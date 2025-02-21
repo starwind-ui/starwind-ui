@@ -102,7 +102,7 @@
 		--warning-foreground: var(--color-amber-950);
 		--error: var(--color-red-700);
 		--error-foreground: var(--color-neutral-50);
-		--border: var(--color-neutral-300);
+		--border: var(--color-neutral-200);
 		--input: var(--color-neutral-200);
 		--outline: var(--color-blue-600);
 		--radius: 0.5rem;
@@ -131,7 +131,7 @@
 		--warning-foreground: var(--color-amber-950);
 		--error: var(--color-red-800);
 		--error-foreground: var(--color-neutral-50);
-		--border: var(--color-neutral-700);
+		--border: var(--color-neutral-800);
 		--input: var(--color-neutral-800);
 		--outline: var(--color-blue-600);
 		--radius: 0.5rem;
