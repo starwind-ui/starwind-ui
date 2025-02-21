@@ -2,7 +2,9 @@
 
 **IMPORTANT NOTE**: This is a work in progress! Everything is subject to change and only two components are currently available for testing purposes.
 
-A collection of accessible UI components built with [Astro](https://astro.build)
+A collection of accessible UI components built with Astro and Tailwind CSS.
+
+Looking for the main package? Go to [starwind-ui/cli](/packages/cli/README.md).
 
 ## Quick Start
 
