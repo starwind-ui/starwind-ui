@@ -6,22 +6,16 @@ A collection of accessible UI components built with [Astro](https://astro.build)
 
 ## Quick Start
 
-### pnpm
-
-```bash
-pnpx starwind@latest init
-```
-
-### npm
+### Initialize your project
 
 ```bash
 npx starwind@latest init
 ```
 
-### Global Installation
+### Select components to add
 
 ```bash
-npm install -g starwind
+npx starwind@latest add
 ```
 
 ## Contributing
@@ -30,4 +24,4 @@ Please read the [contributing guide](/CONTRIBUTING.md).
 
 ## License
 
-Licensed under the [MIT license](https://github.com/boston343/starwind/blob/main/LICENSE.md).
+Licensed under the [MIT license](/LICENSE.md).
