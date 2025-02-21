@@ -1,0 +1,16 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"span"> & {
+	/**
+	 * The text to display when no value is selected
+	 */
+	placeholder?: string;
+};
+
+const { placeholder = "select", ...rest } = Astro.props;
+---
+
+<span class="pointer-events-none" {...rest}>
+	{placeholder}
+</span>

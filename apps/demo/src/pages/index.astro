@@ -1,0 +1,413 @@
+---
+import Mail from "@tabler/icons/outline/mail.svg";
+import Flame from "@tabler/icons/outline/flame.svg";
+import InfoCircle from "@tabler/icons/outline/info-circle.svg";
+
+// layout
+import Layout from "@/layouts/Layout.astro";
+
+// components
+import CreateProjectForm from "@/components/forms/CreateProjectForm.astro";
+import EditProfileForm from "@/components/forms/EditProfileForm.astro";
+import ContactForm from "@/components/forms/ContactForm.astro";
+import TabsForm from "@/components/forms/TabsForm.astro";
+
+// starwind ui
+import {
+	Accordion,
+	AccordionItem,
+	AccordionTrigger,
+	AccordionContent,
+} from "@/components/starwind/accordion";
+// import Accordion from "@/components/starwind/accordion";
+
+import { Alert, AlertTitle, AlertDescription } from "@/components/starwind/alert";
+// import Alert from "@/components/starwind/alert";
+
+import { Badge } from "@/components/starwind/badge";
+
+import { Button } from "@/components/starwind/button";
+// import Button2 from "@/components/starwind/button/Button2.astro";
+
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/starwind/card";
+// import Card from "@/components/starwind/card";
+
+import { Checkbox } from "@/components/starwind/checkbox";
+
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+	DialogClose,
+} from "@/components/starwind/dialog";
+
+import { Input } from "@/components/starwind/input";
+
+import { Label } from "@/components/starwind/label";
+
+import {
+	Select,
+	SelectTrigger,
+	SelectValue,
+	SelectContent,
+	SelectItem,
+	SelectGroup,
+	SelectLabel,
+	SelectSeparator,
+} from "@/components/starwind/select";
+// import Select from "@/components/starwind/select";
+
+import { Switch } from "@/components/starwind/switch";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/tabs";
+
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/tooltip";
+import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
+// import Tooltip from "@/components/starwind/tooltip";
+---
+
+<Layout
+	title="Starwind UI components demo"
+	description="A collection of accessible UI components built with Astro"
+>
+	<div class="container mx-auto px-4 pb-20">
+		<!-- dialog -->
+		<section class="mx-auto mt-6 max-w-lg">
+			<EditProfileForm />
+		</section>
+
+		<!-- tabs -->
+		<section class="mx-auto mt-6 flex w-full max-w-lg flex-col gap-6">
+			<TabsForm />
+
+			<Tabs defaultValue="npm" syncKey="package-manager" class="max-w-[400px]">
+				<TabsList>
+					<TabsTrigger value="npm">npm</TabsTrigger>
+					<TabsTrigger value="pnpm">pnpm</TabsTrigger>
+					<TabsTrigger value="bun">bun</TabsTrigger>
+					<TabsTrigger value="yarn">yarn</TabsTrigger>
+				</TabsList>
+				<TabsContent value="npm">$ npx starwind@latest init</TabsContent>
+				<TabsContent value="pnpm">$ pnpm dlx starwind@latest init</TabsContent>
+				<TabsContent value="bun">$ bunx starwind@latest init</TabsContent>
+				<TabsContent value="yarn">$ yarn dlx starwind@latest init</TabsContent>
+			</Tabs>
+
+			<Tabs defaultValue="npm" syncKey="package-manager" class="max-w-[400px]">
+				<TabsList>
+					<TabsTrigger value="npm">npm</TabsTrigger>
+					<TabsTrigger value="pnpm">pnpm</TabsTrigger>
+					<TabsTrigger value="bun">bun</TabsTrigger>
+					<TabsTrigger value="yarn">yarn</TabsTrigger>
+				</TabsList>
+				<TabsContent value="npm">$ npm run dev</TabsContent>
+				<TabsContent value="pnpm">$ pnpm dev</TabsContent>
+				<TabsContent value="bun">$ bun dev</TabsContent>
+				<TabsContent value="yarn">$ yarn dev</TabsContent>
+			</Tabs>
+		</section>
+
+		<!-- forms -->
+		<section class="mx-auto mt-6 max-w-lg">
+			<ContactForm />
+		</section>
+
+		<!-- Select -->
+		<section class="mx-auto mt-6 max-w-lg">
+			<Select>
+				<SelectTrigger class="w-[350px]">
+					<SelectValue placeholder="Select a timezone" />
+				</SelectTrigger>
+				<SelectContent>
+					<SelectGroup>
+						<SelectLabel>North America</SelectLabel>
+						<SelectItem value="est">Eastern Standard Time (EST)</SelectItem>
+						<SelectItem value="cst">Central Standard Time (CST)</SelectItem>
+						<SelectItem value="mst">Mountain Standard Time (MST)</SelectItem>
+						<SelectItem value="pst">Pacific Standard Time (PST)</SelectItem>
+						<SelectItem value="akst">Alaska Standard Time (AKST)</SelectItem>
+						<SelectItem value="hst">Hawaii Standard Time (HST)</SelectItem>
+					</SelectGroup>
+					<!-- <SelectSeparator /> -->
+					<SelectGroup>
+						<SelectLabel>Europe & Africa</SelectLabel>
+						<SelectItem value="gmt">Greenwich Mean Time (GMT)</SelectItem>
+						<SelectItem value="cet">Central European Time (CET)</SelectItem>
+						<SelectItem value="eet">Eastern European Time (EET)</SelectItem>
+						<SelectItem value="west"> Western European Summer Time (WEST) </SelectItem>
+						<SelectItem value="cat">Central Africa Time (CAT)</SelectItem>
+						<SelectItem value="eat">East Africa Time (EAT)</SelectItem>
+					</SelectGroup>
+					<!-- <SelectSeparator /> -->
+					<SelectGroup>
+						<SelectLabel>Asia</SelectLabel>
+						<SelectItem value="msk">Moscow Time (MSK)</SelectItem>
+						<SelectItem value="ist">India Standard Time (IST)</SelectItem>
+						<SelectItem value="cst_china">China Standard Time (CST)</SelectItem>
+						<SelectItem value="jst">Japan Standard Time (JST)</SelectItem>
+						<SelectItem value="kst">Korea Standard Time (KST)</SelectItem>
+						<SelectItem value="ist_indonesia"> Indonesia Central Standard Time (WITA) </SelectItem>
+					</SelectGroup>
+					<!-- <SelectSeparator /> -->
+					<SelectGroup>
+						<SelectLabel>Australia & Pacific</SelectLabel>
+						<SelectItem value="awst"> Australian Western Standard Time (AWST) </SelectItem>
+						<SelectItem value="acst"> Australian Central Standard Time (ACST) </SelectItem>
+						<SelectItem value="aest"> Australian Eastern Standard Time (AEST) </SelectItem>
+						<SelectItem value="nzst">New Zealand Standard Time (NZST)</SelectItem>
+						<SelectItem value="fjt">Fiji Time (FJT)</SelectItem>
+					</SelectGroup>
+					<!-- <SelectSeparator /> -->
+					<SelectGroup>
+						<SelectLabel>South America</SelectLabel>
+						<SelectItem value="art">Argentina Time (ART)</SelectItem>
+						<SelectItem value="bot">Bolivia Time (BOT)</SelectItem>
+						<SelectItem value="brt">Brasilia Time (BRT)</SelectItem>
+						<SelectItem value="clt">Chile Standard Time (CLT)</SelectItem>
+					</SelectGroup>
+				</SelectContent>
+			</Select>
+		</section>
+
+		<!-- cards -->
+		<section class="mx-auto mt-10 max-w-lg">
+			<div class="flex">
+				<CreateProjectForm />
+			</div>
+		</section>
+
+		<!-- Accordions -->
+		<section class="mx-auto mt-10 max-w-lg">
+			<Accordion defaultValue="item-1">
+				<AccordionItem value="item-1">
+					<AccordionTrigger>What is Astro?</AccordionTrigger>
+					<AccordionContent>
+						Astro is an web framework for building fast, scalable, and secure websites.
+					</AccordionContent>
+				</AccordionItem>
+				<AccordionItem value="item-2">
+					<AccordionTrigger>Why should I use Astro?</AccordionTrigger>
+					<AccordionContent>
+						Astro provides a set of features that make it an ideal choice for building fast,
+						scalable, and secure websites.
+					</AccordionContent>
+				</AccordionItem>
+				<AccordionItem value="item-3">
+					<AccordionTrigger>How do I get started with Astro?</AccordionTrigger>
+					<AccordionContent>
+						To get started with Astro, follow the instructions in the documentation.
+					</AccordionContent>
+				</AccordionItem>
+			</Accordion>
+		</section>
+
+		<section class="mx-auto mt-6 max-w-lg">
+			<Accordion type="multiple" defaultValue="item-1">
+				<AccordionItem value="item-4">
+					<AccordionTrigger>What is Astro?</AccordionTrigger>
+					<AccordionContent>
+						Astro is an web framework for building fast, scalable, and secure websites.
+					</AccordionContent>
+				</AccordionItem>
+				<AccordionItem value="item-5">
+					<AccordionTrigger>Why should I use Astro?</AccordionTrigger>
+					<AccordionContent>
+						Astro provides a set of features that make it an ideal choice for building fast,
+						scalable, and secure websites.
+					</AccordionContent>
+				</AccordionItem>
+				<AccordionItem value="item-6">
+					<AccordionTrigger>How do I get started with Astro?</AccordionTrigger>
+					<AccordionContent>
+						To get started with Astro, follow the instructions in the documentation.
+					</AccordionContent>
+				</AccordionItem>
+			</Accordion>
+		</section>
+
+		<!-- Switches -->
+		<section class="mx-auto mt-10 max-w-lg">
+			<div class="flex flex-col gap-2">
+				<Switch id="terms" label="Accept terms" />
+				<Switch id="newsletter" variant="secondary" label="Subscribe to newsletter" disabled />
+				<Switch id="terms2" variant="primary" label="Accept terms" />
+				<Switch id="newsletter2" variant="secondary" label="Subscribe to newsletter" />
+				<Switch id="terms3" size="sm" variant="info" label="Accept terms" />
+				<Switch id="newsletter3" size="lg" variant="success" label="Subscribe to newsletter" />
+				<Switch id="terms4" variant="warning" label="Accept terms" />
+				<Switch id="newsletter4" variant="error" label="Subscribe to newsletter" />
+				<SwitchListenerTest />
+			</div>
+		</section>
+
+		<!-- Buttons -->
+		<section class="mx-auto mt-10 max-w-lg">
+			<div class="flex flex-wrap items-center gap-2">
+				<Button
+					variant="primary"
+					href="https://astro.build"
+					target="_blank"
+					rel="noopener noreferrer">Primary</Button
+				>
+				<Button variant="secondary" size="lg">Secondary lg</Button>
+				<Button variant="outline">Outline</Button>
+				<Button variant="info" size="sm"><Mail />Info sm</Button>
+				<Button variant="success">Success</Button>
+				<Button variant="warning">Warning</Button>
+				<Button variant="error"><Flame />Error</Button>
+				<Button variant="ghost">Ghost</Button>
+				<Button radius="sm">Radius sm</Button>
+				<Button radius="md">Radius md</Button>
+				<Button radius="lg">Radius lg</Button>
+				<!-- <Button2 variant="primary" size="lg" href="#test">Button</Button2> -->
+			</div>
+		</section>
+
+		<!-- Checkboxes -->
+		<section class="mx-auto mt-10 max-w-lg">
+			<div class="flex flex-col gap-2">
+				<Checkbox id="terms5" label="Accept terms" variant="primary" />
+				<Checkbox id="newsletter5" label="Subscribe to newsletter" variant="secondary" disabled />
+				<Checkbox id="terms6" label="Accept terms" />
+				<Checkbox id="newsletter6" label="Subscribe to newsletter" variant="secondary" />
+				<Checkbox id="terms7" label="Accept terms" variant="info" />
+				<Checkbox id="newsletter7" size="sm" label="Subscribe to newsletter" variant="success" />
+				<Checkbox id="terms8" label="Accept terms" variant="warning" />
+				<Checkbox id="newsletter8" size="lg" label="Subscribe to newsletter" variant="error" />
+			</div>
+
+			<!-- Tooltips -->
+			<section class="mx-auto mt-10 flex max-w-lg flex-wrap items-center gap-2">
+				<Tooltip disableHoverableContent>
+					<TooltipTrigger>
+						<Button variant="outline">Left Tooltip</Button>
+					</TooltipTrigger>
+					<TooltipContent side="left" avoidCollisions={false}>test</TooltipContent>
+				</Tooltip>
+
+				<Tooltip>
+					<TooltipTrigger>
+						<Button variant="outline">Top Tooltip</Button>
+					</TooltipTrigger>
+					<TooltipContent side="top">test</TooltipContent>
+				</Tooltip>
+
+				<Tooltip>
+					<TooltipTrigger>
+						<Button variant="outline">Bottom Tooltip</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">test</TooltipContent>
+				</Tooltip>
+
+				<Tooltip>
+					<TooltipTrigger>
+						<Button variant="outline">Right Tooltip</Button>
+					</TooltipTrigger>
+					<TooltipContent side="right">test</TooltipContent>
+				</Tooltip>
+			</section>
+
+			<!-- Buttons -->
+			<section class="mx-auto mt-10 max-w-lg">
+				<div class="flex flex-wrap items-center gap-2">
+					<Badge variant="default">Default</Badge>
+					<Badge
+						variant="primary"
+						href="https://astro.build"
+						target="_blank"
+						rel="noopener noreferrer">Primary</Badge
+					>
+					<Badge variant="secondary" size="sm">Secondary</Badge>
+					<Badge variant="outline">Outline</Badge>
+					<Badge variant="info">Info</Badge>
+					<Badge variant="success" size="lg">Success</Badge>
+					<Badge variant="warning">Warning</Badge>
+					<Badge variant="error">Error</Badge>
+					<Badge variant="ghost">Ghost</Badge>
+				</div>
+			</section>
+
+			<!-- Alerts -->
+			<section class="mx-auto mt-6 max-w-lg">
+				<Alert>
+					<AlertTitle>Heads up!</AlertTitle>
+					<AlertDescription>
+						A simple alert with an <code>AlertTitle</code> and an
+						<code>AlertDescription</code>.
+					</AlertDescription>
+				</Alert>
+			</section>
+
+			<section class="mx-auto mt-6 max-w-lg">
+				<Alert variant="primary">
+					<AlertTitle>Heads up!</AlertTitle>
+					<AlertDescription>
+						A simple alert with an <code>AlertTitle</code> and an
+						<code>AlertDescription</code>.
+					</AlertDescription>
+				</Alert>
+			</section>
+
+			<section class="mx-auto mt-6 max-w-lg">
+				<Alert variant="secondary">
+					<AlertTitle>Heads up!</AlertTitle>
+					<AlertDescription>
+						A simple alert with an <code>AlertTitle</code> and an
+						<code>AlertDescription</code>.
+					</AlertDescription>
+				</Alert>
+			</section>
+
+			<section class="mx-auto mt-6 max-w-lg">
+				<Alert variant="info">
+					<AlertTitle><InfoCircle class="size-6" /> Heads up!</AlertTitle>
+					<AlertDescription>
+						An alert with an <code>AlertTitle</code> and an
+						<code>AlertDescription</code> and icon.
+					</AlertDescription>
+				</Alert>
+			</section>
+
+			<section class="mx-auto mt-6 max-w-lg">
+				<Alert variant="success">
+					<AlertTitle>Heads up!</AlertTitle>
+					<AlertDescription>
+						A simple alert with an <code>AlertTitle</code> and an
+						<code>AlertDescription</code>.
+					</AlertDescription>
+				</Alert>
+			</section>
+
+			<section class="mx-auto mt-6 max-w-lg">
+				<Alert variant="warning">
+					<AlertTitle>Heads up!</AlertTitle>
+					<AlertDescription>
+						A simple alert with an <code>AlertTitle</code> and an
+						<code>AlertDescription</code>.
+					</AlertDescription>
+				</Alert>
+			</section>
+
+			<section class="mx-auto mt-6 max-w-lg">
+				<Alert variant="error">
+					<AlertTitle><Flame class="size-6" /> Heads up!</AlertTitle>
+					<AlertDescription>
+						An alert with an <code>AlertTitle</code> and an
+						<code>AlertDescription</code> and icon.
+					</AlertDescription>
+				</Alert>
+			</section>
+		</section>
+	</div>
+</Layout>

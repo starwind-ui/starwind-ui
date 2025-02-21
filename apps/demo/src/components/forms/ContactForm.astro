@@ -1,0 +1,23 @@
+---
+// components
+import Button from "@/components/starwind/button";
+import { Label } from "@/components/starwind/label";
+import { Input } from "@/components/starwind/input";
+import { Textarea } from "@/components/starwind/textarea";
+---
+
+<form class="flex max-w-[400px] flex-col gap-y-4">
+	<div class="w-full max-w-[400px] gap-y-2">
+		<Label for="name">Name</Label>
+		<Input name="name" type="text" />
+	</div>
+	<div class="flex w-full max-w-[400px] flex-col gap-y-2">
+		<Label for="email">Email</Label>
+		<Input required name="email" type="email" />
+	</div>
+	<div class="flex w-full max-w-[400px] flex-col gap-y-2">
+		<Label for="message">Message</Label>
+		<Textarea name="message" required rows="4" />
+	</div>
+	<Button type="submit" class="w-full">Send Message</Button>
+</form>

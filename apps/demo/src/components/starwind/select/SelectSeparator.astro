@@ -1,0 +1,9 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["bg-muted -mx-1 my-1 h-px", className]} {...rest}></div>

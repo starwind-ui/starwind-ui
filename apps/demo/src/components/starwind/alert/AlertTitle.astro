@@ -1,0 +1,17 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<h5
+	class:list={[
+		"mb-2 flex items-center gap-2 text-lg leading-none font-medium tracking-tight",
+		className,
+	]}
+	{...rest}
+>
+	<slot />
+</h5>

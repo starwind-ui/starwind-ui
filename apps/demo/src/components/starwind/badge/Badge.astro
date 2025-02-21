@@ -1,0 +1,64 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"div">, Omit<HTMLAttributes<"a">, "type"> {
+	/**
+	 * Sets the variant of the badge
+	 * @default "default"
+	 */
+	variant?:
+		| "default"
+		| "primary"
+		| "secondary"
+		| "outline"
+		| "ghost"
+		| "info"
+		| "success"
+		| "warning"
+		| "error";
+	/**
+	 * Sets the size of the badge
+	 * @default "md"
+	 */
+	size?: "sm" | "md" | "lg";
+}
+
+const { variant = "default", size = "md", class: className, ...rest } = Astro.props;
+
+const Tag = Astro.props.href ? "a" : "div";
+---
+
+<Tag
+	class:list={[
+		"starwind-badge starwind-transition-colors inline-flex items-center rounded-full font-semibold",
+		"focus-visible:outline-2 focus-visible:outline-offset-2",
+		{
+			"bg-foreground text-background hover:bg-foreground/80": variant === "default",
+			"bg-primary text-primary-foreground hover:bg-primary/80 focus-visible:outline-primary":
+				variant === "primary",
+			"bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-secondary":
+				variant === "secondary",
+			"border-border hover:border-border/80 focus-visible:outline-outline border":
+				variant === "outline",
+			"bg-info text-info-foreground hover:bg-info/80 focus-visible:outline-info":
+				variant === "info",
+			"bg-success text-success-foreground hover:bg-success/80 focus-visible:outline-success":
+				variant === "success",
+			"bg-warning text-warning-foreground hover:bg-warning/80 focus-visible:outline-warning":
+				variant === "warning",
+			"bg-error text-error-foreground hover:bg-error/80 focus-visible:outline-error":
+				variant === "error",
+			"bg-foreground/10 text-foreground hover:bg-foreground/7 focus-visible:outline-outline":
+				variant === "ghost",
+		},
+		{
+			"px-2.5 py-0.5 text-xs": size === "sm",
+			"px-3 py-0.5 text-sm": size === "md",
+			"px-4 py-1 text-base": size === "lg",
+		},
+		className,
+	]}
+	{...rest}
+>
+	<slot />
+</Tag>

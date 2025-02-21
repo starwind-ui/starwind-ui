@@ -1,0 +1,25 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"label"> & {
+	size?: "sm" | "md" | "lg";
+};
+
+const { size = "md", class: className = "", ...rest } = Astro.props;
+---
+
+<label
+	class:list={[
+		"text-foreground leading-none font-medium",
+		"peer-disabled:cursor-not-allowed peer-disabled:opacity-70 has-[+:disabled]:cursor-not-allowed has-[+:disabled]:opacity-70",
+		{
+			"text-sm": size === "sm",
+			"text-base": size === "md",
+			"text-lg": size === "lg",
+		},
+		className,
+	]}
+	{...rest}
+>
+	<slot />
+</label>

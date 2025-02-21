@@ -1,0 +1,147 @@
+export const tailwindConfig = `@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@plugin "@tailwindcss/forms";
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+	--animate-accordion-down: accordion-down 0.2s ease-out;
+	--animate-accordion-up: accordion-up 0.2s ease-out;
+
+	@keyframes accordion-down {
+		from {
+			height: 0;
+		}
+		to {
+			height: var(--starwind-accordion-content-height);
+		}
+	}
+
+	@keyframes accordion-up {
+		from {
+			height: var(--starwind-accordion-content-height);
+		}
+		to {
+			height: 0;
+		}
+	}
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-info: var(--info);
+	--color-info-foreground: var(--info-foreground);
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
+	--color-error: var(--error);
+	--color-error-foreground: var(--error-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-outline: var(--outline);
+
+	--radius-xs: calc(var(--radius) - 0.375rem);
+	--radius-sm: calc(var(--radius) - 0.25rem);
+	--radius-md: calc(var(--radius) - 0.125rem);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 0.25rem);
+	--radius-2xl: calc(var(--radius) + 0.5rem);
+	--radius-3xl: calc(var(--radius) + 1rem);
+}
+
+@layer base {
+	:root {
+		--background: var(--color-neutral-50);
+		--foreground: var(--color-neutral-950);
+		--card: var(--color-neutral-50);
+		--card-foreground: var(--color-neutral-950);
+		--popover: var(--color-neutral-50);
+		--popover-foreground: var(--color-neutral-950);
+		--primary: var(--color-blue-700);
+		--primary-foreground: var(--color-neutral-50);
+		--secondary: var(--color-fuchsia-700);
+		--secondary-foreground: var(--color-neutral-50);
+		--muted: var(--color-neutral-100);
+		--muted-foreground: var(--color-neutral-600);
+		--accent: var(--color-neutral-200);
+		--accent-foreground: var(--color-neutral-900);
+		--info: var(--color-sky-300);
+		--info-foreground: var(--color-sky-950);
+		--success: var(--color-green-300);
+		--success-foreground: var(--color-green-950);
+		--warning: var(--color-amber-300);
+		--warning-foreground: var(--color-amber-950);
+		--error: var(--color-red-700);
+		--error-foreground: var(--color-neutral-50);
+		--border: var(--color-neutral-200);
+		--input: var(--color-neutral-200);
+		--outline: var(--color-blue-600);
+		--radius: 0.5rem;
+	}
+
+	.dark {
+		--background: var(--color-neutral-950);
+		--foreground: var(--color-neutral-50);
+		--card: var(--color-neutral-950);
+		--card-foreground: var(--color-neutral-50);
+		--popover: var(--color-neutral-950);
+		--popover-foreground: var(--color-neutral-50);
+		--primary: var(--color-blue-700);
+		--primary-foreground: var(--color-neutral-50);
+		--secondary: var(--color-fuchsia-300);
+		--secondary-foreground: var(--color-neutral-950);
+		--muted: var(--color-neutral-900);
+		--muted-foreground: var(--color-neutral-400);
+		--accent: var(--color-neutral-900);
+		--accent-foreground: var(--color-neutral-100);
+		--info: var(--color-sky-300);
+		--info-foreground: var(--color-sky-950);
+		--success: var(--color-green-300);
+		--success-foreground: var(--color-green-950);
+		--warning: var(--color-amber-300);
+		--warning-foreground: var(--color-amber-950);
+		--error: var(--color-red-800);
+		--error-foreground: var(--color-neutral-50);
+		--border: var(--color-neutral-800);
+		--input: var(--color-neutral-800);
+		--outline: var(--color-blue-600);
+		--radius: 0.5rem;
+	}
+
+	* {
+		@apply border-border;
+	}
+	*:focus-visible {
+		@apply outline-outline;
+	}
+	html {
+		@apply bg-background text-foreground scheme-light dark:scheme-dark;
+	}
+	button {
+		@apply cursor-pointer;
+	}
+}
+
+@layer utilities {
+	/* transition-colors but without outline-color transition property */
+	.starwind-transition-colors {
+		transition-property: color, background-color, border-color, text-decoration-color, fill, stroke,
+			--tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+		transition-timing-function: var(--default-transition-timing-function);
+		transition-duration: var(--default-transition-duration);
+	}
+}
+`;

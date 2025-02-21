@@ -1,0 +1,74 @@
+---
+import Nav from "@/components/nav/Nav.astro";
+
+interface Props {
+	title: string;
+	description: string;
+}
+
+import "@/styles/global.css";
+
+const { title, description } = Astro.props;
+
+import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2";
+---
+
+<!doctype html>
+<html lang="en" class="">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+
+		<!-- local font preload for better performance -->
+		<link rel="preload" href={interVariable} as="font" type="font/woff2" crossorigin="anonymous" />
+
+		<!-- Theme change setup. Run early to eliminate Flash of inAccurate coloR Theme (FART) -->
+		<script is:inline>
+			function initTheme() {
+				let colorTheme = localStorage.getItem("colorTheme");
+				if (!colorTheme) {
+					// if no color theme, default to dark as that's how the site is designed
+					// Note: if you want to match the user's browser preference, you can use the below commented out code instead
+					document.documentElement.classList.add("dark");
+					localStorage.setItem("colorTheme", "dark");
+
+					// if no color theme yet, use the users browser preferences
+					// if (
+					//   window.matchMedia &&
+					//   window.matchMedia("(prefers-color-scheme: dark)").matches
+					// ) {
+					//   document.documentElement.classList.add("dark");
+					//   localStorage.setItem("colorTheme", "dark");
+					// } else {
+					//   document.documentElement.classList.remove("dark");
+					//   localStorage.setItem("colorTheme", "light");
+					// }
+				} else {
+					// If there is, assign the theme based on the value in local storage
+					if (colorTheme === "dark") {
+						document.documentElement.classList.add("dark");
+					} else if (colorTheme === "light") {
+						document.documentElement.classList.remove("dark");
+					}
+				}
+			}
+
+			// runs on initial page load
+			initTheme();
+
+			// runs on view transitions navigation
+			document.addEventListener("astro:after-swap", initTheme);
+		</script>
+	</head>
+
+	<body class="min-h-[100lvh]">
+		<Nav />
+		<main>
+			<slot />
+		</main>
+	</body>
+</html>

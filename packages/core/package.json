@@ -1,0 +1,39 @@
+{
+	"name": "@starwind-ui/core",
+	"version": "0.0.1",
+	"description": "Starwind UI core components and registry",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./registry.json": "./dist/registry.json",
+		"./components/*": "./dist/components/*",
+		"./dist/*": "./dist/*"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "pnpm clean && tsup",
+		"clean": "node -e \"require('fs-extra').remove('dist')\"",
+		"dev": "tsup --watch",
+		"core:link": "pnpm link --global",
+		"core:unlink": "pnpm rm --global @starwind-ui/core",
+		"sync:docs": "pnpm exec starwind sync src/components ../../apps/docs/src/components/starwind",
+		"sync:demo": "pnpm exec starwind sync src/components ../../apps/demo/src/components/starwind",
+		"publish:beta": "pnpm publish --tag beta --access public",
+		"publish:next": "pnpm publish --tag next --access public",
+		"publish:release": "pnpm publish --access public"
+	},
+	"devDependencies": {
+		"astro": "^5.0.0",
+		"fs-extra": "^11.2.0",
+		"glob": "^10.3.10",
+		"tailwindcss": "^4.0.0-beta",
+		"tsup": "^8.0.2"
+	}
+}

@@ -1,0 +1,14 @@
+[
+	{
+		"name": "badge",
+		"type": "component",
+		"version": "0.0.11",
+		"dependencies": []
+	},
+	{
+		"name": "button",
+		"type": "component",
+		"version": "0.0.11",
+		"dependencies": []
+	}
+]

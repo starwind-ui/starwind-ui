@@ -1,0 +1,105 @@
+---
+import Check from "@tabler/icons/outline/check.svg";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = Omit<HTMLAttributes<"input">, "type"> & {
+	/**
+	 * Unique identifier for the checkbox input
+	 */
+	id: string;
+	/**
+	 * Optional label text to display next to the checkbox
+	 */
+	label?: string;
+	/**
+	 * Size variant of the checkbox
+	 * @default "md"
+	 */
+	size?: "sm" | "md" | "lg";
+	/**
+	 * Visual style variant of the checkbox
+	 * @default "default"
+	 */
+	variant?: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error";
+};
+
+const {
+	id,
+	label,
+	value,
+	checked,
+	size = "md",
+	variant = "default",
+	class: className = "",
+	...rest
+} = Astro.props;
+
+const sizeClass = {
+	sm: "size-4",
+	md: "size-5",
+	lg: "size-6",
+};
+---
+
+<div class:list={["starwind-checkbox relative flex items-center space-x-2", className]}>
+	<input
+		type="checkbox"
+		id={id}
+		class:list={[
+			"peer border-input bg-background starwind-transition-colors shrink-0 transform-gpu rounded-sm border",
+			"focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:transition-none",
+			"outline-0 focus:ring-0 focus:ring-offset-0",
+			"not-disabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
+			sizeClass[size],
+			{
+				"checked:bg-foreground focus-visible:outline-outline": variant === "default",
+				"checked:bg-primary focus-visible:outline-primary": variant === "primary",
+				"checked:bg-secondary focus-visible:outline-secondary": variant === "secondary",
+				"checked:bg-info focus-visible:outline-info": variant === "info",
+				"checked:bg-success focus-visible:outline-success": variant === "success",
+				"checked:bg-warning focus-visible:outline-warning": variant === "warning",
+				"checked:bg-error focus-visible:outline-error": variant === "error",
+			},
+		]}
+		{checked}
+		{...rest}
+	/>
+	<Check
+		class:list={[
+			"pointer-events-none absolute stroke-3 p-0.5 opacity-0 transition-opacity peer-checked:opacity-100",
+			sizeClass[size],
+			{
+				"text-background": variant === "default",
+				"text-primary-foreground": variant === "primary",
+				"text-secondary-foreground": variant === "secondary",
+				"text-info-foreground": variant === "info",
+				"text-success-foreground": variant === "success",
+				"text-warning-foreground": variant === "warning",
+				"text-error-foreground": variant === "error",
+			},
+		]}
+	/>
+	{
+		label && (
+			<label
+				for={id}
+				class:list={[
+					"font-medium peer-not-disabled:cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+					{
+						"text-sm": size === "sm",
+						"text-base": size === "md",
+						"text-lg": size === "lg",
+					},
+				]}
+			>
+				{label}
+			</label>
+		)
+	}
+</div>
+
+<style>
+	.starwind-checkbox input[type="checkbox"]:checked {
+		background-image: none;
+	}
+</style>

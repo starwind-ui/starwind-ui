@@ -1,0 +1,28 @@
+---
+/**
+ * NOTE: style="animation: none;" makes it so the close animation doesn't run on page load
+ * It is later removed in the Accordion.astro script
+ */
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div
+	class:list={[
+		"starwind-accordion-content",
+		"transform-gpu overflow-hidden",
+		"data-[state=closed]:animate-accordion-up data-[state=closed]:h-0",
+		"data-[state=open]:animate-accordion-down",
+		className,
+	]}
+	data-state="closed"
+	style="animation: none;"
+	{...rest}
+>
+	<div class="overflow-hidden px-5 pt-0 pb-4">
+		<slot />
+	</div>
+</div>

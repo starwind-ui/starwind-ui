@@ -1,0 +1,88 @@
+---
+import Sun from "@tabler/icons/outline/sun.svg";
+import Moon from "@tabler/icons/outline/moon.svg";
+
+interface Props {
+	class?: string; // any additional classes
+	rest?: any; // catch-all for any additional parameters, such as "aria-label"
+}
+
+const { class: className, ...rest } = Astro.props as Props;
+---
+
+<button
+	class:list={[
+		className,
+		"theme-toggle nav__link--base starwind-transition-colors rounded-full p-2 duration-200",
+	]}
+	aria-label="color theme toggle"
+>
+	<!-- placeholder -->
+	<div class="theme-toggle__placeholder h-5 w-5"></div>
+	<Sun class="theme-toggle__light-icon hidden h-5 w-5" />
+	<Moon class="theme-toggle__dark-icon hidden h-5 w-5" />
+</button>
+
+<script>
+	function changeTheme(theme: "dark" | "light") {
+		if (theme === "dark") {
+			document.documentElement.classList.add("dark");
+		} else {
+			document.documentElement.classList.remove("dark");
+		}
+	}
+
+	function initThemeToggle() {
+		const themeToggleLoaders = document.querySelectorAll(".theme-toggle__placeholder");
+		const themeToggleDarkIcons = document.querySelectorAll(".theme-toggle__dark-icon");
+		const themeToggleLightIcons = document.querySelectorAll(".theme-toggle__light-icon");
+		const themeToggleBtns = document.querySelectorAll(".theme-toggle");
+
+		let colorTheme = localStorage.getItem("colorTheme");
+		// There will always be a color theme as it is assigned in BaseHead.astro
+		// So here just assign the appropriate icon
+		if (colorTheme === "dark") {
+			themeToggleLoaders.forEach((themeToggleLoader) => {
+				themeToggleLoader.classList.add("hidden");
+			});
+			themeToggleDarkIcons.forEach((themeToggleDarkIcon) => {
+				themeToggleDarkIcon.classList.remove("hidden");
+			});
+		} else if (colorTheme === "light") {
+			themeToggleLoaders.forEach((themeToggleLoader) => {
+				themeToggleLoader.classList.add("hidden");
+			});
+			themeToggleLightIcons.forEach((themeToggleLightIcon) => {
+				themeToggleLightIcon.classList.remove("hidden");
+			});
+		}
+
+		// add event listeners to all toggle buttons
+		themeToggleBtns.forEach((themToggleBtn) => {
+			themToggleBtn.addEventListener("click", function () {
+				// toggle icons inside button
+				themeToggleDarkIcons.forEach((themeToggleDarkIcon) => {
+					themeToggleDarkIcon.classList.toggle("hidden");
+				});
+				themeToggleLightIcons.forEach((themeToggleLightIcon) => {
+					themeToggleLightIcon.classList.toggle("hidden");
+				});
+
+				// update local storage
+				if (localStorage.getItem("colorTheme") === "light") {
+					changeTheme("dark");
+					localStorage.setItem("colorTheme", "dark");
+				} else {
+					changeTheme("light");
+					localStorage.setItem("colorTheme", "light");
+				}
+			});
+		});
+	}
+
+	// runs on initial page load
+	initThemeToggle();
+
+	// runs on view transitions navigation
+	document.addEventListener("astro:after-swap", initThemeToggle);
+</script>
