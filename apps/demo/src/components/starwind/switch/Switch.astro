@@ -1,9 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 
-/**
- * Props for the Switch component.
- */
 type Props = Omit<HTMLAttributes<"button">, "role" | "type" | "aria-checked"> & {
 	/**
 	 * Unique identifier for the switch component.
