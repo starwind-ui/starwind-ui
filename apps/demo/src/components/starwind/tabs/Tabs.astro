@@ -31,13 +31,13 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 
 	class TabsHandler {
 		private tabs: HTMLElement;
-		private triggers: HTMLElement[];
+		private triggers: HTMLButtonElement[];
 		private contents: HTMLElement[];
 		private currentTabIndex: number = 0;
 		private tabsId: string;
 		private syncKey?: string;
 		private storageKey: string;
-		private valueToTriggerMap: Map<string, HTMLElement>;
+		private valueToTriggerMap: Map<string, HTMLButtonElement>;
 		private valueToContentMap: Map<string, HTMLElement>;
 
 		constructor(tabs: HTMLElement, idx: number) {
@@ -137,18 +137,44 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 			let newIndex = this.currentTabIndex;
 
 			switch (key) {
-				case "ArrowRight":
-					newIndex = (this.currentTabIndex + 1) % this.triggers.length;
+				case "ArrowRight": {
+					for (let i = 1; i < this.triggers.length; i++) {
+						const index = (this.currentTabIndex + i) % this.triggers.length;
+						if (!this.triggers[index].disabled) {
+							newIndex = index;
+							break;
+						}
+					}
 					break;
-				case "ArrowLeft":
-					newIndex = (this.currentTabIndex - 1 + this.triggers.length) % this.triggers.length;
+				}
+				case "ArrowLeft": {
+					for (let i = 1; i < this.triggers.length; i++) {
+						const index = (this.currentTabIndex - i + this.triggers.length) % this.triggers.length;
+						if (!this.triggers[index].disabled) {
+							newIndex = index;
+							break;
+						}
+					}
 					break;
-				case "Home":
-					newIndex = 0;
+				}
+				case "Home": {
+					for (let i = 0; i < this.triggers.length; i++) {
+						if (!this.triggers[i].disabled) {
+							newIndex = i;
+							break;
+						}
+					}
 					break;
-				case "End":
-					newIndex = this.triggers.length - 1;
+				}
+				case "End": {
+					for (let i = this.triggers.length - 1; i >= 0; i--) {
+						if (!this.triggers[i].disabled) {
+							newIndex = i;
+							break;
+						}
+					}
 					break;
+				}
 				default:
 					return;
 			}
