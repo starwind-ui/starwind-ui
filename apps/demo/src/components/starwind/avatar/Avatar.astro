@@ -1,0 +1,44 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"div"> {
+	/**
+	 * Sets the variant of the avatar
+	 * @default "default"
+	 */
+	variant?: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error";
+	/**
+	 * Sets the size of the avatar
+	 * @default "md"
+	 */
+	size?: "sm" | "md" | "lg";
+}
+
+const { variant = "default", size = "md", class: className, ...rest } = Astro.props;
+
+const sizeClasses = {
+	sm: "h-8 w-8 text-xs",
+	md: "h-10 w-10 text-sm",
+	lg: "h-12 w-12 text-base",
+}[size];
+---
+
+<figure
+	class:list={[
+		"text-foreground bg-muted relative overflow-hidden rounded-full border-2",
+		{
+			"border-border": variant === "default",
+			"border-primary": variant === "primary",
+			"border-secondary": variant === "secondary",
+			"border-info": variant === "info",
+			"border-success": variant === "success",
+			"border-warning": variant === "warning",
+			"border-error": variant === "error",
+		},
+		sizeClasses,
+		className,
+	]}
+	{...rest}
+>
+	<slot />
+</figure>
