@@ -1,0 +1,18 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"nav"> & {
+	children: any;
+};
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<nav
+	role="navigation"
+	aria-label="pagination"
+	class:list={["mx-auto flex w-full justify-center", className]}
+	{...rest}
+>
+	<slot />
+</nav>
