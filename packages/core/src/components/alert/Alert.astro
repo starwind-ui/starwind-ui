@@ -1,0 +1,44 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div"> & {
+	/**
+	 * Sets the variant of the alert
+	 * @default "default"
+	 */
+	variant?: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error";
+};
+
+const { variant = "default", class: className, ...rest } = Astro.props;
+---
+
+<div
+	class:list={[
+		"text-foreground relative w-full rounded-lg border p-4",
+		{
+			"bg-background [&>h5>svg]:text-foreground": variant === "default",
+		},
+		{
+			"border-primary bg-primary/7 [&>h5>svg]:text-primary": variant === "primary",
+		},
+		{
+			"border-secondary bg-secondary/7 [&>h5>svg]:text-secondary": variant === "secondary",
+		},
+		{
+			"border-info bg-info/7 [&>h5>svg]:text-info": variant === "info",
+		},
+		{
+			"border-success bg-success/7 [&>h5>svg]:text-success": variant === "success",
+		},
+		{
+			"border-warning bg-warning/7 [&>h5>svg]:text-warning": variant === "warning",
+		},
+		{
+			"border-error bg-error/7 [&>h5>svg]:text-error": variant === "error",
+		},
+		className,
+	]}
+	{...rest}
+>
+	<slot />
+</div>

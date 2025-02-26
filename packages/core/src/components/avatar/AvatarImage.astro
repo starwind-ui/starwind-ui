@@ -1,0 +1,48 @@
+---
+import { Image } from "astro:assets";
+
+type BaseProps = {
+	alt: string;
+};
+
+type WithSrc = BaseProps & {
+	src: string;
+	image?: never;
+};
+
+type WithImage = BaseProps & {
+	src?: never;
+	image: ImageMetadata;
+};
+
+type Props = WithSrc | WithImage;
+
+const { src, image, alt } = Astro.props;
+
+if (!src && !image) {
+	throw new Error("Either 'src' or 'image' is required for an avatar image.");
+}
+---
+
+{
+	src && (
+		<img
+			src={src}
+			alt={alt}
+			class="relative z-1 h-full w-full rounded-full object-cover"
+			width={64}
+			height={64}
+			onerror="this.style.display='none'"
+		/>
+	)
+}
+{
+	image && (
+		<Image
+			src={image}
+			alt={alt}
+			class="relative z-1 h-full w-full rounded-full object-cover"
+			width={64}
+		/>
+	)
+}

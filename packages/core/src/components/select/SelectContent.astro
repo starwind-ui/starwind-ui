@@ -1,0 +1,57 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div"> & {
+	/**
+	 * Side of the tooltip
+	 * @default bottom
+	 */
+	side?: "top" | "bottom";
+	/**
+	 * Offset distance in pixels
+	 * @default 4
+	 */
+	sideOffset?: number;
+	/**
+	 * Open and close animation duration in milliseconds
+	 * @default 150
+	 */
+	animationDuration?: number;
+};
+
+const {
+	class: className,
+	side = "bottom",
+	sideOffset = 4,
+	animationDuration = 150,
+	...rest
+} = Astro.props;
+---
+
+<div
+	class:list={[
+		"starwind-select-content",
+		"bg-popover text-popover-foreground absolute z-50 min-w-[8rem] rounded-md border shadow-md",
+		"fade-in-0 zoom-in-95 animate-in overflow-hidden will-change-transform",
+		"data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:animate-out",
+		"data-[side=bottom]:slide-in-from-top-4 data-[side=bottom]:top-(--select-content-offset)",
+		"data-[side=top]:slide-in-from-bottom-4 data-[side=top]:bottom-(--select-content-offset)",
+		"left-0",
+		className,
+	]}
+	role="listbox"
+	data-side={side}
+	data-state="closed"
+	tabindex="-1"
+	style={{
+		"--select-content-offset": `calc(100% + ${sideOffset}px)`,
+		// hide the content initially. Script will remove this
+		display: "none",
+		animationDuration: `${animationDuration}ms`,
+	}}
+	{...rest}
+>
+	<div class:list={["max-h-96 w-full min-w-(--select-trigger-width) overflow-y-auto p-1"]}>
+		<slot />
+	</div>
+</div>

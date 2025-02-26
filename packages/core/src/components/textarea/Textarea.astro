@@ -1,0 +1,25 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"textarea"> & {
+	size?: "sm" | "md" | "lg";
+};
+
+const { size = "md", class: className, ...rest } = Astro.props;
+---
+
+<textarea
+	class:list={[
+		"border-input bg-background text-foreground ring-offset-background min-h-10 w-full rounded-md border",
+		"focus:outline-outline focus:ring-0 focus:outline-2 focus:outline-offset-2",
+		"file:text-foreground file:border-0 file:bg-transparent file:text-sm file:font-medium",
+		"disabled:cursor-not-allowed disabled:opacity-50",
+		"peer placeholder:text-muted-foreground",
+		{
+			"min-h-9 px-2 py-1 text-sm": size === "sm",
+			"min-h-10 px-3 py-2 text-base": size === "md",
+			"min-h-12 px-4 py-3 text-lg": size === "lg",
+		},
+		className,
+	]}
+	{...rest}></textarea>
