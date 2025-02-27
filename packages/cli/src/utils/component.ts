@@ -5,6 +5,8 @@ import { getConfig, updateConfig } from "./config.js";
 import { PATHS } from "./constants.js";
 import { getRegistry, getComponent } from "./registry.js";
 import semver from "semver";
+import * as p from "@clack/prompts";
+import { highlighter } from "./highlighter.js";
 
 export type InstallResult = {
 	status: "installed" | "skipped" | "failed";
@@ -143,6 +145,21 @@ export async function updateComponent(name: string, currentVersion: string): Pro
 
 		// Compare versions
 		if (!semver.gt(registryComponent.version, currentVersion)) {
+			return {
+				name,
+				status: "skipped",
+				oldVersion: currentVersion,
+				newVersion: registryComponent.version,
+			};
+		}
+
+		// Confirm the component update with warning about overriding
+		const confirmUpdate = await p.confirm({
+			message: `Update component ${highlighter.info(name)} from ${highlighter.warn(`v${currentVersion}`)} to ${highlighter.success(`v${registryComponent.version}`)}? This will override the existing implementation.`,
+		});
+
+		if (!confirmUpdate || p.isCancel(confirmUpdate)) {
+			p.log.info(`Skipping update for ${highlighter.info(name)}`);
 			return {
 				name,
 				status: "skipped",

@@ -172,8 +172,8 @@ export async function update(components?: string[], options?: { all?: boolean })
 
 		if (results.skipped.length > 0) {
 			p.log.info(
-				`${highlighter.info("Components already up to date:")}\n${results.skipped
-					.map((r) => `  ${r.name} (${r.newVersion})`)
+				`${highlighter.info("Components already up to date or skipped:")}\n${results.skipped
+					.map((r) => `  ${r.name} (${r.oldVersion})`)
 					.join("\n")}`,
 			);
 		}
@@ -199,7 +199,7 @@ export async function update(components?: string[], options?: { all?: boolean })
 		if (results.updated.length > 0) {
 			p.outro("Components updated successfully 🚀");
 		} else if (results.skipped.length > 0 && results.failed.length === 0) {
-			p.outro("All components are up to date ✨");
+			p.outro("Components already up to date or skipped ✨");
 		} else {
 			p.cancel("No components were updated");
 			process.exit(1);
