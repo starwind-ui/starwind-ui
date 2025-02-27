@@ -1,6 +1,6 @@
 {
 	"name": "@starwind-ui/core",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "Starwind UI core components and registry",
 	"type": "module",
 	"main": "./dist/index.js",
