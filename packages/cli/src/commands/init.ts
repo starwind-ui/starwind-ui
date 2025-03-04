@@ -158,7 +158,7 @@ export async function init(withinAdd: boolean = false) {
 		const cssFileExists = await fileExists(configChoices.cssFile);
 		let updatedTailwindConfig = tailwindConfig;
 
-		if (configChoices.twBaseColor !== "gray") {
+		if (configChoices.twBaseColor !== "neutral") {
 			// replace all "--color-neutral" with "--color-twBaseColor"
 			updatedTailwindConfig = updatedTailwindConfig.replace(
 				/--color-neutral-/g,
