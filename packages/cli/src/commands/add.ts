@@ -103,16 +103,17 @@ export async function add(components?: string[], options?: { all?: boolean }) {
 			return process.exit(0);
 		}
 
-		const confirmed = await p.confirm({
-			message: `Install ${componentsToInstall
-				.map((comp) => highlighter.info(comp))
-				.join(", ")} ${componentsToInstall.length > 1 ? "components" : "component"}?`,
-		});
+		// confirm installation
+		// const confirmed = await p.confirm({
+		// 	message: `Install ${componentsToInstall
+		// 		.map((comp) => highlighter.info(comp))
+		// 		.join(", ")} ${componentsToInstall.length > 1 ? "components" : "component"}?`,
+		// });
 
-		if (!confirmed || p.isCancel(confirmed)) {
-			p.cancel("Operation cancelled");
-			return process.exit(0);
-		}
+		// if (!confirmed || p.isCancel(confirmed)) {
+		// 	p.cancel("Operation cancelled");
+		// 	return process.exit(0);
+		// }
 
 		const results = {
 			installed: [] as InstallResult[],

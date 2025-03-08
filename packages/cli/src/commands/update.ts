@@ -86,16 +86,16 @@ export async function update(components?: string[], options?: { all?: boolean })
 		}
 
 		// Confirm update
-		const confirmed = await p.confirm({
-			message: `Check for updates to ${componentsToUpdate
-				.map((comp) => highlighter.info(comp))
-				.join(", ")} ${componentsToUpdate.length > 1 ? "components" : "component"}?`,
-		});
+		// const confirmed = await p.confirm({
+		// 	message: `Check for updates to ${componentsToUpdate
+		// 		.map((comp) => highlighter.info(comp))
+		// 		.join(", ")} ${componentsToUpdate.length > 1 ? "components" : "component"}?`,
+		// });
 
-		if (!confirmed || p.isCancel(confirmed)) {
-			p.cancel("Operation cancelled");
-			process.exit(0);
-		}
+		// if (!confirmed || p.isCancel(confirmed)) {
+		// 	p.cancel("Operation cancelled");
+		// 	process.exit(0);
+		// }
 
 		const results = {
 			updated: [] as UpdateResult[],
