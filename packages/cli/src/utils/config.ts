@@ -17,6 +17,7 @@ interface AliasConfig {
 }
 
 export interface StarwindConfig {
+	$schema: string;
 	tailwind: TailwindConfig;
 	// aliases: AliasConfig;
 	componentDir: string;
@@ -24,9 +25,10 @@ export interface StarwindConfig {
 }
 
 const defaultConfig: StarwindConfig = {
+	$schema: "https://starwind.dev/schema.json",
 	tailwind: {
 		css: "src/styles/starwind.css",
-		baseColor: "gray",
+		baseColor: "neutral",
 		cssVariables: true,
 	},
 	// aliases: {
