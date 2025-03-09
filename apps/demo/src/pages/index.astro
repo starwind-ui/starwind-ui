@@ -21,8 +21,20 @@ import {
 } from "@/components/starwind/accordion";
 // import Accordion from "@/components/starwind/accordion";
 
+import {
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from "@/components/starwind/pagination";
+
 import { Alert, AlertTitle, AlertDescription } from "@/components/starwind/alert";
 // import Alert from "@/components/starwind/alert";
+
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/starwind/avatar";
 
 import { Badge } from "@/components/starwind/badge";
 
@@ -187,6 +199,31 @@ import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
 			</div>
 		</section>
 
+		<section class="mx-auto mt-10 max-w-lg">
+			<Pagination>
+				<PaginationContent>
+					<PaginationItem>
+						<PaginationPrevious href="#">Prev</PaginationPrevious>
+					</PaginationItem>
+					<PaginationItem>
+						<PaginationLink href="#">1</PaginationLink>
+					</PaginationItem>
+					<PaginationItem>
+						<PaginationLink href="#" isActive>2</PaginationLink>
+					</PaginationItem>
+					<PaginationItem>
+						<PaginationLink href="#">3</PaginationLink>
+					</PaginationItem>
+					<PaginationItem>
+						<PaginationEllipsis />
+					</PaginationItem>
+					<PaginationItem>
+						<PaginationNext href="#">Next</PaginationNext>
+					</PaginationItem>
+				</PaginationContent>
+			</Pagination>
+		</section>
+
 		<!-- Accordions -->
 		<section class="mx-auto mt-10 max-w-lg">
 			<Accordion defaultValue="item-1">
@@ -251,6 +288,52 @@ import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
 			</div>
 		</section>
 
+		<!-- Avatar -->
+		<section class="mx-auto mt-10 max-w-lg">
+			<div class="flex flex-wrap gap-4" slot="preview">
+				<Avatar variant="default" class="rounded-md border-purple-500">
+					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+					<AvatarFallback>JD</AvatarFallback>
+				</Avatar>
+				<Avatar variant="primary">
+					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+					<AvatarFallback>JD</AvatarFallback>
+				</Avatar>
+				<Avatar variant="secondary">
+					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+					<AvatarFallback>JD</AvatarFallback>
+				</Avatar>
+				<Avatar variant="info">
+					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+					<AvatarFallback>JD</AvatarFallback>
+				</Avatar>
+				<Avatar variant="success">
+					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+					<AvatarFallback>JD</AvatarFallback>
+				</Avatar>
+				<Avatar variant="warning">
+					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+					<AvatarFallback>JD</AvatarFallback>
+				</Avatar>
+				<Avatar variant="error">
+					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+					<AvatarFallback>JD</AvatarFallback>
+				</Avatar>
+				<Avatar size="sm">
+					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+					<AvatarFallback>JD</AvatarFallback>
+				</Avatar>
+				<Avatar size="md">
+					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+					<AvatarFallback>JD</AvatarFallback>
+				</Avatar>
+				<Avatar size="lg">
+					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+					<AvatarFallback>JD</AvatarFallback>
+				</Avatar>
+			</div>
+		</section>
+
 		<!-- Buttons -->
 		<section class="mx-auto mt-10 max-w-lg">
 			<div class="flex flex-wrap items-center gap-2">
@@ -267,9 +350,9 @@ import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
 				<Button variant="warning">Warning</Button>
 				<Button variant="error"><Flame />Error</Button>
 				<Button variant="ghost">Ghost</Button>
-				<Button radius="sm">Radius sm</Button>
-				<Button radius="md">Radius md</Button>
-				<Button radius="lg">Radius lg</Button>
+				<Button class="rounded-none bg-purple-700 text-white hover:bg-purple-800">Radius sm</Button>
+				<Button class="rounded-lg">Radius lg</Button>
+				<Button class="rounded-full">Radius full</Button>
 				<!-- <Button2 variant="primary" size="lg" href="#test">Button</Button2> -->
 			</div>
 		</section>
@@ -280,7 +363,12 @@ import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
 				<Checkbox id="terms5" label="Accept terms" variant="primary" />
 				<Checkbox id="newsletter5" label="Subscribe to newsletter" variant="secondary" disabled />
 				<Checkbox id="terms6" label="Accept terms" />
-				<Checkbox id="newsletter6" label="Subscribe to newsletter" variant="secondary" />
+				<Checkbox
+					id="newsletter6"
+					label="Subscribe to newsletter"
+					variant="secondary"
+					class="bg-blue-500"
+				/>
 				<Checkbox id="terms7" label="Accept terms" variant="info" />
 				<Checkbox id="newsletter7" size="sm" label="Subscribe to newsletter" variant="success" />
 				<Checkbox id="terms8" label="Accept terms" variant="warning" />

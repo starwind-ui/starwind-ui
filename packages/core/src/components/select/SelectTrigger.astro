@@ -1,6 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-
+import { tv } from "tailwind-variants";
 import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
 
 type Props = Omit<HTMLAttributes<"button">, "role" | "type"> & {
@@ -14,17 +14,20 @@ type Props = Omit<HTMLAttributes<"button">, "role" | "type"> & {
 	required?: boolean;
 };
 
-const { class: className, required = false, ...rest } = Astro.props;
----
-
-<button
-	class:list={[
+const selectTrigger = tv({
+	base: [
 		"starwind-select-trigger",
 		"border-input bg-background text-foreground ring-offset-background flex h-11 items-center justify-between rounded-md border px-3 py-2",
 		"focus:outline-outline focus:outline-2 focus:outline-offset-2",
 		"disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-		className,
-	]}
+	],
+});
+
+const { class: className, required = false, ...rest } = Astro.props;
+---
+
+<button
+	class={selectTrigger({ class: className })}
 	type="button"
 	role="combobox"
 	aria-label="Select field"

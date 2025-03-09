@@ -1,9 +1,14 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"nav"> & {
 	children: any;
 };
+
+const pagination = tv({
+	base: "mx-auto flex w-full justify-center",
+});
 
 const { class: className, ...rest } = Astro.props;
 ---
@@ -11,7 +16,7 @@ const { class: className, ...rest } = Astro.props;
 <nav
 	role="navigation"
 	aria-label="pagination"
-	class:list={["mx-auto flex w-full justify-center", className]}
+	class={pagination({ class: className })}
 	{...rest}
 >
 	<slot />

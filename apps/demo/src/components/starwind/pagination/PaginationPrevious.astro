@@ -2,20 +2,23 @@
 import type { HTMLAttributes } from "astro/types";
 import ChevronLeft from "@tabler/icons/outline/chevron-left.svg";
 import PaginationLink from "./PaginationLink.astro";
+import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"a"> & {
 	size?: "sm" | "md" | "lg" | "icon";
-	radius?: "none" | "xs" | "sm" | "md" | "lg" | "xl" | "full";
 };
 
-const { class: className, size = "md", radius = "md", ...rest } = Astro.props;
+const paginationPrevious = tv({
+	base: "group gap-1",
+});
+
+const { class: className, size = "md", ...rest } = Astro.props;
 ---
 
 <PaginationLink
 	aria-label="Go to previous page"
 	size={size}
-	radius={radius}
-	class:list={["group gap-1", className]}
+	class={paginationPrevious({ class: className })}
 	{...rest}
 >
 	<ChevronLeft class="size-4 transition-transform group-hover:-translate-x-1" />

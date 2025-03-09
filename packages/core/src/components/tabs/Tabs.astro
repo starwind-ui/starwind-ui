@@ -1,16 +1,21 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 interface Props extends HTMLAttributes<"div"> {
 	defaultValue?: string;
 	syncKey?: string;
 }
 
+const tabs = tv({
+	base: "starwind-tabs",
+});
+
 const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 ---
 
 <div
-	class:list={["starwind-tabs", className]}
+	class={tabs({ class: className })}
 	data-default-value={defaultValue}
 	data-sync-key={syncKey}
 	{...rest}

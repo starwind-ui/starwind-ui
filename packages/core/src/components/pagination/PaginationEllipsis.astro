@@ -1,15 +1,20 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import Dots from "@tabler/icons/outline/dots.svg";
+import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"span"> & {
 	children?: any;
 };
 
+const paginationEllipsis = tv({
+	base: "flex h-9 w-9 items-center justify-center",
+});
+
 const { class: className, ...rest } = Astro.props;
 ---
 
-<span aria-hidden class:list={["flex h-9 w-9 items-center justify-center", className]} {...rest}>
+<span aria-hidden class={paginationEllipsis({ class: className })} {...rest}>
 	<Dots class="size-4" />
 	<span class="sr-only">More pages</span>
 </span>

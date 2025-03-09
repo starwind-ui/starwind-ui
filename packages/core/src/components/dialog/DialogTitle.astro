@@ -1,5 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 type Props = Omit<HTMLAttributes<"h2">, "id"> & {
 	/**
@@ -8,9 +9,13 @@ type Props = Omit<HTMLAttributes<"h2">, "id"> & {
 	children: any;
 };
 
+const dialogTitle = tv({
+	base: "text-2xl leading-none font-semibold tracking-tight",
+});
+
 const { class: className, ...rest } = Astro.props;
 ---
 
-<h2 class:list={["text-2xl leading-none font-semibold tracking-tight", className]} {...rest}>
+<h2 class={dialogTitle({ class: className })} {...rest}>
 	<slot />
 </h2>

@@ -1,13 +1,18 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"ul"> & {
 	children: any;
 };
 
+const paginationContent = tv({
+	base: "flex flex-row items-center gap-1",
+});
+
 const { class: className, ...rest } = Astro.props;
 ---
 
-<ul class:list={["flex flex-row items-center gap-1", className]} {...rest}>
+<ul class={paginationContent({ class: className })} {...rest}>
 	<slot />
 </ul>

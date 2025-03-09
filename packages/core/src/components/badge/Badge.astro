@@ -1,5 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
 
 interface Props extends HTMLAttributes<"div">, Omit<HTMLAttributes<"a">, "type"> {
 	/**
@@ -21,44 +22,95 @@ interface Props extends HTMLAttributes<"div">, Omit<HTMLAttributes<"a">, "type">
 	 * @default "md"
 	 */
 	size?: "sm" | "md" | "lg";
+	/**
+	 * URL to link to when badge is clicked
+	 */
+	href?: string;
 }
 
-const { variant = "default", size = "md", class: className, ...rest } = Astro.props;
+const badgeVariants = tv({
+	base: "starwind-badge starwind-transition-colors inline-flex items-center rounded-full font-semibold focus-visible:outline-2 focus-visible:outline-offset-2",
+	variants: {
+		variant: {
+			default: "bg-foreground text-background",
+			primary: "bg-primary text-primary-foreground focus-visible:outline-primary",
+			secondary: "bg-secondary text-secondary-foreground focus-visible:outline-secondary",
+			outline: "border-border focus-visible:outline-outline border",
+			ghost: "bg-foreground/10 text-foreground focus-visible:outline-outline",
+			info: "bg-info text-info-foreground focus-visible:outline-info",
+			success: "bg-success text-success-foreground focus-visible:outline-success",
+			warning: "bg-warning text-warning-foreground focus-visible:outline-warning",
+			error: "bg-error text-error-foreground focus-visible:outline-error",
+		},
+		size: {
+			sm: "px-2.5 py-0.5 text-xs",
+			md: "px-3 py-0.5 text-sm",
+			lg: "px-4 py-1 text-base",
+		},
+		isLink: {
+			true: "cursor-pointer",
+			false: "",
+		},
+	},
+	compoundVariants: [
+		{
+			isLink: true,
+			variant: "default",
+			className: "hover:bg-foreground/80",
+		},
+		{
+			isLink: true,
+			variant: "primary",
+			className: "hover:bg-primary/80",
+		},
+		{
+			isLink: true,
+			variant: "secondary",
+			className: "hover:bg-secondary/80",
+		},
+		{
+			isLink: true,
+			variant: "outline",
+			className: "hover:border-border/80",
+		},
+		{
+			isLink: true,
+			variant: "ghost",
+			className: "hover:bg-foreground/7",
+		},
+		{
+			isLink: true,
+			variant: "info",
+			className: "hover:bg-info/80",
+		},
+		{
+			isLink: true,
+			variant: "success",
+			className: "hover:bg-success/80",
+		},
+		{
+			isLink: true,
+			variant: "warning",
+			className: "hover:bg-warning/80",
+		},
+		{
+			isLink: true,
+			variant: "error",
+			className: "hover:bg-error/80",
+		},
+	],
+	defaultVariants: {
+		variant: "default",
+		size: "md",
+		isLink: false,
+	},
+});
 
-const Tag = Astro.props.href ? "a" : "div";
+const { variant = "default", size = "md", class: className, href, ...rest } = Astro.props;
+const isLink = !!href;
+const Tag = isLink ? "a" : "div";
 ---
 
-<Tag
-	class:list={[
-		"starwind-badge starwind-transition-colors inline-flex items-center rounded-full font-semibold",
-		"focus-visible:outline-2 focus-visible:outline-offset-2",
-		{
-			"bg-foreground text-background hover:bg-foreground/80": variant === "default",
-			"bg-primary text-primary-foreground hover:bg-primary/80 focus-visible:outline-primary":
-				variant === "primary",
-			"bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-secondary":
-				variant === "secondary",
-			"border-border hover:border-border/80 focus-visible:outline-outline border":
-				variant === "outline",
-			"bg-info text-info-foreground hover:bg-info/80 focus-visible:outline-info":
-				variant === "info",
-			"bg-success text-success-foreground hover:bg-success/80 focus-visible:outline-success":
-				variant === "success",
-			"bg-warning text-warning-foreground hover:bg-warning/80 focus-visible:outline-warning":
-				variant === "warning",
-			"bg-error text-error-foreground hover:bg-error/80 focus-visible:outline-error":
-				variant === "error",
-			"bg-foreground/10 text-foreground hover:bg-foreground/7 focus-visible:outline-outline":
-				variant === "ghost",
-		},
-		{
-			"px-2.5 py-0.5 text-xs": size === "sm",
-			"px-3 py-0.5 text-sm": size === "md",
-			"px-4 py-1 text-base": size === "lg",
-		},
-		className,
-	]}
-	{...rest}
->
+<Tag class={badgeVariants({ variant, size, isLink, class: className })} href={href} {...rest}>
 	<slot />
 </Tag>

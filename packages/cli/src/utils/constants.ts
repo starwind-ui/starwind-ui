@@ -28,6 +28,7 @@ export const OTHER_PACKAGES = {
 	tailwindVite: "@tailwindcss/vite@latest",
 	tailwindForms: "@tailwindcss/forms@latest",
 	tailwindAnimate: "tailwindcss-animate@latest",
+	tailwindVariants: "tailwind-variants@latest",
 	tablerIcons: "@tabler/icons@latest",
 } as const;
 
