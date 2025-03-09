@@ -2,9 +2,9 @@
 
 A set of powerful, accessible components for your Astro projects. Styled with Tailwind CSS.
 
-Looking for the main package? Go to [starwind-ui/cli](/packages/cli/README.md).
+**Documentation: [starwind.dev](https://starwind.dev/)**
 
-Documentation: [starwind.dev](https://starwind.dev/)
+Looking for the main package? Go to [starwind-ui/cli](/packages/cli/README.md).
 
 ## Quick Start
 
@@ -19,6 +19,13 @@ npx starwind@latest init
 ```bash
 npx starwind@latest add
 ```
+
+## AI integration
+
+Resources for AI:
+
+- [llms.txt](https://starwind.dev/llms.txt)
+- [llms-full.txt](https://starwind.dev/llms-full.txt)
 
 ## Contributing
 
