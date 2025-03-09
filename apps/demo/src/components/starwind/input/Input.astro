@@ -29,7 +29,4 @@ const input = tv({
 const { size = "md", class: className, ...rest } = Astro.props;
 ---
 
-<input
-	class={input({ size, class: className })}
-	{...rest}
-/>
+<input class={input({ size, class: className })} {...rest} />

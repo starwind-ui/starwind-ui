@@ -1,6 +1,6 @@
 import Avatar from "./Avatar.astro";
-import AvatarImage from "./AvatarImage.astro";
 import AvatarFallback from "./AvatarFallback.astro";
+import AvatarImage from "./AvatarImage.astro";
 
 export { Avatar, AvatarImage, AvatarFallback };
 

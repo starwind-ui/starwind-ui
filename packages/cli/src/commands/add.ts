@@ -1,4 +1,5 @@
 import type { InstallResult } from "@/utils/component.js";
+import { updateConfig } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -7,7 +8,6 @@ import { selectComponents } from "@/utils/prompts.js";
 import { getAllComponents } from "@/utils/registry.js";
 import { sleep } from "@/utils/sleep.js";
 import { isValidComponent } from "@/utils/validate.js";
-import { updateConfig } from "@/utils/config.js";
 import * as p from "@clack/prompts";
 const { init } = await import("./init.js");
 
