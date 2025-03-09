@@ -1,7 +1,7 @@
 ---
 import Check from "@tabler/icons/outline/check.svg";
 import type { HTMLAttributes } from "astro/types";
-import { type VariantProps, tv } from "tailwind-variants";
+import { tv } from "tailwind-variants";
 
 type Props = Omit<HTMLAttributes<"input">, "type"> & {
 	/**
@@ -42,21 +42,9 @@ const checkbox = tv({
 	},
 	variants: {
 		size: {
-			sm: {
-				input: "size-4",
-				icon: "size-4",
-				label: "text-sm",
-			},
-			md: {
-				input: "size-5",
-				icon: "size-5",
-				label: "text-base",
-			},
-			lg: {
-				input: "size-6",
-				icon: "size-6",
-				label: "text-lg",
-			},
+			sm: { input: "size-4", icon: "size-4", label: "text-sm" },
+			md: { input: "size-5", icon: "size-5", label: "text-base" },
+			lg: { input: "size-6", icon: "size-6", label: "text-lg" },
 		},
 		variant: {
 			default: {
@@ -71,10 +59,7 @@ const checkbox = tv({
 				input: "checked:bg-secondary focus-visible:outline-secondary",
 				icon: "text-secondary-foreground",
 			},
-			info: {
-				input: "checked:bg-info focus-visible:outline-info",
-				icon: "text-info-foreground",
-			},
+			info: { input: "checked:bg-info focus-visible:outline-info", icon: "text-info-foreground" },
 			success: {
 				input: "checked:bg-success focus-visible:outline-success",
 				icon: "text-success-foreground",
@@ -89,10 +74,7 @@ const checkbox = tv({
 			},
 		},
 	},
-	defaultVariants: {
-		size: "md",
-		variant: "default",
-	},
+	defaultVariants: { size: "md", variant: "default" },
 });
 
 const {

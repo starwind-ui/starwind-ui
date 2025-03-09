@@ -13,9 +13,7 @@ type Props = HTMLAttributes<"div"> & {
 	defaultValue?: string;
 };
 
-const accordion = tv({
-	base: "starwind-accordion",
-});
+const accordion = tv({ base: "starwind-accordion" });
 
 const { type = "single", defaultValue, class: className, ...rest } = Astro.props;
 ---
@@ -79,12 +77,7 @@ const { type = "single", defaultValue, class: className, ...rest } = Astro.props
 
 					if (!trigger || !content) return null;
 
-					return {
-						element,
-						trigger,
-						content,
-						value,
-					};
+					return { element, trigger, content, value };
 				})
 				.filter((item): item is AccordionItem => item !== null);
 		}

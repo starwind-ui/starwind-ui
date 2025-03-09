@@ -2,9 +2,7 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
-const alertDescription = tv({
-	base: "[&_p]:leading-relaxed",
-});
+const alertDescription = tv({ base: "[&_p]:leading-relaxed" });
 
 type Props = HTMLAttributes<"div">;
 

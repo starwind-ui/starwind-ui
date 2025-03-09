@@ -1,6 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { type VariantProps, tv } from "tailwind-variants";
+import { tv } from "tailwind-variants";
 
 interface Props extends HTMLAttributes<"div">, Omit<HTMLAttributes<"a">, "type"> {
 	/**
@@ -42,68 +42,21 @@ const badgeVariants = tv({
 			warning: "bg-warning text-warning-foreground focus-visible:outline-warning",
 			error: "bg-error text-error-foreground focus-visible:outline-error",
 		},
-		size: {
-			sm: "px-2.5 py-0.5 text-xs",
-			md: "px-3 py-0.5 text-sm",
-			lg: "px-4 py-1 text-base",
-		},
-		isLink: {
-			true: "cursor-pointer",
-			false: "",
-		},
+		size: { sm: "px-2.5 py-0.5 text-xs", md: "px-3 py-0.5 text-sm", lg: "px-4 py-1 text-base" },
+		isLink: { true: "cursor-pointer", false: "" },
 	},
 	compoundVariants: [
-		{
-			isLink: true,
-			variant: "default",
-			className: "hover:bg-foreground/80",
-		},
-		{
-			isLink: true,
-			variant: "primary",
-			className: "hover:bg-primary/80",
-		},
-		{
-			isLink: true,
-			variant: "secondary",
-			className: "hover:bg-secondary/80",
-		},
-		{
-			isLink: true,
-			variant: "outline",
-			className: "hover:border-border/80",
-		},
-		{
-			isLink: true,
-			variant: "ghost",
-			className: "hover:bg-foreground/7",
-		},
-		{
-			isLink: true,
-			variant: "info",
-			className: "hover:bg-info/80",
-		},
-		{
-			isLink: true,
-			variant: "success",
-			className: "hover:bg-success/80",
-		},
-		{
-			isLink: true,
-			variant: "warning",
-			className: "hover:bg-warning/80",
-		},
-		{
-			isLink: true,
-			variant: "error",
-			className: "hover:bg-error/80",
-		},
+		{ isLink: true, variant: "default", className: "hover:bg-foreground/80" },
+		{ isLink: true, variant: "primary", className: "hover:bg-primary/80" },
+		{ isLink: true, variant: "secondary", className: "hover:bg-secondary/80" },
+		{ isLink: true, variant: "outline", className: "hover:border-border/80" },
+		{ isLink: true, variant: "ghost", className: "hover:bg-foreground/7" },
+		{ isLink: true, variant: "info", className: "hover:bg-info/80" },
+		{ isLink: true, variant: "success", className: "hover:bg-success/80" },
+		{ isLink: true, variant: "warning", className: "hover:bg-warning/80" },
+		{ isLink: true, variant: "error", className: "hover:bg-error/80" },
 	],
-	defaultVariants: {
-		variant: "default",
-		size: "md",
-		isLink: false,
-	},
+	defaultVariants: { variant: "default", size: "md", isLink: false },
 });
 
 const { variant = "default", size = "md", class: className, href, ...rest } = Astro.props;

@@ -9,9 +9,7 @@ type Props = Omit<HTMLAttributes<"h2">, "id"> & {
 	children: any;
 };
 
-const dialogTitle = tv({
-	base: "text-2xl leading-none font-semibold tracking-tight",
-});
+const dialogTitle = tv({ base: "text-2xl leading-none font-semibold tracking-tight" });
 
 const { class: className, ...rest } = Astro.props;
 ---
