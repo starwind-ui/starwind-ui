@@ -225,7 +225,7 @@ const { class: className, ...rest } = Astro.props;
 			const currentIndex = Array.from(items).indexOf(activeElement as HTMLElement);
 			if (e.key === "Home") {
 				const firstEnabledItem = Array.from(items).find(
-					(item) => item.getAttribute("data-disabled") !== "true"
+					(item) => item.getAttribute("data-disabled") !== "true",
 				) as HTMLElement;
 				if (firstEnabledItem) {
 					firstEnabledItem.focus();

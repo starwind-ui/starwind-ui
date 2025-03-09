@@ -1,25 +1,31 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"label"> & {
 	size?: "sm" | "md" | "lg";
 };
 
+const label = tv({
+	base: [
+		"text-foreground leading-none font-medium",
+		"peer-disabled:cursor-not-allowed peer-disabled:opacity-70 has-[+:disabled]:cursor-not-allowed has-[+:disabled]:opacity-70",
+	],
+	variants: {
+		size: {
+			sm: "text-sm",
+			md: "text-base",
+			lg: "text-lg",
+		},
+	},
+	defaultVariants: {
+		size: "md",
+	},
+});
+
 const { size = "md", class: className = "", ...rest } = Astro.props;
 ---
 
-<label
-	class:list={[
-		"text-foreground leading-none font-medium",
-		"peer-disabled:cursor-not-allowed peer-disabled:opacity-70 has-[+:disabled]:cursor-not-allowed has-[+:disabled]:opacity-70",
-		{
-			"text-sm": size === "sm",
-			"text-base": size === "md",
-			"text-lg": size === "lg",
-		},
-		className,
-	]}
-	{...rest}
->
+<label class={label({ size, class: className })} {...rest}>
 	<slot />
 </label>

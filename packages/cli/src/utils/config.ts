@@ -25,7 +25,7 @@ export interface StarwindConfig {
 }
 
 const defaultConfig: StarwindConfig = {
-	$schema: "https://starwind.dev/schema.json",
+	$schema: "https://starwind.dev/config-schema.json",
 	tailwind: {
 		css: "src/styles/starwind.css",
 		baseColor: "neutral",

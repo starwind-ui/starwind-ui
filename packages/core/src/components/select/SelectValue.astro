@@ -1,5 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"span"> & {
 	/**
@@ -8,9 +9,13 @@ type Props = HTMLAttributes<"span"> & {
 	placeholder?: string;
 };
 
-const { placeholder = "select", ...rest } = Astro.props;
+const selectValue = tv({
+	base: "pointer-events-none",
+});
+
+const { placeholder = "select", class: className, ...rest } = Astro.props;
 ---
 
-<span class="pointer-events-none" {...rest}>
+<span class={selectValue({ class: className })} {...rest}>
 	{placeholder}
 </span>

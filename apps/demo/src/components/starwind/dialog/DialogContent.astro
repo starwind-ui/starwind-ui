@@ -1,6 +1,7 @@
 ---
 import X from "@tabler/icons/outline/x.svg";
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"dialog"> & {
 	/**
@@ -9,16 +10,38 @@ type Props = HTMLAttributes<"dialog"> & {
 	animationDuration?: number;
 };
 
+const dialogBackdrop = tv({
+	base: [
+		"starwind-dialog-backdrop fixed inset-0 top-0 left-0 z-50 hidden h-screen w-screen bg-black/80",
+		"data-[state=open]:animate-in data-[state=open]:fade-in-0",
+		"data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
+	],
+});
+
+const dialogContent = tv({
+	base: [
+		"fixed top-16 left-[50%] z-50 translate-x-[-50%] sm:top-[50%] sm:translate-y-[-50%]",
+		"bg-background w-full max-w-md border p-8 shadow-lg sm:rounded-lg",
+		"data-[state=open]:animate-in data-[state=closed]:animate-out",
+		"data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-2",
+		"data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-bottom-2",
+	],
+});
+
+const dialogCloseButton = tv({
+	base: [
+		"starwind-dialog-close text-muted-foreground",
+		"absolute top-5.5 right-5.5 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none",
+		"focus-visible:outline-outline focus-visible:outline-2 focus-visible:outline-offset-2",
+	],
+});
+
 const { class: className, animationDuration = 200, ...rest } = Astro.props;
 ---
 
 <!-- dialog overlay -->
 <div
-	class:list={[
-		"starwind-dialog-backdrop fixed inset-0 top-0 left-0 z-50 hidden h-screen w-screen bg-black/80",
-		"data-[state=open]:animate-in data-[state=open]:fade-in-0",
-		"data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
-	]}
+	class={dialogBackdrop()}
 	data-state="closed"
 	style={{
 		animationDuration: `${animationDuration}ms`,
@@ -27,14 +50,7 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
 </div>
 
 <dialog
-	class:list={[
-		"fixed top-16 left-[50%] z-50 translate-x-[-50%] sm:top-[50%] sm:translate-y-[-50%]",
-		"bg-background w-full max-w-md border p-8 shadow-lg sm:rounded-lg",
-		"data-[state=open]:animate-in data-[state=closed]:animate-out",
-		"data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-2",
-		"data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-bottom-2",
-		className,
-	]}
+	class={dialogContent({ class: className })}
 	data-state="closed"
 	{...rest}
 	style={{
@@ -44,11 +60,7 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
 	<slot />
 	<button
 		type="button"
-		class:list={[
-			"starwind-dialog-close text-muted-foreground",
-			"absolute top-5.5 right-5.5 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none",
-			"focus-visible:outline-outline focus-visible:outline-2 focus-visible:outline-offset-2",
-		]}
+		class={dialogCloseButton()}
 		data-dialog-close
 		aria-label="Close dialog"
 	>

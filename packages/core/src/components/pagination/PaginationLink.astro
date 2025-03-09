@@ -1,49 +1,45 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 interface Props extends HTMLAttributes<"a"> {
 	isActive?: boolean;
 	size?: "sm" | "md" | "lg" | "icon";
-	radius?: "none" | "xs" | "sm" | "md" | "lg" | "xl" | "full";
 }
 
-const { class: className, isActive, size = "icon", radius = "md", ...rest } = Astro.props;
----
-
-<a
-	aria-current={isActive ? "page" : undefined}
-	class:list={[
-		// default starwind button styles
-		"inline-flex items-center justify-center gap-1.5 font-medium whitespace-nowrap",
+const paginationLink = tv({
+	base: [
+		"inline-flex items-center justify-center gap-1.5 rounded-md font-medium whitespace-nowrap",
 		"[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
 		"starwind-transition-colors",
 		"focus-visible:outline-2 focus-visible:outline-offset-2",
 		"disabled:pointer-events-none disabled:opacity-50",
-		{
-			// default starwind button variant="outline" styles
-			"border-border hover:bg-border hover:text-foreground focus-visible:outline-outline border":
-				isActive,
-			// default starwind button variant="ghost" styles
-			"hover:bg-foreground/10 hover:text-foreground focus-visible:outline-outline bg-transparent":
-				!isActive,
+	],
+	variants: {
+		isActive: {
+			true: "border-border hover:bg-border hover:text-foreground focus-visible:outline-outline border",
+			false:
+				"hover:bg-foreground/10 hover:text-foreground focus-visible:outline-outline bg-transparent",
 		},
-		{
-			"h-9 px-3 py-2 text-sm": size === "sm",
-			"h-11 px-4 py-2 text-base": size === "md",
-			"h-12 px-8 py-2 text-lg": size === "lg",
-			"h-11 w-11": size === "icon",
+		size: {
+			sm: "h-9 px-3 py-2 text-sm",
+			md: "h-11 px-4 py-2 text-base",
+			lg: "h-12 px-8 py-2 text-lg",
+			icon: "h-11 w-11",
 		},
-		{
-			"rounded-none": radius === "none",
-			"rounded-xs": radius === "xs",
-			"rounded-sm": radius === "sm",
-			"rounded-md": radius === "md",
-			"rounded-lg": radius === "lg",
-			"rounded-xl": radius === "xl",
-			"rounded-full": radius === "full",
-		},
-		className,
-	]}
+	},
+	defaultVariants: {
+		isActive: false,
+		size: "icon",
+	},
+});
+
+const { class: className, isActive, size = "icon", ...rest } = Astro.props;
+---
+
+<a
+	aria-current={isActive ? "page" : undefined}
+	class={paginationLink({ isActive, size, class: className })}
 	{...rest}
 >
 	<slot />

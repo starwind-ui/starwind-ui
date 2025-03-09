@@ -1,5 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div"> & {
 	/**
@@ -29,6 +30,79 @@ type Props = HTMLAttributes<"div"> & {
 	animationDuration?: number;
 };
 
+const tooltipContent = tv({
+	base: [
+		"starwind-tooltip-content",
+		"absolute z-50 hidden px-3 py-1.5 whitespace-nowrap shadow-sm",
+		"bg-popover text-popover-foreground rounded-md border",
+		"animate-in fade-in-0 zoom-in-95",
+		"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+	],
+	variants: {
+		side: {
+			left: "slide-in-from-right-2 right-(--tooltip-offset)",
+			right: "slide-in-from-left-2 left-(--tooltip-offset)",
+			bottom: "slide-in-from-top-2 top-(--tooltip-offset)",
+			top: "slide-in-from-bottom-2 bottom-(--tooltip-offset)",
+		},
+		align: {
+			center: "",
+			start: "",
+			end: "",
+		},
+		sideAlign: {
+			"top-center": "left-[50%] translate-x-[-50%]",
+			"bottom-center": "left-[50%] translate-x-[-50%]",
+			"left-center": "top-[50%] translate-y-[-50%]",
+			"right-center": "top-[50%] translate-y-[-50%]",
+			"top-start": "left-0",
+			"bottom-start": "left-0",
+			"top-end": "right-0",
+			"bottom-end": "right-0",
+			"left-start": "top-0",
+			"right-start": "top-0",
+			"left-end": "bottom-0",
+			"right-end": "bottom-0",
+		},
+	},
+	defaultVariants: {
+		side: "top",
+		align: "center",
+	},
+	compoundVariants: [
+		{
+			side: ["top", "bottom"],
+			align: "center",
+			class: "left-[50%] translate-x-[-50%]",
+		},
+		{
+			side: ["left", "right"],
+			align: "center",
+			class: "top-[50%] translate-y-[-50%]",
+		},
+		{
+			side: ["top", "bottom"],
+			align: "start",
+			class: "left-0",
+		},
+		{
+			side: ["top", "bottom"],
+			align: "end",
+			class: "right-0",
+		},
+		{
+			side: ["left", "right"],
+			align: "start",
+			class: "top-0",
+		},
+		{
+			side: ["left", "right"],
+			align: "end",
+			class: "bottom-0",
+		},
+	],
+});
+
 const {
 	side = "top",
 	align = "center",
@@ -40,28 +114,7 @@ const {
 ---
 
 <div
-	class:list={[
-		"starwind-tooltip-content",
-		"absolute z-50 hidden px-3 py-1.5 whitespace-nowrap shadow-sm",
-		"bg-popover text-popover-foreground rounded-md border",
-		"animate-in fade-in-0 zoom-in-95",
-		"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
-		{
-			"slide-in-from-right-2 right-(--tooltip-offset)": side === "left",
-			"slide-in-from-left-2 left-(--tooltip-offset)": side === "right",
-			"slide-in-from-top-2 top-(--tooltip-offset)": side === "bottom",
-			"slide-in-from-bottom-2 bottom-(--tooltip-offset)": side === "top",
-		},
-		{
-			"left-[50%] translate-x-[-50%]": align === "center" && (side === "top" || side === "bottom"),
-			"top-[50%] translate-y-[-50%]": align === "center" && (side === "left" || side === "right"),
-			"left-0": align === "start" && (side === "top" || side === "bottom"),
-			"right-0": align === "end" && (side === "top" || side === "bottom"),
-			"top-0": align === "start" && (side === "left" || side === "right"),
-			"bottom-0": align === "end" && (side === "left" || side === "right"),
-		},
-		className,
-	]}
+	class={tooltipContent({ side, align, class: className })}
 	data-state="closed"
 	data-side={side}
 	data-align={align}

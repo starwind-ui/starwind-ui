@@ -1,5 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div"> & {
 	/**
@@ -8,18 +9,13 @@ type Props = HTMLAttributes<"div"> & {
 	value: string;
 };
 
+const accordionItem = tv({
+	base: "starwind-accordion-item border-x border-b first:rounded-t-lg first:border-t last:rounded-b-lg",
+});
+
 const { value, class: className, ...rest } = Astro.props;
 ---
 
-<div
-	class:list={[
-		"starwind-accordion-item",
-		"border-x border-b first:rounded-t-lg first:border-t last:rounded-b-lg",
-		className,
-	]}
-	data-value={value}
-	data-state="closed"
-	{...rest}
->
+<div class={accordionItem({ class: className })} data-value={value} data-state="closed" {...rest}>
 	<slot />
 </div>

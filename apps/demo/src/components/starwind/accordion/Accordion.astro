@@ -1,5 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div"> & {
 	/**
@@ -12,15 +13,14 @@ type Props = HTMLAttributes<"div"> & {
 	defaultValue?: string;
 };
 
+const accordion = tv({
+	base: "starwind-accordion",
+});
+
 const { type = "single", defaultValue, class: className, ...rest } = Astro.props;
 ---
 
-<div
-	class:list={["starwind-accordion", className]}
-	data-type={type}
-	data-value={defaultValue}
-	{...rest}
->
+<div class={accordion({ class: className })} data-type={type} data-value={defaultValue} {...rest}>
 	<slot />
 </div>
 

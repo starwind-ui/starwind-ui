@@ -1,5 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
 
 type Props = Omit<HTMLAttributes<"button">, "role" | "type" | "aria-checked"> & {
 	/**
@@ -48,12 +49,6 @@ if (!padding) {
 
 const sizeMultiplier = size === "sm" ? 4 : size === "lg" ? 6 : 5;
 
-const toggleSizeClass = {
-	sm: "size-4",
-	md: "size-5",
-	lg: "size-6",
-};
-
 let ariaLabel;
 if (rest["aria-label"]) {
 	ariaLabel = rest["aria-label"];
@@ -63,6 +58,59 @@ if (rest["aria-label"]) {
 } else {
 	ariaLabel = "switch";
 }
+
+const switchButton = tv({
+	base: [
+		"starwind-transition-colors border-input bg-muted inline-flex h-(--height) w-(--width) items-center rounded-full border",
+		"group peer ring-offset-background focus-visible:outline-2 focus-visible:outline-offset-2",
+		"not-disabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
+	],
+	variants: {
+		variant: {
+			primary: "aria-checked:border-primary focus:outline-primary",
+			secondary: "aria-checked:border-secondary focus:outline-secondary",
+			default: "aria-checked:border-foreground focus:outline-outline",
+			info: "aria-checked:border-info focus:outline-info",
+			success: "aria-checked:border-success focus:outline-success",
+			warning: "aria-checked:border-warning focus:outline-warning",
+			error: "aria-checked:border-error focus:outline-error",
+		},
+	},
+	defaultVariants: {
+		variant: "default",
+	},
+});
+
+const switchToggle = tv({
+	base: [
+		"bg-foreground inline-block transform rounded-full transition-transform",
+		"group-aria-checked:translate-x-(--translation) group-aria-[checked=false]:translate-x-[calc(var(--padding)-var(--border-offset))]",
+	],
+	variants: {
+		size: {
+			sm: "size-4",
+			md: "size-5",
+			lg: "size-6",
+		},
+	},
+	defaultVariants: {
+		size: "md",
+	},
+});
+
+const switchLabel = tv({
+	base: "text-foreground ml-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+	variants: {
+		size: {
+			sm: "text-sm",
+			md: "text-base",
+			lg: "text-lg",
+		},
+	},
+	defaultVariants: {
+		size: "md",
+	},
+});
 ---
 
 <div class="starwind-switch flex items-center">
@@ -72,21 +120,7 @@ if (rest["aria-label"]) {
 		role="switch"
 		aria-checked={checked ? "true" : "false"}
 		aria-label={ariaLabel}
-		class:list={[
-			"starwind-transition-colors border-input bg-muted inline-flex h-(--height) w-(--width) items-center rounded-full border",
-			"group peer ring-offset-background focus-visible:outline-2 focus-visible:outline-offset-2",
-			"not-disabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
-			{
-				"aria-checked:border-primary focus:outline-primary": variant === "primary",
-				"aria-checked:border-secondary focus:outline-secondary": variant === "secondary",
-				"aria-checked:border-foreground focus:outline-outline": variant === "default",
-				"aria-checked:border-info focus:outline-info": variant === "info",
-				"aria-checked:border-success focus:outline-success": variant === "success",
-				"aria-checked:border-warning focus:outline-warning": variant === "warning",
-				"aria-checked:border-error focus:outline-error": variant === "error",
-			},
-			className,
-		]}
+		class={switchButton({ variant, class: className })}
 		style={{
 			"--padding": `${newPadding}px`,
 			"--height": `calc((var(--spacing) * ${sizeMultiplier}) + (var(--padding) * 2))`,
@@ -96,28 +130,14 @@ if (rest["aria-label"]) {
 		{...rest}
 	>
 		<span
-			class:list={[
-				"bg-foreground inline-block transform rounded-full transition-transform",
-				"group-aria-checked:translate-x-(--translation) group-aria-[checked=false]:translate-x-[calc(var(--padding)-var(--border-offset))]",
-				toggleSizeClass[size],
-			]}
+			class={switchToggle({ size })}
 			style={{
 				"--translation": `calc((var(--spacing) * ${sizeMultiplier}) + (var(--padding) * 2) - var(--border-offset))`,
 			}}></span>
 	</button>
 	{
 		label && (
-			<label
-				for={id}
-				class:list={[
-					"text-foreground ml-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-					{
-						"text-sm": size === "sm",
-						"text-base": size === "md",
-						"text-lg": size === "lg",
-					},
-				]}
-			>
+			<label for={id} class={switchLabel({ size })}>
 				{label}
 			</label>
 		)
