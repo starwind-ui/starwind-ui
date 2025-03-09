@@ -1,5 +1,12 @@
 import { z } from "zod";
 import { PATHS } from "./constants.js";
+import { registry as localRegistry } from "@starwind-ui/core";
+
+// Configuration to select registry source
+const REGISTRY_CONFIG = {
+	// Set to 'remote' to fetch from remote server or 'local' to use the imported registry
+	SOURCE: "local" as "remote" | "local",
+};
 
 const componentSchema = z.object({
 	name: z.string(),
@@ -17,36 +24,42 @@ const registryRootSchema = z.object({
 });
 
 // Cache for registry data - stores the promise of fetching to avoid multiple simultaneous requests
-const registryCache = new Map<string, Promise<any>>();
+const registryCache = new Map<string, Promise<Component[]>>();
 
 /**
- * Fetches the component registry from the remote server
+ * Fetches the component registry from either the remote server or the local import
  * @param forceRefresh Whether to force a refresh of the cache
  * @returns A promise that resolves to an array of Components
  */
 export async function getRegistry(forceRefresh = false): Promise<Component[]> {
-	const cacheKey = PATHS.STARWIND_COMPONENT_REGISTRY;
+	const cacheKey =
+		REGISTRY_CONFIG.SOURCE === "remote"
+			? PATHS.STARWIND_REMOTE_COMPONENT_REGISTRY
+			: "local-registry";
 
 	// Return cached promise if available and refresh not forced
 	if (!forceRefresh && registryCache.has(cacheKey)) {
 		return registryCache.get(cacheKey)!;
 	}
 
-	// Create a new promise for the fetch operation
-	const fetchPromise = fetchRegistry();
+	// Create a new promise for the registry operation based on source
+	const registryPromise =
+		REGISTRY_CONFIG.SOURCE === "remote"
+			? fetchRemoteRegistry()
+			: Promise.resolve(getLocalRegistry());
 
 	// Cache the promise
-	registryCache.set(cacheKey, fetchPromise);
+	registryCache.set(cacheKey, registryPromise);
 
-	return fetchPromise;
+	return registryPromise;
 }
 
 /**
  * Internal function to fetch the registry from the remote server
  */
-async function fetchRegistry(): Promise<Component[]> {
+async function fetchRemoteRegistry(): Promise<Component[]> {
 	try {
-		const response = await fetch(PATHS.STARWIND_COMPONENT_REGISTRY);
+		const response = await fetch(PATHS.STARWIND_REMOTE_COMPONENT_REGISTRY);
 
 		if (!response.ok) {
 			throw new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`);
@@ -57,7 +70,21 @@ async function fetchRegistry(): Promise<Component[]> {
 
 		return parsedRegistry.components;
 	} catch (error) {
-		console.error("Failed to load registry:", error);
+		console.error("Failed to load remote registry:", error);
+		throw error;
+	}
+}
+
+/**
+ * Internal function to get the registry from the local import
+ */
+function getLocalRegistry(): Component[] {
+	try {
+		// Validate the local registry with the schema
+		const components = localRegistry.map((comp) => componentSchema.parse(comp));
+		return components;
+	} catch (error) {
+		console.error("Failed to validate local registry:", error);
 		throw error;
 	}
 }
@@ -90,4 +117,15 @@ export async function getComponent(
  */
 export async function getAllComponents(forceRefresh = false): Promise<Component[]> {
 	return getRegistry(forceRefresh);
+}
+
+/**
+ * Set the registry source
+ * @param source The source to use: 'remote' or 'local'
+ */
+export function setRegistrySource(source: "remote" | "local"): void {
+	if (REGISTRY_CONFIG.SOURCE !== source) {
+		REGISTRY_CONFIG.SOURCE = source;
+		clearRegistryCache(); // Clear cache when changing sources
+	}
 }

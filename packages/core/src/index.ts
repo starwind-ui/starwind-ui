@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import componentRegistry from "./registry.json" assert { type: "json" };
+import componentRegistry from "./registry.json" with { type: "json" };
 
 /**
  * Component metadata interface describing a Starwind UI component
@@ -37,4 +37,4 @@ export const getComponentPath = (componentName: string, fileName: string): strin
 /**
  * Map of all components and their metadata from registry
  */
-export const registry = componentRegistry as ComponentMeta[];
+export const registry = componentRegistry.components as ComponentMeta[];
