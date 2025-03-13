@@ -1,6 +1,6 @@
 {
 	"name": "@starwind-ui/core",
-	"version": "1.1.0",
+	"version": "1.3.0",
 	"description": "Starwind UI core components and registry",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -23,7 +23,6 @@
 		"dev": "tsup --watch",
 		"core:link": "pnpm link --global",
 		"core:unlink": "pnpm rm --global @starwind-ui/core",
-		"sync:docs": "pnpm exec starwind sync src/components ../../apps/docs/src/components/starwind",
 		"sync:demo": "pnpm exec starwind sync src/components ../../apps/demo/src/components/starwind",
 		"publish:beta": "pnpm publish --tag beta --access public",
 		"publish:next": "pnpm publish --tag next --access public",

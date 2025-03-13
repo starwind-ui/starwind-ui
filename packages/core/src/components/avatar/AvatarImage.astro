@@ -2,24 +2,13 @@
 import { Image } from "astro:assets";
 import { tv } from "tailwind-variants";
 
-const avatarImage = tv({
-	base: "relative z-1 h-full w-full object-cover",
-});
+const avatarImage = tv({ base: "relative z-1 h-full w-full object-cover" });
 
-type BaseProps = {
-	alt: string;
-	class?: string;
-};
+type BaseProps = { alt: string; class?: string };
 
-type WithSrc = BaseProps & {
-	src: string;
-	image?: never;
-};
+type WithSrc = BaseProps & { src: string; image?: never };
 
-type WithImage = BaseProps & {
-	src?: never;
-	image: ImageMetadata;
-};
+type WithImage = BaseProps & { src?: never; image: ImageMetadata };
 
 type Props = WithSrc | WithImage;
 

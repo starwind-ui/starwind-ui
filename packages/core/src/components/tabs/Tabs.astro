@@ -7,9 +7,7 @@ interface Props extends HTMLAttributes<"div"> {
 	syncKey?: string;
 }
 
-const tabs = tv({
-	base: "starwind-tabs",
-});
+const tabs = tv({ base: "starwind-tabs" });
 
 const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 ---
@@ -129,9 +127,7 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 			if (!this.syncKey) return;
 
 			document.dispatchEvent(
-				new CustomEvent(`starwind-tabs-sync:${this.syncKey}`, {
-					detail: { value },
-				}),
+				new CustomEvent(`starwind-tabs-sync:${this.syncKey}`, { detail: { value } }),
 			);
 
 			localStorage.setItem(this.storageKey, value);

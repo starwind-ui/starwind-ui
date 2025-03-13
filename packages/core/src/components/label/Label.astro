@@ -2,25 +2,15 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
-type Props = HTMLAttributes<"label"> & {
-	size?: "sm" | "md" | "lg";
-};
+type Props = HTMLAttributes<"label"> & { size?: "sm" | "md" | "lg" };
 
 const label = tv({
 	base: [
 		"text-foreground leading-none font-medium",
 		"peer-disabled:cursor-not-allowed peer-disabled:opacity-70 has-[+:disabled]:cursor-not-allowed has-[+:disabled]:opacity-70",
 	],
-	variants: {
-		size: {
-			sm: "text-sm",
-			md: "text-base",
-			lg: "text-lg",
-		},
-	},
-	defaultVariants: {
-		size: "md",
-	},
+	variants: { size: { sm: "text-sm", md: "text-base", lg: "text-lg" } },
+	defaultVariants: { size: "md" },
 });
 
 const { size = "md", class: className = "", ...rest } = Astro.props;

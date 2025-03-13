@@ -1,12 +1,12 @@
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import fs from "fs-extra";
-import { getConfig, updateConfig } from "./config.js";
-import { PATHS } from "./constants.js";
-import { getRegistry, getComponent } from "./registry.js";
-import semver from "semver";
 import * as p from "@clack/prompts";
+import fs from "fs-extra";
+import semver from "semver";
+import { getConfig, } from "./config.js";
+import { PATHS } from "./constants.js";
 import { highlighter } from "./highlighter.js";
+import { getComponent, getRegistry } from "./registry.js";
 
 export type InstallResult = {
 	status: "installed" | "skipped" | "failed";

@@ -45,11 +45,7 @@ const tooltipContent = tv({
 			bottom: "slide-in-from-top-2 top-(--tooltip-offset)",
 			top: "slide-in-from-bottom-2 bottom-(--tooltip-offset)",
 		},
-		align: {
-			center: "",
-			start: "",
-			end: "",
-		},
+		align: { center: "", start: "", end: "" },
 		sideAlign: {
 			"top-center": "left-[50%] translate-x-[-50%]",
 			"bottom-center": "left-[50%] translate-x-[-50%]",
@@ -65,41 +61,14 @@ const tooltipContent = tv({
 			"right-end": "bottom-0",
 		},
 	},
-	defaultVariants: {
-		side: "top",
-		align: "center",
-	},
+	defaultVariants: { side: "top", align: "center" },
 	compoundVariants: [
-		{
-			side: ["top", "bottom"],
-			align: "center",
-			class: "left-[50%] translate-x-[-50%]",
-		},
-		{
-			side: ["left", "right"],
-			align: "center",
-			class: "top-[50%] translate-y-[-50%]",
-		},
-		{
-			side: ["top", "bottom"],
-			align: "start",
-			class: "left-0",
-		},
-		{
-			side: ["top", "bottom"],
-			align: "end",
-			class: "right-0",
-		},
-		{
-			side: ["left", "right"],
-			align: "start",
-			class: "top-0",
-		},
-		{
-			side: ["left", "right"],
-			align: "end",
-			class: "bottom-0",
-		},
+		{ side: ["top", "bottom"], align: "center", class: "left-[50%] translate-x-[-50%]" },
+		{ side: ["left", "right"], align: "center", class: "top-[50%] translate-y-[-50%]" },
+		{ side: ["top", "bottom"], align: "start", class: "left-0" },
+		{ side: ["top", "bottom"], align: "end", class: "right-0" },
+		{ side: ["left", "right"], align: "start", class: "top-0" },
+		{ side: ["left", "right"], align: "end", class: "bottom-0" },
 	],
 });
 

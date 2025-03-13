@@ -2,9 +2,7 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
-type Props = HTMLAttributes<"textarea"> & {
-	size?: "sm" | "md" | "lg";
-};
+type Props = HTMLAttributes<"textarea"> & { size?: "sm" | "md" | "lg" };
 
 const textarea = tv({
 	base: [
@@ -21,9 +19,7 @@ const textarea = tv({
 			lg: "min-h-12 px-4 py-3 text-lg",
 		},
 	},
-	defaultVariants: {
-		size: "md",
-	},
+	defaultVariants: { size: "md" },
 });
 
 const { size = "md", class: className, ...rest } = Astro.props;

@@ -1,9 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 
-type Props = HTMLAttributes<"div"> & {
-	children: any;
-};
+type Props = HTMLAttributes<"div"> & { children: any };
 
 const { class: className, ...rest } = Astro.props;
 ---
@@ -210,10 +208,8 @@ const { class: className, ...rest } = Astro.props;
 				}
 			});
 
-			// passive resize listener to call setSize() on window resize
-			window.addEventListener("resize", () => this.setSize(), {
-				passive: true,
-			});
+			// passive resize listener to call setSize()
+			window.addEventListener("resize", () => this.setSize(), { passive: true });
 		}
 
 		private handleNavigationKeys(e: KeyboardEvent) {
@@ -366,11 +362,7 @@ const { class: className, ...rest } = Astro.props;
 
 				// Dispatch custom event with the new value
 				const event = new CustomEvent<SelectChangeEvent["detail"]>("starwind-select:change", {
-					detail: {
-						value: newValue,
-						selectId: this.select.id,
-						label: item.textContent || "",
-					},
+					detail: { value: newValue, selectId: this.select.id, label: item.textContent || "" },
 					bubbles: true,
 					cancelable: true,
 				});

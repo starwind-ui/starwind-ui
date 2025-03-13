@@ -30,13 +30,12 @@ const selectContent = tv({
 	],
 	variants: {
 		side: {
-			bottom: "data-[side=bottom]:slide-in-from-top-4 data-[side=bottom]:top-(--select-content-offset)",
+			bottom:
+				"data-[side=bottom]:slide-in-from-top-4 data-[side=bottom]:top-(--select-content-offset)",
 			top: "data-[side=top]:slide-in-from-bottom-4 data-[side=top]:bottom-(--select-content-offset)",
 		},
 	},
-	defaultVariants: {
-		side: "bottom",
-	},
+	defaultVariants: { side: "bottom" },
 });
 
 const selectContentInner = tv({

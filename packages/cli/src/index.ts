@@ -8,13 +8,13 @@ import { update } from "./commands/update.js";
 const program = new Command()
 	.name("starwind")
 	.description("Add beautifully designed components to your Astro applications")
-	.version("0.0.1");
+	.version("1.3.0");
 
 program
 	.command("init")
 	.description("Initialize your project with Starwind")
-	.option("--no-install", "Skip dependency installation")
-	.action(() => init(false));
+	.option("-d, --defaults", "Use default values for all prompts")
+	.action((options) => init(false, { defaults: options.defaults }));
 
 program
 	.command("add")

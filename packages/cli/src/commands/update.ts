@@ -1,12 +1,12 @@
-import path from "node:path";
+
+import { type UpdateResult, updateComponent } from "@/utils/component.js";
 import { getConfig } from "@/utils/config.js";
+import { updateConfig } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
-import { fileExists, writeJsonFile } from "@/utils/fs.js";
+import { fileExists, } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { sleep } from "@/utils/sleep.js";
 import * as p from "@clack/prompts";
-import { type UpdateResult, updateComponent } from "@/utils/component.js";
-import { updateConfig } from "@/utils/config.js";
 
 export async function update(components?: string[], options?: { all?: boolean }) {
 	try {
