@@ -1,5 +1,6 @@
 import * as p from "@clack/prompts";
 import { execa } from "execa";
+import { fileExists } from "./fs.js";
 
 export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
 
@@ -24,6 +25,21 @@ export async function requestPackageManager(): Promise<PackageManager> {
 	}
 
 	return pm as PackageManager;
+}
+
+/**
+ * Detects and returns the default package manager based on lock files
+ * @returns The detected package manager, defaults to npm if no lock file is found
+ */
+export async function getDefaultPackageManager(): Promise<PackageManager> {
+	// Check for yarn.lock, pnpm-lock.yaml, package-lock.json in order
+	if (await fileExists("yarn.lock")) {
+		return "yarn";
+	} else if (await fileExists("pnpm-lock.yaml")) {
+		return "pnpm";
+	} else {
+		return "npm";
+	}
 }
 
 /**

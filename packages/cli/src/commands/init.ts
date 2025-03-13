@@ -5,12 +5,12 @@ import { updateConfig } from "@/utils/config.js";
 import { ASTRO_PACKAGES, MIN_ASTRO_VERSION, PATHS, getOtherPackages } from "@/utils/constants.js";
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
-import { installDependencies, requestPackageManager } from "@/utils/package-manager.js";
+import { installDependencies, requestPackageManager, getDefaultPackageManager, PackageManager } from "@/utils/package-manager.js";
 import { sleep } from "@/utils/sleep.js";
 import * as p from "@clack/prompts";
 import semver from "semver";
 
-export async function init(withinAdd: boolean = false) {
+export async function init(withinAdd: boolean = false, options?: { defaults?: boolean }) {
 	if (!withinAdd) {
 		p.intro(highlighter.title(" Welcome to the Starwind CLI "));
 	}
@@ -32,94 +32,109 @@ export async function init(withinAdd: boolean = false) {
 		// ================================================================
 		//         Prepare project structure and configuration tasks
 		// ================================================================
-		const configChoices = await p.group(
-			{
-				// ask where to install components
-				installLocation: () =>
-					p.text({
-						message: "What is your components directory?",
-						placeholder: PATHS.LOCAL_COMPONENTS_DIR,
-						initialValue: PATHS.LOCAL_COMPONENTS_DIR,
-						validate(value) {
-							// Check for empty value
-							if (value.length === 0) return `Value is required!`;
+		let configChoices;
+		
+		// Use defaults if specified, otherwise prompt user for choices
+		if (options?.defaults) {
+			configChoices = {
+				installLocation: PATHS.LOCAL_COMPONENTS_DIR,
+				cssFile: PATHS.LOCAL_CSS_FILE,
+				twBaseColor: "neutral",
+			};
+			
+			if (!withinAdd) {
+				p.log.info("Using default configuration values");
+			}
+		} else {
+			configChoices = await p.group(
+				{
+					// ask where to install components
+					installLocation: () =>
+						p.text({
+							message: "What is your components directory?",
+							placeholder: PATHS.LOCAL_COMPONENTS_DIR,
+							initialValue: PATHS.LOCAL_COMPONENTS_DIR,
+							validate(value) {
+								// Check for empty value
+								if (value.length === 0) return `Value is required!`;
 
-							// Check for absolute paths
-							if (path.isAbsolute(value)) return `Please use a relative path`;
+								// Check for absolute paths
+								if (path.isAbsolute(value)) return `Please use a relative path`;
 
-							// Check for path traversal attempts
-							if (value.includes("..")) return `Path traversal is not allowed`;
+								// Check for path traversal attempts
+								if (value.includes("..")) return `Path traversal is not allowed`;
 
-							// Check for invalid characters in path
-							const invalidChars = /[<>:"|?*]/;
-							if (invalidChars.test(value)) return `Path contains invalid characters`;
+								// Check for invalid characters in path
+								const invalidChars = /[<>:"|?*]/;
+								if (invalidChars.test(value)) return `Path contains invalid characters`;
 
-							// Check if path starts with system directories
-							const systemDirs = ["windows", "program files", "system32"];
-							if (systemDirs.some((dir) => value.toLowerCase().startsWith(dir))) {
-								return `Cannot install in system directories`;
-							}
-						},
-					}),
-				// ask where to add the css file
-				cssFile: () =>
-					p.text({
-						message: `Where would you like to add the Tailwind ${highlighter.info(".css")} file?`,
-						placeholder: PATHS.LOCAL_CSS_FILE,
-						initialValue: PATHS.LOCAL_CSS_FILE,
-						validate(value) {
-							// Check for empty value
-							if (value.length === 0) return `Value is required!`;
+								// Check if path starts with system directories
+								const systemDirs = ["windows", "program files", "system32"];
+								if (systemDirs.some((dir) => value.toLowerCase().startsWith(dir))) {
+									return `Cannot install in system directories`;
+								}
+							},
+						}),
+					// ask where to add the css file
+					cssFile: () =>
+						p.text({
+							message: `Where would you like to add the Tailwind ${highlighter.info(".css")} file?`,
+							placeholder: PATHS.LOCAL_CSS_FILE,
+							initialValue: PATHS.LOCAL_CSS_FILE,
+							validate(value) {
+								// Check for empty value
+								if (value.length === 0) return `Value is required!`;
 
-							// Must end with .css
-							if (!value.endsWith(".css")) return `File must end with .css extension`;
+								// Must end with .css
+								if (!value.endsWith(".css")) return `File must end with .css extension`;
 
-							// Check for absolute paths
-							if (path.isAbsolute(value)) return `Please use a relative path`;
+								// Check for absolute paths
+								if (path.isAbsolute(value)) return `Please use a relative path`;
 
-							// Check for path traversal attempts
-							if (value.includes("..")) return `Path traversal is not allowed`;
+								// Check for path traversal attempts
+								if (value.includes("..")) return `Path traversal is not allowed`;
 
-							// Check for invalid characters in path
-							const invalidChars = /[<>:"|?*]/;
-							if (invalidChars.test(value)) return `Path contains invalid characters`;
+								// Check for invalid characters in path
+								const invalidChars = /[<>:"|?*]/;
+								if (invalidChars.test(value)) return `Path contains invalid characters`;
 
-							// Check if path starts with system directories
-							const systemDirs = ["windows", "program files", "system32"];
-							if (systemDirs.some((dir) => value.toLowerCase().startsWith(dir))) {
-								return `Cannot use system directories`;
-							}
+								// Check if path starts with system directories
+								const systemDirs = ["windows", "program files", "system32"];
+								if (systemDirs.some((dir) => value.toLowerCase().startsWith(dir))) {
+									return `Cannot use system directories`;
+								}
 
-							// Ensure the path has a valid filename
-							const basename = path.basename(value, ".css");
-							if (!basename || basename.trim().length === 0) {
-								return `Invalid filename`;
-							}
-						},
-					}),
+								// Ensure the path has a valid filename
+								const basename = path.basename(value, ".css");
+								if (!basename || basename.trim().length === 0) {
+									return `Invalid filename`;
+								}
+							},
+						}),
 
-				twBaseColor: () =>
-					p.select({
-						message: "What Tailwind base color would you like to use?",
-						initialValue: "neutral",
-						options: [
-							{ label: "Neutral (default)", value: "neutral" },
-							{ label: "Stone", value: "stone" },
-							{ label: "Zinc", value: "zinc" },
-							{ label: "Gray", value: "gray" },
-							{ label: "Slate", value: "slate" },
-						],
-					}),
-			},
-			{
-				// On Cancel callback that wraps the group
-				// So if the user cancels one of the prompts in the group this function will be called
-				onCancel: () => {
-					p.cancel("Operation cancelled.");
-					process.exit(0);
+					twBaseColor: () =>
+						p.select({
+							message: "What Tailwind base color would you like to use?",
+							initialValue: "neutral",
+							options: [
+								{ label: "Neutral (default)", value: "neutral" },
+								{ label: "Stone", value: "stone" },
+								{ label: "Zinc", value: "zinc" },
+								{ label: "Gray", value: "gray" },
+								{ label: "Slate", value: "slate" },
+							],
+						}),
 				},
-			},
-		);
+				{
+					// On Cancel callback that wraps the group
+					// So if the user cancels one of the prompts in the group this function will be called
+					onCancel: () => {
+						p.cancel("Operation cancelled.");
+						process.exit(0);
+					},
+				},
+			);
+		}
 
 		// ================================================================
 		//            Make sure appropriate directories exist
@@ -167,9 +182,14 @@ export async function init(withinAdd: boolean = false) {
 		}
 
 		if (cssFileExists) {
-			const shouldOverride = await p.confirm({
+			let shouldOverride = options?.defaults ? true : await p.confirm({
 				message: `${highlighter.info(configChoices.cssFile)} already exists. Do you want to override it?`,
 			});
+
+			if (p.isCancel(shouldOverride)) {
+				p.cancel("Operation cancelled");
+				return process.exit(0);
+			}
 
 			if (!shouldOverride) {
 				p.log.info("Skipping Tailwind CSS configuration");
@@ -221,12 +241,14 @@ export async function init(withinAdd: boolean = false) {
 		//                Prepare astro installation
 		// ================================================================
 		// Request package manager
-		const pm = await requestPackageManager();
+		const pm = options?.defaults 
+			? await getDefaultPackageManager() 
+			: await requestPackageManager();
 
 		if (pkg.dependencies?.astro) {
 			const astroVersion = pkg.dependencies.astro.replace(/^\^|~/, "");
 			if (!semver.gte(astroVersion, MIN_ASTRO_VERSION)) {
-				const shouldUpgrade = await p.confirm({
+				let shouldUpgrade = options?.defaults ? true : await p.confirm({
 					message: `Starwind requires Astro v${MIN_ASTRO_VERSION} or higher. Would you like to upgrade from v${astroVersion}?`,
 					initialValue: true,
 				});
@@ -250,7 +272,7 @@ export async function init(withinAdd: boolean = false) {
 				});
 			}
 		} else {
-			const shouldInstall = await p.confirm({
+			let shouldInstall = options?.defaults ? true : await p.confirm({
 				message: `Starwind requires Astro v${MIN_ASTRO_VERSION} or higher. Would you like to install it?`,
 				initialValue: true,
 			});
@@ -279,7 +301,7 @@ export async function init(withinAdd: boolean = false) {
 		// ================================================================
 		const otherPackages = getOtherPackages();
 
-		const shouldInstall = await p.confirm({
+		let shouldInstall = options?.defaults ? true : await p.confirm({
 			message: `Install ${highlighter.info(otherPackages.join(", "))} using ${highlighter.info(pm)}?`,
 		});
 
