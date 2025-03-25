@@ -53,7 +53,7 @@ export async function setupAstroConfig(): Promise<boolean> {
 		if (!config.includes("experimental")) {
 			config += `\n\texperimental: {
 		svg: {
-			mode: "sprite",
+			mode: "inline",
 		},
 	},`;
 		} else if (!config.includes("svg: {")) {
@@ -62,7 +62,7 @@ export async function setupAstroConfig(): Promise<boolean> {
 			const blockStart = config.indexOf("{", expEnd) + 1;
 			config =
 				config.slice(0, blockStart) +
-				`\n\t\tsvg: {\n\t\t\tmode: "sprite",\n\t\t},` +
+				`\n\t\tsvg: {\n\t\t\tmode: "inline",\n\t\t},` +
 				config.slice(blockStart);
 		}
 
