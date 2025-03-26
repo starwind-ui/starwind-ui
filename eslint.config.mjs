@@ -35,7 +35,7 @@ export default defineConfig([
 			prettier: prettier,
 		},
 		rules: {
-			"prettier/prettier": "warn",
+			"prettier/prettier": "off", // this gets incredibly annoying otherwise
 		},
 	},
 

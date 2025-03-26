@@ -6,9 +6,9 @@ import { ASTRO_PACKAGES, MIN_ASTRO_VERSION, PATHS, getOtherPackages } from "@/ut
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import {
+	getDefaultPackageManager,
 	installDependencies,
 	requestPackageManager,
-	getDefaultPackageManager,
 } from "@/utils/package-manager.js";
 import { sleep } from "@/utils/sleep.js";
 import * as p from "@clack/prompts";
