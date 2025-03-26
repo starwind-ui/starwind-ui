@@ -12,10 +12,10 @@
 		{ "name": "input", "type": "component", "version": "1.1.0", "dependencies": [] },
 		{ "name": "label", "type": "component", "version": "1.1.0", "dependencies": [] },
 		{ "name": "pagination", "type": "component", "version": "2.0.0", "dependencies": [] },
-		{ "name": "select", "type": "component", "version": "1.1.0", "dependencies": [] },
+		{ "name": "select", "type": "component", "version": "1.2.0", "dependencies": [] },
 		{ "name": "switch", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "tabs", "type": "component", "version": "1.1.0", "dependencies": [] },
+		{ "name": "tabs", "type": "component", "version": "1.1.1", "dependencies": [] },
 		{ "name": "textarea", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "tooltip", "type": "component", "version": "1.1.0", "dependencies": [] }
+		{ "name": "tooltip", "type": "component", "version": "1.1.1", "dependencies": [] }
 	]
 }
