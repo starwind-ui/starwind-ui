@@ -16,6 +16,7 @@ const label = tv({
 const { size = "md", class: className = "", ...rest } = Astro.props;
 ---
 
+{/* eslint-disable-next-line astro/jsx-a11y/label-has-associated-control */}
 <label class={label({ size, class: className })} {...rest}>
 	<slot />
 </label>
