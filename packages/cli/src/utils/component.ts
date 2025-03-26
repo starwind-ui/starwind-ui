@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import * as p from "@clack/prompts";
 import fs from "fs-extra";
 import semver from "semver";
-import { getConfig, } from "./config.js";
+import { getConfig } from "./config.js";
 import { PATHS } from "./constants.js";
 import { highlighter } from "./highlighter.js";
 import { getComponent, getRegistry } from "./registry.js";
