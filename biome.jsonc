@@ -1,7 +1,6 @@
 {
 	"$schema": "https://biomejs.dev/schemas/1.9.3/schema.json",
 	"files": {
-		// ignore all files as I'm now using eslint
 		"ignore": ["**/smoke/**", "**/fixtures/**", "**/_temp-fixtures/**", "**/vendor/**"],
 		"include": ["test/**", "packages/**", "scripts/**"]
 	},
@@ -42,7 +41,7 @@
 	"javascript": {
 		"formatter": {
 			"trailingCommas": "all",
-			"quoteStyle": "single",
+			"quoteStyle": "double",
 			"semicolons": "always"
 		}
 	},
@@ -52,7 +51,7 @@
 			"allowTrailingCommas": false
 		},
 		"formatter": {
-			"indentStyle": "space",
+			"indentStyle": "tab",
 			"trailingCommas": "none"
 		}
 	},
