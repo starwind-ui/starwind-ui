@@ -32,7 +32,6 @@ const { class: className, value, disabled, ...rest } = Astro.props;
 	class={selectItem({ class: className })}
 	data-value={value}
 	data-disabled={disabled}
-	aria-selected="false"
 	role="option"
 	tabindex="0"
 	{...rest}
