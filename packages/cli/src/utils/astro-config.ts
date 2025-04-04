@@ -52,18 +52,13 @@ export async function setupAstroConfig(): Promise<boolean> {
 		// Add experimental configuration
 		if (!config.includes("experimental")) {
 			config += `\n\texperimental: {
-		svg: {
-			mode: "inline",
-		},
+		svg: true,
 	},`;
 		} else if (!config.includes("svg: {")) {
 			// Insert svg config into existing experimental block
 			const expEnd = config.indexOf("experimental:") + "experimental:".length;
 			const blockStart = config.indexOf("{", expEnd) + 1;
-			config =
-				config.slice(0, blockStart) +
-				`\n\t\tsvg: {\n\t\t\tmode: "inline",\n\t\t},` +
-				config.slice(blockStart);
+			config = config.slice(0, blockStart) + `\n\t\tsvg: true,` + config.slice(blockStart);
 		}
 
 		// Add vite configuration
