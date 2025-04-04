@@ -36,4 +36,4 @@ Visit [https://starwind.dev/](https://starwind.dev/) to view the documentation.
 
 ## License
 
-Licensed under the [MIT license](https://github.com/boston343/starwind-ui/blob/main/LICENSE).
+Licensed under the [MIT license](https://github.com/starwind-ui/starwind-ui/blob/main/LICENSE).

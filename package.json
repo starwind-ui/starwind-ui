@@ -5,7 +5,7 @@
 	"type": "module",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Boston343/starwind.git"
+		"url": "git+https://github.com/starwind-ui/starwind-ui.git"
 	},
 	"scripts": {
 		"build": "turbo build",
