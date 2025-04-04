@@ -1,34 +1,13 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
 
-interface Props extends HTMLAttributes<"div">, Omit<HTMLAttributes<"a">, "type"> {
-	/**
-	 * Sets the variant of the badge
-	 * @default "default"
-	 */
-	variant?:
-		| "default"
-		| "primary"
-		| "secondary"
-		| "outline"
-		| "ghost"
-		| "info"
-		| "success"
-		| "warning"
-		| "error";
-	/**
-	 * Sets the size of the badge
-	 * @default "md"
-	 */
-	size?: "sm" | "md" | "lg";
-	/**
-	 * URL to link to when badge is clicked
-	 */
-	href?: string;
-}
+interface Props
+	extends HTMLAttributes<"div">,
+		Omit<HTMLAttributes<"a">, "type">,
+		VariantProps<typeof badge> {}
 
-const badgeVariants = tv({
+const badge = tv({
 	base: "starwind-badge starwind-transition-colors inline-flex items-center rounded-full font-semibold focus-visible:outline-2 focus-visible:outline-offset-2",
 	variants: {
 		variant: {
@@ -59,11 +38,11 @@ const badgeVariants = tv({
 	defaultVariants: { variant: "default", size: "md", isLink: false },
 });
 
-const { variant = "default", size = "md", class: className, href, ...rest } = Astro.props;
-const isLink = !!href;
-const Tag = isLink ? "a" : "div";
+const { variant, size, class: className, ...rest } = Astro.props;
+const isLink = Astro.props.href ? true : false;
+const Tag = Astro.props.href ? "a" : "div";
 ---
 
-<Tag class={badgeVariants({ variant, size, isLink, class: className })} href={href} {...rest}>
+<Tag class={badge({ variant, size, isLink, class: className })} {...rest}>
 	<slot />
 </Tag>

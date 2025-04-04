@@ -1,8 +1,8 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
 
-type Props = HTMLAttributes<"label"> & { size?: "sm" | "md" | "lg" };
+type Props = HTMLAttributes<"label"> & VariantProps<typeof label>;
 
 const label = tv({
 	base: [
@@ -13,7 +13,7 @@ const label = tv({
 	defaultVariants: { size: "md" },
 });
 
-const { size = "md", class: className = "", ...rest } = Astro.props;
+const { size, class: className, ...rest } = Astro.props;
 ---
 
 {/* eslint-disable-next-line astro/jsx-a11y/label-has-associated-control */}
