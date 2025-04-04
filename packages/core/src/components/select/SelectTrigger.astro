@@ -7,6 +7,7 @@ type Props = Omit<HTMLAttributes<"button">, "role" | "type"> & {
 	/**
 	 * The content to be rendered inside the select trigger
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	children: any;
 	/**
 	 * Whether the select field is required in a form context
@@ -31,6 +32,7 @@ const { class: className, required = false, ...rest } = Astro.props;
 	type="button"
 	role="combobox"
 	aria-label="Select field"
+	aria-controls=""
 	aria-expanded="false"
 	aria-haspopup="listbox"
 	aria-autocomplete="none"

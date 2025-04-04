@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import * as p from "@clack/prompts";
 import fs from "fs-extra";
 import semver from "semver";
-import { getConfig, } from "./config.js";
+import { getConfig } from "./config.js";
 import { PATHS } from "./constants.js";
 import { highlighter } from "./highlighter.js";
 import { getComponent, getRegistry } from "./registry.js";
@@ -129,9 +129,14 @@ export async function removeComponent(name: string, componentDir: string): Promi
  * Updates a component to its latest version from the registry
  * @param name - The name of the component to update
  * @param currentVersion - The currently installed version
+ * @param skipConfirm - If true, skips the confirmation prompt
  * @returns A result object indicating the update status
  */
-export async function updateComponent(name: string, currentVersion: string): Promise<UpdateResult> {
+export async function updateComponent(
+	name: string,
+	currentVersion: string,
+	skipConfirm?: boolean,
+): Promise<UpdateResult> {
 	try {
 		// Get latest version from registry
 		const registryComponent = await getComponent(name);
@@ -153,12 +158,36 @@ export async function updateComponent(name: string, currentVersion: string): Pro
 			};
 		}
 
-		// Confirm the component update with warning about overriding
-		const confirmUpdate = await p.confirm({
-			message: `Update component ${highlighter.info(name)} from ${highlighter.warn(`v${currentVersion}`)} to ${highlighter.success(`v${registryComponent.version}`)}? This will override the existing implementation.`,
-		});
+		// Confirm the component update with warning about overriding, unless skipConfirm is true
+		let confirmUpdate = true; // Default to true if skipping confirmation
+		if (!skipConfirm) {
+			// Only prompt if skipConfirm is false or undefined
+			const confirmedResult = await p.confirm({
+				message: `Update component ${highlighter.info(
+					name,
+				)} from ${highlighter.warn(`v${currentVersion}`)} to ${highlighter.success(
+					`v${registryComponent.version}`,
+				)}? This will override the existing implementation.`,
+			});
 
-		if (!confirmUpdate || p.isCancel(confirmUpdate)) {
+			// Check for cancellation immediately
+			if (p.isCancel(confirmedResult)) {
+				p.cancel("Update cancelled.");
+				return {
+					name,
+					status: "skipped",
+					oldVersion: currentVersion,
+					newVersion: registryComponent.version, // Still useful to return the target version
+				};
+			}
+
+			// If not cancelled, confirmedResult is boolean. Assign it.
+			confirmUpdate = confirmedResult;
+		}
+
+		// Now confirmUpdate is guaranteed to be boolean, proceed with the check
+		if (!confirmUpdate) {
+			// Handle non-confirmation ('No' was selected)
 			p.log.info(`Skipping update for ${highlighter.info(name)}`);
 			return {
 				name,

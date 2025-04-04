@@ -5,7 +5,11 @@ import { updateConfig } from "@/utils/config.js";
 import { ASTRO_PACKAGES, MIN_ASTRO_VERSION, PATHS, getOtherPackages } from "@/utils/constants.js";
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
-import { installDependencies, requestPackageManager, getDefaultPackageManager, PackageManager } from "@/utils/package-manager.js";
+import {
+	getDefaultPackageManager,
+	installDependencies,
+	requestPackageManager,
+} from "@/utils/package-manager.js";
 import { sleep } from "@/utils/sleep.js";
 import * as p from "@clack/prompts";
 import semver from "semver";
@@ -33,7 +37,7 @@ export async function init(withinAdd: boolean = false, options?: { defaults?: bo
 		//         Prepare project structure and configuration tasks
 		// ================================================================
 		let configChoices;
-		
+
 		// Use defaults if specified, otherwise prompt user for choices
 		if (options?.defaults) {
 			configChoices = {
@@ -41,7 +45,7 @@ export async function init(withinAdd: boolean = false, options?: { defaults?: bo
 				cssFile: PATHS.LOCAL_CSS_FILE,
 				twBaseColor: "neutral",
 			};
-			
+
 			if (!withinAdd) {
 				p.log.info("Using default configuration values");
 			}
@@ -182,9 +186,11 @@ export async function init(withinAdd: boolean = false, options?: { defaults?: bo
 		}
 
 		if (cssFileExists) {
-			let shouldOverride = options?.defaults ? true : await p.confirm({
-				message: `${highlighter.info(configChoices.cssFile)} already exists. Do you want to override it?`,
-			});
+			const shouldOverride = options?.defaults
+				? true
+				: await p.confirm({
+						message: `${highlighter.info(configChoices.cssFile)} already exists. Do you want to override it?`,
+					});
 
 			if (p.isCancel(shouldOverride)) {
 				p.cancel("Operation cancelled");
@@ -241,17 +247,17 @@ export async function init(withinAdd: boolean = false, options?: { defaults?: bo
 		//                Prepare astro installation
 		// ================================================================
 		// Request package manager
-		const pm = options?.defaults 
-			? await getDefaultPackageManager() 
-			: await requestPackageManager();
+		const pm = options?.defaults ? await getDefaultPackageManager() : await requestPackageManager();
 
 		if (pkg.dependencies?.astro) {
 			const astroVersion = pkg.dependencies.astro.replace(/^\^|~/, "");
 			if (!semver.gte(astroVersion, MIN_ASTRO_VERSION)) {
-				let shouldUpgrade = options?.defaults ? true : await p.confirm({
-					message: `Starwind requires Astro v${MIN_ASTRO_VERSION} or higher. Would you like to upgrade from v${astroVersion}?`,
-					initialValue: true,
-				});
+				const shouldUpgrade = options?.defaults
+					? true
+					: await p.confirm({
+							message: `Starwind requires Astro v${MIN_ASTRO_VERSION} or higher. Would you like to upgrade from v${astroVersion}?`,
+							initialValue: true,
+						});
 
 				if (p.isCancel(shouldUpgrade)) {
 					p.cancel("Operation cancelled");
@@ -272,10 +278,12 @@ export async function init(withinAdd: boolean = false, options?: { defaults?: bo
 				});
 			}
 		} else {
-			let shouldInstall = options?.defaults ? true : await p.confirm({
-				message: `Starwind requires Astro v${MIN_ASTRO_VERSION} or higher. Would you like to install it?`,
-				initialValue: true,
-			});
+			const shouldInstall = options?.defaults
+				? true
+				: await p.confirm({
+						message: `Starwind requires Astro v${MIN_ASTRO_VERSION} or higher. Would you like to install it?`,
+						initialValue: true,
+					});
 
 			if (p.isCancel(shouldInstall)) {
 				p.cancel("Operation cancelled");
@@ -301,9 +309,11 @@ export async function init(withinAdd: boolean = false, options?: { defaults?: bo
 		// ================================================================
 		const otherPackages = getOtherPackages();
 
-		let shouldInstall = options?.defaults ? true : await p.confirm({
-			message: `Install ${highlighter.info(otherPackages.join(", "))} using ${highlighter.info(pm)}?`,
-		});
+		const shouldInstall = options?.defaults
+			? true
+			: await p.confirm({
+					message: `Install ${highlighter.info(otherPackages.join(", "))} using ${highlighter.info(pm)}?`,
+				});
 
 		if (p.isCancel(shouldInstall)) {
 			p.cancel("Operation cancelled");

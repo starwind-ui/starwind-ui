@@ -21,3 +21,7 @@ netlify
 **/.svn
 **/.hg
 **/node_modules
+
+# pnpm files
+pnpm-lock.yaml
+pnpm-workspace.yaml

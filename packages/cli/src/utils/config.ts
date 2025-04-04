@@ -12,9 +12,9 @@ interface TailwindConfig {
 	cssVariables: boolean;
 }
 
-interface AliasConfig {
-	components: string;
-}
+// interface AliasConfig {
+// 	components: string;
+// }
 
 export interface StarwindConfig {
 	$schema: string;
