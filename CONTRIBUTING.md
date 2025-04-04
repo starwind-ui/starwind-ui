@@ -120,7 +120,7 @@ https://www.conventionalcommits.org/ or check out the
    commit type. `scope` is just a short id that describes the scope of work.
 
 3. Make and commit your changes following the
-   [commit convention](https://github.com/boston343/starwind-ui/blob/main/CONTRIBUTING.md#commit-convention).
+   [commit convention](https://github.com/starwind-ui/starwind-ui/blob/main/CONTRIBUTING.md#commit-convention).
    As you develop, you can run `pnpm lint` and
    `pnpm build` e.g. `pnpm lint && pnpm build` to make sure everything works as expected.
 
