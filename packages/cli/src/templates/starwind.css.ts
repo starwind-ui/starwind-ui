@@ -1,5 +1,5 @@
 export const tailwindConfig = `@import "tailwindcss";
-@plugin "tw-animate-css";
+@import "tw-animate-css";
 @plugin "@tailwindcss/forms";
 @variant dark (&:where(.dark, .dark *));
 
