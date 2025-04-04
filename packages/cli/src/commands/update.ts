@@ -7,7 +7,13 @@ import { highlighter } from "@/utils/highlighter.js";
 import { sleep } from "@/utils/sleep.js";
 import * as p from "@clack/prompts";
 
-export async function update(components?: string[], options?: { all?: boolean }) {
+// Define the type for options more explicitly
+interface UpdateOptions {
+	all?: boolean;
+	yes?: boolean;
+}
+
+export async function update(components?: string[], options?: UpdateOptions) {
 	try {
 		p.intro(highlighter.title(" Welcome to the Starwind CLI "));
 
@@ -84,18 +90,6 @@ export async function update(components?: string[], options?: { all?: boolean })
 			process.exit(0);
 		}
 
-		// Confirm update
-		// const confirmed = await p.confirm({
-		// 	message: `Check for updates to ${componentsToUpdate
-		// 		.map((comp) => highlighter.info(comp))
-		// 		.join(", ")} ${componentsToUpdate.length > 1 ? "components" : "component"}?`,
-		// });
-
-		// if (!confirmed || p.isCancel(confirmed)) {
-		// 	p.cancel("Operation cancelled");
-		// 	process.exit(0);
-		// }
-
 		const results = {
 			updated: [] as UpdateResult[],
 			skipped: [] as UpdateResult[],
@@ -116,7 +110,8 @@ export async function update(components?: string[], options?: { all?: boolean })
 				continue;
 			}
 
-			const result = await updateComponent(comp, currentVersion);
+			// Pass the 'yes' option down to updateComponent
+			const result = await updateComponent(comp, currentVersion, options?.yes);
 			switch (result.status) {
 				case "updated":
 					results.updated.push(result);
