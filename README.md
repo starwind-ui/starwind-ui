@@ -26,6 +26,7 @@ Resources for AI:
 
 - [llms.txt](https://starwind.dev/llms.txt)
 - [llms-full.txt](https://starwind.dev/llms-full.txt)
+- [MCP server](https://github.com/starwind-ui/starwind-ui-mcp)
 
 ## Contributing
 

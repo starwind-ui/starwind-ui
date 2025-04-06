@@ -2,20 +2,20 @@
 	"$schema": "https://starwind.dev/registry-schema.json",
 	"components": [
 		{ "name": "accordion", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "alert", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "avatar", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "badge", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "button", "type": "component", "version": "2.0.0", "dependencies": [] },
+		{ "name": "alert", "type": "component", "version": "1.1.1", "dependencies": [] },
+		{ "name": "avatar", "type": "component", "version": "1.1.1", "dependencies": [] },
+		{ "name": "badge", "type": "component", "version": "1.1.1", "dependencies": [] },
+		{ "name": "button", "type": "component", "version": "2.0.1", "dependencies": [] },
 		{ "name": "card", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "checkbox", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "dialog", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "input", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "label", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "pagination", "type": "component", "version": "2.0.0", "dependencies": [] },
-		{ "name": "select", "type": "component", "version": "1.1.0", "dependencies": [] },
+		{ "name": "checkbox", "type": "component", "version": "1.2.0", "dependencies": [] },
+		{ "name": "dialog", "type": "component", "version": "1.1.1", "dependencies": [] },
+		{ "name": "input", "type": "component", "version": "1.1.1", "dependencies": [] },
+		{ "name": "label", "type": "component", "version": "1.1.1", "dependencies": [] },
+		{ "name": "pagination", "type": "component", "version": "2.0.1", "dependencies": [] },
+		{ "name": "select", "type": "component", "version": "1.2.0", "dependencies": [] },
 		{ "name": "switch", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "tabs", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "textarea", "type": "component", "version": "1.1.0", "dependencies": [] },
-		{ "name": "tooltip", "type": "component", "version": "1.1.0", "dependencies": [] }
+		{ "name": "tabs", "type": "component", "version": "1.1.1", "dependencies": [] },
+		{ "name": "textarea", "type": "component", "version": "1.1.1", "dependencies": [] },
+		{ "name": "tooltip", "type": "component", "version": "1.1.1", "dependencies": [] }
 	]
 }

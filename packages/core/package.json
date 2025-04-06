@@ -1,7 +1,17 @@
 {
 	"name": "@starwind-ui/core",
-	"version": "1.3.1",
+	"version": "1.4.1",
 	"description": "Starwind UI core components and registry",
+	"license": "MIT",
+	"author": {
+		"name": "webreaper",
+		"url": "https://x.com/BowTiedWebReapr"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/starwind-ui/starwind-ui.git",
+		"directory": "packages/core"
+	},
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",

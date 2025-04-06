@@ -1,6 +1,6 @@
+import { registry as localRegistry } from "@starwind-ui/core";
 import { z } from "zod";
 import { PATHS } from "./constants.js";
-import { registry as localRegistry } from "@starwind-ui/core";
 
 // Configuration to select registry source
 const REGISTRY_CONFIG = {

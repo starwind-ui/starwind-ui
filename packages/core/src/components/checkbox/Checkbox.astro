@@ -1,28 +1,15 @@
 ---
 import Check from "@tabler/icons/outline/check.svg";
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
 
-type Props = Omit<HTMLAttributes<"input">, "type"> & {
-	/**
-	 * Unique identifier for the checkbox input
-	 */
-	id: string;
-	/**
-	 * Optional label text to display next to the checkbox
-	 */
-	label?: string;
-	/**
-	 * Size variant of the checkbox
-	 * @default "md"
-	 */
-	size?: "sm" | "md" | "lg";
-	/**
-	 * Visual style variant of the checkbox
-	 * @default "default"
-	 */
-	variant?: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error";
-};
+type Props = Omit<HTMLAttributes<"input">, "type"> &
+	VariantProps<typeof checkbox> & {
+		/**
+		 * Optional label text to display next to the checkbox
+		 */
+		label?: string;
+	};
 
 const checkbox = tv({
 	slots: {
@@ -77,16 +64,7 @@ const checkbox = tv({
 	defaultVariants: { size: "md", variant: "default" },
 });
 
-const {
-	id,
-	label,
-	value,
-	checked,
-	size = "md",
-	variant = "default",
-	class: className = "",
-	...rest
-} = Astro.props;
+const { id, label, checked, size, variant, class: className, ...rest } = Astro.props;
 
 const { base, input, icon, label: labelClass } = checkbox({ size, variant });
 ---

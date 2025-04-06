@@ -308,9 +308,12 @@ const { class: className, defaultValue, ...rest } = Astro.props;
 		}
 
 		private toggleSelect() {
-			this.isOpen ? this.closeSelect() : this.openSelect();
+			if (this.isOpen) {
+				this.closeSelect();
+			} else {
+				this.openSelect();
+			}
 		}
-
 		private openSelect() {
 			if (!this.content || !this.trigger || this.trigger.disabled) return;
 

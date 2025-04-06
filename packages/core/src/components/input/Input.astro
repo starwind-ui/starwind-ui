@@ -1,8 +1,8 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
 
-type Props = HTMLAttributes<"input"> & { size?: "sm" | "md" | "lg" };
+type Props = HTMLAttributes<"input"> & VariantProps<typeof input>;
 
 const input = tv({
 	base: [
@@ -18,7 +18,7 @@ const input = tv({
 	defaultVariants: { size: "md" },
 });
 
-const { size = "md", class: className, ...rest } = Astro.props;
+const { size, class: className, ...rest } = Astro.props;
 ---
 
 <input class={input({ size, class: className })} {...rest} />

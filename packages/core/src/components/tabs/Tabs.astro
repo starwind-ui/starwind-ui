@@ -133,7 +133,7 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 			localStorage.setItem(this.storageKey, value);
 		}
 
-		private handleKeyNavigation = (e: KeyboardEvent, trigger: HTMLElement): void => {
+		private handleKeyNavigation = (e: KeyboardEvent): void => {
 			const key = e.key;
 			let newIndex = this.currentTabIndex;
 
@@ -206,7 +206,7 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 		private addEventListeners(): void {
 			this.triggers.forEach((trigger, index) => {
 				trigger.addEventListener("click", () => this.handleClick(trigger, index));
-				trigger.addEventListener("keydown", (e) => this.handleKeyNavigation(e, trigger));
+				trigger.addEventListener("keydown", (e) => this.handleKeyNavigation(e));
 			});
 		}
 

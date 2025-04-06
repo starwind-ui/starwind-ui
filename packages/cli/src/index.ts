@@ -30,6 +30,7 @@ program
 	.argument("[components...]", "The components to update (space separated)")
 	.allowExcessArguments()
 	.option("-a, --all", "Update all installed components")
+	.option("-y, --yes", "Skip confirmation prompts")
 	.action(update);
 
 program
