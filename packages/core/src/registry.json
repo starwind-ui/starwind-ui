@@ -5,6 +5,7 @@
 		{ "name": "alert", "type": "component", "version": "1.1.1", "dependencies": [] },
 		{ "name": "avatar", "type": "component", "version": "1.1.1", "dependencies": [] },
 		{ "name": "badge", "type": "component", "version": "1.1.1", "dependencies": [] },
+		{ "name": "breadcrumb", "type": "component", "version": "1.0.0", "dependencies": [] },
 		{ "name": "button", "type": "component", "version": "2.0.1", "dependencies": [] },
 		{ "name": "card", "type": "component", "version": "1.1.0", "dependencies": [] },
 		{ "name": "checkbox", "type": "component", "version": "1.2.0", "dependencies": [] },
