@@ -19,22 +19,24 @@ const { class: className, name, ...rest } = Astro.props;
 		private dropdown: HTMLElement;
 		private trigger: HTMLButtonElement | null;
 		private content: HTMLElement | null;
+		private items: HTMLElement[] = [];
+		private currentFocusIndex: number = -1;
 		private isOpen: boolean = false;
 		private animationDuration = 150;
 
 		constructor(dropdown: HTMLElement, dropdownIdx: number) {
 			this.dropdown = dropdown;
-			
+
 			// Get the temporary trigger element
 			const tempTrigger = dropdown.querySelector(".starwind-dropdown-trigger") as HTMLElement;
-			
+
 			// if trigger is set with asChild, use the first child element for trigger button
 			if (tempTrigger?.hasAttribute("data-as-child")) {
 				this.trigger = tempTrigger.firstElementChild as HTMLButtonElement;
 			} else {
 				this.trigger = tempTrigger as HTMLButtonElement;
 			}
-			
+
 			this.content = dropdown.querySelector(".starwind-dropdown-content");
 
 			if (!this.trigger || !this.content) return;
@@ -84,6 +86,14 @@ const { class: className, name, ...rest } = Astro.props;
 				} else if (e.key === "Escape" && this.isOpen) {
 					e.preventDefault();
 					this.closeDropdown();
+				} else if (this.isOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+					e.preventDefault();
+					this.updateDropdownItems();
+					if (e.key === "ArrowDown") {
+						this.focusItem(0); // Focus first item when opening with arrow down
+					} else {
+						this.focusItem(this.items.length - 1); // Focus last item when opening with arrow up
+					}
 				}
 			});
 
@@ -100,6 +110,8 @@ const { class: className, name, ...rest } = Astro.props;
 					e.preventDefault();
 					this.closeDropdown();
 					this.trigger?.focus();
+				} else if (this.isOpen) {
+					this.handleMenuKeydown(e);
 				}
 			});
 
@@ -112,6 +124,60 @@ const { class: className, name, ...rest } = Astro.props;
 					this.closeDropdown();
 				}
 			});
+		}
+
+		private handleMenuKeydown(e: KeyboardEvent) {
+			// Make sure we've got an updated list of menu items
+			this.updateDropdownItems();
+
+			// Skip if no items
+			if (this.items.length === 0) return;
+
+			const currentIdx = this.currentFocusIndex;
+
+			switch (e.key) {
+				case "ArrowDown":
+					e.preventDefault();
+					this.focusItem(currentIdx === -1 ? 0 : currentIdx + 1);
+					break;
+				case "ArrowUp":
+					e.preventDefault();
+					this.focusItem(currentIdx === -1 ? this.items.length - 1 : currentIdx - 1);
+					break;
+				case "Home":
+					e.preventDefault();
+					this.focusItem(0);
+					break;
+				case "End":
+					e.preventDefault();
+					this.focusItem(this.items.length - 1);
+					break;
+				case "Enter":
+				case " ":
+					if (currentIdx !== -1) {
+						e.preventDefault();
+						this.items[currentIdx].click();
+					}
+					break;
+			}
+		}
+
+		private updateDropdownItems() {
+			if (!this.content) return;
+			// Get all interactive menuitem elements
+			this.items = Array.from(
+				this.content.querySelectorAll('[role="menuitem"]:not([data-disabled="true"])'),
+			) as HTMLElement[];
+		}
+
+		private focusItem(idx: number) {
+			// Ensure the index wraps around properly
+			const targetIdx = (idx + this.items.length) % this.items.length;
+
+			if (this.items[targetIdx]) {
+				this.items[targetIdx].focus();
+				this.currentFocusIndex = targetIdx;
+			}
 		}
 
 		private toggleDropdown() {
@@ -130,13 +196,11 @@ const { class: className, name, ...rest } = Astro.props;
 			this.trigger.setAttribute("aria-expanded", "true");
 			this.content.style.removeProperty("display");
 
-			// Set focus on the first menu item
-			// setTimeout(() => {
-			// 	const firstItem = this.content?.querySelector('[role="menuitem"]') as HTMLElement;
-			// 	if (firstItem) {
-			// 		firstItem.focus();
-			// 	}
-			// }, 10);
+			// Update the list of dropdown items
+			this.updateDropdownItems();
+
+			// Reset focus index when opening
+			this.currentFocusIndex = -1;
 
 			this.positionContent();
 		}
@@ -160,6 +224,9 @@ const { class: className, name, ...rest } = Astro.props;
 			}, this.animationDuration - 10);
 
 			this.trigger.setAttribute("aria-expanded", "false");
+
+			// Reset focus index when closing
+			this.currentFocusIndex = -1;
 		}
 
 		private positionContent() {
