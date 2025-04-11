@@ -4,9 +4,7 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div">;
 
-const cardDescription = tv({
-	base: "text-muted-foreground text-base",
-});
+const cardDescription = tv({ base: "text-muted-foreground text-base" });
 
 const { class: className, ...rest } = Astro.props;
 ---

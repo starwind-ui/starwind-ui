@@ -1,6 +1,8 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & VariantProps<typeof alert>;
 
 const alert = tv({
 	base: "text-foreground relative w-full rounded-lg border p-4",
@@ -15,20 +17,10 @@ const alert = tv({
 			error: "border-error bg-error/7 [&>h5>svg]:text-error",
 		},
 	},
-	defaultVariants: {
-		variant: "default",
-	},
+	defaultVariants: { variant: "default" },
 });
 
-type Props = HTMLAttributes<"div"> & {
-	/**
-	 * Sets the variant of the alert
-	 * @default "default"
-	 */
-	variant?: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error";
-};
-
-const { variant = "default", class: className, ...rest } = Astro.props;
+const { variant, class: className, ...rest } = Astro.props;
 ---
 
 <div class={alert({ variant, class: className })} {...rest}>

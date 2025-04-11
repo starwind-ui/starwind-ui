@@ -43,9 +43,7 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
 <div
 	class={dialogBackdrop()}
 	data-state="closed"
-	style={{
-		animationDuration: `${animationDuration}ms`,
-	}}
+	style={{ animationDuration: `${animationDuration}ms` }}
 >
 </div>
 
@@ -53,9 +51,7 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
 	class={dialogContent({ class: className })}
 	data-state="closed"
 	{...rest}
-	style={{
-		animationDuration: `${animationDuration}ms`,
-	}}
+	style={{ animationDuration: `${animationDuration}ms` }}
 >
 	<slot />
 	<button type="button" class={dialogCloseButton()} data-dialog-close aria-label="Close dialog">

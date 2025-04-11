@@ -1,12 +1,16 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 
-type Props = HTMLAttributes<"div"> & { children: any };
+type Props = HTMLAttributes<"div"> & {
+	name?: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	children: any;
+};
 
-const { class: className, ...rest } = Astro.props;
+const { class: className, name, ...rest } = Astro.props;
 ---
 
-<div class:list={["starwind-select", "relative", className]} {...rest}>
+<div class:list={["starwind-select", "relative", className]} data-name={name} {...rest}>
 	<slot />
 </div>
 
@@ -55,6 +59,7 @@ const { class: className, ...rest } = Astro.props;
 			selectField.tabIndex = -1;
 			selectField.setAttribute("aria-hidden", "true");
 			selectField.setAttribute("placeholder", "select");
+			selectField.name = this.select.getAttribute("data-name") || "";
 
 			// you can comment out this "sr-only" class line below if you want to see the native select in action
 			selectField.classList.add("starwind-sr-only");
@@ -305,6 +310,7 @@ const { class: className, ...rest } = Astro.props;
 				this.openSelect();
 			}
 		}
+
 		private openSelect() {
 			if (!this.content || !this.trigger || this.trigger.disabled) return;
 

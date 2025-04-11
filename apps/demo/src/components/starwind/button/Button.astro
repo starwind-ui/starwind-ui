@@ -1,30 +1,13 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
 
-interface Props extends HTMLAttributes<"button">, Omit<HTMLAttributes<"a">, "type"> {
-	/**
-	 * Sets the variant of the button
-	 * @default "default"
-	 */
-	variant?:
-		| "default"
-		| "primary"
-		| "secondary"
-		| "outline"
-		| "ghost"
-		| "info"
-		| "success"
-		| "warning"
-		| "error";
-	/**
-	 * Sets the size of the button
-	 * @default "md"
-	 */
-	size?: "sm" | "md" | "lg" | "icon";
-}
+interface Props
+	extends HTMLAttributes<"button">,
+		Omit<HTMLAttributes<"a">, "type">,
+		VariantProps<typeof button> {}
 
-const { variant = "default", size = "md", class: className, ...rest } = Astro.props;
+const { variant, size, class: className, ...rest } = Astro.props;
 
 const button = tv({
 	base: [
@@ -59,10 +42,7 @@ const button = tv({
 			icon: "h-11 w-11",
 		},
 	},
-	defaultVariants: {
-		variant: "default",
-		size: "md",
-	},
+	defaultVariants: { variant: "default", size: "md" },
 });
 
 const Tag = Astro.props.href ? "a" : "button";

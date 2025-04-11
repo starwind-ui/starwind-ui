@@ -1,10 +1,8 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
 
-type Props = HTMLAttributes<"input"> & {
-	size?: "sm" | "md" | "lg";
-};
+type Props = HTMLAttributes<"input"> & VariantProps<typeof input>;
 
 const input = tv({
 	base: [
@@ -15,18 +13,12 @@ const input = tv({
 		"peer placeholder:text-muted-foreground",
 	],
 	variants: {
-		size: {
-			sm: "h-9 px-2 text-sm",
-			md: "h-11 px-3 text-base",
-			lg: "h-12 px-4 text-lg",
-		},
+		size: { sm: "h-9 px-2 text-sm", md: "h-11 px-3 text-base", lg: "h-12 px-4 text-lg" },
 	},
-	defaultVariants: {
-		size: "md",
-	},
+	defaultVariants: { size: "md" },
 });
 
-const { size = "md", class: className, ...rest } = Astro.props;
+const { size, class: className, ...rest } = Astro.props;
 ---
 
 <input class={input({ size, class: className })} {...rest} />

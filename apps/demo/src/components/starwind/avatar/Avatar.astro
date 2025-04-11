@@ -2,18 +2,7 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv, type VariantProps } from "tailwind-variants";
 
-interface Props extends HTMLAttributes<"div"> {
-	/**
-	 * Sets the variant of the avatar
-	 * @default "default"
-	 */
-	variant?: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error";
-	/**
-	 * Sets the size of the avatar
-	 * @default "md"
-	 */
-	size?: "sm" | "md" | "lg";
-}
+interface Props extends HTMLAttributes<"div">, VariantProps<typeof avatar> {}
 
 const avatar = tv({
 	base: "text-foreground bg-muted relative overflow-hidden rounded-full border-2",
@@ -27,16 +16,9 @@ const avatar = tv({
 			warning: "border-warning",
 			error: "border-error",
 		},
-		size: {
-			sm: "h-8 w-8 text-xs",
-			md: "h-10 w-10 text-sm",
-			lg: "h-12 w-12 text-base",
-		},
+		size: { sm: "h-8 w-8 text-xs", md: "h-10 w-10 text-sm", lg: "h-12 w-12 text-base" },
 	},
-	defaultVariants: {
-		variant: "default",
-		size: "md",
-	},
+	defaultVariants: { variant: "default", size: "md" },
 });
 
 const { variant, size, class: className, ...rest } = Astro.props;

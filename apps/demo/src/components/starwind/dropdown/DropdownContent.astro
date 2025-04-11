@@ -1,0 +1,80 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & {
+	/**
+	 * Side of the dropdown
+	 * @default bottom
+	 */
+	side?: "top" | "bottom";
+	/**
+	 * Alignment of the dropdown
+	 * @default start
+	 */
+	align?: "start" | "center" | "end";
+	/**
+	 * Offset distance in pixels
+	 * @default 4
+	 */
+	sideOffset?: number;
+	/**
+	 * Open and close animation duration in milliseconds
+	 * @default 150
+	 */
+	animationDuration?: number;
+};
+
+const dropdownContent = tv({
+	base: [
+		"starwind-dropdown-content",
+		"bg-popover text-popover-foreground z-50 min-w-[9rem] overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md",
+		"animate-in fade-in-0 zoom-in-95",
+		"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+		"absolute will-change-transform",
+	],
+	variants: {
+		side: {
+			bottom: "slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2 top-full",
+			top: "slide-in-from-bottom-2 data-[state=closed]:slide-out-to-bottom-2 bottom-full",
+		},
+		align: {
+			start: "slide-in-from-left-1 data-[state=closed]:slide-out-to-left-1 left-0",
+			center: "left-1/2 -translate-x-1/2",
+			end: "slide-in-from-right-1 data-[state=closed]:slide-out-to-right-1 right-0",
+		},
+	},
+	defaultVariants: {
+		side: "bottom",
+		align: "start",
+	},
+});
+
+const {
+	class: className,
+	side = "bottom",
+	align = "start",
+	sideOffset = 4,
+	animationDuration = 150,
+	...rest
+} = Astro.props;
+---
+
+<div
+	class={dropdownContent({ side, align, class: className })}
+	role="menu"
+	data-side={side}
+	data-align={align}
+	data-state="closed"
+	tabindex="-1"
+	aria-orientation="vertical"
+	style={{
+		display: "none",
+		animationDuration: `${animationDuration}ms`,
+		marginTop: side === "bottom" ? `${sideOffset}px` : undefined,
+		marginBottom: side === "top" ? `${sideOffset}px` : undefined,
+	}}
+	{...rest}
+>
+	<slot />
+</div>
