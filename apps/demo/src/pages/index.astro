@@ -22,6 +22,16 @@ import {
 // import Accordion from "@/components/starwind/accordion";
 
 import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbEllipsis,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/components/starwind/breadcrumb";
+
+import {
 	Pagination,
 	PaginationContent,
 	PaginationEllipsis,
@@ -64,6 +74,15 @@ import {
 	DialogClose,
 } from "@/components/starwind/dialog";
 
+import {
+	Dropdown,
+	DropdownContent,
+	DropdownItem,
+	DropdownLabel,
+	DropdownSeparator,
+	DropdownTrigger,
+} from "@/components/starwind/dropdown";
+
 import { Input } from "@/components/starwind/input";
 
 import { Label } from "@/components/starwind/label";
@@ -94,6 +113,100 @@ import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
 	description="A collection of accessible UI components built with Astro"
 >
 	<div class="container mx-auto px-4 pb-20">
+		<!-- breadcrumb -->
+		<section class="mx-auto mt-6 max-w-lg">
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/">Home</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbEllipsis />
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/components">Components</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbPage>Breadcrumb</BreadcrumbPage>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+		</section>
+
+		<!-- dropdown -->
+		<section class="mx-auto mt-6 max-w-lg">
+			<h2 class="mb-4 text-2xl font-bold">Dropdown</h2>
+			<div class="flex items-center gap-4">
+				<!-- Basic Dropdown -->
+				<Dropdown>
+					<DropdownTrigger asChild>
+						<Button>Left</Button>
+					</DropdownTrigger>
+					<DropdownContent>
+						<DropdownLabel>My Account</DropdownLabel>
+						<DropdownSeparator />
+						<DropdownItem>Profile</DropdownItem>
+						<DropdownItem>Settings</DropdownItem>
+						<DropdownSeparator />
+						<DropdownItem>Help</DropdownItem>
+						<DropdownItem disabled>Sign out</DropdownItem>
+					</DropdownContent>
+				</Dropdown>
+
+				<!-- Dropdown with Groups -->
+				<Dropdown>
+					<DropdownTrigger asChild>
+						<Button>Right aligned really long button</Button>
+					</DropdownTrigger>
+					<DropdownContent align="end" side="bottom">
+						<DropdownLabel>Actions</DropdownLabel>
+						<DropdownSeparator />
+						<DropdownItem>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="lucide lucide-copy"
+								><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path
+									d="M4 16c0-1.1.9-2 2-2h2"></path><path d="M4 12c0-1.1.9-2 2-2h2"></path><path
+									d="M4 8c0-1.1.9-2 2-2h2"></path></svg
+							>
+							Copy
+						</DropdownItem>
+						<DropdownItem>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="lucide lucide-pencil"
+								><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg
+							>
+							Edit
+						</DropdownItem>
+						<DropdownSeparator />
+						<DropdownLabel>Danger Zone</DropdownLabel>
+						<DropdownItem inset>Archive</DropdownItem>
+						<DropdownItem inset disabled>Delete</DropdownItem>
+					</DropdownContent>
+				</Dropdown>
+			</div>
+		</section>
+
 		<!-- dialog -->
 		<section class="mx-auto mt-6 max-w-lg">
 			<EditProfileForm />
