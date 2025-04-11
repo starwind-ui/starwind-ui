@@ -2,7 +2,6 @@
 import type { HTMLAttributes } from "astro/types";
 
 type Props = HTMLAttributes<"div"> & {
-	name?: string;
 	/**
 	 * When true, the dropdown will open on hover in addition to click
 	 */
@@ -16,12 +15,11 @@ type Props = HTMLAttributes<"div"> & {
 	children: any;
 };
 
-const { class: className, name, openOnHover = false, closeDelay = 200, ...rest } = Astro.props;
+const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Astro.props;
 ---
 
 <div
 	class:list={["starwind-dropdown", "relative", className]}
-	data-name={name}
 	data-open-on-hover={openOnHover ? "true" : undefined}
 	data-close-delay={closeDelay}
 	{...rest}
@@ -117,9 +115,24 @@ const { class: className, name, openOnHover = false, closeDelay = 200, ...rest }
 				}
 			});
 
-			// Close dropdown when clicking outside
+			// Close dropdown when clicking outside for mouse
 			document.addEventListener("pointerdown", (e) => {
 				if (this.isOpen && !this.dropdown.contains(e.target as Node)) {
+					// only call handler if it's the left button (mousedown gets triggered by all mouse buttons)
+					// but not when the control key is pressed (avoiding MacOS right click); also not for touch
+					// devices because that would open the menu on scroll. (pen devices behave as touch on iOS).
+					if (e.button === 0 && e.ctrlKey === false && e.pointerType === "mouse") {
+						this.closeDropdown();
+					}
+				}
+			});
+
+			// Handle click outside select content to close for mobile
+			document.addEventListener("click", (e) => {
+				if (
+					!(this.trigger?.contains(e.target as Node) || this.content?.contains(e.target as Node)) &&
+					this.isOpen
+				) {
 					this.closeDropdown();
 				}
 			});
@@ -142,6 +155,7 @@ const { class: className, name, openOnHover = false, closeDelay = 200, ...rest }
 				if (item && !(item as HTMLElement).hasAttribute("data-disabled")) {
 					// Close the dropdown after item selection
 					this.closeDropdown();
+					console.log("click closing");
 				}
 			});
 
@@ -162,8 +176,8 @@ const { class: className, name, openOnHover = false, closeDelay = 200, ...rest }
 			});
 
 			if (this.openOnHover) {
-				// Use mouseenter instead of mouseover to avoid flickering when moving between child elements
-				this.trigger.addEventListener("mouseenter", () => {
+				this.trigger.addEventListener("pointerenter", (e) => {
+					if (e.pointerType !== "mouse") return;
 					if (!this.isOpen) {
 						this.openDropdown();
 					} else {
@@ -172,20 +186,18 @@ const { class: className, name, openOnHover = false, closeDelay = 200, ...rest }
 					}
 				});
 
-				// Use mouseleave instead of mouseout to only trigger when leaving the entire dropdown
-				this.dropdown.addEventListener("mouseleave", () => {
+				this.dropdown.addEventListener("pointerleave", (e) => {
+					if (e.pointerType !== "mouse") return;
 					if (this.isOpen) {
 						this.closeDropdownDelayed();
 					}
 				});
 
-				// When content is available, also add mouseenter to it to cancel close timer
-				if (this.content) {
-					this.content.addEventListener("mouseenter", () => {
-						// If the user moves the mouse to the content, cancel the close timer
-						this.clearCloseTimer();
-					});
-				}
+				this.content.addEventListener("pointerenter", (e) => {
+					if (e.pointerType !== "mouse") return;
+					// If the user moves the mouse to the content, cancel the close timer
+					this.clearCloseTimer();
+				});
 			}
 		}
 
