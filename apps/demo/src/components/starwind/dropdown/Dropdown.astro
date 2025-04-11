@@ -124,6 +124,22 @@ const { class: className, name, ...rest } = Astro.props;
 					this.closeDropdown();
 				}
 			});
+			
+			// Handle hover on dropdown items
+			this.content.addEventListener("mouseover", (e) => {
+				const target = e.target as HTMLElement;
+				const menuItem = target.closest('[role="menuitem"]');
+				if (menuItem && menuItem instanceof HTMLElement && this.isOpen === true) {
+					// Update items list before focusing to ensure the index is correct
+					this.updateDropdownItems();
+					
+					// Focus the item when hovering
+					menuItem.focus();
+					
+					// Update the current focus index
+					this.currentFocusIndex = this.items.indexOf(menuItem);
+				}
+			});
 		}
 
 		private handleMenuKeydown(e: KeyboardEvent) {

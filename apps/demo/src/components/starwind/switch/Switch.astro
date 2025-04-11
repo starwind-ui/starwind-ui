@@ -76,9 +76,7 @@ const switchButton = tv({
 			error: "aria-checked:border-error focus:outline-error",
 		},
 	},
-	defaultVariants: {
-		variant: "default",
-	},
+	defaultVariants: { variant: "default" },
 });
 
 const switchToggle = tv({
@@ -86,30 +84,14 @@ const switchToggle = tv({
 		"bg-foreground inline-block transform rounded-full transition-transform",
 		"group-aria-checked:translate-x-(--translation) group-aria-[checked=false]:translate-x-[calc(var(--padding)-var(--border-offset))]",
 	],
-	variants: {
-		size: {
-			sm: "size-4",
-			md: "size-5",
-			lg: "size-6",
-		},
-	},
-	defaultVariants: {
-		size: "md",
-	},
+	variants: { size: { sm: "size-4", md: "size-5", lg: "size-6" } },
+	defaultVariants: { size: "md" },
 });
 
 const switchLabel = tv({
 	base: "text-foreground ml-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-	variants: {
-		size: {
-			sm: "text-sm",
-			md: "text-base",
-			lg: "text-lg",
-		},
-	},
-	defaultVariants: {
-		size: "md",
-	},
+	variants: { size: { sm: "text-sm", md: "text-base", lg: "text-lg" } },
+	defaultVariants: { size: "md" },
 });
 ---
 
@@ -170,10 +152,7 @@ const switchLabel = tv({
 
 			// Dispatch custom event with the new state
 			const event = new CustomEvent<SwitchChangeEvent["detail"]>("starwind-switch:change", {
-				detail: {
-					checked: newState,
-					switchId: this.switchButton.id,
-				},
+				detail: { checked: newState, switchId: this.switchButton.id },
 				bubbles: true,
 				cancelable: true,
 			});
