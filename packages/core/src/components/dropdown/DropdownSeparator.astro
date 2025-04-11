@@ -4,11 +4,17 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div">;
 
-const dialogHeader = tv({ base: "flex flex-col space-y-2 text-center sm:text-left" });
+const dropdownSeparator = tv({
+	base: "bg-muted -mx-1 my-1 h-px",
+});
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={dialogHeader({ class: className })} {...rest}>
-	<slot />
+<div
+	class={dropdownSeparator({ class: className })}
+	role="separator"
+	aria-orientation="horizontal"
+	{...rest}
+>
 </div>

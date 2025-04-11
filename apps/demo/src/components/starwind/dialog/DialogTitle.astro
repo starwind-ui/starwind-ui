@@ -6,12 +6,11 @@ type Props = Omit<HTMLAttributes<"h2">, "id"> & {
 	/**
 	 * The content to be rendered inside the dialog title
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	children: any;
 };
 
-const dialogTitle = tv({
-	base: "text-2xl leading-none font-semibold tracking-tight",
-});
+const dialogTitle = tv({ base: "text-2xl leading-none font-semibold tracking-tight" });
 
 const { class: className, ...rest } = Astro.props;
 ---

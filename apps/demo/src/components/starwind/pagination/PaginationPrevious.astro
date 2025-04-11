@@ -1,16 +1,12 @@
 ---
-import type { HTMLAttributes } from "astro/types";
 import ChevronLeft from "@tabler/icons/outline/chevron-left.svg";
-import PaginationLink from "./PaginationLink.astro";
+import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
+import PaginationLink from "./PaginationLink.astro";
 
-type Props = HTMLAttributes<"a"> & {
-	size?: "sm" | "md" | "lg" | "icon";
-};
+type Props = HTMLAttributes<"a"> & { size?: "sm" | "md" | "lg" | "icon" };
 
-const paginationPrevious = tv({
-	base: "group gap-1",
-});
+const paginationPrevious = tv({ base: "group gap-1" });
 
 const { class: className, size = "md", ...rest } = Astro.props;
 ---
