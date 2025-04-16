@@ -2,6 +2,8 @@ import { highlighter } from "@/utils/highlighter.js";
 import * as p from "@clack/prompts";
 import fs from "fs-extra";
 import { fileExists } from "./fs.js";
+import semver from "semver";
+import { readJsonFile } from "@/utils/fs.js";
 
 const CONFIG_EXTENSIONS = ["ts", "js", "mjs", "cjs"] as const;
 // type ConfigExtension = (typeof CONFIG_EXTENSIONS)[number];
@@ -18,6 +20,31 @@ async function findAstroConfig(): Promise<string | null> {
 		}
 	}
 	return null;
+}
+
+/**
+ * Gets the installed Astro version from the project's package.json
+ * @returns The installed Astro version or null if not found
+ */
+async function getAstroVersion(): Promise<string | null> {
+	try {
+		const pkg = await readJsonFile("package.json");
+		if (pkg.dependencies?.astro) {
+			const astroVersion = pkg.dependencies.astro.replace(/^\^|~/, "");
+			return astroVersion;
+		}
+
+		p.log.error(
+			highlighter.error(
+				"Astro seems not installed in your project, please check your package.json",
+			),
+		);
+		return null;
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+		p.log.error(highlighter.error(`Failed to check Astro version: ${errorMessage}`));
+		return null;
+	}
 }
 
 /**
@@ -49,16 +76,20 @@ export async function setupAstroConfig(): Promise<boolean> {
 		// Remove outer braces and trim
 		config = config.trim().replace(/^{|}$/g, "").trim();
 
-		// Add experimental configuration
-		if (!config.includes("experimental")) {
-			config += `\n\texperimental: {
+		const astroVersion = await getAstroVersion();
+
+		if (astroVersion && semver.lt(astroVersion, "5.7.0")) {
+			// Add experimental configuration
+			if (!config.includes("experimental")) {
+				config += `\n\texperimental: {
 		svg: true,
 	},`;
-		} else if (!config.includes("svg: {")) {
-			// Insert svg config into existing experimental block
-			const expEnd = config.indexOf("experimental:") + "experimental:".length;
-			const blockStart = config.indexOf("{", expEnd) + 1;
-			config = config.slice(0, blockStart) + `\n\t\tsvg: true,` + config.slice(blockStart);
+			} else if (!config.includes("svg: {")) {
+				// Insert svg config into existing experimental block
+				const expEnd = config.indexOf("experimental:") + "experimental:".length;
+				const blockStart = config.indexOf("{", expEnd) + 1;
+				config = config.slice(0, blockStart) + `\n\t\tsvg: true,` + config.slice(blockStart);
+			}
 		}
 
 		// Add vite configuration
