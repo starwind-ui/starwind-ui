@@ -84,7 +84,7 @@ export async function setupAstroConfig(): Promise<boolean> {
 				config += `\n\texperimental: {
 		svg: true,
 	},`;
-			} else if (!config.includes("svg: {")) {
+			} else if (!config.includes("svg: true") && !config.includes("svg: {")) {
 				// Insert svg config into existing experimental block
 				const expEnd = config.indexOf("experimental:") + "experimental:".length;
 				const blockStart = config.indexOf("{", expEnd) + 1;
