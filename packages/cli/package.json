@@ -1,6 +1,6 @@
 {
 	"name": "starwind",
-	"version": "1.5.2",
+	"version": "1.6.0",
 	"description": "Add beautifully designed components to your Astro applications",
 	"license": "MIT",
 	"author": {
@@ -44,18 +44,18 @@
 		"publish:release": "pnpm publish --access public"
 	},
 	"dependencies": {
-		"@clack/prompts": "^0.9.1",
-		"@starwind-ui/core": "1.5.1",
+		"@clack/prompts": "^0.10.1",
+		"@starwind-ui/core": "1.6.0",
 		"chalk": "^5.4.1",
 		"commander": "^13.0.0",
 		"execa": "^9.5.1",
 		"fs-extra": "^11.2.0",
 		"semver": "^7.6.3",
-		"zod": "^3.22.4"
+		"zod": "^3.24.3"
 	},
 	"devDependencies": {
 		"@types/fs-extra": "^11.0.4",
-		"@types/node": "^22.10.2",
+		"@types/node": "^22.15.2",
 		"@types/prompts": "^2.4.9",
 		"@types/semver": "^7.5.8",
 		"tsup": "^8.0.2"
