@@ -13,7 +13,7 @@ const dropdownTrigger = tv({
 	base: [
 		"starwind-dropdown-trigger",
 		"inline-flex items-center justify-center",
-		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+		"focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
 	],
 });
 
@@ -35,7 +35,6 @@ if (Astro.slots.has("default")) {
 		<button
 			class={dropdownTrigger({ class: className })}
 			type="button"
-			role="button"
 			aria-haspopup="true"
 			aria-expanded="false"
 			data-state="closed"
