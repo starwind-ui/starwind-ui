@@ -8,7 +8,7 @@ import { update } from "./commands/update.js";
 const program = new Command()
 	.name("starwind")
 	.description("Add beautifully designed components to your Astro applications")
-	.version("1.3.0");
+	.version("1.6.0");
 
 program
 	.command("init")

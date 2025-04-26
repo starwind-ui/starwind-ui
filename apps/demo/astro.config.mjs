@@ -17,9 +17,6 @@ export default defineConfig({
 	// adapter: cloudflare({
 	// 	imageService: "compile",
 	// }),
-	experimental: {
-		svg: true,
-	},
 
 	vite: {
 		plugins: [tailwindcss()],

@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@plugin "tailwindcss-animate";
+@import "tw-animate-css";
 @plugin "@tailwindcss/forms";
 @variant dark (&:where(.dark, .dark *));
 

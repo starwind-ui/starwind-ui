@@ -1,9 +1,9 @@
+import { readJsonFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import * as p from "@clack/prompts";
 import fs from "fs-extra";
-import { fileExists } from "./fs.js";
 import semver from "semver";
-import { readJsonFile } from "@/utils/fs.js";
+import { fileExists } from "./fs.js";
 
 const CONFIG_EXTENSIONS = ["ts", "js", "mjs", "cjs"] as const;
 // type ConfigExtension = (typeof CONFIG_EXTENSIONS)[number];

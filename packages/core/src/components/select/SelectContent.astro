@@ -9,6 +9,11 @@ type Props = HTMLAttributes<"div"> & {
 	 */
 	side?: "top" | "bottom";
 	/**
+	 * Alignment of the dropdown
+	 * @default start
+	 */
+	align?: "start" | "center" | "end";
+	/**
 	 * Offset distance in pixels
 	 * @default 4
 	 */
@@ -25,17 +30,20 @@ const selectContent = tv({
 		"starwind-select-content",
 		"bg-popover text-popover-foreground absolute z-50 min-w-[8rem] rounded-md border shadow-md",
 		"fade-in-0 zoom-in-95 animate-in overflow-hidden will-change-transform",
-		"data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:animate-out",
-		"left-0",
+		"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
 	],
 	variants: {
 		side: {
-			bottom:
-				"data-[side=bottom]:slide-in-from-top-4 data-[side=bottom]:top-(--select-content-offset)",
-			top: "data-[side=top]:slide-in-from-bottom-4 data-[side=top]:bottom-(--select-content-offset)",
+			bottom: "slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2 top-full",
+			top: "slide-in-from-bottom-2 data-[state=closed]:slide-out-to-bottom-2 bottom-full",
+		},
+		align: {
+			start: "slide-in-from-left-1 data-[state=closed]:slide-out-to-left-1 left-0",
+			center: "left-1/2 -translate-x-1/2",
+			end: "slide-in-from-right-1 data-[state=closed]:slide-out-to-right-1 right-0",
 		},
 	},
-	defaultVariants: { side: "bottom" },
+	defaultVariants: { side: "bottom", align: "start" },
 });
 
 const selectContentInner = tv({
@@ -45,6 +53,7 @@ const selectContentInner = tv({
 const {
 	class: className,
 	side = "bottom",
+	align = "start",
 	sideOffset = 4,
 	animationDuration = 150,
 	...rest
@@ -52,16 +61,18 @@ const {
 ---
 
 <div
-	class={selectContent({ side, class: className })}
+	class={selectContent({ side, align, class: className })}
 	role="listbox"
 	data-side={side}
+	data-align={align}
 	data-state="closed"
 	tabindex="-1"
 	style={{
-		"--select-content-offset": `calc(100% + ${sideOffset}px)`,
 		// hide the content initially. Script will remove this
 		display: "none",
 		animationDuration: `${animationDuration}ms`,
+		marginTop: side === "bottom" ? `${sideOffset}px` : undefined,
+		marginBottom: side === "top" ? `${sideOffset}px` : undefined,
 	}}
 	{...rest}
 >
