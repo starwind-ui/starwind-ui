@@ -2,19 +2,27 @@
 import type { HTMLAttributes } from "astro/types";
 
 type Props = HTMLAttributes<"div"> & {
+	/**
+	 * The name of the select field for form handling
+	 */
 	name?: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	children: any;
 	/**
 	 * The value of the item that should be selected by default
 	 */
 	defaultValue?: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	children: any;
 };
 
 const { class: className, name, defaultValue, ...rest } = Astro.props;
 ---
 
-<div class:list={["starwind-select", "relative", className]} data-name={name} data-value={defaultValue} {...rest}>
+<div
+	class:list={["starwind-select", "relative", className]}
+	data-name={name}
+	data-value={defaultValue}
+	{...rest}
+>
 	<slot />
 </div>
 
@@ -30,13 +38,11 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 		private animationDuration = 150;
 		private typeaheadTimerRef: number | null = null;
 		private typeaheadSearch = "";
-		private defaultValue: string | undefined;
 
 		constructor(select: HTMLElement, selectIdx: number) {
 			this.select = select;
 			this.trigger = select.querySelector(".starwind-select-trigger");
 			this.content = select.querySelector(".starwind-select-content");
-			this.defaultValue = select.dataset.defaultValue;
 
 			if (!this.trigger || !this.content) return;
 
