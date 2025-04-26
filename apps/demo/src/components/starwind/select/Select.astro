@@ -5,12 +5,16 @@ type Props = HTMLAttributes<"div"> & {
 	name?: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	children: any;
+  /**
+	 * The value of the item that should be selected by default
+	 */
+	defaultValue?: string;
 };
 
-const { class: className, name, ...rest } = Astro.props;
+const { class: className, name, defaultValue, ...rest } = Astro.props;
 ---
 
-<div class:list={["starwind-select", "relative", className]} data-name={name} {...rest}>
+<div class:list={["starwind-select", "relative", className]} data-name={name} data-value={defaultValue} {...rest}>
 	<slot />
 </div>
 
@@ -26,11 +30,13 @@ const { class: className, name, ...rest } = Astro.props;
 		private animationDuration = 150;
 		private typeaheadTimerRef: number | null = null;
 		private typeaheadSearch = "";
+		private defaultValue: string | undefined;
 
 		constructor(select: HTMLElement, selectIdx: number) {
 			this.select = select;
 			this.trigger = select.querySelector(".starwind-select-trigger");
 			this.content = select.querySelector(".starwind-select-content");
+			this.defaultValue = select.dataset.defaultValue;
 
 			if (!this.trigger || !this.content) return;
 
@@ -50,6 +56,7 @@ const { class: className, name, ...rest } = Astro.props;
 			this.setupAccessibility(selectIdx);
 			this.setupEvents();
 			this.setupSelectField();
+			this.setInitialState();
 		}
 
 		private setupSelectField() {
@@ -396,6 +403,21 @@ const { class: className, name, ...rest } = Astro.props;
 
 			// Close the select
 			this.closeSelect();
+		}
+
+		/**
+		 * Sets the initial state based on the default value attribute
+		 */
+		private setInitialState(): void {
+			const defaultValue = this.select.dataset.value;
+			if (defaultValue) {
+				const item = this.content?.querySelector(`[data-value="${defaultValue}"]`);
+
+				if (item && item instanceof HTMLElement) {
+					this.handleSelection(item);
+					this.selectedItem = item;
+				}
+			}
 		}
 
 		/**
