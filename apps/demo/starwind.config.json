@@ -1,50 +1,83 @@
 {
-	"tailwind": {
-		"css": "src/styles/starwind.css",
-		"baseColor": "gray",
-		"cssVariables": true
-	},
-	"componentDir": "src/components",
-	"components": [
-		{
-			"name": "alert",
-			"version": "0.0.1"
-		},
-		{
-			"name": "badge",
-			"version": "0.0.1"
-		},
-		{
-			"name": "button",
-			"version": "0.0.1"
-		},
-		{
-			"name": "card",
-			"version": "0.0.1"
-		},
-		{
-			"name": "checkbox",
-			"version": "0.0.1"
-		},
-		{
-			"name": "input",
-			"version": "0.0.1"
-		},
-		{
-			"name": "select",
-			"version": "0.0.1"
-		},
-		{
-			"name": "switch",
-			"version": "0.0.1"
-		},
-		{
-			"name": "tooltip",
-			"version": "0.0.1"
-		},
-		{
-			"name": "accordion",
-			"version": "0.0.1"
-		}
-	]
+  "$schema": "https://starwind.dev/config-schema.json",
+  "tailwind": {
+    "css": "src/styles/starwind.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
+  "componentDir": "src/components",
+  "components": [
+    {
+      "name": "alert",
+      "version": "1.1.1"
+    },
+    {
+      "name": "badge",
+      "version": "1.1.1"
+    },
+    {
+      "name": "button",
+      "version": "2.0.1"
+    },
+    {
+      "name": "card",
+      "version": "1.1.0"
+    },
+    {
+      "name": "checkbox",
+      "version": "1.2.0"
+    },
+    {
+      "name": "input",
+      "version": "1.1.1"
+    },
+    {
+      "name": "select",
+      "version": "1.2.0"
+    },
+    {
+      "name": "switch",
+      "version": "1.1.0"
+    },
+    {
+      "name": "tooltip",
+      "version": "1.1.1"
+    },
+    {
+      "name": "accordion",
+      "version": "1.1.0"
+    },
+    {
+      "name": "avatar",
+      "version": "1.1.1"
+    },
+    {
+      "name": "breadcrumb",
+      "version": "1.0.0"
+    },
+    {
+      "name": "dialog",
+      "version": "1.1.1"
+    },
+    {
+      "name": "label",
+      "version": "1.1.1"
+    },
+    {
+      "name": "pagination",
+      "version": "2.0.1"
+    },
+    {
+      "name": "tabs",
+      "version": "1.1.1"
+    },
+    {
+      "name": "textarea",
+      "version": "1.1.1"
+    },
+    {
+      "name": "dropdown",
+      "version": "1.0.0"
+    }
+  ]
 }

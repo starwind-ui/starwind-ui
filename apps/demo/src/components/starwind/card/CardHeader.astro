@@ -4,9 +4,7 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div">;
 
-const cardHeader = tv({
-	base: "flex flex-col space-y-2 p-8",
-});
+const cardHeader = tv({ base: "flex flex-col space-y-2 p-8" });
 
 const { class: className, ...rest } = Astro.props;
 ---

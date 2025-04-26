@@ -2,6 +2,8 @@
 import Mail from "@tabler/icons/outline/mail.svg";
 import Flame from "@tabler/icons/outline/flame.svg";
 import InfoCircle from "@tabler/icons/outline/info-circle.svg";
+import Copy from "@tabler/icons/outline/copy.svg";
+import Edit from "@tabler/icons/outline/edit.svg";
 
 // layout
 import Layout from "@/layouts/Layout.astro";
@@ -20,6 +22,16 @@ import {
 	AccordionContent,
 } from "@/components/starwind/accordion";
 // import Accordion from "@/components/starwind/accordion";
+
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbEllipsis,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/components/starwind/breadcrumb";
 
 import {
 	Pagination,
@@ -64,6 +76,15 @@ import {
 	DialogClose,
 } from "@/components/starwind/dialog";
 
+import {
+	Dropdown,
+	DropdownContent,
+	DropdownItem,
+	DropdownLabel,
+	DropdownSeparator,
+	DropdownTrigger,
+} from "@/components/starwind/dropdown";
+
 import { Input } from "@/components/starwind/input";
 
 import { Label } from "@/components/starwind/label";
@@ -94,6 +115,74 @@ import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
 	description="A collection of accessible UI components built with Astro"
 >
 	<div class="container mx-auto px-4 pb-20">
+		<!-- breadcrumb -->
+		<section class="mx-auto mt-6 max-w-lg">
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/">Home</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbEllipsis />
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/components">Components</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbPage>Breadcrumb</BreadcrumbPage>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+		</section>
+
+		<!-- dropdown -->
+		<section class="mx-auto mt-6 max-w-lg">
+			<h2 class="mb-4 text-2xl font-bold">Dropdown</h2>
+			<div class="flex items-center gap-4">
+				<!-- Basic Dropdown -->
+				<Dropdown openOnHover>
+					<DropdownTrigger asChild>
+						<Button>Left</Button>
+					</DropdownTrigger>
+					<DropdownContent>
+						<DropdownLabel>My Account</DropdownLabel>
+						<DropdownSeparator />
+						<DropdownItem as="a" href="/profile">Profile</DropdownItem>
+						<DropdownItem>Settings</DropdownItem>
+						<DropdownSeparator />
+						<DropdownItem>Help</DropdownItem>
+						<DropdownItem disabled>Sign out</DropdownItem>
+					</DropdownContent>
+				</Dropdown>
+
+				<!-- Dropdown with Groups -->
+				<Dropdown>
+					<DropdownTrigger asChild>
+						<Button>Right</Button>
+					</DropdownTrigger>
+					<DropdownContent align="end" side="bottom">
+						<DropdownLabel>Actions</DropdownLabel>
+						<DropdownSeparator />
+						<DropdownItem>
+							<Copy />
+							Copy
+						</DropdownItem>
+						<DropdownItem>
+							<Edit />
+							Edit
+						</DropdownItem>
+						<DropdownSeparator />
+						<DropdownLabel>Danger Zone</DropdownLabel>
+						<DropdownItem inset>Archive</DropdownItem>
+						<DropdownItem inset disabled>Delete</DropdownItem>
+					</DropdownContent>
+				</Dropdown>
+			</div>
+		</section>
+
 		<!-- dialog -->
 		<section class="mx-auto mt-6 max-w-lg">
 			<EditProfileForm />

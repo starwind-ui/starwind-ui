@@ -1,0 +1,22 @@
+---
+import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"li">;
+
+const breadcrumbSeparator = tv({ base: "[&>svg]:size-4" });
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<li
+	role="presentation"
+	aria-hidden="true"
+	class={breadcrumbSeparator({ class: className })}
+	{...rest}
+>
+	<slot>
+		<ChevronRight />
+	</slot>
+</li>

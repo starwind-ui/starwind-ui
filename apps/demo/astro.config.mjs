@@ -9,7 +9,7 @@ export default defineConfig({
 		compress({
 			HTML: true,
 			JavaScript: true,
-			CSS: true,
+			CSS: false,
 			Image: false, // astro:assets handles this. Enabling this can dramatically increase build times
 			SVG: false, // astro-icon handles this
 		}),
@@ -18,9 +18,7 @@ export default defineConfig({
 	// 	imageService: "compile",
 	// }),
 	experimental: {
-		svg: {
-			mode: "sprite",
-		},
+		svg: true,
 	},
 
 	vite: {

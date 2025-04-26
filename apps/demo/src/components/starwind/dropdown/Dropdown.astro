@@ -1,0 +1,355 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div"> & {
+	/**
+	 * When true, the dropdown will open on hover in addition to click
+	 */
+	openOnHover?: boolean;
+	/**
+	 * Time in milliseconds to wait before closing when hover open is enabled
+	 * @default 200
+	 */
+	closeDelay?: number;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	children: any;
+};
+
+const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Astro.props;
+---
+
+<div
+	class:list={["starwind-dropdown", "relative", className]}
+	data-open-on-hover={openOnHover ? "true" : undefined}
+	data-close-delay={closeDelay}
+	{...rest}
+>
+	<slot />
+</div>
+
+<script>
+	class DropdownHandler {
+		private dropdown: HTMLElement;
+		private trigger: HTMLButtonElement | null;
+		private content: HTMLElement | null;
+		private items: HTMLElement[] = [];
+		private currentFocusIndex: number = -1;
+		private isOpen: boolean = false;
+		private animationDuration = 150;
+		private openOnHover: boolean;
+		private closeDelay: number;
+		private closeTimerRef: number | null = null;
+
+		constructor(dropdown: HTMLElement, dropdownIdx: number) {
+			this.dropdown = dropdown;
+			this.openOnHover = dropdown.getAttribute("data-open-on-hover") === "true";
+			this.closeDelay = parseInt(dropdown.getAttribute("data-close-delay") || "200");
+
+			// Get the temporary trigger element
+			const tempTrigger = dropdown.querySelector(".starwind-dropdown-trigger") as HTMLElement;
+
+			// if trigger is set with asChild, use the first child element for trigger button
+			if (tempTrigger?.hasAttribute("data-as-child")) {
+				this.trigger = tempTrigger.firstElementChild as HTMLButtonElement;
+			} else {
+				this.trigger = tempTrigger as HTMLButtonElement;
+			}
+
+			this.content = dropdown.querySelector(".starwind-dropdown-content");
+
+			if (!this.trigger || !this.content) return;
+
+			// Get animation duration from inline styles if available
+			const animationDurationString = this.content.style.animationDuration;
+			if (animationDurationString.endsWith("ms")) {
+				this.animationDuration = parseFloat(animationDurationString);
+			} else if (animationDurationString.endsWith("s")) {
+				this.animationDuration = parseFloat(animationDurationString) * 1000;
+			}
+
+			this.init(dropdownIdx);
+		}
+
+		private init(dropdownIdx: number) {
+			this.setupAccessibility(dropdownIdx);
+			this.setupEvents();
+		}
+
+		private setupAccessibility(dropdownIdx: number) {
+			if (!this.trigger || !this.content) return;
+
+			// Generate unique IDs for accessibility
+			this.trigger.id = `starwind-dropdown${dropdownIdx}-trigger`;
+			this.content.id = `starwind-dropdown${dropdownIdx}-content`;
+
+			// Set up additional ARIA attributes
+			this.trigger.setAttribute("aria-controls", this.content.id);
+			this.content.setAttribute("aria-labelledby", this.trigger.id);
+		}
+
+		private setupEvents() {
+			if (!this.trigger || !this.content) return;
+
+			// Handle trigger click
+			this.trigger.addEventListener("click", (e) => {
+				e.preventDefault();
+				this.toggleDropdown();
+			});
+
+			// Handle keyboard navigation
+			this.trigger.addEventListener("keydown", (e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					this.toggleDropdown();
+				} else if (e.key === "Escape" && this.isOpen) {
+					e.preventDefault();
+					this.closeDropdown();
+				} else if (this.isOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+					e.preventDefault();
+					this.updateDropdownItems();
+					if (e.key === "ArrowDown") {
+						this.focusItem(0); // Focus first item when opening with arrow down
+					} else {
+						this.focusItem(this.items.length - 1); // Focus last item when opening with arrow up
+					}
+				}
+			});
+
+			// Close dropdown when clicking outside for mouse
+			document.addEventListener("pointerdown", (e) => {
+				if (this.isOpen && !this.dropdown.contains(e.target as Node)) {
+					// only call handler if it's the left button (mousedown gets triggered by all mouse buttons)
+					// but not when the control key is pressed (avoiding MacOS right click); also not for touch
+					// devices because that would open the menu on scroll. (pen devices behave as touch on iOS).
+					if (e.button === 0 && e.ctrlKey === false && e.pointerType === "mouse") {
+						this.closeDropdown();
+					}
+				}
+			});
+
+			// Handle click outside select content to close for mobile
+			document.addEventListener("click", (e) => {
+				if (
+					!(this.trigger?.contains(e.target as Node) || this.content?.contains(e.target as Node)) &&
+					this.isOpen
+				) {
+					this.closeDropdown();
+				}
+			});
+
+			// Handle keyboard navigation and item selection within dropdown
+			this.content.addEventListener("keydown", (e) => {
+				if (e.key === "Escape") {
+					e.preventDefault();
+					this.closeDropdown();
+					this.trigger?.focus();
+				} else if (this.isOpen) {
+					this.handleMenuKeydown(e);
+				}
+			});
+
+			// Handle item selection
+			this.content.addEventListener("click", (e) => {
+				const target = e.target as HTMLElement;
+				const item = target.closest('[role="menuitem"]');
+				if (item && !(item as HTMLElement).hasAttribute("data-disabled")) {
+					// Close the dropdown after item selection
+					this.closeDropdown();
+					console.log("click closing");
+				}
+			});
+
+			// Handle hover on dropdown items
+			this.content.addEventListener("mouseover", (e) => {
+				const target = e.target as HTMLElement;
+				const menuItem = target.closest('[role="menuitem"]');
+				if (menuItem && menuItem instanceof HTMLElement && this.isOpen === true) {
+					// Update items list before focusing to ensure the index is correct
+					this.updateDropdownItems();
+
+					// Focus the item when hovering
+					menuItem.focus();
+
+					// Update the current focus index
+					this.currentFocusIndex = this.items.indexOf(menuItem);
+				}
+			});
+
+			if (this.openOnHover) {
+				this.trigger.addEventListener("pointerenter", (e) => {
+					if (e.pointerType !== "mouse") return;
+					if (!this.isOpen) {
+						this.openDropdown();
+					} else {
+						// If the dropdown is already open, make sure to clear any close timer
+						this.clearCloseTimer();
+					}
+				});
+
+				this.dropdown.addEventListener("pointerleave", (e) => {
+					if (e.pointerType !== "mouse") return;
+					if (this.isOpen) {
+						this.closeDropdownDelayed();
+					}
+				});
+
+				this.content.addEventListener("pointerenter", (e) => {
+					if (e.pointerType !== "mouse") return;
+					// If the user moves the mouse to the content, cancel the close timer
+					this.clearCloseTimer();
+				});
+			}
+		}
+
+		private handleMenuKeydown(e: KeyboardEvent) {
+			// Make sure we've got an updated list of menu items
+			this.updateDropdownItems();
+
+			// Skip if no items
+			if (this.items.length === 0) return;
+
+			const currentIdx = this.currentFocusIndex;
+
+			switch (e.key) {
+				case "ArrowDown":
+					e.preventDefault();
+					this.focusItem(currentIdx === -1 ? 0 : currentIdx + 1);
+					break;
+				case "ArrowUp":
+					e.preventDefault();
+					this.focusItem(currentIdx === -1 ? this.items.length - 1 : currentIdx - 1);
+					break;
+				case "Home":
+					e.preventDefault();
+					this.focusItem(0);
+					break;
+				case "End":
+					e.preventDefault();
+					this.focusItem(this.items.length - 1);
+					break;
+				case "Enter":
+				case " ":
+					if (currentIdx !== -1) {
+						e.preventDefault();
+						this.items[currentIdx].click();
+					}
+					break;
+			}
+		}
+
+		private updateDropdownItems() {
+			if (!this.content) return;
+			// Get all interactive menuitem elements
+			this.items = Array.from(
+				this.content.querySelectorAll('[role="menuitem"]:not([data-disabled="true"])'),
+			) as HTMLElement[];
+		}
+
+		private focusItem(idx: number) {
+			// Ensure the index wraps around properly
+			const targetIdx = (idx + this.items.length) % this.items.length;
+
+			if (this.items[targetIdx]) {
+				this.items[targetIdx].focus();
+				this.currentFocusIndex = targetIdx;
+			}
+		}
+
+		private toggleDropdown() {
+			if (this.isOpen) {
+				this.closeDropdown();
+			} else {
+				this.openDropdown();
+			}
+		}
+
+		private openDropdown() {
+			if (!this.content || !this.trigger || this.trigger.disabled) return;
+
+			this.isOpen = true;
+			this.content.setAttribute("data-state", "open");
+			this.trigger.setAttribute("aria-expanded", "true");
+			this.content.style.removeProperty("display");
+
+			// Update the list of dropdown items
+			this.updateDropdownItems();
+
+			// Reset focus index when opening
+			this.currentFocusIndex = -1;
+
+			this.positionContent();
+		}
+
+		private closeDropdown() {
+			if (!this.content || !this.trigger) return;
+
+			this.isOpen = false;
+			this.content.setAttribute("data-state", "closed");
+
+			// Set focus back on trigger
+			requestAnimationFrame(() => {
+				if (!this.trigger) return;
+				this.trigger.focus();
+			});
+
+			// Give the content time to animate before hiding
+			setTimeout(() => {
+				if (!this.content) return;
+				this.content.style.display = "none";
+			}, this.animationDuration - 10);
+
+			this.trigger.setAttribute("aria-expanded", "false");
+
+			// Reset focus index when closing
+			this.currentFocusIndex = -1;
+		}
+
+		private closeDropdownDelayed() {
+			if (!this.content || !this.trigger) return;
+
+			// Clear any existing close timer
+			this.clearCloseTimer();
+
+			// Set a new timer to close the dropdown after the delay
+			this.closeTimerRef = window.setTimeout(() => {
+				if (this.isOpen) {
+					this.closeDropdown();
+				}
+				this.closeTimerRef = null;
+			}, this.closeDelay);
+		}
+
+		private clearCloseTimer() {
+			if (this.closeTimerRef !== null) {
+				window.clearTimeout(this.closeTimerRef);
+				this.closeTimerRef = null;
+			}
+		}
+
+		private positionContent() {
+			if (!this.content || !this.trigger) return;
+
+			// Set content width to match trigger width
+			this.content.style.width = "var(--starwind-dropdown-trigger-width)";
+			this.content.style.setProperty(
+				"--starwind-dropdown-trigger-width",
+				`${this.trigger.offsetWidth}px`,
+			);
+		}
+	}
+
+	// Store instances in a WeakMap to avoid memory leaks
+	const dropdownInstances = new WeakMap<HTMLElement, DropdownHandler>();
+
+	// Initialize dropdowns
+	const initDropdowns = () => {
+		document.querySelectorAll(".starwind-dropdown").forEach((dropdown, idx) => {
+			if (dropdown instanceof HTMLElement && !dropdownInstances.has(dropdown)) {
+				dropdownInstances.set(dropdown, new DropdownHandler(dropdown, idx));
+			}
+		});
+	};
+
+	initDropdowns();
+	document.addEventListener("astro:after-swap", initDropdowns);
+</script>
