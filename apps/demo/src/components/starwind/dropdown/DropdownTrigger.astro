@@ -28,7 +28,7 @@ if (Astro.slots.has("default")) {
 
 {
 	asChild && hasChildren ? (
-		<div class={`starwind-dropdown-trigger${className ? ` ${className}` : ""}`} data-as-child>
+		<div class={`starwind-dropdown-trigger ${className}`} data-as-child>
 			<slot />
 		</div>
 	) : (
