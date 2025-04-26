@@ -47,7 +47,9 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 		constructor(tabs: HTMLElement, idx: number, parentHandler: TabsHandler | null = null) {
 			this.tabs = tabs;
 			this.parentHandler = parentHandler;
-			this.triggers = Array.from(tabs.querySelectorAll(":scope > [data-tabs-list] > [data-tabs-trigger]"));
+			this.triggers = Array.from(
+				tabs.querySelectorAll(":scope > [data-tabs-list] > [data-tabs-trigger]"),
+			);
 			this.contents = Array.from(tabs.querySelectorAll(":scope > [data-tabs-content]"));
 			this.tabsId = `starwind-tabs${idx}`;
 			this.syncKey = tabs.dataset.syncKey;
@@ -234,7 +236,7 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 			// Initialize any nested tabs in the active content
 			if (content.hasAttribute("data-state") && content.getAttribute("data-state") === "active") {
 				const nestedTabs = content.querySelectorAll<HTMLElement>(".starwind-tabs");
-				
+
 				nestedTabs.forEach((nestedTab, nestedIdx) => {
 					// Skip tabs that already have instances
 					if (!tabInstances.has(nestedTab)) {

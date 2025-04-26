@@ -3,8 +3,8 @@ import TableBody from "./TableBody.astro";
 import TableCaption from "./TableCaption.astro";
 import TableCell from "./TableCell.astro";
 import TableFoot from "./TableFoot.astro";
-import TableHeader from "./TableHeader.astro";
 import TableHead from "./TableHead.astro";
+import TableHeader from "./TableHeader.astro";
 import TableRow from "./TableRow.astro";
 
 export { Table, TableBody, TableCaption, TableCell, TableFoot, TableHead, TableHeader, TableRow };
