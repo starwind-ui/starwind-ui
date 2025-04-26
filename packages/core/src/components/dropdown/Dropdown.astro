@@ -35,6 +35,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 		private items: HTMLElement[] = [];
 		private currentFocusIndex: number = -1;
 		private isOpen: boolean = false;
+		private isClosing: boolean = false;
 		private animationDuration = 150;
 		private openOnHover: boolean;
 		private closeDelay: number;
@@ -178,6 +179,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 			if (this.openOnHover) {
 				this.trigger.addEventListener("pointerenter", (e) => {
 					if (e.pointerType !== "mouse") return;
+					if (this.isClosing) return;
 					if (!this.isOpen) {
 						this.openDropdown();
 					} else {
@@ -264,6 +266,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 		}
 
 		private openDropdown() {
+			if (this.isClosing) return;
 			if (!this.content || !this.trigger || this.trigger.disabled) return;
 
 			this.isOpen = true;
@@ -283,6 +286,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 		private closeDropdown() {
 			if (!this.content || !this.trigger) return;
 
+			this.isClosing = true;
 			this.isOpen = false;
 			this.content.setAttribute("data-state", "closed");
 
@@ -296,6 +300,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 			setTimeout(() => {
 				if (!this.content) return;
 				this.content.style.display = "none";
+				this.isClosing = false;
 			}, this.animationDuration - 10);
 
 			this.trigger.setAttribute("aria-expanded", "false");
