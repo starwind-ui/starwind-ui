@@ -42,11 +42,15 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 		private storageKey: string;
 		private valueToTriggerMap: Map<string, HTMLButtonElement>;
 		private valueToContentMap: Map<string, HTMLElement>;
+		private parentHandler: TabsHandler | null = null;
 
-		constructor(tabs: HTMLElement, idx: number) {
+		constructor(tabs: HTMLElement, idx: number, parentHandler: TabsHandler | null = null) {
 			this.tabs = tabs;
-			this.triggers = Array.from(tabs.querySelectorAll("[data-tabs-trigger]"));
-			this.contents = Array.from(tabs.querySelectorAll("[data-tabs-content]"));
+			this.parentHandler = parentHandler;
+			this.triggers = Array.from(
+				tabs.querySelectorAll(":scope > [data-tabs-list] > [data-tabs-trigger]"),
+			);
+			this.contents = Array.from(tabs.querySelectorAll(":scope > [data-tabs-content]"));
 			this.tabsId = `starwind-tabs${idx}`;
 			this.syncKey = tabs.dataset.syncKey;
 			this.storageKey = this.syncKey
@@ -228,6 +232,20 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 				c.setAttribute("data-state", isActive ? "active" : "inactive");
 				c.hidden = !isActive;
 			});
+
+			// Initialize any nested tabs in the active content
+			if (content.hasAttribute("data-state") && content.getAttribute("data-state") === "active") {
+				const nestedTabs = content.querySelectorAll<HTMLElement>(".starwind-tabs");
+
+				nestedTabs.forEach((nestedTab, nestedIdx) => {
+					// Skip tabs that already have instances
+					if (!tabInstances.has(nestedTab)) {
+						const uniqueIdx = 1000 + nestedIdx;
+						const handler = new TabsHandler(nestedTab, uniqueIdx, this);
+						tabInstances.set(nestedTab, handler);
+					}
+				});
+			}
 		}
 	}
 
@@ -235,8 +253,11 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 	const tabInstances = new WeakMap<HTMLElement, TabsHandler>();
 
 	const setupTabs = () => {
+		// First handle top-level tabs
 		document.querySelectorAll<HTMLElement>(".starwind-tabs").forEach((tabs, idx) => {
-			if (!tabInstances.has(tabs)) {
+			// Skip tabs that are nested within other tab contents
+			const isNested = !!tabs.closest("[data-tabs-content]");
+			if (!isNested && !tabInstances.has(tabs)) {
 				tabInstances.set(tabs, new TabsHandler(tabs, idx));
 			}
 		});

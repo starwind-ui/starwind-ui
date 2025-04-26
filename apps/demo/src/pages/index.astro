@@ -217,6 +217,37 @@ import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
 				<TabsContent value="bun">$ bun dev</TabsContent>
 				<TabsContent value="yarn">$ yarn dev</TabsContent>
 			</Tabs>
+
+			<!-- Nested Tabs Demo -->
+			<section class="mt-8">
+				<h2 class="mb-4 text-2xl font-bold">Nested Tabs</h2>
+				<Tabs defaultValue="parent-1" class="max-w-[500px]">
+					<TabsList>
+						<TabsTrigger value="parent-1">Parent Tab 1</TabsTrigger>
+						<TabsTrigger value="parent-2">Parent Tab 2</TabsTrigger>
+						<TabsTrigger value="parent-3">Parent Tab 3</TabsTrigger>
+					</TabsList>
+					<TabsContent value="parent-1">
+						Content of Parent Tab 1
+					</TabsContent>
+					<TabsContent value="parent-2">
+						<div>
+							<p class="mb-2">Parent Tab 2 contains its own tabs:</p>
+							<Tabs defaultValue="child-a" class="max-w-[350px]">
+								<TabsList>
+									<TabsTrigger value="child-a">Child A</TabsTrigger>
+									<TabsTrigger value="child-b">Child B</TabsTrigger>
+								</TabsList>
+								<TabsContent value="child-a">Content of Child Tab A</TabsContent>
+								<TabsContent value="child-b">Content of Child Tab B</TabsContent>
+							</Tabs>
+						</div>
+					</TabsContent>
+					<TabsContent value="parent-3">
+						Content of Parent Tab 3
+					</TabsContent>
+				</Tabs>
+			</section>
 		</section>
 
 		<!-- forms -->
