@@ -40,6 +40,8 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 		private openOnHover: boolean;
 		private closeDelay: number;
 		private closeTimerRef: number | null = null;
+		private lastOpenSource: "keyboard" | "mouse" = "keyboard";
+		private lastCloseSource: "keyboard" | "mouse" = "keyboard";
 
 		constructor(dropdown: HTMLElement, dropdownIdx: number) {
 			this.dropdown = dropdown;
@@ -94,6 +96,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 			// Handle trigger click
 			this.trigger.addEventListener("click", (e) => {
 				e.preventDefault();
+				this.lastOpenSource = e.detail === 0 ? "keyboard" : "mouse";
 				this.toggleDropdown();
 			});
 
@@ -101,12 +104,15 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 			this.trigger.addEventListener("keydown", (e) => {
 				if (e.key === "Enter" || e.key === " ") {
 					e.preventDefault();
+					this.lastOpenSource = "keyboard";
 					this.toggleDropdown();
 				} else if (e.key === "Escape" && this.isOpen) {
 					e.preventDefault();
+					this.lastCloseSource = "keyboard";
 					this.closeDropdown();
 				} else if (this.isOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
 					e.preventDefault();
+					this.lastOpenSource = "keyboard";
 					this.updateDropdownItems();
 					if (e.key === "ArrowDown") {
 						this.focusItem(0); // Focus first item when opening with arrow down
@@ -181,6 +187,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 					if (e.pointerType !== "mouse") return;
 					if (this.isClosing) return;
 					if (!this.isOpen) {
+						this.lastOpenSource = "mouse";
 						this.openDropdown();
 					} else {
 						// If the dropdown is already open, make sure to clear any close timer
@@ -191,6 +198,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 				this.dropdown.addEventListener("pointerleave", (e) => {
 					if (e.pointerType !== "mouse") return;
 					if (this.isOpen) {
+						this.lastCloseSource = "mouse";
 						this.closeDropdownDelayed();
 					}
 				});
@@ -290,18 +298,24 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 			this.isOpen = false;
 			this.content.setAttribute("data-state", "closed");
 
-			// Set focus back on trigger
-			requestAnimationFrame(() => {
-				if (!this.trigger) return;
-				this.trigger.focus();
-			});
+			// Set focus back on trigger only if opened or closed by keyboard
+			if (
+				!this.openOnHover ||
+				this.lastOpenSource === "keyboard" ||
+				this.lastCloseSource === "keyboard"
+			) {
+				requestAnimationFrame(() => {
+					if (!this.trigger) return;
+					this.trigger.focus();
+				});
+			}
 
 			// Give the content time to animate before hiding
 			setTimeout(() => {
 				if (!this.content) return;
 				this.content.style.display = "none";
 				this.isClosing = false;
-			}, this.animationDuration - 10);
+			}, this.animationDuration);
 
 			this.trigger.setAttribute("aria-expanded", "false");
 

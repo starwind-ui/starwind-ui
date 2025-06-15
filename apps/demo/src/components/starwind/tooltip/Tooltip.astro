@@ -162,7 +162,7 @@ const {
 				setTimeout(() => {
 					if (!this.content) return;
 					this.content.style.display = "none";
-				}, this.animationDuration - 10);
+				}, this.animationDuration);
 				this.content.setAttribute("data-state", "closed");
 				return;
 			}
@@ -173,7 +173,7 @@ const {
 					setTimeout(() => {
 						if (!this.content) return;
 						this.content.style.display = "none";
-					}, this.animationDuration - 10);
+					}, this.animationDuration);
 					if (!this.content) return;
 					this.content.setAttribute("data-state", "closed");
 					this.closeTimerRef = null;
