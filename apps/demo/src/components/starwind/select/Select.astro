@@ -368,7 +368,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 			setTimeout(() => {
 				if (!this.content) return;
 				this.content.style.display = "none";
-			}, this.animationDuration - 10);
+			}, this.animationDuration);
 
 			this.trigger.setAttribute("aria-expanded", "false");
 		}

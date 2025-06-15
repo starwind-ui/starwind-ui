@@ -315,7 +315,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 				if (!this.content) return;
 				this.content.style.display = "none";
 				this.isClosing = false;
-			}, this.animationDuration - 10);
+			}, this.animationDuration);
 
 			this.trigger.setAttribute("aria-expanded", "false");
 

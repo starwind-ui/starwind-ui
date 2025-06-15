@@ -29,18 +29,18 @@ const selectContent = tv({
 	base: [
 		"starwind-select-content",
 		"bg-popover text-popover-foreground absolute z-50 min-w-[8rem] rounded-md border shadow-md",
-		"fade-in-0 zoom-in-95 animate-in overflow-hidden will-change-transform",
-		"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+		"data-[state=open]:animate-in fade-in zoom-in-95 overflow-hidden will-change-transform",
+		"data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
 	],
 	variants: {
 		side: {
-			bottom: "slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2 top-full",
-			top: "slide-in-from-bottom-2 data-[state=closed]:slide-out-to-bottom-2 bottom-full",
+			bottom: "slide-in-from-top-2 slide-out-to-top-2 top-full",
+			top: "slide-in-from-bottom-2 slide-out-to-bottom-2 bottom-full",
 		},
 		align: {
-			start: "slide-in-from-left-1 data-[state=closed]:slide-out-to-left-1 left-0",
+			start: "slide-in-from-left-1 slide-out-to-left-1 left-0",
 			center: "left-1/2 -translate-x-1/2",
-			end: "slide-in-from-right-1 data-[state=closed]:slide-out-to-right-1 right-0",
+			end: "slide-in-from-right-1 slide-out-to-right-1 right-0",
 		},
 	},
 	defaultVariants: { side: "bottom", align: "start" },
