@@ -38,6 +38,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 		private animationDuration = 150;
 		private typeaheadTimerRef: number | null = null;
 		private typeaheadSearch = "";
+		private returnFocusOnClose: boolean = true;
 
 		constructor(select: HTMLElement, selectIdx: number) {
 			this.select = select;
@@ -134,6 +135,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 				// but not when the control key is pressed (avoiding MacOS right click); also not for touch
 				// devices because that would open the menu on scroll. (pen devices behave as touch on iOS).
 				if (e.button === 0 && e.ctrlKey === false && e.pointerType === "mouse") {
+					this.returnFocusOnClose = true;
 					this.toggleSelect();
 				}
 			});
@@ -142,6 +144,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 			this.trigger.addEventListener("click", (e) => {
 				if (window.matchMedia("(pointer: coarse)").matches) {
 					e.preventDefault();
+					this.returnFocusOnClose = true;
 					this.toggleSelect();
 				}
 			});
@@ -150,6 +153,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 			this.trigger.addEventListener("keydown", (e) => {
 				if (e.key === "Enter" || e.key === " ") {
 					e.preventDefault();
+					this.returnFocusOnClose = true;
 					this.toggleSelect();
 				}
 			});
@@ -159,8 +163,10 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 				if (e.key === "Enter" || e.key === " ") {
 					// set element based on current focused element
 					const activeElement = document.activeElement;
+					this.returnFocusOnClose = true;
 					this.handleSelection(activeElement as HTMLElement);
 				} else if (e.key === "Escape" && this.isOpen) {
+					this.returnFocusOnClose = true;
 					this.closeSelect();
 				}
 
@@ -203,6 +209,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 						) &&
 						this.isOpen
 					) {
+						this.returnFocusOnClose = false;
 						this.closeSelect();
 					}
 				}
@@ -214,6 +221,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 					!(this.trigger?.contains(e.target as Node) || this.content?.contains(e.target as Node)) &&
 					this.isOpen
 				) {
+					this.returnFocusOnClose = false;
 					this.closeSelect();
 				}
 			});
@@ -222,6 +230,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 			this.content?.addEventListener("click", (e) => {
 				const item = (e.target as HTMLElement).closest("[role='option']");
 				if (item instanceof HTMLElement) {
+					this.returnFocusOnClose = true;
 					this.handleSelection(item);
 				}
 			});
@@ -358,11 +367,13 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 				activeElement.blur();
 			}
 
-			// Set focus on trigger
-			requestAnimationFrame(() => {
-				if (!this.trigger) return;
-				this.trigger.focus();
-			});
+			// Set focus on trigger if returnFocusOnClose is true
+			if (this.returnFocusOnClose) {
+				requestAnimationFrame(() => {
+					if (!this.trigger) return;
+					this.trigger.focus();
+				});
+			}
 
 			// give the content time to animate before hiding
 			setTimeout(() => {
@@ -420,6 +431,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 				const item = this.content?.querySelector(`[data-value="${defaultValue}"]`);
 
 				if (item && item instanceof HTMLElement) {
+					this.returnFocusOnClose = false;
 					this.handleSelection(item);
 					this.selectedItem = item;
 				}
