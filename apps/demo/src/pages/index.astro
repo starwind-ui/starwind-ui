@@ -158,19 +158,19 @@ import {
 
 				<div>
 					<h3 class="mb-2 text-lg font-medium">Subscription Plan</h3>
-					<RadioGroup name="plan" label="Select your subscription plan" orientation="horizontal">
+					<RadioGroup name="plan" label="Select your subscription plan">
 						<div class="flex items-center space-x-6">
 							<div class="flex items-center gap-3">
-								<RadioGroupItem value="free" id="free" />
-								<Label for="free">Free</Label>
+								<RadioGroupItem value="free" id="free" size="sm" variant="secondary" />
+								<Label for="free">Small</Label>
 							</div>
 							<div class="flex items-center gap-3">
-								<RadioGroupItem value="pro" id="pro" />
-								<Label for="pro">Pro</Label>
+								<RadioGroupItem value="pro" id="pro" size="md" variant="info" />
+								<Label for="pro">Medium</Label>
 							</div>
 							<div class="flex items-center gap-3">
-								<RadioGroupItem value="team" id="team" />
-								<Label for="team">Team</Label>
+								<RadioGroupItem value="team" id="team" size="lg" variant="success" />
+								<Label for="team">Large</Label>
 							</div>
 						</div>
 					</RadioGroup>

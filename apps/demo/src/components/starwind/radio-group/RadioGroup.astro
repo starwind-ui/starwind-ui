@@ -35,7 +35,7 @@ type Props = HTMLAttributes<"fieldset"> & {
 };
 
 const radioGroup = tv({
-	base: "starwind-radio-group",
+	base: "starwind-radio-group disabled:cursor-not-allowed disabled:opacity-70",
 	variants: {
 		orientation: {
 			vertical: "grid gap-3",
@@ -61,16 +61,8 @@ const {
 ---
 
 <fieldset
-	class:list={[
-		radioGroup({ orientation, class: className }),
-		required && "required",
-		disabled && "opacity-70",
-	]}
-	data-slot="radio-group"
+	class:list={[radioGroup({ orientation, class: className })]}
 	data-value={value || defaultValue}
-	data-orientation={orientation}
-	data-required={required ? "" : undefined}
-	data-disabled={disabled ? "" : undefined}
 	disabled={disabled}
 	{...rest}
 >
@@ -79,11 +71,14 @@ const {
 </fieldset>
 
 <script>
+	import type { RadioGroupChangeEvent } from "./RadioGroupTypes";
+
 	// Initialize radio groups on page load
 	const initRadioGroups = () => {
 		document.querySelectorAll(".starwind-radio-group").forEach((fieldset) => {
 			const group = fieldset as HTMLFieldSetElement;
 			const initialValue = group.dataset.value;
+			const radioGroupId = group.id || undefined;
 
 			if (initialValue) {
 				// Find the radio input with the matching value and check it
@@ -114,9 +109,12 @@ const {
 					target.checked = true;
 
 					// Dispatch custom event for external listeners
-					const event = new CustomEvent("starwind:value-change", {
+					const event = new CustomEvent<RadioGroupChangeEvent["detail"]>("starwind:value-change", {
 						bubbles: true,
-						detail: { value: target.value },
+						detail: {
+							value: target.value,
+							radioGroupId: group.id,
+						},
 					});
 					group.dispatchEvent(event);
 				}
@@ -127,6 +125,8 @@ const {
 	// Execute initialization immediately
 	initRadioGroups();
 
-	// Handle Astro view transitions
+	// Re-initialize for client-side navigation and Astro view transitions
+	window.addEventListener("DOMContentLoaded", initRadioGroups);
 	document.addEventListener("astro:after-swap", initRadioGroups);
+	document.addEventListener("astro:page-load", initRadioGroups);
 </script>
