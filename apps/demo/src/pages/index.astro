@@ -109,6 +109,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/t
 import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
 // import Tooltip from "@/components/starwind/tooltip";
 
+import { RadioGroup, RadioGroupItem } from "@/components/starwind/radio-group";
+
 import {
 	Table,
 	TableBody,
@@ -126,6 +128,56 @@ import {
 	description="A collection of accessible UI components built with Astro"
 >
 	<div class="container mx-auto px-4 pb-20">
+		<!-- radio group -->
+		<section class="mx-auto mt-6 max-w-lg">
+			<h2 class="mb-4 text-2xl font-bold">Radio Group</h2>
+			<div class="space-y-6">
+				<div>
+					<h3 class="mb-2 text-lg font-medium">Favorite Fruit</h3>
+					<RadioGroup name="fruit" defaultValue="apple">
+						<div class="space-y-2">
+							<div class="flex items-center gap-3">
+								<RadioGroupItem value="apple" id="apple" />
+								<Label for="apple">Apple</Label>
+							</div>
+							<div class="flex items-center gap-3">
+								<RadioGroupItem value="banana" id="banana" />
+								<Label for="banana">Banana</Label>
+							</div>
+							<div class="flex items-center gap-3">
+								<RadioGroupItem value="orange" id="orange" />
+								<Label for="orange">Orange</Label>
+							</div>
+							<div class="flex items-center gap-3">
+								<RadioGroupItem value="strawberry" id="strawberry" disabled />
+								<Label for="strawberry">Strawberry</Label>
+							</div>
+						</div>
+					</RadioGroup>
+				</div>
+
+				<div>
+					<h3 class="mb-2 text-lg font-medium">Subscription Plan</h3>
+					<RadioGroup name="plan" label="Select your subscription plan" orientation="horizontal">
+						<div class="flex items-center space-x-6">
+							<div class="flex items-center gap-3">
+								<RadioGroupItem value="free" id="free" />
+								<Label for="free">Free</Label>
+							</div>
+							<div class="flex items-center gap-3">
+								<RadioGroupItem value="pro" id="pro" />
+								<Label for="pro">Pro</Label>
+							</div>
+							<div class="flex items-center gap-3">
+								<RadioGroupItem value="team" id="team" />
+								<Label for="team">Team</Label>
+							</div>
+						</div>
+					</RadioGroup>
+				</div>
+			</div>
+		</section>
+
 		<!-- breadcrumb -->
 		<section class="mx-auto mt-6 max-w-lg">
 			<Breadcrumb>

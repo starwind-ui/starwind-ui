@@ -1,0 +1,87 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+import CircleFilled from "@tabler/icons/filled/circle.svg";
+
+type Props = HTMLAttributes<"input"> & {
+	/**
+	 * Value of the radio item
+	 */
+	value: string;
+	/**
+	 * Whether the radio is disabled
+	 */
+	disabled?: boolean;
+	/**
+	 * Optional ID for the radio item
+	 */
+	id?: string;
+	/**
+	 * Name to group radio inputs
+	 */
+	name?: string;
+	/**
+	 * Whether the radio is checked (only for initial state)
+	 */
+	checked?: boolean;
+};
+
+const radioWrapper = tv({
+	base: "relative flex h-4 w-4 shrink-0 cursor-pointer",
+});
+
+const radioItem = tv({
+	base: [
+		"starwind-radio-item peer",
+		"absolute inset-0 h-full w-full cursor-pointer opacity-0 outline-none focus:outline-none focus-visible:outline-none",
+	],
+});
+
+const radioControl = tv({
+	base: [
+		"starwind-radio-control",
+		"border-input ring-offset-background",
+		"peer-focus-visible:outline-outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-1 peer-focus-visible:transition-none",
+		// "peer-focus-visible:ring-ring peer-focus-visible:border-ring peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2",
+		"absolute inset-0 rounded-full border shadow-xs",
+		"starwind-transition-colors",
+		"peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+		"flex items-center justify-center",
+		"peer-checked:border-primary [&>svg]:fill-primary peer-checked:[&>svg]:opacity-100",
+	],
+});
+
+const radioIndicator = tv({
+	base: [
+		"starwind-radio-indicator",
+		"absolute top-1/2 left-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2",
+		"opacity-0 transition-opacity",
+	],
+});
+
+const {
+	value,
+	name,
+	disabled = false,
+	checked = false,
+	id,
+	class: className,
+	...rest
+} = Astro.props;
+---
+
+<label class={radioWrapper({ class: className })} for={id}>
+	<input
+		type="radio"
+		class={radioItem()}
+		name={name}
+		id={id}
+		value={value}
+		checked={checked}
+		disabled={disabled}
+		{...rest}
+	/>
+	<span class={radioControl()}>
+		<CircleFilled class={radioIndicator()} />
+	</span>
+</label>
