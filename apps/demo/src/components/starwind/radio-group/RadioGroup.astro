@@ -4,11 +4,11 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"fieldset"> & {
 	/**
-	 * Optional value for the radio group
+	 * Value for the radio group
 	 */
 	value?: string;
 	/**
-	 * Optional default value for the radio group
+	 * Default value for the radio group
 	 */
 	defaultValue?: string;
 	/**
@@ -17,9 +17,9 @@ type Props = HTMLAttributes<"fieldset"> & {
 	 */
 	name: string;
 	/**
-	 * Optional label for the radio group
+	 * Legend for the radio group
 	 */
-	label?: string;
+	legend?: string;
 	/**
 	 * Whether the radio group is required
 	 */
@@ -29,7 +29,7 @@ type Props = HTMLAttributes<"fieldset"> & {
 	 */
 	disabled?: boolean;
 	/**
-	 * Optional orientation
+	 * Orientation of the radio group
 	 */
 	orientation?: "horizontal" | "vertical";
 };
@@ -52,7 +52,7 @@ const {
 	value,
 	defaultValue,
 	name,
-	label,
+	legend,
 	required = false,
 	disabled = false,
 	orientation = "vertical",
@@ -66,7 +66,7 @@ const {
 	disabled={disabled}
 	{...rest}
 >
-	{label && <legend class="sr-only">{label}</legend>}
+	{legend && <legend class="sr-only">{legend}</legend>}
 	<slot />
 </fieldset>
 
