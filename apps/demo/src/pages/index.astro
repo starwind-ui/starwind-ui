@@ -101,6 +101,8 @@ import {
 } from "@/components/starwind/select";
 // import Select from "@/components/starwind/select";
 
+import { Skeleton } from "@/components/starwind/skeleton";
+
 import { Switch } from "@/components/starwind/switch";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/tabs";
@@ -128,6 +130,26 @@ import {
 	description="A collection of accessible UI components built with Astro"
 >
 	<div class="container mx-auto px-4 pb-20">
+		<!-- skeleton -->
+		<section class="mx-auto mt-6 max-w-lg">
+			<h2 class="mb-4 text-2xl font-bold">Skeleton</h2>
+			<div class="flex items-center space-x-4">
+				<Skeleton class="h-12 w-12 rounded-full" />
+				<div class="space-y-2">
+					<Skeleton class="h-4 w-[250px]" />
+					<Skeleton class="h-4 w-[200px]" />
+				</div>
+			</div>
+
+			<div class="mt-6 flex flex-col space-y-3">
+				<Skeleton class="h-[125px] w-[250px] rounded-xl" />
+				<div class="space-y-2">
+					<Skeleton class="h-4 w-[250px]" />
+					<Skeleton class="h-4 w-[200px]" />
+				</div>
+			</div>
+		</section>
+
 		<!-- radio group -->
 		<section class="mx-auto mt-6 max-w-lg">
 			<h2 class="mb-4 text-2xl font-bold">Radio Group</h2>
