@@ -14,7 +14,7 @@ export interface Props extends HTMLAttributes<"div"> {
 	/**
 	 * Color variant for the progress indicator (default: default)
 	 */
-	variant?: "primary" | "secondary" | "default" | "info" | "success" | "warning" | "error";
+	variant?: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error";
 }
 
 const { class: className, value, max = 100, variant = "default", ...rest } = Astro.props;
@@ -33,7 +33,7 @@ const progress = tv({
 });
 
 const indicator = tv({
-	base: ["starwind-progress-indicator", "h-full w-full flex-1 transition-all"],
+	base: ["starwind-progress-indicator", "h-full w-full flex-1 transition-transform"],
 	variants: {
 		variant: {
 			indeterminate: "absolute inset-y-0 start-0 w-3/4",
@@ -84,14 +84,6 @@ const indicatorStyle = isIndeterminate
 </div>
 
 <script>
-	interface ProgressChangeEvent {
-		detail: {
-			value: number;
-			max: number;
-			progressId: string;
-		};
-	}
-
 	class ProgressHandler {
 		private progressElement: HTMLElement;
 		private observer!: MutationObserver;
@@ -134,19 +126,6 @@ const indicatorStyle = isIndeterminate
 				if (indicator) {
 					indicator.style.transform = `translateX(-${100 - valuePercent}%)`;
 				}
-
-				// Dispatch custom event with the new value
-				const event = new CustomEvent<ProgressChangeEvent["detail"]>("starwind-progress:change", {
-					detail: {
-						value,
-						max,
-						progressId: this.progressElement.id || "",
-					},
-					bubbles: true,
-					cancelable: true,
-				});
-
-				this.progressElement.dispatchEvent(event);
 			}
 		}
 
