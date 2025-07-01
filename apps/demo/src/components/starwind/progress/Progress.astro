@@ -1,0 +1,172 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+export interface Props extends HTMLAttributes<"div"> {
+	/**
+	 * Current value of the progress bar (omit for indeterminate state)
+	 */
+	value?: number;
+	/**
+	 * Maximum value for the progress bar (default: 100)
+	 */
+	max?: number;
+	/**
+	 * Color variant for the progress indicator (default: default)
+	 */
+	variant?: "primary" | "secondary" | "default" | "info" | "success" | "warning" | "error";
+}
+
+const { class: className, value, max = 100, variant = "default", ...rest } = Astro.props;
+
+const isIndeterminate = value == null;
+const valuePercent = isIndeterminate ? undefined : Math.round((value / max) * 100);
+const valueText = isIndeterminate ? undefined : `${valuePercent}%`;
+
+const progress = tv({
+	base: ["starwind-progress-bar", "bg-accent h-2 w-full overflow-hidden rounded-full"],
+	variants: {
+		variant: {
+			indeterminate: "relative",
+		},
+	},
+});
+
+const indicator = tv({
+	base: ["starwind-progress-indicator", "h-full w-full flex-1 transition-all"],
+	variants: {
+		variant: {
+			indeterminate: "absolute inset-y-0 start-0 w-3/4",
+		},
+		color: {
+			primary: "bg-primary",
+			secondary: "bg-secondary",
+			default: "bg-foreground",
+			info: "bg-info",
+			success: "bg-success",
+			warning: "bg-warning",
+			error: "bg-error",
+		},
+	},
+	defaultVariants: {
+		color: "primary",
+	},
+});
+
+const progressClasses = progress({
+	variant: isIndeterminate ? "indeterminate" : undefined,
+	class: className,
+});
+
+const indicatorClasses = indicator({
+	variant: isIndeterminate ? "indeterminate" : undefined,
+	color: variant,
+});
+
+const indicatorStyle = isIndeterminate
+	? ""
+	: `transform: translateX(-${100 - (valuePercent ?? 0)}%);`;
+---
+
+<div
+	role="progressbar"
+	aria-valuemin={0}
+	aria-valuemax={max}
+	aria-valuenow={isIndeterminate ? undefined : value}
+	aria-valuetext={valueText}
+	class:list={[progressClasses]}
+	data-value={value}
+	data-max={max}
+	data-indeterminate={isIndeterminate}
+	{...rest}
+>
+	<div class:list={[indicatorClasses]} style={indicatorStyle}></div>
+</div>
+
+<script>
+	interface ProgressChangeEvent {
+		detail: {
+			value: number;
+			max: number;
+			progressId: string;
+		};
+	}
+
+	class ProgressHandler {
+		private progressElement: HTMLElement;
+		private observer!: MutationObserver;
+
+		constructor(progressElement: HTMLElement) {
+			this.progressElement = progressElement;
+			this.setupMutationObserver();
+			this.updateProgress(); // Initial update
+		}
+
+		private setupMutationObserver(): void {
+			// Create a MutationObserver to watch for data-value attribute changes
+			this.observer = new MutationObserver((mutations) => {
+				mutations.forEach((mutation) => {
+					if (mutation.attributeName === "data-value" || mutation.attributeName === "data-max") {
+						this.updateProgress();
+					}
+				});
+			});
+
+			// Start observing
+			this.observer.observe(this.progressElement, { attributes: true });
+		}
+
+		private updateProgress(): void {
+			const value = Number(this.progressElement.getAttribute("data-value"));
+			const max = Number(this.progressElement.getAttribute("data-max") || 100);
+			const isIndeterminate = this.progressElement.hasAttribute("data-indeterminate")
+				? this.progressElement.getAttribute("data-indeterminate") === "true"
+				: value == null;
+
+			// Update ARIA attributes
+			if (!isIndeterminate) {
+				const valuePercent = Math.round((value / max) * 100);
+				this.progressElement.setAttribute("aria-valuenow", String(value));
+				this.progressElement.setAttribute("aria-valuetext", `${valuePercent}%`);
+
+				// Update indicator position
+				const indicator = this.progressElement.querySelector("div");
+				if (indicator) {
+					indicator.style.transform = `translateX(-${100 - valuePercent}%)`;
+				}
+
+				// Dispatch custom event with the new value
+				const event = new CustomEvent<ProgressChangeEvent["detail"]>("starwind-progress:change", {
+					detail: {
+						value,
+						max,
+						progressId: this.progressElement.id || "",
+					},
+					bubbles: true,
+					cancelable: true,
+				});
+
+				this.progressElement.dispatchEvent(event);
+			}
+		}
+
+		// Clean up method to disconnect observer
+		public destroy(): void {
+			this.observer.disconnect();
+		}
+	}
+
+	// Store instances in a WeakMap to avoid memory leaks
+	const progressInstances = new WeakMap<HTMLElement, ProgressHandler>();
+
+	const setupProgressBars = () => {
+		document.querySelectorAll<HTMLElement>(".starwind-progress-bar").forEach((progressElement) => {
+			if (!progressInstances.has(progressElement)) {
+				progressInstances.set(progressElement, new ProgressHandler(progressElement));
+			}
+		});
+	};
+
+	setupProgressBars();
+	document.addEventListener("astro:after-swap", setupProgressBars);
+</script>

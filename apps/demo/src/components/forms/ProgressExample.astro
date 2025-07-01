@@ -1,0 +1,35 @@
+---
+import { Progress } from "@/components/starwind/progress";
+import { Button } from "@/components/starwind/button";
+---
+
+<div class="flex w-full max-w-[400px] flex-col gap-4">
+	<h3 class="text-lg font-medium">Interactive Progress Example</h3>
+
+	<div class="space-y-4">
+		<Progress id="interactive-progress" value={25} class="w-full" />
+
+		<Button id="toggle-progress" variant="outline">Toggle Progress (25% ⟷ 75%)</Button>
+	</div>
+</div>
+
+<script>
+	let isHighValue = false;
+
+	function setupProgressExample() {
+		const progressElement = document.getElementById("interactive-progress");
+		const toggleButton = document.getElementById("toggle-progress");
+
+		if (!progressElement || !toggleButton) return;
+
+		toggleButton.addEventListener("click", () => {
+			isHighValue = !isHighValue;
+			const newValue = isHighValue ? 75 : 25;
+
+			progressElement.setAttribute("data-value", String(newValue));
+		});
+	}
+
+	setupProgressExample();
+	document.addEventListener("astro:after-swap", setupProgressExample);
+</script>
