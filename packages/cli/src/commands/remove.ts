@@ -132,18 +132,18 @@ export async function remove(components?: string[], options?: { all?: boolean })
 		// ================================================================
 		p.log.message(`\n\n${highlighter.underline("Removal Summary")}`);
 
-		if (results.removed.length > 0) {
-			p.log.success(
-				`${highlighter.success("Successfully removed components:")}\n${results.removed
-					.map((r) => `  ${r.name}`)
-					.join("\n")}`,
-			);
-		}
-
 		if (results.failed.length > 0) {
 			p.log.error(
 				`${highlighter.error("Failed to remove components:")}\n${results.failed
 					.map((r) => `  ${r.name} - ${r.error}`)
+					.join("\n")}`,
+			);
+		}
+
+		if (results.removed.length > 0) {
+			p.log.success(
+				`${highlighter.success("Successfully removed components:")}\n${results.removed
+					.map((r) => `  ${r.name}`)
 					.join("\n")}`,
 			);
 		}

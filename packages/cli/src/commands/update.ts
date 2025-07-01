@@ -164,6 +164,14 @@ export async function update(components?: string[], options?: UpdateOptions) {
 		// ================================================================
 		p.log.message(`\n\n${highlighter.underline("Update Summary")}`);
 
+		if (results.failed.length > 0) {
+			p.log.error(
+				`${highlighter.error("Failed to update components:")}\n${results.failed
+					.map((r) => `  ${r.name} - ${r.error}`)
+					.join("\n")}`,
+			);
+		}
+
 		if (results.skipped.length > 0) {
 			p.log.info(
 				`${highlighter.info("Components already up to date or skipped:")}\n${results.skipped
@@ -176,14 +184,6 @@ export async function update(components?: string[], options?: UpdateOptions) {
 			p.log.success(
 				`${highlighter.success("Successfully updated components:")}\n${results.updated
 					.map((r) => `  ${r.name} (${r.oldVersion} → ${r.newVersion})`)
-					.join("\n")}`,
-			);
-		}
-
-		if (results.failed.length > 0) {
-			p.log.error(
-				`${highlighter.error("Failed to update components:")}\n${results.failed
-					.map((r) => `  ${r.name} - ${r.error}`)
 					.join("\n")}`,
 			);
 		}

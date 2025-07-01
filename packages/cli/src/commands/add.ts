@@ -160,10 +160,10 @@ export async function add(components?: string[], options?: { all?: boolean }) {
 		// ================================================================
 		p.log.message(`\n\n${highlighter.underline("Installation Summary")}`);
 
-		if (results.installed.length > 0) {
-			p.log.success(
-				`${highlighter.success("Successfully installed components:")}\n${results.installed
-					.map((r) => `  ${r.name} v${r.version}`)
+		if (results.failed.length > 0) {
+			p.log.error(
+				`${highlighter.error("Failed to install components:")}\n${results.failed
+					.map((r) => `  ${r.name} - ${r.error}`)
 					.join("\n")}`,
 			);
 		}
@@ -176,10 +176,10 @@ export async function add(components?: string[], options?: { all?: boolean }) {
 			);
 		}
 
-		if (results.failed.length > 0) {
-			p.log.error(
-				`${highlighter.error("Failed to install components:")}\n${results.failed
-					.map((r) => `  ${r.name} - ${r.error}`)
+		if (results.installed.length > 0) {
+			p.log.success(
+				`${highlighter.success("Successfully installed components:")}\n${results.installed
+					.map((r) => `  ${r.name} v${r.version}`)
 					.join("\n")}`,
 			);
 		}
