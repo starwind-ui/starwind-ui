@@ -1,0 +1,114 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+import CloudUpload from "@tabler/icons/outline/cloud-upload.svg";
+
+type Props = HTMLAttributes<"input">;
+
+// extract id separately so it's not duplicated when we spread "rest"
+const { class: className, id: inputId, ...rest } = Astro.props as Props;
+
+// Base styling util using tailwind-variants
+const root = tv({
+	base: [
+		"starwind-file-input",
+		"relative flex w-full flex-col items-center justify-center gap-1 rounded-lg p-10",
+		"bg-background text-muted-foreground border-input border border-dashed text-center text-sm",
+		"hover:bg-muted/50 starwind-transition-colors data-[drag-active=true]:bg-muted/50 cursor-pointer",
+		"focus-visible:outline-outline focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-offset-2",
+	],
+});
+---
+
+<label
+	tabindex="0"
+	for={inputId}
+	class:list={[root({ class: className })]}
+	data-drag-active="false"
+>
+	<slot>
+		<CloudUpload class="size-10" aria-hidden="true" />
+		<span class="mt-2 text-sm"> Click to upload or drag and drop </span>
+	</slot>
+	<input tabindex="-1" id={inputId} type="file" class="sr-only" {...rest} />
+</label>
+
+<script>
+	class FileInputHandler {
+		private label: HTMLLabelElement;
+		private input: HTMLInputElement;
+
+		constructor(label: HTMLLabelElement, idx: number) {
+			this.label = label;
+			const maybeInput = label.querySelector<HTMLInputElement>('input[type="file"]');
+			if (!maybeInput) {
+				throw new Error("No file input found inside starwind-file-input");
+			}
+			this.input = maybeInput;
+
+			// generate ID if none was passed
+			if (!this.input.id) {
+				const generatedId = `starwind-file-input-${idx}`;
+				this.input.id = generatedId;
+				this.label.htmlFor = generatedId;
+			}
+
+			this.setupEvents();
+		}
+
+		private setActive(active: boolean) {
+			this.label.dataset.dragActive = String(active);
+		}
+
+		private setupEvents() {
+			this.label.addEventListener("dragover", (e) => {
+				e.preventDefault();
+				this.setActive(true);
+			});
+
+			this.label.addEventListener("dragleave", () => {
+				this.setActive(false);
+			});
+
+			this.label.addEventListener("drop", (e) => {
+				e.preventDefault();
+				this.setActive(false);
+
+				const { files } = e.dataTransfer || {};
+				if (files && files.length) {
+					const dt = new DataTransfer();
+					Array.from(files).forEach((file) => dt.items.add(file));
+					this.input.files = dt.files;
+					this.input.dispatchEvent(new Event("change", { bubbles: true }));
+				}
+			});
+
+			// Add keyboard accessibility for Enter and Space keys
+			this.label.addEventListener("keydown", (e) => {
+				// Handle Enter (13) and Space (32) keys
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					this.input.click(); // Trigger the native file dialog
+				}
+			});
+		}
+	}
+
+	// Store instances in a WeakMap to avoid memory leaks
+	const fileInputInstances = new WeakMap<HTMLElement, FileInputHandler>();
+
+	const setupFileInputs = () => {
+		document.querySelectorAll<HTMLLabelElement>(".starwind-file-input").forEach((label, idx) => {
+			if (!fileInputInstances.has(label)) {
+				try {
+					fileInputInstances.set(label, new FileInputHandler(label, idx));
+				} catch {
+					/* ignore labels without inputs */
+				}
+			}
+		});
+	};
+
+	setupFileInputs();
+	document.addEventListener("astro:after-swap", setupFileInputs);
+</script>
