@@ -2,7 +2,7 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
-export interface Props extends HTMLAttributes<"div"> {
+type Props = HTMLAttributes<"div"> & {
 	/**
 	 * Current value of the progress bar (omit for indeterminate state)
 	 */
@@ -15,7 +15,7 @@ export interface Props extends HTMLAttributes<"div"> {
 	 * Color variant for the progress indicator (default: default)
 	 */
 	variant?: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error";
-}
+};
 
 const { class: className, value, max = 100, variant = "default", ...rest } = Astro.props;
 
