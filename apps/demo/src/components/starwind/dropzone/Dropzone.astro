@@ -6,29 +6,34 @@ import DropzoneFilesList from "./DropzoneFilesList.astro";
 import DropzoneLoadingIndicator from "./DropzoneLoadingIndicator.astro";
 import DropzoneUploadIndicator from "./DropzoneUploadIndicator.astro";
 
-type Props = HTMLAttributes<"input">;
+type Props = HTMLAttributes<"input"> & {
+  /**
+   * Whether to show the loading indicator initially
+   */
+  isUploading?: boolean;
+};
 
-// extract id separately so it's not duplicated when we spread "rest"
-const { class: className, id: inputId, ...rest } = Astro.props as Props;
+// extract id separately so it can be used in the label. The input will get the same id with "-input" suffix.
+const { class: className, id, isUploading = false, ...rest } = Astro.props as Props;
 
 const root = tv({
   base: [
     "starwind-dropzone",
     "relative flex w-full flex-col items-center justify-center gap-1 rounded-lg px-6 py-12",
-    "bg-background text-muted-foreground border-input border border-dashed text-center text-sm",
-    "hover:bg-muted/50 starwind-transition-colors data-[drag-active=true]:bg-muted/50 cursor-pointer",
+    "bg-background text-muted-foreground border-input cursor-pointer border border-dashed text-center text-sm",
+    "starwind-transition-colors data-[is-uploading=false]:hover:bg-muted/50 data-[drag-active=true]:bg-muted/50",
     "focus-visible:outline-outline focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-offset-2",
   ],
 });
 ---
 
 <label
+  id={id}
   tabindex="0"
-  for={inputId}
   class={root({ class: className })}
   data-drag-active="false"
   data-has-files="false"
-  data-is-uploading="false"
+  data-is-uploading={String(isUploading)}
 >
   <slot>
     <DropzoneUploadIndicator />
@@ -36,7 +41,7 @@ const root = tv({
     <DropzoneFilesList />
   </slot>
 
-  <input tabindex="-1" id={inputId} type="file" class="sr-only" {...rest} />
+  <input tabindex="-1" type="file" class="sr-only" {...rest} />
 </label>
 
 <script>
@@ -48,6 +53,7 @@ const root = tv({
     private loadingIndicator: HTMLElement | null;
     private filesList: HTMLElement | null;
     private files: File[] = [];
+    private hasFiles: boolean = false;
     private isUploading: boolean = false;
     private observer: MutationObserver | null = null;
 
@@ -62,8 +68,12 @@ const root = tv({
       this.loadingIndicator = label.querySelector(".starwind-loading-indicator");
       this.filesList = label.querySelector(".starwind-files-list");
 
-      // generate ID if none was passed
-      if (!this.input.id) {
+      // generate ID
+      if (this.label.id) {
+        const inputId = this.label.id + "-input";
+        this.input.id = inputId;
+        this.label.htmlFor = inputId;
+      } else {
         const generatedId = `starwind-dropzone-${idx}`;
         this.input.id = generatedId;
         this.label.htmlFor = generatedId;
