@@ -1,89 +1,86 @@
 ---
 import { Button } from "@/components/starwind/button";
-
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/starwind/card";
-
 import { Input } from "@/components/starwind/input";
 import { Label } from "@/components/starwind/label";
-
 import {
-	Select,
-	SelectTrigger,
-	SelectValue,
-	SelectContent,
-	SelectItem,
-	SelectGroup,
-	SelectLabel,
-	SelectSeparator,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/starwind/select";
 ---
 
 <Card class="w-[400px]">
-	<CardHeader>
-		<CardTitle>Create project</CardTitle>
-		<CardDescription>Deploy your new project in one-click.</CardDescription>
-	</CardHeader>
-	<form id="create-project-form">
-		<CardContent class="flex flex-col gap-4">
-			<div class="flex w-full flex-col gap-2">
-				<Label for="name">Name</Label>
-				<Input type="text" id="name" placeholder="Name of your project" />
-				<!-- <InputFeedback>This is a required field</InputFeedback> -->
-			</div>
-			<div class="flex w-full flex-col gap-2">
-				<Label for="framework">Framework</Label>
-				<Select id="framework">
-					<SelectTrigger class="w-full" required>
-						<SelectValue placeholder="Select" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectGroup>
-							<SelectLabel>Frameworks</SelectLabel>
-							<SelectItem value="astro">Astro</SelectItem>
-							<SelectItem value="next">Next.js</SelectItem>
-							<SelectItem value="svelte">SvelteKit</SelectItem>
-							<SelectItem value="solid">SolidStart</SelectItem>
-						</SelectGroup>
-					</SelectContent>
-				</Select>
-			</div>
-		</CardContent>
-		<CardFooter class="flex justify-between">
-			<Button variant="outline">Cancel</Button>
-			<Button type="submit">Deploy</Button>
-		</CardFooter>
-	</form>
+  <CardHeader>
+    <CardTitle>Create project</CardTitle>
+    <CardDescription>Deploy your new project in one-click.</CardDescription>
+  </CardHeader>
+  <form id="create-project-form">
+    <CardContent class="flex flex-col gap-4">
+      <div class="flex w-full flex-col gap-2">
+        <Label for="name">Name</Label>
+        <Input type="text" id="name" placeholder="Name of your project" />
+        <!-- <InputFeedback>This is a required field</InputFeedback> -->
+      </div>
+      <div class="flex w-full flex-col gap-2">
+        <Label for="framework">Framework</Label>
+        <Select id="framework">
+          <SelectTrigger class="w-full" required>
+            <SelectValue placeholder="Select" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Frameworks</SelectLabel>
+              <SelectItem value="astro">Astro</SelectItem>
+              <SelectItem value="next">Next.js</SelectItem>
+              <SelectItem value="svelte">SvelteKit</SelectItem>
+              <SelectItem value="solid">SolidStart</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
+    </CardContent>
+    <CardFooter class="flex justify-between">
+      <Button variant="outline">Cancel</Button>
+      <Button type="submit">Deploy</Button>
+    </CardFooter>
+  </form>
 </Card>
 
 <script>
-	const setupForm = () => {
-		const form = document.getElementById("create-project-form") as HTMLFormElement;
-		if (!form) return;
+  const setupForm = () => {
+    const form = document.getElementById("create-project-form") as HTMLFormElement;
+    if (!form) return;
 
-		form.addEventListener("submit", (e) => {
-			e.preventDefault();
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
 
-			const formData = new FormData(form);
-			console.log(formData);
-			const data = Object.fromEntries(formData);
+      const formData = new FormData(form);
+      console.log(formData);
+      const data = Object.fromEntries(formData);
 
-			// Log all form inputs
-			console.log("Form submission data:", {
-				name: (form.querySelector("#name") as HTMLInputElement)?.value,
-				framework: (form.querySelector("#framework select") as HTMLSelectElement)?.value,
-				// allFormData: data,
-			});
-		});
-	};
+      // Log all form inputs
+      console.log("Form submission data:", {
+        name: (form.querySelector("#name") as HTMLInputElement)?.value,
+        framework: (form.querySelector("#framework select") as HTMLSelectElement)?.value,
+        // allFormData: data,
+      });
+    });
+  };
 
-	setupForm();
+  setupForm();
 
-	document.addEventListener("astro:after-swap", setupForm);
+  document.addEventListener("astro:after-swap", setupForm);
 </script>

@@ -1,0 +1,25 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+
+const filesList = tv({
+  base: [
+    "starwind-files-list",
+    "mt-1 -mb-8 min-h-8",
+    "bg-muted invisible flex flex-col gap-1 rounded-md px-2 py-1 text-center text-sm",
+    "[&_div]:flex [&_div]:items-center [&_div]:gap-1 [&_svg]:size-3.5",
+  ],
+});
+---
+
+<div
+  class={filesList({ class: className })}
+  aria-live="polite"
+  aria-label="Uploaded files"
+  {...rest}
+>
+</div>

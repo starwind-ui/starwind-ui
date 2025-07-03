@@ -1,8 +1,10 @@
-import { readJsonFile } from "@/utils/fs.js";
-import { highlighter } from "@/utils/highlighter.js";
 import * as p from "@clack/prompts";
 import fs from "fs-extra";
 import semver from "semver";
+
+import { readJsonFile } from "@/utils/fs.js";
+import { highlighter } from "@/utils/highlighter.js";
+
 import { fileExists } from "./fs.js";
 
 const CONFIG_EXTENSIONS = ["ts", "js", "mjs", "cjs"] as const;
@@ -13,13 +15,13 @@ const CONFIG_EXTENSIONS = ["ts", "js", "mjs", "cjs"] as const;
  * @returns The path to the config file if found, null otherwise
  */
 async function findAstroConfig(): Promise<string | null> {
-	for (const ext of CONFIG_EXTENSIONS) {
-		const configPath = `astro.config.${ext}`;
-		if (await fileExists(configPath)) {
-			return configPath;
-		}
-	}
-	return null;
+  for (const ext of CONFIG_EXTENSIONS) {
+    const configPath = `astro.config.${ext}`;
+    if (await fileExists(configPath)) {
+      return configPath;
+    }
+  }
+  return null;
 }
 
 /**
@@ -27,24 +29,24 @@ async function findAstroConfig(): Promise<string | null> {
  * @returns The installed Astro version or null if not found
  */
 async function getAstroVersion(): Promise<string | null> {
-	try {
-		const pkg = await readJsonFile("package.json");
-		if (pkg.dependencies?.astro) {
-			const astroVersion = pkg.dependencies.astro.replace(/^\^|~/, "");
-			return astroVersion;
-		}
+  try {
+    const pkg = await readJsonFile("package.json");
+    if (pkg.dependencies?.astro) {
+      const astroVersion = pkg.dependencies.astro.replace(/^\^|~/, "");
+      return astroVersion;
+    }
 
-		p.log.error(
-			highlighter.error(
-				"Astro seems not installed in your project, please check your package.json",
-			),
-		);
-		return null;
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-		p.log.error(highlighter.error(`Failed to check Astro version: ${errorMessage}`));
-		return null;
-	}
+    p.log.error(
+      highlighter.error(
+        "Astro seems not installed in your project, please check your package.json",
+      ),
+    );
+    return null;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    p.log.error(highlighter.error(`Failed to check Astro version: ${errorMessage}`));
+    return null;
+  }
 }
 
 /**
@@ -52,72 +54,72 @@ async function getAstroVersion(): Promise<string | null> {
  * @returns true if successful, false otherwise
  */
 export async function setupAstroConfig(): Promise<boolean> {
-	try {
-		let configPath = await findAstroConfig();
-		let content = "";
+  try {
+    let configPath = await findAstroConfig();
+    let content = "";
 
-		if (configPath) {
-			content = await fs.readFile(configPath, "utf-8");
-		} else {
-			configPath = "astro.config.ts";
-			content = `import { defineConfig } from "astro/config";\n\nexport default defineConfig({});\n`;
-		}
+    if (configPath) {
+      content = await fs.readFile(configPath, "utf-8");
+    } else {
+      configPath = "astro.config.ts";
+      content = `import { defineConfig } from "astro/config";\n\nexport default defineConfig({});\n`;
+    }
 
-		// Add tailwindcss import if not present
-		if (!content.includes('import tailwindcss from "@tailwindcss/vite"')) {
-			content = `import tailwindcss from "@tailwindcss/vite";\n${content}`;
-		}
+    // Add tailwindcss import if not present
+    if (!content.includes('import tailwindcss from "@tailwindcss/vite"')) {
+      content = `import tailwindcss from "@tailwindcss/vite";\n${content}`;
+    }
 
-		// Parse the configuration object
-		const configStart = content.indexOf("defineConfig(") + "defineConfig(".length;
-		const configEnd = content.lastIndexOf(");");
-		let config = content.slice(configStart, configEnd);
+    // Parse the configuration object
+    const configStart = content.indexOf("defineConfig(") + "defineConfig(".length;
+    const configEnd = content.lastIndexOf(");");
+    let config = content.slice(configStart, configEnd);
 
-		// Remove outer braces and trim
-		config = config.trim().replace(/^{|}$/g, "").trim();
+    // Remove outer braces and trim
+    config = config.trim().replace(/^{|}$/g, "").trim();
 
-		const astroVersion = await getAstroVersion();
+    const astroVersion = await getAstroVersion();
 
-		if (astroVersion && semver.lt(astroVersion, "5.7.0")) {
-			// Add experimental configuration
-			if (!config.includes("experimental")) {
-				config += `\n\texperimental: {
+    if (astroVersion && semver.lt(astroVersion, "5.7.0")) {
+      // Add experimental configuration
+      if (!config.includes("experimental")) {
+        config += `\n\texperimental: {
 		svg: true,
 	},`;
-			} else if (!config.includes("svg: true") && !config.includes("svg: {")) {
-				// Insert svg config into existing experimental block
-				const expEnd = config.indexOf("experimental:") + "experimental:".length;
-				const blockStart = config.indexOf("{", expEnd) + 1;
-				config = config.slice(0, blockStart) + `\n\t\tsvg: true,` + config.slice(blockStart);
-			}
-		}
+      } else if (!config.includes("svg: true") && !config.includes("svg: {")) {
+        // Insert svg config into existing experimental block
+        const expEnd = config.indexOf("experimental:") + "experimental:".length;
+        const blockStart = config.indexOf("{", expEnd) + 1;
+        config = config.slice(0, blockStart) + `\n\t\tsvg: true,` + config.slice(blockStart);
+      }
+    }
 
-		// Add vite configuration
-		if (!config.includes("vite:")) {
-			config += `\n\tvite: {
+    // Add vite configuration
+    if (!config.includes("vite:")) {
+      config += `\n\tvite: {
 		plugins: [tailwindcss()],
 	},`;
-		} else if (!config.includes("plugins: [")) {
-			// Insert plugins into existing vite block
-			const viteEnd = config.indexOf("vite:") + "vite:".length;
-			const blockStart = config.indexOf("{", viteEnd) + 1;
-			config =
-				config.slice(0, blockStart) + `\n\t\tplugins: [tailwindcss()],` + config.slice(blockStart);
-		} else if (!config.includes("tailwindcss()")) {
-			// Add tailwindcss to existing plugins array
-			const pluginsStart = config.indexOf("plugins:") + "plugins:".length;
-			const arrayStart = config.indexOf("[", pluginsStart) + 1;
-			config = config.slice(0, arrayStart) + `tailwindcss(), ` + config.slice(arrayStart);
-		}
+    } else if (!config.includes("plugins: [")) {
+      // Insert plugins into existing vite block
+      const viteEnd = config.indexOf("vite:") + "vite:".length;
+      const blockStart = config.indexOf("{", viteEnd) + 1;
+      config =
+        config.slice(0, blockStart) + `\n\t\tplugins: [tailwindcss()],` + config.slice(blockStart);
+    } else if (!config.includes("tailwindcss()")) {
+      // Add tailwindcss to existing plugins array
+      const pluginsStart = config.indexOf("plugins:") + "plugins:".length;
+      const arrayStart = config.indexOf("[", pluginsStart) + 1;
+      config = config.slice(0, arrayStart) + `tailwindcss(), ` + config.slice(arrayStart);
+    }
 
-		// Reconstruct the file content
-		const newContent = `${content.slice(0, configStart)}{\n\t${config}\n}${content.slice(configEnd)}`;
+    // Reconstruct the file content
+    const newContent = `${content.slice(0, configStart)}{\n\t${config}\n}${content.slice(configEnd)}`;
 
-		await fs.writeFile(configPath, newContent, "utf-8");
-		return true;
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-		p.log.error(highlighter.error(`Failed to setup Astro config: ${errorMessage}`));
-		return false;
-	}
+    await fs.writeFile(configPath, newContent, "utf-8");
+    return true;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    p.log.error(highlighter.error(`Failed to setup Astro config: ${errorMessage}`));
+    return false;
+  }
 }

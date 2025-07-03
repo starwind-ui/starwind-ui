@@ -10,12 +10,12 @@ import TableRow from "./TableRow.astro";
 export { Table, TableBody, TableCaption, TableCell, TableFoot, TableHead, TableHeader, TableRow };
 
 export default {
-	Root: Table,
-	Body: TableBody,
-	Caption: TableCaption,
-	Cell: TableCell,
-	Foot: TableFoot,
-	Head: TableHead,
-	Header: TableHeader,
-	Row: TableRow,
+  Root: Table,
+  Body: TableBody,
+  Caption: TableCaption,
+  Cell: TableCell,
+  Foot: TableFoot,
+  Head: TableHead,
+  Header: TableHeader,
+  Row: TableRow,
 };

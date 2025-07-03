@@ -5,12 +5,12 @@ import { tv, type VariantProps } from "tailwind-variants";
 type Props = HTMLAttributes<"caption"> & VariantProps<typeof tableCaption>;
 
 const tableCaption = tv({
-	base: "text-muted-foreground mt-4 text-sm",
+  base: "text-muted-foreground mt-4 text-sm",
 });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
 <caption data-table-caption class={tableCaption({ class: className })} {...rest}>
-	<slot />
+  <slot />
 </caption>

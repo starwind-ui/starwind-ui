@@ -24,32 +24,32 @@ Things to remember when using Starwind UI:
 
 Starwind UI currently includes the following components:
 
--  [Accordion](https://starwind.dev/docs/components/accordion)
--  [Alert](https://starwind.dev/docs/components/alert)
--  [Avatar](https://starwind.dev/docs/components/avatar)
--  [Badge](https://starwind.dev/docs/components/badge)
--  [Breadcrumb](https://starwind.dev/docs/components/breadcrumb)
--  [Button](https://starwind.dev/docs/components/button)
--  [Card](https://starwind.dev/docs/components/card)
--  [Checkbox](https://starwind.dev/docs/components/checkbox)
--  [Dialog](https://starwind.dev/docs/components/dialog)
--  [Dropdown](https://starwind.dev/docs/components/dropdown)
--  [Input](https://starwind.dev/docs/components/input)
--  [Label](https://starwind.dev/docs/components/label)
--  [Pagination](https://starwind.dev/docs/components/pagination)
--  [Select](https://starwind.dev/docs/components/select)
--  [Switch](https://starwind.dev/docs/components/switch)
--  [Table](https://starwind.dev/docs/components/table)
--  [Tabs](https://starwind.dev/docs/components/tabs)
--  [Textarea](https://starwind.dev/docs/components/textarea)
--  [Tooltip](https://starwind.dev/docs/components/tooltip)
+- [Accordion](https://starwind.dev/docs/components/accordion)
+- [Alert](https://starwind.dev/docs/components/alert)
+- [Avatar](https://starwind.dev/docs/components/avatar)
+- [Badge](https://starwind.dev/docs/components/badge)
+- [Breadcrumb](https://starwind.dev/docs/components/breadcrumb)
+- [Button](https://starwind.dev/docs/components/button)
+- [Card](https://starwind.dev/docs/components/card)
+- [Checkbox](https://starwind.dev/docs/components/checkbox)
+- [Dialog](https://starwind.dev/docs/components/dialog)
+- [Dropdown](https://starwind.dev/docs/components/dropdown)
+- [Input](https://starwind.dev/docs/components/input)
+- [Label](https://starwind.dev/docs/components/label)
+- [Pagination](https://starwind.dev/docs/components/pagination)
+- [Select](https://starwind.dev/docs/components/select)
+- [Switch](https://starwind.dev/docs/components/switch)
+- [Table](https://starwind.dev/docs/components/table)
+- [Tabs](https://starwind.dev/docs/components/tabs)
+- [Textarea](https://starwind.dev/docs/components/textarea)
+- [Tooltip](https://starwind.dev/docs/components/tooltip)
 
 ## Import Pattern
 
 All components follow a consistent import pattern:
 
 ```astro
-import { ComponentName } from "@/components/starwind/component-name";
+import {ComponentName} from "@/components/starwind/component-name";
 ```
 
 ## Optional

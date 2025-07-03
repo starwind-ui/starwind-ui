@@ -5,7 +5,7 @@ import TooltipTrigger from "./TooltipTrigger.astro";
 export { Tooltip, TooltipContent, TooltipTrigger };
 
 export default {
-	Root: Tooltip,
-	Trigger: TooltipTrigger,
-	Content: TooltipContent,
+  Root: Tooltip,
+  Trigger: TooltipTrigger,
+  Content: TooltipContent,
 };

@@ -5,7 +5,7 @@ import fs from "fs-extra";
  * @param dir - Directory path to ensure exists
  */
 export async function ensureDirectory(dir: string) {
-	await fs.ensureDir(dir);
+  await fs.ensureDir(dir);
 }
 
 /**
@@ -14,7 +14,7 @@ export async function ensureDirectory(dir: string) {
  * @param dest - Destination file path
  */
 export async function copyFile(src: string, dest: string) {
-	await fs.copy(src, dest);
+  await fs.copy(src, dest);
 }
 
 /**
@@ -23,7 +23,7 @@ export async function copyFile(src: string, dest: string) {
  * @returns Parsed JSON content
  */
 export async function readJsonFile(filePath: string) {
-	return fs.readJson(filePath);
+  return fs.readJson(filePath);
 }
 
 /**
@@ -32,7 +32,7 @@ export async function readJsonFile(filePath: string) {
  * @param data - Data to write to the file
  */
 export async function writeJsonFile(filePath: string, data: unknown) {
-	await fs.writeJson(filePath, data, { spaces: 2 });
+  await fs.writeJson(filePath, data, { spaces: 2 });
 }
 
 /**
@@ -41,7 +41,7 @@ export async function writeJsonFile(filePath: string, data: unknown) {
  * @returns True if the file exists, false otherwise
  */
 export async function fileExists(filePath: string) {
-	return fs.pathExists(filePath);
+  return fs.pathExists(filePath);
 }
 
 /**
@@ -50,5 +50,5 @@ export async function fileExists(filePath: string) {
  * @param content - CSS content to write
  */
 export async function writeCssFile(filePath: string, content: string) {
-	await fs.writeFile(filePath, content, "utf-8");
+  await fs.writeFile(filePath, content, "utf-8");
 }

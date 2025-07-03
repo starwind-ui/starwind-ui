@@ -3,30 +3,30 @@ import { Switch } from "@/components/starwind/switch";
 ---
 
 <div class="mt-8 space-y-4">
-	<h2 class="text-xl font-semibold">Switch Event Test</h2>
+  <h2 class="text-xl font-semibold">Switch Event Test</h2>
 
-	<div class="space-y-4">
-		<Switch id="test-switch" label="Test Switch" variant="primary" />
+  <div class="space-y-4">
+    <Switch id="test-switch" label="Test Switch" variant="primary" />
 
-		<div id="status-display" class="text-sm text-gray-600">
-			Switch is currently: <span class="font-medium">off</span>
-		</div>
-	</div>
+    <div id="status-display" class="text-sm text-gray-600">
+      Switch is currently: <span class="font-medium">off</span>
+    </div>
+  </div>
 </div>
 
 <script>
-	import type { SwitchChangeEvent } from "@/components/starwind/switch";
+  import type { SwitchChangeEvent } from "@/components/starwind/switch";
 
-	const testSwitch = document.querySelector("#test-switch") as HTMLElement;
-	const statusDisplay = document.querySelector("#status-display span");
+  const testSwitch = document.querySelector("#test-switch") as HTMLElement;
+  const statusDisplay = document.querySelector("#status-display span");
 
-	testSwitch.addEventListener("starwind-switch:change", (e: Event) => {
-		const event = e as SwitchChangeEvent;
-		if (event.detail.switchId === "test-switch" && statusDisplay) {
-			statusDisplay.textContent = event.detail.checked ? "on" : "off";
-			statusDisplay.className = event.detail.checked
-				? "font-medium text-green-600"
-				: "font-medium text-gray-600";
-		}
-	});
+  testSwitch.addEventListener("starwind-switch:change", (e: Event) => {
+    const event = e as SwitchChangeEvent;
+    if (event.detail.switchId === "test-switch" && statusDisplay) {
+      statusDisplay.textContent = event.detail.checked ? "on" : "off";
+      statusDisplay.className = event.detail.checked
+        ? "font-medium text-green-600"
+        : "font-medium text-gray-600";
+    }
+  });
 </script>

@@ -6,8 +6,8 @@ import TabsTrigger from "./TabsTrigger.astro";
 export { Tabs, TabsContent, TabsList, TabsTrigger };
 
 export default {
-	Root: Tabs,
-	Content: TabsContent,
-	List: TabsList,
-	Trigger: TabsTrigger,
+  Root: Tabs,
+  Content: TabsContent,
+  List: TabsList,
+  Trigger: TabsTrigger,
 };

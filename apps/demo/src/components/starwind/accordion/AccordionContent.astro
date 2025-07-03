@@ -9,24 +9,24 @@ import { tv } from "tailwind-variants";
 type Props = HTMLAttributes<"div">;
 
 const accordionContent = tv({
-	base: [
-		"starwind-accordion-content",
-		"transform-gpu overflow-hidden",
-		"data-[state=closed]:animate-accordion-up data-[state=closed]:h-0",
-		"data-[state=open]:animate-accordion-down",
-	],
+  base: [
+    "starwind-accordion-content",
+    "transform-gpu overflow-hidden",
+    "data-[state=closed]:animate-accordion-up data-[state=closed]:h-0",
+    "data-[state=open]:animate-accordion-down",
+  ],
 });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
 <div
-	class={accordionContent({ class: className })}
-	data-state="closed"
-	style="animation: none;"
-	{...rest}
+  class={accordionContent({ class: className })}
+  data-state="closed"
+  style="animation: none;"
+  {...rest}
 >
-	<div class="overflow-hidden px-5 pt-0 pb-4">
-		<slot />
-	</div>
+  <div class="overflow-hidden px-5 pt-0 pb-4">
+    <slot />
+  </div>
 </div>

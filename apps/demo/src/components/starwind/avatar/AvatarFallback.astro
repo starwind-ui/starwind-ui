@@ -2,16 +2,16 @@
 import { tv } from "tailwind-variants";
 
 const avatarFallback = tv({
-	base: "absolute inset-0.5 flex items-center justify-center rounded-full font-medium",
+  base: "absolute inset-0.5 flex items-center justify-center rounded-full font-medium",
 });
 
 interface Props {
-	class?: string;
+  class?: string;
 }
 
 const { class: className } = Astro.props;
 ---
 
 <div class={avatarFallback({ class: className })}>
-	<slot />
+  <slot />
 </div>

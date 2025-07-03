@@ -7,21 +7,21 @@ import PaginationNext from "./PaginationNext.astro";
 import PaginationPrevious from "./PaginationPrevious.astro";
 
 export {
-	Pagination,
-	PaginationContent,
-	PaginationEllipsis,
-	PaginationItem,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
 };
 
 export default {
-	Root: Pagination,
-	Content: PaginationContent,
-	Ellipsis: PaginationEllipsis,
-	Item: PaginationItem,
-	Link: PaginationLink,
-	Next: PaginationNext,
-	Previous: PaginationPrevious,
+  Root: Pagination,
+  Content: PaginationContent,
+  Ellipsis: PaginationEllipsis,
+  Item: PaginationItem,
+  Link: PaginationLink,
+  Next: PaginationNext,
+  Previous: PaginationPrevious,
 };

@@ -1,12 +1,12 @@
 ---
 import { Button } from "@/components/starwind/button";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/starwind/card";
 import { Input } from "@/components/starwind/input";
 import { Label } from "@/components/starwind/label";
@@ -14,54 +14,54 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/
 ---
 
 <Tabs defaultValue="account" class="max-w-[400px]">
-	<TabsList class="w-full">
-		<TabsTrigger value="account">Account</TabsTrigger>
-		<TabsTrigger value="password">Password</TabsTrigger>
-	</TabsList>
-	<TabsContent value="account">
-		<Card>
-			<CardHeader>
-				<CardTitle>Account</CardTitle>
-				<CardDescription>
-					Make changes to your account here. Click save when you're done.
-				</CardDescription>
-			</CardHeader>
-			<CardContent class="flex flex-col gap-4">
-				<div class="flex flex-col gap-2">
-					<Label for="name-tab">Name</Label>
-					<Input id="name-tab" placeholder="Pedro Duarte" />
-				</div>
-				<div class="flex flex-col gap-2">
-					<Label for="username-tab">Username</Label>
-					<Input id="username-tab" placeholder="@peduarte" />
-				</div>
-			</CardContent>
-			<CardFooter>
-				<Button>Save changes</Button>
-			</CardFooter>
-		</Card>
-	</TabsContent>
-	<TabsContent value="password">
-		<Card>
-			<CardHeader>
-				<CardTitle>Password</CardTitle>
-				<CardDescription>
-					Change your password here. After saving, you'll be logged out.
-				</CardDescription>
-			</CardHeader>
-			<CardContent class="flex flex-col gap-4">
-				<div class="flex flex-col gap-2">
-					<Label for="current">Current password</Label>
-					<Input id="current" type="password" />
-				</div>
-				<div class="flex flex-col gap-2">
-					<Label for="new-tab">New password</Label>
-					<Input id="new-tab" type="password" />
-				</div>
-			</CardContent>
-			<CardFooter>
-				<Button>Save password</Button>
-			</CardFooter>
-		</Card>
-	</TabsContent>
+  <TabsList class="w-full">
+    <TabsTrigger value="account">Account</TabsTrigger>
+    <TabsTrigger value="password">Password</TabsTrigger>
+  </TabsList>
+  <TabsContent value="account">
+    <Card>
+      <CardHeader>
+        <CardTitle>Account</CardTitle>
+        <CardDescription>
+          Make changes to your account here. Click save when you're done.
+        </CardDescription>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <Label for="name-tab">Name</Label>
+          <Input id="name-tab" placeholder="Pedro Duarte" />
+        </div>
+        <div class="flex flex-col gap-2">
+          <Label for="username-tab">Username</Label>
+          <Input id="username-tab" placeholder="@peduarte" />
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button>Save changes</Button>
+      </CardFooter>
+    </Card>
+  </TabsContent>
+  <TabsContent value="password">
+    <Card>
+      <CardHeader>
+        <CardTitle>Password</CardTitle>
+        <CardDescription>
+          Change your password here. After saving, you'll be logged out.
+        </CardDescription>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <Label for="current">Current password</Label>
+          <Input id="current" type="password" />
+        </div>
+        <div class="flex flex-col gap-2">
+          <Label for="new-tab">New password</Label>
+          <Input id="new-tab" type="password" />
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button>Save password</Button>
+      </CardFooter>
+    </Card>
+  </TabsContent>
 </Tabs>
