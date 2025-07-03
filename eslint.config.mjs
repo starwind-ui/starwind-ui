@@ -21,14 +21,26 @@ export default defineConfig([
     },
   },
 
-  // only targeting packages
-  {
-    files: ["packages/**/*.{ts, js, tsx, json, astro}"],
-  },
-
   // Base configs
   js.configs.recommended,
   tseslint.configs.recommended,
+
+  // Apps folder configuration - ensure this comes before more specific rules
+  {
+    files: ["apps/**/*.{ts,js,tsx,json,astro}"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+
+  // json files
+  {
+    files: ["**/*.json"],
+    rules: {
+      "@typescript-eslint/no-unused-expressions": "off",
+    },
+  },
 
   // Prettier config
   {
@@ -60,23 +72,12 @@ export default defineConfig([
     },
     rules: {
       "no-undef": "off", // Disable "not defined" errors for specific Astro types that are globally available (ImageMetadata)
-      "astro/jsx-a11y/no-noninteractive-tabindex": "warn",
-      // "astro/jsx-a11y/anchor-is-valid": "off", // Disable anchor-is-valid rule for Astro files as this is a template
-      // "@typescript-eslint/no-unused-vars": "off", // I sometimes purposely have unused vars as this is a template
+      "astro/jsx-a11y/no-noninteractive-tabindex": "off",
     },
-    ignores: ["apps/"],
   },
 
-  // Ignore patterns
+  // Ignore patterns - putting this early to ensure it applies to all configs
   {
-    ignores: [
-      "**/*/dist/**",
-      "apps/",
-      "**/*.d.ts",
-      ".tours/",
-      "scripts/",
-      ".github/",
-      ".changeset/",
-    ],
+    ignores: ["**/*/dist/**", "**/*.d.ts", ".tours/", "scripts/", ".github/", ".changeset/"],
   },
 ]);
