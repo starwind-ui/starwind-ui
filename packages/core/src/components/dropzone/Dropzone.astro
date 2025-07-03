@@ -1,18 +1,20 @@
 ---
-import CloudUpload from "@tabler/icons/outline/cloud-upload.svg";
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
+
+import DropzoneFilesList from "./DropzoneFilesList.astro";
+import DropzoneLoadingIndicator from "./DropzoneLoadingIndicator.astro";
+import DropzoneUploadIndicator from "./DropzoneUploadIndicator.astro";
 
 type Props = HTMLAttributes<"input">;
 
 // extract id separately so it's not duplicated when we spread "rest"
 const { class: className, id: inputId, ...rest } = Astro.props as Props;
 
-// Base styling util using tailwind-variants
 const root = tv({
   base: [
-    "starwind-file-input",
-    "relative flex w-full flex-col items-center justify-center gap-1 rounded-lg p-10",
+    "starwind-dropzone",
+    "relative flex w-full flex-col items-center justify-center gap-1 rounded-lg px-6 py-12",
     "bg-background text-muted-foreground border-input border border-dashed text-center text-sm",
     "hover:bg-muted/50 starwind-transition-colors data-[drag-active=true]:bg-muted/50 cursor-pointer",
     "focus-visible:outline-outline focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-offset-2",
@@ -23,41 +25,133 @@ const root = tv({
 <label
   tabindex="0"
   for={inputId}
-  class:list={[root({ class: className })]}
+  class={root({ class: className })}
   data-drag-active="false"
+  data-has-files="false"
+  data-is-uploading="false"
 >
   <slot>
-    <CloudUpload class="size-10" aria-hidden="true" />
-    <span class="mt-2 text-sm"> Click to upload or drag and drop </span>
+    <DropzoneUploadIndicator />
+    <DropzoneLoadingIndicator />
+    <DropzoneFilesList />
   </slot>
+
   <input tabindex="-1" id={inputId} type="file" class="sr-only" {...rest} />
 </label>
 
 <script>
+  const fileSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /></svg>`;
   class FileInputHandler {
     private label: HTMLLabelElement;
     private input: HTMLInputElement;
+    private uploadIndicator: HTMLElement | null;
+    private loadingIndicator: HTMLElement | null;
+    private filesList: HTMLElement | null;
+    private files: File[] = [];
+    private isUploading: boolean = false;
+    private observer: MutationObserver | null = null;
 
     constructor(label: HTMLLabelElement, idx: number) {
       this.label = label;
       const maybeInput = label.querySelector<HTMLInputElement>('input[type="file"]');
       if (!maybeInput) {
-        throw new Error("No file input found inside starwind-file-input");
+        throw new Error("No file input found inside starwind-dropzone");
       }
       this.input = maybeInput;
+      this.uploadIndicator = label.querySelector(".starwind-upload-indicator");
+      this.loadingIndicator = label.querySelector(".starwind-loading-indicator");
+      this.filesList = label.querySelector(".starwind-files-list");
 
       // generate ID if none was passed
       if (!this.input.id) {
-        const generatedId = `starwind-file-input-${idx}`;
+        const generatedId = `starwind-dropzone-${idx}`;
         this.input.id = generatedId;
         this.label.htmlFor = generatedId;
       }
 
+      // Setup event handlers
       this.setupEvents();
     }
 
     private setActive(active: boolean) {
       this.label.dataset.dragActive = String(active);
+    }
+
+    // Set up mutation observer to watch for external attribute changes
+    private observeAttributeChanges() {
+      this.observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === "attributes" && mutation.attributeName === "data-is-uploading") {
+            this.handleAttributeChange();
+          }
+        });
+      });
+
+      this.observer.observe(this.label, {
+        attributes: true,
+        attributeFilter: ["data-is-uploading"],
+      });
+    }
+
+    // Handle attribute changes from external sources
+    private handleAttributeChange() {
+      const isUploading = this.label.dataset.isUploading === "true";
+
+      // Only update internal state if it's different
+      if (isUploading !== this.isUploading) {
+        this.isUploading = isUploading;
+
+        // Update UI
+        if (this.uploadIndicator && this.loadingIndicator) {
+          if (isUploading) {
+            this.uploadIndicator.classList.add("hidden");
+            this.loadingIndicator.classList.remove("hidden");
+          } else {
+            this.loadingIndicator.classList.add("hidden");
+            this.uploadIndicator.classList.remove("hidden");
+          }
+        }
+      }
+    }
+
+    private updateFilesList() {
+      if (!this.filesList) return;
+
+      const hasFiles = this.files.length > 0;
+      this.label.dataset.hasFiles = String(hasFiles);
+
+      if (hasFiles) {
+        this.filesList.classList.remove("invisible");
+
+        // Clear previous files
+        this.filesList.innerHTML = "";
+
+        // Create file list
+        this.files.forEach((file) => {
+          const fileItem = document.createElement("div");
+
+          // Insert SVG directly
+          fileItem.innerHTML = fileSvg;
+
+          const fileText = document.createElement("span");
+          fileText.textContent = file.name;
+
+          // Append text after the SVG
+          fileItem.appendChild(fileText);
+
+          // Use non-null assertion since we already checked at the beginning of the method
+          this.filesList!.appendChild(fileItem);
+        });
+      } else {
+        this.filesList.classList.add("invisible");
+      }
+    }
+
+    private handleFiles(files: FileList | null) {
+      if (!files || files.length === 0) return;
+
+      this.files = Array.from(files);
+      this.updateFilesList();
     }
 
     private setupEvents() {
@@ -80,7 +174,14 @@ const root = tv({
           Array.from(files).forEach((file) => dt.items.add(file));
           this.input.files = dt.files;
           this.input.dispatchEvent(new Event("change", { bubbles: true }));
+
+          this.handleFiles(files);
         }
+      });
+
+      // Handle file selection from dialog
+      this.input.addEventListener("change", () => {
+        this.handleFiles(this.input.files);
       });
 
       // Add keyboard accessibility for Enter and Space keys
@@ -91,6 +192,13 @@ const root = tv({
           this.input.click(); // Trigger the native file dialog
         }
       });
+
+      if (this.loadingIndicator) {
+        // Watch for external changes to data-is-uploading attribute
+        this.observeAttributeChanges();
+        // Initialize based on current attribute values
+        this.handleAttributeChange();
+      }
     }
   }
 
@@ -98,7 +206,7 @@ const root = tv({
   const fileInputInstances = new WeakMap<HTMLElement, FileInputHandler>();
 
   const setupFileInputs = () => {
-    document.querySelectorAll<HTMLLabelElement>(".starwind-file-input").forEach((label, idx) => {
+    document.querySelectorAll<HTMLLabelElement>(".starwind-dropzone").forEach((label, idx) => {
       if (!fileInputInstances.has(label)) {
         try {
           fileInputInstances.set(label, new FileInputHandler(label, idx));
