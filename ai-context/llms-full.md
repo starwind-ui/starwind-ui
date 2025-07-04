@@ -489,6 +489,77 @@ import { Button } from "@/components/starwind/button";
 </Dialog>
 ```
 
+### Dropdown
+
+- **Documentation**: https://starwind.dev/docs/components/dropdown
+- **Import pattern**: `import { Dropdown, DropdownTrigger, DropdownContent, DropdownItem, DropdownLabel, DropdownSeparator } from "@/components/starwind/dropdown";`
+- **Key props**:
+  - `Dropdown`: `openOnHover` (boolean), `closeDelay` (number)
+  - `DropdownTrigger`: `asChild` (boolean)
+  - `DropdownContent`: `side` ("top" | "bottom"), `align` ("start" | "center" | "end"), `sideOffset` (number)
+  - `DropdownItem`: `as` (HTMLTag), `inset` (boolean), `disabled` (boolean)
+  - `DropdownLabel`: `inset` (boolean)
+- **Example usage**:
+
+```astro
+---
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+  DropdownSeparator,
+} from "@/components/starwind/dropdown";
+import { Button } from "@/components/starwind/button";
+---
+
+<Dropdown>
+  <DropdownTrigger asChild>
+    <Button>Open Menu</Button>
+  </DropdownTrigger>
+  <DropdownContent>
+    <DropdownLabel>My Account</DropdownLabel>
+    <DropdownSeparator />
+    <DropdownItem as="a" href="#">Profile</DropdownItem>
+    <DropdownItem>Settings</DropdownItem>
+    <DropdownSeparator />
+    <DropdownItem>Help</DropdownItem>
+    <DropdownItem disabled>Sign out</DropdownItem>
+  </DropdownContent>
+</Dropdown>
+```
+
+### Dropzone
+
+- **Documentation**: https://starwind.dev/docs/components/dropzone
+- **Import pattern**: `import { Dropzone, DropzoneFilesList, DropzoneLoadingIndicator, DropzoneUploadIndicator } from "@/components/starwind/dropzone";`
+- **Key props**:
+  - `Dropzone`: `accept` (string), `multiple` (boolean), `disabled` (boolean), `required` (boolean), `name` (string), `isUploading` (boolean)
+  - `DropzoneFilesList`: Standard HTML attributes for div elements
+  - `DropzoneUploadIndicator`: Provides a slot for custom content
+  - `DropzoneLoadingIndicator`: Provides a slot for custom content
+- **Example usage**:
+
+```astro
+---
+import {
+  Dropzone,
+  DropzoneFilesList,
+  DropzoneLoadingIndicator,
+  DropzoneUploadIndicator,
+} from "@/components/starwind/dropzone";
+---
+
+<Dropzone>
+  <DropzoneUploadIndicator>
+    <span class="my-6 text-lg">Drop files here or click to upload</span>
+  </DropzoneUploadIndicator>
+  <DropzoneLoadingIndicator />
+  <DropzoneFilesList />
+</Dropzone>
+```
+
 ### Input
 
 - **Documentation**: https://starwind.dev/docs/components/input
@@ -581,6 +652,71 @@ import {
 </Pagination>
 ```
 
+### Progress
+
+- **Documentation**: https://starwind.dev/docs/components/progress
+- **Import pattern**: `import { Progress } from "@/components/starwind/progress";`
+- **Key props**:
+  - `value`: number - Current progress value
+  - `max`: number - Maximum value (default: 100)
+  - `variant`: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error" (default: "default")
+  - Standard HTML attributes for div elements
+- **Example usage**:
+
+```astro
+---
+import { Progress } from "@/components/starwind/progress";
+---
+
+<Progress value={50} />
+
+<!-- Indeterminate state (loading) -->
+<Progress />
+
+<!-- With variant -->
+<Progress value={75} variant="success" />
+```
+
+### Radio Group
+
+- **Documentation**: https://starwind.dev/docs/components/radio-group
+- **Import pattern**: `import { RadioGroup, RadioGroupItem } from "@/components/starwind/radio-group";`
+- **Key props**:
+  - `RadioGroup`:
+    - `name`: string - Name for the radio group inputs (required)
+    - `value`: string - Current value of the radio group
+    - `defaultValue`: string - Default value if `value` not provided
+    - `legend`: string - Screen reader label for the group
+    - `orientation`: "vertical" | "horizontal" (default: "vertical")
+  - `RadioGroupItem`:
+    - `value`: string - Value of the radio item (required)
+    - `id`: string - ID for the radio input
+    - `size`: "sm" | "md" | "lg" (default: "md")
+    - `variant`: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error" (default: "default")
+- **Example usage**:
+
+```astro
+---
+import { RadioGroup, RadioGroupItem } from "@/components/starwind/radio-group";
+import { Label } from "@/components/starwind/label";
+---
+
+<RadioGroup name="demo-radio" defaultValue="option-1" legend="Choose an option">
+  <div class="flex items-center gap-2">
+    <RadioGroupItem id="option-1" value="option-1" name="demo-radio" />
+    <Label for="option-1">Option 1</Label>
+  </div>
+  <div class="flex items-center gap-2">
+    <RadioGroupItem id="option-2" value="option-2" name="demo-radio" />
+    <Label for="option-2">Option 2</Label>
+  </div>
+  <div class="flex items-center gap-2">
+    <RadioGroupItem id="option-3" value="option-3" name="demo-radio" />
+    <Label for="option-3">Option 3</Label>
+  </div>
+</RadioGroup>
+```
+
 ### Select
 
 - **Documentation**: https://starwind.dev/docs/components/select
@@ -623,6 +759,39 @@ import {
     </SelectGroup>
   </SelectContent>
 </Select>
+```
+
+### Skeleton
+
+- **Documentation**: https://starwind.dev/docs/components/skeleton
+- **Import pattern**: `import { Skeleton } from "@/components/starwind/skeleton";`
+- **Key props**:
+  - The Skeleton component accepts all standard HTML attributes for the `<div>` element
+  - Use the `class` prop to control dimensions, shape, and appearance
+- **Example usage**:
+
+```astro
+---
+import { Skeleton } from "@/components/starwind/skeleton";
+---
+
+<!-- Avatar and text skeleton loading state example -->
+<div class="flex items-center space-x-4">
+  <Skeleton class="h-12 w-12 rounded-full" />
+  <div class="space-y-2">
+    <Skeleton class="h-4 w-[250px]" />
+    <Skeleton class="h-4 w-[200px]" />
+  </div>
+</div>
+
+<!-- Card skeleton loading state example -->
+<div class="flex flex-col space-y-3">
+  <Skeleton class="h-[125px] w-[250px] rounded-xl" />
+  <div class="space-y-2">
+    <Skeleton class="h-4 w-[250px]" />
+    <Skeleton class="h-4 w-[200px]" />
+  </div>
+</div>
 ```
 
 ### Switch
@@ -875,3 +1044,4 @@ import {
 - Documentation: [starwind.dev/docs](https://starwind.dev/docs/getting-started)
 - Components: [starwind.dev/docs/components](https://starwind.dev/docs/components)
 - Premium Templates: [cosmicthemes.com/themes](https://cosmicthemes.com/themes)
+  - Templates include internationalization features, CMS, custom animations, SEO, and more
