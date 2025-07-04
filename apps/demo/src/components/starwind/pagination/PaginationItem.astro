@@ -3,8 +3,7 @@ import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"li"> & {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	children: any;
+  children: any;
 };
 
 const paginationItem = tv({ base: "" });
@@ -13,5 +12,5 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 <li class={paginationItem({ class: className })} {...rest}>
-	<slot />
+  <slot />
 </li>

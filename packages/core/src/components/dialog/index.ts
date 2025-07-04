@@ -8,23 +8,23 @@ import DialogTitle from "./DialogTitle.astro";
 import DialogTrigger from "./DialogTrigger.astro";
 
 export {
-	Dialog,
-	DialogTrigger,
-	DialogContent,
-	DialogHeader,
-	DialogFooter,
-	DialogTitle,
-	DialogDescription,
-	DialogClose,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 };
 
 export default {
-	Root: Dialog,
-	Trigger: DialogTrigger,
-	Content: DialogContent,
-	Header: DialogHeader,
-	Footer: DialogFooter,
-	Title: DialogTitle,
-	Description: DialogDescription,
-	Close: DialogClose,
+  Root: Dialog,
+  Trigger: DialogTrigger,
+  Content: DialogContent,
+  Header: DialogHeader,
+  Footer: DialogFooter,
+  Title: DialogTitle,
+  Description: DialogDescription,
+  Close: DialogClose,
 };

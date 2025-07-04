@@ -1,5 +1,7 @@
 import * as path from "node:path";
+
 import * as fs from "fs-extra";
+
 import { highlighter } from "./highlighter.js";
 
 /**
@@ -8,16 +10,16 @@ import { highlighter } from "./highlighter.js";
  * @param target - The target directory path where components will be synced to
  */
 export async function syncComponents(source: string, target: string): Promise<void> {
-	try {
-		// Ensure target directory exists
-		await fs.ensureDir(target);
+  try {
+    // Ensure target directory exists
+    await fs.ensureDir(target);
 
-		// Copy entire directory contents
-		await fs.copy(source, target);
-		highlighter.info(`Synced components from ${path.basename(source)} to ${path.basename(target)}`);
-	} catch (error) {
-		throw new Error(
-			`Failed to sync components: ${error instanceof Error ? error.message : String(error)}`,
-		);
-	}
+    // Copy entire directory contents
+    await fs.copy(source, target);
+    highlighter.info(`Synced components from ${path.basename(source)} to ${path.basename(target)}`);
+  } catch (error) {
+    throw new Error(
+      `Failed to sync components: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }

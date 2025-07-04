@@ -1,718 +1,825 @@
 ---
-import Mail from "@tabler/icons/outline/mail.svg";
-import Flame from "@tabler/icons/outline/flame.svg";
-import InfoCircle from "@tabler/icons/outline/info-circle.svg";
 import Copy from "@tabler/icons/outline/copy.svg";
 import Edit from "@tabler/icons/outline/edit.svg";
+import Flame from "@tabler/icons/outline/flame.svg";
+import InfoCircle from "@tabler/icons/outline/info-circle.svg";
+import Mail from "@tabler/icons/outline/mail.svg";
 
-// layout
-import Layout from "@/layouts/Layout.astro";
-
-// components
+import ContactForm from "@/components/forms/ContactForm.astro";
 import CreateProjectForm from "@/components/forms/CreateProjectForm.astro";
 import EditProfileForm from "@/components/forms/EditProfileForm.astro";
-import ContactForm from "@/components/forms/ContactForm.astro";
-import TabsForm from "@/components/forms/TabsForm.astro";
-
-// starwind ui
-import {
-	Accordion,
-	AccordionItem,
-	AccordionTrigger,
-	AccordionContent,
-} from "@/components/starwind/accordion";
-// import Accordion from "@/components/starwind/accordion";
-
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbEllipsis,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
-} from "@/components/starwind/breadcrumb";
-
-import {
-	Pagination,
-	PaginationContent,
-	PaginationEllipsis,
-	PaginationItem,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
-} from "@/components/starwind/pagination";
-
-import { Alert, AlertTitle, AlertDescription } from "@/components/starwind/alert";
-// import Alert from "@/components/starwind/alert";
-
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/starwind/avatar";
-
-import { Badge } from "@/components/starwind/badge";
-
-import { Button } from "@/components/starwind/button";
-// import Button2 from "@/components/starwind/button/Button2.astro";
-
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/starwind/card";
-// import Card from "@/components/starwind/card";
-
-import { Checkbox } from "@/components/starwind/checkbox";
-
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-	DialogClose,
-} from "@/components/starwind/dialog";
-
-import {
-	Dropdown,
-	DropdownContent,
-	DropdownItem,
-	DropdownLabel,
-	DropdownSeparator,
-	DropdownTrigger,
-} from "@/components/starwind/dropdown";
-
-import { Input } from "@/components/starwind/input";
-
-import { Label } from "@/components/starwind/label";
-
-import {
-	Select,
-	SelectTrigger,
-	SelectValue,
-	SelectContent,
-	SelectItem,
-	SelectGroup,
-	SelectLabel,
-	SelectSeparator,
-} from "@/components/starwind/select";
-// import Select from "@/components/starwind/select";
-
-import { Switch } from "@/components/starwind/switch";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/tabs";
-
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/tooltip";
+import ProgressExample from "@/components/forms/ProgressExample.astro";
 import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
-// import Tooltip from "@/components/starwind/tooltip";
-
+import TabsForm from "@/components/forms/TabsForm.astro";
 import {
-	Table,
-	TableBody,
-	TableCaption,
-	TableCell,
-	TableFoot,
-	TableHead,
-	TableHeader,
-	TableRow,
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/starwind/accordion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind/avatar";
+import { Badge } from "@/components/starwind/badge";
+import {
+  Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/starwind/breadcrumb";
+import { Button } from "@/components/starwind/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/starwind/card";
+import { Checkbox } from "@/components/starwind/checkbox";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/starwind/dialog";
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+  DropdownSeparator,
+  DropdownTrigger,
+} from "@/components/starwind/dropdown";
+import {
+  Dropzone,
+  DropzoneFilesList,
+  DropzoneLoadingIndicator,
+  DropzoneUploadIndicator,
+} from "@/components/starwind/dropzone";
+import { Input } from "@/components/starwind/input";
+import { Label } from "@/components/starwind/label";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/starwind/pagination";
+import { Progress } from "@/components/starwind/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/starwind/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/starwind/select";
+import { Skeleton } from "@/components/starwind/skeleton";
+import { Switch } from "@/components/starwind/switch";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFoot,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/starwind/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/tooltip";
+import Layout from "@/layouts/Layout.astro";
 ---
 
 <Layout
-	title="Starwind UI components demo"
-	description="A collection of accessible UI components built with Astro"
+  title="Starwind UI components demo"
+  description="A collection of accessible UI components built with Astro"
 >
-	<div class="container mx-auto px-4 pb-20">
-		<!-- breadcrumb -->
-		<section class="mx-auto mt-6 max-w-lg">
-			<Breadcrumb>
-				<BreadcrumbList>
-					<BreadcrumbItem>
-						<BreadcrumbLink href="/">Home</BreadcrumbLink>
-					</BreadcrumbItem>
-					<BreadcrumbSeparator />
-					<BreadcrumbItem>
-						<BreadcrumbEllipsis />
-					</BreadcrumbItem>
-					<BreadcrumbSeparator />
-					<BreadcrumbItem>
-						<BreadcrumbLink href="/components">Components</BreadcrumbLink>
-					</BreadcrumbItem>
-					<BreadcrumbSeparator />
-					<BreadcrumbItem>
-						<BreadcrumbPage>Breadcrumb</BreadcrumbPage>
-					</BreadcrumbItem>
-				</BreadcrumbList>
-			</Breadcrumb>
-		</section>
+  <div class="container mx-auto px-4 pb-20">
+    <!-- file input -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">File Input</h2>
+      <div class="flex flex-col gap-6">
+        <Dropzone />
+        <Dropzone multiple>
+          <DropzoneUploadIndicator
+            ><span class="my-6 text-lg"> Your specific message </span></DropzoneUploadIndicator
+          >
+          <DropzoneLoadingIndicator />
+          <DropzoneFilesList />
+        </Dropzone>
+      </div>
+    </section>
+    <!-- progress -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Progress</h2>
+      <div class="flex flex-col gap-6">
+        <div class="space-y-4">
+          <div class="flex items-center space-x-3">
+            <span class="w-20 text-sm">Primary:</span>
+            <Progress value={50} variant="primary" />
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="w-20 text-sm">Secondary:</span>
+            <Progress value={60} variant="secondary" />
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="w-20 text-sm">Default:</span>
+            <Progress value={70} variant="default" />
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="w-20 text-sm">Info:</span>
+            <Progress value={80} variant="info" />
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="w-20 text-sm">Success:</span>
+            <Progress value={90} variant="success" />
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="w-20 text-sm">Warning:</span>
+            <Progress value={40} variant="warning" />
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="w-20 text-sm">Error:</span>
+            <Progress value={30} variant="error" />
+          </div>
+        </div>
 
-		<!-- dropdown -->
-		<section class="mx-auto mt-6 max-w-lg">
-			<h2 class="mb-4 text-2xl font-bold">Dropdown</h2>
-			<div class="flex items-center gap-4">
-				<!-- Basic Dropdown -->
-				<Dropdown openOnHover>
-					<DropdownTrigger asChild>
-						<Button>Left</Button>
-					</DropdownTrigger>
-					<DropdownContent>
-						<DropdownLabel>My Account</DropdownLabel>
-						<DropdownSeparator />
-						<DropdownItem as="a" href="/profile">Profile</DropdownItem>
-						<DropdownItem>Settings</DropdownItem>
-						<DropdownSeparator />
-						<DropdownItem>Help</DropdownItem>
-						<DropdownItem disabled>Sign out</DropdownItem>
-					</DropdownContent>
-				</Dropdown>
+        <div class="bg-card mt-4 rounded-lg border p-4">
+          <ProgressExample />
+        </div>
+      </div>
+    </section>
 
-				<!-- Dropdown with Groups -->
-				<Dropdown>
-					<DropdownTrigger asChild>
-						<Button>Right</Button>
-					</DropdownTrigger>
-					<DropdownContent align="end" side="bottom">
-						<DropdownLabel>Actions</DropdownLabel>
-						<DropdownSeparator />
-						<DropdownItem>
-							<Copy />
-							Copy
-						</DropdownItem>
-						<DropdownItem>
-							<Edit />
-							Edit
-						</DropdownItem>
-						<DropdownSeparator />
-						<DropdownLabel>Danger Zone</DropdownLabel>
-						<DropdownItem inset>Archive</DropdownItem>
-						<DropdownItem inset disabled>Delete</DropdownItem>
-					</DropdownContent>
-				</Dropdown>
-			</div>
-		</section>
+    <!-- skeleton -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Skeleton</h2>
+      <div class="flex items-center space-x-4">
+        <Skeleton class="h-12 w-12 rounded-full" />
+        <div class="space-y-2">
+          <Skeleton class="h-4 w-[250px]" />
+          <Skeleton class="h-4 w-[200px]" />
+        </div>
+      </div>
 
-		<!-- dialog -->
-		<section class="mx-auto mt-6 max-w-lg">
-			<EditProfileForm />
-		</section>
+      <div class="mt-6 flex flex-col space-y-3">
+        <Skeleton class="h-[125px] w-[250px] rounded-xl" />
+        <div class="space-y-2">
+          <Skeleton class="h-4 w-[250px]" />
+          <Skeleton class="h-4 w-[200px]" />
+        </div>
+      </div>
+    </section>
 
-		<!-- tabs -->
-		<section class="mx-auto mt-6 flex w-full max-w-lg flex-col gap-6">
-			<TabsForm />
+    <!-- radio group -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Radio Group</h2>
+      <div class="space-y-6">
+        <div>
+          <h3 class="mb-2 text-lg font-medium">Favorite Fruit</h3>
+          <RadioGroup name="fruit" defaultValue="apple" legend="Favorite Fruit">
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <RadioGroupItem value="apple" id="apple" name="fruit" />
+                <Label for="apple">Apple</Label>
+              </div>
+              <div class="flex items-center gap-3">
+                <RadioGroupItem value="banana" id="banana" name="fruit" />
+                <Label for="banana">Banana</Label>
+              </div>
+              <div class="flex items-center gap-3">
+                <RadioGroupItem value="orange" id="orange" name="fruit" />
+                <Label for="orange">Orange</Label>
+              </div>
+              <div class="flex items-center gap-3">
+                <RadioGroupItem value="strawberry" id="strawberry" name="fruit" disabled />
+                <Label for="strawberry">Strawberry</Label>
+              </div>
+            </div>
+          </RadioGroup>
+        </div>
 
-			<Tabs defaultValue="npm" syncKey="package-manager" class="max-w-[400px]">
-				<TabsList>
-					<TabsTrigger value="npm">npm</TabsTrigger>
-					<TabsTrigger value="pnpm">pnpm</TabsTrigger>
-					<TabsTrigger value="bun">bun</TabsTrigger>
-					<TabsTrigger value="yarn">yarn</TabsTrigger>
-				</TabsList>
-				<TabsContent value="npm">$ npx starwind@latest init</TabsContent>
-				<TabsContent value="pnpm">$ pnpm dlx starwind@latest init</TabsContent>
-				<TabsContent value="bun">$ bunx starwind@latest init</TabsContent>
-				<TabsContent value="yarn">$ yarn dlx starwind@latest init</TabsContent>
-			</Tabs>
+        <div>
+          <h3 class="mb-2 text-lg font-medium">Subscription Plan</h3>
+          <RadioGroup name="plan" legend="Select your subscription plan">
+            <div class="flex items-center space-x-6">
+              <div class="flex items-center gap-3">
+                <RadioGroupItem value="free" id="free" size="sm" variant="secondary" name="plan" />
+                <Label for="free" size="sm">Small</Label>
+              </div>
+              <div class="flex items-center gap-3">
+                <RadioGroupItem value="pro" id="pro" size="md" variant="info" name="plan" />
+                <Label for="pro" size="md">Medium</Label>
+              </div>
+              <div class="flex items-center gap-3">
+                <RadioGroupItem value="team" id="team" size="lg" variant="success" name="plan" />
+                <Label for="team" size="lg">Large</Label>
+              </div>
+            </div>
+          </RadioGroup>
+        </div>
+      </div>
+    </section>
 
-			<Tabs defaultValue="npm" syncKey="package-manager" class="max-w-[400px]">
-				<TabsList>
-					<TabsTrigger value="npm">npm</TabsTrigger>
-					<TabsTrigger value="pnpm">pnpm</TabsTrigger>
-					<TabsTrigger value="bun">bun</TabsTrigger>
-					<TabsTrigger value="yarn">yarn</TabsTrigger>
-				</TabsList>
-				<TabsContent value="npm">$ npm run dev</TabsContent>
-				<TabsContent value="pnpm">$ pnpm dev</TabsContent>
-				<TabsContent value="bun">$ bun dev</TabsContent>
-				<TabsContent value="yarn">$ yarn dev</TabsContent>
-			</Tabs>
+    <!-- breadcrumb -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/">Home</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbEllipsis />
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/components">Components</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Breadcrumb</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    </section>
 
-			<!-- Nested Tabs Demo -->
-			<section class="mt-8">
-				<h2 class="mb-4 text-2xl font-bold">Nested Tabs</h2>
-				<Tabs defaultValue="parent-1" class="max-w-[500px]">
-					<TabsList>
-						<TabsTrigger value="parent-1">Parent Tab 1</TabsTrigger>
-						<TabsTrigger value="parent-2">Parent Tab 2</TabsTrigger>
-						<TabsTrigger value="parent-3">Parent Tab 3</TabsTrigger>
-					</TabsList>
-					<TabsContent value="parent-1"> Content of Parent Tab 1 </TabsContent>
-					<TabsContent value="parent-2">
-						<div>
-							<p class="mb-2">Parent Tab 2 contains its own tabs:</p>
-							<Tabs defaultValue="child-a" class="max-w-[350px]">
-								<TabsList>
-									<TabsTrigger value="child-a">Child A</TabsTrigger>
-									<TabsTrigger value="child-b">Child B</TabsTrigger>
-								</TabsList>
-								<TabsContent value="child-a">Content of Child Tab A</TabsContent>
-								<TabsContent value="child-b">Content of Child Tab B</TabsContent>
-							</Tabs>
-						</div>
-					</TabsContent>
-					<TabsContent value="parent-3"> Content of Parent Tab 3 </TabsContent>
-				</Tabs>
-			</section>
-		</section>
+    <!-- dropdown -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Dropdown</h2>
+      <div class="flex items-center gap-4">
+        <!-- Basic Dropdown -->
+        <Dropdown openOnHover>
+          <DropdownTrigger asChild>
+            <Button>Left</Button>
+          </DropdownTrigger>
+          <DropdownContent>
+            <DropdownLabel>My Account</DropdownLabel>
+            <DropdownSeparator />
+            <DropdownItem as="a" href="/profile">Profile</DropdownItem>
+            <DropdownItem>Settings</DropdownItem>
+            <DropdownSeparator />
+            <DropdownItem>Help</DropdownItem>
+            <DropdownItem disabled>Sign out</DropdownItem>
+          </DropdownContent>
+        </Dropdown>
 
-		<!-- forms -->
-		<section class="mx-auto mt-6 max-w-lg">
-			<ContactForm />
-		</section>
+        <!-- Dropdown with Groups -->
+        <Dropdown>
+          <DropdownTrigger asChild>
+            <Button>Right</Button>
+          </DropdownTrigger>
+          <DropdownContent align="end" side="bottom">
+            <DropdownLabel>Actions</DropdownLabel>
+            <DropdownSeparator />
+            <DropdownItem>
+              <Copy />
+              Copy
+            </DropdownItem>
+            <DropdownItem>
+              <Edit />
+              Edit
+            </DropdownItem>
+            <DropdownSeparator />
+            <DropdownLabel>Danger Zone</DropdownLabel>
+            <DropdownItem inset>Archive</DropdownItem>
+            <DropdownItem inset disabled>Delete</DropdownItem>
+          </DropdownContent>
+        </Dropdown>
+      </div>
+    </section>
 
-		<!-- Select -->
-		<section class="mx-auto mt-6 max-w-lg">
-			<Select defaultValue="aest">
-				<SelectTrigger class="w-[350px]">
-					<SelectValue placeholder="Select a timezone" />
-				</SelectTrigger>
-				<SelectContent>
-					<SelectGroup>
-						<SelectLabel>North America</SelectLabel>
-						<SelectItem value="est">Eastern Standard Time (EST)</SelectItem>
-						<SelectItem value="cst">Central Standard Time (CST)</SelectItem>
-						<SelectItem value="mst">Mountain Standard Time (MST)</SelectItem>
-						<SelectItem value="pst">Pacific Standard Time (PST)</SelectItem>
-						<SelectItem value="akst">Alaska Standard Time (AKST)</SelectItem>
-						<SelectItem value="hst">Hawaii Standard Time (HST)</SelectItem>
-					</SelectGroup>
-					<!-- <SelectSeparator /> -->
-					<SelectGroup>
-						<SelectLabel>Europe & Africa</SelectLabel>
-						<SelectItem value="gmt">Greenwich Mean Time (GMT)</SelectItem>
-						<SelectItem value="cet">Central European Time (CET)</SelectItem>
-						<SelectItem value="eet">Eastern European Time (EET)</SelectItem>
-						<SelectItem value="west"> Western European Summer Time (WEST) </SelectItem>
-						<SelectItem value="cat">Central Africa Time (CAT)</SelectItem>
-						<SelectItem value="eat">East Africa Time (EAT)</SelectItem>
-					</SelectGroup>
-					<!-- <SelectSeparator /> -->
-					<SelectGroup>
-						<SelectLabel>Asia</SelectLabel>
-						<SelectItem value="msk">Moscow Time (MSK)</SelectItem>
-						<SelectItem value="ist">India Standard Time (IST)</SelectItem>
-						<SelectItem value="cst_china">China Standard Time (CST)</SelectItem>
-						<SelectItem value="jst">Japan Standard Time (JST)</SelectItem>
-						<SelectItem value="kst">Korea Standard Time (KST)</SelectItem>
-						<SelectItem value="ist_indonesia"> Indonesia Central Standard Time (WITA) </SelectItem>
-					</SelectGroup>
-					<!-- <SelectSeparator /> -->
-					<SelectGroup>
-						<SelectLabel>Australia & Pacific</SelectLabel>
-						<SelectItem value="awst"> Australian Western Standard Time (AWST) </SelectItem>
-						<SelectItem value="acst"> Australian Central Standard Time (ACST) </SelectItem>
-						<SelectItem value="aest"> Australian Eastern Standard Time (AEST) </SelectItem>
-						<SelectItem value="nzst">New Zealand Standard Time (NZST)</SelectItem>
-						<SelectItem value="fjt">Fiji Time (FJT)</SelectItem>
-					</SelectGroup>
-					<!-- <SelectSeparator /> -->
-					<SelectGroup>
-						<SelectLabel>South America</SelectLabel>
-						<SelectItem value="art">Argentina Time (ART)</SelectItem>
-						<SelectItem value="bot">Bolivia Time (BOT)</SelectItem>
-						<SelectItem value="brt">Brasilia Time (BRT)</SelectItem>
-						<SelectItem value="clt">Chile Standard Time (CLT)</SelectItem>
-					</SelectGroup>
-				</SelectContent>
-			</Select>
-		</section>
+    <!-- dialog -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <EditProfileForm />
+    </section>
 
-		<!-- cards -->
-		<section class="mx-auto mt-10 max-w-lg">
-			<div class="flex">
-				<CreateProjectForm />
-			</div>
-		</section>
+    <!-- tabs -->
+    <section class="mx-auto mt-6 flex w-full max-w-lg flex-col gap-6">
+      <TabsForm />
 
-		<section class="mx-auto mt-10 max-w-lg">
-			<Pagination>
-				<PaginationContent>
-					<PaginationItem>
-						<PaginationPrevious href="#">Prev</PaginationPrevious>
-					</PaginationItem>
-					<PaginationItem>
-						<PaginationLink href="#">1</PaginationLink>
-					</PaginationItem>
-					<PaginationItem>
-						<PaginationLink href="#" isActive>2</PaginationLink>
-					</PaginationItem>
-					<PaginationItem>
-						<PaginationLink href="#">3</PaginationLink>
-					</PaginationItem>
-					<PaginationItem>
-						<PaginationEllipsis />
-					</PaginationItem>
-					<PaginationItem>
-						<PaginationNext href="#">Next</PaginationNext>
-					</PaginationItem>
-				</PaginationContent>
-			</Pagination>
-		</section>
+      <Tabs defaultValue="npm" syncKey="package-manager" class="max-w-[400px]">
+        <TabsList>
+          <TabsTrigger value="npm">npm</TabsTrigger>
+          <TabsTrigger value="pnpm">pnpm</TabsTrigger>
+          <TabsTrigger value="bun">bun</TabsTrigger>
+          <TabsTrigger value="yarn">yarn</TabsTrigger>
+        </TabsList>
+        <TabsContent value="npm">$ npx starwind@latest init</TabsContent>
+        <TabsContent value="pnpm">$ pnpm dlx starwind@latest init</TabsContent>
+        <TabsContent value="bun">$ bunx starwind@latest init</TabsContent>
+        <TabsContent value="yarn">$ yarn dlx starwind@latest init</TabsContent>
+      </Tabs>
 
-		<!-- Accordions -->
-		<section class="mx-auto mt-10 max-w-lg">
-			<Accordion defaultValue="item-1">
-				<AccordionItem value="item-1">
-					<AccordionTrigger>What is Astro?</AccordionTrigger>
-					<AccordionContent>
-						Astro is an web framework for building fast, scalable, and secure websites.
-					</AccordionContent>
-				</AccordionItem>
-				<AccordionItem value="item-2">
-					<AccordionTrigger>Why should I use Astro?</AccordionTrigger>
-					<AccordionContent>
-						Astro provides a set of features that make it an ideal choice for building fast,
-						scalable, and secure websites.
-					</AccordionContent>
-				</AccordionItem>
-				<AccordionItem value="item-3">
-					<AccordionTrigger>How do I get started with Astro?</AccordionTrigger>
-					<AccordionContent>
-						To get started with Astro, follow the instructions in the documentation.
-					</AccordionContent>
-				</AccordionItem>
-			</Accordion>
-		</section>
+      <Tabs defaultValue="npm" syncKey="package-manager" class="max-w-[400px]">
+        <TabsList>
+          <TabsTrigger value="npm">npm</TabsTrigger>
+          <TabsTrigger value="pnpm">pnpm</TabsTrigger>
+          <TabsTrigger value="bun">bun</TabsTrigger>
+          <TabsTrigger value="yarn">yarn</TabsTrigger>
+        </TabsList>
+        <TabsContent value="npm">$ npm run dev</TabsContent>
+        <TabsContent value="pnpm">$ pnpm dev</TabsContent>
+        <TabsContent value="bun">$ bun dev</TabsContent>
+        <TabsContent value="yarn">$ yarn dev</TabsContent>
+      </Tabs>
 
-		<section class="mx-auto mt-6 max-w-lg">
-			<Accordion type="multiple" defaultValue="item-1">
-				<AccordionItem value="item-4">
-					<AccordionTrigger>What is Astro?</AccordionTrigger>
-					<AccordionContent>
-						Astro is an web framework for building fast, scalable, and secure websites.
-					</AccordionContent>
-				</AccordionItem>
-				<AccordionItem value="item-5">
-					<AccordionTrigger>Why should I use Astro?</AccordionTrigger>
-					<AccordionContent>
-						Astro provides a set of features that make it an ideal choice for building fast,
-						scalable, and secure websites.
-					</AccordionContent>
-				</AccordionItem>
-				<AccordionItem value="item-6">
-					<AccordionTrigger>How do I get started with Astro?</AccordionTrigger>
-					<AccordionContent>
-						To get started with Astro, follow the instructions in the documentation.
-					</AccordionContent>
-				</AccordionItem>
-			</Accordion>
-		</section>
+      <!-- Nested Tabs Demo -->
+      <section class="mt-8">
+        <h2 class="mb-4 text-2xl font-bold">Nested Tabs</h2>
+        <Tabs defaultValue="parent-1" class="max-w-[500px]">
+          <TabsList>
+            <TabsTrigger value="parent-1">Parent Tab 1</TabsTrigger>
+            <TabsTrigger value="parent-2">Parent Tab 2</TabsTrigger>
+            <TabsTrigger value="parent-3">Parent Tab 3</TabsTrigger>
+          </TabsList>
+          <TabsContent value="parent-1"> Content of Parent Tab 1 </TabsContent>
+          <TabsContent value="parent-2">
+            <div>
+              <p class="mb-2">Parent Tab 2 contains its own tabs:</p>
+              <Tabs defaultValue="child-a" class="max-w-[350px]">
+                <TabsList>
+                  <TabsTrigger value="child-a">Child A</TabsTrigger>
+                  <TabsTrigger value="child-b">Child B</TabsTrigger>
+                </TabsList>
+                <TabsContent value="child-a">Content of Child Tab A</TabsContent>
+                <TabsContent value="child-b">Content of Child Tab B</TabsContent>
+              </Tabs>
+            </div>
+          </TabsContent>
+          <TabsContent value="parent-3"> Content of Parent Tab 3 </TabsContent>
+        </Tabs>
+      </section>
+    </section>
 
-		<!-- Switches -->
-		<section class="mx-auto mt-10 max-w-lg">
-			<div class="flex flex-col gap-2">
-				<Switch id="terms" label="Accept terms" />
-				<Switch id="newsletter" variant="secondary" label="Subscribe to newsletter" disabled />
-				<Switch id="terms2" variant="primary" label="Accept terms" />
-				<Switch id="newsletter2" variant="secondary" label="Subscribe to newsletter" />
-				<Switch id="terms3" size="sm" variant="info" label="Accept terms" />
-				<Switch id="newsletter3" size="lg" variant="success" label="Subscribe to newsletter" />
-				<Switch id="terms4" variant="warning" label="Accept terms" />
-				<Switch id="newsletter4" variant="error" label="Subscribe to newsletter" />
-				<SwitchListenerTest />
-			</div>
-		</section>
+    <!-- forms -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <ContactForm />
+    </section>
 
-		<!-- Avatar -->
-		<section class="mx-auto mt-10 max-w-lg">
-			<div class="flex flex-wrap gap-4" slot="preview">
-				<Avatar variant="default" class="rounded-md border-purple-500">
-					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
-					<AvatarFallback>JD</AvatarFallback>
-				</Avatar>
-				<Avatar variant="primary">
-					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
-					<AvatarFallback>JD</AvatarFallback>
-				</Avatar>
-				<Avatar variant="secondary">
-					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
-					<AvatarFallback>JD</AvatarFallback>
-				</Avatar>
-				<Avatar variant="info">
-					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
-					<AvatarFallback>JD</AvatarFallback>
-				</Avatar>
-				<Avatar variant="success">
-					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
-					<AvatarFallback>JD</AvatarFallback>
-				</Avatar>
-				<Avatar variant="warning">
-					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
-					<AvatarFallback>JD</AvatarFallback>
-				</Avatar>
-				<Avatar variant="error">
-					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
-					<AvatarFallback>JD</AvatarFallback>
-				</Avatar>
-				<Avatar size="sm">
-					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
-					<AvatarFallback>JD</AvatarFallback>
-				</Avatar>
-				<Avatar size="md">
-					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
-					<AvatarFallback>JD</AvatarFallback>
-				</Avatar>
-				<Avatar size="lg">
-					<AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
-					<AvatarFallback>JD</AvatarFallback>
-				</Avatar>
-			</div>
-		</section>
+    <!-- Select -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <Select defaultValue="aest">
+        <SelectTrigger class="w-[350px]">
+          <SelectValue placeholder="Select a timezone" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>North America</SelectLabel>
+            <SelectItem value="est">Eastern Standard Time (EST)</SelectItem>
+            <SelectItem value="cst">Central Standard Time (CST)</SelectItem>
+            <SelectItem value="mst">Mountain Standard Time (MST)</SelectItem>
+            <SelectItem value="pst">Pacific Standard Time (PST)</SelectItem>
+            <SelectItem value="akst">Alaska Standard Time (AKST)</SelectItem>
+            <SelectItem value="hst">Hawaii Standard Time (HST)</SelectItem>
+          </SelectGroup>
+          <!-- <SelectSeparator /> -->
+          <SelectGroup>
+            <SelectLabel>Europe & Africa</SelectLabel>
+            <SelectItem value="gmt">Greenwich Mean Time (GMT)</SelectItem>
+            <SelectItem value="cet">Central European Time (CET)</SelectItem>
+            <SelectItem value="eet">Eastern European Time (EET)</SelectItem>
+            <SelectItem value="west"> Western European Summer Time (WEST) </SelectItem>
+            <SelectItem value="cat">Central Africa Time (CAT)</SelectItem>
+            <SelectItem value="eat">East Africa Time (EAT)</SelectItem>
+          </SelectGroup>
+          <!-- <SelectSeparator /> -->
+          <SelectGroup>
+            <SelectLabel>Asia</SelectLabel>
+            <SelectItem value="msk">Moscow Time (MSK)</SelectItem>
+            <SelectItem value="ist">India Standard Time (IST)</SelectItem>
+            <SelectItem value="cst_china">China Standard Time (CST)</SelectItem>
+            <SelectItem value="jst">Japan Standard Time (JST)</SelectItem>
+            <SelectItem value="kst">Korea Standard Time (KST)</SelectItem>
+            <SelectItem value="ist_indonesia"> Indonesia Central Standard Time (WITA) </SelectItem>
+          </SelectGroup>
+          <!-- <SelectSeparator /> -->
+          <SelectGroup>
+            <SelectLabel>Australia & Pacific</SelectLabel>
+            <SelectItem value="awst"> Australian Western Standard Time (AWST) </SelectItem>
+            <SelectItem value="acst"> Australian Central Standard Time (ACST) </SelectItem>
+            <SelectItem value="aest"> Australian Eastern Standard Time (AEST) </SelectItem>
+            <SelectItem value="nzst">New Zealand Standard Time (NZST)</SelectItem>
+            <SelectItem value="fjt">Fiji Time (FJT)</SelectItem>
+          </SelectGroup>
+          <!-- <SelectSeparator /> -->
+          <SelectGroup>
+            <SelectLabel>South America</SelectLabel>
+            <SelectItem value="art">Argentina Time (ART)</SelectItem>
+            <SelectItem value="bot">Bolivia Time (BOT)</SelectItem>
+            <SelectItem value="brt">Brasilia Time (BRT)</SelectItem>
+            <SelectItem value="clt">Chile Standard Time (CLT)</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </section>
 
-		<!-- Buttons -->
-		<section class="mx-auto mt-10 max-w-lg">
-			<div class="flex flex-wrap items-center gap-2">
-				<Button
-					variant="primary"
-					href="https://astro.build"
-					target="_blank"
-					rel="noopener noreferrer">Primary</Button
-				>
-				<Button variant="secondary" size="lg">Secondary lg</Button>
-				<Button variant="outline">Outline</Button>
-				<Button variant="info" size="sm"><Mail />Info sm</Button>
-				<Button variant="success">Success</Button>
-				<Button variant="warning">Warning</Button>
-				<Button variant="error"><Flame />Error</Button>
-				<Button variant="ghost">Ghost</Button>
-				<Button class="rounded-none bg-purple-700 text-white hover:bg-purple-800">Radius sm</Button>
-				<Button class="rounded-lg">Radius lg</Button>
-				<Button class="rounded-full">Radius full</Button>
-				<!-- <Button2 variant="primary" size="lg" href="#test">Button</Button2> -->
-			</div>
-		</section>
+    <!-- cards -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <div class="flex">
+        <CreateProjectForm />
+      </div>
+    </section>
 
-		<!-- Checkboxes -->
-		<section class="mx-auto mt-10 max-w-lg">
-			<div class="flex flex-col gap-2">
-				<Checkbox id="terms5" label="Accept terms" variant="primary" />
-				<Checkbox id="newsletter5" label="Subscribe to newsletter" variant="secondary" disabled />
-				<Checkbox id="terms6" label="Accept terms" />
-				<Checkbox
-					id="newsletter6"
-					label="Subscribe to newsletter"
-					variant="secondary"
-					class="bg-blue-500"
-				/>
-				<Checkbox id="terms7" label="Accept terms" variant="info" />
-				<Checkbox id="newsletter7" size="sm" label="Subscribe to newsletter" variant="success" />
-				<Checkbox id="terms8" label="Accept terms" variant="warning" />
-				<Checkbox id="newsletter8" size="lg" label="Subscribe to newsletter" variant="error" />
-			</div>
+    <section class="mx-auto mt-10 max-w-lg">
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious href="#">Prev</PaginationPrevious>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#">1</PaginationLink>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#" isActive>2</PaginationLink>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink href="#">3</PaginationLink>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationEllipsis />
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationNext href="#">Next</PaginationNext>
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    </section>
 
-			<!-- Tooltips -->
-			<section class="mx-auto mt-10 flex max-w-lg flex-wrap items-center gap-2">
-				<Tooltip disableHoverableContent>
-					<TooltipTrigger>
-						<Button variant="outline">Left Tooltip</Button>
-					</TooltipTrigger>
-					<TooltipContent side="left" avoidCollisions={false}>test</TooltipContent>
-				</Tooltip>
+    <!-- Accordions -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <Accordion defaultValue="item-1">
+        <AccordionItem value="item-1">
+          <AccordionTrigger>What is Astro?</AccordionTrigger>
+          <AccordionContent>
+            Astro is an web framework for building fast, scalable, and secure websites.
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-2">
+          <AccordionTrigger>Why should I use Astro?</AccordionTrigger>
+          <AccordionContent>
+            Astro provides a set of features that make it an ideal choice for building fast,
+            scalable, and secure websites.
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-3">
+          <AccordionTrigger>How do I get started with Astro?</AccordionTrigger>
+          <AccordionContent>
+            To get started with Astro, follow the instructions in the documentation.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </section>
 
-				<Tooltip>
-					<TooltipTrigger>
-						<Button variant="outline">Top Tooltip</Button>
-					</TooltipTrigger>
-					<TooltipContent side="top">test</TooltipContent>
-				</Tooltip>
+    <section class="mx-auto mt-6 max-w-lg">
+      <Accordion type="multiple" defaultValue="item-1">
+        <AccordionItem value="item-4">
+          <AccordionTrigger>What is Astro?</AccordionTrigger>
+          <AccordionContent>
+            Astro is an web framework for building fast, scalable, and secure websites.
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-5">
+          <AccordionTrigger>Why should I use Astro?</AccordionTrigger>
+          <AccordionContent>
+            Astro provides a set of features that make it an ideal choice for building fast,
+            scalable, and secure websites.
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="item-6">
+          <AccordionTrigger>How do I get started with Astro?</AccordionTrigger>
+          <AccordionContent>
+            To get started with Astro, follow the instructions in the documentation.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </section>
 
-				<Tooltip>
-					<TooltipTrigger>
-						<Button variant="outline">Bottom Tooltip</Button>
-					</TooltipTrigger>
-					<TooltipContent side="bottom">test</TooltipContent>
-				</Tooltip>
+    <!-- Switches -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <div class="flex flex-col gap-2">
+        <Switch id="terms" label="Accept terms" />
+        <Switch id="newsletter" variant="secondary" label="Subscribe to newsletter" disabled />
+        <Switch id="terms2" variant="primary" label="Accept terms" />
+        <Switch id="newsletter2" variant="secondary" label="Subscribe to newsletter" />
+        <Switch id="terms3" size="sm" variant="info" label="Accept terms" />
+        <Switch id="newsletter3" size="lg" variant="success" label="Subscribe to newsletter" />
+        <Switch id="terms4" variant="warning" label="Accept terms" />
+        <Switch id="newsletter4" variant="error" label="Subscribe to newsletter" />
+        <SwitchListenerTest />
+      </div>
+    </section>
 
-				<Tooltip>
-					<TooltipTrigger>
-						<Button variant="outline">Right Tooltip</Button>
-					</TooltipTrigger>
-					<TooltipContent side="right">test</TooltipContent>
-				</Tooltip>
-			</section>
+    <!-- Avatar -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <div class="flex flex-wrap gap-4" slot="preview">
+        <Avatar variant="default" class="rounded-md border-purple-500">
+          <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+          <AvatarFallback>JD</AvatarFallback>
+        </Avatar>
+        <Avatar variant="primary">
+          <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+          <AvatarFallback>JD</AvatarFallback>
+        </Avatar>
+        <Avatar variant="secondary">
+          <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+          <AvatarFallback>JD</AvatarFallback>
+        </Avatar>
+        <Avatar variant="info">
+          <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+          <AvatarFallback>JD</AvatarFallback>
+        </Avatar>
+        <Avatar variant="success">
+          <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+          <AvatarFallback>JD</AvatarFallback>
+        </Avatar>
+        <Avatar variant="warning">
+          <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+          <AvatarFallback>JD</AvatarFallback>
+        </Avatar>
+        <Avatar variant="error">
+          <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+          <AvatarFallback>JD</AvatarFallback>
+        </Avatar>
+        <Avatar size="sm">
+          <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+          <AvatarFallback>JD</AvatarFallback>
+        </Avatar>
+        <Avatar size="md">
+          <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+          <AvatarFallback>JD</AvatarFallback>
+        </Avatar>
+        <Avatar size="lg">
+          <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
+          <AvatarFallback>JD</AvatarFallback>
+        </Avatar>
+      </div>
+    </section>
 
-			<!-- Buttons -->
-			<section class="mx-auto mt-10 max-w-lg">
-				<div class="flex flex-wrap items-center gap-2">
-					<Badge variant="default">Default</Badge>
-					<Badge
-						variant="primary"
-						href="https://astro.build"
-						target="_blank"
-						rel="noopener noreferrer">Primary</Badge
-					>
-					<Badge variant="secondary" size="sm">Secondary</Badge>
-					<Badge variant="outline">Outline</Badge>
-					<Badge variant="info">Info</Badge>
-					<Badge variant="success" size="lg">Success</Badge>
-					<Badge variant="warning">Warning</Badge>
-					<Badge variant="error">Error</Badge>
-					<Badge variant="ghost">Ghost</Badge>
-				</div>
-			</section>
+    <!-- Buttons -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <div class="flex flex-wrap items-center gap-2">
+        <Button
+          variant="primary"
+          href="https://astro.build"
+          target="_blank"
+          rel="noopener noreferrer">Primary</Button
+        >
+        <Button variant="secondary" size="lg">Secondary lg</Button>
+        <Button variant="outline">Outline</Button>
+        <Button variant="info" size="sm"><Mail />Info sm</Button>
+        <Button variant="success">Success</Button>
+        <Button variant="warning">Warning</Button>
+        <Button variant="error"><Flame />Error</Button>
+        <Button variant="ghost">Ghost</Button>
+        <Button class="rounded-none bg-purple-700 text-white hover:bg-purple-800">Radius sm</Button>
+        <Button class="rounded-lg">Radius lg</Button>
+        <Button class="rounded-full">Radius full</Button>
+        <!-- <Button2 variant="primary" size="lg" href="#test">Button</Button2> -->
+      </div>
+    </section>
 
-			<!-- Alerts -->
-			<section class="mx-auto mt-6 max-w-lg">
-				<Alert>
-					<AlertTitle>Heads up!</AlertTitle>
-					<AlertDescription>
-						A simple alert with an <code>AlertTitle</code> and an
-						<code>AlertDescription</code>.
-					</AlertDescription>
-				</Alert>
-			</section>
+    <!-- Checkboxes -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <div class="flex flex-col gap-2">
+        <Checkbox id="terms5" label="Accept terms" variant="primary" />
+        <Checkbox id="newsletter5" label="Subscribe to newsletter" variant="secondary" disabled />
+        <Checkbox id="terms6" label="Accept terms" />
+        <Checkbox
+          id="newsletter6"
+          label="Subscribe to newsletter"
+          variant="secondary"
+          class="bg-blue-500"
+        />
+        <Checkbox id="terms7" label="Accept terms" variant="info" />
+        <Checkbox id="newsletter7" size="sm" label="Subscribe to newsletter" variant="success" />
+        <Checkbox id="terms8" label="Accept terms" variant="warning" />
+        <Checkbox id="newsletter8" size="lg" label="Subscribe to newsletter" variant="error" />
+      </div>
 
-			<section class="mx-auto mt-6 max-w-lg">
-				<Alert variant="primary">
-					<AlertTitle>Heads up!</AlertTitle>
-					<AlertDescription>
-						A simple alert with an <code>AlertTitle</code> and an
-						<code>AlertDescription</code>.
-					</AlertDescription>
-				</Alert>
-			</section>
+      <!-- Tooltips -->
+      <section class="mx-auto mt-10 flex max-w-lg flex-wrap items-center gap-2">
+        <Tooltip disableHoverableContent>
+          <TooltipTrigger>
+            <Button variant="outline">Left Tooltip</Button>
+          </TooltipTrigger>
+          <TooltipContent side="left" avoidCollisions={false}>test</TooltipContent>
+        </Tooltip>
 
-			<section class="mx-auto mt-6 max-w-lg">
-				<Alert variant="secondary">
-					<AlertTitle>Heads up!</AlertTitle>
-					<AlertDescription>
-						A simple alert with an <code>AlertTitle</code> and an
-						<code>AlertDescription</code>.
-					</AlertDescription>
-				</Alert>
-			</section>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="outline">Top Tooltip</Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">test</TooltipContent>
+        </Tooltip>
 
-			<section class="mx-auto mt-6 max-w-lg">
-				<Alert variant="info">
-					<AlertTitle><InfoCircle class="size-6" /> Heads up!</AlertTitle>
-					<AlertDescription>
-						An alert with an <code>AlertTitle</code> and an
-						<code>AlertDescription</code> and icon.
-					</AlertDescription>
-				</Alert>
-			</section>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="outline">Bottom Tooltip</Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">test</TooltipContent>
+        </Tooltip>
 
-			<section class="mx-auto mt-6 max-w-lg">
-				<Alert variant="success">
-					<AlertTitle>Heads up!</AlertTitle>
-					<AlertDescription>
-						A simple alert with an <code>AlertTitle</code> and an
-						<code>AlertDescription</code>.
-					</AlertDescription>
-				</Alert>
-			</section>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button variant="outline">Right Tooltip</Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">test</TooltipContent>
+        </Tooltip>
+      </section>
 
-			<section class="mx-auto mt-6 max-w-lg">
-				<Alert variant="warning">
-					<AlertTitle>Heads up!</AlertTitle>
-					<AlertDescription>
-						A simple alert with an <code>AlertTitle</code> and an
-						<code>AlertDescription</code>.
-					</AlertDescription>
-				</Alert>
-			</section>
+      <!-- Buttons -->
+      <section class="mx-auto mt-10 max-w-lg">
+        <div class="flex flex-wrap items-center gap-2">
+          <Badge variant="default">Default</Badge>
+          <Badge
+            variant="primary"
+            href="https://astro.build"
+            target="_blank"
+            rel="noopener noreferrer">Primary</Badge
+          >
+          <Badge variant="secondary" size="sm">Secondary</Badge>
+          <Badge variant="outline">Outline</Badge>
+          <Badge variant="info">Info</Badge>
+          <Badge variant="success" size="lg">Success</Badge>
+          <Badge variant="warning">Warning</Badge>
+          <Badge variant="error">Error</Badge>
+          <Badge variant="ghost">Ghost</Badge>
+        </div>
+      </section>
 
-			<section class="mx-auto mt-6 max-w-lg">
-				<Alert variant="error">
-					<AlertTitle><Flame class="size-6" /> Heads up!</AlertTitle>
-					<AlertDescription>
-						An alert with an <code>AlertTitle</code> and an
-						<code>AlertDescription</code> and icon.
-					</AlertDescription>
-				</Alert>
-			</section>
+      <!-- Alerts -->
+      <section class="mx-auto mt-6 max-w-lg">
+        <Alert>
+          <AlertTitle>Heads up!</AlertTitle>
+          <AlertDescription>
+            A simple alert with an <code>AlertTitle</code> and an
+            <code>AlertDescription</code>.
+          </AlertDescription>
+        </Alert>
+      </section>
 
-			<section class="mx-auto mt-6 max-w-xl">
-				<Table>
-					<TableCaption>A list of your recent invoices</TableCaption>
-					<TableHeader>
-						<TableRow>
-							<TableHead>Invoice</TableHead>
-							<TableHead>Status</TableHead>
-							<TableHead>Method</TableHead>
-							<TableHead class="text-right">Amount</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						<TableRow>
-							<TableCell>INV001</TableCell>
-							<TableCell>
-								<Badge>Paid</Badge>
-							</TableCell>
-							<TableCell>Credit Card</TableCell>
-							<TableCell class="text-right">$250.00</TableCell>
-						</TableRow>
-						<TableRow>
-							<TableCell>INV002</TableCell>
-							<TableCell>
-								<Badge variant="outline">Pending</Badge>
-							</TableCell>
-							<TableCell>PayPal</TableCell>
-							<TableCell class="text-right">$150.00</TableCell>
-						</TableRow>
-						<TableRow>
-							<TableCell>INV003</TableCell>
-							<TableCell>
-								<Badge variant="error">Overdue</Badge>
-							</TableCell>
-							<TableCell>Bank Transfer</TableCell>
-							<TableCell class="text-right">$350.00</TableCell>
-						</TableRow>
-					</TableBody>
-					<TableFoot>
-						<TableRow>
-							<TableCell colspan={3}>Total</TableCell>
-							<TableCell class="text-right">$750.00</TableCell>
-						</TableRow>
-					</TableFoot>
-				</Table>
-			</section>
-		</section>
+      <section class="mx-auto mt-6 max-w-lg">
+        <Alert variant="primary">
+          <AlertTitle>Heads up!</AlertTitle>
+          <AlertDescription>
+            A simple alert with an <code>AlertTitle</code> and an
+            <code>AlertDescription</code>.
+          </AlertDescription>
+        </Alert>
+      </section>
 
-		<!-- Nested Dialog Demo -->
-		<section class="mx-auto mt-10 max-w-lg">
-			<h2 class="mb-4 text-2xl font-bold">Nested Dialog Demo</h2>
-			<Dialog>
-				<DialogTrigger asChild>
-					<Button variant="primary">Open Parent Dialog</Button>
-				</DialogTrigger>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Parent Dialog</DialogTitle>
-						<DialogDescription>
-							This is the parent dialog. You can open a nested dialog from here.
-						</DialogDescription>
-					</DialogHeader>
-					<div class="mt-4 flex flex-col gap-4">
-						<Dialog>
-							<DialogTrigger asChild>
-								<Button variant="secondary">Open Nested Dialog</Button>
-							</DialogTrigger>
-							<DialogContent>
-								<DialogHeader>
-									<DialogTitle>Nested Dialog</DialogTitle>
-									<DialogDescription>
-										This is the nested dialog. Only the topmost dialog should close when pressing
-										Escape or clicking outside.
-									</DialogDescription>
-								</DialogHeader>
-								<DialogFooter>
-									<DialogClose asChild>
-										<Button variant="outline">Close Nested Dialog</Button>
-									</DialogClose>
-								</DialogFooter>
-							</DialogContent>
-						</Dialog>
-						<DialogFooter>
-							<DialogClose asChild>
-								<Button variant="outline">Close Parent Dialog</Button>
-							</DialogClose>
-						</DialogFooter>
-					</div>
-				</DialogContent>
-			</Dialog>
-		</section>
-	</div>
+      <section class="mx-auto mt-6 max-w-lg">
+        <Alert variant="secondary">
+          <AlertTitle>Heads up!</AlertTitle>
+          <AlertDescription>
+            A simple alert with an <code>AlertTitle</code> and an
+            <code>AlertDescription</code>.
+          </AlertDescription>
+        </Alert>
+      </section>
+
+      <section class="mx-auto mt-6 max-w-lg">
+        <Alert variant="info">
+          <AlertTitle><InfoCircle class="size-6" /> Heads up!</AlertTitle>
+          <AlertDescription>
+            An alert with an <code>AlertTitle</code> and an
+            <code>AlertDescription</code> and icon.
+          </AlertDescription>
+        </Alert>
+      </section>
+
+      <section class="mx-auto mt-6 max-w-lg">
+        <Alert variant="success">
+          <AlertTitle>Heads up!</AlertTitle>
+          <AlertDescription>
+            A simple alert with an <code>AlertTitle</code> and an
+            <code>AlertDescription</code>.
+          </AlertDescription>
+        </Alert>
+      </section>
+
+      <section class="mx-auto mt-6 max-w-lg">
+        <Alert variant="warning">
+          <AlertTitle>Heads up!</AlertTitle>
+          <AlertDescription>
+            A simple alert with an <code>AlertTitle</code> and an
+            <code>AlertDescription</code>.
+          </AlertDescription>
+        </Alert>
+      </section>
+
+      <section class="mx-auto mt-6 max-w-lg">
+        <Alert variant="error">
+          <AlertTitle><Flame class="size-6" /> Heads up!</AlertTitle>
+          <AlertDescription>
+            An alert with an <code>AlertTitle</code> and an
+            <code>AlertDescription</code> and icon.
+          </AlertDescription>
+        </Alert>
+      </section>
+
+      <section class="mx-auto mt-6 max-w-xl">
+        <Table>
+          <TableCaption>A list of your recent invoices</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Invoice</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Method</TableHead>
+              <TableHead class="text-right">Amount</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell>INV001</TableCell>
+              <TableCell>
+                <Badge>Paid</Badge>
+              </TableCell>
+              <TableCell>Credit Card</TableCell>
+              <TableCell class="text-right">$250.00</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>INV002</TableCell>
+              <TableCell>
+                <Badge variant="outline">Pending</Badge>
+              </TableCell>
+              <TableCell>PayPal</TableCell>
+              <TableCell class="text-right">$150.00</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>INV003</TableCell>
+              <TableCell>
+                <Badge variant="error">Overdue</Badge>
+              </TableCell>
+              <TableCell>Bank Transfer</TableCell>
+              <TableCell class="text-right">$350.00</TableCell>
+            </TableRow>
+          </TableBody>
+          <TableFoot>
+            <TableRow>
+              <TableCell colspan={3}>Total</TableCell>
+              <TableCell class="text-right">$750.00</TableCell>
+            </TableRow>
+          </TableFoot>
+        </Table>
+      </section>
+    </section>
+
+    <!-- Nested Dialog Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Nested Dialog Demo</h2>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="primary">Open Parent Dialog</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Parent Dialog</DialogTitle>
+            <DialogDescription>
+              This is the parent dialog. You can open a nested dialog from here.
+            </DialogDescription>
+          </DialogHeader>
+          <div class="mt-4 flex flex-col gap-4">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="secondary">Open Nested Dialog</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Nested Dialog</DialogTitle>
+                  <DialogDescription>
+                    This is the nested dialog. Only the topmost dialog should close when pressing
+                    Escape or clicking outside.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Close Nested Dialog</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Close Parent Dialog</Button>
+              </DialogClose>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </section>
+  </div>
 </Layout>

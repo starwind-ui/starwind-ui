@@ -33,6 +33,9 @@ importers:
       eslint-plugin-prettier:
         specifier: ^5.2.5
         version: 5.2.6(eslint@9.25.1(jiti@2.4.2))(prettier@3.5.3)
+      eslint-plugin-simple-import-sort:
+        specifier: ^12.1.1
+        version: 12.1.1(eslint@9.25.1(jiti@2.4.2))
       globals:
         specifier: ^16.0.0
         version: 16.0.0
@@ -95,7 +98,7 @@ importers:
         specifier: ^0.10.1
         version: 0.10.1
       '@starwind-ui/core':
-        specifier: 1.6.0
+        specifier: 1.6.4
         version: link:../core
       chalk:
         specifier: ^5.4.1
@@ -1986,6 +1989,11 @@ packages:
         optional: true
       eslint-config-prettier:
         optional: true
+
+  eslint-plugin-simple-import-sort@12.1.1:
+    resolution: {integrity: sha512-6nuzu4xwQtE3332Uz0to+TxDQYRLTKRESSc2hefVT48Zc8JthmN23Gx9lnYhu0FtkRSL1oxny3kJ2aveVhmOVA==}
+    peerDependencies:
+      eslint: '>=5.0.0'
 
   eslint-scope@8.3.0:
     resolution: {integrity: sha512-pUNxi75F8MJ/GdeKtVLSbYg4ZI34J6C0C7sbL4YOp2exGwen7ZsuBqKzUhXd0qMQ362yET3z+uPwKeg/0C2XCQ==}
@@ -6558,6 +6566,10 @@ snapshots:
       prettier: 3.5.3
       prettier-linter-helpers: 1.0.0
       synckit: 0.11.4
+
+  eslint-plugin-simple-import-sort@12.1.1(eslint@9.25.1(jiti@2.4.2)):
+    dependencies:
+      eslint: 9.25.1(jiti@2.4.2)
 
   eslint-scope@8.3.0:
     dependencies:

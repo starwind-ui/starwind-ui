@@ -1,16 +1,16 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { type VariantProps, tv } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
 
 type Props = HTMLAttributes<"td"> & VariantProps<typeof tableCell>;
 
 const tableCell = tv({
-	base: "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+  base: "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
 });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
 <td data-table-cell class={tableCell({ class: className })} {...rest}>
-	<slot />
+  <slot />
 </td>

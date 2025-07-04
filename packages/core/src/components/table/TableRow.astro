@@ -1,16 +1,16 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { type VariantProps, tv } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
 
 type Props = HTMLAttributes<"tr"> & VariantProps<typeof tableRow>;
 
 const tableRow = tv({
-	base: "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
+  base: "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
 });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
 <tr data-table-row class={tableRow({ class: className })} {...rest} role="row">
-	<slot />
+  <slot />
 </tr>

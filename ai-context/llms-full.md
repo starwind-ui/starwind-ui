@@ -5,13 +5,16 @@
 ## Installation
 
 ### Prerequisites
+
 - Astro project
 - Tailwind CSS v4
 - Node.js
 
 ### Setup with CLI (Recommended)
+
 1. Create or use an existing Astro project
 2. Configure path aliases in tsconfig.json:
+
 ```json
 {
   "compilerOptions": {
@@ -22,13 +25,17 @@
   }
 }
 ```
+
 3. If using pnpm, create a .npmrc file:
+
 ```
 auto-install-peers=true
 node-linker=hoisted
 lockfile=true
 ```
+
 4. Run the CLI to initialize:
+
 ```bash
 pnpx starwind@latest init
 # or
@@ -36,13 +43,17 @@ npx starwind@latest init
 # or
 yarn dlx starwind@latest init
 ```
+
 5. Import the CSS in your layout:
+
 ```astro
 ---
 import "@/styles/starwind.css";
 ---
 ```
+
 6. Add components as needed:
+
 ```bash
 npx starwind@latest add button
 ```
@@ -52,6 +63,7 @@ npx starwind@latest add button
 All Starwind components follow a consistent pattern:
 
 1. **Import the components**:
+
 ```astro
 ---
 import { ComponentName } from "@/components/starwind/component-name";
@@ -59,10 +71,9 @@ import { ComponentName } from "@/components/starwind/component-name";
 ```
 
 2. **Use the components in your templates**:
+
 ```astro
-<ComponentName prop="value">
-  Content
-</ComponentName>
+<ComponentName prop="value"> Content </ComponentName>
 ```
 
 ## Available Components
@@ -94,18 +105,18 @@ Starwind UI includes the following components:
 Most components follow a compound component pattern, where a parent component provides context to specialized child components:
 
 ### Example: Tooltip
+
 ```astro
 <Tooltip>
   <TooltipTrigger>
     <Button>Hover me</Button>
   </TooltipTrigger>
-  <TooltipContent>
-    Add to library
-  </TooltipContent>
+  <TooltipContent> Add to library </TooltipContent>
 </Tooltip>
 ```
 
 ### Example: Pagination
+
 ```astro
 <Pagination>
   <PaginationContent>
@@ -134,7 +145,9 @@ Most components follow a compound component pattern, where a parent component pr
 ## Common Props and Patterns
 
 ### Variant Props
+
 Many components support variant props that change their visual appearance:
+
 - `variant="default"` (usually the default)
 - `variant="primary"`
 - `variant="secondary"`
@@ -146,19 +159,24 @@ Many components support variant props that change their visual appearance:
 - `variant="error"`
 
 ### Size Props
+
 Many components support size props:
+
 - `size="sm"`
 - `size="md"` (usually the default)
 - `size="lg"`
 
 ### CSS Variables
+
 Starwind UI uses CSS variables for theming. Key variables include:
 
 **Base**
+
 - `--background`: Default background color
 - `--foreground`: Default text color
 
 **Component Colors**
+
 - `--primary` / `--primary-foreground`: Primary action colors
 - `--secondary` / `--secondary-foreground`: Secondary action colors
 - `--muted` / `--muted-foreground`: Muted UI elements
@@ -171,32 +189,38 @@ Starwind UI uses CSS variables for theming. Key variables include:
 - `--error` / `--error-foreground`: Error messaging colors
 
 **Utilities**
+
 - `--border`: Border color
 - `--input`: Input component border color
 - `--outline`: Focus outline color
 - `--radius`: Base border radius
 
 ### Dark Mode Support
+
 Starwind supports dark mode via a `.dark` class, which changes the CSS variables.
 
 ## Command Line Interface
 
 ### Initialize Project
+
 ```bash
 npx starwind@latest init
 ```
 
 ### Add Components
+
 ```bash
 npx starwind@latest add button card dialog
 ```
 
 ### Update Components
+
 ```bash
 npx starwind@latest update button
 ```
 
 ### Remove Components
+
 ```bash
 npx starwind@latest remove button
 ```
@@ -216,15 +240,22 @@ npx starwind@latest remove button
 ## Detailed Component Reference
 
 ### Accordion
+
 - **Documentation**: https://starwind.dev/docs/components
 - **Import pattern**: `import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/starwind/accordion";`
 - **Key props**:
   - `type`: "single" | "multiple" (default: "single")
   - `defaultValue`: string - Value of the item that should be open by default
 - **Example usage**:
+
 ```astro
 ---
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/starwind/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/starwind/accordion";
 ---
 
 <Accordion defaultValue="item-1">
@@ -237,8 +268,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
   <AccordionItem value="item-2">
     <AccordionTrigger>Why should I use Astro?</AccordionTrigger>
     <AccordionContent>
-      Astro provides a set of features that make it an ideal choice for building fast,
-      scalable, and secure websites.
+      Astro provides a set of features that make it an ideal choice for building fast, scalable, and
+      secure websites.
     </AccordionContent>
   </AccordionItem>
   <AccordionItem value="item-3">
@@ -251,11 +282,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 ```
 
 ### Alert
+
 - **Documentation**: https://starwind.dev/docs/components/alert
 - **Import pattern**: `import { Alert, AlertTitle, AlertDescription } from "@/components/starwind/alert";`
 - **Key props**:
   - `variant`: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error" (default: "default")
 - **Example usage**:
+
 ```astro
 ---
 import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
@@ -264,23 +297,25 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert
 <Alert variant="info">
   <AlertTitle>Heads up!</AlertTitle>
   <AlertDescription>
-    A simple alert with an "AlertTitle" and an
-    "AlertDescription".
+    A simple alert with an "AlertTitle" and an "AlertDescription".
   </AlertDescription>
 </Alert>
 ```
 
 ### Avatar
+
 - **Documentation**: https://starwind.dev/docs/components/avatar
 - **Import pattern**: `import { Avatar, AvatarImage, AvatarFallback } from "@/components/starwind/avatar";`
 - **Key props**:
   - `variant`: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error" (default: "default")
   - `size`: "sm" | "md" | "lg" (default: "md")
 - **Example usage**:
+
 ```astro
 ---
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/starwind/avatar";
 ---
+
 <Avatar>
   <AvatarImage src="https://i.pravatar.cc/150?u=a04258a2462d826712d" alt="John Doe" />
   <AvatarFallback>JD</AvatarFallback>
@@ -288,12 +323,14 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/starwind/avata
 ```
 
 ### Badge
+
 - **Documentation**: https://starwind.dev/docs/components/badge
 - **Import pattern**: `import { Badge } from "@/components/starwind/badge";`
 - **Key props**:
   - `variant`: "default" | "primary" | "secondary" | "outline" | "ghost" | "info" | "success" | "warning" | "error" (default: "default")
   - `size`: "sm" | "md" | "lg" (default: "md")
 - **Example usage**:
+
 ```astro
 ---
 import { Badge } from "@/components/starwind/badge";
@@ -303,12 +340,22 @@ import { Badge } from "@/components/starwind/badge";
 ```
 
 ### Breadcrumb
+
 - **Documentation**: https://starwind.dev/docs/components/breadcrumb
 - **Import pattern**: `import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis } from "@/components/starwind/breadcrumb";`
 - **Example usage**:
+
 ```astro
 ---
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis } from "@/components/starwind/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+} from "@/components/starwind/breadcrumb";
 ---
 
 <Breadcrumb>
@@ -331,25 +378,36 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 ```
 
 ### Button
+
 - **Documentation**: https://starwind.dev/docs/components/button
 - **Import pattern**: `import { Button } from "@/components/starwind/button";`
 - **Key props**:
   - `variant`: "default" | "primary" | "secondary" | "outline" | "ghost" | "info" | "success" | "warning" | "error" (default: "default")
   - `size`: "sm" | "md" | "lg" | "icon" (default: "md")
 - **Example usage**:
+
 ```astro
 <Button variant="primary" size="md">Click me</Button>
 ```
 
 ### Card
+
 - **Documentation**: https://starwind.dev/docs/components/card
 - **Import pattern**: `import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/starwind/card";`
 - **Key props**:
   - Standard HTML attributes for `<div>` elements
 - **Example usage**:
+
 ```astro
 ---
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/starwind/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/starwind/card";
 import { Button } from "@/components/starwind/button";
 ---
 
@@ -368,6 +426,7 @@ import { Button } from "@/components/starwind/button";
 ```
 
 ### Checkbox
+
 - **Documentation**: https://starwind.dev/docs/components/checkbox
 - **Import pattern**: `import { Checkbox } from "@/components/starwind/checkbox";`
 - **Key props**:
@@ -376,6 +435,7 @@ import { Button } from "@/components/starwind/button";
   - `size`: "sm" | "md" | "lg" (default: "md")
   - All standard HTML attributes for <input type="checkbox" /> are supported
 - **Example usage**:
+
 ```astro
 ---
 import { Checkbox } from "@/components/starwind/checkbox";
@@ -385,14 +445,25 @@ import { Checkbox } from "@/components/starwind/checkbox";
 ```
 
 ### Dialog
+
 - **Documentation**: https://starwind.dev/docs/components/dialog
 - **Import pattern**: `import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/starwind/dialog";`
 - **Key props**:
   - See the documentation for the props for each component
 - **Example usage**:
+
 ```astro
 ---
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/starwind/dialog";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/starwind/dialog";
 import { Button } from "@/components/starwind/button";
 ---
 
@@ -419,12 +490,14 @@ import { Button } from "@/components/starwind/button";
 ```
 
 ### Input
+
 - **Documentation**: https://starwind.dev/docs/components/input
 - **Import pattern**: `import { Input } from "@/components/starwind/input";`
 - **Key props**:
   - `size`: "sm" | "md" | "lg" (default: "md")
   - All standard HTML input attributes
 - **Example usage**:
+
 ```astro
 ---
 import { Input } from "@/components/starwind/input";
@@ -434,12 +507,14 @@ import { Input } from "@/components/starwind/input";
 ```
 
 ### Label
+
 - **Documentation**: https://starwind.dev/docs/components/label
 - **Import pattern**: `import { Label } from "@/components/starwind/label";`
 - **Key props**:
   - `size`: "sm" | "md" | "lg" (default: "md")
   - All standard HTML label attributes
 - **Example usage**:
+
 ```astro
 ---
 import { Label } from "@/components/starwind/label";
@@ -453,6 +528,7 @@ import { Input } from "@/components/starwind/input";
 ```
 
 ### Pagination
+
 - **Documentation**: https://starwind.dev/docs/components/pagination
 - **Import pattern**: `import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis } from "@/components/starwind/pagination";`
 - **Key props**:
@@ -467,10 +543,20 @@ import { Input } from "@/components/starwind/input";
     - `href`: string - Link target
     - `size`: `"sm" \| "md" \| "lg"` - element size
 - **Example usage**:
+
 ```astro
 ---
-import { Pagination, PaginationEllipsis, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/starwind/pagination";
+import {
+  Pagination,
+  PaginationEllipsis,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/starwind/pagination";
 ---
+
 <Pagination>
   <PaginationContent>
     <PaginationItem>
@@ -496,6 +582,7 @@ import { Pagination, PaginationEllipsis, PaginationContent, PaginationItem, Pagi
 ```
 
 ### Select
+
 - **Documentation**: https://starwind.dev/docs/components/select
 - **Import pattern**: `import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator } from "@/components/starwind/select";`
 - **Key props**:
@@ -507,9 +594,19 @@ import { Pagination, PaginationEllipsis, PaginationContent, PaginationItem, Pagi
     - `disabled`: boolean - Disables the item
     - `value`: string - Value of the item
 - **Example usage**:
+
 ```astro
 ---
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/starwind/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/starwind/select";
 ---
 
 <Select>
@@ -529,6 +626,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSepa
 ```
 
 ### Switch
+
 - **Documentation**: https://starwind.dev/docs/components/switch
 - **Import pattern**: `import { Switch } from "@/components/starwind/switch";`
 - **Key props**:
@@ -538,6 +636,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSepa
   - `checked`: boolean - Controls the checked state
   - `disabled`: boolean - Disables the switch
 - **Example usage**:
+
 ```astro
 ---
 import { Switch } from "@/components/starwind/switch";
@@ -547,13 +646,25 @@ import { Switch } from "@/components/starwind/switch";
 ```
 
 ### Table
+
 - **Documentation**: https://starwind.dev/docs/components/table
 - **Import pattern**: `import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell, TableCaption, TableFoot } from "@/components/starwind/table";`
 - **Example usage**:
+
 ```astro
 ---
-import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell, TableCaption, TableFoot } from "@/components/starwind/table";
+import {
+  Table,
+  TableHeader,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableCaption,
+  TableFoot,
+} from "@/components/starwind/table";
 ---
+
 <Table>
   <TableCaption>Example of a simple table</TableCaption>
   <TableHeader>
@@ -584,6 +695,7 @@ import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell, TableCap
 ```
 
 ### Tabs
+
 - **Documentation**: https://starwind.dev/docs/components/tabs
 - **Import pattern**: `import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/starwind/tabs";`
 - **Key props**:
@@ -595,6 +707,7 @@ import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell, TableCap
   - `<TabsContent>`
     - `value`: string - The value of the tab
 - **Example usage**:
+
 ```astro
 ---
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/starwind/tabs";
@@ -615,12 +728,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/starwind/
 ```
 
 ### Textarea
+
 - **Documentation**: https://starwind.dev/docs/components/textarea
 - **Import pattern**: `import { Textarea } from "@/components/starwind/textarea";`
 - **Key props**:
   - `size`: "sm" | "md" | "lg" (default: "md")
   - All standard HTML textarea attributes
 - **Example usage**:
+
 ```astro
 ---
 import { Textarea } from "@/components/starwind/textarea";
@@ -630,6 +745,7 @@ import { Textarea } from "@/components/starwind/textarea";
 ```
 
 ### Tooltip
+
 - **Documentation**: https://starwind.dev/docs/components/tooltip
 - **Import pattern**: `import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/starwind/tooltip";`
 - **Key props**:
@@ -638,10 +754,11 @@ import { Textarea } from "@/components/starwind/textarea";
     - `closeDelay`: number - Delay in ms before hiding the tooltip (default: 200)
     - `disableHoverableContent`: boolean - When true, prevents the tooltip from staying open when hovering over its content (default: false)
   - `<TooltipContent>`
-    - `side`: "top" | "right" | "bottom" | "left" (default: "top") 
+    - `side`: "top" | "right" | "bottom" | "left" (default: "top")
     - `align`: "start" | "center" | "end" (default: "center")
     - `animationDuration`: number - Duration in ms of the open/close animation (default: 150)
 - **Example usage**:
+
 ```astro
 ---
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/starwind/tooltip";
@@ -652,9 +769,7 @@ import { Button } from "@/components/starwind/button";
   <TooltipTrigger>
     <Button>Hover me</Button>
   </TooltipTrigger>
-  <TooltipContent>
-    Add to library
-  </TooltipContent>
+  <TooltipContent> Add to library </TooltipContent>
 </Tooltip>
 ```
 

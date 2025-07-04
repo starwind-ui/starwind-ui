@@ -8,23 +8,23 @@ import SelectTrigger from "./SelectTrigger.astro";
 import SelectValue from "./SelectValue.astro";
 
 export {
-	Select,
-	SelectTrigger,
-	SelectValue,
-	SelectContent,
-	SelectGroup,
-	SelectLabel,
-	SelectItem,
-	SelectSeparator,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
 };
 
 export default {
-	Root: Select,
-	Trigger: SelectTrigger,
-	Value: SelectValue,
-	Content: SelectContent,
-	Group: SelectGroup,
-	Label: SelectLabel,
-	Item: SelectItem,
-	Separator: SelectSeparator,
+  Root: Select,
+  Trigger: SelectTrigger,
+  Value: SelectValue,
+  Content: SelectContent,
+  Group: SelectGroup,
+  Label: SelectLabel,
+  Item: SelectItem,
+  Separator: SelectSeparator,
 };

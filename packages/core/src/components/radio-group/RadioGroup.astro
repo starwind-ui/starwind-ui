@@ -1,0 +1,156 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"fieldset"> & {
+  /**
+   * Value for the radio group
+   */
+  value?: string;
+  /**
+   * Default value for the radio group
+   */
+  defaultValue?: string;
+  /**
+   * Legend for the radio group
+   */
+  legend?: string;
+  /**
+   * Whether the radio group is disabled
+   */
+  disabled?: boolean;
+  /**
+   * Orientation of the radio group
+   */
+  orientation?: "horizontal" | "vertical";
+};
+
+const radioGroup = tv({
+  base: "starwind-radio-group disabled:cursor-not-allowed disabled:opacity-70",
+  variants: {
+    orientation: {
+      vertical: "grid gap-3",
+      horizontal: "flex flex-row items-center gap-3",
+    },
+  },
+  defaultVariants: {
+    orientation: "vertical",
+  },
+});
+
+const {
+  class: className,
+  value,
+  defaultValue,
+  legend,
+  disabled = false,
+  orientation = "vertical",
+  ...rest
+} = Astro.props;
+---
+
+<fieldset
+  class:list={[radioGroup({ orientation, class: className })]}
+  data-value={value || defaultValue}
+  disabled={disabled}
+  {...rest}
+>
+  {legend && <legend class="sr-only">{legend}</legend>}
+  <slot />
+</fieldset>
+
+<script>
+  import type { RadioGroupChangeEvent } from "./RadioGroupTypes";
+
+  class RadioGroupHandler {
+    private radioGroup: HTMLFieldSetElement;
+    private radioInputs: NodeListOf<HTMLInputElement> | undefined;
+    private radioGroupId: string | undefined;
+
+    constructor(radioGroup: HTMLFieldSetElement, idx: number) {
+      this.radioGroup = radioGroup;
+      this.radioGroupId = radioGroup.id || `starwind-radio-group-${idx}`;
+      this.radioInputs = radioGroup.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+      this.init();
+    }
+
+    private init() {
+      // Initialize checked state based on data-value
+      this.syncWithDataValue();
+
+      // Setup event listeners
+      this.setupEvents();
+    }
+
+    private syncWithDataValue() {
+      const initialValue = this.radioGroup.dataset.value;
+      if (!initialValue || !this.radioInputs) return;
+
+      // Find the radio input with the matching value and check it
+      this.radioInputs.forEach((input) => {
+        if (input.value === initialValue) {
+          input.checked = true;
+        } else {
+          input.checked = false;
+        }
+      });
+    }
+
+    private setupEvents() {
+      // Listen for changes to update the fieldset's data-value attribute
+      this.radioGroup.addEventListener("change", this.handleChange.bind(this));
+    }
+
+    private handleChange(e: Event) {
+      const target = e.target as HTMLInputElement;
+      console.log("target", target);
+      if (target.type !== "radio") return;
+
+      // Update the data-value attribute
+      this.radioGroup.dataset.value = target.value;
+
+      // Ensure all other radio buttons in the group are unchecked
+      if (this.radioInputs) {
+        this.radioInputs.forEach((radio) => {
+          if (radio !== target) {
+            radio.checked = false;
+          }
+        });
+      }
+
+      // Explicitly mark the clicked radio as checked
+      target.checked = true;
+
+      // Dispatch custom event for external listeners
+      this.dispatchChangeEvent(target.value);
+    }
+
+    private dispatchChangeEvent(value: string) {
+      const event = new CustomEvent<RadioGroupChangeEvent["detail"]>("starwind:value-change", {
+        bubbles: true,
+        detail: {
+          value: value,
+          radioGroupId: this.radioGroupId,
+        },
+      });
+      this.radioGroup.dispatchEvent(event);
+    }
+  }
+
+  // Store instances in a WeakMap to avoid memory leaks
+  const radioGroupInstances = new WeakMap<HTMLElement, RadioGroupHandler>();
+
+  const setupRadioGroups = () => {
+    document
+      .querySelectorAll<HTMLFieldSetElement>(".starwind-radio-group")
+      .forEach((radioGroup, idx) => {
+        if (!radioGroupInstances.has(radioGroup)) {
+          radioGroupInstances.set(radioGroup, new RadioGroupHandler(radioGroup, idx));
+        }
+      });
+  };
+
+  // Initialize on page load and after Astro view transitions
+  setupRadioGroups();
+  document.addEventListener("astro:after-swap", setupRadioGroups);
+</script>

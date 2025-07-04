@@ -6,8 +6,8 @@ import AccordionTrigger from "./AccordionTrigger.astro";
 export { Accordion, AccordionContent, AccordionItem, AccordionTrigger };
 
 export default {
-	Root: Accordion,
-	Content: AccordionContent,
-	Item: AccordionItem,
-	Trigger: AccordionTrigger,
+  Root: Accordion,
+  Content: AccordionContent,
+  Item: AccordionItem,
+  Trigger: AccordionTrigger,
 };

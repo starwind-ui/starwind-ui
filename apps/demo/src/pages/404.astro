@@ -1,29 +1,28 @@
 ---
 import { Image } from "astro:assets";
 
-// layout
-import Layout from "@/layouts/Layout.astro";
-
 // components
 import { Button } from "@/components/starwind/button";
+// layout
+import Layout from "@/layouts/Layout.astro";
 
 // import notFoundImage from "@/assets/404-robot.webp";
 ---
 
 <Layout title="404: Page Not Found" description="Oops! The page you're looking for doesn't exist.">
-	<main class="flex min-h-[calc(100vh-6rem)] flex-col items-center justify-center px-4">
-		<div
-			class:list={[
-				"mx-auto max-w-2xl text-center",
-				"motion-opacity-in-0 motion-translate-y-in-[1rem] motion-duration-1000",
-			]}
-		>
-			<h1
-				class="from-primary to-primary-foreground mb-4 bg-gradient-to-br bg-clip-text text-9xl font-bold tracking-tighter text-transparent"
-			>
-				404
-			</h1>
-			<!-- <Image 
+  <main class="flex min-h-[calc(100vh-6rem)] flex-col items-center justify-center px-4">
+    <div
+      class:list={[
+        "mx-auto max-w-2xl text-center",
+        "motion-opacity-in-0 motion-translate-y-in-[1rem] motion-duration-1000",
+      ]}
+    >
+      <h1
+        class="from-primary to-primary-foreground mb-4 bg-gradient-to-br bg-clip-text text-9xl font-bold tracking-tighter text-transparent"
+      >
+        404
+      </h1>
+      <!-- <Image 
         src={notFoundImage} 
         alt="A friendly robot looking confused" 
         class:list={[
@@ -31,13 +30,13 @@ import { Button } from "@/components/starwind/button";
           "animate-bounce"
         ]}
       /> -->
-			<h2 class="mb-4 text-2xl font-semibold">
-				Oops! Looks like you've ventured into uncharted territory
-			</h2>
-			<p class="text-muted-foreground mb-8">
-				Don't worry, even the best explorers get lost sometimes. Let's get you back on track!
-			</p>
-			<Button as="a" href="/" variant="primary"> Take Me Home </Button>
-		</div>
-	</main>
+      <h2 class="mb-4 text-2xl font-semibold">
+        Oops! Looks like you've ventured into uncharted territory
+      </h2>
+      <p class="text-muted-foreground mb-8">
+        Don't worry, even the best explorers get lost sometimes. Let's get you back on track!
+      </p>
+      <Button as="a" href="/" variant="primary"> Take Me Home </Button>
+    </div>
+  </main>
 </Layout>

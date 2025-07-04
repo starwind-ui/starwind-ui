@@ -5,7 +5,7 @@ import AlertTitle from "./AlertTitle.astro";
 export { Alert, AlertDescription, AlertTitle };
 
 export default {
-	Root: Alert,
-	Description: AlertDescription,
-	Title: AlertTitle,
+  Root: Alert,
+  Description: AlertDescription,
+  Title: AlertTitle,
 };

@@ -1,77 +1,83 @@
-import { defineConfig } from "eslint/config";
-import globals from "globals";
 import js from "@eslint/js";
-import tseslint from "typescript-eslint";
+import { defineConfig } from "eslint/config";
 import astro from "eslint-plugin-astro";
 import prettier from "eslint-plugin-prettier";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
 // parsers
 const tsParser = tseslint.parser;
 const astroParser = astro.parser;
 
 export default defineConfig([
-	// Global configuration
-	{
-		languageOptions: {
-			globals: {
-				...globals.browser,
-				...globals.node,
-			},
-		},
-	},
+  // Global configuration
+  {
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+  },
 
-	// only targeting packages
-	{
-		files: ["packages/**/*.{ts, js, tsx, json, astro}"],
-	},
+  // Base configs
+  js.configs.recommended,
+  tseslint.configs.recommended,
 
-	// Base configs
-	js.configs.recommended,
-	tseslint.configs.recommended,
+  // Apps folder configuration - ensure this comes before more specific rules
+  {
+    files: ["apps/**/*.{ts,js,tsx,json,astro}"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 
-	// Prettier config
-	{
-		plugins: {
-			prettier: prettier,
-		},
-		rules: {
-			"prettier/prettier": "off", // this gets incredibly annoying otherwise
-		},
-	},
+  // json files
+  {
+    files: ["**/*.json"],
+    rules: {
+      "@typescript-eslint/no-unused-expressions": "off",
+    },
+  },
 
-	// astro setup
-	astro.configs.recommended,
-	astro.configs["jsx-a11y-recommended"],
-	{
-		files: ["**/*.astro"],
-		languageOptions: {
-			parser: astroParser,
-			parserOptions: {
-				parser: tsParser,
-				extraFileExtensions: [".astro"],
-				sourceType: "module",
-				ecmaVersion: "latest",
-				project: "./tsconfig.json",
-			},
-		},
-		rules: {
-			"no-undef": "off", // Disable "not defined" errors for specific Astro types that are globally available (ImageMetadata)
-			// "astro/jsx-a11y/anchor-is-valid": "off", // Disable anchor-is-valid rule for Astro files as this is a template
-			// "@typescript-eslint/no-unused-vars": "off", // I sometimes purposely have unused vars as this is a template
-		},
-		ignores: ["apps/"],
-	},
+  // Prettier config
+  {
+    plugins: {
+      prettier: prettier,
+      "simple-import-sort": simpleImportSort,
+    },
+    rules: {
+      "prettier/prettier": "off", // this gets incredibly annoying otherwise
+      "simple-import-sort/imports": "warn",
+      "simple-import-sort/exports": "warn",
+    },
+  },
 
-	// Ignore patterns
-	{
-		ignores: [
-			"**/*/dist/**",
-			"apps/",
-			"**/*.d.ts",
-			".tours/",
-			"scripts/",
-			".github/",
-			".changeset/",
-		],
-	},
+  // astro setup
+  astro.configs.recommended,
+  astro.configs["jsx-a11y-recommended"],
+  {
+    files: ["**/*.astro"],
+    languageOptions: {
+      parser: astroParser,
+      parserOptions: {
+        parser: tsParser,
+        extraFileExtensions: [".astro"],
+        sourceType: "module",
+        ecmaVersion: "latest",
+        project: "./tsconfig.json",
+      },
+    },
+    rules: {
+      "no-undef": "off", // Disable "not defined" errors for specific Astro types that are globally available (ImageMetadata)
+      "astro/jsx-a11y/no-noninteractive-tabindex": "off",
+    },
+  },
+
+  // Ignore patterns - putting this early to ensure it applies to all configs
+  {
+    ignores: ["**/*/dist/**", "**/*.d.ts", ".tours/", "scripts/", ".github/", ".changeset/"],
+  },
 ]);

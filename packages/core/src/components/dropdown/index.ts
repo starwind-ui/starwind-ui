@@ -6,19 +6,19 @@ import DropdownSeparator from "./DropdownSeparator.astro";
 import DropdownTrigger from "./DropdownTrigger.astro";
 
 export {
-	Dropdown,
-	DropdownTrigger,
-	DropdownContent,
-	DropdownItem,
-	DropdownLabel,
-	DropdownSeparator,
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+  DropdownSeparator,
+  DropdownTrigger,
 };
 
 export default {
-	Root: Dropdown,
-	Trigger: DropdownTrigger,
-	Content: DropdownContent,
-	Item: DropdownItem,
-	Label: DropdownLabel,
-	Separator: DropdownSeparator,
+  Root: Dropdown,
+  Trigger: DropdownTrigger,
+  Content: DropdownContent,
+  Item: DropdownItem,
+  Label: DropdownLabel,
+  Separator: DropdownSeparator,
 };

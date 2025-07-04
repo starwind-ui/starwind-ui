@@ -2,6 +2,7 @@
 import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
+
 import PaginationLink from "./PaginationLink.astro";
 
 type Props = HTMLAttributes<"a"> & { size?: "sm" | "md" | "lg" | "icon" };
@@ -12,11 +13,11 @@ const { class: className, size = "md", ...rest } = Astro.props;
 ---
 
 <PaginationLink
-	aria-label="Go to next page"
-	size={size}
-	class={paginationNext({ class: className })}
-	{...rest}
+  aria-label="Go to next page"
+  size={size}
+  class={paginationNext({ class: className })}
+  {...rest}
 >
-	<slot />
-	<ChevronRight class="size-4 transition-transform group-hover:translate-x-1" />
+  <slot />
+  <ChevronRight class="size-4 transition-transform group-hover:translate-x-1" />
 </PaginationLink>
