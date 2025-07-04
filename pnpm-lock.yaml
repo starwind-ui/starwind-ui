@@ -98,7 +98,7 @@ importers:
         specifier: ^0.10.1
         version: 0.10.1
       '@starwind-ui/core':
-        specifier: 1.6.4
+        specifier: 1.7.0
         version: link:../core
       chalk:
         specifier: ^5.4.1
