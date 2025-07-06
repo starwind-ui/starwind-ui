@@ -27,7 +27,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 </div>
 
 <script>
-  import type { SelectChangeEvent } from "./SelectTypes";
+  import type { SelectChangeEvent, SelectEvent } from "./SelectTypes";
 
   class SelectHandler {
     private select: HTMLElement;
@@ -241,6 +241,22 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
       // passive resize listener to call setSize()
       window.addEventListener("resize", () => this.setSize(), { passive: true });
+
+      // Listen for programmatic selection events
+      document.addEventListener('starwind-select:select', (e: Event) => {
+        const selectEvent = e as SelectEvent;
+        const selectId = selectEvent.detail.selectId;
+        const selectName = selectEvent.detail.selectName;
+        const selectValue = selectEvent.detail.value;
+        
+        // Check if this event is for this select
+        if (
+          (selectId && this.select.id === selectId) ||
+          (selectName && this.select.getAttribute('data-name') === selectName)
+        ) {
+          this.programmaticallySelect(selectValue);
+        }
+      });
     }
 
     private handleNavigationKeys(e: KeyboardEvent) {
@@ -439,6 +455,29 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
           this.handleSelection(item);
           this.selectedItem = item;
         }
+      }
+    }
+
+
+
+    /**
+     * Programmatically selects an option by value
+     */
+    private programmaticallySelect(value: string): void {
+      if (!this.content) return;
+      
+      const item = this.content.querySelector(`[data-value="${value}"]`);
+      if (item instanceof HTMLElement) {
+        this.returnFocusOnClose = false;
+        
+        // Update aria-selected attributes immediately
+        if (this.selectedItem) {
+          this.selectedItem.setAttribute("aria-selected", "false");
+        }
+        item.setAttribute("aria-selected", "true");
+        
+        // Then call handleSelection which will update the rest
+        this.handleSelection(item);
       }
     }
 

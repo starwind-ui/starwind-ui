@@ -58,6 +58,10 @@ import {
   </form>
 </Card>
 
+<div class="mt-8">
+  <Button variant="primary" id="select-astro-btn">Programmatically select "astro"</Button>
+</div>
+
 <script>
   function handleFormSubmit() {
     const form = document.querySelector("#create-project-form") as HTMLFormElement;
@@ -78,7 +82,30 @@ import {
     }
   }
 
-  handleFormSubmit();
+  function setupProgrammaticSelectDemo() {
+    const selectAstroBtn = document.querySelector("#select-astro-btn");
+    if (selectAstroBtn) {
+      selectAstroBtn.addEventListener("click", () => {
+        // Dispatch the custom event to programmatically select 'astro'
+        document.dispatchEvent(
+          new CustomEvent("starwind-select:select", {
+            detail: {
+              selectName: "framework", // This is the name attribute of the select
+              value: "astro",
+            },
+          }),
+        );
 
-  document.addEventListener("astro:after-swap", handleFormSubmit);
+        console.log("Dispatched event to select Astro");
+      });
+    }
+  }
+
+  handleFormSubmit();
+  setupProgrammaticSelectDemo();
+
+  document.addEventListener("astro:after-swap", () => {
+    handleFormSubmit();
+    setupProgrammaticSelectDemo();
+  });
 </script>
