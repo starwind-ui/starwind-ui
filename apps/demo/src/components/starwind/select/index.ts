@@ -5,11 +5,14 @@ import SelectItem from "./SelectItem.astro";
 import SelectLabel from "./SelectLabel.astro";
 import SelectSeparator from "./SelectSeparator.astro";
 import SelectTrigger from "./SelectTrigger.astro";
+import type { SelectChangeEvent, SelectEvent } from "./SelectTypes";
 import SelectValue from "./SelectValue.astro";
 
 export {
   Select,
+  type SelectChangeEvent,
   SelectContent,
+  type SelectEvent,
   SelectGroup,
   SelectItem,
   SelectLabel,

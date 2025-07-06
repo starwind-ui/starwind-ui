@@ -63,6 +63,8 @@ import {
 </div>
 
 <script>
+  import type { SelectEvent } from "@/components/starwind/select";
+
   function handleFormSubmit() {
     const form = document.querySelector("#create-project-form") as HTMLFormElement;
     if (form) {
@@ -88,10 +90,11 @@ import {
       selectAstroBtn.addEventListener("click", () => {
         // Dispatch the custom event to programmatically select 'astro'
         document.dispatchEvent(
-          new CustomEvent("starwind-select:select", {
+          new CustomEvent<SelectEvent["detail"]>("starwind-select:select", {
             detail: {
               selectName: "framework", // This is the name attribute of the select
               value: "astro",
+              // selectId: "select-demo-framework",
             },
           }),
         );
