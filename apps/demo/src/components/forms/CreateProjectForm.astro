@@ -31,12 +31,11 @@ import {
     <CardContent class="flex flex-col gap-4">
       <div class="flex w-full flex-col gap-2">
         <Label for="name">Name</Label>
-        <Input type="text" id="name" placeholder="Name of your project" />
-        <!-- <InputFeedback>This is a required field</InputFeedback> -->
+        <Input type="text" id="name" name="name" placeholder="Name of your project" />
       </div>
       <div class="flex w-full flex-col gap-2">
         <Label for="framework">Framework</Label>
-        <Select id="framework">
+        <Select id="select-demo-framework" name="framework">
           <SelectTrigger class="w-full" required>
             <SelectValue placeholder="Select" />
           </SelectTrigger>
@@ -59,28 +58,54 @@ import {
   </form>
 </Card>
 
+<div class="mt-8">
+  <Button variant="primary" id="select-astro-btn">Programmatically select "astro"</Button>
+</div>
+
 <script>
-  const setupForm = () => {
-    const form = document.getElementById("create-project-form") as HTMLFormElement;
-    if (!form) return;
+  function handleFormSubmit() {
+    const form = document.querySelector("#create-project-form") as HTMLFormElement;
+    if (form) {
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const formValues = Object.fromEntries(formData.entries());
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
+        // demo form data logging
+        console.log("Form submission values:", formValues);
 
-      const formData = new FormData(form);
-      console.log(formData);
-      const data = Object.fromEntries(formData);
-
-      // Log all form inputs
-      console.log("Form submission data:", {
-        name: (form.querySelector("#name") as HTMLInputElement)?.value,
-        framework: (form.querySelector("#framework select") as HTMLSelectElement)?.value,
-        // allFormData: data,
+        // You can add additional logic here like:
+        // - Form validation
+        // - API submission
+        // - Success/error handling
       });
-    });
-  };
+    }
+  }
 
-  setupForm();
+  function setupProgrammaticSelectDemo() {
+    const selectAstroBtn = document.querySelector("#select-astro-btn");
+    if (selectAstroBtn) {
+      selectAstroBtn.addEventListener("click", () => {
+        // Dispatch the custom event to programmatically select 'astro'
+        document.dispatchEvent(
+          new CustomEvent("starwind-select:select", {
+            detail: {
+              selectName: "framework", // This is the name attribute of the select
+              value: "astro",
+            },
+          }),
+        );
 
-  document.addEventListener("astro:after-swap", setupForm);
+        console.log("Dispatched event to select Astro");
+      });
+    }
+  }
+
+  handleFormSubmit();
+  setupProgrammaticSelectDemo();
+
+  document.addEventListener("astro:after-swap", () => {
+    handleFormSubmit();
+    setupProgrammaticSelectDemo();
+  });
 </script>

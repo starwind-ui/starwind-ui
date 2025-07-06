@@ -371,7 +371,7 @@ import Layout from "@/layouts/Layout.astro";
 
     <!-- Select -->
     <section class="mx-auto mt-6 max-w-lg">
-      <Select defaultValue="aest">
+      <Select name="timezone" defaultValue="aest">
         <SelectTrigger class="w-[350px]">
           <SelectValue placeholder="Select a timezone" />
         </SelectTrigger>
@@ -428,7 +428,7 @@ import Layout from "@/layouts/Layout.astro";
 
     <!-- cards -->
     <section class="mx-auto mt-10 max-w-lg">
-      <div class="flex">
+      <div class="flex flex-col">
         <CreateProjectForm />
       </div>
     </section>

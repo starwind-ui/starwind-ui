@@ -5,3 +5,9 @@ export interface SelectChangeEvent extends CustomEvent {
     label: string;
   };
 }
+
+export interface SelectEvent extends CustomEvent {
+  detail:
+    | { value: string; selectId: string; selectName?: string }
+    | { value: string; selectId?: string; selectName: string };
+}

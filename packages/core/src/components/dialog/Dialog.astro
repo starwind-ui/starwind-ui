@@ -12,10 +12,11 @@ const { class: className, ...rest } = Astro.props;
 
 <script>
   class DialogHandler {
-    private trigger: HTMLButtonElement;
+    private triggers: HTMLButtonElement[] = [];
     private dialog: HTMLDialogElement;
-    private closeButtons: NodeListOf<HTMLButtonElement>;
+    private closeButtons: HTMLButtonElement[] = [];
     private backdrop: HTMLElement;
+    private dialogId: string;
     /**
      * The duration of the animation in milliseconds. This is used to calculate the
      * duration of close animation before hiding the dialog and backdrop
@@ -25,6 +26,14 @@ const { class: className, ...rest } = Astro.props;
     constructor(dialogWrapper: HTMLElement, dialogNumber: number) {
       this.dialog = dialogWrapper.querySelector("dialog")!;
       this.backdrop = dialogWrapper.querySelector(".starwind-dialog-backdrop")!;
+
+      // if no ID was provided for the wrapper, generate one
+      if (dialogWrapper.id) {
+        this.dialogId = dialogWrapper.id;
+      } else {
+        this.dialogId = `starwind-dialog${dialogNumber}`;
+        dialogWrapper.id = this.dialogId;
+      }
 
       // animationDuration is set with inline styles through passed prop to DialogContent
       const animationDurationString = this.dialog.style.animationDuration;
@@ -37,13 +46,25 @@ const { class: className, ...rest } = Astro.props;
         this.animationDuration = 200;
       }
 
-      // if trigger is set with asChild, use the first child element for trigger button
-      const tempTrigger = dialogWrapper.querySelector(".starwind-dialog-trigger") as HTMLElement;
-      if (tempTrigger?.hasAttribute("data-as-child")) {
-        this.trigger = tempTrigger.firstElementChild as HTMLButtonElement;
-      } else {
-        this.trigger = tempTrigger as HTMLButtonElement;
-      }
+      // Find internal triggers and handle them
+      const internalTriggers = dialogWrapper.querySelectorAll(".starwind-dialog-trigger");
+      internalTriggers.forEach((triggerElement) => {
+        const tempTrigger = triggerElement as HTMLElement;
+        let trigger: HTMLButtonElement;
+
+        if (tempTrigger?.hasAttribute("data-as-child")) {
+          trigger = tempTrigger.firstElementChild as HTMLButtonElement;
+        } else {
+          trigger = tempTrigger as HTMLButtonElement;
+        }
+
+        if (trigger) {
+          this.triggers.push(trigger);
+        }
+      });
+
+      // Find external triggers that target this dialog
+      this.findExternalTriggers();
 
       // if closeButtons are set with asChild, swap the wrapper with its first child
       const tempCloseButtons = dialogWrapper.querySelectorAll(
@@ -60,12 +81,13 @@ const { class: className, ...rest } = Astro.props;
         return button;
       });
 
-      this.closeButtons = dialogWrapper.querySelectorAll(
-        ".starwind-dialog-close",
-      ) as NodeListOf<HTMLButtonElement>;
+      // Convert NodeList to Array for consistency with triggers
+      this.closeButtons = Array.from(
+        dialogWrapper.querySelectorAll(".starwind-dialog-close"),
+      ) as HTMLButtonElement[];
 
-      // if any elements are not there, exit
-      if (!this.trigger || !this.dialog || !this.backdrop) return;
+      // if essential elements are not there, exit
+      if (!this.dialog || !this.backdrop) return;
 
       this.setupAccessibility(dialogNumber);
       this.setupEvents();
@@ -82,9 +104,40 @@ const { class: className, ...rest } = Astro.props;
       }
     }
 
+    /**
+     * Find all external triggers that target this dialog
+     */
+    private findExternalTriggers(): void {
+      const externalTriggers = document.querySelectorAll(
+        `.starwind-dialog-trigger[data-dialog-for="${this.dialogId}"]`,
+      );
+
+      externalTriggers.forEach((triggerElement) => {
+        // Skip if this is an internal trigger we already processed
+        const dialogWrapper = triggerElement.closest(".starwind-dialog");
+        if (dialogWrapper && dialogWrapper.id === this.dialogId) {
+          return;
+        }
+
+        let trigger: HTMLButtonElement;
+        if (triggerElement.hasAttribute("data-as-child")) {
+          trigger = triggerElement.firstElementChild as HTMLButtonElement;
+        } else {
+          trigger = triggerElement as HTMLButtonElement;
+        }
+
+        if (trigger && !this.triggers.includes(trigger)) {
+          this.triggers.push(trigger);
+        }
+      });
+    }
+
     private setupEvents(): void {
-      this.trigger?.addEventListener("click", () => {
-        this.open();
+      // Add click listeners to all triggers
+      this.triggers.forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+          this.open();
+        });
       });
 
       // Add click handlers to all close buttons
@@ -189,3 +242,9 @@ const { class: className, ...rest } = Astro.props;
   setupDialogs();
   document.addEventListener("astro:after-swap", setupDialogs);
 </script>
+
+<style>
+  .overflow-hidden {
+    overflow: hidden;
+  }
+</style>
