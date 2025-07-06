@@ -14,7 +14,7 @@ import { Input } from "@/components/starwind/input";
 import { Label } from "@/components/starwind/label";
 ---
 
-<Dialog>
+<Dialog id="edit-profile-dialog">
   <DialogTrigger asChild>
     <Button variant="outline">Edit Profile</Button>
   </DialogTrigger>
@@ -45,6 +45,16 @@ import { Label } from "@/components/starwind/label";
     </form>
   </DialogContent>
 </Dialog>
+
+<!-- External trigger that opens the same dialog -->
+<div class="mt-8">
+  <p class="mb-2 text-sm text-gray-500">
+    This button is outside the Dialog component but opens the same dialog:
+  </p>
+  <DialogTrigger for="edit-profile-dialog" class="mt-2" asChild>
+    <Button variant="secondary">Edit Profile (External)</Button>
+  </DialogTrigger>
+</div>
 
 <script>
   const setupForm = () => {
