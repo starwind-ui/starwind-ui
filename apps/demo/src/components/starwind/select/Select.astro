@@ -3,9 +3,9 @@ import type { HTMLAttributes } from "astro/types";
 
 type Props = HTMLAttributes<"div"> & {
   /**
-   * The name and ID of the rendered <select> element for form handling
+   * The name for the hidden <select> element - used for standard form handling
    */
-  name: string;
+  name?: string;
   /**
    * The value of the item that should be selected by default
    */
@@ -76,7 +76,6 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       const selectName = this.select.getAttribute("data-name");
       if (selectName) {
         selectField.name = selectName;
-        selectField.id = selectName;
       }
 
       // you can comment out this "sr-only" class line below if you want to see the native select in action
@@ -243,16 +242,16 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       window.addEventListener("resize", () => this.setSize(), { passive: true });
 
       // Listen for programmatic selection events
-      document.addEventListener('starwind-select:select', (e: Event) => {
+      document.addEventListener("starwind-select:select", (e: Event) => {
         const selectEvent = e as SelectEvent;
         const selectId = selectEvent.detail.selectId;
         const selectName = selectEvent.detail.selectName;
         const selectValue = selectEvent.detail.value;
-        
+
         // Check if this event is for this select
         if (
           (selectId && this.select.id === selectId) ||
-          (selectName && this.select.getAttribute('data-name') === selectName)
+          (selectName && this.select.getAttribute("data-name") === selectName)
         ) {
           this.programmaticallySelect(selectValue);
         }
@@ -458,24 +457,22 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       }
     }
 
-
-
     /**
      * Programmatically selects an option by value
      */
     private programmaticallySelect(value: string): void {
       if (!this.content) return;
-      
+
       const item = this.content.querySelector(`[data-value="${value}"]`);
       if (item instanceof HTMLElement) {
         this.returnFocusOnClose = false;
-        
+
         // Update aria-selected attributes immediately
         if (this.selectedItem) {
           this.selectedItem.setAttribute("aria-selected", "false");
         }
         item.setAttribute("aria-selected", "true");
-        
+
         // Then call handleSelection which will update the rest
         this.handleSelection(item);
       }

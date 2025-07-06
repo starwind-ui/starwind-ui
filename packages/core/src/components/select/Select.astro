@@ -3,9 +3,9 @@ import type { HTMLAttributes } from "astro/types";
 
 type Props = HTMLAttributes<"div"> & {
   /**
-   * The name and ID of the rendered <select> element for form handling
+   * The name for the hidden <select> element - used for standard form handling
    */
-  name: string;
+  name?: string;
   /**
    * The value of the item that should be selected by default
    */
@@ -76,7 +76,6 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       const selectName = this.select.getAttribute("data-name");
       if (selectName) {
         selectField.name = selectName;
-        selectField.id = selectName;
       }
 
       // you can comment out this "sr-only" class line below if you want to see the native select in action
