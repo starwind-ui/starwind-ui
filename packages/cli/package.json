@@ -1,6 +1,6 @@
 {
   "name": "starwind",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Add beautifully designed components to your Astro applications",
   "license": "MIT",
   "author": {
@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@clack/prompts": "0.11.0",
-    "@starwind-ui/core": "1.7.0",
+    "@starwind-ui/core": "1.7.1",
     "chalk": "5.4.1",
     "commander": "14.0.0",
     "execa": "9.6.0",
