@@ -32,6 +32,7 @@ const { class: className, ...rest } = Astro.props;
         this.dialogId = dialogWrapper.id;
       } else {
         this.dialogId = `starwind-dialog${dialogNumber}`;
+        dialogWrapper.id = this.dialogId;
       }
 
       // animationDuration is set with inline styles through passed prop to DialogContent
@@ -114,7 +115,7 @@ const { class: className, ...rest } = Astro.props;
       externalTriggers.forEach((triggerElement) => {
         // Skip if this is an internal trigger we already processed
         const dialogWrapper = triggerElement.closest(".starwind-dialog");
-        if (dialogWrapper && dialogWrapper.getAttribute("data-dialog-id") === this.dialogId) {
+        if (dialogWrapper && dialogWrapper.id === this.dialogId) {
           return;
         }
 
