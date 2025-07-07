@@ -9,7 +9,7 @@ import { update } from "./commands/update.js";
 const program = new Command()
   .name("starwind")
   .description("Add beautifully designed components to your Astro applications")
-  .version("1.7.2");
+  .version("1.7.3");
 
 program
   .command("init")
