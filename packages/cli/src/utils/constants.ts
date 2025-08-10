@@ -21,15 +21,16 @@ export const ASTRO_PACKAGES = {
 } as const;
 
 /**
- * Tailwind CSS related dependencies
+ * Tailwind CSS and other dependencies
  */
 export const OTHER_PACKAGES = {
-  tailwindCore: "tailwindcss@latest",
-  tailwindVite: "@tailwindcss/vite@latest",
-  tailwindForms: "@tailwindcss/forms@latest",
-  tailwindAnimate: "tw-animate-css@latest",
-  tailwindVariants: "tailwind-variants@latest",
-  tablerIcons: "@tabler/icons@latest",
+  tailwindCore: "tailwindcss@^4",
+  tailwindVite: "@tailwindcss/vite@^4",
+  tailwindForms: "@tailwindcss/forms@^0.5",
+  tailwindAnimate: "tw-animate-css@^1",
+  tailwindVariants: "tailwind-variants@^2",
+  tailwindMerge: "tailwind-merge@^3",
+  tablerIcons: "@tabler/icons@^3",
 } as const;
 
 /**
