@@ -13,16 +13,17 @@
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@fontsource-variable/inter": "^5.1.1",
-    "@playform/compress": "^0.1.9",
-    "@tabler/icons": "^3.34.0",
+    "@playform/compress": "^0.2.0",
+    "@tabler/icons": "^3.34.1",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/vite": "^4.1.10",
-    "astro": "^5.9.3",
-    "tailwind-variants": "^1.0.0",
+    "astro": "^5.12.9",
+    "tailwind-merge": "^3.3.1",
+    "tailwind-variants": "^2.1.0",
     "tailwindcss": "^4.1.10",
-    "tw-animate-css": "^1.3.4"
+    "tw-animate-css": "^1.3.6"
   },
   "devDependencies": {
-    "typescript": "^5.7.2"
+    "typescript": "^5.9.2"
   }
 }
