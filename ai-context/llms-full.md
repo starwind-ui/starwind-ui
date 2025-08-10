@@ -80,25 +80,29 @@ import { ComponentName } from "@/components/starwind/component-name";
 
 Starwind UI includes the following components:
 
-- Accordion
-- Alert
-- Avatar
-- Badge
-- Breadcrumb
-- Button
-- Card
-- Checkbox
-- Dialog
-- Dropdown
-- Input
-- Label
-- Pagination
-- Select
-- Switch
-- Table
-- Tabs
-- Textarea
-- Tooltip
+- [Accordion](https://starwind.dev/docs/components/accordion/)
+- [Alert](https://starwind.dev/docs/components/alert/)
+- [Avatar](https://starwind.dev/docs/components/avatar/)
+- [Badge](https://starwind.dev/docs/components/badge/)
+- [Breadcrumb](https://starwind.dev/docs/components/breadcrumb/)
+- [Button](https://starwind.dev/docs/components/button/)
+- [Card](https://starwind.dev/docs/components/card/)
+- [Checkbox](https://starwind.dev/docs/components/checkbox/)
+- [Dialog](https://starwind.dev/docs/components/dialog/)
+- [Dropdown](https://starwind.dev/docs/components/dropdown/)
+- [Dropzone](https://starwind.dev/docs/components/dropzone/)
+- [Input](https://starwind.dev/docs/components/input/)
+- [Label](https://starwind.dev/docs/components/label/)
+- [Pagination](https://starwind.dev/docs/components/pagination/)
+- [Progress](https://starwind.dev/docs/components/progress/)
+- [Radio Group](https://starwind.dev/docs/components/radio-group/)
+- [Select](https://starwind.dev/docs/components/select/)
+- [Skeleton](https://starwind.dev/docs/components/skeleton/)
+- [Switch](https://starwind.dev/docs/components/switch/)
+- [Table](https://starwind.dev/docs/components/table/)
+- [Tabs](https://starwind.dev/docs/components/tabs/)
+- [Textarea](https://starwind.dev/docs/components/textarea/)
+- [Tooltip](https://starwind.dev/docs/components/tooltip/)
 
 ## Component Architecture Patterns
 
@@ -1043,5 +1047,5 @@ import {
 - Official Website: [starwind.dev](https://starwind.dev)
 - Documentation: [starwind.dev/docs](https://starwind.dev/docs/getting-started)
 - Components: [starwind.dev/docs/components](https://starwind.dev/docs/components)
-- Premium Templates: [cosmicthemes.com/themes](https://cosmicthemes.com/themes)
+- Premium Templates: [cosmicthemes.com](https://cosmicthemes.com)
   - Templates include internationalization features, CMS, custom animations, SEO, and more

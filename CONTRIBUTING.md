@@ -126,3 +126,5 @@ https://www.conventionalcommits.org/ or check out the
 
 4. Please note that you might have to run `git fetch origin main:master` (where
    origin will be your fork on GitHub).
+
+5. After making your changes, add a changeset by running `pnpm changeset`. This will open an interactive prompt where you can add a changeset.
