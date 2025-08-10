@@ -37,6 +37,7 @@
     "typecheck": "turbo typecheck",
     "check": "turbo lint typecheck format:check",
     "version": "changeset version",
+    "local:release": "changeset version && changeset publish",
     "cli:publish:beta": "cd packages/cli && pnpm publish:beta",
     "cli:publish:next": "cd packages/cli && pnpm publish:next",
     "cli:publish:release": "cd packages/cli && pnpm publish:release",
