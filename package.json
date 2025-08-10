@@ -10,6 +10,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev --parallel",
+    "reset": "pnpm clean:node && pnpm install && pnpm build",
     "clean": "turbo clean",
     "clean:node": "node scripts/clean.mjs",
     "format": "eslint . --fix && prettier -w \"**/*\" --ignore-unknown --cache",
