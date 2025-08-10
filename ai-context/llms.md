@@ -58,4 +58,4 @@ import {ComponentName} from "@/components/starwind/component-name";
 
 ## Optional
 
-- Premium Templates with impressive internationalization features, CMS, custom animations, SEO, and more: [cosmicthemes.com/themes](https://cosmicthemes.com/themes)
+- Premium Templates with impressive internationalization features, CMS, custom animations, SEO, and more: [cosmicthemes.com](https://cosmicthemes.com)
