@@ -50,6 +50,17 @@ import {
   DialogTrigger,
 } from "@/components/starwind/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/starwind/alertDialog";
+import {
   Dropdown,
   DropdownContent,
   DropdownItem,
@@ -304,6 +315,72 @@ import Layout from "@/layouts/Layout.astro";
     <!-- dialog -->
     <section class="mx-auto mt-6 max-w-lg">
       <EditProfileForm />
+    </section>
+
+    <!-- alert dialog -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Alert Dialog</h2>
+      <div class="flex flex-col gap-4">
+        <!-- Basic Alert Dialog -->
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">Delete Account</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete your account
+                and remove your data from our servers.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <!-- Warning Alert Dialog -->
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline">Clear Data</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear all data?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will remove all your saved preferences and data. You can always
+                reconfigure your settings later.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep Data</AlertDialogCancel>
+              <AlertDialogAction>Clear Data</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <!-- Confirmation Alert Dialog -->
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button>Save Changes</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Save changes?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your changes will be saved and applied immediately. This action
+                will update your profile settings.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Discard</AlertDialogCancel>
+              <AlertDialogAction>Save Changes</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </section>
 
     <!-- tabs -->
