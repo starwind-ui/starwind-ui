@@ -1,10 +1,8 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { breadcrumbPageVariants } from "./variants";
 
 type Props = HTMLAttributes<"span">;
-
-const breadcrumbPage = tv({ base: "text-foreground font-normal" });
 
 const { class: className, ...rest } = Astro.props;
 ---
@@ -13,7 +11,7 @@ const { class: className, ...rest } = Astro.props;
   role="link"
   aria-disabled="true"
   aria-current="page"
-  class={breadcrumbPage({ class: className })}
+  class={breadcrumbPageVariants({ class: className })}
   {...rest}
 >
   <slot />
