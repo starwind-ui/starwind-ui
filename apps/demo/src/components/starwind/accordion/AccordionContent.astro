@@ -4,24 +4,15 @@
  * It is later removed in the Accordion.astro script
  */
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { accordionContentVariants } from "./variants";
 
 type Props = HTMLAttributes<"div">;
-
-const accordionContent = tv({
-  base: [
-    "starwind-accordion-content",
-    "transform-gpu overflow-hidden",
-    "data-[state=closed]:animate-accordion-up data-[state=closed]:h-0",
-    "data-[state=open]:animate-accordion-down",
-  ],
-});
 
 const { class: className, ...rest } = Astro.props;
 ---
 
 <div
-  class={accordionContent({ class: className })}
+  class={accordionContentVariants({ class: className })}
   data-state="closed"
   style="animation: none;"
   {...rest}
