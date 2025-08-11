@@ -1,11 +1,9 @@
 ---
 import Dots from "@tabler/icons/outline/dots.svg";
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { breadcrumbEllipsisVariants } from "./variants";
 
 type Props = HTMLAttributes<"span">;
-
-const breadcrumbEllipsis = tv({ base: "flex size-6 items-center justify-center [&>svg]:size-4" });
 
 const { class: className, ...rest } = Astro.props;
 ---
@@ -13,7 +11,7 @@ const { class: className, ...rest } = Astro.props;
 <span
   role="presentation"
   aria-hidden="true"
-  class={breadcrumbEllipsis({ class: className })}
+  class={breadcrumbEllipsisVariants({ class: className })}
   {...rest}
 >
   <Dots />

@@ -1,12 +1,10 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { breadcrumbLinkVariants } from "./variants";
 
-type Props = HTMLAttributes<"a"> & {
+interface Props extends HTMLAttributes<"a"> {
   asChild?: boolean;
-};
-
-const breadcrumbLink = tv({ base: "hover:text-foreground transition-colors" });
+}
 
 const { class: className, asChild = false, ...rest } = Astro.props;
 ---
@@ -15,7 +13,7 @@ const { class: className, asChild = false, ...rest } = Astro.props;
   asChild ? (
     <slot />
   ) : (
-    <a class={breadcrumbLink({ class: className })} {...rest}>
+    <a class={breadcrumbLinkVariants({ class: className })} {...rest}>
       <slot />
     </a>
   )
