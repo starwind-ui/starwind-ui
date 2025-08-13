@@ -18,6 +18,17 @@ import {
   AccordionTrigger,
 } from "@/components/starwind/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/starwind/alertDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind/avatar";
 import { Badge } from "@/components/starwind/badge";
 import {
@@ -49,17 +60,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/starwind/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/starwind/alertDialog";
 import {
   Dropdown,
   DropdownContent,
@@ -324,14 +324,14 @@ import Layout from "@/layouts/Layout.astro";
         <!-- Basic Alert Dialog -->
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive">Delete Account</Button>
+            <Button variant="error">Delete Account</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your account
-                and remove your data from our servers.
+                This action cannot be undone. This will permanently delete your account and remove
+                your data from our servers.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -350,8 +350,8 @@ import Layout from "@/layouts/Layout.astro";
             <AlertDialogHeader>
               <AlertDialogTitle>Clear all data?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will remove all your saved preferences and data. You can always
-                reconfigure your settings later.
+                This will remove all your saved preferences and data. You can always reconfigure
+                your settings later.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -370,8 +370,8 @@ import Layout from "@/layouts/Layout.astro";
             <AlertDialogHeader>
               <AlertDialogTitle>Save changes?</AlertDialogTitle>
               <AlertDialogDescription>
-                Your changes will be saved and applied immediately. This action
-                will update your profile settings.
+                Your changes will be saved and applied immediately. This action will update your
+                profile settings.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

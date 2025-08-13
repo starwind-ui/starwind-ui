@@ -1,6 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import { type VariantProps } from "tailwind-variants";
+
 import { buttonVariants } from "./index";
 
 interface Props
@@ -13,6 +14,10 @@ const { variant, size, class: className, ...rest } = Astro.props;
 const Tag = Astro.props.href ? "a" : "button";
 ---
 
-<Tag class={buttonVariants({ variant, size, class: className })} {...rest}>
+<Tag
+  class={buttonVariants({ variant, size, class: className })}
+  type={Tag === "button" ? "button" : undefined}
+  {...rest}
+>
   <slot />
 </Tag>

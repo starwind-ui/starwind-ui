@@ -25,8 +25,18 @@ const { class: className, ...rest } = Astro.props;
     private animationDuration: number;
 
     constructor(dialogWrapper: HTMLElement, dialogNumber: number) {
-      this.dialog = dialogWrapper.querySelector("dialog")!;
-      this.backdrop = dialogWrapper.querySelector(".starwind-alert-dialog-backdrop")!;
+      const dialog = dialogWrapper.querySelector("dialog");
+      const backdrop = dialogWrapper.querySelector(".starwind-alert-dialog-backdrop");
+      
+      if (!dialog) {
+        throw new Error("AlertDialog: Required dialog element not found");
+      }
+      if (!backdrop) {
+        throw new Error("AlertDialog: Required backdrop element not found");
+      }
+      
+      this.dialog = dialog as HTMLDialogElement;
+      this.backdrop = backdrop as HTMLElement;
 
       // if no ID was provided for the wrapper, generate one
       if (dialogWrapper.id) {
@@ -79,7 +89,6 @@ const { class: className, ...rest } = Astro.props;
             button.parentNode?.replaceChild(childElement, button);
           }
         }
-        return button;
       });
 
       // Handle action buttons with asChild
@@ -94,7 +103,6 @@ const { class: className, ...rest } = Astro.props;
             button.parentNode?.replaceChild(childElement, button);
           }
         }
-        return button;
       });
 
       // Convert NodeList to Array for consistency with triggers
@@ -105,9 +113,6 @@ const { class: className, ...rest } = Astro.props;
       this.actionButtons = Array.from(
         dialogWrapper.querySelectorAll(".starwind-alert-dialog-action"),
       ) as HTMLButtonElement[];
-
-      // if essential elements are not there, exit
-      if (!this.dialog || !this.backdrop) return;
 
       this.setupAccessibility(dialogNumber);
       this.setupEvents();
@@ -167,8 +172,7 @@ const { class: className, ...rest } = Astro.props;
       this.cancelButtons?.forEach((button) => {
         button.addEventListener("click", () => {
           // Only close if this is the topmost dialog
-          const openDialogs = document.querySelectorAll("dialog[open]");
-          if (openDialogs.length > 0 && openDialogs[openDialogs.length - 1] === this.dialog) {
+          if (this.isTopmostDialog()) {
             this.close();
           }
         });
@@ -178,8 +182,7 @@ const { class: className, ...rest } = Astro.props;
       this.actionButtons?.forEach((button) => {
         button.addEventListener("click", () => {
           // Only close if this is the topmost dialog
-          const openDialogs = document.querySelectorAll("dialog[open]");
-          if (openDialogs.length > 0 && openDialogs[openDialogs.length - 1] === this.dialog) {
+          if (this.isTopmostDialog()) {
             this.close();
           }
         });
@@ -191,8 +194,7 @@ const { class: className, ...rest } = Astro.props;
           // prevent default dialog closing behavior so we can add closing animation
           e.preventDefault();
           // Only close if this is the topmost dialog
-          const openDialogs = document.querySelectorAll("dialog[open]");
-          if (openDialogs.length > 0 && openDialogs[openDialogs.length - 1] === this.dialog) {
+          if (this.isTopmostDialog()) {
             this.close();
           }
         }
@@ -215,8 +217,7 @@ const { class: className, ...rest } = Astro.props;
           if (form.method === "dialog") {
             e.preventDefault();
             // Only close if this is the topmost dialog
-            const openDialogs = document.querySelectorAll("dialog[open]");
-            if (openDialogs.length > 0 && openDialogs[openDialogs.length - 1] === this.dialog) {
+            if (this.isTopmostDialog()) {
               this.close();
             }
           }
@@ -230,6 +231,11 @@ const { class: className, ...rest } = Astro.props;
       this.backdrop.classList.remove("hidden");
       this.backdrop.dataset.state = "open";
       this.dialog.dataset.state = "open";
+    }
+
+    private isTopmostDialog(): boolean {
+      const openDialogs = document.querySelectorAll("dialog[open]");
+      return openDialogs.length > 0 && openDialogs[openDialogs.length - 1] === this.dialog;
     }
 
     private close(): void {
@@ -263,7 +269,7 @@ const { class: className, ...rest } = Astro.props;
 </script>
 
 <style>
-  .overflow-hidden {
+  :global(.overflow-hidden) {
     overflow: hidden;
   }
 </style>

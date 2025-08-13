@@ -1,14 +1,17 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import { type VariantProps } from "tailwind-variants";
+
 import { badgeVariants } from "./index";
 
 interface Props
   extends HTMLAttributes<"div">,
     Omit<HTMLAttributes<"a">, "type">,
-    VariantProps<typeof badgeVariants> {}
+    Omit<VariantProps<typeof badgeVariants>, "isLink"> {}
 
-const { variant, size, class: className, ...rest } = Astro.props;
+// Also strip any user-passed `isLink` to avoid leaking invalid attributes
+// Using `as any` here is pragmatic to ensure runtime removal without impacting the public Props.
+const { variant, size, class: className, isLink: _isLink, ...rest } = Astro.props as any;
 const isLink = Astro.props.href ? true : false;
 const Tag = Astro.props.href ? "a" : "div";
 ---

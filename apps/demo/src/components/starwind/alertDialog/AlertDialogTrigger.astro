@@ -24,13 +24,20 @@ if (Astro.slots.has("default")) {
 
 {
   asChild && hasChildren ? (
-    <div class="starwind-alert-dialog-trigger" data-as-child data-alert-dialog-for={alertDialogFor}>
+    <div 
+      class:list={["starwind-alert-dialog-trigger", className]} 
+      data-as-child 
+      data-alert-dialog-for={alertDialogFor}
+      aria-controls={alertDialogFor}
+      {...rest}
+    >
       <slot />
     </div>
   ) : (
     <button
       type="button"
       aria-haspopup="dialog"
+      aria-controls={alertDialogFor}
       class:list={["starwind-alert-dialog-trigger", className]}
       data-alert-dialog-for={alertDialogFor}
       {...rest}

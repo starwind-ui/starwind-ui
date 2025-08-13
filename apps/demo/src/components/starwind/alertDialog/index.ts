@@ -8,6 +8,17 @@ import AlertDialogHeader from "./AlertDialogHeader.astro";
 import AlertDialogTitle from "./AlertDialogTitle.astro";
 import AlertDialogTrigger from "./AlertDialogTrigger.astro";
 
+// Re-export all variants
+export {
+  alertDialogBackdropVariant,
+  alertDialogContentVariant,
+  alertDialogDescriptionVariant,
+  alertDialogFooterVariant,
+  alertDialogHeaderVariant,
+  alertDialogTitleVariant,
+} from "./variants";
+
+// Export all components
 export {
   AlertDialog,
   AlertDialogAction,

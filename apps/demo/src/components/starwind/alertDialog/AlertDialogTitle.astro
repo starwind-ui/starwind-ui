@@ -1,6 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { alertDialogTitleVariant } from "./variants";
 
 type Props = Omit<HTMLAttributes<"h2">, "id"> & {
   /**
@@ -9,11 +10,9 @@ type Props = Omit<HTMLAttributes<"h2">, "id"> & {
   children?: any;
 };
 
-const alertDialogTitle = tv({ base: "text-2xl leading-none font-semibold tracking-tight" });
-
-const { class: className, ...rest } = Astro.props;
+const { class: className, ...rest } = Astro.props as Props;
 ---
 
-<h2 class={alertDialogTitle({ class: className })} {...rest}>
+<h2 class={alertDialogTitleVariant({ class: className })} {...rest}>
   <slot />
 </h2>

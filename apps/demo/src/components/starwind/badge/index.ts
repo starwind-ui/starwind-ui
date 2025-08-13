@@ -1,5 +1,6 @@
-import Badge from "./Badge.astro";
 import { tv } from "tailwind-variants";
+
+import Badge from "./Badge.astro";
 
 const badgeVariants = tv({
   base: "starwind-badge starwind-transition-colors inline-flex items-center rounded-full font-semibold focus-visible:outline-2 focus-visible:outline-offset-2",
@@ -19,15 +20,15 @@ const badgeVariants = tv({
     isLink: { true: "cursor-pointer", false: "" },
   },
   compoundVariants: [
-    { isLink: true, variant: "default", className: "hover:bg-foreground/80" },
-    { isLink: true, variant: "primary", className: "hover:bg-primary/80" },
-    { isLink: true, variant: "secondary", className: "hover:bg-secondary/80" },
-    { isLink: true, variant: "outline", className: "hover:border-border/80" },
-    { isLink: true, variant: "ghost", className: "hover:bg-foreground/7" },
-    { isLink: true, variant: "info", className: "hover:bg-info/80" },
-    { isLink: true, variant: "success", className: "hover:bg-success/80" },
-    { isLink: true, variant: "warning", className: "hover:bg-warning/80" },
-    { isLink: true, variant: "error", className: "hover:bg-error/80" },
+    { isLink: true, variant: "default", class: "hover:bg-foreground/80" },
+    { isLink: true, variant: "primary", class: "hover:bg-primary/80" },
+    { isLink: true, variant: "secondary", class: "hover:bg-secondary/80" },
+    { isLink: true, variant: "outline", class: "hover:border-border/80" },
+    { isLink: true, variant: "ghost", class: "hover:bg-foreground/7" },
+    { isLink: true, variant: "info", class: "hover:bg-info/80" },
+    { isLink: true, variant: "success", class: "hover:bg-success/80" },
+    { isLink: true, variant: "warning", class: "hover:bg-warning/80" },
+    { isLink: true, variant: "error", class: "hover:bg-error/80" },
   ],
   defaultVariants: { variant: "default", size: "md", isLink: false },
 });

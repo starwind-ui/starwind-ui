@@ -1,14 +1,13 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { alertDialogHeaderVariant } from "./variants";
 
 type Props = HTMLAttributes<"div">;
 
-const alertDialogHeader = tv({ base: "flex flex-col space-y-2 text-center sm:text-left" });
-
-const { class: className, ...rest } = Astro.props;
+const { class: className, ...rest } = Astro.props as Props;
 ---
 
-<div class={alertDialogHeader({ class: className })} {...rest}>
+<div class={alertDialogHeaderVariant({ class: className })} {...rest}>
   <slot />
 </div>
