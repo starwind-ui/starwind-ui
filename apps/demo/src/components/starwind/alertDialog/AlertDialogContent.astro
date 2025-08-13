@@ -1,0 +1,33 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { alertDialogBackdropVariant, alertDialogContentVariant } from "./variants";
+
+type Props = HTMLAttributes<"dialog"> & {
+  /**
+   * Open and close animation duration in milliseconds
+   */
+  animationDuration?: number;
+};
+
+const { class: className, animationDuration = 200, ...rest } = Astro.props as Props;
+---
+
+<!-- alert dialog overlay -->
+<div
+  class={alertDialogBackdropVariant()}
+  data-state="closed"
+  style={{ animationDuration: `${animationDuration}ms` }}
+>
+</div>
+
+<dialog
+  class={alertDialogContentVariant({ class: className })}
+  data-state="closed"
+  role="alertdialog"
+  {...rest}
+  style={{ animationDuration: `${animationDuration}ms` }}
+>
+  <slot />
+  <!-- Note: No close button here - AlertDialog can only be dismissed by cancel/action buttons -->
+</dialog>

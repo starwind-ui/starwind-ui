@@ -1,14 +1,13 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { cardFooterVariant } from "./index";
 
 type Props = HTMLAttributes<"div">;
-
-const cardFooter = tv({ base: "flex items-center p-8 pt-0" });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={cardFooter({ class: className })} {...rest}>
+<div class={cardFooterVariant({ class: className })} {...rest}>
+
   <slot />
 </div>

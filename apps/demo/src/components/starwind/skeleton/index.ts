@@ -1,5 +1,12 @@
 import Skeleton from "./Skeleton.astro";
+import { tv } from "tailwind-variants";
 
-export { Skeleton };
+const skeletonVariant = tv({
+  base: "bg-accent animate-pulse rounded-md",
+});
+
+export { Skeleton, skeletonVariant };
+
+
 
 export default Skeleton;

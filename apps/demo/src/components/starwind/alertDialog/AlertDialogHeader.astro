@@ -1,0 +1,13 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { alertDialogHeaderVariant } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props as Props;
+---
+
+<div class={alertDialogHeaderVariant({ class: className })} {...rest}>
+  <slot />
+</div>
