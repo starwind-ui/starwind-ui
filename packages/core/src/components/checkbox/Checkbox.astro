@@ -6,6 +6,11 @@ import { tv, type VariantProps } from "tailwind-variants";
 type Props = Omit<HTMLAttributes<"input">, "type"> &
   VariantProps<typeof checkbox> & {
     /**
+     * Unique identifier (ID) for the element which must be unique in the whole document.
+     */
+    id: string;
+
+    /**
      * Optional label text to display next to the checkbox
      */
     label?: string;
