@@ -15,7 +15,15 @@
     "noUnusedParameters": false,
     "preserveWatchOutput": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "jsx": "preserve",
+    "jsxImportSource": "astro",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./packages/core/src/*"],
+      "@starwind-ui/core": ["./packages/core/src/index.ts"],
+      "@starwind-ui/core/*": ["./packages/core/src/*"]
+    }
   },
   "exclude": ["node_modules"]
 }
