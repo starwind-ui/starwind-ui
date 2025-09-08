@@ -1,7 +1,12 @@
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import componentRegistry from "./registry.json" with { type: "json" };
+import componentRegistry from "@/registry.json" with { type: "json" };
+
+/**
+ * Export utility functions
+ * */
+export { assignElementToFirstHeading } from "@/utils/accessibility.js";
 
 /**
  * Component metadata interface describing a Starwind UI component

@@ -1,28 +1,69 @@
 ---
-import type { HTMLAttributes } from "astro/types";
 import { tv, type VariantProps } from "tailwind-variants";
+import type { HTMLAttributes } from "astro/types";
 
-type Props = HTMLAttributes<"div"> & VariantProps<typeof alert>;
+import { assignElementToFirstHeading } from "@/utils/accessibility";
+
+const alertVariants = {
+  default: "bg-background [&>h5>svg]:text-foreground",
+  primary: "border-primary bg-primary/7 [&>h5>svg]:text-primary",
+  secondary: "border-secondary bg-secondary/7 [&>h5>svg]:text-secondary",
+  info: "border-info bg-info/7 [&>h5>svg]:text-info",
+  success: "border-success bg-success/7 [&>h5>svg]:text-success",
+  warning: "border-warning bg-warning/7 [&>h5>svg]:text-warning",
+  error: "border-error bg-error/7 [&>h5>svg]:text-error",
+} as const;
 
 const alert = tv({
   base: "text-foreground relative w-full rounded-lg border p-4",
   variants: {
-    variant: {
-      default: "bg-background [&>h5>svg]:text-foreground",
-      primary: "border-primary bg-primary/7 [&>h5>svg]:text-primary",
-      secondary: "border-secondary bg-secondary/7 [&>h5>svg]:text-secondary",
-      info: "border-info bg-info/7 [&>h5>svg]:text-info",
-      success: "border-success bg-success/7 [&>h5>svg]:text-success",
-      warning: "border-warning bg-warning/7 [&>h5>svg]:text-warning",
-      error: "border-error bg-error/7 [&>h5>svg]:text-error",
-    },
+    variant: alertVariants,
   },
   defaultVariants: { variant: "default" },
 });
 
-const { variant, class: className, ...rest } = Astro.props;
+export type AlertVariant = NonNullable<VariantProps<typeof alert>["variant"]>;
+export const ALERT_VARIANT_KEYS: AlertVariant[] = [
+  "default",
+  "primary",
+  "secondary",
+  "info",
+  "success",
+  "warning",
+  "error",
+];
+
+type Props = HTMLAttributes<"div"> & VariantProps<typeof alert>;
+
+const {
+  variant,
+  class: className,
+  "aria-labelledby": ariaLabelledby,
+  "aria-describedby": ariaDescribedby,
+  "aria-label": ariaLabel,
+  "aria-live": ariaLive,
+  role,
+  ...rest
+} = Astro.props as Props;
+
+const accessibilityAttributes = {
+  "aria-labelledby": ariaLabelledby || undefined,
+  "aria-describedby": ariaDescribedby || undefined,
+  "aria-label": ariaLabel || undefined,
+  "aria-live": ariaLive === "polite" ? ("polite" as const) : undefined,
+  role: role === "alert" ? ("alert" as const) : undefined,
+};
+
+const { attributes: alertAccessibilityAttributes, content: slotContent } =
+  assignElementToFirstHeading(await Astro.slots.render("default"), accessibilityAttributes);
+
+const hasContent = slotContent && slotContent.trim().length > 0;
 ---
 
-<div class={alert({ variant, class: className })} {...rest}>
-  <slot />
-</div>
+{
+  hasContent && ( // important to NOT render a noisy alert if there's no content in the default slot
+    <div class={alert({ variant, class: className })} {...alertAccessibilityAttributes} {...rest}>
+      <Fragment set:html={slotContent} />
+    </div>
+  )
+}
