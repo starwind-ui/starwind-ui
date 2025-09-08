@@ -320,6 +320,23 @@ describe("Alert Component Integration Tests", function describeAlertComponentInt
         ALERT_TEST_CONTENT.GENERATED_PARAGRAPH,
       );
     });
+
+    it("should add aria-describedby to first paragraph tag when no manual aria-describedby is provided", async function testAlertAddsAriaDescribedByToFirstParagraph() {
+      const contentWithParagraph = `<h2 id="${TEST_IDS.ALERT_TITLE}">${ALERT_TEST_CONTENT.IMPORTANT_NOTICE}</h2><p id="${TEST_IDS.ALERT_DESCRIPTION}">${ALERT_TEST_CONTENT.IMPORTANT_MESSAGE}</p>`;
+      const alertWithParagraphHTML = await container.renderToString(Alert, {
+        slots: {
+          default: contentWithParagraph,
+        },
+      } as AlertRenderOptions);
+
+      expect(alertWithParagraphHTML).toContain(`aria-describedby="${TEST_IDS.ALERT_DESCRIPTION}"`);
+      expect(alertWithParagraphHTML).toContain(`aria-labelledby="${TEST_IDS.ALERT_TITLE}"`);
+      expect(alertWithParagraphHTML).toContain('role="alert"');
+      expect(alertWithParagraphHTML).toContain('aria-live="polite"');
+
+      expect(alertWithParagraphHTML).toContain(`<p id="${TEST_IDS.ALERT_DESCRIPTION}">`);
+      expect(alertWithParagraphHTML).toContain(ALERT_TEST_CONTENT.IMPORTANT_MESSAGE);
+    });
   });
 
   describe("AlertTitle Component", function describeAlertTitleRendering() {
@@ -353,7 +370,7 @@ describe("Alert Component Integration Tests", function describeAlertComponentInt
     it("should render AlertDescription with correct structure", async function testAlertDescriptionStructure() {
       const descriptionHTML = await container.renderToString(AlertDescription);
 
-      expect(descriptionHTML).toContain("<div");
+      expect(descriptionHTML).toContain("<p");
       expect(descriptionHTML).toContain("class=");
       expect(descriptionHTML).toContain("leading-relaxed");
     });
@@ -365,7 +382,7 @@ describe("Alert Component Integration Tests", function describeAlertComponentInt
         },
       });
 
-      expect(descriptionWithSlotHTML).toContain("<div");
+      expect(descriptionWithSlotHTML).toContain("<p");
       expect(descriptionWithSlotHTML).toContain("class=");
       expect(descriptionWithSlotHTML).toContain("leading-relaxed");
       expect(descriptionWithSlotHTML).toContain("Alert description content goes here");
