@@ -1,6 +1,6 @@
-import Alert from "./Alert.astro";
-import AlertDescription from "./AlertDescription.astro";
-import AlertTitle from "./AlertTitle.astro";
+import Alert from "@/components/alert/Alert.astro";
+import AlertDescription from "@/components/alert/AlertDescription.astro";
+import AlertTitle from "@/components/alert/AlertTitle.astro";
 
 export { Alert, AlertDescription, AlertTitle };
 
