@@ -1,3 +1,4 @@
+import { PATHS } from "./constants.js";
 import { fileExists, readJsonFile, writeJsonFile } from "./fs.js";
 
 export interface ShadcnRegistry {
@@ -35,7 +36,7 @@ export function createDefaultShadcnConfig(
     $schema: "https://ui.shadcn.com/schema.json",
     registries: {
       "@starwind-pro": {
-        url: "http://localhost:4321/r/{name}",
+        url: PATHS.STARWIND_PRO_REGISTRY,
         headers: {
           Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
         },
@@ -98,7 +99,7 @@ export function addStarwindProRegistry(config: ShadcnConfig): ShadcnConfig {
 
   // Add or update the Starwind Pro registry
   updatedConfig.registries["@starwind-pro"] = {
-    url: "http://localhost:4321/r/{name}",
+    url: PATHS.STARWIND_PRO_REGISTRY,
     headers: {
       Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
     },
