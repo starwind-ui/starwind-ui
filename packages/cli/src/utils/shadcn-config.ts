@@ -131,7 +131,7 @@ export async function setupShadcnProConfig(
 }
 
 /**
- * Checks if the Starwind Pro registry is already configured
+ * Checks if the Starwind Pro registry is already configured with authorized URL
  */
 export async function hasStarwindProRegistry(): Promise<boolean> {
   if (!(await componentsJsonExists())) {
@@ -140,7 +140,18 @@ export async function hasStarwindProRegistry(): Promise<boolean> {
 
   try {
     const config = await readComponentsJson();
-    return !!(config.registries && config.registries["@starwind-pro"]);
+    const starwindProRegistry = config.registries?.["@starwind-pro"];
+
+    if (!starwindProRegistry?.url) {
+      return false;
+    }
+
+    // Validate that the registry URL is from authorized domains
+    const url = starwindProRegistry.url;
+    const isAuthorized =
+      url.startsWith("http://localhost") || url.startsWith("https://pro.starwind.dev");
+
+    return isAuthorized;
   } catch {
     return false;
   }

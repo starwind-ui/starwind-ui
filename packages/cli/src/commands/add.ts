@@ -2,7 +2,7 @@ import * as p from "@clack/prompts";
 import { execa } from "execa";
 
 import type { InstallResult } from "@/utils/component.js";
-import { updateConfig } from "@/utils/config.js";
+import { getConfig, updateConfig } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -10,9 +10,11 @@ import { installComponent } from "@/utils/install.js";
 import { getShadcnCommand } from "@/utils/package-manager.js";
 import { selectComponents } from "@/utils/prompts.js";
 import { getAllComponents } from "@/utils/registry.js";
+import { hasStarwindProRegistry, setupShadcnProConfig } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
 import { isValidComponent } from "@/utils/validate.js";
-const { init } = await import("./init.js");
+
+import { init } from "./init.js";
 
 export async function add(components?: string[], options?: { all?: boolean }) {
   try {
@@ -67,6 +69,44 @@ export async function add(components?: string[], options?: { all?: boolean }) {
 
       // Handle registry components (e.g., @starwind-pro/login1)
       if (registryComponents.length > 0) {
+        // Check if Starwind Pro registry is configured
+        const hasProRegistry = await hasStarwindProRegistry();
+
+        if (!hasProRegistry) {
+          const shouldSetupPro = await p.confirm({
+            message: `Starwind Pro registry not configured. Would you like to set it up now to install ${registryComponents.join(", ")}?`,
+            initialValue: true,
+          });
+
+          if (p.isCancel(shouldSetupPro)) {
+            p.cancel("Operation cancelled");
+            process.exit(0);
+          }
+
+          if (shouldSetupPro) {
+            p.log.info(highlighter.info("Setting up Starwind Pro configuration..."));
+
+            // Get CSS file and base color from existing config or use defaults
+            let cssFile: string = PATHS.LOCAL_CSS_FILE;
+            let baseColor: string = "neutral";
+
+            try {
+              const config = await getConfig();
+              cssFile = config.tailwind?.css || PATHS.LOCAL_CSS_FILE;
+              baseColor = config.tailwind?.baseColor || "neutral";
+            } catch {
+              // Use defaults if config can't be read
+            }
+
+            await setupShadcnProConfig(cssFile, baseColor);
+            p.log.success("Starwind Pro registry configured successfully!");
+          } else {
+            p.log.error("Cannot install registry components without Starwind Pro configuration");
+            p.cancel("Operation cancelled");
+            process.exit(1);
+          }
+        }
+
         p.log.info(`Installing registry components: ${registryComponents.join(", ")}`);
 
         const [command, baseArgs] = await getShadcnCommand();
