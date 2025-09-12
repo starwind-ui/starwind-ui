@@ -46,6 +46,7 @@ export async function add(components?: string[], options?: { all?: boolean }) {
 
     let componentsToInstall: string[] = [];
     const registryComponents: string[] = [];
+    let registryResults: { success: string[]; failed: string[] } | null = null;
 
     // ================================================================
     //                  Get components to install
@@ -110,7 +111,10 @@ export async function add(components?: string[], options?: { all?: boolean }) {
         p.log.info(`Installing registry components: ${registryComponents.join(", ")}`);
 
         const [command, baseArgs] = await getShadcnCommand();
-        const registryResults = { success: 0, failed: 0 };
+        registryResults = {
+          success: [] as string[],
+          failed: [] as string[]
+        };
 
         for (const registryComponent of registryComponents) {
           try {
@@ -121,27 +125,10 @@ export async function add(components?: string[], options?: { all?: boolean }) {
               cwd: process.cwd(),
             });
 
-            p.log.success(`Successfully installed ${highlighter.success(registryComponent)}`);
-            registryResults.success++;
+            registryResults.success.push(registryComponent);
           } catch (error) {
-            p.log.error(
-              `Failed to install ${registryComponent}: ${error instanceof Error ? error.message : "Unknown error"}`,
-            );
-            registryResults.failed++;
+            registryResults.failed.push(registryComponent);
           }
-        }
-
-        // Show registry installation summary
-        if (registryResults.success > 0 && registryResults.failed === 0) {
-          p.log.success(
-            `All ${registryResults.success} registry components installed successfully!`,
-          );
-        } else if (registryResults.success > 0 && registryResults.failed > 0) {
-          p.log.warn(
-            `${registryResults.success} registry components installed, ${registryResults.failed} failed`,
-          );
-        } else if (registryResults.failed > 0) {
-          p.log.error(`All ${registryResults.failed} registry components failed to install`);
         }
       }
 
@@ -201,10 +188,8 @@ export async function add(components?: string[], options?: { all?: boolean }) {
       return process.exit(0);
     }
 
-    // If we only have registry components, we're done (summary already shown above)
-    if (componentsToInstall.length === 0 && registryComponents.length > 0) {
-      return;
-    }
+    // If we only have registry components, we still need to show the final summary
+    // (removed early return to ensure summary is always shown)
 
     // confirm installation
     // const confirmed = await p.confirm({
@@ -223,6 +208,7 @@ export async function add(components?: string[], options?: { all?: boolean }) {
       skipped: [] as InstallResult[],
       failed: [] as InstallResult[],
     };
+
 
     // ================================================================
     //                      Install components
@@ -281,10 +267,32 @@ export async function add(components?: string[], options?: { all?: boolean }) {
 
     if (results.installed.length > 0) {
       p.log.success(
-        `${highlighter.success("Successfully installed components:")}\n${results.installed
+        `${highlighter.success("Successfully installed components:")}
+${results.installed
           .map((r) => `  ${r.name} v${r.version}`)
           .join("\n")}`,
       );
+    }
+
+    // Show registry component results in the final summary
+    if (registryResults) {
+      if (registryResults.failed.length > 0) {
+        p.log.error(
+          `${highlighter.error("Failed to install registry components:")}
+${registryResults.failed
+            .map((name) => `  ${name} - see the error message above for further details`)
+            .join("\n")}`,
+        );
+      }
+
+      if (registryResults.success.length > 0) {
+        p.log.success(
+          `${highlighter.success("Successfully installed registry components:")}
+${registryResults.success
+            .map((name) => `  ${name}`)
+            .join("\n")}`,
+        );
+      }
     }
 
     await sleep(1000);
