@@ -1,4 +1,5 @@
 import * as p from "@clack/prompts";
+import { execa } from "execa";
 
 import type { InstallResult } from "@/utils/component.js";
 import { updateConfig } from "@/utils/config.js";
@@ -6,6 +7,7 @@ import { PATHS } from "@/utils/constants.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { installComponent } from "@/utils/install.js";
+import { getShadcnCommand } from "@/utils/package-manager.js";
 import { selectComponents } from "@/utils/prompts.js";
 import { getAllComponents } from "@/utils/registry.js";
 import { sleep } from "@/utils/sleep.js";
@@ -41,6 +43,7 @@ export async function add(components?: string[], options?: { all?: boolean }) {
     }
 
     let componentsToInstall: string[] = [];
+    const registryComponents: string[] = [];
 
     // ================================================================
     //                  Get components to install
@@ -51,42 +54,96 @@ export async function add(components?: string[], options?: { all?: boolean }) {
       componentsToInstall = availableComponents.map((c) => c.name);
       p.log.info(`Adding all ${componentsToInstall.length} available components...`);
     } else if (components && components.length > 0) {
-      // Get all available components once to avoid multiple registry calls
-      const availableComponents = await getAllComponents();
+      // Separate registry components from regular components
+      const regularComponents: string[] = [];
 
-      // Filter valid components and collect invalid ones
-      const { valid, invalid } = await components.reduce<
-        Promise<{ valid: string[]; invalid: string[] }>
-      >(
-        async (accPromise, component) => {
-          const acc = await accPromise;
-          const isValid = await isValidComponent(component, availableComponents);
-          if (isValid) {
-            acc.valid.push(component);
-          } else {
-            acc.invalid.push(component);
-          }
-          return acc;
-        },
-        Promise.resolve({ valid: [], invalid: [] }),
-      );
-
-      // Warn about invalid components
-      if (invalid.length > 0) {
-        p.log.warn(
-          `${highlighter.warn("Invalid components found:")}\n${invalid
-            .map((name) => `  ${name}`)
-            .join("\n")}`,
-        );
+      for (const component of components) {
+        if (component.startsWith("@")) {
+          registryComponents.push(component);
+        } else {
+          regularComponents.push(component);
+        }
       }
 
-      // Proceed with valid components
-      if (valid.length > 0) {
-        componentsToInstall = valid;
-      } else {
-        p.log.warn(`${highlighter.warn("No valid components to install")}`);
-        p.cancel("Operation cancelled");
-        return process.exit(0);
+      // Handle registry components (e.g., @starwind-pro/login1)
+      if (registryComponents.length > 0) {
+        p.log.info(`Installing registry components: ${registryComponents.join(", ")}`);
+
+        const [command, baseArgs] = await getShadcnCommand();
+        const registryResults = { success: 0, failed: 0 };
+
+        for (const registryComponent of registryComponents) {
+          try {
+            p.log.info(`Installing ${highlighter.info(registryComponent)} via shadcn...`);
+
+            await execa(command, [...baseArgs, "add", registryComponent], {
+              stdio: "inherit",
+              cwd: process.cwd(),
+            });
+
+            p.log.success(`Successfully installed ${highlighter.success(registryComponent)}`);
+            registryResults.success++;
+          } catch (error) {
+            p.log.error(
+              `Failed to install ${registryComponent}: ${error instanceof Error ? error.message : "Unknown error"}`,
+            );
+            registryResults.failed++;
+          }
+        }
+
+        // Show registry installation summary
+        if (registryResults.success > 0 && registryResults.failed === 0) {
+          p.log.success(
+            `All ${registryResults.success} registry components installed successfully!`,
+          );
+        } else if (registryResults.success > 0 && registryResults.failed > 0) {
+          p.log.warn(
+            `${registryResults.success} registry components installed, ${registryResults.failed} failed`,
+          );
+        } else if (registryResults.failed > 0) {
+          p.log.error(`All ${registryResults.failed} registry components failed to install`);
+        }
+      }
+
+      // Handle regular Starwind components
+      if (regularComponents.length > 0) {
+        // Get all available components once to avoid multiple registry calls
+        const availableComponents = await getAllComponents();
+
+        // Filter valid components and collect invalid ones
+        const { valid, invalid } = await regularComponents.reduce<
+          Promise<{ valid: string[]; invalid: string[] }>
+        >(
+          async (accPromise, component) => {
+            const acc = await accPromise;
+            const isValid = await isValidComponent(component, availableComponents);
+            if (isValid) {
+              acc.valid.push(component);
+            } else {
+              acc.invalid.push(component);
+            }
+            return acc;
+          },
+          Promise.resolve({ valid: [], invalid: [] }),
+        );
+
+        // Warn about invalid components
+        if (invalid.length > 0) {
+          p.log.warn(
+            `${highlighter.warn("Invalid components found:")}\n${invalid
+              .map((name) => `  ${name}`)
+              .join("\n")}`,
+          );
+        }
+
+        // Proceed with valid components
+        if (valid.length > 0) {
+          componentsToInstall = valid;
+        } else if (registryComponents.length === 0) {
+          p.log.warn(`${highlighter.warn("No valid components to install")}`);
+          p.cancel("Operation cancelled");
+          return process.exit(0);
+        }
       }
     } else {
       // If no components provided, show the interactive prompt
@@ -98,10 +155,15 @@ export async function add(components?: string[], options?: { all?: boolean }) {
       componentsToInstall = selected;
     }
 
-    if (componentsToInstall.length === 0) {
+    if (componentsToInstall.length === 0 && registryComponents.length === 0) {
       p.log.warn(`${highlighter.warn("No components selected")}`);
       p.cancel("Operation cancelled");
       return process.exit(0);
+    }
+
+    // If we only have registry components, we're done (summary already shown above)
+    if (componentsToInstall.length === 0 && registryComponents.length > 0) {
+      return;
     }
 
     // confirm installation
