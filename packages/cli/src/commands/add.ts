@@ -113,7 +113,7 @@ export async function add(components?: string[], options?: { all?: boolean }) {
         const [command, baseArgs] = await getShadcnCommand();
         registryResults = {
           success: [] as string[],
-          failed: [] as string[]
+          failed: [] as string[],
         };
 
         for (const registryComponent of registryComponents) {
@@ -209,7 +209,6 @@ export async function add(components?: string[], options?: { all?: boolean }) {
       failed: [] as InstallResult[],
     };
 
-
     // ================================================================
     //                      Install components
     // ================================================================
@@ -268,9 +267,7 @@ export async function add(components?: string[], options?: { all?: boolean }) {
     if (results.installed.length > 0) {
       p.log.success(
         `${highlighter.success("Successfully installed components:")}
-${results.installed
-          .map((r) => `  ${r.name} v${r.version}`)
-          .join("\n")}`,
+${results.installed.map((r) => `  ${r.name} v${r.version}`).join("\n")}`,
       );
     }
 
@@ -280,17 +277,15 @@ ${results.installed
         p.log.error(
           `${highlighter.error("Failed to install registry components:")}
 ${registryResults.failed
-            .map((name) => `  ${name} - see the error message above for further details`)
-            .join("\n")}`,
+  .map((name) => `  ${name} - see the error message above for further details`)
+  .join("\n")}`,
         );
       }
 
       if (registryResults.success.length > 0) {
         p.log.success(
           `${highlighter.success("Successfully installed registry components:")}
-${registryResults.success
-            .map((name) => `  ${name}`)
-            .join("\n")}`,
+${registryResults.success.map((name) => `  ${name}`).join("\n")}`,
         );
       }
     }
