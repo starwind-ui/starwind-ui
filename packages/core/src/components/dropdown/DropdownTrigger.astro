@@ -9,7 +9,7 @@ type Props = Omit<HTMLAttributes<"button">, "role" | "type"> & {
   asChild?: boolean;
 };
 
-const dropdownTrigger = tv({
+export const dropdownTrigger = tv({
   base: [
     "starwind-dropdown-trigger",
     "inline-flex items-center justify-center",

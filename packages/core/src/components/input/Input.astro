@@ -4,7 +4,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 
 type Props = HTMLAttributes<"input"> & VariantProps<typeof input>;
 
-const input = tv({
+export const input = tv({
   base: [
     "border-input bg-background text-foreground w-full rounded-md border",
     "focus:outline-outline focus:ring-0 focus:outline-2 focus:outline-offset-2",

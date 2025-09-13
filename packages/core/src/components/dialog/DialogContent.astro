@@ -10,7 +10,7 @@ type Props = HTMLAttributes<"dialog"> & {
   animationDuration?: number;
 };
 
-const dialogBackdrop = tv({
+export const dialogBackdrop = tv({
   base: [
     "starwind-dialog-backdrop fixed inset-0 top-0 left-0 z-50 hidden h-screen w-screen bg-black/80",
     "data-[state=open]:animate-in fade-in",
@@ -18,7 +18,7 @@ const dialogBackdrop = tv({
   ],
 });
 
-const dialogContent = tv({
+export const dialogContent = tv({
   base: [
     "fixed top-16 left-[50%] z-50 translate-x-[-50%] sm:top-[50%] sm:translate-y-[-50%]",
     "bg-background w-full max-w-md border p-8 shadow-lg sm:rounded-lg",
@@ -28,7 +28,7 @@ const dialogContent = tv({
   ],
 });
 
-const dialogCloseButton = tv({
+export const dialogCloseButton = tv({
   base: [
     "starwind-dialog-close text-muted-foreground",
     "absolute top-5.5 right-5.5 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none",

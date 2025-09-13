@@ -7,7 +7,7 @@ import PaginationLink from "./PaginationLink.astro";
 
 type Props = HTMLAttributes<"a"> & { size?: "sm" | "md" | "lg" | "icon" };
 
-const paginationPrevious = tv({ base: "group gap-1" });
+export const paginationPrevious = tv({ base: "group gap-1" });
 
 const { class: className, size = "md", ...rest } = Astro.props;
 ---

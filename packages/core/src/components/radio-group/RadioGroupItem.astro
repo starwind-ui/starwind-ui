@@ -28,7 +28,7 @@ type Props = HTMLAttributes<"input"> &
     checked?: boolean;
   };
 
-const radioWrapper = tv({
+export const radioWrapper = tv({
   base: "relative isolate flex shrink-0",
   variants: {
     size: {
@@ -42,7 +42,7 @@ const radioWrapper = tv({
   },
 });
 
-const radioItem = tv({
+export const radioItem = tv({
   base: [
     "starwind-radio-item peer z-10 h-full w-full",
     "absolute inset-0 cursor-pointer opacity-0 outline-none focus:outline-none focus-visible:outline-none",
@@ -50,7 +50,7 @@ const radioItem = tv({
   ],
 });
 
-const radioControl = tv({
+export const radioControl = tv({
   base: [
     "starwind-radio-control",
     "border-input bg-background",
@@ -81,7 +81,7 @@ const radioControl = tv({
   },
 });
 
-const radioIndicator = tv({
+export const radioIndicator = tv({
   base: ["starwind-radio-indicator", "opacity-0 transition-opacity"],
   variants: {
     size: {

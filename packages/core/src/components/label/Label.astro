@@ -4,7 +4,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 
 type Props = HTMLAttributes<"label"> & VariantProps<typeof label>;
 
-const label = tv({
+export const label = tv({
   base: [
     "text-foreground leading-none font-medium",
     "peer-disabled:cursor-not-allowed peer-disabled:opacity-70 has-[+:disabled]:cursor-not-allowed has-[+:disabled]:opacity-70",

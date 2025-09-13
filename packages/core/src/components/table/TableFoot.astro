@@ -4,7 +4,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 
 type Props = HTMLAttributes<"tfoot"> & VariantProps<typeof tableFoot>;
 
-const tableFoot = tv({
+export const tableFoot = tv({
   base: "bg-muted/50 border-t font-medium [&>tr]:last:border-b-0",
 });
 

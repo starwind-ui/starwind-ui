@@ -1,5 +1,7 @@
-import Checkbox from "./Checkbox.astro";
+import Checkbox, { checkbox } from "./Checkbox.astro";
 
-export { Checkbox };
+const CheckboxVariants = { checkbox };
+
+export { Checkbox, CheckboxVariants };
 
 export default Checkbox;

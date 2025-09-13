@@ -1,9 +1,17 @@
 import Dropdown from "./Dropdown.astro";
-import DropdownContent from "./DropdownContent.astro";
-import DropdownItem from "./DropdownItem.astro";
-import DropdownLabel from "./DropdownLabel.astro";
-import DropdownSeparator from "./DropdownSeparator.astro";
-import DropdownTrigger from "./DropdownTrigger.astro";
+import DropdownContent, { dropdownContent } from "./DropdownContent.astro";
+import DropdownItem, { dropdownItem } from "./DropdownItem.astro";
+import DropdownLabel, { dropdownLabel } from "./DropdownLabel.astro";
+import DropdownSeparator, { dropdownSeparator } from "./DropdownSeparator.astro";
+import DropdownTrigger, { dropdownTrigger } from "./DropdownTrigger.astro";
+
+const DropdownVariants = {
+  dropdownContent,
+  dropdownItem,
+  dropdownLabel,
+  dropdownSeparator,
+  dropdownTrigger,
+};
 
 export {
   Dropdown,
@@ -12,6 +20,7 @@ export {
   DropdownLabel,
   DropdownSeparator,
   DropdownTrigger,
+  DropdownVariants,
 };
 
 export default {
