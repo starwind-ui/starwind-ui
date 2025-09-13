@@ -37,6 +37,7 @@ const { class: className, isActive, size = "icon", ...rest } = Astro.props;
 <a
   aria-current={isActive ? "page" : undefined}
   class={paginationLink({ isActive, size, class: className })}
+  data-slot="pagination-link"
   {...rest}
 >
   <slot />

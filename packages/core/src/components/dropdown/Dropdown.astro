@@ -22,6 +22,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
   class:list={["starwind-dropdown", "relative", className]}
   data-open-on-hover={openOnHover ? "true" : undefined}
   data-close-delay={closeDelay}
+  data-slot="dropdown"
   {...rest}
 >
   <slot />

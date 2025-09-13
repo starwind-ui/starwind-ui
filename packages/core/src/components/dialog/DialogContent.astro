@@ -43,6 +43,7 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
 <div
   class={dialogBackdrop()}
   data-state="closed"
+  data-slot="dialog-backdrop"
   style={{ animationDuration: `${animationDuration}ms` }}
 >
 </div>
@@ -50,6 +51,7 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
 <dialog
   class={dialogContent({ class: className })}
   data-state="closed"
+  data-slot="dialog-content"
   {...rest}
   style={{ animationDuration: `${animationDuration}ms` }}
 >

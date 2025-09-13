@@ -15,6 +15,6 @@ const dialogTitle = tv({ base: "text-2xl leading-none font-semibold tracking-tig
 const { class: className, ...rest } = Astro.props;
 ---
 
-<h2 class={dialogTitle({ class: className })} {...rest}>
+<h2 class={dialogTitle({ class: className })} data-slot="dialog-title" {...rest}>
   <slot />
 </h2>

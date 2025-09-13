@@ -14,6 +14,7 @@ const { class: className, ...rest } = Astro.props;
   role="presentation"
   aria-hidden="true"
   class={breadcrumbEllipsis({ class: className })}
+  data-slot="breadcrumb-ellipsis"
   {...rest}
 >
   <Dots />

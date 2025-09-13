@@ -108,7 +108,7 @@ const {
 } = Astro.props;
 ---
 
-<div class={radioWrapper({ size })}>
+<div class={radioWrapper({ size })} data-slot="radio-group-item-wrapper">
   <input
     type="radio"
     class={radioItem()}
@@ -117,9 +117,10 @@ const {
     value={value}
     checked={checked}
     disabled={disabled}
+    data-slot="radio-group-item"
     {...rest}
   />
-  <span class={radioControl({ variant, class: className })}>
+  <span class={radioControl({ variant, class: className })} data-slot="radio-group-item-control">
     <CircleFilled class={radioIndicator({ size })} />
   </span>
 </div>
