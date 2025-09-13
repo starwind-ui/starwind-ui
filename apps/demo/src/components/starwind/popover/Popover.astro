@@ -15,11 +15,7 @@ const popover = tv({ base: "starwind-popover relative inline-block" });
 const { openDelay = 0, class: className } = Astro.props;
 ---
 
-<div
-  class={popover({ class: className })}
-  data-state="closed"
-  data-open-delay={openDelay}
->
+<div class={popover({ class: className })} data-state="closed" data-open-delay={openDelay}>
   <slot />
 </div>
 
@@ -70,11 +66,22 @@ const { openDelay = 0, class: className } = Astro.props;
       this.content.id = this.contentId;
     }
 
+    private isShowing() {
+      return this.popover.getAttribute("data-state") === "open";
+    }
+
     private setupEvents() {
       if (!this.trigger || !this.content) return;
 
       // Trigger events
-      this.trigger.addEventListener("click", () => this.show());
+      this.trigger.addEventListener("click", () => {
+        if (this.isShowing()) {
+          this.hide();
+          return;
+        }
+
+        this.show();
+      });
 
       // if data-avoid-collisions exists, add resize listener to reset any translations
       if (this.content.hasAttribute("data-avoid-collisions")) {
@@ -84,44 +91,29 @@ const { openDelay = 0, class: className } = Astro.props;
             if (!this.content) return;
             this.content.style.transform = "";
           },
-          { passive: true }
+          { passive: true },
         );
       }
 
       // Document events
       document.addEventListener("keydown", (e) => {
-        if (
-          e.key === "Escape" &&
-          this.popover.getAttribute("data-state") === "open"
-        ) {
-          this.hide(true);
+        if (e.key === "Escape" && this.isShowing()) {
+          this.hide();
         }
       });
 
       document.addEventListener("click", (e) => {
-        if (
-          !this.popover.contains(e.target as Node) &&
-          this.popover.getAttribute("data-state") === "open"
-        ) {
-          this.hide(true);
+        const isClickedOnPopoverContent = this.popover.contains(e.target as Node);
+        if (this.isShowing() && !isClickedOnPopoverContent) {
+          this.hide();
         }
       });
     }
 
-    private show(immediate: boolean = false) {
+    private show() {
       if (!this.content || !this.trigger) return;
-      if (immediate) {
-        this.popover.setAttribute("data-state", "open");
-        this.content.setAttribute("data-state", "open");
-        this.content.style.display = "block";
-        this.checkBoundary(this.content);
-        this.clearOpenTimer();
-        return;
-      }
 
-      const delay = parseInt(
-        this.popover.getAttribute("data-open-delay") || "700"
-      );
+      const delay = parseInt(this.popover.getAttribute("data-open-delay") || "0");
       this.openTimerRef = window.setTimeout(() => {
         if (!this.content || !this.trigger) return;
         this.popover.setAttribute("data-state", "open");
@@ -132,19 +124,17 @@ const { openDelay = 0, class: className } = Astro.props;
       }, delay);
     }
 
-    private hide(immediate: boolean = false) {
+    private hide() {
       if (!this.content || !this.trigger) return;
       this.clearOpenTimer();
 
-      if (immediate) {
-        this.popover.setAttribute("data-state", "closed");
-        setTimeout(() => {
-          if (!this.content) return;
-          this.content.style.display = "none";
-        }, this.animationDuration);
-        this.content.setAttribute("data-state", "closed");
-        return;
-      }
+      this.popover.setAttribute("data-state", "closed");
+      setTimeout(() => {
+        if (!this.content) return;
+        this.content.style.display = "none";
+      }, this.animationDuration);
+      this.content.setAttribute("data-state", "closed");
+      this.trigger.setAttribute("aria-expanded", "false");
     }
 
     private checkBoundary(popoverElement: HTMLElement) {
@@ -180,15 +170,12 @@ const { openDelay = 0, class: className } = Astro.props;
 
   // Store instances in a WeakMap to avoid memory leaks
   const popoverInstances = new WeakMap<HTMLElement, PopoverHandler>();
-
   const setupPopovers = () => {
-    document
-      .querySelectorAll<HTMLElement>(".starwind-popover")
-      .forEach((popover, idx) => {
-        if (!popoverInstances.has(popover)) {
-          popoverInstances.set(popover, new PopoverHandler(popover, idx));
-        }
-      });
+    document.querySelectorAll<HTMLElement>(".starwind-popover").forEach((popover, idx) => {
+      if (!popoverInstances.has(popover)) {
+        popoverInstances.set(popover, new PopoverHandler(popover, idx));
+      }
+    });
   };
 
   setupPopovers();
