@@ -25,7 +25,7 @@ type Props = HTMLAttributes<"div"> & {
   animationDuration?: number;
 };
 
-const selectContent = tv({
+export const selectContent = tv({
   base: [
     "starwind-select-content",
     "bg-popover text-popover-foreground absolute z-50 min-w-[8rem] rounded-md border shadow-md",
@@ -46,7 +46,7 @@ const selectContent = tv({
   defaultVariants: { side: "bottom", align: "start" },
 });
 
-const selectContentInner = tv({
+export const selectContentInner = tv({
   base: "max-h-96 w-full min-w-(--select-trigger-width) overflow-y-auto p-1",
 });
 

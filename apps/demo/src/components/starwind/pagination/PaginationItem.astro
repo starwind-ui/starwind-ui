@@ -6,7 +6,7 @@ type Props = HTMLAttributes<"li"> & {
   children: any;
 };
 
-const paginationItem = tv({ base: "" });
+export const paginationItem = tv({ base: "" });
 
 const { class: className, ...rest } = Astro.props;
 ---

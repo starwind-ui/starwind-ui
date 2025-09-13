@@ -1,9 +1,20 @@
-import Dropzone from "./Dropzone.astro";
-import DropzoneFilesList from "./DropzoneFilesList.astro";
+import Dropzone, { dropzone } from "./Dropzone.astro";
+import DropzoneFilesList, { dropzoneFilesList } from "./DropzoneFilesList.astro";
 import DropzoneLoadingIndicator from "./DropzoneLoadingIndicator.astro";
 import DropzoneUploadIndicator from "./DropzoneUploadIndicator.astro";
 
-export { Dropzone, DropzoneFilesList, DropzoneLoadingIndicator, DropzoneUploadIndicator };
+const DropzoneVariants = {
+  dropzone,
+  dropzoneFilesList,
+};
+
+export {
+  Dropzone,
+  DropzoneFilesList,
+  DropzoneLoadingIndicator,
+  DropzoneUploadIndicator,
+  DropzoneVariants,
+};
 
 export default {
   Root: Dropzone,

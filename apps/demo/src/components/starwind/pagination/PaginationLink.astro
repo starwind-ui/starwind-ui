@@ -7,7 +7,7 @@ interface Props extends HTMLAttributes<"a"> {
   size?: "sm" | "md" | "lg" | "icon";
 }
 
-const paginationLink = tv({
+export const paginationLink = tv({
   base: [
     "inline-flex items-center justify-center gap-1.5 rounded-md font-medium whitespace-nowrap",
     "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",

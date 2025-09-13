@@ -4,7 +4,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div"> & VariantProps<typeof alert>;
 
-const alert = tv({
+export const alert = tv({
   base: "text-foreground relative w-full rounded-lg border p-4",
   variants: {
     variant: {

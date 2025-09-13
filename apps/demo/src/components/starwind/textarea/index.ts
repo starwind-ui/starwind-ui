@@ -1,5 +1,9 @@
-import Textarea from "./Textarea.astro";
+import Textarea, { textarea } from "./Textarea.astro";
 
-export { Textarea };
+const TextareaVariants = {
+  textarea,
+};
+
+export { Textarea, TextareaVariants };
 
 export default Textarea;

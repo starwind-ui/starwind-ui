@@ -4,7 +4,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 
 interface Props extends HTMLAttributes<"div">, VariantProps<typeof avatar> {}
 
-const avatar = tv({
+export const avatar = tv({
   base: "text-foreground bg-muted relative overflow-hidden rounded-full border-2",
   variants: {
     variant: {

@@ -4,7 +4,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 
 type Props = HTMLAttributes<"caption"> & VariantProps<typeof tableCaption>;
 
-const tableCaption = tv({
+export const tableCaption = tv({
   base: "text-muted-foreground mt-4 text-sm",
 });
 

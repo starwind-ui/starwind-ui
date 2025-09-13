@@ -4,7 +4,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 
 type Props = HTMLAttributes<"tr"> & VariantProps<typeof tableRow>;
 
-const tableRow = tv({
+export const tableRow = tv({
   base: "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
 });
 

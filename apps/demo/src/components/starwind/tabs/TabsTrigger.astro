@@ -6,7 +6,7 @@ interface Props extends Omit<HTMLAttributes<"button">, "type" | "id" | "role"> {
   value: string;
 }
 
-const tabsTrigger = tv({
+export const tabsTrigger = tv({
   base: [
     "starwind-transition-colors inline-flex grow items-center justify-center rounded-sm px-3 py-1.5 font-medium whitespace-nowrap",
     "data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",

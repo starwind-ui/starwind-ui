@@ -6,7 +6,9 @@ interface Props extends Omit<HTMLAttributes<"div">, "id" | "role" | "tabindex" |
   value: string;
 }
 
-const tabsContent = tv({ base: "mt-2 focus-visible:outline-2 focus-visible:outline-offset-2" });
+export const tabsContent = tv({
+  base: "mt-2 focus-visible:outline-2 focus-visible:outline-offset-2",
+});
 
 const { value, class: className, ...rest } = Astro.props;
 ---

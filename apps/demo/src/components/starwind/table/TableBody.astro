@@ -4,7 +4,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 
 type Props = HTMLAttributes<"tbody"> & VariantProps<typeof tableBody>;
 
-const tableBody = tv({
+export const tableBody = tv({
   base: "[&_tr:last-child]:border-0",
 });
 

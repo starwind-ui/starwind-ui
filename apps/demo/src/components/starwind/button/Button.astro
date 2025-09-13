@@ -9,7 +9,7 @@ interface Props
 
 const { variant, size, class: className, ...rest } = Astro.props;
 
-const button = tv({
+export const button = tv({
   base: [
     "inline-flex items-center justify-center gap-1.5 rounded-md font-medium whitespace-nowrap",
     "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",

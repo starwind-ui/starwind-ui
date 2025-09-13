@@ -59,7 +59,7 @@ if (rest["aria-label"]) {
   ariaLabel = "switch";
 }
 
-const switchButton = tv({
+export const switchButton = tv({
   base: [
     "starwind-transition-colors border-input bg-muted inline-flex h-(--height) w-(--width) items-center rounded-full border",
     "group peer ring-offset-background focus-visible:outline-2 focus-visible:outline-offset-2",
@@ -79,7 +79,7 @@ const switchButton = tv({
   defaultVariants: { variant: "default" },
 });
 
-const switchToggle = tv({
+export const switchToggle = tv({
   base: [
     "bg-foreground inline-block transform rounded-full transition-transform",
     "group-aria-checked:translate-x-(--translation) group-aria-[checked=false]:translate-x-[calc(var(--padding)-var(--border-offset))]",
@@ -88,7 +88,7 @@ const switchToggle = tv({
   defaultVariants: { size: "md" },
 });
 
-const switchLabel = tv({
+export const switchLabel = tv({
   base: "text-foreground ml-2 font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
   variants: { size: { sm: "text-sm", md: "text-base", lg: "text-lg" } },
   defaultVariants: { size: "md" },

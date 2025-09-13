@@ -1,5 +1,7 @@
-import Label from "./Label.astro";
+import Label, { label } from "./Label.astro";
 
-export { Label };
+const LabelVariants = { label };
+
+export { Label, LabelVariants };
 
 export default Label;
