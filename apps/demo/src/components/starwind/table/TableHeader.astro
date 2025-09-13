@@ -4,7 +4,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 
 type Props = HTMLAttributes<"thead"> & VariantProps<typeof tableHeader>;
 
-const tableHeader = tv({
+export const tableHeader = tv({
   base: "[&_tr]:border-b",
 });
 

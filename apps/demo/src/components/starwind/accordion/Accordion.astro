@@ -13,7 +13,7 @@ type Props = HTMLAttributes<"div"> & {
   defaultValue?: string;
 };
 
-const accordion = tv({ base: "starwind-accordion" });
+export const accordion = tv({ base: "starwind-accordion" });
 
 const { type = "single", defaultValue, class: className, ...rest } = Astro.props;
 ---

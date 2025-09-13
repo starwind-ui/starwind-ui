@@ -1,8 +1,10 @@
-import Alert from "./Alert.astro";
-import AlertDescription from "./AlertDescription.astro";
-import AlertTitle from "./AlertTitle.astro";
+import Alert, { alert } from "./Alert.astro";
+import AlertDescription, { alertDescription } from "./AlertDescription.astro";
+import AlertTitle, { alertTitle } from "./AlertTitle.astro";
 
-export { Alert, AlertDescription, AlertTitle };
+const AlertVariants = { alert, alertDescription, alertTitle };
+
+export { Alert, AlertDescription, AlertTitle, AlertVariants };
 
 export default {
   Root: Alert,

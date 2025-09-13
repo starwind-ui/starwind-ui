@@ -9,7 +9,7 @@ type Props = HTMLAttributes<"span"> & {
   placeholder?: string;
 };
 
-const selectValue = tv({ base: "pointer-events-none" });
+export const selectValue = tv({ base: "pointer-events-none" });
 
 const { placeholder = "select", class: className, ...rest } = Astro.props;
 ---

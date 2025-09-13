@@ -15,7 +15,7 @@ type Props = Omit<HTMLAttributes<"button">, "role" | "type"> & {
   required?: boolean;
 };
 
-const selectTrigger = tv({
+export const selectTrigger = tv({
   base: [
     "starwind-select-trigger",
     "border-input bg-background text-foreground ring-offset-background flex h-11 items-center justify-between rounded-md border px-3 py-2",

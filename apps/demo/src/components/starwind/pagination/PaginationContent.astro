@@ -6,7 +6,7 @@ type Props = HTMLAttributes<"ul"> & {
   children: any;
 };
 
-const paginationContent = tv({ base: "flex flex-row items-center gap-1" });
+export const paginationContent = tv({ base: "flex flex-row items-center gap-1" });
 
 const { class: className, ...rest } = Astro.props;
 ---

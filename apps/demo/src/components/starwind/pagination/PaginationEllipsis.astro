@@ -5,7 +5,7 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"span">;
 
-const paginationEllipsis = tv({ base: "flex h-9 w-9 items-center justify-center" });
+export const paginationEllipsis = tv({ base: "flex h-9 w-9 items-center justify-center" });
 
 const { class: className, ...rest } = Astro.props;
 ---

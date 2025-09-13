@@ -11,7 +11,7 @@ type Props = Omit<HTMLAttributes<"input">, "type"> &
     label?: string;
   };
 
-const checkbox = tv({
+export const checkbox = tv({
   slots: {
     base: "starwind-checkbox relative flex items-center space-x-2",
     input: [

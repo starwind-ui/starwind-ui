@@ -29,7 +29,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/starwind/breadcrumb";
-import { Button } from "@/components/starwind/button";
+import { Button, ButtonVariants } from "@/components/starwind/button";
 import {
   Card,
   CardContent,
@@ -110,6 +110,9 @@ import Layout from "@/layouts/Layout.astro";
   <div class="container mx-auto px-4 pb-20">
     <!-- file input -->
     <section class="mx-auto mt-6 max-w-lg">
+      <div class={ButtonVariants.button({ variant: "primary", size: "lg" })}>
+        Variant Usage Example
+      </div>
       <h2 class="mb-4 text-2xl font-bold">File Input</h2>
       <div class="flex flex-col gap-6">
         <Dropzone />
