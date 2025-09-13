@@ -15,7 +15,8 @@ program
   .command("init")
   .description("Initialize your project with Starwind")
   .option("-d, --defaults", "Use default values for all prompts")
-  .action((options) => init(false, { defaults: options.defaults }));
+  .option("-p, --pro", "Initialize with Starwind Pro setup")
+  .action((options) => init(false, { defaults: options.defaults, pro: options.pro }));
 
 program
   .command("add")

@@ -1,6 +1,9 @@
 # build output
 dist/
 
+# internal context
+.context/
+
 # generated types
 .astro/
 

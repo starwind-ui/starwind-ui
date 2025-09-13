@@ -14,9 +14,13 @@ import {
   installDependencies,
   requestPackageManager,
 } from "@/utils/package-manager.js";
+import { hasStarwindProRegistry, setupShadcnProConfig } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
 
-export async function init(withinAdd: boolean = false, options?: { defaults?: boolean }) {
+export async function init(
+  withinAdd: boolean = false,
+  options?: { defaults?: boolean; pro?: boolean },
+) {
   if (!withinAdd) {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
   }
@@ -246,6 +250,32 @@ export async function init(withinAdd: boolean = false, options?: { defaults?: bo
     });
 
     // ================================================================
+    //             Prepare Starwind Pro configuration (if enabled)
+    // ================================================================
+    if (options?.pro) {
+      const alreadyHasPro = await hasStarwindProRegistry();
+
+      if (!alreadyHasPro) {
+        if (!withinAdd) {
+          p.log.info(highlighter.info("Setting up Starwind Pro configuration..."));
+        }
+
+        configTasks.push({
+          title: "Setting up Starwind Pro registry",
+          task: async () => {
+            await setupShadcnProConfig(configChoices.cssFile, configChoices.twBaseColor);
+            await sleep(250);
+            return "Configured Starwind Pro registry in components.json";
+          },
+        });
+      } else {
+        if (!withinAdd) {
+          p.log.info(highlighter.info("Starwind Pro registry already configured"));
+        }
+      }
+    }
+
+    // ================================================================
     //                Prepare astro installation
     // ================================================================
     // Request package manager
@@ -349,14 +379,20 @@ export async function init(withinAdd: boolean = false, options?: { defaults?: bo
 
     await sleep(250);
 
-    p.note(
-      `Make sure your layout imports the ${highlighter.infoBright(configChoices.cssFile)} file`,
-      "Next steps",
-    );
+    let nextStepsMessage = `Make sure your layout imports the ${highlighter.infoBright(configChoices.cssFile)} file`;
+
+    if (options?.pro) {
+      nextStepsMessage += `\n\nStarwind Pro is now configured! You can install pro components using:\n${highlighter.info("npx starwind@latest add @starwind-pro/component-name")}\n\nMake sure to set your ${highlighter.infoBright("STARWIND_LICENSE_KEY")} environment variable.`;
+    }
+
+    p.note(nextStepsMessage, "Next steps");
 
     if (!withinAdd) {
       sleep(1000);
-      p.outro("Enjoy using Starwind UI 🚀");
+      const outroMessage = options?.pro
+        ? "Enjoy using Starwind UI with Pro components! 🚀✨"
+        : "Enjoy using Starwind UI 🚀";
+      p.outro(outroMessage);
     }
   } catch (error) {
     p.log.error(error instanceof Error ? error.message : "Failed to add components");
