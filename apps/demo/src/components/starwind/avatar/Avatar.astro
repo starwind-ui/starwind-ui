@@ -24,6 +24,6 @@ const avatar = tv({
 const { variant, size, class: className, ...rest } = Astro.props;
 ---
 
-<figure class={avatar({ variant, size, class: className })} {...rest}>
+<figure class={avatar({ variant, size, class: className })} data-slot="avatar" {...rest}>
   <slot />
 </figure>

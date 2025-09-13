@@ -25,4 +25,4 @@ const textarea = tv({
 const { size, class: className, ...rest } = Astro.props;
 ---
 
-<textarea class={textarea({ size, class: className })} {...rest}></textarea>
+<textarea class={textarea({ size, class: className })} data-slot="textarea" {...rest}></textarea>

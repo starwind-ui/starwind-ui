@@ -11,6 +11,12 @@ const tabsList = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={tabsList({ class: className })} data-tabs-list role="tablist" {...rest}>
+<div
+  class={tabsList({ class: className })}
+  data-slot="tabs-list"
+  data-tabs-list
+  role="tablist"
+  {...rest}
+>
   <slot />
 </div>
