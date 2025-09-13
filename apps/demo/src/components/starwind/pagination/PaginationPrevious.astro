@@ -16,6 +16,7 @@ const { class: className, size = "md", ...rest } = Astro.props;
   aria-label="Go to previous page"
   size={size}
   class={paginationPrevious({ class: className })}
+  data-slot="pagination-previous"
   {...rest}
 >
   <ChevronLeft class="size-4 transition-transform group-hover:-translate-x-1" />

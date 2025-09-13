@@ -9,6 +9,6 @@ const dialogFooter = tv({ base: "flex flex-col-reverse gap-2 sm:flex-row sm:just
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={dialogFooter({ class: className })} {...rest}>
+<div class={dialogFooter({ class: className })} data-slot="dialog-footer" {...rest}>
   <slot />
 </div>

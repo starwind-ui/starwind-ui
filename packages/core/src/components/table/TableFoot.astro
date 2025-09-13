@@ -11,6 +11,6 @@ const tableFoot = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<tfoot data-table-foot class={tableFoot({ class: className })} {...rest}>
+<tfoot data-slot="table-foot" class={tableFoot({ class: className })} {...rest}>
   <slot />
 </tfoot>

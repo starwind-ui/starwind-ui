@@ -9,6 +9,6 @@ const cardDescription = tv({ base: "text-muted-foreground text-base" });
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={cardDescription({ class: className })} {...rest}>
+<div class={cardDescription({ class: className })} data-slot="card-description" {...rest}>
   <slot />
 </div>

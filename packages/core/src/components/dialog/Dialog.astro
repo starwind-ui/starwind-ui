@@ -6,7 +6,7 @@ type Props = HTMLAttributes<"div">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class:list={["starwind-dialog", className]} {...rest}>
+<div class:list={["starwind-dialog", className]} data-slot="dialog" {...rest}>
   <slot />
 </div>
 

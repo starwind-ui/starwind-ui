@@ -11,8 +11,8 @@ const table = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div data-table-container class="relative w-full overflow-x-auto">
-  <table data-table class={table({ class: className })} {...rest} role="table">
+<div data-slot="table-container" class="relative w-full overflow-x-auto">
+  <table data-slot="table" class={table({ class: className })} {...rest} role="table">
     <slot />
   </table>
 </div>

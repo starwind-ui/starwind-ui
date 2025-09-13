@@ -9,6 +9,6 @@ const selectLabel = tv({ base: "py-1.5 pr-2 pl-8 font-semibold" });
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={selectLabel({ class: className })} {...rest}>
+<div class={selectLabel({ class: className })} data-slot="select-label" {...rest}>
   <slot />
 </div>

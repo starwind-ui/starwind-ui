@@ -70,11 +70,18 @@ const { base, input, icon, label: labelClass } = checkbox({ size, variant });
 ---
 
 <div class={base()}>
-  <input type="checkbox" id={id} class={input({ class: className })} {checked} {...rest} />
+  <input
+    type="checkbox"
+    id={id}
+    class={input({ class: className })}
+    data-slot="checkbox-input"
+    {checked}
+    {...rest}
+  />
   <Check class={icon()} />
   {
     label && (
-      <label for={id} class={labelClass()}>
+      <label for={id} class={labelClass()} data-slot="checkbox-label">
         {label}
       </label>
     )

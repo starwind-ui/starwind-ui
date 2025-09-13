@@ -38,6 +38,7 @@ const { class: className, required = false, ...rest } = Astro.props;
   aria-autocomplete="none"
   aria-required={required ? "true" : "false"}
   data-state="closed"
+  data-slot="select-trigger"
   {...rest}
 >
   <slot />

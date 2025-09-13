@@ -21,6 +21,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
   class:list={["starwind-select", "relative", className]}
   data-name={name}
   data-value={defaultValue}
+  data-slot="select"
   {...rest}
 >
   <slot />

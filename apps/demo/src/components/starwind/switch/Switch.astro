@@ -109,17 +109,19 @@ const switchLabel = tv({
       "--width": `calc((var(--spacing) * ${sizeMultiplier} * 2) + (var(--padding) * 3))`,
       "--border-offset": "1px",
     }}
+    data-slot="switch-button"
     {...rest}
   >
     <span
       class={switchToggle({ size })}
+      data-slot="switch-toggle"
       style={{
         "--translation": `calc((var(--spacing) * ${sizeMultiplier}) + (var(--padding) * 2) - var(--border-offset))`,
       }}></span>
   </button>
   {
     label && (
-      <label for={id} class={switchLabel({ size })}>
+      <label for={id} class={switchLabel({ size })} data-slot="switch-label">
         {label}
       </label>
     )

@@ -16,6 +16,7 @@ const { class: className, size = "md", ...rest } = Astro.props;
   aria-label="Go to next page"
   size={size}
   class={paginationNext({ class: className })}
+  data-slot="pagination-next"
   {...rest}
 >
   <slot />

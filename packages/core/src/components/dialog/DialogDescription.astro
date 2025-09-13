@@ -9,6 +9,6 @@ const dialogDescription = tv({ base: "text-muted-foreground" });
 const { class: className, ...rest } = Astro.props;
 ---
 
-<p class={dialogDescription({ class: className })} {...rest}>
+<p class={dialogDescription({ class: className })} data-slot="dialog-description" {...rest}>
   <slot />
 </p>

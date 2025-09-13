@@ -12,6 +12,6 @@ interface Props {
 const { class: className } = Astro.props;
 ---
 
-<div class={avatarFallback({ class: className })}>
+<div class={avatarFallback({ class: className })} data-slot="avatar-fallback">
   <slot />
 </div>

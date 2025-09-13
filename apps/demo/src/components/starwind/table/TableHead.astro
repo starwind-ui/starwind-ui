@@ -11,6 +11,6 @@ const tableHead = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<th data-table-head class={tableHead({ class: className })} {...rest} role="columnheader">
+<th data-slot="table-head" class={tableHead({ class: className })} {...rest} role="columnheader">
   <slot />
 </th>

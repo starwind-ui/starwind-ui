@@ -11,6 +11,6 @@ const breadcrumbList = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<ol class={breadcrumbList({ class: className })} {...rest}>
+<ol class={breadcrumbList({ class: className })} data-slot="breadcrumb-list" {...rest}>
   <slot />
 </ol>

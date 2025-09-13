@@ -21,6 +21,7 @@ const { class: className, ...rest } = Astro.props;
 <button
   type="button"
   class={accordionTrigger({ class: className })}
+  data-slot="accordion-trigger"
   aria-expanded="false"
   {...rest}
 >

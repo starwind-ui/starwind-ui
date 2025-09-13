@@ -17,6 +17,6 @@ const { size, class: className, ...rest } = Astro.props;
 ---
 
 {/* eslint-disable-next-line astro/jsx-a11y/label-has-associated-control */}
-<label class={label({ size, class: className })} {...rest}>
+<label class={label({ size, class: className })} data-slot="label" {...rest}>
   <slot />
 </label>
