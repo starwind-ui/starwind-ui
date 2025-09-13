@@ -23,6 +23,7 @@
     { "name": "table", "type": "component", "version": "1.0.0", "dependencies": [] },
     { "name": "tabs", "type": "component", "version": "1.2.0", "dependencies": [] },
     { "name": "textarea", "type": "component", "version": "1.1.1", "dependencies": [] },
-    { "name": "tooltip", "type": "component", "version": "1.1.2", "dependencies": [] }
+    { "name": "tooltip", "type": "component", "version": "1.1.2", "dependencies": [] },
+    { "name": "popover", "type": "component", "version": "1.0.0", "dependencies": [] }
   ]
 }

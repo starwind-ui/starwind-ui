@@ -74,6 +74,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/starwind/pagination";
+import Popover from "@/components/starwind/popover";
 import { Progress } from "@/components/starwind/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/starwind/radio-group";
 import {
@@ -821,6 +822,43 @@ import Layout from "@/layouts/Layout.astro";
           </div>
         </DialogContent>
       </Dialog>
+    </section>
+
+    <!-- Popover Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <Popover.Root>
+        <Popover.Trigger> Display a Popover </Popover.Trigger>
+        <Popover.Content side="top" sideOffset={16} align="start">
+          <form class="flex flex-col gap-4 p-4 min-w-56">
+            <h4>Dimensions</h4>
+            <p>Set the dimensions for the layer.</p>
+            <fieldset class="flex flex-col gap-1">
+              <span class="grid grid-cols-3 gap-3">
+                <Label for="field-w" class="text-sm">Width</Label>
+                <Input id="field-w" class="col-span-2" value="100%" />
+              </span>
+              <span class="grid grid-cols-3 gap-3">
+                <Label for="field-m-w" class="text-sm">Max. width</Label>
+                <Input id="field-m-w" class="col-span-2" value="300px" />
+              </span>
+              <span class="grid grid-cols-3 gap-3">
+                <Label for="field-h" class="text-sm">Height</Label>
+                <Input id="field-h" class="col-span-2" value="25px" />
+              </span>
+              <span class="grid grid-cols-3 gap-3">
+                <Label for="field-m-h" class="text-sm">Max. height</Label>
+                <Input id="field-m-h" class="col-span-2" value="none" />
+              </span>
+            </fieldset>
+          </form>
+        </Popover.Content>
+      </Popover.Root>
+      <Popover.Root>
+        <Popover.Trigger> Another Popover </Popover.Trigger>
+        <Popover.Content side="right" class="p-2">
+            Hello, Starwind!
+        </Popover.Content>
+      </Popover.Root>
     </section>
   </div>
 </Layout>

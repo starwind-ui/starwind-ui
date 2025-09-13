@@ -1,0 +1,38 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+export interface Props extends HTMLAttributes<"button"> {
+  /**
+   * When true, the component will render its child element with a simple wrapper instead of a button component
+   */
+  asChild?: boolean;
+}
+
+const { asChild = false, class: className, ...props } = Astro.props;
+// Get the first child element if asChild is true
+let hasChildren = false;
+if (Astro.slots.has("default")) {
+  hasChildren = true;
+}
+---
+
+{
+  asChild && hasChildren ? (
+    <slot />
+  ) : (
+    <button
+      type="button"
+      class:list={[
+        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline focus-visible:ring-offset-2",
+        "disabled:pointer-events-none disabled:opacity-50",
+        "bg-primary text-primary-foreground hover:bg-primary/90",
+        "h-10 px-4 py-2",
+        className,
+      ]}
+      {...props}
+    >
+      <slot />
+    </button>
+  )
+}
