@@ -1,0 +1,196 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * Time in milliseconds to wait before showing the popover
+   * @default 0
+   */
+  openDelay?: number;
+};
+
+const popover = tv({ base: "starwind-popover relative inline-block" });
+
+const { openDelay = 0, class: className } = Astro.props;
+---
+
+<div
+  class={popover({ class: className })}
+  data-state="closed"
+  data-open-delay={openDelay}
+>
+  <slot />
+</div>
+
+<script>
+  class PopoverHandler {
+    private popover: HTMLElement;
+    private trigger: HTMLElement | null;
+    private content: HTMLElement | null;
+    private openTimerRef: number | null = null;
+    private contentId: string;
+    private animationDuration = 150;
+
+    constructor(popover: HTMLElement, idx: number) {
+      this.contentId = `starwind-popover${idx}`;
+      this.popover = popover;
+      this.content = popover.querySelector(".starwind-popover-content");
+
+      // if popover.firstElementChild is this.content, then get the next element
+      this.trigger = popover.firstElementChild as HTMLElement;
+      if (this.trigger === this.content) {
+        this.trigger = this.trigger.nextElementSibling as HTMLElement;
+      }
+      if (!this.trigger || !this.content) return;
+
+      this.trigger.classList.add("starwind-popover-trigger");
+      this.trigger.setAttribute("aria-expanded", "false");
+      this.trigger.setAttribute("aria-haspopup", "true");
+
+      // animationDuration is set with inline styles through passed prop to PopoverContent
+      const animationDurationString = this.content.style.animationDuration;
+      if (animationDurationString.endsWith("ms")) {
+        this.animationDuration = parseFloat(animationDurationString);
+      } else if (animationDurationString.endsWith("s")) {
+        // using something like @playform/compress might optimize to use "s" instead of "ms"
+        this.animationDuration = parseFloat(animationDurationString) * 1000;
+      }
+      this.init();
+    }
+
+    private init() {
+      this.setupAccessibility();
+      this.setupEvents();
+    }
+
+    private setupAccessibility() {
+      if (!this.trigger || !this.content) return;
+      this.trigger.setAttribute("aria-describedby", this.contentId);
+      this.content.id = this.contentId;
+    }
+
+    private setupEvents() {
+      if (!this.trigger || !this.content) return;
+
+      // Trigger events
+      this.trigger.addEventListener("click", () => this.show());
+
+      // if data-avoid-collisions exists, add resize listener to reset any translations
+      if (this.content.hasAttribute("data-avoid-collisions")) {
+        window.addEventListener(
+          "resize",
+          () => {
+            if (!this.content) return;
+            this.content.style.transform = "";
+          },
+          { passive: true }
+        );
+      }
+
+      // Document events
+      document.addEventListener("keydown", (e) => {
+        if (
+          e.key === "Escape" &&
+          this.popover.getAttribute("data-state") === "open"
+        ) {
+          this.hide(true);
+        }
+      });
+
+      document.addEventListener("click", (e) => {
+        if (
+          !this.popover.contains(e.target as Node) &&
+          this.popover.getAttribute("data-state") === "open"
+        ) {
+          this.hide(true);
+        }
+      });
+    }
+
+    private show(immediate: boolean = false) {
+      if (!this.content || !this.trigger) return;
+      if (immediate) {
+        this.popover.setAttribute("data-state", "open");
+        this.content.setAttribute("data-state", "open");
+        this.content.style.display = "block";
+        this.checkBoundary(this.content);
+        this.clearOpenTimer();
+        return;
+      }
+
+      const delay = parseInt(
+        this.popover.getAttribute("data-open-delay") || "700"
+      );
+      this.openTimerRef = window.setTimeout(() => {
+        if (!this.content || !this.trigger) return;
+        this.popover.setAttribute("data-state", "open");
+        this.content.setAttribute("data-state", "open");
+        this.content.style.display = "block";
+        this.checkBoundary(this.content);
+        this.openTimerRef = null;
+      }, delay);
+    }
+
+    private hide(immediate: boolean = false) {
+      if (!this.content || !this.trigger) return;
+      this.clearOpenTimer();
+
+      if (immediate) {
+        this.popover.setAttribute("data-state", "closed");
+        setTimeout(() => {
+          if (!this.content) return;
+          this.content.style.display = "none";
+        }, this.animationDuration);
+        this.content.setAttribute("data-state", "closed");
+        return;
+      }
+    }
+
+    private checkBoundary(popoverElement: HTMLElement) {
+      if (!popoverElement) return;
+
+      // if data-avoid-collisions does not exist, return
+      if (!popoverElement.hasAttribute("data-avoid-collisions")) return;
+
+      const viewportWidth = window.innerWidth;
+      const popoverRect = popoverElement.getBoundingClientRect();
+      const padding = 16; // Add some padding from viewport edges
+
+      // Check if popover extends beyond right edge of viewport
+      if (popoverRect.right > viewportWidth - padding) {
+        const overflow = popoverRect.right - (viewportWidth - padding);
+        popoverElement.style.transform = `translateX(-${overflow + padding}px)`;
+      }
+
+      // Check if popover extends beyond left edge of viewport
+      if (popoverRect.left < padding) {
+        const overflow = padding - popoverRect.left;
+        popoverElement.style.transform = `translateX(${overflow + padding}px)`;
+      }
+    }
+
+    private clearOpenTimer() {
+      if (this.openTimerRef) {
+        window.clearTimeout(this.openTimerRef);
+        this.openTimerRef = null;
+      }
+    }
+  }
+
+  // Store instances in a WeakMap to avoid memory leaks
+  const popoverInstances = new WeakMap<HTMLElement, PopoverHandler>();
+
+  const setupPopovers = () => {
+    document
+      .querySelectorAll<HTMLElement>(".starwind-popover")
+      .forEach((popover, idx) => {
+        if (!popoverInstances.has(popover)) {
+          popoverInstances.set(popover, new PopoverHandler(popover, idx));
+        }
+      });
+  };
+
+  setupPopovers();
+  document.addEventListener("astro:after-swap", setupPopovers);
+</script>
