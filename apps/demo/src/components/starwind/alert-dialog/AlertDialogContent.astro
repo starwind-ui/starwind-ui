@@ -20,8 +20,8 @@ export const alertDialogBackdrop = tv({
 
 export const alertDialogContent = tv({
   base: [
-    "bg-background gap-4 rounded-lg border p-6 shadow-lg sm:max-w-lg",
-    "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]",
+    "bg-background space-y-4 rounded-lg border p-6 shadow-lg sm:max-w-lg",
+    "fixed top-[50%] left-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]",
     "data-[state=open]:animate-in fade-in zoom-in-95 will-change-transform",
     "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
   ],
