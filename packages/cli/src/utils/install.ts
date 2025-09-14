@@ -48,8 +48,18 @@ export async function installComponent(name: string): Promise<InstallResult> {
 
     // Install Starwind component dependencies
     if (starwindDependencies.length > 0) {
+      let resolutions: DependencyResolution[] = [];
       try {
-        const resolutions = await getStarwindDependencyResolutions([name]);
+        resolutions = await getStarwindDependencyResolutions([name]);
+      } catch (error) {
+        console.warn(
+          "Proceeding without Starwind dependency installs due to resolution error:",
+          error,
+        );
+        resolutions = [];
+      }
+
+      if (resolutions.length > 0) {
         const installResults = await installStarwindDependencies(resolutions);
         dependencyResults = installResults;
 
@@ -63,12 +73,6 @@ export async function installComponent(name: string): Promise<InstallResult> {
             dependencyResults,
           };
         }
-      } catch (error) {
-        return {
-          status: "failed",
-          name,
-          error: `Failed to resolve Starwind dependencies: ${error instanceof Error ? error.message : String(error)}`,
-        };
       }
     }
   }
