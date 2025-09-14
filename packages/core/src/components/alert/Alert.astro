@@ -23,6 +23,6 @@ export const alert = tv({
 const { variant, class: className, ...rest } = Astro.props;
 ---
 
-<div class={alert({ variant, class: className })} data-slot="alert" {...rest}>
+<div class={alert({ variant, class: className })} data-slot="alert" role="alert" {...rest}>
   <slot />
 </div>
