@@ -26,7 +26,7 @@ export interface DependencyResolution {
 export function parseStarwindDependency(dependency: string): StarwindDependency | null {
   const starwindPattern = /^@starwind-ui\/core\/([^@]+)@(.+)$/;
   const match = dependency.match(starwindPattern);
-  
+
   if (!match) {
     return null;
   }
@@ -53,10 +53,12 @@ export function isStarwindDependency(dependency: string): boolean {
  * @param componentName - Name of the component to check
  * @returns Version string if installed, undefined if not installed
  */
-export async function getInstalledComponentVersion(componentName: string): Promise<string | undefined> {
+export async function getInstalledComponentVersion(
+  componentName: string,
+): Promise<string | undefined> {
   try {
     const config = await getConfig();
-    const installedComponent = config.components.find(comp => comp.name === componentName);
+    const installedComponent = config.components.find((comp) => comp.name === componentName);
     return installedComponent?.version;
   } catch {
     return undefined;
@@ -68,9 +70,11 @@ export async function getInstalledComponentVersion(componentName: string): Promi
  * @param dependency - Dependency string to resolve
  * @returns Resolution information for the dependency
  */
-export async function resolveStarwindDependency(dependency: string): Promise<DependencyResolution | null> {
+export async function resolveStarwindDependency(
+  dependency: string,
+): Promise<DependencyResolution | null> {
   const parsed = parseStarwindDependency(dependency);
-  
+
   if (!parsed) {
     return {
       component: dependency,
@@ -83,7 +87,7 @@ export async function resolveStarwindDependency(dependency: string): Promise<Dep
 
   const currentVersion = await getInstalledComponentVersion(parsed.name);
   const registryComponent = await getComponent(parsed.name);
-  
+
   if (!registryComponent) {
     throw new Error(`Starwind component "${parsed.name}" not found in registry`);
   }
@@ -104,7 +108,7 @@ export async function resolveStarwindDependency(dependency: string): Promise<Dep
       } else {
         throw new Error(
           `No version of "${parsed.name}" satisfies requirement "${parsed.version}". ` +
-          `Latest available: ${registryComponent.version}, currently installed: ${currentVersion}`
+            `Latest available: ${registryComponent.version}, currently installed: ${currentVersion}`,
         );
       }
     }
@@ -128,17 +132,17 @@ export async function resolveStarwindDependency(dependency: string): Promise<Dep
  */
 export async function resolveAllStarwindDependencies(
   componentNames: string[],
-  resolved: Set<string> = new Set()
+  resolved: Set<string> = new Set(),
 ): Promise<DependencyResolution[]> {
   const resolutions: DependencyResolution[] = [];
-  
+
   for (const componentName of componentNames) {
     if (resolved.has(componentName)) {
       continue;
     }
-    
+
     resolved.add(componentName);
-    
+
     const component = await getComponent(componentName);
     if (!component) {
       throw new Error(`Component "${componentName}" not found in registry`);
@@ -147,17 +151,17 @@ export async function resolveAllStarwindDependencies(
     // Process dependencies of this component
     for (const dependency of component.dependencies) {
       const resolution = await resolveStarwindDependency(dependency);
-      
+
       if (resolution && resolution.isStarwindComponent) {
         // Add this dependency to resolutions if it needs action
         if (resolution.needsInstall || resolution.needsUpdate) {
           resolutions.push(resolution);
         }
-        
+
         // Recursively resolve dependencies of this dependency
         const nestedResolutions = await resolveAllStarwindDependencies(
           [resolution.component],
-          resolved
+          resolved,
         );
         resolutions.push(...nestedResolutions);
       }
@@ -166,10 +170,10 @@ export async function resolveAllStarwindDependencies(
 
   // Remove duplicates and prioritize installs over updates
   const uniqueResolutions = new Map<string, DependencyResolution>();
-  
+
   for (const resolution of resolutions) {
     const existing = uniqueResolutions.get(resolution.component);
-    
+
     if (!existing) {
       uniqueResolutions.set(resolution.component, resolution);
     } else {

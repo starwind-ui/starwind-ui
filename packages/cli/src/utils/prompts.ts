@@ -1,9 +1,10 @@
 import { confirm, multiselect } from "@clack/prompts";
 
-import { 
-  type DependencyResolution, 
-  resolveAllStarwindDependencies, 
-  separateDependencies} from "./dependency-resolver.js";
+import {
+  type DependencyResolution,
+  resolveAllStarwindDependencies,
+  separateDependencies,
+} from "./dependency-resolver.js";
 import { highlighter } from "./highlighter.js";
 import type { Component } from "./registry.js";
 import { getAllComponents } from "./registry.js";
@@ -36,16 +37,16 @@ export async function selectComponents(): Promise<string[]> {
 export async function confirmStarwindDependencies(componentNames: string[]): Promise<boolean> {
   try {
     const resolutions = await resolveAllStarwindDependencies(componentNames);
-    
+
     if (resolutions.length === 0) {
       return true; // No Starwind dependencies to handle
     }
 
-    const toInstall = resolutions.filter(r => r.needsInstall);
-    const toUpdate = resolutions.filter(r => r.needsUpdate);
+    const toInstall = resolutions.filter((r) => r.needsInstall);
+    const toUpdate = resolutions.filter((r) => r.needsUpdate);
 
     let message = "This component has Starwind component dependencies:\n\n";
-    
+
     if (toInstall.length > 0) {
       message += `${highlighter.info("Components to install:")}\n`;
       for (const dep of toInstall) {
@@ -90,7 +91,9 @@ export async function confirmStarwindDependencies(componentNames: string[]): Pro
  * @param componentNames - Array of component names to resolve dependencies for
  * @returns Promise<DependencyResolution[]> - Array of dependency resolutions
  */
-export async function getStarwindDependencyResolutions(componentNames: string[]): Promise<DependencyResolution[]> {
+export async function getStarwindDependencyResolutions(
+  componentNames: string[],
+): Promise<DependencyResolution[]> {
   return resolveAllStarwindDependencies(componentNames);
 }
 
@@ -98,7 +101,7 @@ export async function confirmInstall(component: Component): Promise<boolean> {
   if (component.dependencies.length === 0) return true;
 
   const { starwindDependencies, npmDependencies } = separateDependencies(component.dependencies);
-  
+
   // Handle npm dependencies
   if (npmDependencies.length > 0) {
     const confirmed = await confirm({

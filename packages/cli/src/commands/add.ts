@@ -219,7 +219,7 @@ export async function add(components?: string[], options?: { all?: boolean }) {
         case "installed":
           results.installed.push(result);
           installedComponents.push({ name: result.name, version: result.version! });
-          
+
           // Add dependency results to the main results
           if (result.dependencyResults) {
             for (const depResult of result.dependencyResults) {
@@ -242,6 +242,23 @@ export async function add(components?: string[], options?: { all?: boolean }) {
           break;
         case "failed":
           results.failed.push(result);
+
+          // Add dependency results to the main results even if main component failed
+          if (result.dependencyResults) {
+            for (const depResult of result.dependencyResults) {
+              switch (depResult.status) {
+                case "installed":
+                  results.installed.push(depResult);
+                  break;
+                case "skipped":
+                  results.skipped.push(depResult);
+                  break;
+                case "failed":
+                  results.failed.push(depResult);
+                  break;
+              }
+            }
+          }
           break;
       }
     }

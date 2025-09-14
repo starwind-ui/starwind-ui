@@ -49,7 +49,7 @@ describe("shadcn-config utilities", () => {
         $schema: "https://ui.shadcn.com/schema.json",
         registries: {
           "@starwind-pro": {
-            url: "http://localhost:4321/r/{name}",
+            url: "https://pro.starwind.dev/r/{name}",
             headers: {
               Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
             },
@@ -163,7 +163,7 @@ describe("shadcn-config utilities", () => {
         aliases: { components: "@/components" },
         registries: {
           "@starwind-pro": {
-            url: "http://localhost:4321/r/{name}",
+            url: "https://pro.starwind.dev/r/{name}",
             headers: {
               Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
             },
@@ -190,7 +190,7 @@ describe("shadcn-config utilities", () => {
           url: "https://example.com/registry",
         },
         "@starwind-pro": {
-          url: "http://localhost:4321/r/{name}",
+          url: "https://pro.starwind.dev/r/{name}",
           headers: {
             Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
           },
@@ -225,7 +225,7 @@ describe("shadcn-config utilities", () => {
       const mockConfig: ShadcnConfig = {
         registries: {
           "@starwind-pro": {
-            url: "http://localhost:4321/r/{name}",
+            url: "https://pro.starwind.dev/r/{name}",
           },
         },
       };
@@ -294,7 +294,7 @@ describe("shadcn-config utilities", () => {
           $schema: "https://ui.shadcn.com/schema.json",
           registries: {
             "@starwind-pro": {
-              url: "http://localhost:4321/r/{name}",
+              url: "https://pro.starwind.dev/r/{name}",
               headers: {
                 Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
               },
@@ -331,7 +331,7 @@ describe("shadcn-config utilities", () => {
           aliases: { components: "@/components" },
           registries: {
             "@starwind-pro": {
-              url: "http://localhost:4321/r/{name}",
+              url: "https://pro.starwind.dev/r/{name}",
               headers: {
                 Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
               },

@@ -1,6 +1,6 @@
 import { copyComponent, type InstallResult } from "./component.js";
 import { getConfig, updateConfig } from "./config.js";
-import { type DependencyResolution,separateDependencies } from "./dependency-resolver.js";
+import { type DependencyResolution, separateDependencies } from "./dependency-resolver.js";
 import { installDependencies, requestPackageManager } from "./package-manager.js";
 import { confirmInstall, getStarwindDependencyResolutions } from "./prompts.js";
 import { getComponent } from "./registry.js";
@@ -52,7 +52,7 @@ export async function installComponent(name: string): Promise<InstallResult> {
         const resolutions = await getStarwindDependencyResolutions([name]);
         const installResults = await installStarwindDependencies(resolutions);
         dependencyResults = installResults;
-        
+
         // Check if any dependency installation failed
         const failedDeps = installResults.filter((r: InstallResult) => r.status === "failed");
         if (failedDeps.length > 0) {
@@ -75,7 +75,7 @@ export async function installComponent(name: string): Promise<InstallResult> {
 
   // Copy the component files
   const result = await copyComponent(name);
-  
+
   // Include dependency results if any
   if (dependencyResults.length > 0) {
     return {
@@ -83,7 +83,7 @@ export async function installComponent(name: string): Promise<InstallResult> {
       dependencyResults,
     };
   }
-  
+
   return result;
 }
 
@@ -92,17 +92,19 @@ export async function installComponent(name: string): Promise<InstallResult> {
  * @param resolutions - Array of dependency resolutions
  * @returns Promise<InstallResult[]> - Array of installation results
  */
-export async function installStarwindDependencies(resolutions: DependencyResolution[]): Promise<InstallResult[]> {
+export async function installStarwindDependencies(
+  resolutions: DependencyResolution[],
+): Promise<InstallResult[]> {
   const results: InstallResult[] = [];
-  const componentsToInstall: Array<{name: string; version: string}> = [];
-  const componentsToUpdate: Array<{name: string; version: string}> = [];
+  const componentsToInstall: Array<{ name: string; version: string }> = [];
+  const componentsToUpdate: Array<{ name: string; version: string }> = [];
 
   for (const resolution of resolutions) {
     if (resolution.needsInstall) {
       // Install the component
       const result = await copyComponent(resolution.component);
       results.push(result);
-      
+
       if (result.status === "installed" && result.version) {
         componentsToInstall.push({ name: result.name, version: result.version });
       }
@@ -110,7 +112,7 @@ export async function installStarwindDependencies(resolutions: DependencyResolut
       // Update the component
       const result = await copyComponent(resolution.component, true); // overwrite = true
       results.push(result);
-      
+
       if (result.status === "installed" && result.version) {
         componentsToUpdate.push({ name: result.name, version: result.version });
       }
@@ -142,19 +144,21 @@ export async function installStarwindDependencies(resolutions: DependencyResolut
  * Updates existing components in the config by replacing their versions
  * @param componentsToUpdate - Array of components with their new versions
  */
-async function updateExistingComponents(componentsToUpdate: Array<{name: string; version: string}>): Promise<void> {
+async function updateExistingComponents(
+  componentsToUpdate: Array<{ name: string; version: string }>,
+): Promise<void> {
   const config = await getConfig();
   const updatedComponents = [...config.components];
 
   // Update existing components or add new ones
   for (const componentUpdate of componentsToUpdate) {
-    const existingIndex = updatedComponents.findIndex(comp => comp.name === componentUpdate.name);
-    
+    const existingIndex = updatedComponents.findIndex((comp) => comp.name === componentUpdate.name);
+
     if (existingIndex >= 0) {
       // Update existing component version
       updatedComponents[existingIndex] = {
         name: componentUpdate.name,
-        version: componentUpdate.version
+        version: componentUpdate.version,
       };
     } else {
       // Add new component if not found (shouldn't happen in update case, but safety net)

@@ -15,7 +15,7 @@ describe("shadcn-config core functionality", () => {
         $schema: "https://ui.shadcn.com/schema.json",
         registries: {
           "@starwind-pro": {
-            url: "http://localhost:4321/r/{name}",
+            url: "https://pro.starwind.dev/r/{name}",
             headers: {
               Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
             },
@@ -53,7 +53,7 @@ describe("shadcn-config core functionality", () => {
 
       expect(result.registries).toEqual({
         "@starwind-pro": {
-          url: "http://localhost:4321/r/{name}",
+          url: "https://pro.starwind.dev/r/{name}",
           headers: {
             Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
           },
@@ -78,7 +78,7 @@ describe("shadcn-config core functionality", () => {
           url: "https://example.com/registry",
         },
         "@starwind-pro": {
-          url: "http://localhost:4321/r/{name}",
+          url: "https://pro.starwind.dev/r/{name}",
           headers: {
             Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
           },
