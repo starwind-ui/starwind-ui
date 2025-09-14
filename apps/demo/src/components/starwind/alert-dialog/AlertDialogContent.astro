@@ -1,5 +1,4 @@
 ---
-import X from "@tabler/icons/outline/x.svg";
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
@@ -43,6 +42,7 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
   class={alertDialogContent({ class: className })}
   data-state="closed"
   data-slot="alert-dialog-content"
+  role="alertdialog"
   {...rest}
   style={{ animationDuration: `${animationDuration}ms` }}
 >
