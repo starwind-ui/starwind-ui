@@ -3,7 +3,7 @@ import { type EmblaOptionsType } from "embla-carousel";
 import { tv } from "tailwind-variants";
 
 const carousel = tv({
-  base: "starwind-carousel relative",
+  base: "starwind-carousel group/carousel relative",
 });
 
 export interface Props {
@@ -14,7 +14,7 @@ export interface Props {
 }
 
 const {
-  class: className = "",
+  class: className,
   orientation = "horizontal",
   opts = {},
   autoInit = true,
@@ -27,7 +27,7 @@ const {
   role="region"
   aria-roledescription="carousel"
   data-slot="carousel"
-  data-orientation={orientation}
+  data-axis={orientation === "horizontal" ? "x" : "y"}
   data-opts={JSON.stringify(opts)}
   data-auto-init={autoInit}
   {...rest}
@@ -48,7 +48,7 @@ const {
     });
   };
 
-  setupCarousels();
+  document.addEventListener("DOMContentLoaded", setupCarousels);
 
   // Re-initialize after Astro page transitions
   document.addEventListener("astro:after-swap", setupCarousels);

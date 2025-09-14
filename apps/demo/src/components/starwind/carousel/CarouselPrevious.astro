@@ -1,36 +1,32 @@
 ---
 import ArrowLeft from "@tabler/icons/outline/arrow-left.svg";
+import type { ComponentProps } from "astro/types";
 import { tv } from "tailwind-variants";
 
 import { Button } from "@/components/starwind/button";
 
-const carouselPrevious = tv({
+export const carouselPrevious = tv({
   base: [
     "starwind-carousel-previous absolute size-8 rounded-full",
     // Horizontal positioning
-    "data-[orientation=x]:top-1/2 data-[orientation=x]:-left-12 data-[orientation=x]:-translate-y-1/2",
+    "group-data-[axis=x]/carousel:top-1/2 group-data-[axis=x]/carousel:-left-12 group-data-[axis=x]/carousel:-translate-y-1/2",
     // Vertical positioning
-    "data-[orientation=y]:-top-12 data-[orientation=y]:left-1/2 data-[orientation=y]:-translate-x-1/2 data-[orientation=y]:rotate-90",
+    "group-data-[axis=y]/carousel:-top-12 group-data-[axis=y]/carousel:left-1/2 group-data-[axis=y]/carousel:-translate-x-1/2 group-data-[axis=y]/carousel:rotate-90",
   ],
 });
 
-export interface Props {
-  class?: string;
-  variant?: "outline" | "ghost" | "default";
-  size?: "icon" | "sm" | "lg" | "md";
-}
+type Props = ComponentProps<typeof Button>;
 
-const { class: className = "", variant = "outline", size = "icon", ...props } = Astro.props;
+const { class: className = "", variant = "outline", size = "icon", ...rest } = Astro.props;
 ---
 
 <Button
   data-slot="carousel-previous"
-  data-orientation="x"
   variant={variant}
   size={size}
   class={carouselPrevious({ class: className })}
   aria-label="Previous slide"
-  {...props}
+  {...rest}
 >
   <ArrowLeft />
   <span class="sr-only">Previous slide</span>

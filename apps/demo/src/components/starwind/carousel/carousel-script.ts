@@ -37,7 +37,7 @@ export function initCarousel(
 
   // Get configuration from data attributes
   const orientation = carouselElement.dataset.orientation || "horizontal";
-  
+
   // Safely parse data options
   let dataOpts = {};
   try {
@@ -51,7 +51,7 @@ export function initCarousel(
   }
 
   // Ensure dataOpts is a valid object
-  if (!dataOpts || typeof dataOpts !== 'object') {
+  if (!dataOpts || typeof dataOpts !== "object") {
     dataOpts = {};
   }
 
@@ -64,9 +64,9 @@ export function initCarousel(
 
   // Handle plugins - EmblaCarousel expects undefined when no plugins, not empty array
   const plugins = options.plugins && options.plugins.length > 0 ? options.plugins : undefined;
-  
-  // Initialize Embla
-  const emblaApi = EmblaCarousel(viewportElement, emblaOptions, plugins);
+
+  console.log("Plugins:", plugins);
+  console.log("Options:", emblaOptions);
 
   // Find navigation buttons
   const prevButton = carouselElement.querySelector(
@@ -75,6 +75,14 @@ export function initCarousel(
   const nextButton = carouselElement.querySelector(
     '[data-slot="carousel-next"]',
   ) as HTMLButtonElement;
+
+  // Initialize Embla
+  let emblaApi: EmblaCarouselType;
+  if (plugins) {
+    emblaApi = EmblaCarousel(viewportElement, emblaOptions, plugins);
+  } else {
+    emblaApi = EmblaCarousel(viewportElement, emblaOptions);
+  }
 
   // Update button states
   const updateButtons = () => {
@@ -89,30 +97,6 @@ export function initCarousel(
     if (nextButton) {
       nextButton.disabled = !canScrollNext;
       nextButton.setAttribute("aria-disabled", (!canScrollNext).toString());
-    }
-  };
-
-  // Update orientation classes
-  const updateOrientationClasses = () => {
-    const orientationValue = orientation === "horizontal" ? "x" : "y";
-
-    // Set data-orientation attribute on all relevant elements
-    const container = carouselElement.querySelector('[data-slot="carousel-container"]');
-    if (container) {
-      container.setAttribute("data-orientation", orientationValue);
-    }
-
-    const items = carouselElement.querySelectorAll('[data-slot="carousel-item"]');
-    items.forEach((item) => {
-      item.setAttribute("data-orientation", orientationValue);
-    });
-
-    if (prevButton) {
-      prevButton.setAttribute("data-orientation", orientationValue);
-    }
-
-    if (nextButton) {
-      nextButton.setAttribute("data-orientation", orientationValue);
     }
   };
 
@@ -142,16 +126,17 @@ export function initCarousel(
   };
 
   // Initialize everything
+  updateButtons();
   setupEventListeners();
   setupUserCallbacks();
-  updateButtons();
-  updateOrientationClasses();
 
   // Setup internal event listeners
   emblaApi.on("select", updateButtons);
+  emblaApi.on("init", () => {
+    updateButtons();
+  });
   emblaApi.on("reInit", () => {
     updateButtons();
-    updateOrientationClasses();
   });
 
   // Return manager interface
