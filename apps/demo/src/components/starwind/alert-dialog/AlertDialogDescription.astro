@@ -2,13 +2,17 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
-export const alertDescription = tv({ base: "leading-relaxed" });
-
 type Props = HTMLAttributes<"p">;
+
+export const alertDialogDescription = tv({ base: "text-muted-foreground" });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<p class={alertDescription({ class: className })} data-slot="alert-description" {...rest}>
+<p
+  class={alertDialogDescription({ class: className })}
+  data-slot="alert-dialog-description"
+  {...rest}
+>
   <slot />
 </p>

@@ -89,7 +89,7 @@ export const tailwindConfig = `@import "tailwindcss";
 		--border: var(--color-neutral-200);
 		--input: var(--color-neutral-200);
 		--outline: var(--color-blue-600);
-		--radius: 0.5rem;
+		--radius: 0.625rem;
 	}
 
 	.dark {
@@ -118,7 +118,6 @@ export const tailwindConfig = `@import "tailwindcss";
 		--border: var(--color-neutral-800);
 		--input: var(--color-neutral-800);
 		--outline: var(--color-blue-600);
-		--radius: 0.5rem;
 	}
 
 	* {

@@ -6,15 +6,16 @@ type Props = HTMLAttributes<"div">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class:list={["starwind-dialog", className]} data-slot="dialog" {...rest}>
+<div class:list={["starwind-alert-dialog", className]} data-slot="alert-dialog" {...rest}>
   <slot />
 </div>
 
 <script>
-  class DialogHandler {
+  class AlertDialogHandler {
     private triggers: HTMLButtonElement[] = [];
     private dialog: HTMLDialogElement | null = null;
     private closeButtons: HTMLButtonElement[] = [];
+    private actionButtons: HTMLButtonElement[] = [];
     private backdrop: HTMLElement | null = null;
     private dialogId: string;
     /**
@@ -25,16 +26,16 @@ const { class: className, ...rest } = Astro.props;
 
     constructor(dialogWrapper: HTMLElement, dialogNumber: number) {
       this.dialog = dialogWrapper.querySelector("dialog");
-      this.backdrop = dialogWrapper.querySelector(".starwind-dialog-backdrop");
+      this.backdrop = dialogWrapper.querySelector(".starwind-alert-dialog-backdrop");
       if (!this.dialog || !this.backdrop) {
-        throw new Error("Dialog: dialog or backdrop not found");
+        throw new Error("AlertDialog: dialog or backdrop not found");
       }
 
       // if no ID was provided for the wrapper, generate one
       if (dialogWrapper.id) {
         this.dialogId = dialogWrapper.id;
       } else {
-        this.dialogId = `starwind-dialog${dialogNumber}`;
+        this.dialogId = `starwind-alert-dialog${dialogNumber}`;
         dialogWrapper.id = this.dialogId;
       }
 
@@ -50,7 +51,7 @@ const { class: className, ...rest } = Astro.props;
       }
 
       // Find internal triggers and handle them
-      const internalTriggers = dialogWrapper.querySelectorAll(".starwind-dialog-trigger");
+      const internalTriggers = dialogWrapper.querySelectorAll(".starwind-alert-dialog-trigger");
       internalTriggers.forEach((triggerElement) => {
         const tempTrigger = triggerElement as HTMLElement;
         let trigger: HTMLButtonElement;
@@ -71,13 +72,13 @@ const { class: className, ...rest } = Astro.props;
 
       // if closeButtons are set with asChild, swap the wrapper with its first child
       const tempCloseButtons = dialogWrapper.querySelectorAll(
-        ".starwind-dialog-close",
+        ".starwind-alert-dialog-close",
       ) as NodeListOf<HTMLElement>;
       tempCloseButtons.forEach((button: HTMLElement) => {
         if (button.hasAttribute("data-as-child")) {
           const childElement = button.firstElementChild;
           if (childElement) {
-            childElement.classList.add("starwind-dialog-close");
+            childElement.classList.add("starwind-alert-dialog-close");
             button.parentNode?.replaceChild(childElement, button);
           }
         }
@@ -86,7 +87,27 @@ const { class: className, ...rest } = Astro.props;
 
       // Convert NodeList to Array for consistency with triggers
       this.closeButtons = Array.from(
-        dialogWrapper.querySelectorAll(".starwind-dialog-close"),
+        dialogWrapper.querySelectorAll(".starwind-alert-dialog-close"),
+      ) as HTMLButtonElement[];
+
+      // if actionButtons are set with asChild, swap the wrapper with its first child
+      const tempActionButtons = dialogWrapper.querySelectorAll(
+        ".starwind-alert-dialog-action",
+      ) as NodeListOf<HTMLElement>;
+      tempActionButtons.forEach((button: HTMLElement) => {
+        if (button.hasAttribute("data-as-child")) {
+          const childElement = button.firstElementChild;
+          if (childElement) {
+            childElement.classList.add("starwind-alert-dialog-action");
+            button.parentNode?.replaceChild(childElement, button);
+          }
+        }
+        return button;
+      });
+
+      // Convert NodeList to Array for consistency with triggers
+      this.actionButtons = Array.from(
+        dialogWrapper.querySelectorAll(".starwind-alert-dialog-action"),
       ) as HTMLButtonElement[];
 
       // if essential elements are not there, exit
@@ -101,7 +122,7 @@ const { class: className, ...rest } = Astro.props;
       const firstHeading = this.dialog?.querySelector("h1, h2, h3, h4, h5, h6");
       if (firstHeading) {
         // create a unique ID for the heading
-        firstHeading.id = `starwind-dialog${dialogNumber}-heading`;
+        firstHeading.id = `starwind-alert-dialog${dialogNumber}-heading`;
         // set the aria-labelledby attribute to the first heading element
         this.dialog?.setAttribute("aria-labelledby", firstHeading.id);
       }
@@ -112,12 +133,12 @@ const { class: className, ...rest } = Astro.props;
      */
     private findExternalTriggers(): void {
       const externalTriggers = document.querySelectorAll(
-        `.starwind-dialog-trigger[data-dialog-for="${this.dialogId}"]`,
+        `.starwind-alert-dialog-trigger[data-dialog-for="${this.dialogId}"]`,
       );
 
       externalTriggers.forEach((triggerElement) => {
         // Skip if this is an internal trigger we already processed
-        const dialogWrapper = triggerElement.closest(".starwind-dialog");
+        const dialogWrapper = triggerElement.closest(".starwind-alert-dialog");
         if (dialogWrapper && dialogWrapper.id === this.dialogId) {
           return;
         }
@@ -145,7 +166,7 @@ const { class: className, ...rest } = Astro.props;
       });
 
       // Add click handlers to all close buttons
-      this.closeButtons?.forEach((button) => {
+      this.closeButtons.forEach((button) => {
         button.addEventListener("click", () => {
           // Only close if this is the topmost dialog
           const openDialogs = document.querySelectorAll("dialog[open]");
@@ -155,23 +176,15 @@ const { class: className, ...rest } = Astro.props;
         });
       });
 
-      // Close on click outside
-      this.dialog.addEventListener("click", (e) => {
-        if (!this.dialog) return;
-        const dialogDimensions = this.dialog.getBoundingClientRect();
-        const clickedInDialog =
-          e.clientX >= dialogDimensions.left &&
-          e.clientX <= dialogDimensions.right &&
-          e.clientY >= dialogDimensions.top &&
-          e.clientY <= dialogDimensions.bottom;
-
-        if (!clickedInDialog) {
+      // Add click handlers to all action buttons
+      this.actionButtons.forEach((button) => {
+        button.addEventListener("click", () => {
           // Only close if this is the topmost dialog
           const openDialogs = document.querySelectorAll("dialog[open]");
           if (openDialogs.length > 0 && openDialogs[openDialogs.length - 1] === this.dialog) {
             this.close();
           }
-        }
+        });
       });
 
       // Handle escape key
@@ -237,20 +250,20 @@ const { class: className, ...rest } = Astro.props;
   }
 
   // Store instances in a WeakMap to avoid memory leaks
-  const dialogInstances = new WeakMap<HTMLElement, DialogHandler>();
+  const alertDialogInstances = new WeakMap<HTMLElement, AlertDialogHandler>();
 
   // Initialize all dialogs
-  const setupDialogs = () => {
-    document.querySelectorAll(".starwind-dialog").forEach((dialogWrapper, idx) => {
+  const setupAlertDialogs = () => {
+    document.querySelectorAll(".starwind-alert-dialog").forEach((dialogWrapper, idx) => {
       const wrapper = dialogWrapper as HTMLElement;
-      if (!dialogInstances.has(wrapper)) {
-        dialogInstances.set(wrapper, new DialogHandler(wrapper, idx));
+      if (!alertDialogInstances.has(wrapper)) {
+        alertDialogInstances.set(wrapper, new AlertDialogHandler(wrapper, idx));
       }
     });
   };
 
-  setupDialogs();
-  document.addEventListener("astro:after-swap", setupDialogs);
+  setupAlertDialogs();
+  document.addEventListener("astro:after-swap", setupAlertDialogs);
 </script>
 
 <style>

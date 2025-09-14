@@ -18,6 +18,17 @@ import {
   AccordionTrigger,
 } from "@/components/starwind/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/starwind/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind/avatar";
 import { Badge } from "@/components/starwind/badge";
 import {
@@ -302,6 +313,28 @@ import Layout from "@/layouts/Layout.astro";
           </DropdownContent>
         </Dropdown>
       </div>
+    </section>
+
+    <!-- Alert Dialog -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline">Show Alert Dialog</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your account and remove
+              your data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
 
     <!-- dialog -->

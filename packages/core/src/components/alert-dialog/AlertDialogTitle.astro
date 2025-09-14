@@ -1,0 +1,20 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = Omit<HTMLAttributes<"h2">, "id"> & {
+  /**
+   * The content to be rendered inside the dialog title
+   */
+
+  children: any;
+};
+
+export const alertDialogTitle = tv({ base: "text-xl font-semibold" });
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<h2 class={alertDialogTitle({ class: className })} data-slot="alert-dialog-title" {...rest}>
+  <slot />
+</h2>

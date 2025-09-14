@@ -1,0 +1,50 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"dialog"> & {
+  /**
+   * Open and close animation duration in milliseconds
+   */
+  animationDuration?: number;
+};
+
+export const alertDialogBackdrop = tv({
+  base: [
+    "starwind-alert-dialog-backdrop fixed inset-0 z-50 hidden bg-black/50",
+    "data-[state=open]:animate-in fade-in",
+    "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out",
+  ],
+});
+
+export const alertDialogContent = tv({
+  base: [
+    "bg-background space-y-4 rounded-lg border p-6 shadow-lg sm:max-w-lg",
+    "fixed top-[50%] left-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]",
+    "data-[state=open]:animate-in fade-in zoom-in-95 will-change-transform",
+    "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
+  ],
+});
+
+const { class: className, animationDuration = 200, ...rest } = Astro.props;
+---
+
+<!-- dialog overlay -->
+<div
+  class={alertDialogBackdrop()}
+  data-state="closed"
+  data-slot="alert-dialog-backdrop"
+  style={{ animationDuration: `${animationDuration}ms` }}
+>
+</div>
+
+<dialog
+  class={alertDialogContent({ class: className })}
+  data-state="closed"
+  data-slot="alert-dialog-content"
+  role="alertdialog"
+  {...rest}
+  style={{ animationDuration: `${animationDuration}ms` }}
+>
+  <slot />
+</dialog>
