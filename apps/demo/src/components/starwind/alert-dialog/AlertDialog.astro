@@ -234,7 +234,6 @@ const { class: className, ...rest } = Astro.props;
 
     private close(): void {
       if (!this.dialog || !this.backdrop) return;
-      document.body.classList.remove("overflow-hidden");
       this.dialog.dataset.state = "closed";
       this.backdrop.dataset.state = "closed";
 
@@ -242,6 +241,10 @@ const { class: className, ...rest } = Astro.props;
       setTimeout(() => {
         this.backdrop?.classList.add("hidden");
         this.dialog?.close();
+        const stillOpen = document.querySelectorAll("dialog[open]").length;
+        if (stillOpen === 0) {
+          document.body.classList.remove("overflow-hidden");
+        }
       }, this.animationDuration);
     }
   }
