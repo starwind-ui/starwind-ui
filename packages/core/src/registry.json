@@ -3,6 +3,12 @@
   "components": [
     { "name": "accordion", "type": "component", "version": "1.2.0", "dependencies": [] },
     { "name": "alert", "type": "component", "version": "1.2.0", "dependencies": [] },
+    {
+      "name": "alert-dialog",
+      "type": "component",
+      "version": "1.0.0",
+      "dependencies": ["@starwind-ui/core/button@^2.1.0"]
+    },
     { "name": "avatar", "type": "component", "version": "1.2.0", "dependencies": [] },
     { "name": "badge", "type": "component", "version": "1.2.0", "dependencies": [] },
     { "name": "breadcrumb", "type": "component", "version": "1.1.0", "dependencies": [] },
