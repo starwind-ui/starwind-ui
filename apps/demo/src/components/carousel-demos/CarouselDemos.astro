@@ -11,11 +11,11 @@ import {
 
 <section class="mx-auto mt-6 max-w-lg">
   <h2 class="mb-4 text-2xl font-bold">Carousel</h2>
-  
+
   <!-- Basic Horizontal Carousel -->
   <div class="mb-8">
     <h3 class="mb-2 text-lg font-medium">Basic Horizontal Carousel</h3>
-    <Carousel class="w-full max-w-xs mx-auto">
+    <Carousel class="mx-auto w-full max-w-xs">
       <CarouselContent>
         <CarouselItem>
           <div class="p-1">
@@ -71,7 +71,7 @@ import {
   <!-- Vertical Carousel -->
   <div class="mb-8">
     <h3 class="mb-2 text-lg font-medium">Vertical Carousel</h3>
-    <Carousel orientation="vertical" class="w-full max-w-xs mx-auto">
+    <Carousel orientation="vertical" class="mx-auto w-full max-w-xs">
       <CarouselContent class="h-60">
         <CarouselItem class="pt-1 md:basis-1/2">
           <div class="flex items-center justify-center p-6">
@@ -109,10 +109,7 @@ import {
   <!-- Multiple Items Carousel -->
   <div class="mb-8">
     <h3 class="mb-2 text-lg font-medium">Multiple Items (Basis 1/3)</h3>
-    <Carousel 
-      opts={{ align: "start" }}
-      class="w-full max-w-sm mx-auto"
-    >
+    <Carousel opts={{ align: "start" }} class="mx-auto w-full max-w-sm">
       <CarouselContent>
         <CarouselItem class="md:basis-1/2 lg:basis-1/3">
           <div class="p-1">
@@ -168,16 +165,16 @@ import {
   <!-- Image Carousel -->
   <div class="mb-8">
     <h3 class="mb-2 text-lg font-medium">Image Carousel</h3>
-    <Carousel class="w-full max-w-xs mx-auto">
+    <Carousel class="mx-auto w-full max-w-xs">
       <CarouselContent>
         <CarouselItem>
           <div class="p-1">
             <Card>
               <CardContent class="flex aspect-square items-center justify-center p-0">
-                <img 
-                  src="https://picsum.photos/300/300?random=1" 
+                <img
+                  src="https://picsum.photos/300/300?random=1"
                   alt="Landscape scene 1"
-                  class="w-full h-full object-cover rounded-lg"
+                  class="h-full w-full rounded-lg object-cover"
                 />
               </CardContent>
             </Card>
@@ -187,10 +184,10 @@ import {
           <div class="p-1">
             <Card>
               <CardContent class="flex aspect-square items-center justify-center p-0">
-                <img 
-                  src="https://picsum.photos/300/300?random=2" 
+                <img
+                  src="https://picsum.photos/300/300?random=2"
                   alt="Landscape scene 2"
-                  class="w-full h-full object-cover rounded-lg"
+                  class="h-full w-full rounded-lg object-cover"
                 />
               </CardContent>
             </Card>
@@ -200,10 +197,10 @@ import {
           <div class="p-1">
             <Card>
               <CardContent class="flex aspect-square items-center justify-center p-0">
-                <img 
-                  src="https://picsum.photos/300/300?random=3" 
+                <img
+                  src="https://picsum.photos/300/300?random=3"
                   alt="Nature scene 3"
-                  class="w-full h-full object-cover rounded-lg"
+                  class="h-full w-full rounded-lg object-cover"
                 />
               </CardContent>
             </Card>
@@ -218,10 +215,7 @@ import {
   <!-- Looping Carousel -->
   <div class="mb-8">
     <h3 class="mb-2 text-lg font-medium">Looping Carousel</h3>
-    <Carousel 
-      opts={{ align: "start", loop: true }}
-      class="w-full max-w-xs mx-auto"
-    >
+    <Carousel opts={{ align: "start", loop: true }} class="mx-auto w-full max-w-xs">
       <CarouselContent>
         <CarouselItem>
           <div class="p-1">
