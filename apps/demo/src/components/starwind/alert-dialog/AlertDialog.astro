@@ -13,10 +13,10 @@ const { class: className, ...rest } = Astro.props;
 <script>
   class AlertDialogHandler {
     private triggers: HTMLButtonElement[] = [];
-    private dialog: HTMLDialogElement;
+    private dialog: HTMLDialogElement | null = null;
     private closeButtons: HTMLButtonElement[] = [];
     private actionButtons: HTMLButtonElement[] = [];
-    private backdrop: HTMLElement;
+    private backdrop: HTMLElement | null = null;
     private dialogId: string;
     /**
      * The duration of the animation in milliseconds. This is used to calculate the
@@ -25,8 +25,11 @@ const { class: className, ...rest } = Astro.props;
     private animationDuration: number;
 
     constructor(dialogWrapper: HTMLElement, dialogNumber: number) {
-      this.dialog = dialogWrapper.querySelector("dialog")!;
-      this.backdrop = dialogWrapper.querySelector(".starwind-alert-dialog-backdrop")!;
+      this.dialog = dialogWrapper.querySelector("dialog");
+      this.backdrop = dialogWrapper.querySelector(".starwind-alert-dialog-backdrop");
+      if (!this.dialog || !this.backdrop) {
+        throw new Error("AlertDialog: dialog or backdrop not found");
+      }
 
       // if no ID was provided for the wrapper, generate one
       if (dialogWrapper.id) {
@@ -116,12 +119,12 @@ const { class: className, ...rest } = Astro.props;
 
     private setupAccessibility(dialogNumber: number): void {
       // get the first heading element in the dialog
-      const firstHeading = this.dialog.querySelector("h1, h2, h3, h4, h5, h6");
+      const firstHeading = this.dialog?.querySelector("h1, h2, h3, h4, h5, h6");
       if (firstHeading) {
         // create a unique ID for the heading
         firstHeading.id = `starwind-alert-dialog${dialogNumber}-heading`;
         // set the aria-labelledby attribute to the first heading element
-        this.dialog.setAttribute("aria-labelledby", firstHeading.id);
+        this.dialog?.setAttribute("aria-labelledby", firstHeading.id);
       }
     }
 
@@ -154,6 +157,7 @@ const { class: className, ...rest } = Astro.props;
     }
 
     private setupEvents(): void {
+      if (!this.dialog) return;
       // Add click listeners to all triggers
       this.triggers.forEach((trigger) => {
         trigger.addEventListener("click", () => {
@@ -162,7 +166,7 @@ const { class: className, ...rest } = Astro.props;
       });
 
       // Add click handlers to all close buttons
-      this.closeButtons?.forEach((button) => {
+      this.closeButtons.forEach((button) => {
         button.addEventListener("click", () => {
           // Only close if this is the topmost dialog
           const openDialogs = document.querySelectorAll("dialog[open]");
@@ -173,7 +177,7 @@ const { class: className, ...rest } = Astro.props;
       });
 
       // Add click handlers to all action buttons
-      this.actionButtons?.forEach((button) => {
+      this.actionButtons.forEach((button) => {
         button.addEventListener("click", () => {
           // Only close if this is the topmost dialog
           const openDialogs = document.querySelectorAll("dialog[open]");
@@ -220,6 +224,7 @@ const { class: className, ...rest } = Astro.props;
     }
 
     private open(): void {
+      if (!this.dialog || !this.backdrop) return;
       this.dialog.showModal();
       document.body.classList.add("overflow-hidden");
       this.backdrop.classList.remove("hidden");
@@ -228,14 +233,15 @@ const { class: className, ...rest } = Astro.props;
     }
 
     private close(): void {
+      if (!this.dialog || !this.backdrop) return;
       document.body.classList.remove("overflow-hidden");
       this.dialog.dataset.state = "closed";
       this.backdrop.dataset.state = "closed";
 
       // Wait for animation to finish before hiding backdrop
       setTimeout(() => {
-        this.backdrop.classList.add("hidden");
-        this.dialog.close();
+        this.backdrop?.classList.add("hidden");
+        this.dialog?.close();
       }, this.animationDuration);
     }
   }
