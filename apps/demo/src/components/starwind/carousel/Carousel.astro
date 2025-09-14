@@ -1,0 +1,168 @@
+---
+import { tv, type VariantProps } from "tailwind-variants";
+
+const carousel = tv({
+  base: "starwind-carousel relative",
+});
+
+export interface Props {
+  class?: string;
+  orientation?: "horizontal" | "vertical";
+  opts?: any;
+  plugins?: any[];
+}
+
+const {
+  class: className = "",
+  orientation = "horizontal",
+  opts = {},
+  plugins = [],
+  ...rest
+} = Astro.props;
+---
+
+<div
+  class={carousel({ class: className })}
+  role="region"
+  aria-roledescription="carousel"
+  data-slot="carousel"
+  data-orientation={orientation}
+  data-opts={JSON.stringify(opts)}
+  data-plugins={JSON.stringify(plugins)}
+  {...rest}
+>
+  <slot />
+</div>
+
+<script>
+  import EmblaCarousel from "embla-carousel";
+
+  class CarouselManager {
+    private emblaApi: any = null;
+    private element: HTMLElement;
+    private contentElement: HTMLElement | null = null;
+    private prevButton: HTMLButtonElement | null = null;
+    private nextButton: HTMLButtonElement | null = null;
+    private canScrollPrev = false;
+    private canScrollNext = false;
+
+    constructor(element: HTMLElement) {
+      this.element = element;
+      this.init();
+    }
+
+    private init() {
+      // Find content element
+      this.contentElement = this.element.querySelector('[data-slot="carousel-content"]');
+      if (!this.contentElement) return;
+
+      // Get configuration
+      const orientation = this.element.dataset.orientation || "horizontal";
+      const opts = JSON.parse(this.element.dataset.opts || "{}");
+      const plugins = JSON.parse(this.element.dataset.plugins || "[]");
+
+      // Initialize Embla
+      const emblaOptions = {
+        ...opts,
+        axis: orientation === "horizontal" ? "x" : "y",
+      };
+
+      this.emblaApi = EmblaCarousel(this.contentElement, emblaOptions, plugins);
+
+      // Setup event listeners
+      this.setupEventListeners();
+      this.updateButtons();
+
+      // Initial state
+      this.emblaApi.on("select", () => this.updateButtons());
+      this.emblaApi.on("reInit", () => this.updateButtons());
+    }
+
+    private setupEventListeners() {
+      // Find navigation buttons
+      this.prevButton = this.element.querySelector('[data-slot="carousel-previous"]');
+      this.nextButton = this.element.querySelector('[data-slot="carousel-next"]');
+
+      // Add click listeners
+      this.prevButton?.addEventListener("click", () => this.scrollPrev());
+      this.nextButton?.addEventListener("click", () => this.scrollNext());
+
+      // Add keyboard navigation
+      this.element.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          this.scrollPrev();
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          this.scrollNext();
+        }
+      });
+    }
+
+    private updateButtons() {
+      if (!this.emblaApi) return;
+
+      this.canScrollPrev = this.emblaApi.canScrollPrev();
+      this.canScrollNext = this.emblaApi.canScrollNext();
+
+      // Update button states
+      if (this.prevButton) {
+        this.prevButton.disabled = !this.canScrollPrev;
+        this.prevButton.setAttribute("aria-disabled", (!this.canScrollPrev).toString());
+      }
+
+      if (this.nextButton) {
+        this.nextButton.disabled = !this.canScrollNext;
+        this.nextButton.setAttribute("aria-disabled", (!this.canScrollNext).toString());
+      }
+
+      // Update orientation-based classes
+      this.updateOrientationClasses();
+    }
+
+    private updateOrientationClasses() {
+      const orientation = this.element.dataset.orientation == "horizontal" ? "x" : "y";
+
+      // Set data-orientation attribute on all relevant elements (CSS handles styling)
+      const container = this.element.querySelector(`[data-slot="carousel-container"]`);
+      if (container) {
+        container.setAttribute("data-orientation", orientation);
+      }
+
+      const items = this.element.querySelectorAll(`[data-slot="carousel-item"]`);
+      items.forEach((item) => {
+        item.setAttribute("data-orientation", orientation);
+      });
+
+      if (this.prevButton) {
+        this.prevButton.setAttribute("data-orientation", orientation);
+      }
+
+      if (this.nextButton) {
+        this.nextButton.setAttribute("data-orientation", orientation);
+      }
+    }
+
+    public scrollPrev() {
+      this.emblaApi?.scrollPrev();
+    }
+
+    public scrollNext() {
+      this.emblaApi?.scrollNext();
+    }
+
+    public destroy() {
+      this.emblaApi?.destroy();
+    }
+  }
+
+  function setupCarousels() {
+    const carousels = document.querySelectorAll(`[data-slot="carousel"]`);
+    carousels.forEach((carousel) => {
+      new CarouselManager(carousel as HTMLElement);
+    });
+  }
+
+  setupCarousels();
+  document.addEventListener("astro:after-swap", setupCarousels);
+</script>

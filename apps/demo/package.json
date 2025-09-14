@@ -18,6 +18,7 @@
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/vite": "^4.1.11",
     "astro": "^5.12.9",
+    "embla-carousel": "^8.6.0",
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "^2.1.0",
     "tailwindcss": "^4.1.11",

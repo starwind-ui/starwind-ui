@@ -1,0 +1,27 @@
+---
+import { tv, type VariantProps } from "tailwind-variants";
+
+const carouselItem = tv({
+  base: [
+    "min-w-0 shrink-0 grow-0 basis-full",
+    "data-[orientation=x]:pl-4",
+    "data-[orientation=y]:pt-4",
+  ],
+});
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className = "", ...props } = Astro.props;
+---
+
+<div
+  role="group"
+  aria-roledescription="slide"
+  data-slot="carousel-item"
+  class={carouselItem({ class: className })}
+  {...props}
+>
+  <slot />
+</div>

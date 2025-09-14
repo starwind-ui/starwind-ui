@@ -1,0 +1,50 @@
+---
+import { tv } from "tailwind-variants";
+
+import { Button } from "@/components/starwind/button";
+
+const carouselNext = tv({
+  base: [
+    "starwind-carousel-next absolute size-8 rounded-full",
+    // Horizontal positioning
+    "data-[orientation=x]:top-1/2 data-[orientation=x]:-right-12 data-[orientation=x]:-translate-y-1/2",
+    // Vertical positioning
+    "data-[orientation=y]:-bottom-12 data-[orientation=y]:left-1/2 data-[orientation=y]:-translate-x-1/2 data-[orientation=y]:rotate-90",
+  ],
+});
+
+export interface Props {
+  class?: string;
+  variant?: "outline" | "ghost" | "default";
+  size?: "icon" | "sm" | "lg" | "md";
+}
+
+const { class: className = "", variant = "outline", size = "icon", ...props } = Astro.props;
+---
+
+<Button
+  data-slot="carousel-next"
+  data-orientation="x"
+  variant={variant}
+  size={size}
+  class={carouselNext({ class: className })}
+  aria-label="Next slide"
+  {...props}
+>
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 15 15"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    class="h-4 w-4"
+    aria-hidden="true"
+  >
+    <path
+      d="m8.842 3.135.058.069L12.35 6.95c.27.282.27.738 0 1.02L8.9 11.796c-.27.282-.709.282-.979 0-.27-.282-.27-.738 0-1.02L10.221 8.5H2.5c-.384 0-.695-.31-.695-.694 0-.383.311-.693.695-.693h7.721L7.921 4.846c-.27-.282-.27-.738 0-1.02.27-.282.709-.282.979 0l-.058.069z"
+      fill="currentColor"
+      fill-rule="evenodd"
+      clip-rule="evenodd"></path>
+  </svg>
+  <span class="sr-only">Next slide</span>
+</Button>

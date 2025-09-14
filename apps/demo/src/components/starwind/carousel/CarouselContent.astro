@@ -1,0 +1,27 @@
+---
+import { tv, type VariantProps } from "tailwind-variants";
+
+const carouselContent = tv({
+  base: "starwind-carousel-content overflow-hidden",
+});
+
+const carouselContainer = tv({
+  base: [
+    "flex",
+    "data-[orientation=x]:-ml-4",
+    "data-[orientation=y]:-mt-4 data-[orientation=y]:flex-col",
+  ],
+});
+
+export interface Props {
+  class?: string;
+}
+
+const { class: className = "", ...props } = Astro.props;
+---
+
+<div class={carouselContent({ class: className })} data-slot="carousel-content" {...props}>
+  <div class={carouselContainer()} data-orientation="x" data-slot="carousel-container">
+    <slot />
+  </div>
+</div>
