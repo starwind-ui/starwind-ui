@@ -16,6 +16,9 @@ export async function installComponent(name: string): Promise<InstallResult> {
     };
   }
 
+  // Initialize dependency results
+  let dependencyResults: InstallResult[] = [];
+
   // Handle dependencies installation
   if (component.dependencies.length > 0) {
     const confirmed = await confirmInstall(component);
@@ -48,6 +51,7 @@ export async function installComponent(name: string): Promise<InstallResult> {
       try {
         const resolutions = await getStarwindDependencyResolutions([name]);
         const installResults = await installStarwindDependencies(resolutions);
+        dependencyResults = installResults;
         
         // Check if any dependency installation failed
         const failedDeps = installResults.filter((r: InstallResult) => r.status === "failed");
@@ -56,6 +60,7 @@ export async function installComponent(name: string): Promise<InstallResult> {
             status: "failed",
             name,
             error: `Failed to install Starwind dependencies: ${failedDeps.map((r: InstallResult) => r.name).join(", ")}`,
+            dependencyResults,
           };
         }
       } catch (error) {
@@ -69,7 +74,17 @@ export async function installComponent(name: string): Promise<InstallResult> {
   }
 
   // Copy the component files
-  return await copyComponent(name);
+  const result = await copyComponent(name);
+  
+  // Include dependency results if any
+  if (dependencyResults.length > 0) {
+    return {
+      ...result,
+      dependencyResults,
+    };
+  }
+  
+  return result;
 }
 
 /**
