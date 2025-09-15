@@ -102,22 +102,27 @@ export function initCarousel(
     }
   };
 
+  // Event handlers for cleanup
+  const prevClickHandler = () => emblaApi.scrollPrev();
+  const nextClickHandler = () => emblaApi.scrollNext();
+  const keydownHandler = (event: KeyboardEvent) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      emblaApi.scrollPrev();
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      emblaApi.scrollNext();
+    }
+  };
+
   // Setup event listeners
   const setupEventListeners = () => {
     // Navigation button listeners
-    prevButton?.addEventListener("click", () => emblaApi.scrollPrev());
-    nextButton?.addEventListener("click", () => emblaApi.scrollNext());
+    prevButton?.addEventListener("click", prevClickHandler);
+    nextButton?.addEventListener("click", nextClickHandler);
 
     // Keyboard navigation
-    carouselElement.addEventListener("keydown", (event) => {
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        emblaApi.scrollPrev();
-      } else if (event.key === "ArrowRight") {
-        event.preventDefault();
-        emblaApi.scrollNext();
-      }
-    });
+    carouselElement.addEventListener("keydown", keydownHandler);
   };
 
   // Setup user API callback
@@ -148,6 +153,18 @@ export function initCarousel(
     scrollNext: () => emblaApi.scrollNext(),
     canScrollPrev: () => emblaApi.canScrollPrev(),
     canScrollNext: () => emblaApi.canScrollNext(),
-    destroy: () => emblaApi.destroy(),
+    destroy: () => {
+      // Remove event listeners to prevent memory leaks
+      if (prevButton) {
+        prevButton.removeEventListener("click", prevClickHandler);
+      }
+      if (nextButton) {
+        nextButton.removeEventListener("click", nextClickHandler);
+      }
+      carouselElement.removeEventListener("keydown", keydownHandler);
+      
+      // Destroy the Embla instance
+      emblaApi.destroy();
+    },
   };
 }
