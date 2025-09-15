@@ -36,7 +36,8 @@ export function initCarousel(
   }
 
   // Get configuration from data attributes
-  const orientation = carouselElement.dataset.orientation || "horizontal";
+  const axisData = carouselElement.dataset.axis;
+  const axis: EmblaOptionsType["axis"] = axisData === "y" ? "y" : "x";
 
   // Safely parse data options
   let dataOpts = {};
@@ -57,7 +58,7 @@ export function initCarousel(
 
   // Merge options - ensure we always have a valid object
   const emblaOptions: EmblaOptionsType = {
-    axis: orientation === "horizontal" ? "x" : "y",
+    axis,
     ...dataOpts,
     ...(options.opts || {}),
   };
@@ -65,6 +66,7 @@ export function initCarousel(
   // Handle plugins - EmblaCarousel expects undefined when no plugins, not empty array
   const plugins = options.plugins && options.plugins.length > 0 ? options.plugins : undefined;
 
+  console.log("ID:", carouselElement.id);
   console.log("Plugins:", plugins);
   console.log("Options:", emblaOptions);
 
