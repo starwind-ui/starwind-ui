@@ -12,13 +12,38 @@ import { getComponent } from "./registry.js";
 export async function filterUninstalledDependencies(dependencies: string[]): Promise<string[]> {
   try {
     const pkg = await readJsonFile("package.json");
-    const installedDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+    const installedDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
 
     const dependenciesToInstall: string[] = [];
 
     for (const dep of dependencies) {
-      const [packageName, requiredVersion] =
-        dep.includes("@") && !dep.startsWith("@") ? dep.split("@") : [dep, "*"];
+      let packageName: string;
+      let requiredVersion: string;
+
+      // Handle scoped packages properly (e.g., "@scope/name@^1.2.3")
+      if (dep.startsWith("@")) {
+        // For scoped packages, find the last "@" to split package name and version
+        const lastAtIndex = dep.lastIndexOf("@");
+        if (lastAtIndex > 0) {
+          packageName = dep.substring(0, lastAtIndex);
+          requiredVersion = dep.substring(lastAtIndex + 1);
+        } else {
+          // No version specified for scoped package
+          packageName = dep;
+          requiredVersion = "*";
+        }
+      } else {
+        // For non-scoped packages, split on first "@"
+        const atIndex = dep.indexOf("@");
+        if (atIndex > 0) {
+          packageName = dep.substring(0, atIndex);
+          requiredVersion = dep.substring(atIndex + 1);
+        } else {
+          // No version specified
+          packageName = dep;
+          requiredVersion = "*";
+        }
+      }
 
       const installedVersion = installedDeps[packageName];
 
@@ -27,7 +52,10 @@ export async function filterUninstalledDependencies(dependencies: string[]): Pro
         dependenciesToInstall.push(dep);
       } else if (requiredVersion && requiredVersion !== "*") {
         // Check if installed version satisfies required version
-        const cleanInstalledVersion = installedVersion.replace(/^\^|~/, "");
+        // Clean the installed version using semver.clean or manual prefix removal
+        const cleanInstalledVersion = semver.clean(installedVersion) || 
+          installedVersion.replace(/^[\^~>=<= ]+/, "");
+        
         try {
           if (!semver.satisfies(cleanInstalledVersion, requiredVersion)) {
             dependenciesToInstall.push(dep);
