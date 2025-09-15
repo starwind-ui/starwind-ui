@@ -26,6 +26,15 @@ export function initCarousel(
   carouselElement: HTMLElement,
   options: CarouselOptions = {},
 ): CarouselManager | null {
+  // don't re-initialize if already initialized
+  if (carouselElement.dataset.initialized === "true") return null;
+  carouselElement.dataset.initialized = "true";
+
+  if (!carouselElement) {
+    console.warn("Carousel element not found");
+    return null;
+  }
+
   // Find content element - Embla expects the viewport element, not the container
   const viewportElement = carouselElement.querySelector(
     '[data-slot="carousel-content"]',
