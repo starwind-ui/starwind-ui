@@ -1,0 +1,215 @@
+---
+import { Card, CardContent } from "@/components/starwind/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/starwind/carousel";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Carousel</h2>
+
+  <!-- Basic Horizontal Carousel -->
+  <div class="mb-8">
+    <h3 class="mb-2 text-lg font-medium">Basic Horizontal Carousel</h3>
+    <Carousel id="carousel-1" opts={{ align: "start" }} class="mx-auto w-full max-w-xs">
+      <CarouselContent>
+        {
+          Array.from({ length: 5 }).map((_, index) => (
+            <CarouselItem class="">
+              <div class="p-1">
+                <Card>
+                  <CardContent class="flex aspect-square items-center justify-center p-6">
+                    <span class="text-4xl font-semibold">{index + 1}</span>
+                  </CardContent>
+                </Card>
+              </div>
+            </CarouselItem>
+          ))
+        }
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
+  </div>
+
+  <!-- Vertical Carousel -->
+  <div class="mb-20">
+    <h3 class="mb-20 text-lg font-medium">Vertical Carousel</h3>
+    <Carousel
+      id="carousel-2"
+      opts={{ align: "start" }}
+      orientation="vertical"
+      class="w-full max-w-xs"
+    >
+      <CarouselContent class="h-[200px]">
+        {
+          Array.from({ length: 5 }).map((_, index) => (
+            <CarouselItem class="pt-1 md:basis-3/4">
+              <div class="h-full p-1">
+                <Card class="h-full">
+                  <CardContent class="flex h-full items-center justify-center p-6">
+                    <span class="text-3xl font-semibold">{index + 1}</span>
+                  </CardContent>
+                </Card>
+              </div>
+            </CarouselItem>
+          ))
+        }
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
+  </div>
+
+  <!-- Multiple Items Carousel -->
+  <div class="mb-8">
+    <h3 class="mb-2 text-lg font-medium">Multiple Items (Basis 1/3)</h3>
+    <Carousel opts={{ align: "start" }} class="mx-auto w-full max-w-sm">
+      <CarouselContent>
+        <CarouselItem class="md:basis-1/2 lg:basis-1/3">
+          <div class="p-1">
+            <Card>
+              <CardContent class="flex aspect-square items-center justify-center p-6">
+                <span class="text-2xl font-semibold">1</span>
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+        <CarouselItem class="md:basis-1/2 lg:basis-1/3">
+          <div class="p-1">
+            <Card>
+              <CardContent class="flex aspect-square items-center justify-center p-6">
+                <span class="text-2xl font-semibold">2</span>
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+        <CarouselItem class="md:basis-1/2 lg:basis-1/3">
+          <div class="p-1">
+            <Card>
+              <CardContent class="flex aspect-square items-center justify-center p-6">
+                <span class="text-2xl font-semibold">3</span>
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+        <CarouselItem class="md:basis-1/2 lg:basis-1/3">
+          <div class="p-1">
+            <Card>
+              <CardContent class="flex aspect-square items-center justify-center p-6">
+                <span class="text-2xl font-semibold">4</span>
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+        <CarouselItem class="md:basis-1/2 lg:basis-1/3">
+          <div class="p-1">
+            <Card>
+              <CardContent class="flex aspect-square items-center justify-center p-6">
+                <span class="text-2xl font-semibold">5</span>
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
+  </div>
+
+  <!-- Image Carousel -->
+  <div class="mb-8">
+    <h3 class="mb-2 text-lg font-medium">Image Carousel</h3>
+    <Carousel class="mx-auto w-full max-w-xs">
+      <CarouselContent>
+        <CarouselItem>
+          <div class="p-1">
+            <Card>
+              <CardContent class="flex aspect-square items-center justify-center p-0">
+                <img
+                  src="https://picsum.photos/300/300?random=1"
+                  alt="Landscape scene 1"
+                  class="h-full w-full rounded-lg object-cover"
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+        <CarouselItem>
+          <div class="p-1">
+            <Card>
+              <CardContent class="flex aspect-square items-center justify-center p-0">
+                <img
+                  src="https://picsum.photos/300/300?random=2"
+                  alt="Landscape scene 2"
+                  class="h-full w-full rounded-lg object-cover"
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+        <CarouselItem>
+          <div class="p-1">
+            <Card>
+              <CardContent class="flex aspect-square items-center justify-center p-0">
+                <img
+                  src="https://picsum.photos/300/300?random=3"
+                  alt="Nature scene 3"
+                  class="h-full w-full rounded-lg object-cover"
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
+  </div>
+
+  <!-- Looping Carousel -->
+  <div class="mb-8">
+    <h3 class="mb-2 text-lg font-medium">Looping Carousel</h3>
+    <Carousel opts={{ align: "start", loop: true }} class="mx-auto w-full max-w-xs">
+      <CarouselContent>
+        <CarouselItem>
+          <div class="p-1">
+            <Card class="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+              <CardContent class="flex aspect-square items-center justify-center p-6">
+                <span class="text-4xl font-semibold">∞</span>
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+        <CarouselItem>
+          <div class="p-1">
+            <Card class="bg-gradient-to-br from-green-500 to-blue-600 text-white">
+              <CardContent class="flex aspect-square items-center justify-center p-6">
+                <span class="text-4xl font-semibold">Loop</span>
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+        <CarouselItem>
+          <div class="p-1">
+            <Card class="bg-gradient-to-br from-pink-500 to-red-600 text-white">
+              <CardContent class="flex aspect-square items-center justify-center p-6">
+                <span class="text-4xl font-semibold">∞</span>
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
+  </div>
+</section>
+
+<script>
+  import { initCarousel } from "@/components/starwind/carousel";
+</script>

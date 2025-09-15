@@ -2,6 +2,7 @@ import { confirm, multiselect } from "@clack/prompts";
 
 import {
   type DependencyResolution,
+  filterUninstalledDependencies,
   resolveAllStarwindDependencies,
   separateDependencies,
 } from "./dependency-resolver.js";
@@ -102,14 +103,18 @@ export async function confirmInstall(component: Component): Promise<boolean> {
 
   const { starwindDependencies, npmDependencies } = separateDependencies(component.dependencies);
 
-  // Handle npm dependencies
+  // Handle npm dependencies - only prompt for dependencies that need to be installed
   if (npmDependencies.length > 0) {
-    const confirmed = await confirm({
-      message: `This component requires the following npm dependencies: ${npmDependencies.join(", ")}. Install them?`,
-    });
+    const dependenciesToInstall = await filterUninstalledDependencies(npmDependencies);
 
-    if (typeof confirmed === "symbol" || !confirmed) {
-      return false;
+    if (dependenciesToInstall.length > 0) {
+      const confirmed = await confirm({
+        message: `This component requires the following npm dependencies: ${dependenciesToInstall.join(", ")}. Install them?`,
+      });
+
+      if (typeof confirmed === "symbol" || !confirmed) {
+        return false;
+      }
     }
   }
 

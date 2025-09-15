@@ -5,6 +5,8 @@ import Flame from "@tabler/icons/outline/flame.svg";
 import InfoCircle from "@tabler/icons/outline/info-circle.svg";
 import Mail from "@tabler/icons/outline/mail.svg";
 
+import CarouselDemos from "@/components/carousel-demos/CarouselDemos.astro";
+import CarouselPluginDemo from "@/components/carousel-demos/CarouselPluginDemo.astro";
 import ContactForm from "@/components/forms/ContactForm.astro";
 import CreateProjectForm from "@/components/forms/CreateProjectForm.astro";
 import EditProfileForm from "@/components/forms/EditProfileForm.astro";
@@ -49,6 +51,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/starwind/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/starwind/carousel";
 import { Checkbox } from "@/components/starwind/checkbox";
 import {
   Dialog,
@@ -119,6 +128,9 @@ import Layout from "@/layouts/Layout.astro";
   description="A collection of accessible UI components built with Astro"
 >
   <div class="container mx-auto px-4 pb-20">
+    <CarouselDemos />
+    <CarouselPluginDemo />
+
     <!-- file input -->
     <section class="mx-auto mt-6 max-w-lg">
       <div class={ButtonVariants.button({ variant: "primary", size: "lg" })}>

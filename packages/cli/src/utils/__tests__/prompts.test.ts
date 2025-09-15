@@ -21,6 +21,7 @@ const mockResolveAllStarwindDependencies = vi.mocked(
   dependencyResolver.resolveAllStarwindDependencies,
 );
 const mockSeparateDependencies = vi.mocked(dependencyResolver.separateDependencies);
+const mockFilterUninstalledDependencies = vi.mocked(dependencyResolver.filterUninstalledDependencies);
 const mockGetAllComponents = vi.mocked(registry.getAllComponents);
 
 describe("prompts", () => {
@@ -92,6 +93,7 @@ describe("prompts", () => {
         starwindDependencies: [],
         npmDependencies: ["react@^18.0.0", "zod@^3.0.0"],
       });
+      mockFilterUninstalledDependencies.mockResolvedValue(["react@^18.0.0", "zod@^3.0.0"]);
       mockConfirm.mockResolvedValue(true);
 
       const result = await confirmInstall(component);
@@ -144,6 +146,7 @@ describe("prompts", () => {
         starwindDependencies: ["@starwind-ui/core/button@^2.1.0"],
         npmDependencies: ["react@^18.0.0"],
       });
+      mockFilterUninstalledDependencies.mockResolvedValue(["react@^18.0.0"]);
       mockResolveAllStarwindDependencies.mockResolvedValue([
         {
           component: "button",
@@ -174,6 +177,7 @@ describe("prompts", () => {
         starwindDependencies: [],
         npmDependencies: ["react@^18.0.0"],
       });
+      mockFilterUninstalledDependencies.mockResolvedValue(["react@^18.0.0"]);
       mockConfirm.mockResolvedValue(false);
 
       const result = await confirmInstall(component);
@@ -222,6 +226,7 @@ describe("prompts", () => {
         starwindDependencies: [],
         npmDependencies: ["react@^18.0.0"],
       });
+      mockFilterUninstalledDependencies.mockResolvedValue(["react@^18.0.0"]);
       mockConfirm.mockResolvedValue(Symbol("cancel"));
 
       const result = await confirmInstall(component);

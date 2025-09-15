@@ -1,7 +1,79 @@
 import semver from "semver";
 
 import { getConfig } from "./config.js";
+import { readJsonFile } from "./fs.js";
 import { getComponent } from "./registry.js";
+
+/**
+ * Checks if npm dependencies are already installed with valid versions
+ * @param dependencies - Array of dependency strings (e.g., ["react@^18.0.0", "typescript@^5.0.0"])
+ * @returns Array of dependencies that need to be installed
+ */
+export async function filterUninstalledDependencies(dependencies: string[]): Promise<string[]> {
+  try {
+    const pkg = await readJsonFile("package.json");
+    const installedDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+
+    const dependenciesToInstall: string[] = [];
+
+    for (const dep of dependencies) {
+      let packageName: string;
+      let requiredVersion: string;
+
+      // Handle scoped packages properly (e.g., "@scope/name@^1.2.3")
+      if (dep.startsWith("@")) {
+        // For scoped packages, find the last "@" to split package name and version
+        const lastAtIndex = dep.lastIndexOf("@");
+        if (lastAtIndex > 0) {
+          packageName = dep.substring(0, lastAtIndex);
+          requiredVersion = dep.substring(lastAtIndex + 1);
+        } else {
+          // No version specified for scoped package
+          packageName = dep;
+          requiredVersion = "*";
+        }
+      } else {
+        // For non-scoped packages, split on first "@"
+        const atIndex = dep.indexOf("@");
+        if (atIndex > 0) {
+          packageName = dep.substring(0, atIndex);
+          requiredVersion = dep.substring(atIndex + 1);
+        } else {
+          // No version specified
+          packageName = dep;
+          requiredVersion = "*";
+        }
+      }
+
+      const installedVersion = installedDeps[packageName];
+
+      if (!installedVersion) {
+        // Package not installed, needs installation
+        dependenciesToInstall.push(dep);
+      } else if (requiredVersion && requiredVersion !== "*") {
+        // Check if installed version satisfies required version
+        // Clean the installed version using semver.clean or manual prefix removal
+        const cleanInstalledVersion = semver.clean(installedVersion) || 
+          installedVersion.replace(/^[\^~>=<= ]+/, "");
+        
+        try {
+          if (!semver.satisfies(cleanInstalledVersion, requiredVersion)) {
+            dependenciesToInstall.push(dep);
+          }
+        } catch (error) {
+          // If semver comparison fails, assume we need to install
+          dependenciesToInstall.push(dep);
+        }
+      }
+      // If no version specified or version satisfies, skip installation
+    }
+
+    return dependenciesToInstall;
+  } catch (error) {
+    // If we can't read package.json, install all dependencies
+    return dependencies;
+  }
+}
 
 export interface StarwindDependency {
   name: string;
