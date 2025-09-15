@@ -115,12 +115,24 @@ export function initCarousel(
   const prevClickHandler = () => emblaApi.scrollPrev();
   const nextClickHandler = () => emblaApi.scrollNext();
   const keydownHandler = (event: KeyboardEvent) => {
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      emblaApi.scrollPrev();
-    } else if (event.key === "ArrowRight") {
-      event.preventDefault();
-      emblaApi.scrollNext();
+    if (axis === "y") {
+      // Vertical axis: ArrowUp = previous, ArrowDown = next
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        emblaApi.scrollPrev();
+      } else if (event.key === "ArrowDown") {
+        event.preventDefault();
+        emblaApi.scrollNext();
+      }
+    } else {
+      // Horizontal axis (default): ArrowLeft = previous, ArrowRight = next
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        emblaApi.scrollPrev();
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        emblaApi.scrollNext();
+      }
     }
   };
 
