@@ -1,6 +1,9 @@
+import * as p from "@clack/prompts";
+
 import { copyComponent, type InstallResult } from "./component.js";
 import { getConfig, updateConfig } from "./config.js";
 import { type DependencyResolution, separateDependencies } from "./dependency-resolver.js";
+import { highlighter } from "./highlighter.js";
 import { installDependencies, requestPackageManager } from "./package-manager.js";
 import { confirmInstall, getStarwindDependencyResolutions } from "./prompts.js";
 import { getComponent } from "./registry.js";
@@ -36,7 +39,16 @@ export async function installComponent(name: string): Promise<InstallResult> {
     if (npmDependencies.length > 0) {
       try {
         const pm = await requestPackageManager();
-        await installDependencies(npmDependencies, pm);
+        
+        const installTasks = [{
+          title: `Installing ${npmDependencies.length === 1 ? 'dependency' : 'dependencies'}`,
+          task: async () => {
+            await installDependencies(npmDependencies, pm);
+            return `${highlighter.info("Dependencies installed successfully")}`;
+          },
+        }];
+
+        await p.tasks(installTasks);
       } catch (error) {
         return {
           status: "failed",
