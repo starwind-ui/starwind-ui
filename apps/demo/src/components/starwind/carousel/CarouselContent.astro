@@ -8,9 +8,9 @@ const carouselContent = tv({
 
 const carouselContainer = tv({
   base: [
-    "flex",
+    "flex group-data-[axis=y]/carousel:flex-col",
     "group-data-[axis=x]/carousel:-ml-4",
-    "group-data-[axis=y]/carousel:-mt-4 group-data-[axis=y]/carousel:flex-col",
+    "group-data-[axis=y]/carousel:-mt-4",
   ],
 });
 
@@ -19,8 +19,8 @@ type Props = HTMLAttributes<"div">;
 const { class: className = "", ...rest } = Astro.props;
 ---
 
-<div class={carouselContent({ class: className })} data-slot="carousel-content" {...rest}>
-  <div class={carouselContainer()} data-slot="carousel-container">
+<div class={carouselContent()} data-slot="carousel-content" {...rest}>
+  <div class={carouselContainer({ class: className })} data-slot="carousel-container">
     <slot />
   </div>
 </div>

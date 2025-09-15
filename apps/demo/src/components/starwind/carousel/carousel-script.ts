@@ -66,9 +66,9 @@ export function initCarousel(
   // Handle plugins - EmblaCarousel expects undefined when no plugins, not empty array
   const plugins = options.plugins && options.plugins.length > 0 ? options.plugins : undefined;
 
-  console.log("ID:", carouselElement.id);
-  console.log("Plugins:", plugins);
-  console.log("Options:", emblaOptions);
+  // console.log("ID:", carouselElement.id);
+  // console.log("Plugins:", plugins);
+  // console.log("Options:", emblaOptions);
 
   // Find navigation buttons
   const prevButton = carouselElement.querySelector(
