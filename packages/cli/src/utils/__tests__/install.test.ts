@@ -20,6 +20,7 @@ const mockCopyComponent = vi.mocked(component.copyComponent);
 const mockGetConfig = vi.mocked(config.getConfig);
 const mockUpdateConfig = vi.mocked(config.updateConfig);
 const mockSeparateDependencies = vi.mocked(dependencyResolver.separateDependencies);
+const mockFilterUninstalledDependencies = vi.mocked(dependencyResolver.filterUninstalledDependencies);
 const mockInstallDependencies = vi.mocked(packageManager.installDependencies);
 const mockRequestPackageManager = vi.mocked(packageManager.requestPackageManager);
 const mockConfirmInstall = vi.mocked(prompts.confirmInstall);
@@ -94,6 +95,7 @@ describe("install", () => {
         starwindDependencies: [],
         npmDependencies: ["react@^18.0.0", "zod@^3.0.0"],
       });
+      mockFilterUninstalledDependencies.mockResolvedValue(["react@^18.0.0", "zod@^3.0.0"]);
       mockRequestPackageManager.mockResolvedValue("npm");
       mockInstallDependencies.mockResolvedValue();
       mockCopyComponent.mockResolvedValue({
@@ -213,6 +215,7 @@ describe("install", () => {
         starwindDependencies: [],
         npmDependencies: ["react@^18.0.0"],
       });
+      mockFilterUninstalledDependencies.mockResolvedValue(["react@^18.0.0"]);
       mockRequestPackageManager.mockResolvedValue("npm");
       mockInstallDependencies.mockRejectedValue(new Error("Package not found"));
 
