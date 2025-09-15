@@ -1,0 +1,59 @@
+---
+import { Card, CardContent } from "@/components/starwind/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/starwind/carousel";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <!-- Plugin Autoplay Carousel -->
+  <div class="mb-8">
+    <h3 class="mb-2 text-lg font-medium">Plugin Autoplay Carousel</h3>
+    <Carousel
+      id="carousel-autoplay"
+      autoInit={false}
+      opts={{ align: "start" }}
+      class="mx-auto w-full max-w-xs"
+    >
+      <CarouselContent>
+        {
+          Array.from({ length: 5 }).map((_, index) => (
+            <CarouselItem class="">
+              <div class="p-1">
+                <Card>
+                  <CardContent class="flex aspect-square items-center justify-center p-6">
+                    <span class="text-4xl font-semibold">{index + 1}</span>
+                  </CardContent>
+                </Card>
+              </div>
+            </CarouselItem>
+          ))
+        }
+      </CarouselContent>
+      <CarouselPrevious />
+      <CarouselNext />
+    </Carousel>
+  </div>
+</section>
+
+<script>
+  import Autoplay from "embla-carousel-autoplay";
+
+  import { initCarousel } from "@/components/starwind/carousel";
+
+  function initAutoplayCarousel() {
+    const carouselElement = document.getElementById("carousel-autoplay");
+    if (!carouselElement) return;
+    initCarousel(carouselElement, {
+      plugins: [Autoplay()],
+    });
+  }
+
+  initAutoplayCarousel();
+
+  document.addEventListener("astro:after-swap", initAutoplayCarousel);
+</script>

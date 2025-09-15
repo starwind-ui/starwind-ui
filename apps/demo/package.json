@@ -19,6 +19,7 @@
     "@tailwindcss/vite": "^4.1.11",
     "astro": "^5.12.9",
     "embla-carousel": "^8.6.0",
+    "embla-carousel-autoplay": "^8.6.0",
     "tailwind-variants": "^3.1.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11",
