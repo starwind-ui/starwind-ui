@@ -1,7 +1,51 @@
 import semver from "semver";
 
 import { getConfig } from "./config.js";
+import { readJsonFile } from "./fs.js";
 import { getComponent } from "./registry.js";
+
+/**
+ * Checks if npm dependencies are already installed with valid versions
+ * @param dependencies - Array of dependency strings (e.g., ["react@^18.0.0", "typescript@^5.0.0"])
+ * @returns Array of dependencies that need to be installed
+ */
+export async function filterUninstalledDependencies(dependencies: string[]): Promise<string[]> {
+  try {
+    const pkg = await readJsonFile("package.json");
+    const installedDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+
+    const dependenciesToInstall: string[] = [];
+
+    for (const dep of dependencies) {
+      const [packageName, requiredVersion] =
+        dep.includes("@") && !dep.startsWith("@") ? dep.split("@") : [dep, "*"];
+
+      const installedVersion = installedDeps[packageName];
+
+      if (!installedVersion) {
+        // Package not installed, needs installation
+        dependenciesToInstall.push(dep);
+      } else if (requiredVersion && requiredVersion !== "*") {
+        // Check if installed version satisfies required version
+        const cleanInstalledVersion = installedVersion.replace(/^\^|~/, "");
+        try {
+          if (!semver.satisfies(cleanInstalledVersion, requiredVersion)) {
+            dependenciesToInstall.push(dep);
+          }
+        } catch (error) {
+          // If semver comparison fails, assume we need to install
+          dependenciesToInstall.push(dep);
+        }
+      }
+      // If no version specified or version satisfies, skip installation
+    }
+
+    return dependenciesToInstall;
+  } catch (error) {
+    // If we can't read package.json, install all dependencies
+    return dependencies;
+  }
+}
 
 export interface StarwindDependency {
   name: string;

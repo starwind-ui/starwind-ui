@@ -2,7 +2,11 @@ import * as p from "@clack/prompts";
 
 import { copyComponent, type InstallResult } from "./component.js";
 import { getConfig, updateConfig } from "./config.js";
-import { type DependencyResolution, separateDependencies } from "./dependency-resolver.js";
+import {
+  type DependencyResolution,
+  filterUninstalledDependencies,
+  separateDependencies,
+} from "./dependency-resolver.js";
 import { highlighter } from "./highlighter.js";
 import { installDependencies, requestPackageManager } from "./package-manager.js";
 import { confirmInstall, getStarwindDependencyResolutions } from "./prompts.js";
@@ -38,17 +42,29 @@ export async function installComponent(name: string): Promise<InstallResult> {
     // Install npm dependencies
     if (npmDependencies.length > 0) {
       try {
-        const pm = await requestPackageManager();
-        
-        const installTasks = [{
-          title: `Installing ${npmDependencies.length === 1 ? 'dependency' : 'dependencies'}`,
-          task: async () => {
-            await installDependencies(npmDependencies, pm);
-            return `${highlighter.info("Dependencies installed successfully")}`;
-          },
-        }];
+        // Filter out already installed dependencies with valid versions
+        const dependenciesToInstall = await filterUninstalledDependencies(npmDependencies);
 
-        await p.tasks(installTasks);
+        if (dependenciesToInstall.length > 0) {
+          const pm = await requestPackageManager();
+
+          const installTasks = [
+            {
+              title: `Installing ${dependenciesToInstall.length === 1 ? "dependency" : "dependencies"}`,
+              task: async () => {
+                await installDependencies(dependenciesToInstall, pm);
+                return `${highlighter.info("Dependencies installed successfully")}`;
+              },
+            },
+          ];
+
+          await p.tasks(installTasks);
+        } else {
+          // All dependencies are already installed with valid versions
+          p.log.info(
+            `${highlighter.info("All npm dependencies are already installed with valid versions")}`,
+          );
+        }
       } catch (error) {
         return {
           status: "failed",
