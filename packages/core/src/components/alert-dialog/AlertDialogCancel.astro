@@ -22,7 +22,11 @@ if (Astro.slots.has("default")) {
 
 {
   asChild && hasChildren ? (
-    <div class="starwind-alert-dialog-close" data-slot="alert-dialog-cancel" data-as-child>
+    <div
+      class:list={["starwind-alert-dialog-close", className]}
+      data-slot="alert-dialog-cancel"
+      data-as-child
+    >
       <slot />
     </div>
   ) : (
