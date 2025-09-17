@@ -1,0 +1,126 @@
+---
+import { tv } from "tailwind-variants";
+import X from "@tabler/icons/outline/x.svg";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div"> & {
+  side?: "top" | "right" | "bottom" | "left";
+};
+
+const { side = "right", class: className, ...rest } = Astro.props;
+
+export const sheetContent = tv({
+  base: [
+    "starwind-sheet-content",
+    "bg-background fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out",
+    "data-[state=open]:animate-in data-[state=closed]:animate-out",
+    "data-[state=closed]:duration-300 data-[state=open]:duration-500",
+  ],
+  variants: {
+    side: {
+      right: [
+        "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
+        "inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
+      ],
+      left: [
+        "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
+        "inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm",
+      ],
+      top: [
+        "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
+        "inset-x-0 top-0 h-auto border-b",
+      ],
+      bottom: [
+        "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        "inset-x-0 bottom-0 h-auto border-t",
+      ],
+    },
+  },
+  defaultVariants: {
+    side: "right",
+  },
+});
+
+export const sheetCloseButton = tv({
+  base: [
+    "starwind-sheet-close",
+    "ring-offset-background focus:ring-ring data-[state=open]:bg-secondary",
+    "absolute top-4 right-4 rounded-xs opacity-70 transition-opacity",
+    "hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
+    "disabled:pointer-events-none",
+  ],
+});
+---
+
+<div class="starwind-sheet-content">
+  <!-- Overlay will be inserted here by SheetOverlay component -->
+  <div
+    class={sheetContent({ side, class: className })}
+    data-slot="sheet-content"
+    data-side={side}
+    {...rest}
+  >
+    <slot />
+    <button class={sheetCloseButton()} data-slot="sheet-close">
+      <X class="size-4" />
+      <span class="sr-only">Close</span>
+    </button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const contents = document.querySelectorAll(".starwind-sheet-content");
+
+    contents.forEach((content) => {
+      // Handle close button clicks
+      const closeButton = content.querySelector(".starwind-sheet-close");
+      if (closeButton) {
+        closeButton.addEventListener("click", () => {
+          const sheet = content.closest(".starwind-sheet");
+          if (sheet) {
+            sheet.dispatchEvent(new CustomEvent("sheet:close"));
+          }
+        });
+      }
+
+      // Handle escape key
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          const sheet = content.closest(".starwind-sheet");
+          if (sheet && sheet.dataset.state === "open") {
+            sheet.dispatchEvent(new CustomEvent("sheet:close"));
+          }
+        }
+      });
+    });
+  });
+
+  // Handle view transitions
+  document.addEventListener("astro:after-swap", () => {
+    const contents = document.querySelectorAll(".starwind-sheet-content");
+
+    contents.forEach((content) => {
+      // Handle close button clicks
+      const closeButton = content.querySelector(".starwind-sheet-close");
+      if (closeButton) {
+        closeButton.addEventListener("click", () => {
+          const sheet = content.closest(".starwind-sheet");
+          if (sheet) {
+            sheet.dispatchEvent(new CustomEvent("sheet:close"));
+          }
+        });
+      }
+
+      // Handle escape key
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          const sheet = content.closest(".starwind-sheet");
+          if (sheet && sheet.dataset.state === "open") {
+            sheet.dispatchEvent(new CustomEvent("sheet:close"));
+          }
+        }
+      });
+    });
+  });
+</script>

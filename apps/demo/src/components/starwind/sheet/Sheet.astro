@@ -1,0 +1,85 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div"> & {
+  open?: boolean;
+  modal?: boolean;
+  defaultOpen?: boolean;
+};
+
+const { open, modal = true, defaultOpen, class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["starwind-sheet", className]} data-open={open} data-modal={modal} {...rest}>
+  <slot />
+</div>
+
+<script>
+  class SheetManager {
+    private sheet: HTMLElement;
+    private isOpen: boolean = false;
+    private modal: boolean = true;
+
+    constructor(sheet: HTMLElement) {
+      this.sheet = sheet;
+      this.modal = sheet.dataset.modal === "true";
+      this.isOpen = sheet.dataset.open === "true";
+
+      this.init();
+    }
+
+    private init() {
+      // Initialize sheet state
+      this.updateState();
+
+      // Handle view transitions
+      document.addEventListener("astro:after-swap", () => {
+        this.cleanup();
+      });
+    }
+
+    private updateState() {
+      this.sheet.setAttribute("data-state", this.isOpen ? "open" : "closed");
+    }
+
+    public open() {
+      this.isOpen = true;
+      this.updateState();
+      this.sheet.dispatchEvent(new CustomEvent("sheet:open"));
+    }
+
+    public close() {
+      this.isOpen = false;
+      this.updateState();
+      this.sheet.dispatchEvent(new CustomEvent("sheet:close"));
+    }
+
+    public toggle() {
+      if (this.isOpen) {
+        this.close();
+      } else {
+        this.open();
+      }
+    }
+
+    private cleanup() {
+      // Clean up any event listeners or timers
+    }
+  }
+
+  // Initialize all sheet components
+  document.addEventListener("DOMContentLoaded", () => {
+    const sheets = document.querySelectorAll(".starwind-sheet");
+    sheets.forEach((sheet) => {
+      new SheetManager(sheet as HTMLElement);
+    });
+  });
+
+  // Handle view transitions
+  document.addEventListener("astro:after-swap", () => {
+    const sheets = document.querySelectorAll(".starwind-sheet");
+    sheets.forEach((sheet) => {
+      new SheetManager(sheet as HTMLElement);
+    });
+  });
+</script>

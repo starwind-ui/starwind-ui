@@ -1,0 +1,25 @@
+---
+import { tv } from "tailwind-variants";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"p">;
+
+const { class: className, ...rest } = Astro.props;
+
+const descriptionVariants = tv({
+  base: [
+    "starwind-sheet-description",
+    "text-muted-foreground text-sm"
+  ]
+});
+
+export const sheetDescription = descriptionVariants;
+---
+
+<p 
+  class={descriptionVariants({ class: className })}
+  data-slot="sheet-description"
+  {...rest}
+>
+  <slot />
+</p>

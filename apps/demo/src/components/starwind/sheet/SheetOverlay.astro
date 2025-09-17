@@ -1,0 +1,56 @@
+---
+import { tv } from "tailwind-variants";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+
+export const sheetOverlay = tv({
+  base: [
+    "starwind-sheet-overlay",
+    "fixed inset-0 z-50 bg-black/50",
+    "data-[state=open]:animate-in data-[state=closed]:animate-out",
+    "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+  ],
+});
+---
+
+<div class={sheetOverlay({ class: className })} data-slot="sheet-overlay" {...rest}>
+  <slot />
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const overlays = document.querySelectorAll(".starwind-sheet-overlay");
+
+    overlays.forEach((overlay) => {
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) {
+          // Find the parent sheet
+          const sheet = overlay.closest(".starwind-sheet");
+          if (sheet && sheet.dataset.modal === "true") {
+            sheet.dispatchEvent(new CustomEvent("sheet:close"));
+          }
+        }
+      });
+    });
+  });
+
+  // Handle view transitions
+  document.addEventListener("astro:after-swap", () => {
+    const overlays = document.querySelectorAll(".starwind-sheet-overlay");
+
+    overlays.forEach((overlay) => {
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) {
+          // Find the parent sheet
+          const sheet = overlay.closest(".starwind-sheet");
+          if (sheet && sheet.dataset.modal === "true") {
+            sheet.dispatchEvent(new CustomEvent("sheet:close"));
+          }
+        }
+      });
+    });
+  });
+</script>
