@@ -30,23 +30,23 @@ describe("dependency-resolver", () => {
   describe("filterUninstalledDependencies", () => {
     it("should return all dependencies when package.json cannot be read", async () => {
       mockReadJsonFile.mockRejectedValue(new Error("File not found"));
-      
+
       const dependencies = ["react@^18.0.0", "@types/node@^18.0.0"];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual(dependencies);
     });
 
     it("should handle package.json with undefined dependencies and devDependencies", async () => {
       mockReadJsonFile.mockResolvedValue({
         name: "test-package",
-        version: "1.0.0"
+        version: "1.0.0",
         // No dependencies or devDependencies fields
       });
-      
+
       const dependencies = ["react@^18.0.0", "@types/node@^18.0.0"];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual(dependencies);
     });
 
@@ -55,29 +55,34 @@ describe("dependency-resolver", () => {
         name: "test-package",
         version: "1.0.0",
         dependencies: null,
-        devDependencies: null
+        devDependencies: null,
       });
-      
+
       const dependencies = ["react@^18.0.0", "@types/node@^18.0.0"];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual(dependencies);
     });
 
     it("should correctly parse regular packages with versions", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "react": "^18.2.0",
-          "lodash": "4.17.21"
+          react: "^18.2.0",
+          lodash: "4.17.21",
         },
         devDependencies: {
-          "typescript": "^5.0.0"
-        }
+          typescript: "^5.0.0",
+        },
       });
-      
-      const dependencies = ["react@^18.0.0", "lodash@^4.17.0", "typescript@^5.0.0", "missing@^1.0.0"];
+
+      const dependencies = [
+        "react@^18.0.0",
+        "lodash@^4.17.0",
+        "typescript@^5.0.0",
+        "missing@^1.0.0",
+      ];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual(["missing@^1.0.0"]);
     });
 
@@ -85,110 +90,110 @@ describe("dependency-resolver", () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
           "@types/node": "^18.15.0",
-          "@babel/core": "^7.20.0"
+          "@babel/core": "^7.20.0",
         },
         devDependencies: {
-          "@typescript-eslint/parser": "^5.57.0"
-        }
+          "@typescript-eslint/parser": "^5.57.0",
+        },
       });
-      
+
       const dependencies = [
         "@types/node@^18.0.0",
-        "@babel/core@^7.19.0", 
+        "@babel/core@^7.19.0",
         "@typescript-eslint/parser@^5.50.0",
-        "@missing/package@^1.0.0"
+        "@missing/package@^1.0.0",
       ];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual(["@missing/package@^1.0.0"]);
     });
 
     it("should handle scoped packages without versions", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "@types/node": "^18.15.0"
-        }
+          "@types/node": "^18.15.0",
+        },
       });
-      
+
       const dependencies = ["@types/node", "@missing/package"];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual(["@missing/package"]);
     });
 
     it("should handle regular packages without versions", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "react": "^18.2.0"
-        }
+          react: "^18.2.0",
+        },
       });
-      
+
       const dependencies = ["react", "missing"];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual(["missing"]);
     });
 
     it("should handle complex scoped package names with multiple slashes", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "@org/sub/package": "^1.0.0"
-        }
+          "@org/sub/package": "^1.0.0",
+        },
       });
-      
+
       const dependencies = ["@org/sub/package@^1.0.0"];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual([]);
     });
 
     it("should handle version ranges and prefixes correctly", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "react": "^18.2.0",
-          "lodash": "~4.17.21",
-          "axios": ">=1.0.0",
-          "moment": "2.29.4"
-        }
+          react: "^18.2.0",
+          lodash: "~4.17.21",
+          axios: ">=1.0.0",
+          moment: "2.29.4",
+        },
       });
-      
+
       const dependencies = [
-        "react@^18.0.0",    // Should satisfy ^18.2.0
-        "lodash@^4.17.0",   // Should satisfy ~4.17.21
-        "axios@^1.0.0",     // Should satisfy >=1.0.0
-        "moment@^2.29.0"    // Should satisfy 2.29.4
+        "react@^18.0.0", // Should satisfy ^18.2.0
+        "lodash@^4.17.0", // Should satisfy ~4.17.21
+        "axios@^1.0.0", // Should satisfy >=1.0.0
+        "moment@^2.29.0", // Should satisfy 2.29.4
       ];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual([]);
     });
 
     it("should require installation when versions don't satisfy", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "react": "^17.0.0",  // Doesn't satisfy ^18.0.0
-          "lodash": "^3.0.0"   // Doesn't satisfy ^4.0.0
-        }
+          react: "^17.0.0", // Doesn't satisfy ^18.0.0
+          lodash: "^3.0.0", // Doesn't satisfy ^4.0.0
+        },
       });
-      
+
       const dependencies = ["react@^18.0.0", "lodash@^4.0.0"];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual(["react@^18.0.0", "lodash@^4.0.0"]);
     });
 
     it("should handle malformed version strings gracefully", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "react": "invalid-version",
-          "lodash": "file:../local-package",
-          "axios": "git+https://github.com/axios/axios.git"
-        }
+          react: "invalid-version",
+          lodash: "file:../local-package",
+          axios: "git+https://github.com/axios/axios.git",
+        },
       });
-      
+
       const dependencies = ["react@^18.0.0", "lodash@^4.0.0", "axios@^1.0.0"];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       // All should be marked for installation due to semver comparison failures
       expect(result).toEqual(["react@^18.0.0", "lodash@^4.0.0", "axios@^1.0.0"]);
     });
@@ -196,9 +201,9 @@ describe("dependency-resolver", () => {
     it("should handle empty dependency arrays", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {},
-        devDependencies: {}
+        devDependencies: {},
       });
-      
+
       const result = await filterUninstalledDependencies([]);
       expect(result).toEqual([]);
     });
@@ -206,74 +211,69 @@ describe("dependency-resolver", () => {
     it("should handle edge case scoped packages with @ in the middle", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "@scope/name": "^1.0.0"
-        }
+          "@scope/name": "^1.0.0",
+        },
       });
-      
+
       // Test various edge cases with @ placement
       const dependencies = [
-        "@scope/name@^1.0.0",           // Normal case - should be satisfied
+        "@scope/name@^1.0.0", // Normal case - should be satisfied
         "@scope/name@with@symbols@^2.0.0", // Multiple @ symbols - should need installation
-        "@scope/name",                   // No version - should be satisfied (no version check)
+        "@scope/name", // No version - should be satisfied (no version check)
       ];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       // Only the one with multiple @ symbols should need installation
       // The package without version (@scope/name) should be satisfied since it exists
-      expect(result).toEqual([
-        "@scope/name@with@symbols@^2.0.0"
-      ]);
+      expect(result).toEqual(["@scope/name@with@symbols@^2.0.0"]);
     });
 
     it("should handle packages with pre-release versions", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "react": "18.0.0-beta.1",
-          "@types/node": "18.0.0-alpha.2"
-        }
+          react: "18.0.0-beta.1",
+          "@types/node": "18.0.0-alpha.2",
+        },
       });
-      
-      const dependencies = [
-        "react@^18.0.0-beta.0",
-        "@types/node@^18.0.0-alpha.1"
-      ];
+
+      const dependencies = ["react@^18.0.0-beta.0", "@types/node@^18.0.0-alpha.1"];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual([]);
     });
 
     it("should handle mixed dependencies and devDependencies", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "react": "^18.0.0"
+          react: "^18.0.0",
         },
         devDependencies: {
           "@types/react": "^18.0.0",
-          "typescript": "^5.0.0"
-        }
+          typescript: "^5.0.0",
+        },
       });
-      
+
       const dependencies = [
         "react@^18.0.0",
-        "@types/react@^18.0.0", 
+        "@types/react@^18.0.0",
         "typescript@^5.0.0",
-        "missing@^1.0.0"
+        "missing@^1.0.0",
       ];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual(["missing@^1.0.0"]);
     });
 
     it("should handle packages with build metadata in versions", async () => {
       mockReadJsonFile.mockResolvedValue({
         dependencies: {
-          "react": "18.0.0+build.123"
-        }
+          react: "18.0.0+build.123",
+        },
       });
-      
+
       const dependencies = ["react@^18.0.0"];
       const result = await filterUninstalledDependencies(dependencies);
-      
+
       expect(result).toEqual([]);
     });
   });

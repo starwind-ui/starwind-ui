@@ -1,6 +1,6 @@
 import Sheet from "./Sheet.astro";
 import SheetClose from "./SheetClose.astro";
-import SheetContent, { sheetContent, sheetCloseButton } from "./SheetContent.astro";
+import SheetContent, { sheetCloseButton, sheetContent } from "./SheetContent.astro";
 import SheetDescription, { sheetDescription } from "./SheetDescription.astro";
 import SheetFooter, { sheetFooter } from "./SheetFooter.astro";
 import SheetHeader, { sheetHeader } from "./SheetHeader.astro";

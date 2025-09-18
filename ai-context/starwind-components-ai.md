@@ -79,17 +79,19 @@ packages/core/src/components/[component-name]/
 ### TypeScript Patterns & Best Practices
 
 ### ❌ **AVOID** - React-style TypeScript patterns
+
 ```typescript
 // DON'T use these patterns in Astro components:
 export interface Props {
   class?: string;
-  [key: string]: any;  // ❌ Never use this
+  [key: string]: any; // ❌ Never use this
 }
 
 const { class: className, ...props } = Astro.props;
 ```
 
 ### ✅ **CORRECT** - Astro TypeScript patterns
+
 ```typescript
 // Use proper HTMLAttributes with specific element types:
 import type { HTMLAttributes } from "astro/types";
@@ -103,15 +105,17 @@ const { class: className, variant = "default", ...rest } = Astro.props;
 ```
 
 ### Component-Specific Type Examples
+
 ```typescript
 // For different HTML elements:
-type Props = HTMLAttributes<"button"> & { asChild?: boolean; };  // Buttons
-type Props = HTMLAttributes<"div"> & { side?: "left" | "right"; }; // Containers  
-type Props = HTMLAttributes<"h2">;  // Headings
-type Props = HTMLAttributes<"p">;   // Paragraphs
+type Props = HTMLAttributes<"button"> & { asChild?: boolean }; // Buttons
+type Props = HTMLAttributes<"div"> & { side?: "left" | "right" }; // Containers
+type Props = HTMLAttributes<"h2">; // Headings
+type Props = HTMLAttributes<"p">; // Paragraphs
 ```
 
 ### AsChild Pattern Implementation
+
 ```astro
 ---
 import type { HTMLAttributes } from "astro/types";
@@ -130,11 +134,7 @@ if (Astro.slots.has("default")) {
 
 {
   asChild && hasChildren ? (
-    <div
-      class:list={["component-class", className]}
-      data-slot="component-slot"
-      data-as-child
-    >
+    <div class:list={["component-class", className]} data-slot="component-slot" data-as-child>
       <slot />
     </div>
   ) : (

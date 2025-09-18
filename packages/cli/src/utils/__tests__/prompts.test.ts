@@ -21,7 +21,9 @@ const mockResolveAllStarwindDependencies = vi.mocked(
   dependencyResolver.resolveAllStarwindDependencies,
 );
 const mockSeparateDependencies = vi.mocked(dependencyResolver.separateDependencies);
-const mockFilterUninstalledDependencies = vi.mocked(dependencyResolver.filterUninstalledDependencies);
+const mockFilterUninstalledDependencies = vi.mocked(
+  dependencyResolver.filterUninstalledDependencies,
+);
 const mockGetAllComponents = vi.mocked(registry.getAllComponents);
 
 describe("prompts", () => {
