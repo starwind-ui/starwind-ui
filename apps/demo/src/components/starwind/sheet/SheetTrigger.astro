@@ -8,6 +8,6 @@ type Props = ComponentProps<typeof DialogTrigger>;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<DialogTrigger class:list={[className]} data-slot="sheet-trigger" {...rest}>
+<DialogTrigger class:list={["starwind-sheet-trigger", className]} {...rest}>
   <slot />
 </DialogTrigger>

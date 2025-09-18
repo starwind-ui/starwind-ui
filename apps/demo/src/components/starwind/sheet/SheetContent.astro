@@ -14,7 +14,7 @@ type Props = HTMLAttributes<"dialog"> & {
   animationDuration?: number;
 };
 
-const { side = "right", class: className, animationDuration = 200, ...rest } = Astro.props;
+const { side = "right", class: className, animationDuration = 300, ...rest } = Astro.props;
 
 export const dialogBackdrop = tv({
   base: [
