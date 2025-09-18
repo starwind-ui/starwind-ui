@@ -4,7 +4,6 @@ import SheetContent, { sheetContent, sheetCloseButton } from "./SheetContent.ast
 import SheetDescription, { sheetDescription } from "./SheetDescription.astro";
 import SheetFooter, { sheetFooter } from "./SheetFooter.astro";
 import SheetHeader, { sheetHeader } from "./SheetHeader.astro";
-import SheetOverlay, { sheetOverlay } from "./SheetOverlay.astro";
 import SheetTitle, { sheetTitle } from "./SheetTitle.astro";
 import SheetTrigger from "./SheetTrigger.astro";
 
@@ -14,7 +13,6 @@ const SheetVariants = {
   sheetDescription,
   sheetFooter,
   sheetHeader,
-  sheetOverlay,
   sheetTitle,
 };
 
@@ -25,7 +23,6 @@ export {
   SheetDescription,
   SheetFooter,
   SheetHeader,
-  SheetOverlay,
   SheetTitle,
   SheetTrigger,
   SheetVariants,
@@ -35,7 +32,6 @@ export default {
   Root: Sheet,
   Trigger: SheetTrigger,
   Content: SheetContent,
-  Overlay: SheetOverlay,
   Header: SheetHeader,
   Footer: SheetFooter,
   Title: SheetTitle,

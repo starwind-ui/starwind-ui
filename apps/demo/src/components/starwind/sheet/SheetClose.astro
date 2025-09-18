@@ -1,68 +1,13 @@
 ---
-import type { HTMLAttributes } from "astro/types";
+import type { ComponentProps } from "astro/types";
 
-type Props = HTMLAttributes<"button"> & {
-  /**
-   * When true, the component will render its child element with a simple wrapper instead of a button component
-   */
-  asChild?: boolean;
-};
+import { DialogClose } from "@/components/starwind/dialog";
 
-const { class: className, asChild = false, ...rest } = Astro.props;
+type Props = ComponentProps<typeof DialogClose>;
 
-// Get the first child element if asChild is true
-let hasChildren = false;
-if (Astro.slots.has("default")) {
-  hasChildren = true;
-}
+const { class: className, ...rest } = Astro.props;
 ---
 
-{
-  asChild && hasChildren ? (
-    <div
-      class:list={["starwind-sheet-close", className]}
-      data-slot="sheet-close"
-      data-as-child
-    >
-      <slot />
-    </div>
-  ) : (
-    <button
-      type="button"
-      class:list={["starwind-sheet-close", className]}
-      data-slot="sheet-close"
-      {...rest}
-    >
-      <slot />
-    </button>
-  )
-}
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const closeButtons = document.querySelectorAll('.starwind-sheet-close');
-    
-    closeButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const sheet = button.closest('.starwind-sheet');
-        if (sheet) {
-          sheet.dispatchEvent(new CustomEvent('sheet:close'));
-        }
-      });
-    });
-  });
-
-  // Handle view transitions
-  document.addEventListener('astro:after-swap', () => {
-    const closeButtons = document.querySelectorAll('.starwind-sheet-close');
-    
-    closeButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const sheet = button.closest('.starwind-sheet');
-        if (sheet) {
-          sheet.dispatchEvent(new CustomEvent('sheet:close'));
-        }
-      });
-    });
-  });
-</script>
+<DialogClose class:list={[className]} data-slot="sheet-close" {...rest}>
+  <slot />
+</DialogClose>

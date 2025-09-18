@@ -3,18 +3,34 @@ import { tv } from "tailwind-variants";
 import X from "@tabler/icons/outline/x.svg";
 import type { HTMLAttributes } from "astro/types";
 
-type Props = HTMLAttributes<"div"> & {
+type Props = HTMLAttributes<"dialog"> & {
+  /**
+   * Side of the page the sheet opens from
+   */
   side?: "top" | "right" | "bottom" | "left";
+  /**
+   * Open and close animation duration in milliseconds
+   */
+  animationDuration?: number;
 };
 
-const { side = "right", class: className, ...rest } = Astro.props;
+const { side = "right", class: className, animationDuration = 200, ...rest } = Astro.props;
+
+export const dialogBackdrop = tv({
+  base: [
+    "starwind-dialog-backdrop fixed inset-0 top-0 left-0 z-50 hidden h-screen w-screen bg-black/80",
+    "data-[state=open]:animate-in fade-in",
+    "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out",
+    // "data-[state=closed]:duration-300 data-[state=open]:duration-500",
+  ],
+});
 
 export const sheetContent = tv({
   base: [
-    "starwind-sheet-content",
+    "starwind-dialog-content",
     "bg-background fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out",
-    "data-[state=open]:animate-in data-[state=closed]:animate-out",
-    "data-[state=closed]:duration-300 data-[state=open]:duration-500",
+    "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards",
+    // "data-[state=closed]:duration-300 data-[state=open]:duration-500",
   ],
   variants: {
     side: {
@@ -43,84 +59,39 @@ export const sheetContent = tv({
 
 export const sheetCloseButton = tv({
   base: [
-    "starwind-sheet-close",
+    "starwind-dialog-close",
     "ring-offset-background focus:ring-ring data-[state=open]:bg-secondary",
-    "absolute top-4 right-4 rounded-xs opacity-70 transition-opacity",
-    "hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
+    "absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100",
+    "focus-visible:outline-outline focus-visible:outline-2 focus-visible:outline-offset-2",
     "disabled:pointer-events-none",
   ],
 });
 ---
 
-<div class="starwind-sheet-content">
-  <!-- Overlay will be inserted here by SheetOverlay component -->
-  <div
-    class={sheetContent({ side, class: className })}
-    data-slot="sheet-content"
-    data-side={side}
-    {...rest}
-  >
-    <slot />
-    <button class={sheetCloseButton()} data-slot="sheet-close">
-      <X class="size-4" />
-      <span class="sr-only">Close</span>
-    </button>
-  </div>
+<!-- dialog overlay -->
+<div
+  class={dialogBackdrop()}
+  data-state="closed"
+  data-slot="dialog-backdrop"
+  style={{ animationDuration: `${animationDuration}ms` }}
+>
 </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const contents = document.querySelectorAll(".starwind-sheet-content");
-
-    contents.forEach((content) => {
-      // Handle close button clicks
-      const closeButton = content.querySelector(".starwind-sheet-close");
-      if (closeButton) {
-        closeButton.addEventListener("click", () => {
-          const sheet = content.closest(".starwind-sheet");
-          if (sheet) {
-            sheet.dispatchEvent(new CustomEvent("sheet:close"));
-          }
-        });
-      }
-
-      // Handle escape key
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          const sheet = content.closest(".starwind-sheet");
-          if (sheet && sheet.dataset.state === "open") {
-            sheet.dispatchEvent(new CustomEvent("sheet:close"));
-          }
-        }
-      });
-    });
-  });
-
-  // Handle view transitions
-  document.addEventListener("astro:after-swap", () => {
-    const contents = document.querySelectorAll(".starwind-sheet-content");
-
-    contents.forEach((content) => {
-      // Handle close button clicks
-      const closeButton = content.querySelector(".starwind-sheet-close");
-      if (closeButton) {
-        closeButton.addEventListener("click", () => {
-          const sheet = content.closest(".starwind-sheet");
-          if (sheet) {
-            sheet.dispatchEvent(new CustomEvent("sheet:close"));
-          }
-        });
-      }
-
-      // Handle escape key
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          const sheet = content.closest(".starwind-sheet");
-          if (sheet && sheet.dataset.state === "open") {
-            sheet.dispatchEvent(new CustomEvent("sheet:close"));
-          }
-        }
-      });
-    });
-  });
-</script>
+<dialog
+  class={sheetContent({ side, class: className })}
+  data-state="closed"
+  data-slot="sheet-content"
+  {...rest}
+  style={{ animationDuration: `${animationDuration}ms` }}
+>
+  <slot />
+  <button
+    type="button"
+    class={sheetCloseButton()}
+    data-slot="sheet-close"
+    aria-label="Close dialog"
+  >
+    <X class="size-5" />
+    <span class="sr-only">Close</span>
+  </button>
+</dialog>

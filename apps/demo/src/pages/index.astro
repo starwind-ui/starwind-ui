@@ -106,6 +106,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/starwind/select";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/starwind/sheet";
 import { Skeleton } from "@/components/starwind/skeleton";
 import { Switch } from "@/components/starwind/switch";
 import {
@@ -128,6 +138,40 @@ import Layout from "@/layouts/Layout.astro";
   description="A collection of accessible UI components built with Astro"
 >
   <div class="container mx-auto px-4 pb-20">
+    <!-- Sheet Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Sheet Demo</h2>
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline">Open Sheet</Button>
+        </SheetTrigger>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Edit profile</SheetTitle>
+            <SheetDescription>
+              Make changes to your profile here. Click save when you're done.
+            </SheetDescription>
+          </SheetHeader>
+          <div class="grid flex-1 auto-rows-min gap-6 px-4">
+            <div class="grid gap-3">
+              <Label for="sheet-demo-name">Name</Label>
+              <Input id="sheet-demo-name" value="Pedro Duarte" />
+            </div>
+            <div class="grid gap-3">
+              <Label for="sheet-demo-username">Username</Label>
+              <Input id="sheet-demo-username" value="@peduarte" />
+            </div>
+          </div>
+          <SheetFooter>
+            <Button type="submit">Save changes</Button>
+            <SheetClose asChild>
+              <Button variant="outline">Close</Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </section>
+
     <CarouselDemos />
     <CarouselPluginDemo />
 

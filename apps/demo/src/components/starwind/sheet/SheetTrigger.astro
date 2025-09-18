@@ -1,74 +1,13 @@
 ---
-import type { HTMLAttributes } from "astro/types";
+import type { ComponentProps } from "astro/types";
 
-type Props = HTMLAttributes<"button"> & {
-  /**
-   * When true, the component will render its child element with a simple wrapper instead of a button component
-   */
-  asChild?: boolean;
-};
+import { DialogTrigger } from "@/components/starwind/dialog";
 
-const { class: className, asChild = false, ...rest } = Astro.props;
+type Props = ComponentProps<typeof DialogTrigger>;
 
-// Get the first child element if asChild is true
-let hasChildren = false;
-if (Astro.slots.has("default")) {
-  hasChildren = true;
-}
+const { class: className, ...rest } = Astro.props;
 ---
 
-{
-  asChild && hasChildren ? (
-    <div
-      class:list={["starwind-sheet-trigger", className]}
-      data-slot="sheet-trigger"
-      data-as-child
-    >
-      <slot />
-    </div>
-  ) : (
-    <button
-      type="button"
-      class:list={["starwind-sheet-trigger", className]}
-      data-slot="sheet-trigger"
-      {...rest}
-    >
-      <slot />
-    </button>
-  )
-}
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const triggers = document.querySelectorAll('.starwind-sheet-trigger');
-    
-    triggers.forEach(trigger => {
-      trigger.addEventListener('click', (e) => {
-        e.preventDefault();
-        
-        // Find the parent sheet
-        const sheet = trigger.closest('.starwind-sheet');
-        if (sheet) {
-          sheet.dispatchEvent(new CustomEvent('sheet:toggle'));
-        }
-      });
-    });
-  });
-
-  // Handle view transitions
-  document.addEventListener('astro:after-swap', () => {
-    const triggers = document.querySelectorAll('.starwind-sheet-trigger');
-    
-    triggers.forEach(trigger => {
-      trigger.addEventListener('click', (e) => {
-        e.preventDefault();
-        
-        // Find the parent sheet
-        const sheet = trigger.closest('.starwind-sheet');
-        if (sheet) {
-          sheet.dispatchEvent(new CustomEvent('sheet:toggle'));
-        }
-      });
-    });
-  });
-</script>
+<DialogTrigger class:list={[className]} data-slot="sheet-trigger" {...rest}>
+  <slot />
+</DialogTrigger>
