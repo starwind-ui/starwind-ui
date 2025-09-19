@@ -39,6 +39,7 @@ const { class: className, ...rest } = Astro.props;
       }
 
       // animationDuration is set with inline styles through passed prop to DialogContent
+      // if no animationDuration, check data-close-duration
       const animationDurationString = this.dialog.style.animationDuration;
       if (animationDurationString.endsWith("ms")) {
         this.animationDuration = parseFloat(animationDurationString);
@@ -46,7 +47,9 @@ const { class: className, ...rest } = Astro.props;
         // using something like @playform/compress might optimize to use "s" instead of "ms"
         this.animationDuration = parseFloat(animationDurationString) * 1000;
       } else {
-        this.animationDuration = 200;
+        this.animationDuration = this.dialog.dataset.closeDuration
+          ? parseFloat(this.dialog.dataset.closeDuration)
+          : 200;
       }
 
       // Find internal triggers and handle them
