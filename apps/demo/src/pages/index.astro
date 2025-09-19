@@ -141,35 +141,127 @@ import Layout from "@/layouts/Layout.astro";
     <!-- Sheet Demo -->
     <section class="mx-auto mt-10 max-w-lg">
       <h2 class="mb-4 text-2xl font-bold">Sheet Demo</h2>
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="outline">Open Sheet</Button>
-        </SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Edit profile</SheetTitle>
-            <SheetDescription>
-              Make changes to your profile here. Click save when you're done.
-            </SheetDescription>
-          </SheetHeader>
-          <div class="grid flex-1 auto-rows-min gap-6 px-4">
-            <div class="grid gap-3">
-              <Label for="sheet-demo-name">Name</Label>
-              <Input id="sheet-demo-name" value="Pedro Duarte" />
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Top Sheet -->
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline">Open Top Sheet</Button>
+          </SheetTrigger>
+          <SheetContent side="top">
+            <SheetHeader>
+              <SheetTitle>Top Sheet</SheetTitle>
+              <SheetDescription> This sheet opens from the top of the screen. </SheetDescription>
+            </SheetHeader>
+            <div class="grid flex-1 auto-rows-min gap-6 px-4">
+              <div class="grid gap-3">
+                <Label for="top-sheet-name">Name</Label>
+                <Input id="top-sheet-name" value="Pedro Duarte" />
+              </div>
+              <div class="grid gap-3">
+                <Label for="top-sheet-username">Username</Label>
+                <Input id="top-sheet-username" value="@peduarte" />
+              </div>
             </div>
-            <div class="grid gap-3">
-              <Label for="sheet-demo-username">Username</Label>
-              <Input id="sheet-demo-username" value="@peduarte" />
+            <SheetFooter>
+              <Button variant="default">Save changes</Button>
+              <SheetClose asChild>
+                <Button variant="outline">Close</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+
+        <!-- Right Sheet -->
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline">Open Right Sheet</Button>
+          </SheetTrigger>
+          <SheetContent side="right">
+            <SheetHeader>
+              <SheetTitle>Right Sheet</SheetTitle>
+              <SheetDescription>
+                This sheet opens from the right side of the screen.
+              </SheetDescription>
+            </SheetHeader>
+            <div class="grid flex-1 auto-rows-min gap-6 px-4">
+              <div class="grid gap-3">
+                <Label for="right-sheet-name">Name</Label>
+                <Input id="right-sheet-name" value="Pedro Duarte" />
+              </div>
+              <div class="grid gap-3">
+                <Label for="right-sheet-username">Username</Label>
+                <Input id="right-sheet-username" value="@peduarte" />
+              </div>
             </div>
-          </div>
-          <SheetFooter>
-            <Button type="submit">Save changes</Button>
-            <SheetClose asChild>
-              <Button variant="outline">Close</Button>
-            </SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+            <SheetFooter>
+              <Button variant="default">Save changes</Button>
+              <SheetClose asChild>
+                <Button variant="outline">Close</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+
+        <!-- Bottom Sheet -->
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline">Open Bottom Sheet</Button>
+          </SheetTrigger>
+          <SheetContent side="bottom">
+            <SheetHeader>
+              <SheetTitle>Bottom Sheet</SheetTitle>
+              <SheetDescription> This sheet opens from the bottom of the screen. </SheetDescription>
+            </SheetHeader>
+            <div class="grid flex-1 auto-rows-min gap-6 px-4">
+              <div class="grid gap-3">
+                <Label for="bottom-sheet-name">Name</Label>
+                <Input id="bottom-sheet-name" value="Pedro Duarte" />
+              </div>
+              <div class="grid gap-3">
+                <Label for="bottom-sheet-username">Username</Label>
+                <Input id="bottom-sheet-username" value="@peduarte" />
+              </div>
+            </div>
+            <SheetFooter>
+              <Button variant="default">Save changes</Button>
+              <SheetClose asChild>
+                <Button variant="outline">Close</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+
+        <!-- Left Sheet -->
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline">Open Left Sheet</Button>
+          </SheetTrigger>
+          <SheetContent side="left">
+            <SheetHeader>
+              <SheetTitle>Left Sheet</SheetTitle>
+              <SheetDescription>
+                This sheet opens from the left side of the screen.
+              </SheetDescription>
+            </SheetHeader>
+            <div class="grid flex-1 auto-rows-min gap-6 px-4">
+              <div class="grid gap-3">
+                <Label for="left-sheet-name">Name</Label>
+                <Input id="left-sheet-name" value="Pedro Duarte" />
+              </div>
+              <div class="grid gap-3">
+                <Label for="left-sheet-username">Username</Label>
+                <Input id="left-sheet-username" value="@peduarte" />
+              </div>
+            </div>
+            <SheetFooter>
+              <Button variant="default">Save changes</Button>
+              <SheetClose asChild>
+                <Button variant="outline">Close</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      </div>
     </section>
 
     <CarouselDemos />
