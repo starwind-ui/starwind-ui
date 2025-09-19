@@ -30,6 +30,12 @@
     { "name": "progress", "type": "component", "version": "1.1.0", "dependencies": [] },
     { "name": "radio-group", "type": "component", "version": "1.1.0", "dependencies": [] },
     { "name": "select", "type": "component", "version": "1.5.0", "dependencies": [] },
+    {
+      "name": "sheet",
+      "type": "component",
+      "version": "1.0.0",
+      "dependencies": ["@starwind-ui/core/dialog@^1.3.0"]
+    },
     { "name": "skeleton", "type": "component", "version": "1.1.0", "dependencies": [] },
     { "name": "switch", "type": "component", "version": "1.2.0", "dependencies": [] },
     { "name": "table", "type": "component", "version": "1.1.0", "dependencies": [] },
