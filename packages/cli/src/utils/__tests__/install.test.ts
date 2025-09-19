@@ -20,7 +20,9 @@ const mockCopyComponent = vi.mocked(component.copyComponent);
 const mockGetConfig = vi.mocked(config.getConfig);
 const mockUpdateConfig = vi.mocked(config.updateConfig);
 const mockSeparateDependencies = vi.mocked(dependencyResolver.separateDependencies);
-const mockFilterUninstalledDependencies = vi.mocked(dependencyResolver.filterUninstalledDependencies);
+const mockFilterUninstalledDependencies = vi.mocked(
+  dependencyResolver.filterUninstalledDependencies,
+);
 const mockInstallDependencies = vi.mocked(packageManager.installDependencies);
 const mockRequestPackageManager = vi.mocked(packageManager.requestPackageManager);
 const mockConfirmInstall = vi.mocked(prompts.confirmInstall);

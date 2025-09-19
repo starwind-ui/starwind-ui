@@ -1,0 +1,16 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+
+export const sheetFooter = tv({
+  base: ["mt-auto flex flex-col gap-2 p-4"],
+});
+---
+
+<div class={sheetFooter({ class: className })} data-slot="sheet-footer" {...rest}>
+  <slot />
+</div>

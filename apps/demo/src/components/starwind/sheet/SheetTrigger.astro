@@ -1,0 +1,13 @@
+---
+import type { ComponentProps } from "astro/types";
+
+import { DialogTrigger } from "@/components/starwind/dialog";
+
+type Props = ComponentProps<typeof DialogTrigger>;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<DialogTrigger class:list={["starwind-sheet-trigger", className]} {...rest}>
+  <slot />
+</DialogTrigger>

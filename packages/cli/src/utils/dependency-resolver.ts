@@ -53,9 +53,9 @@ export async function filterUninstalledDependencies(dependencies: string[]): Pro
       } else if (requiredVersion && requiredVersion !== "*") {
         // Check if installed version satisfies required version
         // Clean the installed version using semver.clean or manual prefix removal
-        const cleanInstalledVersion = semver.clean(installedVersion) || 
-          installedVersion.replace(/^[\^~>=<= ]+/, "");
-        
+        const cleanInstalledVersion =
+          semver.clean(installedVersion) || installedVersion.replace(/^[\^~>=<= ]+/, "");
+
         try {
           if (!semver.satisfies(cleanInstalledVersion, requiredVersion)) {
             dependenciesToInstall.push(dep);

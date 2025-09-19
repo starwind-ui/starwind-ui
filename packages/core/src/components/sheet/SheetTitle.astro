@@ -1,0 +1,16 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"h2">;
+
+const { class: className, ...rest } = Astro.props;
+
+export const sheetTitle = tv({
+  base: ["starwind-sheet-title", "text-foreground font-semibold"],
+});
+---
+
+<h2 class={sheetTitle({ class: className })} data-slot="sheet-title" {...rest}>
+  <slot />
+</h2>
