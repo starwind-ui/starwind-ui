@@ -19,7 +19,7 @@ export const selectTrigger = tv({
   base: [
     "starwind-select-trigger",
     "border-input dark:bg-input/30 text-foreground ring-offset-background flex h-11 items-center justify-between rounded-md border bg-transparent px-3 py-2 shadow-xs",
-    "focus:outline-outline focus:outline-2 focus:outline-offset-2",
+    "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
     "disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
   ],
 });
