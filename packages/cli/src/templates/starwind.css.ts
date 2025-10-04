@@ -88,7 +88,7 @@ export const tailwindConfig = `@import "tailwindcss";
     --error-foreground: var(--color-neutral-50);
     --border: var(--color-neutral-200);
     --input: var(--color-neutral-200);
-    --outline: var(--color-blue-600);
+    --outline: var(--color-neutral-400);
     --radius: 0.625rem;
   }
 
@@ -117,14 +117,11 @@ export const tailwindConfig = `@import "tailwindcss";
     --error-foreground: var(--color-neutral-50);
     --border: --alpha(var(--color-neutral-50) / 10%);
     --input: --alpha(var(--color-neutral-50) / 15%);
-    --outline: var(--color-blue-600);
+    --outline: var(--color-neutral-500);
   }
 
 	* {
 		@apply border-border;
-	}
-	*:focus-visible {
-		@apply outline-outline;
 	}
 	html {
 		@apply bg-background text-foreground scheme-light dark:scheme-dark;

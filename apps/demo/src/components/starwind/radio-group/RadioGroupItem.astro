@@ -55,25 +55,26 @@ export const radioControl = tv({
     "starwind-radio-control",
     "border-input bg-background dark:bg-input/30",
     "peer-focus-visible:outline-2 peer-focus-visible:outline-offset-1 peer-focus-visible:transition-none",
+    "outline-none peer-focus-visible:ring-3",
     "absolute inset-0 rounded-full border shadow-xs",
-    "starwind-transition-colors peer-checked:[&>svg]:opacity-100",
+    "transition-all peer-checked:[&>svg]:opacity-100",
     "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
     "flex items-center justify-center",
   ],
   variants: {
     variant: {
       default:
-        "peer-checked:border-foreground [&>svg]:fill-foreground peer-focus-visible:outline-outline",
+        "peer-checked:border-foreground [&>svg]:fill-foreground peer-focus-visible:ring-outline/50",
       primary:
-        "peer-checked:border-primary [&>svg]:fill-primary peer-focus-visible:outline-primary",
+        "peer-checked:border-primary [&>svg]:fill-primary peer-focus-visible:ring-primary/50",
       secondary:
-        "peer-checked:border-secondary [&>svg]:fill-secondary peer-focus-visible:outline-secondary",
-      info: "peer-checked:border-info [&>svg]:fill-info peer-focus-visible:outline-info",
+        "peer-checked:border-secondary [&>svg]:fill-secondary peer-focus-visible:ring-secondary/50",
+      info: "peer-checked:border-info [&>svg]:fill-info peer-focus-visible:ring-info/50",
       success:
-        "peer-checked:border-success [&>svg]:fill-success peer-focus-visible:outline-success",
+        "peer-checked:border-success [&>svg]:fill-success peer-focus-visible:ring-success/50",
       warning:
-        "peer-checked:border-warning [&>svg]:fill-warning peer-focus-visible:outline-warning",
-      error: "peer-checked:border-error [&>svg]:fill-error peer-focus-visible:outline-error",
+        "peer-checked:border-warning [&>svg]:fill-warning peer-focus-visible:ring-warning/50",
+      error: "peer-checked:border-error [&>svg]:fill-error peer-focus-visible:ring-error/50",
     },
   },
   defaultVariants: {

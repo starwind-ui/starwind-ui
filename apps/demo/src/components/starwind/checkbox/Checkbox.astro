@@ -15,8 +15,8 @@ export const checkbox = tv({
   slots: {
     base: "starwind-checkbox relative flex items-center space-x-2",
     input: [
-      "peer border-input bg-background dark:bg-input/30 starwind-transition-colors shrink-0 transform-gpu rounded-sm border",
-      "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:transition-none",
+      "peer border-input bg-background dark:bg-input/30 shrink-0 transform-gpu rounded-sm border",
+      "transition-all focus-visible:ring-3",
       "outline-0 focus:ring-0 focus:ring-offset-0",
       "not-disabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
     ],
@@ -35,28 +35,37 @@ export const checkbox = tv({
     },
     variant: {
       default: {
-        input: "checked:bg-foreground focus-visible:outline-outline",
+        input: "checked:bg-foreground focus-visible:ring-outline/50 focus-visible:border-outline",
         icon: "text-background",
       },
       primary: {
-        input: "checked:bg-primary focus-visible:outline-primary",
+        input:
+          "checked:bg-primary checked:border-primary focus-visible:ring-primary/50 focus-visible:border-primary",
         icon: "text-primary-foreground",
       },
       secondary: {
-        input: "checked:bg-secondary focus-visible:outline-secondary",
+        input:
+          "checked:bg-secondary checked:border-secondary focus-visible:ring-secondary/50 focus-visible:border-secondary",
         icon: "text-secondary-foreground",
       },
-      info: { input: "checked:bg-info focus-visible:outline-info", icon: "text-info-foreground" },
+      info: {
+        input:
+          "checked:bg-info checked:border-info focus-visible:ring-info/50 focus-visible:border-info",
+        icon: "text-info-foreground",
+      },
       success: {
-        input: "checked:bg-success focus-visible:outline-success",
+        input:
+          "checked:bg-success checked:border-success focus-visible:ring-success/50 focus-visible:border-success",
         icon: "text-success-foreground",
       },
       warning: {
-        input: "checked:bg-warning focus-visible:outline-warning",
+        input:
+          "checked:bg-warning checked:border-warning focus-visible:ring-warning/50 focus-visible:border-warning",
         icon: "text-warning-foreground",
       },
       error: {
-        input: "checked:bg-error focus-visible:outline-error",
+        input:
+          "checked:bg-error checked:border-error focus-visible:ring-error/50 focus-visible:border-error",
         icon: "text-error-foreground",
       },
     },

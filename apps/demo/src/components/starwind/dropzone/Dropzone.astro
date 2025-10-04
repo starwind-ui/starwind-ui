@@ -21,8 +21,8 @@ export const dropzone = tv({
     "starwind-dropzone",
     "relative flex w-full flex-col items-center justify-center gap-1 rounded-lg px-6 py-12 shadow-xs",
     "bg-background dark:bg-input/30 text-muted-foreground border-input cursor-pointer border border-dashed text-center text-sm",
-    "starwind-transition-colors data-[is-uploading=false]:hover:bg-muted/50 data-[drag-active=true]:bg-muted/50",
-    "focus-visible:outline-outline focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-offset-2",
+    "data-[is-uploading=false]:hover:bg-muted/50 data-[drag-active=true]:bg-muted/50 transition-all",
+    "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
   ],
 });
 ---
