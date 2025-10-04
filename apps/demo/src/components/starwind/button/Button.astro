@@ -25,9 +25,8 @@ export const button = tv({
       secondary:
         "bg-secondary text-secondary-foreground hover:bg-secondary/90 focus-visible:outline-secondary",
       outline:
-        "border-border hover:bg-border hover:text-foreground focus-visible:outline-outline border",
-      ghost:
-        "hover:bg-foreground/10 hover:text-foreground focus-visible:outline-outline bg-transparent",
+        "dark:border-input bg-background dark:bg-input/30 hover:bg-muted dark:hover:bg-input/50 hover:text-foreground focus-visible:outline-outline border shadow-xs",
+      ghost: "hover:bg-foreground/10 hover:text-foreground focus-visible:outline-outline",
       info: "bg-info text-info-foreground hover:bg-info/90 focus-visible:outline-info",
       success:
         "bg-success text-success-foreground hover:bg-success/90 focus-visible:outline-success",
@@ -39,7 +38,9 @@ export const button = tv({
       sm: "h-9 px-3 py-2 text-sm",
       md: "h-11 px-4 py-2 text-base",
       lg: "h-12 px-8 py-2 text-lg",
-      icon: "h-11 w-11",
+      icon: "size-11",
+      "icon-sm": "size-9",
+      "icon-lg": "size-12",
     },
   },
   defaultVariants: { variant: "default", size: "md" },

@@ -6,7 +6,7 @@ type Props = HTMLAttributes<"textarea"> & VariantProps<typeof textarea>;
 
 export const textarea = tv({
   base: [
-    "border-input bg-background text-foreground ring-offset-background min-h-10 w-full rounded-md border",
+    "border-input dark:bg-input/30 text-foreground ring-offset-background min-h-10 w-full rounded-md border bg-transparent shadow-xs",
     "focus:outline-outline focus:ring-0 focus:outline-2 focus:outline-offset-2",
     "file:text-foreground file:border-0 file:bg-transparent file:text-sm file:font-medium",
     "disabled:cursor-not-allowed disabled:opacity-50",
