@@ -130,14 +130,4 @@ export const tailwindConfig = `@import "tailwindcss";
 		@apply cursor-pointer;
 	}
 }
-
-@layer utilities {
-	/* transition-colors but without outline-color transition property */
-	.starwind-transition-colors {
-		transition-property: color, background-color, border-color, text-decoration-color, fill, stroke,
-			--tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
-		transition-timing-function: var(--default-transition-timing-function);
-		transition-duration: var(--default-transition-duration);
-	}
-}
 `;
