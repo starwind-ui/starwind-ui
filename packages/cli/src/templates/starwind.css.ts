@@ -64,11 +64,11 @@ export const tailwindConfig = `@import "tailwindcss";
 
 @layer base {
 	:root {
-		--background: var(--color-neutral-50);
+    --background: var(--color-white);
     --foreground: var(--color-neutral-950);
-    --card: var(--color-neutral-50);
+    --card: var(--color-white);
     --card-foreground: var(--color-neutral-950);
-    --popover: var(--color-neutral-50);
+    --popover: var(--color-white);
     --popover-foreground: var(--color-neutral-950);
     --primary: var(--color-blue-700);
     --primary-foreground: var(--color-neutral-50);
@@ -89,11 +89,11 @@ export const tailwindConfig = `@import "tailwindcss";
     --border: var(--color-neutral-200);
     --input: var(--color-neutral-200);
     --outline: var(--color-blue-600);
-		--radius: 0.625rem;
-	}
+    --radius: 0.625rem;
+  }
 
-	.dark {
-		--background: var(--color-neutral-950);
+  .dark {
+    --background: var(--color-neutral-950);
     --foreground: var(--color-neutral-50);
     --card: var(--color-neutral-900);
     --card-foreground: var(--color-neutral-50);
@@ -118,7 +118,7 @@ export const tailwindConfig = `@import "tailwindcss";
     --border: --alpha(var(--color-neutral-50) / 10%);
     --input: --alpha(var(--color-neutral-50) / 15%);
     --outline: var(--color-blue-600);
-	}
+  }
 
 	* {
 		@apply border-border;

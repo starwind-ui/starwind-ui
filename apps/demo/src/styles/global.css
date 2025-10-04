@@ -81,11 +81,11 @@
 
 @layer base {
   :root {
-    --background: var(--color-neutral-50);
+    --background: var(--color-white);
     --foreground: var(--color-neutral-950);
-    --card: var(--color-neutral-50);
+    --card: var(--color-white);
     --card-foreground: var(--color-neutral-950);
-    --popover: var(--color-neutral-50);
+    --popover: var(--color-white);
     --popover-foreground: var(--color-neutral-950);
     --primary: var(--color-blue-700);
     --primary-foreground: var(--color-neutral-50);
