@@ -80,29 +80,32 @@ import { ComponentName } from "@/components/starwind/component-name";
 
 Starwind UI includes the following components:
 
-- [Accordion](https://starwind.dev/docs/components/accordion/)
-- [Alert](https://starwind.dev/docs/components/alert/)
-- [Avatar](https://starwind.dev/docs/components/avatar/)
-- [Badge](https://starwind.dev/docs/components/badge/)
-- [Breadcrumb](https://starwind.dev/docs/components/breadcrumb/)
-- [Button](https://starwind.dev/docs/components/button/)
-- [Card](https://starwind.dev/docs/components/card/)
-- [Checkbox](https://starwind.dev/docs/components/checkbox/)
-- [Dialog](https://starwind.dev/docs/components/dialog/)
-- [Dropdown](https://starwind.dev/docs/components/dropdown/)
-- [Dropzone](https://starwind.dev/docs/components/dropzone/)
-- [Input](https://starwind.dev/docs/components/input/)
-- [Label](https://starwind.dev/docs/components/label/)
-- [Pagination](https://starwind.dev/docs/components/pagination/)
-- [Progress](https://starwind.dev/docs/components/progress/)
-- [Radio Group](https://starwind.dev/docs/components/radio-group/)
-- [Select](https://starwind.dev/docs/components/select/)
-- [Skeleton](https://starwind.dev/docs/components/skeleton/)
-- [Switch](https://starwind.dev/docs/components/switch/)
-- [Table](https://starwind.dev/docs/components/table/)
-- [Tabs](https://starwind.dev/docs/components/tabs/)
-- [Textarea](https://starwind.dev/docs/components/textarea/)
-- [Tooltip](https://starwind.dev/docs/components/tooltip/)
+- [Accordion](https://starwind.dev/docs/components/accordion)
+- [Alert](https://starwind.dev/docs/components/alert)
+- [Alert Dialog](https://starwind.dev/docs/components/alert-dialog)
+- [Avatar](https://starwind.dev/docs/components/avatar)
+- [Badge](https://starwind.dev/docs/components/badge)
+- [Breadcrumb](https://starwind.dev/docs/components/breadcrumb)
+- [Button](https://starwind.dev/docs/components/button)
+- [Card](https://starwind.dev/docs/components/card)
+- [Carousel](https://starwind.dev/docs/components/carousel)
+- [Checkbox](https://starwind.dev/docs/components/checkbox)
+- [Dialog](https://starwind.dev/docs/components/dialog)
+- [Dropdown](https://starwind.dev/docs/components/dropdown)
+- [Dropzone](https://starwind.dev/docs/components/dropzone)
+- [Input](https://starwind.dev/docs/components/input)
+- [Label](https://starwind.dev/docs/components/label)
+- [Pagination](https://starwind.dev/docs/components/pagination)
+- [Progress](https://starwind.dev/docs/components/progress)
+- [Radio Group](https://starwind.dev/docs/components/radio-group)
+- [Select](https://starwind.dev/docs/components/select)
+- [Sheet](https://starwind.dev/docs/components/sheet)
+- [Skeleton](https://starwind.dev/docs/components/skeleton)
+- [Switch](https://starwind.dev/docs/components/switch)
+- [Table](https://starwind.dev/docs/components/table)
+- [Tabs](https://starwind.dev/docs/components/tabs)
+- [Textarea](https://starwind.dev/docs/components/textarea)
+- [Tooltip](https://starwind.dev/docs/components/tooltip)
 
 ## Component Architecture Patterns
 
@@ -306,6 +309,50 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert
 </Alert>
 ```
 
+### Alert Dialog
+
+- **Documentation**: https://starwind.dev/docs/components/alert-dialog
+- **Import pattern**: `import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from "@/components/starwind/alert-dialog";`
+- **Key props**:
+  - `for?: string` - Used on `AlertDialogTrigger`. Optional ID of the dialog to trigger
+- **Example usage**:
+
+```astro
+---
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/starwind/alert-dialog";
+import { Button } from "@/components/starwind/button";
+---
+
+<AlertDialog>
+  <AlertDialogTrigger asChild>
+    <Button variant="outline">Show Alert Dialog</Button>
+  </AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+      <AlertDialogDescription>
+        This action cannot be undone. This will permanently delete your account and remove your data
+        from our servers.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction>Continue</AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+```
+
 ### Avatar
 
 - **Documentation**: https://starwind.dev/docs/components/avatar
@@ -427,6 +474,49 @@ import { Button } from "@/components/starwind/button";
     <Button>Action</Button>
   </CardFooter>
 </Card>
+```
+
+### Carousel
+
+- **Documentation**: https://starwind.dev/docs/components/carousel
+- **Import pattern**: `import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/starwind/carousel";`
+- **Key props**:
+  - `orientation?: "horizontal" | "vertical"` - Carousel orientation (default: "horizontal")
+  - `opts?: EmblaOptionsType` - Embla Carousel options object
+  - `autoInit?: boolean` - Whether to automatically initialize the carousel (default: true)
+- **Example usage**:
+
+```astro
+---
+import { Card, CardContent } from "@/components/starwind/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/starwind/carousel";
+---
+
+<Carousel opts={{ align: "start" }} class="mx-auto w-full max-w-xs">
+  <CarouselContent>
+    {
+      Array.from({ length: 5 }).map((_, index) => (
+        <CarouselItem>
+          <div class="p-1">
+            <Card>
+              <CardContent class="flex aspect-square items-center justify-center p-6">
+                <span class="text-4xl font-semibold">{index + 1}</span>
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+      ))
+    }
+  </CarouselContent>
+  <CarouselPrevious />
+  <CarouselNext />
+</Carousel>
 ```
 
 ### Checkbox
@@ -763,6 +853,84 @@ import {
     </SelectGroup>
   </SelectContent>
 </Select>
+```
+
+### Sheet
+
+- **Documentation**: https://starwind.dev/docs/components/sheet
+- **Description**: A slide-out panel component that extends from any edge of the screen with smooth animations. Built on top of the Dialog component.
+- **Import pattern**: `import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/starwind/sheet";`
+- **Key props**:
+  - `<Sheet>` (Root component)
+    - Inherits all props from the Dialog component
+  - `<SheetTrigger>` (Button that opens the sheet)
+    - `asChild?: boolean` - When true, renders the child element instead of a button
+    - `for?: string` - Optional ID of the sheet to trigger
+  - `<SheetContent>` (The slide-out panel container)
+    - `side?: "top" | "right" | "bottom" | "left"` - Side of the screen to slide out from (default: "right")
+  - `<SheetClose>` (Button that closes the sheet)
+    - `asChild?: boolean` - When true, renders the child element instead of a button
+- **Example usage**:
+
+```astro
+---
+import { Button } from "@/components/starwind/button";
+import { Input } from "@/components/starwind/input";
+import { Label } from "@/components/starwind/label";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/starwind/sheet";
+---
+
+<Sheet>
+  <SheetTrigger asChild>
+    <Button>Open Sheet</Button>
+  </SheetTrigger>
+  <SheetContent>
+    <SheetHeader>
+      <SheetTitle>Edit Profile</SheetTitle>
+      <SheetDescription>
+        Make changes to your profile here. Click save when you're done.
+      </SheetDescription>
+    </SheetHeader>
+    <div class="grid gap-4 px-4">
+      <div class="grid gap-2">
+        <Label for="name">Name</Label>
+        <Input id="name" value="Pedro Duarte" />
+      </div>
+      <div class="grid gap-2">
+        <Label for="username">Username</Label>
+        <Input id="username" value="@peduarte" />
+      </div>
+    </div>
+    <SheetFooter>
+      <SheetClose asChild>
+        <Button type="submit">Save changes</Button>
+      </SheetClose>
+    </SheetFooter>
+  </SheetContent>
+</Sheet>
+
+<!-- Sheet with different sides -->
+<Sheet>
+  <SheetTrigger asChild>
+    <Button variant="outline">Open Top Sheet</Button>
+  </SheetTrigger>
+  <SheetContent side="top">
+    <SheetHeader>
+      <SheetTitle>Top Sheet</SheetTitle>
+      <SheetDescription>This sheet opens from the top of the screen.</SheetDescription>
+    </SheetHeader>
+    <!-- Content -->
+  </SheetContent>
+</Sheet>
 ```
 
 ### Skeleton
