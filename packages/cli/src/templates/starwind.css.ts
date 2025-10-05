@@ -64,83 +64,70 @@ export const tailwindConfig = `@import "tailwindcss";
 
 @layer base {
 	:root {
-		--background: var(--color-neutral-50);
-		--foreground: var(--color-neutral-950);
-		--card: var(--color-neutral-50);
-		--card-foreground: var(--color-neutral-950);
-		--popover: var(--color-neutral-50);
-		--popover-foreground: var(--color-neutral-950);
-		--primary: var(--color-blue-700);
-		--primary-foreground: var(--color-neutral-50);
-		--secondary: var(--color-fuchsia-700);
-		--secondary-foreground: var(--color-neutral-50);
-		--muted: var(--color-neutral-100);
-		--muted-foreground: var(--color-neutral-600);
-		--accent: var(--color-neutral-200);
-		--accent-foreground: var(--color-neutral-900);
-		--info: var(--color-sky-300);
-		--info-foreground: var(--color-sky-950);
-		--success: var(--color-green-300);
-		--success-foreground: var(--color-green-950);
-		--warning: var(--color-amber-300);
-		--warning-foreground: var(--color-amber-950);
-		--error: var(--color-red-700);
-		--error-foreground: var(--color-neutral-50);
-		--border: var(--color-neutral-200);
-		--input: var(--color-neutral-200);
-		--outline: var(--color-blue-600);
-		--radius: 0.625rem;
-	}
+    --background: var(--color-white);
+    --foreground: var(--color-neutral-950);
+    --card: var(--color-white);
+    --card-foreground: var(--color-neutral-950);
+    --popover: var(--color-white);
+    --popover-foreground: var(--color-neutral-950);
+    --primary: var(--color-blue-700);
+    --primary-foreground: var(--color-neutral-50);
+    --secondary: var(--color-fuchsia-700);
+    --secondary-foreground: var(--color-neutral-50);
+    --muted: var(--color-neutral-100);
+    --muted-foreground: var(--color-neutral-600);
+    --accent: var(--color-neutral-100);
+    --accent-foreground: var(--color-neutral-900);
+    --info: var(--color-sky-300);
+    --info-foreground: var(--color-sky-950);
+    --success: var(--color-green-300);
+    --success-foreground: var(--color-green-950);
+    --warning: var(--color-amber-300);
+    --warning-foreground: var(--color-amber-950);
+    --error: var(--color-red-700);
+    --error-foreground: var(--color-neutral-50);
+    --border: var(--color-neutral-200);
+    --input: var(--color-neutral-200);
+    --outline: var(--color-neutral-400);
+    --radius: 0.625rem;
+  }
 
-	.dark {
-		--background: var(--color-neutral-950);
-		--foreground: var(--color-neutral-50);
-		--card: var(--color-neutral-950);
-		--card-foreground: var(--color-neutral-50);
-		--popover: var(--color-neutral-950);
-		--popover-foreground: var(--color-neutral-50);
-		--primary: var(--color-blue-700);
-		--primary-foreground: var(--color-neutral-50);
-		--secondary: var(--color-fuchsia-300);
-		--secondary-foreground: var(--color-neutral-950);
-		--muted: var(--color-neutral-900);
-		--muted-foreground: var(--color-neutral-400);
-		--accent: var(--color-neutral-900);
-		--accent-foreground: var(--color-neutral-100);
-		--info: var(--color-sky-300);
-		--info-foreground: var(--color-sky-950);
-		--success: var(--color-green-300);
-		--success-foreground: var(--color-green-950);
-		--warning: var(--color-amber-300);
-		--warning-foreground: var(--color-amber-950);
-		--error: var(--color-red-800);
-		--error-foreground: var(--color-neutral-50);
-		--border: var(--color-neutral-800);
-		--input: var(--color-neutral-800);
-		--outline: var(--color-blue-600);
-	}
+  .dark {
+    --background: var(--color-neutral-950);
+    --foreground: var(--color-neutral-50);
+    --card: var(--color-neutral-900);
+    --card-foreground: var(--color-neutral-50);
+    --popover: var(--color-neutral-800);
+    --popover-foreground: var(--color-neutral-50);
+    --primary: var(--color-blue-700);
+    --primary-foreground: var(--color-neutral-50);
+    --secondary: var(--color-fuchsia-300);
+    --secondary-foreground: var(--color-neutral-950);
+    --muted: var(--color-neutral-800);
+    --muted-foreground: var(--color-neutral-400);
+    --accent: var(--color-neutral-700);
+    --accent-foreground: var(--color-neutral-100);
+    --info: var(--color-sky-300);
+    --info-foreground: var(--color-sky-950);
+    --success: var(--color-green-300);
+    --success-foreground: var(--color-green-950);
+    --warning: var(--color-amber-300);
+    --warning-foreground: var(--color-amber-950);
+    --error: var(--color-red-800);
+    --error-foreground: var(--color-neutral-50);
+    --border: --alpha(var(--color-neutral-50) / 10%);
+    --input: --alpha(var(--color-neutral-50) / 15%);
+    --outline: var(--color-neutral-500);
+  }
 
 	* {
 		@apply border-border;
-	}
-	*:focus-visible {
-		@apply outline-outline;
 	}
 	html {
 		@apply bg-background text-foreground scheme-light dark:scheme-dark;
 	}
 	button {
 		@apply cursor-pointer;
-	}
-}
-
-@layer utilities {
-	/* transition-colors but without outline-color transition property */
-	.starwind-transition-colors {
-		transition-property: color, background-color, border-color, text-decoration-color, fill, stroke,
-			--tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
-		transition-timing-function: var(--default-transition-timing-function);
-		transition-duration: var(--default-transition-duration);
 	}
 }
 `;

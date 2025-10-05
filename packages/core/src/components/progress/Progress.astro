@@ -24,7 +24,7 @@ const valuePercent = isIndeterminate ? undefined : Math.round((value / max) * 10
 const valueText = isIndeterminate ? undefined : `${valuePercent}%`;
 
 export const progress = tv({
-  base: ["starwind-progress-bar", "bg-accent h-2 w-full overflow-hidden rounded-full"],
+  base: ["starwind-progress-bar", "bg-muted h-2 w-full overflow-hidden rounded-full"],
   variants: {
     variant: {
       indeterminate: "relative",

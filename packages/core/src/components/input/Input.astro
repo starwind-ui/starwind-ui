@@ -6,8 +6,8 @@ type Props = HTMLAttributes<"input"> & VariantProps<typeof input>;
 
 export const input = tv({
   base: [
-    "border-input bg-background text-foreground w-full rounded-md border",
-    "focus:outline-outline focus:ring-0 focus:outline-2 focus:outline-offset-2",
+    "border-input dark:bg-input/30 text-foreground w-full rounded-md border bg-transparent shadow-xs",
+    "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] focus-visible:ring-3",
     "file:text-foreground file:my-auto file:mr-4 file:h-full file:border-0 file:bg-transparent file:text-sm file:font-medium",
     "disabled:cursor-not-allowed disabled:opacity-50",
     "peer placeholder:text-muted-foreground",
