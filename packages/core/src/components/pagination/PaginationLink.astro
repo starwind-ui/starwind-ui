@@ -9,6 +9,8 @@ type Props = HTMLAttributes<"a"> &
     isActive?: boolean;
   };
 
+export const paginationLink = ButtonVariants.button;
+
 const { class: className, isActive, size = "icon", ...rest } = Astro.props;
 ---
 
