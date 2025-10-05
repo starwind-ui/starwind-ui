@@ -8,18 +8,21 @@ interface Props
     VariantProps<typeof badge> {}
 
 export const badge = tv({
-  base: "starwind-badge starwind-transition-colors inline-flex items-center rounded-full font-semibold focus-visible:outline-2 focus-visible:outline-offset-2",
+  base: [
+    "starwind-badge inline-flex items-center rounded-full font-semibold",
+    "transition-all outline-none focus-visible:ring-3",
+  ],
   variants: {
     variant: {
       default: "bg-foreground text-background",
-      primary: "bg-primary text-primary-foreground focus-visible:outline-primary",
-      secondary: "bg-secondary text-secondary-foreground focus-visible:outline-secondary",
-      outline: "border-border focus-visible:outline-outline border",
-      ghost: "bg-foreground/10 text-foreground focus-visible:outline-outline",
-      info: "bg-info text-info-foreground focus-visible:outline-info",
-      success: "bg-success text-success-foreground focus-visible:outline-success",
-      warning: "bg-warning text-warning-foreground focus-visible:outline-warning",
-      error: "bg-error text-error-foreground focus-visible:outline-error",
+      primary: "bg-primary text-primary-foreground focus-visible:ring-primary/50",
+      secondary: "bg-secondary text-secondary-foreground focus-visible:ring-secondary/50",
+      outline: "border-border focus-visible:border-outline focus-visible:ring-outline/50 border",
+      ghost: "bg-foreground/10 text-foreground focus-visible:ring-outline/50",
+      info: "bg-info text-info-foreground focus-visible:ring-info/50",
+      success: "bg-success text-success-foreground focus-visible:ring-success/50",
+      warning: "bg-warning text-warning-foreground focus-visible:ring-warning/50",
+      error: "bg-error text-error-foreground focus-visible:ring-error/50",
     },
     size: { sm: "px-2.5 py-0.5 text-xs", md: "px-3 py-0.5 text-sm", lg: "px-4 py-1 text-base" },
     isLink: { true: "cursor-pointer", false: "" },
