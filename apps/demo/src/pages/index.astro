@@ -118,6 +118,7 @@ import {
   SheetTrigger,
 } from "@/components/starwind/sheet";
 import { Skeleton } from "@/components/starwind/skeleton";
+import { Spinner } from "@/components/starwind/spinner";
 import { Switch } from "@/components/starwind/switch";
 import {
   Table,
@@ -143,13 +144,32 @@ import Layout from "@/layouts/Layout.astro";
     <section class="mx-auto mt-10 max-w-lg">
       <h2 class="mb-4 text-2xl font-bold">Aspect Ratio Demo</h2>
       <div class="w-[450px]">
-        <AspectRatio ratio={16 / 9} class="bg-muted rounded-lg overflow-hidden">
+        <AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-lg">
           <img
             src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
             alt="Gray concrete building with windows"
             class="h-full w-full rounded-lg object-cover"
           />
         </AspectRatio>
+      </div>
+    </section>
+
+    <!-- Spinner Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Spinner Demo</h2>
+      <div class="flex items-start gap-4">
+        <div>
+          <p class="text-muted-foreground mb-2 text-sm">Default</p>
+          <Spinner />
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-2 text-sm">Large</p>
+          <Spinner class="size-8" />
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-2 text-sm">Custom Color</p>
+          <Spinner class="text-primary size-6" />
+        </div>
       </div>
     </section>
 
