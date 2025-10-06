@@ -1,0 +1,36 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = Omit<HTMLAttributes<"div">, "role" | "aria-orientation"> & {
+  /**
+   * The orientation of the separator.
+   * @default "horizontal"
+   */
+  orientation?: "horizontal" | "vertical";
+};
+
+export const separator = tv({
+  base: "bg-border shrink-0",
+  variants: {
+    orientation: {
+      horizontal: "h-[1px] w-full",
+      vertical: "h-full w-[1px]",
+    },
+  },
+  defaultVariants: {
+    orientation: "horizontal",
+  },
+});
+
+const { class: className, orientation = "horizontal", ...rest } = Astro.props;
+---
+
+<div
+  role="separator"
+  aria-orientation={orientation}
+  class={separator({ orientation, class: className })}
+  data-slot="separator"
+  {...rest}
+>
+</div>

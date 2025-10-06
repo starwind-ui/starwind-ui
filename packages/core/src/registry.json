@@ -31,6 +31,7 @@
     { "name": "progress", "type": "component", "version": "1.1.0", "dependencies": [] },
     { "name": "radio-group", "type": "component", "version": "1.2.0", "dependencies": [] },
     { "name": "select", "type": "component", "version": "1.6.0", "dependencies": [] },
+    { "name": "separator", "type": "component", "version": "1.0.0", "dependencies": [] },
     {
       "name": "sheet",
       "type": "component",
