@@ -1,0 +1,19 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"p">;
+
+export const itemDescription = tv({
+  base: [
+    "text-muted-foreground line-clamp-2 leading-snug font-normal text-balance",
+    "[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
+  ],
+});
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<p class={itemDescription({ class: className })} data-slot="item-description" {...rest}>
+  <slot />
+</p>

@@ -1,4 +1,6 @@
 ---
+import CircleCheckIcon from "@tabler/icons/outline/circle-check.svg";
+import ChevronRightIcon from "@tabler/icons/outline/chevron-right.svg";
 import Copy from "@tabler/icons/outline/copy.svg";
 import Edit from "@tabler/icons/outline/edit.svg";
 import Flame from "@tabler/icons/outline/flame.svg";
@@ -85,6 +87,18 @@ import {
   DropzoneUploadIndicator,
 } from "@/components/starwind/dropzone";
 import { Input } from "@/components/starwind/input";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemFooter,
+  ItemGroup,
+  ItemHeader,
+  ItemMedia,
+  ItemSeparator,
+  ItemTitle,
+} from "@/components/starwind/item";
 import { Label } from "@/components/starwind/label";
 import {
   Pagination,
@@ -190,6 +204,73 @@ import Layout from "@/layouts/Layout.astro";
           <Separator orientation="vertical" />
           <div>Source</div>
         </div>
+      </div>
+    </section>
+
+    <!-- Item Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Item Demo</h2>
+      <div class="flex w-full max-w-md flex-col gap-6">
+        <Item variant="outline">
+          <ItemContent>
+            <ItemTitle>Basic Item</ItemTitle>
+            <ItemDescription>A simple item with title and description.</ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button variant="outline" size="sm">Action</Button>
+          </ItemActions>
+        </Item>
+        <Item variant="outline" size="sm" as="a" href="#">
+          <ItemMedia>
+            <CircleCheckIcon class="size-5" />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>Your profile has been verified.</ItemTitle>
+          </ItemContent>
+          <ItemActions>
+            <ChevronRightIcon class="size-4" />
+          </ItemActions>
+        </Item>
+      </div>
+    </section>
+
+    <!-- Item Variants Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Item Variants</h2>
+      <div class="flex flex-col gap-6">
+        <Item>
+          <ItemContent>
+            <ItemTitle>Default Variant</ItemTitle>
+            <ItemDescription>
+              Standard styling with subtle background and borders.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button variant="outline" size="sm">Open</Button>
+          </ItemActions>
+        </Item>
+        <Item variant="outline">
+          <ItemContent>
+            <ItemTitle>Outline Variant</ItemTitle>
+            <ItemDescription>
+              Outlined style with clear borders and transparent background.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button variant="outline" size="sm">Open</Button>
+          </ItemActions>
+        </Item>
+        <Item variant="muted">
+          <ItemContent>
+            <ItemTitle>Muted Variant</ItemTitle>
+            <ItemDescription>
+              Subdued appearance with muted colors for secondary content.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button variant="outline" size="sm">Open</Button>
+          </ItemActions>
+        </Item>
       </div>
     </section>
 
