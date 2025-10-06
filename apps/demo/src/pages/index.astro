@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/starwind/alert-dialog";
+import { AspectRatio } from "@/components/starwind/aspect-ratio";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind/avatar";
 import { Badge } from "@/components/starwind/badge";
 import {
@@ -138,6 +139,20 @@ import Layout from "@/layouts/Layout.astro";
   description="A collection of accessible UI components built with Astro"
 >
   <div class="container mx-auto px-4 pb-20">
+    <!-- Aspect Ratio Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Aspect Ratio Demo</h2>
+      <div class="w-[450px]">
+        <AspectRatio ratio={16 / 9} class="bg-muted rounded-lg overflow-hidden">
+          <img
+            src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
+            alt="Gray concrete building with windows"
+            class="h-full w-full rounded-lg object-cover"
+          />
+        </AspectRatio>
+      </div>
+    </section>
+
     <!-- Sheet Demo -->
     <section class="mx-auto mt-10 max-w-lg">
       <h2 class="mb-4 text-2xl font-bold">Sheet Demo</h2>
