@@ -31,8 +31,8 @@ export const dialogContent = tv({
 export const dialogCloseButton = tv({
   base: [
     "starwind-dialog-close text-muted-foreground",
-    "absolute top-5.5 right-5.5 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none",
-    "focus-visible:outline-outline focus-visible:outline-2 focus-visible:outline-offset-2",
+    "absolute top-5.5 right-5.5 rounded-sm [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
+    "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
   ],
 });
 
@@ -57,7 +57,7 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
 >
   <slot />
   <button type="button" class={dialogCloseButton()} data-dialog-close aria-label="Close dialog">
-    <X class="size-5" />
+    <X class="size-5 transition-opacity" />
     <span class="sr-only">Close</span>
   </button>
 </dialog>
