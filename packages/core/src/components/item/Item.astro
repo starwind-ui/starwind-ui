@@ -17,7 +17,8 @@ type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & {
 
 export const item = tv({
   base: [
-    "group/item [a]:hover:bg-accent/50 flex flex-wrap items-center rounded-md border border-transparent text-sm transition-colors duration-100 [a]:transition-colors",
+    "group/item flex flex-wrap items-center rounded-md border border-transparent text-sm transition-colors",
+    "[a]:hover:bg-accent/50 [a]:transition-colors",
     "focus-visible:border-ring focus-visible:ring-outline/50 outline-none focus-visible:ring-[3px]",
   ],
   variants: {
