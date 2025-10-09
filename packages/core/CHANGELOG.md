@@ -1,5 +1,15 @@
 # @starwind-ui/core
 
+## 1.10.0
+
+### Minor Changes
+
+- 1f83bc0: add item component
+- bdcbfe3: add spinner component
+- 96de92c: Update various component styles and focus states
+- 9261789: Add new separator component
+- 680f584: add new aspect-ratio component
+
 ## 1.9.0
 
 ### Minor Changes
