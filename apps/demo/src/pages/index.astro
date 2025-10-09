@@ -1,6 +1,6 @@
 ---
-import ChevronRightIcon from "@tabler/icons/outline/chevron-right.svg";
-import CircleCheckIcon from "@tabler/icons/outline/circle-check.svg";
+import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+import CircleCheck from "@tabler/icons/outline/circle-check.svg";
 import Copy from "@tabler/icons/outline/copy.svg";
 import Edit from "@tabler/icons/outline/edit.svg";
 import Flame from "@tabler/icons/outline/flame.svg";
@@ -222,13 +222,32 @@ import Layout from "@/layouts/Layout.astro";
         </Item>
         <Item variant="outline" size="sm" as="a" href="#">
           <ItemMedia>
-            <CircleCheckIcon class="size-5" />
+            <CircleCheck class="size-5" />
           </ItemMedia>
           <ItemContent>
             <ItemTitle>Your profile has been verified.</ItemTitle>
           </ItemContent>
           <ItemActions>
-            <ChevronRightIcon class="size-4" />
+            <ChevronRight class="size-4" />
+          </ItemActions>
+        </Item>
+      </div>
+    </section>
+
+    <!-- Item with Icon Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Item with Icon</h2>
+      <div class="flex w-full max-w-lg flex-col gap-6">
+        <Item variant="outline">
+          <ItemMedia variant="icon">
+            <InfoCircle />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>Security Alert</ItemTitle>
+            <ItemDescription>New login detected from unknown device.</ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button size="sm" variant="outline">Review</Button>
           </ItemActions>
         </Item>
       </div>
