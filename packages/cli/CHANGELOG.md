@@ -1,5 +1,21 @@
 # starwind
 
+## 1.10.0
+
+### Minor Changes
+
+- cffaf7e: Update initial starwind css file to match new component styles
+- 21ca5de: update tailwind-variants package install to v3
+
+### Patch Changes
+
+- Updated dependencies [1f83bc0]
+- Updated dependencies [bdcbfe3]
+- Updated dependencies [96de92c]
+- Updated dependencies [9261789]
+- Updated dependencies [680f584]
+  - @starwind-ui/core@1.10.0
+
 ## 1.9.0
 
 ### Minor Changes
