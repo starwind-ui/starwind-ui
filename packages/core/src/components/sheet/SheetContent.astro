@@ -56,10 +56,8 @@ export const sheetContent = tv({
 export const sheetCloseButton = tv({
   base: [
     "starwind-dialog-close",
-    "ring-offset-background focus:ring-ring data-[state=open]:bg-secondary",
-    "absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100",
-    "focus-visible:outline-outline focus-visible:outline-2 focus-visible:outline-offset-2",
-    "disabled:pointer-events-none",
+    "absolute top-4 right-4 rounded-xs [&>svg]:opacity-70 hover:[&>svg]:opacity-100",
+    "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
   ],
 });
 ---
@@ -84,7 +82,7 @@ export const sheetCloseButton = tv({
     data-slot="sheet-close"
     aria-label="Close dialog"
   >
-    <X class="size-5" />
+    <X class="size-5 transition-opacity" />
     <span class="sr-only">Close</span>
   </button>
 </dialog>

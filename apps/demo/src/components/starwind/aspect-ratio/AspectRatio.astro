@@ -1,0 +1,32 @@
+---
+import type { HTMLTag, Polymorphic } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & {
+  /**
+   * The aspect ratio of the container (e.g., 16/9, 4/3, 1)
+   * @default 1
+   */
+  ratio?: number;
+};
+
+export const aspectRatioWrapper = tv({
+  base: "relative w-full",
+});
+
+export const aspectRatio = tv({
+  base: "absolute inset-0",
+});
+
+const { ratio = 1, class: className, as: Tag = "div", ...rest } = Astro.props;
+---
+
+<div
+  class={aspectRatioWrapper()}
+  style={`padding-bottom: ${100 / ratio}%`}
+  data-slot="aspect-ratio-wrapper"
+>
+  <Tag class={aspectRatio({ class: className })} data-slot="aspect-ratio" {...rest}>
+    <slot />
+  </Tag>
+</div>

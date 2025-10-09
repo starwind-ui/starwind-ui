@@ -4,11 +4,13 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div">;
 
-export const cardTitle = tv({ base: "text-xl leading-none font-semibold tracking-tight" });
+export const itemHeader = tv({
+  base: "flex basis-full items-center justify-between gap-2",
+});
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={cardTitle({ class: className })} data-slot="card-title" {...rest}>
+<div class={itemHeader({ class: className })} data-slot="item-header" {...rest}>
   <slot />
 </div>

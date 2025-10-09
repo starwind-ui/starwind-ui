@@ -1,0 +1,52 @@
+---
+import type { HTMLTag, Polymorphic } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & {
+  /**
+   * Variant of the item
+   * @default "default"
+   */
+  variant?: "default" | "outline" | "muted";
+  /**
+   * Size of the item
+   * @default "default"
+   */
+  size?: "default" | "sm";
+};
+
+export const item = tv({
+  base: [
+    "group/item flex flex-wrap items-center rounded-md border border-transparent text-sm transition-colors",
+    "[a]:hover:bg-accent/50 [a]:transition-colors",
+    "focus-visible:border-ring focus-visible:ring-outline/50 outline-none focus-visible:ring-[3px]",
+  ],
+  variants: {
+    variant: {
+      default: "bg-transparent",
+      outline: "border-border",
+      muted: "bg-muted/50",
+    },
+    size: {
+      default: "gap-4 p-4",
+      sm: "gap-2.5 px-4 py-3",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+    size: "default",
+  },
+});
+
+const {
+  variant = "default",
+  size = "default",
+  class: className,
+  as: Tag = "div",
+  ...rest
+} = Astro.props;
+---
+
+<Tag class={item({ variant, size, class: className })} data-slot="item" {...rest}>
+  <slot />
+</Tag>
