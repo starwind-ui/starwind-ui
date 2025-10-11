@@ -1,5 +1,11 @@
 # @starwind-ui/core
 
+## 1.10.1
+
+### Patch Changes
+
+- eaaec1b: simplify default accordion styling to enable easier custom styling
+
 ## 1.10.0
 
 ### Minor Changes
