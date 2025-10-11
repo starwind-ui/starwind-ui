@@ -10,7 +10,7 @@ type Props = HTMLAttributes<"div"> & {
 };
 
 export const accordionItem = tv({
-  base: "starwind-accordion-item border-x border-b first:rounded-t-lg first:border-t last:rounded-b-lg",
+  base: "starwind-accordion-item border-b last:border-b-0",
 });
 
 const { value, class: className, ...rest } = Astro.props;
