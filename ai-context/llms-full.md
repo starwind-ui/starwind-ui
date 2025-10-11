@@ -83,6 +83,7 @@ Starwind UI includes the following components:
 - [Accordion](https://starwind.dev/docs/components/accordion)
 - [Alert](https://starwind.dev/docs/components/alert)
 - [Alert Dialog](https://starwind.dev/docs/components/alert-dialog)
+- [Aspect Ratio](https://starwind.dev/docs/components/aspect-ratio)
 - [Avatar](https://starwind.dev/docs/components/avatar)
 - [Badge](https://starwind.dev/docs/components/badge)
 - [Breadcrumb](https://starwind.dev/docs/components/breadcrumb)
@@ -94,13 +95,16 @@ Starwind UI includes the following components:
 - [Dropdown](https://starwind.dev/docs/components/dropdown)
 - [Dropzone](https://starwind.dev/docs/components/dropzone)
 - [Input](https://starwind.dev/docs/components/input)
+- [Item](https://starwind.dev/docs/components/item)
 - [Label](https://starwind.dev/docs/components/label)
 - [Pagination](https://starwind.dev/docs/components/pagination)
 - [Progress](https://starwind.dev/docs/components/progress)
 - [Radio Group](https://starwind.dev/docs/components/radio-group)
 - [Select](https://starwind.dev/docs/components/select)
+- [Separator](https://starwind.dev/docs/components/separator)
 - [Sheet](https://starwind.dev/docs/components/sheet)
 - [Skeleton](https://starwind.dev/docs/components/skeleton)
+- [Spinner](https://starwind.dev/docs/components/spinner)
 - [Switch](https://starwind.dev/docs/components/switch)
 - [Table](https://starwind.dev/docs/components/table)
 - [Tabs](https://starwind.dev/docs/components/tabs)
@@ -351,6 +355,30 @@ import { Button } from "@/components/starwind/button";
     </AlertDialogFooter>
   </AlertDialogContent>
 </AlertDialog>
+```
+
+### Aspect Ratio
+
+- **Documentation**: https://starwind.dev/docs/components/aspect-ratio
+- **Import pattern**: `import { AspectRatio } from "@/components/starwind/aspect-ratio";`
+- **Key props**:
+  - `ratio`: number - The aspect ratio (e.g., 16/9, 4/3, 1) (default: 1)
+  - `as`: HTMLTag - The HTML element to render as (default: "div")
+  - All standard HTML attributes for the element specified by the `as` prop
+- **Example usage**:
+
+```astro
+---
+import { AspectRatio } from "@/components/starwind/aspect-ratio";
+---
+
+<AspectRatio ratio={16 / 9}>
+  <img
+    src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
+    alt="Photo by Drew Beamer"
+    class="rounded-md object-cover w-full h-full"
+  />
+</AspectRatio>
 ```
 
 ### Avatar
@@ -671,6 +699,91 @@ import { Input } from "@/components/starwind/input";
 <Input type="email" placeholder="Email" required />
 ```
 
+### Item
+
+- **Documentation**: https://starwind.dev/docs/components/item
+- **Description**: A flexible item component with multiple sub-components for building rich content blocks. Commonly used for lists, notifications, and card-like content.
+- **Import pattern**: `import { Item, ItemContent, ItemTitle, ItemDescription, ItemActions, ItemMedia, ItemHeader, ItemFooter, ItemGroup, ItemSeparator } from "@/components/starwind/item";`
+- **Key props**:
+  - `<Item>` (Root component)
+    - `variant`: "default" | "outline" | "muted" (default: "default")
+    - `size`: "default" | "sm" (default: "default")
+    - `as`: HTMLTag - The HTML element to render as (default: "div")
+    - All standard HTML attributes for the element specified by the `as` prop
+  - `<ItemMedia>`
+    - `variant`: "default" | "icon" | "image" (default: "default")
+    - All standard HTML attributes for div elements
+  - `<ItemContent>`, `<ItemTitle>`, `<ItemDescription>`, `<ItemActions>`, `<ItemHeader>`, `<ItemFooter>`: Standard HTML attributes for their respective elements
+  - `<ItemGroup>`: Container for grouping multiple items with semantic list markup
+  - `<ItemSeparator>`: Separator for use within ItemGroup
+    - `orientation`: "horizontal" | "vertical" (default: "horizontal")
+- **Example usage**:
+
+```astro
+---
+import {
+  Item,
+  ItemContent,
+  ItemTitle,
+  ItemDescription,
+  ItemActions,
+  ItemMedia,
+  ItemGroup,
+  ItemSeparator,
+} from "@/components/starwind/item";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/starwind/avatar";
+import { Button } from "@/components/starwind/button";
+import Plus from "@tabler/icons/outline/plus.svg";
+---
+
+<!-- Basic Item -->
+<Item variant="outline">
+  <ItemContent>
+    <ItemTitle>Basic Item</ItemTitle>
+    <ItemDescription>A simple item with title and description.</ItemDescription>
+  </ItemContent>
+  <ItemActions>
+    <Button variant="outline" size="sm">Action</Button>
+  </ItemActions>
+</Item>
+
+<!-- Item with Avatar -->
+<Item variant="outline">
+  <ItemMedia>
+    <Avatar>
+      <AvatarImage src="https://github.com/Boston343.png" alt="@BowTiedWebReapr" />
+      <AvatarFallback>WR</AvatarFallback>
+    </Avatar>
+  </ItemMedia>
+  <ItemContent>
+    <ItemTitle>Web Reaper</ItemTitle>
+    <ItemDescription>Creator of Starwind UI</ItemDescription>
+  </ItemContent>
+  <ItemActions>
+    <Button size="icon-sm" variant="outline" class="rounded-full" aria-label="Invite">
+      <Plus />
+    </Button>
+  </ItemActions>
+</Item>
+
+<!-- Item Group -->
+<ItemGroup>
+  <Item>
+    <ItemContent>
+      <ItemTitle>First Item</ItemTitle>
+      <ItemDescription>Description for first item</ItemDescription>
+    </ItemContent>
+  </Item>
+  <ItemSeparator />
+  <Item>
+    <ItemContent>
+      <ItemTitle>Second Item</ItemTitle>
+      <ItemDescription>Description for second item</ItemDescription>
+    </ItemContent>
+  </Item>
+</ItemGroup>
+```
+
 ### Label
 
 - **Documentation**: https://starwind.dev/docs/components/label
@@ -855,6 +968,34 @@ import {
 </Select>
 ```
 
+### Separator
+
+- **Documentation**: https://starwind.dev/docs/components/separator
+- **Import pattern**: `import { Separator } from "@/components/starwind/separator";`
+- **Key props**:
+  - `orientation`: "horizontal" | "vertical" (default: "horizontal")
+  - All standard HTML attributes for div elements (excluding `role` and `aria-orientation` which are set automatically)
+- **Example usage**:
+
+```astro
+---
+import { Separator } from "@/components/starwind/separator";
+---
+
+<div>
+  <h4 class="text-sm font-medium">Starwind UI</h4>
+  <p class="text-sm text-muted-foreground">A beautiful component library for Astro.</p>
+</div>
+<Separator />
+<div class="flex h-5 items-center space-x-4 text-sm">
+  <div>Components</div>
+  <Separator orientation="vertical" />
+  <div>Documentation</div>
+  <Separator orientation="vertical" />
+  <div>Examples</div>
+</div>
+```
+
 ### Sheet
 
 - **Documentation**: https://starwind.dev/docs/components/sheet
@@ -964,6 +1105,37 @@ import { Skeleton } from "@/components/starwind/skeleton";
     <Skeleton class="h-4 w-[200px]" />
   </div>
 </div>
+```
+
+### Spinner
+
+- **Documentation**: https://starwind.dev/docs/components/spinner
+- **Import pattern**: `import { Spinner } from "@/components/starwind/spinner";`
+- **Key props**:
+  - All standard HTML attributes for svg elements (excluding `role` and `aria-label` which are set automatically for accessibility)
+  - Use the `class` prop to control size and color
+- **Example usage**:
+
+```astro
+---
+import { Spinner } from "@/components/starwind/spinner";
+import { Button } from "@/components/starwind/button";
+---
+
+<!-- Basic spinner -->
+<Spinner />
+
+<!-- Custom size -->
+<Spinner class="size-8" />
+
+<!-- Custom color -->
+<Spinner class="text-blue-500" />
+
+<!-- In button -->
+<Button disabled>
+  <Spinner />
+  Loading...
+</Button>
 ```
 
 ### Switch
