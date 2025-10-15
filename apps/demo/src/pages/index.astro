@@ -100,6 +100,7 @@ import {
 } from "@/components/starwind/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/tooltip";
+import { Kbd, KbdGroup } from "@/components/starwind/kbd";
 import Layout from "@/layouts/Layout.astro";
 ---
 
@@ -821,6 +822,51 @@ import Layout from "@/layouts/Layout.astro";
           </div>
         </DialogContent>
       </Dialog>
+    </section>
+
+    <!-- Keyboard Shortcuts -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Keyboard Shortcuts</h2>
+      <div class="flex flex-col gap-4">
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-muted-foreground">Single key:</span>
+          <Kbd>⌘</Kbd>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-muted-foreground">Key combinations:</span>
+          <KbdGroup>
+            <Kbd>⌘</Kbd>
+            <Kbd>K</Kbd>
+          </KbdGroup>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-muted-foreground">Multiple combinations:</span>
+          <div class="flex gap-2">
+            <KbdGroup>
+              <Kbd>⌘</Kbd>
+              <Kbd>K</Kbd>
+            </KbdGroup>
+            <span class="text-sm text-muted-foreground">or</span>
+            <KbdGroup>
+              <Kbd>Ctrl</Kbd>
+              <Kbd>K</Kbd>
+            </KbdGroup>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-muted-foreground">With modifiers:</span>
+          <div class="flex gap-2">
+            <KbdGroup>
+              <Kbd>⌘</Kbd>
+              <Kbd>Shift</Kbd>
+              <Kbd>P</Kbd>
+            </KbdGroup>
+          </div>
+        </div>
+      </div>
     </section>
   </div>
 </Layout>
