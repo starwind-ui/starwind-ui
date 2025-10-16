@@ -6,7 +6,7 @@ type Props = HTMLAttributes<"div">;
 
 const { class: className, ...rest } = Astro.props;
 
-const filesList = tv({
+export const dropzoneFilesList = tv({
   base: [
     "starwind-files-list",
     "mt-1 -mb-8 min-h-8",
@@ -17,9 +17,10 @@ const filesList = tv({
 ---
 
 <div
-  class={filesList({ class: className })}
+  class={dropzoneFilesList({ class: className })}
   aria-live="polite"
   aria-label="Uploaded files"
+  data-slot="dropzone-files-list"
   {...rest}
 >
 </div>

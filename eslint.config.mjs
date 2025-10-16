@@ -34,6 +34,15 @@ export default defineConfig([
     },
   },
 
+  // packages folder configuration
+  {
+    files: ["packages/**/*.{ts,js,tsx,json,astro}"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+
   // json files
   {
     files: ["**/*.json"],

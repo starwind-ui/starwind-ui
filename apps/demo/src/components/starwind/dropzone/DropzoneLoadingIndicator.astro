@@ -2,7 +2,7 @@
 import LoaderIcon from "@tabler/icons/outline/loader-2.svg";
 ---
 
-<div class="starwind-loading-indicator hidden">
+<div class="starwind-loading-indicator hidden" data-slot="dropzone-loading-indicator">
   <slot>
     <LoaderIcon class="mx-auto size-10 animate-spin" aria-hidden="true" />
     <p class="mt-1 text-sm">Uploading file(s)...</p>

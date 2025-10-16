@@ -1,0 +1,47 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"button"> & {
+  /**
+   * When true, the component will render its child element with a simple wrapper instead of a button component
+   */
+  asChild?: boolean;
+  /**
+   * Optional ID of the dialog to trigger. If not provided and the trigger is inside a Dialog component,
+   * it will automatically target that dialog. Required when used outside a Dialog component.
+   */
+  for?: string;
+};
+
+const { class: className, asChild = false, for: dialogFor, ...rest } = Astro.props;
+
+// Get the first child element if asChild is true
+let hasChildren = false;
+if (Astro.slots.has("default")) {
+  hasChildren = true;
+}
+---
+
+{
+  asChild && hasChildren ? (
+    <div
+      class:list={["starwind-alert-dialog-trigger", className]}
+      data-slot="alert-dialog-trigger"
+      data-as-child
+      data-dialog-for={dialogFor}
+    >
+      <slot />
+    </div>
+  ) : (
+    <button
+      type="button"
+      aria-haspopup="dialog"
+      class:list={["starwind-alert-dialog-trigger", className]}
+      data-slot="alert-dialog-trigger"
+      data-dialog-for={dialogFor}
+      {...rest}
+    >
+      <slot />
+    </button>
+  )
+}

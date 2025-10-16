@@ -80,29 +80,36 @@ import { ComponentName } from "@/components/starwind/component-name";
 
 Starwind UI includes the following components:
 
-- [Accordion](https://starwind.dev/docs/components/accordion/)
-- [Alert](https://starwind.dev/docs/components/alert/)
-- [Avatar](https://starwind.dev/docs/components/avatar/)
-- [Badge](https://starwind.dev/docs/components/badge/)
-- [Breadcrumb](https://starwind.dev/docs/components/breadcrumb/)
-- [Button](https://starwind.dev/docs/components/button/)
-- [Card](https://starwind.dev/docs/components/card/)
-- [Checkbox](https://starwind.dev/docs/components/checkbox/)
-- [Dialog](https://starwind.dev/docs/components/dialog/)
-- [Dropdown](https://starwind.dev/docs/components/dropdown/)
-- [Dropzone](https://starwind.dev/docs/components/dropzone/)
-- [Input](https://starwind.dev/docs/components/input/)
-- [Label](https://starwind.dev/docs/components/label/)
-- [Pagination](https://starwind.dev/docs/components/pagination/)
-- [Progress](https://starwind.dev/docs/components/progress/)
-- [Radio Group](https://starwind.dev/docs/components/radio-group/)
-- [Select](https://starwind.dev/docs/components/select/)
-- [Skeleton](https://starwind.dev/docs/components/skeleton/)
-- [Switch](https://starwind.dev/docs/components/switch/)
-- [Table](https://starwind.dev/docs/components/table/)
-- [Tabs](https://starwind.dev/docs/components/tabs/)
-- [Textarea](https://starwind.dev/docs/components/textarea/)
-- [Tooltip](https://starwind.dev/docs/components/tooltip/)
+- [Accordion](https://starwind.dev/docs/components/accordion)
+- [Alert](https://starwind.dev/docs/components/alert)
+- [Alert Dialog](https://starwind.dev/docs/components/alert-dialog)
+- [Aspect Ratio](https://starwind.dev/docs/components/aspect-ratio)
+- [Avatar](https://starwind.dev/docs/components/avatar)
+- [Badge](https://starwind.dev/docs/components/badge)
+- [Breadcrumb](https://starwind.dev/docs/components/breadcrumb)
+- [Button](https://starwind.dev/docs/components/button)
+- [Card](https://starwind.dev/docs/components/card)
+- [Carousel](https://starwind.dev/docs/components/carousel)
+- [Checkbox](https://starwind.dev/docs/components/checkbox)
+- [Dialog](https://starwind.dev/docs/components/dialog)
+- [Dropdown](https://starwind.dev/docs/components/dropdown)
+- [Dropzone](https://starwind.dev/docs/components/dropzone)
+- [Input](https://starwind.dev/docs/components/input)
+- [Item](https://starwind.dev/docs/components/item)
+- [Label](https://starwind.dev/docs/components/label)
+- [Pagination](https://starwind.dev/docs/components/pagination)
+- [Progress](https://starwind.dev/docs/components/progress)
+- [Radio Group](https://starwind.dev/docs/components/radio-group)
+- [Select](https://starwind.dev/docs/components/select)
+- [Separator](https://starwind.dev/docs/components/separator)
+- [Sheet](https://starwind.dev/docs/components/sheet)
+- [Skeleton](https://starwind.dev/docs/components/skeleton)
+- [Spinner](https://starwind.dev/docs/components/spinner)
+- [Switch](https://starwind.dev/docs/components/switch)
+- [Table](https://starwind.dev/docs/components/table)
+- [Tabs](https://starwind.dev/docs/components/tabs)
+- [Textarea](https://starwind.dev/docs/components/textarea)
+- [Tooltip](https://starwind.dev/docs/components/tooltip)
 
 ## Component Architecture Patterns
 
@@ -306,6 +313,74 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert
 </Alert>
 ```
 
+### Alert Dialog
+
+- **Documentation**: https://starwind.dev/docs/components/alert-dialog
+- **Import pattern**: `import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from "@/components/starwind/alert-dialog";`
+- **Key props**:
+  - `for?: string` - Used on `AlertDialogTrigger`. Optional ID of the dialog to trigger
+- **Example usage**:
+
+```astro
+---
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/starwind/alert-dialog";
+import { Button } from "@/components/starwind/button";
+---
+
+<AlertDialog>
+  <AlertDialogTrigger asChild>
+    <Button variant="outline">Show Alert Dialog</Button>
+  </AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+      <AlertDialogDescription>
+        This action cannot be undone. This will permanently delete your account and remove your data
+        from our servers.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction>Continue</AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+```
+
+### Aspect Ratio
+
+- **Documentation**: https://starwind.dev/docs/components/aspect-ratio
+- **Import pattern**: `import { AspectRatio } from "@/components/starwind/aspect-ratio";`
+- **Key props**:
+  - `ratio`: number - The aspect ratio (e.g., 16/9, 4/3, 1) (default: 1)
+  - `as`: HTMLTag - The HTML element to render as (default: "div")
+  - All standard HTML attributes for the element specified by the `as` prop
+- **Example usage**:
+
+```astro
+---
+import { AspectRatio } from "@/components/starwind/aspect-ratio";
+---
+
+<AspectRatio ratio={16 / 9}>
+  <img
+    src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
+    alt="Photo by Drew Beamer"
+    class="rounded-md object-cover w-full h-full"
+  />
+</AspectRatio>
+```
+
 ### Avatar
 
 - **Documentation**: https://starwind.dev/docs/components/avatar
@@ -427,6 +502,49 @@ import { Button } from "@/components/starwind/button";
     <Button>Action</Button>
   </CardFooter>
 </Card>
+```
+
+### Carousel
+
+- **Documentation**: https://starwind.dev/docs/components/carousel
+- **Import pattern**: `import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/starwind/carousel";`
+- **Key props**:
+  - `orientation?: "horizontal" | "vertical"` - Carousel orientation (default: "horizontal")
+  - `opts?: EmblaOptionsType` - Embla Carousel options object
+  - `autoInit?: boolean` - Whether to automatically initialize the carousel (default: true)
+- **Example usage**:
+
+```astro
+---
+import { Card, CardContent } from "@/components/starwind/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/starwind/carousel";
+---
+
+<Carousel opts={{ align: "start" }} class="mx-auto w-full max-w-xs">
+  <CarouselContent>
+    {
+      Array.from({ length: 5 }).map((_, index) => (
+        <CarouselItem>
+          <div class="p-1">
+            <Card>
+              <CardContent class="flex aspect-square items-center justify-center p-6">
+                <span class="text-4xl font-semibold">{index + 1}</span>
+              </CardContent>
+            </Card>
+          </div>
+        </CarouselItem>
+      ))
+    }
+  </CarouselContent>
+  <CarouselPrevious />
+  <CarouselNext />
+</Carousel>
 ```
 
 ### Checkbox
@@ -579,6 +697,91 @@ import { Input } from "@/components/starwind/input";
 ---
 
 <Input type="email" placeholder="Email" required />
+```
+
+### Item
+
+- **Documentation**: https://starwind.dev/docs/components/item
+- **Description**: A flexible item component with multiple sub-components for building rich content blocks. Commonly used for lists, notifications, and card-like content.
+- **Import pattern**: `import { Item, ItemContent, ItemTitle, ItemDescription, ItemActions, ItemMedia, ItemHeader, ItemFooter, ItemGroup, ItemSeparator } from "@/components/starwind/item";`
+- **Key props**:
+  - `<Item>` (Root component)
+    - `variant`: "default" | "outline" | "muted" (default: "default")
+    - `size`: "default" | "sm" (default: "default")
+    - `as`: HTMLTag - The HTML element to render as (default: "div")
+    - All standard HTML attributes for the element specified by the `as` prop
+  - `<ItemMedia>`
+    - `variant`: "default" | "icon" | "image" (default: "default")
+    - All standard HTML attributes for div elements
+  - `<ItemContent>`, `<ItemTitle>`, `<ItemDescription>`, `<ItemActions>`, `<ItemHeader>`, `<ItemFooter>`: Standard HTML attributes for their respective elements
+  - `<ItemGroup>`: Container for grouping multiple items with semantic list markup
+  - `<ItemSeparator>`: Separator for use within ItemGroup
+    - `orientation`: "horizontal" | "vertical" (default: "horizontal")
+- **Example usage**:
+
+```astro
+---
+import {
+  Item,
+  ItemContent,
+  ItemTitle,
+  ItemDescription,
+  ItemActions,
+  ItemMedia,
+  ItemGroup,
+  ItemSeparator,
+} from "@/components/starwind/item";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/starwind/avatar";
+import { Button } from "@/components/starwind/button";
+import Plus from "@tabler/icons/outline/plus.svg";
+---
+
+<!-- Basic Item -->
+<Item variant="outline">
+  <ItemContent>
+    <ItemTitle>Basic Item</ItemTitle>
+    <ItemDescription>A simple item with title and description.</ItemDescription>
+  </ItemContent>
+  <ItemActions>
+    <Button variant="outline" size="sm">Action</Button>
+  </ItemActions>
+</Item>
+
+<!-- Item with Avatar -->
+<Item variant="outline">
+  <ItemMedia>
+    <Avatar>
+      <AvatarImage src="https://github.com/Boston343.png" alt="@BowTiedWebReapr" />
+      <AvatarFallback>WR</AvatarFallback>
+    </Avatar>
+  </ItemMedia>
+  <ItemContent>
+    <ItemTitle>Web Reaper</ItemTitle>
+    <ItemDescription>Creator of Starwind UI</ItemDescription>
+  </ItemContent>
+  <ItemActions>
+    <Button size="icon-sm" variant="outline" class="rounded-full" aria-label="Invite">
+      <Plus />
+    </Button>
+  </ItemActions>
+</Item>
+
+<!-- Item Group -->
+<ItemGroup>
+  <Item>
+    <ItemContent>
+      <ItemTitle>First Item</ItemTitle>
+      <ItemDescription>Description for first item</ItemDescription>
+    </ItemContent>
+  </Item>
+  <ItemSeparator />
+  <Item>
+    <ItemContent>
+      <ItemTitle>Second Item</ItemTitle>
+      <ItemDescription>Description for second item</ItemDescription>
+    </ItemContent>
+  </Item>
+</ItemGroup>
 ```
 
 ### Label
@@ -765,6 +968,112 @@ import {
 </Select>
 ```
 
+### Separator
+
+- **Documentation**: https://starwind.dev/docs/components/separator
+- **Import pattern**: `import { Separator } from "@/components/starwind/separator";`
+- **Key props**:
+  - `orientation`: "horizontal" | "vertical" (default: "horizontal")
+  - All standard HTML attributes for div elements (excluding `role` and `aria-orientation` which are set automatically)
+- **Example usage**:
+
+```astro
+---
+import { Separator } from "@/components/starwind/separator";
+---
+
+<div>
+  <h4 class="text-sm font-medium">Starwind UI</h4>
+  <p class="text-sm text-muted-foreground">A beautiful component library for Astro.</p>
+</div>
+<Separator />
+<div class="flex h-5 items-center space-x-4 text-sm">
+  <div>Components</div>
+  <Separator orientation="vertical" />
+  <div>Documentation</div>
+  <Separator orientation="vertical" />
+  <div>Examples</div>
+</div>
+```
+
+### Sheet
+
+- **Documentation**: https://starwind.dev/docs/components/sheet
+- **Description**: A slide-out panel component that extends from any edge of the screen with smooth animations. Built on top of the Dialog component.
+- **Import pattern**: `import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/starwind/sheet";`
+- **Key props**:
+  - `<Sheet>` (Root component)
+    - Inherits all props from the Dialog component
+  - `<SheetTrigger>` (Button that opens the sheet)
+    - `asChild?: boolean` - When true, renders the child element instead of a button
+    - `for?: string` - Optional ID of the sheet to trigger
+  - `<SheetContent>` (The slide-out panel container)
+    - `side?: "top" | "right" | "bottom" | "left"` - Side of the screen to slide out from (default: "right")
+  - `<SheetClose>` (Button that closes the sheet)
+    - `asChild?: boolean` - When true, renders the child element instead of a button
+- **Example usage**:
+
+```astro
+---
+import { Button } from "@/components/starwind/button";
+import { Input } from "@/components/starwind/input";
+import { Label } from "@/components/starwind/label";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/starwind/sheet";
+---
+
+<Sheet>
+  <SheetTrigger asChild>
+    <Button>Open Sheet</Button>
+  </SheetTrigger>
+  <SheetContent>
+    <SheetHeader>
+      <SheetTitle>Edit Profile</SheetTitle>
+      <SheetDescription>
+        Make changes to your profile here. Click save when you're done.
+      </SheetDescription>
+    </SheetHeader>
+    <div class="grid gap-4 px-4">
+      <div class="grid gap-2">
+        <Label for="name">Name</Label>
+        <Input id="name" value="Pedro Duarte" />
+      </div>
+      <div class="grid gap-2">
+        <Label for="username">Username</Label>
+        <Input id="username" value="@peduarte" />
+      </div>
+    </div>
+    <SheetFooter>
+      <SheetClose asChild>
+        <Button type="submit">Save changes</Button>
+      </SheetClose>
+    </SheetFooter>
+  </SheetContent>
+</Sheet>
+
+<!-- Sheet with different sides -->
+<Sheet>
+  <SheetTrigger asChild>
+    <Button variant="outline">Open Top Sheet</Button>
+  </SheetTrigger>
+  <SheetContent side="top">
+    <SheetHeader>
+      <SheetTitle>Top Sheet</SheetTitle>
+      <SheetDescription>This sheet opens from the top of the screen.</SheetDescription>
+    </SheetHeader>
+    <!-- Content -->
+  </SheetContent>
+</Sheet>
+```
+
 ### Skeleton
 
 - **Documentation**: https://starwind.dev/docs/components/skeleton
@@ -796,6 +1105,37 @@ import { Skeleton } from "@/components/starwind/skeleton";
     <Skeleton class="h-4 w-[200px]" />
   </div>
 </div>
+```
+
+### Spinner
+
+- **Documentation**: https://starwind.dev/docs/components/spinner
+- **Import pattern**: `import { Spinner } from "@/components/starwind/spinner";`
+- **Key props**:
+  - All standard HTML attributes for svg elements (excluding `role` and `aria-label` which are set automatically for accessibility)
+  - Use the `class` prop to control size and color
+- **Example usage**:
+
+```astro
+---
+import { Spinner } from "@/components/starwind/spinner";
+import { Button } from "@/components/starwind/button";
+---
+
+<!-- Basic spinner -->
+<Spinner />
+
+<!-- Custom size -->
+<Spinner class="size-8" />
+
+<!-- Custom color -->
+<Spinner class="text-blue-500" />
+
+<!-- In button -->
+<Button disabled>
+  <Spinner />
+  Loading...
+</Button>
 ```
 
 ### Switch

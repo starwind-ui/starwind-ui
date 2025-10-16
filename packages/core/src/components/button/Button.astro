@@ -9,37 +9,37 @@ interface Props
 
 const { variant, size, class: className, ...rest } = Astro.props;
 
-const button = tv({
+export const button = tv({
   base: [
     "inline-flex items-center justify-center gap-1.5 rounded-md font-medium whitespace-nowrap",
     "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-    "starwind-transition-colors",
-    "focus-visible:outline-2 focus-visible:outline-offset-2",
+    "transition-all outline-none focus-visible:ring-3",
     "disabled:pointer-events-none disabled:opacity-50",
   ],
   variants: {
     variant: {
-      default: "bg-foreground text-background hover:bg-foreground/90 focus-visible:outline-outline",
+      default: "bg-foreground text-background hover:bg-foreground/90 focus-visible:ring-outline/50",
       primary:
-        "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:outline-primary",
+        "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/50",
       secondary:
-        "bg-secondary text-secondary-foreground hover:bg-secondary/90 focus-visible:outline-secondary",
+        "bg-secondary text-secondary-foreground hover:bg-secondary/90 focus-visible:ring-secondary/50",
       outline:
-        "border-border hover:bg-border hover:text-foreground focus-visible:outline-outline border",
-      ghost:
-        "hover:bg-foreground/10 hover:text-foreground focus-visible:outline-outline bg-transparent",
-      info: "bg-info text-info-foreground hover:bg-info/90 focus-visible:outline-info",
+        "dark:border-input focus-visible:ring-outline/50 bg-background dark:bg-input/30 focus-visible:border-outline hover:bg-muted dark:hover:bg-input/50 hover:text-foreground border shadow-xs",
+      ghost: "hover:bg-muted hover:text-foreground focus-visible:ring-outline/50",
+      info: "bg-info text-info-foreground hover:bg-info/90 focus-visible:ring-info/50",
       success:
-        "bg-success text-success-foreground hover:bg-success/90 focus-visible:outline-success",
+        "bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success/50",
       warning:
-        "bg-warning text-warning-foreground hover:bg-warning/90 focus-visible:outline-warning",
-      error: "bg-error text-error-foreground hover:bg-error/90 focus-visible:outline-error",
+        "bg-warning text-warning-foreground hover:bg-warning/90 focus-visible:ring-warning/50",
+      error: "bg-error text-error-foreground hover:bg-error/90 focus-visible:ring-error/50",
     },
     size: {
       sm: "h-9 px-3 py-2 text-sm",
       md: "h-11 px-4 py-2 text-base",
       lg: "h-12 px-8 py-2 text-lg",
-      icon: "h-11 w-11",
+      icon: "size-11",
+      "icon-sm": "size-9",
+      "icon-lg": "size-12",
     },
   },
   defaultVariants: { variant: "default", size: "md" },
@@ -48,6 +48,6 @@ const button = tv({
 const Tag = Astro.props.href ? "a" : "button";
 ---
 
-<Tag class={button({ variant, size, class: className })} {...rest}>
+<Tag class={button({ variant, size, class: className })} data-slot="button" {...rest}>
   <slot />
 </Tag>

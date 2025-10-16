@@ -4,11 +4,17 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"nav">;
 
-const pagination = tv({ base: "mx-auto flex w-full justify-center" });
+export const pagination = tv({ base: "mx-auto flex w-full justify-center" });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<nav role="navigation" aria-label="pagination" class={pagination({ class: className })} {...rest}>
+<nav
+  role="navigation"
+  aria-label="pagination"
+  class={pagination({ class: className })}
+  data-slot="pagination"
+  {...rest}
+>
   <slot />
 </nav>

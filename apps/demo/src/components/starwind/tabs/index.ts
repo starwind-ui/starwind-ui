@@ -1,9 +1,16 @@
-import Tabs from "./Tabs.astro";
-import TabsContent from "./TabsContent.astro";
-import TabsList from "./TabsList.astro";
-import TabsTrigger from "./TabsTrigger.astro";
+import Tabs, { tabs } from "./Tabs.astro";
+import TabsContent, { tabsContent } from "./TabsContent.astro";
+import TabsList, { tabsList } from "./TabsList.astro";
+import TabsTrigger, { tabsTrigger } from "./TabsTrigger.astro";
 
-export { Tabs, TabsContent, TabsList, TabsTrigger };
+const TabsVariants = {
+  tabs,
+  tabsContent,
+  tabsList,
+  tabsTrigger,
+};
+
+export { Tabs, TabsContent, TabsList, TabsTrigger, TabsVariants };
 
 export default {
   Root: Tabs,

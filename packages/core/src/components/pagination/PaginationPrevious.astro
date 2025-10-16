@@ -7,7 +7,7 @@ import PaginationLink from "./PaginationLink.astro";
 
 type Props = HTMLAttributes<"a"> & { size?: "sm" | "md" | "lg" | "icon" };
 
-const paginationPrevious = tv({ base: "group gap-1" });
+export const paginationPrevious = tv({ base: "group gap-1" });
 
 const { class: className, size = "md", ...rest } = Astro.props;
 ---
@@ -16,6 +16,7 @@ const { class: className, size = "md", ...rest } = Astro.props;
   aria-label="Go to previous page"
   size={size}
   class={paginationPrevious({ class: className })}
+  data-slot="pagination-previous"
   {...rest}
 >
   <ChevronLeft class="size-4 transition-transform group-hover:-translate-x-1" />

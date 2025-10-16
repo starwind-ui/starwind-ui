@@ -7,6 +7,7 @@ export const PATHS = {
   STARWIND_CORE: "@starwind-ui/core",
   STARWIND_CORE_COMPONENTS: "src/components",
   STARWIND_REMOTE_COMPONENT_REGISTRY: "https://starwind.dev/registry.json",
+  STARWIND_PRO_REGISTRY: "https://pro.starwind.dev/r/{name}",
   LOCAL_CSS_FILE: "src/styles/starwind.css",
   LOCAL_CONFIG_FILE: "starwind.config.json",
   LOCAL_STYLES_DIR: "src/styles",
@@ -28,7 +29,7 @@ export const OTHER_PACKAGES = {
   tailwindVite: "@tailwindcss/vite@^4",
   tailwindForms: "@tailwindcss/forms@^0.5",
   tailwindAnimate: "tw-animate-css@^1",
-  tailwindVariants: "tailwind-variants@^2",
+  tailwindVariants: "tailwind-variants@^3",
   tailwindMerge: "tailwind-merge@^3",
   tablerIcons: "@tabler/icons@^3",
 } as const;

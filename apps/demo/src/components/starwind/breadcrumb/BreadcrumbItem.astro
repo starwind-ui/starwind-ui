@@ -4,11 +4,11 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"li">;
 
-const breadcrumbItem = tv({ base: "inline-flex items-center gap-1.5" });
+export const breadcrumbItem = tv({ base: "inline-flex items-center gap-1.5" });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<li class={breadcrumbItem({ class: className })} {...rest}>
+<li class={breadcrumbItem({ class: className })} data-slot="breadcrumb-item" {...rest}>
   <slot />
 </li>

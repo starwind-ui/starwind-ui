@@ -1,5 +1,10 @@
-import Progress from "./Progress.astro";
+import Progress, { progress, progressIndicator } from "./Progress.astro";
 
-export { Progress };
+const ProgressVariants = {
+  progress,
+  progressIndicator,
+};
+
+export { Progress, ProgressVariants };
 
 export default Progress;

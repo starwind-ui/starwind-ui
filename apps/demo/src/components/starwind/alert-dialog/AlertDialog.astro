@@ -1,0 +1,273 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["starwind-alert-dialog", className]} data-slot="alert-dialog" {...rest}>
+  <slot />
+</div>
+
+<script>
+  class AlertDialogHandler {
+    private triggers: HTMLButtonElement[] = [];
+    private dialog: HTMLDialogElement | null = null;
+    private closeButtons: HTMLButtonElement[] = [];
+    private actionButtons: HTMLButtonElement[] = [];
+    private backdrop: HTMLElement | null = null;
+    private dialogId: string;
+    /**
+     * The duration of the animation in milliseconds. This is used to calculate the
+     * duration of close animation before hiding the dialog and backdrop
+     */
+    private animationDuration: number;
+
+    constructor(dialogWrapper: HTMLElement, dialogNumber: number) {
+      this.dialog = dialogWrapper.querySelector("dialog");
+      this.backdrop = dialogWrapper.querySelector(".starwind-alert-dialog-backdrop");
+      if (!this.dialog || !this.backdrop) {
+        throw new Error("AlertDialog: dialog or backdrop not found");
+      }
+
+      // if no ID was provided for the wrapper, generate one
+      if (dialogWrapper.id) {
+        this.dialogId = dialogWrapper.id;
+      } else {
+        this.dialogId = `starwind-alert-dialog${dialogNumber}`;
+        dialogWrapper.id = this.dialogId;
+      }
+
+      // animationDuration is set with inline styles through passed prop to DialogContent
+      const animationDurationString = this.dialog.style.animationDuration;
+      if (animationDurationString.endsWith("ms")) {
+        this.animationDuration = parseFloat(animationDurationString);
+      } else if (animationDurationString.endsWith("s")) {
+        // using something like @playform/compress might optimize to use "s" instead of "ms"
+        this.animationDuration = parseFloat(animationDurationString) * 1000;
+      } else {
+        this.animationDuration = 200;
+      }
+
+      // Find internal triggers and handle them
+      const internalTriggers = dialogWrapper.querySelectorAll(".starwind-alert-dialog-trigger");
+      internalTriggers.forEach((triggerElement) => {
+        const tempTrigger = triggerElement as HTMLElement;
+        let trigger: HTMLButtonElement;
+
+        if (tempTrigger?.hasAttribute("data-as-child")) {
+          trigger = tempTrigger.firstElementChild as HTMLButtonElement;
+        } else {
+          trigger = tempTrigger as HTMLButtonElement;
+        }
+
+        if (trigger) {
+          this.triggers.push(trigger);
+        }
+      });
+
+      // Find external triggers that target this dialog
+      this.findExternalTriggers();
+
+      // if closeButtons are set with asChild, swap the wrapper with its first child
+      const tempCloseButtons = dialogWrapper.querySelectorAll(
+        ".starwind-alert-dialog-close",
+      ) as NodeListOf<HTMLElement>;
+      tempCloseButtons.forEach((button: HTMLElement) => {
+        if (button.hasAttribute("data-as-child")) {
+          const childElement = button.firstElementChild;
+          if (childElement) {
+            childElement.classList.add("starwind-alert-dialog-close");
+            button.parentNode?.replaceChild(childElement, button);
+          }
+        }
+        return button;
+      });
+
+      // Convert NodeList to Array for consistency with triggers
+      this.closeButtons = Array.from(
+        dialogWrapper.querySelectorAll(".starwind-alert-dialog-close"),
+      ) as HTMLButtonElement[];
+
+      // if actionButtons are set with asChild, swap the wrapper with its first child
+      const tempActionButtons = dialogWrapper.querySelectorAll(
+        ".starwind-alert-dialog-action",
+      ) as NodeListOf<HTMLElement>;
+      tempActionButtons.forEach((button: HTMLElement) => {
+        if (button.hasAttribute("data-as-child")) {
+          const childElement = button.firstElementChild;
+          if (childElement) {
+            childElement.classList.add("starwind-alert-dialog-action");
+            button.parentNode?.replaceChild(childElement, button);
+          }
+        }
+        return button;
+      });
+
+      // Convert NodeList to Array for consistency with triggers
+      this.actionButtons = Array.from(
+        dialogWrapper.querySelectorAll(".starwind-alert-dialog-action"),
+      ) as HTMLButtonElement[];
+
+      // if essential elements are not there, exit
+      if (!this.dialog || !this.backdrop) return;
+
+      this.setupAccessibility(dialogNumber);
+      this.setupEvents();
+    }
+
+    private setupAccessibility(dialogNumber: number): void {
+      // get the first heading element in the dialog
+      const firstHeading = this.dialog?.querySelector("h1, h2, h3, h4, h5, h6");
+      if (firstHeading) {
+        // create a unique ID for the heading
+        firstHeading.id = `starwind-alert-dialog${dialogNumber}-heading`;
+        // set the aria-labelledby attribute to the first heading element
+        this.dialog?.setAttribute("aria-labelledby", firstHeading.id);
+      }
+    }
+
+    /**
+     * Find all external triggers that target this dialog
+     */
+    private findExternalTriggers(): void {
+      const externalTriggers = document.querySelectorAll(
+        `.starwind-alert-dialog-trigger[data-dialog-for="${this.dialogId}"]`,
+      );
+
+      externalTriggers.forEach((triggerElement) => {
+        // Skip if this is an internal trigger we already processed
+        const dialogWrapper = triggerElement.closest(".starwind-alert-dialog");
+        if (dialogWrapper && dialogWrapper.id === this.dialogId) {
+          return;
+        }
+
+        let trigger: HTMLButtonElement;
+        if (triggerElement.hasAttribute("data-as-child")) {
+          trigger = triggerElement.firstElementChild as HTMLButtonElement;
+        } else {
+          trigger = triggerElement as HTMLButtonElement;
+        }
+
+        if (trigger && !this.triggers.includes(trigger)) {
+          this.triggers.push(trigger);
+        }
+      });
+    }
+
+    private setupEvents(): void {
+      if (!this.dialog) return;
+      // Add click listeners to all triggers
+      this.triggers.forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+          this.open();
+        });
+      });
+
+      // Add click handlers to all close buttons
+      this.closeButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          // Only close if this is the topmost dialog
+          const openDialogs = document.querySelectorAll("dialog[open]");
+          if (openDialogs.length > 0 && openDialogs[openDialogs.length - 1] === this.dialog) {
+            this.close();
+          }
+        });
+      });
+
+      // Add click handlers to all action buttons
+      this.actionButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          // Only close if this is the topmost dialog
+          const openDialogs = document.querySelectorAll("dialog[open]");
+          if (openDialogs.length > 0 && openDialogs[openDialogs.length - 1] === this.dialog) {
+            this.close();
+          }
+        });
+      });
+
+      // Handle escape key
+      this.dialog.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          // prevent default dialog closing behavior so we can add closing animation
+          e.preventDefault();
+          // Only close if this is the topmost dialog
+          const openDialogs = document.querySelectorAll("dialog[open]");
+          if (openDialogs.length > 0 && openDialogs[openDialogs.length - 1] === this.dialog) {
+            this.close();
+          }
+        }
+      });
+
+      // Intercept form submissions to handle dialog close
+      const forms = this.dialog.querySelectorAll("form");
+      forms.forEach((form) => {
+        form.addEventListener("submit", (e) => {
+          /**
+           * Default form.method = "dialog" submissions cause the dialog to close
+           * Default form.method = "post" submissions do not close the dialog
+           * Here we intercept the form submission and manage the dialog closing if method = "dialog"
+           * so we can add closing animation
+           * Normal form event listeners for "submit" will still get the form data
+           */
+          if (form.method === "dialog") {
+            e.preventDefault();
+            // Only close if this is the topmost dialog
+            const openDialogs = document.querySelectorAll("dialog[open]");
+            if (openDialogs.length > 0 && openDialogs[openDialogs.length - 1] === this.dialog) {
+              this.close();
+            }
+          }
+        });
+      });
+    }
+
+    private open(): void {
+      if (!this.dialog || !this.backdrop) return;
+      this.dialog.showModal();
+      document.body.classList.add("overflow-hidden");
+      this.backdrop.classList.remove("hidden");
+      this.backdrop.dataset.state = "open";
+      this.dialog.dataset.state = "open";
+    }
+
+    private close(): void {
+      if (!this.dialog || !this.backdrop) return;
+      this.dialog.dataset.state = "closed";
+      this.backdrop.dataset.state = "closed";
+
+      // Wait for animation to finish before hiding backdrop
+      setTimeout(() => {
+        this.backdrop?.classList.add("hidden");
+        this.dialog?.close();
+        const stillOpen = document.querySelectorAll("dialog[open]").length;
+        if (stillOpen === 0) {
+          document.body.classList.remove("overflow-hidden");
+        }
+      }, this.animationDuration);
+    }
+  }
+
+  // Store instances in a WeakMap to avoid memory leaks
+  const alertDialogInstances = new WeakMap<HTMLElement, AlertDialogHandler>();
+
+  // Initialize all dialogs
+  const setupAlertDialogs = () => {
+    document.querySelectorAll(".starwind-alert-dialog").forEach((dialogWrapper, idx) => {
+      const wrapper = dialogWrapper as HTMLElement;
+      if (!alertDialogInstances.has(wrapper)) {
+        alertDialogInstances.set(wrapper, new AlertDialogHandler(wrapper, idx));
+      }
+    });
+  };
+
+  setupAlertDialogs();
+  document.addEventListener("astro:after-swap", setupAlertDialogs);
+</script>
+
+<style>
+  .overflow-hidden {
+    overflow: hidden;
+  }
+</style>

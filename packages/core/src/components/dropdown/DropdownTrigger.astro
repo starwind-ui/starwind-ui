@@ -9,11 +9,12 @@ type Props = Omit<HTMLAttributes<"button">, "role" | "type"> & {
   asChild?: boolean;
 };
 
-const dropdownTrigger = tv({
+export const dropdownTrigger = tv({
   base: [
     "starwind-dropdown-trigger",
     "inline-flex items-center justify-center",
-    "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+    "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
+    "disabled:pointer-events-none",
   ],
 });
 
@@ -28,7 +29,11 @@ if (Astro.slots.has("default")) {
 
 {
   asChild && hasChildren ? (
-    <div class={`starwind-dropdown-trigger ${className}`} data-as-child>
+    <div
+      class={`starwind-dropdown-trigger ${className}`}
+      data-slot="dropdown-trigger"
+      data-as-child
+    >
       <slot />
     </div>
   ) : (
@@ -38,6 +43,7 @@ if (Astro.slots.has("default")) {
       aria-haspopup="true"
       aria-expanded="false"
       data-state="closed"
+      data-slot="dropdown-trigger"
       {...rest}
     >
       <slot />

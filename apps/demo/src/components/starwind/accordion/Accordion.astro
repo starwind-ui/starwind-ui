@@ -13,12 +13,18 @@ type Props = HTMLAttributes<"div"> & {
   defaultValue?: string;
 };
 
-const accordion = tv({ base: "starwind-accordion" });
+export const accordion = tv({ base: "starwind-accordion" });
 
 const { type = "single", defaultValue, class: className, ...rest } = Astro.props;
 ---
 
-<div class={accordion({ class: className })} data-type={type} data-value={defaultValue} {...rest}>
+<div
+  class={accordion({ class: className })}
+  data-type={type}
+  data-value={defaultValue}
+  data-slot="accordion"
+  {...rest}
+>
   <slot />
 </div>
 

@@ -1,5 +1,7 @@
-import Button from "./Button.astro";
+import Button, { button } from "./Button.astro";
 
-export { Button };
+const ButtonVariants = { button };
+
+export { Button, ButtonVariants };
 
 export default Button;

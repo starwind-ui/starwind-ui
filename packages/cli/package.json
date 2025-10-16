@@ -1,6 +1,6 @@
 {
   "name": "starwind",
-  "version": "1.8.0",
+  "version": "1.10.1",
   "description": "Add beautifully designed components to your Astro applications",
   "license": "MIT",
   "author": {
@@ -36,6 +36,9 @@
     "dev": "tsup --watch",
     "cli:link": "pnpm link --global",
     "cli:unlink": "pnpm rm --global starwind",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
     "format:write": "prettier --write \"**/*.{ts,tsx,md,json}\" --cache",
@@ -45,7 +48,7 @@
   },
   "dependencies": {
     "@clack/prompts": "0.11.0",
-    "@starwind-ui/core": "1.8.0",
+    "@starwind-ui/core": "1.10.1",
     "chalk": "5.4.1",
     "commander": "14.0.0",
     "execa": "9.6.0",

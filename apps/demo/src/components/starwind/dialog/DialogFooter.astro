@@ -4,11 +4,11 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div">;
 
-const dialogFooter = tv({ base: "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end" });
+export const dialogFooter = tv({ base: "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end" });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={dialogFooter({ class: className })} {...rest}>
+<div class={dialogFooter({ class: className })} data-slot="dialog-footer" {...rest}>
   <slot />
 </div>

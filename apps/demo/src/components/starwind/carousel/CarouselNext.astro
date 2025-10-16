@@ -1,0 +1,33 @@
+---
+import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+import type { ComponentProps } from "astro/types";
+import { tv } from "tailwind-variants";
+
+import { Button } from "@/components/starwind/button";
+
+export const carouselNext = tv({
+  base: [
+    "starwind-carousel-next absolute size-8 rounded-full",
+    // Horizontal positioning
+    "group-data-[axis=x]/carousel:top-1/2 group-data-[axis=x]/carousel:-right-12 group-data-[axis=x]/carousel:-translate-y-1/2",
+    // Vertical positioning
+    "group-data-[axis=y]/carousel:-bottom-12 group-data-[axis=y]/carousel:left-1/2 group-data-[axis=y]/carousel:-translate-x-1/2 group-data-[axis=y]/carousel:rotate-90",
+  ],
+});
+
+type Props = ComponentProps<typeof Button>;
+
+const { class: className = "", variant = "outline", size = "icon", ...rest } = Astro.props;
+---
+
+<Button
+  data-slot="carousel-next"
+  variant={variant}
+  size={size}
+  class={carouselNext({ class: className })}
+  aria-label="Next slide"
+  {...rest}
+>
+  <ArrowRight />
+  <span class="sr-only">Next slide</span>
+</Button>

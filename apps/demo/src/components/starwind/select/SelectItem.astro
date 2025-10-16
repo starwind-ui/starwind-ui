@@ -14,7 +14,7 @@ type Props = HTMLAttributes<"div"> & {
   disabled?: boolean;
 };
 
-const selectItem = tv({
+export const selectItem = tv({
   base: [
     "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 outline-none select-none",
     "focus:bg-accent focus:text-accent-foreground",
@@ -23,7 +23,7 @@ const selectItem = tv({
   ],
 });
 
-const selectItemIcon = tv({ base: "absolute left-2 size-3.5 items-center justify-center" });
+export const selectItemIcon = tv({ base: "absolute left-2 size-3.5 items-center justify-center" });
 
 const { class: className, value, disabled, ...rest } = Astro.props;
 ---
@@ -32,6 +32,7 @@ const { class: className, value, disabled, ...rest } = Astro.props;
   class={selectItem({ class: className })}
   data-value={value}
   data-disabled={disabled}
+  data-slot="select-item"
   aria-selected="false"
   role="option"
   tabindex="0"

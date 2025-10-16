@@ -1,10 +1,14 @@
 ---
+import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+import CircleCheck from "@tabler/icons/outline/circle-check.svg";
 import Copy from "@tabler/icons/outline/copy.svg";
 import Edit from "@tabler/icons/outline/edit.svg";
 import Flame from "@tabler/icons/outline/flame.svg";
 import InfoCircle from "@tabler/icons/outline/info-circle.svg";
 import Mail from "@tabler/icons/outline/mail.svg";
 
+import CarouselDemos from "@/components/carousel-demos/CarouselDemos.astro";
+import CarouselPluginDemo from "@/components/carousel-demos/CarouselPluginDemo.astro";
 import ContactForm from "@/components/forms/ContactForm.astro";
 import CreateProjectForm from "@/components/forms/CreateProjectForm.astro";
 import EditProfileForm from "@/components/forms/EditProfileForm.astro";
@@ -18,6 +22,18 @@ import {
   AccordionTrigger,
 } from "@/components/starwind/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/starwind/alert-dialog";
+import { AspectRatio } from "@/components/starwind/aspect-ratio";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind/avatar";
 import { Badge } from "@/components/starwind/badge";
 import {
@@ -29,7 +45,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/starwind/breadcrumb";
-import { Button } from "@/components/starwind/button";
+import { Button, ButtonVariants } from "@/components/starwind/button";
 import {
   Card,
   CardContent,
@@ -38,6 +54,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/starwind/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/starwind/carousel";
 import { Checkbox } from "@/components/starwind/checkbox";
 import {
   Dialog,
@@ -64,6 +87,18 @@ import {
   DropzoneUploadIndicator,
 } from "@/components/starwind/dropzone";
 import { Input } from "@/components/starwind/input";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemFooter,
+  ItemGroup,
+  ItemHeader,
+  ItemMedia,
+  ItemSeparator,
+  ItemTitle,
+} from "@/components/starwind/item";
 import { Label } from "@/components/starwind/label";
 import {
   Pagination,
@@ -86,7 +121,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/starwind/select";
+import { Separator } from "@/components/starwind/separator";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/starwind/sheet";
 import { Skeleton } from "@/components/starwind/skeleton";
+import { Spinner } from "@/components/starwind/spinner";
 import { Switch } from "@/components/starwind/switch";
 import {
   Table,
@@ -109,8 +156,278 @@ import Layout from "@/layouts/Layout.astro";
   description="A collection of accessible UI components built with Astro"
 >
   <div class="container mx-auto px-4 pb-20">
+    <!-- Aspect Ratio Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Aspect Ratio Demo</h2>
+      <div class="w-[450px]">
+        <AspectRatio ratio={16 / 9} class="bg-muted overflow-hidden rounded-lg">
+          <img
+            src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
+            alt="Gray concrete building with windows"
+            class="h-full w-full rounded-lg object-cover"
+          />
+        </AspectRatio>
+      </div>
+    </section>
+
+    <!-- Spinner Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Spinner Demo</h2>
+      <div class="flex items-start gap-4">
+        <div>
+          <p class="text-muted-foreground mb-2 text-sm">Default</p>
+          <Spinner />
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-2 text-sm">Large</p>
+          <Spinner class="size-8" />
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-2 text-sm">Custom Color</p>
+          <Spinner class="text-primary size-6" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Separator Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Separator Demo</h2>
+      <div>
+        <div class="space-y-1">
+          <h4 class="text-sm leading-none font-medium">Radix Primitives</h4>
+          <p class="text-muted-foreground text-sm">An open-source UI component library.</p>
+        </div>
+        <Separator class="my-4" />
+        <div class="flex h-5 items-center space-x-4 text-sm">
+          <div>Blog</div>
+          <Separator orientation="vertical" />
+          <div>Docs</div>
+          <Separator orientation="vertical" />
+          <div>Source</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Item Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Item Demo</h2>
+      <div class="flex w-full max-w-md flex-col gap-6">
+        <Item variant="outline">
+          <ItemContent>
+            <ItemTitle>Basic Item</ItemTitle>
+            <ItemDescription>A simple item with title and description.</ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button variant="outline" size="sm">Action</Button>
+          </ItemActions>
+        </Item>
+        <Item variant="outline" size="sm" as="a" href="#">
+          <ItemMedia>
+            <CircleCheck class="size-5" />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>Your profile has been verified.</ItemTitle>
+          </ItemContent>
+          <ItemActions>
+            <ChevronRight class="size-4" />
+          </ItemActions>
+        </Item>
+      </div>
+    </section>
+
+    <!-- Item with Icon Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Item with Icon</h2>
+      <div class="flex w-full max-w-lg flex-col gap-6">
+        <Item variant="outline">
+          <ItemMedia variant="icon">
+            <InfoCircle />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>Security Alert</ItemTitle>
+            <ItemDescription>New login detected from unknown device.</ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button size="sm" variant="outline">Review</Button>
+          </ItemActions>
+        </Item>
+      </div>
+    </section>
+
+    <!-- Item Variants Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Item Variants</h2>
+      <div class="flex flex-col gap-6">
+        <Item>
+          <ItemContent>
+            <ItemTitle>Default Variant</ItemTitle>
+            <ItemDescription>
+              Standard styling with subtle background and borders.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button variant="outline" size="sm">Open</Button>
+          </ItemActions>
+        </Item>
+        <Item variant="outline">
+          <ItemContent>
+            <ItemTitle>Outline Variant</ItemTitle>
+            <ItemDescription>
+              Outlined style with clear borders and transparent background.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button variant="outline" size="sm">Open</Button>
+          </ItemActions>
+        </Item>
+        <Item variant="muted">
+          <ItemContent>
+            <ItemTitle>Muted Variant</ItemTitle>
+            <ItemDescription>
+              Subdued appearance with muted colors for secondary content.
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Button variant="outline" size="sm">Open</Button>
+          </ItemActions>
+        </Item>
+      </div>
+    </section>
+
+    <!-- Sheet Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Sheet Demo</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Top Sheet -->
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline">Open Top Sheet</Button>
+          </SheetTrigger>
+          <SheetContent side="top">
+            <SheetHeader>
+              <SheetTitle>Top Sheet</SheetTitle>
+              <SheetDescription> This sheet opens from the top of the screen. </SheetDescription>
+            </SheetHeader>
+            <div class="grid flex-1 auto-rows-min gap-6 px-4">
+              <div class="grid gap-3">
+                <Label for="top-sheet-name">Name</Label>
+                <Input id="top-sheet-name" value="Pedro Duarte" />
+              </div>
+              <div class="grid gap-3">
+                <Label for="top-sheet-username">Username</Label>
+                <Input id="top-sheet-username" value="@peduarte" />
+              </div>
+            </div>
+            <SheetFooter>
+              <Button variant="default">Save changes</Button>
+              <SheetClose asChild>
+                <Button variant="outline">Close</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+
+        <!-- Right Sheet -->
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline">Open Right Sheet</Button>
+          </SheetTrigger>
+          <SheetContent side="right">
+            <SheetHeader>
+              <SheetTitle>Right Sheet</SheetTitle>
+              <SheetDescription>
+                This sheet opens from the right side of the screen.
+              </SheetDescription>
+            </SheetHeader>
+            <div class="grid flex-1 auto-rows-min gap-6 px-4">
+              <div class="grid gap-3">
+                <Label for="right-sheet-name">Name</Label>
+                <Input id="right-sheet-name" value="Pedro Duarte" />
+              </div>
+              <div class="grid gap-3">
+                <Label for="right-sheet-username">Username</Label>
+                <Input id="right-sheet-username" value="@peduarte" />
+              </div>
+            </div>
+            <SheetFooter>
+              <Button variant="default">Save changes</Button>
+              <SheetClose asChild>
+                <Button variant="outline">Close</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+
+        <!-- Bottom Sheet -->
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline">Open Bottom Sheet</Button>
+          </SheetTrigger>
+          <SheetContent side="bottom">
+            <SheetHeader>
+              <SheetTitle>Bottom Sheet</SheetTitle>
+              <SheetDescription> This sheet opens from the bottom of the screen. </SheetDescription>
+            </SheetHeader>
+            <div class="grid flex-1 auto-rows-min gap-6 px-4">
+              <div class="grid gap-3">
+                <Label for="bottom-sheet-name">Name</Label>
+                <Input id="bottom-sheet-name" value="Pedro Duarte" />
+              </div>
+              <div class="grid gap-3">
+                <Label for="bottom-sheet-username">Username</Label>
+                <Input id="bottom-sheet-username" value="@peduarte" />
+              </div>
+            </div>
+            <SheetFooter>
+              <Button variant="default">Save changes</Button>
+              <SheetClose asChild>
+                <Button variant="outline">Close</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+
+        <!-- Left Sheet -->
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline">Open Left Sheet</Button>
+          </SheetTrigger>
+          <SheetContent side="left">
+            <SheetHeader>
+              <SheetTitle>Left Sheet</SheetTitle>
+              <SheetDescription>
+                This sheet opens from the left side of the screen.
+              </SheetDescription>
+            </SheetHeader>
+            <div class="grid flex-1 auto-rows-min gap-6 px-4">
+              <div class="grid gap-3">
+                <Label for="left-sheet-name">Name</Label>
+                <Input id="left-sheet-name" value="Pedro Duarte" />
+              </div>
+              <div class="grid gap-3">
+                <Label for="left-sheet-username">Username</Label>
+                <Input id="left-sheet-username" value="@peduarte" />
+              </div>
+            </div>
+            <SheetFooter>
+              <Button variant="default">Save changes</Button>
+              <SheetClose asChild>
+                <Button variant="outline">Close</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </section>
+
+    <CarouselDemos />
+    <CarouselPluginDemo />
+
     <!-- file input -->
     <section class="mx-auto mt-6 max-w-lg">
+      <div class={ButtonVariants.button({ variant: "primary", size: "lg" })}>
+        Variant Usage Example
+      </div>
       <h2 class="mb-4 text-2xl font-bold">File Input</h2>
       <div class="flex flex-col gap-6">
         <Dropzone />
@@ -302,6 +619,28 @@ import Layout from "@/layouts/Layout.astro";
       </div>
     </section>
 
+    <!-- Alert Dialog -->
+    <section class="mx-auto mt-6 max-w-lg">
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline">Show Alert Dialog</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your account and remove
+              your data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
+
     <!-- dialog -->
     <section class="mx-auto mt-6 max-w-lg">
       <EditProfileForm />
@@ -485,22 +824,22 @@ import Layout from "@/layouts/Layout.astro";
     </section>
 
     <section class="mx-auto mt-6 max-w-lg">
-      <Accordion type="multiple" defaultValue="item-1">
-        <AccordionItem value="item-4">
-          <AccordionTrigger>What is Astro?</AccordionTrigger>
+      <Accordion class="space-y-3" type="multiple" defaultValue="item-4">
+        <AccordionItem class="bg-muted rounded-xl border px-4" value="item-4">
+          <AccordionTrigger>What is Astro? (custom styling)</AccordionTrigger>
           <AccordionContent>
             Astro is an web framework for building fast, scalable, and secure websites.
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-5">
-          <AccordionTrigger>Why should I use Astro?</AccordionTrigger>
+        <AccordionItem class="bg-muted rounded-xl border px-4" value="item-5">
+          <AccordionTrigger>Why should I use Astro? (custom styling)</AccordionTrigger>
           <AccordionContent>
             Astro provides a set of features that make it an ideal choice for building fast,
             scalable, and secure websites.
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-6">
-          <AccordionTrigger>How do I get started with Astro?</AccordionTrigger>
+        <AccordionItem class="bg-muted rounded-xl border px-4" value="item-6">
+          <AccordionTrigger>How do I get started with Astro? (custom styling)</AccordionTrigger>
           <AccordionContent>
             To get started with Astro, follow the instructions in the documentation.
           </AccordionContent>
@@ -579,8 +918,11 @@ import Layout from "@/layouts/Layout.astro";
           rel="noopener noreferrer">Primary</Button
         >
         <Button variant="secondary" size="lg">Secondary lg</Button>
+        <Button variant="secondary" size="icon-lg"><Mail /></Button>
         <Button variant="outline">Outline</Button>
+        <Button variant="outline" size="icon"><Mail /></Button>
         <Button variant="info" size="sm"><Mail />Info sm</Button>
+        <Button variant="info" size="icon-sm"><Mail /></Button>
         <Button variant="success">Success</Button>
         <Button variant="warning">Warning</Button>
         <Button variant="error"><Flame />Error</Button>

@@ -9,13 +9,14 @@ import { update } from "./commands/update.js";
 const program = new Command()
   .name("starwind")
   .description("Add beautifully designed components to your Astro applications")
-  .version("1.7.3");
+  .version("1.10.1");
 
 program
   .command("init")
   .description("Initialize your project with Starwind")
   .option("-d, --defaults", "Use default values for all prompts")
-  .action((options) => init(false, { defaults: options.defaults }));
+  .option("-p, --pro", "Initialize with Starwind Pro setup")
+  .action((options) => init(false, { defaults: options.defaults, pro: options.pro }));
 
 program
   .command("add")

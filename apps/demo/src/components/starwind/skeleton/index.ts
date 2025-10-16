@@ -1,5 +1,9 @@
-import Skeleton from "./Skeleton.astro";
+import Skeleton, { skeleton } from "./Skeleton.astro";
 
-export { Skeleton };
+const SkeletonVariants = {
+  skeleton,
+};
+
+export { Skeleton, SkeletonVariants };
 
 export default Skeleton;

@@ -25,7 +25,7 @@ type Props = HTMLAttributes<"div"> & {
   animationDuration?: number;
 };
 
-const dropdownContent = tv({
+export const dropdownContent = tv({
   base: [
     "starwind-dropdown-content",
     "bg-popover text-popover-foreground z-50 min-w-[9rem] overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md",
@@ -66,6 +66,7 @@ const {
   data-side={side}
   data-align={align}
   data-state="closed"
+  data-slot="dropdown-content"
   tabindex="-1"
   aria-orientation="vertical"
   style={{

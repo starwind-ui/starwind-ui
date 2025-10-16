@@ -1,0 +1,55 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { type EmblaOptionsType } from "embla-carousel";
+import { tv } from "tailwind-variants";
+
+const carousel = tv({
+  base: "starwind-carousel group/carousel relative",
+});
+
+export interface Props extends HTMLAttributes<"div"> {
+  orientation?: "horizontal" | "vertical";
+  opts?: EmblaOptionsType;
+  autoInit?: boolean;
+}
+
+const {
+  class: className,
+  orientation = "horizontal",
+  opts = {},
+  autoInit = true,
+  ...rest
+} = Astro.props;
+---
+
+<div
+  class={carousel({ class: className })}
+  role="region"
+  aria-roledescription="carousel"
+  data-slot="carousel"
+  data-axis={orientation === "horizontal" ? "x" : "y"}
+  data-opts={JSON.stringify(opts)}
+  data-auto-init={autoInit}
+  {...rest}
+>
+  <slot />
+</div>
+
+<script>
+  import { initCarousel } from "./index";
+
+  const setupCarousels = () => {
+    const carousels = document.querySelectorAll(".starwind-carousel") as NodeListOf<HTMLElement>;
+    carousels.forEach((carousel) => {
+      if (carousel.dataset.autoInit === "false") {
+        return;
+      }
+      initCarousel(carousel);
+    });
+  };
+
+  document.addEventListener("DOMContentLoaded", setupCarousels);
+
+  // Re-initialize after Astro page transitions
+  document.addEventListener("astro:after-swap", setupCarousels);
+</script>

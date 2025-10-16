@@ -1,4 +1,5 @@
 ---
+import CaretUp from "@tabler/icons/filled/caret-up.svg";
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
@@ -15,7 +16,7 @@ type Props = HTMLAttributes<"div"> & {
   align?: "start" | "center" | "end";
   /**
    * Offset distance in pixels
-   * @default 4
+   * @default 8
    */
   sideOffset?: number;
   /**
@@ -30,11 +31,11 @@ type Props = HTMLAttributes<"div"> & {
   animationDuration?: number;
 };
 
-const tooltipContent = tv({
+export const tooltipContent = tv({
   base: [
     "starwind-tooltip-content",
-    "absolute z-50 hidden px-3 py-1.5 whitespace-nowrap shadow-sm will-change-transform",
-    "bg-popover text-popover-foreground rounded-md border",
+    "absolute z-50 hidden px-3 py-1.5 whitespace-nowrap shadow-xs will-change-transform",
+    "bg-foreground text-background rounded-md",
     "animate-in fade-in zoom-in-95",
     "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
   ],
@@ -72,10 +73,23 @@ const tooltipContent = tv({
   ],
 });
 
+export const tooltipCaret = tv({
+  base: ["text-foreground absolute z-50 size-4"],
+  variants: {
+    side: {
+      top: "bottom-0 left-1/2 -translate-x-1/2 translate-y-[calc(50%+1px)] rotate-180",
+      bottom: "top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(50%+1px)]",
+      left: "top-1/2 right-0 translate-x-[calc(50%+1px)] -translate-y-1/2 rotate-90",
+      right: "top-1/2 left-0 -translate-x-[calc(50%+1px)] -translate-y-1/2 -rotate-90",
+    },
+  },
+  defaultVariants: { side: "top" },
+});
+
 const {
   side = "top",
   align = "center",
-  sideOffset = 4,
+  sideOffset = 8,
   avoidCollisions = true,
   animationDuration = 150,
   class: className,
@@ -84,6 +98,7 @@ const {
 
 <div
   class={tooltipContent({ side, align, class: className })}
+  data-slot="tooltip-content"
   data-state="closed"
   data-side={side}
   data-align={align}
@@ -95,4 +110,5 @@ const {
   }}
 >
   <slot> My tooltip! </slot>
+  <CaretUp class={tooltipCaret({ side })} />
 </div>

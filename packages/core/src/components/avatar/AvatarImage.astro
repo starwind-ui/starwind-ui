@@ -2,7 +2,7 @@
 import { Image } from "astro:assets";
 import { tv } from "tailwind-variants";
 
-const avatarImage = tv({ base: "relative z-1 h-full w-full object-cover" });
+export const avatarImage = tv({ base: "relative z-1 h-full w-full object-cover" });
 
 type BaseProps = { alt: string; class?: string };
 
@@ -29,7 +29,18 @@ if (!src && !image) {
       width={64}
       height={64}
       onerror="this.style.display='none'"
+      data-slot="avatar-image"
     />
   )
 }
-{image && <Image src={image} alt={alt} class={avatarImage({ class: className })} width={64} />}
+{
+  image && (
+    <Image
+      src={image}
+      alt={alt}
+      class={avatarImage({ class: className })}
+      width={64}
+      data-slot="avatar-image"
+    />
+  )
+}

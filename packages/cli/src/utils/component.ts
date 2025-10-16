@@ -15,6 +15,7 @@ export type InstallResult = {
   name: string;
   version?: string;
   error?: string;
+  dependencyResults?: InstallResult[];
 };
 
 export interface RemoveResult {

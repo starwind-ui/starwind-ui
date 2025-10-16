@@ -1,42 +1,23 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import type { VariantProps } from "tailwind-variants";
 
-interface Props extends HTMLAttributes<"a"> {
-  isActive?: boolean;
-  size?: "sm" | "md" | "lg" | "icon";
-}
+import { ButtonVariants } from "@/components/starwind/button";
 
-const paginationLink = tv({
-  base: [
-    "inline-flex items-center justify-center gap-1.5 rounded-md font-medium whitespace-nowrap",
-    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-    "starwind-transition-colors",
-    "focus-visible:outline-2 focus-visible:outline-offset-2",
-    "disabled:pointer-events-none disabled:opacity-50",
-  ],
-  variants: {
-    isActive: {
-      true: "border-border hover:bg-border hover:text-foreground focus-visible:outline-outline border",
-      false:
-        "hover:bg-foreground/10 hover:text-foreground focus-visible:outline-outline bg-transparent",
-    },
-    size: {
-      sm: "h-9 px-3 py-2 text-sm",
-      md: "h-11 px-4 py-2 text-base",
-      lg: "h-12 px-8 py-2 text-lg",
-      icon: "h-11 w-11",
-    },
-  },
-  defaultVariants: { isActive: false, size: "icon" },
-});
+type Props = HTMLAttributes<"a"> &
+  Omit<VariantProps<typeof ButtonVariants.button>, "variant"> & {
+    isActive?: boolean;
+  };
+
+export const paginationLink = ButtonVariants.button;
 
 const { class: className, isActive, size = "icon", ...rest } = Astro.props;
 ---
 
 <a
   aria-current={isActive ? "page" : undefined}
-  class={paginationLink({ isActive, size, class: className })}
+  class={ButtonVariants.button({ variant: isActive ? "outline" : "ghost", size, class: className })}
+  data-slot="pagination-link"
   {...rest}
 >
   <slot />

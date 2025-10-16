@@ -1,0 +1,16 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div">;
+
+export const itemContent = tv({
+  base: "flex flex-1 flex-col gap-1.5 [&+[data-slot=item-content]]:flex-none",
+});
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class={itemContent({ class: className })} data-slot="item-content" {...rest}>
+  <slot />
+</div>

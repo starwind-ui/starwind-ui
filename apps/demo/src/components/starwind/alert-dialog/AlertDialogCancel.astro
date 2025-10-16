@@ -1,0 +1,45 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+import { ButtonVariants } from "@/components/starwind/button";
+
+type Props = HTMLAttributes<"button"> & {
+  /**
+   * When true, the component will render its child element instead of a button
+   */
+  asChild?: boolean;
+};
+
+const { class: className, asChild = false, ...rest } = Astro.props;
+
+// Get the first child element if asChild is true
+let hasChildren = false;
+if (Astro.slots.has("default")) {
+  hasChildren = true;
+}
+---
+
+{
+  asChild && hasChildren ? (
+    <div
+      class:list={["starwind-alert-dialog-close", className]}
+      data-slot="alert-dialog-cancel"
+      data-as-child
+    >
+      <slot />
+    </div>
+  ) : (
+    <button
+      type="button"
+      class={ButtonVariants.button({
+        variant: "outline",
+        class: `starwind-alert-dialog-close ${className}`,
+      })}
+      data-slot="alert-dialog-cancel"
+      {...rest}
+    >
+      <slot />
+    </button>
+  )
+}

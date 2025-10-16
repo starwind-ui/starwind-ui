@@ -5,7 +5,7 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"li">;
 
-const breadcrumbSeparator = tv({ base: "[&>svg]:size-4" });
+export const breadcrumbSeparator = tv({ base: "[&>svg]:size-4" });
 
 const { class: className, ...rest } = Astro.props;
 ---
@@ -14,6 +14,7 @@ const { class: className, ...rest } = Astro.props;
   role="presentation"
   aria-hidden="true"
   class={breadcrumbSeparator({ class: className })}
+  data-slot="breadcrumb-separator"
   {...rest}
 >
   <slot>

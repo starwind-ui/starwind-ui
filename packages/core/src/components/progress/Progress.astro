@@ -23,8 +23,8 @@ const isIndeterminate = value == null;
 const valuePercent = isIndeterminate ? undefined : Math.round((value / max) * 100);
 const valueText = isIndeterminate ? undefined : `${valuePercent}%`;
 
-const progress = tv({
-  base: ["starwind-progress-bar", "bg-accent h-2 w-full overflow-hidden rounded-full"],
+export const progress = tv({
+  base: ["starwind-progress-bar", "bg-muted h-2 w-full overflow-hidden rounded-full"],
   variants: {
     variant: {
       indeterminate: "relative",
@@ -32,7 +32,7 @@ const progress = tv({
   },
 });
 
-const indicator = tv({
+export const progressIndicator = tv({
   base: ["starwind-progress-indicator", "h-full w-full flex-1 transition-transform"],
   variants: {
     variant: {
@@ -52,6 +52,8 @@ const indicator = tv({
     color: "primary",
   },
 });
+
+const indicator = progressIndicator;
 
 const progressClasses = progress({
   variant: isIndeterminate ? "indeterminate" : undefined,
@@ -78,6 +80,7 @@ const indicatorStyle = isIndeterminate
   data-value={value}
   data-max={max}
   data-indeterminate={isIndeterminate}
+  data-slot="progress"
   {...rest}
 >
   <div class:list={[indicatorClasses]} style={indicatorStyle}></div>

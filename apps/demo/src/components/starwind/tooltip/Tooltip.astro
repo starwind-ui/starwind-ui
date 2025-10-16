@@ -17,7 +17,7 @@ type Props = HTMLAttributes<"div"> & {
   disableHoverableContent?: boolean;
 };
 
-const tooltip = tv({ base: "starwind-tooltip relative inline-block" });
+export const tooltip = tv({ base: "starwind-tooltip relative inline-block" });
 
 const {
   openDelay = 200,
@@ -29,6 +29,7 @@ const {
 
 <div
   class={tooltip({ class: className })}
+  data-slot="tooltip"
   data-state="closed"
   data-open-delay={openDelay}
   data-close-delay={closeDelay}
