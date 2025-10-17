@@ -2,10 +2,10 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
-interface Props extends HTMLAttributes<"kbd"> {}
+type Props = HTMLAttributes<"kbd">;
 
 const kbdGroup = tv({
-  base: "starwind-kbd-group inline-flex items-center gap-1",
+  base: "inline-flex items-center gap-1",
 });
 
 const { class: className, ...rest } = Astro.props;
