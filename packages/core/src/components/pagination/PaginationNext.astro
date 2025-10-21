@@ -20,5 +20,7 @@ const { class: className, size = "md", ...rest } = Astro.props;
   {...rest}
 >
   <slot />
-  <ChevronRight class="size-4 transition-transform group-hover:translate-x-1" />
+  <slot name="icon">
+    <ChevronRight class="size-4 transition-transform group-hover:translate-x-1" />
+  </slot>
 </PaginationLink>

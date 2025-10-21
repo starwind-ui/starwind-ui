@@ -26,5 +26,7 @@ const { class: className, ...rest } = Astro.props;
   {...rest}
 >
   <slot />
-  <ChevronDown class="size-5 shrink-0 transition-transform duration-200" />
+  <slot name="icon">
+    <ChevronDown class="size-5 shrink-0 transition-transform duration-200" />
+  </slot>
 </button>

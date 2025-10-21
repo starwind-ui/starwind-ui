@@ -28,6 +28,10 @@ const { class: className = "", variant = "outline", size = "icon", ...rest } = A
   aria-label="Next slide"
   {...rest}
 >
-  <ArrowRight />
-  <span class="sr-only">Next slide</span>
+  <slot name="icon">
+    <ArrowRight />
+  </slot>
+  <slot>
+    <span class="sr-only">Next slide</span>
+  </slot>
 </Button>

@@ -30,13 +30,15 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
 ---
 
 <!-- dialog overlay -->
-<div
-  class={alertDialogBackdrop()}
-  data-state="closed"
-  data-slot="alert-dialog-backdrop"
-  style={{ animationDuration: `${animationDuration}ms` }}
->
-</div>
+<slot name="backdrop">
+  <div
+    class={alertDialogBackdrop()}
+    data-state="closed"
+    data-slot="alert-dialog-backdrop"
+    style={{ animationDuration: `${animationDuration}ms` }}
+  >
+  </div>
+</slot>
 
 <dialog
   class={alertDialogContent({ class: className })}
