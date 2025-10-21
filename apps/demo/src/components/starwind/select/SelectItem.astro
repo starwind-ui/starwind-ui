@@ -39,7 +39,9 @@ const { class: className, value, disabled, ...rest } = Astro.props;
   {...rest}
 >
   <span class={selectItemIcon()}>
-    <Check class="size-4" />
+    <slot name="icon">
+      <Check class="size-4" />
+    </slot>
   </span>
   <span>
     <slot />

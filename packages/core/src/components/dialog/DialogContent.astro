@@ -40,13 +40,15 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
 ---
 
 <!-- dialog overlay -->
-<div
-  class={dialogBackdrop()}
-  data-state="closed"
-  data-slot="dialog-backdrop"
-  style={{ animationDuration: `${animationDuration}ms` }}
->
-</div>
+<slot name="backdrop">
+  <div
+    class={dialogBackdrop()}
+    data-state="closed"
+    data-slot="dialog-backdrop"
+    style={{ animationDuration: `${animationDuration}ms` }}
+  >
+  </div>
+</slot>
 
 <dialog
   class={dialogContent({ class: className })}
@@ -57,7 +59,9 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
 >
   <slot />
   <button type="button" class={dialogCloseButton()} data-dialog-close aria-label="Close dialog">
-    <X class="size-5 transition-opacity" />
+    <slot name="icon">
+      <X class="size-5 transition-opacity" />
+    </slot>
     <span class="sr-only">Close</span>
   </button>
 </dialog>

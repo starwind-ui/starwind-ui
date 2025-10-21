@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+
 import { Command } from "commander";
 
+import pkg from "../package.json" with { type: "json" };
 import { add } from "./commands/add.js";
 import { init } from "./commands/init.js";
 import { remove } from "./commands/remove.js";
@@ -9,7 +11,7 @@ import { update } from "./commands/update.js";
 const program = new Command()
   .name("starwind")
   .description("Add beautifully designed components to your Astro applications")
-  .version("1.10.1");
+  .version(pkg.version);
 
 program
   .command("init")

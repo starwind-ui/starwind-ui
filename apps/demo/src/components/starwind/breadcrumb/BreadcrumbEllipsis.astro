@@ -19,6 +19,10 @@ const { class: className, ...rest } = Astro.props;
   data-slot="breadcrumb-ellipsis"
   {...rest}
 >
-  <Dots />
-  <span class="sr-only">More</span>
+  <slot name="icon">
+    <Dots />
+  </slot>
+  <slot>
+    <span class="sr-only">More</span>
+  </slot>
 </span>

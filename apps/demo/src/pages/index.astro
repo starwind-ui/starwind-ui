@@ -6,6 +6,7 @@ import Edit from "@tabler/icons/outline/edit.svg";
 import Flame from "@tabler/icons/outline/flame.svg";
 import InfoCircle from "@tabler/icons/outline/info-circle.svg";
 import Mail from "@tabler/icons/outline/mail.svg";
+import IconX from "@tabler/icons/outline/x.svg";
 
 import CarouselDemos from "@/components/carousel-demos/CarouselDemos.astro";
 import CarouselPluginDemo from "@/components/carousel-demos/CarouselPluginDemo.astro";
@@ -826,20 +827,36 @@ import Layout from "@/layouts/Layout.astro";
     <section class="mx-auto mt-6 max-w-lg">
       <Accordion class="space-y-3" type="multiple" defaultValue="item-4">
         <AccordionItem class="bg-muted rounded-xl border px-4" value="item-4">
-          <AccordionTrigger>What is Astro? (custom styling)</AccordionTrigger>
+          <AccordionTrigger class="[&[data-state=open]>svg]:rotate-0"
+            >What is Astro? (custom styling)
+            <IconX
+              slot="icon"
+              class="size-4.5 shrink-0 rotate-45 transition-transform duration-200"
+            />
+          </AccordionTrigger>
           <AccordionContent>
             Astro is an web framework for building fast, scalable, and secure websites.
           </AccordionContent>
         </AccordionItem>
         <AccordionItem class="bg-muted rounded-xl border px-4" value="item-5">
-          <AccordionTrigger>Why should I use Astro? (custom styling)</AccordionTrigger>
+          <AccordionTrigger class="[&[data-state=open]>svg]:rotate-0"
+            >Why should I use Astro? (custom styling)<IconX
+              slot="icon"
+              class="size-4.5 shrink-0 rotate-45 transition-transform duration-200"
+            /></AccordionTrigger
+          >
           <AccordionContent>
             Astro provides a set of features that make it an ideal choice for building fast,
             scalable, and secure websites.
           </AccordionContent>
         </AccordionItem>
         <AccordionItem class="bg-muted rounded-xl border px-4" value="item-6">
-          <AccordionTrigger>How do I get started with Astro? (custom styling)</AccordionTrigger>
+          <AccordionTrigger class="[&[data-state=open]>svg]:rotate-0"
+            >How do I get started with Astro? (custom styling)<IconX
+              slot="icon"
+              class="size-4.5 shrink-0 rotate-45 transition-transform duration-200"
+            /></AccordionTrigger
+          >
           <AccordionContent>
             To get started with Astro, follow the instructions in the documentation.
           </AccordionContent>

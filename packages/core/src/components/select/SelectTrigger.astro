@@ -42,5 +42,7 @@ const { class: className, required = false, ...rest } = Astro.props;
   {...rest}
 >
   <slot />
-  <ChevronDown class="size-4 opacity-50" />
+  <slot name="icon">
+    <ChevronDown class="size-4 opacity-50" />
+  </slot>
 </button>

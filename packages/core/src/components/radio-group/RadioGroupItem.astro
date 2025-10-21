@@ -122,6 +122,8 @@ const {
     {...rest}
   />
   <span class={radioControl({ variant, class: className })} data-slot="radio-group-item-control">
-    <CircleFilled class={radioIndicator({ size })} />
+    <slot name="icon">
+      <CircleFilled class={radioIndicator({ size })} />
+    </slot>
   </span>
 </div>
