@@ -1,20 +1,17 @@
 #!/usr/bin/env node
-import { createRequire } from "node:module";
 
 import { Command } from "commander";
 
+import pkg from "../package.json" with { type: "json" };
 import { add } from "./commands/add.js";
 import { init } from "./commands/init.js";
 import { remove } from "./commands/remove.js";
 import { update } from "./commands/update.js";
 
-const require = createRequire(import.meta.url);
-const { version } = require("../package.json");
-
 const program = new Command()
   .name("starwind")
   .description("Add beautifully designed components to your Astro applications")
-  .version(version);
+  .version(pkg.version);
 
 program
   .command("init")
