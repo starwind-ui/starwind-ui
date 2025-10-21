@@ -63,7 +63,9 @@ export const sheetCloseButton = tv({
 ---
 
 <!-- dialog overlay -->
-<div class={dialogBackdrop()} data-state="closed" data-slot="dialog-backdrop"></div>
+<slot name="backdrop">
+  <div class={dialogBackdrop()} data-state="closed" data-slot="dialog-backdrop"></div>
+</slot>
 
 <dialog
   class={sheetContent({
@@ -82,7 +84,9 @@ export const sheetCloseButton = tv({
     data-slot="sheet-close"
     aria-label="Close dialog"
   >
-    <X class="size-5 transition-opacity" />
+    <slot name="icon">
+      <X class="size-5 transition-opacity" />
+    </slot>
     <span class="sr-only">Close</span>
   </button>
 </dialog>

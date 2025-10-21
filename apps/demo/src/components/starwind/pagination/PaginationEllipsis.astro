@@ -16,6 +16,10 @@ const { class: className, ...rest } = Astro.props;
   data-slot="pagination-ellipsis"
   {...rest}
 >
-  <Dots class="size-4" />
-  <span class="sr-only">More pages</span>
+  <slot name="icon">
+    <Dots class="size-4" />
+  </slot>
+  <slot>
+    <span class="sr-only">More pages</span>
+  </slot>
 </span>
