@@ -99,6 +99,7 @@ import {
   ItemSeparator,
   ItemTitle,
 } from "@/components/starwind/item";
+import { Kbd, KbdGroup } from "@/components/starwind/kbd";
 import { Label } from "@/components/starwind/label";
 import {
   Pagination,
@@ -1164,5 +1165,91 @@ import Layout from "@/layouts/Layout.astro";
         </DialogContent>
       </Dialog>
     </section>
-  </div>
-</Layout>
+
+    <!-- Keyboard Shortcuts -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Keyboard Shortcuts</h2>
+
+      <!-- Single key -->
+      <div class="flex flex-col gap-4">
+        <div class="flex items-center gap-4">
+          <span class="text-muted-foreground text-sm">Single key:</span>
+          <Kbd>⌘</Kbd>
+        </div>
+
+        <!-- Key combinations -->
+        <div class="flex items-center gap-4">
+          <span class="text-muted-foreground text-sm">Key combinations:</span>
+          <KbdGroup>
+            <Kbd>⌘</Kbd>
+            <Kbd>K</Kbd>
+          </KbdGroup>
+        </div>
+
+        <!-- Multiple combinations -->
+        <div class="flex items-center gap-4">
+          <span class="text-muted-foreground text-sm">Multiple combinations:</span>
+          <div class="flex gap-2">
+            <KbdGroup>
+              <Kbd>⌘</Kbd>
+              <Kbd>K</Kbd>
+            </KbdGroup>
+            <span class="text-muted-foreground text-sm">or</span>
+            <KbdGroup>
+              <Kbd>Ctrl</Kbd>
+              <Kbd>K</Kbd>
+            </KbdGroup>
+          </div>
+        </div>
+
+        <!-- Modifiers -->
+        <div class="flex items-center gap-4">
+          <span class="text-muted-foreground text-sm">With modifiers:</span>
+          <div class="flex gap-2">
+            <KbdGroup>
+              <Kbd>⌘</Kbd>
+              <Kbd>Shift</Kbd>
+              <Kbd>P</Kbd>
+            </KbdGroup>
+          </div>
+        </div>
+      </div>
+
+      <!-- In a Button -->
+      <div class="mt-4 flex items-center gap-4">
+        <span class="text-muted-foreground text-sm">In a Button:</span>
+        <div class="flex items-center gap-4">
+          <Button size="sm">
+            New File
+            <span class="ml-2">
+              <KbdGroup>
+                <Kbd>Ctrl</Kbd>
+                <Kbd>N</Kbd>
+              </KbdGroup>
+            </span>
+          </Button>
+        </div>
+      </div>
+
+      <!-- With tooltip -->
+      <div class="mt-4 flex items-center gap-4">
+        <span class="text-muted-foreground text-sm">With tooltip:</span>
+        <div class="flex flex-col gap-4">
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="outline">Command Palette</Button>
+            </TooltipTrigger>
+            <TooltipContent class="flex items-center gap-2">
+              <span class="text-sm">Shortcut:</span>
+              <KbdGroup>
+                <Kbd>⌘</Kbd>
+                <Kbd>Shift</Kbd>
+                <Kbd>P</Kbd>
+              </KbdGroup>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    </section>
+  </div></Layout
+>

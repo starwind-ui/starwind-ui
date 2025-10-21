@@ -1,0 +1,16 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"kbd">;
+
+export const kbdGroup = tv({
+  base: "inline-flex items-center gap-1",
+});
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<kbd class={kbdGroup({ class: className })} data-slot="kbd-group" {...rest}>
+  <slot />
+</kbd>
