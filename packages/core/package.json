@@ -33,7 +33,6 @@
     "dev": "tsup --watch",
     "core:link": "pnpm link --global",
     "core:unlink": "pnpm rm --global @starwind-ui/core",
-    "sync:demo": "pnpm exec starwind sync src/components ../../apps/demo/src/components/starwind",
     "publish:beta": "pnpm publish --tag beta --access public",
     "publish:next": "pnpm publish --tag next --access public",
     "publish:release": "pnpm publish --access public"
