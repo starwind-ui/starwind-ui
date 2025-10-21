@@ -37,10 +37,9 @@ This is the primary section where individual components are documented. Each com
 - **Description**: (OPTIONAL) Brief description of the component or its purpose
 - **Example usage**:
 
-\`\`\`astro
----
-import { Component, SubComponents } from "@/components/starwind/component-name";
----
+## \`\`\`astro
+
+## import { Component, SubComponents } from "@/components/starwind/component-name";
 
 <Component>
   <!-- Usage example -->
@@ -51,6 +50,7 @@ import { Component, SubComponents } from "@/components/starwind/component-name";
 ### Pattern Analysis by Component Type
 
 #### Simple Components (e.g., Badge, Button, Input, Label)
+
 - **Documentation**: Required
 - **Import pattern**: Required (single import)
 - **Key props**: Required
@@ -62,6 +62,7 @@ import { Component, SubComponents } from "@/components/starwind/component-name";
 - **Example usage**: Required (brief, 1-3 line example)
 
 **Example:**
+
 ```markdown
 ### Badge
 
@@ -72,16 +73,16 @@ import { Component, SubComponents } from "@/components/starwind/component-name";
   - `size`: "sm" | "md" | "lg" (default: "md")
 - **Example usage**:
 
-\`\`\`astro
----
-import { Badge } from "@/components/starwind/badge";
----
+## \`\`\`astro
+
+## import { Badge } from "@/components/starwind/badge";
 
 <Badge variant="info">New</Badge>
 \`\`\`
 ```
 
 #### Compound Components (e.g., Accordion, Card, Dialog, Dropdown, Tabs)
+
 - **Documentation**: Required
 - **Import pattern**: Required (all subcomponents listed)
 - **Key props**: Optional but recommended for complex components
@@ -92,6 +93,7 @@ import { Badge } from "@/components/starwind/badge";
 - **Example usage**: Required (complete working example showing all key subcomponents)
 
 **Example:**
+
 ```markdown
 ### Card
 
@@ -101,17 +103,18 @@ import { Badge } from "@/components/starwind/badge";
   - Standard HTML attributes for `<div>` elements
 - **Example usage**:
 
-\`\`\`astro
----
+## \`\`\`astro
+
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+Card,
+CardContent,
+CardDescription,
+CardFooter,
+CardHeader,
+CardTitle,
 } from "@/components/starwind/card";
 import { Button } from "@/components/starwind/button";
+
 ---
 
 <Card>
@@ -130,6 +133,7 @@ import { Button } from "@/components/starwind/button";
 ```
 
 #### Complex Interactive Components (e.g., Carousel, Select, Sheet, Tooltip)
+
 - **Documentation**: Required
 - **Import pattern**: Required (all subcomponents)
 - **Description**: Recommended (helps explain unique features)
@@ -141,6 +145,7 @@ import { Button } from "@/components/starwind/button";
 - **Example usage**: Required (comprehensive example, sometimes multiple examples)
 
 **Example:**
+
 ```markdown
 ### Sheet
 
@@ -160,18 +165,22 @@ import { Button } from "@/components/starwind/button";
 - **Example usage**:
 
 \`\`\`astro
+
 <!-- Complete examples with multiple variations -->
+
 \`\`\`
 ```
 
 ## Key Prop Documentation Standards
 
 ### Prop Entry Format
+
 ```
 - `propName`: type - Description (default: value)
 ```
 
 ### Type Notation
+
 - String literals: Use `"value1" | "value2" | "value3"`
 - Boolean: `boolean`
 - Number: `number`
@@ -182,23 +191,29 @@ import { Button } from "@/components/starwind/button";
 ### Common Prop Patterns
 
 **Variant Prop** (used in Alert, Avatar, Badge, Button, Checkbox, Progress, Radio, Switch):
+
 ```markdown
 - `variant`: "default" | "primary" | "secondary" | "outline" | "ghost" | "info" | "success" | "warning" | "error" (default: "default")
 ```
+
 Note: Not all components support all variants. Adjust list accordingly.
 
 **Size Prop** (used in Avatar, Badge, Button, Checkbox, Input, Label, Pagination, Radio, Switch, Textarea):
+
 ```markdown
 - `size`: "sm" | "md" | "lg" (default: "md")
 ```
+
 Note: Button also has `"icon"` size option.
 
 **asChild Prop** (used in AlertDialog, Dialog, Dropdown, Sheet triggers/buttons):
+
 ```markdown
 - `asChild?: boolean` - When true, renders the child element instead of a button
 ```
 
 **Positioning Props** (used in Dropdown, Select, Tooltip):
+
 ```markdown
 - `side`: "top" | "right" | "bottom" | "left" (default: varies)
 - `align`: "start" | "center" | "end" (default: "center")
@@ -206,6 +221,7 @@ Note: Button also has `"icon"` size option.
 ```
 
 **Animation Props** (used in Select, Tooltip):
+
 ```markdown
 - `animationDuration`: number - Duration in ms of animation (default: value)
 ```
@@ -213,11 +229,13 @@ Note: Button also has `"icon"` size option.
 ## Import Pattern Standards
 
 ### Single Component
+
 ```markdown
 - **Import pattern**: `import { ComponentName } from "@/components/starwind/component-name";`
 ```
 
 ### Compound Component (format for readability)
+
 ```markdown
 - **Import pattern**: `import { Parent, Child1, Child2, Child3 } from "@/components/starwind/component-name";`
 ```
@@ -227,20 +245,23 @@ When there are many subcomponents (5+), they can be listed in a more organized w
 ## Example Usage Standards
 
 ### Code Block Format
+
 Always use the `astro` language identifier:
+
 ```markdown
-\`\`\`astro
----
-import { Component } from "@/components/starwind/component";
----
+## \`\`\`astro
+
+## import { Component } from "@/components/starwind/component";
 
 <Component>Content</Component>
 \`\`\`
 ```
 
 ### Import Organization in Examples
+
 1. List imports in alphabetical order by component name
 2. Use multi-line imports for readability when importing multiple items:
+
 ```astro
 ---
 import {
@@ -253,6 +274,7 @@ import {
 ```
 
 ### Example Content Guidelines
+
 - **Simple components**: 1-3 line example showing basic usage
 - **Compound components**: Complete working example showing all major subcomponents
 - **Complex components**: May include multiple examples showing different configurations
@@ -262,12 +284,14 @@ import {
 ### Special Example Patterns
 
 **Comment Annotations**:
+
 ```astro
 <!-- Avatar and text skeleton loading state example -->
 <Skeleton class="h-12 w-12 rounded-full" />
 ```
 
 **Alternative Variations**:
+
 ```astro
 <Progress value={50} />
 
@@ -279,6 +303,7 @@ import {
 ```
 
 **Multiple Complete Examples** (for components like Sheet):
+
 ```astro
 <!-- First complete example -->
 <Sheet>...</Sheet>
@@ -292,6 +317,7 @@ import {
 ## Alphabetical Ordering
 
 Components in the "Detailed Component Reference" section are ordered alphabetically:
+
 1. Accordion
 2. Alert
 3. Alert Dialog
@@ -326,6 +352,7 @@ Components in the "Detailed Component Reference" section are ordered alphabetica
 ## Available Components List Pattern
 
 In the "Available Components" section, list all components with links:
+
 ```markdown
 - [Component Name](https://starwind.dev/docs/components/component-name)
 ```
@@ -337,10 +364,12 @@ Maintain alphabetical order.
 When adding a new component to llms-full.md:
 
 ### 1. Add to Available Components List
+
 - [ ] Add link in alphabetical order
 - [ ] Use format: `- [ComponentName](https://starwind.dev/docs/components/component-name)`
 
 ### 2. Add to Detailed Component Reference
+
 - [ ] Insert in alphabetical position
 - [ ] Add heading: `### ComponentName`
 - [ ] Add documentation link
@@ -358,39 +387,53 @@ When adding a new component to llms-full.md:
   - Comments for variations (if applicable)
 
 ### 3. Consider Component Architecture Pattern
+
 If the component introduces a new architectural pattern:
+
 - [ ] Add example to "Component Architecture Patterns" section
 
 ### 4. Update CLI Add Command Example (if relevant)
+
 If the component is commonly used:
+
 - [ ] Consider adding it to example CLI commands
 
 ## Special Considerations
 
 ### Components with Multiple Variants
+
 Some components like Sheet show multiple usage patterns. Include:
+
 1. Primary/default usage
 2. Alternative configurations (e.g., different sides)
 3. Use comments to separate examples
 
 ### Components with State Management
+
 For components with internal state (Carousel, Tabs, Accordion):
+
 - Document state-related props (defaultValue, value, etc.)
 - Show examples of controlled vs uncontrolled usage when relevant
 
 ### Components with External Dependencies
+
 For components using external libraries (e.g., Carousel using Embla):
+
 - Mention the dependency if relevant
 - Document special configuration objects (e.g., `opts?: EmblaOptionsType`)
 
 ### Form Components
+
 For form-related components (Input, Textarea, Checkbox, Radio, Select):
+
 - Always mention "All standard HTML attributes" support
 - Show examples with form integration when relevant
 - Include required accessibility attributes (id, name, label associations)
 
 ### Components with Animations
+
 For animated components:
+
 - Document animation-related props
 - Mention default timing/duration
 - Show how to customize animations
@@ -398,22 +441,26 @@ For animated components:
 ## Writing Style Guidelines
 
 ### Tone
+
 - Concise and technical
 - Descriptive but not verbose
 - Focus on practical usage
 
 ### Descriptions
+
 - Optional for simple components
 - Brief (1-2 sentences max) for complex components
 - Explain the "what" and "why", not the "how" (that's what examples are for)
 
 ### Prop Descriptions
+
 - Clear and specific
 - Include type information
 - Always note defaults
 - Mention special behaviors
 
 ### Examples
+
 - Must be complete and runnable
 - Use realistic data
 - Follow Starwind/Astro best practices
@@ -422,6 +469,7 @@ For animated components:
 ## Version Compatibility Notes
 
 If a component requires specific versions or has compatibility considerations:
+
 - Note in the description
 - Document any breaking changes
 - Mention prerequisites
@@ -429,6 +477,7 @@ If a component requires specific versions or has compatibility considerations:
 ## Cross-References
 
 When components are commonly used together:
+
 - Import them in examples (e.g., Button in Card example)
 - Show realistic integration patterns
 - Mention related components in descriptions when helpful
@@ -436,20 +485,24 @@ When components are commonly used together:
 ## Formatting Consistency
 
 ### Markdown Headers
+
 - Use `###` for component names
 - Use `####` for subsections (rare, only if needed)
 
 ### Code Formatting
+
 - Use backticks for inline code: `ComponentName`
 - Use fenced code blocks with `astro` for examples
 - Use consistent indentation (2 spaces)
 
 ### Lists
+
 - Use `-` for unordered lists
 - Maintain consistent indentation
 - Use nested lists for hierarchical prop documentation
 
 ### Links
+
 - Always use full URLs for documentation links
 - Format: `[Text](https://starwind.dev/docs/components/component-name)`
 
@@ -465,10 +518,9 @@ When components are commonly used together:
   - `size`: "sm" | "md" | "lg" (default: "md")
 - **Example usage**:
 
-\`\`\`astro
----
-import { Component } from "@/components/starwind/component-name";
----
+## \`\`\`astro
+
+## import { Component } from "@/components/starwind/component-name";
 
 <Component variant="default">
   Content

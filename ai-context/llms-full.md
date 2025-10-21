@@ -376,7 +376,7 @@ import { AspectRatio } from "@/components/starwind/aspect-ratio";
   <img
     src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
     alt="Photo by Drew Beamer"
-    class="rounded-md object-cover w-full h-full"
+    class="h-full w-full rounded-md object-cover"
   />
 </AspectRatio>
 ```
@@ -984,7 +984,7 @@ import { Separator } from "@/components/starwind/separator";
 
 <div>
   <h4 class="text-sm font-medium">Starwind UI</h4>
-  <p class="text-sm text-muted-foreground">A beautiful component library for Astro.</p>
+  <p class="text-muted-foreground text-sm">A beautiful component library for Astro.</p>
 </div>
 <Separator />
 <div class="flex h-5 items-center space-x-4 text-sm">
