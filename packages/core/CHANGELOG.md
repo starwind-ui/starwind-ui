@@ -1,5 +1,15 @@
 # @starwind-ui/core
 
+## 1.11.0
+
+### Minor Changes
+
+- 6793ef1: Add Kbd component for keyboard shortcuts
+
+### Patch Changes
+
+- c0a2da8: feat: add slots for various components to enable easier styling, including accordion, alert-dialog, breadcrumb, carousel, dialog, pagination, radio-group, select, and sheet components
+
 ## 1.10.1
 
 ### Patch Changes
