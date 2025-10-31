@@ -129,7 +129,7 @@ export const tailwindConfig = `@import "tailwindcss";
   * {
     @apply border-border outline-outline/50;
   }
-  html {
+  body {
     @apply bg-background text-foreground scheme-light dark:scheme-dark;
   }
   button {
