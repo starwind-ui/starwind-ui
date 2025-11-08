@@ -1,5 +1,11 @@
 # @starwind-ui/core
 
+## 1.11.2
+
+### Patch Changes
+
+- 33dd20a: chore: update registry component versions
+
 ## 1.11.1
 
 ### Patch Changes
