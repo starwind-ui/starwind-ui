@@ -1,4 +1,5 @@
 ---
+import type { HTMLAttributes } from "astro/types";
 import { Image } from "astro:assets";
 import { tv } from "tailwind-variants";
 
@@ -10,9 +11,9 @@ type WithSrc = BaseProps & { src: string; image?: never };
 
 type WithImage = BaseProps & { src?: never; image: ImageMetadata };
 
-type Props = WithSrc | WithImage;
+type Props = HTMLAttributes<"img"> & (WithSrc | WithImage);
 
-const { src, image, alt, class: className } = Astro.props;
+const { src, image, alt, class: className, width, height, ...rest } = Astro.props;
 
 if (!src && !image) {
   throw new Error("Either 'src' or 'image' is required for an avatar image.");
@@ -30,6 +31,7 @@ if (!src && !image) {
       height={64}
       onerror="this.style.display='none'"
       data-slot="avatar-image"
+      {...rest}
     />
   )
 }
@@ -41,6 +43,7 @@ if (!src && !image) {
       class={avatarImage({ class: className })}
       width={64}
       data-slot="avatar-image"
+      {...rest}
     />
   )
 }
