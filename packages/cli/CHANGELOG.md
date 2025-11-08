@@ -1,5 +1,14 @@
 # starwind
 
+## 1.11.1
+
+### Patch Changes
+
+- 873a1b6: add --primary-accent and --secondary-accent color variables, and adjust default css file to align closer to shadcn
+- Updated dependencies [e2e411c]
+- Updated dependencies [b255995]
+  - @starwind-ui/core@1.11.1
+
 ## 1.11.0
 
 ### Patch Changes

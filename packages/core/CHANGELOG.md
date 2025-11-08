@@ -1,5 +1,12 @@
 # @starwind-ui/core
 
+## 1.11.1
+
+### Patch Changes
+
+- e2e411c: Avatar: add ability to pass additional attributes to components
+- b255995: Removed debug logging statements from Dropdown and RadioGroup components
+
 ## 1.11.0
 
 ### Minor Changes
