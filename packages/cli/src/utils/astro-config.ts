@@ -83,7 +83,9 @@ export async function setupAstroConfig(): Promise<boolean> {
     if (astroVersion && semver.lt(astroVersion, "5.7.0")) {
       // Add experimental configuration
       if (!config.includes("experimental")) {
-        config += `\n\texperimental: {
+        // Ensure there's a comma before adding new property if config is not empty
+        const needsComma = config.length > 0 && !config.trimEnd().endsWith(",");
+        config += (needsComma ? "," : "") + `\n\texperimental: {
 		svg: true,
 	},`;
       } else if (!config.includes("svg: true") && !config.includes("svg: {")) {
@@ -96,7 +98,9 @@ export async function setupAstroConfig(): Promise<boolean> {
 
     // Add vite configuration
     if (!config.includes("vite:")) {
-      config += `\n\tvite: {
+      // Ensure there's a comma before adding new property if config is not empty
+      const needsComma = config.length > 0 && !config.trimEnd().endsWith(",");
+      config += (needsComma ? "," : "") + `\n\tvite: {
 		plugins: [tailwindcss()],
 	},`;
     } else if (!config.includes("plugins: [")) {
