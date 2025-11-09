@@ -19,6 +19,9 @@ pnpm-debug.log*
 # turbo
 .turbo
 
+# vitest
+coverage/
+
 # environment variables
 .env
 .env.production
