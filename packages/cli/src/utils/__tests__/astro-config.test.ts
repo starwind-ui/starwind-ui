@@ -244,6 +244,31 @@ describe("astro-config", () => {
         );
       });
 
+      it("should add comma before vite config when existing config property has no trailing comma", async () => {
+        mockFileExists.mockResolvedValueOnce(true).mockResolvedValue(false);
+
+        mockReadFile.mockResolvedValue(
+          `import { defineConfig } from "astro/config";\n\nexport default defineConfig({\n\toutput: "server",\n\tadapter: cloudflare({\n\t\timageService: "cloudflare"\n\t})\n});\n` as any,
+        );
+
+        mockReadJsonFile.mockResolvedValue({
+          dependencies: {
+            astro: "^5.7.0",
+          },
+        });
+
+        const result = await setupAstroConfig();
+
+        expect(result).toBe(true);
+        const writeCall = mockWriteFile.mock.calls[0];
+        const writtenContent = writeCall?.[1] as string;
+        
+        // Should have a comma after the adapter closing parenthesis
+        expect(writtenContent).toMatch(/\)\s*,\s*vite:/);
+        // Should not have syntax errors
+        expect(writtenContent).not.toMatch(/\)\s+vite:/);
+      });
+
       it("should add plugins to existing vite config without plugins", async () => {
         mockFileExists.mockResolvedValueOnce(true).mockResolvedValue(false);
 
@@ -339,6 +364,31 @@ describe("astro-config", () => {
           expect.stringContaining("svg: true"),
           "utf-8",
         );
+      });
+
+      it("should add comma before experimental config when existing config property has no trailing comma", async () => {
+        mockFileExists.mockResolvedValueOnce(true).mockResolvedValue(false);
+
+        mockReadFile.mockResolvedValue(
+          `import { defineConfig } from "astro/config";\n\nexport default defineConfig({\n\toutput: "server",\n\tadapter: cloudflare({\n\t\timageService: "cloudflare"\n\t})\n});\n` as any,
+        );
+
+        mockReadJsonFile.mockResolvedValue({
+          dependencies: {
+            astro: "^5.5.0",
+          },
+        });
+
+        const result = await setupAstroConfig();
+
+        expect(result).toBe(true);
+        const writeCall = mockWriteFile.mock.calls[0];
+        const writtenContent = writeCall?.[1] as string;
+        
+        // Should have a comma after the adapter closing parenthesis before experimental
+        expect(writtenContent).toMatch(/\)\s*,\s*experimental:/);
+        // Should not have syntax errors
+        expect(writtenContent).not.toMatch(/\)\s+experimental:/);
       });
 
       it("should add svg to existing experimental config", async () => {
