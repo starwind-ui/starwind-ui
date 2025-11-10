@@ -2,28 +2,32 @@
 import Moon from "@tabler/icons/outline/moon.svg";
 import Sun from "@tabler/icons/outline/sun.svg";
 
+import { Toggle } from "@/components/starwind/toggle";
+
 interface Props {
-  class?: string; // any additional classes
-  rest?: any; // catch-all for any additional parameters, such as "aria-label"
+  class?: string;
 }
 
-const { class: className, ...rest } = Astro.props as Props;
+const { class: className } = Astro.props as Props;
 ---
 
-<button
+<Toggle
   class:list={[
+    "group hover:border-muted-foreground rounded-full hover:bg-transparent data-[state=on]:bg-transparent",
     className,
-    "theme-toggle nav__link--base rounded-full p-2 transition-colors duration-200",
   ]}
-  aria-label="color theme toggle"
+  variant="outline"
+  syncGroup="theme"
+  aria-label="Toggle theme"
+  data-theme-toggle
 >
-  <!-- placeholder -->
-  <div class="theme-toggle__placeholder h-5 w-5"></div>
-  <Sun class="theme-toggle__light-icon hidden h-5 w-5" />
-  <Moon class="theme-toggle__dark-icon hidden h-5 w-5" />
-</button>
+  <Sun class="size-5 group-data-[state=on]:hidden" />
+  <Moon class="size-5 group-data-[state=off]:hidden" />
+</Toggle>
 
 <script>
+  import type { ToggleChangeEvent } from "@/components/starwind/toggle";
+
   function changeTheme(theme: "dark" | "light") {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
@@ -33,51 +37,40 @@ const { class: className, ...rest } = Astro.props as Props;
   }
 
   function initThemeToggle() {
-    const themeToggleLoaders = document.querySelectorAll(".theme-toggle__placeholder");
-    const themeToggleDarkIcons = document.querySelectorAll(".theme-toggle__dark-icon");
-    const themeToggleLightIcons = document.querySelectorAll(".theme-toggle__light-icon");
-    const themeToggleBtns = document.querySelectorAll(".theme-toggle");
+    const themeToggleBtns = document.querySelectorAll<HTMLButtonElement>("[data-theme-toggle]");
 
-    const colorTheme = localStorage.getItem("colorTheme");
-    // There will always be a color theme as it is assigned in BaseHead.astro
-    // So here just assign the appropriate icon
-    if (colorTheme === "dark") {
-      themeToggleLoaders.forEach((themeToggleLoader) => {
-        themeToggleLoader.classList.add("hidden");
-      });
-      themeToggleDarkIcons.forEach((themeToggleDarkIcon) => {
-        themeToggleDarkIcon.classList.remove("hidden");
-      });
-    } else if (colorTheme === "light") {
-      themeToggleLoaders.forEach((themeToggleLoader) => {
-        themeToggleLoader.classList.add("hidden");
-      });
-      themeToggleLightIcons.forEach((themeToggleLightIcon) => {
-        themeToggleLightIcon.classList.remove("hidden");
-      });
-    }
+    // Get initial theme from localStorage
+    const colorTheme = localStorage.getItem("colorTheme") || "light";
+    const isDark = colorTheme === "dark";
 
-    // add event listeners to all toggle buttons
-    themeToggleBtns.forEach((themToggleBtn) => {
-      themToggleBtn.addEventListener("click", function () {
-        // toggle icons inside button
-        themeToggleDarkIcons.forEach((themeToggleDarkIcon) => {
-          themeToggleDarkIcon.classList.toggle("hidden");
-        });
-        themeToggleLightIcons.forEach((themeToggleLightIcon) => {
-          themeToggleLightIcon.classList.toggle("hidden");
-        });
+    // Add event listener to only the first toggle button
+    // Since they're synced, we only need one to handle theme changes
+    if (themeToggleBtns.length > 0) {
+      themeToggleBtns[0].addEventListener("starwind-toggle:change", ((e: ToggleChangeEvent) => {
+        const { pressed } = e.detail;
 
-        // update local storage
-        if (localStorage.getItem("colorTheme") === "light") {
+        // Update theme based on toggle state
+        // pressed = true means dark mode (moon icon showing)
+        // pressed = false means light mode (sun icon showing)
+        if (pressed) {
           changeTheme("dark");
           localStorage.setItem("colorTheme", "dark");
         } else {
           changeTheme("light");
           localStorage.setItem("colorTheme", "light");
         }
-      });
-    });
+      }) as EventListener);
+
+      // Set initial state by clicking the first toggle if needed
+      const currentState = themeToggleBtns[0].getAttribute("data-state");
+      const shouldBeOn = isDark;
+      const isOn = currentState === "on";
+
+      // Only click if the state doesn't match what it should be
+      if (shouldBeOn !== isOn) {
+        themeToggleBtns[0].click();
+      }
+    }
   }
 
   // runs on initial page load
