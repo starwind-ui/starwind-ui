@@ -212,7 +212,9 @@ describe("astro-config", () => {
         const writeCall = mockWriteFile.mock.calls[0];
         const writtenContent = writeCall?.[1] as string;
         // Should only have one import statement for tailwindcss
-        const importCount = (writtenContent.match(/import tailwindcss from "@tailwindcss\/vite"/g) || []).length;
+        const importCount = (
+          writtenContent.match(/import tailwindcss from "@tailwindcss\/vite"/g) || []
+        ).length;
         expect(importCount).toBe(1);
       });
 
@@ -262,7 +264,7 @@ describe("astro-config", () => {
         expect(result).toBe(true);
         const writeCall = mockWriteFile.mock.calls[0];
         const writtenContent = writeCall?.[1] as string;
-        
+
         // Should have a comma after the adapter closing parenthesis
         expect(writtenContent).toMatch(/\)\s*,\s*vite:/);
         // Should not have syntax errors
@@ -384,7 +386,7 @@ describe("astro-config", () => {
         expect(result).toBe(true);
         const writeCall = mockWriteFile.mock.calls[0];
         const writtenContent = writeCall?.[1] as string;
-        
+
         // Should have a comma after the adapter closing parenthesis before experimental
         expect(writtenContent).toMatch(/\)\s*,\s*experimental:/);
         // Should not have syntax errors
