@@ -35,6 +35,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
     private trigger: HTMLButtonElement | null;
     private content: HTMLElement | null;
     private searchInput: HTMLInputElement | null = null;
+    private emptyElement: HTMLElement | null = null;
     private isOpen: boolean = false;
     private selectedItem: HTMLElement | null = null;
     private animationDuration = 150;
@@ -47,6 +48,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       this.trigger = select.querySelector(".starwind-select-trigger");
       this.content = select.querySelector(".starwind-select-content");
       this.searchInput = select.querySelector('[data-slot="select-search"]');
+      this.emptyElement = select.querySelector('[data-slot="select-empty"]');
 
       if (!this.trigger || !this.content) return;
 
@@ -171,11 +173,18 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
       // Handle keyboard navigation inside select content
       this.content.addEventListener("keydown", (e) => {
+        // Check if the event originated from the search input
+        const isFromSearchInput = e.target === this.searchInput;
+
         if (e.key === "Enter" || e.key === " ") {
-          // set element based on current focused element
-          const activeElement = document.activeElement;
-          this.returnFocusOnClose = true;
-          this.handleSelection(activeElement as HTMLElement);
+          // Only handle selection if not typing in search input
+          if (!isFromSearchInput) {
+            // set element based on current focused element
+            const activeElement = document.activeElement;
+            this.returnFocusOnClose = true;
+            this.handleSelection(activeElement as HTMLElement);
+          }
+          // If from search input, don't handle it here - let the input handle it naturally
         } else if (e.key === "Escape" && this.isOpen) {
           this.returnFocusOnClose = true;
           this.closeSelect();
@@ -316,33 +325,65 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
     private setupSearchInput() {
       if (!this.searchInput || !this.content) return;
 
+      // Hide the empty element initially
+      if (this.emptyElement) {
+        this.emptyElement.classList.add("hidden");
+      }
+
       this.searchInput.addEventListener("input", (e) => {
         const target = e.target as HTMLInputElement;
         const searchValue = target.value.toLowerCase().trim();
         this.filterItems(searchValue);
       });
 
-      // Prevent search input from closing select on escape
+      // Handle keyboard navigation from search input
       this.searchInput.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
           e.stopPropagation();
-          this.searchInput!.value = "";
-          this.filterItems("");
           this.returnFocusOnClose = true;
           this.closeSelect();
         }
-        // Prevent arrow keys from navigating while typing
-        if (["ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) {
+        // Allow arrow keys to navigate to items
+        else if (["ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) {
+          e.preventDefault();
+          this.handleNavigationKeys(e);
+        }
+        // Handle Enter to select the first visible item
+        else if (e.key === "Enter") {
+          e.preventDefault();
+          const firstVisibleItem = this.getFirstVisibleItem();
+          if (firstVisibleItem) {
+            this.returnFocusOnClose = true;
+            this.handleSelection(firstVisibleItem);
+          }
+        }
+        // Prevent space from scrolling the page, but allow it to be typed
+        else if (e.key === " ") {
           e.stopPropagation();
         }
       });
+    }
+
+    private getFirstVisibleItem(): HTMLElement | null {
+      if (!this.content) return null;
+
+      const items = this.content.querySelectorAll('[role="option"]');
+      for (const item of items) {
+        if (
+          !item.classList.contains("starwind-sr-only") &&
+          item.getAttribute("data-disabled") !== "true"
+        ) {
+          return item as HTMLElement;
+        }
+      }
+      return null;
     }
 
     private filterItems(searchValue: string) {
       if (!this.content) return;
 
       const items = this.content.querySelectorAll('[role="option"]');
-      // let firstVisibleItem: HTMLElement | null = null;
+      let visibleCount = 0;
 
       items.forEach((item) => {
         const itemText = item.textContent?.toLowerCase().trim() || "";
@@ -351,19 +392,21 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         if (matches || searchValue == "") {
           item.classList.remove("starwind-sr-only");
           item.removeAttribute("data-disabled");
-          // if (!firstVisibleItem) {
-          //   firstVisibleItem = item as HTMLElement;
-          // }
+          visibleCount++;
         } else {
           item.classList.add("starwind-sr-only");
           item.setAttribute("data-disabled", "true");
         }
       });
 
-      // Focus the first visible item after filtering
-      // if (firstVisibleItem && searchValue) {
-      //   firstVisibleItem.focus();
-      // }
+      // Show/hide empty message
+      if (this.emptyElement) {
+        if (visibleCount === 0 && searchValue !== "") {
+          this.emptyElement.classList.remove("hidden");
+        } else {
+          this.emptyElement.classList.add("hidden");
+        }
+      }
     }
 
     private handleTypeahead(key: string) {
@@ -450,12 +493,6 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       this.isOpen = false;
       this.content.setAttribute("data-state", "closed");
 
-      // Clear search and show all items
-      if (this.searchInput) {
-        this.searchInput.value = "";
-        this.filterItems("");
-      }
-
       // Remove focus from any currently focused element
       const activeElement = document.activeElement;
       if (activeElement instanceof HTMLElement) {
@@ -474,6 +511,12 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       setTimeout(() => {
         if (!this.content) return;
         this.content.style.display = "none";
+        
+        // Clear search and show all items after animation completes
+        if (this.searchInput) {
+          this.searchInput.value = "";
+          this.filterItems("");
+        }
       }, this.animationDuration);
 
       this.trigger.setAttribute("aria-expanded", "false");

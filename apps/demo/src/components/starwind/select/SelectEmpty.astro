@@ -1,0 +1,20 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div">;
+
+export const selectEmpty = tv({
+  base: "text-muted-foreground py-6 text-center text-sm",
+});
+
+const { class: className, children, ...rest } = Astro.props;
+---
+
+<div
+  class={selectEmpty({ class: className })}
+  data-slot="select-empty"
+  {...rest}
+>
+  <slot>No results found.</slot>
+</div>
