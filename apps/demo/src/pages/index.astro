@@ -1206,7 +1206,7 @@ import Layout from "@/layouts/Layout.astro";
                   <ChevronDown />
                 </Button>
               </DropdownTrigger>
-              <DropdownContent align="end" class="min-w-[180px]">
+              <DropdownContent align="end" class="min-w-[200px]">
                 <DropdownItem>Mute Conversation</DropdownItem>
                 <DropdownItem>Mark as Read</DropdownItem>
                 <DropdownItem>Report Conversation</DropdownItem>
@@ -1214,6 +1214,31 @@ import Layout from "@/layouts/Layout.astro";
                 <DropdownItem>Delete Conversation</DropdownItem>
               </DropdownContent>
             </Dropdown>
+          </ButtonGroup>
+        </div>
+
+        <!-- With Select -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">With Select</h3>
+          <ButtonGroup>
+            <ButtonGroup>
+              <Select defaultValue="$">
+                <SelectTrigger class="font-mono">
+                  <SelectValue placeholder="$" />
+                </SelectTrigger>
+                <SelectContent class="min-w-20">
+                  <SelectItem value="$"> $ </SelectItem>
+                  <SelectItem value="€"> € </SelectItem>
+                  <SelectItem value="£"> £ </SelectItem>
+                </SelectContent>
+              </Select>
+              <Input placeholder="10.00" pattern="[0-9]*" />
+            </ButtonGroup>
+            <ButtonGroup>
+              <Button aria-label="Send" size="icon" variant="outline">
+                <ArrowRight />
+              </Button>
+            </ButtonGroup>
           </ButtonGroup>
         </div>
       </div>
