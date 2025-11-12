@@ -1,0 +1,52 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> &
+  VariantProps<typeof buttonGroup> & {
+    /**
+     * The orientation of the button group.
+     * @default "horizontal"
+     */
+    orientation?: "horizontal" | "vertical";
+  };
+
+export const buttonGroup = tv({
+  base: [
+    "flex w-fit items-stretch",
+    "[&>*]:focus-visible:relative [&>*]:focus-visible:z-10",
+    "has-[>[data-slot=button-group]]:gap-2 [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
+    "has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md",
+  ],
+  variants: {
+    orientation: {
+      horizontal: [
+        "[&>*:not(:first-child)]:rounded-l-none",
+        "[&>*:not(:first-child)]:border-l-0",
+        "[&>*:not(:last-child)]:rounded-r-none",
+      ],
+      vertical: [
+        "flex-col",
+        "[&>*:not(:first-child)]:rounded-t-none",
+        "[&>*:not(:first-child)]:border-t-0",
+        "[&>*:not(:last-child)]:rounded-b-none",
+      ],
+    },
+  },
+  defaultVariants: {
+    orientation: "horizontal",
+  },
+});
+
+const { class: className, orientation = "horizontal", ...rest } = Astro.props;
+---
+
+<div
+  role="group"
+  data-slot="button-group"
+  data-orientation={orientation}
+  class={buttonGroup({ orientation, class: className })}
+  {...rest}
+>
+  <slot />
+</div>

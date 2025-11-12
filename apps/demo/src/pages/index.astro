@@ -1,5 +1,8 @@
 ---
+import ArrowLeft from "@tabler/icons/outline/arrow-left.svg";
+import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
 import Bold from "@tabler/icons/outline/bold.svg";
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
 import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
 import CircleCheck from "@tabler/icons/outline/circle-check.svg";
 import Copy from "@tabler/icons/outline/copy.svg";
@@ -10,6 +13,7 @@ import InfoCircle from "@tabler/icons/outline/info-circle.svg";
 import Italic from "@tabler/icons/outline/italic.svg";
 import Mail from "@tabler/icons/outline/mail.svg";
 import Moon from "@tabler/icons/outline/moon.svg";
+import Search from "@tabler/icons/outline/search.svg";
 import Star from "@tabler/icons/outline/star.svg";
 import Sun from "@tabler/icons/outline/sun.svg";
 import Underline from "@tabler/icons/outline/underline.svg";
@@ -54,6 +58,11 @@ import {
   BreadcrumbSeparator,
 } from "@/components/starwind/breadcrumb";
 import { Button, ButtonVariants } from "@/components/starwind/button";
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+  ButtonGroupText,
+} from "@/components/starwind/button-group";
 import {
   Card,
   CardContent,
@@ -1066,6 +1075,147 @@ import Layout from "@/layouts/Layout.astro";
         <Button class="rounded-full">Radius full</Button>
         <Button class="bg-blue-500">override test</Button>
         <!-- <Button2 variant="primary" size="lg" href="#test">Button</Button2> -->
+      </div>
+    </section>
+
+    <!-- Button Group -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Button Group Demo</h2>
+      <div class="flex flex-col gap-6">
+        <!-- Horizontal Button Group -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Horizontal</h3>
+          <ButtonGroup>
+            <Button variant="outline">Left</Button>
+            <Button variant="outline">Middle</Button>
+            <Button variant="outline">Right</Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- Horizontal with Separator -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Horizontal with Separator</h3>
+          <ButtonGroup>
+            <Button variant="outline">
+              <Bold class="size-4" />
+            </Button>
+            <ButtonGroupSeparator />
+            <Button variant="outline">
+              <Italic class="size-4" />
+            </Button>
+            <ButtonGroupSeparator />
+            <Button variant="outline">
+              <Underline class="size-4" />
+            </Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- Vertical Button Group -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Vertical</h3>
+          <ButtonGroup orientation="vertical">
+            <Button variant="outline">Top</Button>
+            <Button variant="outline">Middle</Button>
+            <Button variant="outline">Bottom</Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- Vertical with Separator -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Vertical with Separator</h3>
+          <ButtonGroup orientation="vertical">
+            <Button variant="outline">Account</Button>
+            <ButtonGroupSeparator orientation="horizontal" />
+            <Button variant="outline">Settings</Button>
+            <ButtonGroupSeparator orientation="horizontal" />
+            <Button variant="outline">Logout</Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- Different Variants -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Different Variants</h3>
+          <ButtonGroup>
+            <Button variant="primary">Save</Button>
+            <Button variant="secondary">Cancel</Button>
+            <Button variant="outline">Reset</Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- With Text Label -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">With Text Label</h3>
+          <ButtonGroup>
+            <ButtonGroupText>
+              <InfoCircle class="size-4" />
+              Format:
+            </ButtonGroupText>
+            <Button variant="outline">
+              <Bold class="size-4" />
+            </Button>
+            <Button variant="outline">
+              <Italic class="size-4" />
+            </Button>
+            <Button variant="outline">
+              <Underline class="size-4" />
+            </Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- Nested Button Groups -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Nested Button Groups</h3>
+          <ButtonGroup>
+            <ButtonGroup>
+              <Button variant="outline" size="sm">1</Button>
+              <Button variant="outline" size="sm">2</Button>
+              <Button variant="outline" size="sm">3</Button>
+              <Button variant="outline" size="sm">4</Button>
+              <Button variant="outline" size="sm">5</Button>
+            </ButtonGroup>
+            <ButtonGroup>
+              <Button variant="outline" size="icon-sm" aria-label="Previous">
+                <ArrowLeft />
+              </Button>
+              <Button variant="outline" size="icon-sm" aria-label="Next">
+                <ArrowRight />
+              </Button>
+            </ButtonGroup>
+          </ButtonGroup>
+        </div>
+
+        <!-- With Input -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">With Input</h3>
+          <ButtonGroup>
+            <Input placeholder="Search..." />
+            <Button variant="outline" aria-label="Search">
+              <Search />
+            </Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- With Dropdown -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">With Dropdown</h3>
+          <ButtonGroup>
+            <Button variant="outline">Follow</Button>
+            <Dropdown>
+              <DropdownTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <ChevronDown />
+                </Button>
+              </DropdownTrigger>
+              <DropdownContent align="end" class="min-w-[180px]">
+                <DropdownItem>Mute Conversation</DropdownItem>
+                <DropdownItem>Mark as Read</DropdownItem>
+                <DropdownItem>Report Conversation</DropdownItem>
+                <DropdownSeparator />
+                <DropdownItem>Delete Conversation</DropdownItem>
+              </DropdownContent>
+            </Dropdown>
+          </ButtonGroup>
+        </div>
       </div>
     </section>
 
