@@ -7,7 +7,7 @@ type Props = Omit<HTMLAttributes<"input">, "type" | "autocomplete">;
 
 export const selectSearch = tv({
   base: [
-    "placeholder:text-muted-foreground flex w-full border-0 bg-transparent px-2 py-2.5",
+    "placeholder:text-muted-foreground flex w-full border-0 bg-transparent px-0 py-2.5",
     "ring-0 outline-none disabled:cursor-not-allowed disabled:opacity-50",
   ],
 });
@@ -15,7 +15,10 @@ export const selectSearch = tv({
 const { class: className, placeholder = "Search...", ...rest } = Astro.props;
 ---
 
-<div class="-mx-1 -mt-1 mb-1 flex items-center border-b px-3">
+<div
+  data-slot="select-search-wrapper"
+  class="-mx-1 -mt-1 mb-1 flex items-center gap-2 border-b px-3"
+>
   <slot name="icon">
     <Search class="text-muted-foreground size-4 shrink-0" />
   </slot>
