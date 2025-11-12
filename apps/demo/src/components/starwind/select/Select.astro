@@ -34,6 +34,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
     private select: HTMLElement;
     private trigger: HTMLButtonElement | null;
     private content: HTMLElement | null;
+    private searchInput: HTMLInputElement | null = null;
     private isOpen: boolean = false;
     private selectedItem: HTMLElement | null = null;
     private animationDuration = 150;
@@ -45,6 +46,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       this.select = select;
       this.trigger = select.querySelector(".starwind-select-trigger");
       this.content = select.querySelector(".starwind-select-content");
+      this.searchInput = select.querySelector('[data-slot="select-search"]');
 
       if (!this.trigger || !this.content) return;
 
@@ -123,6 +125,11 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
     private setupEvents() {
       if (!this.trigger || !this.content) return;
 
+      // Handle search input if it exists
+      if (this.searchInput) {
+        this.setupSearchInput();
+      }
+
       // Handle pointerdown
       this.trigger.addEventListener("pointerdown", (e) => {
         // prevent implicit pointer capture
@@ -188,7 +195,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
           // select should not be navigated using tab key so we prevent it
           if (e.key === "Tab") e.preventDefault();
 
-          if (!isModifierKey && e.key.length === 1) {
+          if (!isModifierKey && e.key.length === 1 && !this.searchInput) {
             this.handleTypeahead(e.key);
           }
         }
@@ -306,6 +313,59 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       }
     }
 
+    private setupSearchInput() {
+      if (!this.searchInput || !this.content) return;
+
+      this.searchInput.addEventListener("input", (e) => {
+        const target = e.target as HTMLInputElement;
+        const searchValue = target.value.toLowerCase().trim();
+        this.filterItems(searchValue);
+      });
+
+      // Prevent search input from closing select on escape
+      this.searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.stopPropagation();
+          this.searchInput!.value = "";
+          this.filterItems("");
+          this.returnFocusOnClose = true;
+          this.closeSelect();
+        }
+        // Prevent arrow keys from navigating while typing
+        if (["ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) {
+          e.stopPropagation();
+        }
+      });
+    }
+
+    private filterItems(searchValue: string) {
+      if (!this.content) return;
+
+      const items = this.content.querySelectorAll('[role="option"]');
+      // let firstVisibleItem: HTMLElement | null = null;
+
+      items.forEach((item) => {
+        const itemText = item.textContent?.toLowerCase().trim() || "";
+        const matches = itemText.includes(searchValue);
+
+        if (matches || searchValue == "") {
+          item.classList.remove("starwind-sr-only");
+          item.removeAttribute("data-disabled");
+          // if (!firstVisibleItem) {
+          //   firstVisibleItem = item as HTMLElement;
+          // }
+        } else {
+          item.classList.add("starwind-sr-only");
+          item.setAttribute("data-disabled", "true");
+        }
+      });
+
+      // Focus the first visible item after filtering
+      // if (firstVisibleItem && searchValue) {
+      //   firstVisibleItem.focus();
+      // }
+    }
+
     private handleTypeahead(key: string) {
       if (!this.content) return;
       const search = this.typeaheadSearch + key;
@@ -361,14 +421,23 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       this.trigger.setAttribute("aria-expanded", "true");
       this.content.style.removeProperty("display");
 
-      // set focus on the current selected item
-      if (this.selectedItem) {
-        this.selectedItem.focus();
+      // If search input exists, focus it and clear any previous search
+      if (this.searchInput) {
+        this.searchInput.value = "";
+        this.filterItems("");
+        requestAnimationFrame(() => {
+          this.searchInput?.focus();
+        });
       } else {
-        // if no item is selected, focus on the first item
-        const firstItem = this.content.querySelector('[role="option"]') as HTMLElement;
-        if (firstItem) {
-          firstItem.focus();
+        // set focus on the current selected item
+        if (this.selectedItem) {
+          this.selectedItem.focus();
+        } else {
+          // if no item is selected, focus on the first item
+          const firstItem = this.content.querySelector('[role="option"]') as HTMLElement;
+          if (firstItem) {
+            firstItem.focus();
+          }
         }
       }
 
@@ -380,6 +449,12 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
       this.isOpen = false;
       this.content.setAttribute("data-state", "closed");
+
+      // Clear search and show all items
+      if (this.searchInput) {
+        this.searchInput.value = "";
+        this.filterItems("");
+      }
 
       // Remove focus from any currently focused element
       const activeElement = document.activeElement;
