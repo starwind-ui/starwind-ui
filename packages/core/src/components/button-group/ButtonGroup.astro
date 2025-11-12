@@ -1,0 +1,63 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> &
+  VariantProps<typeof buttonGroup> & {
+    /**
+     * The orientation of the button group.
+     * @default "horizontal"
+     */
+    orientation?: "horizontal" | "vertical";
+  };
+
+export const buttonGroup = tv({
+  base: [
+    "flex w-fit items-stretch",
+    "[&>*]:focus-visible:relative [&>*]:focus-visible:z-10",
+    "has-[>[data-slot=button-group]]:gap-2 [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
+  ],
+  variants: {
+    orientation: {
+      horizontal: [
+        "[&>*:not(:first-child)]:rounded-l-none",
+        "[&>*:not(:first-child)]:border-l-0",
+        "[&>*:not(:last-child)]:rounded-r-none",
+        "[&>*:not(:first-child)_[data-as-child]_>_*]:rounded-l-none",
+        "[&>*:not(:first-child)_[data-as-child]_>_*]:border-l-0",
+        "[&>*:not(:last-child)_[data-as-child]_>_*]:rounded-r-none",
+        "[&>*:not(:first-child)_[data-slot=select-trigger]]:rounded-l-none",
+        "[&>*:not(:first-child)_[data-slot=select-trigger]]:border-l-0",
+        "[&>*:not(:last-child)_[data-slot=select-trigger]]:rounded-r-none",
+      ],
+      vertical: [
+        "flex-col",
+        "[&>*:not(:first-child)]:rounded-t-none",
+        "[&>*:not(:first-child)]:border-t-0",
+        "[&>*:not(:last-child)]:rounded-b-none",
+        "[&>*:not(:first-child)_[data-as-child]_>_*]:rounded-t-none",
+        "[&>*:not(:first-child)_[data-as-child]_>_*]:border-t-0",
+        "[&>*:not(:last-child)_[data-as-child]_>_*]:rounded-b-none",
+        "[&>*:not(:first-child)_[data-slot=select-trigger]]:rounded-t-none",
+        "[&>*:not(:first-child)_[data-slot=select-trigger]]:border-t-0",
+        "[&>*:not(:last-child)_[data-slot=select-trigger]]:rounded-b-none",
+      ],
+    },
+  },
+  defaultVariants: {
+    orientation: "horizontal",
+  },
+});
+
+const { class: className, orientation = "horizontal", ...rest } = Astro.props;
+---
+
+<div
+  role="group"
+  data-slot="button-group"
+  data-orientation={orientation}
+  class={buttonGroup({ orientation, class: className })}
+  {...rest}
+>
+  <slot />
+</div>
