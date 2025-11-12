@@ -16,14 +16,16 @@ type Props = HTMLAttributes<"div"> & {
 
 export const selectItem = tv({
   base: [
-    "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 outline-none select-none",
+    "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 outline-none select-none",
     "focus:bg-accent focus:text-accent-foreground",
     "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
     "not-aria-selected:[&_svg]:hidden aria-selected:[&_svg]:flex",
   ],
 });
 
-export const selectItemIcon = tv({ base: "absolute left-2 size-3.5 items-center justify-center" });
+export const selectItemIcon = tv({
+  base: "absolute right-2 flex size-4 items-center justify-center",
+});
 
 const { class: className, value, disabled, ...rest } = Astro.props;
 ---

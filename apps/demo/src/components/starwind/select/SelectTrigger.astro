@@ -1,34 +1,45 @@
 ---
 import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
 
-type Props = Omit<HTMLAttributes<"button">, "role" | "type"> & {
-  /**
-   * The content to be rendered inside the select trigger
-   */
+type Props = Omit<HTMLAttributes<"button">, "role" | "type"> &
+  VariantProps<typeof selectTrigger> & {
+    /**
+     * The content to be rendered inside the select trigger
+     */
 
-  children: any;
-  /**
-   * Whether the select field is required in a form context
-   */
-  required?: boolean;
-};
+    children: any;
+    /**
+     * Whether the select field is required in a form context
+     */
+    required?: boolean;
+  };
 
 export const selectTrigger = tv({
   base: [
     "starwind-select-trigger",
-    "border-input dark:bg-input/30 text-foreground ring-offset-background flex h-11 items-center justify-between rounded-md border bg-transparent px-3 py-2 shadow-xs",
+    "border-input dark:bg-input/30 text-foreground ring-offset-background flex items-center justify-between gap-2 rounded-md border bg-transparent shadow-xs",
     "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
     "disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
   ],
+  variants: {
+    size: {
+      sm: "h-9 px-2 text-sm",
+      md: "h-11 px-3 text-base",
+      lg: "h-12 px-4 text-lg",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
 });
 
-const { class: className, required = false, ...rest } = Astro.props;
+const { class: className, size, required = false, ...rest } = Astro.props;
 ---
 
 <button
-  class={selectTrigger({ class: className })}
+  class={selectTrigger({ size, class: className })}
   type="button"
   role="combobox"
   aria-label="Select field"
