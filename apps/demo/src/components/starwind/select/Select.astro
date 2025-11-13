@@ -333,10 +333,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         // Find first non-disabled, non-hidden item
         for (let i = 0; i < items.length; i++) {
           const item = items[i] as HTMLElement;
-          if (
-            item.getAttribute("data-disabled") !== "true" &&
-            !item.classList.contains("starwind-sr-only")
-          ) {
+          if (item.getAttribute("data-disabled") !== "true") {
             this.setActiveItem(item);
             break;
           }
@@ -348,10 +345,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         // Find last non-disabled, non-hidden item
         for (let i = items.length - 1; i >= 0; i--) {
           const item = items[i] as HTMLElement;
-          if (
-            item.getAttribute("data-disabled") !== "true" &&
-            !item.classList.contains("starwind-sr-only")
-          ) {
+          if (item.getAttribute("data-disabled") !== "true") {
             this.setActiveItem(item);
             break;
           }
@@ -364,10 +358,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         if (currentIndex > 0) {
           for (let i = currentIndex - 1; i >= 0; i--) {
             const item = items[i] as HTMLElement;
-            if (
-              item.getAttribute("data-disabled") !== "true" &&
-              !item.classList.contains("starwind-sr-only")
-            ) {
+            if (item.getAttribute("data-disabled") !== "true") {
               this.setActiveItem(item);
               break;
             }
@@ -381,10 +372,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         if (currentIndex < items.length - 1) {
           for (let i = currentIndex + 1; i < items.length; i++) {
             const item = items[i] as HTMLElement;
-            if (
-              item.getAttribute("data-disabled") !== "true" &&
-              !item.classList.contains("starwind-sr-only")
-            ) {
+            if (item.getAttribute("data-disabled") !== "true") {
               this.setActiveItem(item);
               break;
             }
@@ -437,10 +425,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
       const items = this.content.querySelectorAll('[role="option"]');
       for (const item of items) {
-        if (
-          !item.classList.contains("starwind-sr-only") &&
-          item.getAttribute("data-disabled") !== "true"
-        ) {
+        if (item.getAttribute("data-disabled") !== "true") {
           return item as HTMLElement;
         }
       }
