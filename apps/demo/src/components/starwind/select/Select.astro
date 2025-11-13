@@ -131,11 +131,11 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         }
         // Link search input to the listbox it filters
         this.searchInput.setAttribute("aria-controls", this.content.id);
-        
+
         const items = this.content.querySelectorAll('[role="option"]');
         items.forEach((item, index) => {
           if (!item.id) {
-            item.id = `starwind-select${selectIdx}-option-${index}`;
+            item.id = `starwind-select${selectIdx}-option${index}`;
           }
         });
       }
