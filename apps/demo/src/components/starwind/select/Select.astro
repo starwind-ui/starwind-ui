@@ -325,7 +325,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
     private findNavigableItem(
       items: NodeListOf<Element>,
       startIndex: number,
-      direction: "forward" | "backward"
+      direction: "forward" | "backward",
     ): HTMLElement | null {
       const step = direction === "forward" ? 1 : -1;
       const end = direction === "forward" ? items.length : -1;
@@ -545,8 +545,6 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
           }
         }
       }
-
-      this.positionContent();
     }
 
     private closeSelect() {
@@ -658,29 +656,6 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         // Then call handleSelection which will update the rest
         this.handleSelection(item);
       }
-    }
-
-    /**
-     * TODO: add position logic to avoid collisions with window boundary
-     * It will need to switch to top or bottom depending on space available
-     * It will also need to set the content max height so it doesn't overflow the viewport
-     */
-    private positionContent() {
-      // if (!this.content || !this.trigger) return;
-      // const triggerRect = this.trigger.getBoundingClientRect();
-      // const contentRect = this.content.getBoundingClientRect();
-      // const viewportHeight = window.innerHeight;
-      // // Position the content below the trigger by default
-      // let top = triggerRect.bottom;
-      // // If there's not enough space below, position it above
-      // if (top + contentRect.height > viewportHeight) {
-      //   top = triggerRect.top - contentRect.height;
-      // }
-      // this.content.style.position = "absolute";
-      // this.content.style.top = `${top}px`;
-      // this.content.style.left = `${triggerRect.left}px`;
-      // this.content.style.width = `${triggerRect.width}px`;
-      // this.content.style.zIndex = "50";
     }
   }
 
