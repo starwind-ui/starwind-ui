@@ -23,6 +23,11 @@ type Props = HTMLAttributes<"div"> & {
    * @default 150
    */
   animationDuration?: number;
+  /**
+   * Size of the select content
+   * @default md
+   */
+  size?: "sm" | "md" | "lg";
 };
 
 export const selectContent = tv({
@@ -42,8 +47,13 @@ export const selectContent = tv({
       center: "left-1/2 -translate-x-1/2",
       end: "slide-in-from-right-1 slide-out-to-right-1 right-0",
     },
+    size: {
+      sm: "text-sm [&_[data-slot=select-label]]:text-xs",
+      md: "text-base [&_[data-slot=select-label]]:text-sm",
+      lg: "text-lg [&_[data-slot=select-label]]:text-base",
+    },
   },
-  defaultVariants: { side: "bottom", align: "start" },
+  defaultVariants: { side: "bottom", align: "start", size: "md" },
 });
 
 export const selectContentInner = tv({
@@ -54,6 +64,7 @@ const {
   class: className,
   side = "bottom",
   align = "start",
+  size = "md",
   sideOffset = 4,
   animationDuration = 150,
   ...rest
@@ -61,7 +72,7 @@ const {
 ---
 
 <div
-  class={selectContent({ side, align, class: className })}
+  class={selectContent({ side, align, size, class: className })}
   role="listbox"
   data-side={side}
   data-align={align}
