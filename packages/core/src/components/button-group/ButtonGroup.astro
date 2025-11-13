@@ -1,15 +1,14 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv, type VariantProps } from "tailwind-variants";
+import { tv } from "tailwind-variants";
 
-type Props = HTMLAttributes<"div"> &
-  VariantProps<typeof buttonGroup> & {
-    /**
-     * The orientation of the button group.
-     * @default "horizontal"
-     */
-    orientation?: "horizontal" | "vertical";
-  };
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * The orientation of the button group.
+   * @default "horizontal"
+   */
+  orientation?: "horizontal" | "vertical";
+};
 
 export const buttonGroup = tv({
   base: [
