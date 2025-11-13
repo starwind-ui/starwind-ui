@@ -28,6 +28,8 @@ const { class: className, placeholder = "Search...", ...rest } = Astro.props;
     data-slot="select-search"
     placeholder={placeholder}
     autocomplete="off"
+    tabindex="-1"
+    aria-hidden="true"
     {...rest}
   />
 </div>
