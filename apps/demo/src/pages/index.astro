@@ -1,11 +1,22 @@
 ---
+import ArrowLeft from "@tabler/icons/outline/arrow-left.svg";
+import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+import Bold from "@tabler/icons/outline/bold.svg";
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
 import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
 import CircleCheck from "@tabler/icons/outline/circle-check.svg";
 import Copy from "@tabler/icons/outline/copy.svg";
 import Edit from "@tabler/icons/outline/edit.svg";
 import Flame from "@tabler/icons/outline/flame.svg";
+import Heart from "@tabler/icons/outline/heart.svg";
 import InfoCircle from "@tabler/icons/outline/info-circle.svg";
+import Italic from "@tabler/icons/outline/italic.svg";
 import Mail from "@tabler/icons/outline/mail.svg";
+import Moon from "@tabler/icons/outline/moon.svg";
+import Search from "@tabler/icons/outline/search.svg";
+import Star from "@tabler/icons/outline/star.svg";
+import Sun from "@tabler/icons/outline/sun.svg";
+import Underline from "@tabler/icons/outline/underline.svg";
 import IconX from "@tabler/icons/outline/x.svg";
 
 import CarouselDemos from "@/components/carousel-demos/CarouselDemos.astro";
@@ -47,6 +58,11 @@ import {
   BreadcrumbSeparator,
 } from "@/components/starwind/breadcrumb";
 import { Button, ButtonVariants } from "@/components/starwind/button";
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+  ButtonGroupText,
+} from "@/components/starwind/button-group";
 import {
   Card,
   CardContent,
@@ -119,6 +135,7 @@ import {
   SelectGroup,
   SelectItem,
   SelectLabel,
+  SelectSearch,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
@@ -148,6 +165,7 @@ import {
   TableRow,
 } from "@/components/starwind/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/tabs";
+import { Toggle } from "@/components/starwind/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/tooltip";
 import Layout from "@/layouts/Layout.astro";
 ---
@@ -713,10 +731,11 @@ import Layout from "@/layouts/Layout.astro";
     <!-- Select -->
     <section class="mx-auto mt-6 max-w-lg">
       <Select name="timezone" defaultValue="aest">
-        <SelectTrigger class="w-[350px]">
+        <SelectTrigger class="w-[350px]" size="sm">
           <SelectValue placeholder="Select a timezone" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent size="sm">
+          <!-- <SelectSearch placeholder="Search time zone..." /> -->
           <SelectGroup>
             <SelectLabel>North America</SelectLabel>
             <SelectItem value="est">Eastern Standard Time (EST)</SelectItem>
@@ -879,6 +898,115 @@ import Layout from "@/layouts/Layout.astro";
       </div>
     </section>
 
+    <!-- Toggles -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Toggle Component</h2>
+
+      <div class="mb-6">
+        <h3 class="mb-2 text-lg font-semibold">Basic Toggles</h3>
+        <div class="flex flex-wrap gap-2">
+          <Toggle>Default</Toggle>
+          <Toggle variant="outline">Outline</Toggle>
+          <Toggle defaultPressed>Default Pressed</Toggle>
+          <Toggle disabled>Disabled</Toggle>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <h3 class="mb-2 text-lg font-semibold">With Icons</h3>
+        <div class="flex flex-wrap gap-2">
+          <Toggle variant="outline" aria-label="Toggle bold">
+            <Bold class="size-4" />
+          </Toggle>
+          <Toggle variant="outline" aria-label="Toggle italic">
+            <Italic class="size-4" />
+          </Toggle>
+          <Toggle variant="outline" aria-label="Toggle underline">
+            <Underline class="size-4" />
+          </Toggle>
+          <Toggle variant="outline" defaultPressed aria-label="Toggle favorite">
+            <Heart class="size-4" />
+          </Toggle>
+          <Toggle variant="outline" aria-label="Toggle star">
+            <Star class="size-4" />
+          </Toggle>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <h3 class="mb-2 text-lg font-semibold">Sizes</h3>
+        <div class="flex flex-wrap items-center gap-2">
+          <Toggle size="sm">Small</Toggle>
+          <Toggle size="md">Medium</Toggle>
+          <Toggle size="lg">Large</Toggle>
+          <Toggle size="sm" aria-label="Small icon">
+            <Star />
+          </Toggle>
+          <Toggle size="md" aria-label="Medium icon">
+            <Star />
+          </Toggle>
+          <Toggle size="lg" aria-label="Large icon">
+            <Star class="size-5" />
+          </Toggle>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <h3 class="mb-2 text-lg font-semibold">Variants</h3>
+        <div class="flex flex-wrap gap-2">
+          <Toggle variant="default">Default</Toggle>
+          <Toggle variant="outline">Outline</Toggle>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <h3 class="mb-2 text-lg font-semibold">Synced Toggles (theme toggle example)</h3>
+        <p class="text-muted-foreground mb-2 text-sm">
+          These toggles share the same sync group and will mirror each other's state
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <Toggle
+            class="group hover:border-muted-foreground rounded-full hover:bg-transparent data-[state=on]:bg-transparent"
+            syncGroup="theme"
+            variant="outline"
+            aria-label="Toggle theme"
+            data-theme-toggle
+          >
+            <Sun class="size-4.5 group-data-[state=on]:hidden" />
+            <Moon class="size-4.5 group-data-[state=off]:hidden" />
+          </Toggle>
+          <Toggle
+            class="group hover:border-muted-foreground rounded-full hover:bg-transparent data-[state=on]:bg-transparent"
+            syncGroup="theme"
+            variant="outline"
+            aria-label="Toggle theme"
+            data-theme-toggle
+          >
+            <Sun class="size-4.5 group-data-[state=on]:hidden" />
+            <Moon class="size-4.5 group-data-[state=off]:hidden" />
+          </Toggle>
+          <Toggle
+            class="group hover:border-muted-foreground rounded-full hover:bg-transparent data-[state=on]:bg-transparent"
+            syncGroup="theme"
+            variant="outline"
+            aria-label="Toggle theme"
+            data-theme-toggle
+          >
+            <Sun class="size-4.5 group-data-[state=on]:hidden" />
+            <Moon class="size-4.5 group-data-[state=off]:hidden" />
+          </Toggle>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <h3 class="mb-2 text-lg font-semibold">Event Listener Example</h3>
+        <div class="rounded-md border p-4">
+          <Toggle id="event-toggle" variant="outline"> Toggle Me </Toggle>
+          <div id="toggle-status" class="text-muted-foreground mt-2 text-sm">Status: off</div>
+        </div>
+      </div>
+    </section>
+
     <!-- Avatar -->
     <section class="mx-auto mt-10 max-w-lg">
       <div class="flex flex-wrap gap-4" slot="preview">
@@ -949,6 +1077,172 @@ import Layout from "@/layouts/Layout.astro";
         <Button class="rounded-full">Radius full</Button>
         <Button class="bg-blue-500">override test</Button>
         <!-- <Button2 variant="primary" size="lg" href="#test">Button</Button2> -->
+      </div>
+    </section>
+
+    <!-- Button Group -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Button Group Demo</h2>
+      <div class="flex flex-col gap-6">
+        <!-- Horizontal Button Group -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Horizontal</h3>
+          <ButtonGroup>
+            <Button variant="outline">Left</Button>
+            <Button variant="outline">Middle</Button>
+            <Button variant="outline">Right</Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- Horizontal with Separator -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Horizontal with Separator</h3>
+          <ButtonGroup>
+            <Button variant="outline">
+              <Bold class="size-4" />
+            </Button>
+            <ButtonGroupSeparator />
+            <Button variant="outline">
+              <Italic class="size-4" />
+            </Button>
+            <ButtonGroupSeparator />
+            <Button variant="outline">
+              <Underline class="size-4" />
+            </Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- Vertical Button Group -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Vertical</h3>
+          <ButtonGroup orientation="vertical">
+            <Button variant="outline">Top</Button>
+            <Button variant="outline">Middle</Button>
+            <Button variant="outline">Bottom</Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- Vertical with Separator -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Vertical with Separator</h3>
+          <ButtonGroup orientation="vertical">
+            <Button variant="outline">Account</Button>
+            <ButtonGroupSeparator orientation="horizontal" />
+            <Button variant="outline">Settings</Button>
+            <ButtonGroupSeparator orientation="horizontal" />
+            <Button variant="outline">Logout</Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- Different Variants -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Different Variants</h3>
+          <ButtonGroup>
+            <Button variant="primary">Save</Button>
+            <Button variant="secondary">Cancel</Button>
+            <Button variant="outline">Reset</Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- With Text Label -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">With Text Label</h3>
+          <ButtonGroup>
+            <ButtonGroupText>
+              <InfoCircle class="size-4" />
+              Format:
+            </ButtonGroupText>
+            <Button variant="outline">
+              <Bold class="size-4" />
+            </Button>
+            <Button variant="outline">
+              <Italic class="size-4" />
+            </Button>
+            <Button variant="outline">
+              <Underline class="size-4" />
+            </Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- Nested Button Groups -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">Nested Button Groups</h3>
+          <ButtonGroup>
+            <ButtonGroup>
+              <Button variant="outline" size="sm">1</Button>
+              <Button variant="outline" size="sm">2</Button>
+              <Button variant="outline" size="sm">3</Button>
+              <Button variant="outline" size="sm">4</Button>
+              <Button variant="outline" size="sm">5</Button>
+            </ButtonGroup>
+            <ButtonGroup>
+              <Button variant="outline" size="icon-sm" aria-label="Previous">
+                <ArrowLeft />
+              </Button>
+              <Button variant="outline" size="icon-sm" aria-label="Next">
+                <ArrowRight />
+              </Button>
+            </ButtonGroup>
+          </ButtonGroup>
+        </div>
+
+        <!-- With Input -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">With Input</h3>
+          <ButtonGroup>
+            <Input placeholder="Search..." />
+            <Button variant="outline" aria-label="Search">
+              <Search />
+            </Button>
+          </ButtonGroup>
+        </div>
+
+        <!-- With Dropdown -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">With Dropdown</h3>
+          <ButtonGroup>
+            <Button variant="outline">Follow</Button>
+            <Dropdown>
+              <DropdownTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <ChevronDown />
+                </Button>
+              </DropdownTrigger>
+              <DropdownContent align="end" class="min-w-[200px]">
+                <DropdownItem>Mute Conversation</DropdownItem>
+                <DropdownItem>Mark as Read</DropdownItem>
+                <DropdownItem>Report Conversation</DropdownItem>
+                <DropdownSeparator />
+                <DropdownItem>Delete Conversation</DropdownItem>
+              </DropdownContent>
+            </Dropdown>
+          </ButtonGroup>
+        </div>
+
+        <!-- With Select -->
+        <div>
+          <h3 class="mb-2 text-lg font-semibold">With Select</h3>
+          <ButtonGroup>
+            <ButtonGroup>
+              <Select defaultValue="$">
+                <SelectTrigger class="font-mono">
+                  <SelectValue placeholder="$" />
+                </SelectTrigger>
+                <SelectContent class="min-w-20">
+                  <SelectItem value="$"> $ </SelectItem>
+                  <SelectItem value="€"> € </SelectItem>
+                  <SelectItem value="£"> £ </SelectItem>
+                </SelectContent>
+              </Select>
+              <Input placeholder="10.00" pattern="[0-9]*" />
+            </ButtonGroup>
+            <ButtonGroup>
+              <Button aria-label="Send" size="icon" variant="outline">
+                <ArrowRight />
+              </Button>
+            </ButtonGroup>
+          </ButtonGroup>
+        </div>
       </div>
     </section>
 
@@ -1268,5 +1562,21 @@ import Layout from "@/layouts/Layout.astro";
         </div>
       </div>
     </section>
-  </div></Layout
->
+  </div>
+
+  <script>
+    // Toggle event listener example
+    const eventToggle = document.getElementById("event-toggle");
+    const statusDiv = document.getElementById("toggle-status");
+
+    if (eventToggle && statusDiv) {
+      eventToggle.addEventListener("starwind-toggle:change", ((e: CustomEvent) => {
+        const { pressed, toggleId, syncGroup } = e.detail;
+        statusDiv.textContent = `Status: ${pressed ? "on" : "off"} | ID: ${toggleId}${syncGroup ? ` | Sync Group: ${syncGroup}` : ""}`;
+        statusDiv.className = pressed
+          ? "mt-2 text-sm font-medium text-success"
+          : "mt-2 text-sm text-muted-foreground";
+      }) as EventListener);
+    }
+  </script>
+</Layout>

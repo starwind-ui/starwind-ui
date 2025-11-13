@@ -85,7 +85,9 @@ export async function setupAstroConfig(): Promise<boolean> {
       if (!config.includes("experimental")) {
         // Ensure there's a comma before adding new property if config is not empty
         const needsComma = config.length > 0 && !config.trimEnd().endsWith(",");
-        config += (needsComma ? "," : "") + `\n\texperimental: {
+        config +=
+          (needsComma ? "," : "") +
+          `\n\texperimental: {
 		svg: true,
 	},`;
       } else if (!config.includes("svg: true") && !config.includes("svg: {")) {
@@ -100,7 +102,9 @@ export async function setupAstroConfig(): Promise<boolean> {
     if (!config.includes("vite:")) {
       // Ensure there's a comma before adding new property if config is not empty
       const needsComma = config.length > 0 && !config.trimEnd().endsWith(",");
-      config += (needsComma ? "," : "") + `\n\tvite: {
+      config +=
+        (needsComma ? "," : "") +
+        `\n\tvite: {
 		plugins: [tailwindcss()],
 	},`;
     } else if (!config.includes("plugins: [")) {

@@ -1,0 +1,172 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
+
+export const toggle = tv({
+  base: [
+    "inline-flex items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "data-[state=on]:bg-accent data-[state=on]:text-accent-foreground",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+    "focus-visible:border-outline focus-visible:ring-outline/50 focus-visible:ring-3",
+    "transition-colors outline-none",
+    "aria-invalid:ring-error/20 dark:aria-invalid:ring-error/40 aria-invalid:border-error",
+  ],
+  variants: {
+    variant: {
+      default: "hover:bg-muted hover:text-muted-foreground bg-transparent",
+      outline:
+        "border-input hover:bg-accent hover:text-accent-foreground border bg-transparent shadow-xs",
+    },
+    size: {
+      sm: "h-9 min-w-9 px-2 text-sm",
+      md: "h-11 min-w-11 px-2.5 text-base",
+      lg: "h-12 min-w-12 px-3 text-lg",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+    size: "md",
+  },
+});
+
+type Props = VariantProps<typeof toggle> &
+  HTMLAttributes<"button"> & {
+    /**
+     * The pressed state of the toggle when initially rendered
+     */
+    defaultPressed?: boolean;
+    /**
+     * Optional sync group name. When set, all toggles with the same sync group will mirror each other's state
+     */
+    syncGroup?: string;
+  };
+
+const { class: className, defaultPressed = false, syncGroup, variant, size, ...rest } = Astro.props;
+
+const dataState = defaultPressed ? "on" : "off";
+---
+
+<button
+  type="button"
+  class={toggle({ variant, size, class: `starwind-toggle ${className || ""}` })}
+  data-slot="toggle"
+  data-state={dataState}
+  data-sync-group={syncGroup}
+  aria-pressed={defaultPressed}
+  {...rest}
+>
+  <slot />
+</button>
+
+<script>
+  import type { ToggleChangeEvent, ToggleSyncEvent } from "./ToggleTypes";
+
+  class ToggleHandler {
+    private toggle: HTMLButtonElement;
+    private syncGroup?: string;
+
+    constructor(toggle: HTMLButtonElement, idx: number) {
+      this.toggle = toggle;
+      this.syncGroup = toggle.dataset.syncGroup;
+
+      if (!this.toggle.id) {
+        this.toggle.id = `starwind-toggle${idx}`;
+      }
+
+      this.setupEventListeners();
+
+      if (this.syncGroup) {
+        this.setupSyncListener();
+      }
+    }
+
+    private setupEventListeners(): void {
+      this.toggle.addEventListener("click", () => this.handleToggle());
+      this.toggle.addEventListener("keydown", (event) => this.handleKeyDown(event));
+    }
+
+    private setupSyncListener(): void {
+      if (!this.syncGroup) return;
+
+      document.addEventListener(`starwind-toggle-sync:${this.syncGroup}`, ((e: ToggleSyncEvent) => {
+        // Don't sync if this toggle triggered the event
+        if (e.detail.sourceId === this.toggle.id) return;
+
+        const newPressed = e.detail.pressed;
+        this.updateState(newPressed, false); // false = don't dispatch sync event
+      }) as EventListener);
+    }
+
+    private handleToggle(): void {
+      if (this.isDisabled()) return;
+
+      const isPressed = this.toggle.getAttribute("aria-pressed") === "true";
+      const newPressed = !isPressed;
+
+      this.updateState(newPressed, true);
+    }
+
+    private handleKeyDown(event: KeyboardEvent): void {
+      if (this.isDisabled()) return;
+
+      if (event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        this.handleToggle();
+      }
+    }
+
+    private isDisabled(): boolean {
+      return this.toggle.disabled;
+    }
+
+    private updateState(pressed: boolean, dispatchSync: boolean): void {
+      const newState = pressed ? "on" : "off";
+
+      this.toggle.setAttribute("aria-pressed", pressed.toString());
+      this.toggle.setAttribute("data-state", newState);
+
+      // Dispatch change event (always fired for user to listen to)
+      const changeEvent = new CustomEvent<ToggleChangeEvent["detail"]>("starwind-toggle:change", {
+        detail: {
+          pressed,
+          toggleId: this.toggle.id,
+          syncGroup: this.syncGroup,
+        },
+        bubbles: true,
+        cancelable: true,
+      });
+
+      this.toggle.dispatchEvent(changeEvent);
+
+      // Dispatch sync event if in a sync group and requested
+      if (this.syncGroup && dispatchSync) {
+        const syncEvent = new CustomEvent<ToggleSyncEvent["detail"]>(
+          `starwind-toggle-sync:${this.syncGroup}`,
+          {
+            detail: {
+              pressed,
+              sourceId: this.toggle.id,
+            },
+          },
+        );
+
+        document.dispatchEvent(syncEvent);
+      }
+    }
+  }
+
+  // Store instances in a WeakMap to avoid memory leaks
+  const toggleInstances = new WeakMap<HTMLElement, ToggleHandler>();
+
+  const setupToggles = () => {
+    document.querySelectorAll<HTMLButtonElement>(".starwind-toggle").forEach((toggle, idx) => {
+      if (!toggleInstances.has(toggle)) {
+        toggleInstances.set(toggle, new ToggleHandler(toggle, idx));
+      }
+    });
+  };
+
+  setupToggles();
+  document.addEventListener("astro:after-swap", setupToggles);
+</script>

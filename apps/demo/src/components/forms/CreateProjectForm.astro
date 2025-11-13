@@ -16,6 +16,7 @@ import {
   SelectGroup,
   SelectItem,
   SelectLabel,
+  SelectSearch,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
@@ -40,12 +41,13 @@ import {
             <SelectValue placeholder="Select" />
           </SelectTrigger>
           <SelectContent>
+            <SelectSearch placeholder="Search frameworks..." emptyText="No frameworks found." />
             <SelectGroup>
-              <SelectLabel>Frameworks</SelectLabel>
               <SelectItem value="astro">Astro</SelectItem>
-              <SelectItem value="next">Next.js</SelectItem>
+              <SelectItem value="next" disabled>Next.js</SelectItem>
               <SelectItem value="svelte">SvelteKit</SelectItem>
               <SelectItem value="solid">SolidStart</SelectItem>
+              <SelectItem value="remix">Remix</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>

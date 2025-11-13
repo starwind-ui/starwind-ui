@@ -11,18 +11,18 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
+    "@astrojs/check": "^0.9.5",
     "@fontsource-variable/inter": "^5.1.1",
     "@playform/compress": "^0.2.0",
     "@tabler/icons": "^3.34.1",
     "@tailwindcss/forms": "^0.5.10",
-    "@tailwindcss/vite": "^4.1.11",
-    "astro": "^5.12.9",
+    "@tailwindcss/vite": "^4.1.17",
+    "astro": "^5.15.4",
     "embla-carousel": "^8.6.0",
     "embla-carousel-autoplay": "^8.6.0",
-    "tailwind-variants": "^3.1.0",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^4.1.11",
+    "tailwind-variants": "^3.1.0",
+    "tailwindcss": "^4.1.17",
     "tw-animate-css": "^1.3.6"
   },
   "devDependencies": {

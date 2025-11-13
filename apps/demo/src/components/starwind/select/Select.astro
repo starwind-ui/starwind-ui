@@ -34,8 +34,11 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
     private select: HTMLElement;
     private trigger: HTMLButtonElement | null;
     private content: HTMLElement | null;
+    private searchInput: HTMLInputElement | null = null;
+    private emptyElement: HTMLElement | null = null;
     private isOpen: boolean = false;
     private selectedItem: HTMLElement | null = null;
+    private activeItem: HTMLElement | null = null;
     private animationDuration = 150;
     private typeaheadTimerRef: number | null = null;
     private typeaheadSearch = "";
@@ -45,6 +48,8 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       this.select = select;
       this.trigger = select.querySelector(".starwind-select-trigger");
       this.content = select.querySelector(".starwind-select-content");
+      this.searchInput = select.querySelector('[data-slot="select-search"]');
+      this.emptyElement = select.querySelector('[data-slot="select-empty"]');
 
       if (!this.trigger || !this.content) return;
 
@@ -118,10 +123,31 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       // Set up additional ARIA attributes
       this.trigger.setAttribute("aria-controls", this.content.id);
       this.content.setAttribute("aria-labelledby", this.trigger.id);
+
+      // If search input exists, add IDs to all items for aria-activedescendant
+      if (this.searchInput) {
+        if (!this.searchInput.id) {
+          this.searchInput.id = `starwind-select${selectIdx}-search`;
+        }
+        // Link search input to the listbox it filters
+        this.searchInput.setAttribute("aria-controls", this.content.id);
+
+        const items = this.content.querySelectorAll('[role="option"]');
+        items.forEach((item, index) => {
+          if (!item.id) {
+            item.id = `starwind-select${selectIdx}-option${index}`;
+          }
+        });
+      }
     }
 
     private setupEvents() {
       if (!this.trigger || !this.content) return;
+
+      // Handle search input if it exists
+      if (this.searchInput) {
+        this.setupSearchInput();
+      }
 
       // Handle pointerdown
       this.trigger.addEventListener("pointerdown", (e) => {
@@ -164,11 +190,18 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
       // Handle keyboard navigation inside select content
       this.content.addEventListener("keydown", (e) => {
+        // Check if the event originated from the search input
+        const isFromSearchInput = e.target === this.searchInput;
+
         if (e.key === "Enter" || e.key === " ") {
-          // set element based on current focused element
-          const activeElement = document.activeElement;
-          this.returnFocusOnClose = true;
-          this.handleSelection(activeElement as HTMLElement);
+          // Only handle selection if not typing in search input
+          if (!isFromSearchInput) {
+            // set element based on current focused element
+            const activeElement = document.activeElement;
+            this.returnFocusOnClose = true;
+            this.handleSelection(activeElement as HTMLElement);
+          }
+          // If from search input, don't handle it here - let the input handle it naturally
         } else if (e.key === "Escape" && this.isOpen) {
           this.returnFocusOnClose = true;
           this.closeSelect();
@@ -188,7 +221,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
           // select should not be navigated using tab key so we prevent it
           if (e.key === "Tab") e.preventDefault();
 
-          if (!isModifierKey && e.key.length === 1) {
+          if (!isModifierKey && e.key.length === 1 && !this.searchInput) {
             this.handleTypeahead(e.key);
           }
         }
@@ -199,7 +232,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         const target = e.target as HTMLElement;
         const option = target.closest('[role="option"]');
         if (option && option instanceof HTMLElement && this.isOpen === true) {
-          option.focus();
+          this.setActiveItem(option);
         }
       });
 
@@ -259,50 +292,181 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       });
     }
 
+    private setActiveItem(item: HTMLElement | null) {
+      if (!this.content) return;
+
+      // Remove active state from previous item
+      if (this.activeItem) {
+        this.activeItem.removeAttribute("data-active");
+      }
+
+      // Set new active item
+      this.activeItem = item;
+      if (item) {
+        item.setAttribute("data-active", "true");
+
+        // Scroll item into view if needed
+        item.scrollIntoView({ block: "nearest" });
+
+        // For search mode, set aria-activedescendant for assistive technologies
+        if (this.searchInput) {
+          // Item should already have an ID from setupAccessibility
+          this.searchInput.setAttribute("aria-activedescendant", item.id);
+        } else {
+          // For non-search mode, set focus for keyboard accessibility
+          item.focus();
+        }
+      } else if (this.searchInput) {
+        // Clear aria-activedescendant when no item is active
+        this.searchInput.removeAttribute("aria-activedescendant");
+      }
+    }
+
+    private findNavigableItem(
+      items: NodeListOf<Element>,
+      startIndex: number,
+      direction: "forward" | "backward",
+    ): HTMLElement | null {
+      const step = direction === "forward" ? 1 : -1;
+      const end = direction === "forward" ? items.length : -1;
+
+      for (let i = startIndex; i !== end; i += step) {
+        const item = items[i] as HTMLElement;
+        if (
+          item.getAttribute("data-disabled") !== "true" &&
+          item.getAttribute("data-filtered") !== "true"
+        ) {
+          return item;
+        }
+      }
+      return null;
+    }
+
     private handleNavigationKeys(e: KeyboardEvent) {
       if (!this.content) return;
       const items = this.content.querySelectorAll('[role="option"]');
+      const currentIndex = Array.from(items).indexOf(this.activeItem as HTMLElement);
 
-      // current, or first item, is focused upon opening the select
-      const activeElement = document.activeElement;
-      const currentIndex = Array.from(items).indexOf(activeElement as HTMLElement);
-      if (e.key === "Home") {
-        const firstEnabledItem = Array.from(items).find(
-          (item) => item.getAttribute("data-disabled") !== "true",
-        ) as HTMLElement;
-        if (firstEnabledItem) {
-          firstEnabledItem.focus();
-        }
-        return;
+      let targetItem: HTMLElement | null = null;
+
+      switch (e.key) {
+        case "Home":
+          targetItem = this.findNavigableItem(items, 0, "forward");
+          break;
+
+        case "End":
+          targetItem = this.findNavigableItem(items, items.length - 1, "backward");
+          break;
+
+        case "ArrowUp":
+          if (currentIndex > 0) {
+            targetItem = this.findNavigableItem(items, currentIndex - 1, "backward");
+          }
+          break;
+
+        case "ArrowDown":
+          if (currentIndex < items.length - 1) {
+            targetItem = this.findNavigableItem(items, currentIndex + 1, "forward");
+          }
+          break;
       }
-      if (e.key === "End") {
-        const lastEnabledItem = Array.from(items)
-          .reverse()
-          .find((item) => item.getAttribute("data-disabled") !== "true") as HTMLElement;
-        if (lastEnabledItem) {
-          lastEnabledItem.focus();
-        }
-        return;
+
+      if (targetItem) {
+        this.setActiveItem(targetItem);
       }
-      if (e.key === "ArrowUp" && currentIndex > 0) {
-        for (let i = currentIndex - 1; i >= 0; i--) {
-          const item = items[i] as HTMLElement;
-          if (item.getAttribute("data-disabled") !== "true") {
-            item.focus();
-            break;
+    }
+
+    private setupSearchInput() {
+      if (!this.searchInput || !this.content) return;
+
+      this.searchInput.addEventListener("input", (e) => {
+        const target = e.target as HTMLInputElement;
+        const searchValue = target.value.toLowerCase().trim();
+        this.filterItems(searchValue);
+      });
+
+      // Handle keyboard navigation from search input
+      this.searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.stopPropagation();
+          this.returnFocusOnClose = true;
+          this.closeSelect();
+        }
+        // Allow arrow keys to navigate to items
+        else if (["ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleNavigationKeys(e);
+        }
+        // Handle Enter to select the active or first visible item
+        else if (e.key === "Enter") {
+          e.preventDefault();
+          const itemToSelect = this.activeItem || this.getFirstVisibleItem();
+          if (itemToSelect) {
+            this.returnFocusOnClose = true;
+            this.handleSelection(itemToSelect);
           }
         }
-        return;
-      }
-      if (e.key === "ArrowDown" && currentIndex < items.length - 1) {
-        for (let i = currentIndex + 1; i < items.length; i++) {
-          const item = items[i] as HTMLElement;
-          if (item.getAttribute("data-disabled") !== "true") {
-            item.focus();
-            break;
-          }
+        // Prevent space from scrolling the page, but allow it to be typed
+        else if (e.key === " ") {
+          e.stopPropagation();
         }
-        return;
+      });
+    }
+
+    private getFirstVisibleItem(): HTMLElement | null {
+      if (!this.content) return null;
+
+      const items = this.content.querySelectorAll('[role="option"]');
+      for (const item of items) {
+        if (
+          item.getAttribute("data-disabled") !== "true" &&
+          item.getAttribute("data-filtered") !== "true"
+        ) {
+          return item as HTMLElement;
+        }
+      }
+      return null;
+    }
+
+    private filterItems(searchValue: string) {
+      if (!this.content) return;
+
+      const items = this.content.querySelectorAll('[role="option"]');
+      let visibleCount = 0;
+      let firstVisibleItem: HTMLElement | null = null;
+
+      items.forEach((item) => {
+        const itemText = item.textContent?.toLowerCase().trim() || "";
+        const matches = itemText.includes(searchValue);
+
+        if (matches || searchValue === "") {
+          item.classList.remove("starwind-sr-only");
+          item.removeAttribute("data-filtered");
+          visibleCount++;
+          if (!firstVisibleItem) {
+            firstVisibleItem = item as HTMLElement;
+          }
+        } else {
+          item.classList.add("starwind-sr-only");
+          item.setAttribute("data-filtered", "true");
+        }
+      });
+
+      // Update active item to first visible item after filtering
+      if (this.searchInput && firstVisibleItem) {
+        this.setActiveItem(firstVisibleItem);
+      } else if (this.searchInput && visibleCount === 0) {
+        this.setActiveItem(null);
+      }
+
+      // Show/hide empty message
+      if (this.emptyElement) {
+        if (visibleCount === 0 && searchValue !== "") {
+          this.emptyElement.classList.remove("hidden");
+        } else {
+          this.emptyElement.classList.add("hidden");
+        }
       }
     }
 
@@ -311,12 +475,12 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       const search = this.typeaheadSearch + key;
       const items = this.content.querySelectorAll('[role="option"]');
 
-      // find and focus the first matching option
+      // find and set active the first matching option
       const matches = Array.from(items).filter((item) =>
         item.textContent?.toLowerCase().trim().startsWith(search.toLowerCase()),
       ) as HTMLElement[];
       if (matches.length > 0) {
-        matches[0].focus();
+        this.setActiveItem(matches[0]);
       }
 
       // update the typeahead search and reset the timer
@@ -361,18 +525,32 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       this.trigger.setAttribute("aria-expanded", "true");
       this.content.style.removeProperty("display");
 
-      // set focus on the current selected item
-      if (this.selectedItem) {
-        this.selectedItem.focus();
+      // If search input exists, focus it and clear any previous search
+      if (this.searchInput) {
+        this.searchInput.value = "";
+        this.filterItems("");
+
+        // Set the selected item or first item as active
+        const initialItem = this.selectedItem || this.getFirstVisibleItem();
+        if (initialItem) {
+          this.setActiveItem(initialItem);
+        }
+
+        requestAnimationFrame(() => {
+          this.searchInput?.focus();
+        });
       } else {
-        // if no item is selected, focus on the first item
-        const firstItem = this.content.querySelector('[role="option"]') as HTMLElement;
-        if (firstItem) {
-          firstItem.focus();
+        // set active on the current selected item
+        if (this.selectedItem) {
+          this.setActiveItem(this.selectedItem);
+        } else {
+          // if no item is selected, set active on the first item
+          const firstItem = this.content.querySelector('[role="option"]') as HTMLElement;
+          if (firstItem) {
+            this.setActiveItem(firstItem);
+          }
         }
       }
-
-      this.positionContent();
     }
 
     private closeSelect() {
@@ -399,6 +577,13 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       setTimeout(() => {
         if (!this.content) return;
         this.content.style.display = "none";
+
+        // Clear search and show all items after animation completes
+        if (this.searchInput) {
+          this.searchInput.value = "";
+          this.filterItems("");
+          this.setActiveItem(null);
+        }
       }, this.animationDuration);
 
       this.trigger.setAttribute("aria-expanded", "false");
@@ -477,29 +662,6 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         // Then call handleSelection which will update the rest
         this.handleSelection(item);
       }
-    }
-
-    /**
-     * TODO: add position logic to avoid collisions with window boundary
-     * It will need to switch to top or bottom depending on space available
-     * It will also need to set the content max height so it doesn't overflow the viewport
-     */
-    private positionContent() {
-      // if (!this.content || !this.trigger) return;
-      // const triggerRect = this.trigger.getBoundingClientRect();
-      // const contentRect = this.content.getBoundingClientRect();
-      // const viewportHeight = window.innerHeight;
-      // // Position the content below the trigger by default
-      // let top = triggerRect.bottom;
-      // // If there's not enough space below, position it above
-      // if (top + contentRect.height > viewportHeight) {
-      //   top = triggerRect.top - contentRect.height;
-      // }
-      // this.content.style.position = "absolute";
-      // this.content.style.top = `${top}px`;
-      // this.content.style.left = `${triggerRect.left}px`;
-      // this.content.style.width = `${triggerRect.width}px`;
-      // this.content.style.zIndex = "50";
     }
   }
 
