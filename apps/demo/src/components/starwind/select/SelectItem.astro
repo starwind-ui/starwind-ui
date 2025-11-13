@@ -40,12 +40,12 @@ const { class: className, value, disabled, ...rest } = Astro.props;
   tabindex="0"
   {...rest}
 >
+  <span>
+    <slot />
+  </span>
   <span class={selectItemIcon()}>
     <slot name="icon">
       <Check class="size-4" />
     </slot>
-  </span>
-  <span>
-    <slot />
   </span>
 </div>

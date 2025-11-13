@@ -123,6 +123,22 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       // Set up additional ARIA attributes
       this.trigger.setAttribute("aria-controls", this.content.id);
       this.content.setAttribute("aria-labelledby", this.trigger.id);
+
+      // If search input exists, add IDs to all items for aria-activedescendant
+      if (this.searchInput) {
+        if (!this.searchInput.id) {
+          this.searchInput.id = `starwind-select${selectIdx}-search`;
+        }
+        // Link search input to the listbox it filters
+        this.searchInput.setAttribute("aria-controls", this.content.id);
+        
+        const items = this.content.querySelectorAll('[role="option"]');
+        items.forEach((item, index) => {
+          if (!item.id) {
+            item.id = `starwind-select${selectIdx}-option-${index}`;
+          }
+        });
+      }
     }
 
     private setupEvents() {
@@ -292,10 +308,17 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         // Scroll item into view if needed
         item.scrollIntoView({ block: "nearest" });
 
-        // For non-search mode, also set focus for keyboard accessibility
-        if (!this.searchInput) {
+        // For search mode, set aria-activedescendant for assistive technologies
+        if (this.searchInput) {
+          // Item should already have an ID from setupAccessibility
+          this.searchInput.setAttribute("aria-activedescendant", item.id);
+        } else {
+          // For non-search mode, set focus for keyboard accessibility
           item.focus();
         }
+      } else if (this.searchInput) {
+        // Clear aria-activedescendant when no item is active
+        this.searchInput.removeAttribute("aria-activedescendant");
       }
     }
 
