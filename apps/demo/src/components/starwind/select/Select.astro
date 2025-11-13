@@ -291,7 +291,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
         // Scroll item into view if needed
         item.scrollIntoView({ block: "nearest" });
-        
+
         // For non-search mode, also set focus for keyboard accessibility
         if (!this.searchInput) {
           item.focus();
