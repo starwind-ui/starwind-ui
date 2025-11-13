@@ -46,8 +46,8 @@ const { class: className } = Astro.props as Props;
     // Add event listener to only the first toggle button
     // Since they're synced, we only need one to handle theme changes
     if (themeToggleBtns.length > 0) {
-      themeToggleBtns[0].addEventListener("starwind-toggle:change", ((e: ToggleChangeEvent) => {
-        const { pressed } = e.detail;
+      const handleToggleChange = (event: Event) => {
+        const { pressed } = (event as ToggleChangeEvent).detail;
 
         // Update theme based on toggle state
         // pressed = true means dark mode (moon icon showing)
@@ -59,7 +59,9 @@ const { class: className } = Astro.props as Props;
           changeTheme("light");
           localStorage.setItem("colorTheme", "light");
         }
-      }) as EventListener);
+      };
+
+      themeToggleBtns[0].addEventListener("starwind-toggle:change", handleToggleChange);
 
       // Set initial state by clicking the first toggle if needed
       const currentState = themeToggleBtns[0].getAttribute("data-state");
