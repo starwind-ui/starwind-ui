@@ -332,7 +332,10 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
       for (let i = startIndex; i !== end; i += step) {
         const item = items[i] as HTMLElement;
-        if (item.getAttribute("data-disabled") !== "true") {
+        if (
+          item.getAttribute("data-disabled") !== "true" &&
+          item.getAttribute("data-filtered") !== "true"
+        ) {
           return item;
         }
       }
@@ -416,7 +419,10 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
       const items = this.content.querySelectorAll('[role="option"]');
       for (const item of items) {
-        if (item.getAttribute("data-disabled") !== "true") {
+        if (
+          item.getAttribute("data-disabled") !== "true" &&
+          item.getAttribute("data-filtered") !== "true"
+        ) {
           return item as HTMLElement;
         }
       }
@@ -436,14 +442,14 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
         if (matches || searchValue === "") {
           item.classList.remove("starwind-sr-only");
-          item.removeAttribute("data-disabled");
+          item.removeAttribute("data-filtered");
           visibleCount++;
           if (!firstVisibleItem) {
             firstVisibleItem = item as HTMLElement;
           }
         } else {
           item.classList.add("starwind-sr-only");
-          item.setAttribute("data-disabled", "true");
+          item.setAttribute("data-filtered", "true");
         }
       });
 
