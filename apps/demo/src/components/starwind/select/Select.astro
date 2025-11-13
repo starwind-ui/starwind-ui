@@ -216,12 +216,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         const target = e.target as HTMLElement;
         const option = target.closest('[role="option"]');
         if (option && option instanceof HTMLElement && this.isOpen === true) {
-          // When search input exists, set active item instead of focusing
-          if (this.searchInput) {
-            this.setActiveItem(option);
-          } else {
-            option.focus();
-          }
+          this.setActiveItem(option);
         }
       });
 
@@ -282,7 +277,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
     }
 
     private setActiveItem(item: HTMLElement | null) {
-      if (!this.searchInput || !this.content) return;
+      if (!this.content) return;
 
       // Remove active state from previous item
       if (this.activeItem) {
@@ -296,6 +291,11 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
         // Scroll item into view if needed
         item.scrollIntoView({ block: "nearest" });
+        
+        // For non-search mode, also set focus for keyboard accessibility
+        if (!this.searchInput) {
+          item.focus();
+        }
       }
     }
 
@@ -303,9 +303,8 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       if (!this.content) return;
       const items = this.content.querySelectorAll('[role="option"]');
 
-      // When search input exists, use activeItem; otherwise use focused element
-      const activeElement = this.searchInput ? this.activeItem : document.activeElement;
-      const currentIndex = Array.from(items).indexOf(activeElement as HTMLElement);
+      // Use activeItem to determine current position
+      const currentIndex = Array.from(items).indexOf(this.activeItem as HTMLElement);
 
       if (e.key === "Home") {
         // Find first non-disabled, non-hidden item
@@ -315,11 +314,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
             item.getAttribute("data-disabled") !== "true" &&
             !item.classList.contains("starwind-sr-only")
           ) {
-            if (this.searchInput) {
-              this.setActiveItem(item);
-            } else {
-              item.focus();
-            }
+            this.setActiveItem(item);
             break;
           }
         }
@@ -334,11 +329,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
             item.getAttribute("data-disabled") !== "true" &&
             !item.classList.contains("starwind-sr-only")
           ) {
-            if (this.searchInput) {
-              this.setActiveItem(item);
-            } else {
-              item.focus();
-            }
+            this.setActiveItem(item);
             break;
           }
         }
@@ -354,11 +345,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
               item.getAttribute("data-disabled") !== "true" &&
               !item.classList.contains("starwind-sr-only")
             ) {
-              if (this.searchInput) {
-                this.setActiveItem(item);
-              } else {
-                item.focus();
-              }
+              this.setActiveItem(item);
               break;
             }
           }
@@ -375,11 +362,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
               item.getAttribute("data-disabled") !== "true" &&
               !item.classList.contains("starwind-sr-only")
             ) {
-              if (this.searchInput) {
-                this.setActiveItem(item);
-              } else {
-                item.focus();
-              }
+              this.setActiveItem(item);
               break;
             }
           }
@@ -481,12 +464,12 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       const search = this.typeaheadSearch + key;
       const items = this.content.querySelectorAll('[role="option"]');
 
-      // find and focus the first matching option
+      // find and set active the first matching option
       const matches = Array.from(items).filter((item) =>
         item.textContent?.toLowerCase().trim().startsWith(search.toLowerCase()),
       ) as HTMLElement[];
       if (matches.length > 0) {
-        matches[0].focus();
+        this.setActiveItem(matches[0]);
       }
 
       // update the typeahead search and reset the timer
@@ -546,14 +529,14 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
           this.searchInput?.focus();
         });
       } else {
-        // set focus on the current selected item
+        // set active on the current selected item
         if (this.selectedItem) {
-          this.selectedItem.focus();
+          this.setActiveItem(this.selectedItem);
         } else {
-          // if no item is selected, focus on the first item
+          // if no item is selected, set active on the first item
           const firstItem = this.content.querySelector('[role="option"]') as HTMLElement;
           if (firstItem) {
-            firstItem.focus();
+            this.setActiveItem(firstItem);
           }
         }
       }
