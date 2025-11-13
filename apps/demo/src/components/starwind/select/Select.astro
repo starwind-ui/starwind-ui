@@ -374,11 +374,6 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
     private setupSearchInput() {
       if (!this.searchInput || !this.content) return;
 
-      // Hide the empty element initially
-      if (this.emptyElement) {
-        this.emptyElement.classList.add("hidden");
-      }
-
       this.searchInput.addEventListener("input", (e) => {
         const target = e.target as HTMLInputElement;
         const searchValue = target.value.toLowerCase().trim();
@@ -434,6 +429,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
       const items = this.content.querySelectorAll('[role="option"]');
       let visibleCount = 0;
+      let firstVisibleItem: HTMLElement | null = null;
 
       items.forEach((item) => {
         const itemText = item.textContent?.toLowerCase().trim() || "";
@@ -443,11 +439,21 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
           item.classList.remove("starwind-sr-only");
           item.removeAttribute("data-disabled");
           visibleCount++;
+          if (!firstVisibleItem) {
+            firstVisibleItem = item as HTMLElement;
+          }
         } else {
           item.classList.add("starwind-sr-only");
           item.setAttribute("data-disabled", "true");
         }
       });
+
+      // Update active item to first visible item after filtering
+      if (this.searchInput && firstVisibleItem) {
+        this.setActiveItem(firstVisibleItem);
+      } else if (this.searchInput && visibleCount === 0) {
+        this.setActiveItem(null);
+      }
 
       // Show/hide empty message
       if (this.emptyElement) {

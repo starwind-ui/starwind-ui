@@ -3,7 +3,13 @@ import Search from "@tabler/icons/outline/search.svg";
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
-type Props = Omit<HTMLAttributes<"input">, "type" | "autocomplete">;
+type Props = Omit<HTMLAttributes<"input">, "type" | "autocomplete"> & {
+  /**
+   * The text to display when no results are found
+   * @default "No results found."
+   */
+  emptyText?: string;
+};
 
 export const selectSearch = tv({
   base: [
@@ -12,7 +18,12 @@ export const selectSearch = tv({
   ],
 });
 
-const { class: className, placeholder = "Search...", ...rest } = Astro.props;
+const {
+  class: className,
+  placeholder = "Search...",
+  emptyText = "No results found.",
+  ...rest
+} = Astro.props;
 ---
 
 <div
@@ -32,4 +43,8 @@ const { class: className, placeholder = "Search...", ...rest } = Astro.props;
     aria-hidden="true"
     {...rest}
   />
+</div>
+
+<div class="text-muted-foreground hidden py-6 text-center text-sm" data-slot="select-empty">
+  <slot name="empty">{emptyText}</slot>
 </div>

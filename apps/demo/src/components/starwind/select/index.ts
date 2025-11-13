@@ -1,6 +1,5 @@
 import Select from "./Select.astro";
 import SelectContent, { selectContent, selectContentInner } from "./SelectContent.astro";
-import SelectEmpty, { selectEmpty } from "./SelectEmpty.astro";
 import SelectGroup from "./SelectGroup.astro";
 import SelectItem, { selectItem, selectItemIcon } from "./SelectItem.astro";
 import SelectLabel, { selectLabel } from "./SelectLabel.astro";
@@ -13,7 +12,6 @@ import SelectValue, { selectValue } from "./SelectValue.astro";
 const SelectVariants = {
   selectContent,
   selectContentInner,
-  selectEmpty,
   selectItem,
   selectItemIcon,
   selectLabel,
@@ -27,7 +25,6 @@ export {
   Select,
   type SelectChangeEvent,
   SelectContent,
-  SelectEmpty,
   type SelectEvent,
   SelectGroup,
   SelectItem,
@@ -47,7 +44,6 @@ export default {
   Group: SelectGroup,
   Label: SelectLabel,
   Search: SelectSearch,
-  Empty: SelectEmpty,
   Item: SelectItem,
   Separator: SelectSeparator,
 };

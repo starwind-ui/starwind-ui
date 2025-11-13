@@ -13,7 +13,6 @@ import { Label } from "@/components/starwind/label";
 import {
   Select,
   SelectContent,
-  SelectEmpty,
   SelectGroup,
   SelectItem,
   SelectLabel,
@@ -42,8 +41,7 @@ import {
             <SelectValue placeholder="Select" />
           </SelectTrigger>
           <SelectContent>
-            <SelectSearch placeholder="Search frameworks..." />
-            <SelectEmpty>No frameworks found.</SelectEmpty>
+            <SelectSearch placeholder="Search frameworks..." emptyText="No frameworks found." />
             <SelectGroup>
               <!-- <SelectLabel>Frameworks</SelectLabel> -->
               <SelectItem value="astro">Astro</SelectItem>
