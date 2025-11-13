@@ -2,12 +2,7 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
-type Props = HTMLAttributes<"div"> & {
-  /**
-   * When true, the component will render its child element with a simple wrapper instead of a div component
-   */
-  asChild?: boolean;
-};
+type Props = HTMLAttributes<"div">;
 
 export const buttonGroupText = tv({
   base: [
@@ -16,21 +11,9 @@ export const buttonGroupText = tv({
   ],
 });
 
-const { class: className, asChild = false, ...rest } = Astro.props;
-
-// Check if there are children for asChild mode
-let hasChildren = false;
-if (Astro.slots.has("default")) {
-  hasChildren = true;
-}
+const { class: className, ...rest } = Astro.props;
 ---
 
-{
-  asChild && hasChildren ? (
-    <slot />
-  ) : (
-    <div class:list={[buttonGroupText(), className]} data-slot="button-group-text" {...rest}>
-      <slot />
-    </div>
-  )
-}
+<div class:list={[buttonGroupText(), className]} data-slot="button-group-text" {...rest}>
+  <slot />
+</div>
