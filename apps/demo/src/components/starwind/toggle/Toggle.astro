@@ -65,23 +65,19 @@ const dataState = defaultPressed ? "on" : "off";
   class ToggleHandler {
     private toggle: HTMLButtonElement;
     private syncGroup?: string;
-    private toggleId: string;
 
     constructor(toggle: HTMLButtonElement, idx: number) {
       this.toggle = toggle;
       this.syncGroup = toggle.dataset.syncGroup;
-      this.toggleId = toggle.id || `starwind-toggle${idx}`;
-      this.setupId();
+
+      if (!this.toggle.id) {
+        this.toggle.id = `starwind-toggle${idx}`;
+      }
+
       this.setupEventListeners();
 
       if (this.syncGroup) {
         this.setupSyncListener();
-      }
-    }
-
-    private setupId(): void {
-      if (!this.toggle.id) {
-        this.toggle.id = this.toggleId;
       }
     }
 
@@ -95,7 +91,7 @@ const dataState = defaultPressed ? "on" : "off";
 
       document.addEventListener(`starwind-toggle-sync:${this.syncGroup}`, ((e: ToggleSyncEvent) => {
         // Don't sync if this toggle triggered the event
-        if (e.detail.sourceId === this.toggleId) return;
+        if (e.detail.sourceId === this.toggle.id) return;
 
         const newPressed = e.detail.pressed;
         this.updateState(newPressed, false); // false = don't dispatch sync event
@@ -134,7 +130,7 @@ const dataState = defaultPressed ? "on" : "off";
       const changeEvent = new CustomEvent<ToggleChangeEvent["detail"]>("starwind-toggle:change", {
         detail: {
           pressed,
-          toggleId: this.toggleId,
+          toggleId: this.toggle.id,
           syncGroup: this.syncGroup,
         },
         bubbles: true,
@@ -150,7 +146,7 @@ const dataState = defaultPressed ? "on" : "off";
           {
             detail: {
               pressed,
-              sourceId: this.toggleId,
+              sourceId: this.toggle.id,
             },
           },
         );
