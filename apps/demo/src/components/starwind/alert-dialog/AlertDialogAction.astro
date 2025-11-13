@@ -33,7 +33,7 @@ if (Astro.slots.has("default")) {
       type="button"
       class={ButtonVariants.button({
         variant: "default",
-        class: `starwind-alert-dialog-action ${className}`,
+        class: `starwind-alert-dialog-action ${className || ""}`,
       })}
       data-slot="alert-dialog-action"
       {...rest}
