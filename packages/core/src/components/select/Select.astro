@@ -434,7 +434,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         const itemText = item.textContent?.toLowerCase().trim() || "";
         const matches = itemText.includes(searchValue);
 
-        if (matches || searchValue == "") {
+        if (matches || searchValue === "") {
           item.classList.remove("starwind-sr-only");
           item.removeAttribute("data-disabled");
           visibleCount++;
