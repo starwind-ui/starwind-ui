@@ -40,7 +40,7 @@
     },
     { "name": "kbd", "type": "component", "version": "1.0.0", "dependencies": [] },
     { "name": "label", "type": "component", "version": "1.2.0", "dependencies": [] },
-    { "name": "pagination", "type": "component", "version": "3.0.1", "dependencies": [] },
+    { "name": "pagination", "type": "component", "version": "3.0.2", "dependencies": [] },
     { "name": "progress", "type": "component", "version": "1.1.0", "dependencies": [] },
     { "name": "radio-group", "type": "component", "version": "1.2.2", "dependencies": [] },
     { "name": "select", "type": "component", "version": "1.7.0", "dependencies": [] },
