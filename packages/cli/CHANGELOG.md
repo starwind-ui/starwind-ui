@@ -1,5 +1,19 @@
 # starwind
 
+## 1.12.0
+
+### Patch Changes
+
+- faf85f1: fix: correctly handle adding extra commas as necessary when starwind init command adjusts the astro config file
+- Updated dependencies [2320eaf]
+- Updated dependencies [7b43fcb]
+- Updated dependencies [fb5651f]
+- Updated dependencies [7773330]
+- Updated dependencies [ce55d46]
+- Updated dependencies [64c1c3a]
+- Updated dependencies [5121926]
+  - @starwind-ui/core@1.12.0
+
 ## 1.11.2
 
 ### Patch Changes
