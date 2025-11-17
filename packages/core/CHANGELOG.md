@@ -1,5 +1,20 @@
 # @starwind-ui/core
 
+## 1.12.0
+
+### Minor Changes
+
+- 2320eaf: feat: add button-group component
+- fb5651f: feat: add combobox component leveraging the select component
+- 7773330: feat: add toggle component
+
+### Patch Changes
+
+- 7b43fcb: feat: add "size" prop to `SelectTrigger` and `SelectContent`, implement `SelectSearch` for a combobox-like implementation, and improve select component styling
+- ce55d46: fix: alert dialog and dropdown components no longer risk having a class of "undefined"
+- 64c1c3a: fix: button group now better handles select and dropdowns within the group
+- 5121926: feat(pagination): add size prop to PaginationEllipsis, and adjust PaginationNext and PaginationPrevious to use button variant props for sizes
+
 ## 1.11.2
 
 ### Patch Changes
