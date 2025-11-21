@@ -9,10 +9,6 @@ type Props = Omit<HTMLAttributes<"button">, "role" | "type"> &
      * The content to be rendered inside the select trigger
      */
     children: any;
-    /**
-     * Whether the select field is required in a form context
-     */
-    required?: boolean;
   };
 
 export const selectTrigger = tv({
@@ -21,6 +17,7 @@ export const selectTrigger = tv({
     "border-input dark:bg-input/30 text-foreground ring-offset-background flex items-center justify-between gap-2 rounded-md border bg-transparent shadow-xs",
     "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
     "disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+    "aria-invalid:border-error aria-invalid:focus:ring-error/40 aria-invalid:focus:ring-3",
   ],
   variants: {
     size: {
@@ -34,7 +31,7 @@ export const selectTrigger = tv({
   },
 });
 
-const { class: className, size, required = false, ...rest } = Astro.props;
+const { class: className, size, ...rest } = Astro.props;
 ---
 
 <button
@@ -46,7 +43,6 @@ const { class: className, size, required = false, ...rest } = Astro.props;
   aria-expanded="false"
   aria-haspopup="listbox"
   aria-autocomplete="none"
-  aria-required={required ? "true" : "false"}
   data-state="closed"
   data-slot="select-trigger"
   {...rest}

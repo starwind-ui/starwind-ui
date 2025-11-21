@@ -32,12 +32,12 @@ import {
     <CardContent class="flex flex-col gap-4">
       <div class="flex w-full flex-col gap-2">
         <Label for="name">Name</Label>
-        <Input type="text" id="name" name="name" placeholder="Name of your project" />
+        <Input type="text" id="name" name="name" placeholder="Name of your project" required />
       </div>
       <div class="flex w-full flex-col gap-2">
         <Label for="framework">Framework</Label>
-        <Select id="select-demo-framework" name="framework">
-          <SelectTrigger class="w-full" required>
+        <Select required id="select-demo-framework" name="framework">
+          <SelectTrigger class="w-full">
             <SelectValue placeholder="Select" />
           </SelectTrigger>
           <SelectContent>
@@ -51,6 +51,10 @@ import {
             </SelectGroup>
           </SelectContent>
         </Select>
+      </div>
+      <div class="flex w-full flex-col gap-2">
+        <Label for="other-data">Other Data</Label>
+        <Input type="text" id="other-data" name="other-data" placeholder="Other data" required />
       </div>
     </CardContent>
     <CardFooter class="flex justify-between">
