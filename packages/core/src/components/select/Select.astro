@@ -10,17 +10,22 @@ type Props = HTMLAttributes<"div"> & {
    * The value of the item that should be selected by default
    */
   defaultValue?: string;
+  /**
+   * Whether the select field is required in a form context
+   */
+  required?: boolean;
 
   children: any;
 };
 
-const { class: className, name, defaultValue, ...rest } = Astro.props;
+const { class: className, name, defaultValue, required, ...rest } = Astro.props;
 ---
 
 <div
   class:list={["starwind-select", "relative", className]}
   data-name={name}
   data-value={defaultValue}
+  data-required={required}
   data-slot="select"
   {...rest}
 >
@@ -43,6 +48,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
     private typeaheadTimerRef: number | null = null;
     private typeaheadSearch = "";
     private returnFocusOnClose: boolean = true;
+    private required: boolean = false;
 
     constructor(select: HTMLElement, selectIdx: number) {
       this.select = select;
@@ -52,6 +58,8 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       this.emptyElement = select.querySelector('[data-slot="select-empty"]');
 
       if (!this.trigger || !this.content) return;
+
+      this.required = this.select.getAttribute("data-required") === "true";
 
       // animationDuration is set with inline styles through passed prop to SelectContent
       const animationDurationString = this.content.style.animationDuration;
@@ -80,6 +88,11 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       selectField.setAttribute("aria-hidden", "true");
       selectField.setAttribute("placeholder", "select");
       const selectName = this.select.getAttribute("data-name");
+
+      if (this.required) {
+        selectField.required = true;
+      }
+
       if (selectName) {
         selectField.name = selectName;
       }
@@ -109,6 +122,14 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
       // add this select field right after the trigger
       this.trigger.parentElement?.insertBefore(selectField, this.trigger.nextSibling);
 
+      // Intercept invalid event to show error on trigger instead of hidden select
+      if (this.required) {
+        selectField.addEventListener("invalid", (e) => {
+          this.showValidationError();
+          e.preventDefault();
+        });
+      }
+
       this.setSize();
       this.content.style.width = "var(--starwind-select-trigger-width)";
     }
@@ -122,6 +143,7 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
 
       // Set up additional ARIA attributes
       this.trigger.setAttribute("aria-controls", this.content.id);
+      this.trigger.setAttribute("aria-required", this.required ? "true" : "false");
       this.content.setAttribute("aria-labelledby", this.trigger.id);
 
       // If search input exists, add IDs to all items for aria-activedescendant
@@ -592,6 +614,9 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
     private handleSelection(item: HTMLElement) {
       if (!this.trigger) return;
 
+      // Clear any validation error when a selection is made
+      this.clearValidationError();
+
       // update the hidden select field
       const selectField = this.select.querySelector("select");
       if (selectField) {
@@ -662,6 +687,31 @@ const { class: className, name, defaultValue, ...rest } = Astro.props;
         // Then call handleSelection which will update the rest
         this.handleSelection(item);
       }
+    }
+
+    /**
+     * Shows validation error on the trigger
+     */
+    private showValidationError(): void {
+      if (!this.trigger) return;
+
+      // Add error state to trigger
+      this.trigger.setAttribute("aria-invalid", "true");
+
+      // scroll trigger into view
+      this.trigger.scrollIntoView({ behavior: "auto", block: "center" });
+
+      // Focus the trigger so user knows where the error is
+      this.trigger.focus();
+    }
+
+    /**
+     * Clears validation error from the trigger
+     */
+    private clearValidationError(): void {
+      if (!this.trigger) return;
+
+      this.trigger.setAttribute("aria-invalid", "false");
     }
   }
 
