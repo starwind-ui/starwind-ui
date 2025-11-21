@@ -1,5 +1,13 @@
 # starwind
 
+## 1.12.1
+
+### Patch Changes
+
+- Updated dependencies [f7ad6e1]
+- Updated dependencies [88e2d11]
+  - @starwind-ui/core@1.12.1
+
 ## 1.12.0
 
 ### Patch Changes

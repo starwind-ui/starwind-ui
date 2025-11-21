@@ -1,5 +1,12 @@
 # @starwind-ui/core
 
+## 1.12.1
+
+### Patch Changes
+
+- f7ad6e1: style: add aria-invalid styling for form related components
+- 88e2d11: feat(select): enable "required" attribute for form handling purposes
+
 ## 1.12.0
 
 ### Minor Changes
