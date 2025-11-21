@@ -54,11 +54,11 @@ export const radioControl = tv({
   base: [
     "starwind-radio-control",
     "border-input bg-background dark:bg-input/30",
-    "peer-focus-visible:outline-2 peer-focus-visible:outline-offset-1 peer-focus-visible:transition-none",
     "outline-none peer-focus-visible:ring-3",
     "absolute inset-0 rounded-full border shadow-xs",
-    "transition-all peer-checked:[&>svg]:opacity-100",
+    "transition-[color,box-shadow] peer-checked:[&>svg]:opacity-100",
     "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+    "peer-aria-invalid:border-error peer-focus-visible:peer-aria-invalid:ring-error/40",
     "flex items-center justify-center",
   ],
   variants: {
