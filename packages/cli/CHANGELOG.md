@@ -1,5 +1,12 @@
 # starwind
 
+## 1.12.2
+
+### Patch Changes
+
+- 9a1108f: fix windows package installation and usage
+  - @starwind-ui/core@1.12.2
+
 ## 1.12.1
 
 ### Patch Changes
