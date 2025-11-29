@@ -48,14 +48,6 @@
       "version": "1.3.0"
     },
     {
-      "name": "checkbox",
-      "version": "1.4.0"
-    },
-    {
-      "name": "input",
-      "version": "1.3.0"
-    },
-    {
       "name": "switch",
       "version": "1.3.0"
     },
@@ -66,10 +58,6 @@
     {
       "name": "label",
       "version": "1.2.0"
-    },
-    {
-      "name": "textarea",
-      "version": "1.3.0"
     },
     {
       "name": "tabs",
@@ -86,10 +74,6 @@
     {
       "name": "carousel",
       "version": "1.0.1"
-    },
-    {
-      "name": "dropzone",
-      "version": "1.2.0"
     },
     {
       "name": "sheet",
@@ -116,16 +100,8 @@
       "version": "1.0.2"
     },
     {
-      "name": "radio-group",
-      "version": "1.2.2"
-    },
-    {
       "name": "pagination",
       "version": "3.0.2"
-    },
-    {
-      "name": "select",
-      "version": "1.7.0"
     },
     {
       "name": "button-group",
@@ -138,6 +114,30 @@
     {
       "name": "toggle",
       "version": "1.0.0"
+    },
+    {
+      "name": "checkbox",
+      "version": "1.4.1"
+    },
+    {
+      "name": "input",
+      "version": "1.3.1"
+    },
+    {
+      "name": "textarea",
+      "version": "1.3.1"
+    },
+    {
+      "name": "dropzone",
+      "version": "1.2.1"
+    },
+    {
+      "name": "radio-group",
+      "version": "1.2.3"
+    },
+    {
+      "name": "select",
+      "version": "1.8.0"
     }
   ]
 }
