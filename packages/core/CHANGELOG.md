@@ -1,5 +1,11 @@
 # @starwind-ui/core
 
+## 1.12.4
+
+### Patch Changes
+
+- 13b7c60: Unlock package versions for potential dependency bug fixes
+
 ## 1.12.2
 
 ## 1.12.1
