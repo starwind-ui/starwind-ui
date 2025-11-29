@@ -38,10 +38,10 @@
     "publish:release": "pnpm publish --access public"
   },
   "devDependencies": {
-    "astro": "5.11.0",
-    "fs-extra": "11.3.0",
-    "glob": "11.0.3",
-    "tailwindcss": "4.1.11",
-    "tsup": "8.5.0"
+    "astro": "^5.11.0",
+    "fs-extra": "^11.3.0",
+    "glob": "^11.0.3",
+    "tailwindcss": "^4.1.11",
+    "tsup": "^8.5.0"
   }
 }
