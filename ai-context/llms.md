@@ -32,9 +32,11 @@ Starwind UI currently includes the following components:
 - [Badge](https://starwind.dev/docs/components/badge)
 - [Breadcrumb](https://starwind.dev/docs/components/breadcrumb)
 - [Button](https://starwind.dev/docs/components/button)
+- [Button Group](https://starwind.dev/docs/components/button-group)
 - [Card](https://starwind.dev/docs/components/card)
 - [Carousel](https://starwind.dev/docs/components/carousel)
 - [Checkbox](https://starwind.dev/docs/components/checkbox)
+- [Combobox](https://starwind.dev/docs/components/combobox)
 - [Dialog](https://starwind.dev/docs/components/dialog)
 - [Dropdown](https://starwind.dev/docs/components/dropdown)
 - [Dropzone](https://starwind.dev/docs/components/dropzone)
@@ -53,6 +55,7 @@ Starwind UI currently includes the following components:
 - [Table](https://starwind.dev/docs/components/table)
 - [Tabs](https://starwind.dev/docs/components/tabs)
 - [Textarea](https://starwind.dev/docs/components/textarea)
+- [Toggle](https://starwind.dev/docs/components/toggle)
 - [Tooltip](https://starwind.dev/docs/components/tooltip)
 
 ## Import Pattern

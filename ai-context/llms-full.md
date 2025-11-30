@@ -88,9 +88,11 @@ Starwind UI includes the following components:
 - [Badge](https://starwind.dev/docs/components/badge)
 - [Breadcrumb](https://starwind.dev/docs/components/breadcrumb)
 - [Button](https://starwind.dev/docs/components/button)
+- [Button Group](https://starwind.dev/docs/components/button-group)
 - [Card](https://starwind.dev/docs/components/card)
 - [Carousel](https://starwind.dev/docs/components/carousel)
 - [Checkbox](https://starwind.dev/docs/components/checkbox)
+- [Combobox](https://starwind.dev/docs/components/combobox)
 - [Dialog](https://starwind.dev/docs/components/dialog)
 - [Dropdown](https://starwind.dev/docs/components/dropdown)
 - [Dropzone](https://starwind.dev/docs/components/dropzone)
@@ -109,6 +111,7 @@ Starwind UI includes the following components:
 - [Table](https://starwind.dev/docs/components/table)
 - [Tabs](https://starwind.dev/docs/components/tabs)
 - [Textarea](https://starwind.dev/docs/components/textarea)
+- [Toggle](https://starwind.dev/docs/components/toggle)
 - [Tooltip](https://starwind.dev/docs/components/tooltip)
 
 ## Component Architecture Patterns
@@ -469,6 +472,30 @@ import {
 <Button variant="primary" size="md">Click me</Button>
 ```
 
+### Button Group
+
+- **Documentation**: https://starwind.dev/docs/components/button-group
+- **Import pattern**: `import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from "@/components/starwind/button-group";`
+- **Key props**:
+  - `ButtonGroup`:
+    - `orientation`: "horizontal" | "vertical" (default: "horizontal")
+  - `ButtonGroupSeparator`:
+    - `orientation`: "horizontal" | "vertical" (default: "vertical")
+- **Example usage**:
+
+```astro
+---
+import { Button } from "@/components/starwind/button";
+import { ButtonGroup } from "@/components/starwind/button-group";
+---
+
+<ButtonGroup>
+  <Button variant="outline">Left</Button>
+  <Button variant="outline">Middle</Button>
+  <Button variant="outline">Right</Button>
+</ButtonGroup>
+```
+
 ### Card
 
 - **Documentation**: https://starwind.dev/docs/components/card
@@ -564,6 +591,46 @@ import { Checkbox } from "@/components/starwind/checkbox";
 ---
 
 <Checkbox id="demo-checkbox" label="Checkbox" />
+```
+
+### Combobox
+
+- **Documentation**: https://starwind.dev/docs/components/combobox
+- **Description**: A searchable select component that combines an input field with a dropdown list. Built using the Select component with the SelectSearch sub-component.
+- **Import pattern**: `import { Select, SelectContent, SelectGroup, SelectItem, SelectSearch, SelectTrigger, SelectValue } from "@/components/starwind/select";`
+- **Key props**:
+  - `SelectSearch`:
+    - `placeholder`: string - Placeholder text for the search input
+    - `emptyText`: string - Text to display when no results are found
+- **Example usage**:
+
+```astro
+---
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectSearch,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/starwind/select";
+---
+
+<Select id="combobox-demo" name="framework">
+  <SelectTrigger class="w-[240px]">
+    <SelectValue placeholder="Select a framework" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectSearch placeholder="Search frameworks..." emptyText="No frameworks found." />
+    <SelectGroup>
+      <SelectItem value="astro">Astro</SelectItem>
+      <SelectItem value="next">Next.js</SelectItem>
+      <SelectItem value="svelte">SvelteKit</SelectItem>
+      <SelectItem value="solid">SolidStart</SelectItem>
+    </SelectGroup>
+  </SelectContent>
+</Select>
 ```
 
 ### Dialog
@@ -929,13 +996,22 @@ import { Label } from "@/components/starwind/label";
 - **Documentation**: https://starwind.dev/docs/components/select
 - **Import pattern**: `import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator } from "@/components/starwind/select";`
 - **Key props**:
+  - `<SelectTrigger>`
+    - `size`: "sm" | "md" | "lg" (default: "md")
+    - `required`: boolean - Enables form validation (default: false)
+    - `disabled`: boolean - Disables the trigger (default: false)
   - `<SelectContent>`
-    - `animationDuration`: number - Duration of the content animation (in ms) (default: 200)
+    - `size`: "sm" | "md" | "lg" (default: "md")
     - `side`: "top" | "bottom" (default: "bottom")
+    - `align`: "start" | "center" | "end" (default: "start")
     - `sideOffset`: number - Offset distance in pixels (default: 4)
+    - `animationDuration`: number - Duration of the content animation in ms (default: 150)
   - `<SelectItem>`
-    - `disabled`: boolean - Disables the item
-    - `value`: string - Value of the item
+    - `value`: string - Value of the item (required)
+    - `disabled`: boolean - Disables the item (default: false)
+  - `<SelectSearch>`
+    - `placeholder`: string - Placeholder text for the search input (default: "Search...")
+    - `emptyText`: string - Text to display when no results are found (default: "No results found.")
 - **Example usage**:
 
 ```astro
@@ -1255,6 +1331,25 @@ import { Textarea } from "@/components/starwind/textarea";
 ---
 
 <Textarea placeholder="Type something..." />
+```
+
+### Toggle
+
+- **Documentation**: https://starwind.dev/docs/components/toggle
+- **Import pattern**: `import { Toggle } from "@/components/starwind/toggle";`
+- **Key props**:
+  - `variant`: "default" | "outline" (default: "default")
+  - `size`: "sm" | "md" | "lg" (default: "md")
+  - `defaultPressed`: boolean - Controls the initial pressed/on state (default: false)
+  - `syncGroup`: string - Optional group key that synchronizes the pressed state across toggles with the same value
+- **Example usage**:
+
+```astro
+---
+import { Toggle } from "@/components/starwind/toggle";
+---
+
+<Toggle variant="outline">Toggle</Toggle>
 ```
 
 ### Tooltip
