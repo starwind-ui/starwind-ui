@@ -33,6 +33,8 @@
     "dev": "tsup --watch",
     "core:link": "pnpm link --global",
     "core:unlink": "pnpm rm --global @starwind-ui/core",
+    "core:yalc:link": "yalc publish",
+    "core:yalc:unlink": "yalc remove @starwind-ui/core",
     "publish:beta": "pnpm publish --tag beta --access public",
     "publish:next": "pnpm publish --tag next --access public",
     "publish:release": "pnpm publish --access public"
