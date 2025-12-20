@@ -66,7 +66,7 @@ pnpm build
 ```
 
 2. Install the built CLI globally on your own machine. This will allow you to
-   run the CLI from anywhere on your machine.
+   run the CLI from anywhere on your machine. NOTE: you will need to install yalc globally for this with `pnpm add -g yalc`
 
 ```bash
 pnpm l
