@@ -24,10 +24,6 @@
       "version": "1.0.0"
     },
     {
-      "name": "progress",
-      "version": "1.1.0"
-    },
-    {
       "name": "skeleton",
       "version": "1.2.0"
     },
@@ -48,28 +44,12 @@
       "version": "1.3.0"
     },
     {
-      "name": "switch",
-      "version": "1.3.0"
-    },
-    {
-      "name": "tooltip",
-      "version": "1.3.0"
-    },
-    {
       "name": "label",
       "version": "1.2.0"
     },
     {
-      "name": "tabs",
-      "version": "1.4.0"
-    },
-    {
       "name": "table",
       "version": "1.1.0"
-    },
-    {
-      "name": "dialog",
-      "version": "1.4.1"
     },
     {
       "name": "carousel",
@@ -80,24 +60,12 @@
       "version": "1.1.1"
     },
     {
-      "name": "accordion",
-      "version": "1.3.2"
-    },
-    {
       "name": "breadcrumb",
       "version": "1.1.1"
     },
     {
       "name": "avatar",
       "version": "1.2.1"
-    },
-    {
-      "name": "dropdown",
-      "version": "1.2.2"
-    },
-    {
-      "name": "alert-dialog",
-      "version": "1.0.2"
     },
     {
       "name": "pagination",
@@ -109,10 +77,6 @@
     },
     {
       "name": "kbd",
-      "version": "1.0.0"
-    },
-    {
-      "name": "toggle",
       "version": "1.0.0"
     },
     {
@@ -128,16 +92,52 @@
       "version": "1.3.1"
     },
     {
-      "name": "dropzone",
-      "version": "1.2.1"
+      "name": "progress",
+      "version": "1.1.1"
     },
     {
-      "name": "radio-group",
+      "name": "switch",
+      "version": "1.3.1"
+    },
+    {
+      "name": "tooltip",
+      "version": "1.3.1"
+    },
+    {
+      "name": "tabs",
+      "version": "1.4.1"
+    },
+    {
+      "name": "dialog",
+      "version": "1.4.2"
+    },
+    {
+      "name": "accordion",
+      "version": "1.3.3"
+    },
+    {
+      "name": "dropdown",
       "version": "1.2.3"
     },
     {
+      "name": "alert-dialog",
+      "version": "1.0.3"
+    },
+    {
+      "name": "toggle",
+      "version": "1.0.1"
+    },
+    {
+      "name": "dropzone",
+      "version": "1.2.2"
+    },
+    {
+      "name": "radio-group",
+      "version": "1.2.4"
+    },
+    {
       "name": "select",
-      "version": "1.8.0"
+      "version": "1.8.1"
     }
   ]
 }
