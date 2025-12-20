@@ -223,15 +223,17 @@ const {
 
   // Store instances in a WeakMap to avoid memory leaks
   const tooltipInstances = new WeakMap<HTMLElement, TooltipHandler>();
+  let tooltipCounter = 0;
 
   const setupTooltips = () => {
-    document.querySelectorAll<HTMLElement>(".starwind-tooltip").forEach((tooltip, idx) => {
+    document.querySelectorAll<HTMLElement>(".starwind-tooltip").forEach((tooltip) => {
       if (!tooltipInstances.has(tooltip)) {
-        tooltipInstances.set(tooltip, new TooltipHandler(tooltip, idx));
+        tooltipInstances.set(tooltip, new TooltipHandler(tooltip, tooltipCounter++));
       }
     });
   };
 
   setupTooltips();
   document.addEventListener("astro:after-swap", setupTooltips);
+  document.addEventListener("starwind:init", setupTooltips);
 </script>

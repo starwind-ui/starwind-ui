@@ -140,13 +140,17 @@ const {
 
   // Store instances in a WeakMap to avoid memory leaks
   const radioGroupInstances = new WeakMap<HTMLElement, RadioGroupHandler>();
+  let radioGroupCounter = 0;
 
   const setupRadioGroups = () => {
     document
       .querySelectorAll<HTMLFieldSetElement>(".starwind-radio-group")
-      .forEach((radioGroup, idx) => {
+      .forEach((radioGroup) => {
         if (!radioGroupInstances.has(radioGroup)) {
-          radioGroupInstances.set(radioGroup, new RadioGroupHandler(radioGroup, idx));
+          radioGroupInstances.set(
+            radioGroup,
+            new RadioGroupHandler(radioGroup, radioGroupCounter++),
+          );
         }
       });
   };
@@ -154,4 +158,5 @@ const {
   // Initialize on page load and after Astro view transitions
   setupRadioGroups();
   document.addEventListener("astro:after-swap", setupRadioGroups);
+  document.addEventListener("starwind:init", setupRadioGroups);
 </script>

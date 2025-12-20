@@ -717,18 +717,20 @@ const { class: className, name, defaultValue, required, ...rest } = Astro.props;
 
   // Store instances in a WeakMap to avoid memory leaks
   const selectInstances = new WeakMap<HTMLElement, SelectHandler>();
+  let selectCounter = 0;
 
   // Initialize selects
   const initSelects = () => {
-    document.querySelectorAll(".starwind-select").forEach((select, idx) => {
+    document.querySelectorAll(".starwind-select").forEach((select) => {
       if (select instanceof HTMLElement && !selectInstances.has(select)) {
-        selectInstances.set(select, new SelectHandler(select, idx));
+        selectInstances.set(select, new SelectHandler(select, selectCounter++));
       }
     });
   };
 
   initSelects();
   document.addEventListener("astro:after-swap", initSelects);
+  document.addEventListener("starwind:init", initSelects);
 </script>
 
 <style is:global>

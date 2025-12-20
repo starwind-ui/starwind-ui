@@ -21,7 +21,7 @@ export const dropzone = tv({
     "starwind-dropzone",
     "relative flex w-full flex-col items-center justify-center gap-1 rounded-lg px-6 py-12 shadow-xs",
     "bg-background dark:bg-input/30 text-muted-foreground border-input cursor-pointer border border-dashed text-center text-sm",
-    "data-[is-uploading=false]:hover:bg-muted/50 data-[drag-active=true]:bg-muted/50 transition",
+    "data-[is-uploading=false]:hover:bg-muted data-[drag-active=true]:bg-muted transition",
     "focus-visible:border-outline focus-visible:ring-outline/50 outline-none focus-visible:ring-3",
     "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",
   ],
@@ -216,12 +216,13 @@ export const dropzone = tv({
 
   // Store instances in a WeakMap to avoid memory leaks
   const fileInputInstances = new WeakMap<HTMLElement, FileInputHandler>();
+  let dropzoneCounter = 0;
 
   const setupFileInputs = () => {
-    document.querySelectorAll<HTMLLabelElement>(".starwind-dropzone").forEach((label, idx) => {
+    document.querySelectorAll<HTMLLabelElement>(".starwind-dropzone").forEach((label) => {
       if (!fileInputInstances.has(label)) {
         try {
-          fileInputInstances.set(label, new FileInputHandler(label, idx));
+          fileInputInstances.set(label, new FileInputHandler(label, dropzoneCounter++));
         } catch {
           /* ignore labels without inputs */
         }
@@ -231,4 +232,5 @@ export const dropzone = tv({
 
   setupFileInputs();
   document.addEventListener("astro:after-swap", setupFileInputs);
+  document.addEventListener("starwind:init", setupFileInputs);
 </script>

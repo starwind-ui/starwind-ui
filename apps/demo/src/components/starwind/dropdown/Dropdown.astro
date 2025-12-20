@@ -360,16 +360,18 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
   // Store instances in a WeakMap to avoid memory leaks
   const dropdownInstances = new WeakMap<HTMLElement, DropdownHandler>();
+  let dropdownCounter = 0;
 
   // Initialize dropdowns
   const initDropdowns = () => {
-    document.querySelectorAll(".starwind-dropdown").forEach((dropdown, idx) => {
+    document.querySelectorAll(".starwind-dropdown").forEach((dropdown) => {
       if (dropdown instanceof HTMLElement && !dropdownInstances.has(dropdown)) {
-        dropdownInstances.set(dropdown, new DropdownHandler(dropdown, idx));
+        dropdownInstances.set(dropdown, new DropdownHandler(dropdown, dropdownCounter++));
       }
     });
   };
 
   initDropdowns();
   document.addEventListener("astro:after-swap", initDropdowns);
+  document.addEventListener("starwind:init", initDropdowns);
 </script>
