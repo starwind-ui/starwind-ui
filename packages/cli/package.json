@@ -38,6 +38,8 @@
     "dev": "tsup --watch",
     "cli:link": "pnpm link --global",
     "cli:unlink": "pnpm rm --global starwind",
+    "cli:yalc:link": "yalc publish && yalc link @starwind-ui/core",
+    "cli:yalc:unlink": "yalc remove @starwind-ui/core && yalc remove starwind",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",

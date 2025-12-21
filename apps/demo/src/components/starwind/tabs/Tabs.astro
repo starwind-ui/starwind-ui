@@ -252,18 +252,20 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
 
   // Store instances in a WeakMap to avoid memory leaks
   const tabInstances = new WeakMap<HTMLElement, TabsHandler>();
+  let tabCounter = 0;
 
   const setupTabs = () => {
     // First handle top-level tabs
-    document.querySelectorAll<HTMLElement>(".starwind-tabs").forEach((tabs, idx) => {
+    document.querySelectorAll<HTMLElement>(".starwind-tabs").forEach((tabs) => {
       // Skip tabs that are nested within other tab contents
       const isNested = !!tabs.closest("[data-tabs-content]");
       if (!isNested && !tabInstances.has(tabs)) {
-        tabInstances.set(tabs, new TabsHandler(tabs, idx));
+        tabInstances.set(tabs, new TabsHandler(tabs, tabCounter++));
       }
     });
   };
 
   setupTabs();
   document.addEventListener("astro:after-swap", setupTabs);
+  document.addEventListener("starwind:init", setupTabs);
 </script>

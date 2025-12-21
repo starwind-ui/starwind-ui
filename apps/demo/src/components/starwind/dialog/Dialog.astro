@@ -241,19 +241,21 @@ const { class: className, ...rest } = Astro.props;
 
   // Store instances in a WeakMap to avoid memory leaks
   const dialogInstances = new WeakMap<HTMLElement, DialogHandler>();
+  let dialogCounter = 0;
 
   // Initialize all dialogs
   const setupDialogs = () => {
-    document.querySelectorAll(".starwind-dialog").forEach((dialogWrapper, idx) => {
+    document.querySelectorAll(".starwind-dialog").forEach((dialogWrapper) => {
       const wrapper = dialogWrapper as HTMLElement;
       if (!dialogInstances.has(wrapper)) {
-        dialogInstances.set(wrapper, new DialogHandler(wrapper, idx));
+        dialogInstances.set(wrapper, new DialogHandler(wrapper, dialogCounter++));
       }
     });
   };
 
   setupDialogs();
   document.addEventListener("astro:after-swap", setupDialogs);
+  document.addEventListener("starwind:init", setupDialogs);
 </script>
 
 <style>

@@ -158,15 +158,17 @@ const dataState = defaultPressed ? "on" : "off";
 
   // Store instances in a WeakMap to avoid memory leaks
   const toggleInstances = new WeakMap<HTMLElement, ToggleHandler>();
+  let toggleCounter = 0;
 
   const setupToggles = () => {
-    document.querySelectorAll<HTMLButtonElement>(".starwind-toggle").forEach((toggle, idx) => {
+    document.querySelectorAll<HTMLButtonElement>(".starwind-toggle").forEach((toggle) => {
       if (!toggleInstances.has(toggle)) {
-        toggleInstances.set(toggle, new ToggleHandler(toggle, idx));
+        toggleInstances.set(toggle, new ToggleHandler(toggle, toggleCounter++));
       }
     });
   };
 
   setupToggles();
   document.addEventListener("astro:after-swap", setupToggles);
+  document.addEventListener("starwind:init", setupToggles);
 </script>

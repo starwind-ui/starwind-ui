@@ -233,15 +233,17 @@ const { type = "single", defaultValue, class: className, ...rest } = Astro.props
 
   // Store instances in a WeakMap to avoid memory leaks
   const accordionInstances = new WeakMap<HTMLElement, AccordionHandler>();
+  let accordionCounter = 0;
 
   const setupAccordions = () => {
-    document.querySelectorAll<HTMLElement>(".starwind-accordion").forEach((accordion, idx) => {
+    document.querySelectorAll<HTMLElement>(".starwind-accordion").forEach((accordion) => {
       if (!accordionInstances.has(accordion)) {
-        accordionInstances.set(accordion, new AccordionHandler(accordion, idx));
+        accordionInstances.set(accordion, new AccordionHandler(accordion, accordionCounter++));
       }
     });
   };
 
   setupAccordions();
   document.addEventListener("astro:after-swap", setupAccordions);
+  document.addEventListener("starwind:init", setupAccordions);
 </script>
