@@ -19,6 +19,7 @@ import Sun from "@tabler/icons/outline/sun.svg";
 import Underline from "@tabler/icons/outline/underline.svg";
 import IconX from "@tabler/icons/outline/x.svg";
 
+import pricingImage from "@/assets/images/pricing-9.jpg";
 import CarouselDemos from "@/components/carousel-demos/CarouselDemos.astro";
 import CarouselPluginDemo from "@/components/carousel-demos/CarouselPluginDemo.astro";
 import ContactForm from "@/components/forms/ContactForm.astro";
@@ -167,6 +168,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/tabs";
 import { Toggle } from "@/components/starwind/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/tooltip";
+import { Image } from "@/components/starwind/image";
 import Layout from "@/layouts/Layout.astro";
 ---
 
@@ -175,6 +177,25 @@ import Layout from "@/layouts/Layout.astro";
   description="A collection of accessible UI components built with Astro"
 >
   <div class="container mx-auto px-4 pb-20">
+    <!-- Image Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Image Demo</h2>
+      <div class="flex flex-col gap-6">
+        <div>
+          <p class="text-muted-foreground mb-2 text-sm">Imported Image</p>
+          <Image src={pricingImage} alt="Pricing illustration" class="rounded-lg" />
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-2 text-sm">Remote URL</p>
+          <Image
+            src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
+            alt="Gray concrete building"
+            class="rounded-lg"
+          />
+        </div>
+      </div>
+    </section>
+
     <!-- Aspect Ratio Demo -->
     <section class="mx-auto mt-10 max-w-lg">
       <h2 class="mb-4 text-2xl font-bold">Aspect Ratio Demo</h2>
