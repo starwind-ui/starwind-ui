@@ -6,7 +6,7 @@ import ToastTitle from "./ToastTitle.astro";
 import ToastDescription from "./ToastDescription.astro";
 
 export const toastViewport = tv({
-  base: "starwind-toast-viewport pointer-events-none fixed z-50 flex w-80 outline-none data-[position=bottom-center]:bottom-4 data-[position=bottom-center]:left-1/2 data-[position=bottom-center]:-translate-x-1/2 data-[position=bottom-left]:bottom-4 data-[position=bottom-left]:left-4 data-[position=bottom-right]:right-4 data-[position=bottom-right]:bottom-4 data-[position=top-center]:top-4 data-[position=top-center]:left-1/2 data-[position=top-center]:-translate-x-1/2 data-[position=top-left]:top-4 data-[position=top-left]:left-4 data-[position=top-right]:top-4 data-[position=top-right]:right-4",
+  base: "starwind-toast-viewport fixed z-50 flex w-80 outline-none data-[position=bottom-center]:bottom-4 data-[position=bottom-center]:left-1/2 data-[position=bottom-center]:-translate-x-1/2 data-[position=bottom-left]:bottom-4 data-[position=bottom-left]:left-4 data-[position=bottom-right]:right-4 data-[position=bottom-right]:bottom-4 data-[position=top-center]:top-4 data-[position=top-center]:left-1/2 data-[position=top-center]:-translate-x-1/2 data-[position=top-left]:top-4 data-[position=top-left]:left-4 data-[position=top-right]:top-4 data-[position=top-right]:right-4",
 });
 
 type Position =
@@ -28,7 +28,7 @@ type Props = HTMLAttributes<"div"> & {
 const {
   class: className,
   position = "bottom-right",
-  gap = "1rem",
+  gap = "0.5rem",
   peek = "1rem",
   limit = 3,
   duration = 5000,
@@ -81,6 +81,33 @@ const {
   </template>
 </div>
 
+<style>
+  [data-slot="toast-viewport"] [data-slot="toast"] {
+    --scale: max(0.9, 1 - (var(--toast-index, 0) * 0.05));
+
+    z-index: calc(1000 - var(--toast-index, 0));
+    transform: translateY(calc(var(--toast-index, 0) * var(--peek) * -1)) scale(var(--scale));
+  }
+
+  [data-slot="toast-viewport"] [data-slot="toast"][data-expanded] {
+    --scale: 1;
+
+    transform: translateY(calc(var(--toast-offset-y, 0px) * -1));
+  }
+
+  /* Position-specific overrides for top positions */
+  [data-slot="toast-viewport"][data-position^="top"] [data-slot="toast"] {
+    top: 0;
+    bottom: auto;
+    transform-origin: top center;
+    transform: translateY(calc(var(--toast-index, 0) * var(--peek))) scale(var(--scale));
+  }
+
+  [data-slot="toast-viewport"][data-position^="top"] [data-slot="toast"][data-expanded] {
+    transform: translateY(var(--toast-offset-y, 0px));
+  }
+</style>
+
 <script>
   type Variant = "default" | "success" | "error" | "warning" | "info";
 
@@ -129,10 +156,20 @@ const {
         this.pauseAllTimers();
       });
 
-      this.viewport.addEventListener("mouseleave", () => {
-        this.expanded = false;
-        this.updateExpanded();
-        this.resumeAllTimers();
+      this.viewport.addEventListener("mouseleave", (e) => {
+        // Check if mouse is still within viewport bounds (handles case where toast is removed)
+        const rect = this.viewport.getBoundingClientRect();
+        const isStillInside =
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom;
+
+        if (!isStillInside) {
+          this.expanded = false;
+          this.updateExpanded();
+          this.resumeAllTimers();
+        }
       });
 
       this.viewport.addEventListener("focusin", () => {
@@ -142,11 +179,27 @@ const {
       });
 
       this.viewport.addEventListener("focusout", (e) => {
-        if (!this.viewport.contains(e.relatedTarget as Node)) {
+        // Check if mouse is still over viewport before collapsing
+        // This handles the case where focus leaves because a toast was closed
+        const rect = this.viewport.getBoundingClientRect();
+        const mouseEvent = (window as any).__lastMousePosition;
+        const isMouseInside =
+          mouseEvent &&
+          mouseEvent.x >= rect.left &&
+          mouseEvent.x <= rect.right &&
+          mouseEvent.y >= rect.top &&
+          mouseEvent.y <= rect.bottom;
+
+        if (!this.viewport.contains(e.relatedTarget as Node) && !isMouseInside) {
           this.expanded = false;
           this.updateExpanded();
           this.resumeAllTimers();
         }
+      });
+
+      // Track mouse position for focusout handling
+      document.addEventListener("mousemove", (e) => {
+        (window as any).__lastMousePosition = { x: e.clientX, y: e.clientY };
       });
     }
 
@@ -154,8 +207,11 @@ const {
       // Set expanded state on viewport
       if (this.expanded) {
         this.viewport.setAttribute("data-expanded", "");
+        // Calculate total height needed for expanded state
+        this.updateViewportHeight();
       } else {
         this.viewport.removeAttribute("data-expanded");
+        this.viewport.style.removeProperty("height");
       }
 
       this.toasts.forEach((toast) => {
@@ -171,6 +227,32 @@ const {
         }
       });
       this.updatePositions();
+    }
+
+    private updateViewportHeight(): void {
+      if (!this.expanded || this.toasts.length === 0) return;
+
+      const gapValue = this.getCssPixelValue("--gap");
+      const visibleToasts = this.toasts.slice(0, this.limit);
+      const totalHeight = visibleToasts.reduce((sum, toast) => sum + (toast.height || 0), 0);
+      const totalGaps = (visibleToasts.length - 1) * gapValue;
+
+      this.viewport.style.height = `${totalHeight + totalGaps}px`;
+    }
+
+    private getCssPixelValue(property: string): number {
+      const value = getComputedStyle(this.viewport).getPropertyValue(property).trim();
+      if (!value) return 16;
+
+      // Create a temporary element to convert CSS value to pixels
+      const temp = document.createElement("div");
+      temp.style.position = "absolute";
+      temp.style.visibility = "hidden";
+      temp.style.width = value;
+      document.body.appendChild(temp);
+      const pixels = temp.offsetWidth;
+      document.body.removeChild(temp);
+      return pixels || 16;
     }
 
     private pauseAllTimers(): void {
@@ -373,7 +455,8 @@ const {
         }
 
         // Accumulate offset for expanded state (height + gap)
-        cumulativeOffset += (toast.height || 0) + 12;
+        const gapValue = this.getCssPixelValue("--gap");
+        cumulativeOffset += (toast.height || 0) + gapValue;
       });
     }
   }
@@ -398,30 +481,3 @@ const {
   document.addEventListener("astro:after-swap", setupToasts);
   document.addEventListener("starwind:init", setupToasts);
 </script>
-
-<style>
-  [data-slot="toast-viewport"] [data-slot="toast"] {
-    --scale: max(0.9, 1 - (var(--toast-index, 0) * 0.05));
-
-    z-index: calc(1000 - var(--toast-index, 0));
-    transform: translateY(calc(var(--toast-index, 0) * var(--peek) * -1)) scale(var(--scale));
-  }
-
-  [data-slot="toast-viewport"] [data-slot="toast"][data-expanded] {
-    --scale: 1;
-
-    transform: translateY(calc(var(--toast-offset-y, 0px) * -1));
-  }
-
-  /* Position-specific overrides for top positions */
-  [data-slot="toast-viewport"][data-position^="top"] [data-slot="toast"] {
-    top: 0;
-    bottom: auto;
-    transform-origin: top center;
-    transform: translateY(calc(var(--toast-index, 0) * var(--peek))) scale(var(--scale));
-  }
-
-  [data-slot="toast-viewport"][data-position^="top"] [data-slot="toast"][data-expanded] {
-    transform: translateY(var(--toast-offset-y, 0px));
-  }
-</style>
