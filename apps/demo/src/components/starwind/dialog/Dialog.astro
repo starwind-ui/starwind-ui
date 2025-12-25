@@ -11,19 +11,28 @@ const { class: className, ...rest } = Astro.props;
 </div>
 
 <script>
+  // Store instances in a WeakMap to avoid memory leaks
+  const dialogInstances = new WeakMap<HTMLElement, DialogHandler>();
+  let dialogCounter = 0;
+
   class DialogHandler {
     private triggers: HTMLButtonElement[] = [];
     private dialog: HTMLDialogElement | null = null;
     private closeButtons: HTMLButtonElement[] = [];
     private backdrop: HTMLElement | null = null;
+    private dialogWrapper: HTMLElement;
     private dialogId: string;
     /**
      * The duration of the animation in milliseconds. This is used to calculate the
      * duration of close animation before hiding the dialog and backdrop
      */
     private animationDuration: number;
+    private parentDialog: DialogHandler | null = null;
+    private nestedOpenCount: number = 0;
+    private isNested: boolean = false;
 
     constructor(dialogWrapper: HTMLElement, dialogNumber: number) {
+      this.dialogWrapper = dialogWrapper;
       this.dialog = dialogWrapper.querySelector("dialog");
       this.backdrop = dialogWrapper.querySelector(".starwind-dialog-backdrop");
       if (!this.dialog || !this.backdrop) {
@@ -217,19 +226,35 @@ const { class: className, ...rest } = Astro.props;
       if (!this.dialog || !this.backdrop) return;
       this.dialog.showModal();
       document.body.classList.add("overflow-hidden");
-      this.backdrop.classList.remove("hidden");
-      this.backdrop.dataset.state = "open";
+
+      // For nested dialogs, hide the backdrop and notify parent
+      if (this.isNested && this.parentDialog) {
+        this.backdrop.classList.add("hidden");
+        this.parentDialog.onNestedDialogOpen();
+      } else {
+        this.backdrop.classList.remove("hidden");
+        this.backdrop.dataset.state = "open";
+      }
+
       this.dialog.dataset.state = "open";
     }
 
     private close(): void {
       if (!this.dialog || !this.backdrop) return;
       this.dialog.dataset.state = "closed";
-      this.backdrop.dataset.state = "closed";
+
+      // Notify parent dialog that nested dialog is closing
+      if (this.isNested && this.parentDialog) {
+        this.parentDialog.onNestedDialogClose();
+      } else {
+        this.backdrop.dataset.state = "closed";
+      }
 
       // Wait for animation to finish before hiding backdrop
       setTimeout(() => {
-        this.backdrop?.classList.add("hidden");
+        if (!this.isNested) {
+          this.backdrop?.classList.add("hidden");
+        }
         this.dialog?.close();
         const stillOpen = document.querySelectorAll("dialog[open]").length;
         if (stillOpen === 0) {
@@ -237,18 +262,69 @@ const { class: className, ...rest } = Astro.props;
         }
       }, this.animationDuration);
     }
-  }
 
-  // Store instances in a WeakMap to avoid memory leaks
-  const dialogInstances = new WeakMap<HTMLElement, DialogHandler>();
-  let dialogCounter = 0;
+    /**
+     * Called by child dialogs when they open
+     */
+    public onNestedDialogOpen(): void {
+      this.nestedOpenCount++;
+      this.updateNestedState();
+    }
+
+    /**
+     * Called by child dialogs when they close
+     */
+    public onNestedDialogClose(): void {
+      this.nestedOpenCount = Math.max(0, this.nestedOpenCount - 1);
+      this.updateNestedState();
+    }
+
+    /**
+     * Updates the nested dialog state attributes
+     */
+    private updateNestedState(): void {
+      if (!this.dialog) return;
+
+      if (this.nestedOpenCount > 0) {
+        this.dialog.setAttribute("data-nested-dialog-open", "");
+        this.dialog.style.setProperty("--nested-dialogs", String(this.nestedOpenCount));
+      } else {
+        this.dialog.removeAttribute("data-nested-dialog-open");
+        this.dialog.style.removeProperty("--nested-dialogs");
+      }
+    }
+
+    /**
+     * Links this dialog to its parent dialog (called after all dialogs are initialized)
+     */
+    public linkParentDialog(): void {
+      const parentDialogWrapper = this.dialogWrapper.parentElement?.closest(".starwind-dialog");
+      if (parentDialogWrapper) {
+        this.isNested = true;
+        const parentInstance = dialogInstances.get(parentDialogWrapper as HTMLElement);
+        if (parentInstance) {
+          this.parentDialog = parentInstance;
+        }
+      }
+    }
+  }
 
   // Initialize all dialogs
   const setupDialogs = () => {
+    // First pass: create all dialog instances
     document.querySelectorAll(".starwind-dialog").forEach((dialogWrapper) => {
       const wrapper = dialogWrapper as HTMLElement;
       if (!dialogInstances.has(wrapper)) {
         dialogInstances.set(wrapper, new DialogHandler(wrapper, dialogCounter++));
+      }
+    });
+
+    // Second pass: link parent dialogs (now that all instances exist)
+    document.querySelectorAll(".starwind-dialog").forEach((dialogWrapper) => {
+      const wrapper = dialogWrapper as HTMLElement;
+      const instance = dialogInstances.get(wrapper);
+      if (instance) {
+        instance.linkParentDialog();
       }
     });
   };
