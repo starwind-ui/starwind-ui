@@ -14,7 +14,7 @@ export async function selectComponents(): Promise<string[]> {
   const components = await getAllComponents();
 
   const selected = await multiselect({
-    message: "Select components to add",
+    message: "Select components to add ('a' for all, space to select, enter to confirm)",
     options: components.map((component) => ({
       label: component.name,
       value: component.name,
