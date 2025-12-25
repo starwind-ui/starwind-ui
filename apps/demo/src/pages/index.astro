@@ -169,6 +169,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/
 import { Toggle } from "@/components/starwind/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/tooltip";
 import { Image } from "@/components/starwind/image";
+import { Slider } from "@/components/starwind/slider";
 import Layout from "@/layouts/Layout.astro";
 ---
 
@@ -177,6 +178,68 @@ import Layout from "@/layouts/Layout.astro";
   description="A collection of accessible UI components built with Astro"
 >
   <div class="container mx-auto px-4 pb-20">
+    <!-- Slider Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Slider Demo</h2>
+      <div class="flex flex-col gap-8">
+        <div>
+          <p class="text-muted-foreground mb-4 text-sm">Default Slider</p>
+          <Slider defaultValue={25} aria-label="Volume" />
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-4 text-sm">Range Slider</p>
+          <Slider defaultValue={[25, 75]} aria-label="Price range" />
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-4 text-sm">With Step (10)</p>
+          <Slider defaultValue={50} step={10} aria-label="Rating" />
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-4 text-sm">Variants</p>
+          <div class="flex flex-col gap-4">
+            <Slider defaultValue={50} variant="default" aria-label="Default variant" />
+            <Slider defaultValue={50} variant="primary" aria-label="Primary variant" />
+            <Slider defaultValue={50} variant="secondary" aria-label="Secondary variant" />
+            <Slider defaultValue={50} variant="info" aria-label="Info variant" />
+            <Slider defaultValue={50} variant="success" aria-label="Success variant" />
+            <Slider defaultValue={50} variant="warning" aria-label="Warning variant" />
+            <Slider defaultValue={50} variant="error" aria-label="Error variant" />
+          </div>
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-4 text-sm">Disabled</p>
+          <Slider defaultValue={40} disabled aria-label="Disabled slider" />
+        </div>
+        <div class="flex items-start gap-4">
+          <p class="text-muted-foreground text-sm">Vertical</p>
+          <div class="h-32">
+            <Slider defaultValue={60} orientation="vertical" aria-label="Vertical slider" />
+          </div>
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-4 text-sm">Form Submission Test</p>
+          <form
+            id="slider-form"
+            class="space-y-4"
+            onsubmit="event.preventDefault(); const fd = new FormData(event.target); const data = Object.fromEntries(fd.entries()); document.getElementById('slider-form-output').textContent = JSON.stringify(data, null, 2);"
+          >
+            <div class="space-y-2">
+              <Label for="volume">Volume</Label>
+              <Slider defaultValue={50} name="volume" aria-label="Volume" />
+            </div>
+            <div class="space-y-2">
+              <Label for="price-range">Price Range</Label>
+              <Slider defaultValue={[20, 80]} name="price" aria-label="Price range" />
+            </div>
+            <Button type="submit">Submit</Button>
+          </form>
+          <pre
+            id="slider-form-output"
+            class="bg-muted text-muted-foreground mt-4 rounded-md p-4 text-sm">Submit the form to see values</pre>
+        </div>
+      </div>
+    </section>
+
     <!-- Image Demo -->
     <section class="mx-auto mt-10 max-w-lg">
       <h2 class="mb-4 text-2xl font-bold">Image Demo</h2>
