@@ -8,10 +8,10 @@ export const toastItem = tv({
   variants: {
     variant: {
       default: "border-border",
-      success: "border-success/50",
-      error: "border-error/50",
-      warning: "border-warning/50",
-      info: "border-info/50",
+      success: "border-success/80",
+      error: "border-error/80",
+      warning: "border-warning/80",
+      info: "border-info/80",
     },
   },
   defaultVariants: {
@@ -53,11 +53,3 @@ const { class: className, variant = "default", ...rest } = Astro.props;
     <X class="size-4" />
   </button>
 </div>
-
-<style>
-  [data-slot="toast"][data-starting-style],
-  [data-slot="toast"][data-state="closed"] {
-    transform: translateY(150%) !important;
-    opacity: 0;
-  }
-</style>
