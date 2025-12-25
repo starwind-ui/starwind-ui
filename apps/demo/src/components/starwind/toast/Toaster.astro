@@ -1,0 +1,427 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+import ToastItem from "./ToastItem.astro";
+import ToastTitle from "./ToastTitle.astro";
+import ToastDescription from "./ToastDescription.astro";
+
+export const toastViewport = tv({
+  base: "starwind-toast-viewport pointer-events-none fixed z-50 flex w-80 outline-none data-[position=bottom-center]:bottom-4 data-[position=bottom-center]:left-1/2 data-[position=bottom-center]:-translate-x-1/2 data-[position=bottom-left]:bottom-4 data-[position=bottom-left]:left-4 data-[position=bottom-right]:right-4 data-[position=bottom-right]:bottom-4 data-[position=top-center]:top-4 data-[position=top-center]:left-1/2 data-[position=top-center]:-translate-x-1/2 data-[position=top-left]:top-4 data-[position=top-left]:left-4 data-[position=top-right]:top-4 data-[position=top-right]:right-4",
+});
+
+type Position =
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right";
+
+type Props = HTMLAttributes<"div"> & {
+  position?: Position;
+  limit?: number;
+  gap?: string;
+  peek?: string;
+  duration?: number;
+};
+
+const {
+  class: className,
+  position = "bottom-right",
+  gap = "1rem",
+  peek = "1rem",
+  limit = 3,
+  duration = 5000,
+  ...rest
+} = Astro.props;
+---
+
+<div
+  class={toastViewport({ class: className })}
+  data-slot="toast-viewport"
+  data-position={position}
+  data-limit={limit}
+  data-duration={duration}
+  role="region"
+  aria-label="Notifications"
+  tabindex={-1}
+  style={`--gap: ${gap}; --peek: ${peek};`}
+  {...rest}
+>
+  <!-- Hidden templates for each variant - JS will clone these -->
+  <template data-toast-template="default">
+    <ToastItem variant="default">
+      <ToastTitle data-toast-title>Title</ToastTitle>
+      <ToastDescription data-toast-description>Description</ToastDescription>
+    </ToastItem>
+  </template>
+  <template data-toast-template="success">
+    <ToastItem variant="success">
+      <ToastTitle data-toast-title>Title</ToastTitle>
+      <ToastDescription data-toast-description>Description</ToastDescription>
+    </ToastItem>
+  </template>
+  <template data-toast-template="error">
+    <ToastItem variant="error">
+      <ToastTitle data-toast-title>Title</ToastTitle>
+      <ToastDescription data-toast-description>Description</ToastDescription>
+    </ToastItem>
+  </template>
+  <template data-toast-template="warning">
+    <ToastItem variant="warning">
+      <ToastTitle data-toast-title>Title</ToastTitle>
+      <ToastDescription data-toast-description>Description</ToastDescription>
+    </ToastItem>
+  </template>
+  <template data-toast-template="info">
+    <ToastItem variant="info">
+      <ToastTitle data-toast-title>Title</ToastTitle>
+      <ToastDescription data-toast-description>Description</ToastDescription>
+    </ToastItem>
+  </template>
+</div>
+
+<script>
+  type Variant = "default" | "success" | "error" | "warning" | "info";
+
+  interface ToastOptions {
+    id?: string;
+    title?: string;
+    description?: string;
+    variant?: Variant;
+    duration?: number;
+    action?: {
+      label: string;
+      onClick: () => void;
+    };
+    onClose?: () => void;
+    onRemove?: () => void;
+  }
+
+  interface ToastState extends ToastOptions {
+    id: string;
+    element?: HTMLElement;
+    timeoutId?: number;
+    height?: number;
+  }
+
+  class StarwindToastManager {
+    private viewport: HTMLElement;
+    private toasts: ToastState[] = [];
+    private queue: ToastState[] = [];
+    private limit: number;
+    private defaultDuration: number;
+    private expanded: boolean = false;
+    private counter: number = 0;
+
+    constructor(viewport: HTMLElement) {
+      this.viewport = viewport;
+      this.limit = Number(viewport.dataset.limit) || 3;
+      this.defaultDuration = Number(viewport.dataset.duration) || 10000;
+
+      this.setupEvents();
+    }
+
+    private setupEvents(): void {
+      this.viewport.addEventListener("mouseenter", () => {
+        this.expanded = true;
+        this.updateExpanded();
+        this.pauseAllTimers();
+      });
+
+      this.viewport.addEventListener("mouseleave", () => {
+        this.expanded = false;
+        this.updateExpanded();
+        this.resumeAllTimers();
+      });
+
+      this.viewport.addEventListener("focusin", () => {
+        this.expanded = true;
+        this.updateExpanded();
+        this.pauseAllTimers();
+      });
+
+      this.viewport.addEventListener("focusout", (e) => {
+        if (!this.viewport.contains(e.relatedTarget as Node)) {
+          this.expanded = false;
+          this.updateExpanded();
+          this.resumeAllTimers();
+        }
+      });
+    }
+
+    private updateExpanded(): void {
+      // Set expanded state on viewport
+      if (this.expanded) {
+        this.viewport.setAttribute("data-expanded", "");
+      } else {
+        this.viewport.removeAttribute("data-expanded");
+      }
+
+      this.toasts.forEach((toast) => {
+        if (toast.element) {
+          const contentEl = toast.element.querySelector('[data-slot="toast-content"]');
+          if (this.expanded) {
+            toast.element.setAttribute("data-expanded", "");
+            contentEl?.setAttribute("data-expanded", "");
+          } else {
+            toast.element.removeAttribute("data-expanded");
+            contentEl?.removeAttribute("data-expanded");
+          }
+        }
+      });
+      this.updatePositions();
+    }
+
+    private pauseAllTimers(): void {
+      this.toasts.forEach((toast) => {
+        if (toast.timeoutId) {
+          clearTimeout(toast.timeoutId);
+          toast.timeoutId = undefined;
+        }
+      });
+    }
+
+    private resumeAllTimers(): void {
+      this.toasts.forEach((toast) => {
+        const duration = toast.duration ?? this.defaultDuration;
+        if (duration > 0) {
+          toast.timeoutId = window.setTimeout(() => {
+            this.close(toast.id);
+          }, duration);
+        }
+      });
+    }
+
+    /**
+     * Add a new toast
+     */
+    public add(options: ToastOptions): string {
+      const id = options.id || `toast-${++this.counter}`;
+      const duration = options.duration ?? this.defaultDuration;
+
+      const toastState: ToastState = {
+        ...options,
+        id,
+        duration,
+      };
+
+      // Always add the new toast at the front (newest first)
+      this.renderToast(toastState);
+      this.toasts.unshift(toastState);
+
+      // updatePositions will handle hiding toasts beyond the limit via data-limited
+      // They'll become visible again when other toasts close
+
+      return id;
+    }
+
+    /**
+     * Update an existing toast
+     */
+    public update(id: string, options: Partial<ToastOptions>): void {
+      const toast = this.toasts.find((t) => t.id === id);
+      if (toast) {
+        Object.assign(toast, options);
+        if (toast.element) {
+          this.updateToastContent(toast);
+        }
+      }
+    }
+
+    /**
+     * Close a toast
+     */
+    public close(id: string): void {
+      const index = this.toasts.findIndex((t) => t.id === id);
+      if (index === -1) return;
+
+      const toast = this.toasts[index];
+      if (toast.timeoutId) {
+        clearTimeout(toast.timeoutId);
+      }
+
+      toast.onClose?.();
+
+      if (toast.element) {
+        toast.element.setAttribute("data-state", "closed");
+
+        setTimeout(() => {
+          toast.element?.remove();
+          toast.onRemove?.();
+
+          this.toasts.splice(index, 1);
+          this.updatePositions();
+        }, 200);
+      }
+    }
+
+    /**
+     * Close all toasts
+     */
+    public closeAll(): void {
+      [...this.toasts].forEach((toast) => this.close(toast.id));
+      this.queue = [];
+    }
+
+    private renderToast(toast: ToastState): void {
+      const variant = toast.variant || "default";
+      const template = this.viewport.querySelector(
+        `template[data-toast-template="${variant}"]`,
+      ) as HTMLTemplateElement;
+
+      if (!template) {
+        console.error(`Toast template for variant "${variant}" not found`);
+        return;
+      }
+
+      const clone = template.content.cloneNode(true) as DocumentFragment;
+      const element = clone.firstElementChild as HTMLElement;
+
+      if (!element) return;
+
+      element.setAttribute("data-toast-id", toast.id);
+      element.setAttribute("data-starting-style", "");
+
+      // Update title
+      const titleEl = element.querySelector("[data-toast-title]");
+      if (titleEl) {
+        if (toast.title) {
+          titleEl.textContent = toast.title;
+        } else {
+          titleEl.remove();
+        }
+      }
+
+      // Update description
+      const descEl = element.querySelector("[data-toast-description]");
+      if (descEl) {
+        if (toast.description) {
+          descEl.textContent = toast.description;
+        } else {
+          descEl.remove();
+        }
+      }
+
+      // Setup close button
+      const closeBtn = element.querySelector('[data-slot="toast-close"]');
+      closeBtn?.addEventListener("click", () => this.close(toast.id));
+
+      // Insert at beginning (newest on top visually)
+      this.viewport.insertBefore(element, this.viewport.firstElementChild);
+      toast.element = element;
+
+      // Trigger entry animation
+      requestAnimationFrame(() => {
+        toast.height = element.offsetHeight;
+        this.updatePositions();
+
+        // Remove starting style after a frame to trigger animation
+        requestAnimationFrame(() => {
+          element.removeAttribute("data-starting-style");
+        });
+      });
+
+      // Start auto-dismiss timer
+      const duration = toast.duration ?? this.defaultDuration;
+      if (duration > 0 && !this.expanded) {
+        toast.timeoutId = window.setTimeout(() => {
+          this.close(toast.id);
+        }, duration);
+      }
+    }
+
+    private updateToastContent(toast: ToastState): void {
+      if (!toast.element) return;
+
+      const titleEl = toast.element.querySelector("[data-toast-title]");
+      const descEl = toast.element.querySelector("[data-toast-description]");
+
+      if (titleEl && toast.title) {
+        titleEl.textContent = toast.title;
+      }
+      if (descEl && toast.description) {
+        descEl.textContent = toast.description;
+      }
+    }
+
+    private updatePositions(): void {
+      let cumulativeOffset = 0;
+
+      // Iterate through toasts - index 0 is newest (front)
+      this.toasts.forEach((toast, index) => {
+        if (!toast.element) return;
+
+        const contentEl = toast.element.querySelector('[data-slot="toast-content"]');
+
+        // Set CSS variables for this toast
+        toast.element.style.setProperty("--toast-index", String(index));
+        toast.element.style.setProperty("--toast-offset-y", `${cumulativeOffset}px`);
+
+        // Set data-behind on content for toasts behind the frontmost
+        if (index > 0) {
+          contentEl?.setAttribute("data-behind", "");
+        } else {
+          contentEl?.removeAttribute("data-behind");
+        }
+
+        // Mark as limited if beyond limit
+        if (index >= this.limit) {
+          toast.element.setAttribute("data-limited", "");
+        } else {
+          toast.element.removeAttribute("data-limited");
+        }
+
+        // Accumulate offset for expanded state (height + gap)
+        cumulativeOffset += (toast.height || 0) + 12;
+      });
+    }
+  }
+
+  const toastInstances = new WeakMap<HTMLElement, StarwindToastManager>();
+
+  const setupToasts = () => {
+    document.querySelectorAll('[data-slot="toast-viewport"]').forEach((viewport) => {
+      const el = viewport as HTMLElement;
+      if (!toastInstances.has(el)) {
+        const manager = new StarwindToastManager(el);
+        toastInstances.set(el, manager);
+
+        if (!(window as any).starwindToast) {
+          (window as any).starwindToast = manager;
+        }
+      }
+    });
+  };
+
+  setupToasts();
+  document.addEventListener("astro:after-swap", setupToasts);
+  document.addEventListener("starwind:init", setupToasts);
+</script>
+
+<style>
+  [data-slot="toast-viewport"] [data-slot="toast"] {
+    --scale: max(0.9, 1 - (var(--toast-index, 0) * 0.05));
+
+    z-index: calc(1000 - var(--toast-index, 0));
+    transform: translateY(calc(var(--toast-index, 0) * var(--peek) * -1)) scale(var(--scale));
+  }
+
+  [data-slot="toast-viewport"] [data-slot="toast"][data-expanded] {
+    --scale: 1;
+
+    transform: translateY(calc(var(--toast-offset-y, 0px) * -1));
+  }
+
+  /* Position-specific overrides for top positions */
+  [data-slot="toast-viewport"][data-position^="top"] [data-slot="toast"] {
+    top: 0;
+    bottom: auto;
+    transform-origin: top center;
+    transform: translateY(calc(var(--toast-index, 0) * var(--peek))) scale(var(--scale));
+  }
+
+  [data-slot="toast-viewport"][data-position^="top"] [data-slot="toast"][data-expanded] {
+    transform: translateY(var(--toast-offset-y, 0px));
+  }
+</style>

@@ -171,6 +171,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/t
 import { Image } from "@/components/starwind/image";
 import { Slider } from "@/components/starwind/slider";
 import { Video } from "@/components/starwind/video";
+import { ToastTrigger } from "@/components/starwind/toast";
 import navVideo from "@/assets/videos/starwind-pro_nav-3-responsive.mp4";
 import Layout from "@/layouts/Layout.astro";
 ---
@@ -180,6 +181,81 @@ import Layout from "@/layouts/Layout.astro";
   description="A collection of accessible UI components built with Astro"
 >
   <div class="container mx-auto px-4 pb-20">
+    <!-- Toast Demo -->
+    <section class="mx-auto mt-10 max-w-lg">
+      <h2 class="mb-4 text-2xl font-bold">Toast Demo</h2>
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-wrap gap-2">
+          <ToastTrigger
+            toast={{ title: "Default Toast", description: "This is a default notification." }}
+            asChild
+          >
+            <Button variant="outline">Default</Button>
+          </ToastTrigger>
+          <ToastTrigger
+            toast={{
+              title: "Success!",
+              description: "Your changes have been saved.",
+              variant: "success",
+            }}
+            asChild
+          >
+            <Button variant="outline">Success</Button>
+          </ToastTrigger>
+          <ToastTrigger
+            toast={{
+              title: "Error",
+              description: "Something went wrong. Please try again.",
+              variant: "error",
+            }}
+            asChild
+          >
+            <Button variant="outline">Error</Button>
+          </ToastTrigger>
+          <ToastTrigger
+            toast={{
+              title: "Warning",
+              description: "Please review your input.",
+              variant: "warning",
+            }}
+            asChild
+          >
+            <Button variant="outline">Warning</Button>
+          </ToastTrigger>
+          <ToastTrigger
+            toast={{
+              title: "Info",
+              description: "Here's some helpful information.",
+              variant: "info",
+            }}
+            asChild
+          >
+            <Button variant="outline">Info</Button>
+          </ToastTrigger>
+        </div>
+        <div>
+          <p class="text-muted-foreground mb-2 text-sm">Programmatic Toast</p>
+          <Button variant="primary" id="programmatic-toast-btn"> Add Multiple Toasts </Button>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      const btn = document.getElementById("programmatic-toast-btn");
+      btn?.addEventListener("click", () => {
+        const variants = ["default", "success", "error", "warning", "info"] as const;
+        variants.forEach((variant, i) => {
+          setTimeout(() => {
+            (window as any).starwindToast?.add({
+              title: `Toast ${i + 1}`,
+              description: `This is a ${variant} toast added programmatically.`,
+              variant,
+            });
+          }, i * 300);
+        });
+      });
+    </script>
+
     <!-- Video Demo -->
     <section class="mx-auto mt-10 max-w-lg">
       <h2 class="mb-4 text-2xl font-bold">Video Demo</h2>

@@ -1,0 +1,16 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+export const toastTitle = tv({
+  base: "starwind-toast-title text-sm font-semibold",
+});
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={[toastTitle(), className]} data-slot="toast-title" {...rest}>
+  <slot />
+</div>
