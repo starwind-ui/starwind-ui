@@ -1,5 +1,9 @@
-import Image from "./Image.astro";
+import Image, { image } from "./Image.astro";
 
-export { Image };
+const ImageVariants = {
+  image,
+};
+
+export { Image, ImageVariants };
 
 export default Image;
