@@ -1,0 +1,28 @@
+---
+import Flame from "@tabler/icons/outline/flame.svg";
+import Mail from "@tabler/icons/outline/mail.svg";
+import { Button } from "@/components/starwind/button";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Button</h2>
+  <div class="flex flex-wrap items-center gap-2">
+    <Button variant="primary" href="https://astro.build" target="_blank" rel="noopener noreferrer"
+      >Primary</Button
+    >
+    <Button variant="secondary" size="lg">Secondary lg</Button>
+    <Button variant="secondary" size="icon-lg"><Mail /></Button>
+    <Button variant="outline">Outline</Button>
+    <Button variant="outline" size="icon"><Mail /></Button>
+    <Button variant="info" size="sm"><Mail />Info sm</Button>
+    <Button variant="info" size="icon-sm"><Mail /></Button>
+    <Button variant="success">Success</Button>
+    <Button variant="warning">Warning</Button>
+    <Button variant="error"><Flame />Error</Button>
+    <Button variant="ghost">Ghost</Button>
+    <Button class="rounded-sm bg-purple-700 text-white hover:bg-purple-800">Radius sm</Button>
+    <Button class="rounded-lg">Radius lg</Button>
+    <Button class="rounded-full">Radius full</Button>
+    <Button class="bg-blue-500">override test</Button>
+  </div>
+</section>

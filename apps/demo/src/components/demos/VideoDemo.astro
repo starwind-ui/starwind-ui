@@ -1,0 +1,30 @@
+---
+import { Video } from "@/components/starwind/video";
+import navVideo from "@/assets/videos/starwind-pro_nav-3-responsive.mp4";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Video Demo</h2>
+  <div class="flex flex-col gap-8">
+    <div>
+      <p class="text-muted-foreground mb-4 text-sm">Imported Video</p>
+      <Video src={navVideo} controls muted class="rounded-lg" />
+    </div>
+    <div>
+      <p class="text-muted-foreground mb-4 text-sm">YouTube Video</p>
+      <Video
+        src="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        title="YouTube video"
+        class="rounded-lg"
+      />
+    </div>
+    <div>
+      <p class="text-muted-foreground mb-4 text-sm">YouTube Shorts</p>
+      <Video
+        src="https://www.youtube.com/shorts/WVfUcdYugio"
+        title="YouTube Shorts"
+        class="aspect-square max-w-xs rounded-lg"
+      />
+    </div>
+  </div>
+</section>

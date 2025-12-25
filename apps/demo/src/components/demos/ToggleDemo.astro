@@ -1,0 +1,133 @@
+---
+import Bold from "@tabler/icons/outline/bold.svg";
+import Heart from "@tabler/icons/outline/heart.svg";
+import Italic from "@tabler/icons/outline/italic.svg";
+import Moon from "@tabler/icons/outline/moon.svg";
+import Star from "@tabler/icons/outline/star.svg";
+import Sun from "@tabler/icons/outline/sun.svg";
+import Underline from "@tabler/icons/outline/underline.svg";
+import { Toggle } from "@/components/starwind/toggle";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Toggle Component</h2>
+
+  <div class="mb-6">
+    <h3 class="mb-2 text-lg font-semibold">Basic Toggles</h3>
+    <div class="flex flex-wrap gap-2">
+      <Toggle>Default</Toggle>
+      <Toggle variant="outline">Outline</Toggle>
+      <Toggle defaultPressed>Default Pressed</Toggle>
+      <Toggle disabled>Disabled</Toggle>
+    </div>
+  </div>
+
+  <div class="mb-6">
+    <h3 class="mb-2 text-lg font-semibold">With Icons</h3>
+    <div class="flex flex-wrap gap-2">
+      <Toggle variant="outline" aria-label="Toggle bold">
+        <Bold class="size-4" />
+      </Toggle>
+      <Toggle variant="outline" aria-label="Toggle italic">
+        <Italic class="size-4" />
+      </Toggle>
+      <Toggle variant="outline" aria-label="Toggle underline">
+        <Underline class="size-4" />
+      </Toggle>
+      <Toggle variant="outline" defaultPressed aria-label="Toggle favorite">
+        <Heart class="size-4" />
+      </Toggle>
+      <Toggle variant="outline" aria-label="Toggle star">
+        <Star class="size-4" />
+      </Toggle>
+    </div>
+  </div>
+
+  <div class="mb-6">
+    <h3 class="mb-2 text-lg font-semibold">Sizes</h3>
+    <div class="flex flex-wrap items-center gap-2">
+      <Toggle size="sm">Small</Toggle>
+      <Toggle size="md">Medium</Toggle>
+      <Toggle size="lg">Large</Toggle>
+      <Toggle size="sm" aria-label="Small icon">
+        <Star />
+      </Toggle>
+      <Toggle size="md" aria-label="Medium icon">
+        <Star />
+      </Toggle>
+      <Toggle size="lg" aria-label="Large icon">
+        <Star class="size-5" />
+      </Toggle>
+    </div>
+  </div>
+
+  <div class="mb-6">
+    <h3 class="mb-2 text-lg font-semibold">Variants</h3>
+    <div class="flex flex-wrap gap-2">
+      <Toggle variant="default">Default</Toggle>
+      <Toggle variant="outline">Outline</Toggle>
+    </div>
+  </div>
+
+  <div class="mb-6">
+    <h3 class="mb-2 text-lg font-semibold">Synced Toggles (theme toggle example)</h3>
+    <p class="text-muted-foreground mb-2 text-sm">
+      These toggles share the same sync group and will mirror each other's state
+    </p>
+    <div class="flex flex-wrap gap-4">
+      <Toggle
+        class="group hover:border-muted-foreground rounded-full hover:bg-transparent data-[state=on]:bg-transparent"
+        syncGroup="theme"
+        variant="outline"
+        aria-label="Toggle theme"
+        data-theme-toggle
+      >
+        <Sun class="size-4.5 group-data-[state=on]:hidden" />
+        <Moon class="size-4.5 group-data-[state=off]:hidden" />
+      </Toggle>
+      <Toggle
+        class="group hover:border-muted-foreground rounded-full hover:bg-transparent data-[state=on]:bg-transparent"
+        syncGroup="theme"
+        variant="outline"
+        aria-label="Toggle theme"
+        data-theme-toggle
+      >
+        <Sun class="size-4.5 group-data-[state=on]:hidden" />
+        <Moon class="size-4.5 group-data-[state=off]:hidden" />
+      </Toggle>
+      <Toggle
+        class="group hover:border-muted-foreground rounded-full hover:bg-transparent data-[state=on]:bg-transparent"
+        syncGroup="theme"
+        variant="outline"
+        aria-label="Toggle theme"
+        data-theme-toggle
+      >
+        <Sun class="size-4.5 group-data-[state=on]:hidden" />
+        <Moon class="size-4.5 group-data-[state=off]:hidden" />
+      </Toggle>
+    </div>
+  </div>
+
+  <div class="mb-6">
+    <h3 class="mb-2 text-lg font-semibold">Event Listener Example</h3>
+    <div class="rounded-md border p-4">
+      <Toggle id="event-toggle" variant="outline"> Toggle Me </Toggle>
+      <div id="toggle-status" class="text-muted-foreground mt-2 text-sm">Status: off</div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const eventToggle = document.getElementById("event-toggle");
+  const statusDiv = document.getElementById("toggle-status");
+
+  if (eventToggle && statusDiv) {
+    eventToggle.addEventListener("starwind-toggle:change", ((e: CustomEvent) => {
+      const { pressed, toggleId, syncGroup } = e.detail;
+      statusDiv.textContent = `Status: ${pressed ? "on" : "off"} | ID: ${toggleId}${syncGroup ? ` | Sync Group: ${syncGroup}` : ""}`;
+      statusDiv.className = pressed
+        ? "mt-2 text-sm font-medium text-success"
+        : "mt-2 text-sm text-muted-foreground";
+    }) as EventListener);
+  }
+</script>

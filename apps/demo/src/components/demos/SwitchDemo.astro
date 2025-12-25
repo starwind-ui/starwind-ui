@@ -1,0 +1,19 @@
+---
+import SwitchListenerTest from "@/components/forms/SwitchListenerTest.astro";
+import { Switch } from "@/components/starwind/switch";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Switch</h2>
+  <div class="flex flex-col gap-2">
+    <Switch id="terms" label="Accept terms" />
+    <Switch id="newsletter" variant="secondary" label="Subscribe to newsletter" disabled />
+    <Switch id="terms2" variant="primary" label="Accept terms" />
+    <Switch id="newsletter2" variant="secondary" label="Subscribe to newsletter" />
+    <Switch id="terms3" size="sm" variant="info" label="Accept terms" />
+    <Switch id="newsletter3" size="lg" variant="success" label="Subscribe to newsletter" />
+    <Switch id="terms4" variant="warning" label="Accept terms" />
+    <Switch id="newsletter4" variant="error" label="Subscribe to newsletter" />
+    <SwitchListenerTest />
+  </div>
+</section>

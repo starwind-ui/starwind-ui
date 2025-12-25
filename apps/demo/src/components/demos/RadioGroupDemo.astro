@@ -1,0 +1,53 @@
+---
+import { Label } from "@/components/starwind/label";
+import { RadioGroup, RadioGroupItem } from "@/components/starwind/radio-group";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Radio Group</h2>
+  <div class="space-y-6">
+    <div>
+      <h3 class="mb-2 text-lg font-medium">Favorite Fruit</h3>
+      <RadioGroup name="fruit" defaultValue="apple" legend="Favorite Fruit">
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <RadioGroupItem value="apple" id="apple" name="fruit" />
+            <Label for="apple">Apple</Label>
+          </div>
+          <div class="flex items-center gap-3">
+            <RadioGroupItem value="banana" id="banana" name="fruit" />
+            <Label for="banana">Banana</Label>
+          </div>
+          <div class="flex items-center gap-3">
+            <RadioGroupItem value="orange" id="orange" name="fruit" />
+            <Label for="orange">Orange</Label>
+          </div>
+          <div class="flex items-center gap-3">
+            <RadioGroupItem value="strawberry" id="strawberry" name="fruit" disabled />
+            <Label for="strawberry">Strawberry</Label>
+          </div>
+        </div>
+      </RadioGroup>
+    </div>
+
+    <div>
+      <h3 class="mb-2 text-lg font-medium">Subscription Plan</h3>
+      <RadioGroup name="plan" legend="Select your subscription plan">
+        <div class="flex items-center space-x-6">
+          <div class="flex items-center gap-3">
+            <RadioGroupItem value="free" id="free" size="sm" variant="secondary" name="plan" />
+            <Label for="free" size="sm">Small</Label>
+          </div>
+          <div class="flex items-center gap-3">
+            <RadioGroupItem value="pro" id="pro" size="md" variant="info" name="plan" />
+            <Label for="pro" size="md">Medium</Label>
+          </div>
+          <div class="flex items-center gap-3">
+            <RadioGroupItem value="team" id="team" size="lg" variant="success" name="plan" />
+            <Label for="team" size="lg">Large</Label>
+          </div>
+        </div>
+      </RadioGroup>
+    </div>
+  </div>
+</section>

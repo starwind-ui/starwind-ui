@@ -1,0 +1,22 @@
+---
+import { Checkbox } from "@/components/starwind/checkbox";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Checkbox</h2>
+  <div class="flex flex-col gap-2">
+    <Checkbox id="terms5" label="Accept terms" variant="primary" />
+    <Checkbox id="newsletter5" label="Subscribe to newsletter" variant="secondary" disabled />
+    <Checkbox id="terms6" label="Accept terms" />
+    <Checkbox
+      id="newsletter6"
+      label="Subscribe to newsletter"
+      variant="secondary"
+      class="bg-blue-500"
+    />
+    <Checkbox id="terms7" label="Accept terms" variant="info" />
+    <Checkbox id="newsletter7" size="sm" label="Subscribe to newsletter" variant="success" />
+    <Checkbox id="terms8" label="Accept terms" variant="warning" />
+    <Checkbox id="newsletter8" size="lg" label="Subscribe to newsletter" variant="error" />
+  </div>
+</section>

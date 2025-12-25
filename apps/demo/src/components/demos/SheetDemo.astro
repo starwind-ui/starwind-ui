@@ -1,0 +1,132 @@
+---
+import { Button } from "@/components/starwind/button";
+import { Input } from "@/components/starwind/input";
+import { Label } from "@/components/starwind/label";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/starwind/sheet";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Sheet Demo</h2>
+  <div class="grid grid-cols-2 gap-4">
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Top Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="top">
+        <SheetHeader>
+          <SheetTitle>Top Sheet</SheetTitle>
+          <SheetDescription> This sheet opens from the top of the screen. </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 px-4">
+          <div class="grid gap-3">
+            <Label for="top-sheet-name">Name</Label>
+            <Input id="top-sheet-name" value="Pedro Duarte" />
+          </div>
+          <div class="grid gap-3">
+            <Label for="top-sheet-username">Username</Label>
+            <Input id="top-sheet-username" value="@peduarte" />
+          </div>
+        </div>
+        <SheetFooter>
+          <Button variant="default">Save changes</Button>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Right Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="right">
+        <SheetHeader>
+          <SheetTitle>Right Sheet</SheetTitle>
+          <SheetDescription> This sheet opens from the right side of the screen. </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 px-4">
+          <div class="grid gap-3">
+            <Label for="right-sheet-name">Name</Label>
+            <Input id="right-sheet-name" value="Pedro Duarte" />
+          </div>
+          <div class="grid gap-3">
+            <Label for="right-sheet-username">Username</Label>
+            <Input id="right-sheet-username" value="@peduarte" />
+          </div>
+        </div>
+        <SheetFooter>
+          <Button variant="default">Save changes</Button>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Bottom Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="bottom">
+        <SheetHeader>
+          <SheetTitle>Bottom Sheet</SheetTitle>
+          <SheetDescription> This sheet opens from the bottom of the screen. </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 px-4">
+          <div class="grid gap-3">
+            <Label for="bottom-sheet-name">Name</Label>
+            <Input id="bottom-sheet-name" value="Pedro Duarte" />
+          </div>
+          <div class="grid gap-3">
+            <Label for="bottom-sheet-username">Username</Label>
+            <Input id="bottom-sheet-username" value="@peduarte" />
+          </div>
+        </div>
+        <SheetFooter>
+          <Button variant="default">Save changes</Button>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Left Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="left">
+        <SheetHeader>
+          <SheetTitle>Left Sheet</SheetTitle>
+          <SheetDescription> This sheet opens from the left side of the screen. </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 px-4">
+          <div class="grid gap-3">
+            <Label for="left-sheet-name">Name</Label>
+            <Input id="left-sheet-name" value="Pedro Duarte" />
+          </div>
+          <div class="grid gap-3">
+            <Label for="left-sheet-username">Username</Label>
+            <Input id="left-sheet-username" value="@peduarte" />
+          </div>
+        </div>
+        <SheetFooter>
+          <Button variant="default">Save changes</Button>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  </div>
+</section>

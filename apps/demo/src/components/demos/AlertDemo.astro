@@ -1,0 +1,66 @@
+---
+import Flame from "@tabler/icons/outline/flame.svg";
+import InfoCircle from "@tabler/icons/outline/info-circle.svg";
+import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Alert</h2>
+  <div class="flex flex-col gap-4">
+    <Alert>
+      <AlertTitle>Heads up!</AlertTitle>
+      <AlertDescription>
+        A simple alert with an <code>AlertTitle</code> and an
+        <code>AlertDescription</code>.
+      </AlertDescription>
+    </Alert>
+
+    <Alert variant="primary">
+      <AlertTitle>Heads up!</AlertTitle>
+      <AlertDescription>
+        A simple alert with an <code>AlertTitle</code> and an
+        <code>AlertDescription</code>.
+      </AlertDescription>
+    </Alert>
+
+    <Alert variant="secondary">
+      <AlertTitle>Heads up!</AlertTitle>
+      <AlertDescription>
+        A simple alert with an <code>AlertTitle</code> and an
+        <code>AlertDescription</code>.
+      </AlertDescription>
+    </Alert>
+
+    <Alert variant="info">
+      <AlertTitle><InfoCircle class="size-6" /> Heads up!</AlertTitle>
+      <AlertDescription>
+        An alert with an <code>AlertTitle</code> and an
+        <code>AlertDescription</code> and icon.
+      </AlertDescription>
+    </Alert>
+
+    <Alert variant="success">
+      <AlertTitle>Heads up!</AlertTitle>
+      <AlertDescription>
+        A simple alert with an <code>AlertTitle</code> and an
+        <code>AlertDescription</code>.
+      </AlertDescription>
+    </Alert>
+
+    <Alert variant="warning">
+      <AlertTitle>Heads up!</AlertTitle>
+      <AlertDescription>
+        A simple alert with an <code>AlertTitle</code> and an
+        <code>AlertDescription</code>.
+      </AlertDescription>
+    </Alert>
+
+    <Alert variant="error">
+      <AlertTitle><Flame class="size-6" /> Heads up!</AlertTitle>
+      <AlertDescription>
+        An alert with an <code>AlertTitle</code> and an
+        <code>AlertDescription</code> and icon.
+      </AlertDescription>
+    </Alert>
+  </div>
+</section>

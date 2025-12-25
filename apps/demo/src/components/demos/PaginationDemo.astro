@@ -1,0 +1,85 @@
+---
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/starwind/pagination";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Pagination</h2>
+  <div class="flex flex-col gap-6">
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious href="#">Prev</PaginationPrevious>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationLink href="#">1</PaginationLink>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationLink href="#" isActive>2</PaginationLink>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationLink href="#">3</PaginationLink>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationEllipsis />
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationNext href="#">Next</PaginationNext>
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious size="sm" href="#">Prev</PaginationPrevious>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationLink size="icon-sm" href="#">1</PaginationLink>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationLink size="icon-sm" href="#" isActive>2</PaginationLink>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationLink size="icon-sm" href="#">3</PaginationLink>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationEllipsis size="icon-sm" />
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationNext size="sm" href="#">Next</PaginationNext>
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious size="lg" href="#">Prev</PaginationPrevious>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationLink size="icon-lg" href="#">1</PaginationLink>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationLink size="icon-lg" href="#" isActive>2</PaginationLink>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationLink size="icon-lg" href="#">3</PaginationLink>
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationEllipsis size="icon-lg" />
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationNext size="lg" href="#">Next</PaginationNext>
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  </div>
+</section>

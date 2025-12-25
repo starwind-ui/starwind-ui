@@ -1,0 +1,95 @@
+---
+import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+import CircleCheck from "@tabler/icons/outline/circle-check.svg";
+import InfoCircle from "@tabler/icons/outline/info-circle.svg";
+import { Button } from "@/components/starwind/button";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/starwind/item";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Item Demo</h2>
+  <div class="flex w-full max-w-md flex-col gap-6">
+    <Item variant="outline">
+      <ItemContent>
+        <ItemTitle>Basic Item</ItemTitle>
+        <ItemDescription>A simple item with title and description.</ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <Button variant="outline" size="sm">Action</Button>
+      </ItemActions>
+    </Item>
+    <Item variant="outline" size="sm" as="a" href="#">
+      <ItemMedia>
+        <CircleCheck class="size-5" />
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>Your profile has been verified.</ItemTitle>
+      </ItemContent>
+      <ItemActions>
+        <ChevronRight class="size-4" />
+      </ItemActions>
+    </Item>
+  </div>
+</section>
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Item with Icon</h2>
+  <div class="flex w-full max-w-lg flex-col gap-6">
+    <Item variant="outline">
+      <ItemMedia variant="icon">
+        <InfoCircle />
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>Security Alert</ItemTitle>
+        <ItemDescription>New login detected from unknown device.</ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <Button size="sm" variant="outline">Review</Button>
+      </ItemActions>
+    </Item>
+  </div>
+</section>
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Item Variants</h2>
+  <div class="flex flex-col gap-6">
+    <Item>
+      <ItemContent>
+        <ItemTitle>Default Variant</ItemTitle>
+        <ItemDescription> Standard styling with subtle background and borders. </ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <Button variant="outline" size="sm">Open</Button>
+      </ItemActions>
+    </Item>
+    <Item variant="outline">
+      <ItemContent>
+        <ItemTitle>Outline Variant</ItemTitle>
+        <ItemDescription>
+          Outlined style with clear borders and transparent background.
+        </ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <Button variant="outline" size="sm">Open</Button>
+      </ItemActions>
+    </Item>
+    <Item variant="muted">
+      <ItemContent>
+        <ItemTitle>Muted Variant</ItemTitle>
+        <ItemDescription>
+          Subdued appearance with muted colors for secondary content.
+        </ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <Button variant="outline" size="sm">Open</Button>
+      </ItemActions>
+    </Item>
+  </div>
+</section>
