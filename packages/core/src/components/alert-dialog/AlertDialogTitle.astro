@@ -10,7 +10,7 @@ type Props = Omit<HTMLAttributes<"h2">, "id"> & {
   children: any;
 };
 
-export const alertDialogTitle = tv({ base: "text-xl font-semibold" });
+export const alertDialogTitle = tv({ base: "font-heading text-xl font-semibold" });
 
 const { class: className, ...rest } = Astro.props;
 ---
