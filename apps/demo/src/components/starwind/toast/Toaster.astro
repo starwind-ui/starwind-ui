@@ -1,9 +1,10 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
+
+import ToastDescription from "./ToastDescription.astro";
 import ToastItem from "./ToastItem.astro";
 import ToastTitle from "./ToastTitle.astro";
-import ToastDescription from "./ToastDescription.astro";
 
 export const toastViewport = tv({
   base: [
@@ -120,22 +121,26 @@ const {
   [data-slot="toast-viewport"]
     [data-slot="toast"][data-state="closed"][data-swipe-direction="down"] {
     transform: translateY(calc(var(--toast-swipe-movement-y, 0px) + 150%));
+    opacity: 0;
   }
 
   [data-slot="toast-viewport"] [data-slot="toast"][data-state="closed"][data-swipe-direction="up"] {
     transform: translateY(calc(var(--toast-swipe-movement-y, 0px) - 150%));
+    opacity: 0;
   }
 
   [data-slot="toast-viewport"]
     [data-slot="toast"][data-state="closed"][data-swipe-direction="right"] {
     transform: translateX(calc(var(--toast-swipe-movement-x, 0px) + 150%))
       translateY(calc(var(--toast-offset-y, 0px) * -1));
+    opacity: 0;
   }
 
   [data-slot="toast-viewport"]
     [data-slot="toast"][data-state="closed"][data-swipe-direction="left"] {
     transform: translateX(calc(var(--toast-swipe-movement-x, 0px) - 150%))
       translateY(calc(var(--toast-offset-y, 0px) * -1));
+    opacity: 0;
   }
 
   /* Position-specific overrides for top positions */
@@ -161,6 +166,20 @@ const {
   [data-slot="toast-viewport"][data-position^="top"]
     [data-slot="toast"][data-state="closed"][data-swipe-direction="down"] {
     transform: translateY(calc(var(--toast-swipe-movement-y, 0px) + 150%));
+  }
+
+  [data-slot="toast-viewport"][data-position^="top"]
+    [data-slot="toast"][data-state="closed"][data-swipe-direction="left"] {
+    transform: translateX(calc(var(--toast-swipe-movement-x, 0px) - 150%))
+      translateY(var(--toast-offset-y, 0px));
+    opacity: 0;
+  }
+
+  [data-slot="toast-viewport"][data-position^="top"]
+    [data-slot="toast"][data-state="closed"][data-swipe-direction="right"] {
+    transform: translateX(calc(var(--toast-swipe-movement-x, 0px) + 150%))
+      translateY(var(--toast-offset-y, 0px));
+    opacity: 0;
   }
 
   /* Entry animation - starting state (must come after base transforms) */
@@ -227,7 +246,7 @@ const {
   type SwipeDirection = "up" | "down" | "left" | "right";
 
   class StarwindToastManager {
-    private viewport: HTMLElement;
+    readonly viewport: HTMLElement;
     private toasts: ToastState[] = [];
     private queue: ToastState[] = [];
     private limit: number;
@@ -433,11 +452,31 @@ const {
      * Update an existing toast
      */
     public update(id: string, options: Partial<ToastOptions>): void {
-      const toast = this.toasts.find((t) => t.id === id);
-      if (toast) {
-        Object.assign(toast, options);
-        if (toast.element) {
-          this.updateToastContent(toast);
+      const toastIndex = this.toasts.findIndex((t) => t.id === id);
+      if (toastIndex === -1) return;
+
+      const toast = this.toasts[toastIndex];
+      const oldVariant = toast.variant;
+      Object.assign(toast, options);
+
+      // If variant changed, we need to re-render the toast with new template
+      if (options.variant && options.variant !== oldVariant && toast.element) {
+        this.rerenderToast(toast);
+      } else if (toast.element) {
+        this.updateToastContent(toast);
+      }
+
+      // Restart timer if duration changed or variant changed (new default duration)
+      if (toast.element && (options.duration !== undefined || options.variant)) {
+        if (toast.timeoutId) {
+          clearTimeout(toast.timeoutId);
+          toast.timeoutId = undefined;
+        }
+        const duration = toast.duration ?? this.defaultDuration;
+        if (duration > 0 && !this.expanded) {
+          toast.timeoutId = window.setTimeout(() => {
+            this.close(toast.id);
+          }, duration);
         }
       }
     }
@@ -565,6 +604,71 @@ const {
       if (descEl && toast.description) {
         descEl.textContent = toast.description;
       }
+    }
+
+    /**
+     * Re-render a toast with a new template (for variant changes)
+     */
+    private rerenderToast(toast: ToastState): void {
+      if (!toast.element) return;
+
+      const variant = toast.variant || "default";
+      const template = this.viewport.querySelector(
+        `template[data-toast-template="${variant}"]`,
+      ) as HTMLTemplateElement;
+
+      if (!template) {
+        console.error(`Toast template for variant "${variant}" not found`);
+        return;
+      }
+
+      const clone = template.content.cloneNode(true) as DocumentFragment;
+      const newElement = clone.firstElementChild as HTMLElement;
+
+      if (!newElement) return;
+
+      // Copy over attributes and state from old element
+      newElement.setAttribute("data-toast-id", toast.id);
+      newElement.setAttribute("data-state", "open");
+      if (this.expanded) {
+        newElement.setAttribute("data-expanded", "");
+      }
+
+      // Copy CSS variables
+      const oldStyle = toast.element.style;
+      newElement.style.setProperty("--toast-index", oldStyle.getPropertyValue("--toast-index"));
+      newElement.style.setProperty(
+        "--toast-offset-y",
+        oldStyle.getPropertyValue("--toast-offset-y"),
+      );
+      newElement.style.setProperty("--toast-swipe-movement-x", "0px");
+      newElement.style.setProperty("--toast-swipe-movement-y", "0px");
+
+      // Update title
+      const titleTextEl = newElement.querySelector("[data-toast-title-text]");
+      if (titleTextEl && toast.title) {
+        titleTextEl.textContent = toast.title;
+      }
+
+      // Update description
+      const descEl = newElement.querySelector("[data-toast-description]");
+      if (descEl && toast.description) {
+        descEl.textContent = toast.description;
+      }
+
+      // Setup close button
+      const closeBtn = newElement.querySelector('[data-slot="toast-close"]');
+      closeBtn?.addEventListener("click", () => this.close(toast.id));
+
+      // Setup swipe handlers
+      this.setupSwipeHandlers(newElement, toast);
+
+      // Replace old element with new one
+      toast.element.replaceWith(newElement);
+      toast.element = newElement;
+
+      // Update height
+      toast.height = newElement.offsetHeight;
     }
 
     private updatePositions(): void {
@@ -787,20 +891,27 @@ const {
     }
   }
 
-  const toastInstances = new WeakMap<HTMLElement, StarwindToastManager>();
+  let currentManager: StarwindToastManager | null = null;
 
   const setupToasts = () => {
-    document.querySelectorAll('[data-slot="toast-viewport"]').forEach((viewport) => {
-      const el = viewport as HTMLElement;
-      if (!toastInstances.has(el)) {
-        const manager = new StarwindToastManager(el);
-        toastInstances.set(el, manager);
+    // Find the viewport in the current DOM
+    const viewport = document.querySelector('[data-slot="toast-viewport"]') as HTMLElement | null;
 
-        if (!(window as any).starwindToast) {
-          (window as any).starwindToast = manager;
-        }
-      }
-    });
+    if (!viewport) {
+      // No viewport on this page, clear the global reference
+      currentManager = null;
+      (window as any).starwindToast = null;
+      return;
+    }
+
+    // Check if we already have a manager for this exact element
+    if (currentManager && currentManager.viewport === viewport) {
+      return;
+    }
+
+    // Create new manager for the viewport
+    currentManager = new StarwindToastManager(viewport);
+    (window as any).starwindToast = currentManager;
   };
 
   setupToasts();
