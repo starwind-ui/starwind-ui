@@ -138,6 +138,22 @@
     {
       "name": "select",
       "version": "1.8.1"
+    },
+    {
+      "name": "image",
+      "version": "1.0.0"
+    },
+    {
+      "name": "slider",
+      "version": "1.0.0"
+    },
+    {
+      "name": "toast",
+      "version": "1.0.0"
+    },
+    {
+      "name": "video",
+      "version": "1.0.0"
     }
   ]
 }
