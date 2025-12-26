@@ -6,7 +6,15 @@ import ToastTitle from "./ToastTitle.astro";
 import ToastDescription from "./ToastDescription.astro";
 
 export const toastViewport = tv({
-  base: "starwind-toast-viewport fixed z-50 flex w-80 outline-none data-[position=bottom-center]:bottom-4 data-[position=bottom-center]:left-1/2 data-[position=bottom-center]:-translate-x-1/2 data-[position=bottom-left]:bottom-4 data-[position=bottom-left]:left-4 data-[position=bottom-right]:right-4 data-[position=bottom-right]:bottom-4 data-[position=top-center]:top-4 data-[position=top-center]:left-1/2 data-[position=top-center]:-translate-x-1/2 data-[position=top-left]:top-4 data-[position=top-left]:left-4 data-[position=top-right]:top-4 data-[position=top-right]:right-4",
+  base: [
+    "starwind-toast-viewport fixed z-50 flex w-80 outline-none",
+    "data-[position=bottom-center]:bottom-4 data-[position=bottom-center]:left-1/2 data-[position=bottom-center]:-translate-x-1/2",
+    "data-[position=bottom-left]:bottom-4 data-[position=bottom-left]:left-4",
+    "data-[position=bottom-right]:right-4 data-[position=bottom-right]:bottom-4",
+    "data-[position=top-center]:top-4 data-[position=top-center]:left-1/2 data-[position=top-center]:-translate-x-1/2",
+    "data-[position=top-left]:top-4 data-[position=top-left]:left-4",
+    "data-[position=top-right]:top-4 data-[position=top-right]:right-4",
+  ],
 });
 
 type Position =
@@ -51,31 +59,37 @@ const {
   <!-- Hidden templates for each variant - JS will clone these -->
   <template data-toast-template="default">
     <ToastItem variant="default">
-      <ToastTitle data-toast-title>Title</ToastTitle>
+      <ToastTitle variant="default" data-toast-title>Title</ToastTitle>
       <ToastDescription data-toast-description>Description</ToastDescription>
     </ToastItem>
   </template>
   <template data-toast-template="success">
     <ToastItem variant="success">
-      <ToastTitle data-toast-title>Title</ToastTitle>
+      <ToastTitle variant="success" data-toast-title>Title</ToastTitle>
       <ToastDescription data-toast-description>Description</ToastDescription>
     </ToastItem>
   </template>
   <template data-toast-template="error">
     <ToastItem variant="error">
-      <ToastTitle data-toast-title>Title</ToastTitle>
+      <ToastTitle variant="error" data-toast-title>Title</ToastTitle>
       <ToastDescription data-toast-description>Description</ToastDescription>
     </ToastItem>
   </template>
   <template data-toast-template="warning">
     <ToastItem variant="warning">
-      <ToastTitle data-toast-title>Title</ToastTitle>
+      <ToastTitle variant="warning" data-toast-title>Title</ToastTitle>
       <ToastDescription data-toast-description>Description</ToastDescription>
     </ToastItem>
   </template>
   <template data-toast-template="info">
     <ToastItem variant="info">
-      <ToastTitle data-toast-title>Title</ToastTitle>
+      <ToastTitle variant="info" data-toast-title>Title</ToastTitle>
+      <ToastDescription data-toast-description>Description</ToastDescription>
+    </ToastItem>
+  </template>
+  <template data-toast-template="loading">
+    <ToastItem variant="default">
+      <ToastTitle variant="loading" data-toast-title>Title</ToastTitle>
       <ToastDescription data-toast-description>Description</ToastDescription>
     </ToastItem>
   </template>
@@ -177,7 +191,7 @@ const {
 </style>
 
 <script>
-  type Variant = "default" | "success" | "error" | "warning" | "info";
+  type Variant = "default" | "success" | "error" | "warning" | "info" | "loading";
 
   interface ToastOptions {
     id?: string;
@@ -484,9 +498,10 @@ const {
 
       // Update title
       const titleEl = element.querySelector("[data-toast-title]");
+      const titleTextEl = element.querySelector("[data-toast-title-text]");
       if (titleEl) {
         if (toast.title) {
-          titleEl.textContent = toast.title;
+          if (titleTextEl) titleTextEl.textContent = toast.title;
         } else {
           titleEl.remove();
         }
@@ -544,7 +559,8 @@ const {
       const descEl = toast.element.querySelector("[data-toast-description]");
 
       if (titleEl && toast.title) {
-        titleEl.textContent = toast.title;
+        const titleTextEl = titleEl.querySelector("[data-toast-title-text]");
+        if (titleTextEl) titleTextEl.textContent = toast.title;
       }
       if (descEl && toast.description) {
         descEl.textContent = toast.description;
