@@ -1,0 +1,57 @@
+---
+import WarningIcon from "@tabler/icons/outline/alert-triangle.svg";
+import SuccessIcon from "@tabler/icons/outline/circle-check.svg";
+import ErrorIcon from "@tabler/icons/outline/circle-x.svg";
+import InfoIcon from "@tabler/icons/outline/info-circle.svg";
+import LoaderIcon from "@tabler/icons/outline/loader-2.svg";
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+export const toastTitle = tv({
+  base: "starwind-toast-title flex items-center gap-1 text-sm font-semibold [&_svg]:size-4",
+  variants: {
+    variant: {
+      default: "",
+      success: "[&_svg]:text-success",
+      error: "[&_svg]:text-error",
+      warning: "[&_svg]:text-warning",
+      info: "[&_svg]:text-info",
+      loading: "[&_svg]:text-muted-foreground",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+type Variant = "default" | "success" | "error" | "warning" | "info" | "loading";
+
+type Props = HTMLAttributes<"div"> & {
+  variant?: Variant;
+};
+
+const { class: className, variant = "default", ...rest } = Astro.props;
+
+const icons = {
+  default: null,
+  success: SuccessIcon,
+  error: ErrorIcon,
+  warning: WarningIcon,
+  info: InfoIcon,
+  loading: LoaderIcon,
+};
+
+const Icon = icons[variant];
+---
+
+<div
+  class={toastTitle({ variant, class: className })}
+  data-slot="toast-title"
+  data-toast-title
+  {...rest}
+>
+  <slot name="icon">
+    {Icon && (variant === "loading" ? <Icon class="animate-spin" /> : <Icon />)}
+  </slot>
+  <span data-toast-title-text><slot /></span>
+</div>
