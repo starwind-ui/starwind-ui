@@ -1,0 +1,411 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+export const slider = tv({
+  slots: {
+    root: "starwind-slider relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto",
+    control:
+      "starwind-slider-control relative w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto",
+    track:
+      "starwind-slider-track bg-muted relative overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5",
+    range:
+      "starwind-slider-range absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full",
+    thumb:
+      "starwind-slider-thumb absolute block size-4 shrink-0 rounded-full border bg-white shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[orientation=horizontal]:top-1/2 data-[orientation=horizontal]:-translate-x-1/2 data-[orientation=horizontal]:-translate-y-1/2 data-[orientation=vertical]:left-1/2 data-[orientation=vertical]:-translate-x-1/2 data-[orientation=vertical]:translate-y-1/2",
+  },
+  variants: {
+    variant: {
+      default: {
+        range: "bg-foreground",
+        thumb: "border-foreground ring-outline/50",
+      },
+      primary: {
+        range: "bg-primary",
+        thumb: "border-primary ring-primary/50",
+      },
+      secondary: {
+        range: "bg-secondary",
+        thumb: "border-secondary ring-secondary/50",
+      },
+      info: {
+        range: "bg-info",
+        thumb: "border-info ring-info/50",
+      },
+      success: {
+        range: "bg-success",
+        thumb: "border-success ring-success/50",
+      },
+      warning: {
+        range: "bg-warning",
+        thumb: "border-warning ring-warning/50",
+      },
+      error: {
+        range: "bg-error",
+        thumb: "border-error ring-error/50",
+      },
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+type Variant = "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error";
+
+type Props = HTMLAttributes<"div"> & {
+  defaultValue?: number | number[];
+  value?: number | number[];
+  min?: number;
+  max?: number;
+  step?: number;
+  largeStep?: number;
+  orientation?: "horizontal" | "vertical";
+  disabled?: boolean;
+  name?: string;
+  variant?: Variant;
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
+};
+
+const {
+  class: className,
+  defaultValue = 0,
+  value,
+  min = 0,
+  max = 100,
+  step = 1,
+  largeStep = 10,
+  orientation = "horizontal",
+  disabled = false,
+  name,
+  variant = "default",
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledby,
+  ...rest
+} = Astro.props;
+
+const { root, control, track, range, thumb } = slider({ variant });
+
+const initialValue = value ?? defaultValue;
+const values = Array.isArray(initialValue) ? initialValue : [initialValue];
+const isRange = values.length > 1;
+
+function getPercentage(val: number): number {
+  return ((val - min) / (max - min)) * 100;
+}
+
+const rangeStart = isRange ? getPercentage(Math.min(...values)) : 0;
+const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(values[0]);
+---
+
+<div
+  class={root({ class: className })}
+  data-slot="slider"
+  data-orientation={orientation}
+  data-disabled={disabled ? "" : undefined}
+  role="group"
+  aria-labelledby={ariaLabelledby}
+  data-min={min}
+  data-max={max}
+  data-step={step}
+  data-large-step={largeStep}
+  {...rest}
+>
+  <div class={control()} data-slot="slider-control" data-orientation={orientation}>
+    <div class={track()} data-slot="slider-track" data-orientation={orientation}>
+      <div
+        class={range()}
+        data-slot="slider-range"
+        data-orientation={orientation}
+        style={orientation === "horizontal"
+          ? `left: ${rangeStart}%; width: ${rangeEnd - rangeStart}%`
+          : `bottom: ${rangeStart}%; height: ${rangeEnd - rangeStart}%`}
+      >
+      </div>
+    </div>
+    {
+      values.map((val, index) => (
+        <div
+          class={thumb()}
+          data-slot="slider-thumb"
+          data-index={index}
+          data-orientation={orientation}
+          style={
+            orientation === "horizontal"
+              ? `left: ${getPercentage(val)}%`
+              : `bottom: ${getPercentage(val)}%`
+          }
+          tabindex={disabled ? -1 : 0}
+          role="slider"
+          aria-label={ariaLabel}
+          aria-valuemin={min}
+          aria-valuemax={max}
+          aria-valuenow={val}
+          aria-orientation={orientation}
+          aria-disabled={disabled}
+        >
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={val}
+            name={name ? (isRange ? `${name}[${index}]` : name) : undefined}
+            disabled={disabled}
+            tabindex={-1}
+            aria-hidden="true"
+            class="sr-only"
+          />
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  class StarwindSlider {
+    private root: HTMLElement;
+    private track: HTMLElement;
+    private range: HTMLElement;
+    private thumbs: HTMLElement[];
+    private inputs: HTMLInputElement[];
+    private min: number;
+    private max: number;
+    private step: number;
+    private largeStep: number;
+    private orientation: "horizontal" | "vertical";
+    private disabled: boolean;
+    private values: number[];
+    private activeThumbIndex: number = -1;
+    private dragging: boolean = false;
+
+    constructor(root: HTMLElement) {
+      this.root = root;
+      this.track = root.querySelector('[data-slot="slider-track"]')!;
+      this.range = root.querySelector('[data-slot="slider-range"]')!;
+      this.thumbs = Array.from(root.querySelectorAll('[data-slot="slider-thumb"]'));
+      this.inputs = Array.from(root.querySelectorAll('input[type="range"]'));
+
+      this.min = Number(root.dataset.min) || 0;
+      this.max = Number(root.dataset.max) || 100;
+      this.step = Number(root.dataset.step) || 1;
+      this.largeStep = Number(root.dataset.largeStep) || 10;
+      this.orientation = (root.dataset.orientation as "horizontal" | "vertical") || "horizontal";
+      this.disabled = root.hasAttribute("data-disabled");
+
+      this.values = this.inputs.map((input) => Number(input.value));
+
+      this.init();
+    }
+
+    private init(): void {
+      if (this.disabled) return;
+
+      this.thumbs.forEach((thumb, index) => {
+        thumb.addEventListener("pointerdown", (e) => this.handleThumbPointerDown(e, index));
+        thumb.addEventListener("keydown", (e) => this.handleKeyDown(e, index));
+        thumb.addEventListener("focus", () => this.handleFocus(index));
+        thumb.addEventListener("blur", () => this.handleBlur());
+      });
+
+      this.track.addEventListener("pointerdown", (e) => this.handleTrackClick(e));
+
+      document.addEventListener("pointermove", (e) => this.handlePointerMove(e));
+      document.addEventListener("pointerup", () => this.handlePointerUp());
+    }
+
+    private getPercentage(val: number): number {
+      return ((val - this.min) / (this.max - this.min)) * 100;
+    }
+
+    private getValueFromPosition(clientX: number, clientY: number): number {
+      const rect = this.track.getBoundingClientRect();
+      let percentage: number;
+
+      if (this.orientation === "horizontal") {
+        percentage = (clientX - rect.left) / rect.width;
+      } else {
+        percentage = 1 - (clientY - rect.top) / rect.height;
+      }
+
+      percentage = Math.max(0, Math.min(1, percentage));
+      const rawValue = this.min + percentage * (this.max - this.min);
+      return this.snapToStep(rawValue);
+    }
+
+    private snapToStep(value: number): number {
+      const snapped = Math.round((value - this.min) / this.step) * this.step + this.min;
+      return Math.max(this.min, Math.min(this.max, snapped));
+    }
+
+    private updateValue(index: number, newValue: number): void {
+      const isRange = this.values.length > 1;
+
+      if (isRange) {
+        if (index === 0 && newValue > this.values[1]) {
+          newValue = this.values[1];
+        } else if (index === 1 && newValue < this.values[0]) {
+          newValue = this.values[0];
+        }
+      }
+
+      this.values[index] = newValue;
+      this.inputs[index].value = String(newValue);
+
+      this.updateVisuals();
+      this.dispatchChangeEvent();
+    }
+
+    private updateVisuals(): void {
+      const isRange = this.values.length > 1;
+      const rangeStart = isRange ? this.getPercentage(Math.min(...this.values)) : 0;
+      const rangeEnd = isRange
+        ? this.getPercentage(Math.max(...this.values))
+        : this.getPercentage(this.values[0]);
+
+      if (this.orientation === "horizontal") {
+        this.range.style.left = `${rangeStart}%`;
+        this.range.style.width = `${rangeEnd - rangeStart}%`;
+      } else {
+        this.range.style.bottom = `${rangeStart}%`;
+        this.range.style.height = `${rangeEnd - rangeStart}%`;
+      }
+
+      this.thumbs.forEach((thumb, index) => {
+        const percentage = this.getPercentage(this.values[index]);
+        if (this.orientation === "horizontal") {
+          thumb.style.left = `${percentage}%`;
+        } else {
+          thumb.style.bottom = `${percentage}%`;
+        }
+        thumb.setAttribute("aria-valuenow", String(this.values[index]));
+      });
+    }
+
+    private dispatchChangeEvent(): void {
+      const value = this.values.length === 1 ? this.values[0] : [...this.values];
+      this.root.dispatchEvent(
+        new CustomEvent("slider-change", {
+          detail: { value },
+          bubbles: true,
+        }),
+      );
+    }
+
+    private handleThumbPointerDown(e: PointerEvent, index: number): void {
+      if (this.disabled) return;
+      e.preventDefault();
+      this.activeThumbIndex = index;
+      this.dragging = true;
+      this.root.setAttribute("data-dragging", "");
+      this.thumbs[index].setAttribute("data-dragging", "");
+      this.thumbs[index].focus();
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    }
+
+    private handlePointerMove(e: PointerEvent): void {
+      if (!this.dragging || this.activeThumbIndex === -1) return;
+      const newValue = this.getValueFromPosition(e.clientX, e.clientY);
+      this.updateValue(this.activeThumbIndex, newValue);
+    }
+
+    private handlePointerUp(): void {
+      if (!this.dragging) return;
+      this.dragging = false;
+      this.root.removeAttribute("data-dragging");
+      this.thumbs.forEach((thumb) => thumb.removeAttribute("data-dragging"));
+
+      const value = this.values.length === 1 ? this.values[0] : [...this.values];
+      this.root.dispatchEvent(
+        new CustomEvent("slider-commit", {
+          detail: { value },
+          bubbles: true,
+        }),
+      );
+
+      this.activeThumbIndex = -1;
+    }
+
+    private handleTrackClick(e: PointerEvent): void {
+      if (this.disabled) return;
+      const newValue = this.getValueFromPosition(e.clientX, e.clientY);
+
+      let closestIndex = 0;
+      if (this.values.length > 1) {
+        const distances = this.values.map((v) => Math.abs(v - newValue));
+        closestIndex = distances.indexOf(Math.min(...distances));
+      }
+
+      this.updateValue(closestIndex, newValue);
+      this.thumbs[closestIndex].focus();
+    }
+
+    private handleKeyDown(e: KeyboardEvent, index: number): void {
+      if (this.disabled) return;
+
+      let newValue = this.values[index];
+      const isHorizontal = this.orientation === "horizontal";
+
+      switch (e.key) {
+        case "ArrowRight":
+        case "ArrowUp":
+          e.preventDefault();
+          newValue += isHorizontal === (e.key === "ArrowRight") ? this.step : -this.step;
+          if (e.shiftKey) newValue = this.values[index] + this.largeStep;
+          break;
+        case "ArrowLeft":
+        case "ArrowDown":
+          e.preventDefault();
+          newValue -= isHorizontal === (e.key === "ArrowLeft") ? this.step : -this.step;
+          if (e.shiftKey) newValue = this.values[index] - this.largeStep;
+          break;
+        case "PageUp":
+          e.preventDefault();
+          newValue += this.largeStep;
+          break;
+        case "PageDown":
+          e.preventDefault();
+          newValue -= this.largeStep;
+          break;
+        case "Home":
+          e.preventDefault();
+          newValue = this.min;
+          break;
+        case "End":
+          e.preventDefault();
+          newValue = this.max;
+          break;
+        default:
+          return;
+      }
+
+      newValue = this.snapToStep(newValue);
+      this.updateValue(index, newValue);
+    }
+
+    private handleFocus(index: number): void {
+      this.root.setAttribute("data-focused", "");
+      this.thumbs[index].setAttribute("data-focused", "");
+    }
+
+    private handleBlur(): void {
+      this.root.removeAttribute("data-focused");
+      this.thumbs.forEach((thumb) => thumb.removeAttribute("data-focused"));
+    }
+  }
+
+  const sliderInstances = new WeakMap<HTMLElement, StarwindSlider>();
+
+  function initSliders(): void {
+    document.querySelectorAll<HTMLElement>('[data-slot="slider"]').forEach((slider) => {
+      if (!sliderInstances.has(slider)) {
+        sliderInstances.set(slider, new StarwindSlider(slider));
+      }
+    });
+  }
+
+  initSliders();
+  document.addEventListener("astro:after-swap", initSliders);
+  document.addEventListener("starwind:init", initSliders);
+</script>

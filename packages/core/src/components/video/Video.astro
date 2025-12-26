@@ -1,0 +1,120 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+export const video = tv({
+  base: "starwind-video aspect-video h-auto w-full",
+});
+
+type Props = HTMLAttributes<"video"> &
+  HTMLAttributes<"iframe"> & {
+    src: string;
+    title?: string;
+    autoplay?: boolean;
+    muted?: boolean;
+    loop?: boolean;
+    controls?: boolean;
+    poster?: string;
+  };
+
+const {
+  class: className,
+  src,
+  title = "Video",
+  autoplay = false,
+  muted = false,
+  loop = false,
+  controls = true,
+  poster,
+  ...rest
+} = Astro.props;
+
+/**
+ * Detects the video type from the src URL
+ */
+function getVideoType(url: string): "youtube" | "youtube-shorts" | "native" {
+  if (url.includes("youtube.com/shorts/") || url.includes("youtu.be/shorts/")) {
+    return "youtube-shorts";
+  }
+  if (
+    url.includes("youtube.com") ||
+    url.includes("youtu.be") ||
+    url.includes("youtube-nocookie.com")
+  ) {
+    return "youtube";
+  }
+  return "native";
+}
+
+/**
+ * Extracts YouTube video ID from various URL formats
+ */
+function getYouTubeId(url: string): string | null {
+  const patterns = [
+    /youtube\.com\/shorts\/([^?&]+)/,
+    /youtube\.com\/watch\?v=([^&]+)/,
+    /youtube\.com\/embed\/([^?&]+)/,
+    /youtu\.be\/([^?&]+)/,
+    /youtube-nocookie\.com\/embed\/([^?&]+)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+/**
+ * Builds YouTube embed URL with parameters
+ */
+function buildYouTubeEmbedUrl(videoId: string, isShort: boolean): string {
+  const params = new URLSearchParams();
+  if (autoplay) params.set("autoplay", "1");
+  if (muted) params.set("mute", "1");
+  if (loop) {
+    params.set("loop", "1");
+    params.set("playlist", videoId);
+  }
+  if (!controls) params.set("controls", "0");
+
+  const baseUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
+  const queryString = params.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+}
+
+const videoType = getVideoType(src);
+const youtubeId = videoType !== "native" ? getYouTubeId(src) : null;
+const isShort = videoType === "youtube-shorts";
+const embedUrl = youtubeId ? buildYouTubeEmbedUrl(youtubeId, isShort) : null;
+---
+
+{
+  videoType === "native" || !embedUrl ? (
+    <video
+      class={video({ class: className })}
+      src={src}
+      autoplay={autoplay}
+      muted={muted}
+      loop={loop}
+      controls={controls}
+      poster={poster}
+      data-slot="video"
+      {...rest}
+    >
+      <track kind="captions" />
+    </video>
+  ) : (
+    <iframe
+      class={video({ class: className })}
+      src={embedUrl}
+      title={title}
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+      data-slot="video"
+      data-video-type={isShort ? "youtube-shorts" : "youtube"}
+      {...rest}
+    />
+  )
+}

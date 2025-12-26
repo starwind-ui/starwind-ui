@@ -1,0 +1,25 @@
+---
+import ToastDescription from "./ToastDescription.astro";
+import ToastItem from "./ToastItem.astro";
+import ToastTitle from "./ToastTitle.astro";
+
+type Variant = "default" | "success" | "error" | "warning" | "info" | "loading";
+
+interface Props {
+  variant: Variant;
+}
+
+const { variant } = Astro.props;
+
+// Loading variant uses default item styling but loading title styling
+const itemVariant = variant === "loading" ? "default" : variant;
+---
+
+<template data-toast-template={variant}>
+  <slot>
+    <ToastItem variant={itemVariant}>
+      <ToastTitle variant={variant}>Title</ToastTitle>
+      <ToastDescription>Description</ToastDescription>
+    </ToastItem>
+  </slot>
+</template>

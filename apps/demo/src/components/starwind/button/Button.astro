@@ -3,7 +3,8 @@ import type { HTMLAttributes } from "astro/types";
 import { tv, type VariantProps } from "tailwind-variants";
 
 interface Props
-  extends HTMLAttributes<"button">,
+  extends
+    HTMLAttributes<"button">,
     Omit<HTMLAttributes<"a">, "type">,
     VariantProps<typeof button> {}
 

@@ -1,0 +1,151 @@
+---
+import { Button } from "@/components/starwind/button";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Toast Demo</h2>
+  <div class="flex flex-col gap-6">
+    <!-- Basic Variants -->
+    <div>
+      <p class="text-muted-foreground mb-2 text-sm">Basic Variants</p>
+      <div class="flex flex-wrap gap-2">
+        <Button variant="outline" id="toast-default">Default</Button>
+        <Button variant="outline" id="toast-success">Success</Button>
+        <Button variant="outline" id="toast-error">Error</Button>
+        <Button variant="outline" id="toast-warning">Warning</Button>
+        <Button variant="outline" id="toast-info">Info</Button>
+        <Button variant="outline" id="toast-loading">Loading</Button>
+      </div>
+    </div>
+
+    <!-- Promise Toast -->
+    <div>
+      <p class="text-muted-foreground mb-2 text-sm">Promise Toast (simulates async operation)</p>
+      <div class="flex flex-wrap gap-2">
+        <Button variant="primary" id="toast-promise-success">Promise (Success)</Button>
+        <Button variant="error" id="toast-promise-error">Promise (Error)</Button>
+      </div>
+    </div>
+
+    <!-- Toast Management -->
+    <div>
+      <p class="text-muted-foreground mb-2 text-sm">Toast Management</p>
+      <div class="flex flex-wrap gap-2">
+        <Button variant="outline" id="toast-update">Create & Update</Button>
+        <Button variant="outline" id="toast-dismiss-all">Dismiss All</Button>
+      </div>
+    </div>
+
+    <!-- Multiple Toasts -->
+    <div>
+      <p class="text-muted-foreground mb-2 text-sm">Stress Test</p>
+      <Button variant="default" id="toast-multiple">Add Multiple Toasts</Button>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Import toast directly from toast.ts to avoid bundling .astro files in client code
+  import { toast } from "@/components/starwind/toast";
+
+  // Basic variants
+  document.getElementById("toast-default")?.addEventListener("click", () => {
+    toast("Default Toast");
+  });
+
+  document.getElementById("toast-success")?.addEventListener("click", () => {
+    toast.success("Success!", {
+      description: "Your changes have been saved.",
+    });
+  });
+
+  document.getElementById("toast-error")?.addEventListener("click", () => {
+    toast.error("Error", {
+      description: "Something went wrong.",
+    });
+  });
+
+  document.getElementById("toast-warning")?.addEventListener("click", () => {
+    toast.warning("Warning", {
+      description: "Please review your input.",
+    });
+  });
+
+  document.getElementById("toast-info")?.addEventListener("click", () => {
+    toast.info("Info", {
+      description: "Here's some helpful information.",
+    });
+  });
+
+  document.getElementById("toast-loading")?.addEventListener("click", () => {
+    toast.loading("Loading...", {
+      description: "Please wait while we process your request.",
+    });
+  });
+
+  // Promise toasts
+  document.getElementById("toast-promise-success")?.addEventListener("click", () => {
+    const fakeApiCall = () =>
+      new Promise<{ name: string }>((resolve) => {
+        setTimeout(() => resolve({ name: "John" }), 2000);
+      });
+
+    toast.promise(fakeApiCall(), {
+      loading: { title: "Saving...", description: "Please wait" },
+      success: (data) => ({ title: "Saved!", description: `Welcome, ${data.name}!` }),
+      error: { title: "Error", description: "Failed to save" },
+    });
+  });
+
+  document.getElementById("toast-promise-error")?.addEventListener("click", () => {
+    const fakeApiCall = () =>
+      new Promise<string>((_, reject) => {
+        setTimeout(() => reject(new Error("Network error")), 2000);
+      });
+
+    toast
+      .promise(fakeApiCall(), {
+        loading: "Processing...",
+        success: "Done!",
+        error: (err) => `Failed: ${err.message}`,
+      })
+      .catch(() => {
+        // Catch the error to prevent unhandled rejection
+      });
+  });
+
+  // Toast management
+  document.getElementById("toast-update")?.addEventListener("click", () => {
+    const id = toast("Processing...", { description: "Step 1 of 3" });
+
+    setTimeout(() => {
+      toast.update(id, { title: "Still working...", description: "Step 2 of 3" });
+    }, 1500);
+
+    setTimeout(() => {
+      toast.update(id, {
+        title: "Complete!",
+        description: "All steps finished",
+        variant: "success",
+      });
+    }, 3000);
+  });
+
+  document.getElementById("toast-dismiss-all")?.addEventListener("click", () => {
+    toast.dismiss();
+  });
+
+  // Multiple toasts
+  document.getElementById("toast-multiple")?.addEventListener("click", () => {
+    const variants = ["default", "success", "error", "warning", "info"] as const;
+    variants.forEach((variant, i) => {
+      setTimeout(() => {
+        toast({
+          title: `Toast ${i + 1}`,
+          description: `This is a ${variant} toast.`,
+          variant,
+        });
+      }, i * 300);
+    });
+  });
+</script>

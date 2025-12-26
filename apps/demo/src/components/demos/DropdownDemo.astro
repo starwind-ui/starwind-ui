@@ -1,0 +1,56 @@
+---
+import Copy from "@tabler/icons/outline/copy.svg";
+import Edit from "@tabler/icons/outline/edit.svg";
+
+import { Button } from "@/components/starwind/button";
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+  DropdownSeparator,
+  DropdownTrigger,
+} from "@/components/starwind/dropdown";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Dropdown</h2>
+  <div class="flex items-center gap-4">
+    <Dropdown openOnHover>
+      <DropdownTrigger asChild>
+        <Button>Left</Button>
+      </DropdownTrigger>
+      <DropdownContent>
+        <DropdownLabel>My Account</DropdownLabel>
+        <DropdownSeparator />
+        <DropdownItem as="a" href="/profile">Profile</DropdownItem>
+        <DropdownItem>Settings</DropdownItem>
+        <DropdownSeparator />
+        <DropdownItem>Help</DropdownItem>
+        <DropdownItem disabled>Sign out</DropdownItem>
+      </DropdownContent>
+    </Dropdown>
+
+    <Dropdown>
+      <DropdownTrigger asChild>
+        <Button>Right</Button>
+      </DropdownTrigger>
+      <DropdownContent align="end" side="bottom">
+        <DropdownLabel>Actions</DropdownLabel>
+        <DropdownSeparator />
+        <DropdownItem>
+          <Copy />
+          Copy
+        </DropdownItem>
+        <DropdownItem>
+          <Edit />
+          Edit
+        </DropdownItem>
+        <DropdownSeparator />
+        <DropdownLabel>Danger Zone</DropdownLabel>
+        <DropdownItem inset>Archive</DropdownItem>
+        <DropdownItem inset disabled>Delete</DropdownItem>
+      </DropdownContent>
+    </Dropdown>
+  </div>
+</section>

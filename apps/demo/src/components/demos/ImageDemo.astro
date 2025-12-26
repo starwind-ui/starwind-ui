@@ -1,0 +1,22 @@
+---
+import pricingImage from "@/assets/images/pricing-9.jpg";
+import { Image } from "@/components/starwind/image";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Image Demo</h2>
+  <div class="flex flex-col gap-6">
+    <div>
+      <p class="text-muted-foreground mb-2 text-sm">Imported Image</p>
+      <Image src={pricingImage} alt="Pricing illustration" class="rounded-lg" />
+    </div>
+    <div>
+      <p class="text-muted-foreground mb-2 text-sm">Remote URL</p>
+      <Image
+        src="https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80"
+        alt="Gray concrete building"
+        class="rounded-lg"
+      />
+    </div>
+  </div>
+</section>

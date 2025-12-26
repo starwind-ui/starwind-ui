@@ -1,0 +1,44 @@
+---
+import ProgressExample from "@/components/forms/ProgressExample.astro";
+import { Progress } from "@/components/starwind/progress";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Progress</h2>
+  <div class="flex flex-col gap-6">
+    <div class="space-y-4">
+      <div class="flex items-center space-x-3">
+        <span class="w-20 text-sm">Primary:</span>
+        <Progress value={50} variant="primary" />
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="w-20 text-sm">Secondary:</span>
+        <Progress value={60} variant="secondary" />
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="w-20 text-sm">Default:</span>
+        <Progress value={70} variant="default" />
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="w-20 text-sm">Info:</span>
+        <Progress value={80} variant="info" />
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="w-20 text-sm">Success:</span>
+        <Progress value={90} variant="success" />
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="w-20 text-sm">Warning:</span>
+        <Progress value={40} variant="warning" />
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="w-20 text-sm">Error:</span>
+        <Progress value={30} variant="error" />
+      </div>
+    </div>
+
+    <div class="bg-card mt-4 rounded-lg border p-4">
+      <ProgressExample />
+    </div>
+  </div>
+</section>

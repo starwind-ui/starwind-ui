@@ -1,5 +1,6 @@
 ---
 import Nav from "@/components/nav/Nav.astro";
+import { Toaster } from "@/components/starwind/toast";
 
 interface Props {
   title: string;
@@ -65,11 +66,12 @@ import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-nor
     </script>
   </head>
 
-  <body class="min-h-[100lvh]">
+  <body class="min-h-lvh">
     <Nav />
     <main>
       <slot />
     </main>
+    <Toaster position="bottom-right" />
   </body>
 </html>
 

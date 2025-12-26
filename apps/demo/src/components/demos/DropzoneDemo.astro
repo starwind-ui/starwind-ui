@@ -1,0 +1,24 @@
+---
+import { ButtonVariants } from "@/components/starwind/button";
+import {
+  Dropzone,
+  DropzoneFilesList,
+  DropzoneLoadingIndicator,
+  DropzoneUploadIndicator,
+} from "@/components/starwind/dropzone";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <div class={ButtonVariants.button({ variant: "primary", size: "lg" })}>Variant Usage Example</div>
+  <h2 class="mb-4 text-2xl font-bold">File Input</h2>
+  <div class="flex flex-col gap-6">
+    <Dropzone />
+    <Dropzone multiple>
+      <DropzoneUploadIndicator
+        ><span class="my-6 text-lg"> Your specific message </span></DropzoneUploadIndicator
+      >
+      <DropzoneLoadingIndicator />
+      <DropzoneFilesList />
+    </Dropzone>
+  </div>
+</section>

@@ -51,6 +51,7 @@ const { type = "single", defaultValue, class: className, ...rest } = Astro.props
     private items: AccordionItem[];
     private itemsByValue: Map<string, AccordionItem>;
     private accordionId: string;
+    private isInitialized: boolean = false;
 
     /**
      * Creates a new AccordionHandler instance
@@ -68,6 +69,7 @@ const { type = "single", defaultValue, class: className, ...rest } = Astro.props
 
       this.setupItems();
       this.setInitialState();
+      this.isInitialized = true;
     }
 
     /**
@@ -217,7 +219,10 @@ const { type = "single", defaultValue, class: className, ...rest } = Astro.props
     private setItemState(item: AccordionItem, isOpen: boolean): void {
       const state: AccordionState = isOpen ? "open" : "closed";
 
-      if (isOpen) {
+      // Skip animation during initial setup, enable for subsequent toggles
+      if (!this.isInitialized) {
+        item.content.style.setProperty("animation", "none");
+      } else {
         item.content.style.removeProperty("animation");
       }
 

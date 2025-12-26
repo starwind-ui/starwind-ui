@@ -1,0 +1,54 @@
+---
+import X from "@tabler/icons/outline/x.svg";
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+export const toastItem = tv({
+  base: "starwind-toast bg-popover text-popover-foreground pointer-events-auto absolute inset-x-0 bottom-0 flex w-full origin-bottom flex-col gap-1 overflow-hidden rounded-lg border bg-clip-padding p-4 pr-10 shadow-lg transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-limited:pointer-events-none data-limited:opacity-0",
+  variants: {
+    variant: {
+      default: "border-border",
+      success: "border-success/80",
+      error: "border-error/80",
+      warning: "border-warning/80",
+      info: "border-info/80",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+type Variant = "default" | "success" | "error" | "warning" | "info";
+
+type Props = HTMLAttributes<"div"> & {
+  variant?: Variant;
+};
+
+const { class: className, variant = "default", ...rest } = Astro.props;
+---
+
+<div
+  class={toastItem({ variant, class: className })}
+  data-slot="toast"
+  data-variant={variant}
+  data-state="open"
+  role="dialog"
+  aria-modal="false"
+  {...rest}
+>
+  <div
+    class="starwind-toast-content grid gap-1 transition-opacity duration-200 data-behind:opacity-0 data-expanded:opacity-100"
+    data-slot="toast-content"
+  >
+    <slot />
+  </div>
+  <button
+    type="button"
+    class="starwind-toast-close text-muted-foreground hover:text-foreground absolute top-2 right-2 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none"
+    data-slot="toast-close"
+    aria-label="Close notification"
+  >
+    <X class="size-4" />
+  </button>
+</div>

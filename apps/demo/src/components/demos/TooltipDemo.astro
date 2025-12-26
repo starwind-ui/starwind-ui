@@ -1,0 +1,35 @@
+---
+import { Button } from "@/components/starwind/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/tooltip";
+---
+
+<section class="mx-auto mt-10 flex max-w-lg flex-wrap items-center gap-2">
+  <h2 class="mb-4 w-full text-2xl font-bold">Tooltip</h2>
+  <Tooltip disableHoverableContent>
+    <TooltipTrigger>
+      <Button variant="outline">Left Tooltip</Button>
+    </TooltipTrigger>
+    <TooltipContent side="left" avoidCollisions={false}>test</TooltipContent>
+  </Tooltip>
+
+  <Tooltip>
+    <TooltipTrigger>
+      <Button variant="outline">Top Tooltip</Button>
+    </TooltipTrigger>
+    <TooltipContent side="top">test</TooltipContent>
+  </Tooltip>
+
+  <Tooltip>
+    <TooltipTrigger>
+      <Button variant="outline">Bottom Tooltip</Button>
+    </TooltipTrigger>
+    <TooltipContent side="bottom">test</TooltipContent>
+  </Tooltip>
+
+  <Tooltip>
+    <TooltipTrigger>
+      <Button variant="outline">Right Tooltip</Button>
+    </TooltipTrigger>
+    <TooltipContent side="right">test</TooltipContent>
+  </Tooltip>
+</section>

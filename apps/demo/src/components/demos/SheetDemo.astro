@@ -1,0 +1,223 @@
+---
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/starwind/accordion";
+import { Button } from "@/components/starwind/button";
+import { Input } from "@/components/starwind/input";
+import { Label } from "@/components/starwind/label";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/starwind/sheet";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Sheet Demo</h2>
+  <div class="grid grid-cols-2 gap-4">
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Top Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="top">
+        <SheetHeader>
+          <SheetTitle>Top Sheet</SheetTitle>
+          <SheetDescription> This sheet opens from the top of the screen. </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 px-4">
+          <div class="grid gap-3">
+            <Label for="top-sheet-name">Name</Label>
+            <Input id="top-sheet-name" value="Pedro Duarte" />
+          </div>
+          <div class="grid gap-3">
+            <Label for="top-sheet-username">Username</Label>
+            <Input id="top-sheet-username" value="@peduarte" />
+          </div>
+        </div>
+        <SheetFooter>
+          <Button variant="default">Save changes</Button>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Right Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="right">
+        <SheetHeader>
+          <SheetTitle>Right Sheet</SheetTitle>
+          <SheetDescription> This sheet opens from the right side of the screen. </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 px-4">
+          <div class="grid gap-3">
+            <Label for="right-sheet-name">Name</Label>
+            <Input id="right-sheet-name" value="Pedro Duarte" />
+          </div>
+          <div class="grid gap-3">
+            <Label for="right-sheet-username">Username</Label>
+            <Input id="right-sheet-username" value="@peduarte" />
+          </div>
+        </div>
+        <SheetFooter>
+          <Button variant="default">Save changes</Button>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Bottom Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="bottom">
+        <SheetHeader>
+          <SheetTitle>Bottom Sheet</SheetTitle>
+          <SheetDescription> This sheet opens from the bottom of the screen. </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 px-4">
+          <div class="grid gap-3">
+            <Label for="bottom-sheet-name">Name</Label>
+            <Input id="bottom-sheet-name" value="Pedro Duarte" />
+          </div>
+          <div class="grid gap-3">
+            <Label for="bottom-sheet-username">Username</Label>
+            <Input id="bottom-sheet-username" value="@peduarte" />
+          </div>
+        </div>
+        <SheetFooter>
+          <Button variant="default">Save changes</Button>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Left Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="left">
+        <SheetHeader>
+          <SheetTitle>Left Sheet</SheetTitle>
+          <SheetDescription> This sheet opens from the left side of the screen. </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 px-4">
+          <div class="grid gap-3">
+            <Label for="left-sheet-name">Name</Label>
+            <Input id="left-sheet-name" value="Pedro Duarte" />
+          </div>
+          <div class="grid gap-3">
+            <Label for="left-sheet-username">Username</Label>
+            <Input id="left-sheet-username" value="@peduarte" />
+          </div>
+        </div>
+        <SheetFooter>
+          <Button variant="default">Save changes</Button>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Accordion Menu</Button>
+      </SheetTrigger>
+      <SheetContent side="right" class="flex flex-col">
+        <SheetHeader>
+          <SheetTitle>Menu</SheetTitle>
+          <SheetDescription>Navigate through our site</SheetDescription>
+        </SheetHeader>
+        <nav class="flex flex-1 flex-col gap-2 px-4">
+          <a
+            href="#"
+            class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium transition-colors"
+          >
+            Home
+          </a>
+          <a
+            href="#"
+            class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium transition-colors"
+          >
+            About
+          </a>
+          <Accordion type="single" class="w-full space-y-2">
+            <AccordionItem value="products" class="border-none">
+              <AccordionTrigger
+                class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium hover:no-underline"
+              >
+                Products
+              </AccordionTrigger>
+              <AccordionContent>
+                <div class="flex flex-col gap-1 pl-4">
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    All Products
+                  </a>
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    Featured
+                  </a>
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    New Arrivals
+                  </a>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="services" class="border-none">
+              <AccordionTrigger
+                class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium hover:no-underline"
+              >
+                Services
+              </AccordionTrigger>
+              <AccordionContent>
+                <div class="flex flex-col gap-1 pl-4">
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    Consulting
+                  </a>
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    Development
+                  </a>
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    Support
+                  </a>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          <a
+            href="#"
+            class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium transition-colors"
+          >
+            Blog
+          </a>
+          <a
+            href="#"
+            class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium transition-colors"
+          >
+            Contact
+          </a>
+        </nav>
+        <SheetFooter class="mt-auto">
+          <SheetClose asChild>
+            <Button variant="outline" class="w-full">Close Menu</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  </div>
+</section>
