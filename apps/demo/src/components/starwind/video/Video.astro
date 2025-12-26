@@ -90,7 +90,7 @@ const embedUrl = youtubeId ? buildYouTubeEmbedUrl(youtubeId, isShort) : null;
 ---
 
 {
-  videoType === "native" ? (
+  videoType === "native" || !embedUrl ? (
     <video
       class={video({ class: className })}
       src={src}
