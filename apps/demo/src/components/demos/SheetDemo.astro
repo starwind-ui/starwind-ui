@@ -1,4 +1,10 @@
 ---
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/starwind/accordion";
 import { Button } from "@/components/starwind/button";
 import { Input } from "@/components/starwind/input";
 import { Label } from "@/components/starwind/label";
@@ -124,6 +130,91 @@ import {
           <Button variant="default">Save changes</Button>
           <SheetClose asChild>
             <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Accordion Menu</Button>
+      </SheetTrigger>
+      <SheetContent side="right" class="flex flex-col">
+        <SheetHeader>
+          <SheetTitle>Menu</SheetTitle>
+          <SheetDescription>Navigate through our site</SheetDescription>
+        </SheetHeader>
+        <nav class="flex flex-1 flex-col gap-2 px-4">
+          <a
+            href="#"
+            class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium transition-colors"
+          >
+            Home
+          </a>
+          <a
+            href="#"
+            class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium transition-colors"
+          >
+            About
+          </a>
+          <Accordion type="single" class="w-full space-y-2">
+            <AccordionItem value="products" class="border-none">
+              <AccordionTrigger
+                class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium hover:no-underline"
+              >
+                Products
+              </AccordionTrigger>
+              <AccordionContent>
+                <div class="flex flex-col gap-1 pl-4">
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    All Products
+                  </a>
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    Featured
+                  </a>
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    New Arrivals
+                  </a>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="services" class="border-none">
+              <AccordionTrigger
+                class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium hover:no-underline"
+              >
+                Services
+              </AccordionTrigger>
+              <AccordionContent>
+                <div class="flex flex-col gap-1 pl-4">
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    Consulting
+                  </a>
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    Development
+                  </a>
+                  <a href="#" class="hover:bg-muted rounded-md px-3 py-2 text-sm transition-colors">
+                    Support
+                  </a>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          <a
+            href="#"
+            class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium transition-colors"
+          >
+            Blog
+          </a>
+          <a
+            href="#"
+            class="hover:bg-muted rounded-md px-3 py-2 text-sm font-medium transition-colors"
+          >
+            Contact
+          </a>
+        </nav>
+        <SheetFooter class="mt-auto">
+          <SheetClose asChild>
+            <Button variant="outline" class="w-full">Close Menu</Button>
           </SheetClose>
         </SheetFooter>
       </SheetContent>
