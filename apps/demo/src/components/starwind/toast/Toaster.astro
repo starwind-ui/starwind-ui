@@ -2,9 +2,7 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
-import ToastDescription from "./ToastDescription.astro";
-import ToastItem from "./ToastItem.astro";
-import ToastTitle from "./ToastTitle.astro";
+import ToastTemplate from "./ToastTemplate.astro";
 
 export const toastViewport = tv({
   base: [
@@ -58,46 +56,18 @@ const {
   {...rest}
 >
   <!-- Hidden templates for each variant - JS will clone these -->
-  <template data-toast-template="default">
-    <ToastItem variant="default">
-      <ToastTitle variant="default" data-toast-title>Title</ToastTitle>
-      <ToastDescription data-toast-description>Description</ToastDescription>
-    </ToastItem>
-  </template>
-  <template data-toast-template="success">
-    <ToastItem variant="success">
-      <ToastTitle variant="success" data-toast-title>Title</ToastTitle>
-      <ToastDescription data-toast-description>Description</ToastDescription>
-    </ToastItem>
-  </template>
-  <template data-toast-template="error">
-    <ToastItem variant="error">
-      <ToastTitle variant="error" data-toast-title>Title</ToastTitle>
-      <ToastDescription data-toast-description>Description</ToastDescription>
-    </ToastItem>
-  </template>
-  <template data-toast-template="warning">
-    <ToastItem variant="warning">
-      <ToastTitle variant="warning" data-toast-title>Title</ToastTitle>
-      <ToastDescription data-toast-description>Description</ToastDescription>
-    </ToastItem>
-  </template>
-  <template data-toast-template="info">
-    <ToastItem variant="info">
-      <ToastTitle variant="info" data-toast-title>Title</ToastTitle>
-      <ToastDescription data-toast-description>Description</ToastDescription>
-    </ToastItem>
-  </template>
-  <template data-toast-template="loading">
-    <ToastItem variant="default">
-      <ToastTitle variant="loading" data-toast-title>Title</ToastTitle>
-      <ToastDescription data-toast-description>Description</ToastDescription>
-    </ToastItem>
-  </template>
+  <slot>
+    <ToastTemplate variant="default" />
+    <ToastTemplate variant="success" />
+    <ToastTemplate variant="error" />
+    <ToastTemplate variant="warning" />
+    <ToastTemplate variant="info" />
+    <ToastTemplate variant="loading" />
+  </slot>
 </div>
 
-<style>
-  [data-slot="toast-viewport"] [data-slot="toast"] {
+<style is:global>
+  .starwind-toast-viewport [data-slot="toast"] {
     --scale: max(0.9, 1 - (var(--toast-index, 0) * 0.05));
 
     z-index: calc(1000 - var(--toast-index, 0));
@@ -106,11 +76,11 @@ const {
       scale(var(--scale));
   }
 
-  [data-slot="toast-viewport"] [data-slot="toast"][data-swiping] {
+  .starwind-toast-viewport [data-slot="toast"][data-swiping] {
     transition: none;
   }
 
-  [data-slot="toast-viewport"] [data-slot="toast"][data-expanded] {
+  .starwind-toast-viewport [data-slot="toast"][data-expanded] {
     --scale: 1;
 
     transform: translateX(var(--toast-swipe-movement-x, 0px))
@@ -118,33 +88,30 @@ const {
   }
 
   /* Exit animations by swipe direction */
-  [data-slot="toast-viewport"]
-    [data-slot="toast"][data-state="closed"][data-swipe-direction="down"] {
+  .starwind-toast-viewport [data-slot="toast"][data-state="closed"][data-swipe-direction="down"] {
     transform: translateY(calc(var(--toast-swipe-movement-y, 0px) + 150%));
     opacity: 0;
   }
 
-  [data-slot="toast-viewport"] [data-slot="toast"][data-state="closed"][data-swipe-direction="up"] {
+  .starwind-toast-viewport [data-slot="toast"][data-state="closed"][data-swipe-direction="up"] {
     transform: translateY(calc(var(--toast-swipe-movement-y, 0px) - 150%));
     opacity: 0;
   }
 
-  [data-slot="toast-viewport"]
-    [data-slot="toast"][data-state="closed"][data-swipe-direction="right"] {
+  .starwind-toast-viewport [data-slot="toast"][data-state="closed"][data-swipe-direction="right"] {
     transform: translateX(calc(var(--toast-swipe-movement-x, 0px) + 150%))
       translateY(calc(var(--toast-offset-y, 0px) * -1));
     opacity: 0;
   }
 
-  [data-slot="toast-viewport"]
-    [data-slot="toast"][data-state="closed"][data-swipe-direction="left"] {
+  .starwind-toast-viewport [data-slot="toast"][data-state="closed"][data-swipe-direction="left"] {
     transform: translateX(calc(var(--toast-swipe-movement-x, 0px) - 150%))
       translateY(calc(var(--toast-offset-y, 0px) * -1));
     opacity: 0;
   }
 
   /* Position-specific overrides for top positions */
-  [data-slot="toast-viewport"][data-position^="top"] [data-slot="toast"] {
+  .starwind-toast-viewport[data-position^="top"] [data-slot="toast"] {
     top: 0;
     bottom: auto;
     transform-origin: top center;
@@ -153,29 +120,29 @@ const {
       scale(var(--scale));
   }
 
-  [data-slot="toast-viewport"][data-position^="top"] [data-slot="toast"][data-expanded] {
+  .starwind-toast-viewport[data-position^="top"] [data-slot="toast"][data-expanded] {
     transform: translateX(var(--toast-swipe-movement-x, 0px))
       translateY(calc(var(--toast-swipe-movement-y, 0px) + var(--toast-offset-y, 0px)));
   }
 
-  [data-slot="toast-viewport"][data-position^="top"]
+  .starwind-toast-viewport[data-position^="top"]
     [data-slot="toast"][data-state="closed"][data-swipe-direction="up"] {
     transform: translateY(calc(var(--toast-swipe-movement-y, 0px) - 150%));
   }
 
-  [data-slot="toast-viewport"][data-position^="top"]
+  .starwind-toast-viewport[data-position^="top"]
     [data-slot="toast"][data-state="closed"][data-swipe-direction="down"] {
     transform: translateY(calc(var(--toast-swipe-movement-y, 0px) + 150%));
   }
 
-  [data-slot="toast-viewport"][data-position^="top"]
+  .starwind-toast-viewport[data-position^="top"]
     [data-slot="toast"][data-state="closed"][data-swipe-direction="left"] {
     transform: translateX(calc(var(--toast-swipe-movement-x, 0px) - 150%))
       translateY(var(--toast-offset-y, 0px));
     opacity: 0;
   }
 
-  [data-slot="toast-viewport"][data-position^="top"]
+  .starwind-toast-viewport[data-position^="top"]
     [data-slot="toast"][data-state="closed"][data-swipe-direction="right"] {
     transform: translateX(calc(var(--toast-swipe-movement-x, 0px) + 150%))
       translateY(var(--toast-offset-y, 0px));
@@ -183,26 +150,25 @@ const {
   }
 
   /* Entry animation - starting state (must come after base transforms) */
-  [data-slot="toast-viewport"] [data-slot="toast"][data-starting-style] {
+  .starwind-toast-viewport [data-slot="toast"][data-starting-style] {
     transform: translateY(150%);
     opacity: 0;
   }
 
   /* Default exit animation - slide down (for non-swipe closes) */
-  [data-slot="toast-viewport"]
-    [data-slot="toast"][data-state="closed"]:not([data-swipe-direction]) {
+  .starwind-toast-viewport [data-slot="toast"][data-state="closed"]:not([data-swipe-direction]) {
     transform: translateY(150%);
     opacity: 0;
   }
 
   /* Top position entry - slide from top */
-  [data-slot="toast-viewport"][data-position^="top"] [data-slot="toast"][data-starting-style] {
+  .starwind-toast-viewport[data-position^="top"] [data-slot="toast"][data-starting-style] {
     transform: translateY(-150%);
     opacity: 0;
   }
 
   /* Top position default exit - slide up */
-  [data-slot="toast-viewport"][data-position^="top"]
+  .starwind-toast-viewport[data-position^="top"]
     [data-slot="toast"][data-state="closed"]:not([data-swipe-direction]) {
     transform: translateY(-150%);
     opacity: 0;
@@ -918,7 +884,7 @@ const {
 
   const setupToasts = () => {
     // Find the viewport in the current DOM
-    const viewport = document.querySelector('[data-slot="toast-viewport"]') as HTMLElement | null;
+    const viewport = document.querySelector(".starwind-toast-viewport") as HTMLElement | null;
 
     if (!viewport) {
       // No viewport on this page, clear the global reference

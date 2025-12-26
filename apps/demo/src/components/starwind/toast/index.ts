@@ -1,32 +1,29 @@
-// Re-export types only (not the toast function itself to avoid client bundle issues)
 import type { PromiseOptions, PromiseStateOption, ToastOptions, Variant } from "./toast-manager";
-import ToastDescription, { toastDescription } from "./ToastDescription.astro";
-import Toaster, { toastViewport } from "./Toaster.astro";
-import ToastItem, { toastItem } from "./ToastItem.astro";
-import ToastTitle, { toastTitle } from "./ToastTitle.astro";
-
-const ToastVariants = {
-  viewport: toastViewport,
-  item: toastItem,
-  title: toastTitle,
-  description: toastDescription,
-};
+import { toast } from "./toast-manager";
+import ToastDescription from "./ToastDescription.astro";
+import Toaster from "./Toaster.astro";
+import ToastItem from "./ToastItem.astro";
+import ToastTemplate from "./ToastTemplate.astro";
+import ToastTitle from "./ToastTitle.astro";
 
 export {
   type PromiseOptions,
   type PromiseStateOption,
+  toast,
   ToastDescription,
   Toaster,
   ToastItem,
   type ToastOptions,
+  ToastTemplate,
   ToastTitle,
-  ToastVariants,
   type Variant,
 };
 
 export default {
+  Manager: toast,
   Viewport: Toaster,
   Item: ToastItem,
   Title: ToastTitle,
   Description: ToastDescription,
+  Template: ToastTemplate,
 };
