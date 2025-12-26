@@ -3,9 +3,7 @@ import type { HTMLAttributes } from "astro/types";
 import { tv, type VariantProps } from "tailwind-variants";
 
 interface Props
-  extends HTMLAttributes<"div">,
-    Omit<HTMLAttributes<"a">, "type">,
-    VariantProps<typeof badge> {}
+  extends HTMLAttributes<"div">, Omit<HTMLAttributes<"a">, "type">, VariantProps<typeof badge> {}
 
 export const badge = tv({
   base: [
