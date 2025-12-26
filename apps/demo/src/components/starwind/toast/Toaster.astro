@@ -231,6 +231,7 @@ const {
     element?: HTMLElement;
     timeoutId?: number;
     height?: number;
+    closing?: boolean;
     // Swipe state
     swiping?: boolean;
     swipeX?: number;
@@ -485,12 +486,16 @@ const {
      * Close a toast
      */
     public close(id: string): void {
-      const index = this.toasts.findIndex((t) => t.id === id);
-      if (index === -1) return;
+      const toast = this.toasts.find((t) => t.id === id);
+      if (!toast) return;
 
-      const toast = this.toasts[index];
+      // Guard against closing a toast that's already closing
+      if (toast.closing) return;
+      toast.closing = true;
+
       if (toast.timeoutId) {
         clearTimeout(toast.timeoutId);
+        toast.timeoutId = undefined;
       }
 
       toast.onClose?.();
@@ -502,9 +507,19 @@ const {
           toast.element?.remove();
           toast.onRemove?.();
 
-          this.toasts.splice(index, 1);
+          // Find current index (may have changed since close was called)
+          const currentIndex = this.toasts.findIndex((t) => t.id === id);
+          if (currentIndex !== -1) {
+            this.toasts.splice(currentIndex, 1);
+          }
           this.updatePositions();
         }, 200);
+      } else {
+        // No element, just remove from array immediately
+        const index = this.toasts.findIndex((t) => t.id === id);
+        if (index !== -1) {
+          this.toasts.splice(index, 1);
+        }
       }
     }
 
