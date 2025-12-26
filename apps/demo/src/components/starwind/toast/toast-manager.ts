@@ -81,7 +81,7 @@ interface ToastManager {
  */
 function getManager(): ToastManager | null {
   if (typeof window === "undefined") return null;
-  return (window as any).starwindToast as ToastManager | null;
+  return (window as any).__starwind__.toast as ToastManager | null;
 }
 
 /**
