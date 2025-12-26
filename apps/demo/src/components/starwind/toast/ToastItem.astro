@@ -33,9 +33,8 @@ const { class: className, variant = "default", ...rest } = Astro.props;
   data-slot="toast"
   data-variant={variant}
   data-state="open"
-  role="status"
-  aria-live="polite"
-  aria-atomic="true"
+  role="dialog"
+  aria-modal="false"
   {...rest}
 >
   <div
