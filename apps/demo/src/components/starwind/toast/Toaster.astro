@@ -856,6 +856,14 @@ const {
       const isLongPress = pressDuration >= LONG_PRESS_DURATION;
       const didMove = this.activeSwipe.didMove;
 
+      // Check if pointer is outside viewport bounds
+      const rect = this.viewport.getBoundingClientRect();
+      const isOutsideViewport =
+        e.clientX < rect.left ||
+        e.clientX > rect.right ||
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom;
+
       if (shouldClose && direction) {
         toast.swipeDirection = direction;
         toast.element?.setAttribute("data-swipe-direction", direction);
@@ -867,8 +875,8 @@ const {
         toast.element?.style.setProperty("--toast-swipe-movement-x", "0px");
         toast.element?.style.setProperty("--toast-swipe-movement-y", "0px");
 
-        // If short tap without movement, collapse toasts
-        if (!isLongPress && !didMove && this.expandedByTouch) {
+        // Collapse if: short tap without movement, OR pointer ended outside viewport
+        if ((!isLongPress && !didMove && this.expandedByTouch) || isOutsideViewport) {
           this.expandedByTouch = false;
           this.expanded = false;
           this.updateExpanded();
