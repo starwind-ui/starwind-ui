@@ -236,7 +236,7 @@ const {
     constructor(viewport: HTMLElement) {
       this.viewport = viewport;
       this.limit = Number(viewport.dataset.limit) || 3;
-      this.defaultDuration = Number(viewport.dataset.duration) || 10000;
+      this.defaultDuration = Number(viewport.dataset.duration) || 5000;
 
       // Determine swipe directions based on position
       const position = viewport.dataset.position || "bottom-right";
