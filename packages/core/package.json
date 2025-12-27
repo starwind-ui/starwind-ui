@@ -41,8 +41,8 @@
   },
   "devDependencies": {
     "astro": "^5.11.0",
-    "fs-extra": "^11.3.0",
-    "glob": "^11.0.3",
+    "fs-extra": "^11.3.3",
+    "glob": "^13.0.0",
     "tailwindcss": "^4.1.11",
     "tsup": "^8.5.0"
   }
