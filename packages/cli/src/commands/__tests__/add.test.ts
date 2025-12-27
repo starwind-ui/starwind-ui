@@ -27,11 +27,13 @@ const mockIsCancel = vi.mocked(clackPrompts.isCancel);
 const mockLog = {
   error: vi.fn(),
   warn: vi.fn(),
+  warning: vi.fn(),
   info: vi.fn(),
   success: vi.fn(),
   message: vi.fn(),
+  step: vi.fn(),
 };
-vi.mocked(clackPrompts).log = mockLog;
+vi.mocked(clackPrompts).log = mockLog as typeof clackPrompts.log;
 
 const mockFileExists = vi.mocked(fs.fileExists);
 const mockUpdateConfig = vi.mocked(config.updateConfig);
@@ -324,7 +326,7 @@ describe("add command", () => {
       try {
         await add();
       } catch (error) {
-        expect(error.message).toBe("process.exit called");
+        expect((error as Error).message).toBe("process.exit called");
       }
 
       expect(mockCancel).toHaveBeenCalledWith("Operation cancelled");
@@ -427,7 +429,7 @@ describe("add command", () => {
       try {
         await add(["button"]);
       } catch (error) {
-        expect(error.message).toBe("process.exit called");
+        expect((error as Error).message).toBe("process.exit called");
       }
 
       expect(mockLog.error).toHaveBeenCalledWith("Failed to update config: Config write failed");

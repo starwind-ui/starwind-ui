@@ -188,21 +188,6 @@ export async function add(components?: string[], options?: { all?: boolean }) {
       return process.exit(0);
     }
 
-    // If we only have registry components, we still need to show the final summary
-    // (removed early return to ensure summary is always shown)
-
-    // confirm installation
-    // const confirmed = await p.confirm({
-    // 	message: `Install ${componentsToInstall
-    // 		.map((comp) => highlighter.info(comp))
-    // 		.join(", ")} ${componentsToInstall.length > 1 ? "components" : "component"}?`,
-    // });
-
-    // if (!confirmed || p.isCancel(confirmed)) {
-    // 	p.cancel("Operation cancelled");
-    // 	return process.exit(0);
-    // }
-
     const results = {
       installed: [] as InstallResult[],
       skipped: [] as InstallResult[],
@@ -287,7 +272,7 @@ export async function add(components?: string[], options?: { all?: boolean }) {
     if (results.failed.length > 0) {
       p.log.error(
         `${highlighter.error("Failed to install components:")}\n${results.failed
-          .map((r) => `  ${r.name} - ${r.error}`)
+          .map((r) => `  ${r.name} - ${r.status === "failed" ? r.error : "Unknown error"}`)
           .join("\n")}`,
       );
     }

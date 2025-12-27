@@ -10,13 +10,28 @@ import { PATHS } from "./constants.js";
 import { highlighter } from "./highlighter.js";
 import { getComponent, getRegistry } from "./registry.js";
 
-export type InstallResult = {
-  status: "installed" | "skipped" | "failed";
+type BaseInstallResult = {
   name: string;
-  version?: string;
-  error?: string;
   dependencyResults?: InstallResult[];
 };
+
+type InstalledResult = BaseInstallResult & {
+  status: "installed";
+  version: string;
+};
+
+type SkippedResult = BaseInstallResult & {
+  status: "skipped";
+  version: string;
+};
+
+type FailedResult = BaseInstallResult & {
+  status: "failed";
+  version?: string;
+  error: string;
+};
+
+export type InstallResult = InstalledResult | SkippedResult | FailedResult;
 
 export interface RemoveResult {
   name: string;
@@ -50,7 +65,7 @@ export async function copyComponent(name: string, overwrite = false): Promise<In
     return {
       status: "skipped",
       name,
-      version: existingComponent?.version,
+      version: existingComponent?.version ?? "unknown",
     };
   }
 
@@ -214,7 +229,7 @@ export async function updateComponent(
       return {
         name,
         status: "failed",
-        error: result.error || "Failed to update component",
+        error: result.status === "failed" ? result.error : "Failed to update component",
       };
     }
   } catch (error) {
