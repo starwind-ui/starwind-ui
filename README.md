@@ -1,5 +1,7 @@
 # Starwind UI
 
+[![NPM version](https://img.shields.io/npm/v/starwind.svg?style=flat)](https://npmjs.org/package/starwind) [![NPM downloads](https://img.shields.io/npm/dm/starwind.svg?style=flat)](https://npmjs.org/package/starwind) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Twitter Follow](https://img.shields.io/twitter/follow/webreaper.svg?style=social)](https://twitter.com/webreaper)
+
 A set of powerful, accessible components for your Astro projects. Styled with Tailwind CSS.
 
 **Documentation: [starwind.dev](https://starwind.dev/)**
