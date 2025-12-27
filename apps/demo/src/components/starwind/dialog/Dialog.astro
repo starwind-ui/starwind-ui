@@ -224,6 +224,11 @@ const { class: className, ...rest } = Astro.props;
 
     private open(): void {
       if (!this.dialog || !this.backdrop) return;
+
+      // Reset nested count when opening (in case it wasn't properly reset)
+      this.nestedOpenCount = 0;
+      this.updateNestedState();
+
       this.dialog.showModal();
       document.body.classList.add("overflow-hidden");
 
@@ -241,6 +246,7 @@ const { class: className, ...rest } = Astro.props;
 
     private close(): void {
       if (!this.dialog || !this.backdrop) return;
+
       this.dialog.dataset.state = "closed";
 
       // Notify parent dialog that nested dialog is closing
@@ -269,6 +275,10 @@ const { class: className, ...rest } = Astro.props;
     public onNestedDialogOpen(): void {
       this.nestedOpenCount++;
       this.updateNestedState();
+      // Propagate up the chain to grandparent dialogs
+      if (this.parentDialog) {
+        this.parentDialog.onNestedDialogOpen();
+      }
     }
 
     /**
@@ -277,6 +287,10 @@ const { class: className, ...rest } = Astro.props;
     public onNestedDialogClose(): void {
       this.nestedOpenCount = Math.max(0, this.nestedOpenCount - 1);
       this.updateNestedState();
+      // Propagate up the chain to grandparent dialogs
+      if (this.parentDialog) {
+        this.parentDialog.onNestedDialogClose();
+      }
     }
 
     /**
