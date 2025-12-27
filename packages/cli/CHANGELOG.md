@@ -1,5 +1,22 @@
 # starwind
 
+## 1.13.0
+
+### Patch Changes
+
+- 8ae0c3e: Add additional detail to add command message to provide more detail to users
+- 676a68a: feat(cli): improve cli add component flow
+- Updated dependencies [708806e]
+- Updated dependencies [c3e979a]
+- Updated dependencies [0662058]
+- Updated dependencies [3a1a86a]
+- Updated dependencies [e574ea6]
+- Updated dependencies [5cfefe4]
+- Updated dependencies [03d5d9a]
+- Updated dependencies [db9b710]
+- Updated dependencies [4105668]
+  - @starwind-ui/core@1.13.0
+
 ## 1.12.4
 
 ### Patch Changes

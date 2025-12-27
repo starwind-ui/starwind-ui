@@ -1,5 +1,22 @@
 # @starwind-ui/core
 
+## 1.13.0
+
+### Minor Changes
+
+- 3a1a86a: feat: add slider component
+- e574ea6: feat: add video component
+- db9b710: feat: add toast component
+- 4105668: feat: add image component
+
+### Patch Changes
+
+- 708806e: feat(dialog): improve nested dialog animation and functionality
+- c3e979a: style: add class "font-heading" to component headings to enable global header font updates
+- 0662058: Add `starwind:init` event listener to enable initialization of additional starwind components loaded after an initial page load, such as when using server islands
+- 5cfefe4: style(accordion): update the opening animation so that it does not play on initial accordion load
+- 03d5d9a: feat: improve behavior and styling of nested dialogs
+
 ## 1.12.4
 
 ### Patch Changes
