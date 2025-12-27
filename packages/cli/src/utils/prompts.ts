@@ -32,8 +32,9 @@ export async function selectComponents(): Promise<string[]> {
 
 /**
  * Confirms installation of Starwind component dependencies
+ * Only prompts for updates - first-time installs are automatic
  * @param componentNames - Array of component names to check dependencies for
- * @returns Promise<boolean> - true if user confirms, false otherwise
+ * @returns Promise<boolean> - true if user confirms or no prompt needed, false otherwise
  */
 export async function confirmStarwindDependencies(componentNames: string[]): Promise<boolean> {
   try {
@@ -46,15 +47,13 @@ export async function confirmStarwindDependencies(componentNames: string[]): Pro
     const toInstall = resolutions.filter((r) => r.needsInstall);
     const toUpdate = resolutions.filter((r) => r.needsUpdate);
 
-    let message = "This component has Starwind component dependencies:\n\n";
-
-    if (toInstall.length > 0) {
-      message += `${highlighter.info("Components to install:")}\n`;
-      for (const dep of toInstall) {
-        message += `  • ${dep.component} (requires ${dep.requiredVersion})\n`;
-      }
-      message += "\n";
+    // First-time installs are automatic - no prompt needed
+    // Only prompt if there are updates required
+    if (toUpdate.length === 0) {
+      return true;
     }
+
+    let message = "This component has Starwind component dependencies that need updating:\n\n";
 
     if (toUpdate.length > 0) {
       message += `${highlighter.warn("Components to update:")}\n`;
@@ -64,7 +63,15 @@ export async function confirmStarwindDependencies(componentNames: string[]): Pro
       message += "\n";
     }
 
-    message += "Proceed with installation?";
+    if (toInstall.length > 0) {
+      message += `${highlighter.info("Components to install (automatic):")}\n`;
+      for (const dep of toInstall) {
+        message += `  • ${dep.component} (requires ${dep.requiredVersion})\n`;
+      }
+      message += "\n";
+    }
+
+    message += "Proceed with updates?";
 
     const confirmed = await confirm({ message });
 
@@ -109,7 +116,7 @@ export async function confirmInstall(component: Component): Promise<boolean> {
 
     if (dependenciesToInstall.length > 0) {
       const confirmed = await confirm({
-        message: `This component requires the following npm dependencies: ${dependenciesToInstall.join(", ")}. Install them?`,
+        message: `The ${component.name} component requires the following npm dependencies: ${dependenciesToInstall.join(", ")}. Install them?`,
       });
 
       if (typeof confirmed === "symbol" || !confirmed) {

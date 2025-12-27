@@ -188,25 +188,37 @@ export async function add(components?: string[], options?: { all?: boolean }) {
       return process.exit(0);
     }
 
-    // If we only have registry components, we still need to show the final summary
-    // (removed early return to ensure summary is always shown)
-
-    // confirm installation
-    // const confirmed = await p.confirm({
-    // 	message: `Install ${componentsToInstall
-    // 		.map((comp) => highlighter.info(comp))
-    // 		.join(", ")} ${componentsToInstall.length > 1 ? "components" : "component"}?`,
-    // });
-
-    // if (!confirmed || p.isCancel(confirmed)) {
-    // 	p.cancel("Operation cancelled");
-    // 	return process.exit(0);
-    // }
-
     const results = {
       installed: [] as InstallResult[],
       skipped: [] as InstallResult[],
       failed: [] as InstallResult[],
+    };
+
+    // Track components installed during this session to avoid duplicates
+    const installedThisSession = new Set<string>();
+
+    /**
+     * Adds a result to the appropriate results array, avoiding duplicates.
+     * If a component was already installed this session, it won't be added again.
+     * If a component shows as "skipped" but was installed this session, ignore it.
+     */
+    const addResult = (result: InstallResult) => {
+      const name = result.name;
+
+      if (result.status === "installed") {
+        if (!installedThisSession.has(name)) {
+          installedThisSession.add(name);
+          results.installed.push(result);
+        }
+      } else if (result.status === "skipped") {
+        // Only add to skipped if it wasn't installed this session
+        if (!installedThisSession.has(name)) {
+          results.skipped.push(result);
+        }
+      } else if (result.status === "failed") {
+        // Always report failures
+        results.failed.push(result);
+      }
     };
 
     // ================================================================
@@ -214,58 +226,33 @@ export async function add(components?: string[], options?: { all?: boolean }) {
     // ================================================================
     const installedComponents = [];
     for (const comp of componentsToInstall) {
+      // Skip if already installed this session (as a dependency of a previous component)
+      if (installedThisSession.has(comp)) {
+        continue;
+      }
+
       const result = await installComponent(comp);
-      switch (result.status) {
-        case "installed":
-          results.installed.push(result);
-          installedComponents.push({ name: result.name, version: result.version! });
 
-          // Add dependency results to the main results
-          if (result.dependencyResults) {
-            for (const depResult of result.dependencyResults) {
-              switch (depResult.status) {
-                case "installed":
-                  results.installed.push(depResult);
-                  break;
-                case "skipped":
-                  results.skipped.push(depResult);
-                  break;
-                case "failed":
-                  results.failed.push(depResult);
-                  break;
-              }
-            }
-          }
-          break;
-        case "skipped":
-          results.skipped.push(result);
-          break;
-        case "failed":
-          results.failed.push(result);
+      // Process dependency results first (they were installed before the main component)
+      if (result.dependencyResults) {
+        for (const depResult of result.dependencyResults) {
+          addResult(depResult);
+        }
+      }
 
-          // Add dependency results to the main results even if main component failed
-          if (result.dependencyResults) {
-            for (const depResult of result.dependencyResults) {
-              switch (depResult.status) {
-                case "installed":
-                  results.installed.push(depResult);
-                  break;
-                case "skipped":
-                  results.skipped.push(depResult);
-                  break;
-                case "failed":
-                  results.failed.push(depResult);
-                  break;
-              }
-            }
-          }
-          break;
+      // Process main component result
+      addResult(result);
+
+      if (result.status === "installed") {
+        installedComponents.push({ name: result.name, version: result.version! });
       }
     }
 
     // ================================================================
     //                     Update Config File
     // ================================================================
+    // Note: updateConfig with appendComponents: true will deduplicate by component name,
+    // so even if a component was already added by installStarwindDependencies, it won't duplicate
     if (installedComponents.length > 0) {
       try {
         await updateConfig({ components: installedComponents }, { appendComponents: true });
@@ -285,7 +272,7 @@ export async function add(components?: string[], options?: { all?: boolean }) {
     if (results.failed.length > 0) {
       p.log.error(
         `${highlighter.error("Failed to install components:")}\n${results.failed
-          .map((r) => `  ${r.name} - ${r.error}`)
+          .map((r) => `  ${r.name} - ${r.status === "failed" ? r.error : "Unknown error"}`)
           .join("\n")}`,
       );
     }

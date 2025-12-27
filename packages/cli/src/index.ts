@@ -45,4 +45,4 @@ program
   .option("-a, --all", "Remove all installed components")
   .action(remove);
 
-program.parse();
+program.parse(process.argv);

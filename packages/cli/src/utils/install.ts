@@ -133,8 +133,8 @@ export async function installStarwindDependencies(
 
   for (const resolution of resolutions) {
     if (resolution.needsInstall) {
-      // Install the component
-      const result = await copyComponent(resolution.component);
+      // Install the component (use overwrite=true since resolution already determined it's needed)
+      const result = await copyComponent(resolution.component, true);
       results.push(result);
 
       if (result.status === "installed" && result.version) {

@@ -27,11 +27,13 @@ const mockIsCancel = vi.mocked(clackPrompts.isCancel);
 const mockLog = {
   error: vi.fn(),
   warn: vi.fn(),
+  warning: vi.fn(),
   info: vi.fn(),
   success: vi.fn(),
   message: vi.fn(),
+  step: vi.fn(),
 };
-vi.mocked(clackPrompts).log = mockLog;
+vi.mocked(clackPrompts).log = mockLog as typeof clackPrompts.log;
 
 const mockFileExists = vi.mocked(fs.fileExists);
 const mockUpdateConfig = vi.mocked(config.updateConfig);
@@ -224,7 +226,7 @@ describe("add command", () => {
   });
 
   describe("multiple components with dependencies", () => {
-    it("should install multiple components and aggregate dependency results", async () => {
+    it("should install multiple components and deduplicate shared dependencies", async () => {
       const mockComponents = [
         {
           name: "alert-dialog",
@@ -243,7 +245,8 @@ describe("add command", () => {
       mockGetAllComponents.mockResolvedValue(mockComponents);
       mockIsValidComponent.mockResolvedValue(true);
 
-      // Mock installations - first installs button, second skips it
+      // Mock installations - first installs button, second reports it as skipped
+      // but the add command should deduplicate and only show button once as installed
       mockInstallComponent
         .mockResolvedValueOnce({
           status: "installed",
@@ -272,11 +275,12 @@ describe("add command", () => {
 
       await add(["alert-dialog", "dialog"]);
 
-      // Should show all components in appropriate categories
+      // Should show all components as installed (button only once, not duplicated or in skipped)
       expect(mockLog.success).toHaveBeenCalledWith(expect.stringContaining("alert-dialog v1.0.0"));
       expect(mockLog.success).toHaveBeenCalledWith(expect.stringContaining("dialog v1.3.0"));
       expect(mockLog.success).toHaveBeenCalledWith(expect.stringContaining("button v2.1.0"));
-      expect(mockLog.warn).toHaveBeenCalledWith(expect.stringContaining("button v2.1.0"));
+      // Button should NOT appear in skipped since it was already installed this session
+      expect(mockLog.warn).not.toHaveBeenCalled();
     });
   });
 
@@ -322,7 +326,7 @@ describe("add command", () => {
       try {
         await add();
       } catch (error) {
-        expect(error.message).toBe("process.exit called");
+        expect((error as Error).message).toBe("process.exit called");
       }
 
       expect(mockCancel).toHaveBeenCalledWith("Operation cancelled");
@@ -425,11 +429,76 @@ describe("add command", () => {
       try {
         await add(["button"]);
       } catch (error) {
-        expect(error.message).toBe("process.exit called");
+        expect((error as Error).message).toBe("process.exit called");
       }
 
       expect(mockLog.error).toHaveBeenCalledWith("Failed to update config: Config write failed");
       expect(mockExit).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe("dependency deduplication", () => {
+    beforeEach(() => {
+      // Ensure updateConfig resolves successfully for these tests
+      mockUpdateConfig.mockResolvedValue(undefined);
+    });
+
+    it("should skip installing component if already installed as dependency of previous component", async () => {
+      // Scenario: "starwind add sheet dialog" where sheet depends on dialog
+      // Dialog should only be installed once (as dependency of sheet), not again as main component
+      const mockComponents = [
+        {
+          name: "sheet",
+          version: "1.0.0",
+          dependencies: ["@starwind-ui/core/dialog@^1.0.0"],
+          type: "component" as const,
+        },
+        {
+          name: "dialog",
+          version: "1.0.0",
+          dependencies: [],
+          type: "component" as const,
+        },
+      ];
+
+      mockGetAllComponents.mockResolvedValue(mockComponents);
+      mockIsValidComponent.mockResolvedValue(true);
+
+      // First call: sheet installs with dialog as dependency
+      mockInstallComponent.mockResolvedValueOnce({
+        status: "installed",
+        name: "sheet",
+        version: "1.0.0",
+        dependencyResults: [
+          {
+            status: "installed",
+            name: "dialog",
+            version: "1.0.0",
+          },
+        ],
+      });
+
+      // Second call should NOT happen because dialog was already installed as dependency
+      // But if it does get called, it would return this
+      mockInstallComponent.mockResolvedValueOnce({
+        status: "skipped",
+        name: "dialog",
+        version: "1.0.0",
+      });
+
+      await add(["sheet", "dialog"]);
+
+      // installComponent should only be called once (for sheet)
+      // dialog should be skipped since it was already installed as a dependency
+      expect(mockInstallComponent).toHaveBeenCalledTimes(1);
+      expect(mockInstallComponent).toHaveBeenCalledWith("sheet");
+
+      // Both should appear in success (sheet and dialog), dialog only once
+      expect(mockLog.success).toHaveBeenCalledWith(expect.stringContaining("sheet v1.0.0"));
+      expect(mockLog.success).toHaveBeenCalledWith(expect.stringContaining("dialog v1.0.0"));
+
+      // Dialog should NOT appear in skipped
+      expect(mockLog.warn).not.toHaveBeenCalled();
     });
   });
 });
