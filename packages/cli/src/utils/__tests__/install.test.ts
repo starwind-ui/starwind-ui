@@ -312,7 +312,7 @@ describe("install", () => {
         },
       ]);
 
-      expect(mockCopyComponent).toHaveBeenCalledWith("button");
+      expect(mockCopyComponent).toHaveBeenCalledWith("button", true);
       expect(mockUpdateConfig).toHaveBeenCalledWith(
         { components: [{ name: "button", version: "2.1.0" }] },
         { appendComponents: true },

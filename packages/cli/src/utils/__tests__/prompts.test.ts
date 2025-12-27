@@ -45,7 +45,7 @@ describe("prompts", () => {
 
       expect(result).toEqual(["button", "input"]);
       expect(mockMultiselect).toHaveBeenCalledWith({
-        message: "Select components to add",
+        message: "Select components to add ('a' for all, space to select, enter to confirm)",
         options: [
           { label: "button", value: "button" },
           { label: "input", value: "input" },
@@ -103,11 +103,11 @@ describe("prompts", () => {
       expect(result).toBe(true);
       expect(mockConfirm).toHaveBeenCalledWith({
         message:
-          "This component requires the following npm dependencies: react@^18.0.0, zod@^3.0.0. Install them?",
+          "The form component requires the following npm dependencies: react@^18.0.0, zod@^3.0.0. Install them?",
       });
     });
 
-    it("should handle Starwind dependencies only", async () => {
+    it("should handle Starwind dependencies only (first-time install - no prompt)", async () => {
       const component = {
         name: "alert-dialog",
         version: "1.0.0",
@@ -129,14 +129,15 @@ describe("prompts", () => {
           isStarwindComponent: true,
         },
       ]);
-      mockConfirm.mockResolvedValue(true);
 
       const result = await confirmInstall(component);
 
       expect(result).toBe(true);
+      // First-time installs are automatic - no prompt needed
+      expect(mockConfirm).not.toHaveBeenCalled();
     });
 
-    it("should handle mixed dependencies", async () => {
+    it("should handle mixed dependencies (npm prompts, starwind first-time auto-installs)", async () => {
       const component = {
         name: "complex-form",
         version: "1.0.0",
@@ -159,12 +160,13 @@ describe("prompts", () => {
           isStarwindComponent: true,
         },
       ]);
-      mockConfirm.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+      mockConfirm.mockResolvedValueOnce(true);
 
       const result = await confirmInstall(component);
 
       expect(result).toBe(true);
-      expect(mockConfirm).toHaveBeenCalledTimes(2);
+      // Only npm dependencies prompt, starwind first-time installs are automatic
+      expect(mockConfirm).toHaveBeenCalledTimes(1);
     });
 
     it("should return false if user cancels npm dependencies", async () => {
@@ -187,7 +189,7 @@ describe("prompts", () => {
       expect(result).toBe(false);
     });
 
-    it("should return false if user cancels Starwind dependencies", async () => {
+    it("should return false if user cancels Starwind dependency updates", async () => {
       const component = {
         name: "alert-dialog",
         version: "1.0.0",
@@ -199,13 +201,14 @@ describe("prompts", () => {
         starwindDependencies: ["@starwind-ui/core/button@^2.1.0"],
         npmDependencies: [],
       });
+      // User has an outdated version that needs updating
       mockResolveAllStarwindDependencies.mockResolvedValue([
         {
           component: "button",
-          currentVersion: undefined,
+          currentVersion: "2.0.0",
           requiredVersion: "^2.1.0",
-          needsInstall: true,
-          needsUpdate: false,
+          needsInstall: false,
+          needsUpdate: true,
           isStarwindComponent: true,
         },
       ]);
@@ -247,7 +250,7 @@ describe("prompts", () => {
       expect(mockConfirm).not.toHaveBeenCalled();
     });
 
-    it("should show install dependencies and get confirmation", async () => {
+    it("should auto-install first-time dependencies without prompting", async () => {
       const resolutions = [
         {
           component: "button",
@@ -268,19 +271,12 @@ describe("prompts", () => {
       ];
 
       mockResolveAllStarwindDependencies.mockResolvedValue(resolutions);
-      mockConfirm.mockResolvedValue(true);
 
       const result = await confirmStarwindDependencies(["alert-dialog"]);
 
       expect(result).toBe(true);
-      expect(mockConfirm).toHaveBeenCalledWith({
-        message: expect.stringContaining("This component has Starwind component dependencies:"),
-      });
-
-      const callArgs = mockConfirm.mock.calls[0][0];
-      expect(callArgs.message).toContain("Components to install:");
-      expect(callArgs.message).toContain("• button (requires ^2.1.0)");
-      expect(callArgs.message).toContain("• input (requires ^1.0.0)");
+      // First-time installs are automatic - no prompt needed
+      expect(mockConfirm).not.toHaveBeenCalled();
     });
 
     it("should show update dependencies and get confirmation", async () => {
@@ -307,7 +303,7 @@ describe("prompts", () => {
       expect(callArgs.message).toContain("• button (2.0.0 → latest, requires ^2.1.0)");
     });
 
-    it("should show mixed install and update dependencies", async () => {
+    it("should show mixed install and update dependencies (prompts for updates only)", async () => {
       const resolutions = [
         {
           component: "button",
@@ -334,21 +330,24 @@ describe("prompts", () => {
 
       expect(result).toBe(true);
 
+      // Should prompt because there are updates needed
+      expect(mockConfirm).toHaveBeenCalled();
       const callArgs = mockConfirm.mock.calls[0][0];
-      expect(callArgs.message).toContain("Components to install:");
-      expect(callArgs.message).toContain("• button (requires ^2.1.0)");
       expect(callArgs.message).toContain("Components to update:");
       expect(callArgs.message).toContain("• input (1.0.0 → latest, requires ^1.1.0)");
+      // Install dependencies are shown as informational
+      expect(callArgs.message).toContain("Components to install (automatic):");
+      expect(callArgs.message).toContain("• button (requires ^2.1.0)");
     });
 
-    it("should return false if user cancels", async () => {
+    it("should return false if user cancels update prompt", async () => {
       const resolutions = [
         {
           component: "button",
-          currentVersion: undefined,
+          currentVersion: "2.0.0",
           requiredVersion: "^2.1.0",
-          needsInstall: true,
-          needsUpdate: false,
+          needsInstall: false,
+          needsUpdate: true,
           isStarwindComponent: true,
         },
       ];
@@ -361,14 +360,14 @@ describe("prompts", () => {
       expect(result).toBe(false);
     });
 
-    it("should return false if confirm returns symbol (cancel)", async () => {
+    it("should return false if confirm returns symbol (cancel) on update prompt", async () => {
       const resolutions = [
         {
           component: "button",
-          currentVersion: undefined,
+          currentVersion: "2.0.0",
           requiredVersion: "^2.1.0",
-          needsInstall: true,
-          needsUpdate: false,
+          needsInstall: false,
+          needsUpdate: true,
           isStarwindComponent: true,
         },
       ];

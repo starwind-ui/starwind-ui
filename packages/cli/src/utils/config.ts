@@ -80,6 +80,24 @@ export async function updateConfig(
   // Ensure components array exists
   const currentComponents = Array.isArray(currentConfig.components) ? currentConfig.components : [];
 
+  // When appending components, deduplicate by name (newer entries override older ones)
+  let finalComponents = currentComponents;
+  if (updates.components) {
+    if (options.appendComponents) {
+      // Create a map to deduplicate by name, with newer entries taking precedence
+      const componentMap = new Map<string, { name: string; version: string }>();
+      for (const comp of currentComponents) {
+        componentMap.set(comp.name, comp);
+      }
+      for (const comp of updates.components) {
+        componentMap.set(comp.name, comp);
+      }
+      finalComponents = Array.from(componentMap.values());
+    } else {
+      finalComponents = updates.components;
+    }
+  }
+
   const newConfig = {
     ...currentConfig,
     tailwind: {
@@ -87,11 +105,7 @@ export async function updateConfig(
       ...(updates.tailwind || {}),
     },
     componentDir: updates.componentDir ? updates.componentDir : currentConfig.componentDir,
-    components: updates.components
-      ? options.appendComponents
-        ? [...currentComponents, ...updates.components]
-        : updates.components
-      : currentComponents,
+    components: finalComponents,
   };
 
   try {
