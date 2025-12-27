@@ -20,12 +20,15 @@ export const dialogBackdrop = tv({
 
 export const dialogContent = tv({
   base: [
+    "starwind-dialog-content",
     "fixed top-16 left-[50%] z-50 translate-x-[-50%] sm:top-[50%] sm:translate-y-[-50%]",
-    "bg-background w-full max-w-md border p-8 shadow-lg sm:rounded-lg",
-    "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards",
+    "bg-background w-full max-w-md rounded-lg border p-8 shadow-lg",
+    "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards transition-[translate,scale,opacity]",
     "fade-in zoom-in-95 slide-in-from-bottom-2",
     "fade-out zoom-out-95 slide-out-to-bottom-2",
-    "transition-all data-[nested-dialog-open]:scale-95 data-[nested-dialog-open]:opacity-90",
+    "data-[state=open]:data-[nested-dialog-open]:-translate-y-[calc(50%-var(--nested-offset)*var(--nested-dialogs,1))]",
+    "data-[state=open]:data-[nested-dialog-open]:scale-[calc(1-var(--nested-scale)*var(--nested-dialogs,1))]",
+    "max-sm:data-[state=open]:data-[nested-dialog-open]:translate-y-[calc(var(--nested-offset)*var(--nested-dialogs,1))]",
   ],
 });
 
@@ -66,3 +69,10 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
     <span class="sr-only">Close</span>
   </button>
 </dialog>
+
+<style>
+  .starwind-dialog-content {
+    --nested-offset: 1rem;
+    --nested-scale: 0.05;
+  }
+</style>

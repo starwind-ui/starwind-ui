@@ -22,7 +22,7 @@ import {
   <h2 class="mb-4 text-2xl font-bold">Nested Dialog Demo</h2>
   <Dialog>
     <DialogTrigger asChild>
-      <Button variant="primary">Open Parent Dialog</Button>
+      <Button variant="outline">Open Parent Dialog</Button>
     </DialogTrigger>
     <DialogContent>
       <DialogHeader>
@@ -31,32 +31,45 @@ import {
           This is the parent dialog. You can open a nested dialog from here.
         </DialogDescription>
       </DialogHeader>
-      <div class="mt-4 flex flex-col gap-4">
+      <DialogFooter class="mt-4">
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="secondary">Open Nested Dialog</Button>
+            <Button class="w-full sm:w-auto">Open Nested</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Nested Dialog</DialogTitle>
+              <DialogTitle>Nested Dialog (Level 1)</DialogTitle>
               <DialogDescription>
-                This is the nested dialog. Only the topmost dialog should close when pressing Escape
-                or clicking outside.
+                This is the first nested dialog. You can open another nested dialog.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
+            <DialogFooter class="mt-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button class="w-full sm:w-auto">Open Level 2</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Nested Dialog (Level 2)</DialogTitle>
+                    <DialogDescription> This is the second level nested dialog. </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter class="mt-4">
+                    <DialogClose asChild>
+                      <Button variant="outline">Close Level 2</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               <DialogClose asChild>
-                <Button variant="outline">Close Nested Dialog</Button>
+                <Button variant="outline">Close Level 1</Button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Close Parent Dialog</Button>
-          </DialogClose>
-        </DialogFooter>
-      </div>
+        <DialogClose asChild>
+          <Button variant="outline" class="w-full sm:w-auto">Close Parent</Button>
+        </DialogClose>
+      </DialogFooter>
     </DialogContent>
   </Dialog>
 </section>
