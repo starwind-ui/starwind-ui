@@ -40,6 +40,7 @@ Starwind UI currently includes the following components:
 - [Dialog](https://starwind.dev/docs/components/dialog)
 - [Dropdown](https://starwind.dev/docs/components/dropdown)
 - [Dropzone](https://starwind.dev/docs/components/dropzone)
+- [Image](https://starwind.dev/docs/components/image)
 - [Input](https://starwind.dev/docs/components/input)
 - [Item](https://starwind.dev/docs/components/item)
 - [Label](https://starwind.dev/docs/components/label)
@@ -50,13 +51,16 @@ Starwind UI currently includes the following components:
 - [Separator](https://starwind.dev/docs/components/separator)
 - [Sheet](https://starwind.dev/docs/components/sheet)
 - [Skeleton](https://starwind.dev/docs/components/skeleton)
+- [Slider](https://starwind.dev/docs/components/slider)
 - [Spinner](https://starwind.dev/docs/components/spinner)
 - [Switch](https://starwind.dev/docs/components/switch)
 - [Table](https://starwind.dev/docs/components/table)
 - [Tabs](https://starwind.dev/docs/components/tabs)
 - [Textarea](https://starwind.dev/docs/components/textarea)
+- [Toast](https://starwind.dev/docs/components/toast)
 - [Toggle](https://starwind.dev/docs/components/toggle)
 - [Tooltip](https://starwind.dev/docs/components/tooltip)
+- [Video](https://starwind.dev/docs/components/video)
 
 ## Import Pattern
 
@@ -66,6 +70,11 @@ All components follow a consistent import pattern:
 import {ComponentName} from "@/components/starwind/component-name";
 ```
 
-## Optional
+## Starwind Pro - Premium Blocks
 
-- Premium Templates with impressive internationalization features, CMS, custom animations, SEO, and more: [cosmicthemes.com](https://cosmicthemes.com)
+Looking for complete, production-ready page sections? **Starwind Pro** offers 100+ expertly crafted blocks for Astro projects including heroes, pricing tables, testimonials, navigation, CTAs, and more. **30+ blocks are completely free** to use.
+
+- [Browse All Components](https://pro.starwind.dev/components/)
+- [Free Components (30+)](https://pro.starwind.dev/components/free/)
+
+Categories include: Authentication, Bento, Blog, CTA, Effects, FAQ, Features, Footers, Forms, Heroes, Logo Clouds, Navigation, Pricing, Team, Testimonials, and Theme Switchers.
