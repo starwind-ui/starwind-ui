@@ -1,0 +1,107 @@
+---
+import { InputOtp, InputOtpGroup, InputOtpSeparator, InputOtpSlot } from "@/components/starwind/input-otp";
+import { Label } from "@/components/starwind/label";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Input OTP</h2>
+  <div class="space-y-6">
+    <div>
+      <Label for="otp-1" class="mb-2 block">Verification Code</Label>
+      <InputOtp id="otp-1" maxLength={6}>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} />
+          <InputOtpSlot index={1} />
+          <InputOtpSlot index={2} />
+          <InputOtpSlot index={3} />
+          <InputOtpSlot index={4} />
+          <InputOtpSlot index={5} />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+
+    <div>
+      <Label for="otp-2" class="mb-2 block">4-Digit Code</Label>
+      <InputOtp id="otp-2" maxLength={4}>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} size="sm" />
+          <InputOtpSlot index={1} size="sm" />
+          <InputOtpSlot index={2} size="sm" />
+          <InputOtpSlot index={3} size="sm" />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+
+    <div>
+      <Label for="otp-3" class="mb-2 block">Large Size</Label>
+      <InputOtp id="otp-3" maxLength={6}>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} size="lg" />
+          <InputOtpSlot index={1} size="lg" />
+          <InputOtpSlot index={2} size="lg" />
+          <InputOtpSlot index={3} size="lg" />
+          <InputOtpSlot index={4} size="lg" />
+          <InputOtpSlot index={5} size="lg" />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+
+    <div>
+      <Label for="otp-4" class="mb-2 block">Disabled</Label>
+      <InputOtp id="otp-4" maxLength={6} disabled>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} />
+          <InputOtpSlot index={1} />
+          <InputOtpSlot index={2} />
+          <InputOtpSlot index={3} />
+          <InputOtpSlot index={4} />
+          <InputOtpSlot index={5} />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+
+    <div>
+      <Label for="otp-5" class="mb-2 block">Alphanumeric Pattern</Label>
+      <InputOtp id="otp-5" maxLength={6} pattern={/[A-Za-z0-9]/}>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} />
+          <InputOtpSlot index={1} />
+          <InputOtpSlot index={2} />
+          <InputOtpSlot index={3} />
+          <InputOtpSlot index={4} />
+          <InputOtpSlot index={5} />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+
+    <div>
+      <Label for="otp-6" class="mb-2 block">With Separator</Label>
+      <InputOtp id="otp-6" maxLength={6}>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} />
+          <InputOtpSlot index={1} />
+          <InputOtpSlot index={2} />
+        </InputOtpGroup>
+        <InputOtpSeparator />
+        <InputOtpGroup>
+          <InputOtpSlot index={3} />
+          <InputOtpSlot index={4} />
+          <InputOtpSlot index={5} />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+  </div>
+</section>
+
+<script>
+  const otp7 = document.getElementById("otp-7");
+  const otp7Value = document.getElementById("otp-7-value");
+
+  if (otp7 && otp7Value) {
+    otp7.addEventListener("starwind-input-otp:change", ((e: CustomEvent) => {
+      const value = e.detail.value;
+      otp7Value.textContent = `Value: ${value || "(empty)"}`;
+    }) as EventListener);
+  }
+</script>
+

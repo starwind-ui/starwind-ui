@@ -1,0 +1,22 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div">;
+
+export const inputOtpSeparator = tv({
+  base: "flex items-center px-2 text-muted-foreground",
+});
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div
+  aria-hidden="true"
+  class={inputOtpSeparator({ class: className })}
+  data-slot="input-otp-separator"
+  {...rest}
+>
+  <slot>-</slot>
+</div>
+

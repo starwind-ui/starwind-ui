@@ -1,0 +1,41 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
+
+type Props = Omit<HTMLAttributes<"input">, "type" | "maxLength"> &
+  VariantProps<typeof inputOtpSlot> & {
+    index?: number;
+  };
+
+export const inputOtpSlot = tv({
+  base: [
+    "border-input dark:bg-input/30 text-foreground w-12 rounded-md border bg-transparent text-center shadow-xs",
+    "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] focus-visible:ring-3",
+    "disabled:cursor-not-allowed disabled:opacity-50",
+    "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",
+  ],
+  variants: {
+    size: {
+      sm: "h-9 text-sm",
+      md: "h-11 text-base",
+      lg: "h-12 text-lg",
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+const { size, index, class: className, ...rest } = Astro.props;
+---
+
+<input
+  type="text"
+  inputmode="text"
+  maxlength="1"
+  autocomplete="one-time-code"
+  class={inputOtpSlot({ size, class: className })}
+  data-otp-slot
+  data-index={index}
+  data-slot="input-otp-slot"
+  {...rest}
+/>
+
