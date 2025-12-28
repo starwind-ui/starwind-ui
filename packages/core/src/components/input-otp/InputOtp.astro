@@ -50,6 +50,7 @@ if (pattern) {
     private maxLength: number;
     private containerId: string;
     private pattern: RegExp;
+    private observer: MutationObserver | null = null;
 
     constructor(container: HTMLElement, idx: number) {
       this.container = container;
@@ -87,7 +88,7 @@ if (pattern) {
     }
 
     private setupValueSync() {
-      const observer = new MutationObserver(() => {
+      this.observer = new MutationObserver(() => {
         const containerValue = this.container.dataset.value || "";
         const currentValue = this.getValue();
         if (containerValue !== currentValue) {
@@ -95,7 +96,7 @@ if (pattern) {
         }
       });
 
-      observer.observe(this.container, {
+      this.observer.observe(this.container, {
         attributes: true,
         attributeFilter: ["data-value"],
       });

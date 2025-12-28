@@ -93,15 +93,3 @@ import { Label } from "@/components/starwind/label";
   </div>
 </section>
 
-<script>
-  const otp7 = document.getElementById("otp-7");
-  const otp7Value = document.getElementById("otp-7-value");
-
-  if (otp7 && otp7Value) {
-    otp7.addEventListener("starwind-input-otp:change", ((e: CustomEvent) => {
-      const value = e.detail.value;
-      otp7Value.textContent = `Value: ${value || "(empty)"}`;
-    }) as EventListener);
-  }
-</script>
-
