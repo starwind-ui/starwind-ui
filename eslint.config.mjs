@@ -83,6 +83,7 @@ export default defineConfig([
       "no-undef": "off", // Disable "not defined" errors for specific Astro types that are globally available (ImageMetadata)
       "astro/jsx-a11y/no-noninteractive-tabindex": "off",
       "@typescript-eslint/no-explicit-any": "off", // you may want this as it can get annoying
+      "astro/jsx-a11y/anchor-is-valid": "off", // ignore since some demos use invalid anchors
     },
   },
 

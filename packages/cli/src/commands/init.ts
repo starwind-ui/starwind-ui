@@ -7,8 +7,10 @@ import { tailwindConfig } from "@/templates/starwind.css.js";
 import { setupAstroConfig } from "@/utils/astro-config.js";
 import { updateConfig } from "@/utils/config.js";
 import { ASTRO_PACKAGES, getOtherPackages, MIN_ASTRO_VERSION, PATHS } from "@/utils/constants.js";
+import { setupStarwindProEnv } from "@/utils/env.js";
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
+import { setupLayoutCssImport } from "@/utils/layout.js";
 import {
   getDefaultPackageManager,
   installDependencies,
@@ -16,6 +18,7 @@ import {
 } from "@/utils/package-manager.js";
 import { hasStarwindProRegistry, setupShadcnProConfig } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
+import { setupTsConfig } from "@/utils/tsconfig.js";
 
 export async function init(
   withinAdd: boolean = false,
@@ -177,6 +180,21 @@ export async function init(
     });
 
     // ================================================================
+    //                Prepare TypeScript config file setup
+    // ================================================================
+    configTasks.push({
+      title: "Setup TypeScript path aliases",
+      task: async () => {
+        const success = await setupTsConfig();
+        if (!success) {
+          throw new Error("Failed to setup tsconfig.json");
+        }
+        await sleep(250);
+        return "TypeScript path aliases configured";
+      },
+    });
+
+    // ================================================================
     //                      Prepare CSS file
     // ================================================================
     // Check if CSS file already exists
@@ -227,6 +245,21 @@ export async function init(
     }
 
     // ================================================================
+    //                 Add CSS import to layout file
+    // ================================================================
+    configTasks.push({
+      title: "Adding CSS import to layout",
+      task: async () => {
+        const success = await setupLayoutCssImport(configChoices.cssFile);
+        if (!success) {
+          throw new Error("Failed to add CSS import to layout");
+        }
+        await sleep(250);
+        return "CSS import added to layout";
+      },
+    });
+
+    // ================================================================
     //             Prepare project starwind configuration
     // ================================================================
     configTasks.push({
@@ -266,6 +299,18 @@ export async function init(
             await setupShadcnProConfig(configChoices.cssFile, configChoices.twBaseColor);
             await sleep(250);
             return "Configured Starwind Pro registry in components.json";
+          },
+        });
+
+        configTasks.push({
+          title: "Setting up Starwind Pro environment",
+          task: async () => {
+            const success = await setupStarwindProEnv();
+            if (!success) {
+              throw new Error("Failed to setup Starwind Pro environment");
+            }
+            await sleep(250);
+            return "Created .env.local and updated .gitignore";
           },
         });
       } else {
@@ -382,7 +427,7 @@ export async function init(
     let nextStepsMessage = `Make sure your layout imports the ${highlighter.infoBright(configChoices.cssFile)} file`;
 
     if (options?.pro) {
-      nextStepsMessage += `\n\nStarwind Pro is now configured! You can install pro components using:\n${highlighter.info("npx starwind@latest add @starwind-pro/component-name")}\n\nMake sure to set your ${highlighter.infoBright("STARWIND_LICENSE_KEY")} environment variable.`;
+      nextStepsMessage += `\n\nStarwind Pro is now configured! You can install pro components using:\n${highlighter.info("npx starwind@latest add @starwind-pro/component-name")}\n\nMake sure to set your ${highlighter.infoBright("STARWIND_LICENSE_KEY")} environment variable in ${highlighter.infoBright(".env.local")}.`;
     }
 
     p.note(nextStepsMessage, "Next steps");
@@ -390,7 +435,7 @@ export async function init(
     if (!withinAdd) {
       sleep(1000);
       const outroMessage = options?.pro
-        ? "Enjoy using Starwind UI with Pro components! 🚀✨"
+        ? "Enjoy using Starwind UI with Pro components! 🚀"
         : "Enjoy using Starwind UI 🚀";
       p.outro(outroMessage);
     }
