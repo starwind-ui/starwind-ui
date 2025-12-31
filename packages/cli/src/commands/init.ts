@@ -9,6 +9,7 @@ import { updateConfig } from "@/utils/config.js";
 import { ASTRO_PACKAGES, getOtherPackages, MIN_ASTRO_VERSION, PATHS } from "@/utils/constants.js";
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
+import { setupLayoutCssImport } from "@/utils/layout.js";
 import {
   getDefaultPackageManager,
   installDependencies,
@@ -241,6 +242,21 @@ export async function init(
         },
       });
     }
+
+    // ================================================================
+    //                 Add CSS import to layout file
+    // ================================================================
+    configTasks.push({
+      title: "Adding CSS import to layout",
+      task: async () => {
+        const success = await setupLayoutCssImport(configChoices.cssFile);
+        if (!success) {
+          throw new Error("Failed to add CSS import to layout");
+        }
+        await sleep(250);
+        return "CSS import added to layout";
+      },
+    });
 
     // ================================================================
     //             Prepare project starwind configuration
