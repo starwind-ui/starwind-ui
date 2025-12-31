@@ -4,4 +4,3 @@ export interface InputOtpChangeEvent extends CustomEvent {
     inputOtpId?: string;
   };
 }
-
