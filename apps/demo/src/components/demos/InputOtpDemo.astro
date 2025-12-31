@@ -1,5 +1,5 @@
 ---
-import { InputOtp, InputOtpGroup, InputOtpSeparator, InputOtpSlot } from "@/components/starwind/input-otp";
+import { InputOtp, InputOtpGroup, InputOtpSeparator, InputOtpSlot, REGEXP_ONLY_DIGITS_AND_CHARS } from "@/components/starwind/input-otp";
 import { Label } from "@/components/starwind/label";
 ---
 
@@ -62,7 +62,7 @@ import { Label } from "@/components/starwind/label";
 
     <div>
       <Label for="otp-5" class="mb-2 block">Alphanumeric Pattern</Label>
-      <InputOtp id="otp-5" maxLength={6} pattern={/[A-Za-z0-9]/}>
+      <InputOtp id="otp-5" maxLength={6} pattern={REGEXP_ONLY_DIGITS_AND_CHARS}>
         <InputOtpGroup>
           <InputOtpSlot index={0} />
           <InputOtpSlot index={1} />

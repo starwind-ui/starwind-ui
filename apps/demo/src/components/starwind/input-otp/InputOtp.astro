@@ -11,11 +11,18 @@ type Props = HTMLAttributes<"div"> & {
 };
 
 export const inputOtp = tv({
-  base: "starwind-input-otp flex items-center",
+  base: "starwind-input-otp flex items-center gap-2",
 });
 
-const { maxLength = 6, value, defaultValue, disabled = false, pattern, class: className, ...rest } =
-  Astro.props;
+const {
+  maxLength = 6,
+  value,
+  defaultValue,
+  disabled = false,
+  pattern,
+  class: className,
+  ...rest
+} = Astro.props;
 
 let patternStr = "\\d";
 if (pattern) {
@@ -223,4 +230,3 @@ if (pattern) {
   document.addEventListener("astro:after-swap", setupInputOtps);
   document.addEventListener("starwind:init", setupInputOtps);
 </script>
-

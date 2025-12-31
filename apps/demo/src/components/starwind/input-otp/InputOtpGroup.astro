@@ -5,17 +5,12 @@ import { tv } from "tailwind-variants";
 type Props = HTMLAttributes<"div">;
 
 export const inputOtpGroup = tv({
-  base: "flex items-center gap-2",
+  base: "flex items-center",
 });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div
-  class={inputOtpGroup({ class: className })}
-  data-slot="input-otp-group"
-  {...rest}
->
+<div class={inputOtpGroup({ class: className })} data-slot="input-otp-group" {...rest}>
   <slot />
 </div>
-
