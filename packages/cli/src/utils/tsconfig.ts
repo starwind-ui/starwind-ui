@@ -1,5 +1,4 @@
 import * as p from "@clack/prompts";
-import fs from "fs-extra";
 
 import { fileExists, readJsonFile, writeJsonFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
