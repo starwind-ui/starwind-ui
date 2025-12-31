@@ -1,5 +1,17 @@
 # starwind
 
+## 1.14.0
+
+### Minor Changes
+
+- be76e48: feat(cli): automatically create ".env.local" with demo "STARWIND_LICENSE_KEY" variable, and add file to .gitignore during "starwind init --pro" command
+- b8e37af: feat(cli): automatically add import of starwind css file and set up tsconfig path aliases during "starwind init" command
+
+### Patch Changes
+
+- Updated dependencies [05ad2c7]
+  - @starwind-ui/core@1.14.0
+
 ## 1.13.0
 
 ### Patch Changes

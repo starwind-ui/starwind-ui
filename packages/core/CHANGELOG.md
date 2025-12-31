@@ -1,5 +1,11 @@
 # @starwind-ui/core
 
+## 1.14.0
+
+### Patch Changes
+
+- 05ad2c7: feat(select): add guard for programmatic selection to prevent potential infinite loops
+
 ## 1.13.0
 
 ### Minor Changes
