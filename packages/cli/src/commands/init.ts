@@ -16,6 +16,7 @@ import {
 } from "@/utils/package-manager.js";
 import { hasStarwindProRegistry, setupShadcnProConfig } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
+import { setupTsConfig } from "@/utils/tsconfig.js";
 
 export async function init(
   withinAdd: boolean = false,
@@ -173,6 +174,21 @@ export async function init(
         }
         await sleep(250);
         return "Astro config setup completed";
+      },
+    });
+
+    // ================================================================
+    //                Prepare TypeScript config file setup
+    // ================================================================
+    configTasks.push({
+      title: "Setup TypeScript path aliases",
+      task: async () => {
+        const success = await setupTsConfig();
+        if (!success) {
+          throw new Error("Failed to setup tsconfig.json");
+        }
+        await sleep(250);
+        return "TypeScript path aliases configured";
       },
     });
 
