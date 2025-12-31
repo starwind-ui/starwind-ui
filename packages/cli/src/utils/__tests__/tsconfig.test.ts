@@ -172,6 +172,28 @@ describe("tsconfig", () => {
 
       expect(result.hasPathAlias).toBe(false);
     });
+
+    it("should handle null values in paths", () => {
+      const result = validateTsConfig({
+        compilerOptions: {
+          paths: {
+            "@/*": null as unknown as string[],
+          },
+        },
+      });
+
+      expect(result.hasPathAlias).toBe(false);
+    });
+
+    it("should handle undefined compilerOptions", () => {
+      const result = validateTsConfig({
+        extends: "astro/tsconfigs/strict",
+        compilerOptions: undefined,
+      });
+
+      expect(result.hasBaseUrl).toBe(false);
+      expect(result.hasPathAlias).toBe(false);
+    });
   });
 
   describe("mergeTsConfig", () => {

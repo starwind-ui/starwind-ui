@@ -69,6 +69,16 @@ ANOTHER_KEY=value2`;
       const content = `OTHER_KEY=value\r\nSTARWIND_LICENSE_KEY=abc123\r\n`;
       expect(hasStarwindLicenseKey(content)).toBe(true);
     });
+
+    it("should return false if key is in a comment", () => {
+      const content = `# STARWIND_LICENSE_KEY=commented_out\nOTHER_KEY=value`;
+      expect(hasStarwindLicenseKey(content)).toBe(false);
+    });
+
+    it("should return true if key exists after a comment with the key", () => {
+      const content = `# STARWIND_LICENSE_KEY=commented\nSTARWIND_LICENSE_KEY=actual_value`;
+      expect(hasStarwindLicenseKey(content)).toBe(true);
+    });
   });
 
   describe("hasEnvLocalInGitignore", () => {
@@ -133,6 +143,16 @@ dist
     it("should not match commented out .env.local", () => {
       const content = `# .env.local`;
       expect(hasEnvLocalInGitignore(content)).toBe(false);
+    });
+
+    it("should not match negated .env.local pattern", () => {
+      const content = `!.env.local`;
+      expect(hasEnvLocalInGitignore(content)).toBe(false);
+    });
+
+    it("should return true when .env.local exists alongside negation", () => {
+      const content = `.env.local\n!.env.local.example`;
+      expect(hasEnvLocalInGitignore(content)).toBe(true);
     });
   });
 
@@ -214,6 +234,18 @@ dist
         expect(writtenContent).toContain("# My env file");
         expect(writtenContent).toContain("API_KEY=secret");
         expect(writtenContent).toContain("DATABASE_URL=postgres://localhost");
+      });
+
+      it("should handle empty .env.local file", async () => {
+        mockFileExists.mockResolvedValue(true);
+        mockReadFile.mockResolvedValue(`` as any);
+        mockWriteFile.mockResolvedValue(undefined);
+
+        const result = await setupEnvLocal();
+
+        expect(result).toBe(true);
+        const writtenContent = mockWriteFile.mock.calls[0]?.[1] as string;
+        expect(writtenContent).toContain("STARWIND_LICENSE_KEY=your_starwind_pro_license_key");
       });
     });
 
@@ -371,6 +403,16 @@ dist
         await setupGitignore();
 
         expect(mockWriteFile).toHaveBeenCalledWith(".gitignore", ".env.local\n", "utf-8");
+      });
+
+      it("should handle gitignore with only whitespace", async () => {
+        mockFileExists.mockResolvedValue(true);
+        mockReadFile.mockResolvedValue(`   \n  \n` as any);
+        mockWriteFile.mockResolvedValue(undefined);
+
+        await setupGitignore();
+
+        expect(mockWriteFile).toHaveBeenCalledWith(".gitignore", "   \n  \n.env.local\n", "utf-8");
       });
     });
 

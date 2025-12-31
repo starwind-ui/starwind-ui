@@ -64,6 +64,12 @@ describe("layout", () => {
       // Should not check for BaseLayout.astro if Layout.astro exists
       expect(mockFileExists).toHaveBeenCalledTimes(1);
     });
+
+    it("should handle fileExists throwing an error", async () => {
+      mockFileExists.mockRejectedValue(new Error("Permission denied"));
+
+      await expect(findLayoutFile()).rejects.toThrow("Permission denied");
+    });
   });
 
   describe("toImportPath", () => {
@@ -299,6 +305,26 @@ import "@/styles/starwind.css";
 
 <!-- This is a layout -->
 <html></html>`);
+      });
+
+      it("should treat file with --- not at start as no frontmatter", () => {
+        const content = `<html>
+---
+some content
+---
+</html>`;
+
+        const result = addCssImportToLayout(content, "src/styles/starwind.css");
+
+        expect(result).toBe(`---
+import "@/styles/starwind.css";
+---
+
+<html>
+---
+some content
+---
+</html>`);
       });
     });
 
