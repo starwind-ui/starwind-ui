@@ -674,6 +674,9 @@ const { class: className, name, defaultValue, required, ...rest } = Astro.props;
     private programmaticallySelect(value: string): void {
       if (!this.content) return;
 
+      // Skip if already selected (prevents infinite loops with synced selects)
+      if (this.selectedItem?.getAttribute("data-value") === value) return;
+
       const item = this.content.querySelector(`[data-value="${value}"]`);
       if (item instanceof HTMLElement) {
         this.returnFocusOnClose = false;
