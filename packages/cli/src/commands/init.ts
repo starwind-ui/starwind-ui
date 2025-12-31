@@ -7,6 +7,7 @@ import { tailwindConfig } from "@/templates/starwind.css.js";
 import { setupAstroConfig } from "@/utils/astro-config.js";
 import { updateConfig } from "@/utils/config.js";
 import { ASTRO_PACKAGES, getOtherPackages, MIN_ASTRO_VERSION, PATHS } from "@/utils/constants.js";
+import { setupStarwindProEnv } from "@/utils/env.js";
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { setupLayoutCssImport } from "@/utils/layout.js";
@@ -300,6 +301,18 @@ export async function init(
             return "Configured Starwind Pro registry in components.json";
           },
         });
+
+        configTasks.push({
+          title: "Setting up Starwind Pro environment",
+          task: async () => {
+            const success = await setupStarwindProEnv();
+            if (!success) {
+              throw new Error("Failed to setup Starwind Pro environment");
+            }
+            await sleep(250);
+            return "Created .env.local and updated .gitignore";
+          },
+        });
       } else {
         if (!withinAdd) {
           p.log.info(highlighter.info("Starwind Pro registry already configured"));
@@ -414,7 +427,7 @@ export async function init(
     let nextStepsMessage = `Make sure your layout imports the ${highlighter.infoBright(configChoices.cssFile)} file`;
 
     if (options?.pro) {
-      nextStepsMessage += `\n\nStarwind Pro is now configured! You can install pro components using:\n${highlighter.info("npx starwind@latest add @starwind-pro/component-name")}\n\nMake sure to set your ${highlighter.infoBright("STARWIND_LICENSE_KEY")} environment variable.`;
+      nextStepsMessage += `\n\nStarwind Pro is now configured! You can install pro components using:\n${highlighter.info("npx starwind@latest add @starwind-pro/component-name")}\n\nMake sure to set your ${highlighter.infoBright("STARWIND_LICENSE_KEY")} environment variable in ${highlighter.infoBright(".env.local")}.`;
     }
 
     p.note(nextStepsMessage, "Next steps");
@@ -422,7 +435,7 @@ export async function init(
     if (!withinAdd) {
       sleep(1000);
       const outroMessage = options?.pro
-        ? "Enjoy using Starwind UI with Pro components! 🚀✨"
+        ? "Enjoy using Starwind UI with Pro components! 🚀"
         : "Enjoy using Starwind UI 🚀";
       p.outro(outroMessage);
     }
