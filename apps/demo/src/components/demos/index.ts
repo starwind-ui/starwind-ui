@@ -28,6 +28,7 @@ export { default as SpinnerDemo } from "./SpinnerDemo.astro";
 export { default as SwitchDemo } from "./SwitchDemo.astro";
 export { default as TableDemo } from "./TableDemo.astro";
 export { default as TabsDemo } from "./TabsDemo.astro";
+export { default as ThemeToggleDemo } from "./ThemeToggleDemo.astro";
 export { default as ToastDemo } from "./ToastDemo.astro";
 export { default as ToggleDemo } from "./ToggleDemo.astro";
 export { default as TooltipDemo } from "./TooltipDemo.astro";
