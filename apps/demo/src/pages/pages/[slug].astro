@@ -2,6 +2,8 @@
 import { type CollectionEntry, getCollection, render } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
 
+import { Prose } from "@/components/starwind/prose";
+
 export async function getStaticPaths() {
   const pages: CollectionEntry<"pages">[] = await getCollection("pages");
   return pages.map((page) => ({
@@ -16,16 +18,16 @@ const { Content } = await render(page);
 
 <Layout title={page.data.title} description={page.data.description ?? ""}>
   <article class="container mx-auto px-4 py-12">
-    <header class="mb-8">
-      <h1 class="text-4xl font-bold">{page.data.title}</h1>
+    <header class="mb-16 text-center">
+      <h1 class="text-4xl font-bold md:text-5xl">{page.data.title}</h1>
       {
         page.data.description && (
-          <p class="text-muted-foreground mt-2 text-lg">{page.data.description}</p>
+          <p class="text-muted-foreground mt-2 md:text-lg">{page.data.description}</p>
         )
       }
     </header>
-    <div class="prose dark:prose-invert max-w-none">
+    <Prose class="mx-auto px-4">
       <Content />
-    </div>
+    </Prose>
   </article>
 </Layout>
