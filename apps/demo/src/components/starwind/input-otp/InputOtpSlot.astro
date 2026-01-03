@@ -2,7 +2,7 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv, type VariantProps } from "tailwind-variants";
 
-type Props = Omit<HTMLAttributes<"input">, "type" | "maxLength"> &
+type Props = HTMLAttributes<"div"> &
   VariantProps<typeof inputOtpSlot> & {
     index?: number;
   };
@@ -10,11 +10,13 @@ type Props = Omit<HTMLAttributes<"input">, "type" | "maxLength"> &
 export const inputOtpSlot = tv({
   base: [
     "border-input dark:bg-input/30 text-foreground border bg-transparent text-center shadow-xs",
-    "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] focus-visible:ring-3",
     "disabled:cursor-not-allowed disabled:opacity-50",
-    "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",
+    "aria-invalid:border-error dark:aria-invalid:ring-destructive/40",
     "relative flex items-center justify-center border-y border-r text-sm transition-all outline-none",
-    "first:rounded-l-md first:border-l last:rounded-r-md data-[active=true]:z-10",
+    "first:rounded-l-md first:border-l last:rounded-r-md",
+    "data-[active=true]:z-10 data-[active=true]:border-outline data-[active=true]:ring-outline/50",
+    "data-[active=true]:ring-[3px] data-[active=true]:aria-invalid:ring-destructive/20",
+    "data-[active=true]:aria-invalid:border-destructive",
   ],
   variants: {
     size: {
@@ -29,13 +31,15 @@ export const inputOtpSlot = tv({
 const { size, index, class: className, ...rest } = Astro.props;
 ---
 
-<input
-  type="text"
-  inputmode="text"
-  maxlength="1"
+<div
   class={inputOtpSlot({ size, class: className })}
   data-otp-slot
   data-index={index}
   data-slot="input-otp-slot"
   {...rest}
-/>
+>
+  <span data-otp-char></span>
+  <div class="pointer-events-none absolute inset-0 hidden items-center justify-center" data-otp-caret>
+    <div class="animate-caret-blink bg-foreground h-4 w-px duration-1000"></div>
+  </div>
+</div>

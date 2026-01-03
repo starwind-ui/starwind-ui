@@ -8,14 +8,27 @@ type Props = HTMLAttributes<"div"> & {
   defaultValue?: string;
   disabled?: boolean;
   pattern?: RegExp | string;
+  name?: string;
+  id?: string;
+  required?: boolean;
 };
 
 export const inputOtp = tv({
-  base: "starwind-input-otp flex items-center",
+  base: "starwind-input-otp flex items-center outline-none",
 });
 
-const { maxLength = 6, value, defaultValue, disabled = false, pattern, class: className, ...rest } =
-  Astro.props;
+const {
+  maxLength = 6,
+  value,
+  defaultValue,
+  disabled = false,
+  pattern,
+  name,
+  id,
+  required,
+  class: className,
+  ...rest
+} = Astro.props;
 
 let patternStr = "\\d";
 if (pattern) {
@@ -36,8 +49,17 @@ if (pattern) {
   data-disabled={disabled}
   data-pattern={patternStr}
   data-slot="input-otp"
+  tabindex={disabled ? "-1" : "0"}
   {...rest}
 >
+  <input
+    type="hidden"
+    name={name}
+    id={id}
+    required={required}
+    data-otp-hidden-input
+    value={value || defaultValue || ""}
+  />
   <slot />
 </div>
 
@@ -46,11 +68,14 @@ if (pattern) {
 
   class InputOtpHandler {
     private container: HTMLElement;
-    private inputs: HTMLInputElement[];
+    private slots: HTMLElement[];
+    private hiddenInput: HTMLInputElement | null;
     private maxLength: number;
     private containerId: string;
     private pattern: RegExp;
     private observer: MutationObserver | null = null;
+    private currentIndex: number = 0;
+    private values: string[] = [];
 
     constructor(container: HTMLElement, idx: number) {
       this.container = container;
@@ -61,20 +86,20 @@ if (pattern) {
       this.maxLength = parseInt(container.dataset.maxLength || "6", 10);
       const patternStr = container.dataset.pattern || "\\d";
       this.pattern = new RegExp(`^${patternStr}$`);
-      this.inputs = Array.from(
-        container.querySelectorAll<HTMLInputElement>("input[data-otp-slot]"),
+      this.slots = Array.from(
+        container.querySelectorAll<HTMLElement>("[data-otp-slot]"),
       );
+      this.hiddenInput = container.querySelector<HTMLInputElement>("input[data-otp-hidden-input]");
+      this.values = new Array(this.slots.length).fill("");
       this.init();
     }
 
     private init() {
-      if (this.inputs.length === 0) return;
+      if (this.slots.length === 0) return;
 
       const isDisabled = this.container.dataset.disabled === "true";
       if (isDisabled) {
-        this.inputs.forEach((input) => {
-          input.disabled = true;
-        });
+        this.container.setAttribute("tabindex", "-1");
         return;
       }
 
@@ -85,6 +110,7 @@ if (pattern) {
 
       this.setupEventListeners();
       this.setupValueSync();
+      this.updateSlots();
     }
 
     private setupValueSync() {
@@ -103,76 +129,131 @@ if (pattern) {
     }
 
     private setupEventListeners() {
-      this.inputs.forEach((input, index) => {
-        input.addEventListener("input", (e) => this.handleInput(e, index));
-        input.addEventListener("keydown", (e) => this.handleKeyDown(e, index));
-        input.addEventListener("paste", (e) => this.handlePaste(e, index));
-        input.addEventListener("focus", () => this.handleFocus(index));
-      });
+      this.container.addEventListener("keydown", (e) => this.handleKeyDown(e));
+      this.container.addEventListener("focus", () => this.handleContainerFocus());
+      this.container.addEventListener("blur", () => this.handleContainerBlur());
+      this.container.addEventListener("paste", (e) => this.handlePaste(e));
+      this.container.addEventListener("click", (e) => this.handleClick(e));
     }
 
-    private handleInput(e: Event, index: number) {
-      const input = e.target as HTMLInputElement;
-      const value = input.value.slice(-1);
+    private handleKeyDown(e: KeyboardEvent) {
+      const isDisabled = this.container.dataset.disabled === "true";
+      if (isDisabled) return;
 
-      if (!this.pattern.test(value)) {
-        input.value = "";
-        return;
-      }
-
-      input.value = value;
-
-      if (value && index < this.inputs.length - 1) {
-        this.inputs[index + 1]?.focus();
-      }
-
-      this.updateValue();
-    }
-
-    private handleKeyDown(e: KeyboardEvent, index: number) {
-      const input = e.target as HTMLInputElement;
-
-      if (e.key === "Backspace" && !input.value && index > 0) {
-        this.inputs[index - 1]?.focus();
-      }
-
-      if (e.key === "ArrowLeft" && index > 0) {
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
-        this.inputs[index - 1]?.focus();
-      }
-
-      if (e.key === "ArrowRight" && index < this.inputs.length - 1) {
+        const char = e.key;
+        if (this.pattern.test(char)) {
+          this.setSlotValue(this.currentIndex, char);
+          if (this.currentIndex < this.slots.length - 1) {
+            this.currentIndex++;
+          }
+          this.updateSlots();
+          this.updateValue();
+        }
+      } else if (e.key === "Backspace") {
         e.preventDefault();
-        this.inputs[index + 1]?.focus();
-      }
-
-      if (e.key === "Delete" && input.value) {
-        input.value = "";
+        if (this.values[this.currentIndex]) {
+          this.setSlotValue(this.currentIndex, "");
+        } else if (this.currentIndex > 0) {
+          this.currentIndex--;
+          this.setSlotValue(this.currentIndex, "");
+        }
+        this.updateSlots();
+        this.updateValue();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        if (this.currentIndex > 0) {
+          this.currentIndex--;
+          this.updateSlots();
+        }
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        if (this.currentIndex < this.slots.length - 1) {
+          this.currentIndex++;
+          this.updateSlots();
+        }
+      } else if (e.key === "Delete") {
+        e.preventDefault();
+        this.setSlotValue(this.currentIndex, "");
+        this.updateSlots();
         this.updateValue();
       }
     }
 
-    private handlePaste(e: ClipboardEvent, index: number) {
+    private handlePaste(e: ClipboardEvent) {
+      const isDisabled = this.container.dataset.disabled === "true";
+      if (isDisabled) return;
+
       e.preventDefault();
       const pastedData = e.clipboardData?.getData("text") || "";
       const matchedChars = this.filterByPattern(pastedData).slice(0, this.maxLength);
 
       if (matchedChars.length === 0) return;
 
-      for (let i = 0; i < matchedChars.length && index + i < this.inputs.length; i++) {
-        this.inputs[index + i].value = matchedChars[i];
+      for (let i = 0; i < matchedChars.length && this.currentIndex + i < this.slots.length; i++) {
+        this.setSlotValue(this.currentIndex + i, matchedChars[i]);
       }
 
-      const nextIndex = Math.min(index + matchedChars.length, this.inputs.length - 1);
-      this.inputs[nextIndex]?.focus();
+      this.currentIndex = Math.min(this.currentIndex + matchedChars.length, this.slots.length - 1);
+      this.updateSlots();
       this.updateValue();
     }
 
-    private handleFocus(index: number) {
-      const input = this.inputs[index];
-      if (input) {
-        input.select();
+    private handleClick(e: MouseEvent) {
+      const isDisabled = this.container.dataset.disabled === "true";
+      if (isDisabled) return;
+
+      const slot = (e.target as HTMLElement).closest<HTMLElement>("[data-otp-slot]");
+      if (slot) {
+        const index = this.slots.indexOf(slot);
+        if (index !== -1) {
+          this.currentIndex = index;
+          this.updateSlots();
+          this.container.focus();
+        }
       }
+    }
+
+    private handleContainerFocus() {
+      this.updateSlots();
+    }
+
+    private handleContainerBlur() {
+      this.updateSlots();
+    }
+
+    private setSlotValue(index: number, value: string) {
+      if (index >= 0 && index < this.values.length) {
+        this.values[index] = value;
+      }
+    }
+
+    private updateSlots() {
+      const isFocused = document.activeElement === this.container;
+      
+      this.slots.forEach((slot, index) => {
+        const charElement = slot.querySelector("[data-otp-char]");
+        const caretElement = slot.querySelector("[data-otp-caret]");
+        const char = this.values[index] || "";
+        
+        if (charElement) {
+          charElement.textContent = char;
+        }
+
+        const isActive = isFocused && index === this.currentIndex;
+        slot.setAttribute("data-active", isActive ? "true" : "false");
+        
+        if (caretElement) {
+          if (isActive && !char) {
+            caretElement.classList.remove("hidden");
+            caretElement.classList.add("flex");
+          } else {
+            caretElement.classList.add("hidden");
+            caretElement.classList.remove("flex");
+          }
+        }
+      });
     }
 
     private filterByPattern(value: string): string[] {
@@ -181,19 +262,26 @@ if (pattern) {
 
     private setValue(value: string) {
       const matchedChars = this.filterByPattern(value).slice(0, this.maxLength);
-      for (let i = 0; i < this.inputs.length; i++) {
-        this.inputs[i].value = matchedChars[i] || "";
+      for (let i = 0; i < this.slots.length; i++) {
+        this.values[i] = matchedChars[i] || "";
       }
+      this.currentIndex = Math.min(matchedChars.length, this.slots.length - 1);
+      this.updateSlots();
     }
 
     private updateValue() {
-      const value = this.inputs.map((input) => input.value).join("");
+      const value = this.values.join("");
       this.container.dataset.value = value;
+      
+      if (this.hiddenInput) {
+        this.hiddenInput.value = value;
+      }
+      
       this.dispatchChangeEvent(value);
     }
 
     public getValue(): string {
-      return this.inputs.map((input) => input.value).join("");
+      return this.values.join("");
     }
 
     private dispatchChangeEvent(value: string) {
@@ -223,4 +311,3 @@ if (pattern) {
   document.addEventListener("astro:after-swap", setupInputOtps);
   document.addEventListener("starwind:init", setupInputOtps);
 </script>
-
