@@ -7,8 +7,10 @@ interface Props
 
 export const badge = tv({
   base: [
-    "starwind-badge inline-flex items-center rounded-full font-semibold",
+    "starwind-badge inline-flex items-center gap-1.5 rounded-full font-medium whitespace-nowrap",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0",
     "transition-all outline-none focus-visible:ring-3",
+    "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",
   ],
   variants: {
     variant: {
@@ -22,7 +24,11 @@ export const badge = tv({
       warning: "bg-warning text-warning-foreground focus-visible:ring-warning/50",
       error: "bg-error text-error-foreground focus-visible:ring-error/50",
     },
-    size: { sm: "px-2.5 py-0.5 text-xs", md: "px-3 py-0.5 text-sm", lg: "px-4 py-1 text-base" },
+    size: {
+      sm: "px-2.5 py-0.5 text-xs [&_svg:not([class*='size-'])]:size-3",
+      md: "px-3 py-0.5 text-sm [&_svg:not([class*='size-'])]:size-4",
+      lg: "px-4 py-1 text-base [&_svg:not([class*='size-'])]:size-4.5",
+    },
     isLink: { true: "cursor-pointer", false: "" },
   },
   compoundVariants: [

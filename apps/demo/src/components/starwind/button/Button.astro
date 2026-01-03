@@ -13,9 +13,10 @@ const { variant, size, class: className, ...rest } = Astro.props;
 export const button = tv({
   base: [
     "inline-flex items-center justify-center gap-1.5 rounded-md font-medium whitespace-nowrap",
-    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0",
     "transition-all outline-none focus-visible:ring-3",
     "disabled:pointer-events-none disabled:opacity-50",
+    "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",
   ],
   variants: {
     variant: {
@@ -35,12 +36,12 @@ export const button = tv({
       error: "bg-error text-error-foreground hover:bg-error/90 focus-visible:ring-error/50",
     },
     size: {
-      sm: "h-9 px-3 py-2 text-sm",
-      md: "h-11 px-4 py-2 text-base",
-      lg: "h-12 px-8 py-2 text-lg",
-      icon: "size-11",
-      "icon-sm": "size-9",
-      "icon-lg": "size-12",
+      sm: "h-9 px-4 text-sm has-[>svg]:px-3 [&_svg:not([class*='size-'])]:size-3.5",
+      md: "h-11 px-5 text-base has-[>svg]:px-4 [&_svg:not([class*='size-'])]:size-4.5",
+      lg: "h-12 px-8 text-lg has-[>svg]:px-6 [&_svg:not([class*='size-'])]:size-5",
+      "icon-sm": "size-9 [&_svg:not([class*='size-'])]:size-3.5",
+      icon: "size-11 [&_svg:not([class*='size-'])]:size-4.5",
+      "icon-lg": "size-12 [&_svg:not([class*='size-'])]:size-5",
     },
   },
   defaultVariants: { variant: "default", size: "md" },
