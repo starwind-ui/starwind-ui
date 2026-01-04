@@ -41,6 +41,8 @@ const { size, index, class: className, ...rest } = Astro.props;
     class="pointer-events-none absolute inset-0 hidden items-center justify-center"
     data-otp-caret
   >
-    <div class="animate-caret-blink bg-foreground h-4 w-px duration-1000"></div>
+    <slot name="caret">
+      <div class="animate-caret-blink bg-foreground h-4 w-px duration-1000"></div>
+    </slot>
   </div>
 </div>
