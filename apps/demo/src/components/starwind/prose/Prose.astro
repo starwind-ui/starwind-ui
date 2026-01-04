@@ -3,14 +3,14 @@ import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
 export const prose = tv({
-  base: "starwind-prose md:starwind-prose-xl max-w-[65ch]",
+  base: "sw-prose max-w-[65ch]",
   variants: {
     size: {
-      sm: "starwind-prose-sm",
-      base: "starwind-prose-base",
-      lg: "starwind-prose-lg",
-      xl: "starwind-prose-xl",
-      "2xl": "starwind-prose-2xl",
+      sm: "sw-prose-sm",
+      base: "sw-prose-base",
+      lg: "sw-prose-lg",
+      xl: "sw-prose-xl",
+      "2xl": "sw-prose-2xl",
     },
   },
   defaultVariants: {
@@ -39,12 +39,12 @@ const { class: className, size, ...rest } = Astro.props;
 
   /* --------------------------------------------------------------------------
    * Size Variants - Custom properties for responsive sizing
-   * Use classes like: starwind-prose-sm, starwind-prose-base, etc.
-   * Supports responsive: "starwind-prose-sm md:starwind-prose-base"
+   * Use classes like: sw-prose-sm, sw-prose-base, etc.
+   * Supports responsive: "sw-prose-sm md:sw-prose-base" TODO: NO IT DOESN'T!!!
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose-sm {
-    --sw-prose-font-size: 0.875rem;
+  .sw-prose-sm {
+    --sw-prose-font-size: var(--text-sm);
     --sw-prose-line-height: 1.714;
     --sw-prose-spacing: 1.143em;
     --sw-prose-heading-spacing: 1.5em;
@@ -53,12 +53,11 @@ const { class: className, size, ...rest } = Astro.props;
     --sw-prose-h3-size: 1.286em;
     --sw-prose-h4-size: 1em;
     --sw-prose-code-size: 0.857em;
-    --sw-prose-lead-size: 1.286em;
     --sw-prose-list-indent: 1.571em;
   }
 
-  .starwind-prose-base {
-    --sw-prose-font-size: 1rem;
+  .sw-prose-base {
+    --sw-prose-font-size: var(--text-base);
     --sw-prose-line-height: 1.75;
     --sw-prose-spacing: 1.25em;
     --sw-prose-heading-spacing: 1.5em;
@@ -67,12 +66,11 @@ const { class: className, size, ...rest } = Astro.props;
     --sw-prose-h3-size: 1.25em;
     --sw-prose-h4-size: 1em;
     --sw-prose-code-size: 0.875em;
-    --sw-prose-lead-size: 1.25em;
     --sw-prose-list-indent: 1.625em;
   }
 
-  .starwind-prose-lg {
-    --sw-prose-font-size: 1.125rem;
+  .sw-prose-lg {
+    --sw-prose-font-size: var(--text-lg);
     --sw-prose-line-height: 1.778;
     --sw-prose-spacing: 1.333em;
     --sw-prose-heading-spacing: 1.556em;
@@ -81,12 +79,11 @@ const { class: className, size, ...rest } = Astro.props;
     --sw-prose-h3-size: 1.333em;
     --sw-prose-h4-size: 1em;
     --sw-prose-code-size: 0.889em;
-    --sw-prose-lead-size: 1.222em;
     --sw-prose-list-indent: 1.556em;
   }
 
-  .starwind-prose-xl {
-    --sw-prose-font-size: 1.25rem;
+  .sw-prose-xl {
+    --sw-prose-font-size: var(--text-xl);
     --sw-prose-line-height: 1.8;
     --sw-prose-spacing: 1.2em;
     --sw-prose-heading-spacing: 1.8em;
@@ -95,12 +92,11 @@ const { class: className, size, ...rest } = Astro.props;
     --sw-prose-h3-size: 1.5em;
     --sw-prose-h4-size: 1em;
     --sw-prose-code-size: 0.9em;
-    --sw-prose-lead-size: 1.2em;
     --sw-prose-list-indent: 1.6em;
   }
 
-  .starwind-prose-2xl {
-    --sw-prose-font-size: 1.5rem;
+  .sw-prose-2xl {
+    --sw-prose-font-size: var(--text-2xl);
     --sw-prose-line-height: 1.667;
     --sw-prose-spacing: 1.333em;
     --sw-prose-heading-spacing: 1.667em;
@@ -109,7 +105,6 @@ const { class: className, size, ...rest } = Astro.props;
     --sw-prose-h3-size: 1.5em;
     --sw-prose-h4-size: 1em;
     --sw-prose-code-size: 0.833em;
-    --sw-prose-lead-size: 1.25em;
     --sw-prose-list-indent: 1.583em;
   }
 
@@ -117,32 +112,31 @@ const { class: className, size, ...rest } = Astro.props;
    * Base Styles
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose {
+  .sw-prose {
     font-size: var(--sw-prose-font-size);
     line-height: var(--sw-prose-line-height);
-    color: var(--color-foreground, currentColor);
-    opacity: 0.8;
+    color: --alpha(var(--color-foreground) / 80%);
   }
 
   /* Vertical rhythm - spacing between block elements */
-  .starwind-prose
+  .sw-prose
     :not(a, strong, em, del, span, input, code, br)
-    + :not(a, strong, em, del, span, input, code, br, :where(.not-starwind-prose *)) {
+    + :not(a, strong, em, del, span, input, code, br, :where(.not-sw-prose *)) {
     margin-top: var(--sw-prose-spacing);
   }
 
   /* Headings after non-headings have more spacing */
-  .starwind-prose
+  .sw-prose
     :not(h1, h2, h3, h4, h5, h6)
-    + :is(h1, h2, h3, h4, h5, h6):not(:where(.not-starwind-prose *)) {
+    + :is(h1, h2, h3, h4, h5, h6):not(:where(.not-sw-prose *)) {
     margin-top: var(--sw-prose-heading-spacing);
   }
 
   /* First/last child margin reset */
-  .starwind-prose > :first-child:not(:where(.not-starwind-prose *)) {
+  .sw-prose > :first-child:not(:where(.not-sw-prose *)) {
     margin-top: 0;
   }
-  .starwind-prose > :last-child:not(:where(.not-starwind-prose *)) {
+  .sw-prose > :last-child:not(:where(.not-sw-prose *)) {
     margin-bottom: 0;
   }
 
@@ -150,87 +144,85 @@ const { class: className, size, ...rest } = Astro.props;
    * Headings
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose :is(h1, h2, h3, h4, h5, h6):not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(h1, h2, h3, h4, h5, h6):not(:where(.not-sw-prose *)) {
     color: var(--color-foreground);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     line-height: 1.25;
     opacity: 1;
   }
 
-  .starwind-prose h1:not(:where(.not-starwind-prose *)) {
+  .sw-prose h1:not(:where(.not-sw-prose *)) {
     font-size: var(--sw-prose-h1-size);
-    font-weight: 800;
+    font-weight: var(--font-weight-bold);
     margin-bottom: 0.889em;
   }
 
-  .starwind-prose h2:not(:where(.not-starwind-prose *)) {
+  .sw-prose h2:not(:where(.not-sw-prose *)) {
     font-size: var(--sw-prose-h2-size);
-    font-weight: 700;
     margin-bottom: 0.667em;
   }
 
-  .starwind-prose h3:not(:where(.not-starwind-prose *)) {
+  .sw-prose h3:not(:where(.not-sw-prose *)) {
     font-size: var(--sw-prose-h3-size);
     margin-bottom: 0.6em;
   }
 
-  .starwind-prose h4:not(:where(.not-starwind-prose *)) {
+  .sw-prose h4:not(:where(.not-sw-prose *)) {
     font-size: var(--sw-prose-h4-size);
     margin-bottom: 0.5em;
   }
 
-  .starwind-prose h5:not(:where(.not-starwind-prose *)),
-  .starwind-prose h6:not(:where(.not-starwind-prose *)) {
-    font-size: 1em;
+  .sw-prose h5:not(:where(.not-sw-prose *)),
+  .sw-prose h6:not(:where(.not-sw-prose *)) {
+    font-size: var(--sw-prose-font-size);
     margin-bottom: 0.5em;
   }
 
   /* Reset margin-top after headings */
-  .starwind-prose :is(h1, h2, h3, h4, h5, h6) + *:not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(h1, h2, h3, h4, h5, h6) + *:not(:where(.not-sw-prose *)) {
     margin-top: 0;
   }
 
   /* --------------------------------------------------------------------------
-   * Paragraphs and Lead text
+   * Paragraphs
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose p:not(:where(.not-starwind-prose *)) {
+  .sw-prose p:not(:where(.not-sw-prose *)) {
     margin-top: var(--sw-prose-spacing);
     margin-bottom: var(--sw-prose-spacing);
-  }
-
-  .starwind-prose [class~="lead"]:not(:where(.not-starwind-prose *)) {
-    font-size: var(--sw-prose-lead-size);
-    color: var(--color-muted-foreground);
   }
 
   /* --------------------------------------------------------------------------
    * Links
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose a:not(:where(.not-starwind-prose *)) {
-    color: var(--color-primary-accent);
+  .sw-prose a:not(:where(.not-sw-prose *)) {
+    color: var(--color-foreground);
     text-decoration: underline;
+    text-decoration-color: var(--color-primary-accent);
     text-underline-offset: 0.15em;
     font-weight: 500;
     opacity: 1;
+    transition-property: color;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
 
-  .starwind-prose a:hover:not(:where(.not-starwind-prose *)) {
-    color: var(--color-foreground);
+  .sw-prose a:hover:not(:where(.not-sw-prose *)) {
+    color: var(--color-primary-accent);
   }
 
   /* --------------------------------------------------------------------------
    * Strong, Bold, Emphasis
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose strong:not(:where(.not-starwind-prose *)) {
+  .sw-prose strong:not(:where(.not-sw-prose *)) {
     color: var(--color-foreground);
     font-weight: 600;
     opacity: 1;
   }
 
-  .starwind-prose :is(a, blockquote, thead th) strong:not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(a, blockquote, thead th) strong:not(:where(.not-sw-prose *)) {
     color: inherit;
   }
 
@@ -238,66 +230,66 @@ const { class: className, size, ...rest } = Astro.props;
    * Lists
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose :is(ul, ol):not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(ul, ol):not(:where(.not-sw-prose *)) {
     padding-inline-start: var(--sw-prose-list-indent);
     margin-top: var(--sw-prose-spacing);
     margin-bottom: var(--sw-prose-spacing);
   }
 
-  .starwind-prose ul:not(:where(.not-starwind-prose *)) {
+  .sw-prose ul:not(:where(.not-sw-prose *)) {
     list-style-type: disc;
   }
 
-  .starwind-prose ol:not(:where(.not-starwind-prose *)) {
+  .sw-prose ol:not(:where(.not-sw-prose *)) {
     list-style-type: decimal;
   }
 
-  .starwind-prose li:not(:where(.not-starwind-prose *)) {
+  .sw-prose li:not(:where(.not-sw-prose *)) {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
     padding-inline-start: 0.375em;
     overflow-wrap: anywhere;
   }
 
-  .starwind-prose li + li:not(:where(.not-starwind-prose *)) {
+  .sw-prose li + li:not(:where(.not-sw-prose *)) {
     margin-top: 0.25rem;
   }
 
-  .starwind-prose :is(ul, ol) :is(ul, ol):not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(ul, ol) :is(ul, ol):not(:where(.not-sw-prose *)) {
     margin-top: 0.75em;
     margin-bottom: 0.75em;
   }
 
-  .starwind-prose ol > li::marker:not(:where(.not-starwind-prose *)) {
+  .sw-prose ol > li::marker:not(:where(.not-sw-prose *)) {
     font-weight: 400;
     color: var(--color-muted-foreground);
   }
 
-  .starwind-prose ul > li::marker:not(:where(.not-starwind-prose *)) {
+  .sw-prose ul > li::marker:not(:where(.not-sw-prose *)) {
     color: var(--color-muted-foreground);
   }
 
   /* Definition lists */
-  .starwind-prose dl:not(:where(.not-starwind-prose *)) {
+  .sw-prose dl:not(:where(.not-sw-prose *)) {
     margin-top: var(--sw-prose-spacing);
     margin-bottom: var(--sw-prose-spacing);
   }
 
-  .starwind-prose dt:not(:where(.not-starwind-prose *)) {
+  .sw-prose dt:not(:where(.not-sw-prose *)) {
     color: var(--color-foreground);
     font-weight: 600;
     margin-top: var(--sw-prose-spacing);
     opacity: 1;
   }
 
-  .starwind-prose dd:not(:where(.not-starwind-prose *)) {
+  .sw-prose dd:not(:where(.not-sw-prose *)) {
     margin-top: 0.25rem;
     padding-inline-start: var(--sw-prose-list-indent);
   }
 
-  .starwind-prose dt + dt:not(:where(.not-starwind-prose *)),
-  .starwind-prose dt + dd:not(:where(.not-starwind-prose *)),
-  .starwind-prose dd + dd:not(:where(.not-starwind-prose *)) {
+  .sw-prose dt + dt:not(:where(.not-sw-prose *)),
+  .sw-prose dt + dd:not(:where(.not-sw-prose *)),
+  .sw-prose dd + dd:not(:where(.not-sw-prose *)) {
     margin-top: 0.25rem;
   }
 
@@ -305,21 +297,20 @@ const { class: className, size, ...rest } = Astro.props;
    * Blockquotes
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose blockquote:not(:where(.not-starwind-prose *)) {
+  .sw-prose blockquote:not(:where(.not-sw-prose *)) {
     font-style: italic;
     color: var(--color-foreground);
-    border-inline-start: 0.25rem solid var(--color-border);
+    border-inline-start: 4px solid var(--color-border);
     padding-inline-start: 1rem;
     margin-top: var(--sw-prose-spacing);
     margin-bottom: var(--sw-prose-spacing);
-    opacity: 1;
   }
 
-  .starwind-prose blockquote p:first-of-type::before:not(:where(.not-starwind-prose *)) {
+  .sw-prose blockquote p:first-of-type::before:not(:where(.not-sw-prose *)) {
     content: open-quote;
   }
 
-  .starwind-prose blockquote p:last-of-type::after:not(:where(.not-starwind-prose *)) {
+  .sw-prose blockquote p:last-of-type::after:not(:where(.not-sw-prose *)) {
     content: close-quote;
   }
 
@@ -327,7 +318,7 @@ const { class: className, size, ...rest } = Astro.props;
    * Code (inline)
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose code:not(:where(.not-starwind-prose *)) {
+  .sw-prose code:not(:where(.not-sw-prose *)) {
     background-color: var(--color-muted);
     color: var(--color-foreground);
     font-size: var(--sw-prose-code-size);
@@ -337,11 +328,11 @@ const { class: className, size, ...rest } = Astro.props;
     opacity: 1;
   }
 
-  .starwind-prose :is(h1, h2, h3, h4, h5, h6) code:not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(h1, h2, h3, h4, h5, h6) code:not(:where(.not-sw-prose *)) {
     font-size: inherit;
   }
 
-  .starwind-prose a code:not(:where(.not-starwind-prose *)) {
+  .sw-prose a code:not(:where(.not-sw-prose *)) {
     color: inherit;
   }
 
@@ -349,7 +340,7 @@ const { class: className, size, ...rest } = Astro.props;
    * Pre / Code blocks
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose pre:not(:where(.not-starwind-prose *)) {
+  .sw-prose pre:not(:where(.not-sw-prose *)) {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md, 0.375rem);
     padding: 0.75rem 1rem;
@@ -361,25 +352,23 @@ const { class: className, size, ...rest } = Astro.props;
     margin-bottom: var(--sw-prose-spacing);
   }
 
-  .starwind-prose pre code:not(:where(.not-starwind-prose *)) {
+  .sw-prose pre code:not(:where(.not-sw-prose *)) {
     all: unset;
-    font-family:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
-      monospace;
+    font-family: (--font-mono);
   }
 
   /* --------------------------------------------------------------------------
    * Horizontal Rules
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose hr:not(:where(.not-starwind-prose *)) {
+  .sw-prose hr:not(:where(.not-sw-prose *)) {
     border: 0;
     border-top: 1px solid var(--color-border);
     margin-top: 3em;
     margin-bottom: 3em;
   }
 
-  .starwind-prose hr + *:not(:where(.not-starwind-prose *)) {
+  .sw-prose hr + *:not(:where(.not-sw-prose *)) {
     margin-top: 0;
   }
 
@@ -387,7 +376,7 @@ const { class: className, size, ...rest } = Astro.props;
    * Images and Media
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose :is(img, picture, video, canvas, svg, iframe):not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(img, picture, video, canvas, svg, iframe):not(:where(.not-sw-prose *)) {
     display: block;
     max-width: 100%;
     height: auto;
@@ -395,7 +384,7 @@ const { class: className, size, ...rest } = Astro.props;
     margin-bottom: var(--sw-prose-spacing);
   }
 
-  .starwind-prose picture > img:not(:where(.not-starwind-prose *)) {
+  .sw-prose picture > img:not(:where(.not-sw-prose *)) {
     margin-top: 0;
     margin-bottom: 0;
   }
@@ -404,17 +393,17 @@ const { class: className, size, ...rest } = Astro.props;
    * Figures and Captions
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose figure:not(:where(.not-starwind-prose *)) {
+  .sw-prose figure:not(:where(.not-sw-prose *)) {
     margin-top: var(--sw-prose-spacing);
     margin-bottom: var(--sw-prose-spacing);
   }
 
-  .starwind-prose figure > *:not(:where(.not-starwind-prose *)) {
+  .sw-prose figure > *:not(:where(.not-sw-prose *)) {
     margin-top: 0;
     margin-bottom: 0;
   }
 
-  .starwind-prose figcaption:not(:where(.not-starwind-prose *)) {
+  .sw-prose figcaption:not(:where(.not-sw-prose *)) {
     color: var(--color-muted-foreground);
     font-size: var(--sw-prose-code-size);
     margin-top: 0.857em;
@@ -424,7 +413,7 @@ const { class: className, size, ...rest } = Astro.props;
    * Tables
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose table:not(:where(.not-starwind-prose *)) {
+  .sw-prose table:not(:where(.not-sw-prose *)) {
     width: 100%;
     table-layout: auto;
     margin-top: var(--sw-prose-spacing);
@@ -433,11 +422,11 @@ const { class: className, size, ...rest } = Astro.props;
     line-height: 1.714;
   }
 
-  .starwind-prose thead:not(:where(.not-starwind-prose *)) {
+  .sw-prose thead:not(:where(.not-sw-prose *)) {
     border-bottom: 1px solid var(--color-border);
   }
 
-  .starwind-prose thead th:not(:where(.not-starwind-prose *)) {
+  .sw-prose thead th:not(:where(.not-sw-prose *)) {
     color: var(--color-foreground);
     font-weight: 600;
     vertical-align: bottom;
@@ -448,40 +437,40 @@ const { class: className, size, ...rest } = Astro.props;
     opacity: 1;
   }
 
-  .starwind-prose thead th:first-child:not(:where(.not-starwind-prose *)) {
+  .sw-prose thead th:first-child:not(:where(.not-sw-prose *)) {
     padding-inline-start: 0;
   }
 
-  .starwind-prose thead th:last-child:not(:where(.not-starwind-prose *)) {
+  .sw-prose thead th:last-child:not(:where(.not-sw-prose *)) {
     padding-inline-end: 0;
   }
 
-  .starwind-prose tbody tr:not(:where(.not-starwind-prose *)) {
+  .sw-prose tbody tr:not(:where(.not-sw-prose *)) {
     border-bottom: 1px solid var(--color-border);
   }
 
-  .starwind-prose tbody tr:last-child:not(:where(.not-starwind-prose *)) {
+  .sw-prose tbody tr:last-child:not(:where(.not-sw-prose *)) {
     border-bottom-width: 0;
   }
 
-  .starwind-prose :is(td, th):not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(td, th):not(:where(.not-sw-prose *)) {
     vertical-align: baseline;
     padding: 0.571em;
   }
 
-  .starwind-prose :is(td:first-child, th:first-child):not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(td:first-child, th:first-child):not(:where(.not-sw-prose *)) {
     padding-inline-start: 0;
   }
 
-  .starwind-prose :is(td:last-child, th:last-child):not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(td:last-child, th:last-child):not(:where(.not-sw-prose *)) {
     padding-inline-end: 0;
   }
 
-  .starwind-prose tfoot:not(:where(.not-starwind-prose *)) {
+  .sw-prose tfoot:not(:where(.not-sw-prose *)) {
     border-top: 1px solid var(--color-border);
   }
 
-  .starwind-prose tfoot td:not(:where(.not-starwind-prose *)) {
+  .sw-prose tfoot td:not(:where(.not-sw-prose *)) {
     vertical-align: top;
   }
 
@@ -489,7 +478,7 @@ const { class: className, size, ...rest } = Astro.props;
    * Keyboard Input
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose kbd:not(:where(.not-starwind-prose *)) {
+  .sw-prose kbd:not(:where(.not-sw-prose *)) {
     font-weight: 500;
     font-family: inherit;
     font-size: var(--sw-prose-code-size);
@@ -507,7 +496,7 @@ const { class: className, size, ...rest } = Astro.props;
    * Details / Summary (Starlight-inspired)
    * -------------------------------------------------------------------------- */
 
-  .starwind-prose details:not(:where(.not-starwind-prose *)) {
+  .sw-prose details:not(:where(.not-sw-prose *)) {
     --sw-details-border-color: var(--color-border);
     --sw-details-border-color-hover: var(--color-primary-accent);
 
@@ -517,12 +506,12 @@ const { class: className, size, ...rest } = Astro.props;
     margin-bottom: var(--sw-prose-spacing);
   }
 
-  .starwind-prose details:not([open]):hover:not(:where(.not-starwind-prose *)),
-  .starwind-prose details:has(> summary:hover):not(:where(.not-starwind-prose *)) {
+  .sw-prose details:not([open]):hover:not(:where(.not-sw-prose *)),
+  .sw-prose details:has(> summary:hover):not(:where(.not-sw-prose *)) {
     border-color: var(--sw-details-border-color-hover);
   }
 
-  .starwind-prose summary:not(:where(.not-starwind-prose *)) {
+  .sw-prose summary:not(:where(.not-sw-prose *)) {
     color: var(--color-foreground);
     cursor: pointer;
     display: block;
@@ -532,17 +521,17 @@ const { class: className, size, ...rest } = Astro.props;
     opacity: 1;
   }
 
-  .starwind-prose details[open] > summary:not(:where(.not-starwind-prose *)) {
+  .sw-prose details[open] > summary:not(:where(.not-sw-prose *)) {
     margin-bottom: 1rem;
   }
 
   /* Summary marker styles */
-  .starwind-prose summary:not(:where(.not-starwind-prose *))::marker,
-  .starwind-prose summary:not(:where(.not-starwind-prose *))::-webkit-details-marker {
+  .sw-prose summary:not(:where(.not-sw-prose *))::marker,
+  .sw-prose summary:not(:where(.not-sw-prose *))::-webkit-details-marker {
     display: none;
   }
 
-  .starwind-prose summary:not(:where(.not-starwind-prose *))::before {
+  .sw-prose summary:not(:where(.not-sw-prose *))::before {
     --sw-details-marker-size: 1.25rem;
 
     background-color: currentColor;
@@ -559,22 +548,22 @@ const { class: className, size, ...rest } = Astro.props;
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .starwind-prose summary:not(:where(.not-starwind-prose *))::before {
+    .sw-prose summary:not(:where(.not-sw-prose *))::before {
       transition: transform 0.2s ease-in-out;
     }
   }
 
-  .starwind-prose details[open] > summary:not(:where(.not-starwind-prose *))::before {
+  .sw-prose details[open] > summary:not(:where(.not-sw-prose *))::before {
     transform: rotateZ(90deg);
   }
 
-  [dir="rtl"] .starwind-prose summary:not(:where(.not-starwind-prose *))::before,
-  .starwind-prose [dir="rtl"] summary:not(:where(.not-starwind-prose *))::before {
+  [dir="rtl"] .sw-prose summary:not(:where(.not-sw-prose *))::before,
+  .sw-prose [dir="rtl"] summary:not(:where(.not-sw-prose *))::before {
     transform: rotateZ(180deg);
   }
 
   /* Summary with only a paragraph (MDX) */
-  .starwind-prose summary:not(:where(.not-starwind-prose *)) p:only-child {
+  .sw-prose summary:not(:where(.not-sw-prose *)) p:only-child {
     display: inline;
   }
 
@@ -583,21 +572,21 @@ const { class: className, size, ...rest } = Astro.props;
    * -------------------------------------------------------------------------- */
 
   /* Abbreviations */
-  .starwind-prose abbr[title]:not(:where(.not-starwind-prose *)) {
+  .sw-prose abbr[title]:not(:where(.not-sw-prose *)) {
     text-decoration: underline dotted;
     cursor: help;
   }
 
   /* Mark/Highlight */
-  .starwind-prose mark:not(:where(.not-starwind-prose *)) {
-    background-color: color-mix(in srgb, var(--color-warning) 40%, transparent);
+  .sw-prose mark:not(:where(.not-sw-prose *)) {
+    background-color: --alpha(var(--color-warning) / 30%);
     color: var(--color-foreground);
     padding: 0.125em 0.25em;
     border-radius: 0.125rem;
   }
 
   /* Subscript and Superscript */
-  .starwind-prose :is(sub, sup):not(:where(.not-starwind-prose *)) {
+  .sw-prose :is(sub, sup):not(:where(.not-sw-prose *)) {
     font-size: 0.75em;
   }
 </style>

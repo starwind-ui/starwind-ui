@@ -3,11 +3,11 @@ title: Markdown Example
 description: A comprehensive example of all standard markdown elements for styling purposes.
 ---
 
-# Heading 1
+# Heading 1 this is a really long heading to see word wrapping if it's an issue
 
-## Heading 2
+## Heading 2 this is a really long heading to see word wrapping if it's an issue
 
-### Heading 3
+### Heading 3 this is a really long heading to see word wrapping if it's an issue
 
 This is a paragraph with **bold text**, _italic text_, and **_bold italic text_**. You can also use `inline code` within paragraphs.
 
@@ -151,14 +151,6 @@ Content below the rule.
 
 ---
 
-Another style of horizontal rule.
-
----
-
-Yet another style.
-
----
-
 ## Definition Lists
 
 Term 1
@@ -167,15 +159,6 @@ Term 1
 Term 2
 : Definition for term 2
 : Another definition for term 2
-
----
-
-## Abbreviations
-
-The HTML specification is maintained by the W3C.
-
-_[HTML]: Hyper Text Markup Language
-_[W3C]: World Wide Web Consortium
 
 ---
 
@@ -221,7 +204,7 @@ Here's a sentence with a footnote[^2].
 
 ## Embedded HTML
 
-<div style="padding: 1rem; border: 1px solid currentColor; border-radius: 0.5rem;">
+<div class="not-starwind-prose text-foreground border-primary-accent bg-primary-accent/10 p-4 border rounded-md">
   <p>This is a custom HTML block embedded in markdown.</p>
 </div>
 
