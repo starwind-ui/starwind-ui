@@ -1,0 +1,21 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"ul">;
+
+export const sidebarMenu = tv({
+  base: "flex w-full min-w-0 flex-col gap-1",
+});
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ul
+  class={sidebarMenu({ class: className })}
+  data-slot="sidebar-menu"
+  data-sidebar="menu"
+  {...rest}
+>
+  <slot />
+</ul>

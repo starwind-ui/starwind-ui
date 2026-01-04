@@ -1,0 +1,49 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
+
+type Props = HTMLAttributes<"a"> &
+  VariantProps<typeof sidebarMenuSubButton> & {
+    /**
+     * Whether the menu sub item is currently active
+     */
+    isActive?: boolean;
+  };
+
+export const sidebarMenuSubButton = tv({
+  base: [
+    "text-sidebar-foreground ring-sidebar-outline",
+    "flex h-8 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2.5",
+    "outline-hidden",
+    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+    "focus-visible:ring-2",
+    "active:bg-sidebar-accent active:text-sidebar-accent-foreground",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "aria-disabled:pointer-events-none aria-disabled:opacity-50",
+    "[&>svg]:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+    "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
+  ],
+  variants: {
+    size: {
+      sm: "text-sm",
+      md: "text-base",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
+});
+
+const { size, isActive = false, class: className, ...rest } = Astro.props;
+---
+
+<a
+  class={sidebarMenuSubButton({ size, class: className })}
+  data-slot="sidebar-menu-sub-button"
+  data-sidebar="menu-sub-button"
+  data-size={size || "md"}
+  data-active={isActive}
+  {...rest}
+>
+  <slot />
+</a>

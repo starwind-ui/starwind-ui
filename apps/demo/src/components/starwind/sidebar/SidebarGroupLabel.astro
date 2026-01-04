@@ -1,0 +1,51 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * Render as a child element wrapper instead of a div
+   */
+  asChild?: boolean;
+};
+
+export const sidebarGroupLabel = tv({
+  base: [
+    "text-sidebar-foreground/70 ring-sidebar-outline",
+    "flex h-10 shrink-0 items-center rounded-md px-2 text-sm font-medium",
+    "outline-hidden transition-[margin,opacity] duration-200 ease-linear",
+    "focus-visible:ring-2",
+    "[&>svg]:size-4.5 [&>svg]:shrink-0",
+    "group-data-[collapsible=icon]:-mt-10 group-data-[collapsible=icon]:opacity-0",
+  ],
+});
+
+const { asChild = false, class: className, ...rest } = Astro.props;
+
+let hasChildren = false;
+if (Astro.slots.has("default")) {
+  hasChildren = true;
+}
+---
+
+{
+  asChild && hasChildren ? (
+    <div
+      class={sidebarGroupLabel({ class: className })}
+      data-slot="sidebar-group-label"
+      data-sidebar="group-label"
+      data-as-child
+    >
+      <slot />
+    </div>
+  ) : (
+    <div
+      class={sidebarGroupLabel({ class: className })}
+      data-slot="sidebar-group-label"
+      data-sidebar="group-label"
+      {...rest}
+    >
+      <slot />
+    </div>
+  )
+}

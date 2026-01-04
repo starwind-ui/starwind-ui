@@ -2,6 +2,7 @@
 import { type CollectionEntry, getCollection, render } from "astro:content";
 
 import { Prose } from "@/components/starwind/prose";
+import { Toggle } from "@/components/starwind/toggle";
 import Layout from "@/layouts/Layout.astro";
 
 export async function getStaticPaths() {
@@ -18,6 +19,13 @@ const { Content } = await render(page);
 
 <Layout title={page.data.title} description={page.data.description ?? ""}>
   <article class="container mx-auto px-4 py-12">
+    <div class="mb-4 flex items-center justify-end gap-2">
+      <span class="text-muted-foreground text-sm">Custom Prose Style</span>
+      <Toggle id="prose-style-toggle" defaultPressed={true} variant="outline" size="sm">
+        <span class="toggle-on">On</span>
+        <span class="toggle-off">Off</span>
+      </Toggle>
+    </div>
     <header class="mb-16 text-center">
       <h1 class="text-4xl font-bold md:text-5xl">{page.data.title}</h1>
       {
@@ -33,6 +41,16 @@ const { Content } = await render(page);
 </Layout>
 
 <style>
+  .toggle-off {
+    display: none;
+  }
+  [data-state="off"] .toggle-on {
+    display: none;
+  }
+  [data-state="off"] .toggle-off {
+    display: block;
+  }
+
   .custom-prose-style {
     /* spacing */
     --prose-line-height: 1.7;
@@ -62,3 +80,13 @@ const { Content } = await render(page);
     --prose-highlight-bg-color: --alpha(var(--color-primary-accent) / 20%);
   }
 </style>
+
+<script>
+  const toggle = document.getElementById("prose-style-toggle");
+  const prose = document.querySelector("[data-slot='prose']");
+
+  toggle?.addEventListener("starwind-toggle:change", (e) => {
+    const { pressed } = (e as CustomEvent).detail;
+    prose?.classList.toggle("custom-prose-style", pressed);
+  });
+</script>

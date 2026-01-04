@@ -1,0 +1,51 @@
+---
+import PanelLeft from "@tabler/icons/outline/layout-sidebar.svg";
+import type { ComponentProps } from "astro/types";
+
+import { tv } from "tailwind-variants";
+
+const sidebarTrigger = tv({
+  base: "starwind-sidebar-trigger",
+});
+
+import { Button } from "@/components/starwind/button";
+
+type Props = ComponentProps<typeof Button>;
+
+const { class: className, size = "icon-sm", variant = "ghost", ...rest } = Astro.props;
+---
+
+<Button
+  variant={variant}
+  size={size}
+  class={sidebarTrigger({ class: className })}
+  data-slot="sidebar-trigger"
+  data-sidebar="trigger"
+  aria-label="Toggle Sidebar"
+  {...rest}
+>
+  <slot name="icon">
+    <PanelLeft />
+  </slot>
+  <span class="sr-only">Toggle Sidebar</span>
+</Button>
+
+<script>
+  const setupSidebarTriggers = () => {
+    document.querySelectorAll<HTMLElement>(".starwind-sidebar-trigger").forEach((trigger) => {
+      if (trigger.dataset.initialized) return;
+      trigger.dataset.initialized = "true";
+
+      trigger.addEventListener("click", () => {
+        const provider = trigger.closest<HTMLElement>('[data-slot="sidebar-provider"]');
+        if (provider) {
+          provider.dispatchEvent(new CustomEvent("sidebar:toggle"));
+        }
+      });
+    });
+  };
+
+  setupSidebarTriggers();
+  document.addEventListener("astro:after-swap", setupSidebarTriggers);
+  document.addEventListener("starwind:init", setupSidebarTriggers);
+</script>

@@ -1,0 +1,184 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * Default open state of the sidebar
+   * @default true
+   */
+  defaultOpen?: boolean;
+  /**
+   * Keyboard shortcut to toggle the sidebar
+   * @default "b"
+   */
+  keyboardShortcut?: string;
+};
+
+export const sidebarProvider = tv({
+  base: [
+    "starwind-sidebar-provider",
+    "group/sidebar-wrapper flex min-h-svh w-full",
+    "has-data-[variant=inset]:bg-sidebar",
+  ],
+});
+
+const { defaultOpen = true, keyboardShortcut = "b", class: className, ...rest } = Astro.props;
+
+const SIDEBAR_WIDTH = "18rem";
+const SIDEBAR_WIDTH_ICON = "3.5rem";
+---
+
+<div
+  class={sidebarProvider({ class: className })}
+  data-slot="sidebar-provider"
+  data-state={defaultOpen ? "expanded" : "collapsed"}
+  data-mobile-open="false"
+  data-keyboard-shortcut={keyboardShortcut}
+  style={{
+    "--sidebar-width": SIDEBAR_WIDTH,
+    "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+  }}
+  {...rest}
+>
+  <slot />
+</div>
+
+<script>
+  const SIDEBAR_COOKIE_NAME = "sidebar_state";
+  const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+  class SidebarController {
+    private provider: HTMLElement;
+    private mobileQuery: MediaQueryList;
+
+    constructor(provider: HTMLElement) {
+      this.provider = provider;
+      this.mobileQuery = window.matchMedia("(max-width: 768px)");
+      this.init();
+    }
+
+    private init() {
+      this.setupKeyboardShortcut();
+      this.setupCustomEvents();
+      this.setupMobileQuery();
+      // Restore state last so event listeners are ready
+      this.restoreState();
+    }
+
+    private restoreState() {
+      const cookies = document.cookie.split(";");
+      const stateCookie = cookies.find((c) => c.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+      if (stateCookie) {
+        const value = stateCookie.split("=")[1]?.trim();
+        if (value === "true" || value === "false") {
+          const open = value === "true";
+          const state = open ? "expanded" : "collapsed";
+          this.provider.setAttribute("data-state", state);
+          // Dispatch event so Sidebar components can sync their state
+          this.provider.dispatchEvent(
+            new CustomEvent("sidebar:change", { detail: { open, state } }),
+          );
+        }
+      }
+    }
+
+    private setupKeyboardShortcut() {
+      const shortcut = this.provider.getAttribute("data-keyboard-shortcut") || "b";
+      document.addEventListener("keydown", (e) => {
+        if (e.key === shortcut && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          this.toggle();
+        }
+      });
+    }
+
+    private setupCustomEvents() {
+      this.provider.addEventListener("sidebar:toggle", () => this.toggle());
+      this.provider.addEventListener("sidebar:open", () => this.setOpen(true));
+      this.provider.addEventListener("sidebar:close", () => this.setOpen(false));
+      this.provider.addEventListener("sidebar:toggle-mobile", () => this.toggleMobile());
+      this.provider.addEventListener("sidebar:open-mobile", () => this.setMobileOpen(true));
+      this.provider.addEventListener("sidebar:close-mobile", () => this.setMobileOpen(false));
+    }
+
+    private setupMobileQuery() {
+      this.mobileQuery.addEventListener("change", () => {
+        if (!this.isMobile()) {
+          this.setMobileOpen(false);
+        }
+      });
+    }
+
+    isMobile(): boolean {
+      return this.mobileQuery.matches;
+    }
+
+    getState(): "expanded" | "collapsed" {
+      return this.provider.getAttribute("data-state") as "expanded" | "collapsed";
+    }
+
+    isOpen(): boolean {
+      return this.getState() === "expanded";
+    }
+
+    isMobileOpen(): boolean {
+      return this.provider.getAttribute("data-mobile-open") === "true";
+    }
+
+    toggle() {
+      if (this.isMobile()) {
+        this.toggleMobile();
+      } else {
+        this.setOpen(!this.isOpen());
+      }
+    }
+
+    setOpen(open: boolean) {
+      const state = open ? "expanded" : "collapsed";
+      this.provider.setAttribute("data-state", state);
+      this.persistState(open);
+      this.provider.dispatchEvent(new CustomEvent("sidebar:change", { detail: { open, state } }));
+    }
+
+    toggleMobile() {
+      // Check the actual dialog state instead of our tracked state
+      const mobileSheet = this.provider.querySelector<HTMLElement>(".starwind-sheet");
+      const dialogContent = mobileSheet?.querySelector<HTMLElement>(".starwind-dialog-content");
+      const isCurrentlyOpen = dialogContent?.dataset.state === "open";
+
+      this.setMobileOpen(!isCurrentlyOpen);
+    }
+
+    setMobileOpen(open: boolean) {
+      this.provider.setAttribute("data-mobile-open", String(open));
+
+      // Find the mobile sidebar Sheet and use Dialog's programmatic API
+      const mobileSheet = this.provider.querySelector<HTMLElement>(".starwind-sheet");
+      if (mobileSheet) {
+        const eventName = open ? "dialog:open" : "dialog:close";
+        mobileSheet.dispatchEvent(new CustomEvent(eventName));
+      }
+
+      this.provider.dispatchEvent(new CustomEvent("sidebar:mobile-change", { detail: { open } }));
+    }
+
+    private persistState(open: boolean) {
+      document.cookie = `${SIDEBAR_COOKIE_NAME}=${open}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+    }
+  }
+
+  const sidebarInstances = new WeakMap<HTMLElement, SidebarController>();
+
+  const setupSidebars = () => {
+    document.querySelectorAll<HTMLElement>(".starwind-sidebar-provider").forEach((provider) => {
+      if (!sidebarInstances.has(provider)) {
+        sidebarInstances.set(provider, new SidebarController(provider));
+      }
+    });
+  };
+
+  setupSidebars();
+  document.addEventListener("astro:after-swap", setupSidebars);
+  document.addEventListener("starwind:init", setupSidebars);
+</script>
