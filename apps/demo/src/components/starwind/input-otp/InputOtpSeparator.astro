@@ -1,11 +1,12 @@
 ---
+import MinusIcon from "@tabler/icons/outline/minus.svg";
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div">;
 
 export const inputOtpSeparator = tv({
-  base: "text-muted-foreground flex items-center px-2",
+  base: "text-muted-foreground",
 });
 
 const { class: className, ...rest } = Astro.props;
@@ -15,7 +16,10 @@ const { class: className, ...rest } = Astro.props;
   aria-hidden="true"
   class={inputOtpSeparator({ class: className })}
   data-slot="input-otp-separator"
+  role="separator"
   {...rest}
 >
-  <slot>-</slot>
+  <slot name="icon">
+    <MinusIcon class="size-6" />
+  </slot>
 </div>
