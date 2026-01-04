@@ -1,8 +1,8 @@
 ---
 import { type CollectionEntry, getCollection, render } from "astro:content";
-import Layout from "@/layouts/Layout.astro";
 
 import { Prose } from "@/components/starwind/prose";
+import Layout from "@/layouts/Layout.astro";
 
 export async function getStaticPaths() {
   const pages: CollectionEntry<"pages">[] = await getCollection("pages");
