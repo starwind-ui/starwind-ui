@@ -4,6 +4,9 @@ import InputOtpSeparator, { inputOtpSeparator } from "./InputOtpSeparator.astro"
 import InputOtpSlot, { inputOtpSlot } from "./InputOtpSlot.astro";
 import type { InputOtpChangeEvent } from "./InputOtpTypes";
 
+const REGEXP_ONLY_DIGITS_AND_CHARS = /^[A-Za-z0-9]+$/;
+const REGEXP_ONLY_DIGITS = /^[0-9]+$/;
+
 const InputOtpVariants = {
   inputOtp,
   inputOtpGroup,
@@ -18,6 +21,8 @@ export {
   InputOtpSeparator,
   InputOtpSlot,
   InputOtpVariants,
+  REGEXP_ONLY_DIGITS,
+  REGEXP_ONLY_DIGITS_AND_CHARS,
 };
 
 export default {
@@ -26,4 +31,3 @@ export default {
   Separator: InputOtpSeparator,
   Slot: InputOtpSlot,
 };
-
