@@ -45,9 +45,6 @@ const SIDEBAR_WIDTH_ICON = "3.5rem";
 </div>
 
 <script>
-  const SIDEBAR_COOKIE_NAME = "sidebar_state";
-  const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-
   class SidebarController {
     private provider: HTMLElement;
     private mobileQuery: MediaQueryList;
@@ -62,25 +59,6 @@ const SIDEBAR_WIDTH_ICON = "3.5rem";
       this.setupKeyboardShortcut();
       this.setupCustomEvents();
       this.setupMobileQuery();
-      // Restore state last so event listeners are ready
-      this.restoreState();
-    }
-
-    private restoreState() {
-      const cookies = document.cookie.split(";");
-      const stateCookie = cookies.find((c) => c.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`));
-      if (stateCookie) {
-        const value = stateCookie.split("=")[1]?.trim();
-        if (value === "true" || value === "false") {
-          const open = value === "true";
-          const state = open ? "expanded" : "collapsed";
-          this.provider.setAttribute("data-state", state);
-          // Dispatch event so Sidebar components can sync their state
-          this.provider.dispatchEvent(
-            new CustomEvent("sidebar:change", { detail: { open, state } }),
-          );
-        }
-      }
     }
 
     private setupKeyboardShortcut() {
@@ -137,7 +115,6 @@ const SIDEBAR_WIDTH_ICON = "3.5rem";
     setOpen(open: boolean) {
       const state = open ? "expanded" : "collapsed";
       this.provider.setAttribute("data-state", state);
-      this.persistState(open);
       this.provider.dispatchEvent(new CustomEvent("sidebar:change", { detail: { open, state } }));
     }
 
@@ -161,10 +138,6 @@ const SIDEBAR_WIDTH_ICON = "3.5rem";
       }
 
       this.provider.dispatchEvent(new CustomEvent("sidebar:mobile-change", { detail: { open } }));
-    }
-
-    private persistState(open: boolean) {
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${open}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     }
   }
 
