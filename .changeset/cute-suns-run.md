@@ -2,4 +2,4 @@
 "@starwind-ui/core": minor
 ---
 
-feat: prose component
+feat: add prose component
