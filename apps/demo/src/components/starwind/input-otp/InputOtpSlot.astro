@@ -1,0 +1,48 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> &
+  VariantProps<typeof inputOtpSlot> & {
+    index?: number;
+  };
+
+export const inputOtpSlot = tv({
+  base: [
+    "border-input dark:bg-input/30 text-foreground border bg-transparent text-center shadow-xs",
+    "relative flex items-center justify-center border-y border-r text-sm transition-all outline-none",
+    "first:rounded-l-md first:border-l last:rounded-r-md disabled:cursor-not-allowed disabled:opacity-50",
+    "data-[active=true]:border-outline data-[active=true]:ring-outline/50 data-[active=true]:z-10 data-[active=true]:ring-3",
+    "data-[active=true]:aria-invalid:ring-error/40",
+    "aria-invalid:border-error data-[active=true]:aria-invalid:border-error",
+  ],
+  variants: {
+    size: {
+      sm: "size-9 text-sm",
+      md: "size-11 text-base",
+      lg: "size-12 text-lg",
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+const { size, index, class: className, ...rest } = Astro.props;
+---
+
+<div
+  class={inputOtpSlot({ size, class: className })}
+  data-otp-slot
+  data-index={index}
+  data-slot="input-otp-slot"
+  {...rest}
+>
+  <span data-otp-char></span>
+  <div
+    class="pointer-events-none absolute inset-0 hidden items-center justify-center"
+    data-otp-caret
+  >
+    <slot name="caret">
+      <div class="animate-caret-blink bg-foreground h-4 w-px duration-1000"></div>
+    </slot>
+  </div>
+</div>
