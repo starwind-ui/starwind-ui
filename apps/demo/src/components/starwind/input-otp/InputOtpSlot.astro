@@ -14,8 +14,8 @@ export const inputOtpSlot = tv({
     "aria-invalid:border-error dark:aria-invalid:ring-destructive/40",
     "relative flex items-center justify-center border-y border-r text-sm transition-all outline-none",
     "first:rounded-l-md first:border-l last:rounded-r-md",
-    "data-[active=true]:z-10 data-[active=true]:border-outline data-[active=true]:ring-outline/50",
-    "data-[active=true]:ring-[3px] data-[active=true]:aria-invalid:ring-destructive/20",
+    "data-[active=true]:border-outline data-[active=true]:ring-outline/50 data-[active=true]:z-10",
+    "data-[active=true]:aria-invalid:ring-destructive/20 data-[active=true]:ring-[3px]",
     "data-[active=true]:aria-invalid:border-destructive",
   ],
   variants: {
@@ -39,7 +39,10 @@ const { size, index, class: className, ...rest } = Astro.props;
   {...rest}
 >
   <span data-otp-char></span>
-  <div class="pointer-events-none absolute inset-0 hidden items-center justify-center" data-otp-caret>
+  <div
+    class="pointer-events-none absolute inset-0 hidden items-center justify-center"
+    data-otp-caret
+  >
     <div class="animate-caret-blink bg-foreground h-4 w-px duration-1000"></div>
   </div>
 </div>

@@ -86,9 +86,7 @@ if (pattern) {
       this.maxLength = parseInt(container.dataset.maxLength || "6", 10);
       const patternStr = container.dataset.pattern || "\\d";
       this.pattern = new RegExp(`^${patternStr}$`);
-      this.slots = Array.from(
-        container.querySelectorAll<HTMLElement>("[data-otp-slot]"),
-      );
+      this.slots = Array.from(container.querySelectorAll<HTMLElement>("[data-otp-slot]"));
       this.hiddenInput = container.querySelector<HTMLInputElement>("input[data-otp-hidden-input]");
       this.values = new Array(this.slots.length).fill("");
       this.init();
@@ -231,19 +229,19 @@ if (pattern) {
 
     private updateSlots() {
       const isFocused = document.activeElement === this.container;
-      
+
       this.slots.forEach((slot, index) => {
         const charElement = slot.querySelector("[data-otp-char]");
         const caretElement = slot.querySelector("[data-otp-caret]");
         const char = this.values[index] || "";
-        
+
         if (charElement) {
           charElement.textContent = char;
         }
 
         const isActive = isFocused && index === this.currentIndex;
         slot.setAttribute("data-active", isActive ? "true" : "false");
-        
+
         if (caretElement) {
           if (isActive && !char) {
             caretElement.classList.remove("hidden");
@@ -272,11 +270,11 @@ if (pattern) {
     private updateValue() {
       const value = this.values.join("");
       this.container.dataset.value = value;
-      
+
       if (this.hiddenInput) {
         this.hiddenInput.value = value;
       }
-      
+
       this.dispatchChangeEvent(value);
     }
 

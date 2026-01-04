@@ -126,7 +126,10 @@ import { Label } from "@/components/starwind/label";
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const formData = new FormData(form);
+      const formValues = Object.fromEntries(formData.entries());
+      console.log("FormData:", formValues);
       const otp = formData.get("otp");
+      console.log("OTP value:", otp);
 
       resultDiv.textContent = JSON.stringify({ otp }, null, 2);
       resultDiv.classList.remove("hidden");
