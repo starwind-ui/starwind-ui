@@ -3,11 +3,11 @@ title: Markdown Example
 description: A comprehensive example of all standard markdown elements for styling purposes.
 ---
 
-# Heading 1 this is a really long heading to see word wrapping if it's an issue
+# Heading 1
 
-## Heading 2 this is a really long heading to see word wrapping if it's an issue
+## Heading 2
 
-### Heading 3 this is a really long heading to see word wrapping if it's an issue
+### Heading 3
 
 This is a paragraph with **bold text**, _italic text_, and **_bold italic text_**. You can also use `inline code` within paragraphs.
 
@@ -50,12 +50,6 @@ The smallest heading level, useful for minor sections.
    2. Sub-step two
 3. Third step
 
-## Task Lists
-
-- [x] Completed task
-- [ ] Incomplete task
-- [ ] Another task to do
-
 ---
 
 ## Blockquotes
@@ -83,29 +77,6 @@ function greet(name) {
 greet("World");
 ```
 
-```typescript
-interface User {
-  id: number;
-  name: string;
-  email: string;
-}
-
-const user: User = {
-  id: 1,
-  name: "John Doe",
-  email: "john@example.com",
-};
-```
-
-```css
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-```
-
 ```bash
 npm install astro
 pnpm dev
@@ -121,15 +92,6 @@ pnpm dev
 | Styling       | 🚧 WIP  | In progress               |
 | Accessibility | ✅ Done | ARIA labels included      |
 | Dark Mode     | ✅ Done | Automatic theme switching |
-
-### Right-Aligned Table
-
-| Item        |       Price |   Qty |
-| :---------- | ----------: | ----: |
-| Widget      |      $10.00 |     5 |
-| Gadget      |      $25.00 |     2 |
-| Thingamajig |     $100.00 |     1 |
-| **Total**   | **$180.00** | **8** |
 
 ---
 
@@ -204,7 +166,7 @@ Here's a sentence with a footnote[^2].
 
 ## Embedded HTML
 
-<div class="not-starwind-prose text-foreground border-primary-accent bg-primary-accent/10 p-4 border rounded-md">
+<div class="not-sw-prose text-foreground border-primary-accent bg-primary-accent/10 p-4 border rounded-md">
   <p>This is a custom HTML block embedded in markdown.</p>
 </div>
 

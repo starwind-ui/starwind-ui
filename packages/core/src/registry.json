@@ -43,6 +43,7 @@
     { "name": "label", "type": "component", "version": "1.2.0", "dependencies": [] },
     { "name": "pagination", "type": "component", "version": "3.0.2", "dependencies": [] },
     { "name": "progress", "type": "component", "version": "1.1.1", "dependencies": [] },
+    { "name": "prose", "type": "component", "version": "1.0.0", "dependencies": [] },
     { "name": "radio-group", "type": "component", "version": "1.2.4", "dependencies": [] },
     { "name": "select", "type": "component", "version": "1.8.2", "dependencies": [] },
     { "name": "separator", "type": "component", "version": "1.0.0", "dependencies": [] },
