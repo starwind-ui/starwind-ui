@@ -54,6 +54,7 @@ const { class: className, ...rest } = Astro.props;
      * =================== */
     --sw-prose-heading-font: var(--prose-heading-font, var(--font-heading, inherit));
     --sw-prose-heading-weight: var(--prose-heading-weight, 600);
+    --sw-prose-heading-line-height: var(--prose-heading-line-height, 1.25);
     --sw-prose-h1-size: var(--prose-h1-size, 2.25em);
     --sw-prose-h1-weight: var(--prose-h1-weight, var(--sw-prose-heading-weight));
     --sw-prose-h2-size: var(--prose-h2-size, 1.5em);
@@ -109,9 +110,9 @@ const { class: className, ...rest } = Astro.props;
     /* ===================
      * Media (images, video, etc.)
      * =================== */
-    --sw-prose-media-border-width: var(--prose-media-border-width, 1px);
+    --sw-prose-media-border-width: var(--prose-media-border-width, 0px);
     --sw-prose-media-border-color: var(--prose-media-border-color, var(--color-border));
-    --sw-prose-media-border-radius: var(--prose-media-border-radius, var(--radius-md));
+    --sw-prose-media-border-radius: var(--prose-media-border-radius, 0);
 
     /* ===================
      * Mark/Highlight
@@ -131,8 +132,8 @@ const { class: className, ...rest } = Astro.props;
 
   /* Vertical rhythm - spacing between block elements */
   .sw-prose
-    :not(a, strong, em, del, span, input, code, br)
-    + :not(a, strong, em, del, span, input, code, br, :where(.not-sw-prose *)) {
+    :not(a, strong, em, del, span, input, code, br, kbd)
+    + :not(a, strong, em, del, span, input, code, br, kbd, :where(.not-sw-prose *)) {
     margin-top: var(--sw-prose-spacing);
   }
 
@@ -159,7 +160,7 @@ const { class: className, ...rest } = Astro.props;
     color: var(--sw-prose-heading-color);
     font-family: var(--sw-prose-heading-font);
     font-weight: var(--sw-prose-heading-weight);
-    line-height: 1.25;
+    line-height: var(--sw-prose-heading-line-height);
   }
 
   .sw-prose h1:not(:where(.not-sw-prose *)) {
@@ -498,14 +499,19 @@ const { class: className, ...rest } = Astro.props;
     font-weight: 500;
     font-family: inherit;
     font-size: var(--sw-prose-code-size);
-    color: var(--color-foreground);
+    width: fit-content;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing);
+    min-width: calc(var(--spacing) * 5);
+    color: var(--color-muted-foreground);
     background-color: var(--color-muted);
-    padding: 0.1875em 0.375em;
-    border-radius: 0.3125rem;
-    box-shadow:
+    padding: calc(var(--spacing) / 2) calc(var(--spacing) * 1.25);
+    border-radius: var(--radius-sm);
+    /* box-shadow:
       0 0 0 1px color-mix(in srgb, var(--color-foreground) 10%, transparent),
-      0 2px 0 color-mix(in srgb, var(--color-foreground) 10%, transparent);
-    opacity: 1;
+      0 2px 0 color-mix(in srgb, var(--color-foreground) 10%, transparent); */
   }
 
   /* --------------------------------------------------------------------------
@@ -520,6 +526,9 @@ const { class: className, ...rest } = Astro.props;
     padding-inline-start: 1rem;
     margin-top: var(--sw-prose-spacing);
     margin-bottom: var(--sw-prose-spacing);
+    transition-property: border-color;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
 
   .sw-prose details:not([open]):hover:not(:where(.not-sw-prose *)),
@@ -597,8 +606,8 @@ const { class: className, ...rest } = Astro.props;
   .sw-prose mark:not(:where(.not-sw-prose *)) {
     background-color: var(--sw-prose-highlight-bg-color);
     color: var(--sw-prose-highlight-color);
-    padding: 0.125em 0.25em;
-    border-radius: 0.125rem;
+    padding: calc(var(--spacing) / 2) var(--spacing);
+    border-radius: calc(var(--radius) / 4);
   }
 
   /* Subscript and Superscript */

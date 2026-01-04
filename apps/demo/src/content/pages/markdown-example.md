@@ -97,7 +97,7 @@ pnpm dev
 
 ## Images
 
-![Placeholder image](https://via.placeholder.com/800x400?text=Example+Image)
+![Placeholder image](https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop)
 
 _Caption: This is an example image with a caption below it._
 
