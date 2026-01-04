@@ -1,0 +1,138 @@
+---
+import { Button } from "@/components/starwind/button";
+import {
+  InputOtp,
+  InputOtpGroup,
+  InputOtpSeparator,
+  InputOtpSlot,
+  REGEXP_ONLY_DIGITS_AND_CHARS,
+} from "@/components/starwind/input-otp";
+import { Label } from "@/components/starwind/label";
+---
+
+<section class="mx-auto mt-6 max-w-lg pb-12">
+  <h2 class="mb-4 text-2xl font-bold">Input OTP</h2>
+  <div class="space-y-10">
+    <div>
+      <Label for="otp-form" class="mb-2 block font-medium">Form Submission</Label>
+      <form id="otp-demo-form" class="space-y-4">
+        <InputOtp id="otp-form" name="otp" maxLength={6} required>
+          <InputOtpGroup>
+            <InputOtpSlot index={0} />
+            <InputOtpSlot index={1} />
+            <InputOtpSlot index={2} />
+            <InputOtpSlot index={3} />
+            <InputOtpSlot index={4} />
+            <InputOtpSlot index={5} />
+          </InputOtpGroup>
+        </InputOtp>
+        <Button type="submit">Submit Code</Button>
+      </form>
+      <div id="form-result" class="bg-muted mt-4 hidden rounded-md p-4 font-mono text-sm"></div>
+    </div>
+
+    <div class="border-t pt-8">
+      <Label for="otp-1" class="mb-2 block">Verification Code</Label>
+      <InputOtp id="otp-1" maxLength={6}>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} />
+          <InputOtpSlot index={1} />
+          <InputOtpSlot index={2} />
+          <InputOtpSlot index={3} />
+          <InputOtpSlot index={4} />
+          <InputOtpSlot index={5} />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+
+    <div>
+      <Label for="otp-2" class="mb-2 block">4-Digit Code</Label>
+      <InputOtp id="otp-2" maxLength={4}>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} size="sm" />
+          <InputOtpSlot index={1} size="sm" />
+          <InputOtpSlot index={2} size="sm" />
+          <InputOtpSlot index={3} size="sm" />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+
+    <div>
+      <Label for="otp-3" class="mb-2 block">Large Size</Label>
+      <InputOtp id="otp-3" maxLength={6}>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} size="lg" />
+          <InputOtpSlot index={1} size="lg" />
+          <InputOtpSlot index={2} size="lg" />
+          <InputOtpSlot index={3} size="lg" />
+          <InputOtpSlot index={4} size="lg" />
+          <InputOtpSlot index={5} size="lg" />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+
+    <div>
+      <Label for="otp-4" class="mb-2 block">Disabled</Label>
+      <InputOtp id="otp-4" maxLength={6} disabled>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} />
+          <InputOtpSlot index={1} />
+          <InputOtpSlot index={2} />
+          <InputOtpSlot index={3} />
+          <InputOtpSlot index={4} />
+          <InputOtpSlot index={5} />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+
+    <div>
+      <Label for="otp-5" class="mb-2 block">Alphanumeric Pattern</Label>
+      <InputOtp id="otp-5" maxLength={6} pattern={REGEXP_ONLY_DIGITS_AND_CHARS}>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} />
+          <InputOtpSlot index={1} />
+          <InputOtpSlot index={2} />
+          <InputOtpSlot index={3} />
+          <InputOtpSlot index={4} />
+          <InputOtpSlot index={5} />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+
+    <div>
+      <Label for="otp-6" class="mb-2 block">With Separator</Label>
+      <InputOtp id="otp-6" maxLength={6}>
+        <InputOtpGroup>
+          <InputOtpSlot index={0} />
+          <InputOtpSlot index={1} />
+          <InputOtpSlot index={2} />
+        </InputOtpGroup>
+        <InputOtpSeparator />
+        <InputOtpGroup>
+          <InputOtpSlot index={3} />
+          <InputOtpSlot index={4} />
+          <InputOtpSlot index={5} />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById("otp-demo-form") as HTMLFormElement;
+  const resultDiv = document.getElementById("form-result");
+
+  if (form && resultDiv) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const formValues = Object.fromEntries(formData.entries());
+      console.log("FormData:", formValues);
+      const otp = formData.get("otp");
+      console.log("OTP value:", otp);
+
+      resultDiv.textContent = JSON.stringify({ otp }, null, 2);
+      resultDiv.classList.remove("hidden");
+    });
+  }
+</script>

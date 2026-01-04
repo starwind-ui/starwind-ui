@@ -1,0 +1,319 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & {
+  maxLength?: number;
+  value?: string;
+  defaultValue?: string;
+  disabled?: boolean;
+  pattern?: RegExp | string;
+  name?: string;
+  id?: string;
+  required?: boolean;
+};
+
+export const inputOtp = tv({
+  base: "starwind-input-otp flex items-center gap-2 outline-none has-disabled:opacity-50",
+});
+
+const {
+  maxLength = 6,
+  value,
+  defaultValue,
+  disabled = false,
+  pattern,
+  name,
+  id,
+  required,
+  class: className,
+  ...rest
+} = Astro.props;
+
+let patternStr = "\\d";
+if (pattern) {
+  const stripAnchorsRegex = /^\^|\$$/g;
+  if (pattern instanceof RegExp) {
+    patternStr = pattern.source.replace(stripAnchorsRegex, "");
+  } else {
+    patternStr = pattern.replace(stripAnchorsRegex, "");
+  }
+}
+
+const numericPatterns = ["\\d", "[0-9]", "\\d+", "[0-9]+"];
+const isNumericOnly = numericPatterns.includes(patternStr);
+const inputMode = isNumericOnly ? "numeric" : "text";
+---
+
+<div
+  class={inputOtp({ class: className })}
+  data-max-length={maxLength}
+  data-value={value || defaultValue || ""}
+  data-disabled={disabled}
+  data-pattern={patternStr}
+  data-slot="input-otp"
+  tabindex={disabled ? "-1" : "0"}
+  {...rest}
+>
+  <input
+    autocomplete="one-time-code"
+    inputmode={inputMode}
+    tabindex="-1"
+    name={name}
+    id={id}
+    class="sr-only"
+    required={required}
+    maxlength={maxLength.toString()}
+    value={value || defaultValue || ""}
+    disabled={disabled}
+    data-otp-hidden-input
+  />
+  <slot />
+</div>
+
+<script>
+  import type { InputOtpChangeEvent } from "./InputOtpTypes";
+
+  class InputOtpHandler {
+    private container: HTMLElement;
+    private slots: HTMLElement[];
+    private hiddenInput: HTMLInputElement | null;
+    private maxLength: number;
+    private containerId: string;
+    private pattern: RegExp;
+    private observer: MutationObserver | null = null;
+    private currentIndex: number = 0;
+    private values: string[] = [];
+
+    constructor(container: HTMLElement, idx: number) {
+      this.container = container;
+      this.containerId = container.id || `starwind-input-otp-${idx}`;
+      if (!container.id) {
+        container.id = this.containerId;
+      }
+      this.maxLength = parseInt(container.dataset.maxLength || "6", 10);
+      const patternStr = container.dataset.pattern || "\\d";
+      this.pattern = new RegExp(`^${patternStr}$`);
+      this.slots = Array.from(container.querySelectorAll<HTMLElement>("[data-otp-slot]"));
+      this.hiddenInput = container.querySelector<HTMLInputElement>("input[data-otp-hidden-input]");
+      this.values = new Array(this.slots.length).fill("");
+      this.init();
+    }
+
+    private init() {
+      if (this.slots.length === 0) return;
+
+      const isDisabled = this.container.dataset.disabled === "true";
+      if (isDisabled) {
+        this.container.setAttribute("tabindex", "-1");
+        return;
+      }
+
+      const initialValue = this.container.dataset.value || "";
+      if (initialValue) {
+        this.setValue(initialValue);
+      }
+
+      this.setupEventListeners();
+      this.setupValueSync();
+      this.updateSlots();
+    }
+
+    private setupValueSync() {
+      this.observer = new MutationObserver(() => {
+        const containerValue = this.container.dataset.value || "";
+        const currentValue = this.getValue();
+        if (containerValue !== currentValue) {
+          this.setValue(containerValue);
+        }
+      });
+
+      this.observer.observe(this.container, {
+        attributes: true,
+        attributeFilter: ["data-value"],
+      });
+    }
+
+    private setupEventListeners() {
+      this.container.addEventListener("keydown", (e) => this.handleKeyDown(e));
+      this.container.addEventListener("focus", () => this.handleContainerFocus());
+      this.container.addEventListener("blur", () => this.handleContainerBlur());
+      this.container.addEventListener("paste", (e) => this.handlePaste(e));
+      this.container.addEventListener("click", (e) => this.handleClick(e));
+    }
+
+    private handleKeyDown(e: KeyboardEvent) {
+      const isDisabled = this.container.dataset.disabled === "true";
+      if (isDisabled) return;
+
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const char = e.key;
+        if (this.pattern.test(char)) {
+          this.setSlotValue(this.currentIndex, char);
+          if (this.currentIndex < this.slots.length - 1) {
+            this.currentIndex++;
+          }
+          this.updateSlots();
+          this.updateValue();
+        }
+      } else if (e.key === "Backspace") {
+        e.preventDefault();
+        if (this.values[this.currentIndex]) {
+          this.setSlotValue(this.currentIndex, "");
+        } else if (this.currentIndex > 0) {
+          this.currentIndex--;
+          this.setSlotValue(this.currentIndex, "");
+        }
+        this.updateSlots();
+        this.updateValue();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        if (this.currentIndex > 0) {
+          this.currentIndex--;
+          this.updateSlots();
+        }
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        if (this.currentIndex < this.slots.length - 1) {
+          this.currentIndex++;
+          this.updateSlots();
+        }
+      } else if (e.key === "Delete") {
+        e.preventDefault();
+        this.setSlotValue(this.currentIndex, "");
+        this.updateSlots();
+        this.updateValue();
+      }
+    }
+
+    private handlePaste(e: ClipboardEvent) {
+      const isDisabled = this.container.dataset.disabled === "true";
+      if (isDisabled) return;
+
+      e.preventDefault();
+      const pastedData = e.clipboardData?.getData("text") || "";
+      const matchedChars = this.filterByPattern(pastedData).slice(0, this.maxLength);
+
+      if (matchedChars.length === 0) return;
+
+      for (let i = 0; i < matchedChars.length && this.currentIndex + i < this.slots.length; i++) {
+        this.setSlotValue(this.currentIndex + i, matchedChars[i]);
+      }
+
+      this.currentIndex = Math.min(this.currentIndex + matchedChars.length, this.slots.length - 1);
+      this.updateSlots();
+      this.updateValue();
+    }
+
+    private handleClick(e: MouseEvent) {
+      const isDisabled = this.container.dataset.disabled === "true";
+      if (isDisabled) return;
+
+      const slot = (e.target as HTMLElement).closest<HTMLElement>("[data-otp-slot]");
+      if (slot) {
+        const index = this.slots.indexOf(slot);
+        if (index !== -1) {
+          this.currentIndex = index;
+          this.updateSlots();
+          this.container.focus();
+        }
+      }
+    }
+
+    private handleContainerFocus() {
+      this.updateSlots();
+    }
+
+    private handleContainerBlur() {
+      this.updateSlots();
+    }
+
+    private setSlotValue(index: number, value: string) {
+      if (index >= 0 && index < this.values.length) {
+        this.values[index] = value;
+      }
+    }
+
+    private updateSlots() {
+      const isFocused = document.activeElement === this.container;
+
+      this.slots.forEach((slot, index) => {
+        const charElement = slot.querySelector("[data-otp-char]");
+        const caretElement = slot.querySelector("[data-otp-caret]");
+        const char = this.values[index] || "";
+
+        if (charElement) {
+          charElement.textContent = char;
+        }
+
+        const isActive = isFocused && index === this.currentIndex;
+        slot.setAttribute("data-active", isActive ? "true" : "false");
+
+        if (caretElement) {
+          if (isActive && !char) {
+            caretElement.classList.remove("hidden");
+            caretElement.classList.add("flex");
+          } else {
+            caretElement.classList.add("hidden");
+            caretElement.classList.remove("flex");
+          }
+        }
+      });
+    }
+
+    private filterByPattern(value: string): string[] {
+      return value.split("").filter((char) => this.pattern.test(char));
+    }
+
+    private setValue(value: string) {
+      const matchedChars = this.filterByPattern(value).slice(0, this.maxLength);
+      for (let i = 0; i < this.slots.length; i++) {
+        this.values[i] = matchedChars[i] || "";
+      }
+      this.currentIndex = Math.min(matchedChars.length, this.slots.length - 1);
+      this.updateSlots();
+    }
+
+    private updateValue() {
+      const value = this.values.join("");
+      this.container.dataset.value = value;
+
+      if (this.hiddenInput) {
+        this.hiddenInput.value = value;
+      }
+
+      this.dispatchChangeEvent(value);
+    }
+
+    public getValue(): string {
+      return this.values.join("");
+    }
+
+    private dispatchChangeEvent(value: string) {
+      const event = new CustomEvent<InputOtpChangeEvent["detail"]>("starwind-input-otp:change", {
+        bubbles: true,
+        detail: {
+          value,
+          inputOtpId: this.containerId,
+        },
+      });
+      this.container.dispatchEvent(event);
+    }
+  }
+
+  const inputOtpInstances = new WeakMap<HTMLElement, InputOtpHandler>();
+  let inputOtpCounter = 0;
+
+  const setupInputOtps = () => {
+    document.querySelectorAll<HTMLElement>(".starwind-input-otp").forEach((container) => {
+      if (!inputOtpInstances.has(container)) {
+        inputOtpInstances.set(container, new InputOtpHandler(container, inputOtpCounter++));
+      }
+    });
+  };
+
+  setupInputOtps();
+  document.addEventListener("astro:after-swap", setupInputOtps);
+  document.addEventListener("starwind:init", setupInputOtps);
+</script>
