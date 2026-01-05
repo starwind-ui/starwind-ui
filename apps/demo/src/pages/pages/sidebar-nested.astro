@@ -136,7 +136,7 @@ const projects = [
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" tooltip="Starwind UI">
+              <SidebarMenuButton size="lg">
                 <div
                   class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-10 items-center justify-center rounded-lg"
                 >
@@ -162,7 +162,7 @@ const projects = [
                   navMain.map((item) => (
                     <SidebarMenuItem class="starwind-collapsible-menu">
                       <SidebarMenuButton tooltip={item.title}>
-                        <item.icon class="size-4" />
+                        <item.icon />
                         <span>{item.title}</span>
                         <ChevronRight class="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                       </SidebarMenuButton>
