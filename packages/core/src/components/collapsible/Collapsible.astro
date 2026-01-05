@@ -1,0 +1,146 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * Whether the collapsible panel is initially open
+   */
+  defaultOpen?: boolean;
+  /**
+   * Whether the component should ignore user interaction
+   */
+  disabled?: boolean;
+};
+
+export const collapsible = tv({ base: "starwind-collapsible" });
+
+const { defaultOpen = false, disabled = false, class: className, ...rest } = Astro.props;
+---
+
+<div
+  class={collapsible({ class: className })}
+  data-state={defaultOpen ? "open" : "closed"}
+  data-disabled={disabled ? "" : undefined}
+  data-slot="collapsible"
+  {...rest}
+>
+  <slot />
+</div>
+
+<script>
+  type CollapsibleState = "open" | "closed";
+
+  /**
+   * Handles the functionality of a collapsible component.
+   * Manages open/close state and accessibility attributes.
+   */
+  class CollapsibleHandler {
+    private root: HTMLElement;
+    private trigger: HTMLElement | null;
+    private content: HTMLElement | null;
+    private collapsibleId: string;
+    private isInitialized: boolean = false;
+
+    constructor(root: HTMLElement, idx: number) {
+      this.root = root;
+      this.collapsibleId = `starwind-collapsible-${idx}`;
+
+      this.trigger = root.querySelector<HTMLElement>(".starwind-collapsible-trigger");
+      this.content = root.querySelector<HTMLElement>(".starwind-collapsible-content");
+
+      if (this.trigger && this.content) {
+        this.setupAccessibility();
+        this.setupEventListeners();
+        this.setInitialState();
+      }
+
+      this.isInitialized = true;
+    }
+
+    private setupAccessibility(): void {
+      if (!this.trigger || !this.content) return;
+
+      const triggerId = `${this.collapsibleId}-trigger`;
+      const contentId = `${this.collapsibleId}-content`;
+
+      this.trigger.id = triggerId;
+      this.trigger.setAttribute("aria-controls", contentId);
+
+      this.content.id = contentId;
+      this.content.setAttribute("aria-labelledby", triggerId);
+      this.content.setAttribute("role", "region");
+
+      this.updateAriaExpanded();
+    }
+
+    private setInitialState(): void {
+      const isOpen = this.root.dataset.state === "open";
+      this.setState(isOpen);
+    }
+
+    private setupEventListeners(): void {
+      if (!this.trigger) return;
+
+      this.trigger.addEventListener("click", () => {
+        if (this.root.dataset.disabled !== undefined) return;
+        this.toggle();
+      });
+    }
+
+    private toggle(): void {
+      const isOpen = this.root.dataset.state === "open";
+      this.setState(!isOpen);
+    }
+
+    private setState(isOpen: boolean): void {
+      const state: CollapsibleState = isOpen ? "open" : "closed";
+
+      this.root.dataset.state = state;
+
+      if (this.trigger) {
+        this.trigger.dataset.state = state;
+        if (isOpen) {
+          this.trigger.dataset.panelOpen = "";
+        } else {
+          delete this.trigger.dataset.panelOpen;
+        }
+      }
+
+      if (this.content) {
+        this.content.dataset.state = state;
+        if (isOpen) {
+          this.content.hidden = false;
+        } else {
+          this.content.hidden = true;
+        }
+      }
+
+      this.updateAriaExpanded();
+    }
+
+    private updateAriaExpanded(): void {
+      if (!this.trigger) return;
+      const isOpen = this.root.dataset.state === "open";
+      this.trigger.setAttribute("aria-expanded", isOpen.toString());
+    }
+  }
+
+  const collapsibleInstances = new WeakMap<HTMLElement, CollapsibleHandler>();
+  let collapsibleCounter = 0;
+
+  const setupCollapsibles = () => {
+    document.querySelectorAll<HTMLElement>(".starwind-collapsible").forEach((collapsible) => {
+      if (!collapsibleInstances.has(collapsible)) {
+        collapsibleInstances.set(
+          collapsible,
+          new CollapsibleHandler(collapsible, collapsibleCounter++),
+        );
+      }
+    });
+  };
+
+  setupCollapsibles();
+  document.addEventListener("astro:after-swap", setupCollapsibles);
+  document.addEventListener("starwind:init", setupCollapsibles);
+</script>
