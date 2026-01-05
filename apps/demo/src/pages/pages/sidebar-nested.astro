@@ -12,6 +12,11 @@ import Send from "@tabler/icons/outline/send.svg";
 import Settings2 from "@tabler/icons/outline/settings-2.svg";
 import SquareTerminal from "@tabler/icons/outline/terminal-2.svg";
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/starwind/collapsible";
 import { ThemeToggle } from "@/components/starwind/theme-toggle";
 import {
   Sidebar,
@@ -160,24 +165,30 @@ const projects = [
               <SidebarMenu>
                 {
                   navMain.map((item) => (
-                    <SidebarMenuItem class="starwind-collapsible-menu">
-                      <SidebarMenuButton tooltip={item.title}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                        <ChevronRight class="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                      </SidebarMenuButton>
-                      {item.items && (
-                        <SidebarMenuSub>
-                          {item.items.map((subItem) => (
-                            <SidebarMenuSubItem>
-                              <SidebarMenuSubButton href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      )}
-                    </SidebarMenuItem>
+                    <Collapsible defaultOpen={item.isActive} class="group/collapsible">
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton tooltip={item.title}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                            <ChevronRight class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        {item.items && (
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              {item.items.map((subItem) => (
+                                <SidebarMenuSubItem>
+                                  <SidebarMenuSubButton href={subItem.url}>
+                                    <span>{subItem.title}</span>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        )}
+                      </SidebarMenuItem>
+                    </Collapsible>
                   ))
                 }
               </SidebarMenu>
@@ -311,32 +322,4 @@ const projects = [
   html {
     scrollbar-gutter: stable;
   }
-
-  /* Simple collapsible menu state using CSS */
-  .starwind-collapsible-menu [data-slot="sidebar-menu-sub"] {
-    display: none;
-  }
-  .starwind-collapsible-menu[data-state="open"] [data-slot="sidebar-menu-sub"] {
-    display: flex;
-  }
 </style>
-
-<script>
-  const setupCollapsibleMenus = () => {
-    document.querySelectorAll<HTMLElement>(".starwind-collapsible-menu").forEach((menu) => {
-      const button = menu.querySelector<HTMLElement>('[data-slot="sidebar-menu-button"]');
-      if (!button || button.dataset.collapsibleInit) return;
-      button.dataset.collapsibleInit = "true";
-
-      button.addEventListener("click", (e) => {
-        e.preventDefault();
-        const isOpen = menu.dataset.state === "open";
-        menu.dataset.state = isOpen ? "closed" : "open";
-        menu.classList.toggle("group/collapsible", !isOpen);
-      });
-    });
-  };
-
-  setupCollapsibleMenus();
-  document.addEventListener("astro:after-swap", setupCollapsibleMenus);
-</script>
