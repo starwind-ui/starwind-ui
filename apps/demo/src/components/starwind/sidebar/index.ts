@@ -1,7 +1,7 @@
 import Sidebar, {
   sidebar,
-  sidebarGap,
   sidebarContainer,
+  sidebarGap,
   sidebarInner,
   sidebarMobileContent,
 } from "./Sidebar.astro";

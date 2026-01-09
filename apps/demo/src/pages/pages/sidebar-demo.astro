@@ -1,5 +1,6 @@
 ---
-import BadgeCheck from "@tabler/icons/outline/rosette-discount-check.svg";
+import "@/styles/global.css";
+
 import Bell from "@tabler/icons/outline/bell.svg";
 import Calendar from "@tabler/icons/outline/calendar.svg";
 import ChevronUp from "@tabler/icons/outline/chevron-up.svg";
@@ -7,6 +8,7 @@ import CreditCard from "@tabler/icons/outline/credit-card.svg";
 import Home from "@tabler/icons/outline/home.svg";
 import Inbox from "@tabler/icons/outline/inbox.svg";
 import Logout from "@tabler/icons/outline/logout.svg";
+import BadgeCheck from "@tabler/icons/outline/rosette-discount-check.svg";
 import Search from "@tabler/icons/outline/search.svg";
 import Settings from "@tabler/icons/outline/settings.svg";
 import Sparkles from "@tabler/icons/outline/sparkles.svg";
@@ -21,7 +23,6 @@ import {
   DropdownSeparator,
   DropdownTrigger,
 } from "@/components/starwind/dropdown";
-import { ThemeToggle } from "@/components/starwind/theme-toggle";
 import {
   Sidebar,
   SidebarContent,
@@ -39,8 +40,7 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/starwind/sidebar";
-
-import "@/styles/global.css";
+import { ThemeToggle } from "@/components/starwind/theme-toggle";
 
 const menuItems = [
   { title: "Home", url: "#", icon: Home },
