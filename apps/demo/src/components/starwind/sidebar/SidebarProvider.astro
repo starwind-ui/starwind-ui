@@ -47,16 +47,18 @@ const SIDEBAR_WIDTH_ICON = "3.5rem";
 <script>
   class SidebarController {
     private provider: HTMLElement;
-    private mobileQuery: MediaQueryList;
     private boundKeyHandler: (e: KeyboardEvent) => void;
+    private boundResizeHandler: () => void;
+    private wasMobile: boolean = false;
 
     constructor(provider: HTMLElement) {
       this.provider = provider;
-      this.mobileQuery = window.matchMedia("(max-width: 768px)");
       this.boundKeyHandler = this.handleKeydown.bind(this);
+      this.boundResizeHandler = this.handleResize.bind(this);
+      this.wasMobile = this.isMobile();
       this.setupKeyboardShortcut();
       this.setupCustomEvents();
-      this.setupMobileQuery();
+      this.setupResizeListener();
     }
 
     private handleKeydown(e: KeyboardEvent) {
@@ -81,16 +83,25 @@ const SIDEBAR_WIDTH_ICON = "3.5rem";
       this.provider.addEventListener("sidebar:close-mobile", () => this.setMobileOpen(false));
     }
 
-    private setupMobileQuery() {
-      this.mobileQuery.addEventListener("change", () => {
-        if (!this.isMobile()) {
-          this.setMobileOpen(false);
-        }
-      });
+    private handleResize() {
+      const isMobileNow = this.isMobile();
+      // Close mobile sheet when transitioning from mobile to desktop
+      if (this.wasMobile && !isMobileNow) {
+        this.setMobileOpen(false);
+      }
+      this.wasMobile = isMobileNow;
+    }
+
+    private setupResizeListener() {
+      window.removeEventListener("resize", this.boundResizeHandler);
+      window.addEventListener("resize", this.boundResizeHandler);
     }
 
     isMobile(): boolean {
-      return this.mobileQuery.matches;
+      // Check if desktop sidebar is hidden (has display: none from hidden class)
+      const desktopSidebar = this.provider.querySelector<HTMLElement>('[data-slot="sidebar"]');
+      if (!desktopSidebar) return false;
+      return getComputedStyle(desktopSidebar).display === "none";
     }
 
     getState(): "expanded" | "collapsed" {
