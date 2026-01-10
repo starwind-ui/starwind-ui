@@ -48,27 +48,28 @@ const SIDEBAR_WIDTH_ICON = "3.5rem";
   class SidebarController {
     private provider: HTMLElement;
     private mobileQuery: MediaQueryList;
+    private boundKeyHandler: (e: KeyboardEvent) => void;
 
     constructor(provider: HTMLElement) {
       this.provider = provider;
       this.mobileQuery = window.matchMedia("(max-width: 768px)");
-      this.init();
-    }
-
-    private init() {
+      this.boundKeyHandler = this.handleKeydown.bind(this);
       this.setupKeyboardShortcut();
       this.setupCustomEvents();
       this.setupMobileQuery();
     }
 
-    private setupKeyboardShortcut() {
+    private handleKeydown(e: KeyboardEvent) {
       const shortcut = this.provider.getAttribute("data-keyboard-shortcut") || "b";
-      document.addEventListener("keydown", (e) => {
-        if (e.key === shortcut && (e.metaKey || e.ctrlKey)) {
-          e.preventDefault();
-          this.toggle();
-        }
-      });
+      if (e.key === shortcut && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        this.toggle();
+      }
+    }
+
+    private setupKeyboardShortcut() {
+      document.removeEventListener("keydown", this.boundKeyHandler);
+      document.addEventListener("keydown", this.boundKeyHandler);
     }
 
     private setupCustomEvents() {
