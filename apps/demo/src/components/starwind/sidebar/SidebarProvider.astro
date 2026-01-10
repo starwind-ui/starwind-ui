@@ -166,19 +166,37 @@ const SIDEBAR_WIDTH_ICON = "3.5rem";
 
       this.provider.dispatchEvent(new CustomEvent("sidebar:mobile-change", { detail: { open } }));
     }
+
+    destroy() {
+      document.removeEventListener("keydown", this.boundKeyHandler);
+      window.removeEventListener("resize", this.boundResizeHandler);
+    }
   }
 
   const sidebarInstances = new WeakMap<HTMLElement, SidebarController>();
+  const trackedProviders = new Set<HTMLElement>();
+
+  const cleanupSidebars = () => {
+    // Destroy controllers for providers no longer in DOM
+    for (const provider of trackedProviders) {
+      if (!document.contains(provider)) {
+        sidebarInstances.get(provider)?.destroy();
+        trackedProviders.delete(provider);
+      }
+    }
+  };
 
   const setupSidebars = () => {
     document.querySelectorAll<HTMLElement>(".starwind-sidebar-provider").forEach((provider) => {
       if (!sidebarInstances.has(provider)) {
         sidebarInstances.set(provider, new SidebarController(provider));
+        trackedProviders.add(provider);
       }
     });
   };
 
   setupSidebars();
+  document.addEventListener("astro:before-swap", cleanupSidebars);
   document.addEventListener("astro:after-swap", setupSidebars);
   document.addEventListener("starwind:init", setupSidebars);
 </script>
