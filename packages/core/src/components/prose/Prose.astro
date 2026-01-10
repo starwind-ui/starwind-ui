@@ -189,7 +189,7 @@ const { class: className, ...rest } = Astro.props;
 
   .sw-prose h5:not(:where(.not-sw-prose *)),
   .sw-prose h6:not(:where(.not-sw-prose *)) {
-    font-size: var(--sw-prose-font-size);
+    font-size: inherit;
     font-weight: var(--sw-prose-heading-weight);
     margin-bottom: 0.5em;
   }
@@ -369,7 +369,7 @@ const { class: className, ...rest } = Astro.props;
 
   .sw-prose pre code:not(:where(.not-sw-prose *)) {
     all: unset;
-    font-family: (--font-mono);
+    font-family: var(--font-mono);
   }
 
   /* --------------------------------------------------------------------------
