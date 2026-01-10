@@ -321,11 +321,11 @@ const { class: className, ...rest } = Astro.props;
     margin-bottom: var(--sw-prose-spacing);
   }
 
-  .sw-prose blockquote:not(:where(.not-sw-prose *)) p:first-of-type::before {
+  .sw-prose blockquote p:first-of-type:not(:where(.not-sw-prose *))::before {
     content: open-quote;
   }
 
-  .sw-prose blockquote:not(:where(.not-sw-prose *)) p:last-of-type::after {
+  .sw-prose blockquote p:last-of-type:not(:where(.not-sw-prose *))::after {
     content: close-quote;
   }
 
