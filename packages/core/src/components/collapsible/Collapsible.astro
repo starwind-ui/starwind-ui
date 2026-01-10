@@ -16,14 +16,30 @@ type Props = HTMLAttributes<"div"> & {
 export const collapsible = tv({ base: "starwind-collapsible" });
 
 const { defaultOpen = false, disabled = false, class: className, ...rest } = Astro.props;
+
+// Keys owned by the runtime that should not be spread from rest
+const runtimeOwnedKeys = ["id", "data-state", "data-disabled", "class"] as const;
+const sanitizedRest = Object.fromEntries(
+  Object.entries(rest).filter(
+    ([key]) => !runtimeOwnedKeys.includes(key as (typeof runtimeOwnedKeys)[number]),
+  ),
+);
+
+// Compute final values, preferring consumer-provided values
+const finalDataState =
+  (rest as Record<string, unknown>)["data-state"] ?? (defaultOpen ? "open" : "closed");
+const finalDataDisabled =
+  (rest as Record<string, unknown>)["data-disabled"] ?? (disabled ? "" : undefined);
+const finalId = (rest as Record<string, unknown>)["id"] as string | undefined;
 ---
 
 <div
+  {...sanitizedRest}
+  id={finalId}
   class={collapsible({ class: className })}
-  data-state={defaultOpen ? "open" : "closed"}
-  data-disabled={disabled ? "" : undefined}
+  data-state={finalDataState}
+  data-disabled={finalDataDisabled}
   data-slot="collapsible"
-  {...rest}
 >
   <slot />
 </div>
@@ -40,7 +56,6 @@ const { defaultOpen = false, disabled = false, class: className, ...rest } = Ast
     private trigger: HTMLElement | null;
     private content: HTMLElement | null;
     private collapsibleId: string;
-    private isInitialized: boolean = false;
 
     constructor(root: HTMLElement, idx: number) {
       this.root = root;
@@ -54,8 +69,6 @@ const { defaultOpen = false, disabled = false, class: className, ...rest } = Ast
         this.setupEventListeners();
         this.setInitialState();
       }
-
-      this.isInitialized = true;
     }
 
     private setupAccessibility(): void {
@@ -64,11 +77,13 @@ const { defaultOpen = false, disabled = false, class: className, ...rest } = Ast
       const triggerId = `${this.collapsibleId}-trigger`;
       const contentId = `${this.collapsibleId}-content`;
 
-      this.trigger.id = triggerId;
-      this.trigger.setAttribute("aria-controls", contentId);
+      // Use "set if missing" semantics for IDs
+      if (!this.trigger.id) this.trigger.id = triggerId;
+      if (!this.content.id) this.content.id = contentId;
 
-      this.content.id = contentId;
-      this.content.setAttribute("aria-labelledby", triggerId);
+      // Use actual IDs (consumer-provided or generated) for ARIA
+      this.trigger.setAttribute("aria-controls", this.content.id);
+      this.content.setAttribute("aria-labelledby", this.trigger.id);
       this.content.setAttribute("role", "region");
 
       this.updateAriaExpanded();
