@@ -1,0 +1,22 @@
+---
+import type { ComponentProps } from "astro/types";
+import { tv } from "tailwind-variants";
+
+import { Separator } from "@/components/starwind/separator";
+
+const sidebarSeparator = tv({
+  base: "bg-sidebar-border mx-2 w-auto",
+});
+
+type Props = ComponentProps<typeof Separator>;
+
+const { orientation = "horizontal", class: className, ...rest } = Astro.props;
+---
+
+<Separator
+  orientation={orientation}
+  class={sidebarSeparator({ class: className })}
+  data-slot="sidebar-separator"
+  data-sidebar="separator"
+  {...rest}
+/>
