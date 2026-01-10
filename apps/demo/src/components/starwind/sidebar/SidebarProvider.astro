@@ -62,6 +62,21 @@ const SIDEBAR_WIDTH_ICON = "3.5rem";
     }
 
     private handleKeydown(e: KeyboardEvent) {
+      // Skip if focus is in an editable element
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tagName = target.tagName.toLowerCase();
+        if (
+          tagName === "input" ||
+          tagName === "textarea" ||
+          tagName === "select" ||
+          target.isContentEditable ||
+          target.closest("[contenteditable='true']")
+        ) {
+          return;
+        }
+      }
+
       const shortcut = this.provider.getAttribute("data-keyboard-shortcut") || "b";
       if (e.key === shortcut && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
