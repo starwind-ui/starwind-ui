@@ -274,12 +274,12 @@ const { class: className, ...rest } = Astro.props;
     margin-bottom: 0.75em;
   }
 
-  .sw-prose ol > li::marker:not(:where(.not-sw-prose *)) {
+  .sw-prose ol > li:not(:where(.not-sw-prose *))::marker {
     font-weight: 400;
     color: var(--sw-prose-list-marker-color);
   }
 
-  .sw-prose ul > li::marker:not(:where(.not-sw-prose *)) {
+  .sw-prose ul > li:not(:where(.not-sw-prose *))::marker {
     color: var(--sw-prose-list-marker-color);
   }
 
@@ -321,11 +321,11 @@ const { class: className, ...rest } = Astro.props;
     margin-bottom: var(--sw-prose-spacing);
   }
 
-  .sw-prose blockquote p:first-of-type::before:not(:where(.not-sw-prose *)) {
+  .sw-prose blockquote:not(:where(.not-sw-prose *)) p:first-of-type::before {
     content: open-quote;
   }
 
-  .sw-prose blockquote p:last-of-type::after:not(:where(.not-sw-prose *)) {
+  .sw-prose blockquote:not(:where(.not-sw-prose *)) p:last-of-type::after {
     content: close-quote;
   }
 
