@@ -1,0 +1,21 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div">;
+
+export const sidebarGroupContent = tv({
+  base: "w-full text-sm",
+});
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div
+  class={sidebarGroupContent({ class: className })}
+  data-slot="sidebar-group-content"
+  data-sidebar="group-content"
+  {...rest}
+>
+  <slot />
+</div>

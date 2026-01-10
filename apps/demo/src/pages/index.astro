@@ -13,6 +13,7 @@ import {
   ButtonGroupDemo,
   CardDemo,
   CheckboxDemo,
+  CollapsibleDemo,
   DialogDemo,
   DropdownDemo,
   DropzoneDemo,
@@ -33,6 +34,7 @@ import {
   SwitchDemo,
   TableDemo,
   TabsDemo,
+  ThemeToggleDemo,
   ToastDemo,
   ToggleDemo,
   TooltipDemo,
@@ -46,6 +48,11 @@ import Layout from "@/layouts/Layout.astro";
   description="A collection of accessible UI components built with Astro"
 >
   <div class="container mx-auto px-4 pb-20">
+    <CollapsibleDemo />
+    <ThemeToggleDemo />
+    <BadgeDemo />
+    <ButtonDemo />
+    <ButtonGroupDemo />
     <InputOtpDemo />
     <DialogDemo />
     <ToastDemo />
@@ -75,11 +82,8 @@ import Layout from "@/layouts/Layout.astro";
     <SwitchDemo />
     <ToggleDemo />
     <AvatarDemo />
-    <ButtonDemo />
-    <ButtonGroupDemo />
     <CheckboxDemo />
     <TooltipDemo />
-    <BadgeDemo />
     <AlertDemo />
     <TableDemo />
     <KbdDemo />

@@ -100,18 +100,6 @@ const {
         this.content.addEventListener("mouseleave", () => this.hide());
       }
 
-      // if data-avoid-collisions exists, add resize listener to reset any translations
-      if (this.content.hasAttribute("data-avoid-collisions")) {
-        window.addEventListener(
-          "resize",
-          () => {
-            if (!this.content) return;
-            this.content.style.transform = "";
-          },
-          { passive: true },
-        );
-      }
-
       // Document events
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && this.tooltip.getAttribute("data-state") === "open") {
@@ -135,7 +123,7 @@ const {
         this.tooltip.setAttribute("data-state", "open");
         this.content.setAttribute("data-state", "open");
         this.content.style.display = "block";
-        this.checkBoundary(this.content);
+        this.positionTooltip();
         this.clearOpenTimer();
         return;
       }
@@ -148,9 +136,87 @@ const {
         this.tooltip.setAttribute("data-state", "open");
         this.content.setAttribute("data-state", "open");
         this.content.style.display = "block";
-        this.checkBoundary(this.content);
+        this.positionTooltip();
         this.openTimerRef = null;
       }, delay);
+    }
+
+    private positionTooltip() {
+      if (!this.content || !this.trigger) return;
+
+      const triggerRect = this.trigger.getBoundingClientRect();
+      const contentRect = this.content.getBoundingClientRect();
+      const side = this.content.dataset.side || "top";
+      const align = this.content.dataset.align || "center";
+      const sideOffset = parseInt(this.content.dataset.sideOffset || "8");
+
+      let top = 0;
+      let left = 0;
+
+      // Calculate position based on side
+      switch (side) {
+        case "top":
+          top = triggerRect.top - contentRect.height - sideOffset;
+          break;
+        case "bottom":
+          top = triggerRect.bottom + sideOffset;
+          break;
+        case "left":
+          left = triggerRect.left - contentRect.width - sideOffset;
+          break;
+        case "right":
+          left = triggerRect.right + sideOffset;
+          break;
+      }
+
+      // Calculate alignment
+      if (side === "top" || side === "bottom") {
+        switch (align) {
+          case "center":
+            left = triggerRect.left + (triggerRect.width - contentRect.width) / 2;
+            break;
+          case "start":
+            left = triggerRect.left;
+            break;
+          case "end":
+            left = triggerRect.right - contentRect.width;
+            break;
+        }
+      } else {
+        switch (align) {
+          case "center":
+            top = triggerRect.top + (triggerRect.height - contentRect.height) / 2;
+            break;
+          case "start":
+            top = triggerRect.top;
+            break;
+          case "end":
+            top = triggerRect.bottom - contentRect.height;
+            break;
+        }
+      }
+
+      // Apply collision avoidance if enabled
+      if (this.content.hasAttribute("data-avoid-collisions")) {
+        const padding = 8;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Horizontal bounds
+        if (left < padding) left = padding;
+        if (left + contentRect.width > viewportWidth - padding) {
+          left = viewportWidth - contentRect.width - padding;
+        }
+
+        // Vertical bounds
+        if (top < padding) top = padding;
+        if (top + contentRect.height > viewportHeight - padding) {
+          top = viewportHeight - contentRect.height - padding;
+        }
+      }
+
+      this.content.style.top = `${top}px`;
+      this.content.style.left = `${left}px`;
     }
 
     private hide(immediate: boolean = false) {
@@ -181,29 +247,6 @@ const {
         },
         parseInt(this.tooltip.getAttribute("data-close-delay") || "300"),
       );
-    }
-
-    private checkBoundary(tooltipElement: HTMLElement) {
-      if (!tooltipElement) return;
-
-      // if data-avoid-collisions does not exist, return
-      if (!tooltipElement.hasAttribute("data-avoid-collisions")) return;
-
-      const viewportWidth = window.innerWidth;
-      const tooltipRect = tooltipElement.getBoundingClientRect();
-      const padding = 16; // Add some padding from viewport edges
-
-      // Check if tooltip extends beyond right edge of viewport
-      if (tooltipRect.right > viewportWidth - padding) {
-        const overflow = tooltipRect.right - (viewportWidth - padding);
-        tooltipElement.style.transform = `translateX(-${overflow + padding}px)`;
-      }
-
-      // Check if tooltip extends beyond left edge of viewport
-      if (tooltipRect.left < padding) {
-        const overflow = padding - tooltipRect.left;
-        tooltipElement.style.transform = `translateX(${overflow + padding}px)`;
-      }
     }
 
     private clearOpenTimer() {

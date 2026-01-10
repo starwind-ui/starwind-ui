@@ -1,0 +1,129 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
+
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/tooltip";
+
+type Props = HTMLAttributes<"button"> &
+  Omit<HTMLAttributes<"a">, "type"> &
+  VariantProps<typeof sidebarMenuButton> & {
+    /**
+     * Render as a child element wrapper instead of a button
+     */
+    asChild?: boolean;
+    /**
+     * Whether the menu item is currently active
+     */
+    isActive?: boolean;
+    /**
+     * Tooltip text to show when sidebar is collapsed
+     */
+    tooltip?: string;
+  };
+
+export const sidebarMenuButton = tv({
+  base: [
+    "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2.5 text-left",
+    "ring-sidebar-outline outline-hidden transition-[width,height,padding]",
+    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+    "focus-visible:ring-2",
+    "active:bg-sidebar-accent active:text-sidebar-accent-foreground",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "aria-disabled:pointer-events-none aria-disabled:opacity-50",
+    "group-has-data-[sidebar=menu-action]/menu-item:pr-8",
+    "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
+    "data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground",
+    "group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-2.5!",
+    "[&>span:last-child]:truncate [&>svg]:size-4.5 [&>svg]:shrink-0",
+  ],
+  variants: {
+    variant: {
+      default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+      outline: [
+        "bg-background shadow-sidebar-border shadow-xs",
+        "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-sidebar-accent",
+      ],
+    },
+    size: {
+      default: "h-10 text-base",
+      sm: "h-8 text-sm",
+      lg: "h-14 text-lg group-data-[collapsible=icon]:p-0!",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+    size: "default",
+  },
+});
+
+const {
+  asChild = false,
+  isActive = false,
+  tooltip,
+  variant,
+  size,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const Tag = Astro.props.href ? "a" : "button";
+
+const buttonClasses = sidebarMenuButton({ variant, size, class: className });
+const buttonDataAttrs = {
+  "data-slot": "sidebar-menu-button",
+  "data-sidebar": "menu-button",
+  "data-size": size || "default",
+  "data-active": isActive,
+};
+---
+
+{
+  tooltip ? (
+    <Tooltip openDelay={0} closeDelay={0} class="w-full">
+      <TooltipTrigger>
+        {asChild ? (
+          <div class={buttonClasses} {...buttonDataAttrs} data-as-child>
+            <slot />
+          </div>
+        ) : (
+          <Tag class={buttonClasses} {...buttonDataAttrs} {...rest}>
+            <slot />
+          </Tag>
+        )}
+      </TooltipTrigger>
+      <TooltipContent
+        side="right"
+        align="center"
+        class="starwind-sidebar-tooltip-content whitespace-nowrap"
+      >
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
+  ) : asChild ? (
+    <div class={buttonClasses} {...buttonDataAttrs} data-as-child>
+      <slot />
+    </div>
+  ) : (
+    <Tag class={buttonClasses} {...buttonDataAttrs} {...rest}>
+      <slot />
+    </Tag>
+  )
+}
+
+<style is:global>
+  /* Hide tooltip when sidebar is expanded */
+  [data-slot="sidebar"][data-state="expanded"] .starwind-sidebar-tooltip-content,
+  [data-slot="sidebar"]:not([data-collapsible="icon"]) .starwind-sidebar-tooltip-content {
+    display: none !important;
+  }
+
+  /* Hide tooltips in mobile sheet */
+  .starwind-sheet .starwind-sidebar-tooltip-content {
+    display: none !important;
+  }
+
+  /* Only show tooltip trigger wrapper styles when collapsed */
+  .starwind-sidebar-menu-button-tooltip-trigger {
+    display: contents;
+  }
+</style>

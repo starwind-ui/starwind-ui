@@ -11,7 +11,7 @@
     },
     { "name": "aspect-ratio", "type": "component", "version": "1.0.0", "dependencies": [] },
     { "name": "avatar", "type": "component", "version": "1.2.1", "dependencies": [] },
-    { "name": "badge", "type": "component", "version": "1.3.0", "dependencies": [] },
+    { "name": "badge", "type": "component", "version": "1.4.0", "dependencies": [] },
     { "name": "breadcrumb", "type": "component", "version": "1.1.1", "dependencies": [] },
     {
       "name": "button-group",
@@ -19,7 +19,7 @@
       "version": "1.0.0",
       "dependencies": ["@starwind-ui/core/separator@^1.0.0"]
     },
-    { "name": "button", "type": "component", "version": "2.2.0", "dependencies": [] },
+    { "name": "button", "type": "component", "version": "2.3.0", "dependencies": [] },
     { "name": "card", "type": "component", "version": "1.3.0", "dependencies": [] },
     {
       "name": "carousel",
@@ -28,7 +28,8 @@
       "dependencies": ["@starwind-ui/core/button@^2.1.0", "embla-carousel@^8.6.0"]
     },
     { "name": "checkbox", "type": "component", "version": "1.4.1", "dependencies": [] },
-    { "name": "dialog", "type": "component", "version": "1.4.2", "dependencies": [] },
+    { "name": "collapsible", "type": "component", "version": "1.0.0", "dependencies": [] },
+    { "name": "dialog", "type": "component", "version": "1.4.3", "dependencies": [] },
     { "name": "dropdown", "type": "component", "version": "1.2.3", "dependencies": [] },
     { "name": "dropzone", "type": "component", "version": "1.2.2", "dependencies": [] },
     { "name": "image", "type": "component", "version": "1.0.0", "dependencies": [] },
@@ -44,6 +45,7 @@
     { "name": "label", "type": "component", "version": "1.2.0", "dependencies": [] },
     { "name": "pagination", "type": "component", "version": "3.0.2", "dependencies": [] },
     { "name": "progress", "type": "component", "version": "1.1.1", "dependencies": [] },
+    { "name": "prose", "type": "component", "version": "1.0.0", "dependencies": [] },
     { "name": "radio-group", "type": "component", "version": "1.2.4", "dependencies": [] },
     { "name": "select", "type": "component", "version": "1.8.2", "dependencies": [] },
     { "name": "separator", "type": "component", "version": "1.0.0", "dependencies": [] },
@@ -53,6 +55,20 @@
       "version": "1.1.1",
       "dependencies": ["@starwind-ui/core/dialog@^1.3.0"]
     },
+    {
+      "name": "sidebar",
+      "type": "component",
+      "version": "1.0.0",
+      "dependencies": [
+        "@starwind-ui/core/button@^2.3.0",
+        "@starwind-ui/core/dialog@^1.4.3",
+        "@starwind-ui/core/input@^1.3.1",
+        "@starwind-ui/core/separator@^1.0.0",
+        "@starwind-ui/core/sheet@^1.1.1",
+        "@starwind-ui/core/skeleton@^1.2.0",
+        "@starwind-ui/core/tooltip@^1.4.0"
+      ]
+    },
     { "name": "skeleton", "type": "component", "version": "1.2.0", "dependencies": [] },
     { "name": "slider", "type": "component", "version": "1.0.0", "dependencies": [] },
     { "name": "spinner", "type": "component", "version": "1.0.0", "dependencies": [] },
@@ -60,9 +76,15 @@
     { "name": "table", "type": "component", "version": "1.1.0", "dependencies": [] },
     { "name": "tabs", "type": "component", "version": "1.4.1", "dependencies": [] },
     { "name": "textarea", "type": "component", "version": "1.3.1", "dependencies": [] },
+    {
+      "name": "theme-toggle",
+      "type": "component",
+      "version": "1.0.0",
+      "dependencies": ["@starwind-ui/core/toggle@^1.0.1"]
+    },
     { "name": "toast", "type": "component", "version": "1.0.0", "dependencies": [] },
     { "name": "toggle", "type": "component", "version": "1.0.1", "dependencies": [] },
-    { "name": "tooltip", "type": "component", "version": "1.3.1", "dependencies": [] },
+    { "name": "tooltip", "type": "component", "version": "1.4.0", "dependencies": [] },
     { "name": "video", "type": "component", "version": "1.0.0", "dependencies": [] }
   ]
 }

@@ -14,6 +14,11 @@ export default defineConfig({
       SVG: false, // astro-icon handles this
     }),
   ],
+  markdown: {
+    shikiConfig: {
+      theme: "houston",
+    },
+  },
   // adapter: cloudflare({
   // 	imageService: "compile",
   // }),

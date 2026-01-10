@@ -1,0 +1,22 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div">;
+
+export const collapsibleContent = tv({
+  base: "starwind-collapsible-content",
+});
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div
+  class={collapsibleContent({ class: className })}
+  data-state="closed"
+  data-slot="collapsible-content"
+  hidden
+  {...rest}
+>
+  <slot />
+</div>

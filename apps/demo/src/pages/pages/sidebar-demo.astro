@@ -1,0 +1,360 @@
+---
+import "@/styles/global.css";
+
+import Bell from "@tabler/icons/outline/bell.svg";
+import Calendar from "@tabler/icons/outline/calendar.svg";
+import ChevronUp from "@tabler/icons/outline/chevron-up.svg";
+import CreditCard from "@tabler/icons/outline/credit-card.svg";
+import Home from "@tabler/icons/outline/home.svg";
+import Inbox from "@tabler/icons/outline/inbox.svg";
+import Logout from "@tabler/icons/outline/logout.svg";
+import BadgeCheck from "@tabler/icons/outline/rosette-discount-check.svg";
+import Search from "@tabler/icons/outline/search.svg";
+import Settings from "@tabler/icons/outline/settings.svg";
+import Sparkles from "@tabler/icons/outline/sparkles.svg";
+import User from "@tabler/icons/outline/user.svg";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind/avatar";
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+  DropdownSeparator,
+  DropdownTrigger,
+} from "@/components/starwind/dropdown";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+} from "@/components/starwind/sidebar";
+import { ThemeToggle } from "@/components/starwind/theme-toggle";
+
+const menuItems = [
+  { title: "Home", url: "#", icon: Home },
+  { title: "Inbox", url: "#", icon: Inbox },
+  { title: "Calendar", url: "#", icon: Calendar },
+  { title: "Search", url: "#", icon: Search },
+  { title: "Settings", url: "#", icon: Settings },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Sidebar Demo - Starwind UI</title>
+    <meta name="description" content="Sidebar component demo for Starwind UI" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <script is:inline>
+      function initTheme() {
+        const colorTheme = localStorage.getItem("colorTheme");
+        if (!colorTheme) {
+          if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            document.documentElement.classList.add("dark");
+            localStorage.setItem("colorTheme", "dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+            localStorage.setItem("colorTheme", "light");
+          }
+        } else {
+          if (colorTheme === "dark") {
+            document.documentElement.classList.add("dark");
+          } else if (colorTheme === "light") {
+            document.documentElement.classList.remove("dark");
+          } else if (colorTheme === "system") {
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            document.documentElement.classList.toggle("dark", prefersDark);
+          }
+        }
+      }
+      initTheme();
+      document.addEventListener("astro:after-swap", initTheme);
+    </script>
+  </head>
+
+  <body class="min-h-lvh">
+    <SidebarProvider>
+      <Sidebar collapsible="icon">
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton variant="outline" size="lg">
+                <div
+                  class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-10 items-center justify-center rounded-lg"
+                >
+                  <span class="text-lg font-bold">S</span>
+                </div>
+                <div class="grid flex-1 text-left text-sm leading-tight">
+                  <span class="truncate font-semibold">Starwind UI</span>
+                  <span class="text-sidebar-foreground/70 truncate text-xs">Demo App</span>
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+
+        <SidebarSeparator />
+
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Application</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {
+                  menuItems.map((item) => (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        href={item.url}
+                        isActive={item.title === "Home"}
+                        tooltip={item.title}
+                        variant="outline"
+                      >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                }
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel>Projects</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton variant="outline" href="#">
+                    <span
+                      class="flex size-4.5 shrink-0 items-center justify-center rounded-sm bg-blue-500 text-[10px] text-white"
+                      >P1</span
+                    >
+                    <span>Project Alpha</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton variant="outline" href="#">
+                    <span
+                      class="flex size-4.5 shrink-0 items-center justify-center rounded-sm bg-green-500 text-[10px] text-white"
+                      >P2</span
+                    >
+                    <span>Project Beta</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton variant="outline" href="#">
+                    <span
+                      class="flex size-4.5 shrink-0 items-center justify-center rounded-sm bg-purple-500 text-[10px] text-white"
+                      >P3</span
+                    >
+                    <span>Project Gamma</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <Dropdown>
+                <DropdownTrigger asChild>
+                  <SidebarMenuButton
+                    variant="outline"
+                    size="lg"
+                    class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  >
+                    <Avatar class="shrink-0 rounded-lg">
+                      <AvatarImage src="https://i.pravatar.cc/150?u=johndoe" alt="John Doe" />
+                      <AvatarFallback class="rounded-lg">JD</AvatarFallback>
+                    </Avatar>
+                    <div class="grid flex-1 text-left text-sm leading-tight">
+                      <span class="truncate font-semibold">John Doe</span>
+                      <span class="text-sidebar-foreground/70 truncate text-xs"
+                        >john@example.com</span
+                      >
+                    </div>
+                    <ChevronUp class="ml-auto size-4" />
+                  </SidebarMenuButton>
+                </DropdownTrigger>
+                <DropdownContent
+                  class="w-[--trigger-width] min-w-56 rounded-lg"
+                  side="top"
+                  align="end"
+                  sideOffset={4}
+                >
+                  <DropdownLabel class="p-0 font-normal">
+                    <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                      <Avatar class="size-8 rounded-lg">
+                        <AvatarImage src="https://i.pravatar.cc/150?u=johndoe" alt="John Doe" />
+                        <AvatarFallback class="rounded-lg">JD</AvatarFallback>
+                      </Avatar>
+                      <div class="grid flex-1 text-left text-sm leading-tight">
+                        <span class="truncate font-semibold">John Doe</span>
+                        <span class="text-muted-foreground truncate text-xs">john@example.com</span>
+                      </div>
+                    </div>
+                  </DropdownLabel>
+                  <DropdownSeparator />
+                  <DropdownItem as="a" href="#">
+                    <Sparkles class="mr-2 size-4" />
+                    Upgrade to Pro
+                  </DropdownItem>
+                  <DropdownSeparator />
+                  <DropdownItem as="a" href="#">
+                    <BadgeCheck class="mr-2 size-4" />
+                    Account
+                  </DropdownItem>
+                  <DropdownItem as="a" href="#">
+                    <CreditCard class="mr-2 size-4" />
+                    Billing
+                  </DropdownItem>
+                  <DropdownItem as="a" href="#">
+                    <Bell class="mr-2 size-4" />
+                    Notifications
+                  </DropdownItem>
+                  <DropdownSeparator />
+                  <DropdownItem as="a" href="#">
+                    <Logout class="mr-2 size-4" />
+                    Log out
+                  </DropdownItem>
+                </DropdownContent>
+              </Dropdown>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+
+        <SidebarRail />
+      </Sidebar>
+
+      <SidebarInset>
+        <header class="bg-background sticky top-0 flex h-14 items-center gap-4 border-b px-4">
+          <SidebarTrigger />
+          <div class="flex-1">
+            <h1 class="text-lg font-semibold">Sidebar Demo</h1>
+          </div>
+          <ThemeToggle />
+        </header>
+
+        <main class="flex-1 p-6">
+          <div class="mx-auto max-w-4xl space-y-8">
+            <section>
+              <h2 class="mb-4 text-2xl font-bold">Starwind UI Sidebar Component</h2>
+              <p class="text-muted-foreground mb-6">
+                A composable, themeable and customizable sidebar component built for Astro. This
+                demo showcases the <code class="bg-muted rounded px-1.5 py-0.5 text-sm"
+                  >collapsible="icon"</code
+                > mode.
+              </p>
+
+              <div class="bg-muted/50 space-y-4 rounded-lg border p-6">
+                <h3 class="font-semibold">Features</h3>
+                <ul class="text-muted-foreground list-inside list-disc space-y-2 text-sm">
+                  <li>
+                    <strong>Collapsible modes:</strong>
+                    <code class="bg-muted rounded px-1 text-xs">icon</code>,
+                    <code class="bg-muted rounded px-1 text-xs">offcanvas</code>, or
+                    <code class="bg-muted rounded px-1 text-xs">none</code>
+                  </li>
+                  <li>
+                    <strong>Side positioning:</strong>
+                    <code class="bg-muted rounded px-1 text-xs">left</code> or
+                    <code class="bg-muted rounded px-1 text-xs">right</code>
+                  </li>
+                  <li>
+                    <strong>Variants:</strong>
+                    <code class="bg-muted rounded px-1 text-xs">sidebar</code>,
+                    <code class="bg-muted rounded px-1 text-xs">floating</code>, or
+                    <code class="bg-muted rounded px-1 text-xs">inset</code>
+                  </li>
+                  <li>
+                    <strong>Keyboard shortcut:</strong> Press
+                    <kbd class="bg-muted rounded border px-1.5 py-0.5 font-mono text-xs">Ctrl</kbd>
+                    +
+                    <kbd class="bg-muted rounded border px-1.5 py-0.5 font-mono text-xs">B</kbd> to toggle
+                  </li>
+                  <li>
+                    <strong>Cookie persistence:</strong> Remembers sidebar state across sessions
+                  </li>
+                  <li><strong>Mobile support:</strong> Opens as a sheet on mobile devices</li>
+                </ul>
+              </div>
+            </section>
+
+            <section>
+              <h3 class="mb-4 text-xl font-semibold">Usage</h3>
+              <pre
+                class="bg-muted overflow-x-auto rounded-lg border p-4 text-sm"><code>{`<SidebarProvider>
+  <Sidebar collapsible="icon">
+    <SidebarHeader>...</SidebarHeader>
+    <SidebarContent>
+      <SidebarGroup>
+        <SidebarGroupLabel>Menu</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="#">
+                <Icon />
+                <span>Label</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </SidebarContent>
+    <SidebarFooter>...</SidebarFooter>
+    <SidebarRail />
+  </Sidebar>
+  
+  <SidebarInset>
+    <main>Your content here</main>
+  </SidebarInset>
+</SidebarProvider>`}</code></pre>
+            </section>
+
+            <section>
+              <h3 class="mb-4 text-xl font-semibold">Try It</h3>
+              <div class="flex flex-wrap gap-4">
+                <button
+                  type="button"
+                  class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                  onclick="document.querySelector('[data-slot=sidebar-provider]')?.dispatchEvent(new CustomEvent('sidebar:toggle'))"
+                >
+                  Toggle Sidebar
+                </button>
+                <a
+                  href="/"
+                  class="bg-foreground text-background hover:bg-foreground/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  ← Back to Components
+                </a>
+              </div>
+            </section>
+          </div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
+  </body>
+</html>
+
+<style>
+  html {
+    scrollbar-gutter: stable;
+  }
+</style>

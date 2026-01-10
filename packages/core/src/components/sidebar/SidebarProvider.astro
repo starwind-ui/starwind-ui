@@ -1,0 +1,202 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * Default open state of the sidebar
+   * @default true
+   */
+  defaultOpen?: boolean;
+  /**
+   * Keyboard shortcut to toggle the sidebar
+   * @default "b"
+   */
+  keyboardShortcut?: string;
+};
+
+export const sidebarProvider = tv({
+  base: [
+    "starwind-sidebar-provider",
+    "group/sidebar-wrapper flex min-h-svh w-full",
+    "has-data-[variant=inset]:bg-sidebar",
+  ],
+});
+
+const { defaultOpen = true, keyboardShortcut = "b", class: className, ...rest } = Astro.props;
+
+const SIDEBAR_WIDTH = "18rem";
+const SIDEBAR_WIDTH_ICON = "3.5rem";
+---
+
+<div
+  class={sidebarProvider({ class: className })}
+  data-slot="sidebar-provider"
+  data-state={defaultOpen ? "expanded" : "collapsed"}
+  data-mobile-open="false"
+  data-keyboard-shortcut={keyboardShortcut}
+  style={{
+    "--sidebar-width": SIDEBAR_WIDTH,
+    "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+  }}
+  {...rest}
+>
+  <slot />
+</div>
+
+<script>
+  class SidebarController {
+    private provider: HTMLElement;
+    private boundKeyHandler: (e: KeyboardEvent) => void;
+    private boundResizeHandler: () => void;
+    private wasMobile: boolean = false;
+
+    constructor(provider: HTMLElement) {
+      this.provider = provider;
+      this.boundKeyHandler = this.handleKeydown.bind(this);
+      this.boundResizeHandler = this.handleResize.bind(this);
+      this.wasMobile = this.isMobile();
+      this.setupKeyboardShortcut();
+      this.setupCustomEvents();
+      this.setupResizeListener();
+    }
+
+    private handleKeydown(e: KeyboardEvent) {
+      // Skip if focus is in an editable element
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tagName = target.tagName.toLowerCase();
+        if (
+          tagName === "input" ||
+          tagName === "textarea" ||
+          tagName === "select" ||
+          target.isContentEditable ||
+          target.closest("[contenteditable='true']")
+        ) {
+          return;
+        }
+      }
+
+      const shortcut = this.provider.getAttribute("data-keyboard-shortcut") || "b";
+      if (e.key === shortcut && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        this.toggle();
+      }
+    }
+
+    private setupKeyboardShortcut() {
+      document.removeEventListener("keydown", this.boundKeyHandler);
+      document.addEventListener("keydown", this.boundKeyHandler);
+    }
+
+    private setupCustomEvents() {
+      this.provider.addEventListener("sidebar:toggle", () => this.toggle());
+      this.provider.addEventListener("sidebar:open", () => this.setOpen(true));
+      this.provider.addEventListener("sidebar:close", () => this.setOpen(false));
+      this.provider.addEventListener("sidebar:toggle-mobile", () => this.toggleMobile());
+      this.provider.addEventListener("sidebar:open-mobile", () => this.setMobileOpen(true));
+      this.provider.addEventListener("sidebar:close-mobile", () => this.setMobileOpen(false));
+    }
+
+    private handleResize() {
+      const isMobileNow = this.isMobile();
+      // Close mobile sheet when transitioning from mobile to desktop
+      if (this.wasMobile && !isMobileNow) {
+        this.setMobileOpen(false);
+      }
+      this.wasMobile = isMobileNow;
+    }
+
+    private setupResizeListener() {
+      window.removeEventListener("resize", this.boundResizeHandler);
+      window.addEventListener("resize", this.boundResizeHandler);
+    }
+
+    isMobile(): boolean {
+      // Check if desktop sidebar is hidden (has display: none from hidden class)
+      const desktopSidebar = this.provider.querySelector<HTMLElement>('[data-slot="sidebar"]');
+      if (!desktopSidebar) return false;
+      return getComputedStyle(desktopSidebar).display === "none";
+    }
+
+    getState(): "expanded" | "collapsed" {
+      return this.provider.getAttribute("data-state") as "expanded" | "collapsed";
+    }
+
+    isOpen(): boolean {
+      return this.getState() === "expanded";
+    }
+
+    isMobileOpen(): boolean {
+      return this.provider.getAttribute("data-mobile-open") === "true";
+    }
+
+    toggle() {
+      if (this.isMobile()) {
+        this.toggleMobile();
+      } else {
+        this.setOpen(!this.isOpen());
+      }
+    }
+
+    setOpen(open: boolean) {
+      const state = open ? "expanded" : "collapsed";
+      this.provider.setAttribute("data-state", state);
+      this.provider.dispatchEvent(new CustomEvent("sidebar:change", { detail: { open, state } }));
+    }
+
+    toggleMobile() {
+      // Check the actual dialog state instead of our tracked state
+      const mobileSheet = this.provider.querySelector<HTMLElement>(".starwind-sheet");
+      const dialogContent = mobileSheet?.querySelector<HTMLElement>(".starwind-dialog-content");
+      const isCurrentlyOpen = dialogContent?.dataset.state === "open";
+
+      this.setMobileOpen(!isCurrentlyOpen);
+    }
+
+    setMobileOpen(open: boolean) {
+      this.provider.setAttribute("data-mobile-open", String(open));
+
+      // Find the mobile sidebar Sheet and use Dialog's programmatic API
+      const mobileSheet = this.provider.querySelector<HTMLElement>(".starwind-sheet");
+      if (mobileSheet) {
+        const eventName = open ? "dialog:open" : "dialog:close";
+        mobileSheet.dispatchEvent(new CustomEvent(eventName));
+      }
+
+      this.provider.dispatchEvent(new CustomEvent("sidebar:mobile-change", { detail: { open } }));
+    }
+
+    destroy() {
+      document.removeEventListener("keydown", this.boundKeyHandler);
+      window.removeEventListener("resize", this.boundResizeHandler);
+    }
+  }
+
+  const sidebarInstances = new WeakMap<HTMLElement, SidebarController>();
+  const trackedProviders = new Set<HTMLElement>();
+
+  const cleanupSidebars = () => {
+    // Destroy controllers for providers no longer in DOM
+    for (const provider of trackedProviders) {
+      if (!document.contains(provider)) {
+        sidebarInstances.get(provider)?.destroy();
+        trackedProviders.delete(provider);
+      }
+    }
+  };
+
+  const setupSidebars = () => {
+    document.querySelectorAll<HTMLElement>(".starwind-sidebar-provider").forEach((provider) => {
+      if (!sidebarInstances.has(provider)) {
+        sidebarInstances.set(provider, new SidebarController(provider));
+        trackedProviders.add(provider);
+      }
+    });
+  };
+
+  setupSidebars();
+  document.addEventListener("astro:before-swap", cleanupSidebars);
+  document.addEventListener("astro:after-swap", setupSidebars);
+  document.addEventListener("starwind:init", setupSidebars);
+</script>

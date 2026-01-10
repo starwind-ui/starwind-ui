@@ -1,0 +1,40 @@
+---
+import type { ComponentProps, HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+import { Skeleton } from "@/components/starwind/skeleton";
+
+const sidebarMenuSkeleton = tv({
+  base: "flex h-8 items-center gap-2 rounded-md px-2",
+});
+
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * Whether to show the icon skeleton
+   * @default false
+   */
+  showIcon?: boolean;
+  /**
+   * Width of the text skeleton (random 50-90% if not specified)
+   */
+  width?: string;
+};
+
+const { showIcon = false, width, class: className, ...rest } = Astro.props;
+
+const skeletonWidth = width || `${Math.floor(Math.random() * 40) + 50}%`;
+---
+
+<div
+  class={sidebarMenuSkeleton({ class: className })}
+  data-slot="sidebar-menu-skeleton"
+  data-sidebar="menu-skeleton"
+  {...rest}
+>
+  {showIcon && <Skeleton class="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />}
+  <Skeleton
+    class="h-4 max-w-(--skeleton-width) flex-1"
+    style={`--skeleton-width: ${skeletonWidth}`}
+    data-sidebar="menu-skeleton-text"
+  />
+</div>

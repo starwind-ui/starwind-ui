@@ -30,6 +30,8 @@ const { class: className, ...rest } = Astro.props;
     private parentDialog: DialogHandler | null = null;
     private nestedOpenCount: number = 0;
     private isNested: boolean = false;
+    private _closeTimeout: number | null = null;
+    private _isClosing: boolean = false;
 
     constructor(dialogWrapper: HTMLElement, dialogNumber: number) {
       this.dialogWrapper = dialogWrapper;
@@ -149,6 +151,18 @@ const { class: className, ...rest } = Astro.props;
 
     private setupEvents(): void {
       if (!this.dialog) return;
+
+      // Add programmatic open/close via custom events on the wrapper
+      this.dialogWrapper.addEventListener("dialog:open", () => this.open());
+      this.dialogWrapper.addEventListener("dialog:close", () => this.close());
+      this.dialogWrapper.addEventListener("dialog:toggle", () => {
+        if (this.dialog?.open) {
+          this.close();
+        } else {
+          this.open();
+        }
+      });
+
       // Add click listeners to all triggers
       this.triggers.forEach((trigger) => {
         trigger.addEventListener("click", () => {
@@ -224,6 +238,15 @@ const { class: className, ...rest } = Astro.props;
 
     private open(): void {
       if (!this.dialog || !this.backdrop) return;
+      // Return early if already open
+      if (this.dialog.open && !this._isClosing) return;
+
+      // Cancel any pending close
+      if (this._closeTimeout !== null) {
+        clearTimeout(this._closeTimeout);
+        this._closeTimeout = null;
+      }
+      this._isClosing = false;
 
       // Reset nested count when opening (in case it wasn't properly reset)
       this.nestedOpenCount = 0;
@@ -246,7 +269,16 @@ const { class: className, ...rest } = Astro.props;
 
     private close(): void {
       if (!this.dialog || !this.backdrop) return;
+      // Return early if already closed or closing
+      if (!this.dialog.open || this._isClosing) return;
 
+      // Clear any existing close timeout
+      if (this._closeTimeout !== null) {
+        clearTimeout(this._closeTimeout);
+        this._closeTimeout = null;
+      }
+
+      this._isClosing = true;
       this.dialog.dataset.state = "closed";
 
       // Notify parent dialog that nested dialog is closing
@@ -257,11 +289,13 @@ const { class: className, ...rest } = Astro.props;
       }
 
       // Wait for animation to finish before hiding backdrop
-      setTimeout(() => {
+      this._closeTimeout = window.setTimeout(() => {
         if (!this.isNested) {
           this.backdrop?.classList.add("hidden");
         }
         this.dialog?.close();
+        this._isClosing = false;
+        this._closeTimeout = null;
         const stillOpen = document.querySelectorAll("dialog[open]").length;
         if (stillOpen === 0) {
           document.body.classList.remove("overflow-hidden");

@@ -1,0 +1,617 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+export const prose = tv({
+  base: "sw-prose max-w-[65ch]",
+});
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={[prose({ class: className })]} data-slot="prose" {...rest}><slot /></div>
+
+<style is:global>
+  /* ==========================================================================
+   * Starwind Prose - Typography styles for markdown content
+   * Inspired by Tailwind Typography and Astro Starlight
+   * ========================================================================== */
+
+  /* --------------------------------------------------------------------------
+   * CSS Custom Properties
+   * 
+   * Sizing is em-based, so it scales with the inherited font-size.
+   * Control overall size via Tailwind text utilities: text-sm md:text-base
+   * 
+   * Override specific values using CSS variables (supports responsive):
+   *   class="[--prose-spacing:1.5em] md:[--prose-spacing:1.25em]"
+   * 
+   * Or set on a parent element:
+   *   <div style="--prose-h1-size: 3em;"><Prose>...</Prose></div>
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose {
+    /* ===================
+     * Typography & Spacing
+     * =================== */
+    --sw-prose-line-height: var(--prose-line-height, 1.6);
+    --sw-prose-spacing: var(--prose-spacing, 1.25em);
+    --sw-prose-heading-spacing: var(--prose-heading-spacing, 1.5em);
+    --sw-prose-code-size: var(--prose-code-size, 0.875em);
+    --sw-prose-list-indent: var(--prose-list-indent, 1.625em);
+
+    /* ===================
+     * Colors
+     * =================== */
+    --sw-prose-color: var(--prose-color, --alpha(var(--color-foreground) / 80%));
+    --sw-prose-heading-color: var(--prose-heading-color, var(--color-foreground));
+    --sw-prose-list-marker-color: var(--prose-list-marker-color, var(--color-muted-foreground));
+
+    /* ===================
+     * Headings
+     * =================== */
+    --sw-prose-heading-font: var(--prose-heading-font, var(--font-heading, inherit));
+    --sw-prose-heading-weight: var(--prose-heading-weight, 600);
+    --sw-prose-heading-line-height: var(--prose-heading-line-height, 1.25);
+    --sw-prose-h1-size: var(--prose-h1-size, 2.25em);
+    --sw-prose-h1-weight: var(--prose-h1-weight, var(--sw-prose-heading-weight));
+    --sw-prose-h2-size: var(--prose-h2-size, 1.5em);
+    --sw-prose-h2-weight: var(--prose-h2-weight, var(--sw-prose-heading-weight));
+    --sw-prose-h3-size: var(--prose-h3-size, 1.25em);
+    --sw-prose-h3-weight: var(--prose-h3-weight, var(--sw-prose-heading-weight));
+    --sw-prose-h4-size: var(--prose-h4-size, 1em);
+    --sw-prose-h4-weight: var(--prose-h4-weight, var(--sw-prose-heading-weight));
+
+    /* ===================
+     * Links
+     * =================== */
+    --sw-prose-link-color: var(--prose-link-color, var(--color-foreground));
+    --sw-prose-link-decoration-color: var(
+      --prose-link-decoration-color,
+      var(--color-primary-accent)
+    );
+    --sw-prose-link-hover-color: var(--prose-link-hover-color, var(--color-primary-accent));
+
+    /* ===================
+     * Strong/Bold
+     * =================== */
+    --sw-prose-strong-color: var(--prose-strong-color, var(--color-foreground));
+    --sw-prose-strong-weight: var(--prose-strong-weight, 600);
+
+    /* ===================
+     * Blockquote
+     * =================== */
+    --sw-prose-blockquote-color: var(--prose-blockquote-color, var(--color-foreground));
+    --sw-prose-blockquote-border-color: var(--prose-blockquote-border-color, var(--color-border));
+    --sw-prose-blockquote-border-width: var(--prose-blockquote-border-width, 4px);
+
+    /* ===================
+     * Inline Code
+     * =================== */
+    --sw-prose-code-bg: var(--prose-code-bg, var(--color-muted));
+    --sw-prose-code-color: var(--prose-code-color, var(--color-foreground));
+    --sw-prose-code-weight: var(--prose-code-weight, 500);
+    --sw-prose-code-radius: var(--prose-code-radius, var(--radius-sm));
+
+    /* ===================
+     * Pre / Code Blocks
+     * =================== */
+    --sw-prose-pre-border-color: var(--prose-pre-border-color, var(--color-border));
+    --sw-prose-pre-border-radius: var(--prose-pre-border-radius, var(--radius-md));
+
+    /* ===================
+     * Tables
+     * =================== */
+    --sw-prose-table-heading-color: var(--prose-table-heading-color, var(--color-foreground));
+    --sw-prose-table-border-color: var(--prose-table-border-color, var(--color-border));
+
+    /* ===================
+     * Media (images, video, etc.)
+     * =================== */
+    --sw-prose-media-border-width: var(--prose-media-border-width, 0px);
+    --sw-prose-media-border-color: var(--prose-media-border-color, var(--color-border));
+    --sw-prose-media-border-radius: var(--prose-media-border-radius, 0);
+
+    /* ===================
+     * Mark/Highlight
+     * =================== */
+    --sw-prose-highlight-color: var(--prose-highlight-color, var(--color-foreground));
+    --sw-prose-highlight-bg-color: var(
+      --prose-highlight-bg-color,
+      --alpha(var(--color-warning) / 30%)
+    );
+
+    /* ===================
+     * Base styles
+     * =================== */
+    line-height: var(--sw-prose-line-height);
+    color: var(--sw-prose-color);
+  }
+
+  /* Vertical rhythm - spacing between block elements */
+  .sw-prose
+    :not(a, strong, em, del, span, input, code, br, kbd)
+    + :not(a, strong, em, del, span, input, code, br, kbd, :where(.not-sw-prose *)) {
+    margin-top: var(--sw-prose-spacing);
+  }
+
+  /* Headings after non-headings have more spacing */
+  .sw-prose
+    :not(h1, h2, h3, h4, h5, h6)
+    + :is(h1, h2, h3, h4, h5, h6):not(:where(.not-sw-prose *)) {
+    margin-top: var(--sw-prose-heading-spacing);
+  }
+
+  /* First/last child margin reset */
+  .sw-prose > :first-child:not(:where(.not-sw-prose *)) {
+    margin-top: 0;
+  }
+  .sw-prose > :last-child:not(:where(.not-sw-prose *)) {
+    margin-bottom: 0;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Headings
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose :is(h1, h2, h3, h4, h5, h6):not(:where(.not-sw-prose *)) {
+    color: var(--sw-prose-heading-color);
+    font-family: var(--sw-prose-heading-font);
+    font-weight: var(--sw-prose-heading-weight);
+    line-height: var(--sw-prose-heading-line-height);
+  }
+
+  .sw-prose h1:not(:where(.not-sw-prose *)) {
+    font-size: var(--sw-prose-h1-size);
+    font-weight: var(--sw-prose-h1-weight);
+    margin-bottom: 0.889em;
+  }
+
+  .sw-prose h2:not(:where(.not-sw-prose *)) {
+    font-size: var(--sw-prose-h2-size);
+    font-weight: var(--sw-prose-h2-weight);
+    margin-bottom: 0.667em;
+  }
+
+  .sw-prose h3:not(:where(.not-sw-prose *)) {
+    font-size: var(--sw-prose-h3-size);
+    font-weight: var(--sw-prose-h3-weight);
+    margin-bottom: 0.6em;
+  }
+
+  .sw-prose h4:not(:where(.not-sw-prose *)) {
+    font-size: var(--sw-prose-h4-size);
+    font-weight: var(--sw-prose-h4-weight);
+    margin-bottom: 0.5em;
+  }
+
+  .sw-prose h5:not(:where(.not-sw-prose *)),
+  .sw-prose h6:not(:where(.not-sw-prose *)) {
+    font-size: inherit;
+    font-weight: var(--sw-prose-heading-weight);
+    margin-bottom: 0.5em;
+  }
+
+  /* Reset margin-top after headings */
+  .sw-prose :is(h1, h2, h3, h4, h5, h6) + *:not(:where(.not-sw-prose *)) {
+    margin-top: 0;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Paragraphs
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose p:not(:where(.not-sw-prose *)) {
+    margin-top: var(--sw-prose-spacing);
+    margin-bottom: var(--sw-prose-spacing);
+  }
+
+  /* --------------------------------------------------------------------------
+   * Links
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose a:not(:where(.not-sw-prose *)) {
+    color: var(--sw-prose-link-color);
+    text-decoration: underline;
+    text-decoration-color: var(--sw-prose-link-decoration-color);
+    text-underline-offset: 0.15em;
+    font-weight: 500;
+    transition-property: color;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+
+  .sw-prose a:hover:not(:where(.not-sw-prose *)) {
+    color: var(--sw-prose-link-hover-color);
+  }
+
+  /* --------------------------------------------------------------------------
+   * Strong, Bold, Emphasis
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose strong:not(:where(.not-sw-prose *)) {
+    color: var(--sw-prose-strong-color);
+    font-weight: var(--sw-prose-strong-weight);
+  }
+
+  .sw-prose :is(a, blockquote, thead th) strong:not(:where(.not-sw-prose *)) {
+    color: inherit;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Lists
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose :is(ul, ol):not(:where(.not-sw-prose *)) {
+    padding-inline-start: var(--sw-prose-list-indent);
+    margin-top: var(--sw-prose-spacing);
+    margin-bottom: var(--sw-prose-spacing);
+  }
+
+  .sw-prose ul:not(:where(.not-sw-prose *)) {
+    list-style-type: disc;
+  }
+
+  .sw-prose ol:not(:where(.not-sw-prose *)) {
+    list-style-type: decimal;
+  }
+
+  .sw-prose li:not(:where(.not-sw-prose *)) {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    padding-inline-start: 0.375em;
+    overflow-wrap: anywhere;
+  }
+
+  .sw-prose li + li:not(:where(.not-sw-prose *)) {
+    margin-top: 0.25rem;
+  }
+
+  .sw-prose :is(ul, ol) :is(ul, ol):not(:where(.not-sw-prose *)) {
+    margin-top: 0.75em;
+    margin-bottom: 0.75em;
+  }
+
+  .sw-prose ol > li:not(:where(.not-sw-prose *))::marker {
+    font-weight: 400;
+    color: var(--sw-prose-list-marker-color);
+  }
+
+  .sw-prose ul > li:not(:where(.not-sw-prose *))::marker {
+    color: var(--sw-prose-list-marker-color);
+  }
+
+  /* Definition lists */
+  .sw-prose dl:not(:where(.not-sw-prose *)) {
+    margin-top: var(--sw-prose-spacing);
+    margin-bottom: var(--sw-prose-spacing);
+  }
+
+  .sw-prose dt:not(:where(.not-sw-prose *)) {
+    color: var(--color-foreground);
+    font-weight: 600;
+    margin-top: var(--sw-prose-spacing);
+    opacity: 1;
+  }
+
+  .sw-prose dd:not(:where(.not-sw-prose *)) {
+    margin-top: 0.25rem;
+    padding-inline-start: var(--sw-prose-list-indent);
+  }
+
+  .sw-prose dt + dt:not(:where(.not-sw-prose *)),
+  .sw-prose dt + dd:not(:where(.not-sw-prose *)),
+  .sw-prose dd + dd:not(:where(.not-sw-prose *)) {
+    margin-top: 0.25rem;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Blockquotes
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose blockquote:not(:where(.not-sw-prose *)) {
+    font-style: italic;
+    color: var(--sw-prose-blockquote-color);
+    border-inline-start: var(--sw-prose-blockquote-border-width) solid
+      var(--sw-prose-blockquote-border-color);
+    padding-inline-start: 1rem;
+    margin-top: var(--sw-prose-spacing);
+    margin-bottom: var(--sw-prose-spacing);
+  }
+
+  .sw-prose blockquote p:first-of-type:not(:where(.not-sw-prose *))::before {
+    content: open-quote;
+  }
+
+  .sw-prose blockquote p:last-of-type:not(:where(.not-sw-prose *))::after {
+    content: close-quote;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Code (inline)
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose code:not(:where(.not-sw-prose *)) {
+    background-color: var(--sw-prose-code-bg);
+    color: var(--sw-prose-code-color);
+    font-size: var(--sw-prose-code-size);
+    font-weight: var(--sw-prose-code-weight);
+    /* padding: 0.125rem 0.375rem; */
+    padding: calc(var(--spacing) / 2) calc(var(--spacing) * 1.25);
+    border-radius: var(--sw-prose-code-radius);
+  }
+
+  .sw-prose :is(h1, h2, h3, h4, h5, h6) code:not(:where(.not-sw-prose *)) {
+    font-size: inherit;
+  }
+
+  .sw-prose a code:not(:where(.not-sw-prose *)) {
+    color: inherit;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Pre / Code blocks
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose pre:not(:where(.not-sw-prose *)) {
+    border: 1px solid var(--sw-prose-pre-border-color);
+    border-radius: var(--sw-prose-pre-border-radius);
+    padding: 0.75rem 1rem;
+    font-size: var(--sw-prose-code-size);
+    line-height: 1.714;
+    overflow-x: auto;
+    tab-size: 2;
+    margin-top: var(--sw-prose-spacing);
+    margin-bottom: var(--sw-prose-spacing);
+  }
+
+  .sw-prose pre code:not(:where(.not-sw-prose *)) {
+    all: unset;
+    font-family: var(--font-mono);
+  }
+
+  /* --------------------------------------------------------------------------
+   * Horizontal Rules
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose hr:not(:where(.not-sw-prose *)) {
+    border: 0;
+    border-top: 1px solid var(--color-border);
+    margin-top: 3em;
+    margin-bottom: 3em;
+  }
+
+  .sw-prose hr + *:not(:where(.not-sw-prose *)) {
+    margin-top: 0;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Images and Media
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose :is(img, picture, video, canvas, svg, iframe):not(:where(.not-sw-prose *)) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: var(--sw-prose-media-border-width) solid var(--sw-prose-media-border-color);
+    border-radius: var(--sw-prose-media-border-radius);
+    margin-top: var(--sw-prose-spacing);
+    margin-bottom: var(--sw-prose-spacing);
+  }
+
+  .sw-prose picture > img:not(:where(.not-sw-prose *)) {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Figures and Captions
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose figure:not(:where(.not-sw-prose *)) {
+    margin-top: var(--sw-prose-spacing);
+    margin-bottom: var(--sw-prose-spacing);
+  }
+
+  .sw-prose figure > *:not(:where(.not-sw-prose *)) {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .sw-prose figcaption:not(:where(.not-sw-prose *)) {
+    color: var(--color-muted-foreground);
+    font-size: var(--sw-prose-code-size);
+    margin-top: 0.857em;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Tables
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose table:not(:where(.not-sw-prose *)) {
+    width: 100%;
+    table-layout: auto;
+    margin-top: var(--sw-prose-spacing);
+    margin-bottom: var(--sw-prose-spacing);
+    font-size: var(--sw-prose-code-size);
+    line-height: 1.714;
+  }
+
+  .sw-prose thead:not(:where(.not-sw-prose *)) {
+    border-bottom: 1px solid var(--sw-prose-table-border-color);
+  }
+
+  .sw-prose thead th:not(:where(.not-sw-prose *)) {
+    color: var(--sw-prose-table-heading-color);
+    font-weight: 600;
+    vertical-align: bottom;
+    padding-inline-end: 0.571em;
+    padding-bottom: 0.571em;
+    padding-inline-start: 0.571em;
+    text-align: start;
+    opacity: 1;
+  }
+
+  .sw-prose thead th:first-child:not(:where(.not-sw-prose *)) {
+    padding-inline-start: 0;
+  }
+
+  .sw-prose thead th:last-child:not(:where(.not-sw-prose *)) {
+    padding-inline-end: 0;
+  }
+
+  .sw-prose tbody tr:not(:where(.not-sw-prose *)) {
+    border-bottom: 1px solid var(--sw-prose-table-border-color);
+  }
+
+  .sw-prose tbody tr:last-child:not(:where(.not-sw-prose *)) {
+    border-bottom-width: 0;
+  }
+
+  .sw-prose :is(td, th):not(:where(.not-sw-prose *)) {
+    vertical-align: baseline;
+    padding: 0.571em;
+  }
+
+  .sw-prose :is(td:first-child, th:first-child):not(:where(.not-sw-prose *)) {
+    padding-inline-start: 0;
+  }
+
+  .sw-prose :is(td:last-child, th:last-child):not(:where(.not-sw-prose *)) {
+    padding-inline-end: 0;
+  }
+
+  .sw-prose tfoot:not(:where(.not-sw-prose *)) {
+    border-top: 1px solid var(--sw-prose-table-border-color);
+  }
+
+  .sw-prose tfoot td:not(:where(.not-sw-prose *)) {
+    vertical-align: top;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Keyboard Input
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose kbd:not(:where(.not-sw-prose *)) {
+    font-weight: 500;
+    font-family: inherit;
+    font-size: var(--sw-prose-code-size);
+    width: fit-content;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing);
+    min-width: calc(var(--spacing) * 5);
+    color: var(--color-muted-foreground);
+    background-color: var(--color-muted);
+    padding: calc(var(--spacing) / 2) calc(var(--spacing) * 1.25);
+    border-radius: var(--radius-sm);
+    /* box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-foreground) 10%, transparent),
+      0 2px 0 color-mix(in srgb, var(--color-foreground) 10%, transparent); */
+  }
+
+  /* --------------------------------------------------------------------------
+   * Details / Summary (Starlight-inspired)
+   * -------------------------------------------------------------------------- */
+
+  .sw-prose details:not(:where(.not-sw-prose *)) {
+    --sw-details-border-color: var(--color-border);
+    --sw-details-border-color-hover: var(--color-primary-accent);
+
+    border-inline-start: 2px solid var(--sw-details-border-color);
+    padding-inline-start: 1rem;
+    margin-top: var(--sw-prose-spacing);
+    margin-bottom: var(--sw-prose-spacing);
+    transition-property: border-color;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+
+  .sw-prose details:not([open]):hover:not(:where(.not-sw-prose *)),
+  .sw-prose details:has(> summary:hover):not(:where(.not-sw-prose *)) {
+    border-color: var(--sw-details-border-color-hover);
+  }
+
+  .sw-prose summary:not(:where(.not-sw-prose *)) {
+    color: var(--color-foreground);
+    cursor: pointer;
+    display: block;
+    font-weight: 600;
+    margin-inline-start: -0.5rem;
+    padding-inline-start: 0.5rem;
+    opacity: 1;
+  }
+
+  .sw-prose details[open] > summary:not(:where(.not-sw-prose *)) {
+    margin-bottom: 1rem;
+  }
+
+  /* Summary marker styles */
+  .sw-prose summary:not(:where(.not-sw-prose *))::marker,
+  .sw-prose summary:not(:where(.not-sw-prose *))::-webkit-details-marker {
+    display: none;
+  }
+
+  .sw-prose summary:not(:where(.not-sw-prose *))::before {
+    --sw-details-marker-size: 1.25rem;
+
+    background-color: currentColor;
+    content: "";
+    display: inline-block;
+    height: var(--sw-details-marker-size);
+    width: var(--sw-details-marker-size);
+    margin-inline: calc((var(--sw-details-marker-size) / 4) * -1) 0.25rem;
+    vertical-align: middle;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14.8 11.3 10.6 7a1 1 0 1 0-1.4 1.5l3.5 3.5-3.5 3.5a1 1 0 0 0 0 1.4 1 1 0 0 0 .7.3 1 1 0 0 0 .7-.3l4.2-4.2a1 1 0 0 0 0-1.4Z'/%3E%3C/svg%3E%0A");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14.8 11.3 10.6 7a1 1 0 1 0-1.4 1.5l3.5 3.5-3.5 3.5a1 1 0 0 0 0 1.4 1 1 0 0 0 .7.3 1 1 0 0 0 .7-.3l4.2-4.2a1 1 0 0 0 0-1.4Z'/%3E%3C/svg%3E%0A");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .sw-prose summary:not(:where(.not-sw-prose *))::before {
+      transition: transform 0.2s ease-in-out;
+    }
+  }
+
+  .sw-prose details[open] > summary:not(:where(.not-sw-prose *))::before {
+    transform: rotateZ(90deg);
+  }
+
+  [dir="rtl"] .sw-prose summary:not(:where(.not-sw-prose *))::before,
+  .sw-prose [dir="rtl"] summary:not(:where(.not-sw-prose *))::before {
+    transform: rotateZ(180deg);
+  }
+
+  /* Summary with only a paragraph (MDX) */
+  .sw-prose summary:not(:where(.not-sw-prose *)) p:only-child {
+    display: inline;
+  }
+
+  /* --------------------------------------------------------------------------
+   * Miscellaneous
+   * -------------------------------------------------------------------------- */
+
+  /* Abbreviations */
+  .sw-prose abbr[title]:not(:where(.not-sw-prose *)) {
+    text-decoration: underline dotted;
+    cursor: help;
+  }
+
+  /* Mark/Highlight */
+  .sw-prose mark:not(:where(.not-sw-prose *)) {
+    background-color: var(--sw-prose-highlight-bg-color);
+    color: var(--sw-prose-highlight-color);
+    padding: calc(var(--spacing) / 2) var(--spacing);
+    border-radius: calc(var(--radius) / 4);
+  }
+
+  /* Subscript and Superscript */
+  .sw-prose :is(sub, sup):not(:where(.not-sw-prose *)) {
+    font-size: 0.75em;
+  }
+</style>

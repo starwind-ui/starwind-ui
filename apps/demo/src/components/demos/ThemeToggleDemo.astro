@@ -1,0 +1,35 @@
+---
+import Bold from "@tabler/icons/outline/bold.svg";
+import Heart from "@tabler/icons/outline/heart.svg";
+import Italic from "@tabler/icons/outline/italic.svg";
+import Moon from "@tabler/icons/outline/moon.svg";
+import Star from "@tabler/icons/outline/star.svg";
+import Sun from "@tabler/icons/outline/sun.svg";
+import Underline from "@tabler/icons/outline/underline.svg";
+
+import { ThemeToggle } from "@/components/starwind/theme-toggle";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Theme Toggle Component</h2>
+
+  <div class="mb-6">
+    <h3 class="mb-2 text-lg font-semibold">Theme Toggles</h3>
+    <div class="flex flex-wrap gap-2">
+      <ThemeToggle />
+      <ThemeToggle />
+      <ThemeToggle>
+        <Heart
+          slot="light-icon"
+          class="hidden size-5 group-data-[state=off]:data-ready:block"
+          data-theme-icon
+        />
+        <Star
+          slot="dark-icon"
+          class="hidden size-5 group-data-[state=on]:data-ready:block"
+          data-theme-icon
+        />
+      </ThemeToggle>
+    </div>
+  </div>
+</section>

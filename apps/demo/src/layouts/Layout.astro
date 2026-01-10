@@ -32,28 +32,24 @@ import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-nor
       function initTheme() {
         const colorTheme = localStorage.getItem("colorTheme");
         if (!colorTheme) {
-          // if no color theme, default to dark as that's how the site is designed
-          // Note: if you want to match the user's browser preference, you can use the below commented out code instead
-          document.documentElement.classList.add("dark");
-          localStorage.setItem("colorTheme", "dark");
-
-          // if no color theme yet, use the users browser preferences
-          // if (
-          //   window.matchMedia &&
-          //   window.matchMedia("(prefers-color-scheme: dark)").matches
-          // ) {
-          //   document.documentElement.classList.add("dark");
-          //   localStorage.setItem("colorTheme", "dark");
-          // } else {
-          //   document.documentElement.classList.remove("dark");
-          //   localStorage.setItem("colorTheme", "light");
-          // }
+          // if no color theme yet, use the users preferences
+          if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            document.documentElement.classList.add("dark");
+            localStorage.setItem("colorTheme", "dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+            localStorage.setItem("colorTheme", "light");
+          }
         } else {
-          // If there is, assign the theme based on the value in local storage
+          // assign the theme based on the value in local storage
           if (colorTheme === "dark") {
             document.documentElement.classList.add("dark");
           } else if (colorTheme === "light") {
             document.documentElement.classList.remove("dark");
+          } else if (colorTheme === "system") {
+            // use system preference
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            document.documentElement.classList.toggle("dark", prefersDark);
           }
         }
       }

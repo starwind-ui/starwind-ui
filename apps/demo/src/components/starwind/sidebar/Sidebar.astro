@@ -1,0 +1,213 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/starwind/sheet";
+
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * The side of the viewport the sidebar appears on
+   * @default "left"
+   */
+  side?: "left" | "right";
+  /**
+   * The visual variant of the sidebar
+   * @default "sidebar"
+   */
+  variant?: "sidebar" | "floating" | "inset";
+  /**
+   * How the sidebar collapses
+   * @default "offcanvas"
+   */
+  collapsible?: "offcanvas" | "icon" | "none";
+};
+
+export const sidebar = tv({
+  base: "starwind-sidebar group peer text-sidebar-foreground hidden md:block",
+});
+
+export const sidebarGap = tv({
+  base: [
+    "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
+    "group-data-[collapsible=offcanvas]:w-0",
+    "group-data-[side=right]:rotate-180",
+  ],
+  variants: {
+    variant: {
+      sidebar: "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+      floating: "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem)]",
+      inset: "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem)]",
+    },
+  },
+  defaultVariants: {
+    variant: "sidebar",
+  },
+});
+
+export const sidebarContainer = tv({
+  base: [
+    "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
+  ],
+  variants: {
+    side: {
+      left: "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]",
+      right: "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+    },
+    variant: {
+      sidebar: [
+        "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+        "group-data-[side=left]:border-r group-data-[side=right]:border-l",
+      ],
+      floating: "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem+2px)]",
+      inset: "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem+2px)]",
+    },
+  },
+  defaultVariants: {
+    side: "left",
+    variant: "sidebar",
+  },
+});
+
+export const sidebarInner = tv({
+  base: "bg-sidebar flex h-full w-full flex-col",
+  variants: {
+    variant: {
+      sidebar: "",
+      floating: "border-sidebar-border rounded-lg border shadow-sm",
+      inset: "border-sidebar-border rounded-lg border shadow-sm",
+    },
+  },
+  defaultVariants: {
+    variant: "sidebar",
+  },
+});
+
+export const sidebarMobileContent = tv({
+  base: "bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden",
+});
+
+const {
+  side = "left",
+  variant = "sidebar",
+  collapsible = "offcanvas",
+  class: className,
+  ...rest
+} = Astro.props;
+
+const SIDEBAR_WIDTH_MOBILE = "18rem";
+---
+
+{/* Non-collapsible sidebar */}
+{
+  collapsible === "none" ? (
+    <div
+      class:list={[
+        "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
+        className,
+      ]}
+      data-slot="sidebar"
+      {...rest}
+    >
+      <slot />
+    </div>
+  ) : (
+    <>
+      {/* Desktop sidebar */}
+      <div
+        class={sidebar({ class: className })}
+        data-state="expanded"
+        data-collapsible=""
+        data-collapsible-mode={collapsible}
+        data-variant={variant}
+        data-side={side}
+        data-slot="sidebar"
+      >
+        {/* Gap placeholder for layout */}
+        <div data-slot="sidebar-gap" class={sidebarGap({ variant })} />
+
+        {/* Fixed sidebar container */}
+        <div data-slot="sidebar-container" class={sidebarContainer({ side, variant })} {...rest}>
+          <div data-slot="sidebar-inner" class={sidebarInner({ variant })}>
+            <slot />
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile sidebar (Sheet) */}
+      <Sheet class="md:hidden" data-slot="sidebar-mobile">
+        <SheetContent
+          side={side}
+          class={sidebarMobileContent()}
+          style={{ "--sidebar-width": SIDEBAR_WIDTH_MOBILE }}
+        >
+          <SheetHeader class="sr-only">
+            <SheetTitle>Sidebar</SheetTitle>
+            <SheetDescription>Mobile navigation sidebar</SheetDescription>
+          </SheetHeader>
+          <div class="flex h-full w-full flex-col">
+            <slot />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
+
+<script>
+  class SidebarHandler {
+    private sidebar: HTMLElement;
+    private provider: HTMLElement;
+    private collapsibleMode: string;
+    private boundUpdateState: () => void;
+
+    constructor(sidebar: HTMLElement) {
+      this.sidebar = sidebar;
+      this.provider = sidebar.closest<HTMLElement>('[data-slot="sidebar-provider"]')!;
+      this.collapsibleMode =
+        sidebar.dataset.collapsibleMode ||
+        (sidebar.closest("[data-collapsible]") as HTMLElement)?.dataset.collapsible ||
+        "offcanvas";
+      sidebar.dataset.collapsibleMode = this.collapsibleMode;
+
+      this.boundUpdateState = this.updateState.bind(this);
+      this.init();
+    }
+
+    private init() {
+      this.updateState();
+      this.provider.addEventListener("sidebar:change", this.boundUpdateState);
+    }
+
+    private updateState() {
+      const state = this.provider.getAttribute("data-state") || "expanded";
+      this.sidebar.setAttribute("data-state", state);
+
+      if (state === "collapsed") {
+        this.sidebar.setAttribute("data-collapsible", this.collapsibleMode);
+      } else {
+        this.sidebar.setAttribute("data-collapsible", "");
+      }
+    }
+  }
+
+  const sidebarInstances = new WeakMap<HTMLElement, SidebarHandler>();
+
+  const setupSidebars = () => {
+    document.querySelectorAll<HTMLElement>('[data-slot="sidebar"]').forEach((sidebar) => {
+      if (sidebarInstances.has(sidebar)) return;
+      const provider = sidebar.closest<HTMLElement>('[data-slot="sidebar-provider"]');
+      if (!provider) return;
+      sidebarInstances.set(sidebar, new SidebarHandler(sidebar));
+    });
+  };
+
+  setupSidebars();
+  document.addEventListener("astro:after-swap", setupSidebars);
+  document.addEventListener("starwind:init", setupSidebars);
+</script>

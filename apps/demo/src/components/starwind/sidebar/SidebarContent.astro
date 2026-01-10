@@ -1,0 +1,24 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div">;
+
+export const sidebarContent = tv({
+  base: [
+    "flex min-h-0 flex-1 flex-col gap-2 overflow-auto",
+    "group-data-[collapsible=icon]:overflow-hidden",
+  ],
+});
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div
+  class={sidebarContent({ class: className })}
+  data-slot="sidebar-content"
+  data-sidebar="content"
+  {...rest}
+>
+  <slot />
+</div>

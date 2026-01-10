@@ -1,0 +1,21 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div">;
+
+export const sidebarFooter = tv({
+  base: "flex flex-col gap-2 p-2",
+});
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div
+  class={sidebarFooter({ class: className })}
+  data-slot="sidebar-footer"
+  data-sidebar="footer"
+  {...rest}
+>
+  <slot />
+</div>

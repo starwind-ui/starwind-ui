@@ -1,0 +1,92 @@
+---
+import { type CollectionEntry, getCollection, render } from "astro:content";
+
+import { Prose } from "@/components/starwind/prose";
+import { Toggle } from "@/components/starwind/toggle";
+import Layout from "@/layouts/Layout.astro";
+
+export async function getStaticPaths() {
+  const pages: CollectionEntry<"pages">[] = await getCollection("pages");
+  return pages.map((page) => ({
+    params: { slug: page.id },
+    props: { page },
+  }));
+}
+
+const { page } = Astro.props;
+const { Content } = await render(page);
+---
+
+<Layout title={page.data.title} description={page.data.description ?? ""}>
+  <article class="container mx-auto px-4 py-12">
+    <div class="mb-4 flex items-center justify-end gap-2">
+      <span class="text-muted-foreground text-sm">Custom Prose Style</span>
+      <Toggle id="prose-style-toggle" defaultPressed={true} variant="outline" size="sm">
+        <span class="toggle-on">On</span>
+        <span class="toggle-off">Off</span>
+      </Toggle>
+    </div>
+    <header class="mb-16 text-center">
+      <h1 class="text-4xl font-bold md:text-5xl">{page.data.title}</h1>
+      {
+        page.data.description && (
+          <p class="text-muted-foreground mt-2 md:text-lg">{page.data.description}</p>
+        )
+      }
+    </header>
+    <Prose class="custom-prose-style mx-auto text-sm md:text-base">
+      <Content />
+    </Prose>
+  </article>
+</Layout>
+
+<style>
+  .toggle-off {
+    display: none;
+  }
+  [data-state="off"] .toggle-on {
+    display: none;
+  }
+  [data-state="off"] .toggle-off {
+    display: block;
+  }
+
+  .custom-prose-style {
+    /* spacing */
+    --prose-line-height: 1.7;
+    --prose-spacing: 1.4em;
+    --prose-heading-spacing: 1.7em;
+
+    /* colors */
+    --prose-color: var(--color-muted-foreground);
+
+    /* headings */
+    --prose-h1-size: 2.5em;
+    --prose-heading-font: var(--font-serif);
+    --prose-heading-weight: var(--font-weight-medium);
+
+    /* links */
+    --prose-link-color: var(--color-primary-accent);
+    --prose-link-hover-color: --alpha(var(--color-primary-accent) / 80%);
+
+    /* blockquotes */
+    --prose-blockquote-border-color: var(--color-primary-accent);
+
+    /* media */
+    --prose-media-border-width: 1px;
+    --prose-media-border-radius: var(--radius-md);
+
+    /* highlight */
+    --prose-highlight-bg-color: --alpha(var(--color-primary-accent) / 20%);
+  }
+</style>
+
+<script>
+  const toggle = document.getElementById("prose-style-toggle");
+  const prose = document.querySelector("[data-slot='prose']");
+
+  toggle?.addEventListener("starwind-toggle:change", (e) => {
+    const { pressed } = (e as CustomEvent).detail;
+    prose?.classList.toggle("custom-prose-style", pressed);
+  });
+</script>

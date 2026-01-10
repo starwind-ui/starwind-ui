@@ -1,0 +1,44 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"button"> & {
+  /**
+   * When true, renders as a wrapper div instead of a button,
+   * allowing a custom trigger element as a child
+   */
+  asChild?: boolean;
+};
+
+export const collapsibleTrigger = tv({
+  base: "starwind-collapsible-trigger",
+});
+
+const { class: className, asChild = false, ...rest } = Astro.props;
+
+let hasChildren = false;
+if (Astro.slots.has("default")) {
+  hasChildren = true;
+}
+---
+
+{
+  asChild && hasChildren ? (
+    <div
+      class={collapsibleTrigger({ class: className })}
+      data-slot="collapsible-trigger"
+      data-as-child
+    >
+      <slot />
+    </div>
+  ) : (
+    <button
+      type="button"
+      class={collapsibleTrigger({ class: className })}
+      data-slot="collapsible-trigger"
+      {...rest}
+    >
+      <slot />
+    </button>
+  )
+}
