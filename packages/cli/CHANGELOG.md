@@ -1,5 +1,18 @@
 # starwind
 
+## 1.15.0
+
+### Patch Changes
+
+- a6c2f2c: feat: add sidebar variables to starwind css file
+- Updated dependencies [2a7b70e]
+- Updated dependencies [c667fb9]
+- Updated dependencies [225ceb1]
+- Updated dependencies [efa8569]
+- Updated dependencies [eece2cc]
+- Updated dependencies [b4bd93d]
+  - @starwind-ui/core@1.15.0
+
 ## 1.14.0
 
 ### Minor Changes
