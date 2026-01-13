@@ -23,10 +23,24 @@ export const sidebarProvider = tv({
   ],
 });
 
-const { defaultOpen = true, keyboardShortcut = "b", class: className, ...rest } = Astro.props;
+const {
+  defaultOpen = true,
+  keyboardShortcut = "b",
+  class: className,
+  style,
+  ...rest
+} = Astro.props;
 
 const SIDEBAR_WIDTH = "18rem";
 const SIDEBAR_WIDTH_ICON = "3.5rem";
+
+// Parse style prop to extract CSS variable overrides
+const styleObj = typeof style === "string" ? {} : ((style as Record<string, string>) ?? {});
+const mergedStyle = {
+  "--sidebar-width": styleObj["--sidebar-width"] ?? SIDEBAR_WIDTH,
+  "--sidebar-width-icon": styleObj["--sidebar-width-icon"] ?? SIDEBAR_WIDTH_ICON,
+  ...styleObj,
+};
 ---
 
 <div
@@ -35,10 +49,7 @@ const SIDEBAR_WIDTH_ICON = "3.5rem";
   data-state={defaultOpen ? "expanded" : "collapsed"}
   data-mobile-open="false"
   data-keyboard-shortcut={keyboardShortcut}
-  style={{
-    "--sidebar-width": SIDEBAR_WIDTH,
-    "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-  }}
+  style={mergedStyle}
   {...rest}
 >
   <slot />
