@@ -218,6 +218,7 @@ const { class: className, name, defaultValue, required, ...rest } = Astro.props;
         if (e.key === "Enter" || e.key === " ") {
           // Only handle selection if not typing in search input
           if (!isFromSearchInput) {
+            e.preventDefault();
             // set element based on current focused element
             const activeElement = document.activeElement;
             this.returnFocusOnClose = true;
