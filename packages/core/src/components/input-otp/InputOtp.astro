@@ -140,6 +140,12 @@ const inputMode = isNumericOnly ? "numeric" : "text";
       this.container.addEventListener("blur", () => this.handleContainerBlur());
       this.container.addEventListener("paste", (e) => this.handlePaste(e));
       this.container.addEventListener("click", (e) => this.handleClick(e));
+
+      if (this.hiddenInput) {
+        this.hiddenInput.addEventListener("input", (e) => this.handleHiddenInput(e));
+        this.hiddenInput.addEventListener("focus", () => this.updateSlots());
+        this.hiddenInput.addEventListener("blur", () => this.updateSlots());
+      }
     }
 
     private handleKeyDown(e: KeyboardEvent) {
@@ -210,19 +216,45 @@ const inputMode = isNumericOnly ? "numeric" : "text";
       const isDisabled = this.container.dataset.disabled === "true";
       if (isDisabled) return;
 
-      const slot = (e.target as HTMLElement).closest<HTMLElement>("[data-otp-slot]");
-      if (slot) {
-        const index = this.slots.indexOf(slot);
-        if (index !== -1) {
-          this.currentIndex = index;
-          this.updateSlots();
-          this.container.focus();
-        }
+      this.currentIndex = this.getNextEmptyIndex();
+      this.updateSlots();
+      this.focusHiddenInput();
+    }
+
+    private getNextEmptyIndex(): number {
+      const firstEmptyIndex = this.values.findIndex((v) => !v);
+      if (firstEmptyIndex !== -1) {
+        return firstEmptyIndex;
+      }
+      return this.slots.length - 1;
+    }
+
+    private handleHiddenInput(e: Event) {
+      const input = e.target as HTMLInputElement;
+      const newValue = input.value;
+      const matchedChars = this.filterByPattern(newValue).slice(0, this.maxLength);
+
+      for (let i = 0; i < this.slots.length; i++) {
+        this.values[i] = matchedChars[i] || "";
+      }
+
+      this.currentIndex = Math.min(matchedChars.length, this.slots.length - 1);
+      if (matchedChars.length === this.slots.length) {
+        this.currentIndex = this.slots.length - 1;
+      }
+
+      this.updateSlots();
+      this.updateValue();
+    }
+
+    private focusHiddenInput() {
+      if (this.hiddenInput) {
+        this.hiddenInput.focus();
       }
     }
 
     private handleContainerFocus() {
-      this.updateSlots();
+      this.focusHiddenInput();
     }
 
     private handleContainerBlur() {
@@ -236,7 +268,8 @@ const inputMode = isNumericOnly ? "numeric" : "text";
     }
 
     private updateSlots() {
-      const isFocused = document.activeElement === this.container;
+      const isFocused =
+        document.activeElement === this.container || document.activeElement === this.hiddenInput;
 
       this.slots.forEach((slot, index) => {
         const charElement = slot.querySelector("[data-otp-char]");
