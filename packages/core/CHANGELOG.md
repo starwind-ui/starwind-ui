@@ -1,5 +1,12 @@
 # @starwind-ui/core
 
+## 1.15.1
+
+### Patch Changes
+
+- c997e6f: fix(input-otp): focus hidden input on click to automatically open keyboards on mobile devices. Also always focus the next empty index
+- 17d0877: fix(select): selections with the `spacebar` key no longer cause the page to scroll
+
 ## 1.15.0
 
 ### Minor Changes
