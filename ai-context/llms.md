@@ -36,20 +36,24 @@ Starwind UI currently includes the following components:
 - [Card](https://starwind.dev/docs/components/card)
 - [Carousel](https://starwind.dev/docs/components/carousel)
 - [Checkbox](https://starwind.dev/docs/components/checkbox)
+- [Collapsible](https://starwind.dev/docs/components/collapsible)
 - [Combobox](https://starwind.dev/docs/components/combobox)
 - [Dialog](https://starwind.dev/docs/components/dialog)
 - [Dropdown](https://starwind.dev/docs/components/dropdown)
 - [Dropzone](https://starwind.dev/docs/components/dropzone)
 - [Image](https://starwind.dev/docs/components/image)
 - [Input](https://starwind.dev/docs/components/input)
+- [Input OTP](https://starwind.dev/docs/components/input-otp)
 - [Item](https://starwind.dev/docs/components/item)
 - [Label](https://starwind.dev/docs/components/label)
 - [Pagination](https://starwind.dev/docs/components/pagination)
 - [Progress](https://starwind.dev/docs/components/progress)
+- [Prose](https://starwind.dev/docs/components/prose)
 - [Radio Group](https://starwind.dev/docs/components/radio-group)
 - [Select](https://starwind.dev/docs/components/select)
 - [Separator](https://starwind.dev/docs/components/separator)
 - [Sheet](https://starwind.dev/docs/components/sheet)
+- [Sidebar](https://starwind.dev/docs/components/sidebar)
 - [Skeleton](https://starwind.dev/docs/components/skeleton)
 - [Slider](https://starwind.dev/docs/components/slider)
 - [Spinner](https://starwind.dev/docs/components/spinner)
@@ -57,6 +61,7 @@ Starwind UI currently includes the following components:
 - [Table](https://starwind.dev/docs/components/table)
 - [Tabs](https://starwind.dev/docs/components/tabs)
 - [Textarea](https://starwind.dev/docs/components/textarea)
+- [Theme Toggle](https://starwind.dev/docs/components/theme-toggle)
 - [Toast](https://starwind.dev/docs/components/toast)
 - [Toggle](https://starwind.dev/docs/components/toggle)
 - [Tooltip](https://starwind.dev/docs/components/tooltip)
@@ -72,9 +77,9 @@ import {ComponentName} from "@/components/starwind/component-name";
 
 ## Starwind Pro - Premium Blocks
 
-Looking for complete, production-ready page sections? **Starwind Pro** offers 100+ expertly crafted blocks for Astro projects including heroes, pricing tables, testimonials, navigation, CTAs, and more. **30+ blocks are completely free** to use.
+Looking for complete, production-ready page sections? **Starwind Pro** offers 150+ expertly crafted blocks for Astro projects including heroes, pricing tables, testimonials, navigation, CTAs, and more. **40+ blocks are completely free** to use.
 
 - [Browse All Components](https://pro.starwind.dev/components/)
-- [Free Components (30+)](https://pro.starwind.dev/components/free/)
+- [Free Components (40+)](https://pro.starwind.dev/components/free/)
 
-Categories include: Authentication, Bento, Blog, CTA, Effects, FAQ, Features, Footers, Forms, Heroes, Logo Clouds, Navigation, Pricing, Team, Testimonials, and Theme Switchers.
+Categories include: Authentication, Backgrounds, Bento, Blog, CTA, Effects, FAQ, Features, Footers, Forms, Heroes, Logo Clouds, Navigation, Pricing, Team, Testimonials, and Theme Switchers.
