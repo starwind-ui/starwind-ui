@@ -1,5 +1,19 @@
 # @starwind-ui/core
 
+## 1.15.0
+
+### Minor Changes
+
+- 2a7b70e: feat: add prose component
+- c667fb9: feat: add input-otp component
+- eece2cc: feat: add theme toggle component
+- b4bd93d: feat: add sidebar component
+
+### Patch Changes
+
+- 225ceb1: Update tooltip positioning to work with the sidebar component. It now uses fixed positioning with javascript placement calculations.
+- efa8569: style: update button and badge styling (related to #99)
+
 ## 1.14.0
 
 ### Patch Changes
