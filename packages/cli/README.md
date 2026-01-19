@@ -16,8 +16,6 @@ Starwind UI is a collection of 42+ beautifully designed, animated, and accessibl
 - **🚀 Zero Runtime Dependencies** — Pure Astro + vanilla JS. No heavy frameworks to slow you down.
 - **🛠️ CLI-Powered** — Add only what you need with a simple `npx starwind add` command.
 
-> Looking for the main package? See [starwind-ui/cli](/packages/cli/README.md).
-
 ## Quick Start
 
 ### Initialize your project
