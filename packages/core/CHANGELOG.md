@@ -1,5 +1,7 @@
 # @starwind-ui/core
 
+## 1.15.3
+
 ## 1.15.2
 
 ### Patch Changes
