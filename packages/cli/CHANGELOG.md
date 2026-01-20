@@ -1,5 +1,12 @@
 # starwind
 
+## 1.15.3
+
+### Patch Changes
+
+- 734f2e9: feat(cli): add --yes and --package-manager commands to add and update commands
+  - @starwind-ui/core@1.15.3
+
 ## 1.15.2
 
 ### Patch Changes
