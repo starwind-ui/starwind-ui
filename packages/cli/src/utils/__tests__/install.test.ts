@@ -24,7 +24,7 @@ const mockFilterUninstalledDependencies = vi.mocked(
   dependencyResolver.filterUninstalledDependencies,
 );
 const mockInstallDependencies = vi.mocked(packageManager.installDependencies);
-const mockRequestPackageManager = vi.mocked(packageManager.requestPackageManager);
+const mockDetectPackageManager = vi.mocked(packageManager.detectPackageManager);
 const mockConfirmInstall = vi.mocked(prompts.confirmInstall);
 const mockGetStarwindDependencyResolutions = vi.mocked(prompts.getStarwindDependencyResolutions);
 const mockGetComponent = vi.mocked(registry.getComponent);
@@ -98,7 +98,13 @@ describe("install", () => {
         npmDependencies: ["react@^18.0.0", "zod@^3.0.0"],
       });
       mockFilterUninstalledDependencies.mockResolvedValue(["react@^18.0.0", "zod@^3.0.0"]);
-      mockRequestPackageManager.mockResolvedValue("npm");
+      mockDetectPackageManager.mockReturnValue({
+        name: "npm",
+        installCmd: "npm install",
+        addCmd: "npm install",
+        removeCmd: "npm uninstall",
+        runCmd: "npm run",
+      });
       mockInstallDependencies.mockResolvedValue();
       mockCopyComponent.mockResolvedValue({
         status: "installed",
@@ -218,7 +224,13 @@ describe("install", () => {
         npmDependencies: ["react@^18.0.0"],
       });
       mockFilterUninstalledDependencies.mockResolvedValue(["react@^18.0.0"]);
-      mockRequestPackageManager.mockResolvedValue("npm");
+      mockDetectPackageManager.mockReturnValue({
+        name: "npm",
+        installCmd: "npm install",
+        addCmd: "npm install",
+        removeCmd: "npm uninstall",
+        runCmd: "npm run",
+      });
       mockInstallDependencies.mockRejectedValue(new Error("Package not found"));
 
       const result = await installComponent("form");

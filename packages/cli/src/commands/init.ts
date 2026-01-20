@@ -12,9 +12,9 @@ import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils
 import { highlighter } from "@/utils/highlighter.js";
 import { setupLayoutCssImport } from "@/utils/layout.js";
 import {
-  getDefaultPackageManager,
+  detectPackageManager,
   installDependencies,
-  requestPackageManager,
+  type PackageManager,
 } from "@/utils/package-manager.js";
 import { hasStarwindProRegistry, setupShadcnProConfig } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
@@ -22,7 +22,7 @@ import { setupTsConfig } from "@/utils/tsconfig.js";
 
 export async function init(
   withinAdd: boolean = false,
-  options?: { defaults?: boolean; pro?: boolean },
+  options?: { defaults?: boolean; pro?: boolean; packageManager?: PackageManager },
 ) {
   if (!withinAdd) {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
@@ -323,8 +323,16 @@ export async function init(
     // ================================================================
     //                Prepare astro installation
     // ================================================================
-    // Request package manager
-    const pm = options?.defaults ? await getDefaultPackageManager() : await requestPackageManager();
+    // Determine package manager: use provided option, auto-detect, or prompt if explicitly not using defaults
+    let pm: PackageManager;
+    if (options?.packageManager) {
+      pm = options.packageManager;
+    } else if (options?.defaults) {
+      pm = detectPackageManager().name;
+    } else {
+      // Auto-detect first, only prompt if not using defaults and user hasn't specified
+      pm = detectPackageManager().name;
+    }
 
     if (pkg.dependencies?.astro) {
       const astroVersion = pkg.dependencies.astro.replace(/^\^|~/, "");

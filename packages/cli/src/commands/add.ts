@@ -16,7 +16,13 @@ import { isValidComponent } from "@/utils/validate.js";
 
 import { init } from "./init.js";
 
-export async function add(components?: string[], options?: { all?: boolean }) {
+interface AddOptions {
+  all?: boolean;
+  yes?: boolean;
+  packageManager?: "npm" | "pnpm" | "yarn";
+}
+
+export async function add(components?: string[], options?: AddOptions) {
   try {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
 
@@ -24,10 +30,12 @@ export async function add(components?: string[], options?: { all?: boolean }) {
     const configExists = await fileExists(PATHS.LOCAL_CONFIG_FILE);
 
     if (!configExists) {
-      const shouldInit = await p.confirm({
-        message: `Starwind configuration not found. Would you like to run ${highlighter.info("starwind init")} now?`,
-        initialValue: true,
-      });
+      const shouldInit = options?.yes
+        ? true
+        : await p.confirm({
+            message: `Starwind configuration not found. Would you like to run ${highlighter.info("starwind init")} now?`,
+            initialValue: true,
+          });
 
       if (p.isCancel(shouldInit)) {
         p.cancel("Operation cancelled");
@@ -35,7 +43,7 @@ export async function add(components?: string[], options?: { all?: boolean }) {
       }
 
       if (shouldInit) {
-        await init(true);
+        await init(true, { defaults: options?.yes, packageManager: options?.packageManager });
       } else {
         p.log.error(
           `Please initialize starwind with ${highlighter.info("starwind init")} before adding components`,
@@ -74,10 +82,12 @@ export async function add(components?: string[], options?: { all?: boolean }) {
         const hasProRegistry = await hasStarwindProRegistry();
 
         if (!hasProRegistry) {
-          const shouldSetupPro = await p.confirm({
-            message: `Starwind Pro registry not configured. Would you like to set it up now to install ${registryComponents.join(", ")}?`,
-            initialValue: true,
-          });
+          const shouldSetupPro = options?.yes
+            ? true
+            : await p.confirm({
+                message: `Starwind Pro registry not configured. Would you like to set it up now to install ${registryComponents.join(", ")}?`,
+                initialValue: true,
+              });
 
           if (p.isCancel(shouldSetupPro)) {
             p.cancel("Operation cancelled");

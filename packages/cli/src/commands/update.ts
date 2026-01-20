@@ -12,6 +12,7 @@ import { sleep } from "@/utils/sleep.js";
 interface UpdateOptions {
   all?: boolean;
   yes?: boolean;
+  packageManager?: "npm" | "pnpm" | "yarn";
 }
 
 export async function update(components?: string[], options?: UpdateOptions) {

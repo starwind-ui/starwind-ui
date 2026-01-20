@@ -8,7 +8,7 @@ import {
   separateDependencies,
 } from "./dependency-resolver.js";
 import { highlighter } from "./highlighter.js";
-import { installDependencies, requestPackageManager } from "./package-manager.js";
+import { detectPackageManager, installDependencies } from "./package-manager.js";
 import { confirmInstall, getStarwindDependencyResolutions } from "./prompts.js";
 import { getComponent } from "./registry.js";
 
@@ -46,7 +46,7 @@ export async function installComponent(name: string): Promise<InstallResult> {
         const dependenciesToInstall = await filterUninstalledDependencies(npmDependencies);
 
         if (dependenciesToInstall.length > 0) {
-          const pm = await requestPackageManager();
+          const pm = detectPackageManager().name;
 
           const installTasks = [
             {
