@@ -36,7 +36,10 @@ export async function selectComponents(): Promise<string[]> {
  * @param componentNames - Array of component names to check dependencies for
  * @returns Promise<boolean> - true if user confirms or no prompt needed, false otherwise
  */
-export async function confirmStarwindDependencies(componentNames: string[]): Promise<boolean> {
+export async function confirmStarwindDependencies(
+  componentNames: string[],
+  options?: { skipPrompts?: boolean },
+): Promise<boolean> {
   try {
     const resolutions = await resolveAllStarwindDependencies(componentNames);
 
@@ -50,6 +53,11 @@ export async function confirmStarwindDependencies(componentNames: string[]): Pro
     // First-time installs are automatic - no prompt needed
     // Only prompt if there are updates required
     if (toUpdate.length === 0) {
+      return true;
+    }
+
+    // Skip prompt if --yes option was passed
+    if (options?.skipPrompts) {
       return true;
     }
 
@@ -105,7 +113,10 @@ export async function getStarwindDependencyResolutions(
   return resolveAllStarwindDependencies(componentNames);
 }
 
-export async function confirmInstall(component: Component): Promise<boolean> {
+export async function confirmInstall(
+  component: Component,
+  options?: { skipPrompts?: boolean },
+): Promise<boolean> {
   if (component.dependencies.length === 0) return true;
 
   const { starwindDependencies, npmDependencies } = separateDependencies(component.dependencies);
@@ -115,19 +126,24 @@ export async function confirmInstall(component: Component): Promise<boolean> {
     const dependenciesToInstall = await filterUninstalledDependencies(npmDependencies);
 
     if (dependenciesToInstall.length > 0) {
-      const confirmed = await confirm({
-        message: `The ${component.name} component requires the following npm dependencies: ${dependenciesToInstall.join(", ")}. Install them?`,
-      });
+      // Skip prompt if --yes option was passed
+      if (!options?.skipPrompts) {
+        const confirmed = await confirm({
+          message: `The ${component.name} component requires the following npm dependencies: ${dependenciesToInstall.join(", ")}. Install them?`,
+        });
 
-      if (typeof confirmed === "symbol" || !confirmed) {
-        return false;
+        if (typeof confirmed === "symbol" || !confirmed) {
+          return false;
+        }
       }
     }
   }
 
   // Handle Starwind component dependencies
   if (starwindDependencies.length > 0) {
-    const confirmed = await confirmStarwindDependencies([component.name]);
+    const confirmed = await confirmStarwindDependencies([component.name], {
+      skipPrompts: options?.skipPrompts,
+    });
     if (!confirmed) {
       return false;
     }

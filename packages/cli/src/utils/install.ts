@@ -12,7 +12,15 @@ import { detectPackageManager, installDependencies } from "./package-manager.js"
 import { confirmInstall, getStarwindDependencyResolutions } from "./prompts.js";
 import { getComponent } from "./registry.js";
 
-export async function installComponent(name: string): Promise<InstallResult> {
+export interface InstallComponentOptions {
+  /** Skip confirmation prompts (--yes flag) */
+  skipPrompts?: boolean;
+}
+
+export async function installComponent(
+  name: string,
+  options?: InstallComponentOptions,
+): Promise<InstallResult> {
   const component = await getComponent(name);
 
   if (!component) {
@@ -28,7 +36,7 @@ export async function installComponent(name: string): Promise<InstallResult> {
 
   // Handle dependencies installation
   if (component.dependencies.length > 0) {
-    const confirmed = await confirmInstall(component);
+    const confirmed = await confirmInstall(component, { skipPrompts: options?.skipPrompts });
     if (!confirmed) {
       return {
         status: "failed",

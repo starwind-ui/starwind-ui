@@ -120,7 +120,7 @@ describe("install", () => {
         version: "1.0.0",
       });
 
-      expect(mockConfirmInstall).toHaveBeenCalledWith(mockComponent);
+      expect(mockConfirmInstall).toHaveBeenCalledWith(mockComponent, expect.any(Object));
       expect(mockInstallDependencies).toHaveBeenCalledWith(["react@^18.0.0", "zod@^3.0.0"], "npm");
     });
 

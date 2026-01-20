@@ -241,7 +241,7 @@ export async function add(components?: string[], options?: AddOptions) {
         continue;
       }
 
-      const result = await installComponent(comp);
+      const result = await installComponent(comp, { skipPrompts: options?.yes });
 
       // Process dependency results first (they were installed before the main component)
       if (result.dependencyResults) {
