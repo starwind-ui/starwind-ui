@@ -27,7 +27,7 @@ program
   .allowExcessArguments()
   .option("-a, --all", "Add all available components")
   .option("-y, --yes", "Skip confirmation prompts")
-  .option("-pm, --package-manager <pm>", "Package manager to use (npm, pnpm, yarn)")
+  .option("-m, --package-manager <pm>", "Package manager to use (npm, pnpm, yarn)")
   .action(add);
 
 program
@@ -37,7 +37,7 @@ program
   .allowExcessArguments()
   .option("-a, --all", "Update all installed components")
   .option("-y, --yes", "Skip confirmation prompts")
-  .option("-pm, --package-manager <pm>", "Package manager to use (npm, pnpm, yarn)")
+  .option("-m, --package-manager <pm>", "Package manager to use (npm, pnpm, yarn)")
   .action(update);
 
 program
