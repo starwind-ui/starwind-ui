@@ -8,13 +8,19 @@ import {
   separateDependencies,
 } from "./dependency-resolver.js";
 import { highlighter } from "./highlighter.js";
-import { detectPackageManager, installDependencies } from "./package-manager.js";
+import {
+  detectPackageManager,
+  installDependencies,
+  type PackageManager,
+} from "./package-manager.js";
 import { confirmInstall, getStarwindDependencyResolutions } from "./prompts.js";
 import { getComponent } from "./registry.js";
 
 export interface InstallComponentOptions {
   /** Skip confirmation prompts (--yes flag) */
   skipPrompts?: boolean;
+  /** Package manager to use (overrides auto-detection) */
+  packageManager?: PackageManager;
 }
 
 export async function installComponent(
@@ -54,7 +60,7 @@ export async function installComponent(
         const dependenciesToInstall = await filterUninstalledDependencies(npmDependencies);
 
         if (dependenciesToInstall.length > 0) {
-          const pm = detectPackageManager().name;
+          const pm = options?.packageManager ?? detectPackageManager().name;
 
           const installTasks = [
             {

@@ -323,16 +323,8 @@ export async function init(
     // ================================================================
     //                Prepare astro installation
     // ================================================================
-    // Determine package manager: use provided option, auto-detect, or prompt if explicitly not using defaults
-    let pm: PackageManager;
-    if (options?.packageManager) {
-      pm = options.packageManager;
-    } else if (options?.defaults) {
-      pm = detectPackageManager().name;
-    } else {
-      // Auto-detect first, only prompt if not using defaults and user hasn't specified
-      pm = detectPackageManager().name;
-    }
+    // Determine package manager: use provided option or auto-detect
+    const pm: PackageManager = options?.packageManager ?? detectPackageManager().name;
 
     if (pkg.dependencies?.astro) {
       const astroVersion = pkg.dependencies.astro.replace(/^\^|~/, "");
