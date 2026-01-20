@@ -85,7 +85,7 @@ describe("add command", () => {
 
       await add(["alert-dialog"]);
 
-      expect(mockInstallComponent).toHaveBeenCalledWith("alert-dialog");
+      expect(mockInstallComponent).toHaveBeenCalledWith("alert-dialog", expect.any(Object));
       expect(mockUpdateConfig).toHaveBeenCalledWith(
         { components: [{ name: "alert-dialog", version: "1.0.0" }] },
         { appendComponents: true },
@@ -315,7 +315,7 @@ describe("add command", () => {
       await add(); // No components specified, should use interactive selection
 
       expect(mockSelectComponents).toHaveBeenCalled();
-      expect(mockInstallComponent).toHaveBeenCalledWith("alert-dialog");
+      expect(mockInstallComponent).toHaveBeenCalledWith("alert-dialog", expect.any(Object));
       expect(mockLog.success).toHaveBeenCalledWith(expect.stringContaining("alert-dialog v1.0.0"));
       expect(mockLog.success).toHaveBeenCalledWith(expect.stringContaining("button v2.1.0"));
     });
@@ -370,8 +370,8 @@ describe("add command", () => {
       await add(undefined, { all: true });
 
       expect(mockInstallComponent).toHaveBeenCalledTimes(2);
-      expect(mockInstallComponent).toHaveBeenCalledWith("button");
-      expect(mockInstallComponent).toHaveBeenCalledWith("alert-dialog");
+      expect(mockInstallComponent).toHaveBeenCalledWith("button", expect.any(Object));
+      expect(mockInstallComponent).toHaveBeenCalledWith("alert-dialog", expect.any(Object));
     });
   });
 
@@ -491,7 +491,7 @@ describe("add command", () => {
       // installComponent should only be called once (for sheet)
       // dialog should be skipped since it was already installed as a dependency
       expect(mockInstallComponent).toHaveBeenCalledTimes(1);
-      expect(mockInstallComponent).toHaveBeenCalledWith("sheet");
+      expect(mockInstallComponent).toHaveBeenCalledWith("sheet", expect.any(Object));
 
       // Both should appear in success (sheet and dialog), dialog only once
       expect(mockLog.success).toHaveBeenCalledWith(expect.stringContaining("sheet v1.0.0"));

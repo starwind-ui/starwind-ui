@@ -8,11 +8,25 @@ import {
   separateDependencies,
 } from "./dependency-resolver.js";
 import { highlighter } from "./highlighter.js";
-import { installDependencies, requestPackageManager } from "./package-manager.js";
+import {
+  detectPackageManager,
+  installDependencies,
+  type PackageManager,
+} from "./package-manager.js";
 import { confirmInstall, getStarwindDependencyResolutions } from "./prompts.js";
 import { getComponent } from "./registry.js";
 
-export async function installComponent(name: string): Promise<InstallResult> {
+export interface InstallComponentOptions {
+  /** Skip confirmation prompts (--yes flag) */
+  skipPrompts?: boolean;
+  /** Package manager to use (overrides auto-detection) */
+  packageManager?: PackageManager;
+}
+
+export async function installComponent(
+  name: string,
+  options?: InstallComponentOptions,
+): Promise<InstallResult> {
   const component = await getComponent(name);
 
   if (!component) {
@@ -28,7 +42,7 @@ export async function installComponent(name: string): Promise<InstallResult> {
 
   // Handle dependencies installation
   if (component.dependencies.length > 0) {
-    const confirmed = await confirmInstall(component);
+    const confirmed = await confirmInstall(component, { skipPrompts: options?.skipPrompts });
     if (!confirmed) {
       return {
         status: "failed",
@@ -46,7 +60,7 @@ export async function installComponent(name: string): Promise<InstallResult> {
         const dependenciesToInstall = await filterUninstalledDependencies(npmDependencies);
 
         if (dependenciesToInstall.length > 0) {
-          const pm = await requestPackageManager();
+          const pm = options?.packageManager ?? detectPackageManager().name;
 
           const installTasks = [
             {

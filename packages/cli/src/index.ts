@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Command } from "commander";
+import { Command, Option } from "commander";
 
 import pkg from "../package.json" with { type: "json" };
 import { add } from "./commands/add.js";
@@ -26,6 +26,14 @@ program
   .argument("[components...]", "The components to add (space separated)")
   .allowExcessArguments()
   .option("-a, --all", "Add all available components")
+  .option("-y, --yes", "Skip confirmation prompts")
+  .addOption(
+    new Option("-m, --package-manager <pm>", "Package manager to use").choices([
+      "npm",
+      "pnpm",
+      "yarn",
+    ]),
+  )
   .action(add);
 
 program
@@ -35,6 +43,13 @@ program
   .allowExcessArguments()
   .option("-a, --all", "Update all installed components")
   .option("-y, --yes", "Skip confirmation prompts")
+  .addOption(
+    new Option("-m, --package-manager <pm>", "Package manager to use").choices([
+      "npm",
+      "pnpm",
+      "yarn",
+    ]),
+  )
   .action(update);
 
 program
