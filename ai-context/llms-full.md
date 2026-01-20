@@ -12,21 +12,8 @@
 
 ### Setup with CLI (Recommended)
 
-1. Create or use an existing Astro project
-2. Configure path aliases in tsconfig.json:
-
-```json
-{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
-  }
-}
-```
-
-3. If using pnpm, create a .npmrc file:
+1. Create a new astro project with `npm create astro@latest` or start with an existing Astro project.
+2. If using pnpm, create a .npmrc file:
 
 ```
 auto-install-peers=true
@@ -34,7 +21,7 @@ node-linker=hoisted
 lockfile=true
 ```
 
-4. Run the CLI to initialize:
+3. Run the CLI to initialize:
 
 ```bash
 pnpx starwind@latest init
@@ -44,15 +31,7 @@ npx starwind@latest init
 yarn dlx starwind@latest init
 ```
 
-5. Import the CSS in your layout:
-
-```astro
----
-import "@/styles/starwind.css";
----
-```
-
-6. Add components as needed:
+4. Add components as needed:
 
 ```bash
 npx starwind@latest add button
