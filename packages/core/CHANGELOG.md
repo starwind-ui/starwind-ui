@@ -1,5 +1,11 @@
 # @starwind-ui/core
 
+## 1.15.4
+
+### Patch Changes
+
+- af156c5: feat(card): add "sm" card variant and improve styling to more closely match the shadcn implementation
+
 ## 1.15.3
 
 ## 1.15.2
