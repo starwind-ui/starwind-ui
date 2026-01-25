@@ -4,7 +4,12 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div">;
 
-export const cardHeader = tv({ base: "flex flex-col space-y-2 p-8" });
+export const cardHeader = tv({
+  base: [
+    "@container/card-header grid auto-rows-min items-start gap-1 px-6 group-data-[size=sm]/card:px-4",
+    "has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto]",
+  ],
+});
 
 const { class: className, ...rest } = Astro.props;
 ---
