@@ -4,13 +4,13 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div">;
 
-export const cardContent = tv({
-  base: "px-6 group-data-[size=sm]/card:px-4",
+export const cardAction = tv({
+  base: "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
 });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={cardContent({ class: className })} data-slot="card-content" {...rest}>
+<div class={cardAction({ class: className })} data-slot="card-action" {...rest}>
   <slot />
 </div>

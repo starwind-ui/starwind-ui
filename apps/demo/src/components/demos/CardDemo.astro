@@ -1,10 +1,76 @@
 ---
+import { Badge } from "@/components/starwind/badge";
+import { Button } from "@/components/starwind/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/starwind/card";
 import CreateProjectForm from "@/components/forms/CreateProjectForm.astro";
 ---
 
-<section class="mx-auto mt-10 max-w-lg">
-  <h2 class="mb-4 text-2xl font-bold">Card</h2>
-  <div class="flex flex-col">
-    <CreateProjectForm />
+<section class="mx-auto mt-10 max-w-lg space-y-12">
+  <div>
+    <h2 class="mb-4 text-2xl font-bold">Card</h2>
+    <div class="flex flex-col items-center">
+      <CreateProjectForm />
+    </div>
+  </div>
+
+  <div>
+    <h3 class="mb-4 text-xl font-semibold">Small Size</h3>
+    <p class="text-muted-foreground mb-4">
+      Use the <code class="bg-muted rounded px-1.5 py-0.5 text-sm">size="sm"</code> prop to set the size
+      of the card to small. The small size variant uses smaller spacing.
+    </p>
+    <div class="flex flex-col items-center">
+      <Card size="sm" class="mx-auto w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Small Card</CardTitle>
+          <CardDescription>This card uses the small size variant.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p>
+            The card component supports a size prop that can be set to "sm" for a more compact
+            appearance.
+          </p>
+        </CardContent>
+        <CardFooter>
+          <Button variant="outline" size="sm" class="w-full">Action</Button>
+        </CardFooter>
+      </Card>
+    </div>
+  </div>
+
+  <div>
+    <h3 class="mb-4 text-xl font-semibold">With Image</h3>
+    <p class="text-muted-foreground mb-4">
+      Add an image before the card header to create a card with an image.
+    </p>
+    <div class="flex flex-col items-center">
+      <Card class="relative mx-auto w-full max-w-sm">
+        <img
+          src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop"
+          alt="Event cover"
+          class="aspect-video w-full object-cover"
+        />
+        <CardHeader>
+          <CardAction>
+            <Badge size="sm" variant="primary">Featured</Badge>
+          </CardAction>
+          <CardTitle>Design systems meetup</CardTitle>
+          <CardDescription>
+            A practical talk on component APIs, accessibility, and shipping faster.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button class="w-full">View Event</Button>
+        </CardFooter>
+      </Card>
+    </div>
   </div>
 </section>
