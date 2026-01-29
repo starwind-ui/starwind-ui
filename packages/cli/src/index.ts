@@ -61,6 +61,18 @@ program
   .option("-a, --all", "Remove all installed components")
   .action(remove);
 
-program.command("setup").description("Setup Starwind Pro in your project").action(setup);
+program
+  .command("setup")
+  .description("Setup Starwind Pro in your project")
+  .option("-y, --yes", "Skip confirmation prompts")
+  .addOption(
+    new Option("-m, --package-manager <pm>", "Package manager to use").choices([
+      "npm",
+      "pnpm",
+      "yarn",
+    ]),
+  )
+  .option("-p, --pro", "Setup Starwind Pro (default)")
+  .action(setup);
 
 program.parse(process.argv);
