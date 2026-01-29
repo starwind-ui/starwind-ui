@@ -1,5 +1,12 @@
 # starwind
 
+## 1.15.5
+
+### Patch Changes
+
+- e179b78: feat(cli): add setup command for adding starwind pro to existing starwind ui projects
+  - @starwind-ui/core@1.15.5
+
 ## 1.15.4
 
 ### Patch Changes
