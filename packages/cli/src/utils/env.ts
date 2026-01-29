@@ -147,3 +147,29 @@ export async function setupStarwindProEnv(): Promise<boolean> {
 
   return envResult && gitignoreResult;
 }
+
+/**
+ * Checks if the Starwind Pro environment is already configured
+ * @returns true if .env.local has the key and .gitignore includes .env.local
+ */
+export async function checkStarwindProEnv(): Promise<boolean> {
+  // Check .env.local
+  const envExists = await fileExists(ENV_LOCAL_PATH);
+  if (!envExists) return false;
+
+  const envContent = await fs.readFile(ENV_LOCAL_PATH, "utf-8");
+  if (!hasStarwindLicenseKey(envContent)) return false;
+
+  // Check .gitignore
+  const gitignoreExists = await fileExists(GITIGNORE_PATH);
+  if (gitignoreExists) {
+    const gitignoreContent = await fs.readFile(GITIGNORE_PATH, "utf-8");
+    if (!hasEnvLocalInGitignore(gitignoreContent)) return false;
+  } else {
+    // If .gitignore doesn't exist, we consider the env not set up
+    // because we want to create it with the default content
+    return false;
+  }
+
+  return true;
+}

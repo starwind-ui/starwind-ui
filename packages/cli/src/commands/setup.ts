@@ -2,7 +2,7 @@ import * as p from "@clack/prompts";
 
 import { getConfig } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
-import { setupStarwindProEnv } from "@/utils/env.js";
+import { checkStarwindProEnv, setupStarwindProEnv } from "@/utils/env.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { hasStarwindProRegistry, setupShadcnProConfig } from "@/utils/shadcn-config.js";
@@ -100,9 +100,12 @@ async function runProSetup() {
   p.log.info(highlighter.info("Setting up Starwind Pro..."));
 
   const configTasks = [];
-  const alreadyHasPro = await hasStarwindProRegistry();
+  const hasRegistry = await hasStarwindProRegistry();
+  const hasEnv = await checkStarwindProEnv();
 
-  if (!alreadyHasPro) {
+  if (hasRegistry && hasEnv) {
+    p.log.info(highlighter.info("Starwind Pro registry and environment already configured"));
+  } else {
     let cssFile: string = PATHS.LOCAL_CSS_FILE;
     let baseColor = "neutral";
 
@@ -114,32 +117,34 @@ async function runProSetup() {
       // Use defaults if config can't be read
     }
 
-    configTasks.push({
-      title: "Setting up Starwind Pro registry",
-      task: async () => {
-        await setupShadcnProConfig(cssFile, baseColor);
-        await sleep(250);
-        return "Configured Starwind Pro registry in components.json";
-      },
-    });
+    if (!hasRegistry) {
+      configTasks.push({
+        title: "Setting up Starwind Pro registry",
+        task: async () => {
+          await setupShadcnProConfig(cssFile, baseColor);
+          await sleep(250);
+          return "Configured Starwind Pro registry in components.json";
+        },
+      });
+    }
 
-    configTasks.push({
-      title: "Setting up Starwind Pro environment",
-      task: async () => {
-        const success = await setupStarwindProEnv();
-        if (!success) {
-          throw new Error("Failed to setup Starwind Pro environment");
-        }
-        await sleep(250);
-        return "Created .env.local and updated .gitignore";
-      },
-    });
+    if (!hasEnv) {
+      configTasks.push({
+        title: "Setting up Starwind Pro environment",
+        task: async () => {
+          const success = await setupStarwindProEnv();
+          if (!success) {
+            throw new Error("Failed to setup Starwind Pro environment");
+          }
+          await sleep(250);
+          return "Created .env.local and updated .gitignore";
+        },
+      });
+    }
 
     if (configTasks.length > 0) {
       await p.tasks(configTasks);
     }
-  } else {
-    p.log.info(highlighter.info("Starwind Pro registry already configured"));
   }
 
   await sleep(250);
