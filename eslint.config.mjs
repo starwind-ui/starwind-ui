@@ -89,6 +89,15 @@ export default defineConfig([
 
   // Ignore patterns - putting this early to ensure it applies to all configs
   {
-    ignores: ["**/*/dist/**", "**/*.d.ts", ".tours/", "scripts/", ".github/", ".changeset/"],
+    ignores: [
+      "**/*/dist/**",
+      "**/*/node_modules/**",
+      "**/*/.astro/**",
+      "**/*.d.ts",
+      ".tours/",
+      "scripts/",
+      ".github/",
+      ".changeset/",
+    ],
   },
 ]);
