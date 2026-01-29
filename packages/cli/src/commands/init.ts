@@ -315,7 +315,9 @@ export async function init(
         });
       } else {
         if (!withinAdd) {
-          p.log.info(highlighter.info("Starwind Pro registry already configured"));
+          p.log.warn(
+            `${highlighter.warn("Starwind Pro registry already configured.")} Use the ${highlighter.info("setup")} command to update your Pro configuration.`,
+          );
         }
       }
     }

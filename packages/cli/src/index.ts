@@ -6,6 +6,7 @@ import pkg from "../package.json" with { type: "json" };
 import { add } from "./commands/add.js";
 import { init } from "./commands/init.js";
 import { remove } from "./commands/remove.js";
+import { setup } from "./commands/setup.js";
 import { update } from "./commands/update.js";
 
 const program = new Command()
@@ -59,5 +60,10 @@ program
   .allowExcessArguments()
   .option("-a, --all", "Remove all installed components")
   .action(remove);
+
+program
+  .command("setup")
+  .description("Setup Starwind Pro in your project")
+  .action(setup);
 
 program.parse(process.argv);
