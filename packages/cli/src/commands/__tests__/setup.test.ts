@@ -25,9 +25,10 @@ vi.mock("../../utils/env.js");
 
 // Now import the modules
 import * as clackPrompts from "@clack/prompts";
+
+import * as env from "../../utils/env.js";
 import * as fs from "../../utils/fs.js";
 import * as shadcnConfig from "../../utils/shadcn-config.js";
-import * as env from "../../utils/env.js";
 import { setup } from "../setup.js";
 
 // Get references to the mocked functions

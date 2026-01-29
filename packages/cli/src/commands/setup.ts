@@ -1,8 +1,9 @@
-import { fileExists, readJsonFile } from "@/utils/fs.js";
 import * as p from "@clack/prompts";
+
+import { setupStarwindProEnv } from "@/utils/env.js";
+import { fileExists, readJsonFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { hasStarwindProRegistry, setupShadcnProConfig } from "@/utils/shadcn-config.js";
-import { setupStarwindProEnv } from "@/utils/env.js";
 import { sleep } from "@/utils/sleep.js";
 
 export async function setup() {
@@ -10,9 +11,7 @@ export async function setup() {
 
   try {
     if (!(await fileExists("starwind.config.json"))) {
-      p.log.error(
-        "No starwind.config.json found. Please run `starwind init` first.",
-      );
+      p.log.error("No starwind.config.json found. Please run `starwind init` first.");
       process.exit(1);
     }
 
@@ -65,13 +64,12 @@ export async function setup() {
 
     await sleep(250);
 
-    let nextStepsMessage = `Starwind Pro is now configured! You can install pro components using:\n${highlighter.info("npx starwind@latest add @starwind-pro/component-name")}\n\nMake sure to set your ${highlighter.infoBright("STARWIND_LICENSE_KEY")} environment variable in ${highlighter.infoBright(".env.local")}.`;
+    const nextStepsMessage = `Starwind Pro is now configured! You can install pro components using:\n${highlighter.info("npx starwind@latest add @starwind-pro/component-name")}\n\nMake sure to set your ${highlighter.infoBright("STARWIND_LICENSE_KEY")} environment variable in ${highlighter.infoBright(".env.local")}.`;
 
     p.note(nextStepsMessage, "Next steps");
 
     await sleep(1000);
     p.outro("Enjoy using Starwind UI with Pro components! 🚀");
-
   } catch (error) {
     p.log.error(error instanceof Error ? error.message : "Failed to add components");
     p.cancel("Operation cancelled");

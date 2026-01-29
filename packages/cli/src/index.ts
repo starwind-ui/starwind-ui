@@ -61,9 +61,6 @@ program
   .option("-a, --all", "Remove all installed components")
   .action(remove);
 
-program
-  .command("setup")
-  .description("Setup Starwind Pro in your project")
-  .action(setup);
+program.command("setup").description("Setup Starwind Pro in your project").action(setup);
 
 program.parse(process.argv);
