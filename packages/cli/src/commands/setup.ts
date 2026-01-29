@@ -24,14 +24,25 @@ export async function setup() {
     if (!alreadyHasPro) {
       p.log.info(highlighter.info("Setting up Starwind Pro configuration..."));
 
-      configTasks.push({
-        title: "Setting up Starwind Pro registry",
-        task: async () => {
-          await setupShadcnProConfig(config.tailwind.css, config.tailwind.baseColor);
-          await sleep(250);
-          return "Configured Starwind Pro registry in components.json";
-        },
-      });
+      if (
+        config &&
+        typeof config === "object" &&
+        config.tailwind &&
+        typeof config.tailwind === "object" &&
+        typeof config.tailwind.css === "string" &&
+        typeof config.tailwind.baseColor === "string"
+      ) {
+        configTasks.push({
+          title: "Setting up Starwind Pro registry",
+          task: async () => {
+            await setupShadcnProConfig(config.tailwind.css, config.tailwind.baseColor);
+            await sleep(250);
+            return "Configured Starwind Pro registry in components.json";
+          },
+        });
+      } else {
+        p.log.error("Invalid `starwind.config.json`. Could not set up Starwind Pro registry.");
+      }
 
       configTasks.push({
         title: "Setting up Starwind Pro environment",
@@ -45,7 +56,9 @@ export async function setup() {
         },
       });
 
-      await p.tasks(configTasks);
+      if (configTasks.length > 0) {
+        await p.tasks(configTasks);
+      }
     } else {
       p.log.info(highlighter.info("Starwind Pro registry already configured"));
     }
@@ -56,7 +69,7 @@ export async function setup() {
 
     p.note(nextStepsMessage, "Next steps");
 
-    sleep(1000);
+    await sleep(1000);
     p.outro("Enjoy using Starwind UI with Pro components! 🚀");
 
   } catch (error) {
