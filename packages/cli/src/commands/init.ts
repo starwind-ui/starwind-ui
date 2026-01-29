@@ -315,7 +315,9 @@ export async function init(
         });
       } else {
         if (!withinAdd) {
-          p.log.info(highlighter.info("Starwind Pro registry already configured"));
+          p.log.warn(
+            `${highlighter.warn("Starwind Pro registry already configured.")} Use the ${highlighter.info("setup")} command to update your Pro configuration.`,
+          );
         }
       }
     }
@@ -427,7 +429,7 @@ export async function init(
     let nextStepsMessage = `Make sure your layout imports the ${highlighter.infoBright(configChoices.cssFile)} file`;
 
     if (options?.pro) {
-      nextStepsMessage += `\n\nStarwind Pro is now configured! You can install pro components using:\n${highlighter.info("npx starwind@latest add @starwind-pro/component-name")}\n\nMake sure to set your ${highlighter.infoBright("STARWIND_LICENSE_KEY")} environment variable in ${highlighter.infoBright(".env.local")}.`;
+      nextStepsMessage += `\n\nStarwind Pro is now configured! You can install pro components using:\n${highlighter.info("npx starwind@latest add @starwind-pro/component-name")}\n\nMake sure to set your ${highlighter.infoBright("STARWIND_LICENSE_KEY")} environment variable in ${highlighter.infoBright(".env.local")}`;
     }
 
     p.note(nextStepsMessage, "Next steps");
