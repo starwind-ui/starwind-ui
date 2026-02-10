@@ -5,6 +5,7 @@ const THEME_TOGGLE_SNIPPET = {
   "Starwind UI Theme Toggle": {
     prefix: "starwind-theme-toggle",
     description: "Starwind UI theme initialization script for the document head",
+    scope: "astro,typescript",
     body: [
       "<script is:inline>",
       "  function initTheme() {",
@@ -38,27 +39,19 @@ const THEME_TOGGLE_SNIPPET = {
 
 /**
  * Sets up VS Code snippets for Starwind UI.
- * Creates or merges snippets into .vscode/astro.json or .vscode/starwind.code-snippets.
+ * Creates or merges snippets into .vscode/starwind.code-snippets.
  */
 export async function setupSnippets() {
   await ensureDirectory(PATHS.VSCODE_DIR);
 
-  let targetPath = PATHS.VSCODE_SNIPPETS_FILE;
+  const targetPath = PATHS.VSCODE_SNIPPETS_FILE;
   let existingSnippets: Record<string, any> = {};
 
-  // Check if astro.json exists (as requested by user)
-  if (await fileExists(PATHS.VSCODE_ASTRO_SNIPPETS_FILE)) {
-    targetPath = PATHS.VSCODE_ASTRO_SNIPPETS_FILE;
+  if (await fileExists(targetPath)) {
     try {
-      existingSnippets = await readJsonFile(PATHS.VSCODE_ASTRO_SNIPPETS_FILE);
+      existingSnippets = await readJsonFile(targetPath);
     } catch (error) {
       // If file is empty or invalid JSON, start with empty object
-      existingSnippets = {};
-    }
-  } else if (await fileExists(PATHS.VSCODE_SNIPPETS_FILE)) {
-    try {
-      existingSnippets = await readJsonFile(PATHS.VSCODE_SNIPPETS_FILE);
-    } catch (error) {
       existingSnippets = {};
     }
   }
@@ -69,11 +62,6 @@ export async function setupSnippets() {
       ...THEME_TOGGLE_SNIPPET["Starwind UI Theme Toggle"],
     },
   };
-
-  // Add scope: "astro" if we are using .code-snippets extension
-  if (targetPath.endsWith(".code-snippets")) {
-    (updatedSnippets["Starwind UI Theme Toggle"] as any).scope = "astro";
-  }
 
   await writeJsonFile(targetPath, updatedSnippets);
 

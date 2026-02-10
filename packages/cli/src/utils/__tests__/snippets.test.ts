@@ -32,40 +32,10 @@ describe("snippets", () => {
         expect.objectContaining({
           "Starwind UI Theme Toggle": expect.objectContaining({
             prefix: "starwind-theme-toggle",
-            scope: "astro",
+            scope: "astro,typescript",
           }),
         }),
       );
-    });
-
-    it("should merge into .vscode/astro.json if it exists", async () => {
-      mockFileExists.mockImplementation(async (path) => {
-        return path === PATHS.VSCODE_ASTRO_SNIPPETS_FILE;
-      });
-      mockReadJsonFile.mockResolvedValue({
-        "Existing Snippet": {
-          prefix: "existing",
-          body: ["test"],
-          description: "Existing snippet",
-        },
-      });
-      mockWriteJsonFile.mockResolvedValue(undefined);
-      mockEnsureDirectory.mockResolvedValue(undefined);
-
-      const result = await setupSnippets();
-
-      expect(result).toBe(true);
-      expect(mockWriteJsonFile).toHaveBeenCalledWith(
-        PATHS.VSCODE_ASTRO_SNIPPETS_FILE,
-        expect.objectContaining({
-          "Existing Snippet": expect.any(Object),
-          "Starwind UI Theme Toggle": expect.any(Object),
-        }),
-      );
-      // No scope for .json file in my implementation currently
-      expect(
-        (mockWriteJsonFile.mock.calls[0][1] as any)["Starwind UI Theme Toggle"].scope,
-      ).toBeUndefined();
     });
 
     it("should merge into .vscode/starwind.code-snippets if it exists", async () => {
@@ -89,7 +59,7 @@ describe("snippets", () => {
         expect.objectContaining({
           "Other Starwind Snippet": expect.any(Object),
           "Starwind UI Theme Toggle": expect.objectContaining({
-            scope: "astro",
+            scope: "astro,typescript",
           }),
         }),
       );
@@ -97,7 +67,7 @@ describe("snippets", () => {
 
     it("should handle invalid existing JSON by starting fresh", async () => {
       mockFileExists.mockImplementation(async (path) => {
-        return path === PATHS.VSCODE_ASTRO_SNIPPETS_FILE;
+        return path === PATHS.VSCODE_SNIPPETS_FILE;
       });
       mockReadJsonFile.mockRejectedValue(new Error("Invalid JSON"));
       mockWriteJsonFile.mockResolvedValue(undefined);
@@ -107,7 +77,7 @@ describe("snippets", () => {
 
       expect(result).toBe(true);
       expect(mockWriteJsonFile).toHaveBeenCalledWith(
-        PATHS.VSCODE_ASTRO_SNIPPETS_FILE,
+        PATHS.VSCODE_SNIPPETS_FILE,
         expect.objectContaining({
           "Starwind UI Theme Toggle": expect.any(Object),
         }),
