@@ -1,0 +1,47 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & VariantProps<typeof inputGroupAddon>;
+
+export const inputGroupAddon = tv({
+  base: "text-muted-foreground flex cursor-text select-none items-center justify-center gap-2 text-sm font-medium group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-[calc(var(--radius)-5px)] [&>svg:not([class*='size-'])]:size-4",
+  variants: {
+    align: {
+      "inline-start": "order-first pl-2 has-[>button]:ml-[-0.3rem] has-[>kbd]:ml-[-0.15rem]",
+      "inline-end": "order-last pr-2 has-[>button]:mr-[-0.3rem] has-[>kbd]:mr-[-0.15rem]",
+      "block-start": "order-first w-full justify-start px-2.5 pt-2 group-has-[>input]/input-group:pt-2 [.border-b]:pb-2",
+      "block-end": "order-last w-full justify-start px-2.5 pb-2 group-has-[>input]/input-group:pb-2 [.border-t]:pt-2",
+    },
+  },
+  defaultVariants: {
+    align: "inline-start",
+  },
+});
+
+const { align, class: className, ...rest } = Astro.props;
+---
+
+<div
+  role="group"
+  data-slot="input-group-addon"
+  data-align={align}
+  class={inputGroupAddon({ align, class: className })}
+  {...rest}
+>
+  <slot />
+</div>
+
+<script>
+  const handleAddonClick = (e: MouseEvent) => {
+    const addon = (e.target as HTMLElement).closest('[data-slot="input-group-addon"]');
+    if (addon && !(e.target as HTMLElement).closest('button')) {
+      const input = addon.parentElement?.querySelector('input, textarea') as HTMLInputElement | HTMLTextAreaElement;
+      if (input) {
+        input.focus();
+      }
+    }
+  };
+
+  document.addEventListener("click", handleAddonClick);
+</script>

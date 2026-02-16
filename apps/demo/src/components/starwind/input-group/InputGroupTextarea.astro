@@ -1,0 +1,28 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
+
+type Props = HTMLAttributes<"textarea"> & VariantProps<typeof inputGroupTextarea>;
+
+export const inputGroupTextarea = tv({
+  base: "flex-1 border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent rounded-none resize-none h-full outline-none placeholder:text-muted-foreground",
+  variants: {
+    size: {
+      sm: "px-2 py-1 text-sm",
+      md: "px-3 py-2 text-base",
+      lg: "px-4 py-3 text-lg",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
+});
+
+const { size, class: className, ...rest } = Astro.props;
+---
+
+<textarea
+  data-slot="input-group-control"
+  class={inputGroupTextarea({ size, class: className })}
+  {...rest}
+></textarea>
