@@ -9,13 +9,17 @@ import {
   DropdownItem,
   DropdownLabel,
   DropdownSeparator,
+  DropdownShortcut,
+  DropdownSub,
+  DropdownSubContent,
+  DropdownSubTrigger,
   DropdownTrigger,
 } from "@/components/starwind/dropdown";
 ---
 
 <section class="mx-auto mt-6 max-w-lg">
   <h2 class="mb-4 text-2xl font-bold">Dropdown</h2>
-  <div class="flex items-center gap-4">
+  <div class="flex flex-wrap items-center gap-4">
     <Dropdown openOnHover>
       <DropdownTrigger asChild>
         <Button>Left</Button>
@@ -50,6 +54,51 @@ import {
         <DropdownLabel>Danger Zone</DropdownLabel>
         <DropdownItem inset>Archive</DropdownItem>
         <DropdownItem inset disabled>Delete</DropdownItem>
+      </DropdownContent>
+    </Dropdown>
+
+    <Dropdown>
+      <DropdownTrigger asChild>
+        <Button variant="outline">Sub-menu Demo</Button>
+      </DropdownTrigger>
+      <DropdownContent class="w-56" align="start">
+        <DropdownLabel>My Account</DropdownLabel>
+        <DropdownSeparator />
+        <DropdownItem>
+          Profile
+          <DropdownShortcut>⇧⌘P</DropdownShortcut>
+        </DropdownItem>
+        <DropdownItem>
+          Billing
+          <DropdownShortcut>⌘B</DropdownShortcut>
+        </DropdownItem>
+        <DropdownItem>
+          Settings
+          <DropdownShortcut>⌘S</DropdownShortcut>
+        </DropdownItem>
+        <DropdownSeparator />
+        <DropdownSub>
+          <DropdownSubTrigger>Invite users</DropdownSubTrigger>
+          <DropdownSubContent>
+            <DropdownItem>Email</DropdownItem>
+            <DropdownItem>Message</DropdownItem>
+            <DropdownSeparator />
+            <DropdownItem>More...</DropdownItem>
+          </DropdownSubContent>
+        </DropdownSub>
+        <DropdownItem>
+          New Team
+          <DropdownShortcut>⌘+T</DropdownShortcut>
+        </DropdownItem>
+        <DropdownSeparator />
+        <DropdownItem>GitHub</DropdownItem>
+        <DropdownItem>Support</DropdownItem>
+        <DropdownItem disabled>API</DropdownItem>
+        <DropdownSeparator />
+        <DropdownItem>
+          Log out
+          <DropdownShortcut>⇧⌘Q</DropdownShortcut>
+        </DropdownItem>
       </DropdownContent>
     </Dropdown>
   </div>

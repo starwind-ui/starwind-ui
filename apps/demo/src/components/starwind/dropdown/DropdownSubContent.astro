@@ -1,0 +1,30 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { dropdownContent } from "./DropdownContent.astro";
+
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * Open and close animation duration in milliseconds
+   * @default 150
+   */
+  animationDuration?: number;
+};
+
+const { class: className, animationDuration = 150, ...rest } = Astro.props;
+---
+
+<div
+  class={dropdownContent({ side: "right", align: "start", class: ["starwind-dropdown-sub-content", className] })}
+  role="menu"
+  data-state="closed"
+  data-slot="dropdown-content"
+  tabindex="-1"
+  aria-orientation="vertical"
+  style={{
+    display: "none",
+    animationDuration: `${animationDuration}ms`,
+  }}
+  {...rest}
+>
+  <slot />
+</div>

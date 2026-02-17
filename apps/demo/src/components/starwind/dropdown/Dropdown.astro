@@ -31,7 +31,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 <script>
   class DropdownHandler {
     private dropdown: HTMLElement;
-    private trigger: HTMLButtonElement | null;
+    private trigger: HTMLElement | null;
     private content: HTMLElement | null;
     private items: HTMLElement[] = [];
     private currentFocusIndex: number = -1;
@@ -43,23 +43,23 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
     private closeTimerRef: number | null = null;
     private lastOpenSource: "keyboard" | "mouse" = "keyboard";
     private lastCloseSource: "keyboard" | "mouse" = "keyboard";
+    private isSubmenu: boolean;
 
     constructor(dropdown: HTMLElement, dropdownIdx: number) {
       this.dropdown = dropdown;
-      this.openOnHover = dropdown.getAttribute("data-open-on-hover") === "true";
+      this.isSubmenu = dropdown.classList.contains("starwind-dropdown-sub");
+      this.openOnHover = dropdown.getAttribute("data-open-on-hover") === "true" || this.isSubmenu;
       this.closeDelay = parseInt(dropdown.getAttribute("data-close-delay") || "200");
 
-      // Get the temporary trigger element
-      const tempTrigger = dropdown.querySelector(".starwind-dropdown-trigger") as HTMLElement;
+      // Find the trigger and content that belong to this dropdown, avoiding nested ones
+      this.trigger = this.findOwnElement('[data-slot="dropdown-trigger"], [data-sub-trigger]');
 
       // if trigger is set with asChild, use the first child element for trigger button
-      if (tempTrigger?.hasAttribute("data-as-child")) {
-        this.trigger = tempTrigger.firstElementChild as HTMLButtonElement;
-      } else {
-        this.trigger = tempTrigger as HTMLButtonElement;
+      if (this.trigger?.hasAttribute("data-as-child")) {
+        this.trigger = this.trigger.firstElementChild as HTMLElement;
       }
 
-      this.content = dropdown.querySelector(".starwind-dropdown-content");
+      this.content = this.findOwnElement('[data-slot="dropdown-content"]');
 
       if (!this.trigger || !this.content) return;
 
@@ -72,6 +72,16 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       }
 
       this.init(dropdownIdx);
+    }
+
+    private findOwnElement(selector: string): HTMLElement | null {
+      const elements = this.dropdown.querySelectorAll(selector);
+      for (const el of elements) {
+        if (el.closest(".starwind-dropdown, .starwind-dropdown-sub") === this.dropdown) {
+          return el as HTMLElement;
+        }
+      }
+      return null;
     }
 
     private init(dropdownIdx: number) {
@@ -101,7 +111,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         this.toggleDropdown();
       });
 
-      // Handle keyboard navigation
+      // Handle keyboard navigation on trigger
       this.trigger.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -120,15 +130,21 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
           } else {
             this.focusItem(this.items.length - 1); // Focus last item when opening with arrow up
           }
+        } else if (e.key === "ArrowRight" && this.isSubmenu && !this.isOpen) {
+          e.preventDefault();
+          this.lastOpenSource = "keyboard";
+          this.openDropdown();
         }
+      });
+
+      // Listen for close-all event
+      this.dropdown.addEventListener("starwind-dropdown:close-all", () => {
+        this.closeDropdown();
       });
 
       // Close dropdown when clicking outside for mouse
       document.addEventListener("pointerdown", (e) => {
         if (this.isOpen && !this.dropdown.contains(e.target as Node)) {
-          // only call handler if it's the left button (mousedown gets triggered by all mouse buttons)
-          // but not when the control key is pressed (avoiding MacOS right click); also not for touch
-          // devices because that would open the menu on scroll. (pen devices behave as touch on iOS).
           if (e.button === 0 && e.ctrlKey === false && e.pointerType === "mouse") {
             this.closeDropdown();
           }
@@ -161,9 +177,15 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         const target = e.target as HTMLElement;
         const item = target.closest('[role="menuitem"]');
         if (item && !(item as HTMLElement).hasAttribute("data-disabled")) {
+          if (item.hasAttribute("aria-haspopup")) return;
+
           // Close the dropdown after item selection
           this.closeDropdown();
-          // console.log("click closing");
+
+          // Dispatch close-all to parents
+          this.dropdown.dispatchEvent(
+            new CustomEvent("starwind-dropdown:close-all", { bubbles: true }),
+          );
         }
       });
 
@@ -230,6 +252,19 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
           e.preventDefault();
           this.focusItem(currentIdx === -1 ? this.items.length - 1 : currentIdx - 1);
           break;
+        case "ArrowRight":
+          const currentItem = this.items[currentIdx];
+          if (currentItem?.getAttribute("aria-haspopup") === "true") {
+            e.preventDefault();
+            currentItem.click();
+          }
+          break;
+        case "ArrowLeft":
+          if (this.isSubmenu) {
+            e.preventDefault();
+            this.closeDropdown();
+          }
+          break;
         case "Home":
           e.preventDefault();
           this.focusItem(0);
@@ -276,7 +311,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
     private openDropdown() {
       if (this.isClosing) return;
-      if (!this.content || !this.trigger || this.trigger.disabled) return;
+      if (!this.content || !this.trigger || (this.trigger as any).disabled) return;
 
       this.isOpen = true;
       this.content.setAttribute("data-state", "open");
@@ -290,6 +325,13 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       this.currentFocusIndex = -1;
 
       this.positionContent();
+
+      // For submenus opened by keyboard, focus the first item
+      if (this.isSubmenu && this.lastOpenSource === "keyboard") {
+        requestAnimationFrame(() => {
+          this.focusItem(0);
+        });
+      }
     }
 
     private closeDropdown() {
@@ -347,7 +389,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
     }
 
     private positionContent() {
-      if (!this.content || !this.trigger) return;
+      if (!this.content || !this.trigger || this.isSubmenu) return;
 
       // Set content width to match trigger width
       this.content.style.width = "var(--starwind-dropdown-trigger-width)";
@@ -364,7 +406,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
   // Initialize dropdowns
   const initDropdowns = () => {
-    document.querySelectorAll(".starwind-dropdown").forEach((dropdown) => {
+    document.querySelectorAll(".starwind-dropdown, .starwind-dropdown-sub").forEach((dropdown) => {
       if (dropdown instanceof HTMLElement && !dropdownInstances.has(dropdown)) {
         dropdownInstances.set(dropdown, new DropdownHandler(dropdown, dropdownCounter++));
       }
