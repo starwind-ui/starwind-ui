@@ -1,14 +1,25 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import { tv, type VariantProps } from "tailwind-variants";
+
 import { button as starwindButton } from "../button/Button.astro";
 
-type Props = HTMLAttributes<"button"> & VariantProps<typeof inputGroupButton> & {
-  variant?: "default" | "primary" | "secondary" | "outline" | "ghost" | "info" | "success" | "warning" | "error";
-};
+type Props = HTMLAttributes<"button"> &
+  VariantProps<typeof inputGroupButton> & {
+    variant?:
+      | "default"
+      | "primary"
+      | "secondary"
+      | "outline"
+      | "ghost"
+      | "info"
+      | "success"
+      | "warning"
+      | "error";
+  };
 
 export const inputGroupButton = tv({
-  base: "gap-2 text-sm shadow-none flex items-center",
+  base: "flex items-center gap-2 text-sm shadow-none",
   variants: {
     size: {
       xs: "h-7 gap-1 rounded-[calc(var(--radius)-3px)] px-1.5 [&>svg:not([class*='size-'])]:size-3.5",
