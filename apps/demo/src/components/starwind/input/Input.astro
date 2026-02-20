@@ -22,4 +22,4 @@ export const input = tv({
 const { size, class: className, ...rest } = Astro.props;
 ---
 
-<input class={input({ size, class: className })} data-slot="input" {...rest} />
+<input class={input({ size, class: className })} {...rest} data-slot="input" />
