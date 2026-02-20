@@ -14,15 +14,16 @@
   },
   "keywords": [
     "starwind",
-    "starwind ui",
-    "starwind cli",
+    "starwind-ui",
+    "starwind-cli",
     "astro",
-    "astro component",
-    "astro ui",
-    "astro ui library",
+    "astro-component",
+    "astro-ui",
+    "withastro",
+    "ui",
+    "accessibility",
     "tailwind",
-    "components",
-    "add component"
+    "components"
   ],
   "type": "module",
   "bin": {

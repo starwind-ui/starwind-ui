@@ -98,6 +98,10 @@ export default defineConfig([
       "scripts/",
       ".github/",
       ".changeset/",
+
+      // agent items
+      ".agent/**",
+      ".windsurf/**",
     ],
   },
 ]);
