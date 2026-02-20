@@ -12,6 +12,7 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "@/components/starwind/input-group";
+import Kbd from "@/components/starwind/kbd/Kbd.astro";
 import { Spinner } from "@/components/starwind/spinner";
 ---
 
@@ -134,6 +135,20 @@ import { Spinner } from "@/components/starwind/spinner";
           </InputGroupAddon>
         </InputGroup>
       </div>
+    </div>
+
+    <!-- Kbd Example -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">With Kbd</p>
+      <InputGroup>
+        <InputGroupInput placeholder="Search..." />
+        <InputGroupAddon>
+          <Search class="size-4" />
+        </InputGroupAddon>
+        <InputGroupAddon align="inline-end">
+          <Kbd>⌘K</Kbd>
+        </InputGroupAddon>
+      </InputGroup>
     </div>
 
     <!-- Spinner Examples -->
