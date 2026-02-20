@@ -1,0 +1,182 @@
+---
+import Copy from "@tabler/icons/outline/copy.svg";
+import Mail from "@tabler/icons/outline/mail.svg";
+import Search from "@tabler/icons/outline/search.svg";
+import Settings from "@tabler/icons/outline/settings.svg";
+
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+  InputGroupTextarea,
+} from "@/components/starwind/input-group";
+import Kbd from "@/components/starwind/kbd/Kbd.astro";
+import { Spinner } from "@/components/starwind/spinner";
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Input Group</h2>
+  <div class="space-y-8">
+    <!-- Basic Example -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">Basic Addon</p>
+      <InputGroup>
+        <InputGroupAddon align="inline-start">
+          <Mail class="size-4" />
+        </InputGroupAddon>
+        <InputGroupInput placeholder="Email" />
+      </InputGroup>
+    </div>
+
+    <!-- With Button -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">With Button</p>
+      <InputGroup>
+        <InputGroupInput placeholder="Search..." />
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton size="icon-sm">
+            <Search class="size-4" />
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+    </div>
+
+    <!-- Multiple Addons -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">Multiple Addons</p>
+      <InputGroup>
+        <InputGroupAddon align="inline-start">
+          <Settings class="size-4" />
+        </InputGroupAddon>
+        <InputGroupAddon align="inline-start">
+          <InputGroupText>$</InputGroupText>
+        </InputGroupAddon>
+        <InputGroupInput placeholder="Amount" />
+        <InputGroupAddon align="inline-end">
+          <InputGroupText>.00</InputGroupText>
+        </InputGroupAddon>
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton variant="outline" size="sm"> Action </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+    </div>
+
+    <!-- Copy Link style -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">Copy Link Example</p>
+      <InputGroup>
+        <InputGroupInput value="https://starwind-ui.com" readonly />
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton variant="outline" size="sm">
+            <Copy class="size-4" />
+            Copy
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+    </div>
+
+    <!-- Block Alignments -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">Block Alignments (Vertical Stack)</p>
+      <div class="space-y-4">
+        <InputGroup>
+          <InputGroupAddon align="block-start">
+            <InputGroupText>Top Label</InputGroupText>
+          </InputGroupAddon>
+          <InputGroupInput placeholder="Input with top label" />
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupInput placeholder="Input with bottom label" />
+          <InputGroupAddon align="block-end">
+            <InputGroupText>Bottom Label</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+    </div>
+
+    <!-- InputGroupText Examples -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">Text Addons</p>
+      <div class="space-y-4">
+        <InputGroup>
+          <InputGroupAddon>
+            <InputGroupText>$</InputGroupText>
+          </InputGroupAddon>
+          <InputGroupInput placeholder="0.00" />
+          <InputGroupAddon align="inline-end">
+            <InputGroupText>USD</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupAddon>
+            <InputGroupText>https://</InputGroupText>
+          </InputGroupAddon>
+          <InputGroupInput placeholder="example.com" class="pl-0.5!" />
+          <InputGroupAddon align="inline-end">
+            <InputGroupText>.com</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupInput placeholder="Enter your username" />
+          <InputGroupAddon align="inline-end">
+            <InputGroupText>@company.com</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupTextarea placeholder="Enter your message" />
+          <InputGroupAddon align="block-end">
+            <InputGroupText class="text-xs">120 characters left</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+    </div>
+
+    <!-- Kbd Example -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">With Kbd</p>
+      <InputGroup>
+        <InputGroupInput placeholder="Search..." />
+        <InputGroupAddon>
+          <Search class="size-4" />
+        </InputGroupAddon>
+        <InputGroupAddon align="inline-end">
+          <Kbd>⌘K</Kbd>
+        </InputGroupAddon>
+      </InputGroup>
+    </div>
+
+    <!-- Spinner Examples -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">With Spinner</p>
+      <div class="space-y-4">
+        <InputGroup>
+          <InputGroupInput placeholder="Searching..." />
+          <InputGroupAddon align="inline-end">
+            <Spinner />
+          </InputGroupAddon>
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupInput placeholder="Processing..." />
+          <InputGroupAddon>
+            <Spinner />
+          </InputGroupAddon>
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupInput placeholder="Saving changes..." />
+          <InputGroupAddon align="inline-end">
+            <InputGroupText>Saving...</InputGroupText>
+            <Spinner />
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+    </div>
+  </div>
+</section>
