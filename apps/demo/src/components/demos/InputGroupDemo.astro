@@ -10,7 +10,9 @@ import {
   InputGroupButton,
   InputGroupInput,
   InputGroupText,
-} from "../starwind/input-group";
+  InputGroupTextarea,
+} from "@/components/starwind/input-group";
+import { Spinner } from "@/components/starwind/spinner";
 ---
 
 <section class="mx-auto mt-10 max-w-lg">
@@ -33,38 +35,11 @@ import {
       <InputGroup>
         <InputGroupInput placeholder="Search..." />
         <InputGroupAddon align="inline-end">
-          <InputGroupButton>
+          <InputGroupButton size="icon-sm">
             <Search class="size-4" />
           </InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
-    </div>
-
-    <!-- Sizes -->
-    <div class="space-y-2">
-      <p class="text-sm font-medium">Sizes (sm, md, lg)</p>
-      <div class="space-y-4">
-        <InputGroup size="sm">
-          <InputGroupAddon align="inline-start">
-            <InputGroupText>https://</InputGroupText>
-          </InputGroupAddon>
-          <InputGroupInput size="sm" placeholder="example.com" />
-        </InputGroup>
-
-        <InputGroup size="md">
-          <InputGroupAddon align="inline-start">
-            <InputGroupText>https://</InputGroupText>
-          </InputGroupAddon>
-          <InputGroupInput size="md" placeholder="example.com" />
-        </InputGroup>
-
-        <InputGroup size="lg">
-          <InputGroupAddon align="inline-start">
-            <InputGroupText>https://</InputGroupText>
-          </InputGroupAddon>
-          <InputGroupInput size="lg" placeholder="example.com" />
-        </InputGroup>
-      </div>
     </div>
 
     <!-- Multiple Addons -->
@@ -116,6 +91,74 @@ import {
           <InputGroupInput placeholder="Input with bottom label" />
           <InputGroupAddon align="block-end">
             <InputGroupText>Bottom Label</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+    </div>
+
+    <!-- InputGroupText Examples -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">Text Addons</p>
+      <div class="space-y-4">
+        <InputGroup>
+          <InputGroupAddon>
+            <InputGroupText>$</InputGroupText>
+          </InputGroupAddon>
+          <InputGroupInput placeholder="0.00" />
+          <InputGroupAddon align="inline-end">
+            <InputGroupText>USD</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupAddon>
+            <InputGroupText>https://</InputGroupText>
+          </InputGroupAddon>
+          <InputGroupInput placeholder="example.com" class="pl-0.5!" />
+          <InputGroupAddon align="inline-end">
+            <InputGroupText>.com</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupInput placeholder="Enter your username" />
+          <InputGroupAddon align="inline-end">
+            <InputGroupText>@company.com</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupTextarea placeholder="Enter your message" />
+          <InputGroupAddon align="block-end">
+            <InputGroupText class="text-xs">120 characters left</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+    </div>
+
+    <!-- Spinner Examples -->
+    <div class="space-y-2">
+      <p class="text-sm font-medium">With Spinner</p>
+      <div class="space-y-4">
+        <InputGroup>
+          <InputGroupInput placeholder="Searching..." />
+          <InputGroupAddon align="inline-end">
+            <Spinner />
+          </InputGroupAddon>
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupInput placeholder="Processing..." />
+          <InputGroupAddon>
+            <Spinner />
+          </InputGroupAddon>
+        </InputGroup>
+
+        <InputGroup>
+          <InputGroupInput placeholder="Saving changes..." />
+          <InputGroupAddon align="inline-end">
+            <InputGroupText>Saving...</InputGroupText>
+            <Spinner />
           </InputGroupAddon>
         </InputGroup>
       </div>

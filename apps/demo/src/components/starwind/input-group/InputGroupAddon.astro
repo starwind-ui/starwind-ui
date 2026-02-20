@@ -35,17 +35,42 @@ const { align, class: className, ...rest } = Astro.props;
 </div>
 
 <script>
-  const handleAddonClick = (e: MouseEvent) => {
-    const addon = (e.target as HTMLElement).closest('[data-slot="input-group-addon"]');
-    if (addon && !(e.target as HTMLElement).closest("button")) {
-      const input = addon.parentElement?.querySelector("input, textarea") as
+  class InputGroupAddonHandler {
+    private addon: HTMLElement;
+
+    constructor(addon: HTMLElement) {
+      this.addon = addon;
+      this.setupEventListeners();
+    }
+
+    private setupEventListeners(): void {
+      this.addon.addEventListener("click", (e) => this.handleClick(e));
+    }
+
+    private handleClick(e: MouseEvent): void {
+      if ((e.target as HTMLElement).closest("button")) return;
+
+      const input = this.addon.parentElement?.querySelector("input, textarea") as
         | HTMLInputElement
         | HTMLTextAreaElement;
+
       if (input) {
         input.focus();
       }
     }
+  }
+
+  const addonInstances = new WeakMap<HTMLElement, InputGroupAddonHandler>();
+
+  const setupAddons = () => {
+    document.querySelectorAll<HTMLElement>('[data-slot="input-group-addon"]').forEach((addon) => {
+      if (!addonInstances.has(addon)) {
+        addonInstances.set(addon, new InputGroupAddonHandler(addon));
+      }
+    });
   };
 
-  document.addEventListener("click", handleAddonClick);
+  setupAddons();
+  document.addEventListener("astro:after-swap", setupAddons);
+  document.addEventListener("starwind:init", setupAddons);
 </script>

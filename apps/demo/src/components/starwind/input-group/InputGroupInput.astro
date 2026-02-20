@@ -1,28 +1,16 @@
 ---
-import type { HTMLAttributes } from "astro/types";
-import { tv, type VariantProps } from "tailwind-variants";
+import type { ComponentProps } from "astro/types";
+import { tv } from "tailwind-variants";
 
-type Props = HTMLAttributes<"input"> & VariantProps<typeof inputGroupInput>;
+import { Input } from "@/components/starwind/input";
+
+type Props = ComponentProps<typeof Input>;
 
 export const inputGroupInput = tv({
-  base: "placeholder:text-muted-foreground h-full flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 outline-none focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent",
-  variants: {
-    size: {
-      sm: "px-2 text-sm",
-      md: "px-3 text-base",
-      lg: "px-4 text-lg",
-    },
-  },
-  defaultVariants: {
-    size: "md",
-  },
+  base: "h-full flex-1 rounded-none border-0 shadow-none ring-0 outline-none focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent",
 });
 
-const { size, class: className, ...rest } = Astro.props;
+const { class: className, ...rest } = Astro.props;
 ---
 
-<input
-  data-slot="input-group-control"
-  class={inputGroupInput({ size, class: className })}
-  {...rest}
-/>
+<Input class={inputGroupInput({ class: className })} {...rest} data-slot="input-group-control" />

@@ -1,9 +1,17 @@
-import InputGroup from "./InputGroup.astro";
-import InputGroupAddon from "./InputGroupAddon.astro";
-import InputGroupButton from "./InputGroupButton.astro";
-import InputGroupInput from "./InputGroupInput.astro";
+import InputGroup, { inputGroup } from "./InputGroup.astro";
+import InputGroupAddon, { inputGroupAddon } from "./InputGroupAddon.astro";
+import InputGroupButton, { inputGroupButton } from "./InputGroupButton.astro";
+import InputGroupInput, { inputGroupInput } from "./InputGroupInput.astro";
 import InputGroupText from "./InputGroupText.astro";
-import InputGroupTextarea from "./InputGroupTextarea.astro";
+import InputGroupTextarea, { inputGroupTextarea } from "./InputGroupTextarea.astro";
+
+const InputGroupVariants = {
+  inputGroup,
+  inputGroupAddon,
+  inputGroupButton,
+  inputGroupInput,
+  inputGroupTextarea,
+};
 
 export {
   InputGroup,
@@ -12,6 +20,7 @@ export {
   InputGroupInput,
   InputGroupText,
   InputGroupTextarea,
+  InputGroupVariants,
 };
 
 export default {
