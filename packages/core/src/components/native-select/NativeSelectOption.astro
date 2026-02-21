@@ -6,6 +6,10 @@ type Props = HTMLAttributes<"option">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<option class:list={["starwind-native-select-option", className]} {...rest} data-slot="native-select-option">
+<option
+  class:list={["starwind-native-select-option", className]}
+  {...rest}
+  data-slot="native-select-option"
+>
   <slot />
 </option>
