@@ -44,8 +44,11 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
     private lastOpenSource: "keyboard" | "mouse" = "keyboard";
     private lastCloseSource: "keyboard" | "mouse" = "keyboard";
     private isSubmenu: boolean;
+    private rootDropdown: HTMLElement;
     private contentPlaceholder: Comment | null = null;
     private cleanupAutoUpdate: (() => void) | null = null;
+    private openChildCount: number = 0;
+    private parentHandler: DropdownHandler | null = null;
 
     constructor(dropdown: HTMLElement, dropdownIdx: number) {
       this.dropdown = dropdown;
@@ -62,6 +65,15 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       }
 
       this.content = this.findOwnElement('[data-slot="dropdown-content"]');
+
+      // Resolve root dropdown before any portaling (DOM is in original state)
+      this.rootDropdown =
+        (this.dropdown.closest(".starwind-dropdown") as HTMLElement) || this.dropdown;
+
+      // Store handler reference on content element for child→parent lookups
+      if (this.content) {
+        (this.content as any).__dropdownHandler = this;
+      }
 
       if (!this.trigger || !this.content) return;
 
@@ -128,7 +140,8 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
           e.preventDefault();
           e.stopPropagation();
           this.lastCloseSource = "keyboard";
-          this.closeDropdown();
+          // Close all menus in the group
+          this.rootDropdown.dispatchEvent(new CustomEvent("starwind-dropdown:close-all"));
         } else if (this.isOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
           e.preventDefault();
           e.stopPropagation();
@@ -152,22 +165,14 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         }
       });
 
-      // Listen for close-all event
-      this.dropdown.addEventListener("starwind-dropdown:close-all", () => {
+      // Listen for close-all event (routed through rootDropdown to work across portaled content)
+      this.rootDropdown.addEventListener("starwind-dropdown:close-all", () => {
         this.closeDropdown();
       });
 
-      // Listen for cancel-close event (used by portaled sub-content hover)
-      this.dropdown.addEventListener("starwind-dropdown:cancel-close", () => {
+      // Listen for cancel-close event (routed through rootDropdown)
+      this.rootDropdown.addEventListener("starwind-dropdown:cancel-close", () => {
         this.clearCloseTimer();
-      });
-
-      // Listen for start-close event (used by portaled sub-content hover)
-      this.dropdown.addEventListener("starwind-dropdown:start-close", () => {
-        if (this.isOpen && this.openOnHover) {
-          this.lastCloseSource = "mouse";
-          this.closeDropdownDelayed();
-        }
       });
 
       // Close dropdown when clicking outside for mouse
@@ -198,8 +203,8 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         if (e.key === "Escape") {
           e.preventDefault();
           e.stopPropagation();
-          this.closeDropdown();
-          this.trigger?.focus();
+          // Close all menus in the group
+          this.rootDropdown.dispatchEvent(new CustomEvent("starwind-dropdown:close-all"));
         } else if (this.isOpen) {
           this.handleMenuKeydown(e);
         }
@@ -215,10 +220,8 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
           // Close the dropdown after item selection
           this.closeDropdown();
 
-          // Dispatch close-all to parents
-          this.dropdown.dispatchEvent(
-            new CustomEvent("starwind-dropdown:close-all", { bubbles: true }),
-          );
+          // Dispatch close-all through root to close all menus in the group
+          this.rootDropdown.dispatchEvent(new CustomEvent("starwind-dropdown:close-all"));
         }
       });
 
@@ -253,6 +256,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
         this.dropdown.addEventListener("pointerleave", (e) => {
           if (e.pointerType !== "mouse") return;
+          if (this.openChildCount > 0) return;
           if (this.isOpen) {
             this.lastCloseSource = "mouse";
             this.closeDropdownDelayed();
@@ -462,22 +466,29 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       window.addEventListener("scroll", updatePosition, true);
       window.addEventListener("resize", updatePosition);
 
+      // Find and link to parent handler for child-tracking
+      const parentContent = this.trigger.closest('[data-slot="dropdown-content"]');
+      if (parentContent) {
+        this.parentHandler = (parentContent as any).__dropdownHandler || null;
+        if (this.parentHandler) {
+          this.parentHandler.openChildCount++;
+        }
+      }
+
       // Handle hover interactions for portaled content
       const onPointerEnter = (e: PointerEvent) => {
         if (e.pointerType !== "mouse") return;
         this.clearCloseTimer();
-        this.dropdown.dispatchEvent(
-          new CustomEvent("starwind-dropdown:cancel-close", { bubbles: true }),
-        );
+        // Cancel close timers for all handlers in the group (parents included)
+        this.rootDropdown.dispatchEvent(new CustomEvent("starwind-dropdown:cancel-close"));
       };
 
       const onPointerLeave = (e: PointerEvent) => {
         if (e.pointerType !== "mouse") return;
+        // Don't close if a child submenu is still open
+        if (this.openChildCount > 0) return;
         this.lastCloseSource = "mouse";
         this.closeDropdownDelayed();
-        this.dropdown.dispatchEvent(
-          new CustomEvent("starwind-dropdown:start-close", { bubbles: true }),
-        );
       };
 
       this.content.addEventListener("pointerenter", onPointerEnter);
@@ -493,6 +504,12 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
     private unportalContent() {
       if (!this.content || !this.contentPlaceholder) return;
+
+      // Decrement parent's open child count
+      if (this.parentHandler) {
+        this.parentHandler.openChildCount--;
+        this.parentHandler = null;
+      }
 
       // Clean up auto-update and hover listeners
       this.cleanupAutoUpdate?.();
