@@ -11,6 +11,6 @@ export const tableHead = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<th data-slot="table-head" class={tableHead({ class: className })} {...rest} role="columnheader">
+<th role="columnheader" class={tableHead({ class: className })} {...rest} data-slot="table-head">
   <slot />
 </th>

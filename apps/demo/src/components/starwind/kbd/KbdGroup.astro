@@ -11,6 +11,6 @@ export const kbdGroup = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<kbd class={kbdGroup({ class: className })} data-slot="kbd-group" {...rest}>
+<kbd class={kbdGroup({ class: className })} {...rest} data-slot="kbd-group">
   <slot />
 </kbd>

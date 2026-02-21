@@ -15,9 +15,9 @@ const { class: className, ...rest } = Astro.props;
 <div
   aria-hidden="true"
   class={inputOtpSeparator({ class: className })}
-  data-slot="input-otp-separator"
   role="separator"
   {...rest}
+  data-slot="input-otp-separator"
 >
   <slot name="icon">
     <MinusIcon class="size-6" />

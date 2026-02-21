@@ -1,0 +1,79 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv, type VariantProps } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & VariantProps<typeof inputGroupAddon>;
+
+export const inputGroupAddon = tv({
+  base: [
+    "text-muted-foreground flex cursor-text items-center justify-center gap-2 text-sm font-medium select-none",
+    "group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-xs [&>svg:not([class*='size-'])]:size-4",
+  ],
+  variants: {
+    align: {
+      "inline-start": "order-first pl-2.5 has-[>button]:ml-[-0.3rem]",
+      "inline-end": "order-last pr-2.5 has-[>button]:mr-[-0.3rem]",
+      "block-start":
+        "order-first w-full justify-start px-3 pt-2 group-has-[>input]/input-group:pt-2.5 [.border-b]:pb-2.5",
+      "block-end":
+        "order-last w-full justify-start px-3 pb-2 group-has-[>input]/input-group:pb-2.5 [.border-t]:pt-2.5",
+    },
+  },
+  defaultVariants: {
+    align: "inline-start",
+  },
+});
+
+const { align, class: className, ...rest } = Astro.props;
+---
+
+<div
+  role="group"
+  data-align={align}
+  class={inputGroupAddon({ align, class: className })}
+  {...rest}
+  data-slot="input-group-addon"
+>
+  <slot />
+</div>
+
+<script>
+  class InputGroupAddonHandler {
+    private addon: HTMLElement;
+
+    constructor(addon: HTMLElement) {
+      this.addon = addon;
+      this.setupEventListeners();
+    }
+
+    private setupEventListeners(): void {
+      this.addon.addEventListener("click", (e) => this.handleClick(e));
+    }
+
+    private handleClick(e: MouseEvent): void {
+      if ((e.target as HTMLElement).closest("button")) return;
+
+      const input = this.addon.parentElement?.querySelector("input, textarea") as
+        | HTMLInputElement
+        | HTMLTextAreaElement;
+
+      if (input) {
+        input.focus();
+      }
+    }
+  }
+
+  const addonInstances = new WeakMap<HTMLElement, InputGroupAddonHandler>();
+
+  const setupAddons = () => {
+    document.querySelectorAll<HTMLElement>('[data-slot="input-group-addon"]').forEach((addon) => {
+      if (!addonInstances.has(addon)) {
+        addonInstances.set(addon, new InputGroupAddonHandler(addon));
+      }
+    });
+  };
+
+  setupAddons();
+  document.addEventListener("astro:after-swap", setupAddons);
+  document.addEventListener("starwind:init", setupAddons);
+</script>

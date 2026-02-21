@@ -18,10 +18,10 @@ const { class: className, size = "icon-sm", variant = "ghost", ...rest } = Astro
   variant={variant}
   size={size}
   class={sidebarTrigger({ class: className })}
-  data-slot="sidebar-trigger"
   data-sidebar="trigger"
   aria-label="Toggle Sidebar"
   {...rest}
+  data-slot="sidebar-trigger"
 >
   <slot name="icon">
     <PanelLeft />

@@ -5,12 +5,12 @@ import { tv } from "tailwind-variants";
 type Props = HTMLAttributes<"ol">;
 
 export const breadcrumbList = tv({
-  base: "text-muted-foreground flex flex-wrap items-center gap-1.5 break-words sm:gap-2",
+  base: "text-muted-foreground flex flex-wrap items-center gap-1.5 wrap-break-word sm:gap-2",
 });
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<ol class={breadcrumbList({ class: className })} data-slot="breadcrumb-list" {...rest}>
+<ol class={breadcrumbList({ class: className })} {...rest} data-slot="breadcrumb-list">
   <slot />
 </ol>

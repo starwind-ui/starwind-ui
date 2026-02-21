@@ -12,7 +12,7 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 <div data-slot="table-container" class="relative w-full overflow-x-auto">
-  <table data-slot="table" class={table({ class: className })} {...rest} role="table">
+  <table role="table" class={table({ class: className })} {...rest} data-slot="table">
     <slot />
   </table>
 </div>

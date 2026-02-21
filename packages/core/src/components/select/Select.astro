@@ -26,8 +26,8 @@ const { class: className, name, defaultValue, required, ...rest } = Astro.props;
   data-name={name}
   data-value={defaultValue}
   data-required={required}
-  data-slot="select"
   {...rest}
+  data-slot="select"
 >
   <slot />
 </div>

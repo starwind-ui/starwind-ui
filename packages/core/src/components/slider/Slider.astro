@@ -101,7 +101,6 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
 
 <div
   class={root({ class: className })}
-  data-slot="slider"
   data-orientation={orientation}
   data-disabled={disabled ? "" : undefined}
   role="group"
@@ -111,6 +110,7 @@ const rangeEnd = isRange ? getPercentage(Math.max(...values)) : getPercentage(va
   data-step={step}
   data-large-step={largeStep}
   {...rest}
+  data-slot="slider"
 >
   <div class={control()} data-slot="slider-control" data-orientation={orientation}>
     <div class={track()} data-slot="slider-track" data-orientation={orientation}>

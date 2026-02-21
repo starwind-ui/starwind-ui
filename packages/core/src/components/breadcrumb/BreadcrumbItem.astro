@@ -9,6 +9,6 @@ export const breadcrumbItem = tv({ base: "inline-flex items-center gap-1.5" });
 const { class: className, ...rest } = Astro.props;
 ---
 
-<li class={breadcrumbItem({ class: className })} data-slot="breadcrumb-item" {...rest}>
+<li class={breadcrumbItem({ class: className })} {...rest} data-slot="breadcrumb-item">
   <slot />
 </li>

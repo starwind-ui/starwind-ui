@@ -11,6 +11,6 @@ export const tableCell = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<td data-slot="table-cell" class={tableCell({ class: className })} {...rest}>
+<td class={tableCell({ class: className })} {...rest} data-slot="table-cell">
   <slot />
 </td>

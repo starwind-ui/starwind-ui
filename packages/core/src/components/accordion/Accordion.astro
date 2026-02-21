@@ -22,8 +22,8 @@ const { type = "single", defaultValue, class: className, ...rest } = Astro.props
   class={accordion({ class: className })}
   data-type={type}
   data-value={defaultValue}
-  data-slot="accordion"
   {...rest}
+  data-slot="accordion"
 >
   <slot />
 </div>

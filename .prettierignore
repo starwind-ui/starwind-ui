@@ -25,3 +25,9 @@ netlify
 # pnpm files
 pnpm-lock.yaml
 pnpm-workspace.yaml
+
+# agent items
+.agent
+.windsurf
+.agents
+artifacts/superpowers

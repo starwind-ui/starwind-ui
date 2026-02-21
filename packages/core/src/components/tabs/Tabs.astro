@@ -16,8 +16,8 @@ const { defaultValue, syncKey, class: className, ...rest } = Astro.props;
   class={tabs({ class: className })}
   data-default-value={defaultValue}
   data-sync-key={syncKey}
-  data-slot="tabs"
   {...rest}
+  data-slot="tabs"
 >
   <slot />
 </div>

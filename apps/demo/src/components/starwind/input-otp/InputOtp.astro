@@ -51,9 +51,9 @@ const inputMode = isNumericOnly ? "numeric" : "text";
   data-value={value || defaultValue || ""}
   data-disabled={disabled}
   data-pattern={patternStr}
-  data-slot="input-otp"
   tabindex={disabled ? "-1" : "0"}
   {...rest}
+  data-slot="input-otp"
 >
   <input
     autocomplete="one-time-code"

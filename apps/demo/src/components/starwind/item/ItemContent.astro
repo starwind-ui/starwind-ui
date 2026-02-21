@@ -11,6 +11,6 @@ export const itemContent = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={itemContent({ class: className })} data-slot="item-content" {...rest}>
+<div class={itemContent({ class: className })} {...rest} data-slot="item-content">
   <slot />
 </div>

@@ -26,6 +26,6 @@ const inferredRole =
   rest.role ?? (variant === "error" || variant === "warning" ? "alert" : "status");
 ---
 
-<div class={alert({ variant, class: className })} data-slot="alert" role={inferredRole} {...rest}>
+<div class={alert({ variant, class: className })} role={inferredRole} {...rest} data-slot="alert">
   <slot />
 </div>

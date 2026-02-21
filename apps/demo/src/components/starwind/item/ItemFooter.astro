@@ -11,6 +11,6 @@ export const itemFooter = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={itemFooter({ class: className })} data-slot="item-footer" {...rest}>
+<div class={itemFooter({ class: className })} {...rest} data-slot="item-footer">
   <slot />
 </div>

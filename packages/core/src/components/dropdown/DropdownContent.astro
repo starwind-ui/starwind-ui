@@ -7,7 +7,7 @@ type Props = HTMLAttributes<"div"> & {
    * Side of the dropdown
    * @default bottom
    */
-  side?: "top" | "bottom";
+  side?: "top" | "bottom" | "left" | "right";
   /**
    * Alignment of the dropdown
    * @default start
@@ -37,13 +37,47 @@ export const dropdownContent = tv({
     side: {
       bottom: "slide-in-from-top-2 slide-out-to-top-2 top-full",
       top: "slide-in-from-bottom-2 slide-out-to-bottom-2 bottom-full",
+      right: "slide-in-from-left-2 slide-out-to-left-2 top-0 left-full",
+      left: "slide-in-from-right-2 slide-out-to-right-2 top-0 right-full",
     },
     align: {
-      start: "slide-in-from-left-1 slide-out-to-left-1 left-0",
-      center: "left-1/2 -translate-x-1/2",
-      end: "slide-in-from-right-1 slide-out-to-right-1 right-0",
+      start: "",
+      center: "",
+      end: "",
     },
   },
+  compoundVariants: [
+    {
+      side: ["top", "bottom"],
+      align: "start",
+      class: "slide-in-from-left-1 slide-out-to-left-1 left-0",
+    },
+    {
+      side: ["top", "bottom"],
+      align: "center",
+      class: "left-1/2 -translate-x-1/2",
+    },
+    {
+      side: ["top", "bottom"],
+      align: "end",
+      class: "slide-in-from-right-1 slide-out-to-right-1 right-0",
+    },
+    {
+      side: ["left", "right"],
+      align: "start",
+      class: "top-0",
+    },
+    {
+      side: ["left", "right"],
+      align: "center",
+      class: "top-1/2 -translate-y-1/2",
+    },
+    {
+      side: ["left", "right"],
+      align: "end",
+      class: "bottom-0",
+    },
+  ],
   defaultVariants: {
     side: "bottom",
     align: "start",
@@ -66,7 +100,6 @@ const {
   data-side={side}
   data-align={align}
   data-state="closed"
-  data-slot="dropdown-content"
   tabindex="-1"
   aria-orientation="vertical"
   style={{
@@ -74,8 +107,11 @@ const {
     animationDuration: `${animationDuration}ms`,
     marginTop: side === "bottom" ? `${sideOffset}px` : undefined,
     marginBottom: side === "top" ? `${sideOffset}px` : undefined,
+    marginLeft: side === "right" ? `${sideOffset}px` : undefined,
+    marginRight: side === "left" ? `${sideOffset}px` : undefined,
   }}
   {...rest}
+  data-slot="dropdown-content"
 >
   <slot />
 </div>

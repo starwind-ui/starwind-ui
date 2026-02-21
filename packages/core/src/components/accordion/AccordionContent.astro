@@ -24,8 +24,8 @@ const { class: className, ...rest } = Astro.props;
   class={accordionContent({ class: className })}
   data-state="closed"
   style="animation: none;"
-  data-slot="accordion-content"
   {...rest}
+  data-slot="accordion-content"
 >
   <div class="pt-0 pb-4">
     <slot />

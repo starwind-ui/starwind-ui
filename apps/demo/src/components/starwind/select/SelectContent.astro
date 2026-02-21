@@ -77,7 +77,6 @@ const {
   data-side={side}
   data-align={align}
   data-state="closed"
-  data-slot="select-content"
   tabindex="-1"
   style={{
     // hide the content initially. Script will remove this
@@ -87,6 +86,7 @@ const {
     marginBottom: side === "top" ? `${sideOffset}px` : undefined,
   }}
   {...rest}
+  data-slot="select-content"
 >
   <div class={selectContentInner()}>
     <slot />

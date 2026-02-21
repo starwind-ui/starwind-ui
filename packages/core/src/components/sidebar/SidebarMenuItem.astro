@@ -13,9 +13,9 @@ const { class: className, ...rest } = Astro.props;
 
 <li
   class={sidebarMenuItem({ class: className })}
-  data-slot="sidebar-menu-item"
   data-sidebar="menu-item"
   {...rest}
+  data-slot="sidebar-menu-item"
 >
   <slot />
 </li>

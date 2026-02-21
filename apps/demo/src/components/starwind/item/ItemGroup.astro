@@ -11,6 +11,6 @@ export const itemGroup = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div role="list" class={itemGroup({ class: className })} data-slot="item-group" {...rest}>
+<div role="list" class={itemGroup({ class: className })} {...rest} data-slot="item-group">
   <slot />
 </div>

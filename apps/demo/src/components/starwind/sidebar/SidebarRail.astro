@@ -28,11 +28,11 @@ const { class: className, ...rest } = Astro.props;
 <button
   type="button"
   class={sidebarRail({ class: className })}
-  data-slot="sidebar-rail"
   data-sidebar="rail"
   aria-label="Toggle Sidebar"
   tabindex="-1"
-  {...rest}></button>
+  {...rest}
+  data-slot="sidebar-rail"></button>
 
 <script>
   class SidebarRailHandler {

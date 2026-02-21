@@ -11,6 +11,6 @@ export const cardFooter = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={cardFooter({ class: className })} data-slot="card-footer" {...rest}>
+<div class={cardFooter({ class: className })} {...rest} data-slot="card-footer">
   <slot />
 </div>
