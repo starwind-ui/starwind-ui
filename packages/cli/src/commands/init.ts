@@ -18,6 +18,7 @@ import {
 } from "@/utils/package-manager.js";
 import { hasStarwindProRegistry, setupShadcnProConfig } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
+import { setupSnippets } from "@/utils/snippets.js";
 import { setupTsConfig } from "@/utils/tsconfig.js";
 
 export async function init(
@@ -161,6 +162,18 @@ export async function init(
         await ensureDirectory(cssFileDir);
         await sleep(250);
         return "Created project structure";
+      },
+    });
+
+    // ================================================================
+    //                     Prepare VS Code snippets
+    // ================================================================
+    configTasks.push({
+      title: "Setting up VS Code snippets",
+      task: async () => {
+        await setupSnippets();
+        await sleep(250);
+        return "VS Code snippets configured";
       },
     });
 

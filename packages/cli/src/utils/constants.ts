@@ -12,6 +12,8 @@ export const PATHS = {
   LOCAL_CONFIG_FILE: "starwind.config.json",
   LOCAL_STYLES_DIR: "src/styles",
   LOCAL_COMPONENTS_DIR: "src/components",
+  VSCODE_DIR: ".vscode",
+  VSCODE_SNIPPETS_FILE: ".vscode/starwind.code-snippets",
 } as const;
 
 /**
