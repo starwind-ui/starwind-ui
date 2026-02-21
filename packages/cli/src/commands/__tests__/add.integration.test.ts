@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { add } from "../add.js";
 
@@ -98,7 +98,9 @@ describe.sequential("add command integration", () => {
   it("updates starwind.config.json with installed component using real config utils", async () => {
     await add(["button"], { yes: true });
 
-    const updatedConfig = JSON.parse(await readFile(join(tempDir, "starwind.config.json"), "utf-8"));
+    const updatedConfig = JSON.parse(
+      await readFile(join(tempDir, "starwind.config.json"), "utf-8"),
+    );
 
     expect(updatedConfig.components).toEqual([{ name: "button", version: "2.1.0" }]);
   });
@@ -107,7 +109,9 @@ describe.sequential("add command integration", () => {
     await add(["button"], { yes: true });
     await add(["button"], { yes: true });
 
-    const updatedConfig = JSON.parse(await readFile(join(tempDir, "starwind.config.json"), "utf-8"));
+    const updatedConfig = JSON.parse(
+      await readFile(join(tempDir, "starwind.config.json"), "utf-8"),
+    );
 
     expect(updatedConfig.components).toEqual([{ name: "button", version: "2.1.0" }]);
   });
