@@ -182,6 +182,7 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
     private init() {
       this.updateState();
       this.provider.addEventListener("sidebar:change", this.boundUpdateState);
+      this.provider.addEventListener("sidebar:mobile-change", this.boundUpdateState);
     }
 
     private updateState() {
@@ -192,6 +193,22 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
         this.sidebar.setAttribute("data-collapsible", this.collapsibleMode);
       } else {
         this.sidebar.setAttribute("data-collapsible", "");
+      }
+
+      this.syncSidebarMenuTooltips();
+    }
+
+    private syncSidebarMenuTooltips() {
+      const hasEnabledSidebar = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          '[data-slot="sidebar"][data-collapsible-mode="icon"][data-state="collapsed"]',
+        ),
+      ).some((sidebar) => getComputedStyle(sidebar).display !== "none");
+
+      if (hasEnabledSidebar) {
+        document.documentElement.setAttribute("data-starwind-sidebar-tooltips", "enabled");
+      } else {
+        document.documentElement.removeAttribute("data-starwind-sidebar-tooltips");
       }
     }
   }

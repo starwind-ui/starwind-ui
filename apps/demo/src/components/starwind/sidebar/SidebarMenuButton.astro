@@ -79,7 +79,7 @@ const buttonDataAttrs = {
 
 {
   tooltip ? (
-    <Tooltip openDelay={0} closeDelay={0} class="w-full">
+    <Tooltip openDelay={0} closeDelay={0} class="starwind-sidebar-menu-button-tooltip w-full">
       <TooltipTrigger>
         {asChild ? (
           <div class={buttonClasses} {...buttonDataAttrs} data-as-child>
@@ -111,19 +111,7 @@ const buttonDataAttrs = {
 }
 
 <style is:global>
-  /* Hide tooltip when sidebar is expanded */
-  [data-slot="sidebar"][data-state="expanded"] .starwind-sidebar-tooltip-content,
-  [data-slot="sidebar"]:not([data-collapsible="icon"]) .starwind-sidebar-tooltip-content {
+  :root:not([data-starwind-sidebar-tooltips="enabled"]) .starwind-sidebar-tooltip-content {
     display: none !important;
-  }
-
-  /* Hide tooltips in mobile sheet */
-  .starwind-sheet .starwind-sidebar-tooltip-content {
-    display: none !important;
-  }
-
-  /* Only show tooltip trigger wrapper styles when collapsed */
-  .starwind-sidebar-menu-button-tooltip-trigger {
-    display: contents;
   }
 </style>

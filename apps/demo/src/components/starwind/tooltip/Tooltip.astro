@@ -134,7 +134,7 @@ const {
         this.tooltip.setAttribute("data-state", "open");
         this.trigger.setAttribute("data-state", "open");
         this.content.setAttribute("data-state", "open");
-        this.content.style.display = "block";
+        this.content.classList.remove("hidden");
         this.portalContent();
         this.positionTooltip();
         requestAnimationFrame(() => this.positionTooltip());
@@ -142,7 +142,7 @@ const {
         this.tooltip.setAttribute("data-state", "closed");
         this.trigger.setAttribute("data-state", "closed");
         this.content.setAttribute("data-state", "closed");
-        this.content.style.display = "none";
+        this.content.classList.add("hidden");
       }
     }
 
@@ -256,7 +256,7 @@ const {
       this.tooltip.setAttribute("data-state", "open");
       this.trigger.setAttribute("data-state", "open");
       this.content.setAttribute("data-state", "open");
-      this.content.style.display = "block";
+      this.content.classList.remove("hidden");
       this.portalContent();
       this.positionTooltip();
       requestAnimationFrame(() => this.positionTooltip());
@@ -264,6 +264,7 @@ const {
 
     private show(immediate: boolean = false) {
       if (!this.content || !this.trigger) return;
+
       this.clearCloseTimer();
       this.clearHideAnimationTimer();
       this.clearOpenTimer();
@@ -324,7 +325,7 @@ const {
       this.hideAnimationTimerRef = window.setTimeout(() => {
         if (this.abortController.signal.aborted) return;
         if (!this.content) return;
-        this.content.style.display = "none";
+        this.content.classList.add("hidden");
         this.unportalContent();
       }, this.animationDuration);
     }

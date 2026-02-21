@@ -78,7 +78,7 @@
         "@starwind-ui/core/separator@^1.0.0",
         "@starwind-ui/core/sheet@^1.1.1",
         "@starwind-ui/core/skeleton@^1.2.0",
-        "@starwind-ui/core/tooltip@^1.4.0"
+        "@starwind-ui/core/tooltip@^1.5.0"
       ]
     },
     { "name": "skeleton", "type": "component", "version": "1.2.1", "dependencies": [] },
@@ -96,7 +96,7 @@
     },
     { "name": "toast", "type": "component", "version": "1.0.1", "dependencies": [] },
     { "name": "toggle", "type": "component", "version": "1.0.2", "dependencies": [] },
-    { "name": "tooltip", "type": "component", "version": "1.4.1", "dependencies": [] },
+    { "name": "tooltip", "type": "component", "version": "1.5.0", "dependencies": [] },
     { "name": "video", "type": "component", "version": "1.0.1", "dependencies": [] }
   ]
 }
