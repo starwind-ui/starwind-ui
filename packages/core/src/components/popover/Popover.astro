@@ -4,6 +4,16 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div"> & {
   /**
+   * When true, the popover will open on hover in addition to click
+   * @default false
+   */
+  openOnHover?: boolean;
+  /**
+   * Time in milliseconds to wait before closing when hover-open is enabled
+   * @default 200
+   */
+  closeDelay?: number;
+  /**
    * Whether the popover should be open when first rendered
    * @default false
    */
@@ -14,11 +24,19 @@ type Props = HTMLAttributes<"div"> & {
 
 export const popover = tv({ base: "starwind-popover" });
 
-const { class: className, defaultOpen = false, ...rest } = Astro.props;
+const {
+  class: className,
+  openOnHover = false,
+  closeDelay = 200,
+  defaultOpen = false,
+  ...rest
+} = Astro.props;
 ---
 
 <div
   class={popover({ class: className })}
+  data-open-on-hover={openOnHover ? "true" : undefined}
+  data-close-delay={closeDelay}
   data-state={defaultOpen ? "open" : "closed"}
   data-default-open={defaultOpen ? "true" : undefined}
   {...rest}
@@ -28,8 +46,47 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
 </div>
 
 <script>
-  type PopoverSide = "top" | "bottom" | "left" | "right";
-  type PopoverAlign = "start" | "center" | "end";
+  import {
+    getTransformOrigin,
+    resolvePlacement,
+    type FloatingAlign,
+    type FloatingSide,
+  } from "@/lib/utils/starwind/positioning";
+
+  let globalPointerClientX: number | null = null;
+  let globalPointerClientY: number | null = null;
+  let globalPointerTrackingRefCount = 0;
+  let isGlobalPointerTrackingAttached = false;
+
+  const handleGlobalPointerMove = (e: PointerEvent) => {
+    if (e.pointerType !== "mouse") return;
+    globalPointerClientX = e.clientX;
+    globalPointerClientY = e.clientY;
+  };
+
+  const registerGlobalPointerTracking = () => {
+    globalPointerTrackingRefCount += 1;
+
+    if (isGlobalPointerTrackingAttached) {
+      return;
+    }
+
+    document.addEventListener("pointermove", handleGlobalPointerMove);
+    isGlobalPointerTrackingAttached = true;
+  };
+
+  const unregisterGlobalPointerTracking = () => {
+    globalPointerTrackingRefCount = Math.max(0, globalPointerTrackingRefCount - 1);
+
+    if (globalPointerTrackingRefCount > 0 || !isGlobalPointerTrackingAttached) {
+      return;
+    }
+
+    document.removeEventListener("pointermove", handleGlobalPointerMove);
+    isGlobalPointerTrackingAttached = false;
+    globalPointerClientX = null;
+    globalPointerClientY = null;
+  };
 
   class PopoverHandler {
     private popover: HTMLElement;
@@ -40,14 +97,20 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
     private isOpen: boolean = false;
     private isClosing: boolean = false;
     private animationDuration = 150;
-    private side: PopoverSide = "bottom";
-    private align: PopoverAlign = "center";
+    private side: FloatingSide = "bottom";
+    private align: FloatingAlign = "center";
     private sideOffset = 4;
     private parentHandler: PopoverHandler | null = null;
     private contentPlaceholder: Comment | null = null;
     private cleanupAutoUpdate: (() => void) | null = null;
     private abortController: AbortController;
     private closeTimeoutRef: number | null = null;
+    private openOnHover = false;
+    private hoverCloseDelay = 200;
+    private hoverCloseTimerRef: number | null = null;
+    private openChildCount = 0;
+    private registeredWithParentAsOpenChild = false;
+    private usesGlobalPointerTracking = false;
 
     constructor(popover: HTMLElement, popoverIdx: number) {
       this.popover = popover;
@@ -61,6 +124,12 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
         (this.content as any).__popoverHandler = this;
       }
 
+      this.openOnHover = this.popover.getAttribute("data-open-on-hover") === "true";
+      const closeDelay = parseInt(this.popover.getAttribute("data-close-delay") || "200");
+      if (Number.isFinite(closeDelay) && closeDelay >= 0) {
+        this.hoverCloseDelay = closeDelay;
+      }
+
       this.parentHandler = this.resolveParentHandler();
 
       // if trigger is set with asChild, use the first child element as trigger button
@@ -69,6 +138,11 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
       }
 
       if (!this.trigger || !this.content) return;
+
+      if (this.openOnHover) {
+        registerGlobalPointerTracking();
+        this.usesGlobalPointerTracking = true;
+      }
 
       const animationDurationString = this.content.style.animationDuration;
       if (animationDurationString.endsWith("ms")) {
@@ -192,6 +266,54 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
         }
       });
 
+      if (this.openOnHover) {
+        this.trigger.addEventListener(
+          "pointerenter",
+          (e) => {
+            if (e.pointerType !== "mouse") return;
+            if (this.isTriggerDisabled()) return;
+
+            if (!this.isOpen) {
+              this.openPopover();
+            } else {
+              this.clearHoverCloseTimersInTree();
+            }
+          },
+          { signal: this.abortController.signal },
+        );
+
+        this.trigger.addEventListener(
+          "pointerleave",
+          (e) => {
+            if (e.pointerType !== "mouse") return;
+            if (this.isOpen) {
+              this.closePopoverDelayed();
+            }
+          },
+          { signal: this.abortController.signal },
+        );
+
+        this.content.addEventListener(
+          "pointerenter",
+          (e) => {
+            if (e.pointerType !== "mouse") return;
+            this.clearHoverCloseTimersInTree();
+          },
+          { signal: this.abortController.signal },
+        );
+
+        this.content.addEventListener(
+          "pointerleave",
+          (e) => {
+            if (e.pointerType !== "mouse") return;
+            if (this.isOpen) {
+              this.closePopoverDelayed();
+            }
+          },
+          { signal: this.abortController.signal },
+        );
+      }
+
       this.popover.addEventListener("starwind-popover:close", ((
         event: CustomEvent<{ focusTrigger?: boolean }>,
       ) => {
@@ -272,6 +394,9 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
       if (this.isOpen || this.isClosing) return;
       if (!this.trigger || !this.content || this.isTriggerDisabled()) return;
 
+      this.clearHoverCloseTimersInTree();
+      this.registerAsOpenChildOnParent();
+
       this.isOpen = true;
       this.popover.setAttribute("data-state", "open");
       this.trigger.setAttribute("aria-expanded", "true");
@@ -286,6 +411,8 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
     private closePopover(options?: { focusTrigger?: boolean }) {
       if (!this.isOpen) return;
       if (!this.trigger || !this.content) return;
+
+      this.clearHoverCloseTimer();
 
       this.closeNestedPopovers();
 
@@ -312,6 +439,7 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
         if (!this.content) return;
         this.unportalContent();
         this.content.style.display = "none";
+        this.unregisterAsOpenChildOnParent();
         this.isClosing = false;
       }, this.animationDuration);
     }
@@ -337,18 +465,116 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
 
       this.abortController.abort();
 
+      if (this.usesGlobalPointerTracking) {
+        unregisterGlobalPointerTracking();
+        this.usesGlobalPointerTracking = false;
+      }
+
+      this.clearHoverCloseTimer();
+
       if (this.closeTimeoutRef !== null) {
         window.clearTimeout(this.closeTimeoutRef);
         this.closeTimeoutRef = null;
       }
 
       this.unportalContent();
+      this.unregisterAsOpenChildOnParent();
       this.isOpen = false;
       this.isClosing = false;
 
       if (this.content) {
         delete (this.content as any).__popoverHandler;
       }
+    }
+
+    private closePopoverDelayed() {
+      if (!this.openOnHover) return;
+
+      this.clearHoverCloseTimer();
+
+      this.hoverCloseTimerRef = window.setTimeout(() => {
+        this.hoverCloseTimerRef = null;
+        if (this.abortController.signal.aborted) return;
+        if (this.openChildCount > 0) return;
+        if (this.isFocusWithinPopoverTree()) return;
+        if (this.isPointerWithinPopoverTree()) return;
+        if (this.isOpen) {
+          this.closePopover();
+        }
+      }, this.hoverCloseDelay);
+    }
+
+    private clearHoverCloseTimer() {
+      if (this.hoverCloseTimerRef !== null) {
+        window.clearTimeout(this.hoverCloseTimerRef);
+        this.hoverCloseTimerRef = null;
+      }
+    }
+
+    private clearHoverCloseTimersInTree() {
+      this.clearHoverCloseTimer();
+
+      let currentHandler = this.parentHandler;
+      while (currentHandler) {
+        currentHandler.clearHoverCloseTimer();
+        currentHandler = currentHandler.parentHandler;
+      }
+    }
+
+    private isFocusWithinPopoverTree(): boolean {
+      const activeElement = document.activeElement;
+      if (!(activeElement instanceof Node)) return false;
+
+      return (
+        this.popover.contains(activeElement) ||
+        this.content?.contains(activeElement) ||
+        this.isTargetInPopoverTree(activeElement)
+      );
+    }
+
+    private isPointerWithinPopoverTree(): boolean {
+      if (this.trigger?.matches(":hover") || this.content?.matches(":hover")) {
+        return true;
+      }
+
+      if (globalPointerClientX === null || globalPointerClientY === null) {
+        return false;
+      }
+
+      const pointerTarget = document.elementFromPoint(globalPointerClientX, globalPointerClientY);
+      if (!(pointerTarget instanceof Node)) {
+        return false;
+      }
+
+      return (
+        this.popover.contains(pointerTarget) ||
+        this.content?.contains(pointerTarget) ||
+        this.isTargetInPopoverTree(pointerTarget)
+      );
+    }
+
+    private registerAsOpenChildOnParent() {
+      if (!this.parentHandler || this.registeredWithParentAsOpenChild) return;
+
+      this.parentHandler.openChildCount++;
+      this.registeredWithParentAsOpenChild = true;
+    }
+
+    private unregisterAsOpenChildOnParent() {
+      if (!this.parentHandler || !this.registeredWithParentAsOpenChild) return;
+
+      this.parentHandler.openChildCount = Math.max(0, this.parentHandler.openChildCount - 1);
+      this.registeredWithParentAsOpenChild = false;
+      this.parentHandler.handleChildPopoverClosed();
+    }
+
+    private handleChildPopoverClosed() {
+      if (!this.openOnHover || !this.isOpen) return;
+      if (this.openChildCount > 0) return;
+      if (this.isFocusWithinPopoverTree()) return;
+      if (this.isPointerWithinPopoverTree()) return;
+
+      this.closePopoverDelayed();
     }
 
     private isTargetInPopoverTree(target: Node): boolean {
@@ -370,30 +596,6 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
       }
 
       return false;
-    }
-
-    private getOppositeSide(side: PopoverSide): PopoverSide {
-      switch (side) {
-        case "top":
-          return "bottom";
-        case "bottom":
-          return "top";
-        case "left":
-          return "right";
-        case "right":
-          return "left";
-      }
-    }
-
-    private getOppositeAlign(align: PopoverAlign): PopoverAlign {
-      switch (align) {
-        case "start":
-          return "end";
-        case "end":
-          return "start";
-        case "center":
-          return "center";
-      }
     }
 
     private portalContent() {
@@ -454,224 +656,27 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
       const viewportHeight = window.innerHeight;
       const viewportPadding = 8;
 
-      const candidates = this.getPlacementCandidates();
-
-      let bestPlacement = candidates[0];
-      let bestPosition = this.clampPositionToViewport(
-        this.getPlacementPosition(candidates[0], triggerRect, contentWidth, contentHeight),
+      const resolvedPlacement = resolvePlacement({
+        side: this.side,
+        align: this.align,
+        sideOffset: this.sideOffset,
+        triggerRect,
         contentWidth,
         contentHeight,
         viewportWidth,
         viewportHeight,
         viewportPadding,
+        avoidCollisions: true,
+      });
+
+      this.content.style.left = `${Math.round(resolvedPlacement.left)}px`;
+      this.content.style.top = `${Math.round(resolvedPlacement.top)}px`;
+      this.content.style.transformOrigin = getTransformOrigin(
+        resolvedPlacement.side,
+        resolvedPlacement.align,
       );
-      let bestScore = Number.POSITIVE_INFINITY;
-
-      for (const placement of candidates) {
-        const preferredPosition = this.getPlacementPosition(
-          placement,
-          triggerRect,
-          contentWidth,
-          contentHeight,
-        );
-        const clampedPosition = this.clampPositionToViewport(
-          preferredPosition,
-          contentWidth,
-          contentHeight,
-          viewportWidth,
-          viewportHeight,
-          viewportPadding,
-        );
-
-        const overflow = this.getOverflowAmount(
-          preferredPosition,
-          contentWidth,
-          contentHeight,
-          viewportWidth,
-          viewportHeight,
-          viewportPadding,
-        );
-
-        const overflowTotal = overflow.left + overflow.right + overflow.top + overflow.bottom;
-        const mainAxisShift = this.getMainAxisShift(
-          placement.side,
-          preferredPosition,
-          clampedPosition,
-        );
-        const crossAxisShift = this.getCrossAxisShift(
-          placement.side,
-          preferredPosition,
-          clampedPosition,
-        );
-
-        const sidePenalty = placement.side === this.side ? 0 : 32;
-        const alignPenalty = placement.align === this.align ? 0 : 8;
-        const score =
-          overflowTotal * 24 + mainAxisShift * 8 + crossAxisShift * 3 + sidePenalty + alignPenalty;
-
-        if (score < bestScore) {
-          bestScore = score;
-          bestPlacement = placement;
-          bestPosition = clampedPosition;
-        }
-      }
-
-      this.content.style.left = `${Math.round(bestPosition.left)}px`;
-      this.content.style.top = `${Math.round(bestPosition.top)}px`;
-      this.content.style.transformOrigin = this.getTransformOrigin(
-        bestPlacement.side,
-        bestPlacement.align,
-      );
-      this.content.setAttribute("data-side", bestPlacement.side);
-      this.content.setAttribute("data-align", bestPlacement.align);
-    }
-
-    private getPlacementCandidates() {
-      const placements: Array<{ side: PopoverSide; align: PopoverAlign }> = [];
-
-      const pushUnique = (side: PopoverSide, align: PopoverAlign) => {
-        if (!placements.some((placement) => placement.side === side && placement.align === align)) {
-          placements.push({ side, align });
-        }
-      };
-
-      const oppositeSide = this.getOppositeSide(this.side);
-      const oppositeAlign = this.getOppositeAlign(this.align);
-
-      pushUnique(this.side, this.align);
-      pushUnique(oppositeSide, this.align);
-      pushUnique(this.side, "center");
-      pushUnique(oppositeSide, "center");
-      pushUnique(this.side, oppositeAlign);
-      pushUnique(oppositeSide, oppositeAlign);
-
-      if (this.side === "top" || this.side === "bottom") {
-        for (const align of ["start", "center", "end"] as const) {
-          pushUnique("right", align);
-          pushUnique("left", align);
-        }
-      } else {
-        for (const align of ["start", "center", "end"] as const) {
-          pushUnique("bottom", align);
-          pushUnique("top", align);
-        }
-      }
-
-      return placements;
-    }
-
-    private getPlacementPosition(
-      placement: { side: PopoverSide; align: PopoverAlign },
-      triggerRect: DOMRect,
-      contentWidth: number,
-      contentHeight: number,
-    ) {
-      let top = 0;
-      let left = 0;
-
-      if (placement.side === "bottom" || placement.side === "top") {
-        top =
-          placement.side === "bottom"
-            ? triggerRect.bottom + this.sideOffset
-            : triggerRect.top - contentHeight - this.sideOffset;
-
-        if (placement.align === "start") {
-          left = triggerRect.left;
-        } else if (placement.align === "end") {
-          left = triggerRect.right - contentWidth;
-        } else {
-          left = triggerRect.left + (triggerRect.width - contentWidth) / 2;
-        }
-      } else {
-        left =
-          placement.side === "right"
-            ? triggerRect.right + this.sideOffset
-            : triggerRect.left - contentWidth - this.sideOffset;
-
-        if (placement.align === "start") {
-          top = triggerRect.top;
-        } else if (placement.align === "end") {
-          top = triggerRect.bottom - contentHeight;
-        } else {
-          top = triggerRect.top + (triggerRect.height - contentHeight) / 2;
-        }
-      }
-
-      return { top, left };
-    }
-
-    private clampPositionToViewport(
-      position: { top: number; left: number },
-      contentWidth: number,
-      contentHeight: number,
-      viewportWidth: number,
-      viewportHeight: number,
-      viewportPadding: number,
-    ) {
-      const maxLeft = Math.max(viewportPadding, viewportWidth - contentWidth - viewportPadding);
-      const maxTop = Math.max(viewportPadding, viewportHeight - contentHeight - viewportPadding);
-
-      return {
-        left: Math.min(Math.max(viewportPadding, position.left), maxLeft),
-        top: Math.min(Math.max(viewportPadding, position.top), maxTop),
-      };
-    }
-
-    private getOverflowAmount(
-      position: { top: number; left: number },
-      contentWidth: number,
-      contentHeight: number,
-      viewportWidth: number,
-      viewportHeight: number,
-      viewportPadding: number,
-    ) {
-      const right = position.left + contentWidth;
-      const bottom = position.top + contentHeight;
-
-      return {
-        left: Math.max(0, viewportPadding - position.left),
-        top: Math.max(0, viewportPadding - position.top),
-        right: Math.max(0, right - (viewportWidth - viewportPadding)),
-        bottom: Math.max(0, bottom - (viewportHeight - viewportPadding)),
-      };
-    }
-
-    private getMainAxisShift(
-      side: PopoverSide,
-      preferredPosition: { top: number; left: number },
-      clampedPosition: { top: number; left: number },
-    ) {
-      if (side === "top" || side === "bottom") {
-        return Math.abs(clampedPosition.top - preferredPosition.top);
-      }
-
-      return Math.abs(clampedPosition.left - preferredPosition.left);
-    }
-
-    private getCrossAxisShift(
-      side: PopoverSide,
-      preferredPosition: { top: number; left: number },
-      clampedPosition: { top: number; left: number },
-    ) {
-      if (side === "top" || side === "bottom") {
-        return Math.abs(clampedPosition.left - preferredPosition.left);
-      }
-
-      return Math.abs(clampedPosition.top - preferredPosition.top);
-    }
-
-    private getTransformOrigin(side: PopoverSide, align: PopoverAlign) {
-      if (side === "top" || side === "bottom") {
-        const vertical = side === "bottom" ? "top" : "bottom";
-        const horizontal = align === "start" ? "left" : align === "end" ? "right" : "center";
-
-        return `${horizontal} ${vertical}`;
-      }
-
-      const horizontal = side === "right" ? "left" : "right";
-      const vertical = align === "start" ? "top" : align === "end" ? "bottom" : "center";
-
-      return `${horizontal} ${vertical}`;
+      this.content.setAttribute("data-side", resolvedPlacement.side);
+      this.content.setAttribute("data-align", resolvedPlacement.align);
     }
   }
 
