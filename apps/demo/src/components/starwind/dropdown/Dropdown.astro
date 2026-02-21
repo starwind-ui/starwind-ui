@@ -70,9 +70,10 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       this.rootDropdown =
         (this.dropdown.closest(".starwind-dropdown") as HTMLElement) || this.dropdown;
 
-      // Store handler reference on content element for child→parent lookups
+      // Store handler reference and root dropdown on content element for lookups
       if (this.content) {
         (this.content as any).__dropdownHandler = this;
+        (this.content as any).__rootDropdown = this.rootDropdown;
       }
 
       if (!this.trigger || !this.content) return;
@@ -182,7 +183,8 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         if (
           this.isOpen &&
           !this.dropdown.contains(e.target as Node) &&
-          !this.content?.contains(e.target as Node)
+          !this.content?.contains(e.target as Node) &&
+          !this.isTargetInGroup(e.target as Node)
         ) {
           if (e.button === 0 && e.ctrlKey === false && e.pointerType === "mouse") {
             this.closeDropdown();
@@ -193,8 +195,10 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       // Handle click outside select content to close for mobile
       document.addEventListener("click", (e) => {
         if (
-          !(this.trigger?.contains(e.target as Node) || this.content?.contains(e.target as Node)) &&
-          this.isOpen
+          this.isOpen &&
+          !this.trigger?.contains(e.target as Node) &&
+          !this.content?.contains(e.target as Node) &&
+          !this.isTargetInGroup(e.target as Node)
         ) {
           this.closeDropdown();
         }
@@ -329,6 +333,13 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
           }
           break;
       }
+    }
+
+    private isTargetInGroup(target: Node): boolean {
+      const el = target instanceof HTMLElement ? target : target.parentElement;
+      if (!el) return false;
+      const contentEl = el.closest('[data-slot="dropdown-content"]');
+      return !!contentEl && (contentEl as any).__rootDropdown === this.rootDropdown;
     }
 
     private updateDropdownItems() {
