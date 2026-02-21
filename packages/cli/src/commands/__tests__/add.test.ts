@@ -1,5 +1,5 @@
 import * as clackPrompts from "@clack/prompts";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as config from "../../utils/config.js";
 import * as fs from "../../utils/fs.js";
@@ -8,6 +8,7 @@ import * as prompts from "../../utils/prompts.js";
 import * as registry from "../../utils/registry.js";
 import * as validate from "../../utils/validate.js";
 import { add } from "../add.js";
+import * as initModule from "../init.js";
 
 // Mock all dependencies
 vi.mock("@clack/prompts");
@@ -17,6 +18,9 @@ vi.mock("../../utils/install.js");
 vi.mock("../../utils/prompts.js");
 vi.mock("../../utils/registry.js");
 vi.mock("../../utils/validate.js");
+vi.mock("../../utils/sleep.js", () => ({
+  sleep: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("../init.js");
 
 const mockIntro = vi.mocked(clackPrompts.intro);
@@ -41,17 +45,58 @@ const mockInstallComponent = vi.mocked(install.installComponent);
 const mockSelectComponents = vi.mocked(prompts.selectComponents);
 const mockGetAllComponents = vi.mocked(registry.getAllComponents);
 const mockIsValidComponent = vi.mocked(validate.isValidComponent);
-
-// Mock process.exit
-const mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
-  throw new Error("process.exit called");
-});
+const mockInit = vi.mocked(initModule.init);
 
 describe("add command", () => {
+  let mockExit: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
+
     mockFileExists.mockResolvedValue(true); // Config exists by default
     mockIsCancel.mockReturnValue(false);
+    mockInit.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    mockExit.mockRestore();
+  });
+
+  describe("initialization flow", () => {
+    it("should exit when config is missing and user declines init", async () => {
+      mockFileExists.mockResolvedValue(false);
+      mockConfirm.mockResolvedValue(false);
+
+      await expect(add(["button"])).rejects.toThrow("process.exit called");
+
+      expect(mockInit).not.toHaveBeenCalled();
+      expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("starwind init"));
+      expect(mockExit).toHaveBeenCalledWith(1);
+    });
+
+    it("should run init when config is missing and user confirms", async () => {
+      mockFileExists.mockResolvedValue(false);
+      mockConfirm.mockResolvedValue(true);
+      mockGetAllComponents.mockResolvedValue([
+        { name: "button", version: "2.1.0", dependencies: [], type: "component" as const },
+      ]);
+      mockIsValidComponent.mockResolvedValue(true);
+      mockInstallComponent.mockResolvedValue({
+        status: "installed",
+        name: "button",
+        version: "2.1.0",
+      });
+
+      await add(["button"]);
+
+      expect(mockInit).toHaveBeenCalledWith(true, {
+        defaults: undefined,
+        packageManager: undefined,
+      });
+    });
   });
 
   describe("component with Starwind dependencies", () => {
