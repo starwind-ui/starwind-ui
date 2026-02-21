@@ -1,0 +1,14 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"p">;
+
+export const popoverDescription = tv({ base: "text-muted-foreground" });
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<p class={popoverDescription({ class: className })} {...rest} data-slot="popover-description">
+  <slot />
+</p>

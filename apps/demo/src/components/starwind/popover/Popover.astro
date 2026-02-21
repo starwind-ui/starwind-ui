@@ -1,0 +1,272 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * Whether the popover should be open when first rendered
+   * @default false
+   */
+  defaultOpen?: boolean;
+
+  children: any;
+};
+
+export const popover = tv({ base: "starwind-popover relative inline-block" });
+
+const { class: className, defaultOpen = false, ...rest } = Astro.props;
+---
+
+<div
+  class={popover({ class: className })}
+  data-state={defaultOpen ? "open" : "closed"}
+  data-default-open={defaultOpen ? "true" : undefined}
+  {...rest}
+  data-slot="popover"
+>
+  <slot />
+</div>
+
+<script>
+  class PopoverHandler {
+    private popover: HTMLElement;
+    private trigger: HTMLElement | null;
+    private content: HTMLElement | null;
+    private title: HTMLElement | null;
+    private description: HTMLElement | null;
+    private isOpen: boolean = false;
+    private isClosing: boolean = false;
+    private animationDuration = 150;
+
+    constructor(popover: HTMLElement, popoverIdx: number) {
+      this.popover = popover;
+      this.trigger = this.findOwnElement('[data-slot="popover-trigger"]');
+      this.content = this.findOwnElement('[data-slot="popover-content"]');
+      this.title = this.findOwnElement('[data-slot="popover-title"]');
+      this.description = this.findOwnElement('[data-slot="popover-description"]');
+
+      // if trigger is set with asChild, use the first child element as trigger button
+      if (this.trigger?.hasAttribute("data-as-child")) {
+        this.trigger = this.trigger.firstElementChild as HTMLElement;
+      }
+
+      if (!this.trigger || !this.content) return;
+
+      const animationDurationString = this.content.style.animationDuration;
+      if (animationDurationString.endsWith("ms")) {
+        this.animationDuration = parseFloat(animationDurationString);
+      } else if (animationDurationString.endsWith("s")) {
+        this.animationDuration = parseFloat(animationDurationString) * 1000;
+      }
+
+      this.isOpen =
+        this.popover.getAttribute("data-state") === "open" ||
+        this.popover.getAttribute("data-default-open") === "true";
+
+      this.init(popoverIdx);
+    }
+
+    private findOwnElement(selector: string): HTMLElement | null {
+      const elements = this.popover.querySelectorAll(selector);
+      for (const element of elements) {
+        if (element.closest(".starwind-popover") === this.popover) {
+          return element as HTMLElement;
+        }
+      }
+      return null;
+    }
+
+    private init(popoverIdx: number) {
+      this.setupAccessibility(popoverIdx);
+      this.setupEvents();
+      this.setInitialState();
+    }
+
+    private setupAccessibility(popoverIdx: number) {
+      if (!this.trigger || !this.content) return;
+
+      if (!this.trigger.id) {
+        this.trigger.id = `starwind-popover${popoverIdx}-trigger`;
+      }
+
+      if (!this.content.id) {
+        this.content.id = `starwind-popover${popoverIdx}-content`;
+      }
+
+      this.trigger.setAttribute("aria-controls", this.content.id);
+      this.trigger.setAttribute("aria-haspopup", "dialog");
+      this.content.setAttribute("aria-labelledby", this.trigger.id);
+
+      if (this.title) {
+        if (!this.title.id) {
+          this.title.id = `starwind-popover${popoverIdx}-title`;
+        }
+        this.content.setAttribute("aria-labelledby", this.title.id);
+      }
+
+      if (this.description) {
+        if (!this.description.id) {
+          this.description.id = `starwind-popover${popoverIdx}-description`;
+        }
+        this.content.setAttribute("aria-describedby", this.description.id);
+      }
+    }
+
+    private setupEvents() {
+      if (!this.trigger || !this.content) return;
+
+      this.trigger.addEventListener("click", (e) => {
+        if (this.isTriggerDisabled()) return;
+        e.preventDefault();
+        this.togglePopover();
+      });
+
+      this.trigger.addEventListener("keydown", (e) => {
+        if (this.isTriggerDisabled()) return;
+
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          this.togglePopover();
+        } else if (e.key === "ArrowDown" && !this.isOpen) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.openPopover();
+        } else if (e.key === "Escape" && this.isOpen) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closePopover({ focusTrigger: true });
+        }
+      });
+
+      this.content.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && this.isOpen) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closePopover({ focusTrigger: true });
+        }
+      });
+
+      this.popover.addEventListener(
+        "starwind-popover:close",
+        ((event: CustomEvent<{ focusTrigger?: boolean }>) => {
+          this.closePopover({ focusTrigger: event.detail?.focusTrigger });
+        }) as EventListener,
+      );
+
+      document.addEventListener("pointerdown", (e) => {
+        if (this.isOpen && !this.popover.contains(e.target as Node)) {
+          this.closePopover();
+        }
+      });
+
+      document.addEventListener("click", (e) => {
+        if (this.isOpen && !this.popover.contains(e.target as Node)) {
+          this.closePopover();
+        }
+      });
+    }
+
+    private setInitialState() {
+      if (!this.trigger || !this.content) return;
+
+      if (this.isOpen) {
+        this.popover.setAttribute("data-state", "open");
+        this.trigger.setAttribute("aria-expanded", "true");
+        this.trigger.setAttribute("data-state", "open");
+        this.content.setAttribute("data-state", "open");
+        this.content.style.removeProperty("display");
+      } else {
+        this.popover.setAttribute("data-state", "closed");
+        this.trigger.setAttribute("aria-expanded", "false");
+        this.trigger.setAttribute("data-state", "closed");
+        this.content.setAttribute("data-state", "closed");
+        this.content.style.display = "none";
+      }
+    }
+
+    private isTriggerDisabled() {
+      if (!this.trigger) return true;
+      return (
+        this.trigger.hasAttribute("disabled") ||
+        this.trigger.getAttribute("aria-disabled") === "true" ||
+        this.trigger.getAttribute("data-disabled") === "true"
+      );
+    }
+
+    private togglePopover() {
+      if (this.isOpen) {
+        this.closePopover();
+      } else {
+        this.openPopover();
+      }
+    }
+
+    private openPopover() {
+      if (this.isOpen || this.isClosing) return;
+      if (!this.trigger || !this.content || this.isTriggerDisabled()) return;
+
+      this.isOpen = true;
+      this.popover.setAttribute("data-state", "open");
+      this.trigger.setAttribute("aria-expanded", "true");
+      this.trigger.setAttribute("data-state", "open");
+      this.content.setAttribute("data-state", "open");
+      this.content.style.removeProperty("display");
+    }
+
+    private closePopover(options?: { focusTrigger?: boolean }) {
+      if (!this.isOpen) return;
+      if (!this.trigger || !this.content) return;
+
+      this.closeNestedPopovers();
+
+      this.isClosing = true;
+      this.isOpen = false;
+      this.popover.setAttribute("data-state", "closed");
+      this.trigger.setAttribute("aria-expanded", "false");
+      this.trigger.setAttribute("data-state", "closed");
+      this.content.setAttribute("data-state", "closed");
+
+      if (options?.focusTrigger) {
+        requestAnimationFrame(() => {
+          this.trigger?.focus();
+        });
+      }
+
+      setTimeout(() => {
+        if (!this.content) return;
+        this.content.style.display = "none";
+        this.isClosing = false;
+      }, this.animationDuration);
+    }
+
+    private closeNestedPopovers() {
+      const nestedPopovers = this.popover.querySelectorAll<HTMLElement>(
+        '.starwind-popover[data-state="open"]',
+      );
+
+      for (const nestedPopover of nestedPopovers) {
+        if (nestedPopover !== this.popover) {
+          nestedPopover.dispatchEvent(
+            new CustomEvent("starwind-popover:close", { detail: { focusTrigger: false } }),
+          );
+        }
+      }
+    }
+  }
+
+  const popoverInstances = new WeakMap<HTMLElement, PopoverHandler>();
+  let popoverCounter = 0;
+
+  const initPopovers = () => {
+    document.querySelectorAll<HTMLElement>(".starwind-popover").forEach((popoverEl) => {
+      if (!popoverInstances.has(popoverEl)) {
+        popoverInstances.set(popoverEl, new PopoverHandler(popoverEl, popoverCounter++));
+      }
+    });
+  };
+
+  initPopovers();
+  document.addEventListener("astro:after-swap", initPopovers);
+  document.addEventListener("starwind:init", initPopovers);
+</script>

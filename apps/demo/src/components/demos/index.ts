@@ -20,6 +20,7 @@ export { default as InputOtpDemo } from "./InputOtpDemo.astro";
 export { default as ItemDemo } from "./ItemDemo.astro";
 export { default as KbdDemo } from "./KbdDemo.astro";
 export { default as PaginationDemo } from "./PaginationDemo.astro";
+export { default as PopoverDemo } from "./PopoverDemo.astro";
 export { default as ProgressDemo } from "./ProgressDemo.astro";
 export { default as RadioGroupDemo } from "./RadioGroupDemo.astro";
 export { default as SelectDemo } from "./SelectDemo.astro";

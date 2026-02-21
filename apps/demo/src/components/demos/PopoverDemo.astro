@@ -1,0 +1,57 @@
+---
+import { Button } from "@/components/starwind/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/starwind/popover";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Popover</h2>
+  <div class="flex flex-wrap items-center gap-4">
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline">Open popover</Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" side="bottom">
+        <PopoverHeader>
+          <PopoverTitle>Account settings</PopoverTitle>
+          <PopoverDescription>Manage your profile and communication preferences.</PopoverDescription>
+        </PopoverHeader>
+      </PopoverContent>
+    </Popover>
+
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button>Nested popover</Button>
+      </PopoverTrigger>
+      <PopoverContent align="center" side="bottom">
+        <PopoverHeader>
+          <PopoverTitle>Parent popover</PopoverTitle>
+          <PopoverDescription>
+            Open the nested popover below to verify nested interaction behavior.
+          </PopoverDescription>
+        </PopoverHeader>
+        <div class="mt-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant="outline">Open child</Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="right">
+              <PopoverHeader>
+                <PopoverTitle>Child popover</PopoverTitle>
+                <PopoverDescription>
+                  Interacting here should not immediately close the parent popover.
+                </PopoverDescription>
+              </PopoverHeader>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </PopoverContent>
+    </Popover>
+  </div>
+</section>
