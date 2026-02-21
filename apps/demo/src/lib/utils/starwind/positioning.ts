@@ -66,7 +66,11 @@ function getPlacementCandidates(side: FloatingSide, align: FloatingAlign): Place
   const placements: Placement[] = [];
 
   const pushUnique = (candidate: Placement) => {
-    if (!placements.some((placement) => placement.side === candidate.side && placement.align === candidate.align)) {
+    if (
+      !placements.some(
+        (placement) => placement.side === candidate.side && placement.align === candidate.align,
+      )
+    ) {
       placements.push(candidate);
     }
   };
@@ -278,7 +282,8 @@ export function resolvePlacement(options: ResolvePlacementOptions): ResolvePlace
 
     const sidePenalty = placement.side === side ? 0 : 32;
     const alignPenalty = placement.align === align ? 0 : 8;
-    const score = overflowTotal * 24 + mainAxisShift * 8 + crossAxisShift * 3 + sidePenalty + alignPenalty;
+    const score =
+      overflowTotal * 24 + mainAxisShift * 8 + crossAxisShift * 3 + sidePenalty + alignPenalty;
 
     if (score < bestScore) {
       bestScore = score;
