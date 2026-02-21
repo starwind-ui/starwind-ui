@@ -1,0 +1,57 @@
+---
+import { Label } from "@/components/starwind/label";
+import {
+  NativeSelect,
+  NativeSelectOptGroup,
+  NativeSelectOption,
+} from "@/components/starwind/native-select";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Native Select</h2>
+  <div class="space-y-4">
+    <div class="grid gap-2">
+      <Label for="native-select-sm" size="sm">Small</Label>
+      <NativeSelect id="native-select-sm" name="native-select-sm" size="sm" class="w-[350px]">
+        <NativeSelectOption value="" disabled selected>Select a timezone</NativeSelectOption>
+        <NativeSelectOptGroup label="North America">
+          <NativeSelectOption value="est">Eastern Standard Time (EST)</NativeSelectOption>
+          <NativeSelectOption value="cst">Central Standard Time (CST)</NativeSelectOption>
+          <NativeSelectOption value="pst">Pacific Standard Time (PST)</NativeSelectOption>
+        </NativeSelectOptGroup>
+        <NativeSelectOptGroup label="Asia">
+          <NativeSelectOption value="ist">India Standard Time (IST)</NativeSelectOption>
+          <NativeSelectOption value="jst">Japan Standard Time (JST)</NativeSelectOption>
+        </NativeSelectOptGroup>
+      </NativeSelect>
+    </div>
+
+    <div class="grid gap-2">
+      <Label for="native-select-md" size="md">Medium</Label>
+      <NativeSelect id="native-select-md" name="native-select-md" class="w-[350px]">
+        <NativeSelectOption value="" disabled selected>Select a timezone</NativeSelectOption>
+        <NativeSelectOptGroup label="Europe & Africa">
+          <NativeSelectOption value="gmt">Greenwich Mean Time (GMT)</NativeSelectOption>
+          <NativeSelectOption value="cet">Central European Time (CET)</NativeSelectOption>
+          <NativeSelectOption value="eat">East Africa Time (EAT)</NativeSelectOption>
+        </NativeSelectOptGroup>
+        <NativeSelectOptGroup label="Australia & Pacific">
+          <NativeSelectOption value="aest">Australian Eastern Standard Time (AEST)</NativeSelectOption>
+          <NativeSelectOption value="nzst">New Zealand Standard Time (NZST)</NativeSelectOption>
+        </NativeSelectOptGroup>
+      </NativeSelect>
+    </div>
+
+    <div class="grid gap-2">
+      <Label for="native-select-lg" size="lg">Large</Label>
+      <NativeSelect id="native-select-lg" name="native-select-lg" size="lg" class="w-[350px]">
+        <NativeSelectOption value="" disabled selected>Select a timezone</NativeSelectOption>
+        <NativeSelectOptGroup label="South America">
+          <NativeSelectOption value="art">Argentina Time (ART)</NativeSelectOption>
+          <NativeSelectOption value="bot">Bolivia Time (BOT)</NativeSelectOption>
+          <NativeSelectOption value="brt">Brasilia Time (BRT)</NativeSelectOption>
+        </NativeSelectOptGroup>
+      </NativeSelect>
+    </div>
+  </div>
+</section>
