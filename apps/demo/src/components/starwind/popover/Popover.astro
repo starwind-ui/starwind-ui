@@ -4,10 +4,15 @@ import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"div"> & {
   /**
-   * When true, the dropdown will open on hover in addition to click
+   * When true, the popover will open on hover in addition to click
    * @default false
    */
   openOnHover?: boolean;
+  /**
+   * Time in milliseconds to wait before closing when hover-open is enabled
+   * @default 200
+   */
+  closeDelay?: number;
   /**
    * Whether the popover should be open when first rendered
    * @default false
@@ -19,12 +24,19 @@ type Props = HTMLAttributes<"div"> & {
 
 export const popover = tv({ base: "starwind-popover" });
 
-const { class: className, openOnHover = false, defaultOpen = false, ...rest } = Astro.props;
+const {
+  class: className,
+  openOnHover = false,
+  closeDelay = 200,
+  defaultOpen = false,
+  ...rest
+} = Astro.props;
 ---
 
 <div
   class={popover({ class: className })}
   data-open-on-hover={openOnHover ? "true" : undefined}
+  data-close-delay={closeDelay}
   data-state={defaultOpen ? "open" : "closed"}
   data-default-open={defaultOpen ? "true" : undefined}
   {...rest}
@@ -40,6 +52,41 @@ const { class: className, openOnHover = false, defaultOpen = false, ...rest } = 
     type FloatingAlign,
     type FloatingSide,
   } from "@/lib/utils/starwind/positioning";
+
+  let globalPointerClientX: number | null = null;
+  let globalPointerClientY: number | null = null;
+  let globalPointerTrackingRefCount = 0;
+  let isGlobalPointerTrackingAttached = false;
+
+  const handleGlobalPointerMove = (e: PointerEvent) => {
+    if (e.pointerType !== "mouse") return;
+    globalPointerClientX = e.clientX;
+    globalPointerClientY = e.clientY;
+  };
+
+  const registerGlobalPointerTracking = () => {
+    globalPointerTrackingRefCount += 1;
+
+    if (isGlobalPointerTrackingAttached) {
+      return;
+    }
+
+    document.addEventListener("pointermove", handleGlobalPointerMove);
+    isGlobalPointerTrackingAttached = true;
+  };
+
+  const unregisterGlobalPointerTracking = () => {
+    globalPointerTrackingRefCount = Math.max(0, globalPointerTrackingRefCount - 1);
+
+    if (globalPointerTrackingRefCount > 0 || !isGlobalPointerTrackingAttached) {
+      return;
+    }
+
+    document.removeEventListener("pointermove", handleGlobalPointerMove);
+    isGlobalPointerTrackingAttached = false;
+    globalPointerClientX = null;
+    globalPointerClientY = null;
+  };
 
   class PopoverHandler {
     private popover: HTMLElement;
@@ -58,6 +105,12 @@ const { class: className, openOnHover = false, defaultOpen = false, ...rest } = 
     private cleanupAutoUpdate: (() => void) | null = null;
     private abortController: AbortController;
     private closeTimeoutRef: number | null = null;
+    private openOnHover = false;
+    private hoverCloseDelay = 200;
+    private hoverCloseTimerRef: number | null = null;
+    private openChildCount = 0;
+    private registeredWithParentAsOpenChild = false;
+    private usesGlobalPointerTracking = false;
 
     constructor(popover: HTMLElement, popoverIdx: number) {
       this.popover = popover;
@@ -71,6 +124,12 @@ const { class: className, openOnHover = false, defaultOpen = false, ...rest } = 
         (this.content as any).__popoverHandler = this;
       }
 
+      this.openOnHover = this.popover.getAttribute("data-open-on-hover") === "true";
+      const closeDelay = parseInt(this.popover.getAttribute("data-close-delay") || "200");
+      if (Number.isFinite(closeDelay) && closeDelay >= 0) {
+        this.hoverCloseDelay = closeDelay;
+      }
+
       this.parentHandler = this.resolveParentHandler();
 
       // if trigger is set with asChild, use the first child element as trigger button
@@ -79,6 +138,11 @@ const { class: className, openOnHover = false, defaultOpen = false, ...rest } = 
       }
 
       if (!this.trigger || !this.content) return;
+
+      if (this.openOnHover) {
+        registerGlobalPointerTracking();
+        this.usesGlobalPointerTracking = true;
+      }
 
       const animationDurationString = this.content.style.animationDuration;
       if (animationDurationString.endsWith("ms")) {
@@ -202,6 +266,54 @@ const { class: className, openOnHover = false, defaultOpen = false, ...rest } = 
         }
       });
 
+      if (this.openOnHover) {
+        this.trigger.addEventListener(
+          "pointerenter",
+          (e) => {
+            if (e.pointerType !== "mouse") return;
+            if (this.isTriggerDisabled()) return;
+
+            if (!this.isOpen) {
+              this.openPopover();
+            } else {
+              this.clearHoverCloseTimersInTree();
+            }
+          },
+          { signal: this.abortController.signal },
+        );
+
+        this.trigger.addEventListener(
+          "pointerleave",
+          (e) => {
+            if (e.pointerType !== "mouse") return;
+            if (this.isOpen) {
+              this.closePopoverDelayed();
+            }
+          },
+          { signal: this.abortController.signal },
+        );
+
+        this.content.addEventListener(
+          "pointerenter",
+          (e) => {
+            if (e.pointerType !== "mouse") return;
+            this.clearHoverCloseTimersInTree();
+          },
+          { signal: this.abortController.signal },
+        );
+
+        this.content.addEventListener(
+          "pointerleave",
+          (e) => {
+            if (e.pointerType !== "mouse") return;
+            if (this.isOpen) {
+              this.closePopoverDelayed();
+            }
+          },
+          { signal: this.abortController.signal },
+        );
+      }
+
       this.popover.addEventListener("starwind-popover:close", ((
         event: CustomEvent<{ focusTrigger?: boolean }>,
       ) => {
@@ -282,6 +394,9 @@ const { class: className, openOnHover = false, defaultOpen = false, ...rest } = 
       if (this.isOpen || this.isClosing) return;
       if (!this.trigger || !this.content || this.isTriggerDisabled()) return;
 
+      this.clearHoverCloseTimersInTree();
+      this.registerAsOpenChildOnParent();
+
       this.isOpen = true;
       this.popover.setAttribute("data-state", "open");
       this.trigger.setAttribute("aria-expanded", "true");
@@ -296,6 +411,8 @@ const { class: className, openOnHover = false, defaultOpen = false, ...rest } = 
     private closePopover(options?: { focusTrigger?: boolean }) {
       if (!this.isOpen) return;
       if (!this.trigger || !this.content) return;
+
+      this.clearHoverCloseTimer();
 
       this.closeNestedPopovers();
 
@@ -322,6 +439,7 @@ const { class: className, openOnHover = false, defaultOpen = false, ...rest } = 
         if (!this.content) return;
         this.unportalContent();
         this.content.style.display = "none";
+        this.unregisterAsOpenChildOnParent();
         this.isClosing = false;
       }, this.animationDuration);
     }
@@ -347,18 +465,116 @@ const { class: className, openOnHover = false, defaultOpen = false, ...rest } = 
 
       this.abortController.abort();
 
+      if (this.usesGlobalPointerTracking) {
+        unregisterGlobalPointerTracking();
+        this.usesGlobalPointerTracking = false;
+      }
+
+      this.clearHoverCloseTimer();
+
       if (this.closeTimeoutRef !== null) {
         window.clearTimeout(this.closeTimeoutRef);
         this.closeTimeoutRef = null;
       }
 
       this.unportalContent();
+      this.unregisterAsOpenChildOnParent();
       this.isOpen = false;
       this.isClosing = false;
 
       if (this.content) {
         delete (this.content as any).__popoverHandler;
       }
+    }
+
+    private closePopoverDelayed() {
+      if (!this.openOnHover) return;
+
+      this.clearHoverCloseTimer();
+
+      this.hoverCloseTimerRef = window.setTimeout(() => {
+        this.hoverCloseTimerRef = null;
+        if (this.abortController.signal.aborted) return;
+        if (this.openChildCount > 0) return;
+        if (this.isFocusWithinPopoverTree()) return;
+        if (this.isPointerWithinPopoverTree()) return;
+        if (this.isOpen) {
+          this.closePopover();
+        }
+      }, this.hoverCloseDelay);
+    }
+
+    private clearHoverCloseTimer() {
+      if (this.hoverCloseTimerRef !== null) {
+        window.clearTimeout(this.hoverCloseTimerRef);
+        this.hoverCloseTimerRef = null;
+      }
+    }
+
+    private clearHoverCloseTimersInTree() {
+      this.clearHoverCloseTimer();
+
+      let currentHandler = this.parentHandler;
+      while (currentHandler) {
+        currentHandler.clearHoverCloseTimer();
+        currentHandler = currentHandler.parentHandler;
+      }
+    }
+
+    private isFocusWithinPopoverTree(): boolean {
+      const activeElement = document.activeElement;
+      if (!(activeElement instanceof Node)) return false;
+
+      return (
+        this.popover.contains(activeElement) ||
+        this.content?.contains(activeElement) ||
+        this.isTargetInPopoverTree(activeElement)
+      );
+    }
+
+    private isPointerWithinPopoverTree(): boolean {
+      if (this.trigger?.matches(":hover") || this.content?.matches(":hover")) {
+        return true;
+      }
+
+      if (globalPointerClientX === null || globalPointerClientY === null) {
+        return false;
+      }
+
+      const pointerTarget = document.elementFromPoint(globalPointerClientX, globalPointerClientY);
+      if (!(pointerTarget instanceof Node)) {
+        return false;
+      }
+
+      return (
+        this.popover.contains(pointerTarget) ||
+        this.content?.contains(pointerTarget) ||
+        this.isTargetInPopoverTree(pointerTarget)
+      );
+    }
+
+    private registerAsOpenChildOnParent() {
+      if (!this.parentHandler || this.registeredWithParentAsOpenChild) return;
+
+      this.parentHandler.openChildCount++;
+      this.registeredWithParentAsOpenChild = true;
+    }
+
+    private unregisterAsOpenChildOnParent() {
+      if (!this.parentHandler || !this.registeredWithParentAsOpenChild) return;
+
+      this.parentHandler.openChildCount = Math.max(0, this.parentHandler.openChildCount - 1);
+      this.registeredWithParentAsOpenChild = false;
+      this.parentHandler.handleChildPopoverClosed();
+    }
+
+    private handleChildPopoverClosed() {
+      if (!this.openOnHover || !this.isOpen) return;
+      if (this.openChildCount > 0) return;
+      if (this.isFocusWithinPopoverTree()) return;
+      if (this.isPointerWithinPopoverTree()) return;
+
+      this.closePopoverDelayed();
     }
 
     private isTargetInPopoverTree(target: Node): boolean {
