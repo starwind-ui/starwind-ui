@@ -10,48 +10,137 @@ import {
 } from "@/components/starwind/popover";
 ---
 
-<section class="mx-auto mt-6 max-w-lg">
+<section class="mx-auto mt-6 max-w-2xl">
   <h2 class="mb-4 text-2xl font-bold">Popover</h2>
-  <div class="flex flex-wrap items-center gap-4">
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline">Open popover</Button>
-      </PopoverTrigger>
-      <PopoverContent align="start" side="bottom">
-        <PopoverHeader>
-          <PopoverTitle>Account settings</PopoverTitle>
-          <PopoverDescription>Manage your profile and communication preferences.</PopoverDescription>
-        </PopoverHeader>
-      </PopoverContent>
-    </Popover>
 
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button>Nested popover</Button>
-      </PopoverTrigger>
-      <PopoverContent align="center" side="bottom">
-        <PopoverHeader>
-          <PopoverTitle>Parent popover</PopoverTitle>
-          <PopoverDescription>
-            Open the nested popover below to verify nested interaction behavior.
-          </PopoverDescription>
-        </PopoverHeader>
-        <div class="mt-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="sm" variant="outline">Open child</Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" side="right">
-              <PopoverHeader>
-                <PopoverTitle>Child popover</PopoverTitle>
-                <PopoverDescription>
-                  Interacting here should not immediately close the parent popover.
-                </PopoverDescription>
-              </PopoverHeader>
-            </PopoverContent>
-          </Popover>
-        </div>
-      </PopoverContent>
-    </Popover>
+  <div class="space-y-8">
+    <div class="space-y-3">
+      <h3 class="text-muted-foreground text-sm font-medium">Basic and nested</h3>
+      <div class="flex flex-wrap items-center gap-4">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline">Open popover</Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" side="bottom">
+            <PopoverHeader>
+              <PopoverTitle>Account settings</PopoverTitle>
+              <PopoverDescription
+                >Manage your profile and communication preferences.</PopoverDescription
+              >
+            </PopoverHeader>
+          </PopoverContent>
+        </Popover>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button>Nested popover</Button>
+          </PopoverTrigger>
+          <PopoverContent align="center" side="bottom">
+            <PopoverHeader>
+              <PopoverTitle>Parent popover</PopoverTitle>
+              <PopoverDescription>
+                Open the nested popover below to verify nested interaction behavior.
+              </PopoverDescription>
+            </PopoverHeader>
+            <div class="mt-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button size="sm" variant="outline">Open child</Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" side="right">
+                  <PopoverHeader>
+                    <PopoverTitle>Child popover</PopoverTitle>
+                    <PopoverDescription>
+                      Interacting here should not immediately close the parent popover.
+                    </PopoverDescription>
+                  </PopoverHeader>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="text-muted-foreground text-sm font-medium">Align: start, center, end</h3>
+      <div class="flex flex-wrap items-center gap-4">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size="sm" variant="outline">Start</Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" class="w-40"> Aligned to start. </PopoverContent>
+        </Popover>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size="sm" variant="outline">Center</Button>
+          </PopoverTrigger>
+          <PopoverContent align="center" class="w-40"> Aligned to center. </PopoverContent>
+        </Popover>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size="sm" variant="outline">End</Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" class="w-40"> Aligned to end. </PopoverContent>
+        </Popover>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="text-muted-foreground text-sm font-medium">
+        Side, sideOffset, and animationDuration
+      </h3>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size="sm" variant="outline" class="w-full">Top</Button>
+          </PopoverTrigger>
+          <PopoverContent side="top" sideOffset={12} animationDuration={120} class="w-44">
+            side=&quot;top&quot; with sideOffset=12 and a quicker animation.
+          </PopoverContent>
+        </Popover>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size="sm" variant="outline" class="w-full">Right</Button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="start"
+            sideOffset={16}
+            animationDuration={180}
+            class="w-44"
+          >
+            side=&quot;right&quot; + align=&quot;start&quot;.
+          </PopoverContent>
+        </Popover>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size="sm" variant="outline" class="w-full">Bottom</Button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="bottom"
+            align="end"
+            sideOffset={8}
+            animationDuration={220}
+            class="w-44"
+          >
+            side=&quot;bottom&quot; + align=&quot;end&quot;.
+          </PopoverContent>
+        </Popover>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size="sm" variant="outline" class="w-full">Left</Button>
+          </PopoverTrigger>
+          <PopoverContent side="left" sideOffset={14} animationDuration={260} class="w-44">
+            side=&quot;left&quot; with a longer animation duration.
+          </PopoverContent>
+        </Popover>
+      </div>
+    </div>
   </div>
 </section>
