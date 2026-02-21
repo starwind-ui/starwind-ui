@@ -55,7 +55,13 @@
     { "name": "label", "type": "component", "version": "1.2.1", "dependencies": [] },
     { "name": "native-select", "type": "component", "version": "1.0.0", "dependencies": [] },
     { "name": "pagination", "type": "component", "version": "3.0.3", "dependencies": [] },
-    { "name": "popover", "type": "component", "version": "1.0.0", "dependencies": [] },
+    {
+      "name": "popover",
+      "type": "component",
+      "version": "1.0.0",
+      "dependencies": [],
+      "fileDependencies": ["positioning.ts"]
+    },
     { "name": "progress", "type": "component", "version": "1.1.2", "dependencies": [] },
     { "name": "prose", "type": "component", "version": "1.0.1", "dependencies": [] },
     { "name": "radio-group", "type": "component", "version": "1.2.5", "dependencies": [] },
@@ -96,7 +102,13 @@
     },
     { "name": "toast", "type": "component", "version": "1.0.1", "dependencies": [] },
     { "name": "toggle", "type": "component", "version": "1.0.2", "dependencies": [] },
-    { "name": "tooltip", "type": "component", "version": "1.5.0", "dependencies": [] },
+    {
+      "name": "tooltip",
+      "type": "component",
+      "version": "1.5.0",
+      "dependencies": [],
+      "fileDependencies": ["positioning.ts"]
+    },
     { "name": "video", "type": "component", "version": "1.0.1", "dependencies": [] }
   ]
 }

@@ -13,6 +13,7 @@ const componentSchema = z.object({
   name: z.string(),
   version: z.string(),
   dependencies: z.array(z.string()).default([]),
+  fileDependencies: z.array(z.string()).optional(),
   type: z.enum(["component"]),
 });
 
@@ -82,7 +83,7 @@ async function fetchRemoteRegistry(): Promise<Component[]> {
 function getLocalRegistry(): Component[] {
   try {
     // Validate the local registry with the schema
-    const components = localRegistry.map((comp) => componentSchema.parse(comp));
+    const components = localRegistry.map((comp: unknown) => componentSchema.parse(comp));
     return components;
   } catch (error) {
     console.error("Failed to validate local registry:", error);

@@ -47,40 +47,123 @@ export interface UpdateResult {
   error?: string;
 }
 
+interface CopyComponentOptions {
+  resolvePackageUrl?: (specifier: string) => string | undefined;
+}
+
+function resolveConfigPath(directory: string): string {
+  if (directory.startsWith("@/")) {
+    return path.join("src", directory.slice(2));
+  }
+
+  return directory;
+}
+
+function normalizeFileDependencyPath(fileDependency: string): string {
+  const normalized = fileDependency.replace(/\\/g, "/");
+
+  if (path.posix.isAbsolute(normalized)) {
+    throw new Error(`File dependency "${fileDependency}" must be a relative path`);
+  }
+
+  const trimmed = normalized.startsWith("starwind/")
+    ? normalized.slice("starwind/".length)
+    : normalized;
+  const safePath = path.posix.normalize(trimmed);
+
+  if (safePath.startsWith("..") || safePath === "." || safePath.length === 0) {
+    throw new Error(`File dependency "${fileDependency}" contains an invalid path`);
+  }
+
+  return safePath;
+}
+
+async function copyFileDependencies(options: {
+  coreDir: string;
+  fileDependencies: string[];
+  utilsDir: string;
+}): Promise<void> {
+  const { coreDir, fileDependencies, utilsDir } = options;
+
+  if (fileDependencies.length === 0) return;
+
+  const targetUtilsRoot = path.join(resolveConfigPath(utilsDir), "starwind");
+  const sourceUtilsRoot = path.join(coreDir, PATHS.STARWIND_CORE_UTILS, "starwind");
+
+  await fs.ensureDir(targetUtilsRoot);
+
+  for (const fileDependency of fileDependencies) {
+    const relativePath = normalizeFileDependencyPath(fileDependency);
+    const sourcePath = path.join(sourceUtilsRoot, relativePath);
+    const destinationPath = path.join(targetUtilsRoot, relativePath);
+
+    if (!(await fs.pathExists(sourcePath))) {
+      throw new Error(
+        `File dependency "${fileDependency}" for component is missing from ${PATHS.STARWIND_CORE_UTILS}/starwind`,
+      );
+    }
+
+    await fs.ensureDir(path.dirname(destinationPath));
+    await fs.copy(sourcePath, destinationPath, { overwrite: true });
+  }
+}
+
 /**
  * Copies a component from the core package to the local components directory
  * @param name - The name of the component to copy
  * @param overwrite - If true, will overwrite existing component instead of skipping
+ * @param options - Optional overrides used internally for testing
  * @returns A result object indicating the installation status
  */
-export async function copyComponent(name: string, overwrite = false): Promise<InstallResult> {
+export async function copyComponent(
+  name: string,
+  overwrite = false,
+  options?: CopyComponentOptions,
+): Promise<InstallResult> {
   const config = await getConfig();
 
   // Ensure components array exists
   const currentComponents = Array.isArray(config.components) ? config.components : [];
 
-  // Check if component already exists
-  if (!overwrite && currentComponents.some((component) => component.name === name)) {
-    const existingComponent = currentComponents.find((c) => c.name === name);
-    return {
-      status: "skipped",
-      name,
-      version: existingComponent?.version ?? "unknown",
-    };
-  }
-
-  const componentDir = path.join(config.componentDir, "starwind", name);
-
   try {
-    await fs.ensureDir(componentDir);
+    const registry = await getRegistry();
+    const componentInfo = registry.find((component) => component.name === name);
+    if (!componentInfo) {
+      throw new Error(`Component ${name} not found in registry`);
+    }
+
+    const fileDependencies = componentInfo.fileDependencies ?? [];
+
+    const resolvePackageUrl =
+      options?.resolvePackageUrl ?? ((specifier: string) => import.meta.resolve?.(specifier));
 
     // Get the path to the installed @starwind/core package
-    const pkgUrl = import.meta.resolve?.(PATHS.STARWIND_CORE);
+    const pkgUrl = resolvePackageUrl(PATHS.STARWIND_CORE);
     if (!pkgUrl) {
       throw new Error(`Could not resolve ${PATHS.STARWIND_CORE} package, is it installed?`);
     }
 
     const coreDir = path.dirname(fileURLToPath(pkgUrl));
+
+    // Check if component already exists
+    if (!overwrite && currentComponents.some((component) => component.name === name)) {
+      await copyFileDependencies({
+        coreDir,
+        fileDependencies,
+        utilsDir: config.utilsDir || PATHS.LOCAL_UTILS_DIR,
+      });
+
+      const existingComponent = currentComponents.find((c) => c.name === name);
+      return {
+        status: "skipped",
+        name,
+        version: existingComponent?.version ?? "unknown",
+      };
+    }
+
+    const componentDir = path.join(config.componentDir, "starwind", name);
+    await fs.ensureDir(componentDir);
+
     const sourceDir = path.join(coreDir, PATHS.STARWIND_CORE_COMPONENTS, name);
 
     const files = await fs.readdir(sourceDir);
@@ -91,12 +174,11 @@ export async function copyComponent(name: string, overwrite = false): Promise<In
       await fs.copy(sourcePath, destPath, { overwrite: true });
     }
 
-    // Get component version from registry
-    const registry = await getRegistry();
-    const componentInfo = registry.find((c) => c.name === name);
-    if (!componentInfo) {
-      throw new Error(`Component ${name} not found in registry`);
-    }
+    await copyFileDependencies({
+      coreDir,
+      fileDependencies,
+      utilsDir: config.utilsDir || PATHS.LOCAL_UTILS_DIR,
+    });
 
     return {
       status: "installed",
