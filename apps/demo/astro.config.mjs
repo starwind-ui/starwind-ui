@@ -19,6 +19,9 @@ export default defineConfig({
       theme: "houston",
     },
   },
+  image: {
+    domains: ["images.unsplash.com"],
+  },
   // adapter: cloudflare({
   // 	imageService: "compile",
   // }),
