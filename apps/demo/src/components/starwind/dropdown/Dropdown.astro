@@ -242,6 +242,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       if (this.items.length === 0) return;
 
       const currentIdx = this.currentFocusIndex;
+      const currentItem = this.items[currentIdx];
 
       switch (e.key) {
         case "ArrowDown":
@@ -253,7 +254,6 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
           this.focusItem(currentIdx === -1 ? this.items.length - 1 : currentIdx - 1);
           break;
         case "ArrowRight":
-          const currentItem = this.items[currentIdx];
           if (currentItem?.getAttribute("aria-haspopup") === "true") {
             e.preventDefault();
             currentItem.click();
@@ -335,6 +335,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
     }
 
     private closeDropdown() {
+      if (!this.isOpen) return;
       if (!this.content || !this.trigger) return;
 
       this.isClosing = true;

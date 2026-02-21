@@ -6,9 +6,6 @@ type Props = HTMLAttributes<"span">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<span
-  class:list={["ml-auto text-xs tracking-widest opacity-60", className]}
-  {...rest}
->
+<span class:list={["ml-auto text-xs tracking-widest opacity-60", className]} {...rest}>
   <slot />
 </span>
