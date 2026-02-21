@@ -140,8 +140,10 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
           e.preventDefault();
           e.stopPropagation();
           this.lastCloseSource = "keyboard";
-          // Close all menus in the group
-          this.rootDropdown.dispatchEvent(new CustomEvent("starwind-dropdown:close-all"));
+          // Close all menus in the group, focus root trigger
+          this.rootDropdown.dispatchEvent(
+            new CustomEvent("starwind-dropdown:close-all", { detail: { focusRoot: true } }),
+          );
         } else if (this.isOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
           e.preventDefault();
           e.stopPropagation();
@@ -166,9 +168,9 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       });
 
       // Listen for close-all event (routed through rootDropdown to work across portaled content)
-      this.rootDropdown.addEventListener("starwind-dropdown:close-all", () => {
-        this.closeDropdown();
-      });
+      this.rootDropdown.addEventListener("starwind-dropdown:close-all", ((e: CustomEvent) => {
+        this.closeDropdown({ skipFocus: e.detail?.focusRoot && this.isSubmenu });
+      }) as EventListener);
 
       // Listen for cancel-close event (routed through rootDropdown)
       this.rootDropdown.addEventListener("starwind-dropdown:cancel-close", () => {
@@ -203,8 +205,10 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         if (e.key === "Escape") {
           e.preventDefault();
           e.stopPropagation();
-          // Close all menus in the group
-          this.rootDropdown.dispatchEvent(new CustomEvent("starwind-dropdown:close-all"));
+          // Close all menus in the group, focus root trigger
+          this.rootDropdown.dispatchEvent(
+            new CustomEvent("starwind-dropdown:close-all", { detail: { focusRoot: true } }),
+          );
         } else if (this.isOpen) {
           this.handleMenuKeydown(e);
         }
@@ -386,7 +390,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       }
     }
 
-    private closeDropdown() {
+    private closeDropdown(options?: { skipFocus?: boolean }) {
       if (!this.isOpen) return;
       if (!this.content || !this.trigger) return;
 
@@ -395,10 +399,12 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       this.content.setAttribute("data-state", "closed");
 
       // Set focus back on trigger only if opened or closed by keyboard
+      // Skip focus if a close-all with focusRoot is closing this submenu (root will handle focus)
       if (
-        !this.openOnHover ||
-        this.lastOpenSource === "keyboard" ||
-        this.lastCloseSource === "keyboard"
+        !options?.skipFocus &&
+        (!this.openOnHover ||
+          this.lastOpenSource === "keyboard" ||
+          this.lastCloseSource === "keyboard")
       ) {
         requestAnimationFrame(() => {
           if (!this.trigger) return;
