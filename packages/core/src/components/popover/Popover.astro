@@ -46,9 +46,12 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
     private parentHandler: PopoverHandler | null = null;
     private contentPlaceholder: Comment | null = null;
     private cleanupAutoUpdate: (() => void) | null = null;
+    private abortController: AbortController;
+    private closeTimeoutRef: number | null = null;
 
     constructor(popover: HTMLElement, popoverIdx: number) {
       this.popover = popover;
+      this.abortController = new AbortController();
       this.trigger = this.findOwnElement('[data-slot="popover-trigger"]');
       this.content = this.findOwnElement('[data-slot="popover-content"]');
       this.title = this.findOwnElement('[data-slot="popover-title"]');
@@ -195,27 +198,35 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
         this.closePopover({ focusTrigger: event.detail?.focusTrigger });
       }) as EventListener);
 
-      document.addEventListener("pointerdown", (e) => {
-        if (
-          this.isOpen &&
-          !this.popover.contains(e.target as Node) &&
-          !this.content?.contains(e.target as Node) &&
-          !this.isTargetInPopoverTree(e.target as Node)
-        ) {
-          this.closePopover();
-        }
-      });
+      document.addEventListener(
+        "pointerdown",
+        (e) => {
+          if (
+            this.isOpen &&
+            !this.popover.contains(e.target as Node) &&
+            !this.content?.contains(e.target as Node) &&
+            !this.isTargetInPopoverTree(e.target as Node)
+          ) {
+            this.closePopover();
+          }
+        },
+        { signal: this.abortController.signal },
+      );
 
-      document.addEventListener("click", (e) => {
-        if (
-          this.isOpen &&
-          !this.popover.contains(e.target as Node) &&
-          !this.content?.contains(e.target as Node) &&
-          !this.isTargetInPopoverTree(e.target as Node)
-        ) {
-          this.closePopover();
-        }
-      });
+      document.addEventListener(
+        "click",
+        (e) => {
+          if (
+            this.isOpen &&
+            !this.popover.contains(e.target as Node) &&
+            !this.content?.contains(e.target as Node) &&
+            !this.isTargetInPopoverTree(e.target as Node)
+          ) {
+            this.closePopover();
+          }
+        },
+        { signal: this.abortController.signal },
+      );
     }
 
     private setInitialState() {
@@ -291,7 +302,13 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
         });
       }
 
-      setTimeout(() => {
+      if (this.closeTimeoutRef !== null) {
+        window.clearTimeout(this.closeTimeoutRef);
+      }
+
+      this.closeTimeoutRef = window.setTimeout(() => {
+        this.closeTimeoutRef = null;
+        if (this.abortController.signal.aborted) return;
         if (!this.content) return;
         this.unportalContent();
         this.content.style.display = "none";
@@ -312,6 +329,25 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
             new CustomEvent("starwind-popover:close", { detail: { focusTrigger: false } }),
           );
         }
+      }
+    }
+
+    destroy() {
+      if (this.abortController.signal.aborted) return;
+
+      this.abortController.abort();
+
+      if (this.closeTimeoutRef !== null) {
+        window.clearTimeout(this.closeTimeoutRef);
+        this.closeTimeoutRef = null;
+      }
+
+      this.unportalContent();
+      this.isOpen = false;
+      this.isClosing = false;
+
+      if (this.content) {
+        delete (this.content as any).__popoverHandler;
       }
     }
 
@@ -639,10 +675,29 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
     }
   }
 
-  const popoverInstances = new WeakMap<HTMLElement, PopoverHandler>();
+  const popoverInstances = new Map<HTMLElement, PopoverHandler>();
   let popoverCounter = 0;
 
+  const cleanupStalePopovers = () => {
+    for (const [popoverEl, popoverHandler] of popoverInstances.entries()) {
+      if (!document.contains(popoverEl)) {
+        popoverHandler.destroy();
+        popoverInstances.delete(popoverEl);
+      }
+    }
+  };
+
+  const destroyAllPopovers = () => {
+    for (const popoverHandler of popoverInstances.values()) {
+      popoverHandler.destroy();
+    }
+
+    popoverInstances.clear();
+  };
+
   const initPopovers = () => {
+    cleanupStalePopovers();
+
     document.querySelectorAll<HTMLElement>(".starwind-popover").forEach((popoverEl) => {
       if (!popoverInstances.has(popoverEl)) {
         popoverInstances.set(popoverEl, new PopoverHandler(popoverEl, popoverCounter++));
@@ -651,6 +706,7 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
   };
 
   initPopovers();
+  document.addEventListener("astro:before-swap", destroyAllPopovers);
   document.addEventListener("astro:after-swap", initPopovers);
   document.addEventListener("starwind:init", initPopovers);
 </script>

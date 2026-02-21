@@ -23,6 +23,11 @@ type Props = HTMLAttributes<"div"> & {
    * @default 150
    */
   animationDuration?: number;
+  /**
+   * Accessible name for the dialog when a PopoverTitle is not present.
+   * If neither aria-label nor aria-labelledby is provided, a fallback label is applied.
+   */
+  "aria-label"?: string;
 };
 
 export const popoverContent = tv({
@@ -70,6 +75,8 @@ const {
   align = "center",
   sideOffset = 4,
   animationDuration = 150,
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledBy,
   ...rest
 } = Astro.props;
 ---
@@ -81,6 +88,8 @@ const {
   data-side-offset={sideOffset}
   data-state="closed"
   role="dialog"
+  aria-label={ariaLabel ?? (ariaLabelledBy ? undefined : "Popover dialog")}
+  aria-labelledby={ariaLabelledBy}
   tabindex="-1"
   style={{
     display: "none",
