@@ -26,11 +26,11 @@ const {
   class={carousel({ class: className })}
   role="region"
   aria-roledescription="carousel"
-  data-slot="carousel"
   data-axis={orientation === "horizontal" ? "x" : "y"}
   data-opts={JSON.stringify(opts)}
   data-auto-init={autoInit}
   {...rest}
+  data-slot="carousel"
 >
   <slot />
 </div>

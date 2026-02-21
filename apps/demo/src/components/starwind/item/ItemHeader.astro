@@ -11,6 +11,6 @@ export const itemHeader = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={itemHeader({ class: className })} data-slot="item-header" {...rest}>
+<div class={itemHeader({ class: className })} {...rest} data-slot="item-header">
   <slot />
 </div>

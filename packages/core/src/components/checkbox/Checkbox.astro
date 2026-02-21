@@ -84,9 +84,9 @@ const { base, input, icon, label: labelClass } = checkbox({ size, variant });
     type="checkbox"
     id={id}
     class={input({ class: className })}
-    data-slot="checkbox-input"
     {checked}
     {...rest}
+    data-slot="checkbox-input"
   />
   <Check class={icon()} />
   {

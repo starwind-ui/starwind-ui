@@ -41,8 +41,8 @@ const { class: className, inset = false, disabled = false, as: Tag = "div", ...r
   role="menuitem"
   tabindex={disabled ? "-1" : "0"}
   data-disabled={disabled ? "true" : undefined}
-  data-slot="dropdown-item"
   {...rest}
+  data-slot="dropdown-item"
 >
   <slot />
 </Tag>

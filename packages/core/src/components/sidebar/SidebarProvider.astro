@@ -45,12 +45,12 @@ const mergedStyle = {
 
 <div
   class={sidebarProvider({ class: className })}
-  data-slot="sidebar-provider"
   data-state={defaultOpen ? "expanded" : "collapsed"}
   data-mobile-open="false"
   data-keyboard-shortcut={keyboardShortcut}
   style={mergedStyle}
   {...rest}
+  data-slot="sidebar-provider"
 >
   <slot />
 </div>

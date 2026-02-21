@@ -9,6 +9,6 @@ export const dialogFooter = tv({ base: "flex flex-col-reverse gap-2 sm:flex-row 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={dialogFooter({ class: className })} data-slot="dialog-footer" {...rest}>
+<div class={dialogFooter({ class: className })} {...rest} data-slot="dialog-footer">
   <slot />
 </div>

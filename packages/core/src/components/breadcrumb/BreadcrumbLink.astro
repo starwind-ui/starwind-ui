@@ -15,7 +15,7 @@ const { class: className, asChild = false, ...rest } = Astro.props;
   asChild ? (
     <slot />
   ) : (
-    <a class={breadcrumbLink({ class: className })} data-slot="breadcrumb-link" {...rest}>
+    <a class={breadcrumbLink({ class: className })} {...rest} data-slot="breadcrumb-link">
       <slot />
     </a>
   )

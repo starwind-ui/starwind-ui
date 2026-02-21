@@ -11,6 +11,6 @@ export const tableCaption = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<caption data-slot="table-caption" class={tableCaption({ class: className })} {...rest}>
+<caption class={tableCaption({ class: className })} {...rest} data-slot="table-caption">
   <slot />
 </caption>

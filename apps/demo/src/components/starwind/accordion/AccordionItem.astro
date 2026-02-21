@@ -20,8 +20,8 @@ const { value, class: className, ...rest } = Astro.props;
   class={accordionItem({ class: className })}
   data-value={value}
   data-state="closed"
-  data-slot="accordion-item"
   {...rest}
+  data-slot="accordion-item"
 >
   <slot />
 </div>

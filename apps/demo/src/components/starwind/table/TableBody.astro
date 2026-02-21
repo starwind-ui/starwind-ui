@@ -11,6 +11,6 @@ export const tableBody = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<tbody data-slot="table-body" class={tableBody({ class: className })} {...rest}>
+<tbody class={tableBody({ class: className })} {...rest} data-slot="table-body">
   <slot />
 </tbody>

@@ -11,6 +11,6 @@ export const inputOtpGroup = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={inputOtpGroup({ class: className })} data-slot="input-otp-group" {...rest}>
+<div class={inputOtpGroup({ class: className })} {...rest} data-slot="input-otp-group">
   <slot />
 </div>

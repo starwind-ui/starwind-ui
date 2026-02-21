@@ -24,9 +24,9 @@ const { class: className, inset = false, disabled = false, ...rest } = Astro.pro
   aria-expanded="false"
   tabindex={disabled ? "-1" : "0"}
   data-disabled={disabled ? "true" : undefined}
-  data-slot="dropdown-item"
   data-sub-trigger
   {...rest}
+  data-slot="dropdown-item"
 >
   <slot />
   <ChevronRight class="ml-auto size-4" />

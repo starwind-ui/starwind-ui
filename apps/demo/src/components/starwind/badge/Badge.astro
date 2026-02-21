@@ -50,6 +50,6 @@ const isLink = Astro.props.href ? true : false;
 const Tag = Astro.props.href ? "a" : "div";
 ---
 
-<Tag class={badge({ variant, size, isLink, class: className })} data-slot="badge" {...rest}>
+<Tag class={badge({ variant, size, isLink, class: className })} {...rest} data-slot="badge">
   <slot />
 </Tag>

@@ -22,9 +22,9 @@ const { class: className, ...rest } = Astro.props;
 
 <div
   class={sidebarMenuBadge({ class: className })}
-  data-slot="sidebar-menu-badge"
   data-sidebar="menu-badge"
   {...rest}
+  data-slot="sidebar-menu-badge"
 >
   <slot />
 </div>

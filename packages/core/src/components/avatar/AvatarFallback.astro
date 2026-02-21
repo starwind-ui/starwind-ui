@@ -13,6 +13,6 @@ interface Props extends HTMLAttributes<"div"> {
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={avatarFallback({ class: className })} data-slot="avatar-fallback" {...rest}>
+<div class={avatarFallback({ class: className })} {...rest} data-slot="avatar-fallback">
   <slot />
 </div>

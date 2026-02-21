@@ -14,6 +14,6 @@ export const selectValue = tv({ base: "pointer-events-none" });
 const { placeholder = "select", class: className, ...rest } = Astro.props;
 ---
 
-<span class={selectValue({ class: className })} data-slot="select-value" {...rest}>
+<span class={selectValue({ class: className })} {...rest} data-slot="select-value">
   {placeholder}
 </span>

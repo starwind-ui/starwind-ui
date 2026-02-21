@@ -9,6 +9,6 @@ export const alertDialogHeader = tv({ base: "flex flex-col gap-2 text-center sm:
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class={alertDialogHeader({ class: className })} data-slot="alert-dialog-header" {...rest}>
+<div class={alertDialogHeader({ class: className })} {...rest} data-slot="alert-dialog-header">
   <slot />
 </div>

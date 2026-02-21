@@ -19,7 +19,7 @@ type Props = HTMLAttributes<"div">;
 const { class: className = "", ...rest } = Astro.props;
 ---
 
-<div class={carouselContent()} data-slot="carousel-content" {...rest}>
+<div class={carouselContent()} {...rest} data-slot="carousel-content">
   <div class={carouselContainer({ class: className })} data-slot="carousel-container">
     <slot />
   </div>

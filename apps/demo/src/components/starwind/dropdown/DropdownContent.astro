@@ -37,8 +37,8 @@ export const dropdownContent = tv({
     side: {
       bottom: "slide-in-from-top-2 slide-out-to-top-2 top-full",
       top: "slide-in-from-bottom-2 slide-out-to-bottom-2 bottom-full",
-      right: "slide-in-from-left-2 slide-out-to-left-2 left-full top-0",
-      left: "slide-in-from-right-2 slide-out-to-right-2 right-full top-0",
+      right: "slide-in-from-left-2 slide-out-to-left-2 top-0 left-full",
+      left: "slide-in-from-right-2 slide-out-to-right-2 top-0 right-full",
     },
     align: {
       start: "",
@@ -100,7 +100,6 @@ const {
   data-side={side}
   data-align={align}
   data-state="closed"
-  data-slot="dropdown-content"
   tabindex="-1"
   aria-orientation="vertical"
   style={{
@@ -112,6 +111,7 @@ const {
     marginRight: side === "left" ? `${sideOffset}px` : undefined,
   }}
   {...rest}
+  data-slot="dropdown-content"
 >
   <slot />
 </div>

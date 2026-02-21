@@ -14,10 +14,13 @@ const { class: className, animationDuration = 150, ...rest } = Astro.props;
 ---
 
 <div
-  class={dropdownContent({ side: "right", align: "start", class: ["starwind-dropdown-sub-content", className] })}
+  class={dropdownContent({
+    side: "right",
+    align: "start",
+    class: ["starwind-dropdown-sub-content", className],
+  })}
   role="menu"
   data-state="closed"
-  data-slot="dropdown-content"
   tabindex="-1"
   aria-orientation="vertical"
   style={{
@@ -25,6 +28,7 @@ const { class: className, animationDuration = 150, ...rest } = Astro.props;
     animationDuration: `${animationDuration}ms`,
   }}
   {...rest}
+  data-slot="dropdown-content"
 >
   <slot />
 </div>

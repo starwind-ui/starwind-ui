@@ -6,6 +6,6 @@ type Props = HTMLAttributes<"nav">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<nav aria-label="breadcrumb" class={className} data-slot="breadcrumb" {...rest}>
+<nav aria-label="breadcrumb" class={className} {...rest} data-slot="breadcrumb">
   <slot />
 </nav>
