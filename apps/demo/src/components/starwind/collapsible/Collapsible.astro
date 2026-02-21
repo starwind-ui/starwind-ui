@@ -34,11 +34,11 @@ const finalId = (rest as Record<string, unknown>)["id"] as string | undefined;
 ---
 
 <div
-  {...sanitizedRest}
   id={finalId}
   class={collapsible({ class: className })}
   data-state={finalDataState}
   data-disabled={finalDataDisabled}
+  {...sanitizedRest}
   data-slot="collapsible"
 >
   <slot />

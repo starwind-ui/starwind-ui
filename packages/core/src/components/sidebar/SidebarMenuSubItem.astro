@@ -8,9 +8,9 @@ const { class: className, ...rest } = Astro.props;
 
 <li
   class:list={["group/menu-sub-item relative", className]}
-  data-slot="sidebar-menu-sub-item"
   data-sidebar="menu-sub-item"
   {...rest}
+  data-slot="sidebar-menu-sub-item"
 >
   <slot />
 </li>

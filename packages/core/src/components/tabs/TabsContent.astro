@@ -15,7 +15,6 @@ const { value, class: className, ...rest } = Astro.props;
 
 <div
   class={tabsContent({ class: className })}
-  data-slot="tabs-content"
   data-tabs-content
   data-value={value}
   data-state="inactive"
@@ -23,6 +22,7 @@ const { value, class: className, ...rest } = Astro.props;
   tabindex="0"
   hidden
   {...rest}
+  data-slot="tabs-content"
 >
   <slot />
 </div>

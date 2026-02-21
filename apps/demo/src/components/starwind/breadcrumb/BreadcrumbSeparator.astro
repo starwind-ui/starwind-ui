@@ -14,8 +14,8 @@ const { class: className, ...rest } = Astro.props;
   role="presentation"
   aria-hidden="true"
   class={breadcrumbSeparator({ class: className })}
-  data-slot="breadcrumb-separator"
   {...rest}
+  data-slot="breadcrumb-separator"
 >
   <slot>
     <ChevronRight />

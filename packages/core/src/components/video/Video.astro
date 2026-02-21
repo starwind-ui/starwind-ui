@@ -99,8 +99,8 @@ const embedUrl = youtubeId ? buildYouTubeEmbedUrl(youtubeId, isShort) : null;
       loop={loop}
       controls={controls}
       poster={poster}
-      data-slot="video"
       {...rest}
+      data-slot="video"
     >
       <track kind="captions" />
     </video>
@@ -112,9 +112,9 @@ const embedUrl = youtubeId ? buildYouTubeEmbedUrl(youtubeId, isShort) : null;
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       referrerpolicy="strict-origin-when-cross-origin"
       allowfullscreen
-      data-slot="video"
       data-video-type={isShort ? "youtube-shorts" : "youtube"}
       {...rest}
+      data-slot="video"
     />
   )
 }

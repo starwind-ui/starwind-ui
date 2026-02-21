@@ -14,6 +14,6 @@ export const buttonGroupText = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div class:list={[buttonGroupText(), className]} data-slot="button-group-text" {...rest}>
+<div class:list={[buttonGroupText(), className]} {...rest} data-slot="button-group-text">
   <slot />
 </div>

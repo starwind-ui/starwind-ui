@@ -21,12 +21,12 @@ const { class: className = "", variant = "outline", size = "icon", ...rest } = A
 ---
 
 <Button
-  data-slot="carousel-previous"
   variant={variant}
   size={size}
   class={carouselPrevious({ class: className })}
   aria-label="Previous slide"
   {...rest}
+  data-slot="carousel-previous"
 >
   <slot name="icon">
     <ArrowLeft />

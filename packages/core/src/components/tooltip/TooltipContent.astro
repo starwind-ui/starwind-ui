@@ -75,7 +75,6 @@ const {
 
 <div
   class={tooltipContent({ side, class: className })}
-  data-slot="tooltip-content"
   data-state="closed"
   data-side={side}
   data-align={align}
@@ -83,6 +82,7 @@ const {
   {...avoidCollisions && { "data-avoid-collisions": "" }}
   role="tooltip"
   style={{ animationDuration: `${animationDuration}ms` }}
+  data-slot="tooltip-content"
 >
   <slot> My tooltip! </slot>
   <CaretUp class={tooltipCaret({ side })} />

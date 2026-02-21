@@ -53,10 +53,10 @@ const { class: className, orientation = "horizontal", ...rest } = Astro.props;
 
 <div
   role="group"
-  data-slot="button-group"
   data-orientation={orientation}
   class={buttonGroup({ orientation, class: className })}
   {...rest}
+  data-slot="button-group"
 >
   <slot />
 </div>

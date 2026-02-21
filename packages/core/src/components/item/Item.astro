@@ -47,6 +47,6 @@ const {
 } = Astro.props;
 ---
 
-<Tag class={item({ variant, size, class: className })} data-slot="item" {...rest}>
+<Tag class={item({ variant, size, class: className })} {...rest} data-slot="item">
   <slot />
 </Tag>

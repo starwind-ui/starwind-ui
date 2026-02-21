@@ -27,9 +27,9 @@ const skeletonWidth = width || `${Math.floor(Math.random() * 40) + 50}%`;
 
 <div
   class={sidebarMenuSkeleton({ class: className })}
-  data-slot="sidebar-menu-skeleton"
   data-sidebar="menu-skeleton"
   {...rest}
+  data-slot="sidebar-menu-skeleton"
 >
   {showIcon && <Skeleton class="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />}
   <Skeleton

@@ -16,6 +16,6 @@ export const sidebarInset = tv({
 const { class: className, ...rest } = Astro.props;
 ---
 
-<main class={sidebarInset({ class: className })} data-slot="sidebar-inset" {...rest}>
+<main class={sidebarInset({ class: className })} {...rest} data-slot="sidebar-inset">
   <slot />
 </main>

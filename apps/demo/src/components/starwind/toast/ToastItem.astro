@@ -30,12 +30,12 @@ const { class: className, variant = "default", ...rest } = Astro.props;
 
 <div
   class={toastItem({ variant, class: className })}
-  data-slot="toast"
   data-variant={variant}
   data-state="open"
   role="dialog"
   aria-modal="false"
   {...rest}
+  data-slot="toast"
 >
   <div
     class="starwind-toast-content grid gap-1 transition-opacity duration-200 data-behind:opacity-0 data-expanded:opacity-100"

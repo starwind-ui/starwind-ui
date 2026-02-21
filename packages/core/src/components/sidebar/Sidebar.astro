@@ -111,8 +111,8 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
         "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
         className,
       ]}
-      data-slot="sidebar"
       {...rest}
+      data-slot="sidebar"
     >
       <slot />
     </div>
@@ -132,7 +132,7 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
         <div data-slot="sidebar-gap" class={sidebarGap({ variant })} />
 
         {/* Fixed sidebar container */}
-        <div data-slot="sidebar-container" class={sidebarContainer({ side, variant })} {...rest}>
+        <div class={sidebarContainer({ side, variant })} {...rest} data-slot="sidebar-container">
           <div data-slot="sidebar-inner" class={sidebarInner({ variant })}>
             <slot />
           </div>

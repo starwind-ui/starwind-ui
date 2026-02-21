@@ -10,7 +10,7 @@ type Props = HTMLAttributes<"div"> & {
 };
 
 export const dropdownLabel = tv({
-  base: ["px-2 py-1.5 font-semibold"],
+  base: ["text-muted-foreground px-2 py-1.5 text-sm font-medium"],
   variants: {
     inset: {
       true: "pl-8",
@@ -24,6 +24,6 @@ export const dropdownLabel = tv({
 const { class: className, inset = false, ...rest } = Astro.props;
 ---
 
-<div class={dropdownLabel({ inset, class: className })} data-slot="dropdown-label" {...rest}>
+<div class={dropdownLabel({ inset, class: className })} {...rest} data-slot="dropdown-label">
   <slot />
 </div>

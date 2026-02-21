@@ -13,8 +13,8 @@ const { class: className, ...rest } = Astro.props;
   role="navigation"
   aria-label="pagination"
   class={pagination({ class: className })}
-  data-slot="pagination"
   {...rest}
+  data-slot="pagination"
 >
   <slot />
 </nav>

@@ -29,11 +29,11 @@ const {
 
 <div
   class={tooltip({ class: className })}
-  data-slot="tooltip"
   data-state="closed"
   data-open-delay={openDelay}
   data-close-delay={closeDelay}
   {...!disableHoverableContent && { "data-content-hoverable": "" }}
+  data-slot="tooltip"
 >
   <slot />
 </div>

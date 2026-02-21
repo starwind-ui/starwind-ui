@@ -32,19 +32,19 @@ if (Astro.slots.has("default")) {
   asChild && hasChildren ? (
     <div
       class={sidebarGroupLabel({ class: className })}
-      data-slot="sidebar-group-label"
       data-sidebar="group-label"
       data-as-child
       {...rest}
+      data-slot="sidebar-group-label"
     >
       <slot />
     </div>
   ) : (
     <div
       class={sidebarGroupLabel({ class: className })}
-      data-slot="sidebar-group-label"
       data-sidebar="group-label"
       {...rest}
+      data-slot="sidebar-group-label"
     >
       <slot />
     </div>
