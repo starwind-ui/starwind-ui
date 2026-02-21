@@ -1,0 +1,712 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = HTMLAttributes<"div"> & {
+  /**
+   * Whether the popover should be open when first rendered
+   * @default false
+   */
+  defaultOpen?: boolean;
+
+  children: any;
+};
+
+export const popover = tv({ base: "starwind-popover" });
+
+const { class: className, defaultOpen = false, ...rest } = Astro.props;
+---
+
+<div
+  class={popover({ class: className })}
+  data-state={defaultOpen ? "open" : "closed"}
+  data-default-open={defaultOpen ? "true" : undefined}
+  {...rest}
+  data-slot="popover"
+>
+  <slot />
+</div>
+
+<script>
+  type PopoverSide = "top" | "bottom" | "left" | "right";
+  type PopoverAlign = "start" | "center" | "end";
+
+  class PopoverHandler {
+    private popover: HTMLElement;
+    private trigger: HTMLElement | null;
+    private content: HTMLElement | null;
+    private title: HTMLElement | null;
+    private description: HTMLElement | null;
+    private isOpen: boolean = false;
+    private isClosing: boolean = false;
+    private animationDuration = 150;
+    private side: PopoverSide = "bottom";
+    private align: PopoverAlign = "center";
+    private sideOffset = 4;
+    private parentHandler: PopoverHandler | null = null;
+    private contentPlaceholder: Comment | null = null;
+    private cleanupAutoUpdate: (() => void) | null = null;
+    private abortController: AbortController;
+    private closeTimeoutRef: number | null = null;
+
+    constructor(popover: HTMLElement, popoverIdx: number) {
+      this.popover = popover;
+      this.abortController = new AbortController();
+      this.trigger = this.findOwnElement('[data-slot="popover-trigger"]');
+      this.content = this.findOwnElement('[data-slot="popover-content"]');
+      this.title = this.findOwnElement('[data-slot="popover-title"]');
+      this.description = this.findOwnElement('[data-slot="popover-description"]');
+
+      if (this.content) {
+        (this.content as any).__popoverHandler = this;
+      }
+
+      this.parentHandler = this.resolveParentHandler();
+
+      // if trigger is set with asChild, use the first child element as trigger button
+      if (this.trigger?.hasAttribute("data-as-child")) {
+        this.trigger = this.trigger.firstElementChild as HTMLElement;
+      }
+
+      if (!this.trigger || !this.content) return;
+
+      const animationDurationString = this.content.style.animationDuration;
+      if (animationDurationString.endsWith("ms")) {
+        this.animationDuration = parseFloat(animationDurationString);
+      } else if (animationDurationString.endsWith("s")) {
+        this.animationDuration = parseFloat(animationDurationString) * 1000;
+      }
+
+      const contentSide = this.content.getAttribute("data-side");
+      if (
+        contentSide === "top" ||
+        contentSide === "bottom" ||
+        contentSide === "left" ||
+        contentSide === "right"
+      ) {
+        this.side = contentSide;
+      }
+
+      const contentAlign = this.content.getAttribute("data-align");
+      if (contentAlign === "start" || contentAlign === "center" || contentAlign === "end") {
+        this.align = contentAlign;
+      }
+
+      const contentSideOffset = parseFloat(this.content.getAttribute("data-side-offset") || "4");
+      if (Number.isFinite(contentSideOffset)) {
+        this.sideOffset = contentSideOffset;
+      }
+
+      this.isOpen =
+        this.popover.getAttribute("data-state") === "open" ||
+        this.popover.getAttribute("data-default-open") === "true";
+
+      this.init(popoverIdx);
+    }
+
+    private findOwnElement(selector: string): HTMLElement | null {
+      const elements = this.popover.querySelectorAll(selector);
+      for (const element of elements) {
+        if (element.closest(".starwind-popover") === this.popover) {
+          return element as HTMLElement;
+        }
+      }
+      return null;
+    }
+
+    private resolveParentHandler() {
+      const parentContent = this.popover.parentElement?.closest('[data-slot="popover-content"]');
+      if (!parentContent) return null;
+
+      return ((parentContent as any).__popoverHandler as PopoverHandler | undefined) ?? null;
+    }
+
+    private init(popoverIdx: number) {
+      this.setupAccessibility(popoverIdx);
+      this.setupEvents();
+      this.setInitialState();
+    }
+
+    private setupAccessibility(popoverIdx: number) {
+      if (!this.trigger || !this.content) return;
+
+      if (!this.trigger.id) {
+        this.trigger.id = `starwind-popover${popoverIdx}-trigger`;
+      }
+
+      if (!this.content.id) {
+        this.content.id = `starwind-popover${popoverIdx}-content`;
+      }
+
+      this.trigger.setAttribute("aria-controls", this.content.id);
+      this.trigger.setAttribute("aria-haspopup", "dialog");
+      this.content.setAttribute("aria-labelledby", this.trigger.id);
+
+      if (this.title) {
+        if (!this.title.id) {
+          this.title.id = `starwind-popover${popoverIdx}-title`;
+        }
+        this.content.setAttribute("aria-labelledby", this.title.id);
+      }
+
+      if (this.description) {
+        if (!this.description.id) {
+          this.description.id = `starwind-popover${popoverIdx}-description`;
+        }
+        this.content.setAttribute("aria-describedby", this.description.id);
+      }
+    }
+
+    private setupEvents() {
+      if (!this.trigger || !this.content) return;
+
+      this.trigger.addEventListener("click", (e) => {
+        if (this.isTriggerDisabled()) return;
+        e.preventDefault();
+        this.togglePopover();
+      });
+
+      this.trigger.addEventListener("keydown", (e) => {
+        if (this.isTriggerDisabled()) return;
+
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          this.togglePopover();
+        } else if (e.key === "ArrowDown" && !this.isOpen) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.openPopover();
+        } else if (e.key === "Escape" && this.isOpen) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closePopover({ focusTrigger: true });
+        }
+      });
+
+      this.content.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && this.isOpen) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closePopover({ focusTrigger: true });
+        }
+      });
+
+      this.popover.addEventListener("starwind-popover:close", ((
+        event: CustomEvent<{ focusTrigger?: boolean }>,
+      ) => {
+        this.closePopover({ focusTrigger: event.detail?.focusTrigger });
+      }) as EventListener);
+
+      document.addEventListener(
+        "pointerdown",
+        (e) => {
+          if (
+            this.isOpen &&
+            !this.popover.contains(e.target as Node) &&
+            !this.content?.contains(e.target as Node) &&
+            !this.isTargetInPopoverTree(e.target as Node)
+          ) {
+            this.closePopover();
+          }
+        },
+        { signal: this.abortController.signal },
+      );
+
+      document.addEventListener(
+        "click",
+        (e) => {
+          if (
+            this.isOpen &&
+            !this.popover.contains(e.target as Node) &&
+            !this.content?.contains(e.target as Node) &&
+            !this.isTargetInPopoverTree(e.target as Node)
+          ) {
+            this.closePopover();
+          }
+        },
+        { signal: this.abortController.signal },
+      );
+    }
+
+    private setInitialState() {
+      if (!this.trigger || !this.content) return;
+
+      if (this.isOpen) {
+        this.popover.setAttribute("data-state", "open");
+        this.trigger.setAttribute("aria-expanded", "true");
+        this.trigger.setAttribute("data-state", "open");
+        this.content.setAttribute("data-state", "open");
+        this.content.style.removeProperty("display");
+        this.portalContent();
+        this.positionContent();
+        requestAnimationFrame(() => this.positionContent());
+      } else {
+        this.popover.setAttribute("data-state", "closed");
+        this.trigger.setAttribute("aria-expanded", "false");
+        this.trigger.setAttribute("data-state", "closed");
+        this.content.setAttribute("data-state", "closed");
+        this.unportalContent();
+        this.content.style.display = "none";
+      }
+    }
+
+    private isTriggerDisabled() {
+      if (!this.trigger) return true;
+      return (
+        this.trigger.hasAttribute("disabled") ||
+        this.trigger.getAttribute("aria-disabled") === "true" ||
+        this.trigger.getAttribute("data-disabled") === "true"
+      );
+    }
+
+    private togglePopover() {
+      if (this.isOpen) {
+        this.closePopover();
+      } else {
+        this.openPopover();
+      }
+    }
+
+    private openPopover() {
+      if (this.isOpen || this.isClosing) return;
+      if (!this.trigger || !this.content || this.isTriggerDisabled()) return;
+
+      this.isOpen = true;
+      this.popover.setAttribute("data-state", "open");
+      this.trigger.setAttribute("aria-expanded", "true");
+      this.trigger.setAttribute("data-state", "open");
+      this.content.setAttribute("data-state", "open");
+      this.content.style.removeProperty("display");
+      this.portalContent();
+      this.positionContent();
+      requestAnimationFrame(() => this.positionContent());
+    }
+
+    private closePopover(options?: { focusTrigger?: boolean }) {
+      if (!this.isOpen) return;
+      if (!this.trigger || !this.content) return;
+
+      this.closeNestedPopovers();
+
+      this.isClosing = true;
+      this.isOpen = false;
+      this.popover.setAttribute("data-state", "closed");
+      this.trigger.setAttribute("aria-expanded", "false");
+      this.trigger.setAttribute("data-state", "closed");
+      this.content.setAttribute("data-state", "closed");
+
+      if (options?.focusTrigger) {
+        requestAnimationFrame(() => {
+          this.trigger?.focus();
+        });
+      }
+
+      if (this.closeTimeoutRef !== null) {
+        window.clearTimeout(this.closeTimeoutRef);
+      }
+
+      this.closeTimeoutRef = window.setTimeout(() => {
+        this.closeTimeoutRef = null;
+        if (this.abortController.signal.aborted) return;
+        if (!this.content) return;
+        this.unportalContent();
+        this.content.style.display = "none";
+        this.isClosing = false;
+      }, this.animationDuration);
+    }
+
+    private closeNestedPopovers() {
+      if (!this.content) return;
+
+      const nestedPopovers = this.content.querySelectorAll<HTMLElement>(
+        '.starwind-popover[data-state="open"]',
+      );
+
+      for (const nestedPopover of nestedPopovers) {
+        if (nestedPopover !== this.popover) {
+          nestedPopover.dispatchEvent(
+            new CustomEvent("starwind-popover:close", { detail: { focusTrigger: false } }),
+          );
+        }
+      }
+    }
+
+    destroy() {
+      if (this.abortController.signal.aborted) return;
+
+      this.abortController.abort();
+
+      if (this.closeTimeoutRef !== null) {
+        window.clearTimeout(this.closeTimeoutRef);
+        this.closeTimeoutRef = null;
+      }
+
+      this.unportalContent();
+      this.isOpen = false;
+      this.isClosing = false;
+
+      if (this.content) {
+        delete (this.content as any).__popoverHandler;
+      }
+    }
+
+    private isTargetInPopoverTree(target: Node): boolean {
+      const element = target instanceof HTMLElement ? target : target.parentElement;
+      if (!element) return false;
+
+      const contentElement = element.closest('[data-slot="popover-content"]');
+      if (!contentElement) return false;
+
+      let currentHandler: PopoverHandler | null =
+        ((contentElement as any).__popoverHandler as PopoverHandler | undefined) ?? null;
+
+      while (currentHandler) {
+        if (currentHandler === this) {
+          return true;
+        }
+
+        currentHandler = currentHandler.parentHandler;
+      }
+
+      return false;
+    }
+
+    private getOppositeSide(side: PopoverSide): PopoverSide {
+      switch (side) {
+        case "top":
+          return "bottom";
+        case "bottom":
+          return "top";
+        case "left":
+          return "right";
+        case "right":
+          return "left";
+      }
+    }
+
+    private getOppositeAlign(align: PopoverAlign): PopoverAlign {
+      switch (align) {
+        case "start":
+          return "end";
+        case "end":
+          return "start";
+        case "center":
+          return "center";
+      }
+    }
+
+    private portalContent() {
+      if (!this.content) return;
+      if (this.contentPlaceholder || this.content.parentElement === document.body) return;
+
+      this.contentPlaceholder = document.createComment("popover-content-placeholder");
+      this.content.parentNode?.insertBefore(this.contentPlaceholder, this.content);
+
+      document.body.appendChild(this.content);
+
+      this.content.style.position = "fixed";
+      this.content.style.zIndex = "50";
+
+      const updatePosition = () => this.positionContent();
+      window.addEventListener("scroll", updatePosition, true);
+      window.addEventListener("resize", updatePosition);
+
+      const resizeObserver = new ResizeObserver(() => this.positionContent());
+      resizeObserver.observe(this.content);
+      if (this.trigger) {
+        resizeObserver.observe(this.trigger);
+      }
+
+      this.cleanupAutoUpdate = () => {
+        window.removeEventListener("scroll", updatePosition, true);
+        window.removeEventListener("resize", updatePosition);
+        resizeObserver.disconnect();
+      };
+    }
+
+    private unportalContent() {
+      if (!this.content) return;
+
+      this.cleanupAutoUpdate?.();
+      this.cleanupAutoUpdate = null;
+
+      if (this.contentPlaceholder) {
+        this.contentPlaceholder.parentNode?.insertBefore(this.content, this.contentPlaceholder);
+        this.contentPlaceholder.remove();
+        this.contentPlaceholder = null;
+      }
+
+      this.content.style.removeProperty("position");
+      this.content.style.removeProperty("z-index");
+      this.content.style.removeProperty("top");
+      this.content.style.removeProperty("left");
+      this.content.style.removeProperty("transform-origin");
+    }
+
+    private positionContent() {
+      if (!this.content || !this.trigger || !this.isOpen) return;
+
+      const triggerRect = this.trigger.getBoundingClientRect();
+      const contentWidth = this.content.offsetWidth;
+      const contentHeight = this.content.offsetHeight;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const viewportPadding = 8;
+
+      const candidates = this.getPlacementCandidates();
+
+      let bestPlacement = candidates[0];
+      let bestPosition = this.clampPositionToViewport(
+        this.getPlacementPosition(candidates[0], triggerRect, contentWidth, contentHeight),
+        contentWidth,
+        contentHeight,
+        viewportWidth,
+        viewportHeight,
+        viewportPadding,
+      );
+      let bestScore = Number.POSITIVE_INFINITY;
+
+      for (const placement of candidates) {
+        const preferredPosition = this.getPlacementPosition(
+          placement,
+          triggerRect,
+          contentWidth,
+          contentHeight,
+        );
+        const clampedPosition = this.clampPositionToViewport(
+          preferredPosition,
+          contentWidth,
+          contentHeight,
+          viewportWidth,
+          viewportHeight,
+          viewportPadding,
+        );
+
+        const overflow = this.getOverflowAmount(
+          preferredPosition,
+          contentWidth,
+          contentHeight,
+          viewportWidth,
+          viewportHeight,
+          viewportPadding,
+        );
+
+        const overflowTotal = overflow.left + overflow.right + overflow.top + overflow.bottom;
+        const mainAxisShift = this.getMainAxisShift(
+          placement.side,
+          preferredPosition,
+          clampedPosition,
+        );
+        const crossAxisShift = this.getCrossAxisShift(
+          placement.side,
+          preferredPosition,
+          clampedPosition,
+        );
+
+        const sidePenalty = placement.side === this.side ? 0 : 32;
+        const alignPenalty = placement.align === this.align ? 0 : 8;
+        const score =
+          overflowTotal * 24 + mainAxisShift * 8 + crossAxisShift * 3 + sidePenalty + alignPenalty;
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestPlacement = placement;
+          bestPosition = clampedPosition;
+        }
+      }
+
+      this.content.style.left = `${Math.round(bestPosition.left)}px`;
+      this.content.style.top = `${Math.round(bestPosition.top)}px`;
+      this.content.style.transformOrigin = this.getTransformOrigin(
+        bestPlacement.side,
+        bestPlacement.align,
+      );
+      this.content.setAttribute("data-side", bestPlacement.side);
+      this.content.setAttribute("data-align", bestPlacement.align);
+    }
+
+    private getPlacementCandidates() {
+      const placements: Array<{ side: PopoverSide; align: PopoverAlign }> = [];
+
+      const pushUnique = (side: PopoverSide, align: PopoverAlign) => {
+        if (!placements.some((placement) => placement.side === side && placement.align === align)) {
+          placements.push({ side, align });
+        }
+      };
+
+      const oppositeSide = this.getOppositeSide(this.side);
+      const oppositeAlign = this.getOppositeAlign(this.align);
+
+      pushUnique(this.side, this.align);
+      pushUnique(oppositeSide, this.align);
+      pushUnique(this.side, "center");
+      pushUnique(oppositeSide, "center");
+      pushUnique(this.side, oppositeAlign);
+      pushUnique(oppositeSide, oppositeAlign);
+
+      if (this.side === "top" || this.side === "bottom") {
+        for (const align of ["start", "center", "end"] as const) {
+          pushUnique("right", align);
+          pushUnique("left", align);
+        }
+      } else {
+        for (const align of ["start", "center", "end"] as const) {
+          pushUnique("bottom", align);
+          pushUnique("top", align);
+        }
+      }
+
+      return placements;
+    }
+
+    private getPlacementPosition(
+      placement: { side: PopoverSide; align: PopoverAlign },
+      triggerRect: DOMRect,
+      contentWidth: number,
+      contentHeight: number,
+    ) {
+      let top = 0;
+      let left = 0;
+
+      if (placement.side === "bottom" || placement.side === "top") {
+        top =
+          placement.side === "bottom"
+            ? triggerRect.bottom + this.sideOffset
+            : triggerRect.top - contentHeight - this.sideOffset;
+
+        if (placement.align === "start") {
+          left = triggerRect.left;
+        } else if (placement.align === "end") {
+          left = triggerRect.right - contentWidth;
+        } else {
+          left = triggerRect.left + (triggerRect.width - contentWidth) / 2;
+        }
+      } else {
+        left =
+          placement.side === "right"
+            ? triggerRect.right + this.sideOffset
+            : triggerRect.left - contentWidth - this.sideOffset;
+
+        if (placement.align === "start") {
+          top = triggerRect.top;
+        } else if (placement.align === "end") {
+          top = triggerRect.bottom - contentHeight;
+        } else {
+          top = triggerRect.top + (triggerRect.height - contentHeight) / 2;
+        }
+      }
+
+      return { top, left };
+    }
+
+    private clampPositionToViewport(
+      position: { top: number; left: number },
+      contentWidth: number,
+      contentHeight: number,
+      viewportWidth: number,
+      viewportHeight: number,
+      viewportPadding: number,
+    ) {
+      const maxLeft = Math.max(viewportPadding, viewportWidth - contentWidth - viewportPadding);
+      const maxTop = Math.max(viewportPadding, viewportHeight - contentHeight - viewportPadding);
+
+      return {
+        left: Math.min(Math.max(viewportPadding, position.left), maxLeft),
+        top: Math.min(Math.max(viewportPadding, position.top), maxTop),
+      };
+    }
+
+    private getOverflowAmount(
+      position: { top: number; left: number },
+      contentWidth: number,
+      contentHeight: number,
+      viewportWidth: number,
+      viewportHeight: number,
+      viewportPadding: number,
+    ) {
+      const right = position.left + contentWidth;
+      const bottom = position.top + contentHeight;
+
+      return {
+        left: Math.max(0, viewportPadding - position.left),
+        top: Math.max(0, viewportPadding - position.top),
+        right: Math.max(0, right - (viewportWidth - viewportPadding)),
+        bottom: Math.max(0, bottom - (viewportHeight - viewportPadding)),
+      };
+    }
+
+    private getMainAxisShift(
+      side: PopoverSide,
+      preferredPosition: { top: number; left: number },
+      clampedPosition: { top: number; left: number },
+    ) {
+      if (side === "top" || side === "bottom") {
+        return Math.abs(clampedPosition.top - preferredPosition.top);
+      }
+
+      return Math.abs(clampedPosition.left - preferredPosition.left);
+    }
+
+    private getCrossAxisShift(
+      side: PopoverSide,
+      preferredPosition: { top: number; left: number },
+      clampedPosition: { top: number; left: number },
+    ) {
+      if (side === "top" || side === "bottom") {
+        return Math.abs(clampedPosition.left - preferredPosition.left);
+      }
+
+      return Math.abs(clampedPosition.top - preferredPosition.top);
+    }
+
+    private getTransformOrigin(side: PopoverSide, align: PopoverAlign) {
+      if (side === "top" || side === "bottom") {
+        const vertical = side === "bottom" ? "top" : "bottom";
+        const horizontal = align === "start" ? "left" : align === "end" ? "right" : "center";
+
+        return `${horizontal} ${vertical}`;
+      }
+
+      const horizontal = side === "right" ? "left" : "right";
+      const vertical = align === "start" ? "top" : align === "end" ? "bottom" : "center";
+
+      return `${horizontal} ${vertical}`;
+    }
+  }
+
+  const popoverInstances = new Map<HTMLElement, PopoverHandler>();
+  let popoverCounter = 0;
+
+  const cleanupStalePopovers = () => {
+    for (const [popoverEl, popoverHandler] of popoverInstances.entries()) {
+      if (!document.contains(popoverEl)) {
+        popoverHandler.destroy();
+        popoverInstances.delete(popoverEl);
+      }
+    }
+  };
+
+  const destroyAllPopovers = () => {
+    for (const popoverHandler of popoverInstances.values()) {
+      popoverHandler.destroy();
+    }
+
+    popoverInstances.clear();
+  };
+
+  const initPopovers = () => {
+    cleanupStalePopovers();
+
+    document.querySelectorAll<HTMLElement>(".starwind-popover").forEach((popoverEl) => {
+      if (!popoverInstances.has(popoverEl)) {
+        popoverInstances.set(popoverEl, new PopoverHandler(popoverEl, popoverCounter++));
+      }
+    });
+  };
+
+  initPopovers();
+  document.addEventListener("astro:before-swap", destroyAllPopovers);
+  document.addEventListener("astro:after-swap", initPopovers);
+  document.addEventListener("starwind:init", initPopovers);
+</script>
