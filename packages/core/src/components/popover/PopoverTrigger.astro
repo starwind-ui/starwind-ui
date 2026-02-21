@@ -1,0 +1,47 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = Omit<HTMLAttributes<"button">, "role" | "type"> & {
+  /**
+   * When true, the component will render its child element with a simple wrapper instead of a button component
+   */
+  asChild?: boolean;
+};
+
+export const popoverTrigger = tv({
+  base: [
+    "starwind-popover-trigger",
+    "inline-flex items-center justify-center",
+    "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
+    "disabled:pointer-events-none",
+  ],
+});
+
+const { class: className, asChild = false, ...rest } = Astro.props;
+
+let hasChildren = false;
+if (Astro.slots.has("default")) {
+  hasChildren = true;
+}
+---
+
+{
+  asChild && hasChildren ? (
+    <div class:list={["starwind-popover-trigger", className]} data-slot="popover-trigger" data-as-child>
+      <slot />
+    </div>
+  ) : (
+    <button
+      class={popoverTrigger({ class: className })}
+      type="button"
+      aria-haspopup="dialog"
+      aria-expanded="false"
+      data-state="closed"
+      {...rest}
+      data-slot="popover-trigger"
+    >
+      <slot />
+    </button>
+  )
+}
