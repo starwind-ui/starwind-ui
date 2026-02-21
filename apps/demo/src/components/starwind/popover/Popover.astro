@@ -349,6 +349,17 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
       }
     }
 
+    private getOppositeAlign(align: PopoverAlign): PopoverAlign {
+      switch (align) {
+        case "start":
+          return "end";
+        case "end":
+          return "start";
+        case "center":
+          return "center";
+      }
+    }
+
     private portalContent() {
       if (!this.content) return;
       if (this.contentPlaceholder || this.content.parentElement === document.body) return;
@@ -394,6 +405,7 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
       this.content.style.removeProperty("z-index");
       this.content.style.removeProperty("top");
       this.content.style.removeProperty("left");
+      this.content.style.removeProperty("transform-origin");
     }
 
     private positionContent() {
@@ -406,76 +418,210 @@ const { class: className, defaultOpen = false, ...rest } = Astro.props;
       const viewportHeight = window.innerHeight;
       const viewportPadding = 8;
 
-      const placeBySide = (side: PopoverSide) => {
-        let top = 0;
-        let left = 0;
+      const candidates = this.getPlacementCandidates();
 
-        if (side === "bottom" || side === "top") {
-          top =
-            side === "bottom"
-              ? triggerRect.bottom + this.sideOffset
-              : triggerRect.top - contentHeight - this.sideOffset;
+      let bestPlacement = candidates[0];
+      let bestPosition = this.clampPositionToViewport(
+        this.getPlacementPosition(candidates[0], triggerRect, contentWidth, contentHeight),
+        contentWidth,
+        contentHeight,
+        viewportWidth,
+        viewportHeight,
+        viewportPadding,
+      );
+      let bestScore = Number.POSITIVE_INFINITY;
 
-          if (this.align === "start") {
-            left = triggerRect.left;
-          } else if (this.align === "end") {
-            left = triggerRect.right - contentWidth;
-          } else {
-            left = triggerRect.left + (triggerRect.width - contentWidth) / 2;
-          }
-        } else {
-          left =
-            side === "right"
-              ? triggerRect.right + this.sideOffset
-              : triggerRect.left - contentWidth - this.sideOffset;
-
-          if (this.align === "start") {
-            top = triggerRect.top;
-          } else if (this.align === "end") {
-            top = triggerRect.bottom - contentHeight;
-          } else {
-            top = triggerRect.top + (triggerRect.height - contentHeight) / 2;
-          }
-        }
-
-        return { top, left };
-      };
-
-      const overflowScore = (position: { top: number; left: number }) => {
-        const right = position.left + contentWidth;
-        const bottom = position.top + contentHeight;
-
-        return (
-          Math.max(0, viewportPadding - position.left) +
-          Math.max(0, viewportPadding - position.top) +
-          Math.max(0, right - (viewportWidth - viewportPadding)) +
-          Math.max(0, bottom - (viewportHeight - viewportPadding))
+      for (const placement of candidates) {
+        const preferredPosition = this.getPlacementPosition(
+          placement,
+          triggerRect,
+          contentWidth,
+          contentHeight,
         );
-      };
+        const clampedPosition = this.clampPositionToViewport(
+          preferredPosition,
+          contentWidth,
+          contentHeight,
+          viewportWidth,
+          viewportHeight,
+          viewportPadding,
+        );
 
-      const preferredPosition = placeBySide(this.side);
-      const flippedSide = this.getOppositeSide(this.side);
-      const flippedPosition = placeBySide(flippedSide);
+        const overflow = this.getOverflowAmount(
+          preferredPosition,
+          contentWidth,
+          contentHeight,
+          viewportWidth,
+          viewportHeight,
+          viewportPadding,
+        );
 
-      let resolvedSide = this.side;
-      let resolvedPosition = preferredPosition;
+        const overflowTotal = overflow.left + overflow.right + overflow.top + overflow.bottom;
+        const mainAxisShift = this.getMainAxisShift(
+          placement.side,
+          preferredPosition,
+          clampedPosition,
+        );
+        const crossAxisShift = this.getCrossAxisShift(
+          placement.side,
+          preferredPosition,
+          clampedPosition,
+        );
 
-      if (overflowScore(flippedPosition) < overflowScore(preferredPosition)) {
-        resolvedSide = flippedSide;
-        resolvedPosition = flippedPosition;
+        const sidePenalty = placement.side === this.side ? 0 : 32;
+        const alignPenalty = placement.align === this.align ? 0 : 8;
+        const score =
+          overflowTotal * 24 + mainAxisShift * 8 + crossAxisShift * 3 + sidePenalty + alignPenalty;
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestPlacement = placement;
+          bestPosition = clampedPosition;
+        }
       }
 
+      this.content.style.left = `${Math.round(bestPosition.left)}px`;
+      this.content.style.top = `${Math.round(bestPosition.top)}px`;
+      this.content.style.transformOrigin = this.getTransformOrigin(
+        bestPlacement.side,
+        bestPlacement.align,
+      );
+      this.content.setAttribute("data-side", bestPlacement.side);
+      this.content.setAttribute("data-align", bestPlacement.align);
+    }
+
+    private getPlacementCandidates() {
+      const placements: Array<{ side: PopoverSide; align: PopoverAlign }> = [];
+
+      const pushUnique = (side: PopoverSide, align: PopoverAlign) => {
+        if (!placements.some((placement) => placement.side === side && placement.align === align)) {
+          placements.push({ side, align });
+        }
+      };
+
+      const oppositeSide = this.getOppositeSide(this.side);
+      const oppositeAlign = this.getOppositeAlign(this.align);
+
+      pushUnique(this.side, this.align);
+      pushUnique(oppositeSide, this.align);
+      pushUnique(this.side, "center");
+      pushUnique(oppositeSide, "center");
+      pushUnique(this.side, oppositeAlign);
+      pushUnique(oppositeSide, oppositeAlign);
+
+      if (this.side === "top" || this.side === "bottom") {
+        for (const align of ["start", "center", "end"] as const) {
+          pushUnique("right", align);
+          pushUnique("left", align);
+        }
+      } else {
+        for (const align of ["start", "center", "end"] as const) {
+          pushUnique("bottom", align);
+          pushUnique("top", align);
+        }
+      }
+
+      return placements;
+    }
+
+    private getPlacementPosition(
+      placement: { side: PopoverSide; align: PopoverAlign },
+      triggerRect: DOMRect,
+      contentWidth: number,
+      contentHeight: number,
+    ) {
+      let top = 0;
+      let left = 0;
+
+      if (placement.side === "bottom" || placement.side === "top") {
+        top =
+          placement.side === "bottom"
+            ? triggerRect.bottom + this.sideOffset
+            : triggerRect.top - contentHeight - this.sideOffset;
+
+        if (placement.align === "start") {
+          left = triggerRect.left;
+        } else if (placement.align === "end") {
+          left = triggerRect.right - contentWidth;
+        } else {
+          left = triggerRect.left + (triggerRect.width - contentWidth) / 2;
+        }
+      } else {
+        left =
+          placement.side === "right"
+            ? triggerRect.right + this.sideOffset
+            : triggerRect.left - contentWidth - this.sideOffset;
+
+        if (placement.align === "start") {
+          top = triggerRect.top;
+        } else if (placement.align === "end") {
+          top = triggerRect.bottom - contentHeight;
+        } else {
+          top = triggerRect.top + (triggerRect.height - contentHeight) / 2;
+        }
+      }
+
+      return { top, left };
+    }
+
+    private clampPositionToViewport(
+      position: { top: number; left: number },
+      contentWidth: number,
+      contentHeight: number,
+      viewportWidth: number,
+      viewportHeight: number,
+      viewportPadding: number,
+    ) {
       const maxLeft = Math.max(viewportPadding, viewportWidth - contentWidth - viewportPadding);
       const maxTop = Math.max(viewportPadding, viewportHeight - contentHeight - viewportPadding);
 
-      const clampedLeft = Math.min(Math.max(viewportPadding, resolvedPosition.left), maxLeft);
-      const clampedTop = Math.min(Math.max(viewportPadding, resolvedPosition.top), maxTop);
+      return {
+        left: Math.min(Math.max(viewportPadding, position.left), maxLeft),
+        top: Math.min(Math.max(viewportPadding, position.top), maxTop),
+      };
+    }
 
-      this.content.style.left = `${Math.round(clampedLeft)}px`;
-      this.content.style.top = `${Math.round(clampedTop)}px`;
-      this.content.style.transformOrigin = this.getTransformOrigin(resolvedSide, this.align);
-      this.content.setAttribute("data-side", resolvedSide);
-      this.content.setAttribute("data-align", this.align);
+    private getOverflowAmount(
+      position: { top: number; left: number },
+      contentWidth: number,
+      contentHeight: number,
+      viewportWidth: number,
+      viewportHeight: number,
+      viewportPadding: number,
+    ) {
+      const right = position.left + contentWidth;
+      const bottom = position.top + contentHeight;
+
+      return {
+        left: Math.max(0, viewportPadding - position.left),
+        top: Math.max(0, viewportPadding - position.top),
+        right: Math.max(0, right - (viewportWidth - viewportPadding)),
+        bottom: Math.max(0, bottom - (viewportHeight - viewportPadding)),
+      };
+    }
+
+    private getMainAxisShift(
+      side: PopoverSide,
+      preferredPosition: { top: number; left: number },
+      clampedPosition: { top: number; left: number },
+    ) {
+      if (side === "top" || side === "bottom") {
+        return Math.abs(clampedPosition.top - preferredPosition.top);
+      }
+
+      return Math.abs(clampedPosition.left - preferredPosition.left);
+    }
+
+    private getCrossAxisShift(
+      side: PopoverSide,
+      preferredPosition: { top: number; left: number },
+      clampedPosition: { top: number; left: number },
+    ) {
+      if (side === "top" || side === "bottom") {
+        return Math.abs(clampedPosition.left - preferredPosition.left);
+      }
+
+      return Math.abs(clampedPosition.top - preferredPosition.top);
     }
 
     private getTransformOrigin(side: PopoverSide, align: PopoverAlign) {
