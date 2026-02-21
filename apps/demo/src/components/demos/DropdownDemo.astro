@@ -61,43 +61,29 @@ import {
       <DropdownTrigger asChild>
         <Button variant="outline">Sub-menu Demo</Button>
       </DropdownTrigger>
-      <DropdownContent class="w-56" align="start">
-        <DropdownLabel>My Account</DropdownLabel>
-        <DropdownSeparator />
-        <DropdownItem>
-          Profile
-          <DropdownShortcut>⇧⌘P</DropdownShortcut>
-        </DropdownItem>
-        <DropdownItem>
-          Billing
-          <DropdownShortcut>⌘B</DropdownShortcut>
-        </DropdownItem>
-        <DropdownItem>
-          Settings
-          <DropdownShortcut>⌘S</DropdownShortcut>
-        </DropdownItem>
-        <DropdownSeparator />
+      <DropdownContent align="start">
+        <DropdownItem>Team</DropdownItem>
         <DropdownSub>
           <DropdownSubTrigger>Invite users</DropdownSubTrigger>
           <DropdownSubContent>
             <DropdownItem>Email</DropdownItem>
             <DropdownItem>Message</DropdownItem>
+            <DropdownSub>
+              <DropdownSubTrigger>More options</DropdownSubTrigger>
+              <DropdownSubContent>
+                <DropdownItem>Calendly</DropdownItem>
+                <DropdownItem>Slack</DropdownItem>
+                <DropdownSeparator />
+                <DropdownItem>Webhook</DropdownItem>
+              </DropdownSubContent>
+            </DropdownSub>
             <DropdownSeparator />
-            <DropdownItem>More...</DropdownItem>
+            <DropdownItem>Advanced...</DropdownItem>
           </DropdownSubContent>
         </DropdownSub>
         <DropdownItem>
           New Team
           <DropdownShortcut>⌘+T</DropdownShortcut>
-        </DropdownItem>
-        <DropdownSeparator />
-        <DropdownItem>GitHub</DropdownItem>
-        <DropdownItem>Support</DropdownItem>
-        <DropdownItem disabled>API</DropdownItem>
-        <DropdownSeparator />
-        <DropdownItem>
-          Log out
-          <DropdownShortcut>⇧⌘Q</DropdownShortcut>
         </DropdownItem>
       </DropdownContent>
     </Dropdown>
