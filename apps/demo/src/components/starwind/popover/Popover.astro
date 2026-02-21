@@ -12,7 +12,7 @@ type Props = HTMLAttributes<"div"> & {
   children: any;
 };
 
-export const popover = tv({ base: "starwind-popover relative inline-block" });
+export const popover = tv({ base: "starwind-popover" });
 
 const { class: className, defaultOpen = false, ...rest } = Astro.props;
 ---
