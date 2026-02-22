@@ -4,7 +4,7 @@
 
 **Create animated websites in record time.**
 
-Starwind UI is a collection of 42+ beautifully designed, animated, and accessible components built purely with Astro and vanilla JS. Inspired by [shadcn/ui](https://ui.shadcn.com/), components are added directly to your codebase, giving you full ownership and complete control.
+Starwind UI is a collection of 45+ beautifully designed, animated, and accessible components built purely with Astro and vanilla JS. Inspired by [shadcn/ui](https://ui.shadcn.com/), components are added directly to your codebase, giving you full ownership and complete control.
 
 **[Get Started →](https://starwind.dev/docs/getting-started/installation/)** &nbsp;|&nbsp; **[Explore Components](https://starwind.dev/docs/components/)**
 
