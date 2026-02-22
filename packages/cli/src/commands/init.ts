@@ -150,6 +150,8 @@ export async function init(
       );
     }
 
+    const utilsDir = PATHS.LOCAL_UTILS_DIR;
+
     // ================================================================
     //            Make sure appropriate directories exist
     // ================================================================
@@ -288,6 +290,7 @@ export async function init(
           // 	components: "@/components",
           // },
           componentDir: configChoices.installLocation,
+          utilsDir,
           components: [],
         });
         await sleep(250);

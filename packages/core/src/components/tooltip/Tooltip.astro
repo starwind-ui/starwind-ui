@@ -39,18 +39,35 @@ const {
 </div>
 
 <script>
+  import {
+    type FloatingAlign,
+    type FloatingSide,
+    getTransformOrigin,
+    resolvePlacement,
+  } from "@/lib/utils/starwind/positioning";
+
   class TooltipHandler {
     private tooltip: HTMLElement;
     private trigger: HTMLElement | null;
     private content: HTMLElement | null;
     private openTimerRef: number | null = null;
     private closeTimerRef: number | null = null;
+    private hideAnimationTimerRef: number | null = null;
     private contentId: string;
     private animationDuration = 150;
+    private side: FloatingSide = "top";
+    private align: FloatingAlign = "center";
+    private sideOffset = 8;
+    private avoidCollisions = true;
+    private isOpen = false;
+    private contentPlaceholder: Comment | null = null;
+    private cleanupAutoUpdate: (() => void) | null = null;
+    private abortController: AbortController;
 
     constructor(tooltip: HTMLElement, idx: number) {
       this.contentId = `starwind-tooltip${idx}`;
       this.tooltip = tooltip;
+      this.abortController = new AbortController();
       this.content = tooltip.querySelector(".starwind-tooltip-content");
 
       // if tooltip.firstElementChild is this.content, then get the next element
@@ -59,9 +76,9 @@ const {
         this.trigger = this.trigger.nextElementSibling as HTMLElement;
       }
 
-      this.trigger.classList.add("starwind-tooltip-trigger");
-
       if (!this.trigger || !this.content) return;
+
+      this.trigger.classList.add("starwind-tooltip-trigger");
 
       // animationDuration is set with inline styles through passed prop to TooltipContent
       const animationDurationString = this.content.style.animationDuration;
@@ -71,12 +88,37 @@ const {
         // using something like @playform/compress might optimize to use "s" instead of "ms"
         this.animationDuration = parseFloat(animationDurationString) * 1000;
       }
+
+      const contentSide = this.content.getAttribute("data-side");
+      if (
+        contentSide === "top" ||
+        contentSide === "bottom" ||
+        contentSide === "left" ||
+        contentSide === "right"
+      ) {
+        this.side = contentSide;
+      }
+
+      const contentAlign = this.content.getAttribute("data-align");
+      if (contentAlign === "start" || contentAlign === "center" || contentAlign === "end") {
+        this.align = contentAlign;
+      }
+
+      const contentSideOffset = parseFloat(this.content.getAttribute("data-side-offset") || "8");
+      if (Number.isFinite(contentSideOffset)) {
+        this.sideOffset = contentSideOffset;
+      }
+
+      this.avoidCollisions = this.content.hasAttribute("data-avoid-collisions");
+      this.isOpen = this.tooltip.getAttribute("data-state") === "open";
+
       this.init();
     }
 
     private init() {
       this.setupAccessibility();
       this.setupEvents();
+      this.setInitialState();
     }
 
     private setupAccessibility() {
@@ -85,168 +127,238 @@ const {
       this.content.id = this.contentId;
     }
 
+    private setInitialState() {
+      if (!this.content || !this.trigger) return;
+
+      if (this.isOpen) {
+        this.tooltip.setAttribute("data-state", "open");
+        this.trigger.setAttribute("data-state", "open");
+        this.content.setAttribute("data-state", "open");
+        this.content.classList.remove("hidden");
+        this.portalContent();
+        this.positionTooltip();
+        requestAnimationFrame(() => this.positionTooltip());
+      } else {
+        this.tooltip.setAttribute("data-state", "closed");
+        this.trigger.setAttribute("data-state", "closed");
+        this.content.setAttribute("data-state", "closed");
+        this.content.classList.add("hidden");
+      }
+    }
+
     private setupEvents() {
       if (!this.trigger || !this.content) return;
 
       // Trigger events
-      this.trigger.addEventListener("mouseenter", () => this.show());
-      this.trigger.addEventListener("mouseleave", () => this.hide());
-      this.trigger.addEventListener("focus", () => this.show(true));
-      this.trigger.addEventListener("blur", () => this.hide(true));
+      this.trigger.addEventListener("mouseenter", () => this.show(), {
+        signal: this.abortController.signal,
+      });
+      this.trigger.addEventListener("mouseleave", () => this.hide(), {
+        signal: this.abortController.signal,
+      });
+      this.trigger.addEventListener("focus", () => this.show(true), {
+        signal: this.abortController.signal,
+      });
+      this.trigger.addEventListener("blur", () => this.hide(true), {
+        signal: this.abortController.signal,
+      });
 
       // Content events
       if (this.tooltip.hasAttribute("data-content-hoverable")) {
-        this.content.addEventListener("mouseenter", () => this.show());
-        this.content.addEventListener("mouseleave", () => this.hide());
+        this.content.addEventListener("mouseenter", () => this.show(), {
+          signal: this.abortController.signal,
+        });
+        this.content.addEventListener("mouseleave", () => this.hide(), {
+          signal: this.abortController.signal,
+        });
       }
 
       // Document events
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && this.tooltip.getAttribute("data-state") === "open") {
-          this.hide(true);
-        }
-      });
+      document.addEventListener(
+        "keydown",
+        (e) => {
+          if (e.key === "Escape" && this.isOpen) {
+            this.hide(true);
+          }
+        },
+        { signal: this.abortController.signal },
+      );
 
-      document.addEventListener("click", (e) => {
-        if (
-          !this.tooltip.contains(e.target as Node) &&
-          this.tooltip.getAttribute("data-state") === "open"
-        ) {
-          this.hide(true);
-        }
-      });
+      document.addEventListener(
+        "pointerdown",
+        (e) => {
+          if (
+            this.isOpen &&
+            !this.tooltip.contains(e.target as Node) &&
+            !this.content?.contains(e.target as Node)
+          ) {
+            this.hide(true);
+          }
+        },
+        { signal: this.abortController.signal },
+      );
+    }
+
+    private portalContent() {
+      if (!this.content) return;
+      if (this.contentPlaceholder || this.content.parentElement === document.body) return;
+
+      this.contentPlaceholder = document.createComment("tooltip-content-placeholder");
+      this.content.parentNode?.insertBefore(this.contentPlaceholder, this.content);
+
+      document.body.appendChild(this.content);
+
+      this.content.style.position = "fixed";
+      this.content.style.zIndex = "50";
+
+      const updatePosition = () => this.positionTooltip();
+      window.addEventListener("scroll", updatePosition, true);
+      window.addEventListener("resize", updatePosition);
+
+      const resizeObserver = new ResizeObserver(() => this.positionTooltip());
+      resizeObserver.observe(this.content);
+      if (this.trigger) {
+        resizeObserver.observe(this.trigger);
+      }
+
+      this.cleanupAutoUpdate = () => {
+        window.removeEventListener("scroll", updatePosition, true);
+        window.removeEventListener("resize", updatePosition);
+        resizeObserver.disconnect();
+      };
+    }
+
+    private unportalContent() {
+      if (!this.content) return;
+
+      this.cleanupAutoUpdate?.();
+      this.cleanupAutoUpdate = null;
+
+      if (this.contentPlaceholder) {
+        this.contentPlaceholder.parentNode?.insertBefore(this.content, this.contentPlaceholder);
+        this.contentPlaceholder.remove();
+        this.contentPlaceholder = null;
+      }
+
+      this.content.style.removeProperty("position");
+      this.content.style.removeProperty("z-index");
+      this.content.style.removeProperty("top");
+      this.content.style.removeProperty("left");
+      this.content.style.removeProperty("transform-origin");
+    }
+
+    private openNow() {
+      if (!this.content || !this.trigger) return;
+      if (this.abortController.signal.aborted) return;
+
+      this.clearHideAnimationTimer();
+      this.isOpen = true;
+      this.tooltip.setAttribute("data-state", "open");
+      this.trigger.setAttribute("data-state", "open");
+      this.content.setAttribute("data-state", "open");
+      this.content.classList.remove("hidden");
+      this.portalContent();
+      this.positionTooltip();
+      requestAnimationFrame(() => this.positionTooltip());
     }
 
     private show(immediate: boolean = false) {
       if (!this.content || !this.trigger) return;
+
+      this.clearCloseTimer();
+      this.clearHideAnimationTimer();
+      this.clearOpenTimer();
+
       if (immediate) {
-        this.tooltip.setAttribute("data-state", "open");
-        this.content.setAttribute("data-state", "open");
-        this.content.style.display = "block";
-        this.positionTooltip();
+        this.openNow();
         this.clearOpenTimer();
         return;
       }
 
-      this.clearCloseTimer();
-
-      const delay = parseInt(this.tooltip.getAttribute("data-open-delay") || "700");
+      const delay = parseInt(this.tooltip.getAttribute("data-open-delay") || "200");
       this.openTimerRef = window.setTimeout(() => {
-        if (!this.content || !this.trigger) return;
-        this.tooltip.setAttribute("data-state", "open");
-        this.content.setAttribute("data-state", "open");
-        this.content.style.display = "block";
-        this.positionTooltip();
+        if (this.abortController.signal.aborted) return;
+        this.openNow();
         this.openTimerRef = null;
       }, delay);
     }
 
     private positionTooltip() {
-      if (!this.content || !this.trigger) return;
+      if (!this.content || !this.trigger || !this.isOpen) return;
 
       const triggerRect = this.trigger.getBoundingClientRect();
-      const contentRect = this.content.getBoundingClientRect();
-      const side = this.content.dataset.side || "top";
-      const align = this.content.dataset.align || "center";
-      const sideOffset = parseInt(this.content.dataset.sideOffset || "8");
+      const contentWidth = this.content.offsetWidth;
+      const contentHeight = this.content.offsetHeight;
+      if (contentWidth === 0 || contentHeight === 0) return;
 
-      let top = 0;
-      let left = 0;
+      const resolvedPlacement = resolvePlacement({
+        side: this.side,
+        align: this.align,
+        sideOffset: this.sideOffset,
+        triggerRect,
+        contentWidth,
+        contentHeight,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        viewportPadding: 8,
+        avoidCollisions: this.avoidCollisions,
+      });
 
-      // Calculate position based on side
-      switch (side) {
-        case "top":
-          top = triggerRect.top - contentRect.height - sideOffset;
-          break;
-        case "bottom":
-          top = triggerRect.bottom + sideOffset;
-          break;
-        case "left":
-          left = triggerRect.left - contentRect.width - sideOffset;
-          break;
-        case "right":
-          left = triggerRect.right + sideOffset;
-          break;
-      }
+      this.content.style.left = `${Math.round(resolvedPlacement.left)}px`;
+      this.content.style.top = `${Math.round(resolvedPlacement.top)}px`;
+      this.content.style.transformOrigin = getTransformOrigin(
+        resolvedPlacement.side,
+        resolvedPlacement.align,
+      );
+      this.content.setAttribute("data-side", resolvedPlacement.side);
+      this.content.setAttribute("data-align", resolvedPlacement.align);
+    }
 
-      // Calculate alignment
-      if (side === "top" || side === "bottom") {
-        switch (align) {
-          case "center":
-            left = triggerRect.left + (triggerRect.width - contentRect.width) / 2;
-            break;
-          case "start":
-            left = triggerRect.left;
-            break;
-          case "end":
-            left = triggerRect.right - contentRect.width;
-            break;
-        }
-      } else {
-        switch (align) {
-          case "center":
-            top = triggerRect.top + (triggerRect.height - contentRect.height) / 2;
-            break;
-          case "start":
-            top = triggerRect.top;
-            break;
-          case "end":
-            top = triggerRect.bottom - contentRect.height;
-            break;
-        }
-      }
+    private closeNow() {
+      if (!this.content || !this.trigger) return;
+      this.isOpen = false;
+      this.tooltip.setAttribute("data-state", "closed");
+      this.trigger.setAttribute("data-state", "closed");
+      this.content.setAttribute("data-state", "closed");
 
-      // Apply collision avoidance if enabled
-      if (this.content.hasAttribute("data-avoid-collisions")) {
-        const padding = 8;
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-
-        // Horizontal bounds
-        if (left < padding) left = padding;
-        if (left + contentRect.width > viewportWidth - padding) {
-          left = viewportWidth - contentRect.width - padding;
-        }
-
-        // Vertical bounds
-        if (top < padding) top = padding;
-        if (top + contentRect.height > viewportHeight - padding) {
-          top = viewportHeight - contentRect.height - padding;
-        }
-      }
-
-      this.content.style.top = `${top}px`;
-      this.content.style.left = `${left}px`;
+      this.clearHideAnimationTimer();
+      this.hideAnimationTimerRef = window.setTimeout(() => {
+        if (this.abortController.signal.aborted) return;
+        if (!this.content) return;
+        this.content.classList.add("hidden");
+        this.unportalContent();
+      }, this.animationDuration);
     }
 
     private hide(immediate: boolean = false) {
       if (!this.content || !this.trigger) return;
       this.clearOpenTimer();
+      this.clearCloseTimer();
 
       if (immediate) {
-        this.clearCloseTimer();
-        this.tooltip.setAttribute("data-state", "closed");
-        setTimeout(() => {
-          if (!this.content) return;
-          this.content.style.display = "none";
-        }, this.animationDuration);
-        this.content.setAttribute("data-state", "closed");
+        this.closeNow();
         return;
       }
 
       this.closeTimerRef = window.setTimeout(
         () => {
-          this.tooltip.setAttribute("data-state", "closed");
-          setTimeout(() => {
-            if (!this.content) return;
-            this.content.style.display = "none";
-          }, this.animationDuration);
-          if (!this.content) return;
-          this.content.setAttribute("data-state", "closed");
+          if (this.abortController.signal.aborted) return;
+          this.closeNow();
           this.closeTimerRef = null;
         },
-        parseInt(this.tooltip.getAttribute("data-close-delay") || "300"),
+        parseInt(this.tooltip.getAttribute("data-close-delay") || "200"),
       );
+    }
+
+    destroy() {
+      if (this.abortController.signal.aborted) return;
+
+      this.abortController.abort();
+      this.clearOpenTimer();
+      this.clearCloseTimer();
+      this.clearHideAnimationTimer();
+      this.unportalContent();
+      this.isOpen = false;
     }
 
     private clearOpenTimer() {
@@ -262,13 +374,38 @@ const {
         this.closeTimerRef = null;
       }
     }
+
+    private clearHideAnimationTimer() {
+      if (this.hideAnimationTimerRef) {
+        window.clearTimeout(this.hideAnimationTimerRef);
+        this.hideAnimationTimerRef = null;
+      }
+    }
   }
 
-  // Store instances in a WeakMap to avoid memory leaks
-  const tooltipInstances = new WeakMap<HTMLElement, TooltipHandler>();
+  const tooltipInstances = new Map<HTMLElement, TooltipHandler>();
   let tooltipCounter = 0;
 
+  const cleanupStaleTooltips = () => {
+    for (const [tooltipEl, tooltipHandler] of tooltipInstances.entries()) {
+      if (!document.contains(tooltipEl)) {
+        tooltipHandler.destroy();
+        tooltipInstances.delete(tooltipEl);
+      }
+    }
+  };
+
+  const destroyAllTooltips = () => {
+    for (const tooltipHandler of tooltipInstances.values()) {
+      tooltipHandler.destroy();
+    }
+
+    tooltipInstances.clear();
+  };
+
   const setupTooltips = () => {
+    cleanupStaleTooltips();
+
     document.querySelectorAll<HTMLElement>(".starwind-tooltip").forEach((tooltip) => {
       if (!tooltipInstances.has(tooltip)) {
         tooltipInstances.set(tooltip, new TooltipHandler(tooltip, tooltipCounter++));
@@ -277,6 +414,7 @@ const {
   };
 
   setupTooltips();
+  document.addEventListener("astro:before-swap", destroyAllTooltips);
   document.addEventListener("astro:after-swap", setupTooltips);
   document.addEventListener("starwind:init", setupTooltips);
 </script>

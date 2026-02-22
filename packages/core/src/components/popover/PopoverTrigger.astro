@@ -28,7 +28,11 @@ if (Astro.slots.has("default")) {
 
 {
   asChild && hasChildren ? (
-    <div class:list={["starwind-popover-trigger", className]} data-slot="popover-trigger" data-as-child>
+    <div
+      class:list={["starwind-popover-trigger", className]}
+      data-slot="popover-trigger"
+      data-as-child
+    >
       <slot />
     </div>
   ) : (

@@ -11,6 +11,7 @@ export interface ComponentMeta {
   version: string;
   type: "component";
   dependencies: string[];
+  fileDependencies?: string[];
 }
 
 /**

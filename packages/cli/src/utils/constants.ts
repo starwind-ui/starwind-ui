@@ -6,12 +6,14 @@ export const MIN_ASTRO_VERSION = "5.0.0";
 export const PATHS = {
   STARWIND_CORE: "@starwind-ui/core",
   STARWIND_CORE_COMPONENTS: "src/components",
+  STARWIND_CORE_UTILS: "src/lib/utils",
   STARWIND_REMOTE_COMPONENT_REGISTRY: "https://starwind.dev/registry.json",
   STARWIND_PRO_REGISTRY: "https://pro.starwind.dev/r/{name}",
   LOCAL_CSS_FILE: "src/styles/starwind.css",
   LOCAL_CONFIG_FILE: "starwind.config.json",
   LOCAL_STYLES_DIR: "src/styles",
   LOCAL_COMPONENTS_DIR: "src/components",
+  LOCAL_UTILS_DIR: "src/lib/utils",
   VSCODE_DIR: ".vscode",
   VSCODE_SNIPPETS_FILE: ".vscode/starwind.code-snippets",
 } as const;

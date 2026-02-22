@@ -36,3 +36,7 @@ coverage/
 .netlify
 .vercel
 .wrangler
+
+# yalc
+packages/*/yalc.lock
+packages/*/.yalc/

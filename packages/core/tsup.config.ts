@@ -13,9 +13,9 @@ export default defineConfig({
   target: "esnext",
   outDir: "dist",
   async onSuccess() {
-    // Copy all component files to dist/src/components
-    const componentFiles = await glob("src/components/**/*.*");
-    for (const file of componentFiles) {
+    // Copy all component and shared utility files into dist
+    const filesToCopy = await glob("src/{components,lib/utils}/**/*.*");
+    for (const file of filesToCopy) {
       const destPath = join("dist", file);
       await ensureDir(dirname(destPath));
       await copy(file, destPath);

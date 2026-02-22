@@ -21,6 +21,7 @@ export interface StarwindConfig {
   tailwind: TailwindConfig;
   // aliases: AliasConfig;
   componentDir: string;
+  utilsDir?: string;
   components: ComponentConfig[];
 }
 
@@ -35,6 +36,7 @@ const defaultConfig: StarwindConfig = {
   // 	components: "@/components",
   // },
   componentDir: "src/components/starwind",
+  utilsDir: PATHS.LOCAL_UTILS_DIR,
   components: [],
 };
 
@@ -105,6 +107,9 @@ export async function updateConfig(
       ...(updates.tailwind || {}),
     },
     componentDir: updates.componentDir ? updates.componentDir : currentConfig.componentDir,
+    utilsDir: updates.utilsDir
+      ? updates.utilsDir
+      : (currentConfig.utilsDir ?? defaultConfig.utilsDir),
     components: finalComponents,
   };
 
