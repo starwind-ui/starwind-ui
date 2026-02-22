@@ -1,5 +1,20 @@
 # @starwind-ui/core
 
+## 1.16.0
+
+### Minor Changes
+
+- 6a3b754: feat: add popover component
+- 7bc43d2: feat: add input-group component
+- a2153f5: feat: add dropdown sub-menu support
+- f8953e5: feat: add native-select component
+
+### Patch Changes
+
+- 4ea7955: refactor: spread props before data-slot attribute to enable data-slot overrides
+- d865158: feat: update sidebar to support new tooltip implementation
+- 0bf0403: feat: improve tooltip positioning
+
 ## 1.15.5
 
 ## 1.15.4

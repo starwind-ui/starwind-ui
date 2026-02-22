@@ -1,5 +1,24 @@
 # starwind
 
+## 1.16.0
+
+### Minor Changes
+
+- a662227: feat: add cli support for utility files
+- 4118e32: feat: add theme toggle code snippet for vscode during init process
+
+### Patch Changes
+
+- d7e6e8e: style: update default secondary styles
+- Updated dependencies [4ea7955]
+- Updated dependencies [6a3b754]
+- Updated dependencies [7bc43d2]
+- Updated dependencies [a2153f5]
+- Updated dependencies [d865158]
+- Updated dependencies [0bf0403]
+- Updated dependencies [f8953e5]
+  - @starwind-ui/core@1.16.0
+
 ## 1.15.5
 
 ### Patch Changes
