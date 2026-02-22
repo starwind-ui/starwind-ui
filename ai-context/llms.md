@@ -43,10 +43,13 @@ Starwind UI currently includes the following components:
 - [Dropzone](https://starwind.dev/docs/components/dropzone)
 - [Image](https://starwind.dev/docs/components/image)
 - [Input](https://starwind.dev/docs/components/input)
+- [Input Group](https://starwind.dev/docs/components/input-group)
 - [Input OTP](https://starwind.dev/docs/components/input-otp)
 - [Item](https://starwind.dev/docs/components/item)
 - [Label](https://starwind.dev/docs/components/label)
+- [Native Select](https://starwind.dev/docs/components/native-select)
 - [Pagination](https://starwind.dev/docs/components/pagination)
+- [Popover](https://starwind.dev/docs/components/popover)
 - [Progress](https://starwind.dev/docs/components/progress)
 - [Prose](https://starwind.dev/docs/components/prose)
 - [Radio Group](https://starwind.dev/docs/components/radio-group)
@@ -77,9 +80,9 @@ import {ComponentName} from "@/components/starwind/component-name";
 
 ## Starwind Pro - Premium Blocks
 
-Looking for complete, production-ready page sections? **Starwind Pro** offers 150+ expertly crafted blocks for Astro projects including heroes, pricing tables, testimonials, navigation, CTAs, and more. **40+ blocks are completely free** to use.
+Looking for complete, production-ready page sections? **Starwind Pro** offers 190+ expertly crafted blocks for Astro projects including heroes, pricing tables, testimonials, navigation, CTAs, and more. **45+ blocks are completely free** to use.
 
 - [Browse All Components](https://pro.starwind.dev/components/)
-- [Free Components (40+)](https://pro.starwind.dev/components/free/)
+- [Free Components (45+)](https://pro.starwind.dev/components/free/)
 
-Categories include: Authentication, Backgrounds, Bento, Blog, CTA, Effects, FAQ, Features, Footers, Forms, Heroes, Logo Clouds, Navigation, Pricing, Team, Testimonials, and Theme Switchers.
+Categories include: Authentication, Background, Bento, Blog, Blog Post, Contact, CTA, Effect, FAQ, Feature, Footer, Form, Hero, Legal Page, Logo Cloud, Navigation, Pricing, Service Page, Services, Specialized Components, Steps, Team, Testimonial, and Theme Switcher.
