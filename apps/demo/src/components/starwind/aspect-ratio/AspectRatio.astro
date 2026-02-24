@@ -26,7 +26,7 @@ const { ratio = 1, class: className, as: Tag = "div", ...rest } = Astro.props;
   style={`padding-bottom: ${100 / ratio}%`}
   data-slot="aspect-ratio-wrapper"
 >
-  <Tag class={aspectRatio({ class: className })} {...rest} data-slot="aspect-ratio">
+  <Tag class={aspectRatio({ class: className })} data-slot="aspect-ratio" {...rest}>
     <slot />
   </Tag>
 </div>
