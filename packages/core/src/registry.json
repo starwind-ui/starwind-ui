@@ -24,7 +24,7 @@
     {
       "name": "carousel",
       "type": "component",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": ["@starwind-ui/core/button@^2.1.0", "embla-carousel@^8.6.0"]
     },
     { "name": "checkbox", "type": "component", "version": "1.4.2", "dependencies": [] },

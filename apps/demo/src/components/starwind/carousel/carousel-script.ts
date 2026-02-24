@@ -81,11 +81,9 @@ export function initCarousel(
 
   // Find navigation buttons
   const prevButton = carouselElement.querySelector(
-    '[data-slot="carousel-previous"]',
+    ".starwind-carousel-previous",
   ) as HTMLButtonElement;
-  const nextButton = carouselElement.querySelector(
-    '[data-slot="carousel-next"]',
-  ) as HTMLButtonElement;
+  const nextButton = carouselElement.querySelector(".starwind-carousel-next") as HTMLButtonElement;
 
   // Initialize Embla
   let emblaApi: EmblaCarouselType;
