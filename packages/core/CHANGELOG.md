@@ -1,5 +1,12 @@
 # @starwind-ui/core
 
+## 1.16.1
+
+### Patch Changes
+
+- 43a7435: fix carousel previous and next buttons
+- ece15f2: refactor: move data-slot attributes before spread props in dynamic tag components to support data-slot overrides
+
 ## 1.16.0
 
 ### Minor Changes
