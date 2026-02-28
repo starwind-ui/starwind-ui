@@ -130,10 +130,20 @@ export async function add(components?: string[], options?: AddOptions) {
           try {
             p.log.info(`Installing ${highlighter.info(registryComponent)} via shadcn...`);
 
-            await execa(command, [...baseArgs, "add", registryComponent], {
-              stdio: "inherit",
-              cwd: process.cwd(),
-            });
+            await execa(
+              command,
+              [
+                ...baseArgs,
+                "add",
+                registryComponent,
+                ...(options?.yes ? ["--yes"] : []),
+                "--overwrite",
+              ],
+              {
+                stdio: "inherit",
+                cwd: process.cwd(),
+              },
+            );
 
             registryResults.success.push(registryComponent);
           } catch (error) {

@@ -222,7 +222,7 @@ export async function getShadcnCommand(): Promise<[string, string[]]> {
       return ["bunx", ["shadcn@3"]];
     case "npm":
     default:
-      return ["npx", ["shadcn@3"]];
+      return ["npx", ["-y", "shadcn@3"]];
   }
 }
 
