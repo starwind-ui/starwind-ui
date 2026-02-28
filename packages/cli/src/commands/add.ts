@@ -19,6 +19,7 @@ import { init } from "./init.js";
 interface AddOptions {
   all?: boolean;
   yes?: boolean;
+  overwrite?: boolean;
   packageManager?: "npm" | "pnpm" | "yarn";
 }
 
@@ -136,8 +137,8 @@ export async function add(components?: string[], options?: AddOptions) {
                 ...baseArgs,
                 "add",
                 registryComponent,
-                ...(options?.yes ? ["--yes"] : []),
-                "--overwrite",
+                "--yes",
+                ...(options?.overwrite ? ["--overwrite"] : []),
               ],
               {
                 stdio: "inherit",
@@ -253,6 +254,7 @@ export async function add(components?: string[], options?: AddOptions) {
 
       const result = await installComponent(comp, {
         skipPrompts: options?.yes,
+        overwrite: options?.overwrite,
         packageManager: options?.packageManager,
       });
 
