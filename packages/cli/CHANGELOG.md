@@ -1,5 +1,12 @@
 # starwind
 
+## 1.16.2
+
+### Patch Changes
+
+- 8c5d9e7: fix: remove confusion around pro component installation via shadcn
+  - @starwind-ui/core@1.16.2
+
 ## 1.16.1
 
 ### Patch Changes
