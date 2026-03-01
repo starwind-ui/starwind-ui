@@ -129,16 +129,16 @@ export async function add(components?: string[], options?: AddOptions) {
 
         for (const registryComponent of registryComponents) {
           try {
-            p.log.info(`Installing ${highlighter.info(registryComponent)} via shadcn...`);
+            p.log.info(`Installing ${highlighter.info(registryComponent)}`);
 
             await execa(
               command,
               [
                 ...baseArgs,
                 "add",
-                registryComponent,
                 "--yes",
                 ...(options?.overwrite ? ["--overwrite"] : []),
+                registryComponent,
               ],
               {
                 stdio: "inherit",
