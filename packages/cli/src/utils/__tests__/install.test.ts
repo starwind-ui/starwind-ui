@@ -67,7 +67,7 @@ describe("install", () => {
       });
 
       expect(mockGetComponent).toHaveBeenCalledWith("button");
-      expect(mockCopyComponent).toHaveBeenCalledWith("button");
+      expect(mockCopyComponent).toHaveBeenCalledWith("button", undefined);
       expect(mockConfirmInstall).not.toHaveBeenCalled();
     });
 

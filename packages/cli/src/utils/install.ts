@@ -19,6 +19,8 @@ import { getComponent } from "./registry.js";
 export interface InstallComponentOptions {
   /** Skip confirmation prompts (--yes flag) */
   skipPrompts?: boolean;
+  /** Whether to overwrite existing files */
+  overwrite?: boolean;
   /** Package manager to use (overrides auto-detection) */
   packageManager?: PackageManager;
 }
@@ -120,7 +122,7 @@ export async function installComponent(
   }
 
   // Copy the component files
-  const result = await copyComponent(name);
+  const result = await copyComponent(name, options?.overwrite);
 
   // Include dependency results if any
   if (dependencyResults.length > 0) {

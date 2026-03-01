@@ -28,6 +28,7 @@ program
   .allowExcessArguments()
   .option("-a, --all", "Add all available components")
   .option("-y, --yes", "Skip confirmation prompts")
+  .option("-o, --overwrite", "Overwrite existing files")
   .addOption(
     new Option("-m, --package-manager <pm>", "Package manager to use").choices([
       "npm",

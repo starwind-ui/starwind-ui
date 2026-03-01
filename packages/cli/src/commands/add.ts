@@ -19,6 +19,7 @@ import { init } from "./init.js";
 interface AddOptions {
   all?: boolean;
   yes?: boolean;
+  overwrite?: boolean;
   packageManager?: "npm" | "pnpm" | "yarn";
 }
 
@@ -128,12 +129,22 @@ export async function add(components?: string[], options?: AddOptions) {
 
         for (const registryComponent of registryComponents) {
           try {
-            p.log.info(`Installing ${highlighter.info(registryComponent)} via shadcn...`);
+            p.log.info(`Installing ${highlighter.info(registryComponent)}`);
 
-            await execa(command, [...baseArgs, "add", registryComponent], {
-              stdio: "inherit",
-              cwd: process.cwd(),
-            });
+            await execa(
+              command,
+              [
+                ...baseArgs,
+                "add",
+                "--yes",
+                ...(options?.overwrite ? ["--overwrite"] : []),
+                registryComponent,
+              ],
+              {
+                stdio: "inherit",
+                cwd: process.cwd(),
+              },
+            );
 
             registryResults.success.push(registryComponent);
           } catch (error) {
@@ -243,6 +254,7 @@ export async function add(components?: string[], options?: AddOptions) {
 
       const result = await installComponent(comp, {
         skipPrompts: options?.yes,
+        overwrite: options?.overwrite,
         packageManager: options?.packageManager,
       });
 
