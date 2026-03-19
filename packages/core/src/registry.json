@@ -29,6 +29,16 @@
     },
     { "name": "checkbox", "type": "component", "version": "1.4.2", "dependencies": [] },
     { "name": "collapsible", "type": "component", "version": "1.0.1", "dependencies": [] },
+     {
+      "name": "color-picker",
+      "type": "component",
+      "version": "1.0.0",
+      "dependencies": [
+        "@starwind-ui/core/button@^2.3.2",
+        "@starwind-ui/core/input@^1.3.2",
+        "@starwind-ui/core/select@^1.8.4"
+      ]
+    },
     { "name": "dialog", "type": "component", "version": "1.4.4", "dependencies": [] },
     { "name": "dropdown", "type": "component", "version": "1.3.1", "dependencies": [] },
     { "name": "dropzone", "type": "component", "version": "1.2.3", "dependencies": [] },

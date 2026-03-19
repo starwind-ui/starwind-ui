@@ -10,6 +10,7 @@ export { default as ButtonGroupDemo } from "./ButtonGroupDemo.astro";
 export { default as CardDemo } from "./CardDemo.astro";
 export { default as CheckboxDemo } from "./CheckboxDemo.astro";
 export { default as CollapsibleDemo } from "./CollapsibleDemo.astro";
+export { default as ColorPickerDemo } from "./ColorPickerDemo.astro";
 export { default as DialogDemo } from "./DialogDemo.astro";
 export { default as DropdownDemo } from "./DropdownDemo.astro";
 export { default as DropzoneDemo } from "./DropzoneDemo.astro";
