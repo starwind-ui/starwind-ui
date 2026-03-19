@@ -35,9 +35,9 @@ import TextColor from "@tabler/icons/outline/text-color.svg";
   </div>
   <div class="mb-6">
     <p class="text-muted-foreground mb-2 text-sm">Custom Use</p>
-    <span class="dark:bg-input/30 bg-background border h-11 w-11 !block !flex !flex-col justify-center items-center gap-[1px] px-2 rounded-md">
+    <span class="dark:bg-input/30 bg-background border h-11 w-11 !flex !flex-col justify-center items-center gap-[1px] px-2 rounded-md">
       <TextColor class="size-4" />
-      <ColorPicker class="!w-8 !h-3" defaultValue="rgb(255,0,0)"/>
+      <ColorPicker class="!w-8 !h-3" defaultValue="#ff0000"/>
     </span>
   </div>
 </section>
@@ -46,7 +46,7 @@ import TextColor from "@tabler/icons/outline/text-color.svg";
   const colorPickerProgrammatic = document.getElementById("color-picker-programmatic");
   const programmaticBtn = document.getElementById("programmatic-set-value-btn");
   programmaticBtn.addEventListener('click', () => {
-    colorPickerProgrammatic.setValue("rgb(0,0,255)");
+    colorPickerProgrammatic.setValue("rgba(0,0,255, 0.5)");
   });
   colorPickerProgrammatic.addEventListener('starwind-color-picker:change', (event: ColorPickerEvent) => {
     console.log("selectedValue: ", event.detail.value); 

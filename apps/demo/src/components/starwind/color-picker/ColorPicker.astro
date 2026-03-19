@@ -63,9 +63,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
 ---
 <div class={pickerContainer({ size, class: className })} {...rest}>
   <input id="color-input" class={colorInput({ size })} {...rest} type="color" value={defaultValue}/>
-  <div id="custom-picker" class={colorPicker({ size })} 
-  class="custom-picker p-5 border bg-input rounded-md w-100 hidden absolute"
-  >
+  <div id="custom-picker" class={colorPicker({ size })}>
     <div id="sat-rect" class={`sat-rect relative w-full bg-red-500 ${size == "sm" ? "h-[150px]" : size == "md" ? "h-[175px]" : "h-[200px]"} mb-[10px] !rounded-md border !border-outline`}>
       <div class="absolute inset-0 bg-gradient-to-r from-white to-transparent rounded-[7px]"></div>
       <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent rounded-[7px]"></div>
@@ -114,7 +112,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
         </div>
       </div>
     </div>
-    <div class=`flex gap-2 ${size == "sm" ? "flex-col" : "flex-row items-center"} mt-5`>
+    <div class={`flex gap-2 ${size == "sm" ? "flex-col" : "flex-row items-center"} mt-5`}>
       <Select class={colorFormatSelect({ size })} required id="colorFormat" name="colorFormat" defaultValue="hex">  
         <SelectTrigger class="w-full border-foreground/20 dark:border-input" size="sm">
           <SelectValue class="!text-nowrap"/>
@@ -189,10 +187,13 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     // Create setValue function
     container.setValue = (newRgb) => { 
       if (isValidRGB(newRgb)){
-        const [r,g,b] = newRgb.split("(")[1].split(")")[0].split(",");
+        const [r,g,b,a] = newRgb.split("(")[1].split(")")[0].split(",");
         updateUIFromRGB(r, g, b);
+        if(a){
+          updateOpacityValue(a);
+        }
       } else {
-        console.error(`Bad format: value does not conform to the required format.  The format is "rgb(r,g,b)" where r, g, b are numbers between 0 and 255.`)
+        console.error(`Bad format: value does not conform to the required format.  The format is "rgb(r,g,b)" or "rgba(r,g,b,a)" where r, g, b are numbers between 0 and 255 and a is a number between 0 and 1.`)
       }
     };
   
@@ -228,6 +229,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
 
       const initialValue = hexToRgb(colorInput.value);
       updateUIFromRGB(initialValue[0], initialValue[1], initialValue[2]);
+      updateOpacityValue(currentOpacity / 100);
     });
   
     // Manage outside click to close picker
@@ -260,6 +262,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     // Manage Picker Button to open eye dropper
     pickerBtn.addEventListener('click', async (e) => {
       const color = await openEyeDropper();
+      if (!color) return;
       const [r,g,b] = hexToRgb(color);
       currentRgb = `rgb(${r},${g},${b})`;
       updateUIFromRGB(r,g,b);
@@ -365,7 +368,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
   
     // Select Main Color and Update UI
     function setSelectedColor(r,g,b) {
-      const finalColor = `rgb(${r},${g},${b})`
+      const finalColor = currentOpacity != 100 ? `rgba(${r},${g},${b}, ${currentOpacity/100})` : `rgb(${r},${g},${b})`
       cursor.style.backgroundColor = finalColor;
       currentRgb = finalColor;
       const rgb = `${r},${g},${b}`;
@@ -379,7 +382,6 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
           composed: true,
           cancelable: true,
         });
-
       container.dispatchEvent(event);
       updateTextInput();
     };
@@ -425,6 +427,14 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       const rgb = currentRgb.split("(")[1].split(")")[0]
       opacityHandle.style.backgroundColor = `rgba(${rgb}, ${opacityPercentage})`;
       colorInput.style.opacity = opacityPercentage;
+      container.setAttribute('value', currentOpacity != 100 ? `rgba(${rgb}, ${opacityPercentage})` : `rgb(${rgb})`);
+      const event = new CustomEvent<ColorPickerChangeEvent["detail"]>("starwind-color-picker:change", {
+        detail: { value: currentOpacity != 100 ? `rgba(${rgb}, ${opacityPercentage})` : `rgb(${rgb})`, selectId: container.id},
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      });
+      container.dispatchEvent(event);
       updateTextInput();
     }
   
@@ -438,6 +448,14 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       x = Math.max(0, Math.min(x, rect.width));
       opacityHandle.style.left = `${x}px`;
       colorInput.style.opacity = value;
+      container.setAttribute('value', currentOpacity != 100 ? `rgba(${rgb}, ${value})` : `rgb(${rgb})`);
+      const event = new CustomEvent<ColorPickerChangeEvent["detail"]>("starwind-color-picker:change", {
+        detail: { value: currentOpacity != 100 ? `rgba(${rgb}, ${value})` : `rgb(${rgb})`, selectId: container.id},
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      });
+      container.dispatchEvent(event);
     }
   
     // Update Text Input Values After Selected Color Changes
@@ -503,7 +521,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     
     // Before Input Logic (Prevent invalid inputs)
     const isHexInputValid = (data, value) => {
-      const regex = /[0-9a-fA-F#]/;
+      const regex = /[0-9a-fA-F]/;
       return value.length <= 1 && regex.test(data)
     } 
   
@@ -514,7 +532,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
   
     const isHsbHslValid = (data, value, index) => {
       const regex = /[0-9]/;
-      return value.length <= 2 && regex.test(data) && (index != 0 || Number(`${value}${data}`) <= 360) && (index == 0 || Number(`${value}${data}`) <= 100) && Number(`${value}${data}`) > 0;
+      return value.length <= 2 && regex.test(data) && (index != 0 || Number(`${value}${data}`) <= 360) && (index == 0 || Number(`${value}${data}`) <= 100) && Number(`${value}${data}`) >= 0;
     } 
   
     textInputs.forEach((input, inputIndex) => input.addEventListener("beforeinput", (e) => {
@@ -600,14 +618,20 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       return parseFloat((intValue / 255).toFixed(2));
     }
 
-    function isValidRGB(rgb) {
-      const match = rgb.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
+    function isValidRGB(color) {
+      const regex = /^rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$/i;
+      const match = color.match(regex);
       
       if (!match) return false;
 
-      const [_, r, g, b] = match.map(Number);
+      const [r, g, b, a] = match.slice(1).map(Number);
       
-      return [r, g, b].every(val => val >= 0 && val <= 255);
+      const rgbValid = [r, g, b].every(val => !isNaN(val) && val >= 0 && val <= 255);
+      
+      const hasAlpha = match[4] !== undefined;
+      const alphaValid = !hasAlpha || (a >= 0 && a <= 1);
+
+      return rgbValid && alphaValid;
     }
   
     function rgbToHsl(r, g, b) {
