@@ -1,8 +1,8 @@
 import ColorPicker, { colorPicker } from "./ColorPicker.astro";
-import type { ColorPickerEvent, ColorPickerChangeEvent } from "./ColorPickerTypes";
+import type { ColorPickerChangeEvent } from "./ColorPickerTypes";
 
 const ColorPickerVariants = { colorPicker };
 
-export { ColorPicker, ColorPickerVariants, type ColorPickerEvent, type ColorPickerChangeEvent };
+export { ColorPicker, ColorPickerVariants, type ColorPickerChangeEvent };
 
 export default ColorPicker;

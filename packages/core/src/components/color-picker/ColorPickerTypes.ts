@@ -4,9 +4,3 @@ export interface ColorPickerChangeEvent extends CustomEvent {
     selectId: string;
   };
 }
-
-export interface ColorPickerEvent extends CustomEvent {
-  detail:
-    | { value: string; selectId: string; }
-    | { value: string; selectId?: string; };
-}
