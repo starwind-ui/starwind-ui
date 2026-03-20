@@ -46,7 +46,7 @@ import TextColor from "@tabler/icons/outline/text-color.svg";
   const colorPickerProgrammatic = document.getElementById("color-picker-programmatic");
   const programmaticBtn = document.getElementById("programmatic-set-value-btn");
   programmaticBtn.addEventListener('click', () => {
-    colorPickerProgrammatic.setValue("rgba(0,0,255, 0.5)");
+    colorPickerProgrammatic.setValue("rgb(0,0,255)");
   });
   colorPickerProgrammatic.addEventListener('starwind-color-picker:change', (event: ColorPickerChangeEvent) => {
     console.log("selectedValue: ", event.detail.value); 
