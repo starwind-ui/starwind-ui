@@ -3,6 +3,6 @@ import type { ColorPickerChangeEvent } from "./ColorPickerTypes.ts";
 
 const ColorPickerVariants = { colorPicker };
 
-export { ColorPicker, ColorPickerVariants, type ColorPickerChangeEvent };
+export { ColorPicker, type ColorPickerChangeEvent,ColorPickerVariants };
 
 export default ColorPicker;
