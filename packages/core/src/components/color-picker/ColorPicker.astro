@@ -22,7 +22,7 @@ type Props = HTMLAttributes<"input"> &
 
 export const colorInput = tv({
   base: [
-    "border-input dark:bg-input/30 text-foreground pointer-events-none absolute h-full w-full cursor-pointer appearance-none rounded-md border border-none bg-transparent bg-none !p-0 shadow-xs",
+    "border-input dark:bg-input/30 text-foreground pointer-events-none absolute h-full w-full cursor-pointer appearance-none rounded-md border border-none bg-transparent bg-none p-0 shadow-xs",
     "[&::-moz-color-swatch]:border-none [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch-wrapper]:p-0",
     "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] focus-visible:ring-3",
     "disabled:cursor-not-allowed disabled:opacity-50",
@@ -44,21 +44,21 @@ export const colorPicker = tv({
 });
 
 export const pickerContainer = tv({
-  base: ["picker-container", "border-input relative isolate !h-9 !w-9 rounded-[9.5px]"],
+  base: ["picker-container", "border-input relative isolate rounded-[9.5px]"],
   variants: {
     size: {
-      sm: "!h-5 !w-5 rounded-[5.5px] border",
-      md: "!h-7 !w-7 rounded-[7.5px] border-2",
-      lg: "!h-9 !w-9 rounded-[10.5px] border-3",
+      sm: "h-5 w-5 rounded-[5.5px] border",
+      md: "h-7 w-7 rounded-[7.5px] border-2",
+      lg: "h-9 w-9 rounded-[10.5px] border-3",
     },
   },
   defaultVariants: { size: "md" },
 });
 
 export const colorFormatSelect = tv({
-  base: ["r!overflow-y-visible !flex !min-w-22"],
+  base: ["flex min-w-22 overflow-y-visible"],
   variants: {
-    size: { sm: "!w-18", md: "!min-w-20", lg: "!min-w-22" },
+    size: { sm: "min-w-18", md: "min-w-20", lg: "min-w-22" },
   },
   defaultVariants: { size: "md" },
 });
@@ -77,10 +77,10 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
   <div id="custom-picker" class={colorPicker({ size })}>
     <div
       id="sat-rect"
-      class={`sat-rect relative w-full bg-red-500 ${size == "sm" ? "h-[150px]" : size == "md" ? "h-[175px]" : "h-[200px]"} mb-[10px] !rounded-md border !border-outline`}
+      class={`sat-rect relative w-full bg-red-500 ${size == "sm" ? "h-[150px]" : size == "md" ? "h-[175px]" : "h-[200px]"} mb-[10px] rounded-md border border-outline`}
     >
-      <div class="absolute inset-0 rounded-[7px] bg-gradient-to-r from-white to-transparent"></div>
-      <div class="absolute inset-0 rounded-[7px] bg-gradient-to-t from-black to-transparent"></div>
+      <div class="absolute inset-0 rounded-[7px] bg-linear-to-r from-white to-transparent"></div>
+      <div class="absolute inset-0 rounded-[7px] bg-linear-to-t from-black to-transparent"></div>
       <div
         draggable="false"
         id="cursor"
@@ -91,9 +91,9 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     <div class="relative flex items-center gap-4">
       <Button
         id="picker-btn"
-        class="bg-input border-foreground/20 hover:bg-foreground/10 dark:bg-input/30 dark:hover:bg-input/50 aspect-square h-full border dark:border-0"
+        class="aspect-square h-full dark:border-none"
         variant="outline"
-        size="sm"
+        size="icon"
       >
         <ColorPickerIcon class="size-4" />
       </Button>
@@ -101,22 +101,22 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
         <div id="hue-slider" class="hue-range relative mb-3 h-3 w-full rounded-md">
           <div
             id="hue-handle"
-            class="hue-handle absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--foreground)] bg-red-500"
+            class="hue-handle border-foreground absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-red-500"
           >
           </div>
         </div>
         <div
           id="opacity-container"
-          class="relative h-3 w-full cursor-pointer overflow-visible !rounded-md rounded"
+          class="relative h-3 w-full cursor-pointer overflow-visible rounded-md"
         >
-          <div class="checkerboard absolute inset-0 !rounded-md bg-white"></div>
+          <div class="checkerboard absolute inset-0 rounded-md bg-white"></div>
           <div
             id="opacity-slider"
-            class="absolute inset-0 !rounded-md bg-gradient-to-r from-transparent to-red-500"
+            class="absolute inset-0 rounded-md bg-linear-to-r from-transparent to-red-500"
           >
             <div
               id="opacity-handle"
-              class="pointer-events-none absolute top-1/2 left-full z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--foreground)] bg-red-500 shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
+              class="border-foreground pointer-events-none absolute top-1/2 left-full z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-red-500 shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
             >
             </div>
           </div>
@@ -131,42 +131,26 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
         name="colorFormat"
         defaultValue="hex"
       >
-        <SelectTrigger class="border-foreground/20 dark:border-input w-full" size="sm">
-          <SelectValue class="!text-nowrap" />
+        <SelectTrigger class="w-full" size="sm">
+          <SelectValue class="text-nowrap" />
         </SelectTrigger>
         <SelectContent size="sm">
           <SelectGroup>
-            <SelectItem value="hex" class="!text-nowrap">HEX</SelectItem>
-            <SelectItem value="rgb" class="!text-nowrap">RGB</SelectItem>
-            <SelectItem value="hsl" class="!text-nowrap">HSL</SelectItem>
-            <SelectItem value="hsb" class="!text-nowrap">HSB</SelectItem>
+            <SelectItem value="hex" class="text-nowrap">HEX</SelectItem>
+            <SelectItem value="rgb" class="text-nowrap">RGB</SelectItem>
+            <SelectItem value="hsl" class="text-nowrap">HSL</SelectItem>
+            <SelectItem value="hsb" class="text-nowrap">HSB</SelectItem>
           </SelectGroup>
         </SelectContent>
       </Select>
       <div class="flex">
-        <Input
-          class="input-text text-foreground border-foreground/20 dark:border-input !rounded-r-none"
-          size="sm"
-        />
-        <Input
-          class="input-text text-foreground border-foreground/20 dark:border-input !rounded-none"
-          size="sm"
-        />
-        <Input
-          class="input-text text-foreground border-foreground/20 dark:border-input !rounded-none"
-          size="sm"
-        />
-        <Input
-          class="input-text text-foreground border-foreground/20 dark:border-input !rounded-l-none"
-          size="sm"
-        />
+        <Input class="input-text rounded-r-none" size="sm" />
+        <Input class="input-text rounded-none" size="sm" />
+        <Input class="input-text rounded-none" size="sm" />
+        <Input class="input-text rounded-l-none" size="sm" />
       </div>
     </div>
-    <Button
-      id="none-btn"
-      size="sm"
-      class="bg-input text-foreground hover:bg-outline border-foreground/20 hover:bg-foreground/10 dark:bg-input/30 dark:hover:bg-input/50 mt-5 border dark:border-none"
-    >
+    <Button id="none-btn" size="sm" variant="outline" class="mt-5 dark:border-none">
       <Background class="size-4" />
       None
     </Button>
@@ -740,9 +724,8 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
 
       const max = Math.max(r, g, b),
         min = Math.min(r, g, b);
-      let h,
-        s_hsl,
-        l = (max + min) / 2;
+      let h, s_hsl;
+      const l = (max + min) / 2;
 
       const d = max - min;
 
@@ -786,11 +769,10 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
 
       const max = Math.max(r, g, b),
         min = Math.min(r, g, b);
-      let h,
-        _,
-        __ = (max + min) / 2;
-      let s_hsb,
-        v = max; // v is Brightness/Value
+      let h, _;
+      const __ = (max + min) / 2;
+      let s_hsb;
+      const v = max; // v is Brightness/Value
 
       const d = max - min;
 
