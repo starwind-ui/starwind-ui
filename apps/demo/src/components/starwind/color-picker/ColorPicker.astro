@@ -26,6 +26,7 @@ export const colorInput = tv({
     "[&::-moz-color-swatch]:border-none [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch-wrapper]:p-0",
     "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] focus-visible:ring-3",
     "disabled:cursor-not-allowed disabled:opacity-50",
+    "data-[state=enabled]:pointer-events-auto data-[state=disabled]:pointer-events-none",
     "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",
     "peer placeholder:text-muted-foreground",
   ],
@@ -36,7 +37,13 @@ export const colorInput = tv({
 });
 
 export const colorPicker = tv({
-  base: ["custom-picker bg-card absolute z-10 hidden w-100 rounded-md border"],
+  base: [
+    "custom-picker bg-card absolute w-100 rounded-md border",
+    "data-[state=hidden]:hidden data-[state=hidden]:z-0 data-[state=visible]:block data-[state=visible]:!z-20",
+    "data-[position-x=left]:left-0 data-[position-x=right]:right-0",
+    "data-[position-y=top]:top-full data-[position-y=bottom]:bottom-full",
+    "data-[position-y=top]:mt-2 data-[position-y=bottom]:mb-2",
+  ],
   variants: {
     size: { sm: "w-60 p-3", md: "w-80 p-4", lg: "w-100 p-5" },
   },
@@ -44,7 +51,7 @@ export const colorPicker = tv({
 });
 
 export const pickerContainer = tv({
-  base: ["picker-container", "border-input relative isolate rounded-[9.5px]"],
+  base: ["picker-container", "border-input relative isolate- rounded-[9.5px]"],
   variants: {
     size: {
       sm: "h-5 w-5 rounded-[5.5px] border",
@@ -68,16 +75,17 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
 
 <div class={pickerContainer({ size, class: className })} {...rest}>
   <input
+    data-state="disabled"
     id="color-input"
     class={colorInput({ size })}
     {...rest}
     type="color"
     value={defaultValue}
   />
-  <div id="custom-picker" class={colorPicker({ size })}>
+  <div id="custom-picker" class={colorPicker({ size })} data-state="hidden" data-position-x="right" data-position-y="bottom">
     <div
       id="sat-rect"
-      class={`sat-rect relative w-full bg-red-500 ${size == "sm" ? "h-[150px]" : size == "md" ? "h-[175px]" : "h-[200px]"} mb-[10px] rounded-md border border-outline`}
+      class={`sat-rect relative w-full bg-red-500 ${size == "sm" ? "h-[150px]" : size == "md" ? "h-[175px]" : "h-[200px]"} mb-[20px] rounded-md border border-outline`}
     >
       <div class="absolute inset-0 rounded-[7px] bg-linear-to-r from-white to-transparent"></div>
       <div class="absolute inset-0 rounded-[7px] bg-linear-to-t from-black to-transparent"></div>
@@ -88,7 +96,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       >
       </div>
     </div>
-    <div class="relative flex items-center gap-4">
+    <div class="relative flex items-center gap-4 has-[button]:px-0 px-2">
       <Button
         id="picker-btn"
         class="aspect-square h-full dark:border-none"
@@ -97,7 +105,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       >
         <ColorPickerIcon class="size-4" />
       </Button>
-      <div class="flex-1">
+      <div class="flex-1 px-2">
         <div id="hue-slider" class="hue-range relative mb-3 h-3 w-full rounded-md">
           <div
             id="hue-handle"
@@ -187,23 +195,23 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
 </style>
 <script>
   import type { ColorPickerChangeEvent } from "./ColorPickerTypes";
-  document.querySelectorAll(".picker-container").forEach((el) => {
+  document.querySelectorAll(".picker-container").forEach((el: HTMLElement) => {
     initColorPicker(el);
   });
-  function initColorPicker(container) {
+  function initColorPicker(container: HTMLElement) {
     // DOM Elements and variables
-    const colorInput = container.querySelector("#color-input");
-    const customPicker = container.querySelector("#custom-picker");
-    const satRect = container.querySelector("#sat-rect");
-    const hueSlider = container.querySelector("#hue-slider");
-    const opacitySlider = container.querySelector("#opacity-slider");
-    const hueHandle = container.querySelector("#hue-handle");
-    const opacityHandle = container.querySelector("#opacity-handle");
-    const cursor = container.querySelector("#cursor");
-    const colorFormatSelect = container.querySelector("#colorFormat");
-    const textInputs = container.querySelectorAll(".input-text");
-    const pickerBtn = container.querySelector("#picker-btn");
-    const noneBtn = container.querySelector("#none-btn");
+    const colorInput: HTMLInputElement | null = container.querySelector("#color-input");
+    const customPicker: HTMLDivElement | null = container.querySelector("#custom-picker");
+    const satRect: HTMLDivElement | null = container.querySelector("#sat-rect");
+    const hueSlider: HTMLDivElement | null = container.querySelector("#hue-slider");
+    const opacitySlider: HTMLDivElement | null = container.querySelector("#opacity-slider");
+    const hueHandle: HTMLDivElement | null = container.querySelector("#hue-handle");
+    const opacityHandle: HTMLDivElement | null = container.querySelector("#opacity-handle");
+    const cursor: HTMLDivElement | null = container.querySelector("#cursor");
+    const colorFormatSelect: HTMLSelectElement | null = container.querySelector("#colorFormat");
+    const textInputs: NodeListOf<HTMLInputElement> = container.querySelectorAll(".input-text");
+    const pickerBtn: HTMLButtonElement | null = container.querySelector("#picker-btn");
+    const noneBtn: HTMLButtonElement | null = container.querySelector("#none-btn");
     let isDraggingHue = false;
     let isDraggingSquare = false;
     let isDraggingOpacity = false;
@@ -212,10 +220,10 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     let currentRgb = "rgb(255,0,0)";
     let currentColorFormat = "hex";
 
-    colorInput.classList.remove("pointer-events-none");
+    colorInput.setAttribute('data-state', 'enabled');
 
     // Create setValue function
-    container.setValue = (newRgb) => {
+    container.setValue = (newRgb: string) => {
       if (isValidRGB(newRgb)) {
         const [r, g, b, a] = newRgb.split("(")[1].split(")")[0].split(",");
         updateUIFromRGB(r, g, b);
@@ -230,34 +238,27 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     };
 
     // Manage Color Input Trigger (prevent default picker opening and open custom picker)
-    colorInput.addEventListener("click", (e) => {
+    colorInput.addEventListener("click", (e: MouseEvent) => {
       e.preventDefault();
       const button = e.currentTarget.getBoundingClientRect();
       const pickerHeight = 410;
       const pickerWidth = 410;
+      const spaceVerticalAbove = button.top;
       const spaceVerticalBelow = window.innerHeight - button.bottom;
       const spaceHorizontalBelow = window.innerWidth - button.right;
+      const spaceHorizontalAbove = button.left;
       // Based on space (vertical and horizontall) depends on where to open the picker
-      if (spaceVerticalBelow < pickerHeight) {
-        customPicker.classList.add("bottom-full");
-        customPicker.classList.add("mb-2");
-        customPicker.classList.remove("top-full");
-        customPicker.classList.remove("mt-2");
+      if (spaceVerticalBelow < pickerHeight && spaceVerticalAbove > pickerHeight) {
+        customPicker.setAttribute('data-position-y', 'bottom');
       } else {
-        customPicker.classList.remove("bottom-full");
-        customPicker.classList.remove("mb-2");
-        customPicker.classList.add("top-full");
-        customPicker.classList.add("mt-2");
+        customPicker.setAttribute('data-position-y', 'top');
       }
-      if (spaceHorizontalBelow < pickerWidth) {
-        customPicker.classList.add("right-0");
-        customPicker.classList.remove("left-0");
+      if (spaceHorizontalBelow < pickerWidth && spaceHorizontalAbove > pickerWidth) {
+        customPicker.setAttribute('data-position-x', 'right');
       } else {
-        customPicker.classList.remove("right-0");
-        customPicker.classList.add("left-0");
+        customPicker.setAttribute('data-position-x', 'left');
       }
-      container.classList.toggle("z-20");
-      customPicker.classList.toggle("hidden");
+      customPicker.setAttribute('data-state', customPicker.getAttribute('data-state') === 'hidden' ? 'visible' : 'hidden');
 
       const initialValue = hexToRgb(colorInput.value);
       updateUIFromRGB(initialValue[0], initialValue[1], initialValue[2]);
@@ -265,49 +266,49 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     });
 
     // Manage outside click to close picker
-    document.addEventListener("mousedown", (event) => {
+    document.addEventListener("mousedown", (event: MouseEvent) => {
       const isClickInside =
         customPicker.contains(event.target) || colorInput.contains(event.target);
 
       if (!isClickInside) {
-        customPicker.classList.add("hidden");
-        container.classList.remove("z-20");
+        customPicker.setAttribute('data-state', 'hidden');
       }
     });
 
     // Update Input Values On Color Format Change
-    colorFormatSelect.addEventListener("starwind-select:change", (event) => {
+    colorFormatSelect.addEventListener("starwind-select:change", (event: ColorPickerChangeEvent) => {
       currentColorFormat = event.detail.value;
       updateTextInput();
     });
 
     // Manage None Button to unselect color
-    noneBtn.addEventListener("click", async (e) => {
+    noneBtn.addEventListener("click", async () => {
       currentRgb = `rgb(${255},${0},${0})`;
       currentOpacity = 100;
       updateUIFromRGB(255, 0, 0);
       updateOpacityValue(1);
       colorInput.value = null;
-      customPicker.classList.toggle("hidden");
+      customPicker.setAttribute('data-state', 'hidden');
       container.setAttribute("value", null);
     });
 
     // Manage Picker Button to open eye dropper
-    pickerBtn.addEventListener("click", async (e) => {
-      const color = await openEyeDropper();
+    pickerBtn.addEventListener("click", async () => {
+      const color: string | undefined = await openEyeDropper();
       if (!color) return;
       const [r, g, b] = hexToRgb(color);
       currentRgb = `rgb(${r},${g},${b})`;
       updateUIFromRGB(r, g, b);
     });
 
-    // Function to Open Eye Dropper and Return Selected Color
-    async function openEyeDropper() {
-      if (!window.EyeDropper) {
-        console.error("Your browser does not support the EyeDropper API");
-        return;
-      }
+    // Check if EyeDropper API is supported, if not, hide the picker button
+    if (!window.EyeDropper) {
+      console.error("Your browser does not support the EyeDropper API");
+      pickerBtn.style.display = "none";
+    }
 
+    // Function to Open Eye Dropper and Return Selected Color
+    async function openEyeDropper(): Promise<string | undefined> {
       const eyeDropper = new EyeDropper();
 
       try {
@@ -319,17 +320,17 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     }
 
     // Manage Hue and Opacity Sliders (During Dragging)
-    hueSlider.addEventListener("mousedown", (e) => {
+    hueSlider.addEventListener("mousedown", (e: MouseEvent) => {
       e.preventDefault();
       isDraggingHue = true;
       updateHue(e);
     });
-    opacitySlider.addEventListener("mousedown", (e) => {
+    opacitySlider.addEventListener("mousedown", (e: MouseEvent) => {
       e.preventDefault();
       isDraggingOpacity = true;
       updateOpacity(e);
     });
-    window.addEventListener("mousemove", (e) => {
+    window.addEventListener("mousemove", (e: MouseEvent) => {
       if (isDraggingHue) {
         updateHue(e);
       }
@@ -344,17 +345,17 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     });
 
     // Manage Main Color Square (During Dragging)
-    satRect.addEventListener("mousedown", (e) => {
+    satRect.addEventListener("mousedown", (e: MouseEvent) => {
       e.preventDefault();
       isDraggingSquare = true;
       moveCursor(e);
     });
 
-    window.addEventListener("mousemove", (e) => {
+    window.addEventListener("mousemove", (e: MouseEvent) => {
       if (isDraggingSquare) moveCursor(e);
     });
 
-    function moveCursor(e) {
+    function moveCursor(e: MouseEvent) {
       const rect = satRect.getBoundingClientRect();
       let x = e.clientX - rect.left;
       let y = e.clientY - rect.top;
@@ -379,7 +380,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     // Update UI and Manage Colors
 
     // Manage Hue Slider (During Dragging)
-    function updateHue(e) {
+    function updateHue(e: MouseEvent) {
       const rect = hueSlider.getBoundingClientRect();
 
       // Calculate position relative to the slider
@@ -400,7 +401,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     }
 
     // Select Main Color and Update UI
-    function setSelectedColor(r, g, b) {
+    function setSelectedColor(r: number, g: number, b: number) {
       const finalColor =
         currentOpacity != 100
           ? `rgba(${r},${g},${b}, ${currentOpacity / 100})`
@@ -426,7 +427,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     }
 
     // Update Main Square Color and Cursor Position (During Dragging)
-    function updateMainSquareColor(hue) {
+    function updateMainSquareColor(hue: number) {
       // 1. Update the background color of the square
       // This represents the "Pure" version of the selected Hue
       const pureColor = `hsl(${hue}, 100%, 50%)`;
@@ -448,7 +449,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     }
 
     // Update Opacity (During Dragging)
-    function updateOpacity(e) {
+    function updateOpacity(e: MouseEvent) {
       const rect = opacitySlider.getBoundingClientRect();
       let x = e.clientX - rect.left;
 
@@ -487,7 +488,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     }
 
     // Update Opacity with Value (Directly)
-    function updateOpacityValue(value) {
+    function updateOpacityValue(value: number) {
       currentOpacity = value * 100;
       const rgb = currentRgb.split("(")[1].split(")")[0];
       opacityHandle.style.backgroundColor = `rgba(${rgb}, ${value})`;
@@ -546,7 +547,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     }
 
     // Update UI After Selected Color Changes
-    function updateUIFromRGB(r, g, b) {
+    function updateUIFromRGB(r: number, g: number, b: number) {
       const [h, s, v] = rgbToHsb(r, g, b);
 
       const rect = satRect.getBoundingClientRect();
@@ -576,12 +577,12 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     }
 
     // Before Input Logic (Prevent invalid inputs)
-    const isHexInputValid = (data, value) => {
+    const isHexInputValid = (data: string, value: string) => {
       const regex = /[0-9a-fA-F]/;
       return value.length <= 1 && regex.test(data);
     };
 
-    const isRgbInputValid = (data, value) => {
+    const isRgbInputValid = (data: string, value: string) => {
       const regex = /[0-9]/;
       return (
         value.length <= 2 &&
@@ -591,7 +592,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       );
     };
 
-    const isHsbHslValid = (data, value, index) => {
+    const isHsbHslValid = (data: string, value: string, index: number) => {
       const regex = /[0-9]/;
       return (
         value.length <= 2 &&
@@ -602,9 +603,9 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       );
     };
 
-    textInputs.forEach((input, inputIndex) =>
-      input.addEventListener("beforeinput", (e) => {
-        const futureValue =
+    textInputs.forEach((input: HTMLInputElement, inputIndex: number) =>
+      input.addEventListener("beforeinput", (e: InputEvent) => {
+        const futureValue: number =
           e.target.value.slice(0, e.target.selectionStart) +
           (e.data || "") +
           e.target.value.slice(e.target.selectionEnd);
@@ -631,15 +632,15 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     );
 
     // Input Change Logic (Update selector ui and value on input)
-    textInputs.forEach((input, inputIndex) =>
-      input.addEventListener("change", (e) => {
+    textInputs.forEach((input: HTMLInputElement, inputIndex: number) =>
+      input.addEventListener("change", (e: Event) => {
         if (inputIndex == 3) {
           const value =
             currentColorFormat == "hex" ? hexOpacityToDecimal(e.target.value) : e.target.value;
           updateOpacityValue(value);
           return;
         }
-        let rgbValues;
+        let rgbValues: [number, number, number];
         if (currentColorFormat == "rgb") {
           const rgb = currentRgb.split("(")[1].split(")")[0];
           rgbValues = rgb.split(",");
@@ -652,6 +653,8 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
           rgbValues = hsbToRgb(textInputs[0].value, textInputs[1].value, textInputs[2].value);
         } else if (currentColorFormat == "hsl") {
           rgbValues = hslToRgb(textInputs[0].value, textInputs[1].value, textInputs[2].value);
+        } else {
+          rgbValues = [0, 0, 0];
         }
         setSelectedColor(rgbValues[0], rgbValues[1], rgbValues[2]);
         updateUIFromRGB(rgbValues[0], rgbValues[1], rgbValues[2]);
@@ -659,7 +662,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     );
 
     // Translate Color Format Functions
-    const rgbToHex = (r, g, b) => {
+    const rgbToHex = (r: number, g: number, b: number): string => {
       const [hexR, hexG, hexB] = [r, g, b].map((code) => {
         const hex = Math.round(code).toString(16);
         return hex.length === 1 ? "0" + hex : hex;
@@ -667,7 +670,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       return `#${hexR}${hexG}${hexB}`;
     };
 
-    function hexToRgb(hex) {
+    function hexToRgb(hex: string): [number, number, number] {
       hex = hex.replace(/^#/, "");
 
       if (hex.length === 3) {
@@ -684,13 +687,13 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       return [r, g, b];
     }
 
-    function decimalOpacityToHex(opacity) {
+    function decimalOpacityToHex(opacity: number): string {
       const percent = Math.max(0, Math.min(100, opacity)); // Ensure opacity is between 0 and 100
       const intValue = Math.round(percent * 2.55); // Map 0-100 to 0-255
       const hex = intValue.toString(16).padStart(2, "0");
       return hex;
     }
-    function hexOpacityToDecimal(hexAlpha) {
+    function hexOpacityToDecimal(hexAlpha: string): number {
       const cleanHex = hexAlpha.replace("#", "");
       const alphaPart = cleanHex.length > 2 ? cleanHex.slice(-2) : cleanHex;
 
@@ -701,7 +704,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       return parseFloat((intValue / 255).toFixed(2));
     }
 
-    function isValidRGB(color) {
+    function isValidRGB(color: string): boolean {
       const regex = /^rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$/i;
       const match = color.match(regex);
 
@@ -717,7 +720,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       return rgbValid && alphaValid;
     }
 
-    function rgbToHsl(r, g, b) {
+    function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
       r /= 255;
       g /= 255;
       b /= 255;
@@ -751,18 +754,18 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       return [Math.round(h * 360), Math.round(s_hsl * 100), Math.round(l * 100)];
     }
 
-    function hslToRgb(h, s, l) {
+    function hslToRgb(h: number, s: number, l: number): [number, number, number] {
       const sNorm = s / 100;
       const lNorm = l / 100;
 
       const a = sNorm * Math.min(lNorm, 1 - lNorm);
-      const k = (n) => (n + h / 30) % 12;
-      const f = (n) => lNorm - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+      const k = (n: number) => (n + h / 30) % 12;
+      const f = (n: number) => lNorm - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
 
       return [Math.round(255 * f(0)), Math.round(255 * f(8)), Math.round(255 * f(4))];
     }
 
-    function rgbToHsb(r, g, b) {
+    function rgbToHsb(r: number, g: number, b: number): [number, number, number] {
       r /= 255;
       g /= 255;
       b /= 255;
@@ -797,7 +800,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       return [Math.round(h * 360), Math.round(s_hsb * 100), Math.round(v * 100)];
     }
 
-    function hsbToRgb(h, s, b) {
+    function hsbToRgb(h: number, s: number, b: number): [number, number, number] {
       const sNorm = s / 100;
       const bNorm = b / 100;
 
@@ -807,7 +810,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       return [Math.round(255 * f(5)), Math.round(255 * f(3)), Math.round(255 * f(1))];
     }
 
-    function hsvToRgb(h, s, v) {
+    function hsvToRgb(h: number, s: number, v: number): string {
       s /= 100;
       v /= 100;
       const k = (n) => (n + h / 60) % 6;
