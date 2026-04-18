@@ -70,15 +70,60 @@ export const colorFormatSelect = tv({
   defaultVariants: { size: "md" },
 });
 
-const { defaultValue = "#000000", size, class: className, ...rest } = Astro.props;
+const {
+  defaultValue = "#000000",
+  size,
+  class: className,
+  id,
+  name,
+  autocomplete,
+  autofocus,
+  disabled,
+  form,
+  list,
+  max,
+  min,
+  pattern,
+  placeholder,
+  readonly,
+  required,
+  step,
+  title,
+  ...rest
+} = Astro.props;
+
+const inputProps = Object.fromEntries(
+  Object.entries({
+    id,
+    name,
+    autocomplete,
+    autofocus,
+    disabled,
+    form,
+    list,
+    max,
+    min,
+    pattern,
+    placeholder,
+    readonly,
+    required,
+    step,
+    title,
+    ...Object.fromEntries(Object.entries(rest).filter(([key]) => key.startsWith("aria-"))),
+  }).filter(([, value]) => value !== undefined),
+);
+
+const containerProps = Object.fromEntries(
+  Object.entries(rest).filter(([key]) => !key.startsWith("aria-")),
+);
 ---
 
-<div class={pickerContainer({ size, class: className })} {...rest}>
+<div class={pickerContainer({ size, class: className })} {...containerProps}>
   <input
     data-state="disabled"
     data-part="color-input"
     class={colorInput({ size })}
-    {...rest}
+    {...inputProps}
     type="color"
     value={defaultValue}
   />
