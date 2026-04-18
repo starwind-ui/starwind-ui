@@ -40,7 +40,13 @@
       ]
     },
     { "name": "dialog", "type": "component", "version": "1.4.4", "dependencies": [] },
-    { "name": "dropdown", "type": "component", "version": "1.3.1", "dependencies": [] },
+    {
+      "name": "dropdown",
+      "type": "component",
+      "version": "2.0.0",
+      "dependencies": [],
+      "fileDependencies": ["positioning.ts"]
+    },
     { "name": "dropzone", "type": "component", "version": "1.2.3", "dependencies": [] },
     { "name": "image", "type": "component", "version": "1.0.1", "dependencies": [] },
     { "name": "input", "type": "component", "version": "1.3.2", "dependencies": [] },
