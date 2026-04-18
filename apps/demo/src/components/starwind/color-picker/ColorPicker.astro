@@ -51,7 +51,7 @@ export const colorPicker = tv({
 });
 
 export const pickerContainer = tv({
-  base: ["picker-container", "border-input isolate- relative rounded-[9.5px]"],
+  base: ["starwind-color-picker", "border-input relative isolate rounded-[9.5px]"],
   variants: {
     size: {
       sm: "h-5 w-5 rounded-[5.5px] border",
@@ -76,35 +76,35 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
 <div class={pickerContainer({ size, class: className })} {...rest}>
   <input
     data-state="disabled"
-    id="color-input"
+    data-part="color-input"
     class={colorInput({ size })}
     {...rest}
     type="color"
     value={defaultValue}
   />
   <div
-    id="custom-picker"
+    data-part="custom-picker"
     class={colorPicker({ size })}
     data-state="hidden"
     data-position-x="right"
     data-position-y="bottom"
   >
     <div
-      id="sat-rect"
+      data-part="sat-rect"
       class={`sat-rect relative w-full bg-red-500 ${size == "sm" ? "h-[150px]" : size == "md" ? "h-[175px]" : "h-[200px]"} mb-[20px] rounded-md border border-outline`}
     >
       <div class="absolute inset-0 rounded-[7px] bg-linear-to-r from-white to-transparent"></div>
       <div class="absolute inset-0 rounded-[7px] bg-linear-to-t from-black to-transparent"></div>
       <div
         draggable="false"
-        id="cursor"
+        data-part="cursor"
         class="cursor absolute top-0 left-full z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-red-500"
       >
       </div>
     </div>
     <div class="relative flex items-center gap-4 px-2 has-[button]:px-0">
       <Button
-        id="picker-btn"
+        data-part="picker-btn"
         class="aspect-square h-full dark:border-none"
         variant="outline"
         size="icon"
@@ -112,24 +112,24 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
         <ColorPickerIcon class="size-4" />
       </Button>
       <div class="flex-1 px-2">
-        <div id="hue-slider" class="hue-range relative mb-3 h-3 w-full rounded-md">
+        <div data-part="hue-slider" class="hue-range relative mb-3 h-3 w-full rounded-md">
           <div
-            id="hue-handle"
+            data-part="hue-handle"
             class="hue-handle border-foreground absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-red-500"
           >
           </div>
         </div>
         <div
-          id="opacity-container"
+          data-part="opacity-container"
           class="relative h-3 w-full cursor-pointer overflow-visible rounded-md"
         >
           <div class="checkerboard absolute inset-0 rounded-md bg-white"></div>
           <div
-            id="opacity-slider"
+            data-part="opacity-slider"
             class="absolute inset-0 rounded-md bg-linear-to-r from-transparent to-red-500"
           >
             <div
-              id="opacity-handle"
+              data-part="opacity-handle"
               class="border-foreground pointer-events-none absolute top-1/2 left-full z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-red-500 shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
             >
             </div>
@@ -141,7 +141,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       <Select
         class={colorFormatSelect({ size })}
         required
-        id="colorFormat"
+        data-part="color-format"
         name="colorFormat"
         defaultValue="hex"
       >
@@ -164,7 +164,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
         <Input class="input-text rounded-l-none" size="sm" />
       </div>
     </div>
-    <Button id="none-btn" size="sm" variant="outline" class="mt-5 dark:border-none">
+    <Button data-part="none-btn" size="sm" variant="outline" class="mt-5 dark:border-none">
       <Background class="size-4" />
       None
     </Button>
@@ -201,23 +201,33 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
 </style>
 <script>
   import type { ColorPickerChangeEvent } from "./ColorPickerTypes";
-  document.querySelectorAll(".picker-container").forEach((el) => {
+  document.querySelectorAll(".starwind-color-picker").forEach((el) => {
     initColorPicker(el as HTMLElement);
   });
   function initColorPicker(container: HTMLElement) {
     // DOM Elements and variables
-    const colorInput: HTMLInputElement | null = container.querySelector("#color-input");
-    const customPicker: HTMLDivElement | null = container.querySelector("#custom-picker");
-    const satRect: HTMLDivElement | null = container.querySelector("#sat-rect");
-    const hueSlider: HTMLDivElement | null = container.querySelector("#hue-slider");
-    const opacitySlider: HTMLDivElement | null = container.querySelector("#opacity-slider");
-    const hueHandle: HTMLDivElement | null = container.querySelector("#hue-handle");
-    const opacityHandle: HTMLDivElement | null = container.querySelector("#opacity-handle");
-    const cursor: HTMLDivElement | null = container.querySelector("#cursor");
-    const colorFormatSelect: HTMLSelectElement | null = container.querySelector("#colorFormat");
+    const colorInput: HTMLInputElement | null = container.querySelector(
+      '[data-part="color-input"]',
+    );
+    const customPicker: HTMLDivElement | null = container.querySelector(
+      '[data-part="custom-picker"]',
+    );
+    const satRect: HTMLDivElement | null = container.querySelector('[data-part="sat-rect"]');
+    const hueSlider: HTMLDivElement | null = container.querySelector('[data-part="hue-slider"]');
+    const opacitySlider: HTMLDivElement | null = container.querySelector(
+      '[data-part="opacity-slider"]',
+    );
+    const hueHandle: HTMLDivElement | null = container.querySelector('[data-part="hue-handle"]');
+    const opacityHandle: HTMLDivElement | null = container.querySelector(
+      '[data-part="opacity-handle"]',
+    );
+    const cursor: HTMLDivElement | null = container.querySelector('[data-part="cursor"]');
+    const colorFormatSelect: HTMLElement | null = container.querySelector(
+      '[data-part="color-format"]',
+    );
     const textInputs: NodeListOf<HTMLInputElement> = container.querySelectorAll(".input-text");
-    const pickerBtn: HTMLButtonElement | null = container.querySelector("#picker-btn");
-    const noneBtn: HTMLButtonElement | null = container.querySelector("#none-btn");
+    const pickerBtn: HTMLButtonElement | null = container.querySelector('[data-part="picker-btn"]');
+    const noneBtn: HTMLButtonElement | null = container.querySelector('[data-part="none-btn"]');
     if (
       !colorInput ||
       !customPicker ||
