@@ -697,6 +697,16 @@ const containerProps = Object.fromEntries(
       );
     };
 
+    const isOpacityValueValid = (value: string): boolean => {
+      const normalizedValue = value.trim();
+      if (!/^(0(?:\.\d+)?|1(?:\.0+)?)$/.test(normalizedValue)) {
+        return false;
+      }
+
+      const parsedValue = Number(normalizedValue);
+      return Number.isFinite(parsedValue) && parsedValue >= 0 && parsedValue <= 1;
+    };
+
     textInputs.forEach((input: HTMLInputElement, inputIndex: number) =>
       input.addEventListener("beforeinput", (e: InputEvent) => {
         const target = e.target as HTMLInputElement;
@@ -706,8 +716,7 @@ const containerProps = Object.fromEntries(
           target.value.slice(target.selectionEnd ?? 0);
         if (e.data) {
           if (inputIndex == 3 && currentColorFormat != "hex") {
-            const regex = /[0-9-.]/;
-            if (!regex.test(e.data) || Number(futureValue) > 1 || Number(futureValue) < 0) {
+            if (!isOpacityValueValid(futureValue)) {
               e.preventDefault();
             }
             return;
@@ -734,7 +743,13 @@ const containerProps = Object.fromEntries(
           const value =
             currentColorFormat == "hex"
               ? hexOpacityToDecimal(changeTarget.value)
-              : Number(changeTarget.value);
+              : isOpacityValueValid(changeTarget.value)
+                ? Number(changeTarget.value)
+                : NaN;
+          if (!Number.isFinite(value)) {
+            updateTextInput();
+            return;
+          }
           updateOpacityValue(value);
           return;
         }
