@@ -410,8 +410,7 @@ const containerProps = Object.fromEntries(
     });
 
     // Check if EyeDropper API is supported, if not, hide the picker button
-    if (!(window as any).EyeDropper) {
-      console.error("Your browser does not support the EyeDropper API");
+    if (!("EyeDropper" in window)) {
       pickerBtn.style.display = "none";
     }
 
