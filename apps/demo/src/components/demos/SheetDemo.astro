@@ -20,6 +20,14 @@ import {
 import { Input } from "@/components/starwind/input";
 import { Label } from "@/components/starwind/label";
 import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/starwind/popover";
+import {
   Sheet,
   SheetClose,
   SheetContent,
@@ -164,6 +172,69 @@ import {
         </div>
         <SheetFooter>
           <Button variant="default">Save changes</Button>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Popover In Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="left">
+        <SheetHeader>
+          <SheetTitle>Popover Portal Test</SheetTitle>
+          <SheetDescription>
+            Open the popover to confirm it renders above the sheet and remains interactive.
+          </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 overflow-hidden px-4">
+          <div class="grid gap-3">
+            <Label for="sheet-popover-name">Workspace</Label>
+            <Input id="sheet-popover-name" value="Portal QA" />
+          </div>
+          <div class="grid gap-3">
+            <Label>Details popover</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" class="w-full justify-between">Open popover</Button>
+              </PopoverTrigger>
+              <PopoverContent side="right" align="start" class="w-72">
+                <PopoverHeader>
+                  <PopoverTitle>Sheet popover</PopoverTitle>
+                  <PopoverDescription>
+                    This popover should render above the sheet without being clipped.
+                  </PopoverDescription>
+                </PopoverHeader>
+                <div class="mt-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" class="w-full">Open nested popover</Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="right" align="start" class="w-64">
+                      <PopoverHeader>
+                        <PopoverTitle>Nested popover</PopoverTitle>
+                        <PopoverDescription>
+                          Use this to verify nested popovers also stay above the sheet.
+                        </PopoverDescription>
+                      </PopoverHeader>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div class="grid gap-3">
+            <Label for="sheet-popover-notes">Notes</Label>
+            <Input
+              id="sheet-popover-notes"
+              value="Use this sheet to validate popover portal stacking."
+            />
+          </div>
+        </div>
+        <SheetFooter>
           <SheetClose asChild>
             <Button variant="outline">Close</Button>
           </SheetClose>

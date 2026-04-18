@@ -36,7 +36,7 @@ export const popoverContent = tv({
     "bg-popover text-popover-foreground z-50 flex w-72 flex-col gap-2.5 overflow-x-hidden overflow-y-auto rounded-lg border p-2.5 shadow-md",
     "data-[state=open]:animate-in fade-in zoom-in-95 outline-none",
     "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
-    "fixed isolate will-change-transform",
+    "pointer-events-auto fixed isolate will-change-transform",
   ],
   variants: {
     side: {
