@@ -57,6 +57,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
     private isSubmenu: boolean;
     private rootDropdown: HTMLElement;
     private contentPlaceholder: Comment | null = null;
+    private portalTarget: HTMLElement | null = null;
     private cleanupAutoUpdate: (() => void) | null = null;
     private openChildCount: number = 0;
     private parentHandler: DropdownHandler | null = null;
@@ -138,6 +139,23 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         }
       }
       return null;
+    }
+
+    private resolvePortalTarget(): HTMLElement {
+      const currentFloatingRoot = this.trigger?.closest("[data-floating-root]");
+      if (currentFloatingRoot instanceof HTMLElement) {
+        return currentFloatingRoot;
+      }
+
+      const dialogHost = this.trigger?.closest(
+        'dialog[data-slot="dialog-content"], dialog[data-slot="sheet-content"]',
+      );
+      const dialogFloatingRoot = dialogHost?.querySelector(":scope > [data-floating-root]");
+      if (dialogFloatingRoot instanceof HTMLElement) {
+        return dialogFloatingRoot;
+      }
+
+      return document.body;
     }
 
     private init(dropdownIdx: number) {
@@ -582,17 +600,19 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
     private portalContent() {
       if (!this.content || !this.trigger) return;
-      if (this.contentPlaceholder || this.content.parentElement === document.body) return;
+      const portalTarget = this.resolvePortalTarget();
+      if (this.contentPlaceholder || this.content.parentElement === portalTarget) return;
 
       // Save the original position with a placeholder
       this.contentPlaceholder = document.createComment("dropdown-content-placeholder");
       this.content.parentNode?.insertBefore(this.contentPlaceholder, this.content);
 
       // Move content to body
-      document.body.appendChild(this.content);
+      portalTarget.appendChild(this.content);
+      this.portalTarget = portalTarget;
 
       // Apply fixed positioning (overrides the CSS absolute class)
-      this.content.style.position = "fixed";
+      this.content.style.position = portalTarget === document.body ? "fixed" : "absolute";
 
       // Position relative to trigger
       this.positionContent({ avoidCollisions: true });
@@ -670,6 +690,8 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         this.contentPlaceholder = null;
       }
 
+      this.portalTarget = null;
+
       // Remove fixed positioning styles
       this.content.style.removeProperty("position");
       this.content.style.removeProperty("top");
@@ -712,8 +734,19 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         avoidCollisions: options?.avoidCollisions ?? true,
       });
 
-      this.content.style.left = `${Math.round(resolvedPlacement.left)}px`;
-      this.content.style.top = `${Math.round(resolvedPlacement.top)}px`;
+      const portalTargetRect =
+        this.portalTarget && this.portalTarget !== document.body
+          ? this.portalTarget.getBoundingClientRect()
+          : null;
+      const left = portalTargetRect
+        ? resolvedPlacement.left - portalTargetRect.left
+        : resolvedPlacement.left;
+      const top = portalTargetRect
+        ? resolvedPlacement.top - portalTargetRect.top
+        : resolvedPlacement.top;
+
+      this.content.style.left = `${Math.round(left)}px`;
+      this.content.style.top = `${Math.round(top)}px`;
       this.content.style.transformOrigin = getTransformOrigin(
         resolvedPlacement.side,
         resolvedPlacement.align,
