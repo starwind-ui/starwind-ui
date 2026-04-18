@@ -94,7 +94,6 @@ const {
 
 const inputProps = Object.fromEntries(
   Object.entries({
-    id,
     name,
     autocomplete,
     autofocus,
@@ -113,8 +112,12 @@ const inputProps = Object.fromEntries(
   }).filter(([, value]) => value !== undefined),
 );
 
+const inputPropKeys = new Set(Object.keys(inputProps));
+
 const containerProps = Object.fromEntries(
-  Object.entries(rest).filter(([key]) => !key.startsWith("aria-")),
+  Object.entries({ id, ...rest }).filter(
+    ([key, value]) => value !== undefined && !inputPropKeys.has(key),
+  ),
 );
 ---
 
@@ -250,6 +253,10 @@ const containerProps = Object.fromEntries(
     initColorPicker(el as HTMLElement);
   });
   function initColorPicker(container: HTMLElement) {
+    type UpdateOptions = {
+      dispatch?: boolean;
+    };
+
     // DOM Elements and variables
     const colorInput: HTMLInputElement | null = container.querySelector(
       '[data-part="color-input"]',
@@ -298,14 +305,28 @@ const containerProps = Object.fromEntries(
 
     colorInput.setAttribute("data-state", "enabled");
 
+    function dispatchChangeEvent(value: string) {
+      const event = new CustomEvent<ColorPickerChangeEvent["detail"]>(
+        "starwind-color-picker:change",
+        {
+          detail: { value, selectId: container.id },
+          bubbles: true,
+          composed: true,
+          cancelable: true,
+        },
+      );
+      container.dispatchEvent(event);
+    }
+
     // Create setValue function
     (container as any).setValue = (newRgb: string) => {
       if (isValidRGB(newRgb)) {
         const [r, g, b, a] = newRgb.split("(")[1].split(")")[0].split(",");
-        updateUIFromRGB(Number(r), Number(g), Number(b));
+        updateUIFromRGB(Number(r), Number(g), Number(b), { dispatch: false });
         if (a) {
-          updateOpacityValue(Number(a));
+          updateOpacityValue(Number(a), { dispatch: false });
         }
+        dispatchChangeEvent(container.getAttribute("value") ?? "");
       } else {
         console.error(
           `Bad format: value does not conform to the required format.  The format is "rgb(r,g,b)" or "rgba(r,g,b,a)" where r, g, b are numbers between 0 and 255 and a is a number between 0 and 1.`,
@@ -340,8 +361,8 @@ const containerProps = Object.fromEntries(
       );
 
       const initialValue = parseColorToRgb(colorInput.value) ?? [255, 0, 0];
-      updateUIFromRGB(initialValue[0], initialValue[1], initialValue[2]);
-      updateOpacityValue(currentOpacity / 100);
+      updateUIFromRGB(initialValue[0], initialValue[1], initialValue[2], { dispatch: false });
+      updateOpacityValue(currentOpacity / 100, { dispatch: false });
     });
 
     // Manage outside click to close picker
@@ -364,11 +385,12 @@ const containerProps = Object.fromEntries(
     noneBtn.addEventListener("click", async () => {
       currentRgb = `rgb(${255},${0},${0})`;
       currentOpacity = 100;
-      updateUIFromRGB(255, 0, 0);
-      updateOpacityValue(1);
+      updateUIFromRGB(255, 0, 0, { dispatch: false });
+      updateOpacityValue(1, { dispatch: false });
       colorInput.value = "";
       customPicker.setAttribute("data-state", "hidden");
       container.setAttribute("value", "");
+      dispatchChangeEvent("");
     });
 
     // Manage Picker Button to open eye dropper
@@ -484,9 +506,10 @@ const containerProps = Object.fromEntries(
     }
 
     // Select Main Color and Update UI
-    function setSelectedColor(r: number, g: number, b: number) {
+    function setSelectedColor(r: number, g: number, b: number, options: UpdateOptions = {}) {
       if (!cursor || !opacitySlider || !opacityHandle || !colorInput) return;
       if (!areRgbValuesValid(r, g, b)) return;
+      const { dispatch = true } = options;
       const finalColor =
         currentOpacity != 100
           ? `rgba(${r},${g},${b}, ${currentOpacity / 100})`
@@ -498,16 +521,9 @@ const containerProps = Object.fromEntries(
       opacityHandle.style.backgroundColor = `rgba(${rgb}, ${currentOpacity / 100})`;
       colorInput.value = rgbToHex(r, g, b);
       container.setAttribute("value", finalColor);
-      const event = new CustomEvent<ColorPickerChangeEvent["detail"]>(
-        "starwind-color-picker:change",
-        {
-          detail: { value: finalColor, selectId: container.id },
-          bubbles: true,
-          composed: true,
-          cancelable: true,
-        },
-      );
-      container.dispatchEvent(event);
+      if (dispatch) {
+        dispatchChangeEvent(finalColor);
+      }
       updateTextInput();
     }
 
@@ -558,25 +574,16 @@ const containerProps = Object.fromEntries(
         "value",
         currentOpacity != 100 ? `rgba(${rgb}, ${opacityPercentage})` : `rgb(${rgb})`,
       );
-      const event = new CustomEvent<ColorPickerChangeEvent["detail"]>(
-        "starwind-color-picker:change",
-        {
-          detail: {
-            value: currentOpacity != 100 ? `rgba(${rgb}, ${opacityPercentage})` : `rgb(${rgb})`,
-            selectId: container.id,
-          },
-          bubbles: true,
-          composed: true,
-          cancelable: true,
-        },
+      dispatchChangeEvent(
+        currentOpacity != 100 ? `rgba(${rgb}, ${opacityPercentage})` : `rgb(${rgb})`,
       );
-      container.dispatchEvent(event);
       updateTextInput();
     }
 
     // Update Opacity with Value (Directly)
-    function updateOpacityValue(value: number) {
+    function updateOpacityValue(value: number, options: UpdateOptions = {}) {
       if (!opacityHandle || !opacitySlider || !colorInput) return;
+      const { dispatch = true } = options;
       currentOpacity = value * 100;
       const rgb = currentRgb.split("(")[1].split(")")[0];
       opacityHandle.style.backgroundColor = `rgba(${rgb}, ${value})`;
@@ -589,19 +596,10 @@ const containerProps = Object.fromEntries(
         "value",
         currentOpacity != 100 ? `rgba(${rgb}, ${value})` : `rgb(${rgb})`,
       );
-      const event = new CustomEvent<ColorPickerChangeEvent["detail"]>(
-        "starwind-color-picker:change",
-        {
-          detail: {
-            value: currentOpacity != 100 ? `rgba(${rgb}, ${value})` : `rgb(${rgb})`,
-            selectId: container.id,
-          },
-          bubbles: true,
-          composed: true,
-          cancelable: true,
-        },
-      );
-      container.dispatchEvent(event);
+      if (dispatch) {
+        dispatchChangeEvent(currentOpacity != 100 ? `rgba(${rgb}, ${value})` : `rgb(${rgb})`);
+      }
+      updateTextInput();
     }
 
     // Update Text Input Values After Selected Color Changes
@@ -635,7 +633,7 @@ const containerProps = Object.fromEntries(
     }
 
     // Update UI After Selected Color Changes
-    function updateUIFromRGB(r: number, g: number, b: number) {
+    function updateUIFromRGB(r: number, g: number, b: number, options: UpdateOptions = {}) {
       if (!satRect || !hueHandle || !cursor || !hueSlider) return;
       const [h, s, v] = rgbToHsb(r, g, b);
 
@@ -662,7 +660,7 @@ const containerProps = Object.fromEntries(
       hueHandle.style.left = `${huePercent * trackWidth}px`;
 
       // 6. Finally, update the color input value
-      setSelectedColor(r, g, b);
+      setSelectedColor(r, g, b, options);
     }
 
     // Before Input Logic (Prevent invalid inputs)
@@ -759,7 +757,6 @@ const containerProps = Object.fromEntries(
         } else {
           rgbValues = [0, 0, 0];
         }
-        setSelectedColor(rgbValues[0], rgbValues[1], rgbValues[2]);
         updateUIFromRGB(rgbValues[0], rgbValues[1], rgbValues[2]);
       }),
     );
