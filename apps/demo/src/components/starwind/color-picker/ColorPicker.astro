@@ -301,7 +301,7 @@ const containerProps = Object.fromEntries(
     let isDraggingOpacity = false;
     let currentHue = 0;
     let currentOpacity = 100;
-    let currentRgb = "rgb(255,0,0)";
+    let currentRgb = "255,0,0";
     let currentColorFormat = "hex";
 
     colorInput.setAttribute("data-state", "enabled");
@@ -317,6 +317,10 @@ const containerProps = Object.fromEntries(
         },
       );
       container.dispatchEvent(event);
+    }
+
+    function normalizeOpacity(value: number): number {
+      return Number(value.toFixed(2));
     }
 
     // Create setValue function
@@ -384,7 +388,7 @@ const containerProps = Object.fromEntries(
 
     // Manage None Button to unselect color
     noneBtn.addEventListener("click", async () => {
-      currentRgb = `rgb(${255},${0},${0})`;
+      currentRgb = `${255},${0},${0}`;
       currentOpacity = 100;
       updateUIFromRGB(255, 0, 0, { dispatch: false });
       updateOpacityValue(1, { dispatch: false });
@@ -401,7 +405,7 @@ const containerProps = Object.fromEntries(
       const rgbValues = parseColorToRgb(color);
       if (!rgbValues) return;
       const [r, g, b] = rgbValues;
-      currentRgb = `rgb(${r},${g},${b})`;
+      currentRgb = `${r},${g},${b}`;
       updateUIFromRGB(r, g, b);
     });
 
@@ -511,15 +515,14 @@ const containerProps = Object.fromEntries(
       if (!cursor || !opacitySlider || !opacityHandle || !colorInput) return;
       if (!areRgbValuesValid(r, g, b)) return;
       const { dispatch = true } = options;
+      const alpha = normalizeOpacity(currentOpacity / 100);
       const finalColor =
-        currentOpacity != 100
-          ? `rgba(${r},${g},${b}, ${currentOpacity / 100})`
-          : `rgb(${r},${g},${b})`;
+        currentOpacity != 100 ? `rgba(${r},${g},${b}, ${alpha})` : `rgb(${r},${g},${b})`;
       cursor.style.backgroundColor = finalColor;
-      currentRgb = finalColor;
+      currentRgb = `${r},${g},${b}`;
       const rgb = `${r},${g},${b}`;
       opacitySlider.style.background = `linear-gradient(to right, rgba(${rgb}, 0) 0%, rgba(${rgb}, 1) 100%)`;
-      opacityHandle.style.backgroundColor = `rgba(${rgb}, ${currentOpacity / 100})`;
+      opacityHandle.style.backgroundColor = `rgba(${rgb}, ${alpha})`;
       colorInput.value = rgbToHex(r, g, b);
       container.setAttribute("value", finalColor);
       if (dispatch) {
@@ -564,11 +567,11 @@ const containerProps = Object.fromEntries(
       opacityHandle.style.left = `${x}px`;
 
       // Calculate the percentage (0 to 1)
-      const opacityPercentage = x / rect.width;
+      const opacityPercentage = normalizeOpacity(x / rect.width);
 
       // Store as 0–100 for easy state reading
       currentOpacity = Math.round(opacityPercentage * 100);
-      const rgb = currentRgb.split("(")[1].split(")")[0];
+      const rgb = currentRgb;
       opacityHandle.style.backgroundColor = `rgba(${rgb}, ${opacityPercentage})`;
       colorInput.style.opacity = opacityPercentage.toString();
       container.setAttribute(
@@ -585,27 +588,30 @@ const containerProps = Object.fromEntries(
     function updateOpacityValue(value: number, options: UpdateOptions = {}) {
       if (!opacityHandle || !opacitySlider || !colorInput) return;
       const { dispatch = true } = options;
-      currentOpacity = value * 100;
-      const rgb = currentRgb.split("(")[1].split(")")[0];
-      opacityHandle.style.backgroundColor = `rgba(${rgb}, ${value})`;
+      const normalizedValue = normalizeOpacity(value);
+      currentOpacity = normalizedValue * 100;
+      const rgb = currentRgb;
+      opacityHandle.style.backgroundColor = `rgba(${rgb}, ${normalizedValue})`;
       const rect = opacitySlider.getBoundingClientRect();
-      let x = rect.width * value;
+      let x = rect.width * normalizedValue;
       x = Math.max(0, Math.min(x, rect.width));
       opacityHandle.style.left = `${x}px`;
-      colorInput.style.opacity = value.toString();
+      colorInput.style.opacity = normalizedValue.toString();
       container.setAttribute(
         "value",
-        currentOpacity != 100 ? `rgba(${rgb}, ${value})` : `rgb(${rgb})`,
+        currentOpacity != 100 ? `rgba(${rgb}, ${normalizedValue})` : `rgb(${rgb})`,
       );
       if (dispatch) {
-        dispatchChangeEvent(currentOpacity != 100 ? `rgba(${rgb}, ${value})` : `rgb(${rgb})`);
+        dispatchChangeEvent(
+          currentOpacity != 100 ? `rgba(${rgb}, ${normalizedValue})` : `rgb(${rgb})`,
+        );
       }
       updateTextInput();
     }
 
     // Update Text Input Values After Selected Color Changes
     function updateTextInput() {
-      const rgb = currentRgb.split("(")[1].split(")")[0];
+      const rgb = currentRgb;
       const [r, g, b] = rgb.split(",");
       if (currentColorFormat == "rgb") {
         textInputs[0].value = r;
@@ -734,7 +740,7 @@ const containerProps = Object.fromEntries(
         }
         let rgbValues: [number, number, number];
         if (currentColorFormat == "rgb") {
-          const rgb = currentRgb.split("(")[1].split(")")[0];
+          const rgb = currentRgb;
           rgbValues = rgb.split(",").map(Number) as [number, number, number];
           rgbValues[inputIndex] = Number(changeTarget.value);
         } else if (currentColorFormat == "hex") {
