@@ -154,10 +154,11 @@ const containerProps = Object.fromEntries(
       <Button
         data-part="picker-btn"
         class="aspect-square h-full dark:border-none"
+        aria-label="Pick a color from the screen"
         variant="outline"
         size="icon"
       >
-        <ColorPickerIcon class="size-4" />
+        <ColorPickerIcon class="size-4" aria-hidden="true" />
       </Button>
       <div class="flex-1 px-2">
         <div data-part="hue-slider" class="hue-range relative mb-3 h-3 w-full rounded-md">
