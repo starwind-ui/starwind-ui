@@ -422,7 +422,10 @@ const containerProps = Object.fromEntries(
         const result = await eyeDropper.open();
         return typeof result?.sRGBHex === "string" ? result.sRGBHex : undefined;
       } catch (e) {
-        console.error("Color selection cancelled");
+        if ((e as DOMException)?.name !== "AbortError") {
+          console.error("EyeDropper failed:", e);
+        }
+        return undefined;
       }
     }
 
