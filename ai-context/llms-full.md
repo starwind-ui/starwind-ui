@@ -1204,8 +1204,7 @@ import { Prose } from "@/components/starwind/prose";
   <h1>Welcome to Starwind</h1>
   <p>
     Starwind UI is a <strong>beautiful component library</strong> designed for the modern web. It provides
-    accessible, customizable components that work seamlessly with <a href="#">Astro</a> and Tailwind
-    CSS.
+    accessible, customizable components that work seamlessly with <a href="#">Astro</a> and Tailwind CSS.
   </p>
   <h2>Getting Started</h2>
   <ul>
