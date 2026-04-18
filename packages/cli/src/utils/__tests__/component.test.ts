@@ -1,12 +1,12 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as config from "../config.js";
 import { copyComponent } from "../component.js";
+import * as config from "../config.js";
 import * as registry from "../registry.js";
 
 vi.mock("../config.js");
