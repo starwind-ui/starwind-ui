@@ -38,8 +38,8 @@ export const colorInput = tv({
 
 export const colorPicker = tv({
   base: [
-    "custom-picker bg-card absolute w-100 rounded-md border",
-    "data-[state=hidden]:z-0 data-[state=hidden]:hidden data-[state=visible]:!z-20 data-[state=visible]:block",
+    "bg-card absolute w-100 rounded-md border",
+    "data-[state=hidden]:z-0 data-[state=hidden]:hidden data-[state=visible]:z-20 data-[state=visible]:block",
     "data-[position-x=left]:left-0 data-[position-x=right]:right-0",
     "data-[position-y=bottom]:bottom-full data-[position-y=top]:top-full",
     "data-[position-y=bottom]:mb-2 data-[position-y=top]:mt-2",
@@ -51,7 +51,7 @@ export const colorPicker = tv({
 });
 
 export const pickerContainer = tv({
-  base: ["starwind-color-picker", "border-input relative isolate rounded-[9.5px]"],
+  base: ["starwind-color-picker", "border-input relative rounded-[9.5px]"],
   variants: {
     size: {
       sm: "h-5 w-5 rounded-[5.5px] border",

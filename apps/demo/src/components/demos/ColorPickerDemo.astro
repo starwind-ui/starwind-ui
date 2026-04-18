@@ -1,11 +1,10 @@
 ---
-
 import TextColor from "@tabler/icons/outline/text-color.svg";
 
 import { Button } from "@/components/starwind/button";
 import { ColorPicker } from "@/components/starwind/color-picker";
-
 ---
+
 <section class="mx-auto mt-6 max-w-lg">
   <h2 class="mb-4 text-2xl font-bold">Color Picker</h2>
   <div class="mb-6">
@@ -13,43 +12,57 @@ import { ColorPicker } from "@/components/starwind/color-picker";
     <div class="flex gap-5">
       <div>
         <p class="text-muted-foreground mb-2 text-xs">Small</p>
-        <ColorPicker size="sm"/>
+        <ColorPicker size="sm" />
       </div>
       <div>
         <p class="text-muted-foreground mb-2 text-xs">Medium (Default)</p>
-        <ColorPicker size="md"/>
+        <ColorPicker size="md" />
       </div>
       <div>
         <p class="text-muted-foreground mb-2 text-xs">Large</p>
-        <ColorPicker size="lg"/>
+        <ColorPicker size="lg" />
       </div>
     </div>
   </div>
   <div class="mb-6">
     <p class="text-muted-foreground mb-2 text-sm">Default Value</p>
-    <ColorPicker defaultValue="#ff0000"/>
+    <ColorPicker defaultValue="#ff0000" />
   </div>
   <div class="mb-6">
     <p class="text-muted-foreground mb-2 text-sm">Programmatic Set Value</p>
-    <ColorPicker id="color-picker-programmatic"/>
-    <Button size="sm" variant="primary" class="mt-4" id="programmatic-set-value-btn">Programmatically select color rgb(0,0,255)</Button>
+    <ColorPicker id="color-picker-programmatic" />
+    <Button size="sm" variant="primary" class="mt-4" id="programmatic-set-value-btn"
+      >Programmatically select color rgb(0,0,255)</Button
+    >
   </div>
   <div class="mb-6">
     <p class="text-muted-foreground mb-2 text-sm">Custom Use</p>
-    <span class="dark:bg-input/30 bg-background border h-11 w-11 !flex !flex-col justify-center items-center gap-[1px] px-2 rounded-md">
+    <span
+      class="dark:bg-input/30 bg-background flex h-11 w-11 flex-col items-center justify-center gap-px rounded-md border px-2"
+    >
       <TextColor class="size-4" />
-      <ColorPicker class="!w-8 !h-3" defaultValue="#ff0000"/>
+      <ColorPicker class="h-3 w-8" defaultValue="#ff0000" />
     </span>
   </div>
 </section>
 <script>
   import type { ColorPickerChangeEvent } from "@/components/starwind/color-picker/ColorPickerTypes";
-  const colorPickerProgrammatic = document.getElementById("color-picker-programmatic");
+  type ProgrammaticColorPickerElement = HTMLElement & {
+    setValue: (newRgb: string) => void;
+  };
+
+  const colorPickerProgrammatic = document.getElementById(
+    "color-picker-programmatic",
+  ) as ProgrammaticColorPickerElement | null;
   const programmaticBtn = document.getElementById("programmatic-set-value-btn");
-  programmaticBtn.addEventListener('click', () => {
-    colorPickerProgrammatic.setValue("rgb(0,0,255)");
-  });
-  colorPickerProgrammatic.addEventListener('starwind-color-picker:change', (event: ColorPickerChangeEvent) => {
-    console.log("selectedValue: ", event.detail.value); 
-  });
+
+  if (colorPickerProgrammatic && programmaticBtn) {
+    programmaticBtn.addEventListener("click", () => {
+      colorPickerProgrammatic.setValue("rgb(0,0,255)");
+    });
+
+    colorPickerProgrammatic.addEventListener("starwind-color-picker:change", (event: Event) => {
+      console.log("selectedValue: ", (event as ColorPickerChangeEvent).detail.value);
+    });
+  }
 </script>
