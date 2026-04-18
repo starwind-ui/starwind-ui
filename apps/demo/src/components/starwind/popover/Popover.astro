@@ -637,19 +637,22 @@ const {
 
       this.content.style.position = "fixed";
 
-      const updatePosition = () => this.positionContent();
-      window.addEventListener("scroll", updatePosition, true);
-      window.addEventListener("resize", updatePosition);
+      const handleScroll = () => this.positionContent({ avoidCollisions: false });
+      const handleResize = () => this.positionContent({ avoidCollisions: true });
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleResize);
 
-      const resizeObserver = new ResizeObserver(() => this.positionContent());
+      const resizeObserver = new ResizeObserver(() =>
+        this.positionContent({ avoidCollisions: true }),
+      );
       resizeObserver.observe(this.content);
       if (this.trigger) {
         resizeObserver.observe(this.trigger);
       }
 
       this.cleanupAutoUpdate = () => {
-        window.removeEventListener("scroll", updatePosition, true);
-        window.removeEventListener("resize", updatePosition);
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleResize);
         resizeObserver.disconnect();
       };
     }
@@ -672,7 +675,7 @@ const {
       this.content.style.removeProperty("transform-origin");
     }
 
-    private positionContent() {
+    private positionContent(options?: { avoidCollisions?: boolean }) {
       if (!this.content || !this.trigger || !this.isOpen) return;
 
       const triggerRect = this.trigger.getBoundingClientRect();
@@ -692,7 +695,7 @@ const {
         viewportWidth,
         viewportHeight,
         viewportPadding,
-        avoidCollisions: true,
+        avoidCollisions: options?.avoidCollisions ?? true,
       });
 
       this.content.style.left = `${Math.round(resolvedPlacement.left)}px`;
