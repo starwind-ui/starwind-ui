@@ -390,6 +390,31 @@ const {
       }
     }
 
+    private focusContentOnOpen() {
+      if (!this.isOpen || !this.content) return;
+
+      const focusTarget = this.getInitialFocusTarget();
+      focusTarget?.focus({ preventScroll: true });
+    }
+
+    private getInitialFocusTarget(): HTMLElement | null {
+      if (!this.content) return null;
+
+      const focusableElement = this.content.querySelector<HTMLElement>(
+        [
+          "button:not([disabled])",
+          "[href]",
+          "input:not([disabled])",
+          "select:not([disabled])",
+          "textarea:not([disabled])",
+          '[tabindex]:not([tabindex="-1"])',
+          '[contenteditable="true"]',
+        ].join(", "),
+      );
+
+      return focusableElement ?? this.content;
+    }
+
     private openPopover() {
       if (this.isOpen || this.isClosing) return;
       if (!this.trigger || !this.content || this.isTriggerDisabled()) return;
@@ -405,7 +430,10 @@ const {
       this.content.style.removeProperty("display");
       this.portalContent();
       this.positionContent();
-      requestAnimationFrame(() => this.positionContent());
+      requestAnimationFrame(() => {
+        this.positionContent();
+        this.focusContentOnOpen();
+      });
     }
 
     private closePopover(options?: { focusTrigger?: boolean }) {
@@ -608,7 +636,6 @@ const {
       document.body.appendChild(this.content);
 
       this.content.style.position = "fixed";
-      this.content.style.zIndex = "50";
 
       const updatePosition = () => this.positionContent();
       window.addEventListener("scroll", updatePosition, true);
@@ -640,7 +667,6 @@ const {
       }
 
       this.content.style.removeProperty("position");
-      this.content.style.removeProperty("z-index");
       this.content.style.removeProperty("top");
       this.content.style.removeProperty("left");
       this.content.style.removeProperty("transform-origin");

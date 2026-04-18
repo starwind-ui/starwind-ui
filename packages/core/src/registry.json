@@ -29,7 +29,7 @@
     },
     { "name": "checkbox", "type": "component", "version": "1.4.2", "dependencies": [] },
     { "name": "collapsible", "type": "component", "version": "1.0.1", "dependencies": [] },
-     {
+    {
       "name": "color-picker",
       "type": "component",
       "version": "1.0.0",
@@ -68,7 +68,7 @@
     {
       "name": "popover",
       "type": "component",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": [],
       "fileDependencies": ["positioning.ts"]
     },
