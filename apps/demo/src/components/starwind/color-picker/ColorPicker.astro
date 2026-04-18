@@ -294,7 +294,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
         customPicker.getAttribute("data-state") === "hidden" ? "visible" : "hidden",
       );
 
-      const initialValue = hexToRgb(colorInput.value);
+      const initialValue = parseColorToRgb(colorInput.value) ?? [255, 0, 0];
       updateUIFromRGB(initialValue[0], initialValue[1], initialValue[2]);
       updateOpacityValue(currentOpacity / 100);
     });
@@ -330,7 +330,9 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     pickerBtn.addEventListener("click", async () => {
       const color: string | undefined = await openEyeDropper();
       if (!color) return;
-      const [r, g, b] = hexToRgb(color);
+      const rgbValues = parseColorToRgb(color);
+      if (!rgbValues) return;
+      const [r, g, b] = rgbValues;
       currentRgb = `rgb(${r},${g},${b})`;
       updateUIFromRGB(r, g, b);
     });
@@ -347,7 +349,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
 
       try {
         const result = await eyeDropper.open();
-        return result.sRGBHex;
+        return typeof result?.sRGBHex === "string" ? result.sRGBHex : undefined;
       } catch (e) {
         console.error("Color selection cancelled");
       }
@@ -439,6 +441,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     // Select Main Color and Update UI
     function setSelectedColor(r: number, g: number, b: number) {
       if (!cursor || !opacitySlider || !opacityHandle || !colorInput) return;
+      if (!areRgbValuesValid(r, g, b)) return;
       const finalColor =
         currentOpacity != 100
           ? `rgba(${r},${g},${b}, ${currentOpacity / 100})`
@@ -691,9 +694,11 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
           rgbValues = rgb.split(",").map(Number) as [number, number, number];
           rgbValues[inputIndex] = Number(changeTarget.value);
         } else if (currentColorFormat == "hex") {
-          rgbValues = hexToRgb(
+          const parsedHex = parseColorToRgb(
             `#${textInputs[0].value}${textInputs[1].value}${textInputs[2].value}`,
           );
+          if (!parsedHex) return;
+          rgbValues = parsedHex;
         } else if (currentColorFormat == "hsb") {
           rgbValues = hsbToRgb(
             Number(textInputs[0].value),
@@ -715,7 +720,24 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
     );
 
     // Translate Color Format Functions
+    const areRgbValuesValid = (...values: number[]): boolean =>
+      values.every((value) => Number.isFinite(value) && value >= 0 && value <= 255);
+
+    const parseColorToRgb = (color: string): [number, number, number] | undefined => {
+      const normalized = color.trim();
+      if (!normalized) return undefined;
+
+      const rgbMatch = normalized.match(/^rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+      if (rgbMatch) {
+        const rgbValues = rgbMatch.slice(1, 4).map(Number) as [number, number, number];
+        return areRgbValuesValid(...rgbValues) ? rgbValues : undefined;
+      }
+
+      return hexToRgb(normalized);
+    };
+
     const rgbToHex = (r: number, g: number, b: number): string => {
+      if (!areRgbValuesValid(r, g, b)) return "#000000";
       const [hexR, hexG, hexB] = [r, g, b].map((code) => {
         const hex = Math.round(code).toString(16);
         return hex.length === 1 ? "0" + hex : hex;
@@ -723,8 +745,12 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       return `#${hexR}${hexG}${hexB}`;
     };
 
-    function hexToRgb(hex: string): [number, number, number] {
-      hex = hex.replace(/^#/, "");
+    function hexToRgb(hex: string): [number, number, number] | undefined {
+      hex = hex.trim().replace(/^#/, "");
+
+      if (![3, 6].includes(hex.length) || !/^[0-9a-fA-F]+$/.test(hex)) {
+        return undefined;
+      }
 
       if (hex.length === 3) {
         hex = hex
@@ -737,7 +763,7 @@ const { defaultValue = "#000000", size, class: className, ...rest } = Astro.prop
       const g = parseInt(hex.substring(2, 4), 16);
       const b = parseInt(hex.substring(4, 6), 16);
 
-      return [r, g, b];
+      return areRgbValuesValid(r, g, b) ? [r, g, b] : undefined;
     }
 
     function decimalOpacityToHex(opacity: number): string {
