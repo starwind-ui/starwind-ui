@@ -680,7 +680,7 @@ const containerProps = Object.fromEntries(
       return (
         value.length <= 2 &&
         regex.test(data) &&
-        Number(`${value}${data}`) < 257 &&
+        Number(`${value}${data}`) < 256 &&
         Number(`${value}${data}`) >= 0
       );
     };
