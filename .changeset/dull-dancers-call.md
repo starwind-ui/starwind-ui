@@ -2,4 +2,4 @@
 "@starwind-ui/core": patch
 ---
 
-fix: improve popover positioning and focus handling
+fix(popover): improve popover positioning and focus handling
