@@ -685,9 +685,19 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
       // Move content back to its original position
       if (this.contentPlaceholder) {
-        this.contentPlaceholder.parentNode?.insertBefore(this.content, this.contentPlaceholder);
+        if (this.contentPlaceholder.parentNode) {
+          this.contentPlaceholder.parentNode.insertBefore(this.content, this.contentPlaceholder);
+        } else if (this.content.parentNode) {
+          this.content.remove();
+        }
         this.contentPlaceholder.remove();
         this.contentPlaceholder = null;
+      } else if (
+        this.content.parentNode &&
+        this.portalTarget &&
+        this.portalTarget !== document.body
+      ) {
+        this.content.remove();
       }
 
       this.portalTarget = null;
