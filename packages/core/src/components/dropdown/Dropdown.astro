@@ -294,6 +294,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
           if (e.key === "Escape") {
             e.preventDefault();
             e.stopPropagation();
+            this.lastCloseSource = "keyboard";
             // Close all menus in the group, focus root trigger
             this.rootDropdown.dispatchEvent(
               new CustomEvent("starwind-dropdown:close-all", { detail: { focusRoot: true } }),
