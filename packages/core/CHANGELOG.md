@@ -1,5 +1,18 @@
 # @starwind-ui/core
 
+## 1.17.0
+
+### Minor Changes
+
+- 24feea4: feat: add color-picker
+- 7a2da11: feat(dropdown): revamp dropdown component with improved positioning and portaling
+
+### Patch Changes
+
+- d2f67d1: fix(popover): improve popover positioning and focus handling
+- 3f73476: feat(dialog): Add a floating root within the dialog content to enable dropdown functionality from within dialogs
+- a2b3687: feat(sheet): Add a floating root within the sheet content to enable dropdown functionality from within sheets
+
 ## 1.16.2
 
 ## 1.16.1
