@@ -24,7 +24,13 @@ async function createCoreFixture(options?: {
 
   const coreDir = await mkdtemp(join(tmpdir(), "starwind-core-fixture-"));
 
-  const componentFilePath = join(coreDir, "src", "components", componentName, `${componentName}.astro`);
+  const componentFilePath = join(
+    coreDir,
+    "src",
+    "components",
+    componentName,
+    `${componentName}.astro`,
+  );
   await mkdir(dirname(componentFilePath), { recursive: true });
   await writeFile(componentFilePath, `---\n---\n<div>${componentName}</div>\n`, "utf-8");
 

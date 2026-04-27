@@ -4,6 +4,7 @@ import type { HTMLAttributes } from "astro/types";
 import { dropdownContent } from "./DropdownContent.astro";
 
 type Props = HTMLAttributes<"div"> & {
+  sideOffset?: number;
   /**
    * Open and close animation duration in milliseconds
    * @default 150
@@ -11,7 +12,7 @@ type Props = HTMLAttributes<"div"> & {
   animationDuration?: number;
 };
 
-const { class: className, animationDuration = 150, ...rest } = Astro.props;
+const { class: className, sideOffset = 0, animationDuration = 150, ...rest } = Astro.props;
 ---
 
 <div
@@ -21,6 +22,7 @@ const { class: className, animationDuration = 150, ...rest } = Astro.props;
     class: ["starwind-dropdown-sub-content", className],
   })}
   data-sub-content
+  data-side-offset={sideOffset}
   role="menu"
   data-state="closed"
   tabindex="-1"

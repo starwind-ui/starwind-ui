@@ -68,6 +68,7 @@ const { class: className, animationDuration = 200, ...rest } = Astro.props;
     </slot>
     <span class="sr-only">Close</span>
   </button>
+  <div class="pointer-events-none fixed inset-0" data-floating-root data-slot="floating-root"></div>
 </dialog>
 
 <style>

@@ -184,6 +184,13 @@ const { class: className, ...rest } = Astro.props;
       // Close on click outside
       this.dialog.addEventListener("click", (e) => {
         if (!this.dialog) return;
+        if (
+          e.target instanceof Node &&
+          e.target !== this.dialog &&
+          this.dialog.contains(e.target)
+        ) {
+          return;
+        }
         const dialogDimensions = this.dialog.getBoundingClientRect();
         const clickedInDialog =
           e.clientX >= dialogDimensions.left &&

@@ -6,8 +6,27 @@ import {
   AccordionTrigger,
 } from "@/components/starwind/accordion";
 import { Button } from "@/components/starwind/button";
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+  DropdownSeparator,
+  DropdownSub,
+  DropdownSubContent,
+  DropdownSubTrigger,
+  DropdownTrigger,
+} from "@/components/starwind/dropdown";
 import { Input } from "@/components/starwind/input";
 import { Label } from "@/components/starwind/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/starwind/popover";
 import {
   Sheet,
   SheetClose,
@@ -81,6 +100,59 @@ import {
 
     <Sheet>
       <SheetTrigger asChild>
+        <Button variant="outline">Dropdown In Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="right">
+        <SheetHeader>
+          <SheetTitle>Dropdown Portal Test</SheetTitle>
+          <SheetDescription>
+            Open the dropdown to confirm it renders above the sheet and is not clipped.
+          </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 overflow-hidden px-4">
+          <div class="grid gap-3">
+            <Label for="sheet-dropdown-name">Project</Label>
+            <Input id="sheet-dropdown-name" value="Portal QA" />
+          </div>
+          <div class="grid gap-3">
+            <Label>Actions menu</Label>
+            <Dropdown>
+              <DropdownTrigger asChild>
+                <Button variant="outline" class="w-full justify-between">Open dropdown</Button>
+              </DropdownTrigger>
+              <DropdownContent side="left" align="start">
+                <DropdownLabel>Sheet actions</DropdownLabel>
+                <DropdownItem>Rename project</DropdownItem>
+                <DropdownItem>Duplicate</DropdownItem>
+                <DropdownSub>
+                  <DropdownSubTrigger>Share</DropdownSubTrigger>
+                  <DropdownSubContent>
+                    <DropdownItem>Email invite</DropdownItem>
+                    <DropdownItem>Copy link</DropdownItem>
+                    <DropdownSeparator />
+                    <DropdownItem>Advanced permissions</DropdownItem>
+                  </DropdownSubContent>
+                </DropdownSub>
+                <DropdownSeparator />
+                <DropdownItem>Archive</DropdownItem>
+              </DropdownContent>
+            </Dropdown>
+          </div>
+          <div class="grid gap-3">
+            <Label for="sheet-dropdown-notes">Notes</Label>
+            <Input id="sheet-dropdown-notes" value="Use this sheet to validate portal stacking." />
+          </div>
+        </div>
+        <SheetFooter>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
         <Button variant="outline">Open Bottom Sheet</Button>
       </SheetTrigger>
       <SheetContent side="bottom">
@@ -100,6 +172,69 @@ import {
         </div>
         <SheetFooter>
           <Button variant="default">Save changes</Button>
+          <SheetClose asChild>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Popover In Sheet</Button>
+      </SheetTrigger>
+      <SheetContent side="left">
+        <SheetHeader>
+          <SheetTitle>Popover Portal Test</SheetTitle>
+          <SheetDescription>
+            Open the popover to confirm it renders above the sheet and remains interactive.
+          </SheetDescription>
+        </SheetHeader>
+        <div class="grid flex-1 auto-rows-min gap-6 overflow-hidden px-4">
+          <div class="grid gap-3">
+            <Label for="sheet-popover-name">Workspace</Label>
+            <Input id="sheet-popover-name" value="Portal QA" />
+          </div>
+          <div class="grid gap-3">
+            <Label>Details popover</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" class="w-full justify-between">Open popover</Button>
+              </PopoverTrigger>
+              <PopoverContent side="right" align="start" class="w-72">
+                <PopoverHeader>
+                  <PopoverTitle>Sheet popover</PopoverTitle>
+                  <PopoverDescription>
+                    This popover should render above the sheet without being clipped.
+                  </PopoverDescription>
+                </PopoverHeader>
+                <div class="mt-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" class="w-full">Open nested popover</Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="right" align="start" class="w-64">
+                      <PopoverHeader>
+                        <PopoverTitle>Nested popover</PopoverTitle>
+                        <PopoverDescription>
+                          Use this to verify nested popovers also stay above the sheet.
+                        </PopoverDescription>
+                      </PopoverHeader>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div class="grid gap-3">
+            <Label for="sheet-popover-notes">Notes</Label>
+            <Input
+              id="sheet-popover-notes"
+              value="Use this sheet to validate popover portal stacking."
+            />
+          </div>
+        </div>
+        <SheetFooter>
           <SheetClose asChild>
             <Button variant="outline">Close</Button>
           </SheetClose>
