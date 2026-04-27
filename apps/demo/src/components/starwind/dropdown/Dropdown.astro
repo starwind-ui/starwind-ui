@@ -573,6 +573,20 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       }
     }
 
+    private isPointerWithinDropdownGroup(): boolean {
+      if (this.trigger?.matches(":hover") || this.content?.matches(":hover")) {
+        return true;
+      }
+
+      const hoveredElements = Array.from(document.querySelectorAll(":hover"));
+      return hoveredElements.some(
+        (element) =>
+          this.dropdown.contains(element) ||
+          this.content?.contains(element) ||
+          this.isTargetInGroup(element),
+      );
+    }
+
     destroy() {
       if (this.abortController.signal.aborted) return;
 
@@ -676,8 +690,18 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
       // Decrement parent's open child count
       if (this.parentHandler) {
-        this.parentHandler.openChildCount = Math.max(0, this.parentHandler.openChildCount - 1);
+        const parentHandler = this.parentHandler;
+        parentHandler.openChildCount = Math.max(0, parentHandler.openChildCount - 1);
         this.parentHandler = null;
+
+        if (
+          parentHandler.openOnHover &&
+          parentHandler.openChildCount === 0 &&
+          !parentHandler.isPointerWithinDropdownGroup()
+        ) {
+          parentHandler.lastCloseSource = "mouse";
+          parentHandler.closeDropdownDelayed();
+        }
       }
 
       // Clean up auto-update and hover listeners
