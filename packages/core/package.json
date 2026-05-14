@@ -40,6 +40,7 @@
     "publish:release": "pnpm publish --access public"
   },
   "devDependencies": {
+    "@types/node": "^24.12.4",
     "astro": "^5.11.0",
     "fs-extra": "^11.3.3",
     "glob": "^13.0.0",
