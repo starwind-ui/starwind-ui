@@ -31,8 +31,8 @@
     "build": "pnpm clean && tsup",
     "clean": "node -e \"require('fs-extra').remove('dist')\"",
     "dev": "tsup --watch",
-    "core:link": "pnpm link --global",
-    "core:unlink": "pnpm rm --global @starwind-ui/core",
+    "core:link": "yalc publish",
+    "core:unlink": "yalc remove @starwind-ui/core",
     "core:yalc:link": "yalc publish",
     "core:yalc:unlink": "yalc remove @starwind-ui/core",
     "publish:beta": "pnpm publish --tag beta --access public",
@@ -40,6 +40,7 @@
     "publish:release": "pnpm publish --access public"
   },
   "devDependencies": {
+    "@types/node": "^24.12.4",
     "astro": "^5.11.0",
     "fs-extra": "^11.3.3",
     "glob": "^13.0.0",

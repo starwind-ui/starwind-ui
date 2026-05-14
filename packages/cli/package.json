@@ -38,7 +38,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "cli:link": "pnpm link --global",
+    "cli:link": "pnpm add --global . --ignore-scripts",
     "cli:unlink": "pnpm rm --global starwind",
     "cli:yalc:link": "yalc publish && yalc link @starwind-ui/core",
     "cli:yalc:unlink": "yalc remove @starwind-ui/core && yalc remove starwind",
@@ -70,6 +70,6 @@
     "tsup": "^8.5.1"
   },
   "engines": {
-    "node": "^20.6.0 || >=22.0.0"
+    "node": ">=22.12.0"
   }
 }
