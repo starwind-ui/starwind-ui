@@ -5,6 +5,11 @@ onlyBuiltDependencies:
   - '@biomejs/biome'
   - esbuild
   - sharp
+allowBuilds:
+  esbuild: true
+  sharp: true
+
+resolutionMode: highest
 
 # 2 day minimum release age
 minimumReleaseAge: 2880
@@ -14,3 +19,6 @@ minimumReleaseAgeStrict: true
 minimumReleaseAgeExclude:
   - "starwind"
   - "@starwind-ui/*"
+  # below packages are missing the "time" field
+  - "@tailwindcss/oxide"
+  - "@astrojs/markdown-remark"

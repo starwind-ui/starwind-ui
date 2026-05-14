@@ -111,7 +111,7 @@ importers:
         version: 0.11.0
       '@starwind-ui/core':
         specifier: 1.16.2
-        version: link:../core
+        version: 1.16.2
       chalk:
         specifier: ^5.6.2
         version: 5.6.2
@@ -1137,6 +1137,9 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@starwind-ui/core@1.16.2':
+    resolution: {integrity: sha512-OD/3WTz+wLD7lP/YkJmeVfBTWGCM2zowrxou0mWm8iD/m3bmv4PFWx3kGn7q+/+unEz0U/BKk9OiliGaVINiGg==}
 
   '@tabler/icons@3.44.0':
     resolution: {integrity: sha512-Wn0AOZG9sg0L+bjfMqq4eNhC6pQjIrk94LvvWYNYkY8KH8wC3YILRzQlrnVJc4FUeMxH/AK97QsYCX35H3LndA==}
@@ -5179,6 +5182,8 @@ snapshots:
   '@sindresorhus/merge-streams@4.0.0': {}
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@starwind-ui/core@1.16.2': {}
 
   '@tabler/icons@3.44.0': {}
 
