@@ -5,3 +5,12 @@ onlyBuiltDependencies:
   - '@biomejs/biome'
   - esbuild
   - sharp
+
+# 2 day minimum release age
+minimumReleaseAge: 2880
+minimumReleaseAgeStrict: true
+
+# allow starwind related packages and others I created
+minimumReleaseAgeExclude:
+  - "starwind"
+  - "@starwind-ui/*"
