@@ -100,6 +100,9 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
     devDependencies:
+      sharp:
+        specifier: ^0.34.5
+        version: 0.34.5
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -149,6 +152,9 @@ importers:
 
   packages/core:
     devDependencies:
+      '@types/node':
+        specifier: ^24.12.4
+        version: 24.12.4
       astro:
         specifier: ^5.11.0
         version: 5.18.1(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.3)(terser@5.46.1)(typescript@5.9.3)(yaml@2.9.0)
