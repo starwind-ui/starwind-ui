@@ -1,4 +1,4 @@
-import { readdir, rm } from "node:fs/promises";
+import { readdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 
 const NAMES_TO_REMOVE = new Set([
@@ -46,17 +46,29 @@ async function clean() {
     ];
 
     const uniquePaths = [...new Set(paths)];
+    const filteredExistingPaths = (
+      await Promise.all(
+        uniquePaths.map(async (path) => {
+          try {
+            await stat(path);
+            return path;
+          } catch {
+            return null;
+          }
+        }),
+      )
+    ).filter(Boolean);
 
-    if (uniquePaths.length === 0) {
+    if (filteredExistingPaths.length === 0) {
       console.log("✨ Nothing to clean");
       return;
     }
 
     console.log("\nRemoving the following paths:");
-    uniquePaths.forEach((path) => console.log(`- ${path}`));
+    filteredExistingPaths.forEach((path) => console.log(`- ${path}`));
 
     await Promise.all(
-      uniquePaths.map((path) =>
+      filteredExistingPaths.map((path) =>
         rm(path, { recursive: true, force: true }).catch((err) =>
           console.error(`Failed to remove ${path}:`, err),
         ),
