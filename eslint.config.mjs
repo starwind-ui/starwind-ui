@@ -104,6 +104,7 @@ export default defineConfig([
       // agent items
       ".agent/**",
       ".windsurf/**",
+      "ai-context/**",
     ],
   },
 ]);
