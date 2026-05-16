@@ -58,7 +58,7 @@ const {
     private abortController: AbortController;
 
     constructor(hoverCard: HTMLElement, idx: number) {
-      this.contentId = `starwind-hover-card${idx}`;
+      this.contentId = `starwind-hover-card-${idx}`;
       this.hoverCard = hoverCard;
       this.abortController = new AbortController();
       this.content = hoverCard.querySelector(".starwind-hover-card-content");
