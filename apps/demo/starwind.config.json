@@ -6,154 +6,195 @@
     "cssVariables": true
   },
   "componentDir": "src/components",
+  "utilsDir": "src/lib/utils",
   "components": [
     {
       "name": "button",
-      "version": "2.2.0"
-    },
-    {
-      "name": "separator",
-      "version": "1.0.0"
-    },
-    {
-      "name": "aspect-ratio",
-      "version": "1.0.0"
-    },
-    {
-      "name": "item",
-      "version": "1.0.0"
-    },
-    {
-      "name": "skeleton",
-      "version": "1.2.0"
-    },
-    {
-      "name": "spinner",
-      "version": "1.0.0"
-    },
-    {
-      "name": "alert",
-      "version": "1.3.0"
-    },
-    {
-      "name": "badge",
-      "version": "1.3.0"
-    },
-    {
-      "name": "card",
-      "version": "1.3.0"
-    },
-    {
-      "name": "label",
-      "version": "1.2.0"
-    },
-    {
-      "name": "table",
-      "version": "1.1.0"
-    },
-    {
-      "name": "carousel",
-      "version": "1.0.1"
-    },
-    {
-      "name": "sheet",
-      "version": "1.1.1"
-    },
-    {
-      "name": "breadcrumb",
-      "version": "1.1.1"
-    },
-    {
-      "name": "avatar",
-      "version": "1.2.1"
-    },
-    {
-      "name": "pagination",
-      "version": "3.0.2"
-    },
-    {
-      "name": "button-group",
-      "version": "1.0.0"
-    },
-    {
-      "name": "kbd",
-      "version": "1.0.0"
-    },
-    {
-      "name": "checkbox",
-      "version": "1.4.1"
+      "version": "2.3.2"
     },
     {
       "name": "input",
-      "version": "1.3.1"
+      "version": "1.3.2"
     },
     {
       "name": "textarea",
-      "version": "1.3.1"
-    },
-    {
-      "name": "progress",
-      "version": "1.1.1"
-    },
-    {
-      "name": "switch",
-      "version": "1.3.1"
+      "version": "1.3.2"
     },
     {
       "name": "tooltip",
-      "version": "1.3.1"
-    },
-    {
-      "name": "tabs",
-      "version": "1.4.1"
+      "version": "1.5.0"
     },
     {
       "name": "dialog",
+      "version": "1.5.0"
+    },
+    {
+      "name": "select",
+      "version": "1.8.4"
+    },
+    {
+      "name": "collapsible",
+      "version": "1.0.1"
+    },
+    {
+      "name": "color-picker",
+      "version": "1.0.0"
+    },
+    {
+      "name": "hover-card",
+      "version": "1.0.0"
+    },
+    {
+      "name": "input-group",
+      "version": "1.0.0"
+    },
+    {
+      "name": "input-otp",
+      "version": "1.0.2"
+    },
+    {
+      "name": "native-select",
+      "version": "1.0.0"
+    },
+    {
+      "name": "popover",
+      "version": "1.0.1"
+    },
+    {
+      "name": "prose",
+      "version": "1.0.1"
+    },
+    {
+      "name": "sidebar",
+      "version": "1.0.1"
+    },
+    {
+      "name": "theme-toggle",
+      "version": "1.0.1"
+    },
+    {
+      "name": "separator",
+      "version": "1.0.1"
+    },
+    {
+      "name": "aspect-ratio",
+      "version": "1.0.2"
+    },
+    {
+      "name": "item",
+      "version": "1.0.2"
+    },
+    {
+      "name": "skeleton",
+      "version": "1.2.1"
+    },
+    {
+      "name": "spinner",
+      "version": "1.0.1"
+    },
+    {
+      "name": "alert",
+      "version": "1.3.1"
+    },
+    {
+      "name": "badge",
+      "version": "1.4.2"
+    },
+    {
+      "name": "card",
+      "version": "2.0.1"
+    },
+    {
+      "name": "label",
+      "version": "1.2.1"
+    },
+    {
+      "name": "table",
+      "version": "1.1.1"
+    },
+    {
+      "name": "carousel",
+      "version": "1.0.3"
+    },
+    {
+      "name": "sheet",
+      "version": "1.2.0"
+    },
+    {
+      "name": "breadcrumb",
+      "version": "1.1.2"
+    },
+    {
+      "name": "avatar",
+      "version": "1.2.2"
+    },
+    {
+      "name": "pagination",
+      "version": "3.0.3"
+    },
+    {
+      "name": "button-group",
+      "version": "1.0.1"
+    },
+    {
+      "name": "kbd",
+      "version": "1.0.1"
+    },
+    {
+      "name": "checkbox",
+      "version": "1.4.2"
+    },
+    {
+      "name": "progress",
+      "version": "1.1.2"
+    },
+    {
+      "name": "switch",
+      "version": "1.3.2"
+    },
+    {
+      "name": "tabs",
       "version": "1.4.2"
     },
     {
       "name": "accordion",
-      "version": "1.3.3"
+      "version": "1.3.4"
     },
     {
       "name": "dropdown",
-      "version": "1.2.3"
+      "version": "2.0.0"
     },
     {
       "name": "alert-dialog",
-      "version": "1.0.3"
+      "version": "1.0.5"
     },
     {
       "name": "toggle",
-      "version": "1.0.1"
+      "version": "1.0.2"
     },
     {
       "name": "dropzone",
-      "version": "1.2.2"
+      "version": "1.2.3"
     },
     {
       "name": "radio-group",
-      "version": "1.2.4"
-    },
-    {
-      "name": "select",
-      "version": "1.8.1"
+      "version": "1.2.5"
     },
     {
       "name": "image",
-      "version": "1.0.0"
+      "version": "1.0.1"
     },
     {
       "name": "slider",
-      "version": "1.0.0"
+      "version": "1.0.1"
     },
     {
       "name": "toast",
-      "version": "1.0.0"
+      "version": "1.0.1"
     },
     {
       "name": "video",
-      "version": "1.0.0"
+      "version": "1.0.1"
     }
   ]
 }
