@@ -1,0 +1,34 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type ScrollBarOrientation = "vertical" | "horizontal";
+
+type Props = HTMLAttributes<"div"> & {
+  orientation?: ScrollBarOrientation;
+};
+
+export const scrollBar = tv({
+  base: [
+    "starwind-scroll-area-scrollbar absolute z-10 flex touch-none p-px transition-colors select-none",
+    "data-[orientation=horizontal]:right-0 data-[orientation=horizontal]:bottom-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:h-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:border-t data-[orientation=horizontal]:border-t-transparent",
+    "data-[orientation=vertical]:inset-y-0 data-[orientation=vertical]:right-0 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-2.5 data-[orientation=vertical]:border-l data-[orientation=vertical]:border-l-transparent",
+  ],
+});
+
+export const scrollBarThumb = tv({
+  base: "starwind-scroll-area-thumb bg-border relative flex-1 rounded-full",
+});
+
+const { class: className, orientation = "vertical", ...rest } = Astro.props;
+---
+
+<div
+  class={scrollBar({ class: className })}
+  data-orientation={orientation}
+  aria-hidden="true"
+  {...rest}
+  data-slot="scroll-area-scrollbar"
+>
+  <div class={scrollBarThumb()} data-slot="scroll-area-thumb"></div>
+</div>

@@ -1,0 +1,22 @@
+---
+import { ScrollArea } from "@/components/starwind/scroll-area";
+
+const tags = Array.from({ length: 24 }, (_, index) => `v1.2.${index}`);
+---
+
+<section class="mx-auto mt-10 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Scroll Area</h2>
+  <ScrollArea class="h-72 w-full rounded-sm border">
+    <div class="p-4">
+      <h3 class="mb-4 text-sm leading-none font-medium">Tags</h3>
+      {
+        tags.map((tag) => (
+          <div class="text-sm" data-tag={tag}>
+            <div class="py-2">{tag}</div>
+            <div class="border-t" />
+          </div>
+        ))
+      }
+    </div>
+  </ScrollArea>
+</section>
