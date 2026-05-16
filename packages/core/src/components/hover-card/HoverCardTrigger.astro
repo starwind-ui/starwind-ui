@@ -1,0 +1,50 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = Omit<HTMLAttributes<"button">, "type"> & {
+  /**
+   * When true, the component will render its child element with a simple wrapper instead of a button component
+   */
+  asChild?: boolean;
+};
+
+export const hoverCardTrigger = tv({
+  base: [
+    "starwind-hover-card-trigger",
+    "inline-flex items-center justify-center",
+    "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
+    "disabled:pointer-events-none",
+  ],
+});
+
+const { class: className, asChild = false, ...rest } = Astro.props;
+
+let hasChildren = false;
+if (Astro.slots.has("default")) {
+  hasChildren = true;
+}
+---
+
+{
+  asChild && hasChildren ? (
+    <div
+      class:list={["starwind-hover-card-trigger", className]}
+      data-as-child
+      {...rest}
+      data-slot="hover-card-trigger"
+    >
+      <slot />
+    </div>
+  ) : (
+    <button
+      class={hoverCardTrigger({ class: className })}
+      type="button"
+      data-state="closed"
+      {...rest}
+      data-slot="hover-card-trigger"
+    >
+      <slot />
+    </button>
+  )
+}
