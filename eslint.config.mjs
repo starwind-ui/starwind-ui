@@ -94,6 +94,8 @@ export default defineConfig([
       "**/*/node_modules/**",
       "**/*/.astro/**",
       "**/*.d.ts",
+      "**/*.tsx",
+      "**/.turbo/**",
       ".tours/",
       "scripts/",
       ".github/",

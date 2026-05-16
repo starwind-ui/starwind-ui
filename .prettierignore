@@ -31,3 +31,6 @@ pnpm-workspace.yaml
 .windsurf
 .agents
 artifacts/superpowers
+
+# turbo files
+**/.turbo
