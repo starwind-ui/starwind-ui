@@ -2,16 +2,16 @@
 import type { HTMLAttributes } from "astro/types";
 import { tv } from "tailwind-variants";
 
-type Props = Omit<HTMLAttributes<"button">, "role" | "type"> & {
+type Props = Omit<HTMLAttributes<"button">, "type"> & {
   /**
    * When true, the component will render its child element with a simple wrapper instead of a button component
    */
   asChild?: boolean;
 };
 
-export const popoverTrigger = tv({
+export const hoverCardTrigger = tv({
   base: [
-    "starwind-popover-trigger",
+    "starwind-hover-card-trigger",
     "inline-flex items-center justify-center",
     "focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
     "disabled:pointer-events-none",
@@ -29,22 +29,20 @@ if (Astro.slots.has("default")) {
 {
   asChild && hasChildren ? (
     <div
-      class:list={["starwind-popover-trigger", className]}
+      class:list={["starwind-hover-card-trigger", className]}
       data-as-child
       {...rest}
-      data-slot="popover-trigger"
+      data-slot="hover-card-trigger"
     >
       <slot />
     </div>
   ) : (
     <button
-      class={popoverTrigger({ class: className })}
+      class={hoverCardTrigger({ class: className })}
       type="button"
-      aria-haspopup="dialog"
-      aria-expanded="false"
       data-state="closed"
       {...rest}
-      data-slot="popover-trigger"
+      data-slot="hover-card-trigger"
     >
       <slot />
     </button>

@@ -26,9 +26,10 @@ if (Astro.slots.has("default")) {
   asChild && hasChildren ? (
     <div
       class:list={["starwind-dialog-trigger", className]}
-      data-slot="dialog-trigger"
       data-as-child
       data-dialog-for={dialogFor}
+      {...rest}
+      data-slot="dialog-trigger"
     >
       <slot />
     </div>

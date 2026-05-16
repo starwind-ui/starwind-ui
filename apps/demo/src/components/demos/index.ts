@@ -15,6 +15,7 @@ export { default as DialogDemo } from "./DialogDemo.astro";
 export { default as DropdownDemo } from "./DropdownDemo.astro";
 export { default as DropzoneDemo } from "./DropzoneDemo.astro";
 export { default as FormDemo } from "./FormDemo.astro";
+export { default as HoverCardDemo } from "./HoverCardDemo.astro";
 export { default as ImageDemo } from "./ImageDemo.astro";
 export { default as InputGroupDemo } from "./InputGroupDemo.astro";
 export { default as InputOtpDemo } from "./InputOtpDemo.astro";

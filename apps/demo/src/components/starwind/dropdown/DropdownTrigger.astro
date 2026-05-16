@@ -31,8 +31,9 @@ if (Astro.slots.has("default")) {
   asChild && hasChildren ? (
     <div
       class:list={["starwind-dropdown-trigger", className]}
-      data-slot="dropdown-trigger"
       data-as-child
+      {...rest}
+      data-slot="dropdown-trigger"
     >
       <slot />
     </div>

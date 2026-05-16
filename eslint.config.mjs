@@ -94,6 +94,8 @@ export default defineConfig([
       "**/*/node_modules/**",
       "**/*/.astro/**",
       "**/*.d.ts",
+      "**/*.tsx",
+      "**/.turbo/**",
       ".tours/",
       "scripts/",
       ".github/",
@@ -102,6 +104,7 @@ export default defineConfig([
       // agent items
       ".agent/**",
       ".windsurf/**",
+      "ai-context/**",
     ],
   },
 ]);

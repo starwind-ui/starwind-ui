@@ -1,0 +1,90 @@
+---
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind/avatar";
+import { Button } from "@/components/starwind/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/starwind/hover-card";
+---
+
+<section class="mx-auto mt-6 max-w-2xl">
+  <h2 class="mb-4 text-2xl font-bold">Hover Card</h2>
+
+  <div class="space-y-8">
+    <div class="space-y-3">
+      <h3 class="text-muted-foreground text-sm font-medium">Profile preview</h3>
+      <div class="flex flex-wrap items-center gap-4">
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <Button variant="outline">@starwind</Button>
+          </HoverCardTrigger>
+          <HoverCardContent align="start" class="w-80">
+            <div class="flex justify-between gap-4">
+              <Avatar class="shrink-0">
+                <AvatarImage src="https://i.pravatar.cc/150?u=starwind" alt="Starwind UI" />
+                <AvatarFallback>SW</AvatarFallback>
+              </Avatar>
+              <div class="space-y-1">
+                <h4 class="text-sm font-semibold">Starwind UI</h4>
+                <p class="text-muted-foreground text-sm">
+                  Accessible Astro components styled with Tailwind CSS.
+                </p>
+                <div class="flex items-center pt-2">
+                  <span class="text-muted-foreground text-xs">Built for Astro developers</span>
+                </div>
+              </div>
+            </div>
+          </HoverCardContent>
+        </HoverCard>
+
+        <HoverCard openDelay={200} closeDelay={200}>
+          <HoverCardTrigger asChild>
+            <Button href="https://astro.build" variant="ghost">Astro</Button>
+          </HoverCardTrigger>
+          <HoverCardContent side="right" align="start" class="w-80">
+            <div class="space-y-2">
+              <h4 class="text-sm font-semibold">Astro</h4>
+              <p class="text-muted-foreground text-sm">
+                A web framework for content-driven sites with fast-by-default performance.
+              </p>
+            </div>
+          </HoverCardContent>
+        </HoverCard>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="text-muted-foreground text-sm font-medium">Side and alignment</h3>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <HoverCard openDelay={150}>
+          <HoverCardTrigger asChild>
+            <Button variant="outline" class="w-full">Top</Button>
+          </HoverCardTrigger>
+          <HoverCardContent side="top" sideOffset={8}>Appears above the trigger.</HoverCardContent>
+        </HoverCard>
+
+        <HoverCard openDelay={150}>
+          <HoverCardTrigger asChild>
+            <Button variant="outline" class="w-full">Right</Button>
+          </HoverCardTrigger>
+          <HoverCardContent side="right" align="start" sideOffset={8}>
+            Appears to the right and aligns to the start.
+          </HoverCardContent>
+        </HoverCard>
+
+        <HoverCard openDelay={150}>
+          <HoverCardTrigger asChild>
+            <Button variant="outline" class="w-full">Bottom</Button>
+          </HoverCardTrigger>
+          <HoverCardContent side="bottom" align="end" sideOffset={8}>
+            Appears below and aligns to the end.
+          </HoverCardContent>
+        </HoverCard>
+
+        <HoverCard openDelay={150}>
+          <HoverCardTrigger asChild>
+            <Button variant="outline" class="w-full">Left</Button>
+          </HoverCardTrigger>
+          <HoverCardContent side="left" sideOffset={8}>Appears to the left.</HoverCardContent>
+        </HoverCard>
+      </div>
+    </div>
+  </div>
+</section>
