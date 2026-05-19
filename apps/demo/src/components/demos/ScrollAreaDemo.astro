@@ -1,0 +1,141 @@
+---
+import { ScrollArea, ScrollBar } from "@/components/starwind/scroll-area";
+
+const tags = Array.from({ length: 24 }, (_, index) => `v1.2.${index}`);
+const releases = Array.from({ length: 18 }, (_, index) => ({
+  version: `v2.${index}.0`,
+  date: `2026-${String((index % 12) + 1).padStart(2, "0")}-15`,
+}));
+const columns = Array.from({ length: 12 }, (_, index) => `Column ${index + 1}`);
+const rows = Array.from({ length: 16 }, (_, index) => `Row ${index + 1}`);
+const rtlItems = ["مرحبا", "تصميم", "واجهة", "تمرير", "مكوّن", "تجربة", "اختبار", "اتجاه"];
+---
+
+<section class="mx-auto mt-10 w-full max-w-5xl min-w-0 space-y-8">
+  <div>
+    <h2 class="text-2xl font-bold">Scroll Area</h2>
+    <p class="text-muted-foreground mt-2 text-sm">
+      Examples covering vertical, horizontal, RTL, two-axis overflow, and dynamic content sizing.
+    </p>
+  </div>
+
+  <div class="grid min-w-0 gap-6 lg:grid-cols-2">
+    <article class="min-w-0 space-y-3">
+      <h3 class="text-base font-semibold">Vertical overflow</h3>
+      <ScrollArea class="h-72 w-full rounded-sm border">
+        <div class="p-4">
+          <h4 class="mb-4 text-sm leading-none font-medium">Tags</h4>
+          {
+            tags.map((tag) => (
+              <div class="text-sm" data-tag={tag}>
+                <div class="py-2">{tag}</div>
+                <div class="border-t" />
+              </div>
+            ))
+          }
+        </div>
+      </ScrollArea>
+    </article>
+
+    <article class="min-w-0 space-y-3">
+      <h3 class="text-base font-semibold">Horizontal overflow</h3>
+      <ScrollArea class="w-full rounded-sm border">
+        <div class="flex w-max gap-4 p-4">
+          {
+            releases.map((release) => (
+              <div
+                class="bg-muted/40 w-44 shrink-0 rounded-md border p-4"
+                data-release={release.version}
+              >
+                <div class="font-medium">{release.version}</div>
+                <div class="text-muted-foreground mt-1 text-sm">{release.date}</div>
+              </div>
+            ))
+          }
+        </div>
+        <ScrollBar slot="scrollbar" orientation="horizontal" />
+      </ScrollArea>
+    </article>
+  </div>
+
+  <div class="grid min-w-0 gap-6 lg:grid-cols-2">
+    <article class="min-w-0 space-y-3">
+      <h3 class="text-base font-semibold">Horizontal RTL overflow</h3>
+      <ScrollArea class="w-full rounded-sm border" dir="rtl">
+        <div class="flex w-max gap-4 p-4">
+          {
+            rtlItems.map((item, index) => (
+              <div
+                class="bg-muted/40 w-40 shrink-0 rounded-md border p-4 text-right"
+                data-rtl-item={item}
+              >
+                <div class="font-medium">{item}</div>
+                <div class="text-muted-foreground mt-1 text-sm">عنصر {index + 1}</div>
+              </div>
+            ))
+          }
+        </div>
+        <ScrollBar slot="scrollbar" orientation="horizontal" />
+      </ScrollArea>
+    </article>
+
+    <article class="min-w-0 space-y-3">
+      <h3 class="text-base font-semibold">Both axes with corner</h3>
+      <ScrollArea class="h-72 w-full rounded-sm border">
+        <table class="w-max border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr>
+              <th class="bg-background sticky top-0 z-10 border-b p-3 text-left font-medium"
+                >Release</th
+              >
+              {
+                columns.map((column) => (
+                  <th class="bg-background sticky top-0 z-10 min-w-32 border-b p-3 text-left font-medium">
+                    {column}
+                  </th>
+                ))
+              }
+            </tr>
+          </thead>
+          <tbody>
+            {
+              rows.map((row) => (
+                <tr>
+                  <th class="bg-background sticky left-0 border-r p-3 text-left font-medium">
+                    {row}
+                  </th>
+                  {columns.map((column) => (
+                    <td class="text-muted-foreground border-b p-3">
+                      {row} / {column}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+        <ScrollBar slot="scrollbar" />
+        <ScrollBar slot="scrollbar" orientation="horizontal" />
+      </ScrollArea>
+    </article>
+  </div>
+
+  <article class="min-w-0 space-y-3">
+    <h3 class="text-base font-semibold">Dynamic content resize</h3>
+    <ScrollArea class="h-56 w-full rounded-sm border">
+      <details class="p-4">
+        <summary class="cursor-pointer text-sm font-medium">Toggle extra content</summary>
+        <div class="mt-4 space-y-3 text-sm">
+          {
+            tags.map((tag) => (
+              <p class="rounded-md border p-3" data-dynamic-tag={tag}>
+                The content wrapper resize observer recalculates scrollbar visibility and thumb size
+                when this section expands. Current item: {tag}.
+              </p>
+            ))
+          }
+        </div>
+      </details>
+    </ScrollArea>
+  </article>
+</section>

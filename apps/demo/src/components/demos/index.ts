@@ -26,6 +26,7 @@ export { default as PaginationDemo } from "./PaginationDemo.astro";
 export { default as PopoverDemo } from "./PopoverDemo.astro";
 export { default as ProgressDemo } from "./ProgressDemo.astro";
 export { default as RadioGroupDemo } from "./RadioGroupDemo.astro";
+export { default as ScrollAreaDemo } from "./ScrollAreaDemo.astro";
 export { default as SelectDemo } from "./SelectDemo.astro";
 export { default as SeparatorDemo } from "./SeparatorDemo.astro";
 export { default as SheetDemo } from "./SheetDemo.astro";
