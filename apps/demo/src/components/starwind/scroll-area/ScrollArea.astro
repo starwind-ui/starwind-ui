@@ -13,18 +13,21 @@ export const scrollArea = tv({
     root: "starwind-scroll-area relative overflow-hidden",
     viewport:
       "starwind-scroll-area-viewport focus-visible:ring-outline/50 size-full overflow-auto rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1",
+    content: "starwind-scroll-area-content min-w-fit",
     corner:
-      "starwind-scroll-area-corner bg-background absolute right-0 bottom-0 z-10 hidden size-2.5",
+      "starwind-scroll-area-corner bg-background absolute end-0 bottom-0 z-10 hidden size-2.5",
   },
 });
 
 const { class: className, viewportClass, ...rest } = Astro.props;
-const { root, viewport, corner } = scrollArea();
+const { root, viewport, content, corner } = scrollArea();
 ---
 
 <div class={root({ class: className })} {...rest} data-slot="scroll-area">
-  <div class={viewport({ class: viewportClass })} tabindex="0" data-slot="scroll-area-viewport">
-    <slot />
+  <div class={viewport({ class: viewportClass })} tabindex="-1" data-slot="scroll-area-viewport">
+    <div class={content()} role="presentation" data-slot="scroll-area-content">
+      <slot />
+    </div>
   </div>
   <slot name="scrollbar">
     <ScrollBar />
@@ -45,10 +48,64 @@ const { root, viewport, corner } = scrollArea();
 
 <script>
   type ScrollOrientation = "vertical" | "horizontal";
+  type ScrollAxis = "x" | "y";
+  type SpacingProperty = "margin" | "padding";
+
+  const MIN_THUMB_SIZE = 20;
+
+  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+  const parseCssPixelValue = (value: string) => {
+    const parsed = Number.parseFloat(value);
+
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const getPhysicalSpacing = (
+    element: Element,
+    property: SpacingProperty,
+    orientation: ScrollOrientation,
+  ) => {
+    const styles = getComputedStyle(element);
+
+    if (orientation === "horizontal") {
+      return {
+        start: parseCssPixelValue(styles.getPropertyValue(`${property}-left`)),
+        end: parseCssPixelValue(styles.getPropertyValue(`${property}-right`)),
+      };
+    }
+
+    return {
+      start: parseCssPixelValue(styles.getPropertyValue(`${property}-top`)),
+      end: parseCssPixelValue(styles.getPropertyValue(`${property}-bottom`)),
+    };
+  };
+
+  const getSpacing = (
+    element: Element | null,
+    property: SpacingProperty,
+    axis: ScrollAxis,
+  ): number => {
+    if (!element) return 0;
+
+    const styles = getComputedStyle(element);
+
+    if (axis === "x" && property === "margin") {
+      return parseCssPixelValue(styles.getPropertyValue("margin-inline-start")) * 2;
+    }
+
+    const propertyAxis = axis === "x" ? "inline" : "block";
+
+    return (
+      parseCssPixelValue(styles.getPropertyValue(`${property}-${propertyAxis}-start`)) +
+      parseCssPixelValue(styles.getPropertyValue(`${property}-${propertyAxis}-end`))
+    );
+  };
 
   class ScrollAreaHandler {
     private root: HTMLElement;
     private viewport: HTMLElement;
+    private content: HTMLElement | null;
     private scrollbars: HTMLElement[];
     private corner: HTMLElement | null;
     private resizeObserver: ResizeObserver;
@@ -57,6 +114,7 @@ const { root, viewport, corner } = scrollArea();
     constructor(root: HTMLElement) {
       this.root = root;
       this.viewport = root.querySelector<HTMLElement>(".starwind-scroll-area-viewport")!;
+      this.content = root.querySelector<HTMLElement>(".starwind-scroll-area-content");
       this.scrollbars = Array.from(
         root.querySelectorAll<HTMLElement>(".starwind-scroll-area-scrollbar"),
       ).filter((scrollbar) => scrollbar.closest(".starwind-scroll-area") === root);
@@ -79,11 +137,19 @@ const { root, viewport, corner } = scrollArea();
         if (!thumb) return;
 
         thumb.style.flex = "0 0 auto";
+        thumb.dataset.orientation = this.getOrientation(scrollbar);
         thumb.addEventListener("pointerdown", (event) =>
           this.handleThumbPointerDown(event, scrollbar, thumb),
         );
         scrollbar.addEventListener("pointerdown", (event) =>
           this.handleScrollbarPointerDown(event, scrollbar, thumb),
+        );
+        scrollbar.addEventListener(
+          "wheel",
+          (event) => this.handleScrollbarWheel(event, scrollbar),
+          {
+            passive: false,
+          },
         );
       });
     }
@@ -91,6 +157,9 @@ const { root, viewport, corner } = scrollArea();
     private setupObservers(): void {
       this.resizeObserver.observe(this.root);
       this.resizeObserver.observe(this.viewport);
+      if (this.content) {
+        this.resizeObserver.observe(this.content);
+      }
       this.mutationObserver.observe(this.viewport, {
         childList: true,
         subtree: true,
@@ -108,6 +177,107 @@ const { root, viewport, corner } = scrollArea();
       }
 
       return this.viewport.scrollHeight > this.viewport.clientHeight + 1;
+    }
+
+    private isRtl(): boolean {
+      return getComputedStyle(this.viewport).direction === "rtl";
+    }
+
+    private getScrollbar(orientation: ScrollOrientation): HTMLElement | undefined {
+      return this.scrollbars.find((scrollbar) => this.getOrientation(scrollbar) === orientation);
+    }
+
+    private getScrollSize(orientation: ScrollOrientation): number {
+      return orientation === "horizontal" ? this.viewport.scrollWidth : this.viewport.scrollHeight;
+    }
+
+    private getViewportSize(orientation: ScrollOrientation): number {
+      return orientation === "horizontal" ? this.viewport.clientWidth : this.viewport.clientHeight;
+    }
+
+    private getMaxScrollOffset(orientation: ScrollOrientation): number {
+      return Math.max(this.getScrollSize(orientation) - this.getViewportSize(orientation), 0);
+    }
+
+    private getScrollPosition(orientation: ScrollOrientation): number {
+      const maxScrollOffset = this.getMaxScrollOffset(orientation);
+
+      if (orientation === "horizontal") {
+        return clamp(
+          this.isRtl() ? -this.viewport.scrollLeft : this.viewport.scrollLeft,
+          0,
+          maxScrollOffset,
+        );
+      }
+
+      return clamp(this.viewport.scrollTop, 0, maxScrollOffset);
+    }
+
+    private setScrollPosition(orientation: ScrollOrientation, position: number): void {
+      const nextPosition = clamp(position, 0, this.getMaxScrollOffset(orientation));
+
+      if (orientation === "horizontal") {
+        this.viewport.scrollLeft = this.isRtl() ? -nextPosition : nextPosition;
+      } else {
+        this.viewport.scrollTop = nextPosition;
+      }
+    }
+
+    private getThumbMetrics(
+      scrollbar: HTMLElement,
+      thumb: HTMLElement,
+      orientation: ScrollOrientation,
+    ) {
+      const axis = orientation === "horizontal" ? "x" : "y";
+      const isHorizontal = orientation === "horizontal";
+      const viewportSize = this.getViewportSize(orientation);
+      const scrollSize = this.getScrollSize(orientation);
+      const scrollbarSize = isHorizontal ? scrollbar.clientWidth : scrollbar.clientHeight;
+      const scrollbarPadding = getSpacing(scrollbar, "padding", axis);
+      const thumbMargin = getSpacing(thumb, "margin", axis);
+      const trackSize = Math.max(scrollbarSize - scrollbarPadding - thumbMargin, 0);
+      const thumbSize =
+        trackSize > 0
+          ? Math.min(Math.max((viewportSize / scrollSize) * trackSize, MIN_THUMB_SIZE), trackSize)
+          : 0;
+      const maxThumbOffset = Math.max(trackSize - thumbSize, 0);
+      const maxScrollOffset = Math.max(scrollSize - viewportSize, 0);
+
+      return {
+        maxScrollOffset,
+        maxThumbOffset,
+        thumbSize,
+      };
+    }
+
+    private updateLayout(hasVerticalOverflow: boolean, hasHorizontalOverflow: boolean): void {
+      const verticalScrollbar = this.getScrollbar("vertical");
+      const horizontalScrollbar = this.getScrollbar("horizontal");
+      const shouldShowCorner = Boolean(
+        hasVerticalOverflow && hasHorizontalOverflow && verticalScrollbar && horizontalScrollbar,
+      );
+
+      if (this.corner) {
+        this.corner.style.display = shouldShowCorner ? "block" : "none";
+
+        if (shouldShowCorner && verticalScrollbar && horizontalScrollbar) {
+          this.corner.style.width = `${verticalScrollbar.offsetWidth}px`;
+          this.corner.style.height = `${horizontalScrollbar.offsetHeight}px`;
+        } else {
+          this.corner.style.width = "";
+          this.corner.style.height = "";
+        }
+      }
+
+      if (verticalScrollbar) {
+        verticalScrollbar.style.bottom =
+          shouldShowCorner && horizontalScrollbar ? `${horizontalScrollbar.offsetHeight}px` : "";
+      }
+
+      if (horizontalScrollbar) {
+        horizontalScrollbar.style.insetInlineEnd =
+          shouldShowCorner && verticalScrollbar ? `${verticalScrollbar.offsetWidth}px` : "";
+      }
     }
 
     private update(): void {
@@ -131,20 +301,25 @@ const { root, viewport, corner } = scrollArea();
 
         scrollbar.style.display = isOverflowing ? "flex" : "none";
 
-        if (!thumb || !isOverflowing) return;
+        if (!thumb) return;
+
+        thumb.dataset.orientation = orientation;
+      });
+
+      this.viewport.tabIndex = hasVerticalOverflow || hasHorizontalOverflow ? 0 : -1;
+      this.updateLayout(
+        hasVerticalOverflow && hasVerticalScrollbar,
+        hasHorizontalOverflow && hasHorizontalScrollbar,
+      );
+
+      this.scrollbars.forEach((scrollbar) => {
+        const orientation = this.getOrientation(scrollbar);
+        const thumb = scrollbar.querySelector<HTMLElement>(".starwind-scroll-area-thumb");
+
+        if (!thumb || !this.hasOverflow(orientation)) return;
 
         this.updateThumb(scrollbar, thumb, orientation);
       });
-
-      if (this.corner) {
-        this.corner.style.display =
-          hasVerticalOverflow &&
-          hasHorizontalOverflow &&
-          hasVerticalScrollbar &&
-          hasHorizontalScrollbar
-            ? "block"
-            : "none";
-      }
     }
 
     private updateThumb(
@@ -153,19 +328,19 @@ const { root, viewport, corner } = scrollArea();
       orientation: ScrollOrientation,
     ): void {
       const isHorizontal = orientation === "horizontal";
-      const viewportSize = isHorizontal ? this.viewport.clientWidth : this.viewport.clientHeight;
-      const scrollSize = isHorizontal ? this.viewport.scrollWidth : this.viewport.scrollHeight;
-      const scrollPosition = isHorizontal ? this.viewport.scrollLeft : this.viewport.scrollTop;
-      const trackSize = isHorizontal ? scrollbar.clientWidth : scrollbar.clientHeight;
-      const thumbSize = Math.max((viewportSize / scrollSize) * trackSize, 20);
-      const maxThumbOffset = Math.max(trackSize - thumbSize, 0);
-      const maxScrollOffset = Math.max(scrollSize - viewportSize, 1);
-      const thumbOffset = (scrollPosition / maxScrollOffset) * maxThumbOffset;
+      const { maxScrollOffset, maxThumbOffset, thumbSize } = this.getThumbMetrics(
+        scrollbar,
+        thumb,
+        orientation,
+      );
+      const scrollPosition = this.getScrollPosition(orientation);
+      const thumbOffset =
+        maxScrollOffset === 0 ? 0 : (scrollPosition / maxScrollOffset) * maxThumbOffset;
 
       if (isHorizontal) {
         thumb.style.width = `${thumbSize}px`;
         thumb.style.height = "100%";
-        thumb.style.transform = `translateX(${thumbOffset}px)`;
+        thumb.style.transform = `translateX(${this.isRtl() ? -thumbOffset : thumbOffset}px)`;
       } else {
         thumb.style.height = `${thumbSize}px`;
         thumb.style.width = "100%";
@@ -178,30 +353,56 @@ const { root, viewport, corner } = scrollArea();
       scrollbar: HTMLElement,
       thumb: HTMLElement,
     ): void {
-      if (event.target === thumb) return;
+      if (event.button !== 0 || !event.isPrimary || thumb.contains(event.target as Node)) return;
 
       event.preventDefault();
       const orientation = this.getOrientation(scrollbar);
       const isHorizontal = orientation === "horizontal";
       const rect = scrollbar.getBoundingClientRect();
-      const pointerPosition = isHorizontal ? event.clientX - rect.left : event.clientY - rect.top;
-      const trackSize = isHorizontal ? scrollbar.clientWidth : scrollbar.clientHeight;
-      const thumbSize = isHorizontal ? thumb.offsetWidth : thumb.offsetHeight;
-      const maxThumbOffset = Math.max(trackSize - thumbSize, 1);
+      const scrollbarPadding = getPhysicalSpacing(scrollbar, "padding", orientation);
+      const thumbMargin = getPhysicalSpacing(thumb, "margin", orientation);
+      const pointerPosition = isHorizontal
+        ? this.isRtl()
+          ? rect.right - event.clientX - scrollbarPadding.end - thumbMargin.end
+          : event.clientX - rect.left - scrollbarPadding.start - thumbMargin.start
+        : event.clientY - rect.top - scrollbarPadding.start - thumbMargin.start;
+      const { maxScrollOffset, maxThumbOffset, thumbSize } = this.getThumbMetrics(
+        scrollbar,
+        thumb,
+        orientation,
+      );
+
+      if (maxThumbOffset === 0) return;
+
       const nextThumbOffset = Math.min(
         Math.max(pointerPosition - thumbSize / 2, 0),
         maxThumbOffset,
       );
-      const scrollSize = isHorizontal ? this.viewport.scrollWidth : this.viewport.scrollHeight;
-      const viewportSize = isHorizontal ? this.viewport.clientWidth : this.viewport.clientHeight;
-      const maxScrollOffset = Math.max(scrollSize - viewportSize, 0);
       const nextScrollPosition = (nextThumbOffset / maxThumbOffset) * maxScrollOffset;
 
-      if (isHorizontal) {
-        this.viewport.scrollLeft = nextScrollPosition;
-      } else {
-        this.viewport.scrollTop = nextScrollPosition;
-      }
+      this.setScrollPosition(orientation, nextScrollPosition);
+    }
+
+    private handleScrollbarWheel(event: WheelEvent, scrollbar: HTMLElement): void {
+      const orientation = this.getOrientation(scrollbar);
+      const isHorizontal = orientation === "horizontal";
+
+      if (event.ctrlKey || !this.hasOverflow(orientation)) return;
+
+      const delta = isHorizontal ? event.deltaX : event.deltaY;
+      if (delta === 0) return;
+
+      const scrollProperty = isHorizontal ? "scrollLeft" : "scrollTop";
+      const maxScrollOffset = this.getMaxScrollOffset(orientation);
+      const minScroll = isHorizontal && this.isRtl() ? -maxScrollOffset : 0;
+      const maxScroll = isHorizontal && this.isRtl() ? 0 : maxScrollOffset;
+      const scrollPosition = this.viewport[scrollProperty];
+      const nextScrollPosition = clamp(scrollPosition + delta, minScroll, maxScroll);
+
+      if (nextScrollPosition === scrollPosition) return;
+
+      event.preventDefault();
+      this.viewport[scrollProperty] = nextScrollPosition;
     }
 
     private handleThumbPointerDown(
@@ -209,34 +410,41 @@ const { root, viewport, corner } = scrollArea();
       scrollbar: HTMLElement,
       thumb: HTMLElement,
     ): void {
+      if (event.button !== 0 || !event.isPrimary) return;
+
       event.preventDefault();
-      thumb.setPointerCapture(event.pointerId);
 
       const orientation = this.getOrientation(scrollbar);
       const isHorizontal = orientation === "horizontal";
       const startPointerPosition = isHorizontal ? event.clientX : event.clientY;
-      const startScrollPosition = isHorizontal ? this.viewport.scrollLeft : this.viewport.scrollTop;
-      const trackSize = isHorizontal ? scrollbar.clientWidth : scrollbar.clientHeight;
-      const thumbSize = isHorizontal ? thumb.offsetWidth : thumb.offsetHeight;
-      const maxThumbOffset = Math.max(trackSize - thumbSize, 1);
-      const scrollSize = isHorizontal ? this.viewport.scrollWidth : this.viewport.scrollHeight;
-      const viewportSize = isHorizontal ? this.viewport.clientWidth : this.viewport.clientHeight;
-      const maxScrollOffset = Math.max(scrollSize - viewportSize, 0);
+      const startScrollPosition = this.getScrollPosition(orientation);
+      const { maxScrollOffset, maxThumbOffset } = this.getThumbMetrics(
+        scrollbar,
+        thumb,
+        orientation,
+      );
+
+      if (maxThumbOffset === 0) return;
+
+      if (!thumb.hasPointerCapture(event.pointerId)) {
+        thumb.setPointerCapture(event.pointerId);
+      }
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
         const pointerPosition = isHorizontal ? moveEvent.clientX : moveEvent.clientY;
-        const delta = pointerPosition - startPointerPosition;
+        const delta =
+          isHorizontal && this.isRtl()
+            ? startPointerPosition - pointerPosition
+            : pointerPosition - startPointerPosition;
         const nextScrollPosition = startScrollPosition + (delta / maxThumbOffset) * maxScrollOffset;
 
-        if (isHorizontal) {
-          this.viewport.scrollLeft = nextScrollPosition;
-        } else {
-          this.viewport.scrollTop = nextScrollPosition;
-        }
+        this.setScrollPosition(orientation, nextScrollPosition);
       };
 
       const handlePointerUp = (upEvent: PointerEvent) => {
-        thumb.releasePointerCapture(upEvent.pointerId);
+        if (thumb.hasPointerCapture(upEvent.pointerId)) {
+          thumb.releasePointerCapture(upEvent.pointerId);
+        }
         thumb.removeEventListener("pointermove", handlePointerMove);
         thumb.removeEventListener("pointerup", handlePointerUp);
         thumb.removeEventListener("pointercancel", handlePointerUp);
