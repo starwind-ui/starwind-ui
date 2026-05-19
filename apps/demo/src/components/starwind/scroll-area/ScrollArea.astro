@@ -35,13 +35,13 @@ const { root, viewport, content, corner } = scrollArea();
   <div class={corner()} aria-hidden="true" data-slot="scroll-area-corner"></div>
 </div>
 
-<style>
-  :global(.starwind-scroll-area-viewport) {
+<style is:global>
+  .starwind-scroll-area-viewport {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
 
-  :global(.starwind-scroll-area-viewport::-webkit-scrollbar) {
+  .starwind-scroll-area-viewport::-webkit-scrollbar {
     display: none;
   }
 </style>
