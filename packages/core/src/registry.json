@@ -39,6 +39,12 @@
         "@starwind-ui/core/select@^1.8.4"
       ]
     },
+    {
+      "name": "context-menu",
+      "type": "component",
+      "version": "1.0.0",
+      "dependencies": ["@starwind-ui/core/dropdown@^2.0.0"]
+    },
     { "name": "dialog", "type": "component", "version": "1.5.0", "dependencies": [] },
     {
       "name": "dropdown",
@@ -81,7 +87,7 @@
     {
       "name": "popover",
       "type": "component",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": [],
       "fileDependencies": ["positioning.ts"]
     },

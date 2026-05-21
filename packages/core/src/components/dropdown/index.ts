@@ -1,5 +1,7 @@
 import Dropdown from "./Dropdown.astro";
+import DropdownCheckboxItem, { dropdownCheckboxItem } from "./DropdownCheckboxItem.astro";
 import DropdownContent, { dropdownContent } from "./DropdownContent.astro";
+import DropdownGroup from "./DropdownGroup.astro";
 import DropdownItem, { dropdownItem } from "./DropdownItem.astro";
 import DropdownLabel, { dropdownLabel } from "./DropdownLabel.astro";
 import DropdownSeparator, { dropdownSeparator } from "./DropdownSeparator.astro";
@@ -10,6 +12,7 @@ import DropdownSubTrigger from "./DropdownSubTrigger.astro";
 import DropdownTrigger, { dropdownTrigger } from "./DropdownTrigger.astro";
 
 const DropdownVariants = {
+  dropdownCheckboxItem,
   dropdownContent,
   dropdownItem,
   dropdownLabel,
@@ -19,7 +22,9 @@ const DropdownVariants = {
 
 export {
   Dropdown,
+  DropdownCheckboxItem,
   DropdownContent,
+  DropdownGroup,
   DropdownItem,
   DropdownLabel,
   DropdownSeparator,
@@ -35,7 +40,9 @@ export default {
   Root: Dropdown,
   Trigger: DropdownTrigger,
   Content: DropdownContent,
+  CheckboxItem: DropdownCheckboxItem,
   Item: DropdownItem,
+  Group: DropdownGroup,
   Label: DropdownLabel,
   Separator: DropdownSeparator,
   Shortcut: DropdownShortcut,

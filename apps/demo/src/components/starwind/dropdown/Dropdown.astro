@@ -82,6 +82,7 @@ const {
     private longPressTimerRef: number | null = null;
     private suppressTouchContextMenuUntil = 0;
     private suppressTouchTriggerCloseUntil = 0;
+    private skipParentHoverCloseOnUnmount = false;
 
     constructor(dropdown: HTMLElement, dropdownIdx: number) {
       this.dropdown = dropdown;
@@ -394,15 +395,20 @@ const {
         (e) => {
           const target = e.target as HTMLElement;
           const menuItem = target.closest('[role="menuitem"], [role="menuitemcheckbox"]');
-          if (menuItem && menuItem instanceof HTMLElement && this.isOpen === true) {
+          if (
+            menuItem &&
+            menuItem instanceof HTMLElement &&
+            !menuItem.hasAttribute("data-disabled") &&
+            this.isOpen === true
+          ) {
             // Update items list before focusing to ensure the index is correct
             this.updateDropdownItems();
 
-            // Focus the item when hovering
-            menuItem.focus();
+            const itemIndex = this.items.indexOf(menuItem);
+            if (itemIndex === -1) return;
 
-            // Update the current focus index
-            this.currentFocusIndex = this.items.indexOf(menuItem);
+            // Focus the item when hovering
+            this.focusItem(itemIndex);
           }
         },
         { signal: this.abortController.signal },
@@ -468,7 +474,11 @@ const {
       this.trigger.addEventListener(
         "touchstart",
         (e) => {
-          if (e.touches.length !== 1) return;
+          if (e.touches.length !== 1) {
+            this.clearLongPressTimer();
+            this.touchStartPoint = null;
+            return;
+          }
           const touch = e.touches[0];
           this.touchStartPoint = { x: touch.clientX, y: touch.clientY };
           this.clearLongPressTimer();
@@ -486,7 +496,11 @@ const {
       this.trigger.addEventListener(
         "touchmove",
         (e) => {
-          if (!this.touchStartPoint || e.touches.length !== 1) return;
+          if (e.touches.length !== 1) {
+            this.clearLongPressTimer();
+            return;
+          }
+          if (!this.touchStartPoint) return;
           const touch = e.touches[0];
           const deltaX = Math.abs(touch.clientX - this.touchStartPoint.x);
           const deltaY = Math.abs(touch.clientY - this.touchStartPoint.y);
@@ -558,7 +572,7 @@ const {
           if (this.isSubmenu) {
             e.preventDefault();
             e.stopPropagation();
-            this.closeDropdown();
+            this.closeDropdown({ skipParentHoverClose: true });
           }
           break;
         case "Home":
@@ -609,6 +623,13 @@ const {
           ),
         ) as HTMLElement[]
       ).filter((item) => item.closest('[role="menu"]') === this.content);
+      this.content
+        .querySelectorAll('[role="menuitem"], [role="menuitemcheckbox"]')
+        .forEach((item) => {
+          if (item.closest('[role="menu"]') === this.content) {
+            item.setAttribute("tabindex", "-1");
+          }
+        });
     }
 
     private toggleCheckboxItem(item: HTMLElement) {
@@ -628,6 +649,8 @@ const {
       const targetIdx = (idx + this.items.length) % this.items.length;
 
       if (this.items[targetIdx]) {
+        this.items.forEach((item) => item.setAttribute("tabindex", "-1"));
+        this.items[targetIdx].setAttribute("tabindex", "0");
         this.items[targetIdx].focus();
         this.currentFocusIndex = targetIdx;
       }
@@ -673,13 +696,14 @@ const {
       }
     }
 
-    private closeDropdown(options?: { skipFocus?: boolean }) {
+    private closeDropdown(options?: { skipFocus?: boolean; skipParentHoverClose?: boolean }) {
       if (!this.isOpen) return;
       if (!this.content || !this.trigger) return;
 
       this.isClosing = true;
       this.isOpen = false;
       this.initialCursorPoint = null;
+      this.skipParentHoverCloseOnUnmount = options?.skipParentHoverClose === true;
       this.content.setAttribute("data-state", "closed");
 
       // Set focus back on trigger only if opened or closed by keyboard
@@ -872,6 +896,7 @@ const {
         this.parentHandler = null;
 
         if (
+          !this.skipParentHoverCloseOnUnmount &&
           parentHandler.openOnHover &&
           parentHandler.openChildCount === 0 &&
           !parentHandler.isPointerWithinDropdownGroup()
@@ -880,6 +905,7 @@ const {
           parentHandler.closeDropdownDelayed();
         }
       }
+      this.skipParentHoverCloseOnUnmount = false;
 
       // Clean up auto-update and hover listeners
       this.cleanupAutoUpdate?.();
