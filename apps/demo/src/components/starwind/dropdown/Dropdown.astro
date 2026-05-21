@@ -82,6 +82,7 @@ const {
     private longPressTimerRef: number | null = null;
     private suppressTouchContextMenuUntil = 0;
     private suppressTouchTriggerCloseUntil = 0;
+    private skipParentHoverCloseOnUnmount = false;
 
     constructor(dropdown: HTMLElement, dropdownIdx: number) {
       this.dropdown = dropdown;
@@ -567,7 +568,7 @@ const {
           if (this.isSubmenu) {
             e.preventDefault();
             e.stopPropagation();
-            this.closeDropdown();
+            this.closeDropdown({ skipParentHoverClose: true });
           }
           break;
         case "Home":
@@ -691,13 +692,14 @@ const {
       }
     }
 
-    private closeDropdown(options?: { skipFocus?: boolean }) {
+    private closeDropdown(options?: { skipFocus?: boolean; skipParentHoverClose?: boolean }) {
       if (!this.isOpen) return;
       if (!this.content || !this.trigger) return;
 
       this.isClosing = true;
       this.isOpen = false;
       this.initialCursorPoint = null;
+      this.skipParentHoverCloseOnUnmount = options?.skipParentHoverClose === true;
       this.content.setAttribute("data-state", "closed");
 
       // Set focus back on trigger only if opened or closed by keyboard
@@ -890,6 +892,7 @@ const {
         this.parentHandler = null;
 
         if (
+          !this.skipParentHoverCloseOnUnmount &&
           parentHandler.openOnHover &&
           parentHandler.openChildCount === 0 &&
           !parentHandler.isPointerWithinDropdownGroup()
@@ -898,6 +901,7 @@ const {
           parentHandler.closeDropdownDelayed();
         }
       }
+      this.skipParentHoverCloseOnUnmount = false;
 
       // Clean up auto-update and hover listeners
       this.cleanupAutoUpdate?.();
