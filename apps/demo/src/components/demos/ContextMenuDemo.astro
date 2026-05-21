@@ -1,0 +1,54 @@
+---
+import Copy from "@tabler/icons/outline/copy.svg";
+import Download from "@tabler/icons/outline/download.svg";
+
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "@/components/starwind/context-menu";
+---
+
+<section class="mx-auto mt-6 max-w-lg">
+  <h2 class="mb-4 text-2xl font-bold">Context Menu</h2>
+  <ContextMenu>
+    <ContextMenuTrigger
+      class="border-border bg-muted/40 text-muted-foreground flex h-40 items-center justify-center rounded-lg border border-dashed text-sm"
+    >
+      Right click or press Shift+F10
+    </ContextMenuTrigger>
+    <ContextMenuContent>
+      <ContextMenuLabel>Actions</ContextMenuLabel>
+      <ContextMenuItem>
+        <Copy />
+        Copy
+        <ContextMenuShortcut>⌘C</ContextMenuShortcut>
+      </ContextMenuItem>
+      <ContextMenuItem>
+        <Download />
+        Download
+      </ContextMenuItem>
+      <ContextMenuCheckboxItem checked>Show grid</ContextMenuCheckboxItem>
+      <ContextMenuSeparator />
+      <ContextMenuSub>
+        <ContextMenuSubTrigger>Share</ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuItem>Email link</ContextMenuItem>
+          <ContextMenuItem>Copy link</ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem disabled>Publish</ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSeparator />
+      <ContextMenuItem class="text-destructive focus:text-destructive">Delete</ContextMenuItem>
+    </ContextMenuContent>
+  </ContextMenu>
+</section>

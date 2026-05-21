@@ -1,0 +1,13 @@
+---
+import type { ComponentProps } from "astro/types";
+
+import { Dropdown } from "@/components/starwind/dropdown";
+
+type Props = Omit<ComponentProps<typeof Dropdown>, "menuMode" | "openOnHover">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<Dropdown class:list={["starwind-context-menu", className]} menuMode="context-menu" {...rest}>
+  <slot />
+</Dropdown>

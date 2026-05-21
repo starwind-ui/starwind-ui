@@ -1,0 +1,61 @@
+---
+import Check from "@tabler/icons/outline/check.svg";
+import type { HTMLAttributes } from "astro/types";
+import { tv } from "tailwind-variants";
+
+type Props = Omit<HTMLAttributes<"div">, "aria-checked" | "role"> & {
+  checked?: boolean;
+  closeOnClick?: boolean;
+  inset?: boolean;
+  disabled?: boolean;
+};
+
+export const dropdownCheckboxItem = tv({
+  base: [
+    "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 transition-colors outline-none select-none",
+    "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+    "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
+  ],
+  variants: {
+    inset: {
+      true: "pl-8",
+    },
+    disabled: {
+      true: "pointer-events-none opacity-50",
+    },
+  },
+  defaultVariants: {
+    inset: false,
+    disabled: false,
+  },
+});
+
+const {
+  class: className,
+  checked = false,
+  closeOnClick = false,
+  inset = false,
+  disabled = false,
+  ...rest
+} = Astro.props;
+---
+
+<div
+  class={dropdownCheckboxItem({ inset, disabled, class: className })}
+  role="menuitemcheckbox"
+  aria-checked={checked ? "true" : "false"}
+  tabindex={disabled ? "-1" : "0"}
+  data-close-on-click={closeOnClick ? "true" : undefined}
+  data-disabled={disabled ? "true" : undefined}
+  data-slot="dropdown-checkbox-item"
+  {...rest}
+>
+  <span
+    class="pointer-events-none absolute right-2 flex size-4 items-center justify-center opacity-0 group-aria-checked/dropdown-item:opacity-100"
+  >
+    <slot name="indicator">
+      <Check class="size-4" />
+    </slot>
+  </span>
+  <slot />
+</div>
