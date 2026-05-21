@@ -496,7 +496,11 @@ const {
       this.trigger.addEventListener(
         "touchmove",
         (e) => {
-          if (!this.touchStartPoint || e.touches.length !== 1) return;
+          if (e.touches.length !== 1) {
+            this.clearLongPressTimer();
+            return;
+          }
+          if (!this.touchStartPoint) return;
           const touch = e.touches[0];
           const deltaX = Math.abs(touch.clientX - this.touchStartPoint.x);
           const deltaY = Math.abs(touch.clientY - this.touchStartPoint.y);
