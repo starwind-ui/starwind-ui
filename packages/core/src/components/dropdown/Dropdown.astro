@@ -394,15 +394,20 @@ const {
         (e) => {
           const target = e.target as HTMLElement;
           const menuItem = target.closest('[role="menuitem"], [role="menuitemcheckbox"]');
-          if (menuItem && menuItem instanceof HTMLElement && this.isOpen === true) {
+          if (
+            menuItem &&
+            menuItem instanceof HTMLElement &&
+            !menuItem.hasAttribute("data-disabled") &&
+            this.isOpen === true
+          ) {
             // Update items list before focusing to ensure the index is correct
             this.updateDropdownItems();
 
-            // Focus the item when hovering
-            menuItem.focus();
+            const itemIndex = this.items.indexOf(menuItem);
+            if (itemIndex === -1) return;
 
-            // Update the current focus index
-            this.currentFocusIndex = this.items.indexOf(menuItem);
+            // Focus the item when hovering
+            this.focusItem(itemIndex);
           }
         },
         { signal: this.abortController.signal },
@@ -613,6 +618,13 @@ const {
           ),
         ) as HTMLElement[]
       ).filter((item) => item.closest('[role="menu"]') === this.content);
+      this.content
+        .querySelectorAll('[role="menuitem"], [role="menuitemcheckbox"]')
+        .forEach((item) => {
+          if (item.closest('[role="menu"]') === this.content) {
+            item.setAttribute("tabindex", "-1");
+          }
+        });
     }
 
     private toggleCheckboxItem(item: HTMLElement) {
@@ -632,6 +644,8 @@ const {
       const targetIdx = (idx + this.items.length) % this.items.length;
 
       if (this.items[targetIdx]) {
+        this.items.forEach((item) => item.setAttribute("tabindex", "-1"));
+        this.items[targetIdx].setAttribute("tabindex", "0");
         this.items[targetIdx].focus();
         this.currentFocusIndex = targetIdx;
       }

@@ -44,6 +44,7 @@ const {
   class={dropdownCheckboxItem({ inset, disabled, class: className })}
   role="menuitemcheckbox"
   aria-checked={checked ? "true" : "false"}
+  aria-disabled={disabled ? "true" : undefined}
   tabindex={disabled ? "-1" : "0"}
   data-close-on-click={closeOnClick ? "true" : undefined}
   data-disabled={disabled ? "true" : undefined}
