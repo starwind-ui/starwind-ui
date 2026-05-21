@@ -80,6 +80,8 @@ const {
     private initialCursorPoint: { x: number; y: number } | null = null;
     private touchStartPoint: { x: number; y: number } | null = null;
     private longPressTimerRef: number | null = null;
+    private suppressTouchContextMenuUntil = 0;
+    private suppressTouchTriggerCloseUntil = 0;
 
     constructor(dropdown: HTMLElement, dropdownIdx: number) {
       this.dropdown = dropdown;
@@ -296,7 +298,9 @@ const {
         (e) => {
           if (
             this.isOpen &&
-            !this.dropdown.contains(e.target as Node) &&
+            (this.isContextMenu && !this.isSubmenu
+              ? this.shouldCloseContextMenuFromTarget(e.target as Node)
+              : !this.dropdown.contains(e.target as Node)) &&
             !this.content?.contains(e.target as Node) &&
             !this.isTargetInGroup(e.target as Node)
           ) {
@@ -314,7 +318,9 @@ const {
         (e) => {
           if (
             this.isOpen &&
-            !this.trigger?.contains(e.target as Node) &&
+            (this.isContextMenu && !this.isSubmenu
+              ? this.shouldCloseContextMenuFromTarget(e.target as Node)
+              : !this.trigger?.contains(e.target as Node)) &&
             !this.content?.contains(e.target as Node) &&
             !this.isTargetInGroup(e.target as Node)
           ) {
@@ -452,6 +458,7 @@ const {
         (e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (Date.now() < this.suppressTouchContextMenuUntil) return;
           this.lastOpenSource = "mouse";
           this.openAtPoint(e.clientX, e.clientY);
         },
@@ -469,6 +476,8 @@ const {
             if (!this.touchStartPoint) return;
             this.lastOpenSource = "mouse";
             this.openAtPoint(this.touchStartPoint.x, this.touchStartPoint.y, 10, 10);
+            this.suppressTouchContextMenuUntil = Date.now() + 700;
+            this.suppressTouchTriggerCloseUntil = Date.now() + 700;
           }, 500);
         },
         { signal: this.abortController.signal },
@@ -580,6 +589,14 @@ const {
         '[data-slot="dropdown-content"], [data-slot="context-menu-content"]',
       );
       return !!contentEl && (contentEl as any).__rootDropdown === this.rootDropdown;
+    }
+
+    private shouldCloseContextMenuFromTarget(target: Node): boolean {
+      if (Date.now() < this.suppressTouchTriggerCloseUntil && this.trigger?.contains(target)) {
+        return false;
+      }
+
+      return true;
     }
 
     private updateDropdownItems() {
