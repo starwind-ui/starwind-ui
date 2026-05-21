@@ -468,7 +468,11 @@ const {
       this.trigger.addEventListener(
         "touchstart",
         (e) => {
-          if (e.touches.length !== 1) return;
+          if (e.touches.length !== 1) {
+            this.clearLongPressTimer();
+            this.touchStartPoint = null;
+            return;
+          }
           const touch = e.touches[0];
           this.touchStartPoint = { x: touch.clientX, y: touch.clientY };
           this.clearLongPressTimer();
