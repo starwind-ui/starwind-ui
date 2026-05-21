@@ -11,19 +11,32 @@ type Props = HTMLAttributes<"div"> & {
    * @default 200
    */
   closeDelay?: number;
+  menuMode?: "dropdown" | "context-menu";
 
   children: any;
 };
 
-const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Astro.props;
+const {
+  class: className,
+  openOnHover = false,
+  closeDelay = 200,
+  menuMode = "dropdown",
+  ...rest
+} = Astro.props;
 ---
 
 <div
-  class:list={["starwind-dropdown", "relative", className]}
+  class:list={[
+    "starwind-dropdown",
+    menuMode === "context-menu" && "starwind-context-menu",
+    "relative",
+    className,
+  ]}
+  data-menu-mode={menuMode}
   data-open-on-hover={openOnHover ? "true" : undefined}
   data-close-delay={closeDelay}
   {...rest}
-  data-slot="dropdown"
+  data-slot={menuMode}
 >
   <slot />
 </div>
@@ -62,23 +75,35 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
     private openChildCount: number = 0;
     private parentHandler: DropdownHandler | null = null;
     private abortController: AbortController;
+    private isContextMenu: boolean;
+    private anchorRect: DOMRect | null = null;
+    private initialCursorPoint: { x: number; y: number } | null = null;
+    private touchStartPoint: { x: number; y: number } | null = null;
+    private longPressTimerRef: number | null = null;
+    private suppressTouchContextMenuUntil = 0;
+    private suppressTouchTriggerCloseUntil = 0;
 
     constructor(dropdown: HTMLElement, dropdownIdx: number) {
       this.dropdown = dropdown;
       this.abortController = new AbortController();
       this.isSubmenu = dropdown.classList.contains("starwind-dropdown-sub");
+      this.isContextMenu = dropdown.getAttribute("data-menu-mode") === "context-menu";
       this.openOnHover = dropdown.getAttribute("data-open-on-hover") === "true" || this.isSubmenu;
       this.closeDelay = parseInt(dropdown.getAttribute("data-close-delay") || "200");
 
       // Find the trigger and content that belong to this dropdown, avoiding nested ones
-      this.trigger = this.findOwnElement('[data-slot="dropdown-trigger"], [data-sub-trigger]');
+      this.trigger = this.findOwnElement(
+        '[data-slot="dropdown-trigger"], [data-slot="context-menu-trigger"], [data-sub-trigger]',
+      );
 
       // if trigger is set with asChild, use the first child element for trigger button
       if (this.trigger?.hasAttribute("data-as-child")) {
         this.trigger = this.trigger.firstElementChild as HTMLElement;
       }
 
-      this.content = this.findOwnElement('[data-slot="dropdown-content"]');
+      this.content = this.findOwnElement(
+        '[data-slot="dropdown-content"], [data-slot="context-menu-content"]',
+      );
 
       // Resolve root dropdown before any portaling (DOM is in original state)
       this.rootDropdown =
@@ -167,8 +192,9 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       if (!this.trigger || !this.content) return;
 
       // Generate unique IDs for accessibility
-      this.trigger.id = `starwind-dropdown${dropdownIdx}-trigger`;
-      this.content.id = `starwind-dropdown${dropdownIdx}-content`;
+      const idPrefix = this.isContextMenu ? "starwind-context-menu" : "starwind-dropdown";
+      this.trigger.id = `${idPrefix}${dropdownIdx}-trigger`;
+      this.content.id = `${idPrefix}${dropdownIdx}-content`;
 
       // Set up additional ARIA attributes
       this.trigger.setAttribute("aria-controls", this.content.id);
@@ -178,22 +204,35 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
     private setupEvents() {
       if (!this.trigger || !this.content) return;
 
-      // Handle trigger click
-      this.trigger.addEventListener(
-        "click",
-        (e) => {
-          e.preventDefault();
-          this.lastOpenSource = e.detail === 0 ? "keyboard" : "mouse";
-          this.toggleDropdown();
-        },
-        { signal: this.abortController.signal },
-      );
+      if (this.isContextMenu && !this.isSubmenu) {
+        this.setupContextMenuEvents();
+      } else {
+        // Handle trigger click
+        this.trigger.addEventListener(
+          "click",
+          (e) => {
+            e.preventDefault();
+            this.lastOpenSource = e.detail === 0 ? "keyboard" : "mouse";
+            this.toggleDropdown();
+          },
+          { signal: this.abortController.signal },
+        );
+      }
 
       // Handle keyboard navigation on trigger
       this.trigger.addEventListener(
         "keydown",
         (e) => {
-          if (e.key === "Enter" || e.key === " ") {
+          if (
+            this.isContextMenu &&
+            !this.isSubmenu &&
+            (e.key === "ContextMenu" || (e.shiftKey && e.key === "F10"))
+          ) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.lastOpenSource = "keyboard";
+            this.openAtTrigger();
+          } else if (!this.isContextMenu && (e.key === "Enter" || e.key === " ")) {
             e.preventDefault();
             e.stopPropagation();
             this.lastOpenSource = "keyboard";
@@ -259,7 +298,9 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         (e) => {
           if (
             this.isOpen &&
-            !this.dropdown.contains(e.target as Node) &&
+            (this.isContextMenu && !this.isSubmenu
+              ? this.shouldCloseContextMenuFromTarget(e.target as Node)
+              : !this.dropdown.contains(e.target as Node)) &&
             !this.content?.contains(e.target as Node) &&
             !this.isTargetInGroup(e.target as Node)
           ) {
@@ -277,7 +318,9 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         (e) => {
           if (
             this.isOpen &&
-            !this.trigger?.contains(e.target as Node) &&
+            (this.isContextMenu && !this.isSubmenu
+              ? this.shouldCloseContextMenuFromTarget(e.target as Node)
+              : !this.trigger?.contains(e.target as Node)) &&
             !this.content?.contains(e.target as Node) &&
             !this.isTargetInGroup(e.target as Node)
           ) {
@@ -308,12 +351,32 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
       // Handle item selection
       this.content.addEventListener(
+        "mouseup",
+        (e) => {
+          if (!this.isContextMenu || this.isSubmenu || !this.initialCursorPoint) return;
+          const isOpeningPointer =
+            Math.abs(e.clientX - this.initialCursorPoint.x) <= 1 &&
+            Math.abs(e.clientY - this.initialCursorPoint.y) <= 1;
+          this.initialCursorPoint = null;
+          if (isOpeningPointer || e.button === 2) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        },
+        { signal: this.abortController.signal },
+      );
+
+      this.content.addEventListener(
         "click",
         (e) => {
           const target = e.target as HTMLElement;
-          const item = target.closest('[role="menuitem"]');
+          const item = target.closest('[role="menuitem"], [role="menuitemcheckbox"]');
           if (item && !(item as HTMLElement).hasAttribute("data-disabled")) {
             if (item.hasAttribute("aria-haspopup")) return;
+            if (item.getAttribute("role") === "menuitemcheckbox") {
+              this.toggleCheckboxItem(item as HTMLElement);
+              if ((item as HTMLElement).getAttribute("data-close-on-click") !== "true") return;
+            }
 
             // Close the dropdown after item selection
             this.closeDropdown();
@@ -330,7 +393,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
         "mouseover",
         (e) => {
           const target = e.target as HTMLElement;
-          const menuItem = target.closest('[role="menuitem"]');
+          const menuItem = target.closest('[role="menuitem"], [role="menuitemcheckbox"]');
           if (menuItem && menuItem instanceof HTMLElement && this.isOpen === true) {
             // Update items list before focusing to ensure the index is correct
             this.updateDropdownItems();
@@ -385,6 +448,82 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
           { signal: this.abortController.signal },
         );
       }
+    }
+
+    private setupContextMenuEvents() {
+      if (!this.trigger) return;
+
+      this.trigger.addEventListener(
+        "contextmenu",
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (Date.now() < this.suppressTouchContextMenuUntil) return;
+          this.lastOpenSource = "mouse";
+          this.openAtPoint(e.clientX, e.clientY);
+        },
+        { signal: this.abortController.signal },
+      );
+
+      this.trigger.addEventListener(
+        "touchstart",
+        (e) => {
+          if (e.touches.length !== 1) return;
+          const touch = e.touches[0];
+          this.touchStartPoint = { x: touch.clientX, y: touch.clientY };
+          this.clearLongPressTimer();
+          this.longPressTimerRef = window.setTimeout(() => {
+            if (!this.touchStartPoint) return;
+            this.lastOpenSource = "mouse";
+            this.openAtPoint(this.touchStartPoint.x, this.touchStartPoint.y, 10, 10);
+            this.suppressTouchContextMenuUntil = Date.now() + 700;
+            this.suppressTouchTriggerCloseUntil = Date.now() + 700;
+          }, 500);
+        },
+        { signal: this.abortController.signal },
+      );
+
+      this.trigger.addEventListener(
+        "touchmove",
+        (e) => {
+          if (!this.touchStartPoint || e.touches.length !== 1) return;
+          const touch = e.touches[0];
+          const deltaX = Math.abs(touch.clientX - this.touchStartPoint.x);
+          const deltaY = Math.abs(touch.clientY - this.touchStartPoint.y);
+          if (deltaX > 10 || deltaY > 10) {
+            this.clearLongPressTimer();
+          }
+        },
+        { signal: this.abortController.signal },
+      );
+
+      const handleTouchEnd = () => {
+        this.clearLongPressTimer();
+        this.touchStartPoint = null;
+      };
+
+      this.trigger.addEventListener("touchend", handleTouchEnd, {
+        signal: this.abortController.signal,
+      });
+      this.trigger.addEventListener("touchcancel", handleTouchEnd, {
+        signal: this.abortController.signal,
+      });
+    }
+
+    private openAtPoint(x: number, y: number, width = 0, height = 0) {
+      this.anchorRect = new DOMRect(x, y, width, height);
+      this.initialCursorPoint = { x, y };
+      if (this.isOpen) {
+        this.positionContent({ avoidCollisions: true });
+        return;
+      }
+      this.openDropdown();
+    }
+
+    private openAtTrigger() {
+      if (!this.trigger) return;
+      const rect = this.trigger.getBoundingClientRect();
+      this.openAtPoint(rect.left, rect.bottom);
     }
 
     private handleMenuKeydown(e: KeyboardEvent) {
@@ -446,8 +585,18 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
     private isTargetInGroup(target: Node): boolean {
       const el = target instanceof HTMLElement ? target : target.parentElement;
       if (!el) return false;
-      const contentEl = el.closest('[data-slot="dropdown-content"]');
+      const contentEl = el.closest(
+        '[data-slot="dropdown-content"], [data-slot="context-menu-content"]',
+      );
       return !!contentEl && (contentEl as any).__rootDropdown === this.rootDropdown;
+    }
+
+    private shouldCloseContextMenuFromTarget(target: Node): boolean {
+      if (Date.now() < this.suppressTouchTriggerCloseUntil && this.trigger?.contains(target)) {
+        return false;
+      }
+
+      return true;
     }
 
     private updateDropdownItems() {
@@ -455,9 +604,23 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       // Get all interactive menuitem elements belonging to this menu level only
       this.items = (
         Array.from(
-          this.content.querySelectorAll('[role="menuitem"]:not([data-disabled="true"])'),
+          this.content.querySelectorAll(
+            '[role="menuitem"]:not([data-disabled="true"]), [role="menuitemcheckbox"]:not([data-disabled="true"])',
+          ),
         ) as HTMLElement[]
       ).filter((item) => item.closest('[role="menu"]') === this.content);
+    }
+
+    private toggleCheckboxItem(item: HTMLElement) {
+      const checked = item.getAttribute("aria-checked") === "true";
+      const nextChecked = !checked;
+      item.setAttribute("aria-checked", String(nextChecked));
+      item.dispatchEvent(
+        new CustomEvent("starwind-dropdown-checkbox:change", {
+          detail: { checked: nextChecked },
+          bubbles: true,
+        }),
+      );
     }
 
     private focusItem(idx: number) {
@@ -516,6 +679,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
       this.isClosing = true;
       this.isOpen = false;
+      this.initialCursorPoint = null;
       this.content.setAttribute("data-state", "closed");
 
       // Set focus back on trigger only if opened or closed by keyboard
@@ -573,6 +737,13 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       }
     }
 
+    private clearLongPressTimer() {
+      if (this.longPressTimerRef !== null) {
+        window.clearTimeout(this.longPressTimerRef);
+        this.longPressTimerRef = null;
+      }
+    }
+
     private isPointerWithinDropdownGroup(): boolean {
       if (this.trigger?.matches(":hover") || this.content?.matches(":hover")) {
         return true;
@@ -592,6 +763,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
       this.abortController.abort();
       this.clearCloseTimer();
+      this.clearLongPressTimer();
 
       if (this.closeTimeoutRef !== null) {
         window.clearTimeout(this.closeTimeoutRef);
@@ -601,6 +773,9 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       this.unportalContent();
       this.isOpen = false;
       this.isClosing = false;
+      this.anchorRect = null;
+      this.initialCursorPoint = null;
+      this.touchStartPoint = null;
       this.currentFocusIndex = -1;
 
       if (this.trigger) {
@@ -645,7 +820,9 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
       resizeObserver.observe(this.trigger);
 
       // Find and link to parent handler for child-tracking
-      const parentContent = this.trigger.closest('[data-slot="dropdown-content"]');
+      const parentContent = this.trigger.closest(
+        '[data-slot="dropdown-content"], [data-slot="context-menu-content"]',
+      );
       if (parentContent) {
         this.parentHandler = (parentContent as any).__dropdownHandler || null;
         if (this.parentHandler) {
@@ -735,7 +912,7 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
     }
 
     private syncDropdownWidth() {
-      if (!this.content || !this.trigger || this.isSubmenu) return;
+      if (!this.content || !this.trigger || this.isSubmenu || this.isContextMenu) return;
 
       this.content.style.width = "var(--starwind-dropdown-trigger-width)";
       this.content.style.setProperty(
@@ -749,7 +926,10 @@ const { class: className, openOnHover = false, closeDelay = 200, ...rest } = Ast
 
       this.syncDropdownWidth();
 
-      const triggerRect = this.trigger.getBoundingClientRect();
+      const triggerRect =
+        this.isContextMenu && !this.isSubmenu && this.anchorRect
+          ? this.anchorRect
+          : this.trigger.getBoundingClientRect();
       const contentWidth = this.content.offsetWidth;
       const contentHeight = this.content.offsetHeight;
       const viewportWidth = window.innerWidth;
