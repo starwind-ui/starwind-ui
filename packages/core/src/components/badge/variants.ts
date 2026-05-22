@@ -1,0 +1,41 @@
+import { tv } from "tailwind-variants";
+
+export const badge = tv({
+  base: [
+    "starwind-badge inline-flex items-center gap-1.5 rounded-full font-medium whitespace-nowrap",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0",
+    "transition-all outline-none focus-visible:ring-3",
+    "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",
+  ],
+  variants: {
+    variant: {
+      default: "bg-foreground text-background focus-visible:ring-outline/50",
+      primary: "bg-primary text-primary-foreground focus-visible:ring-primary/50",
+      secondary: "bg-secondary text-secondary-foreground focus-visible:ring-secondary/50",
+      outline: "border-border focus-visible:border-outline focus-visible:ring-outline/50 border",
+      ghost: "bg-foreground/10 text-foreground focus-visible:ring-outline/50",
+      info: "bg-info text-info-foreground focus-visible:ring-info/50",
+      success: "bg-success text-success-foreground focus-visible:ring-success/50",
+      warning: "bg-warning text-warning-foreground focus-visible:ring-warning/50",
+      error: "bg-error text-error-foreground focus-visible:ring-error/50",
+    },
+    size: {
+      sm: "px-2.5 py-0.5 text-xs [&_svg:not([class*='size-'])]:size-3",
+      md: "px-3 py-0.5 text-sm [&_svg:not([class*='size-'])]:size-4",
+      lg: "px-4 py-1 text-base [&_svg:not([class*='size-'])]:size-4.5",
+    },
+    isLink: { true: "cursor-pointer", false: "" },
+  },
+  compoundVariants: [
+    { isLink: true, variant: "default", className: "hover:bg-foreground/80" },
+    { isLink: true, variant: "primary", className: "hover:bg-primary/80" },
+    { isLink: true, variant: "secondary", className: "hover:bg-secondary/80" },
+    { isLink: true, variant: "outline", className: "hover:border-border/80" },
+    { isLink: true, variant: "ghost", className: "hover:bg-foreground/7" },
+    { isLink: true, variant: "info", className: "hover:bg-info/80" },
+    { isLink: true, variant: "success", className: "hover:bg-success/80" },
+    { isLink: true, variant: "warning", className: "hover:bg-warning/80" },
+    { isLink: true, variant: "error", className: "hover:bg-error/80" },
+  ],
+  defaultVariants: { variant: "default", size: "md", isLink: false },
+});

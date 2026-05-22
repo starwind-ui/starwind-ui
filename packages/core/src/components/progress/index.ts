@@ -1,5 +1,5 @@
-import Progress, { progress, progressIndicator } from "./Progress.astro";
-
+import Progress from "./Progress.astro";
+import { progress, progressIndicator } from "./variants";
 const ProgressVariants = {
   progress,
   progressIndicator,

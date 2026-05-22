@@ -1,10 +1,17 @@
-import Popover, { popover } from "./Popover.astro";
-import PopoverContent, { popoverContent } from "./PopoverContent.astro";
-import PopoverDescription, { popoverDescription } from "./PopoverDescription.astro";
-import PopoverHeader, { popoverHeader } from "./PopoverHeader.astro";
-import PopoverTitle, { popoverTitle } from "./PopoverTitle.astro";
-import PopoverTrigger, { popoverTrigger } from "./PopoverTrigger.astro";
-
+import Popover from "./Popover.astro";
+import PopoverContent from "./PopoverContent.astro";
+import PopoverDescription from "./PopoverDescription.astro";
+import PopoverHeader from "./PopoverHeader.astro";
+import PopoverTitle from "./PopoverTitle.astro";
+import PopoverTrigger from "./PopoverTrigger.astro";
+import {
+  popover,
+  popoverContent,
+  popoverDescription,
+  popoverHeader,
+  popoverTitle,
+  popoverTrigger,
+} from "./variants";
 const PopoverVariants = {
   popover,
   popoverContent,

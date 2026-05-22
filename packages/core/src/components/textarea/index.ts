@@ -1,5 +1,5 @@
-import Textarea, { textarea } from "./Textarea.astro";
-
+import Textarea from "./Textarea.astro";
+import { textarea } from "./variants";
 const TextareaVariants = {
   textarea,
 };

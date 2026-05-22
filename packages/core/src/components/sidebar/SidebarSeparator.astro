@@ -1,12 +1,9 @@
 ---
 import type { ComponentProps } from "astro/types";
-import { tv } from "tailwind-variants";
 
 import { Separator } from "@/components/starwind/separator";
 
-const sidebarSeparator = tv({
-  base: "bg-sidebar-border mx-2 w-auto",
-});
+import { sidebarSeparator } from "./variants";
 
 type Props = ComponentProps<typeof Separator>;
 

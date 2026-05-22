@@ -1,14 +1,25 @@
-import Item, { item } from "./Item.astro";
-import ItemActions, { itemActions } from "./ItemActions.astro";
-import ItemContent, { itemContent } from "./ItemContent.astro";
-import ItemDescription, { itemDescription } from "./ItemDescription.astro";
-import ItemFooter, { itemFooter } from "./ItemFooter.astro";
-import ItemGroup, { itemGroup } from "./ItemGroup.astro";
-import ItemHeader, { itemHeader } from "./ItemHeader.astro";
-import ItemMedia, { itemMedia } from "./ItemMedia.astro";
-import ItemSeparator, { itemSeparator } from "./ItemSeparator.astro";
-import ItemTitle, { itemTitle } from "./ItemTitle.astro";
-
+import Item from "./Item.astro";
+import ItemActions from "./ItemActions.astro";
+import ItemContent from "./ItemContent.astro";
+import ItemDescription from "./ItemDescription.astro";
+import ItemFooter from "./ItemFooter.astro";
+import ItemGroup from "./ItemGroup.astro";
+import ItemHeader from "./ItemHeader.astro";
+import ItemMedia from "./ItemMedia.astro";
+import ItemSeparator from "./ItemSeparator.astro";
+import ItemTitle from "./ItemTitle.astro";
+import {
+  item,
+  itemActions,
+  itemContent,
+  itemDescription,
+  itemFooter,
+  itemGroup,
+  itemHeader,
+  itemMedia,
+  itemSeparator,
+  itemTitle,
+} from "./variants";
 const ItemVariants = {
   item,
   itemActions,

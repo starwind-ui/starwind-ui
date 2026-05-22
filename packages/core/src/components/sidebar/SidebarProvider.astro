@@ -1,6 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { sidebarProvider } from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
   /**
@@ -14,14 +15,6 @@ type Props = HTMLAttributes<"div"> & {
    */
   keyboardShortcut?: string;
 };
-
-export const sidebarProvider = tv({
-  base: [
-    "starwind-sidebar-provider",
-    "group/sidebar-wrapper flex min-h-svh w-full",
-    "has-data-[variant=inset]:bg-sidebar",
-  ],
-});
 
 const {
   defaultOpen = true,

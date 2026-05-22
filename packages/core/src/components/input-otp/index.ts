@@ -1,8 +1,9 @@
-import InputOtp, { inputOtp } from "./InputOtp.astro";
-import InputOtpGroup, { inputOtpGroup } from "./InputOtpGroup.astro";
-import InputOtpSeparator, { inputOtpSeparator } from "./InputOtpSeparator.astro";
-import InputOtpSlot, { inputOtpSlot } from "./InputOtpSlot.astro";
+import InputOtp from "./InputOtp.astro";
+import InputOtpGroup from "./InputOtpGroup.astro";
+import InputOtpSeparator from "./InputOtpSeparator.astro";
+import InputOtpSlot from "./InputOtpSlot.astro";
 import type { InputOtpChangeEvent } from "./InputOtpTypes";
+import { inputOtp, inputOtpGroup, inputOtpSeparator, inputOtpSlot } from "./variants";
 
 const REGEXP_ONLY_DIGITS_AND_CHARS = /^[A-Za-z0-9]+$/;
 const REGEXP_ONLY_DIGITS = /^[0-9]+$/;

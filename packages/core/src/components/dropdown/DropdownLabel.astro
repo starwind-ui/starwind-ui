@@ -1,6 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { dropdownLabel } from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
   /**
@@ -8,18 +9,6 @@ type Props = HTMLAttributes<"div"> & {
    */
   inset?: boolean;
 };
-
-export const dropdownLabel = tv({
-  base: ["text-muted-foreground px-2 py-1.5 text-sm font-medium"],
-  variants: {
-    inset: {
-      true: "pl-8",
-    },
-  },
-  defaultVariants: {
-    inset: false,
-  },
-});
 
 const { class: className, inset = false, ...rest } = Astro.props;
 ---

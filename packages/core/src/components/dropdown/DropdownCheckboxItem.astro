@@ -1,7 +1,8 @@
 ---
 import Check from "@tabler/icons/outline/check.svg";
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { dropdownCheckboxItem } from "./variants";
 
 type Props = Omit<HTMLAttributes<"div">, "aria-checked" | "role"> & {
   checked?: boolean;
@@ -9,26 +10,6 @@ type Props = Omit<HTMLAttributes<"div">, "aria-checked" | "role"> & {
   inset?: boolean;
   disabled?: boolean;
 };
-
-export const dropdownCheckboxItem = tv({
-  base: [
-    "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 transition-colors outline-none select-none",
-    "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-    "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
-  ],
-  variants: {
-    inset: {
-      true: "pl-8",
-    },
-    disabled: {
-      true: "pointer-events-none opacity-50",
-    },
-  },
-  defaultVariants: {
-    inset: false,
-    disabled: false,
-  },
-});
 
 const {
   class: className,

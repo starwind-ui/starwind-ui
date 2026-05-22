@@ -1,20 +1,8 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
 
 import ToastTemplate from "./ToastTemplate.astro";
-
-export const toastViewport = tv({
-  base: [
-    "starwind-toast-viewport fixed z-50 flex w-80 outline-none",
-    "data-[position=bottom-center]:bottom-4 data-[position=bottom-center]:left-1/2 data-[position=bottom-center]:-translate-x-1/2",
-    "data-[position=bottom-left]:bottom-4 data-[position=bottom-left]:left-4",
-    "data-[position=bottom-right]:right-4 data-[position=bottom-right]:bottom-4",
-    "data-[position=top-center]:top-4 data-[position=top-center]:left-1/2 data-[position=top-center]:-translate-x-1/2",
-    "data-[position=top-left]:top-4 data-[position=top-left]:left-4",
-    "data-[position=top-right]:top-4 data-[position=top-right]:right-4",
-  ],
-});
+import { toastViewport } from "./variants";
 
 type Position =
   | "top-left"

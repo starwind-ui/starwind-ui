@@ -1,12 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { cardAction } from "./variants";
 
 type Props = HTMLAttributes<"div">;
-
-export const cardAction = tv({
-  base: "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
-});
 
 const { class: className, ...rest } = Astro.props;
 ---

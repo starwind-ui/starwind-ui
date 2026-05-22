@@ -1,12 +1,10 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv, type VariantProps } from "tailwind-variants";
+import type { VariantProps } from "tailwind-variants";
+
+import { table } from "./variants";
 
 type Props = HTMLAttributes<"table"> & VariantProps<typeof table>;
-
-export const table = tv({
-  base: "w-full caption-bottom text-sm",
-});
 
 const { class: className, ...rest } = Astro.props;
 ---

@@ -1,14 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
 
-const carouselItem = tv({
-  base: [
-    "min-w-0 shrink-0 grow-0 basis-full",
-    "group-data-[axis=x]/carousel:pl-4",
-    "group-data-[axis=y]/carousel:pt-4",
-  ],
-});
+import { carouselItem } from "./variants";
 
 type Props = HTMLAttributes<"div">;
 

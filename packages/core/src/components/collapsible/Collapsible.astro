@@ -1,6 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { collapsible } from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
   /**
@@ -12,8 +13,6 @@ type Props = HTMLAttributes<"div"> & {
    */
   disabled?: boolean;
 };
-
-export const collapsible = tv({ base: "starwind-collapsible" });
 
 const { defaultOpen = false, disabled = false, class: className, ...rest } = Astro.props;
 

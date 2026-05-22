@@ -1,10 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { selectSeparator } from "./variants";
 
 type Props = HTMLAttributes<"div">;
-
-export const selectSeparator = tv({ base: "bg-muted -mx-1 my-1 h-px" });
 
 const { class: className, ...rest } = Astro.props;
 ---

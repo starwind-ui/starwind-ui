@@ -1,5 +1,5 @@
-import Image, { image } from "./Image.astro";
-
+import Image from "./Image.astro";
+import { image } from "./variants";
 const ImageVariants = {
   image,
 };

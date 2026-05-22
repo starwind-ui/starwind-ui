@@ -1,10 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { dialogDescription } from "./variants";
 
 type Props = HTMLAttributes<"p">;
-
-export const dialogDescription = tv({ base: "text-muted-foreground" });
 
 const { class: className, ...rest } = Astro.props;
 ---
