@@ -1,6 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { inputOtp } from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
   maxLength?: number;
@@ -12,10 +13,6 @@ type Props = HTMLAttributes<"div"> & {
   id?: string;
   required?: boolean;
 };
-
-export const inputOtp = tv({
-  base: "starwind-input-otp flex items-center gap-2 outline-none has-disabled:opacity-50",
-});
 
 const {
   maxLength = 6,

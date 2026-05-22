@@ -1,6 +1,6 @@
-import ScrollArea, { scrollArea } from "./ScrollArea.astro";
-import ScrollBar, { scrollBar, scrollBarThumb } from "./ScrollBar.astro";
-
+import ScrollArea from "./ScrollArea.astro";
+import ScrollBar from "./ScrollBar.astro";
+import { scrollArea, scrollBar, scrollBarThumb } from "./variants";
 const ScrollAreaVariants = {
   scrollArea,
   scrollBar,

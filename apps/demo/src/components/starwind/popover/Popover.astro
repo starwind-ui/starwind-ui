@@ -1,6 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { popover } from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
   /**
@@ -21,8 +22,6 @@ type Props = HTMLAttributes<"div"> & {
 
   children: any;
 };
-
-export const popover = tv({ base: "starwind-popover" });
 
 const {
   class: className,

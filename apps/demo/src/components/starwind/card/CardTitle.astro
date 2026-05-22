@@ -1,12 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { cardTitle } from "./variants";
 
 type Props = HTMLAttributes<"div">;
-
-export const cardTitle = tv({
-  base: "font-heading text-xl leading-snug font-medium group-data-[size=sm]/card:text-base",
-});
 
 const { class: className, ...rest } = Astro.props;
 ---

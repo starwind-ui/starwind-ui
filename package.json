@@ -54,7 +54,8 @@
     "core:publish:beta": "cd packages/core && pnpm publish:beta",
     "core:publish:next": "cd packages/core && pnpm publish:next",
     "core:publish:release": "cd packages/core && pnpm publish:release",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow pnpm",
+    "refactor:demo:variants": "node scripts/refactor-starwind-variants.mjs apps/demo/src/components/starwind"
   },
   "dependencies": {
     "turbo": "^2.5.4"

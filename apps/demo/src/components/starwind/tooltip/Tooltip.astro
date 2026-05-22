@@ -1,6 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { tooltip } from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
   /**
@@ -16,8 +17,6 @@ type Props = HTMLAttributes<"div"> & {
    */
   disableHoverableContent?: boolean;
 };
-
-export const tooltip = tv({ base: "starwind-tooltip relative inline-block" });
 
 const {
   openDelay = 200,

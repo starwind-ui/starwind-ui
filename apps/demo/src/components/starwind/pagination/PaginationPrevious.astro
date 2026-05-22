@@ -1,17 +1,16 @@
 ---
 import ChevronLeft from "@tabler/icons/outline/chevron-left.svg";
 import type { HTMLAttributes } from "astro/types";
-import { tv, type VariantProps } from "tailwind-variants";
+import type { VariantProps } from "tailwind-variants";
 
 import { ButtonVariants } from "@/components/starwind/button";
 
 import PaginationLink from "./PaginationLink.astro";
+import { paginationPrevious } from "./variants";
 
 type Props = HTMLAttributes<"a"> & {
   size?: VariantProps<typeof ButtonVariants.button>["size"];
 };
-
-export const paginationPrevious = tv({ base: "group gap-1" });
 
 const { class: className, size = "md", ...rest } = Astro.props;
 ---

@@ -1,5 +1,5 @@
-import AspectRatio, { aspectRatio, aspectRatioWrapper } from "./AspectRatio.astro";
-
+import AspectRatio from "./AspectRatio.astro";
+import { aspectRatio, aspectRatioWrapper } from "./variants";
 const AspectRatioVariants = { aspectRatio, aspectRatioWrapper };
 
 export { AspectRatio, AspectRatioVariants };

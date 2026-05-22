@@ -1,12 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { itemFooter } from "./variants";
 
 type Props = HTMLAttributes<"div">;
-
-export const itemFooter = tv({
-  base: "flex basis-full items-center justify-between gap-2",
-});
 
 const { class: className, ...rest } = Astro.props;
 ---

@@ -1,12 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { itemGroup } from "./variants";
 
 type Props = HTMLAttributes<"div">;
-
-export const itemGroup = tv({
-  base: "group/item-group flex flex-col",
-});
 
 const { class: className, ...rest } = Astro.props;
 ---

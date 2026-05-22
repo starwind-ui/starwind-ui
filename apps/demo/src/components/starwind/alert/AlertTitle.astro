@@ -1,10 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
 
-export const alertTitle = tv({
-  base: "font-heading mb-2 flex items-center gap-2 text-lg leading-none font-medium tracking-tight",
-});
+import { alertTitle } from "./variants";
 
 type Props = HTMLAttributes<"h5">;
 

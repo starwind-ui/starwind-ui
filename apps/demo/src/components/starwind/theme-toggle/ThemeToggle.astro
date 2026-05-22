@@ -1,7 +1,6 @@
 ---
 // put the following script in the <head> of each page of your site
 // this ensures it is run early to eliminate any flashes of incorrect color theme
-
 /* 
 <script is:inline>
   function initTheme() {
@@ -36,19 +35,13 @@
   document.addEventListener("astro:after-swap", initTheme);
 </script>
 */
-
 import Moon from "@tabler/icons/outline/moon.svg";
 import Sun from "@tabler/icons/outline/sun.svg";
-import { tv, type VariantProps } from "tailwind-variants";
+import type { VariantProps } from "tailwind-variants";
 
 import { Toggle, ToggleVariants } from "@/components/starwind/toggle";
 
-export const themeToggle = tv({
-  base: [
-    "starwind-theme-toggle",
-    "group hover:border-muted-foreground hover:bg-transparent data-[state=on]:bg-transparent",
-  ],
-});
+import { themeToggle } from "./variants";
 
 type Props = VariantProps<typeof ToggleVariants.toggle> & {
   /**

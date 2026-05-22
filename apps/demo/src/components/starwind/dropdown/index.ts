@@ -1,22 +1,31 @@
 import Dropdown from "./Dropdown.astro";
-import DropdownCheckboxItem, { dropdownCheckboxItem } from "./DropdownCheckboxItem.astro";
-import DropdownContent, { dropdownContent } from "./DropdownContent.astro";
+import DropdownCheckboxItem from "./DropdownCheckboxItem.astro";
+import DropdownContent from "./DropdownContent.astro";
 import DropdownGroup from "./DropdownGroup.astro";
-import DropdownItem, { dropdownItem } from "./DropdownItem.astro";
-import DropdownLabel, { dropdownLabel } from "./DropdownLabel.astro";
-import DropdownSeparator, { dropdownSeparator } from "./DropdownSeparator.astro";
+import DropdownItem from "./DropdownItem.astro";
+import DropdownLabel from "./DropdownLabel.astro";
+import DropdownSeparator from "./DropdownSeparator.astro";
 import DropdownShortcut from "./DropdownShortcut.astro";
 import DropdownSub from "./DropdownSub.astro";
 import DropdownSubContent from "./DropdownSubContent.astro";
 import DropdownSubTrigger from "./DropdownSubTrigger.astro";
-import DropdownTrigger, { dropdownTrigger } from "./DropdownTrigger.astro";
-
+import DropdownTrigger from "./DropdownTrigger.astro";
+import {
+  dropdownCheckboxItem,
+  dropdownContent,
+  dropdownItem,
+  dropdownLabel,
+  dropdownSeparator,
+  dropdownShortcut,
+  dropdownTrigger,
+} from "./variants";
 const DropdownVariants = {
   dropdownCheckboxItem,
   dropdownContent,
   dropdownItem,
   dropdownLabel,
   dropdownSeparator,
+  dropdownShortcut,
   dropdownTrigger,
 };
 
