@@ -7,6 +7,7 @@ export const PATHS = {
   STARWIND_CORE: "@starwind-ui/core",
   STARWIND_CORE_COMPONENTS: "src/components",
   STARWIND_CORE_UTILS: "src/lib/utils",
+  STARWIND_DOCS_BASE_URL: "https://starwind.dev/docs/components",
   STARWIND_REMOTE_COMPONENT_REGISTRY: "https://starwind.dev/registry.json",
   STARWIND_PRO_REGISTRY: "https://pro.starwind.dev/r/{name}",
   LOCAL_CSS_FILE: "src/styles/starwind.css",

@@ -7,6 +7,7 @@ import { add } from "./commands/add.js";
 import { docs } from "./commands/docs.js";
 import { init } from "./commands/init.js";
 import { remove } from "./commands/remove.js";
+import { search } from "./commands/search.js";
 import { setup } from "./commands/setup.js";
 import { update } from "./commands/update.js";
 
@@ -46,6 +47,17 @@ program
   .allowExcessArguments()
   .option("--json", "Output as JSON")
   .action(docs);
+
+program
+  .command("search")
+  .description("Search Starwind components and Pro blocks")
+  .argument("[query]", "Search query string")
+  .allowExcessArguments()
+  .option("-p, --plan <plan>", "Filter Pro blocks by plan type (free or pro)")
+  .option("-c, --category <category>", "Filter Pro blocks by category")
+  .option("-l, --limit <number>", "Maximum number of Pro blocks to display", "20")
+  .option("--json", "Output as JSON")
+  .action(search);
 
 program
   .command("update")
