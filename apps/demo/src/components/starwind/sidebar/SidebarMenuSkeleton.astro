@@ -1,12 +1,9 @@
 ---
-import type { ComponentProps, HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+import type { HTMLAttributes } from "astro/types";
 
 import { Skeleton } from "@/components/starwind/skeleton";
 
-const sidebarMenuSkeleton = tv({
-  base: "flex h-8 items-center gap-2 rounded-md px-2",
-});
+import { sidebarMenuSkeleton } from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
   /**

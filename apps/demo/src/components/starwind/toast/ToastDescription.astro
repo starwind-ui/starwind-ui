@@ -1,10 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
 
-export const toastDescription = tv({
-  base: "starwind-toast-description text-muted-foreground text-sm",
-});
+import { toastDescription } from "./variants";
 
 type Props = HTMLAttributes<"div">;
 

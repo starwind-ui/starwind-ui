@@ -1,15 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { sidebarMenuSub } from "./variants";
 
 type Props = HTMLAttributes<"ul">;
-
-export const sidebarMenuSub = tv({
-  base: [
-    "border-sidebar-border mx-4.5 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5",
-    "group-data-[collapsible=icon]:hidden",
-  ],
-});
 
 const { class: className, ...rest } = Astro.props;
 ---

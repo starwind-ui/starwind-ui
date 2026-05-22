@@ -1,9 +1,8 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import { Image } from "astro:assets";
-import { tv } from "tailwind-variants";
 
-export const avatarImage = tv({ base: "relative z-1 h-full w-full object-cover" });
+import { avatarImage } from "./variants";
 
 type BaseProps = { alt: string; class?: string };
 

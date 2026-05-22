@@ -1,31 +1,51 @@
-import Sidebar, {
-  sidebar,
-  sidebarContainer,
-  sidebarGap,
-  sidebarInner,
-  sidebarMobileContent,
-} from "./Sidebar.astro";
-import SidebarContent, { sidebarContent } from "./SidebarContent.astro";
-import SidebarFooter, { sidebarFooter } from "./SidebarFooter.astro";
-import SidebarGroup, { sidebarGroup } from "./SidebarGroup.astro";
-import SidebarGroupContent, { sidebarGroupContent } from "./SidebarGroupContent.astro";
-import SidebarGroupLabel, { sidebarGroupLabel } from "./SidebarGroupLabel.astro";
-import SidebarHeader, { sidebarHeader } from "./SidebarHeader.astro";
+import Sidebar from "./Sidebar.astro";
+import SidebarContent from "./SidebarContent.astro";
+import SidebarFooter from "./SidebarFooter.astro";
+import SidebarGroup from "./SidebarGroup.astro";
+import SidebarGroupContent from "./SidebarGroupContent.astro";
+import SidebarGroupLabel from "./SidebarGroupLabel.astro";
+import SidebarHeader from "./SidebarHeader.astro";
 import SidebarInput from "./SidebarInput.astro";
-import SidebarInset, { sidebarInset } from "./SidebarInset.astro";
-import SidebarMenu, { sidebarMenu } from "./SidebarMenu.astro";
-import SidebarMenuAction, { sidebarMenuAction } from "./SidebarMenuAction.astro";
-import SidebarMenuBadge, { sidebarMenuBadge } from "./SidebarMenuBadge.astro";
-import SidebarMenuButton, { sidebarMenuButton } from "./SidebarMenuButton.astro";
-import SidebarMenuItem, { sidebarMenuItem } from "./SidebarMenuItem.astro";
+import SidebarInset from "./SidebarInset.astro";
+import SidebarMenu from "./SidebarMenu.astro";
+import SidebarMenuAction from "./SidebarMenuAction.astro";
+import SidebarMenuBadge from "./SidebarMenuBadge.astro";
+import SidebarMenuButton from "./SidebarMenuButton.astro";
+import SidebarMenuItem from "./SidebarMenuItem.astro";
 import SidebarMenuSkeleton from "./SidebarMenuSkeleton.astro";
-import SidebarMenuSub, { sidebarMenuSub } from "./SidebarMenuSub.astro";
-import SidebarMenuSubButton, { sidebarMenuSubButton } from "./SidebarMenuSubButton.astro";
+import SidebarMenuSub from "./SidebarMenuSub.astro";
+import SidebarMenuSubButton from "./SidebarMenuSubButton.astro";
 import SidebarMenuSubItem from "./SidebarMenuSubItem.astro";
-import SidebarProvider, { sidebarProvider } from "./SidebarProvider.astro";
-import SidebarRail, { sidebarRail } from "./SidebarRail.astro";
+import SidebarProvider from "./SidebarProvider.astro";
+import SidebarRail from "./SidebarRail.astro";
 import SidebarSeparator from "./SidebarSeparator.astro";
 import SidebarTrigger from "./SidebarTrigger.astro";
+import {
+  sidebar,
+  sidebarContainer,
+  sidebarContent,
+  sidebarFooter,
+  sidebarGap,
+  sidebarGroup,
+  sidebarGroupContent,
+  sidebarGroupLabel,
+  sidebarHeader,
+  sidebarInner,
+  sidebarInput,
+  sidebarInset,
+  sidebarMenu,
+  sidebarMenuAction,
+  sidebarMenuBadge,
+  sidebarMenuButton,
+  sidebarMenuItem,
+  sidebarMenuSkeleton,
+  sidebarMenuSub,
+  sidebarMenuSubButton,
+  sidebarMobileContent,
+  sidebarProvider,
+  sidebarRail,
+  sidebarSeparator,
+} from "./variants";
 
 const SidebarVariants = {
   sidebar,
@@ -49,6 +69,9 @@ const SidebarVariants = {
   sidebarMenuSubButton,
   sidebarProvider,
   sidebarRail,
+  sidebarMenuSkeleton,
+  sidebarInput,
+  sidebarSeparator,
 };
 
 export {

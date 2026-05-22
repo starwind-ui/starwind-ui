@@ -1,10 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
 
-export const avatarFallback = tv({
-  base: "absolute inset-0.5 flex items-center justify-center rounded-full font-medium",
-});
+import { avatarFallback } from "./variants";
 
 interface Props extends HTMLAttributes<"div"> {
   class?: string;

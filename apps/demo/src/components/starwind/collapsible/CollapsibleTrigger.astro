@@ -1,6 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { collapsibleTrigger } from "./variants";
 
 type Props = HTMLAttributes<"button"> & {
   /**
@@ -9,10 +10,6 @@ type Props = HTMLAttributes<"button"> & {
    */
   asChild?: boolean;
 };
-
-export const collapsibleTrigger = tv({
-  base: "starwind-collapsible-trigger",
-});
 
 const { class: className, asChild = false, ...rest } = Astro.props;
 

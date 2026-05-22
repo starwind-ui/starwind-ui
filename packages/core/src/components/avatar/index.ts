@@ -1,7 +1,7 @@
-import Avatar, { avatar } from "./Avatar.astro";
-import AvatarFallback, { avatarFallback } from "./AvatarFallback.astro";
-import AvatarImage, { avatarImage } from "./AvatarImage.astro";
-
+import Avatar from "./Avatar.astro";
+import AvatarFallback from "./AvatarFallback.astro";
+import AvatarImage from "./AvatarImage.astro";
+import { avatar, avatarFallback, avatarImage } from "./variants";
 const AvatarVariants = { avatar, avatarFallback, avatarImage };
 
 export { Avatar, AvatarFallback, AvatarImage, AvatarVariants };

@@ -1,10 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { breadcrumbPage } from "./variants";
 
 type Props = HTMLAttributes<"span">;
-
-export const breadcrumbPage = tv({ base: "text-foreground font-normal" });
 
 const { class: className, ...rest } = Astro.props;
 ---

@@ -1,16 +1,13 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
 
 type Props = HTMLAttributes<"li"> & {
   children: any;
 };
 
-export const paginationItem = tv({ base: "" });
-
 const { class: className, ...rest } = Astro.props;
 ---
 
-<li class={paginationItem({ class: className })} {...rest} data-slot="pagination-item">
+<li class={className} {...rest} data-slot="pagination-item">
   <slot />
 </li>

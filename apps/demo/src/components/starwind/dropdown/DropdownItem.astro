@@ -1,6 +1,7 @@
 ---
 import type { HTMLTag, Polymorphic } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { dropdownItem } from "./variants";
 
 type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & {
   /**
@@ -12,26 +13,6 @@ type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & {
    */
   disabled?: boolean;
 };
-
-export const dropdownItem = tv({
-  base: [
-    "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 transition-colors outline-none select-none",
-    "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-    "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
-  ],
-  variants: {
-    inset: {
-      true: "pl-8",
-    },
-    disabled: {
-      true: "pointer-events-none opacity-50",
-    },
-  },
-  defaultVariants: {
-    inset: false,
-    disabled: false,
-  },
-});
 
 const { class: className, inset = false, disabled = false, as: Tag = "div", ...rest } = Astro.props;
 ---

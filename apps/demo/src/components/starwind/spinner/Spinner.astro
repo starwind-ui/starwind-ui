@@ -1,13 +1,10 @@
 ---
 import Loader2 from "@tabler/icons/outline/loader-2.svg";
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { spinner } from "./variants";
 
 type Props = Omit<HTMLAttributes<"svg">, "role" | "aria-label">;
-
-export const spinner = tv({
-  base: "size-4 animate-spin",
-});
 
 const { class: className, ...rest } = Astro.props;
 ---

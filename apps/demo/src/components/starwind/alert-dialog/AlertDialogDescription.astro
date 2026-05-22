@@ -1,10 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { alertDialogDescription } from "./variants";
 
 type Props = HTMLAttributes<"p">;
-
-export const alertDialogDescription = tv({ base: "text-muted-foreground" });
 
 const { class: className, ...rest } = Astro.props;
 ---

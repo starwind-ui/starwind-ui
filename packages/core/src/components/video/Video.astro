@@ -1,10 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
 
-export const video = tv({
-  base: "starwind-video aspect-video h-auto w-full",
-});
+import { video } from "./variants";
 
 type Props = HTMLAttributes<"video"> &
   HTMLAttributes<"iframe"> & {

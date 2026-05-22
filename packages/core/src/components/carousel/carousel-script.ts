@@ -1,6 +1,5 @@
 import EmblaCarousel, {
   type EmblaCarouselType,
-  type EmblaEventType,
   type EmblaOptionsType,
   type EmblaPluginType,
 } from "embla-carousel";

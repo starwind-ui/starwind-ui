@@ -1,5 +1,5 @@
-import Skeleton, { skeleton } from "./Skeleton.astro";
-
+import Skeleton from "./Skeleton.astro";
+import { skeleton } from "./variants";
 const SkeletonVariants = {
   skeleton,
 };

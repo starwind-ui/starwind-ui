@@ -1,7 +1,8 @@
 ---
 import Search from "@tabler/icons/outline/search.svg";
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { selectSearch } from "./variants";
 
 type Props = Omit<HTMLAttributes<"input">, "type" | "autocomplete"> & {
   /**
@@ -10,13 +11,6 @@ type Props = Omit<HTMLAttributes<"input">, "type" | "autocomplete"> & {
    */
   emptyText?: string;
 };
-
-export const selectSearch = tv({
-  base: [
-    "placeholder:text-muted-foreground flex w-full border-0 bg-transparent px-0 py-2.5",
-    "ring-0 outline-none disabled:cursor-not-allowed disabled:opacity-50",
-  ],
-});
 
 const {
   class: className,

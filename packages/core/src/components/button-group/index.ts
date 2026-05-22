@@ -1,7 +1,7 @@
-import ButtonGroup, { buttonGroup } from "./ButtonGroup.astro";
-import ButtonGroupSeparator, { buttonGroupSeparator } from "./ButtonGroupSeparator.astro";
-import ButtonGroupText, { buttonGroupText } from "./ButtonGroupText.astro";
-
+import ButtonGroup from "./ButtonGroup.astro";
+import ButtonGroupSeparator from "./ButtonGroupSeparator.astro";
+import ButtonGroupText from "./ButtonGroupText.astro";
+import { buttonGroup, buttonGroupSeparator, buttonGroupText } from "./variants";
 const ButtonGroupVariants = {
   buttonGroup,
   buttonGroupSeparator,

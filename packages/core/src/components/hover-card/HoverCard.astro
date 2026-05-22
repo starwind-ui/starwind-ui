@@ -1,14 +1,13 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { hoverCard } from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
   openDelay?: number;
   closeDelay?: number;
   disableHoverableContent?: boolean;
 };
-
-export const hoverCard = tv({ base: "starwind-hover-card inline-block" });
 
 const {
   openDelay = 700,

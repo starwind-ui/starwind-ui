@@ -1,14 +1,11 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { tabsContent } from "./variants";
 
 interface Props extends Omit<HTMLAttributes<"div">, "id" | "role" | "tabindex" | "hidden"> {
   value: string;
 }
-
-export const tabsContent = tv({
-  base: "mt-2 focus-visible:outline-2 focus-visible:outline-offset-2",
-});
 
 const { value, class: className, ...rest } = Astro.props;
 ---

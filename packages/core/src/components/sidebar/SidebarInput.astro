@@ -1,12 +1,9 @@
 ---
 import type { ComponentProps } from "astro/types";
-import { tv } from "tailwind-variants";
 
 import { Input } from "@/components/starwind/input";
 
-const sidebarInput = tv({
-  base: "bg-background focus-visible:ring-sidebar-outline h-10 w-full shadow-none focus-visible:ring-2",
-});
+import { sidebarInput } from "./variants";
 
 type Props = ComponentProps<typeof Input>;
 

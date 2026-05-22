@@ -1,5 +1,5 @@
-import Separator, { separator } from "./Separator.astro";
-
+import Separator from "./Separator.astro";
+import { separator } from "./variants";
 const SeparatorVariants = { separator };
 
 export { Separator, SeparatorVariants };

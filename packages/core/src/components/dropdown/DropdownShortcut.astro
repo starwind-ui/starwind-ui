@@ -1,17 +1,13 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 
+import { dropdownShortcut } from "./variants";
+
 type Props = HTMLAttributes<"span">;
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<span
-  class:list={[
-    "group-focus/dropdown-item:text-accent-foreground text-muted-foreground ml-auto text-sm tracking-widest transition-colors",
-    className,
-  ]}
-  {...rest}
->
+<span class={dropdownShortcut({ class: className })} {...rest}>
   <slot />
 </span>

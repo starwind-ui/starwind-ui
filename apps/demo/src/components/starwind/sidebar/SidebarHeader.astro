@@ -1,12 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { sidebarHeader } from "./variants";
 
 type Props = HTMLAttributes<"div">;
-
-export const sidebarHeader = tv({
-  base: "flex flex-col gap-2 p-2",
-});
 
 const { class: className, ...rest } = Astro.props;
 ---

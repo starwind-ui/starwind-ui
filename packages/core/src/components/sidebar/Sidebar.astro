@@ -1,6 +1,5 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
 
 import {
   Sheet,
@@ -9,6 +8,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/starwind/sheet";
+
+import {
+  sidebar,
+  sidebarContainer,
+  sidebarGap,
+  sidebarInner,
+  sidebarMobileContent,
+} from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
   /**
@@ -27,70 +34,6 @@ type Props = HTMLAttributes<"div"> & {
    */
   collapsible?: "offcanvas" | "icon" | "none";
 };
-
-export const sidebar = tv({
-  base: "starwind-sidebar group peer text-sidebar-foreground hidden md:block",
-});
-
-export const sidebarGap = tv({
-  base: [
-    "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
-    "group-data-[collapsible=offcanvas]:w-0",
-    "group-data-[side=right]:rotate-180",
-  ],
-  variants: {
-    variant: {
-      sidebar: "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
-      floating: "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem)]",
-      inset: "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem)]",
-    },
-  },
-  defaultVariants: {
-    variant: "sidebar",
-  },
-});
-
-export const sidebarContainer = tv({
-  base: [
-    "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
-  ],
-  variants: {
-    side: {
-      left: "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]",
-      right: "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-    },
-    variant: {
-      sidebar: [
-        "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
-        "group-data-[side=left]:border-r group-data-[side=right]:border-l",
-      ],
-      floating: "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem+2px)]",
-      inset: "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem+2px)]",
-    },
-  },
-  defaultVariants: {
-    side: "left",
-    variant: "sidebar",
-  },
-});
-
-export const sidebarInner = tv({
-  base: "bg-sidebar flex h-full w-full flex-col",
-  variants: {
-    variant: {
-      sidebar: "",
-      floating: "border-sidebar-border rounded-lg border shadow-sm",
-      inset: "border-sidebar-border rounded-lg border shadow-sm",
-    },
-  },
-  defaultVariants: {
-    variant: "sidebar",
-  },
-});
-
-export const sidebarMobileContent = tv({
-  base: "bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden",
-});
 
 const {
   side = "left",

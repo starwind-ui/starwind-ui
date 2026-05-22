@@ -9,6 +9,20 @@ import CarouselContent from "./CarouselContent.astro";
 import CarouselItem from "./CarouselItem.astro";
 import CarouselNext from "./CarouselNext.astro";
 import CarouselPrevious from "./CarouselPrevious.astro";
+import {
+  carousel,
+  carouselContent,
+  carouselItem,
+  carouselNext,
+  carouselPrevious,
+} from "./variants";
+const CarouselVariants = {
+  carousel,
+  carouselContent,
+  carouselItem,
+  carouselNext,
+  carouselPrevious,
+};
 
 export {
   Carousel,
@@ -19,6 +33,7 @@ export {
   CarouselNext,
   type CarouselOptions,
   CarouselPrevious,
+  CarouselVariants,
   initCarousel,
 };
 

@@ -1,11 +1,7 @@
-import RadioGroup, { radioGroup } from "./RadioGroup.astro";
-import RadioGroupItem, {
-  radioControl,
-  radioIndicator,
-  radioItem,
-  radioWrapper,
-} from "./RadioGroupItem.astro";
+import RadioGroup from "./RadioGroup.astro";
+import RadioGroupItem from "./RadioGroupItem.astro";
 import type { RadioGroupChangeEvent } from "./RadioGroupTypes";
+import { radioControl, radioGroup, radioIndicator, radioItem, radioWrapper } from "./variants";
 
 const RadioGroupVariants = {
   radioGroup,

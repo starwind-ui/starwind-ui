@@ -5,6 +5,13 @@ import Toaster from "./Toaster.astro";
 import ToastItem from "./ToastItem.astro";
 import ToastTemplate from "./ToastTemplate.astro";
 import ToastTitle from "./ToastTitle.astro";
+import { toastDescription, toastItem, toastTitle, toastViewport } from "./variants";
+const ToastVariants = {
+  toastViewport,
+  toastDescription,
+  toastItem,
+  toastTitle,
+};
 
 export {
   type PromiseOptions,
@@ -16,6 +23,7 @@ export {
   type ToastOptions,
   ToastTemplate,
   ToastTitle,
+  ToastVariants,
   type Variant,
 };
 

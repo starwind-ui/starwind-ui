@@ -1,8 +1,9 @@
 ---
 import type { ComponentProps } from "astro/types";
-import { tv } from "tailwind-variants";
 
 import { Button } from "@/components/starwind/button";
+
+import { sidebarMenuAction } from "./variants";
 
 type Props = ComponentProps<typeof Button> & {
   /**
@@ -11,32 +12,6 @@ type Props = ComponentProps<typeof Button> & {
    */
   showOnHover?: boolean;
 };
-
-export const sidebarMenuAction = tv({
-  base: [
-    "text-sidebar-foreground ring-sidebar-outline",
-    "absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0",
-    "outline-hidden transition-transform",
-    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-    "peer-hover/menu-button:text-sidebar-accent-foreground",
-    "[&>svg]:size-4 [&>svg]:shrink-0",
-    "after:absolute after:-inset-2 md:after:hidden",
-    "peer-data-[size=sm]/menu-button:top-1",
-    "peer-data-[size=default]/menu-button:top-1.5",
-    "peer-data-[size=lg]/menu-button:top-2.5",
-    "group-data-[collapsible=icon]:hidden",
-  ],
-  variants: {
-    showOnHover: {
-      true: [
-        "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground",
-        "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100",
-        "data-[state=open]:opacity-100",
-        "md:opacity-0",
-      ],
-    },
-  },
-});
 
 const {
   showOnHover = false,

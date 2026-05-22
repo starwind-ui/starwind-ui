@@ -1,5 +1,5 @@
-import Prose, { prose } from "./Prose.astro";
-
+import Prose from "./Prose.astro";
+import { prose } from "./variants";
 const ProseVariants = {
   prose,
 };

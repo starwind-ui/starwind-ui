@@ -1,7 +1,9 @@
 ---
 import CircleFilled from "@tabler/icons/filled/circle.svg";
 import type { HTMLAttributes } from "astro/types";
-import { tv, type VariantProps } from "tailwind-variants";
+import type { VariantProps } from "tailwind-variants";
+
+import { radioControl, radioIndicator, radioItem, radioWrapper } from "./variants";
 
 type Props = HTMLAttributes<"input"> &
   VariantProps<typeof radioWrapper> &
@@ -27,74 +29,6 @@ type Props = HTMLAttributes<"input"> &
      */
     checked?: boolean;
   };
-
-export const radioWrapper = tv({
-  base: "relative isolate flex shrink-0",
-  variants: {
-    size: {
-      sm: "size-4",
-      md: "size-5",
-      lg: "size-6",
-    },
-  },
-  defaultVariants: {
-    size: "md",
-  },
-});
-
-export const radioItem = tv({
-  base: [
-    "starwind-radio-item peer z-10 h-full w-full",
-    "absolute inset-0 cursor-pointer opacity-0 outline-none focus:outline-none focus-visible:outline-none",
-    "disabled:cursor-not-allowed",
-  ],
-});
-
-export const radioControl = tv({
-  base: [
-    "starwind-radio-control",
-    "border-input bg-background dark:bg-input/30",
-    "outline-none peer-focus-visible:ring-3",
-    "absolute inset-0 rounded-full border shadow-xs",
-    "transition-[color,box-shadow] peer-checked:[&>svg]:opacity-100",
-    "peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-    "peer-aria-invalid:border-error peer-focus-visible:peer-aria-invalid:ring-error/40",
-    "flex items-center justify-center",
-  ],
-  variants: {
-    variant: {
-      default:
-        "peer-checked:border-foreground [&>svg]:fill-foreground peer-focus-visible:ring-outline/50",
-      primary:
-        "peer-checked:border-primary [&>svg]:fill-primary peer-focus-visible:ring-primary/50",
-      secondary:
-        "peer-checked:border-secondary [&>svg]:fill-secondary peer-focus-visible:ring-secondary/50",
-      info: "peer-checked:border-info [&>svg]:fill-info peer-focus-visible:ring-info/50",
-      success:
-        "peer-checked:border-success [&>svg]:fill-success peer-focus-visible:ring-success/50",
-      warning:
-        "peer-checked:border-warning [&>svg]:fill-warning peer-focus-visible:ring-warning/50",
-      error: "peer-checked:border-error [&>svg]:fill-error peer-focus-visible:ring-error/50",
-    },
-  },
-  defaultVariants: {
-    variant: "primary",
-  },
-});
-
-export const radioIndicator = tv({
-  base: ["starwind-radio-indicator", "opacity-0 transition-opacity"],
-  variants: {
-    size: {
-      sm: "size-2",
-      md: "size-3",
-      lg: "size-4",
-    },
-  },
-  defaultVariants: {
-    size: "md",
-  },
-});
 
 const {
   value,

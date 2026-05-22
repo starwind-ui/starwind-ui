@@ -1,7 +1,8 @@
-import Dropzone, { dropzone } from "./Dropzone.astro";
-import DropzoneFilesList, { dropzoneFilesList } from "./DropzoneFilesList.astro";
+import Dropzone from "./Dropzone.astro";
+import DropzoneFilesList from "./DropzoneFilesList.astro";
 import DropzoneLoadingIndicator from "./DropzoneLoadingIndicator.astro";
 import DropzoneUploadIndicator from "./DropzoneUploadIndicator.astro";
+import { dropzone, dropzoneFilesList } from "./variants";
 
 const DropzoneVariants = {
   dropzone,

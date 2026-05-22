@@ -1,5 +1,6 @@
-import ColorPicker, { colorPicker } from "./ColorPicker.astro";
+import ColorPicker from "./ColorPicker.astro";
 import type { ColorPickerChangeEvent } from "./ColorPickerTypes.ts";
+import { colorPicker } from "./variants";
 
 const ColorPickerVariants = { colorPicker };
 

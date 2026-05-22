@@ -1,17 +1,13 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 
+import { inputGroupText } from "./variants";
+
 type Props = HTMLAttributes<"span">;
 
 const { class: className, ...rest } = Astro.props;
 ---
 
-<span
-  class:list={[
-    "text-muted-foreground flex items-center gap-2 text-sm [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4.5",
-    className,
-  ]}
-  {...rest}
->
+<span class={inputGroupText({ class: className })} {...rest}>
   <slot />
 </span>

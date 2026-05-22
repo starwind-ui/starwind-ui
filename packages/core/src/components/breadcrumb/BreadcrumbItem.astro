@@ -1,10 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { breadcrumbItem } from "./variants";
 
 type Props = HTMLAttributes<"li">;
-
-export const breadcrumbItem = tv({ base: "inline-flex items-center gap-1.5" });
 
 const { class: className, ...rest } = Astro.props;
 ---

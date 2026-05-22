@@ -1,11 +1,18 @@
 import Breadcrumb from "./Breadcrumb.astro";
-import BreadcrumbEllipsis, { breadcrumbEllipsis } from "./BreadcrumbEllipsis.astro";
-import BreadcrumbItem, { breadcrumbItem } from "./BreadcrumbItem.astro";
-import BreadcrumbLink, { breadcrumbLink } from "./BreadcrumbLink.astro";
-import BreadcrumbList, { breadcrumbList } from "./BreadcrumbList.astro";
-import BreadcrumbPage, { breadcrumbPage } from "./BreadcrumbPage.astro";
-import BreadcrumbSeparator, { breadcrumbSeparator } from "./BreadcrumbSeparator.astro";
-
+import BreadcrumbEllipsis from "./BreadcrumbEllipsis.astro";
+import BreadcrumbItem from "./BreadcrumbItem.astro";
+import BreadcrumbLink from "./BreadcrumbLink.astro";
+import BreadcrumbList from "./BreadcrumbList.astro";
+import BreadcrumbPage from "./BreadcrumbPage.astro";
+import BreadcrumbSeparator from "./BreadcrumbSeparator.astro";
+import {
+  breadcrumbEllipsis,
+  breadcrumbItem,
+  breadcrumbLink,
+  breadcrumbList,
+  breadcrumbPage,
+  breadcrumbSeparator,
+} from "./variants";
 const BreadcrumbVariants = {
   breadcrumbEllipsis,
   breadcrumbItem,

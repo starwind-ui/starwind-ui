@@ -1,11 +1,20 @@
 import Sheet from "./Sheet.astro";
 import SheetClose from "./SheetClose.astro";
-import SheetContent, { dialogBackdrop, sheetCloseButton, sheetContent } from "./SheetContent.astro";
-import SheetDescription, { sheetDescription } from "./SheetDescription.astro";
-import SheetFooter, { sheetFooter } from "./SheetFooter.astro";
-import SheetHeader, { sheetHeader } from "./SheetHeader.astro";
-import SheetTitle, { sheetTitle } from "./SheetTitle.astro";
+import SheetContent from "./SheetContent.astro";
+import SheetDescription from "./SheetDescription.astro";
+import SheetFooter from "./SheetFooter.astro";
+import SheetHeader from "./SheetHeader.astro";
+import SheetTitle from "./SheetTitle.astro";
 import SheetTrigger from "./SheetTrigger.astro";
+import {
+  dialogBackdrop,
+  sheetCloseButton,
+  sheetContent,
+  sheetDescription,
+  sheetFooter,
+  sheetHeader,
+  sheetTitle,
+} from "./variants";
 
 const SheetVariants = {
   sheetCloseButton,

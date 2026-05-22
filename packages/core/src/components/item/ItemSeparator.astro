@@ -1,14 +1,11 @@
 ---
 import type { ComponentProps } from "astro/types";
-import { tv } from "tailwind-variants";
 
 import { Separator } from "@/components/starwind/separator";
 
-type Props = ComponentProps<typeof Separator>;
+import { itemSeparator } from "./variants";
 
-export const itemSeparator = tv({
-  base: "my-0",
-});
+type Props = ComponentProps<typeof Separator>;
 
 const { class: className, orientation = "horizontal", ...rest } = Astro.props;
 ---

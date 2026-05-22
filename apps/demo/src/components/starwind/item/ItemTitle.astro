@@ -1,12 +1,9 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import { tv } from "tailwind-variants";
+
+import { itemTitle } from "./variants";
 
 type Props = HTMLAttributes<"div">;
-
-export const itemTitle = tv({
-  base: "flex w-fit items-center gap-2 leading-snug font-medium",
-});
 
 const { class: className, ...rest } = Astro.props;
 ---
