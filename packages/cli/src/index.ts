@@ -4,6 +4,7 @@ import { Command, Option } from "commander";
 
 import pkg from "../package.json" with { type: "json" };
 import { add } from "./commands/add.js";
+import { docs } from "./commands/docs.js";
 import { init } from "./commands/init.js";
 import { remove } from "./commands/remove.js";
 import { setup } from "./commands/setup.js";
@@ -37,6 +38,14 @@ program
     ]),
   )
   .action(add);
+
+program
+  .command("docs")
+  .description("Open documentation for Starwind components")
+  .argument("[components...]", "The components to look up (space separated)")
+  .allowExcessArguments()
+  .option("--json", "Output as JSON")
+  .action(docs);
 
 program
   .command("update")
