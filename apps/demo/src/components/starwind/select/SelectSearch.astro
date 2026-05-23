@@ -10,12 +10,18 @@ type Props = Omit<HTMLAttributes<"input">, "type" | "autocomplete"> & {
    * @default "No results found."
    */
   emptyText?: string;
+  /**
+   * Whether the search input should be auto-focused on touch devices.
+   * @default false
+   */
+  focusOnTouchDevices?: boolean;
 };
 
 const {
   class: className,
   placeholder = "Search...",
   emptyText = "No results found.",
+  focusOnTouchDevices = false,
   ...rest
 } = Astro.props;
 ---
@@ -35,6 +41,7 @@ const {
     aria-label={placeholder}
     {...rest}
     data-slot="select-search"
+    data-focus-on-touch-devices={focusOnTouchDevices}
   />
 </div>
 
