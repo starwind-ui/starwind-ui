@@ -559,9 +559,14 @@ const { class: className, name, defaultValue, required, ...rest } = Astro.props;
           this.setActiveItem(initialItem);
         }
 
-        requestAnimationFrame(() => {
-          this.searchInput?.focus();
-        });
+        const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+        const focusOnTouch =
+          this.searchInput?.getAttribute("data-focus-on-touch-devices") === "true";
+        if (!isTouchDevice || focusOnTouch) {
+          requestAnimationFrame(() => {
+            this.searchInput?.focus();
+          });
+        }
       } else {
         // set active on the current selected item
         if (this.selectedItem) {
