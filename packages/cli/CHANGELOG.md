@@ -1,5 +1,30 @@
 # starwind
 
+## 2.0.0
+
+### Major Changes
+
+- a170442: chore: update required node version to minimum v22.12.0 to reflect Astro v6 requirements
+
+### Minor Changes
+
+- 87f35ec: feat(cli): add search command
+- 72b3b89: feat(cli): add docs command
+
+### Patch Changes
+
+- Updated dependencies [d2f67d1]
+- Updated dependencies [283f35e]
+- Updated dependencies [3f73476]
+- Updated dependencies [11291f4]
+- Updated dependencies [24feea4]
+- Updated dependencies [1f2f57c]
+- Updated dependencies [a2b3687]
+- Updated dependencies [8c2806f]
+- Updated dependencies [7a2da11]
+- Updated dependencies [9af78d5]
+  - @starwind-ui/core@2.0.0
+
 ## 1.16.2
 
 ### Patch Changes

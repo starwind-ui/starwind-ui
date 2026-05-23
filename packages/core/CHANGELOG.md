@@ -1,5 +1,23 @@
 # @starwind-ui/core
 
+## 2.0.0
+
+### Minor Changes
+
+- 283f35e: feat: add scroll-area component
+- 24feea4: feat: add color-picker
+- 1f2f57c: feat: add context-menu component
+- 8c2806f: feat: add hover-card component
+- 7a2da11: feat(dropdown): revamp dropdown component with improved positioning and portaling
+
+### Patch Changes
+
+- d2f67d1: fix(popover): improve popover positioning and focus handling
+- 3f73476: feat(dialog): Add a floating root within the dialog content to enable dropdown functionality from within dialogs
+- 11291f4: feat: refactor all starwind components to have a dedicated variants.ts file for tailwind variant functions
+- a2b3687: feat(sheet): Add a floating root within the sheet content to enable dropdown functionality from within sheets
+- 9af78d5: feat(select): add `focusOnTouchDevices` prop to prevent search auto-focus on touch devices by default
+
 ## 1.16.2
 
 ## 1.16.1
