@@ -8,7 +8,17 @@ import SelectSeparator from "./SelectSeparator.astro";
 import SelectTrigger from "./SelectTrigger.astro";
 import type { SelectChangeEvent, SelectEvent } from "./SelectTypes";
 import SelectValue from "./SelectValue.astro";
-import { selectContent, selectContentInner, selectItem, selectItemIcon, selectLabel, selectSearch, selectSeparator, selectTrigger, selectValue } from "./variants";
+import {
+  selectContent,
+  selectContentInner,
+  selectItem,
+  selectItemIcon,
+  selectLabel,
+  selectSearch,
+  selectSeparator,
+  selectTrigger,
+  selectValue,
+} from "./variants";
 const SelectVariants = {
   selectContent,
   selectContentInner,
