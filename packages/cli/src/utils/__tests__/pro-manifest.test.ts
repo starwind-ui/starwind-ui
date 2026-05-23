@@ -134,6 +134,12 @@ describe("pro-manifest", () => {
       expect(results).toHaveLength(2);
     });
 
+    it("respects offset", async () => {
+      const results = await searchProBlocks({ limit: 2, offset: 1 });
+      expect(results).toHaveLength(2);
+      expect(results[0].id).toBe("hero-pro");
+    });
+
     it("caps limit at 50", async () => {
       const results = await searchProBlocks({ limit: 100 });
       expect(results).toHaveLength(3); // manifest only has 3 blocks

@@ -86,6 +86,7 @@ export interface SearchProBlocksOptions {
   category?: string;
   plan?: "free" | "pro";
   limit?: number;
+  offset?: number;
 }
 
 /**
@@ -119,7 +120,7 @@ function scoreBlockMatch(block: ManifestBlock, query: string): number {
 export async function searchProBlocks(
   options: SearchProBlocksOptions = {},
 ): Promise<ManifestBlock[]> {
-  const { query, category, plan, limit = 50 } = options;
+  const { query, category, plan, limit = 50, offset = 0 } = options;
   const { manifest } = await getProManifest();
 
   let results = [...manifest.blocks];
@@ -142,7 +143,8 @@ export async function searchProBlocks(
   }
 
   const effectiveLimit = Math.min(Math.max(1, limit), 50);
-  return results.slice(0, effectiveLimit);
+  const effectiveOffset = Math.max(0, offset);
+  return results.slice(effectiveOffset, effectiveOffset + effectiveLimit);
 }
 
 /**

@@ -56,13 +56,15 @@ program
   .option("-p, --plan <plan>", "Filter Pro blocks by plan type (free or pro)")
   .option("-c, --category <category>", "Filter Pro blocks by category")
   .option("-l, --limit <number>", "Maximum number of Pro blocks to display", "20")
+  .option("-o, --offset <number>", "Offset for paginating Pro block results", "0")
   .option("--json", "Output as JSON")
   .action(
     async (
       query: string,
-      opts: { plan?: string; category?: string; limit: string; json?: boolean },
+      opts: { plan?: string; category?: string; limit: string; offset: string; json?: boolean },
     ) => {
       const parsedLimit = Math.min(Math.max(parseInt(opts.limit, 10) || 20, 1), 50);
+      const parsedOffset = Math.max(parseInt(opts.offset, 10) || 0, 0);
 
       if (opts.plan && opts.plan !== "free" && opts.plan !== "pro") {
         program.error(`Invalid plan "${opts.plan}". Must be "free" or "pro".`);
@@ -72,6 +74,7 @@ program
         plan: opts.plan as "free" | "pro" | undefined,
         category: opts.category,
         limit: parsedLimit,
+        offset: parsedOffset,
         json: opts.json,
       });
     },

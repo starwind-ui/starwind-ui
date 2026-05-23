@@ -10,6 +10,7 @@ interface SearchOptions {
   plan?: "free" | "pro";
   category?: string;
   limit?: number;
+  offset?: number;
   json?: boolean;
 }
 
@@ -37,6 +38,7 @@ export async function search(query?: string, options?: SearchOptions) {
         category: options?.category,
         plan: options?.plan,
         limit: options?.limit ?? 20,
+        offset: options?.offset ?? 0,
       });
 
       if (!proOnly) {
@@ -62,6 +64,7 @@ export async function search(query?: string, options?: SearchOptions) {
               category: options?.category,
               plan: options?.plan,
               limit: options?.limit ?? 20,
+              offset: options?.offset ?? 0,
             });
             return `Found ${proBlocks.length} Pro block${proBlocks.length === 1 ? "" : "s"}`;
           },

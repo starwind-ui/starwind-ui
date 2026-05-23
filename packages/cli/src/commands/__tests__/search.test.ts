@@ -88,6 +88,16 @@ describe("search command", () => {
       plan: "pro",
       category: "pricing",
       limit: 10,
+      offset: 0,
+    });
+  });
+
+  it("passes offset through to searchProBlocks", async () => {
+    await search("pricing", { limit: 5, offset: 10 });
+    expect(mockSearchProBlocks).toHaveBeenCalledWith({
+      query: "pricing",
+      limit: 5,
+      offset: 10,
     });
   });
 
