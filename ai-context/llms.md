@@ -37,10 +37,13 @@ Starwind UI currently includes the following components:
 - [Carousel](https://starwind.dev/docs/components/carousel)
 - [Checkbox](https://starwind.dev/docs/components/checkbox)
 - [Collapsible](https://starwind.dev/docs/components/collapsible)
+- [Color Picker](https://starwind.dev/docs/components/color-picker)
 - [Combobox](https://starwind.dev/docs/components/combobox)
+- [Context Menu](https://starwind.dev/docs/components/context-menu)
 - [Dialog](https://starwind.dev/docs/components/dialog)
 - [Dropdown](https://starwind.dev/docs/components/dropdown)
 - [Dropzone](https://starwind.dev/docs/components/dropzone)
+- [Hover Card](https://starwind.dev/docs/components/hover-card)
 - [Image](https://starwind.dev/docs/components/image)
 - [Input](https://starwind.dev/docs/components/input)
 - [Input Group](https://starwind.dev/docs/components/input-group)
@@ -56,6 +59,7 @@ Starwind UI currently includes the following components:
 - [Select](https://starwind.dev/docs/components/select)
 - [Separator](https://starwind.dev/docs/components/separator)
 - [Sheet](https://starwind.dev/docs/components/sheet)
+- [Scroll Area](https://starwind.dev/docs/components/scroll-area)
 - [Sidebar](https://starwind.dev/docs/components/sidebar)
 - [Skeleton](https://starwind.dev/docs/components/skeleton)
 - [Slider](https://starwind.dev/docs/components/slider)
@@ -80,9 +84,9 @@ import {ComponentName} from "@/components/starwind/component-name";
 
 ## Starwind Pro - Premium Blocks
 
-Looking for complete, production-ready page sections? **Starwind Pro** offers 190+ expertly crafted blocks for Astro projects including heroes, pricing tables, testimonials, navigation, CTAs, and more. **45+ blocks are completely free** to use.
+Looking for complete, production-ready page sections? **Starwind Pro** offers 200+ expertly crafted blocks for Astro projects including heroes, pricing tables, testimonials, navigation, CTAs, and more. **45+ blocks are completely free** to use.
 
 - [Browse All Components](https://pro.starwind.dev/components/)
-- [Free Components (45+)](https://pro.starwind.dev/components/free/)
+- [Free Components (50+)](https://pro.starwind.dev/components/free/)
 
 Categories include: Authentication, Background, Bento, Blog, Blog Post, Contact, CTA, Effect, FAQ, Feature, Footer, Form, Hero, Legal Page, Logo Cloud, Navigation, Pricing, Service Page, Services, Specialized Components, Steps, Team, Testimonial, and Theme Switcher.
