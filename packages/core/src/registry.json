@@ -100,7 +100,7 @@
       "version": "1.0.0",
       "dependencies": []
     },
-    { "name": "select", "type": "component", "version": "1.8.5", "dependencies": [] },
+    { "name": "select", "type": "component", "version": "1.9.0", "dependencies": [] },
     { "name": "separator", "type": "component", "version": "1.0.2", "dependencies": [] },
     {
       "name": "sheet",
