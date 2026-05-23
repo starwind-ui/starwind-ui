@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as component from "../component.js";
 import * as config from "../config.js";
@@ -30,8 +30,13 @@ const mockGetStarwindDependencyResolutions = vi.mocked(prompts.getStarwindDepend
 const mockGetComponent = vi.mocked(registry.getComponent);
 
 describe("install", () => {
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Default mocks
     mockGetConfig.mockResolvedValue({
@@ -40,6 +45,11 @@ describe("install", () => {
       componentDir: "test",
       components: [],
     });
+  });
+
+  afterEach(() => {
+    consoleErrorSpy?.mockRestore();
+    consoleWarnSpy?.mockRestore();
   });
 
   describe("installComponent", () => {
