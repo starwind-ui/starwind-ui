@@ -74,6 +74,12 @@ Starwind UI currently includes the following components:
 - [Tooltip](https://starwind.dev/docs/components/tooltip)
 - [Video](https://starwind.dev/docs/components/video)
 
+## Markdown Alternate URLs
+
+- Docs pages also provide a Markdown alternate at the same path with `.md` suffix.
+- Example: `https://starwind.dev/docs/components/button` -> `https://starwind.dev/docs/components/button.md`
+- HTML docs pages include: `<link rel="alternate" type="text/markdown" href="...">`
+
 ## Import Pattern
 
 All components follow a consistent import pattern:
