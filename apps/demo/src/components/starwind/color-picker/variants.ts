@@ -18,11 +18,11 @@ export const colorInput = tv({
 
 export const colorPicker = tv({
   base: [
-    "bg-card absolute w-100 rounded-md border",
-    "data-[state=hidden]:z-0 data-[state=hidden]:hidden data-[state=visible]:z-20 data-[state=visible]:block",
-    "data-[position-x=left]:left-0 data-[position-x=right]:right-0",
-    "data-[position-y=bottom]:bottom-full data-[position-y=top]:top-full",
-    "data-[position-y=bottom]:mb-2 data-[position-y=top]:mt-2",
+    "bg-card pointer-events-auto fixed isolate z-50 w-100 max-w-[calc(100vw-1rem)] rounded-md border shadow-md",
+    "data-[state=visible]:animate-in fade-in zoom-in-95",
+    "data-[state=hidden]:animate-out data-[state=hidden]:fill-mode-forwards fade-out",
+    "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
+    "will-change-transform outline-none",
   ],
   variants: {
     size: { sm: "w-60 p-3", md: "w-80 p-4", lg: "w-100 p-5" },
