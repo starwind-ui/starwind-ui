@@ -17,15 +17,42 @@ import {
 
 import { colorFormatSelect, colorInput, colorPicker, pickerContainer } from "./variants";
 
+type ColorPickerSide = "top" | "bottom";
+type ColorPickerAlign = "start" | "center" | "end";
+
 type Props = HTMLAttributes<"input"> &
   VariantProps<typeof colorPicker> & {
     defaultValue?: string;
+    /**
+     * Side of the color picker
+     * @default bottom
+     */
+    side?: ColorPickerSide;
+    /**
+     * Alignment of the color picker
+     * @default start
+     */
+    align?: ColorPickerAlign;
+    /**
+     * Offset distance in pixels
+     * @default 8
+     */
+    sideOffset?: number;
+    /**
+     * Open animation duration in milliseconds
+     * @default 150
+     */
+    animationDuration?: number;
   };
 
 const {
   defaultValue = "#000000",
   size,
   class: className,
+  side = "bottom",
+  align = "start",
+  sideOffset = 8,
+  animationDuration = 150,
   id,
   name,
   autocomplete,
@@ -86,12 +113,17 @@ const containerProps = Object.fromEntries(
     data-part="custom-picker"
     class={colorPicker({ size })}
     data-state="hidden"
-    data-position-x="right"
-    data-position-y="bottom"
+    data-side={side}
+    data-align={align}
+    data-side-offset={sideOffset}
+    style={{
+      display: "none",
+      animationDuration: `${animationDuration}ms`,
+    }}
   >
     <div
       data-part="sat-rect"
-      class={`sat-rect relative w-full bg-red-500 ${size == "sm" ? "h-[150px]" : size == "md" ? "h-[175px]" : "h-[200px]"} mb-[20px] rounded-md border border-outline`}
+      class={`sat-rect relative w-full touch-none bg-red-500 select-none ${size == "sm" ? "h-[150px]" : size == "md" ? "h-[175px]" : "h-[200px]"} mb-[20px] rounded-md border border-outline`}
     >
       <div class="absolute inset-0 rounded-[7px] bg-linear-to-r from-white to-transparent"></div>
       <div class="absolute inset-0 rounded-[7px] bg-linear-to-t from-black to-transparent"></div>
@@ -113,7 +145,10 @@ const containerProps = Object.fromEntries(
         <ColorPickerIcon class="size-4" aria-hidden="true" />
       </Button>
       <div class="flex-1 px-2">
-        <div data-part="hue-slider" class="hue-range relative mb-3 h-3 w-full rounded-md">
+        <div
+          data-part="hue-slider"
+          class="hue-range relative mb-3 h-3 w-full touch-none rounded-md select-none"
+        >
           <div
             data-part="hue-handle"
             class="hue-handle border-foreground absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-red-500"
@@ -122,7 +157,7 @@ const containerProps = Object.fromEntries(
         </div>
         <div
           data-part="opacity-container"
-          class="relative h-3 w-full cursor-pointer overflow-visible rounded-md"
+          class="relative h-3 w-full cursor-pointer touch-none overflow-visible rounded-md select-none"
         >
           <div class="checkerboard absolute inset-0 rounded-md bg-white"></div>
           <div
@@ -201,11 +236,26 @@ const containerProps = Object.fromEntries(
   }
 </style>
 <script>
+  import {
+    type FloatingAlign,
+    type FloatingSide,
+    getTransformOrigin,
+    resolvePlacement,
+  } from "@/lib/utils/starwind/positioning";
+
   import type { ColorPickerChangeEvent } from "./ColorPickerTypes";
-  document.querySelectorAll(".starwind-color-picker").forEach((el) => {
-    initColorPicker(el as HTMLElement);
-  });
-  function initColorPicker(container: HTMLElement) {
+
+  type ColorPickerFloatingSide = Extract<FloatingSide, "top" | "bottom">;
+  type ColorPickerPlacement = {
+    side: ColorPickerFloatingSide;
+    align: FloatingAlign;
+    top: number;
+    left: number;
+  };
+
+  const colorPickerInstances = new WeakMap<HTMLElement, () => void>();
+
+  function initColorPicker(container: HTMLElement): () => void {
     type UpdateOptions = {
       dispatch?: boolean;
     };
@@ -246,7 +296,7 @@ const containerProps = Object.fromEntries(
       !pickerBtn ||
       !noneBtn
     ) {
-      return;
+      return () => {};
     }
     let isDraggingHue = false;
     let isDraggingSquare = false;
@@ -255,8 +305,283 @@ const containerProps = Object.fromEntries(
     let currentOpacity = 100;
     let currentRgb = "255,0,0";
     let currentColorFormat = "hex";
+    let isOpen = false;
+    let isClosing = false;
+    let contentPlaceholder: Comment | null = null;
+    let portalTarget: HTMLElement | null = null;
+    let cleanupAutoUpdate: (() => void) | null = null;
+    let closeTimeoutRef: number | null = null;
+    const abortController = new AbortController();
+    const parsedSideOffset = Number(customPicker.getAttribute("data-side-offset") ?? 8);
+    const sideOffset = Number.isFinite(parsedSideOffset) ? parsedSideOffset : 8;
+    let animationDuration = 150;
+    let side: ColorPickerFloatingSide = "bottom";
+    let align: FloatingAlign = "start";
+    const contentSide = customPicker.getAttribute("data-side");
+    const contentAlign = customPicker.getAttribute("data-align");
+    const animationDurationString = customPicker.style.animationDuration;
+
+    if (animationDurationString.endsWith("ms")) {
+      animationDuration = parseFloat(animationDurationString);
+    } else if (animationDurationString.endsWith("s")) {
+      animationDuration = parseFloat(animationDurationString) * 1000;
+    }
+
+    if (contentSide === "top" || contentSide === "bottom") {
+      side = contentSide;
+    }
+
+    if (contentAlign === "start" || contentAlign === "center" || contentAlign === "end") {
+      align = contentAlign;
+    }
 
     colorInput.setAttribute("data-state", "enabled");
+
+    function resolvePortalTarget(): HTMLElement {
+      if (!colorInput) return document.body;
+      const currentFloatingRoot = colorInput.closest("[data-floating-root]");
+      if (currentFloatingRoot instanceof HTMLElement) {
+        return currentFloatingRoot;
+      }
+
+      const dialogHost = colorInput.closest(
+        'dialog[data-slot="dialog-content"], dialog[data-slot="sheet-content"]',
+      );
+      const dialogFloatingRoot = dialogHost?.querySelector(":scope > [data-floating-root]");
+      if (dialogFloatingRoot instanceof HTMLElement) {
+        return dialogFloatingRoot;
+      }
+
+      return document.body;
+    }
+
+    function clampPosition(value: number, min: number, max: number): number {
+      return Math.min(Math.max(value, min), Math.max(min, max));
+    }
+
+    function getVerticalPlacement(options: {
+      preferredSide: ColorPickerFloatingSide;
+      align: FloatingAlign;
+      sideOffset: number;
+      triggerRect: DOMRect;
+      contentWidth: number;
+      contentHeight: number;
+      viewportWidth: number;
+      viewportHeight: number;
+      viewportPadding: number;
+      avoidCollisions?: boolean;
+    }): ColorPickerPlacement {
+      const {
+        preferredSide,
+        align,
+        sideOffset,
+        triggerRect,
+        contentWidth,
+        contentHeight,
+        viewportWidth,
+        viewportHeight,
+        viewportPadding,
+        avoidCollisions = true,
+      } = options;
+      const oppositeSide = preferredSide === "bottom" ? "top" : "bottom";
+      const getTop = (placementSide: ColorPickerFloatingSide) =>
+        placementSide === "bottom"
+          ? triggerRect.bottom + sideOffset
+          : triggerRect.top - contentHeight - sideOffset;
+      const getLeft = () => {
+        if (align === "end") {
+          return triggerRect.right - contentWidth;
+        }
+
+        if (align === "center") {
+          return triggerRect.left + (triggerRect.width - contentWidth) / 2;
+        }
+
+        return triggerRect.left;
+      };
+
+      if (!avoidCollisions) {
+        return {
+          side: preferredSide,
+          align,
+          top: getTop(preferredSide),
+          left: getLeft(),
+        };
+      }
+
+      const preferredTop = getTop(preferredSide);
+      const oppositeTop = getTop(oppositeSide);
+      const preferredFits =
+        preferredTop >= viewportPadding &&
+        preferredTop + contentHeight <= viewportHeight - viewportPadding;
+      const oppositeFits =
+        oppositeTop >= viewportPadding &&
+        oppositeTop + contentHeight <= viewportHeight - viewportPadding;
+      const spaceBelow = viewportHeight - triggerRect.bottom - sideOffset - viewportPadding;
+      const spaceAbove = triggerRect.top - sideOffset - viewportPadding;
+      const resolvedSide: ColorPickerFloatingSide = preferredFits
+        ? preferredSide
+        : oppositeFits
+          ? oppositeSide
+          : spaceBelow >= spaceAbove
+            ? "bottom"
+            : "top";
+
+      return {
+        side: resolvedSide,
+        align,
+        top: clampPosition(
+          getTop(resolvedSide),
+          viewportPadding,
+          viewportHeight - contentHeight - viewportPadding,
+        ),
+        left: clampPosition(
+          getLeft(),
+          viewportPadding,
+          viewportWidth - contentWidth - viewportPadding,
+        ),
+      };
+    }
+
+    function positionPicker(options?: { avoidCollisions?: boolean }) {
+      if (!isOpen) return;
+      if (!colorInput || !customPicker) return;
+
+      const triggerRect = colorInput.getBoundingClientRect();
+      const contentWidth = customPicker.offsetWidth;
+      const contentHeight = customPicker.offsetHeight;
+      const viewportPadding = 8;
+      const helperPlacement = resolvePlacement({
+        side,
+        align,
+        sideOffset,
+        triggerRect,
+        contentWidth,
+        contentHeight,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        viewportPadding,
+        avoidCollisions: options?.avoidCollisions ?? true,
+      });
+      const resolvedPlacement =
+        helperPlacement.side === "top" || helperPlacement.side === "bottom"
+          ? helperPlacement
+          : getVerticalPlacement({
+              preferredSide: side,
+              align,
+              sideOffset,
+              triggerRect,
+              contentWidth,
+              contentHeight,
+              viewportWidth: window.innerWidth,
+              viewportHeight: window.innerHeight,
+              viewportPadding,
+              avoidCollisions: options?.avoidCollisions ?? true,
+            });
+
+      const portalTargetRect =
+        portalTarget && portalTarget !== document.body
+          ? portalTarget.getBoundingClientRect()
+          : null;
+      const left = portalTargetRect
+        ? resolvedPlacement.left - portalTargetRect.left
+        : resolvedPlacement.left;
+      const top = portalTargetRect
+        ? resolvedPlacement.top - portalTargetRect.top
+        : resolvedPlacement.top;
+
+      customPicker.style.left = `${Math.round(left)}px`;
+      customPicker.style.top = `${Math.round(top)}px`;
+      customPicker.style.transformOrigin = getTransformOrigin(
+        resolvedPlacement.side,
+        resolvedPlacement.align,
+      );
+      customPicker.setAttribute("data-side", resolvedPlacement.side);
+      customPicker.setAttribute("data-align", resolvedPlacement.align);
+    }
+
+    function portalPicker() {
+      if (!customPicker || !colorInput) return;
+      const target = resolvePortalTarget();
+      if (contentPlaceholder || customPicker.parentElement === target) return;
+
+      contentPlaceholder = document.createComment("color-picker-placeholder");
+      customPicker.parentNode?.insertBefore(contentPlaceholder, customPicker);
+      target.appendChild(customPicker);
+      portalTarget = target;
+      customPicker.style.position = target === document.body ? "fixed" : "absolute";
+
+      const handleScroll = () => positionPicker({ avoidCollisions: false });
+      const handleResize = () => positionPicker({ avoidCollisions: true });
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleResize);
+
+      const resizeObserver = new ResizeObserver(() => positionPicker({ avoidCollisions: true }));
+      resizeObserver.observe(customPicker);
+      resizeObserver.observe(colorInput);
+
+      cleanupAutoUpdate = () => {
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleResize);
+        resizeObserver.disconnect();
+      };
+    }
+
+    function unportalPicker() {
+      if (!customPicker) return;
+      cleanupAutoUpdate?.();
+      cleanupAutoUpdate = null;
+
+      if (contentPlaceholder) {
+        contentPlaceholder.parentNode?.insertBefore(customPicker, contentPlaceholder);
+        contentPlaceholder.remove();
+        contentPlaceholder = null;
+      }
+
+      portalTarget = null;
+      customPicker.style.removeProperty("position");
+      customPicker.style.removeProperty("top");
+      customPicker.style.removeProperty("left");
+      customPicker.style.removeProperty("transform-origin");
+    }
+
+    function openPicker() {
+      if (!customPicker || !colorInput) return;
+      if (isClosing) return;
+
+      isOpen = true;
+      customPicker.style.removeProperty("display");
+      portalPicker();
+      customPicker.setAttribute("data-state", "visible");
+      positionPicker({ avoidCollisions: true });
+      requestAnimationFrame(() => positionPicker({ avoidCollisions: true }));
+
+      const initialValue = parseColorToRgb(colorInput.value) ?? [255, 0, 0];
+      updateUIFromRGB(initialValue[0], initialValue[1], initialValue[2], { dispatch: false });
+      updateOpacityValue(currentOpacity / 100, { dispatch: false });
+    }
+
+    function closePicker() {
+      if (!customPicker) return;
+      if (!isOpen) return;
+
+      isClosing = true;
+      isOpen = false;
+      customPicker.setAttribute("data-state", "hidden");
+
+      if (closeTimeoutRef !== null) {
+        window.clearTimeout(closeTimeoutRef);
+      }
+
+      closeTimeoutRef = window.setTimeout(() => {
+        closeTimeoutRef = null;
+        if (abortController.signal.aborted) return;
+        if (!customPicker) return;
+        unportalPicker();
+        customPicker.style.display = "none";
+        isClosing = false;
+      }, animationDuration);
+    }
 
     function dispatchChangeEvent(value: string) {
       const event = new CustomEvent<ColorPickerChangeEvent["detail"]>(
@@ -292,74 +617,73 @@ const containerProps = Object.fromEntries(
     };
 
     // Manage Color Input Trigger (prevent default picker opening and open custom picker)
-    colorInput.addEventListener("click", (e: MouseEvent) => {
-      e.preventDefault();
-      const button = (e.currentTarget as HTMLInputElement).getBoundingClientRect();
-      const pickerHeight = 410;
-      const pickerWidth = 410;
-      const spaceVerticalAbove = button.top;
-      const spaceVerticalBelow = window.innerHeight - button.bottom;
-      const spaceHorizontalBelow = window.innerWidth - button.right;
-      const spaceHorizontalAbove = button.left;
-      // Based on space (vertical and horizontall) depends on where to open the picker
-      if (spaceVerticalBelow < pickerHeight && spaceVerticalAbove > pickerHeight) {
-        customPicker.setAttribute("data-position-y", "bottom");
-      } else {
-        customPicker.setAttribute("data-position-y", "top");
-      }
-      if (spaceHorizontalBelow < pickerWidth && spaceHorizontalAbove > pickerWidth) {
-        customPicker.setAttribute("data-position-x", "right");
-      } else {
-        customPicker.setAttribute("data-position-x", "left");
-      }
-      customPicker.setAttribute(
-        "data-state",
-        customPicker.getAttribute("data-state") === "hidden" ? "visible" : "hidden",
-      );
-
-      const initialValue = parseColorToRgb(colorInput.value) ?? [255, 0, 0];
-      updateUIFromRGB(initialValue[0], initialValue[1], initialValue[2], { dispatch: false });
-      updateOpacityValue(currentOpacity / 100, { dispatch: false });
-    });
+    colorInput.addEventListener(
+      "click",
+      (e: MouseEvent) => {
+        e.preventDefault();
+        if (isOpen) {
+          closePicker();
+        } else {
+          openPicker();
+        }
+      },
+      { signal: abortController.signal },
+    );
 
     // Manage outside click to close picker
-    document.addEventListener("mousedown", (event: MouseEvent) => {
-      const isClickInside =
-        customPicker.contains(event.target as Node) || colorInput.contains(event.target as Node);
+    document.addEventListener(
+      "pointerdown",
+      (event: PointerEvent) => {
+        const isClickInside =
+          customPicker.contains(event.target as Node) || colorInput.contains(event.target as Node);
 
-      if (!isClickInside) {
-        customPicker.setAttribute("data-state", "hidden");
-      }
-    });
+        if (!isClickInside) {
+          closePicker();
+        }
+      },
+      { signal: abortController.signal },
+    );
 
     // Update Input Values On Color Format Change
-    colorFormatSelect.addEventListener("starwind-select:change", (event: Event) => {
-      currentColorFormat = (event as ColorPickerChangeEvent).detail.value;
-      updateTextInput();
-    });
+    colorFormatSelect.addEventListener(
+      "starwind-select:change",
+      (event: Event) => {
+        currentColorFormat = (event as ColorPickerChangeEvent).detail.value;
+        updateTextInput();
+      },
+      { signal: abortController.signal },
+    );
 
     // Manage None Button to unselect color
-    noneBtn.addEventListener("click", async () => {
-      currentRgb = `${255},${0},${0}`;
-      currentOpacity = 100;
-      updateUIFromRGB(255, 0, 0, { dispatch: false });
-      updateOpacityValue(1, { dispatch: false });
-      colorInput.value = "";
-      customPicker.setAttribute("data-state", "hidden");
-      container.setAttribute("value", "");
-      dispatchChangeEvent("");
-    });
+    noneBtn.addEventListener(
+      "click",
+      async () => {
+        currentRgb = `${255},${0},${0}`;
+        currentOpacity = 100;
+        updateUIFromRGB(255, 0, 0, { dispatch: false });
+        updateOpacityValue(1, { dispatch: false });
+        colorInput.value = "";
+        closePicker();
+        container.setAttribute("value", "");
+        dispatchChangeEvent("");
+      },
+      { signal: abortController.signal },
+    );
 
     // Manage Picker Button to open eye dropper
-    pickerBtn.addEventListener("click", async () => {
-      const color: string | undefined = await openEyeDropper();
-      if (!color) return;
-      const rgbValues = parseColorToRgb(color);
-      if (!rgbValues) return;
-      const [r, g, b] = rgbValues;
-      currentRgb = `${r},${g},${b}`;
-      updateUIFromRGB(r, g, b);
-    });
+    pickerBtn.addEventListener(
+      "click",
+      async () => {
+        const color: string | undefined = await openEyeDropper();
+        if (!color) return;
+        const rgbValues = parseColorToRgb(color);
+        if (!rgbValues) return;
+        const [r, g, b] = rgbValues;
+        currentRgb = `${r},${g},${b}`;
+        updateUIFromRGB(r, g, b);
+      },
+      { signal: abortController.signal },
+    );
 
     // Check if EyeDropper API is supported, if not, hide the picker button
     if (!("EyeDropper" in window)) {
@@ -382,42 +706,73 @@ const containerProps = Object.fromEntries(
     }
 
     // Manage Hue and Opacity Sliders (During Dragging)
-    hueSlider.addEventListener("mousedown", (e: MouseEvent) => {
-      e.preventDefault();
-      isDraggingHue = true;
-      updateHue(e);
-    });
-    opacitySlider.addEventListener("mousedown", (e: MouseEvent) => {
-      e.preventDefault();
-      isDraggingOpacity = true;
-      updateOpacity(e);
-    });
-    window.addEventListener("mousemove", (e: MouseEvent) => {
-      if (isDraggingHue) {
+    hueSlider.addEventListener(
+      "pointerdown",
+      (e: PointerEvent) => {
+        e.preventDefault();
+        isDraggingHue = true;
+        hueSlider.setPointerCapture(e.pointerId);
         updateHue(e);
-      }
-      if (isDraggingOpacity) {
+      },
+      { signal: abortController.signal },
+    );
+    opacitySlider.addEventListener(
+      "pointerdown",
+      (e: PointerEvent) => {
+        e.preventDefault();
+        isDraggingOpacity = true;
+        opacitySlider.setPointerCapture(e.pointerId);
         updateOpacity(e);
-      }
-    });
-    window.addEventListener("mouseup", () => {
-      isDraggingHue = false;
-      isDraggingOpacity = false;
-      isDraggingSquare = false;
-    });
+      },
+      { signal: abortController.signal },
+    );
+    window.addEventListener(
+      "pointermove",
+      (e: PointerEvent) => {
+        if (isDraggingHue) {
+          updateHue(e);
+        }
+        if (isDraggingOpacity) {
+          updateOpacity(e);
+        }
+        if (isDraggingSquare) {
+          moveCursor(e);
+        }
+      },
+      { signal: abortController.signal },
+    );
+    window.addEventListener(
+      "pointerup",
+      () => {
+        isDraggingHue = false;
+        isDraggingOpacity = false;
+        isDraggingSquare = false;
+      },
+      { signal: abortController.signal },
+    );
+    window.addEventListener(
+      "pointercancel",
+      () => {
+        isDraggingHue = false;
+        isDraggingOpacity = false;
+        isDraggingSquare = false;
+      },
+      { signal: abortController.signal },
+    );
 
     // Manage Main Color Square (During Dragging)
-    satRect.addEventListener("mousedown", (e: MouseEvent) => {
-      e.preventDefault();
-      isDraggingSquare = true;
-      moveCursor(e);
-    });
+    satRect.addEventListener(
+      "pointerdown",
+      (e: PointerEvent) => {
+        e.preventDefault();
+        isDraggingSquare = true;
+        satRect.setPointerCapture(e.pointerId);
+        moveCursor(e);
+      },
+      { signal: abortController.signal },
+    );
 
-    window.addEventListener("mousemove", (e: MouseEvent) => {
-      if (isDraggingSquare) moveCursor(e);
-    });
-
-    function moveCursor(e: MouseEvent) {
+    function moveCursor(e: PointerEvent) {
       if (!satRect || !cursor) return;
       const rect = satRect.getBoundingClientRect();
       let x = e.clientX - rect.left;
@@ -443,7 +798,7 @@ const containerProps = Object.fromEntries(
     // Update UI and Manage Colors
 
     // Manage Hue Slider (During Dragging)
-    function updateHue(e: MouseEvent) {
+    function updateHue(e: PointerEvent) {
       if (!hueSlider || !hueHandle) return;
       const rect = hueSlider.getBoundingClientRect();
 
@@ -509,7 +864,7 @@ const containerProps = Object.fromEntries(
     }
 
     // Update Opacity (During Dragging)
-    function updateOpacity(e: MouseEvent) {
+    function updateOpacity(e: PointerEvent) {
       if (!opacitySlider || !opacityHandle || !colorInput) return;
       const rect = opacitySlider.getBoundingClientRect();
       let x = e.clientX - rect.left;
@@ -662,79 +1017,87 @@ const containerProps = Object.fromEntries(
     };
 
     textInputs.forEach((input: HTMLInputElement, inputIndex: number) =>
-      input.addEventListener("beforeinput", (e: InputEvent) => {
-        const target = e.target as HTMLInputElement;
-        const futureValue: string =
-          target.value.slice(0, target.selectionStart ?? 0) +
-          (e.data || "") +
-          target.value.slice(target.selectionEnd ?? 0);
-        if (e.data) {
-          if (inputIndex == 3 && currentColorFormat != "hex") {
-            if (!isOpacityValueValid(futureValue)) {
+      input.addEventListener(
+        "beforeinput",
+        (e: InputEvent) => {
+          const target = e.target as HTMLInputElement;
+          const futureValue: string =
+            target.value.slice(0, target.selectionStart ?? 0) +
+            (e.data || "") +
+            target.value.slice(target.selectionEnd ?? 0);
+          if (e.data) {
+            if (inputIndex == 3 && currentColorFormat != "hex") {
+              if (!isOpacityValueValid(futureValue)) {
+                e.preventDefault();
+              }
+              return;
+            }
+            if (currentColorFormat == "hex" && !isHexInputValid(e.data, target.value)) {
+              e.preventDefault();
+            } else if (currentColorFormat == "rgb" && !isRgbInputValid(e.data, target.value)) {
+              e.preventDefault();
+            } else if (
+              ["hsb", "hsl"].includes(currentColorFormat) &&
+              !isHsbHslValid(e.data, target.value, inputIndex)
+            ) {
               e.preventDefault();
             }
-            return;
           }
-          if (currentColorFormat == "hex" && !isHexInputValid(e.data, target.value)) {
-            e.preventDefault();
-          } else if (currentColorFormat == "rgb" && !isRgbInputValid(e.data, target.value)) {
-            e.preventDefault();
-          } else if (
-            ["hsb", "hsl"].includes(currentColorFormat) &&
-            !isHsbHslValid(e.data, target.value, inputIndex)
-          ) {
-            e.preventDefault();
-          }
-        }
-      }),
+        },
+        { signal: abortController.signal },
+      ),
     );
 
     // Input Change Logic (Update selector ui and value on input)
     textInputs.forEach((input: HTMLInputElement, inputIndex: number) =>
-      input.addEventListener("change", (e: Event) => {
-        const changeTarget = e.target as HTMLInputElement;
-        if (inputIndex == 3) {
-          const value =
-            currentColorFormat == "hex"
-              ? hexOpacityToDecimal(changeTarget.value)
-              : isOpacityValueValid(changeTarget.value)
-                ? Number(changeTarget.value)
-                : NaN;
-          if (!Number.isFinite(value)) {
-            updateTextInput();
+      input.addEventListener(
+        "change",
+        (e: Event) => {
+          const changeTarget = e.target as HTMLInputElement;
+          if (inputIndex == 3) {
+            const value =
+              currentColorFormat == "hex"
+                ? hexOpacityToDecimal(changeTarget.value)
+                : isOpacityValueValid(changeTarget.value)
+                  ? Number(changeTarget.value)
+                  : NaN;
+            if (!Number.isFinite(value)) {
+              updateTextInput();
+              return;
+            }
+            updateOpacityValue(value);
             return;
           }
-          updateOpacityValue(value);
-          return;
-        }
-        let rgbValues: [number, number, number];
-        if (currentColorFormat == "rgb") {
-          const rgb = currentRgb;
-          rgbValues = rgb.split(",").map(Number) as [number, number, number];
-          rgbValues[inputIndex] = Number(changeTarget.value);
-        } else if (currentColorFormat == "hex") {
-          const parsedHex = parseColorToRgb(
-            `#${textInputs[0].value}${textInputs[1].value}${textInputs[2].value}`,
-          );
-          if (!parsedHex) return;
-          rgbValues = parsedHex;
-        } else if (currentColorFormat == "hsb") {
-          rgbValues = hsbToRgb(
-            Number(textInputs[0].value),
-            Number(textInputs[1].value),
-            Number(textInputs[2].value),
-          );
-        } else if (currentColorFormat == "hsl") {
-          rgbValues = hslToRgb(
-            Number(textInputs[0].value),
-            Number(textInputs[1].value),
-            Number(textInputs[2].value),
-          );
-        } else {
-          rgbValues = [0, 0, 0];
-        }
-        updateUIFromRGB(rgbValues[0], rgbValues[1], rgbValues[2]);
-      }),
+          let rgbValues: [number, number, number];
+          if (currentColorFormat == "rgb") {
+            const rgb = currentRgb;
+            rgbValues = rgb.split(",").map(Number) as [number, number, number];
+            rgbValues[inputIndex] = Number(changeTarget.value);
+          } else if (currentColorFormat == "hex") {
+            const parsedHex = parseColorToRgb(
+              `#${textInputs[0].value}${textInputs[1].value}${textInputs[2].value}`,
+            );
+            if (!parsedHex) return;
+            rgbValues = parsedHex;
+          } else if (currentColorFormat == "hsb") {
+            rgbValues = hsbToRgb(
+              Number(textInputs[0].value),
+              Number(textInputs[1].value),
+              Number(textInputs[2].value),
+            );
+          } else if (currentColorFormat == "hsl") {
+            rgbValues = hslToRgb(
+              Number(textInputs[0].value),
+              Number(textInputs[1].value),
+              Number(textInputs[2].value),
+            );
+          } else {
+            rgbValues = [0, 0, 0];
+          }
+          updateUIFromRGB(rgbValues[0], rgbValues[1], rgbValues[2]);
+        },
+        { signal: abortController.signal },
+      ),
     );
 
     // Translate Color Format Functions
@@ -919,5 +1282,38 @@ const containerProps = Object.fromEntries(
 
       return `rgb(${r}, ${g}, ${b})`;
     }
+
+    return () => {
+      abortController.abort();
+      if (closeTimeoutRef !== null) {
+        window.clearTimeout(closeTimeoutRef);
+        closeTimeoutRef = null;
+      }
+      closePicker();
+      unportalPicker();
+      customPicker.style.display = "none";
+      isClosing = false;
+    };
   }
+
+  function initColorPickers() {
+    document.querySelectorAll<HTMLElement>(".starwind-color-picker").forEach((colorPicker) => {
+      if (!colorPickerInstances.has(colorPicker)) {
+        colorPickerInstances.set(colorPicker, initColorPicker(colorPicker));
+      }
+    });
+  }
+
+  function destroyColorPickers() {
+    document.querySelectorAll<HTMLElement>(".starwind-color-picker").forEach((colorPicker) => {
+      const destroy = colorPickerInstances.get(colorPicker);
+      destroy?.();
+      colorPickerInstances.delete(colorPicker);
+    });
+  }
+
+  initColorPickers();
+  document.addEventListener("astro:before-swap", destroyColorPickers);
+  document.addEventListener("astro:after-swap", initColorPickers);
+  document.addEventListener("starwind:init", initColorPickers);
 </script>
