@@ -6,7 +6,8 @@
 
 - `llms.txt`: A concise static overview for AI tools.
 - `llms-full.txt`: This full static reference for Starwind UI docs, components, theming, and CLI usage.
-- Per-page Markdown docs: URL form is `/docs/.../page.md`.
+- Per-page Markdown docs: append `.md` to the docs path, such as `/docs/components/button.md`.
+- Starwind Skills: Installable agent instructions from `starwind-ui/skills` for Starwind UI and Starwind Pro workflows.
 - MCP server: The published `@starwind-ui/mcp` package exposes the current live tools for docs lookup, init command generation, add command generation, and Starwind Pro block search.
 
 ## Installation

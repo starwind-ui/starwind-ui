@@ -15,14 +15,17 @@ Things to remember when using Starwind UI:
 
 - `llms.txt`: This concise static overview for AI tools.
 - `llms-full.txt`: A full static reference for Starwind UI docs, components, theming, and CLI usage.
-- Per-page Markdown docs: URL form is `/docs/.../page.md`.
+- Per-page Markdown docs: append `.md` to the docs path, such as `/docs/components/button.md`.
+- Starwind Skills: Installable agent instructions from `starwind-ui/skills` for Starwind UI and Starwind Pro workflows.
 - MCP server: The published `@starwind-ui/mcp` package exposes the current live tools for docs lookup, init command generation, add command generation, and Starwind Pro block search.
 
 ## Important Links for AI Tools
 
 - [Home](https://starwind.dev/): The main landing page for Starwind UI, providing an overview and access to documentation.
 - [Getting Started](https://starwind.dev/docs/getting-started/): A guide for newcomers to the Starwind UI framework, covering the basics.
-- [AI Integration](https://starwind.dev/docs/getting-started/ai/): Current AI-readable docs surfaces and MCP setup.
+- [AI Integration](https://starwind.dev/docs/getting-started/ai/): Current AI-readable docs surfaces.
+- [Skills](https://starwind.dev/docs/getting-started/skills/): Install Starwind Skills for compatible AI agents.
+- [MCP Server](https://starwind.dev/docs/getting-started/mcp/): Configure the Starwind UI MCP server for compatible editors and AI tools.
 - [CLI](https://starwind.dev/docs/getting-started/cli/): Information on using the Command Line Interface for Starwind UI development.
 - [Installation](https://starwind.dev/docs/getting-started/installation/): Step-by-step instructions for installing the Starwind UI framework.
 - [Theming](https://starwind.dev/docs/getting-started/theming/): Guidance on customizing the look and feel of applications built with Starwind UI.
