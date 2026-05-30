@@ -257,3 +257,7 @@ export const sidebarRail = tv({
 export const sidebarSeparator = tv({
   base: "bg-sidebar-border mx-2 w-auto",
 });
+
+export const sidebarTrigger = tv({
+  base: "starwind-sidebar-trigger",
+});

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Starwind Components"
+  short_description: "Build Starwind UI components consistently"
+  default_prompt: "Use $starwind-components to add a new Starwind UI component that matches the current project standards."

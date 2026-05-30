@@ -1,13 +1,10 @@
 ---
 import PanelLeft from "@tabler/icons/outline/layout-sidebar.svg";
 import type { ComponentProps } from "astro/types";
-import { tv } from "tailwind-variants";
-
-const sidebarTrigger = tv({
-  base: "starwind-sidebar-trigger",
-});
 
 import { Button } from "@/components/starwind/button";
+
+import { sidebarTrigger } from "./variants";
 
 type Props = ComponentProps<typeof Button>;
 

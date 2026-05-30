@@ -9,20 +9,32 @@ Things to remember when using Starwind UI:
 - Use the `init` command to setup a new project with Starwind UI.
 - Use the `add` command to add components to your project.
 - Use the `update` command to update components in your project.
+- Combobox is a documented Select pattern built with `Select` and `SelectSearch`. Install `select`, not `combobox`.
+
+## Public AI Surfaces
+
+- `llms.txt`: This concise static overview for AI tools.
+- `llms-full.txt`: A full static reference for Starwind UI docs, components, theming, and CLI usage.
+- Per-page Markdown docs: append `.md` to the docs path, such as `/docs/components/button.md`.
+- Starwind Skills: Installable agent instructions from `starwind-ui/skills` for Starwind UI and Starwind Pro workflows.
+- MCP server: The published `@starwind-ui/mcp` package exposes the current live tools for docs lookup, init command generation, add command generation, and Starwind Pro block search.
 
 ## Important Links for AI Tools
 
 - [Home](https://starwind.dev/): The main landing page for Starwind UI, providing an overview and access to documentation.
 - [Getting Started](https://starwind.dev/docs/getting-started/): A guide for newcomers to the Starwind UI framework, covering the basics.
+- [AI Integration](https://starwind.dev/docs/getting-started/ai/): Current AI-readable docs surfaces.
+- [Skills](https://starwind.dev/docs/getting-started/skills/): Install Starwind Skills for compatible AI agents.
+- [MCP Server](https://starwind.dev/docs/getting-started/mcp/): Configure the Starwind UI MCP server for compatible editors and AI tools.
 - [CLI](https://starwind.dev/docs/getting-started/cli/): Information on using the Command Line Interface for Starwind UI development.
 - [Installation](https://starwind.dev/docs/getting-started/installation/): Step-by-step instructions for installing the Starwind UI framework.
 - [Theming](https://starwind.dev/docs/getting-started/theming/): Guidance on customizing the look and feel of applications built with Starwind UI.
 - [Components](https://starwind.dev/docs/components/): A detailed list of UI components available in the Starwind UI framework.
 - [Full Reference](https://starwind.dev/llms-full.txt): A comprehensive LLM reference guide for all components and functionality provided by Starwind UI.
 
-## Available Components and Documentation
+## Installable Components and Documentation
 
-Starwind UI currently includes the following components:
+Starwind UI currently includes the following installable components:
 
 - [Accordion](https://starwind.dev/docs/components/accordion)
 - [Alert](https://starwind.dev/docs/components/alert)
@@ -38,7 +50,6 @@ Starwind UI currently includes the following components:
 - [Checkbox](https://starwind.dev/docs/components/checkbox)
 - [Collapsible](https://starwind.dev/docs/components/collapsible)
 - [Color Picker](https://starwind.dev/docs/components/color-picker)
-- [Combobox](https://starwind.dev/docs/components/combobox)
 - [Context Menu](https://starwind.dev/docs/components/context-menu)
 - [Dialog](https://starwind.dev/docs/components/dialog)
 - [Dropdown](https://starwind.dev/docs/components/dropdown)
@@ -49,6 +60,7 @@ Starwind UI currently includes the following components:
 - [Input Group](https://starwind.dev/docs/components/input-group)
 - [Input OTP](https://starwind.dev/docs/components/input-otp)
 - [Item](https://starwind.dev/docs/components/item)
+- [Kbd](https://starwind.dev/docs/components/kbd)
 - [Label](https://starwind.dev/docs/components/label)
 - [Native Select](https://starwind.dev/docs/components/native-select)
 - [Pagination](https://starwind.dev/docs/components/pagination)
@@ -74,11 +86,15 @@ Starwind UI currently includes the following components:
 - [Tooltip](https://starwind.dev/docs/components/tooltip)
 - [Video](https://starwind.dev/docs/components/video)
 
-## Markdown Alternate URLs
+## Documented Select Patterns
 
-- Docs pages also provide a Markdown alternate at the same path with `.md` suffix.
-- Example: `https://starwind.dev/docs/components/button` -> `https://starwind.dev/docs/components/button.md`
-- HTML docs pages include: `<link rel="alternate" type="text/markdown" href="...">`
+- Combobox: Select plus `SelectSearch` pattern documented at https://starwind.dev/docs/components/combobox. Install with `starwind add select`; there is no separate `combobox` install target.
+
+## Markdown Docs URL
+
+- Per-page Markdown URL: append `.md` to the docs path.
+- Example URL: `https://starwind.dev/docs/components/button.md`
+- HTML docs pages include: `<link rel="alternate" type="text/markdown" href="...">` pointing to the `.md` URL.
 
 ## Import Pattern
 

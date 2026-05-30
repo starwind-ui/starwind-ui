@@ -21,6 +21,6 @@ export default defineConfig({
       await copy(file, destPath);
     }
     // Copy registry.json
-    // await copy("src/registry.json", "dist/registry.json");
+    await copy("src/registry.json", "dist/registry.json");
   },
 });

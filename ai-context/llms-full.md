@@ -2,6 +2,14 @@
 
 > Starwind UI is an open-source component library for Astro projects, styled with Tailwind CSS v4. It provides accessible, customizable components that can be added directly to your projects. The library follows a modular approach where components are added individually to your project via a CLI rather than imported from a package.
 
+## Public AI Surfaces
+
+- `llms.txt`: A concise static overview for AI tools.
+- `llms-full.txt`: This full static reference for Starwind UI docs, components, theming, and CLI usage.
+- Per-page Markdown docs: append `.md` to the docs path, such as `/docs/components/button.md`.
+- Starwind Skills: Installable agent instructions from `starwind-ui/skills` for Starwind UI and Starwind Pro workflows.
+- MCP server: The published `@starwind-ui/mcp` package exposes the current live tools for docs lookup, init command generation, add command generation, and Starwind Pro block search.
+
 ## Installation
 
 ### Prerequisites
@@ -55,9 +63,9 @@ import { ComponentName } from "@/components/starwind/component-name";
 <ComponentName prop="value"> Content </ComponentName>
 ```
 
-## Available Components
+## Installable Components
 
-Starwind UI includes the following components:
+Starwind UI includes the following installable components:
 
 - [Accordion](https://starwind.dev/docs/components/accordion)
 - [Alert](https://starwind.dev/docs/components/alert)
@@ -73,7 +81,6 @@ Starwind UI includes the following components:
 - [Checkbox](https://starwind.dev/docs/components/checkbox)
 - [Collapsible](https://starwind.dev/docs/components/collapsible)
 - [Color Picker](https://starwind.dev/docs/components/color-picker)
-- [Combobox](https://starwind.dev/docs/components/combobox)
 - [Context Menu](https://starwind.dev/docs/components/context-menu)
 - [Dialog](https://starwind.dev/docs/components/dialog)
 - [Dropdown](https://starwind.dev/docs/components/dropdown)
@@ -84,6 +91,7 @@ Starwind UI includes the following components:
 - [Input Group](https://starwind.dev/docs/components/input-group)
 - [Input OTP](https://starwind.dev/docs/components/input-otp)
 - [Item](https://starwind.dev/docs/components/item)
+- [Kbd](https://starwind.dev/docs/components/kbd)
 - [Label](https://starwind.dev/docs/components/label)
 - [Native Select](https://starwind.dev/docs/components/native-select)
 - [Pagination](https://starwind.dev/docs/components/pagination)
@@ -109,12 +117,16 @@ Starwind UI includes the following components:
 - [Tooltip](https://starwind.dev/docs/components/tooltip)
 - [Video](https://starwind.dev/docs/components/video)
 
-## Markdown Alternate URLs
+## Documented Select Patterns
 
-- Docs pages also provide a Markdown alternate at the same path with `.md` suffix.
-- Example: `https://starwind.dev/docs/components/button` -> `https://starwind.dev/docs/components/button.md`
-- HTML docs pages include: `<link rel="alternate" type="text/markdown" href="...">`
-- Markdown responses include a canonical `Link` header pointing back to the HTML docs URL.
+- Combobox: Select plus `SelectSearch` pattern documented at https://starwind.dev/docs/components/combobox. Install with `starwind add select`; there is no separate `combobox` install target.
+
+## Markdown Docs URL
+
+- Per-page Markdown URL: append `.md` to the docs path.
+- Example URL: `https://starwind.dev/docs/components/button.md`
+- HTML docs pages include: `<link rel="alternate" type="text/markdown" href="...">` pointing to the `.md` URL.
+- `.md` responses include a canonical `Link` header pointing back to the HTML docs URL.
 
 ## Component Architecture Patterns
 
@@ -749,10 +761,11 @@ import { Checkbox } from "@/components/starwind/checkbox";
 <Checkbox id="demo-checkbox" label="Checkbox" />
 ```
 
-### Combobox
+### Combobox (Select Pattern)
 
 - **Documentation**: https://starwind.dev/docs/components/combobox
-- **Description**: A searchable select component that combines an input field with a dropdown list. Built using the Select component with the SelectSearch sub-component.
+- **Description**: A searchable Select pattern that combines an input field with a dropdown list. Built using the Select component with the SelectSearch sub-component.
+- **Install target**: `select` (there is no separate `combobox` install target)
 - **Import pattern**: `import { Select, SelectContent, SelectGroup, SelectItem, SelectSearch, SelectTrigger, SelectValue } from "@/components/starwind/select";`
 - **Key props**:
   - `SelectSearch`:
@@ -1267,6 +1280,32 @@ import Plus from "@tabler/icons/outline/plus.svg";
 </ItemGroup>
 ```
 
+### Kbd
+
+- **Documentation**: https://starwind.dev/docs/components/kbd
+- **Description**: Displays keyboard input, shortcuts, and key combinations.
+- **Import pattern**: `import { Kbd, KbdGroup } from "@/components/starwind/kbd";`
+- **Key props**:
+  - `<Kbd>`: accepts standard HTML attributes for `<kbd>`
+  - `<KbdGroup>`: groups multiple keys or key combinations
+- **Example usage**:
+
+```astro
+---
+import { Kbd, KbdGroup } from "@/components/starwind/kbd";
+---
+
+<p class="flex items-center gap-2">
+  Press
+  <KbdGroup>
+    <Kbd>Ctrl</Kbd>
+    <span>+</span>
+    <Kbd>K</Kbd>
+  </KbdGroup>
+  to open the command palette
+</p>
+```
+
 ### Label
 
 - **Documentation**: https://starwind.dev/docs/components/label
@@ -1531,7 +1570,7 @@ import { Label } from "@/components/starwind/label";
 ### Select
 
 - **Documentation**: https://starwind.dev/docs/components/select
-- **Import pattern**: `import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator } from "@/components/starwind/select";`
+- **Import pattern**: `import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator, SelectSearch } from "@/components/starwind/select";`
 - **Key props**:
   - `<SelectTrigger>`
     - `size`: "sm" | "md" | "lg" (default: "md")
@@ -1549,6 +1588,7 @@ import { Label } from "@/components/starwind/label";
   - `<SelectSearch>`
     - `placeholder`: string - Placeholder text for the search input (default: "Search...")
     - `emptyText`: string - Text to display when no results are found (default: "No results found.")
+    - Enables the documented Combobox pattern; install `select` to use it
 - **Example usage**:
 
 ```astro
