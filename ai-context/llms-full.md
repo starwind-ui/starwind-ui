@@ -6,8 +6,7 @@
 
 - `llms.txt`: A concise static overview for AI tools.
 - `llms-full.txt`: This full static reference for Starwind UI docs, components, theming, and CLI usage.
-- Per-page Markdown docs: Preferred URL form is `/docs/.../page.md`.
-- Compatibility Markdown docs: `/docs/.../page/markdown.md` remains available and is used by the current MCP server.
+- Per-page Markdown docs: URL form is `/docs/.../page.md`.
 - MCP server: The published `@starwind-ui/mcp` package exposes the current live tools for docs lookup, init command generation, add command generation, and Starwind Pro block search.
 
 ## Installation
@@ -121,14 +120,12 @@ Starwind UI includes the following installable components:
 
 - Combobox: Select plus `SelectSearch` pattern documented at https://starwind.dev/docs/components/combobox. Install with `starwind add select`; there is no separate `combobox` install target.
 
-## Markdown Alternate URLs
+## Markdown Docs URL
 
-- Preferred per-page Markdown URL: append `.md` to the docs path.
-- Compatibility Markdown URL: append `/markdown.md` to the docs path. This path remains available for current MCP/server behavior.
-- Example preferred URL: `https://starwind.dev/docs/components/button.md`
-- Example compatibility URL: `https://starwind.dev/docs/components/button/markdown.md`
-- HTML docs pages include: `<link rel="alternate" type="text/markdown" href="...">` pointing to the preferred `.md` URL.
-- Preferred `.md` responses include a canonical `Link` header pointing back to the HTML docs URL.
+- Per-page Markdown URL: append `.md` to the docs path.
+- Example URL: `https://starwind.dev/docs/components/button.md`
+- HTML docs pages include: `<link rel="alternate" type="text/markdown" href="...">` pointing to the `.md` URL.
+- `.md` responses include a canonical `Link` header pointing back to the HTML docs URL.
 
 ## Component Architecture Patterns
 
