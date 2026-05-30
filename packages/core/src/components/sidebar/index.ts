@@ -45,6 +45,7 @@ import {
   sidebarProvider,
   sidebarRail,
   sidebarSeparator,
+  sidebarTrigger,
 } from "./variants";
 
 const SidebarVariants = {
@@ -72,6 +73,7 @@ const SidebarVariants = {
   sidebarMenuSkeleton,
   sidebarInput,
   sidebarSeparator,
+  sidebarTrigger,
 };
 
 export {

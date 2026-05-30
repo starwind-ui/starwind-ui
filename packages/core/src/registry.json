@@ -112,7 +112,7 @@
     {
       "name": "sidebar",
       "type": "component",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": [
         "@starwind-ui/core/button@^2.3.0",
         "@starwind-ui/core/dialog@^1.4.3",
