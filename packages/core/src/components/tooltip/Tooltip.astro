@@ -207,9 +207,6 @@ const {
 
       document.body.appendChild(this.content);
 
-      this.content.style.position = "fixed";
-      this.content.style.zIndex = "50";
-
       const updatePosition = () => this.positionTooltip();
       window.addEventListener("scroll", updatePosition, true);
       window.addEventListener("resize", updatePosition);
@@ -239,8 +236,6 @@ const {
         this.contentPlaceholder = null;
       }
 
-      this.content.style.removeProperty("position");
-      this.content.style.removeProperty("z-index");
       this.content.style.removeProperty("top");
       this.content.style.removeProperty("left");
       this.content.style.removeProperty("transform-origin");

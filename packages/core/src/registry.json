@@ -141,7 +141,7 @@
     {
       "name": "tooltip",
       "type": "component",
-      "version": "1.5.1",
+      "version": "1.5.2",
       "dependencies": [],
       "fileDependencies": ["positioning.ts"]
     },
