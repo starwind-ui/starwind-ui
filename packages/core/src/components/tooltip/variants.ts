@@ -1,6 +1,6 @@
 import { tv } from "tailwind-variants";
 
-export const tooltip = tv({ base: "starwind-tooltip relative inline-block" });
+export const tooltip = tv({ base: "starwind-tooltip inline-block" });
 
 export const tooltipContent = tv({
   base: [
