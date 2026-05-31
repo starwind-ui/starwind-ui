@@ -1,5 +1,13 @@
 # @starwind-ui/core
 
+## 2.0.1
+
+### Patch Changes
+
+- 0c0c4a7: feat(color-picker): add positioning system, portal support, and touch interactions to ColorPicker
+- e793f8d: refactor(tooltip): move position and z-index styling from JavaScript to variants module
+- 6b8d786: fix(sidebar): move trigger variant styling into variants module
+
 ## 2.0.0
 
 ### Minor Changes
