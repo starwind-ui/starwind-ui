@@ -1,6 +1,6 @@
 # Starwind UI
 
-[![NPM version](https://img.shields.io/npm/v/starwind.svg?style=flat)](https://npmjs.org/package/starwind) [![NPM downloads](https://img.shields.io/npm/dm/starwind.svg?style=flat)](https://npmjs.org/package/starwind) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Twitter Follow](https://img.shields.io/twitter/follow/webreaper.svg?style=social)](https://twitter.com/webreaper)
+[![NPM version](https://img.shields.io/npm/v/starwind.svg?style=flat)](https://npmjs.org/package/starwind) [![NPM downloads](https://img.shields.io/npm/dm/starwind.svg?style=flat)](https://npmjs.org/package/starwind) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Twitter Follow](https://img.shields.io/twitter/follow/Branden.svg?style=social)](https://twitter.com/BowTiedWebReapr)
 
 **Create animated websites in record time.**
 
@@ -36,9 +36,10 @@ npx starwind@latest add
 
 Resources for AI:
 
+- [Starwind Skills](https://starwind.dev/docs/getting-started/skills/)
+- [MCP server](https://starwind.dev/docs/getting-started/mcp/)
 - [llms.txt](https://starwind.dev/llms.txt)
 - [llms-full.txt](https://starwind.dev/llms-full.txt)
-- [MCP server](https://github.com/starwind-ui/starwind-ui-mcp)
 
 ## Contributing
 
