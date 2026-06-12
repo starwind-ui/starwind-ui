@@ -3,6 +3,9 @@ dist/
 
 # internal context
 .context/
+docs/
+.agents/
+.devin/
 
 # generated types
 .astro/
@@ -21,6 +24,7 @@ pnpm-debug.log*
 
 # vitest
 coverage/
+**/.vitest-attachments/
 
 # environment variables
 .env
