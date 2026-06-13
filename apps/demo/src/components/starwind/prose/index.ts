@@ -1,5 +1,6 @@
 import Prose from "./Prose.astro";
 import { prose } from "./variants";
+
 const ProseVariants = {
   prose,
 };

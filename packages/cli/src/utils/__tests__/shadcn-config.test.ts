@@ -1,6 +1,3 @@
-import path from "node:path";
-
-import fs from "fs-extra";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -9,8 +6,8 @@ import {
   createDefaultShadcnConfig,
   hasStarwindProRegistry,
   readComponentsJson,
-  setupShadcnProConfig,
   type ShadcnConfig,
+  setupShadcnProConfig,
   writeComponentsJson,
 } from "../shadcn-config.js";
 
@@ -25,6 +22,7 @@ vi.mock("../fs.js", () => ({
 }));
 
 import { fileExists, readJsonFile, writeJsonFile } from "../fs.js";
+
 const mockFileExists = vi.mocked(fileExists);
 const mockReadJsonFile = vi.mocked(readJsonFile);
 const mockWriteJsonFile = vi.mocked(writeJsonFile);

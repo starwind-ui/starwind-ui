@@ -19,6 +19,7 @@ import {
   selectTrigger,
   selectValue,
 } from "./variants";
+
 const SelectVariants = {
   selectContent,
   selectContentInner,

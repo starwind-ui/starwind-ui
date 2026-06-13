@@ -19,6 +19,7 @@ import {
   dropdownShortcut,
   dropdownTrigger,
 } from "./variants";
+
 const DropdownVariants = {
   dropdownCheckboxItem,
   dropdownContent,

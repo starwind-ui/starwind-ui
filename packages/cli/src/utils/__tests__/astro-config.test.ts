@@ -1,6 +1,5 @@
 import * as p from "@clack/prompts";
 import fs from "fs-extra";
-import semver from "semver";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { setupAstroConfig } from "../astro-config.js";

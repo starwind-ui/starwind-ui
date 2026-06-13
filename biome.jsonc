@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.0/schema.json",
   "files": {
     "includes": [
       "**/test/**",
@@ -28,7 +28,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": false,
+      "preset": "none",
       "style": {
         "useNodejsImportProtocol": "error",
         // Enforce separate type imports for type-only imports to avoid bundling unneeded code
@@ -41,7 +41,7 @@
       "correctness": {
         "noUnusedVariables": "info",
         "noUnusedFunctionParameters": "info",
-        "noUnusedImports": "warn"
+        "noUnusedImports": "info"
       }
     }
   },
@@ -87,7 +87,12 @@
       }
     },
     {
-      "includes": ["**/packages/cli/**/*.ts", "scripts/**/*"],
+      "includes": [
+        "**/packages/cli/**/*.ts",
+        "**/toast/**/*.ts",
+        "**/carousel/**/*.ts",
+        "scripts/**/*"
+      ],
       "linter": {
         "rules": {
           "suspicious": {

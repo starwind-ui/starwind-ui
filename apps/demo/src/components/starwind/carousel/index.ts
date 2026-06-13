@@ -1,14 +1,14 @@
 import Carousel from "./Carousel.astro";
+import CarouselContent from "./CarouselContent.astro";
+import CarouselItem from "./CarouselItem.astro";
+import CarouselNext from "./CarouselNext.astro";
+import CarouselPrevious from "./CarouselPrevious.astro";
 import {
   type CarouselApi,
   type CarouselManager,
   type CarouselOptions,
   initCarousel,
 } from "./carousel-script";
-import CarouselContent from "./CarouselContent.astro";
-import CarouselItem from "./CarouselItem.astro";
-import CarouselNext from "./CarouselNext.astro";
-import CarouselPrevious from "./CarouselPrevious.astro";
 import {
   carousel,
   carouselContent,
@@ -16,6 +16,7 @@ import {
   carouselNext,
   carouselPrevious,
 } from "./variants";
+
 const CarouselVariants = {
   carousel,
   carouselContent,

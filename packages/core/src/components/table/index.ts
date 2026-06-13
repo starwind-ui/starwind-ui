@@ -16,6 +16,7 @@ import {
   tableHeader,
   tableRow,
 } from "./variants";
+
 const TableVariants = {
   table,
   tableBody,

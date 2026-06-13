@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 
-import { removeComponent, type RemoveResult } from "@/utils/component.js";
+import { type RemoveResult, removeComponent } from "@/utils/component.js";
 import { getConfig, updateConfig } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
 import { fileExists } from "@/utils/fs.js";
