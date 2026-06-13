@@ -1,8 +1,15 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.3/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
   "files": {
-    "ignore": ["**/smoke/**", "**/fixtures/**", "**/_temp-fixtures/**", "**/vendor/**"],
-    "include": ["test/**", "packages/**", "scripts/**"]
+    "includes": [
+      "**/test/**",
+      "**/packages/**",
+      "**/scripts/**",
+      "!**/smoke/**",
+      "!**/fixtures/**",
+      "!**/_temp-fixtures/**",
+      "!**/vendor/**"
+    ]
   },
   "vcs": {
     "enabled": true,
@@ -10,14 +17,12 @@
     "useIgnoreFile": true
   },
   "formatter": {
-    "indentStyle": "tab",
+    "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100,
-    "ignore": [".changeset", "pnpm-lock.yaml", "*.astro"]
+    "includes": ["**", "!**/.changeset", "!**/pnpm-lock.yaml", "!**/*.astro"]
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
@@ -29,7 +34,7 @@
       },
       "suspicious": {
         // This one is specific to catch `console.log`. The rest of logs are permitted
-        "noConsoleLog": "warn"
+        "noConsole": { "level": "warn", "options": { "allow": ["log"] } }
       },
       "correctness": {
         "noUnusedVariables": "info",
@@ -58,7 +63,7 @@
   "overrides": [
     {
       // Workaround to format files like npm does
-      "include": ["package.json"],
+      "includes": ["**/package.json"],
       "json": {
         "formatter": {
           "lineWidth": 1
@@ -66,7 +71,7 @@
       }
     },
     {
-      "include": ["*.astro"],
+      "includes": ["**/*.astro"],
       "linter": {
         "rules": {
           "correctness": {
@@ -77,12 +82,11 @@
       }
     },
     {
-      "include": ["packages/cli/**/*.ts", "./scripts/*"],
+      "includes": ["**/packages/cli/**/*.ts", "scripts/**/*"],
       "linter": {
         "rules": {
           "suspicious": {
-            "noConsole": "off",
-            "noConsoleLog": "off"
+            "noConsole": "off"
           }
         }
       }
