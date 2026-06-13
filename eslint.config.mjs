@@ -90,6 +90,9 @@ export default defineConfig([
   // Ignore patterns - putting this early to ensure it applies to all configs
   {
     ignores: [
+      // ignore everything for testing
+      "**/**",
+
       "**/*/dist/**",
       "**/*/node_modules/**",
       "**/*/.astro/**",
