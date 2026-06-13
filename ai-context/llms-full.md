@@ -1247,7 +1247,7 @@ import Plus from "@tabler/icons/outline/plus.svg";
 <Item variant="outline">
   <ItemMedia>
     <Avatar>
-      <AvatarImage src="https://github.com/Boston343.png" alt="@BowTiedWebReapr" />
+      <AvatarImage src="https://github.com/Boston343.png" alt="@boston343builds" />
       <AvatarFallback>WR</AvatarFallback>
     </Avatar>
   </ItemMedia>
