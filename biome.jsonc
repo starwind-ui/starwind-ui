@@ -4,7 +4,9 @@
     "includes": [
       "**/test/**",
       "**/packages/**",
+      "**/apps/**",
       "**/scripts/**",
+      "!**/*.css",
       "!**/smoke/**",
       "!**/fixtures/**",
       "!**/_temp-fixtures/**",
@@ -77,6 +79,9 @@
           "correctness": {
             "noUnusedVariables": "off",
             "noUnusedImports": "off"
+          },
+          "style": {
+            "useImportType": "off"
           }
         }
       }
