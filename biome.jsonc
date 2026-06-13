@@ -36,12 +36,27 @@
       },
       "suspicious": {
         // This one is specific to catch `console.log`. The rest of logs are permitted
-        "noConsole": { "level": "warn", "options": { "allow": ["log"] } }
+        "noConsole": { "level": "warn", "options": { "allow": ["log"] } },
+        "noAssignInExpressions": "error",
+        "noDebugger": "error",
+        "noDuplicateObjectKeys": "error",
+        "noFallthroughSwitchClause": "error",
+        "noGlobalIsNan": "error",
+        "noImportAssign": "error",
+        "noSelfCompare": "error"
       },
       "correctness": {
+        "noConstAssign": "error",
+        "noConstantCondition": "error",
+        "noInvalidConstructorSuper": "error",
+        "noSetterReturn": "error",
+        "noUndeclaredVariables": "error",
+        "noUnreachable": "error",
         "noUnusedVariables": "info",
         "noUnusedFunctionParameters": "info",
-        "noUnusedImports": "info"
+        "noUnusedImports": "info",
+        "noUnsafeFinally": "error",
+        "useIsNan": "error"
       }
     }
   },
