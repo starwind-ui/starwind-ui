@@ -35,7 +35,7 @@
         "useImportType": "error"
       },
       "suspicious": {
-        // This one is specific to catch `console.log`. The rest of logs are permitted
+        // Allow console logs
         "noConsole": { "level": "warn", "options": { "allow": ["log"] } },
         "noAssignInExpressions": "error",
         "noDebugger": "error",
