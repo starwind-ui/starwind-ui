@@ -12,6 +12,7 @@ import {
   paginationNext,
   paginationPrevious,
 } from "./variants";
+
 const PaginationVariants = {
   pagination,
   paginationContent,

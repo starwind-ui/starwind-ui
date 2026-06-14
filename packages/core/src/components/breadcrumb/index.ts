@@ -13,6 +13,7 @@ import {
   breadcrumbPage,
   breadcrumbSeparator,
 } from "./variants";
+
 const BreadcrumbVariants = {
   breadcrumbEllipsis,
   breadcrumbItem,

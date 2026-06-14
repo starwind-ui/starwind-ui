@@ -1,8 +1,7 @@
 import * as p from "@clack/prompts";
 
-import { updateComponent, type UpdateResult } from "@/utils/component.js";
-import { getConfig } from "@/utils/config.js";
-import { updateConfig } from "@/utils/config.js";
+import { type UpdateResult, updateComponent } from "@/utils/component.js";
+import { getConfig, updateConfig } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";

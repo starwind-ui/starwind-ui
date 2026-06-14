@@ -12,6 +12,7 @@ import {
   inputGroupText,
   inputGroupTextarea,
 } from "./variants";
+
 const InputGroupVariants = {
   inputGroup,
   inputGroupAddon,

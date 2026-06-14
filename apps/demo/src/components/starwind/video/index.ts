@@ -1,5 +1,6 @@
-import { video } from "./variants";
 import Video from "./Video.astro";
+import { video } from "./variants";
+
 const VideoVariants = {
   video,
 };
