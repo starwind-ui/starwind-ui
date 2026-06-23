@@ -45,8 +45,7 @@ const {
     });
   };
 
-  document.addEventListener("DOMContentLoaded", setupCarousels);
-
-  // Re-initialize after Astro page transitions
+  setupCarousels();
   document.addEventListener("astro:after-swap", setupCarousels);
+  document.addEventListener("starwind:init", setupCarousels);
 </script>
