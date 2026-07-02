@@ -1,0 +1,454 @@
+---
+import ChartLegend from "./ChartLegend.astro";
+import ChartTooltip from "./ChartTooltip.astro";
+import { buildArea, buildPath, type Point } from "./curves";
+import { niceMax, tightMax, xLabelStep } from "./scale";
+import { nextUid } from "./uid";
+import type { ChartConfig } from "./variants";
+
+type Props = {
+  data: Record<string, string | number>[];
+  config: ChartConfig;
+  categoryKey: string;
+  series: string[];
+  curve?: "linear" | "monotone" | "step" | "natural";
+  stacked?: boolean;
+  gradient?: boolean;
+  gradientOpacity?: number;
+  showDots?: boolean;
+  showGrid?: boolean;
+  showXAxis?: boolean;
+  showYAxis?: boolean;
+  showLegend?: boolean;
+  showTooltip?: boolean;
+  yTickCount?: number;
+  marginLeft?: number;
+  marginRight?: number;
+  width?: number;
+  height?: number;
+};
+
+const {
+  data,
+  config,
+  categoryKey,
+  series,
+  curve = "monotone",
+  stacked = false,
+  gradient = true,
+  gradientOpacity,
+  showDots = false,
+  showGrid = true,
+  showXAxis = true,
+  showYAxis = false,
+  showLegend = false,
+  showTooltip = true,
+  yTickCount = 6,
+  marginLeft = 0,
+  marginRight,
+  width = 640,
+  height = 360,
+} = Astro.props;
+
+// Internal coordinate space — defaults to aspect-video; callers can override for wide containers
+const W = width;
+const H = height;
+
+// Domain maximum
+const domainVals = stacked
+  ? data.map((d) => series.reduce((sum, s) => sum + Number(d[s] ?? 0), 0))
+  : data.flatMap((d) => series.map((s) => Number(d[s] ?? 0)));
+const rawMax = Math.max(...domainVals, 0);
+
+const isWideChart = W > 800;
+const basePadX = isWideChart ? 8 : 26;
+// "Stacked expand" mode (data pre-normalised to sum ~100, e.g. Stacked Expanded):
+// oracle renders the bottom-most series at fillOpacity 0.1, the rest at 0.4.
+const expandStack = stacked && rawMax <= 100.0001;
+const padTop = expandStack ? (isWideChart ? 12 : 26) : 5;
+const padRight = basePadX + (marginRight ?? 0);
+const padBottom = showXAxis ? (showLegend ? (isWideChart ? 63 : 124) : isWideChart ? 63 : 64) : 10;
+const padLeft = (showYAxis ? (isWideChart ? 40 : 86) : basePadX) + marginLeft;
+const plotLeft = padLeft;
+const plotTop = padTop;
+const plotW = W - padLeft - padRight;
+const plotH = H - padTop - padBottom;
+const plotBottom = plotTop + plotH;
+const plotRight = plotLeft + plotW;
+
+const domainMax = stacked
+  ? rawMax <= 100.0001
+    ? 100
+    : niceMax(rawMax)
+  : showYAxis
+    ? niceMax(rawMax)
+    : tightMax(rawMax);
+
+const yOf = (v: number) => plotBottom - (v / domainMax) * plotH;
+const ticks = Array.from({ length: yTickCount }, (_, i) => (i * domainMax) / (yTickCount - 1));
+
+// X positions evenly across the plot width.
+const xOf = (i: number) =>
+  data.length <= 1 ? plotLeft + plotW / 2 : plotLeft + (i / (data.length - 1)) * plotW;
+
+// X-axis label thinning — approximates Recharts minTickGap for dense daily data.
+const labelStride = xLabelStep(data.length, W);
+
+// Cumulative sums per data point for stacking
+const cumSums: number[][] = data.map(() => new Array(series.length + 1).fill(0));
+if (stacked) {
+  for (let si = 0; si < series.length; si++) {
+    for (let di = 0; di < data.length; di++) {
+      cumSums[di][si + 1] = cumSums[di][si] + Number(data[di][series[si]] ?? 0);
+    }
+  }
+}
+
+type SeriesData = {
+  key: string;
+  areaPath: string;
+  linePath: string;
+  topPts: Point[];
+};
+
+const seriesData: SeriesData[] = series.map((key, si) => {
+  const topPts: Point[] = data.map((d, di) => ({
+    x: xOf(di),
+    y: stacked ? yOf(cumSums[di][si + 1]) : yOf(Number(d[key] ?? 0)),
+  }));
+  const bottomPts: Point[] = data.map((_d, di) => ({
+    x: xOf(di),
+    y: stacked ? yOf(cumSums[di][si]) : plotBottom,
+  }));
+  return {
+    key,
+    areaPath: buildArea(topPts, bottomPts, curve),
+    linePath: buildPath(topPts, curve),
+    topPts,
+  };
+});
+
+const hitBands = data.map((d, di) => {
+  const x = xOf(di);
+  const left = di === 0 ? plotLeft : (xOf(di - 1) + x) / 2;
+  const right = di === data.length - 1 ? plotRight : (x + xOf(di + 1)) / 2;
+  return {
+    x: left,
+    width: right - left,
+    category: String(d[categoryKey]),
+    items: series.map((key) => ({
+      series: key,
+      label: config[key]?.label ?? key,
+      value: String(Number(d[key] ?? 0)),
+    })),
+    dots: seriesData.map(({ key, topPts }) => ({ key, point: topPts[di] })),
+  };
+});
+
+// Per-instance suffix so gradient ids don't collide with other AreaChart instances
+// on the same page — a shared id like "grad-desktop" is invalid HTML with >1 chart,
+// and some browsers fail to paint a url(#id) fill when the first same-id element
+// they resolve to sits in a hidden subtree (e.g. an inactive tab/panel elsewhere).
+const gid = nextUid("area-grad");
+
+const ariaLabel = `Area chart of ${series.map((s) => config[s]?.label ?? s).join(", ")} by ${categoryKey}`;
+const legendInset = isWideChart ? 5 : 12;
+const legendBottom = isWideChart ? 5 : 0;
+---
+
+<svg
+  data-area-chart
+  viewBox={`0 0 ${W} ${H}`}
+  width="100%"
+  height="100%"
+  preserveAspectRatio="none"
+  overflow="visible"
+  role="img"
+  aria-label={ariaLabel}
+>
+  <style>
+    [data-area-hit] [data-active-dot] {
+      opacity: 0;
+      pointer-events: none;
+    }
+    [data-area-hit]:hover [data-active-dot] {
+      opacity: 1;
+    }
+  </style>
+
+  <defs>
+    {
+      series.map((key) => (
+        <linearGradient id={`grad-${key}-${gid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stop-color={`var(--color-${key})`} stop-opacity="0.8" />
+          <stop offset="95%" stop-color={`var(--color-${key})`} stop-opacity="0.1" />
+        </linearGradient>
+      ))
+    }
+  </defs>
+
+  <!-- Gridlines -->
+  {
+    showGrid &&
+      ticks.map((t) => (
+        <line
+          x1={plotLeft}
+          x2={plotRight}
+          y1={yOf(t)}
+          y2={yOf(t)}
+          stroke="var(--border)"
+          stroke-opacity="0.5"
+          stroke-width="1"
+          data-sw="1"
+        />
+      ))
+  }
+
+  <!-- Y-axis value labels -->
+  {
+    showYAxis &&
+      ticks.map((t) => (
+        <text
+          x={plotLeft - 30}
+          y={yOf(t) + 8}
+          text-anchor="end"
+          fill="var(--muted-foreground)"
+          font-size="11"
+          data-fs="11"
+        >
+          {t}
+        </text>
+      ))
+  }
+
+  <!-- X-axis category labels -->
+  {
+    showXAxis &&
+      data.map(
+        (d, i) =>
+          (data.length > 30 || i % labelStride === 0) && (
+            <text
+              data-area-x-label
+              data-index={i}
+              data-count={data.length}
+              x={xOf(i)}
+              y={plotBottom + 20}
+              dy="0.71em"
+              text-anchor="middle"
+              fill="var(--muted-foreground)"
+              font-size="12"
+              data-fs="12"
+            >
+              {String(d[categoryKey])}
+            </text>
+          ),
+      )
+  }
+
+  <!-- Area fills (back to front so later series render on top) -->
+  {
+    seriesData.map(({ key, areaPath }, i) => (
+      <path
+        d={areaPath}
+        fill={gradient ? `url(#grad-${key}-${gid})` : `var(--color-${key})`}
+        fill-opacity={gradient ? gradientOpacity : expandStack ? (i === 0 ? "0.1" : "0.4") : "0.4"}
+        stroke="none"
+      />
+    ))
+  }
+
+  <!-- Line strokes on top of fills -->
+  {
+    seriesData.map(({ key, linePath }) => (
+      <path
+        d={linePath}
+        fill="none"
+        stroke={`var(--color-${key})`}
+        stroke-width="1"
+        data-sw="1"
+        vector-effect="non-scaling-stroke"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    ))
+  }
+
+  <!-- Optional dots at each data point -->
+  {
+    showDots &&
+      seriesData.map(({ key, topPts }) =>
+        topPts.map((p) => (
+          <circle
+            cx={p.x}
+            cy={p.y}
+            r="6"
+            data-r="4"
+            fill={`var(--color-${key})`}
+            stroke="var(--background)"
+            stroke-width="2"
+            data-sw="2"
+          />
+        )),
+      )
+  }
+
+  <!-- Full-height hit bands — Recharts tooltip follows the nearest x-axis point. -->
+  {
+    showTooltip &&
+      hitBands.map((band) => (
+        <g data-area-hit>
+          <rect
+            x={band.x}
+            y={plotTop}
+            width={band.width}
+            height={plotH}
+            fill="transparent"
+            pointer-events="all"
+            data-series={band.items[0]?.series}
+            data-category={band.category}
+            data-items={JSON.stringify(band.items)}
+          />
+          {band.dots.map(({ key, point }) => (
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r="6"
+              data-r="4"
+              fill={`var(--color-${key})`}
+              stroke="var(--background)"
+              stroke-width="2"
+              data-sw="2"
+              data-active-dot
+            />
+          ))}
+        </g>
+      ))
+  }
+</svg>
+
+{
+  showLegend && (
+    <div
+      style={`position:absolute;left:${legendInset}px;right:${legendInset}px;bottom:${legendBottom}px;`}
+    >
+      <ChartLegend config={config} series={series} />
+    </div>
+  )
+}
+{showTooltip && <ChartTooltip />}
+
+<script>
+  // Which x-axis labels to show for dense (daily) data, matched to shadcn's Recharts
+  // output: same first label + count + last-label position per breakpoint, spread
+  // EVENLY so nothing crowds the right edge. shadcn's last visible label sits ~1 band
+  // inset from the plot edge (Recharts right margin), so we end on total-2, not total-1.
+  const pickAreaLabelIndices = (total: number, width: number) => {
+    if (total <= 30) return null;
+    const [first, count] = width < 500 ? [14, 5] : width < 900 ? [4, 10] : [2, 15];
+    // shadcn's last visible label sits a fixed ~13px in from the plot edge (Recharts
+    // right margin). With mine's data spanning to the edge, that inset is ~1 band on
+    // desktop/tablet but ~3 on the much narrower mobile bands — so end further in there.
+    const last = total - (width < 500 ? 4 : 2);
+    const indices = new Set<number>();
+    for (let k = 0; k < count; k++) {
+      indices.add(Math.round(first + (k * (last - first)) / (count - 1)));
+    }
+    return indices;
+  };
+
+  const scaleAreaSvgMetrics = (svg: SVGSVGElement) => {
+    const vb = svg.viewBox?.baseVal;
+    if (!vb?.width || !vb?.height) return;
+    const box = svg.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+
+    // preserveAspectRatio="none" on a fluid-width/fixed-height container lets
+    // sx and sy diverge (interactive card: sx≈0.36, sy≈1 at narrow widths).
+    // Counter-scale each text/dot about its own anchor with independent kx/ky
+    // so glyphs and dots render at their natural aspect instead of squished.
+    // For aspect-video cards sx===sy, so this collapses to the old uniform scale.
+    const sx = box.width / vb.width;
+    const sy = box.height / vb.height;
+    const kx = 1 / (sx || 1);
+    const ky = 1 / (sy || 1);
+
+    const anchorTransform = (ax: number, ay: number) =>
+      `translate(${(ax * (1 - kx)).toFixed(3)} ${(ay * (1 - ky)).toFixed(3)}) scale(${kx.toFixed(4)} ${ky.toFixed(4)})`;
+
+    svg.querySelectorAll<SVGTextElement>("[data-fs]").forEach((el) => {
+      const px = Number(el.getAttribute("data-fs")) || 12;
+      el.setAttribute("font-size", String(px));
+      const ax = Number(el.getAttribute("x")) || 0;
+      const ay = Number(el.getAttribute("y")) || 0;
+      el.setAttribute("transform", anchorTransform(ax, ay));
+    });
+
+    svg.querySelectorAll<SVGCircleElement>("[data-r]").forEach((el) => {
+      const px = Number(el.getAttribute("data-r")) || 4;
+      el.setAttribute("r", String(px));
+      const ax = Number(el.getAttribute("cx")) || 0;
+      const ay = Number(el.getAttribute("cy")) || 0;
+      el.setAttribute("transform", anchorTransform(ax, ay));
+    });
+
+    // Strokes (area/line paths) intentionally fill the width — just keep
+    // their on-screen thickness constant vertically. Dots carry data-r, so a
+    // counter-scale transform already cancels the viewport stretch and their
+    // stroke renders at natural size — they must NOT get the extra ky factor
+    // (that double-scales it and makes hover dots come out ~1.7× too heavy).
+    svg.querySelectorAll<SVGElement>("[data-sw]").forEach((el) => {
+      const px = Number(el.getAttribute("data-sw")) || 1;
+      // Transformed dots (data-r) and non-scaling-stroke line paths already
+      // render at a true screen px; only the width-filling gridlines still
+      // need the ky factor to hold their on-screen thickness.
+      const natural =
+        el.hasAttribute("data-r") || el.getAttribute("vector-effect") === "non-scaling-stroke";
+      el.setAttribute("stroke-width", natural ? String(px) : (px * ky).toFixed(2));
+    });
+    svg.setAttribute("data-scaled", ""); // reveal labels (hidden until scaled by CSS)
+  };
+
+  const updateAreaLabels = (svg: SVGSVGElement) => {
+    const labels = Array.from(svg.querySelectorAll<SVGTextElement>("[data-area-x-label]"));
+    if (!labels.length) return;
+    const total = Number(labels[0]?.dataset.count) || labels.length;
+    const chosen = pickAreaLabelIndices(
+      total,
+      svg.clientWidth || svg.getBoundingClientRect().width,
+    );
+    for (const label of labels) {
+      const index = Number(label.dataset.index);
+      label.style.display = !chosen || chosen.has(index) ? "" : "none";
+    }
+  };
+
+  const areaObserved = new WeakSet<SVGSVGElement>();
+  const areaResizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const svg = entry.target as SVGSVGElement;
+      requestAnimationFrame(() => {
+        updateAreaLabels(svg);
+        scaleAreaSvgMetrics(svg);
+      });
+    }
+  });
+
+  const setupAreaCharts = () => {
+    document.querySelectorAll<SVGSVGElement>("svg[data-area-chart]").forEach((svg) => {
+      updateAreaLabels(svg);
+      scaleAreaSvgMetrics(svg);
+      requestAnimationFrame(() => {
+        updateAreaLabels(svg);
+        scaleAreaSvgMetrics(svg);
+      });
+      if (!areaObserved.has(svg)) {
+        areaObserved.add(svg);
+        areaResizeObserver.observe(svg);
+      }
+    });
+  };
+
+  setupAreaCharts();
+  document.addEventListener("astro:after-swap", setupAreaCharts);
+  document.addEventListener("starwind:init", setupAreaCharts);
+</script>

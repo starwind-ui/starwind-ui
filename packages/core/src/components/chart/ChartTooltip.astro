@@ -1,0 +1,153 @@
+<div
+  data-slot="chart-tooltip"
+  class="border-border/50 bg-background pointer-events-none absolute z-50 hidden min-w-[8rem] items-start rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"
+>
+  <div data-chart-tooltip-content></div>
+</div>
+
+<script>
+  type TooltipItem = { series: string; label: string; value: string; color?: string };
+
+  class ChartTooltipHandler {
+    private chart: HTMLElement;
+    private tooltip: HTMLElement;
+    private content: HTMLElement;
+
+    constructor(chart: HTMLElement) {
+      this.chart = chart;
+      this.tooltip = chart.querySelector('[data-slot="chart-tooltip"]')!;
+      this.content = this.tooltip.querySelector("[data-chart-tooltip-content]")!;
+      this.setup();
+    }
+
+    private setup(): void {
+      const svg = this.chart.querySelector("svg");
+      if (!svg || !this.tooltip || !this.content) return;
+
+      svg.addEventListener("mouseover", (e) => {
+        const target = (e.target as Element).closest(
+          "[data-series],[data-items]",
+        ) as HTMLElement | null;
+        if (!target) {
+          this.hide();
+          return;
+        }
+        this.show(target, e as MouseEvent);
+      });
+
+      svg.addEventListener("mousemove", (e) => {
+        if (!this.tooltip.classList.contains("hidden")) {
+          this.position(e as MouseEvent);
+        }
+      });
+
+      svg.addEventListener("mouseleave", () => this.hide());
+    }
+
+    private getItems(target: HTMLElement): TooltipItem[] {
+      if (target.dataset.items) {
+        try {
+          const parsed = JSON.parse(target.dataset.items);
+          if (Array.isArray(parsed)) {
+            return parsed
+              .map((item) => ({
+                series: String(item.series ?? ""),
+                label: String(item.label ?? item.series ?? ""),
+                value: String(item.value ?? ""),
+                color: String(item.color ?? ""),
+              }))
+              .filter((item) => item.series);
+          }
+        } catch {}
+      }
+
+      const series = target.dataset.series ?? "";
+      return [
+        {
+          series,
+          label: target.dataset.label ?? series,
+          value: target.dataset.value ?? "",
+          color: target.dataset.color ?? "",
+        },
+      ];
+    }
+
+    private show(target: HTMLElement, e: MouseEvent): void {
+      const category = target.dataset.category ?? "";
+      // Match shadcn's ChartTooltipContent hideLabel / hideIndicator flags.
+      const hideLabel = target.dataset.hideLabel === "1";
+      const hideIndicator = target.dataset.hideIndicator === "1";
+      const items = this.getItems(target);
+      const rows = items
+        .map((item) => {
+          const color = getComputedStyle(this.chart)
+            .getPropertyValue(`--color-${item.series}`)
+            .trim();
+          const swatch =
+            (item.color && item.color.trim()) || color || `var(--color-${item.series})`;
+          const dot = hideIndicator
+            ? ""
+            : `<span style="width:10px;height:10px;border-radius:2px;background:${swatch};flex-shrink:0"></span>`;
+          return `
+            <div style="display:flex;width:100%;align-items:center;gap:8px">
+              ${dot}
+              <div style="display:flex;flex:1;align-items:center;justify-content:space-between;line-height:1">
+                <span style="color:var(--muted-foreground)">${item.label}</span>
+                <span style="font-family:monospace;font-weight:500;font-variant-numeric:tabular-nums;color:var(--foreground)">${item.value}</span>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+
+      this.content.innerHTML = `
+        <div style="display:grid;gap:6px">
+          ${hideLabel ? "" : `<div style="font-weight:500;line-height:1">${category}</div>`}
+          ${rows}
+        </div>
+      `;
+
+      this.tooltip.classList.remove("hidden");
+      this.position(e);
+    }
+
+    private position(e: MouseEvent): void {
+      const chartRect = this.chart.getBoundingClientRect();
+      const tooltipW = this.tooltip.offsetWidth || 140;
+      const tooltipH = this.tooltip.offsetHeight || 60;
+      let x = e.clientX - chartRect.left + 8;
+      let y = e.clientY - chartRect.top - tooltipH - 8;
+
+      // Flip horizontally if would overflow right edge
+      if (x + tooltipW > chartRect.width) {
+        x = e.clientX - chartRect.left - tooltipW - 8;
+      }
+      // Clamp vertically
+      if (y + tooltipH > chartRect.height) {
+        y = e.clientY - chartRect.top - tooltipH - 8;
+      }
+      if (y < 0) y = 4;
+
+      this.tooltip.style.left = `${x}px`;
+      this.tooltip.style.top = `${y}px`;
+    }
+
+    private hide(): void {
+      this.tooltip.classList.add("hidden");
+    }
+  }
+
+  const tooltipInstances = new WeakMap<HTMLElement, ChartTooltipHandler>();
+
+  const setupChartTooltips = () => {
+    document.querySelectorAll<HTMLElement>('[data-slot="chart"]').forEach((chart) => {
+      if (chart.querySelector('[data-slot="chart-tooltip"]') && !tooltipInstances.has(chart)) {
+        tooltipInstances.set(chart, new ChartTooltipHandler(chart));
+      }
+    });
+  };
+
+  setupChartTooltips();
+  document.addEventListener("astro:after-swap", setupChartTooltips);
+  document.addEventListener("starwind:init", setupChartTooltips);
+</script>

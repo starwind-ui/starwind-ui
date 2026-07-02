@@ -1,0 +1,181 @@
+---
+import "@/styles/global.css";
+import { BarChart, Chart } from "@/components/starwind/chart";
+import type { ChartConfig } from "@/components/starwind/chart";
+
+// Sample data for demo variants
+const monthlyData = [
+  { month: "Jan", desktop: 186, mobile: 80 },
+  { month: "Feb", desktop: 305, mobile: 200 },
+  { month: "Mar", desktop: 237, mobile: 120 },
+  { month: "Apr", desktop: 173, mobile: 190 },
+  { month: "May", desktop: 209, mobile: 130 },
+  { month: "Jun", desktop: 214, mobile: 140 },
+];
+
+const config: ChartConfig = {
+  desktop: { label: "Desktop", color: "var(--chart-1)" },
+  mobile: { label: "Mobile", color: "var(--chart-2)" },
+};
+
+const singleConfig: ChartConfig = {
+  desktop: { label: "Desktop", color: "var(--chart-1)" },
+};
+
+const categoryData = [
+  { category: "Q1", revenue: 4200, expenses: 2800, profit: 1400 },
+  { category: "Q2", revenue: 5100, expenses: 3200, profit: 1900 },
+  { category: "Q3", revenue: 6300, expenses: 3600, profit: 2700 },
+  { category: "Q4", revenue: 7800, expenses: 4100, profit: 3700 },
+];
+
+const categoryConfig: ChartConfig = {
+  revenue: { label: "Revenue", color: "var(--chart-1)" },
+  expenses: { label: "Expenses", color: "var(--chart-2)" },
+  profit: { label: "Profit", color: "var(--chart-3)" },
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Chart Demo — Starwind UI</title>
+    <!-- Theme init: eliminate FART -->
+    <script is:inline>
+      const t = localStorage.getItem("colorTheme");
+      if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
+  </head>
+
+  <body class="bg-background text-foreground min-h-screen p-8">
+    <h1 class="mb-2 text-2xl font-semibold">Chart Demo</h1>
+    <p class="text-muted-foreground mb-10 text-sm">
+      Bar chart variants — Starwind UI (light + dark sections below)
+    </p>
+
+    <!-- Light mode section -->
+    <div class="mb-12 grid gap-8">
+      <!-- 1. Single series -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">1. Single series</h2>
+        <Chart config={singleConfig}>
+          <BarChart
+            data={monthlyData}
+            config={singleConfig}
+            categoryKey="month"
+            series={["desktop"]}
+          />
+        </Chart>
+      </section>
+
+      <!-- 2. Grouped (multiple series) -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">2. Grouped — Desktop &amp; Mobile</h2>
+        <Chart config={config}>
+          <BarChart
+            data={monthlyData}
+            config={config}
+            categoryKey="month"
+            series={["desktop", "mobile"]}
+            showLegend
+          />
+        </Chart>
+      </section>
+
+      <!-- 3. Stacked -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">3. Stacked</h2>
+        <Chart config={config}>
+          <BarChart
+            data={monthlyData}
+            config={config}
+            categoryKey="month"
+            series={["desktop", "mobile"]}
+            stacked
+            showLegend
+          />
+        </Chart>
+      </section>
+
+      <!-- 4. Horizontal -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">4. Horizontal</h2>
+        <Chart config={config}>
+          <BarChart
+            data={monthlyData}
+            config={config}
+            categoryKey="month"
+            series={["desktop", "mobile"]}
+            layout="horizontal"
+            showLegend
+          />
+        </Chart>
+      </section>
+
+      <!-- 5. Value labels + Y-axis + 3 series stacked -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">5. Value labels — 3-series grouped with Y-axis</h2>
+        <Chart config={categoryConfig}>
+          <BarChart
+            data={categoryData}
+            config={categoryConfig}
+            categoryKey="category"
+            series={["revenue", "expenses", "profit"]}
+            showYAxis
+            showLabels
+            showLegend
+          />
+        </Chart>
+      </section>
+    </div>
+
+    <!-- Dark mode mirror -->
+    <div class="dark rounded-xl bg-neutral-950 p-8">
+      <h2 class="mb-6 text-sm font-medium text-neutral-200">Dark mode</h2>
+      <div class="grid gap-8">
+        <section>
+          <h3 class="mb-3 text-sm font-medium text-neutral-400">Single series</h3>
+          <Chart config={singleConfig}>
+            <BarChart
+              data={monthlyData}
+              config={singleConfig}
+              categoryKey="month"
+              series={["desktop"]}
+            />
+          </Chart>
+        </section>
+
+        <section>
+          <h3 class="mb-3 text-sm font-medium text-neutral-400">Grouped</h3>
+          <Chart config={config}>
+            <BarChart
+              data={monthlyData}
+              config={config}
+              categoryKey="month"
+              series={["desktop", "mobile"]}
+              showLegend
+            />
+          </Chart>
+        </section>
+
+        <section>
+          <h3 class="mb-3 text-sm font-medium text-neutral-400">Stacked</h3>
+          <Chart config={config}>
+            <BarChart
+              data={monthlyData}
+              config={config}
+              categoryKey="month"
+              series={["desktop", "mobile"]}
+              stacked
+              showLegend
+            />
+          </Chart>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>

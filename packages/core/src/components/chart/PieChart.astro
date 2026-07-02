@@ -1,0 +1,363 @@
+---
+import ChartLegend from "./ChartLegend.astro";
+import ChartTooltip from "./ChartTooltip.astro";
+import type { ChartConfig } from "./variants";
+
+type Props = {
+  data: Record<string, string | number>[];
+  config: ChartConfig;
+  nameKey: string;
+  dataKey: string;
+  donut?: boolean;
+  innerRadiusRatio?: number;
+  showLabels?: boolean;
+  labelLine?: boolean;
+  /** What outside labels display: visitor count (default), config name, or percent. */
+  labelContent?: "value" | "name" | "percent";
+  /** Inside-slice labels (label-list variant). */
+  showInnerLabels?: boolean;
+  centerText?: string;
+  centerLabel?: string;
+  showLegend?: boolean;
+  showTooltip?: boolean;
+  padAngle?: number;
+  /** Stroke width on slice borders; set to 0 for separator-none. */
+  strokeWidth?: number;
+  /** If set, this slice index gets outerRadius + 10 (donut-active/interactive). */
+  activeIndex?: number;
+  /** Second ring data for stacked variant (outer ring). Requires dataKey2. */
+  data2?: Record<string, string | number>[];
+  dataKey2?: string;
+};
+
+const {
+  data,
+  config,
+  nameKey,
+  dataKey,
+  donut = false,
+  innerRadiusRatio = 0.6,
+  showLabels = false,
+  labelLine = false,
+  labelContent = "value",
+  showInnerLabels = false,
+  centerText,
+  centerLabel,
+  showLegend = true,
+  showTooltip = true,
+  padAngle = 0,
+  // No separator by default: shadcn's ChartContainer maps Recharts' default
+  // stroke='#fff' to stroke-transparent, so slices touch seamlessly.
+  strokeWidth = 0,
+  activeIndex,
+  data2,
+  dataKey2,
+} = Astro.props;
+
+// Square viewBox — use <Chart class="mx-auto aspect-square max-w-[300px]"> in the demo.
+const W = 260;
+const H = 260;
+const cx = W / 2;
+const cy = showLegend ? 108 : H / 2;
+// ~80% of the viewBox half (130) matches shadcn's plain pie proportion. Recharts
+// reserves vertical space for an in-chart legend, so the legend variant uses a
+// smaller radius inside the same square SVG.
+const outerR = showLegend ? 82.5 : 104;
+const innerR = donut ? outerR * innerRadiusRatio : 0;
+const padRad = (padAngle * Math.PI) / 180;
+
+// Round to 2 dp to keep SVG path strings tidy.
+function fmt(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+type Slice = {
+  path: string;
+  seriesKey: string;
+  category: string;
+  value: string;
+  label: string;
+  labelX: number;
+  labelY: number;
+  labelLineStartX: number;
+  labelLineStartY: number;
+  labelLineEndX: number;
+  labelLineEndY: number;
+  labelAnchor: "start" | "middle" | "end";
+  percent: string;
+  innerLabelX: number;
+  innerLabelY: number;
+};
+
+// Builds an arc path. Outer arc CW, inner arc CCW (nonzero winding for donut holes).
+function buildArcPath(startA: number, endA: number, oR: number, iR: number): string {
+  const sweep = endA - startA;
+  const isFull = sweep >= 2 * Math.PI - 0.0001;
+
+  if (isFull) {
+    const ox1 = fmt(cx - oR),
+      ox2 = fmt(cx + oR),
+      oy = fmt(cy);
+    const outer = `M ${ox1} ${oy} A ${oR} ${oR} 0 1 1 ${ox2} ${oy} A ${oR} ${oR} 0 1 1 ${ox1} ${oy} Z`;
+    if (iR > 0) {
+      const ix1 = fmt(cx - iR),
+        ix2 = fmt(cx + iR);
+      const inner = `M ${ix1} ${oy} A ${iR} ${iR} 0 1 0 ${ix2} ${oy} A ${iR} ${iR} 0 1 0 ${ix1} ${oy} Z`;
+      return `${outer} ${inner}`;
+    }
+    return outer;
+  }
+
+  const largeArc = sweep > Math.PI ? 1 : 0;
+  const cos1 = Math.cos(startA),
+    sin1 = Math.sin(startA);
+  const cos2 = Math.cos(endA),
+    sin2 = Math.sin(endA);
+  const osx = fmt(cx + oR * cos1),
+    osy = fmt(cy + oR * sin1);
+  const oex = fmt(cx + oR * cos2),
+    oey = fmt(cy + oR * sin2);
+
+  if (iR > 0) {
+    const iex = fmt(cx + iR * cos2),
+      iey = fmt(cy + iR * sin2);
+    const isx = fmt(cx + iR * cos1),
+      isy = fmt(cy + iR * sin1);
+    return (
+      `M ${osx} ${osy} A ${oR} ${oR} 0 ${largeArc} 1 ${oex} ${oey} ` +
+      `L ${iex} ${iey} A ${iR} ${iR} 0 ${largeArc} 0 ${isx} ${isy} Z`
+    );
+  }
+
+  return `M ${fmt(cx)} ${fmt(cy)} L ${osx} ${osy} A ${oR} ${oR} 0 ${largeArc} 1 ${oex} ${oey} Z`;
+}
+
+function buildSlicesFor(
+  sliceData: Record<string, string | number>[],
+  sliceDataKey: string,
+  oR: number,
+  iR: number,
+  activIdx?: number,
+): Slice[] {
+  const sliceTotal = sliceData.reduce((s, d) => s + Number(d[sliceDataKey] ?? 0), 0);
+  const result: Slice[] = [];
+  // Recharts <Pie> defaults: startAngle=0 (3 o'clock) sweeping COUNTERclockwise
+  // (endAngle=360). Its polarToCartesian uses -angle, so a Recharts angle θ maps
+  // to SVG angle -θ (SVG y is down). We accumulate θ CCW from 0, then hand each
+  // slice's [θStart,θEnd] to buildArcPath as the equivalent positive-sweep SVG
+  // arc (-θEnd → -θStart) so the existing winding / largeArc logic is reused
+  // unchanged but slices land exactly where shadcn's do.
+  let theta = 0; // Recharts angle (radians), CCW from 3 o'clock
+  const halfPad = padRad / 2;
+  let idx = 0;
+
+  for (const d of sliceData) {
+    const name = String(d[nameKey]);
+    const val = Number(d[sliceDataKey] ?? 0);
+    if (val <= 0) continue;
+    const pct = sliceTotal > 0 ? val / sliceTotal : 0;
+    const sweep = pct * 2 * Math.PI;
+    const thetaStart = theta + halfPad;
+    const thetaEnd = theta + sweep - halfPad;
+    const startA = -thetaEnd;
+    const endA = -thetaStart;
+    const midA = -(thetaStart + thetaEnd) / 2;
+
+    // Active slice gets a 10px outer-radius bump (donut-active / interactive).
+    const sliceOuter = activIdx === idx ? oR + 10 : oR;
+
+    const labelR = sliceOuter + 16;
+    const lx = fmt(cx + Math.cos(midA) * labelR);
+    const ly = fmt(cy + Math.sin(midA) * labelR);
+    const cosM = Math.cos(midA);
+    const anchor: "start" | "middle" | "end" =
+      cosM > 0.1 ? "start" : cosM < -0.1 ? "end" : "middle";
+    const labelLineEndX = fmt(lx + (anchor === "start" ? -4 : anchor === "end" ? 4 : 0));
+
+    // Inner label at midpoint of the slice's radial depth (label-list variant).
+    const innerLabelR = iR > 0 ? (iR + sliceOuter) / 2 : sliceOuter * 0.6;
+    const ilx = fmt(cx + Math.cos(midA) * innerLabelR);
+    const ily = fmt(cy + Math.sin(midA) * innerLabelR);
+
+    result.push({
+      path: buildArcPath(startA, endA, sliceOuter, iR),
+      seriesKey: name,
+      category: name,
+      value: String(val),
+      label: config[name]?.label ?? name,
+      labelX: lx,
+      labelY: ly + 4,
+      labelLineStartX: fmt(cx + Math.cos(midA) * sliceOuter),
+      labelLineStartY: fmt(cy + Math.sin(midA) * sliceOuter),
+      labelLineEndX,
+      labelLineEndY: ly,
+      labelAnchor: anchor,
+      percent: `${Math.round(pct * 100)}%`,
+      innerLabelX: ilx,
+      innerLabelY: ily + 4,
+    });
+
+    theta += sweep;
+    idx++;
+  }
+  return result;
+}
+
+// ponytail: stacked uses fixed radii (60 inner, 70/90 outer) matching shadcn proportions.
+const isStacked = data2 !== undefined && dataKey2 !== undefined;
+const mainOuterR = isStacked ? 60 : outerR;
+const mainInnerR = isStacked ? 0 : innerR;
+
+const slices = buildSlicesFor(
+  data,
+  dataKey,
+  mainOuterR,
+  mainInnerR,
+  isStacked ? undefined : activeIndex,
+);
+const slices2 =
+  isStacked && data2 && dataKey2 ? buildSlicesFor(data2, dataKey2, 90, 70, undefined) : [];
+
+const seriesKeys = slices.map((s) => s.seriesKey);
+const ariaLabel = `Pie chart: ${seriesKeys.map((k) => `${config[k]?.label ?? k} ${slices.find((s) => s.seriesKey === k)?.value}`).join(", ")}`;
+
+function getLabelText(s: Slice): string {
+  if (labelContent === "name") return s.label;
+  if (labelContent === "percent") return s.percent;
+  return s.value;
+}
+
+const strokeAttr = strokeWidth > 0 ? "transparent" : "none";
+---
+
+<svg
+  viewBox={`0 0 ${W} ${H}`}
+  width="100%"
+  preserveAspectRatio="xMidYMid meet"
+  role="img"
+  aria-label={ariaLabel}
+>
+  <!-- Main slices (or inner ring for stacked) — data-* attrs drive tooltip -->
+  {
+    slices.map((s) => (
+      <path
+        d={s.path}
+        fill={`var(--color-${s.seriesKey})`}
+        stroke={strokeAttr}
+        stroke-width={strokeWidth}
+        data-sw={strokeWidth > 0 ? strokeWidth : undefined}
+        data-series={s.seriesKey}
+        data-category={s.category}
+        data-value={s.value}
+        data-label={s.label}
+      />
+    ))
+  }
+
+  <!-- Outer ring (stacked variant) -->
+  {
+    slices2.map((s) => (
+      <path
+        d={s.path}
+        fill={`var(--color-${s.seriesKey})`}
+        stroke={strokeAttr}
+        stroke-width={strokeWidth}
+        data-sw={strokeWidth > 0 ? strokeWidth : undefined}
+        data-series={s.seriesKey}
+        data-category={s.category}
+        data-value={s.value}
+        data-label={s.label}
+      />
+    ))
+  }
+
+  <!-- Outside labels (label / label-custom variants) -->
+  {
+    showLabels &&
+      labelLine &&
+      slices.map((s) => (
+        <polyline
+          points={`${s.labelLineStartX},${s.labelLineStartY} ${s.labelLineEndX},${s.labelLineEndY}`}
+          fill="none"
+          stroke={`var(--color-${s.seriesKey})`}
+          stroke-width="1"
+          data-sw="1"
+        />
+      ))
+  }
+  {
+    showLabels &&
+      slices.map((s) => (
+        <text
+          x={s.labelX}
+          y={s.labelY}
+          text-anchor={s.labelAnchor}
+          fill="var(--foreground)"
+          font-size="12"
+          font-weight="500"
+          data-fs="12"
+        >
+          {getLabelText(s)}
+        </text>
+      ))
+  }
+
+  <!-- Inside labels (label-list variant — browser name centred in each slice) -->
+  {
+    showInnerLabels &&
+      slices.map((s) => (
+        <text
+          x={s.innerLabelX}
+          y={s.innerLabelY}
+          text-anchor="middle"
+          fill="var(--background)"
+          font-size="12"
+          font-weight="500"
+          data-fs="12"
+        >
+          {s.label}
+        </text>
+      ))
+  }
+
+  <!-- Donut center text (donut-text / interactive variants) -->
+  {
+    donut && centerText && (
+      <g>
+        <text
+          x={cx}
+          y={cy}
+          text-anchor="middle"
+          dominant-baseline="middle"
+          font-size="12"
+          data-fs="12"
+        >
+          <tspan
+            x={cx}
+            y={centerLabel ? cy : cy + 8}
+            fill="var(--foreground)"
+            font-size="30"
+            font-weight="700"
+            data-fs="30"
+          >
+            {centerText}
+          </tspan>
+          {centerLabel && (
+            <tspan x={cx} y={cy + 24} fill="var(--muted-foreground)" font-size="12" data-fs="12">
+              {centerLabel}
+            </tspan>
+          )}
+        </text>
+      </g>
+    )
+  }
+</svg>
+
+{
+  showLegend && (
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 [&_[data-slot=chart-legend]]:-translate-y-2 [&_[data-slot=chart-legend]>div]:basis-1/4 [&_[data-slot=chart-legend]>div]:justify-center">
+      <ChartLegend config={config} series={seriesKeys} />
+    </div>
+  )
+}
+{showTooltip && <ChartTooltip />}

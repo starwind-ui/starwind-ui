@@ -1,0 +1,483 @@
+---
+import ChartLegend from "./ChartLegend.astro";
+import ChartTooltip from "./ChartTooltip.astro";
+import { buildPath, type Point } from "./curves";
+import { rechartsAutoMax, xLabelStep } from "./scale";
+import type { ChartConfig } from "./variants";
+
+type Props = {
+  data: Record<string, string | number>[];
+  config: ChartConfig;
+  categoryKey: string;
+  series: string[];
+  curve?: "linear" | "monotone" | "natural" | "step";
+  showDots?: boolean;
+  showGrid?: boolean;
+  showXAxis?: boolean;
+  showYAxis?: boolean;
+  showLabels?: boolean;
+  showLegend?: boolean;
+  showTooltip?: boolean;
+  strokeWidth?: number;
+  /** Per-point dot color: name of a data field holding a CSS color string (e.g. "fill"). */
+  dotColorKey?: string;
+  /** "diamond" renders a git-commit-vertical style dot (vertical line + hollow circle). */
+  dotShape?: "circle" | "diamond";
+  /** Custom label key: data field whose value is looked up in config for the label text. */
+  labelKey?: string;
+  width?: number;
+  height?: number;
+};
+
+const {
+  data,
+  config,
+  categoryKey,
+  series,
+  curve = "monotone",
+  showDots = true,
+  showGrid = true,
+  showXAxis = true,
+  showYAxis = false,
+  showLabels = false,
+  showLegend = false,
+  showTooltip = true,
+  strokeWidth = 2,
+  dotColorKey,
+  dotShape = "circle",
+  labelKey,
+  width = 297,
+  height = 167,
+} = Astro.props;
+
+// Internal coordinate space — defaults to Recharts' rendered aspect-video size.
+const W = width;
+const H = height;
+
+const padTop = showLabels ? (showXAxis ? 20 : 24) : showXAxis ? 0 : 24;
+const padRight = showXAxis ? 12 : 24;
+const padBottom = showXAxis ? 30 : 0;
+const padLeft = showYAxis ? 50 : showXAxis ? 12 : 24;
+
+const plotLeft = padLeft;
+const plotTop = padTop;
+const plotW = W - padLeft - padRight;
+const plotH = H - padTop - padBottom;
+const plotBottom = plotTop + plotH;
+const plotRight = plotLeft + plotW;
+
+const domainVals = data.flatMap((d) => series.map((s) => Number(d[s] ?? 0)));
+const rawMax = Math.max(...domainVals, 0);
+
+const domainMax = rechartsAutoMax(rawMax);
+
+// Points spread evenly across plot width; single-point case centers it
+const xOf = (i: number) =>
+  data.length > 1 ? plotLeft + (i / (data.length - 1)) * plotW : plotLeft + plotW / 2;
+const yOf = (v: number) => plotBottom - (v / domainMax) * plotH;
+
+const tickCount = 5;
+const ticks = Array.from({ length: tickCount + 1 }, (_, i) => (i * domainMax) / tickCount);
+
+// Thin x-axis labels — approximates Recharts minTickGap for dense daily data.
+const isDenseXAxis = data.length > 20;
+const labelStride = xLabelStep(data.length, W);
+const xLabelStart = isDenseXAxis ? 2 : 0;
+const shouldShowXLabel = (i: number) =>
+  !isDenseXAxis ||
+  i === data.length - 1 ||
+  (i >= xLabelStart && i < data.length - labelStride && (i - xLabelStart) % labelStride === 0);
+
+type LinePoint = {
+  x: number;
+  y: number;
+  category: string;
+  value: string;
+  dotFill: string;
+  labelText: string;
+};
+type LineData = { key: string; pathD: string; points: LinePoint[] };
+
+const lines: LineData[] = series.map((key) => {
+  const pts: Point[] = data.map((d, i) => ({ x: xOf(i), y: yOf(Number(d[key] ?? 0)) }));
+  return {
+    key,
+    pathD: buildPath(pts, curve),
+    points: data.map((d, i) => ({
+      x: xOf(i),
+      y: yOf(Number(d[key] ?? 0)),
+      category: String(d[categoryKey]),
+      value: String(d[key] ?? 0),
+      dotFill: dotColorKey ? String(d[dotColorKey]) : `var(--color-${key})`,
+      labelText: labelKey
+        ? (config[String(d[labelKey])]?.label ?? String(d[labelKey]))
+        : String(d[key] ?? 0),
+    })),
+  };
+});
+
+const hitBands = data.map((d, di) => {
+  const x = xOf(di);
+  const left = di === 0 ? plotLeft : (xOf(di - 1) + x) / 2;
+  const right = di === data.length - 1 ? plotRight : (x + xOf(di + 1)) / 2;
+  return {
+    x: left,
+    width: right - left,
+    category: String(d[categoryKey]),
+    items: series.map((key) => ({
+      series: key,
+      label: config[key]?.label ?? key,
+      value: String(d[key] ?? 0),
+    })),
+    dots: lines.map((line) => ({ key: line.key, point: line.points[di] })),
+  };
+});
+
+const ariaLabel = `Line chart of ${series.map((s) => config[s]?.label ?? s).join(", ")} by ${categoryKey}`;
+const denseValues = isDenseXAxis
+  ? JSON.stringify(data.map((d) => series.map((key) => Number(d[key] ?? 0))))
+  : undefined;
+---
+
+<svg
+  data-line-dense={isDenseXAxis ? "true" : undefined}
+  data-line-values={denseValues}
+  data-line-domain={isDenseXAxis ? domainMax : undefined}
+  data-line-curve={isDenseXAxis ? curve : undefined}
+  viewBox={`0 0 ${W} ${H}`}
+  width="100%"
+  height="100%"
+  preserveAspectRatio="none"
+  overflow="visible"
+  role="img"
+  aria-label={ariaLabel}
+>
+  <style>
+    [data-line-hit] [data-active-dot] {
+      opacity: 0;
+      pointer-events: none;
+    }
+    [data-line-hit]:hover [data-active-dot] {
+      opacity: 1;
+    }
+  </style>
+
+  <!-- Horizontal gridlines -->
+  {
+    showGrid &&
+      ticks.map((t, i) => (
+        <line
+          data-grid-line={i}
+          x1={plotLeft}
+          x2={plotRight}
+          y1={yOf(t)}
+          y2={yOf(t)}
+          stroke="var(--border)"
+          stroke-opacity="0.5"
+          stroke-width="1"
+          data-sw="1"
+        />
+      ))
+  }
+
+  <!-- Y-axis value labels -->
+  {
+    showYAxis &&
+      ticks.map((t) => (
+        <text
+          x={plotLeft - 6}
+          y={yOf(t) + 4}
+          text-anchor="end"
+          fill="var(--muted-foreground)"
+          font-size="12"
+          data-fs="12"
+        >
+          {t}
+        </text>
+      ))
+  }
+
+  <!-- X-axis category labels -->
+  {
+    showXAxis &&
+      data.map(
+        (d, i) =>
+          (isDenseXAxis || shouldShowXLabel(i)) && (
+            <text
+              data-x-label={i}
+              x={xOf(i)}
+              y={plotBottom + 14}
+              dy="0.71em"
+              text-anchor="middle"
+              fill="var(--muted-foreground)"
+              font-size="12"
+              data-fs="12"
+            >
+              {String(d[categoryKey])}
+            </text>
+          ),
+      )
+  }
+
+  <!-- Line paths — one per series -->
+  {
+    lines.map((line) => (
+      <path
+        data-line-path={line.key}
+        d={line.pathD}
+        fill="none"
+        stroke={`var(--color-${line.key})`}
+        stroke-width={strokeWidth}
+        data-sw={strokeWidth}
+        stroke-linejoin="round"
+        stroke-linecap="round"
+      />
+    ))
+  }
+
+  <!-- Visible dots (optional) -->
+  {
+    showDots &&
+      lines.map((line) =>
+        dotShape === "diamond"
+          ? line.points.map((pt) => (
+              <g>
+                <line
+                  x1={pt.x}
+                  y1={pt.y - 12}
+                  x2={pt.x}
+                  y2={pt.y + 12}
+                  stroke={`var(--color-${line.key})`}
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  data-sw="2"
+                />
+                <circle
+                  cx={pt.x}
+                  cy={pt.y}
+                  r="3"
+                  fill="var(--foreground)"
+                  stroke="var(--background)"
+                  stroke-width="2"
+                  data-r="3"
+                  data-sw="2"
+                />
+              </g>
+            ))
+          : line.points.map((pt) => (
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r={dotColorKey ? "5" : "3"}
+                data-r={dotColorKey ? "5" : "3"}
+                fill={pt.dotFill}
+                stroke={pt.dotFill}
+                stroke-width={dotColorKey ? "1" : "2"}
+                data-sw={dotColorKey ? "1" : "2"}
+              />
+            )),
+      )
+  }
+
+  <!-- Full-height hit bands — Recharts tooltip follows the nearest x-axis point. -->
+  {
+    showTooltip &&
+      hitBands.map((band) => (
+        <g data-line-hit>
+          <rect
+            x={band.x}
+            y={plotTop}
+            width={band.width}
+            height={plotH}
+            fill="transparent"
+            pointer-events="all"
+            data-series={band.items[0]?.series}
+            data-category={band.category}
+            data-items={JSON.stringify(band.items)}
+          />
+          {band.dots.map(({ key, point }) => (
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r="6"
+              data-r="6"
+              fill={`var(--color-${key})`}
+              stroke="var(--background)"
+              stroke-width="2"
+              data-sw="2"
+              data-active-dot
+            />
+          ))}
+        </g>
+      ))
+  }
+
+  <!-- Value/custom labels — pointer-events none so they don't block tooltip hit targets -->
+  {
+    showLabels &&
+      lines.map((line) =>
+        line.points.map((pt, i) => (
+          <text
+            x={pt.x}
+            y={pt.y - 10}
+            text-anchor={i === 0 ? "start" : i === line.points.length - 1 ? "end" : "middle"}
+            fill="var(--foreground)"
+            font-size="12"
+            font-weight="500"
+            pointer-events="none"
+            data-fs="12"
+          >
+            {pt.labelText}
+          </text>
+        )),
+      )
+  }
+</svg>
+
+{showLegend && <ChartLegend config={config} series={series} />}
+{showTooltip && <ChartTooltip />}
+
+<script>
+  const installDenseLineReflow = () => {
+    const win = window as typeof window & { __starwindDenseLineReflow?: boolean };
+    if (win.__starwindDenseLineReflow) return;
+    win.__starwindDenseLineReflow = true;
+
+    const linePath = (pts: number[][]) =>
+      pts.length
+        ? `M${pts[0][0]},${pts[0][1]}` +
+          pts
+            .slice(1)
+            .map((p) => ` L${p[0]},${p[1]}`)
+            .join("")
+        : "";
+
+    const stepPath = (pts: number[][]) => {
+      if (!pts.length) return "";
+      let d = `M${pts[0][0]},${pts[0][1]}`;
+      for (let i = 1; i < pts.length; i++) d += ` H${pts[i][0]} V${pts[i][1]}`;
+      return d;
+    };
+
+    const monotonePath = (pts: number[][]) => {
+      if (pts.length < 2) return pts.length === 1 ? `M${pts[0][0]},${pts[0][1]}` : "";
+      const n = pts.length;
+      const dxs = pts.slice(0, -1).map((p, i) => pts[i + 1][0] - p[0]);
+      const dys = pts.slice(0, -1).map((p, i) => pts[i + 1][1] - p[1]);
+      const tan = new Array(n).fill(0);
+      tan[0] = dxs[0] ? dys[0] / dxs[0] : 0;
+      tan[n - 1] = dxs[n - 2] ? dys[n - 2] / dxs[n - 2] : 0;
+      for (let i = 1; i < n - 1; i++) {
+        const s0 = dxs[i - 1] ? dys[i - 1] / dxs[i - 1] : 0;
+        const s1 = dxs[i] ? dys[i] / dxs[i] : 0;
+        tan[i] = s0 * s1 <= 0 ? 0 : (s0 + s1) / 2;
+      }
+      for (let i = 0; i < n - 1; i++) {
+        const s = dxs[i] ? dys[i] / dxs[i] : 0;
+        if (Math.abs(s) < 1e-10) {
+          tan[i] = tan[i + 1] = 0;
+          continue;
+        }
+        const a = tan[i] / s;
+        const b = tan[i + 1] / s;
+        const h = Math.sqrt(a * a + b * b);
+        if (h > 3) {
+          tan[i] = (3 / h) * a * s;
+          tan[i + 1] = (3 / h) * b * s;
+        }
+      }
+      let d = `M${pts[0][0]},${pts[0][1]}`;
+      for (let i = 0; i < n - 1; i++) {
+        const dx = dxs[i];
+        const cp1x = pts[i][0] + dx / 3;
+        const cp1y = pts[i][1] + (tan[i] * dx) / 3;
+        const cp2x = pts[i + 1][0] - dx / 3;
+        const cp2y = pts[i + 1][1] - (tan[i + 1] * dx) / 3;
+        d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${pts[i + 1][0].toFixed(1)},${pts[i + 1][1].toFixed(1)}`;
+      }
+      return d;
+    };
+
+    const buildPath = (pts: number[][], curve: string) => {
+      if (curve === "linear") return linePath(pts);
+      if (curve === "step") return stepPath(pts);
+      return monotonePath(pts);
+    };
+
+    const labelPlan = (width: number, count: number) => {
+      if (width < 500) return { start: 11, step: 20, last: count - 1 };
+      if (width < 800) return { start: 2, step: 10, last: count - 1 };
+      return { start: 2, step: 6, last: count - 1 };
+    };
+
+    const reflow = (svg: SVGSVGElement) => {
+      const box = svg.getBoundingClientRect();
+      const width = box.width;
+      const height = box.height;
+      if (!width || !height) return;
+
+      const values = JSON.parse(svg.dataset.lineValues || "[]") as number[][];
+      const domainMax = Number(svg.dataset.lineDomain) || 1;
+      if (!values.length) return;
+
+      const padLeft = 12;
+      const padRight = 12;
+      const padTop = 0;
+      const padBottom = 30;
+      const plotW = width - padLeft - padRight;
+      const plotH = height - padTop - padBottom;
+      const plotBottom = padTop + plotH;
+      const xOf = (i: number) => padLeft + (i / (values.length - 1)) * plotW;
+      const yOf = (v: number) => plotBottom - (v / domainMax) * plotH;
+      const curve = svg.dataset.lineCurve || "monotone";
+
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.querySelectorAll<SVGLineElement>("[data-grid-line]").forEach((line) => {
+        const i = Number(line.dataset.gridLine) || 0;
+        const y = yOf((i * domainMax) / 5);
+        line.setAttribute("x1", String(padLeft));
+        line.setAttribute("x2", String(width - padRight));
+        line.setAttribute("y1", String(y));
+        line.setAttribute("y2", String(y));
+      });
+
+      svg.querySelectorAll<SVGPathElement>("[data-line-path]").forEach((path, seriesIndex) => {
+        const pts = values.map((row, i) => [xOf(i), yOf(Number(row[seriesIndex] ?? 0))]);
+        path.setAttribute("d", buildPath(pts, curve));
+        path.setAttribute("stroke-width", "2");
+      });
+
+      const plan = labelPlan(width, values.length);
+      svg.querySelectorAll<SVGTextElement>("[data-x-label]").forEach((text) => {
+        const i = Number(text.dataset.xLabel);
+        const visible =
+          i === plan.last ||
+          (i >= plan.start && i < plan.last - plan.step / 2 && (i - plan.start) % plan.step === 0);
+        text.style.display = visible ? "" : "none";
+        text.setAttribute("x", String(xOf(i)));
+        text.setAttribute("y", String(plotBottom + 14));
+        text.setAttribute("font-size", "12");
+      });
+    };
+
+    const reflowAll = () => {
+      document.querySelectorAll<SVGSVGElement>('svg[data-line-dense="true"]').forEach(reflow);
+    };
+    const schedule = () => requestAnimationFrame(reflowAll);
+
+    const ro = new ResizeObserver(schedule);
+    document
+      .querySelectorAll<SVGSVGElement>('svg[data-line-dense="true"]')
+      .forEach((svg) => ro.observe(svg));
+    schedule();
+    document.addEventListener("starwind:init", schedule);
+    document.addEventListener("astro:after-swap", () => {
+      document
+        .querySelectorAll<SVGSVGElement>('svg[data-line-dense="true"]')
+        .forEach((svg) => ro.observe(svg));
+      schedule();
+    });
+  };
+
+  installDenseLineReflow();
+</script>

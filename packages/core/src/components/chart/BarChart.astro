@@ -1,0 +1,874 @@
+---
+import ChartLegend from "./ChartLegend.astro";
+import ChartTooltip from "./ChartTooltip.astro";
+import { niceDomain, xLabelStep } from "./scale";
+import type { ChartConfig } from "./variants";
+
+type Props = {
+  data: Record<string, string | number>[];
+  config: ChartConfig;
+  categoryKey: string;
+  series: string[];
+  layout?: "vertical" | "horizontal";
+  stacked?: boolean;
+  showGrid?: boolean;
+  showXAxis?: boolean;
+  showYAxis?: boolean;
+  showLabels?: boolean;
+  showCategoryLabels?: boolean;
+  barRadius?: number;
+  showLegend?: boolean;
+  showTooltip?: boolean;
+  colorByCategory?: boolean;
+  activeIndex?: number;
+  labelInside?: boolean;
+  negativeColor?: string;
+  showCursor?: boolean;
+  hideTooltipLabel?: boolean;
+  hideTooltipIndicator?: boolean;
+  width?: number;
+  height?: number;
+};
+
+const {
+  data,
+  config,
+  categoryKey,
+  series,
+  layout = "vertical",
+  stacked = false,
+  showGrid = true,
+  showXAxis = true,
+  showYAxis = false,
+  showLabels = false,
+  showCategoryLabels = false,
+  barRadius = 4,
+  showLegend = false,
+  showTooltip = true,
+  colorByCategory = false,
+  activeIndex,
+  labelInside = false,
+  negativeColor,
+  showCursor = false,
+  hideTooltipLabel = false,
+  hideTooltipIndicator = false,
+  width = 640,
+  height = 360,
+} = Astro.props;
+
+const isHorizontal = layout === "horizontal";
+const isDenseVertical = !isHorizontal && data.length > 30;
+
+// Internal coordinate space — driven by props so wide containers don't letterbox.
+const W = width;
+const H = height;
+
+// Padding (logical px) tuned to Recharts' plot box for the shadcn bar examples.
+// Negative/stacked+legend padTop/padBottom and horizontal padLeft/padRight were
+// re-derived from the oracle's real margin/CartesianGrid geometry — the old
+// values had been tuned to compensate for domainMax previously being raw
+// (un-nice-rounded); with the domain fix they left far too much dead margin.
+// Label overflow (month names, value labels) still fits: Recharts renders
+// these past the nominal margin via SVG overflow, and bars stop short of the
+// plot edge anyway once the domain is nice-rounded, leaving room for the
+// label offsets without needing extra padding to compensate.
+const padTop = isHorizontal
+  ? 3
+  : isDenseVertical
+    ? 37
+    : showCategoryLabels
+      ? 9
+      : showLabels
+        ? 55
+        : stacked && showLegend
+          ? 9
+          : 24;
+const padRight = isHorizontal ? (labelInside ? 29 : colorByCategory ? 8 : 0) : 12;
+const padBottom = isHorizontal
+  ? showXAxis
+    ? 28
+    : 3
+  : isDenseVertical
+    ? 30
+    : stacked && showLegend
+      ? 115
+      : showCategoryLabels
+        ? 9
+        : showLabels
+          ? 64
+          : showXAxis
+            ? 75
+            : 35;
+const padLeft = isHorizontal ? (labelInside ? 0 : colorByCategory ? 111 : 73) : showYAxis ? 50 : 12;
+
+const plotLeft = padLeft;
+const plotTop = padTop;
+const plotW = W - padLeft - padRight;
+const plotH = H - padTop - padBottom;
+const plotBottom = plotTop + plotH;
+const plotRight = plotLeft + plotW;
+
+// Compute domain — auto-detect negatives
+const allVals = stacked
+  ? data.map((d) => series.reduce((sum, s) => sum + Number(d[s] ?? 0), 0))
+  : data.flatMap((d) => series.map((s) => Number(d[s] ?? 0)));
+const rawMax = Math.max(...allVals, 0);
+const rawMin = Math.min(...allVals, 0);
+
+// Faithful port of Recharts' default axis "nice" domain algorithm
+// (recharts-scale's getNiceTickValues/calculateStep, tickCount=5). Recharts
+// mutates a numeric axis' scale domain to this nice-rounded range EVEN WHEN
+// the axis is hidden — confirmed by reading generateCategoricalChart.js's
+// getTicksOfScale, which runs unconditionally per axis. That's the actual
+// root cause of shadcn's bars leaving headroom / stopping short of the plot
+// edges instead of touching them exactly at the raw data min/max.
+const [domainMin, domainMax] = niceDomain(rawMin, rawMax);
+const domainRange = domainMax - domainMin;
+
+// Unified scale helpers — backward-compatible when domainMin === 0
+const yOf = (v: number) => plotBottom - ((v - domainMin) / domainRange) * plotH;
+const xOf = (v: number) => plotLeft + (v / domainMax) * plotW;
+const baselineY = yOf(0); // = plotBottom when domainMin === 0
+
+// X-axis label thinning — approximates Recharts minTickGap for dense daily data.
+const labelStride = xLabelStep(data.length, W);
+
+// Grid ticks — Recharts' implicit-axis default: 5 evenly-spaced lines from
+// domainMin to domainMax (confirmed against oracle gridline y-positions).
+const tickCount = 5;
+const ticks = Array.from(
+  { length: tickCount },
+  (_, i) => domainMin + (i * domainRange) / (tickCount - 1),
+);
+
+// Shape helpers — used only for stacked segments
+function topRoundRect(x: number, y: number, w: number, h: number, r: number): string {
+  if (h <= 0 || w <= 0) return "";
+  const cr = Math.min(r, w / 2, h);
+  return (
+    `M${x},${y + h} L${x},${y + cr} Q${x},${y} ${x + cr},${y} ` +
+    `L${x + w - cr},${y} Q${x + w},${y} ${x + w},${y + cr} L${x + w},${y + h} Z`
+  );
+}
+
+// Rounds only the bottom two corners (for negative stacked bars growing downward)
+function bottomRoundRect(x: number, y: number, w: number, h: number, r: number): string {
+  if (h <= 0 || w <= 0) return "";
+  const cr = Math.min(r, w / 2, h);
+  return (
+    `M${x},${y} L${x + w},${y} L${x + w},${y + h - cr} ` +
+    `Q${x + w},${y + h} ${x + w - cr},${y + h} ` +
+    `L${x + cr},${y + h} Q${x},${y + h} ${x},${y + h - cr} L${x},${y} Z`
+  );
+}
+
+// Rounds only the right two corners (for horizontal stacked segments)
+function rightRoundRect(x: number, y: number, w: number, h: number, r: number): string {
+  if (h <= 0 || w <= 0) return "";
+  const cr = Math.min(r, h / 2, w);
+  return (
+    `M${x},${y} L${x + w - cr},${y} Q${x + w},${y} ${x + w},${y + cr} ` +
+    `L${x + w},${y + h - cr} Q${x + w},${y + h} ${x + w - cr},${y + h} L${x},${y + h} Z`
+  );
+}
+
+type BarItem = {
+  path: string;
+  // Non-stacked bars use a rect instead of a path (all-four-corner rounding via rx/ry).
+  rect?: { x: number; y: number; w: number; h: number; r: number };
+  fill: string;
+  labelText: string;
+  labelX: number;
+  labelY: number;
+  labelAnchor: string;
+  seriesKey: string;
+  category: string;
+  value: string;
+  dataIndex: number;
+  isActive: boolean;
+  catLabelText: string;
+  catLabelX: number;
+  catLabelY: number;
+  catLabelFill: string;
+  // Screen-space vertical offset (px) applied by the counter-scaler. Used for
+  // negative-bar month labels so the gap below the bar stays constant on screen
+  // instead of shrinking with the viewBox scale (which made labels touch bars).
+  catLabelDyPx?: number;
+  insideLabel?: { text: string; x: number; y: number };
+};
+
+const bars: BarItem[] = [];
+
+// Resolve fill for a single bar
+function resolveFill(key: string, val: number, category: string): string {
+  if (colorByCategory) return `var(--color-${category})`;
+  if (val < 0 && negativeColor) return negativeColor;
+  return `var(--color-${key})`;
+}
+
+if (!isHorizontal) {
+  const bandW = plotW / data.length;
+
+  if (stacked) {
+    const stackBarW = bandW * 0.75;
+    for (let di = 0; di < data.length; di++) {
+      const bandCenter = plotLeft + bandW * (di + 0.5);
+      const x = bandCenter - stackBarW / 2;
+      let currentBottom = baselineY;
+
+      for (let si = 0; si < series.length; si++) {
+        const key = series[si];
+        const val = Number(data[di][key] ?? 0);
+        const h = (val / domainMax) * plotH;
+        const y = currentBottom - h;
+        const category = String(data[di][categoryKey]);
+        // Top segment: top corners rounded. Bottom segment: bottom corners rounded
+        // (matching shadcn radius={[0,0,4,4]} / radius={[4,4,0,0]}). Non-top
+        // segments extend 2px upward under the segment above to kill the
+        // antialiasing seam; bottomRoundRect inherits that trick via y-2/h+2.
+        const isTopSeg = si === series.length - 1;
+        const isBottomSeg = si === 0 && series.length > 1;
+        const segTop = y - 2;
+        const path = isTopSeg
+          ? topRoundRect(x, y, stackBarW, h, barRadius)
+          : isBottomSeg
+            ? bottomRoundRect(x, y - 2, stackBarW, h + 2, barRadius)
+            : `M${x},${y + h} L${x},${segTop} L${x + stackBarW},${segTop} L${x + stackBarW},${y + h} Z`;
+
+        bars.push({
+          path: path || "",
+          fill: resolveFill(key, val, category),
+          labelText: String(val),
+          labelX: x + stackBarW / 2,
+          labelY: y - 4,
+          labelAnchor: "middle",
+          seriesKey: key,
+          category,
+          value: String(val),
+          dataIndex: di,
+          isActive: false,
+          catLabelText: category,
+          catLabelX: x + stackBarW / 2,
+          catLabelY: y - 8,
+          catLabelFill: "var(--foreground)",
+        });
+        currentBottom = y;
+      }
+    }
+  } else {
+    // Grouped vertical — Recharts uses ONE bar-width ratio regardless of
+    // whether LabelList is present; measured ~0.794 on the oracle (default
+    // and active bars agree to within 0.02%). Grouped pair fills ~0.9.
+    const groupFrac = series.length === 1 ? 0.79 : 0.9;
+    const groupW = bandW * groupFrac;
+    const barSlotW = groupW / series.length;
+    const actualBarW = series.length === 1 ? barSlotW : barSlotW * 0.92;
+    const barOffset = (barSlotW - actualBarW) / 2;
+
+    for (let di = 0; di < data.length; di++) {
+      const bandCenter = plotLeft + bandW * (di + 0.5);
+      const groupLeft = bandCenter - groupW / 2;
+      const category = String(data[di][categoryKey]);
+
+      for (let si = 0; si < series.length; si++) {
+        const key = series[si];
+        const val = Number(data[di][key] ?? 0);
+        const x = groupLeft + si * barSlotW + barOffset;
+        const isNeg = val < 0;
+        const fill = resolveFill(key, val, category);
+
+        let rect: BarItem["rect"];
+        let labelY: number;
+        let catLabelY: number;
+        let catLabelDyPx: number | undefined;
+
+        if (isNeg) {
+          // Bar grows downward from baseline
+          const h = yOf(val) - baselineY;
+          const r = Math.min(barRadius, actualBarW / 2, h / 2);
+          rect = { x, y: baselineY, w: actualBarW, h, r };
+          labelY = baselineY - 4;
+          // Anchor at the bar's outer (bottom) edge; push the label down a
+          // constant 14px on screen (matches shadcn's LabelList gap). A viewBox
+          // offset would shrink under scaling and collapse the gap.
+          catLabelY = yOf(val);
+          catLabelDyPx = 14;
+        } else {
+          const barTop = yOf(val);
+          const h = baselineY - barTop;
+          const r = Math.min(barRadius, actualBarW / 2, h / 2);
+          rect = { x, y: barTop, w: actualBarW, h, r };
+          labelY = barTop - 8;
+          catLabelY = barTop - 6;
+        }
+
+        bars.push({
+          path: "",
+          rect,
+          fill,
+          labelText: String(val),
+          labelX: x + actualBarW / 2,
+          labelY,
+          labelAnchor: "middle",
+          seriesKey: key,
+          category,
+          value: String(val),
+          dataIndex: di,
+          isActive: activeIndex !== undefined && di === activeIndex,
+          catLabelText: category,
+          catLabelX: x + actualBarW / 2,
+          catLabelY,
+          catLabelFill: fill,
+          catLabelDyPx,
+        });
+      }
+    }
+  }
+} else {
+  // Horizontal bars
+  const bandH = plotH / data.length;
+
+  if (stacked) {
+    const stackBarH = bandH * 0.6;
+    for (let di = 0; di < data.length; di++) {
+      const bandMidY = plotTop + bandH * (di + 0.5);
+      const y = bandMidY - stackBarH / 2;
+      let currentLeft = plotLeft;
+      const category = String(data[di][categoryKey]);
+
+      for (let si = 0; si < series.length; si++) {
+        const key = series[si];
+        const val = Number(data[di][key] ?? 0);
+        const w = (val / domainMax) * plotW;
+        // Only the rightmost segment gets rounded corners. Non-rightmost
+        // segments extend ~0.75px right under the next so fills overlap and
+        // the antialiasing seam between colors disappears.
+        const isRightmost = si === series.length - 1;
+        const segRight = currentLeft + w + 0.75;
+        const path = isRightmost
+          ? rightRoundRect(currentLeft, y, w, stackBarH, barRadius)
+          : `M${currentLeft},${y} L${segRight},${y} L${segRight},${y + stackBarH} L${currentLeft},${y + stackBarH} Z`;
+
+        bars.push({
+          path: path || "",
+          fill: resolveFill(key, val, category),
+          labelText: String(val),
+          labelX: currentLeft + w + 4,
+          labelY: y + stackBarH / 2 + 4,
+          labelAnchor: "start",
+          seriesKey: key,
+          category,
+          value: String(val),
+          dataIndex: di,
+          isActive: false,
+          catLabelText: category,
+          catLabelX: plotLeft + 8,
+          catLabelY: y + stackBarH / 2 + 4,
+          catLabelFill: "var(--foreground)",
+        });
+        currentLeft += w;
+      }
+    }
+  } else {
+    // Grouped horizontal — single bar ~0.7 of band; grouped pair fills ~0.8
+    const groupFrac = series.length === 1 ? 0.8 : 0.8;
+    const groupH = bandH * groupFrac;
+    const barSlotH = groupH / series.length;
+    const actualBarH = series.length === 1 ? barSlotH : barSlotH * 0.9;
+    const barOffset = (barSlotH - actualBarH) / 2;
+
+    for (let di = 0; di < data.length; di++) {
+      const bandMidY = plotTop + bandH * (di + 0.5);
+      const groupTop = bandMidY - groupH / 2;
+      const category = String(data[di][categoryKey]);
+
+      for (let si = 0; si < series.length; si++) {
+        const key = series[si];
+        const val = Number(data[di][key] ?? 0);
+        const w = xOf(val) - plotLeft;
+        const y = groupTop + si * barSlotH + barOffset;
+        // True bar center — text uses dominant-baseline="central" at render
+        // time instead of an alphabetic-baseline fudge offset (measured on
+        // the oracle: LabelList text centers within ~0.25px of bar center).
+        const midY = y + actualBarH / 2;
+        const fill = resolveFill(key, val, category);
+        const r = Math.min(barRadius, actualBarH / 2, w / 2);
+
+        bars.push({
+          path: "",
+          rect: { x: plotLeft, y, w, h: actualBarH, r },
+          fill,
+          labelText: String(val),
+          labelX: plotLeft + w + 6,
+          labelY: midY,
+          labelAnchor: "start",
+          seriesKey: key,
+          category,
+          value: String(val),
+          dataIndex: di,
+          isActive: activeIndex !== undefined && di === activeIndex,
+          catLabelText: category,
+          catLabelX: plotLeft + 8,
+          catLabelY: midY,
+          catLabelFill: fill,
+          // labelInside: category name inside bar (left) + value at right end
+          insideLabel: labelInside ? { text: category, x: plotLeft + 8, y: midY } : undefined,
+        });
+      }
+    }
+  }
+}
+
+const hitBands = data.map((d, di) => {
+  const category = String(d[categoryKey]);
+  const items = series.map((key) => ({
+    series: key,
+    label: config[key]?.label ?? key,
+    value: String(d[key] ?? 0),
+    // Resolved bar color CSS string — lets the tooltip swatch render even
+    // for series without a --color-<key> var (e.g. colorByCategory bars).
+    color: resolveFill(key, Number(d[key] ?? 0), category),
+  }));
+
+  if (isHorizontal) {
+    const bandH = plotH / data.length;
+    return {
+      index: di,
+      x: plotLeft,
+      y: plotTop + bandH * di,
+      width: plotW,
+      height: bandH,
+      category,
+      items,
+    };
+  }
+
+  const bandW = plotW / data.length;
+  return {
+    index: di,
+    x: plotLeft + bandW * di,
+    y: plotTop,
+    width: bandW,
+    height: plotH,
+    category,
+    items,
+  };
+});
+
+const ariaLabel = `Bar chart of ${series.map((s) => config[s]?.label ?? s).join(", ")} by ${categoryKey}`;
+---
+
+<svg
+  viewBox={`0 0 ${W} ${H}`}
+  width="100%"
+  height="100%"
+  preserveAspectRatio="xMidYMid meet"
+  overflow="visible"
+  data-bar-dense={isDenseVertical ? "true" : undefined}
+  data-bar-cursor={showCursor ? "true" : undefined}
+  role="img"
+  aria-label={ariaLabel}
+>
+  <!-- Gridlines -->
+  {
+    showGrid &&
+      !isHorizontal &&
+      ticks.map((t) => (
+        <line
+          x1={plotLeft}
+          x2={plotRight}
+          y1={yOf(t)}
+          y2={yOf(t)}
+          stroke="var(--border)"
+          stroke-opacity="0.5"
+          stroke-width="1"
+          data-sw="1"
+        />
+      ))
+  }
+  {
+    showGrid &&
+      isHorizontal &&
+      ticks.map((t) => (
+        <line
+          x1={xOf(t)}
+          x2={xOf(t)}
+          y1={plotTop}
+          y2={plotBottom}
+          stroke="var(--border)"
+          stroke-opacity="0.5"
+          stroke-width="1"
+          data-sw="1"
+        />
+      ))
+  }
+
+  <!-- Y-axis value labels (vertical layout) -->
+  {
+    showYAxis &&
+      !isHorizontal &&
+      ticks.map((t) => (
+        <text
+          x={plotLeft - 6}
+          y={yOf(t) + 4}
+          text-anchor="end"
+          fill="var(--muted-foreground)"
+          font-size="11"
+          data-fs="11"
+        >
+          {t}
+        </text>
+      ))
+  }
+
+  <!-- X-axis category labels (vertical layout) — thinned for dense datasets -->
+  {
+    showXAxis &&
+      !isHorizontal &&
+      data.map((d, i) => {
+        if (!isDenseVertical && i % labelStride !== 0) return null;
+        const bandW = plotW / data.length;
+        const cx = plotLeft + bandW * (i + 0.5);
+        return (
+          <text
+            x={cx}
+            y={plotBottom + 20}
+            dy="0.71em"
+            text-anchor="middle"
+            fill="var(--muted-foreground)"
+            font-size="12"
+            data-fs="12"
+            data-dense-x-label={isDenseVertical ? "true" : undefined}
+            data-index={isDenseVertical ? i : undefined}
+          >
+            {config[String(d[categoryKey])]?.label ?? String(d[categoryKey])}
+          </text>
+        );
+      })
+  }
+
+  <!-- Y-axis category labels (horizontal layout) — hidden when labelInside -->
+  {
+    !labelInside &&
+      isHorizontal &&
+      data.map((d, i) => {
+        const bandH = plotH / data.length;
+        const midY = plotTop + bandH * (i + 0.5);
+        const cat = String(d[categoryKey]);
+        return (
+          <text
+            x={plotLeft - 28}
+            y={midY + 4}
+            text-anchor="end"
+            fill="var(--muted-foreground)"
+            font-size="12"
+            data-fs="12"
+          >
+            {config[cat]?.label ?? cat}
+          </text>
+        );
+      })
+  }
+
+  <!-- X-axis value labels (horizontal layout) -->
+  {
+    showXAxis &&
+      isHorizontal &&
+      ticks.map((t) => (
+        <text
+          x={xOf(t)}
+          y={plotBottom + 16}
+          text-anchor="middle"
+          fill="var(--muted-foreground)"
+          font-size="11"
+          data-fs="11"
+        >
+          {t}
+        </text>
+      ))
+  }
+
+  <!-- Hover cursor band — shadcn only shows this on charts that don't set
+       cursor={false} (stacked, interactive). Hidden by default; toggled by
+       the script below on hover of the matching hit band. Rendered before
+       bars so bars paint on top of it, matching Recharts' z-order. -->
+  {
+    showCursor &&
+      hitBands.map((band) => (
+        <rect
+          x={band.x}
+          y={band.y}
+          width={band.width}
+          height={band.height}
+          fill="var(--muted)"
+          opacity="0"
+          pointer-events="none"
+          data-cursor-index={band.index}
+        />
+      ))
+  }
+
+  <!-- Bars — data-* attrs drive tooltip content.
+       Non-stacked bars use <rect rx/ry> for all-four-corner rounding (matches
+       Recharts radius={N}). Stacked segments keep <path> for per-corner control. -->
+  {
+    bars.map((b) =>
+      b.rect ? (
+        <rect
+          x={b.rect.x}
+          y={b.rect.y}
+          width={b.rect.w}
+          height={b.rect.h}
+          rx={b.rect.r}
+          ry={b.rect.r}
+          data-rxy={barRadius}
+          fill={b.fill}
+          fill-opacity={b.isActive ? 0.8 : 1}
+          stroke={b.isActive ? b.fill : "none"}
+          stroke-width={b.isActive ? 2 : 0}
+          data-sw={b.isActive ? "2" : undefined}
+          stroke-dasharray={b.isActive ? "4 4" : undefined}
+          stroke-dashoffset={b.isActive ? 4 : undefined}
+          data-series={b.seriesKey}
+          data-category={b.category}
+          data-value={b.value}
+          data-label={config[b.seriesKey]?.label ?? b.seriesKey}
+        />
+      ) : (
+        b.path && (
+          <path
+            d={b.path}
+            fill={b.fill}
+            fill-opacity={b.isActive ? 0.8 : 1}
+            stroke={b.isActive ? b.fill : "none"}
+            stroke-width={b.isActive ? 2 : 0}
+            data-sw={b.isActive ? "2" : undefined}
+            stroke-dasharray={b.isActive ? "4 4" : undefined}
+            stroke-dashoffset={b.isActive ? 4 : undefined}
+            data-series={b.seriesKey}
+            data-category={b.category}
+            data-value={b.value}
+            data-label={config[b.seriesKey]?.label ?? b.seriesKey}
+          />
+        )
+      ),
+    )
+  }
+
+  <!-- Optional per-bar value labels (above bar for vertical, right end for horizontal) -->
+  {
+    showLabels &&
+      !labelInside &&
+      bars.map(
+        (b) =>
+          (b.rect || b.path) && (
+            <text
+              x={b.labelX}
+              y={b.labelY}
+              text-anchor={b.labelAnchor}
+              fill="var(--foreground)"
+              font-size="12"
+              data-fs="12"
+            >
+              {b.labelText}
+            </text>
+          ),
+      )
+  }
+
+  <!-- Category key labels above/below bars (e.g. month names on the negative chart).
+       Each label is colored to match its bar and sits at the outer end of the bar. -->
+  {
+    showCategoryLabels &&
+      bars.map(
+        (b) =>
+          (b.rect || b.path) && (
+            <text
+              x={b.catLabelX}
+              y={b.catLabelY}
+              text-anchor={b.labelAnchor}
+              fill={b.catLabelFill}
+              font-size="12"
+              data-fs="12"
+              data-dy-px={b.catLabelDyPx}
+            >
+              {b.catLabelText}
+            </text>
+          ),
+      )
+  }
+
+  <!-- labelInside: category name inside bar (left) + value at right end -->
+  {
+    labelInside &&
+      bars.map(
+        (b) =>
+          (b.rect || b.path) &&
+          b.insideLabel && (
+            <>
+              <text
+                x={b.insideLabel.x}
+                y={b.insideLabel.y}
+                text-anchor="start"
+                dominant-baseline="central"
+                fill="var(--background)"
+                font-size="12"
+                font-weight="500"
+                data-fs="12"
+              >
+                {b.insideLabel.text}
+              </text>
+              <text
+                x={b.labelX}
+                y={b.labelY}
+                text-anchor="start"
+                dominant-baseline="central"
+                fill="var(--foreground)"
+                font-size="12"
+                font-weight="500"
+                data-fs="12"
+              >
+                {b.labelText}
+              </text>
+            </>
+          ),
+      )
+  }
+
+  <!-- Full-band hit targets — Recharts tooltip follows the nearest category, not just painted bars. -->
+  {
+    showTooltip &&
+      hitBands.map((band) => (
+        <rect
+          x={band.x}
+          y={band.y}
+          width={band.width}
+          height={band.height}
+          fill="transparent"
+          pointer-events="all"
+          data-index={band.index}
+          data-series={band.items[0]?.series}
+          data-category={band.category}
+          data-items={JSON.stringify(band.items)}
+          data-hide-label={hideTooltipLabel ? "1" : undefined}
+          data-hide-indicator={hideTooltipIndicator ? "1" : undefined}
+        />
+      ))
+  }
+</svg>
+
+{
+  showLegend && (
+    <div class="pointer-events-none absolute inset-x-0 bottom-0">
+      <ChartLegend config={config} series={series} />
+    </div>
+  )
+}
+{showTooltip && <ChartTooltip />}
+
+<script>
+  const normalizeDenseBars = () => {
+    requestAnimationFrame(() => {
+      document.querySelectorAll<SVGSVGElement>('svg[data-bar-dense="true"]').forEach((svg) => {
+        const width = svg.clientWidth || svg.getBoundingClientRect().width;
+        const height = svg.clientHeight || svg.getBoundingClientRect().height;
+        if (!width || !height) return;
+
+        const left = 13;
+        const right = 13;
+        const top = 37;
+        const bottom = 30;
+        const plotWidth = width - left - right;
+        const plotHeight = height - top - bottom;
+        const plotBottom = top + plotHeight;
+        const bars = Array.from(
+          svg.querySelectorAll<SVGRectElement>("rect[data-value]:not([data-items])"),
+        );
+        if (!bars.length || plotWidth <= 0 || plotHeight <= 0) return;
+
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+        const values = bars.map((bar) => Number(bar.dataset.value) || 0);
+        const max = Math.max(...values, 10);
+        const bandWidth = plotWidth / bars.length;
+        const barWidth = bandWidth * 0.78;
+
+        bars.forEach((bar, index) => {
+          const value = values[index] || 0;
+          const barHeight = (value / max) * plotHeight;
+          bar.setAttribute("x", String(left + bandWidth * index + (bandWidth - barWidth) / 2));
+          bar.setAttribute("y", String(plotBottom - barHeight));
+          bar.setAttribute("width", String(barWidth));
+          bar.setAttribute("height", String(barHeight));
+        });
+
+        const gridLines = Array.from(svg.querySelectorAll<SVGLineElement>("line[data-sw]"));
+        gridLines.forEach((line, index) => {
+          const ratio = gridLines.length > 1 ? index / (gridLines.length - 1) : 0;
+          const y = plotBottom - ratio * plotHeight;
+          line.setAttribute("x1", String(left));
+          line.setAttribute("x2", String(width - right));
+          line.setAttribute("y1", String(y));
+          line.setAttribute("y2", String(y));
+        });
+
+        Array.from(svg.querySelectorAll<SVGRectElement>("rect[data-items]")).forEach(
+          (hit, index) => {
+            hit.setAttribute("x", String(left + bandWidth * index));
+            hit.setAttribute("y", String(top));
+            hit.setAttribute("width", String(bandWidth));
+            hit.setAttribute("height", String(plotHeight));
+          },
+        );
+
+        const labels = Array.from(
+          svg.querySelectorAll<SVGTextElement>('text[data-dense-x-label="true"]'),
+        );
+        const first = width < 500 ? 11 : 2;
+        const step = width < 500 ? 20 : width < 900 ? 10 : 6;
+        labels.forEach((label, index) => {
+          const visible =
+            index === labels.length - 1 || (index >= first && (index - first) % step === 0);
+          label.style.display = visible ? "" : "none";
+          label.setAttribute("x", String(left + bandWidth * (index + 0.5)));
+          label.setAttribute("y", String(plotBottom + (width < 500 ? 12 : 20)));
+          label.setAttribute("font-size", "12");
+        });
+
+        svg.setAttribute("data-scaled", ""); // reveal labels (hidden until scaled by CSS)
+      });
+    });
+  };
+
+  // Hover cursor band (stacked/interactive) — self-contained here so it
+  // doesn't require changes to ChartTooltip.astro. Binds once per svg (guarded
+  // via dataset.cursorBound) since the interactive card toggles panels via
+  // `hidden` without recreating the DOM, so this can re-run harmlessly.
+  const setupBarCursor = () => {
+    document.querySelectorAll<SVGSVGElement>('svg[data-bar-cursor="true"]').forEach((svg) => {
+      if (svg.dataset.cursorBound === "true") return;
+      svg.dataset.cursorBound = "true";
+      const cursors = Array.from(svg.querySelectorAll<SVGRectElement>("rect[data-cursor-index]"));
+      svg.querySelectorAll<SVGRectElement>("rect[data-items]").forEach((hit) => {
+        const cursor = cursors.find((c) => c.dataset.cursorIndex === hit.dataset.index);
+        if (!cursor) return;
+        hit.addEventListener("mouseenter", () => {
+          for (const attr of ["x", "y", "width", "height"]) {
+            const v = hit.getAttribute(attr);
+            if (v !== null) cursor.setAttribute(attr, v);
+          }
+          cursor.setAttribute("opacity", "1");
+        });
+        hit.addEventListener("mouseleave", () => cursor.setAttribute("opacity", "0"));
+      });
+    });
+  };
+
+  normalizeDenseBars();
+  setupBarCursor();
+  window.addEventListener("resize", normalizeDenseBars);
+  document.addEventListener("astro:after-swap", normalizeDenseBars);
+  document.addEventListener("astro:after-swap", setupBarCursor);
+  document.addEventListener("starwind:init", normalizeDenseBars);
+  document.addEventListener("starwind:init", setupBarCursor);
+</script>

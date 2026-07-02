@@ -1,0 +1,420 @@
+---
+import ChartLegend from "./ChartLegend.astro";
+import ChartTooltip from "./ChartTooltip.astro";
+import type { ChartConfig } from "./variants";
+
+type Props = {
+  data: Record<string, string | number>[];
+  config: ChartConfig;
+  categoryKey: string;
+  series: string[];
+  gridType?: "polygon" | "circle";
+  gridLevels?: number;
+  showAxisLabels?: boolean;
+  fillOpacity?: number;
+  showDots?: boolean;
+  showLegend?: boolean;
+  showTooltip?: boolean;
+  /** Hide both grid rings and spokes (grid-none variant). */
+  showGrid?: boolean;
+  /** Hide radial spokes while keeping rings (lines-only, grid-custom, grid-circle-no-lines). */
+  showSpokes?: boolean;
+  /** Fill grid rings with the primary series color at 0.2 opacity, outermost-first for additive center effect (grid-fill, grid-circle-fill). */
+  gridFill?: boolean;
+  /** Explicit grid radii, matching Recharts PolarGrid polarRadius. */
+  polarRadius?: number[];
+  /** Show numeric value ticks along the axis between axis 0 and axis 1 (radius-axis variant). */
+  showRadiusAxis?: boolean;
+  /** Replace axis labels with value/value + month-name two-line labels (label-custom variant). */
+  showDataLabels?: boolean;
+  /** Per-series fill-opacity overrides. Index 0 = first series. Falls back to fillOpacity for unspecified indices. */
+  fillOpacities?: number[];
+};
+
+const {
+  data,
+  config,
+  categoryKey,
+  series,
+  gridType = "polygon",
+  gridLevels = 4,
+  showAxisLabels = true,
+  fillOpacity: fillOpacityProp,
+  fillOpacities,
+  showDots = true,
+  showLegend = false,
+  showTooltip = true,
+  showGrid = true,
+  showSpokes = true,
+  gridFill = false,
+  polarRadius,
+  showRadiusAxis = false,
+  showDataLabels = false,
+} = Astro.props;
+
+// Default opacity: single series looks richer at 0.6; overlapping polygons need less
+const fillOpacity = fillOpacityProp ?? (series.length > 1 ? 0.4 : 0.6);
+
+const W = 250;
+const H = 250;
+const cx = W / 2;
+const cy = H / 2;
+const maxR = showDataLabels ? 92 : 96;
+
+const N = data.length;
+
+// Compute domain max across all plotted values
+const domainVals = data.flatMap((d) => series.map((s) => Number(d[s] ?? 0)));
+const rawMax = Math.max(...domainVals, 0);
+
+// Recharts' PolarRadiusAxis defaults to domain [0, dataMax] when the axis is
+// hidden, so the largest value sits ON the outer ring (don't nice-round, or the
+// polygon shrinks). When the radius axis IS shown, Recharts nice-rounds the
+// domain so ticks are round (305 -> 320 = 4 × 80), and the polygon sits ~0.95.
+const domainMax = showRadiusAxis
+  ? Math.max(10, Math.ceil(rawMax / gridLevels / 10) * 10 * gridLevels)
+  : rawMax > 0
+    ? rawMax
+    : 10;
+
+// Polar → cartesian; axis 0 starts at top (-π/2), proceeds clockwise
+function polarToXY(r: number, axisIndex: number): [number, number] {
+  const angle = -Math.PI / 2 + axisIndex * ((2 * Math.PI) / N);
+  return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+}
+
+// Points string for a grid ring at a given radius
+function ringPoints(r: number): string {
+  return Array.from({ length: N }, (_, k) => polarToXY(r, k).join(",")).join(" ");
+}
+
+// Points string for a series polygon
+function seriesPoints(key: string): string {
+  return data
+    .map((d, k) => {
+      const r = (Number(d[key] ?? 0) / domainMax) * maxR;
+      return polarToXY(r, k).join(",");
+    })
+    .join(" ");
+}
+
+type Vertex = {
+  x: number;
+  y: number;
+  seriesKey: string;
+  category: string;
+  value: string;
+  label: string;
+};
+
+// Pre-compute all vertices for dots and tooltip hit areas
+const vertices: Vertex[] = series.flatMap((key) =>
+  data.map((d, k) => {
+    const val = Number(d[key] ?? 0);
+    const [x, y] = polarToXY((val / domainMax) * maxR, k);
+    return {
+      x,
+      y,
+      seriesKey: key,
+      category: String(d[categoryKey]),
+      value: String(val),
+      label: config[key]?.label ?? key,
+    };
+  }),
+);
+
+// Axis labels just outside the outer ring
+const labelR = maxR + 8;
+const axisLabels = data.map((d, k) => {
+  const [x, y] = polarToXY(labelR, k);
+  return {
+    x,
+    y,
+    anchor: x > cx + 1 ? "start" : x < cx - 1 ? "end" : "middle",
+    text: String(d[categoryKey]),
+    // seriesVals used by showDataLabels to render value/value above the month name
+    seriesVals: series.map((s) => String(d[s] ?? "")),
+  };
+});
+
+const hitWedges = data.map((d, k) => {
+  const [x1, y1] = polarToXY(labelR + 16, k - 0.5);
+  const [x2, y2] = polarToXY(labelR + 16, k + 0.5);
+  return {
+    points: `${cx},${cy} ${x1},${y1} ${x2},${y2}`,
+    category: String(d[categoryKey]),
+    items: series.map((key) => ({
+      series: key,
+      label: config[key]?.label ?? key,
+      value: String(d[key] ?? 0),
+    })),
+  };
+});
+
+// Radius axis: ticks placed between axis 0 and axis 1 (~30° from top, matching recharts angle=60)
+const radiusAxisAngle = -Math.PI / 2 + 0.5 * ((2 * Math.PI) / N);
+// gridLevels+1 ticks: 0 at center through domainMax at outer ring (matches recharts PolarRadiusAxis default)
+const radiusTicks = showRadiusAxis
+  ? Array.from({ length: gridLevels + 1 }, (_, i) => {
+      const r = (i / gridLevels) * maxR;
+      return {
+        x: cx + r * Math.cos(radiusAxisAngle),
+        y: cy + r * Math.sin(radiusAxisAngle),
+        tickValue: Math.round((i / gridLevels) * domainMax),
+      };
+    })
+  : ([] as { x: number; y: number; tickValue: number }[]);
+
+// gridFill: render outermost ring first so inner rings layer on top → additive center opacity
+const gridRadii =
+  polarRadius ?? Array.from({ length: gridLevels + 1 }, (_, i) => (i / gridLevels) * maxR);
+const visibleGridRadii = gridFill ? [...gridRadii].reverse() : gridRadii;
+
+const ariaLabel = `Radar chart of ${series.map((s) => config[s]?.label ?? s).join(", ")} by ${categoryKey}`;
+---
+
+<svg
+  viewBox={`0 0 ${W} ${H}`}
+  width="100%"
+  preserveAspectRatio="xMidYMid meet"
+  role="img"
+  aria-label={ariaLabel}
+  style="display:block"
+>
+  <!-- Concentric grid rings -->
+  {
+    showGrid &&
+      visibleGridRadii.map((r) => {
+        // gridFill: filled shapes, no stroke; normal: stroked outline, no fill
+        return gridType === "circle" ? (
+          <circle
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill={gridFill ? `var(--color-${series[0]})` : "none"}
+            fill-opacity={gridFill ? 0.2 : undefined}
+            stroke={gridFill ? "none" : "var(--border)"}
+            stroke-width="1"
+            data-sw="1"
+          />
+        ) : (
+          <polygon
+            points={ringPoints(r)}
+            fill={gridFill ? `var(--color-${series[0]})` : "none"}
+            fill-opacity={gridFill ? 0.2 : undefined}
+            stroke={gridFill ? "none" : "var(--border)"}
+            stroke-width="1"
+            data-sw="1"
+          />
+        );
+      })
+  }
+
+  <!-- Radial spokes: center → outer ring tip -->
+  {
+    showGrid &&
+      showSpokes &&
+      data.map((_, k) => {
+        const [x, y] = polarToXY(maxR, k);
+        return (
+          <line x1={cx} y1={cy} x2={x} y2={y} stroke="var(--border)" stroke-width="1" data-sw="1" />
+        );
+      })
+  }
+
+  <!-- Series polygons — fill + stroke share the series color -->
+  {
+    series.map((key, i) => {
+      const opacity = fillOpacities?.[i] ?? fillOpacity;
+      return (
+        <polygon
+          points={seriesPoints(key)}
+          fill={`var(--color-${key})`}
+          fill-opacity={opacity}
+          stroke={opacity === 0 ? `var(--color-${key})` : "none"}
+          stroke-width="2"
+          data-sw={opacity === 0 ? "2" : undefined}
+          stroke-linejoin="round"
+        />
+      );
+    })
+  }
+
+  <!-- Optional vertex dots on top of polygons -->
+  {
+    showDots &&
+      vertices.map((v) => (
+        <circle cx={v.x} cy={v.y} r="4" data-r="4" fill={`var(--color-${v.seriesKey})`} />
+      ))
+  }
+
+  <!-- Hover dots: recharts' default activeDot (r=4, white 2px stroke) appears at the hovered
+       category's vertex per series, even when the permanent dot (showDots) is off. Skipped when
+       showDots is on — a permanent dot already sits there, so an identical one would just double-draw. -->
+  {
+    !showDots &&
+      vertices.map((v) => (
+        <circle
+          cx={v.x}
+          cy={v.y}
+          r="4"
+          data-r="4"
+          data-hover-dot="1"
+          data-category={v.category}
+          fill={`var(--color-${v.seriesKey})`}
+          stroke="#fff"
+          stroke-width="2"
+          data-sw="2"
+          pointer-events="none"
+          style="display:none"
+        />
+      ))
+  }
+
+  <!-- Transparent hit areas — carry data-* for the shared ChartTooltip -->
+  {
+    showTooltip &&
+      vertices.map((v) => (
+        <circle
+          cx={v.x}
+          cy={v.y}
+          r="10"
+          fill="transparent"
+          data-series={v.seriesKey}
+          data-category={v.category}
+          data-value={v.value}
+          data-label={v.label}
+        />
+      ))
+  }
+
+  <!-- Radius axis ticks (between axis 0 and axis 1, no axis line per recharts source) -->
+  {
+    radiusTicks.map(({ x, y, tickValue }) => (
+      <text
+        x={x}
+        y={y}
+        text-anchor="middle"
+        dominant-baseline="central"
+        fill="var(--foreground)"
+        font-size="12"
+        data-fs="12"
+      >
+        {tickValue}
+      </text>
+    ))
+  }
+
+  <!-- Custom value+month labels (label-custom variant: shows "val1/val2" + month name) -->
+  {
+    showDataLabels &&
+      axisLabels.map(({ x, y, anchor, seriesVals }) => (
+        <text
+          x={x}
+          y={y - 10}
+          text-anchor={anchor}
+          dominant-baseline="central"
+          fill="currentColor"
+          font-size="13"
+          font-weight="500"
+          data-fs="13"
+        >
+          {seriesVals.slice(0, 2).join("/")}
+        </text>
+      ))
+  }
+  {
+    showDataLabels &&
+      axisLabels.map(({ x, y, anchor, text }) => (
+        <text
+          x={x}
+          y={y + 8}
+          text-anchor={anchor}
+          dominant-baseline="central"
+          fill="var(--muted-foreground)"
+          font-size="12"
+          data-fs="12"
+        >
+          {text}
+        </text>
+      ))
+  }
+
+  <!-- Standard angular axis labels, rendered last so they sit above grid lines -->
+  {
+    !showDataLabels &&
+      showAxisLabels &&
+      axisLabels.map(({ x, y, anchor, text }) => (
+        <text
+          x={x}
+          y={y}
+          text-anchor={anchor}
+          dominant-baseline="central"
+          fill="var(--muted-foreground)"
+          font-size="12"
+          data-fs="12"
+        >
+          {text}
+        </text>
+      ))
+  }
+
+  <!-- Angular hit wedges — Recharts tooltip tracks the nearest polar category. -->
+  {
+    showTooltip &&
+      hitWedges.map((hit) => (
+        <polygon
+          points={hit.points}
+          fill="transparent"
+          pointer-events="all"
+          data-series={hit.items[0]?.series}
+          data-category={hit.category}
+          data-items={JSON.stringify(hit.items)}
+        />
+      ))
+  }
+</svg>
+
+{
+  showLegend && (
+    <div style="position:absolute;left:0;right:0;bottom:-10px;height:60px;padding-top:32px;display:flex;align-items:flex-start;justify-content:center">
+      <ChartLegend config={config} series={series} />
+    </div>
+  )
+}
+{showTooltip && <ChartTooltip />}
+
+<script>
+  // Reveal per-series [data-hover-dot] circles for the hovered category (recharts activeDot),
+  // reusing the same hit targets ([data-category] on hitWedges/vertex circles) as ChartTooltip.
+  const initialized = new WeakSet<SVGSVGElement>();
+  const setupRadarHoverDots = () => {
+    document.querySelectorAll<HTMLElement>('[data-slot="chart"]').forEach((chart) => {
+      const svg = chart.querySelector("svg");
+      if (!svg || initialized.has(svg)) return;
+      const dots = svg.querySelectorAll<SVGCircleElement>("[data-hover-dot]");
+      if (!dots.length) return;
+      initialized.add(svg);
+
+      const hideAll = () => dots.forEach((dot) => (dot.style.display = "none"));
+
+      svg.addEventListener("mouseover", (e) => {
+        const target = (e.target as Element).closest("[data-category]") as HTMLElement | null;
+        if (!target) {
+          hideAll();
+          return;
+        }
+        const category = target.dataset.category ?? "";
+        dots.forEach(
+          (dot) => (dot.style.display = dot.dataset.category === category ? "" : "none"),
+        );
+      });
+
+      svg.addEventListener("mouseleave", hideAll);
+    });
+  };
+
+  setupRadarHoverDots();
+  document.addEventListener("astro:after-swap", setupRadarHoverDots);
+  document.addEventListener("starwind:init", setupRadarHoverDots);
+</script>
