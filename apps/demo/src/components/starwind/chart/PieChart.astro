@@ -149,12 +149,15 @@ function buildSlicesFor(
   // unchanged but slices land exactly where shadcn's do.
   let theta = 0; // Recharts angle (radians), CCW from 3 o'clock
   const halfPad = padRad / 2;
-  let idx = 0;
+  let dataIdx = 0;
 
   for (const d of sliceData) {
     const name = String(d[nameKey]);
     const val = Number(d[sliceDataKey] ?? 0);
-    if (val <= 0) continue;
+    if (val <= 0) {
+      dataIdx++;
+      continue;
+    }
     const pct = sliceTotal > 0 ? val / sliceTotal : 0;
     const sweep = pct * 2 * Math.PI;
     const thetaStart = theta + halfPad;
@@ -164,7 +167,7 @@ function buildSlicesFor(
     const midA = -(thetaStart + thetaEnd) / 2;
 
     // Active slice gets a 10px outer-radius bump (donut-active / interactive).
-    const sliceOuter = activIdx === idx ? oR + 10 : oR;
+    const sliceOuter = activIdx === dataIdx ? oR + 10 : oR;
 
     const labelR = sliceOuter + 16;
     const lx = fmt(cx + Math.cos(midA) * labelR);
@@ -198,7 +201,7 @@ function buildSlicesFor(
     });
 
     theta += sweep;
-    idx++;
+    dataIdx++;
   }
   return result;
 }

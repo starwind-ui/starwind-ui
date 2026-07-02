@@ -68,6 +68,9 @@ function naturalControl(v: number[]): [number[], number[]] {
 
 function naturalSegments(pts: Point[]): string {
   if (pts.length < 2) return "";
+  // d3 curveNatural draws exactly two points as a straight segment; the
+  // tridiagonal solve below assumes at least three points.
+  if (pts.length === 2) return linearSegments(pts);
   const [ax, bx] = naturalControl(pts.map((p) => p.x));
   const [ay, by] = naturalControl(pts.map((p) => p.y));
   return pts

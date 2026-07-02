@@ -8,6 +8,13 @@
 <script>
   type TooltipItem = { series: string; label: string; value: string; color?: string };
 
+  // Escape chart-derived text before it is spliced into innerHTML (XSS-safe with untrusted data).
+  const escapeHtml = (s: string) =>
+    String(s).replace(
+      /[&<>"']/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+    );
+
   class ChartTooltipHandler {
     private chart: HTMLElement;
     private tooltip: HTMLElement;
@@ -87,13 +94,13 @@
             (item.color && item.color.trim()) || color || `var(--color-${item.series})`;
           const dot = hideIndicator
             ? ""
-            : `<span style="width:10px;height:10px;border-radius:2px;background:${swatch};flex-shrink:0"></span>`;
+            : `<span style="width:10px;height:10px;border-radius:2px;background:${escapeHtml(swatch)};flex-shrink:0"></span>`;
           return `
             <div style="display:flex;width:100%;align-items:center;gap:8px">
               ${dot}
               <div style="display:flex;flex:1;align-items:center;justify-content:space-between;line-height:1">
-                <span style="color:var(--muted-foreground)">${item.label}</span>
-                <span style="font-family:monospace;font-weight:500;font-variant-numeric:tabular-nums;color:var(--foreground)">${item.value}</span>
+                <span style="color:var(--muted-foreground)">${escapeHtml(item.label)}</span>
+                <span style="font-family:monospace;font-weight:500;font-variant-numeric:tabular-nums;color:var(--foreground)">${escapeHtml(item.value)}</span>
               </div>
             </div>
           `;
@@ -102,7 +109,7 @@
 
       this.content.innerHTML = `
         <div style="display:grid;gap:6px">
-          ${hideLabel ? "" : `<div style="font-weight:500;line-height:1">${category}</div>`}
+          ${hideLabel ? "" : `<div style="font-weight:500;line-height:1">${escapeHtml(category)}</div>`}
           ${rows}
         </div>
       `;
