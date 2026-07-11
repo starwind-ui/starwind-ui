@@ -45,7 +45,9 @@ pnpm publish:beta
 ```
 
 Both commands regenerate package and registry artifacts, then run the complete beta gate: repository
-verification, Astro and React browser smoke tests, dependency audit, and package-size budgets.
+verification, Astro and React browser smoke tests, dependency audit, and package-size budgets. After
+the gate, they rebuild the publishable JavaScript packages directly so a Turbo cache restore cannot
+leave obsolete files in `dist` before packing.
 
 Package-size release blocking uses Starwind's absolute minified-plus-gzip ceilings. Matched-support
 measurements against Zag and Base UI remain visible as comparison advisories, but competitor ordering
