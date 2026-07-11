@@ -8,8 +8,13 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
+  verify:
+    name: Verify
+    uses: ./.github/workflows/verify.yml
+
   release:
     name: Release
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
       contents: write

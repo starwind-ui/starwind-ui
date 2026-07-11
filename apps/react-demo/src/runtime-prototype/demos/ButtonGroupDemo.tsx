@@ -1,0 +1,215 @@
+import {
+  Button,
+  ButtonGroup,
+  ButtonGroupSeparator,
+  ButtonGroupText,
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownSeparator,
+  DropdownTrigger,
+  IconArrowLeft,
+  IconArrowRight,
+  IconBold,
+  IconChevronDown,
+  IconInfoCircle,
+  IconItalic,
+  IconSearch,
+  IconUnderline,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../kit";
+
+export function ButtonGroupDemo() {
+  return (
+    <section className="space-y-4" id="runtime-button-group-demo">
+      <h2 className="font-heading text-xl font-semibold">Button Group</h2>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Horizontal</p>
+          <ButtonGroup id="runtime-button-group-horizontal">
+            <Button id="runtime-button-group-horizontal-left" variant="outline">
+              Left
+            </Button>
+            <Button id="runtime-button-group-horizontal-middle" variant="outline">
+              Middle
+            </Button>
+            <Button id="runtime-button-group-horizontal-right" variant="outline">
+              Right
+            </Button>
+          </ButtonGroup>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Horizontal with Separator</p>
+          <ButtonGroup id="runtime-button-group-horizontal-separators">
+            <Button variant="outline" aria-label="Bold">
+              <IconBold className="size-4" />
+            </Button>
+            <ButtonGroupSeparator id="runtime-button-group-horizontal-separator-one" />
+            <Button variant="outline" aria-label="Italic">
+              <IconItalic className="size-4" />
+            </Button>
+            <ButtonGroupSeparator id="runtime-button-group-horizontal-separator-two" />
+            <Button variant="outline" aria-label="Underline">
+              <IconUnderline className="size-4" />
+            </Button>
+          </ButtonGroup>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Vertical</p>
+          <ButtonGroup orientation="vertical" id="runtime-button-group-vertical">
+            <Button variant="outline">Top</Button>
+            <Button variant="outline">Middle</Button>
+            <Button variant="outline">Bottom</Button>
+          </ButtonGroup>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Vertical with Separator</p>
+          <ButtonGroup orientation="vertical" id="runtime-button-group-vertical-separators">
+            <Button variant="outline">Account</Button>
+            <ButtonGroupSeparator
+              orientation="horizontal"
+              id="runtime-button-group-vertical-separator-one"
+            />
+            <Button variant="outline">Settings</Button>
+            <ButtonGroupSeparator
+              orientation="horizontal"
+              id="runtime-button-group-vertical-separator-two"
+            />
+            <Button variant="outline">Logout</Button>
+          </ButtonGroup>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Different Variants</p>
+          <ButtonGroup id="runtime-button-group-variants">
+            <Button variant="primary">Save</Button>
+            <Button variant="secondary">Skip</Button>
+            <Button variant="outline">Reset</Button>
+          </ButtonGroup>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Text Label</p>
+          <ButtonGroup id="runtime-button-group-text-label">
+            <ButtonGroupText id="runtime-button-group-text">
+              <IconInfoCircle className="size-4" />
+              Format:
+            </ButtonGroupText>
+            <Button variant="outline" aria-label="Bold">
+              <IconBold className="size-4" />
+            </Button>
+            <Button variant="outline" aria-label="Italic">
+              <IconItalic className="size-4" />
+            </Button>
+            <Button variant="outline" aria-label="Underline">
+              <IconUnderline className="size-4" />
+            </Button>
+          </ButtonGroup>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">With Dropdown</p>
+          <ButtonGroup id="runtime-button-group-dropdown">
+            <Button variant="outline">Follow</Button>
+            <Dropdown>
+              <DropdownTrigger asChild>
+                <Button
+                  id="runtime-button-group-dropdown-trigger"
+                  variant="outline"
+                  size="icon"
+                  aria-label="More follow actions"
+                >
+                  <IconChevronDown className="size-4" />
+                </Button>
+              </DropdownTrigger>
+              <DropdownContent align="end" className="min-w-52">
+                <DropdownItem>Mute conversation</DropdownItem>
+                <DropdownItem>Mark as read</DropdownItem>
+                <DropdownItem>Report conversation</DropdownItem>
+                <DropdownSeparator />
+                <DropdownItem>Delete conversation</DropdownItem>
+              </DropdownContent>
+            </Dropdown>
+          </ButtonGroup>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">With Input</p>
+          <ButtonGroup id="runtime-button-group-input" className="w-full">
+            <Input placeholder="Search..." aria-label="Search query" />
+            <Button variant="outline" aria-label="Search">
+              <IconSearch className="size-4" />
+            </Button>
+          </ButtonGroup>
+        </div>
+
+        <div className="space-y-2 lg:col-span-2">
+          <p className="text-sm font-medium">With Select</p>
+          <ButtonGroup id="runtime-button-group-select">
+            <ButtonGroup id="runtime-button-group-select-amount">
+              <Select defaultValue="usd" name="reactRuntimeButtonGroupCurrency">
+                <SelectTrigger
+                  id="runtime-button-group-select-trigger"
+                  className="font-mono"
+                  placeholder="USD"
+                >
+                  <SelectValue placeholder="USD" />
+                </SelectTrigger>
+                <SelectContent id="runtime-button-group-select-content" className="min-w-24">
+                  <SelectItem value="usd">USD</SelectItem>
+                  <SelectItem value="eur">EUR</SelectItem>
+                  <SelectItem value="gbp">GBP</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input placeholder="10.00" pattern="[0-9]*" aria-label="Amount" />
+            </ButtonGroup>
+            <ButtonGroup id="runtime-button-group-select-send">
+              <Button aria-label="Send amount" size="icon" variant="outline">
+                <IconArrowRight className="size-4" />
+              </Button>
+            </ButtonGroup>
+          </ButtonGroup>
+        </div>
+
+        <div className="space-y-2 lg:col-span-2">
+          <p className="text-sm font-medium">Nested Groups</p>
+          <ButtonGroup id="runtime-button-group-nested">
+            <ButtonGroup id="runtime-button-group-nested-pages">
+              <Button variant="outline" size="sm">
+                1
+              </Button>
+              <Button variant="outline" size="sm">
+                2
+              </Button>
+              <Button variant="outline" size="sm">
+                3
+              </Button>
+              <Button variant="outline" size="sm">
+                4
+              </Button>
+              <Button variant="outline" size="sm">
+                5
+              </Button>
+            </ButtonGroup>
+            <ButtonGroup id="runtime-button-group-nested-arrows">
+              <Button variant="outline" size="icon-sm" aria-label="Previous">
+                <IconArrowLeft className="size-4" />
+              </Button>
+              <Button variant="outline" size="icon-sm" aria-label="Next">
+                <IconArrowRight className="size-4" />
+              </Button>
+            </ButtonGroup>
+          </ButtonGroup>
+        </div>
+      </div>
+    </section>
+  );
+}

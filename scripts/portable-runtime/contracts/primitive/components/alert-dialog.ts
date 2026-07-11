@@ -1,0 +1,237 @@
+import type { RuntimeAdapterContract } from "../types.js";
+
+export const alertDialogRuntimeAdapterContract = {
+  component: "alert-dialog",
+  category: "dialog-native-overlay",
+  displayName: "AlertDialog",
+  runtime: {
+    factory: "createAlertDialog",
+    importSource: "@starwind-ui/runtime/alert-dialog",
+    rootPart: "root",
+    optionProps: [
+      "closeOnEscape",
+      "closeOnOutsideInteract",
+      "defaultOpen",
+      "modal",
+      "onCloseComplete",
+      "onOpenChange",
+      "open",
+    ],
+    optionPropLifecycles: {
+      closeOnEscape: "constructor-only",
+      closeOnOutsideInteract: "constructor-only",
+      defaultOpen: "constructor-only",
+      modal: "constructor-only",
+      onCloseComplete: "constructor-only",
+      onOpenChange: "constructor-only",
+      open: "setter-backed",
+    },
+    destroys: true,
+  },
+  parts: [
+    {
+      name: "root",
+      defaultElement: "div",
+      discoveryAttribute: "data-sw-alert-dialog",
+      forwardsRef: true,
+      ownsRuntime: true,
+      initialAttributes: [
+        { name: "data-default-open", source: "prop" },
+        { name: "data-close-on-escape", source: "prop" },
+        { name: "data-close-on-outside-interact", source: "prop" },
+        { name: "data-modal", source: "prop" },
+        { name: "data-state", source: "state" },
+      ],
+    },
+    {
+      name: "trigger",
+      defaultElement: "button",
+      discoveryAttribute: "data-sw-alert-dialog-trigger",
+      forwardsRef: true,
+      initialAttributes: [
+        { name: "type", source: "constant", value: "button" },
+        { name: "aria-haspopup", source: "constant", value: "dialog" },
+        { name: "data-sw-alert-dialog-target-id", source: "prop" },
+        { name: "data-state", source: "state" },
+      ],
+    },
+    {
+      name: "portal",
+      defaultElement: "div",
+      discoveryAttribute: "data-sw-alert-dialog-portal",
+      forwardsRef: true,
+    },
+    {
+      name: "backdrop",
+      defaultElement: "div",
+      discoveryAttribute: "data-sw-alert-dialog-backdrop",
+      forwardsRef: true,
+      initialAttributes: [
+        { name: "data-state", source: "state" },
+        { name: "hidden", source: "state" },
+      ],
+    },
+    {
+      name: "viewport",
+      defaultElement: "div",
+      discoveryAttribute: "data-sw-alert-dialog-viewport",
+      forwardsRef: true,
+    },
+    {
+      name: "popup",
+      defaultElement: "dialog",
+      discoveryAttribute: "data-sw-alert-dialog-popup",
+      forwardsRef: true,
+      role: "alertdialog",
+      initialAttributes: [
+        { name: "role", source: "constant", value: "alertdialog" },
+        { name: "data-state", source: "state" },
+      ],
+    },
+    {
+      name: "title",
+      defaultElement: "h2",
+      discoveryAttribute: "data-sw-alert-dialog-title",
+      forwardsRef: true,
+    },
+    {
+      name: "description",
+      defaultElement: "p",
+      discoveryAttribute: "data-sw-alert-dialog-description",
+      forwardsRef: true,
+    },
+    {
+      name: "close",
+      defaultElement: "button",
+      discoveryAttribute: "data-sw-alert-dialog-close",
+      forwardsRef: true,
+      initialAttributes: [{ name: "type", source: "constant", value: "button" }],
+    },
+  ],
+  props: [
+    { name: "open", kind: "control", targets: ["root"], type: "boolean" },
+    {
+      defaultValue: "false",
+      name: "defaultOpen",
+      kind: "control",
+      targets: ["root"],
+      type: "boolean",
+    },
+    { defaultValue: "true", name: "closeOnEscape", kind: "option", type: "boolean" },
+    {
+      defaultValue: "false",
+      name: "closeOnOutsideInteract",
+      kind: "option",
+      type: "boolean",
+    },
+    { defaultValue: "true", name: "modal", kind: "option", type: "boolean" },
+    { name: "onCloseComplete", kind: "callback", type: "AlertDialogCloseCompleteDetails" },
+    { name: "onOpenChange", kind: "callback", type: "AlertDialogOpenChangeDetails" },
+    { name: "targetId", kind: "attribute", targets: ["trigger"], type: "string" },
+  ],
+  stateModels: [
+    {
+      name: "open",
+      controlledProp: "open",
+      defaultProp: "defaultOpen",
+      initialAttribute: "data-default-open",
+      runtimeGetter: "getOpen",
+      runtimeSetter: "setOpen",
+      valueType: "boolean",
+      controlledStateSync: "unsupported",
+    },
+  ],
+  events: [
+    {
+      name: "closeComplete",
+      callbackTiming: "after-state-commit",
+      cancelable: false,
+      callbackProp: "onCloseComplete",
+      detailsType: "AlertDialogCloseCompleteDetails",
+      domEvent: "starwind:close-complete",
+      emitsFrom: "root",
+      valueProperty: "open",
+      valueType: "boolean",
+    },
+    {
+      name: "openChange",
+      callbackTiming: "before-state-commit",
+      cancelable: true,
+      callbackProp: "onOpenChange",
+      detailsType: "AlertDialogOpenChangeDetails",
+      domEvent: "starwind:open-change",
+      emitsFrom: "root",
+      valueProperty: "open",
+      valueType: "boolean",
+    },
+  ],
+  setters: [
+    { method: "setOpen", options: { emit: false }, stateModel: "open", suppressesEmit: true },
+  ],
+  presence: {
+    initialHiddenParts: ["backdrop"],
+    unmountPolicy: "runtime-owned",
+  },
+  refs: [
+    { part: "root", public: true },
+    { part: "trigger", public: true },
+    { part: "portal", public: true },
+    { part: "backdrop", public: true },
+    { part: "viewport", public: true },
+    { part: "popup", public: true },
+    { part: "title", public: true },
+    { part: "description", public: true },
+    { part: "close", public: true },
+  ],
+  initialMarkup: [
+    {
+      part: "root",
+      attributes: [
+        "data-sw-alert-dialog",
+        "data-default-open",
+        "data-close-on-escape",
+        "data-close-on-outside-interact",
+        "data-modal",
+        "data-state",
+      ],
+      reason:
+        "The alert dialog root needs default-open, dismissal, modality, and initial state markers before hydration.",
+    },
+    {
+      part: "trigger",
+      attributes: [
+        "data-sw-alert-dialog-trigger",
+        "type",
+        "aria-haspopup",
+        "data-sw-alert-dialog-target-id",
+        "data-state",
+      ],
+      reason:
+        "Triggers need button semantics, dialog affordances, and initial closed state before activation listeners attach.",
+    },
+    {
+      part: "backdrop",
+      attributes: ["data-sw-alert-dialog-backdrop", "data-state", "hidden"],
+      reason: "The backdrop starts hidden and receives runtime-owned open/close visibility.",
+    },
+    {
+      part: "popup",
+      attributes: ["data-sw-alert-dialog-popup", "role", "data-state"],
+      reason:
+        "The native popup starts closed with alertdialog semantics before runtime normalization maps it onto the Dialog controller.",
+    },
+    {
+      part: "close",
+      attributes: ["data-sw-alert-dialog-close", "type"],
+      reason: "Action/cancel controls need button semantics before runtime listeners attach.",
+    },
+  ],
+  frameworkNotes: {
+    astro: [
+      "Render static alert-dialog anatomy and self-initialize; runtime normalizes Alert Dialog parts onto the shared Dialog controller.",
+    ],
+    react: [
+      "Bridge controlled open state through setOpen, wire onOpenChange through the factory for cancellable before-commit callbacks, and recreate on constructor-only option changes.",
+    ],
+  },
+} as const satisfies RuntimeAdapterContract;

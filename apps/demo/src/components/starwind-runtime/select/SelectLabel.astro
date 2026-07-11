@@ -1,0 +1,17 @@
+---
+import SelectPrimitive from "@starwind-ui/astro/select";
+import type { HTMLAttributes } from "astro/types";
+import { selectLabel } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<SelectPrimitive.GroupLabel
+  class={selectLabel({ class: className })}
+  {...rest}
+  data-slot="select-label"
+>
+  <slot />
+</SelectPrimitive.GroupLabel>

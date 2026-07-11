@@ -1,0 +1,202 @@
+---
+import { button } from "@/components/starwind-runtime/button/variants";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/starwind-runtime/select";
+
+const selectThemes = [
+  { label: "Light", value: "light" },
+  { label: "System", value: "system" },
+  { label: "Dark", value: "dark" },
+  { disabled: true, label: "High contrast", value: "contrast" },
+];
+const selectDensity = [
+  { label: "Compact", value: "compact" },
+  { label: "Comfortable", value: "comfortable" },
+  { label: "Spacious", value: "spacious" },
+];
+const selectAlignmentOptions = [
+  { label: "Owner", value: "owner" },
+  { label: "Editor", value: "editor" },
+  { label: "Viewer", value: "viewer" },
+];
+const selectScrollableItems = Array.from({ length: 64 }, (_, index) => {
+  const number = String(index + 1).padStart(2, "0");
+
+  return { label: `Item ${number}`, value: `item-${number}` };
+});
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Select</h2>
+  <div class="grid gap-6 md:grid-cols-2">
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Uncontrolled form value</h3>
+      <Select
+        id="runtime-select-theme"
+        defaultValue="system"
+        name="runtimeTheme"
+        required
+        class="w-72"
+      >
+        <SelectTrigger
+          id="runtime-select-theme-trigger"
+          class="runtime-select-trigger-custom w-full"
+          placeholder="Pick theme"
+        />
+        <SelectContent id="runtime-select-theme-content">
+          <SelectGroup>
+            <SelectLabel>Appearance</SelectLabel>
+            {
+              selectThemes.map((item) => (
+                <SelectItem
+                  id={`runtime-select-theme-${item.value}`}
+                  value={item.value}
+                  disabled={item.disabled}
+                >
+                  {item.label}
+                </SelectItem>
+              ))
+            }
+            <SelectSeparator />
+            <SelectItem id="runtime-select-theme-auto" value="auto"> Auto detect </SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">asChild trigger</h3>
+      <Select id="runtime-select-density" defaultValue="comfortable" name="runtimeDensity">
+        <SelectTrigger asChild showIcon={false} class={button({ variant: "outline" })}>
+          <button id="runtime-select-density-trigger" type="button">
+            <SelectValue placeholder="Density" />
+          </button>
+        </SelectTrigger>
+        <SelectContent id="runtime-select-density-content" sideOffset={6}>
+          {
+            selectDensity.map((item) => (
+              <SelectItem id={`runtime-select-density-${item.value}`} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))
+          }
+        </SelectContent>
+      </Select>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Read-only form metadata</h3>
+      <Select
+        id="runtime-select-readonly"
+        defaultValue="dark"
+        name="runtimeReadonlyTheme"
+        form="runtime-settings-form"
+        autoComplete="organization"
+        readOnly
+        class="w-72"
+      >
+        <SelectTrigger id="runtime-select-readonly-trigger" class="w-full" placeholder="Theme" />
+        <SelectContent id="runtime-select-readonly-content">
+          {
+            selectThemes
+              .filter((item) => !item.disabled)
+              .map((item) => (
+                <SelectItem id={`runtime-select-readonly-${item.value}`} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))
+          }
+        </SelectContent>
+      </Select>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">No hover highlight</h3>
+      <Select
+        id="runtime-select-no-hover"
+        defaultValue="compact"
+        name="runtimeNoHoverDensity"
+        highlightItemOnHover={false}
+        class="w-72"
+      >
+        <SelectTrigger id="runtime-select-no-hover-trigger" class="w-full" placeholder="Density" />
+        <SelectContent id="runtime-select-no-hover-content">
+          {
+            selectDensity.map((item) => (
+              <SelectItem id={`runtime-select-no-hover-${item.value}`} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))
+          }
+        </SelectContent>
+      </Select>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Item-aligned positioner</h3>
+      <Select
+        id="runtime-select-aligned"
+        defaultValue="editor"
+        name="runtimeAlignedRole"
+        class="w-72"
+      >
+        <SelectTrigger id="runtime-select-aligned-trigger" class="w-full" placeholder="Role" />
+        <SelectContent id="runtime-select-aligned-content" alignItemWithTrigger>
+          {
+            selectAlignmentOptions.map((item) => (
+              <SelectItem id={`runtime-select-aligned-${item.value}`} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))
+          }
+        </SelectContent>
+      </Select>
+      <Select
+        id="runtime-select-standard"
+        defaultValue="editor"
+        name="runtimeStandardRole"
+        class="w-72"
+      >
+        <SelectTrigger id="runtime-select-standard-trigger" class="w-full" placeholder="Role" />
+        <SelectContent id="runtime-select-standard-content" alignItemWithTrigger={false}>
+          {
+            selectAlignmentOptions.map((item) => (
+              <SelectItem id={`runtime-select-standard-${item.value}`} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))
+          }
+        </SelectContent>
+      </Select>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Scrollable options</h3>
+      <Select
+        id="runtime-select-scroll"
+        defaultValue="item-01"
+        name="runtimeScrollableItem"
+        class="w-72"
+      >
+        <SelectTrigger id="runtime-select-scroll-trigger" class="w-full" placeholder="Item" />
+        <SelectContent id="runtime-select-scroll-content">
+          {
+            selectScrollableItems.map((item) => (
+              <SelectItem id={`runtime-select-scroll-${item.value}`} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))
+          }
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
+</section>

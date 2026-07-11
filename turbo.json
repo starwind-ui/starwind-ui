@@ -13,9 +13,6 @@
     "preview": {
       "dependsOn": ["build"]
     },
-    "lint": {
-      "outputs": []
-    },
     "typecheck": {
       "outputs": []
     },

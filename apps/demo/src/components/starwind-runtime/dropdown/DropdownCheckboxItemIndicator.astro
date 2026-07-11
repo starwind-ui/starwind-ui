@@ -1,0 +1,17 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownCheckboxItemIndicator } from "./variants";
+
+type Props = HTMLAttributes<"span">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<MenuPrimitive.CheckboxItemIndicator
+  class={dropdownCheckboxItemIndicator({ class: className })}
+  {...rest}
+  data-slot="dropdown-checkbox-item-indicator"
+>
+  <slot />
+</MenuPrimitive.CheckboxItemIndicator>

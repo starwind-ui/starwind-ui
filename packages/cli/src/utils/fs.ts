@@ -1,11 +1,14 @@
 import fs from "fs-extra";
+import { parse, printParseErrorCode, type ParseError } from "jsonc-parser";
+
+import { resolveProjectMutationPath } from "./project-path.js";
 
 /**
  * Ensures a directory exists, creating it and its parents if necessary
  * @param dir - Directory path to ensure exists
  */
 export async function ensureDirectory(dir: string) {
-  await fs.ensureDir(dir);
+  await fs.ensureDir(await resolveProjectMutationPath(dir));
 }
 
 /**
@@ -26,13 +29,28 @@ export async function readJsonFile(filePath: string) {
   return fs.readJson(filePath);
 }
 
+export async function readJsoncFile(filePath: string): Promise<unknown> {
+  const source = await fs.readFile(filePath, "utf8");
+  const errors: ParseError[] = [];
+  const value = parse(source, errors, { allowTrailingComma: true });
+
+  if (errors.length > 0) {
+    const firstError = errors[0]!;
+    throw new Error(
+      `${filePath}: ${printParseErrorCode(firstError.error)} at offset ${firstError.offset}`,
+    );
+  }
+
+  return value;
+}
+
 /**
  * Writes data to a JSON file
  * @param filePath - Path to write the JSON file
  * @param data - Data to write to the file
  */
 export async function writeJsonFile(filePath: string, data: unknown) {
-  await fs.writeJson(filePath, data, { spaces: 2 });
+  await fs.writeJson(await resolveProjectMutationPath(filePath), data, { spaces: 2 });
 }
 
 /**
@@ -50,5 +68,5 @@ export async function fileExists(filePath: string) {
  * @param content - CSS content to write
  */
 export async function writeCssFile(filePath: string, content: string) {
-  await fs.writeFile(filePath, content, "utf-8");
+  await fs.writeFile(await resolveProjectMutationPath(filePath), content, "utf-8");
 }

@@ -1,0 +1,53 @@
+{
+  "name": "@starwind-ui/astro",
+  "version": "0.1.0-beta.1",
+  "description": "Astro primitive adapters for Starwind UI Runtime components",
+  "license": "MIT",
+  "author": {
+    "name": "boston343",
+    "url": "https://x.com/boston343builds"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/starwind-ui/starwind-ui.git",
+    "directory": "packages/astro"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./*": {
+      "types": "./src/*/index.ts",
+      "import": "./src/*/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "astro check",
+    "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{astro,ts,md,json}\"",
+    "format:write": "prettier --ignore-path ../../.prettierignore --write \"**/*.{astro,ts,md,json}\" --cache",
+    "publish:beta": "pnpm publish --tag beta --access public",
+    "publish:next": "pnpm publish --tag next --access public",
+    "publish:release": "pnpm publish --access public"
+  },
+  "dependencies": {
+    "@starwind-ui/runtime": "workspace:*"
+  },
+  "peerDependencies": {
+    "astro": ">=5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.8",
+    "astro": "^7.0.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

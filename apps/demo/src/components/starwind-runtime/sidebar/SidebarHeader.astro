@@ -1,0 +1,20 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { sidebarHeader } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  "data-slot"?: string;
+};
+
+const { "data-slot": dataSlot = "sidebar-header", class: className, ...rest } = Astro.props;
+---
+
+<div
+  class={sidebarHeader({ class: className })}
+  data-sidebar="header"
+  {...rest}
+  data-slot={dataSlot}
+>
+  <slot />
+</div>

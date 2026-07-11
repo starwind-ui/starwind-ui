@@ -1,0 +1,31 @@
+---
+import FormPrimitive from "@starwind-ui/astro/form";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { form } from "./variants";
+
+interface Props extends HTMLAttributes<"form">, VariantProps<typeof form> {
+  errorVisibility?: import("@starwind-ui/astro/form").FormValidationTiming;
+  revalidationTiming?: import("@starwind-ui/astro/form").FormValidationTiming;
+  validationTiming?: import("@starwind-ui/astro/form").FormValidationTiming;
+}
+
+const {
+  errorVisibility,
+  revalidationTiming,
+  validationTiming,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<FormPrimitive.Root
+  class={form({ class: className })}
+  errorVisibility={errorVisibility}
+  revalidationTiming={revalidationTiming}
+  validationTiming={validationTiming}
+  {...rest}
+  data-slot="form"
+>
+  <slot />
+</FormPrimitive.Root>

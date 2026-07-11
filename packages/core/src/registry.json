@@ -136,7 +136,7 @@
       "version": "1.0.2",
       "dependencies": ["@starwind-ui/core/toggle@^1.0.1"]
     },
-    { "name": "toast", "type": "component", "version": "1.0.2", "dependencies": [] },
+    { "name": "toast", "type": "component", "version": "1.0.3", "dependencies": [] },
     { "name": "toggle", "type": "component", "version": "1.0.3", "dependencies": [] },
     {
       "name": "tooltip",

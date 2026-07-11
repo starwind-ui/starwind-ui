@@ -1,0 +1,95 @@
+---
+import Mail from "@tabler/icons/outline/mail.svg";
+
+import { Badge } from "@/components/starwind-runtime/badge";
+
+const badgeTones = [
+  { tone: "neutral", label: "Neutral" },
+  { tone: "primary", label: "Primary" },
+  { tone: "primary-accent", label: "Primary accent" },
+  { tone: "secondary", label: "Secondary" },
+  { tone: "secondary-accent", label: "Secondary accent" },
+  { tone: "info", label: "Info" },
+  { tone: "success", label: "Success" },
+  { tone: "warning", label: "Warning" },
+  { tone: "error", label: "Error" },
+] as const;
+
+const badgeAppearances = ["solid", "soft", "outline", "text", "frosted"] as const;
+const linkBadgeTones = new Set(["primary", "secondary", "info"]);
+---
+
+<section class="mb-12" id="runtime-badge-demo">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Badge</h2>
+  <div class="space-y-6">
+    <div class="space-y-2">
+      <h3 class="text-muted-foreground text-sm font-medium">Legacy variants</h3>
+      <div class="flex flex-wrap items-center gap-3">
+        <Badge>Default</Badge>
+        <Badge variant="primary">Primary</Badge>
+        <Badge variant="secondary">Secondary</Badge>
+        <Badge variant="outline">Outline</Badge>
+        <Badge variant="info">Info</Badge>
+        <Badge variant="ghost">Ghost</Badge>
+        <Badge variant="success" size="sm">Success</Badge>
+        <Badge variant="warning" size="lg">Warning</Badge>
+        <Badge variant="error">Error</Badge>
+        <Badge href="/" variant="primary" size="lg">Link badge</Badge>
+        <Badge variant="primary" size="sm"><Mail />Primary sm</Badge>
+        <Badge variant="primary" size="md"><Mail />Primary md</Badge>
+        <Badge variant="primary" size="lg"><Mail />Primary lg</Badge>
+      </div>
+    </div>
+
+    {
+      badgeAppearances.map((appearance) => (
+        <div class="space-y-2">
+          <h3 class="text-muted-foreground text-sm font-medium capitalize">{appearance}</h3>
+          <div class="flex flex-wrap items-center gap-3">
+            {badgeTones.map(({ tone, label }) => {
+              const isLink = linkBadgeTones.has(tone);
+
+              return (
+                <Badge
+                  href={isLink ? "https://starwind.dev" : undefined}
+                  tone={tone}
+                  appearance={appearance}
+                  target={isLink ? "_blank" : undefined}
+                  rel={isLink ? "noreferrer" : undefined}
+                >
+                  {isLink ? `${label} link` : label}
+                </Badge>
+              );
+            })}
+          </div>
+        </div>
+      ))
+    }
+
+    <div class="space-y-2">
+      <h3 class="text-muted-foreground text-sm font-medium">Eyebrow</h3>
+      <div class="flex flex-wrap items-center gap-3">
+        <Badge tone="primary-accent" appearance="text" size="sm" eyebrow>Small eyebrow</Badge>
+        <Badge tone="primary-accent" appearance="text" size="md" eyebrow>Medium eyebrow</Badge>
+        <Badge tone="primary-accent" appearance="text" size="lg" eyebrow>Large eyebrow</Badge>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <h3 class="text-muted-foreground text-sm font-medium">Composed examples</h3>
+      <div class="flex flex-wrap items-center gap-3">
+        <Badge tone="primary-accent" appearance="soft" size="lg"><Mail />Icon soft</Badge>
+        <Badge tone="info" appearance="outline"><Mail />Icon outline</Badge>
+        <Badge href="/" tone="primary-accent" appearance="soft" size="lg">
+          <Mail />Release notes
+        </Badge>
+      </div>
+      <div class="bg-primary flex flex-wrap items-center gap-3 rounded-lg border p-4">
+        <Badge href="/" tone="primary-accent" appearance="frosted" size="lg">
+          <Mail />Frosted link
+        </Badge>
+        <Badge tone="secondary-accent" appearance="frosted">Overlay label</Badge>
+      </div>
+    </div>
+  </div>
+</section>

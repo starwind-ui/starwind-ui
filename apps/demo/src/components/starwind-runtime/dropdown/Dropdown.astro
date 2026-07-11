@@ -1,0 +1,36 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+import { dropdown } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  defaultOpen?: boolean;
+  disabled?: boolean;
+  modal?: boolean;
+  openOnHover?: boolean;
+  closeDelay?: number;
+};
+
+const {
+  defaultOpen = false,
+  disabled = false,
+  modal = false,
+  openOnHover = false,
+  closeDelay = 200,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<MenuPrimitive.Root
+  class={dropdown({ class: className })}
+  defaultOpen={defaultOpen}
+  disabled={disabled}
+  modal={modal}
+  openOnHover={openOnHover}
+  closeDelay={closeDelay}
+  {...rest}
+  data-slot="dropdown"
+>
+  <slot />
+</MenuPrimitive.Root>

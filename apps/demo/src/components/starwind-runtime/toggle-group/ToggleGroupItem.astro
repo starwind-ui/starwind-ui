@@ -1,0 +1,45 @@
+---
+import TogglePrimitive from "@starwind-ui/astro/toggle";
+import type { HTMLAttributes } from "astro/types";
+import { toggleGroupItem } from "./variants";
+
+type Props = Omit<
+  HTMLAttributes<"button">,
+  "aria-pressed" | "defaultPressed" | "disabled" | "onChange" | "type" | "value"
+> & {
+  defaultPressed?: boolean;
+  disabled?: boolean;
+  nativeButton?: boolean;
+  pressed?: boolean;
+  size?: "sm" | "md" | "lg";
+  value?: string;
+  variant?: "default" | "outline";
+};
+
+const {
+  variant,
+  size,
+  defaultPressed,
+  disabled = false,
+  nativeButton,
+  pressed,
+  value,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<TogglePrimitive.Root
+  class={toggleGroupItem({ variant, size, class: className })}
+  data-variant={variant}
+  data-size={size}
+  defaultPressed={defaultPressed}
+  disabled={disabled}
+  nativeButton={nativeButton}
+  pressed={pressed}
+  value={value}
+  {...rest}
+  data-slot="toggle-group-item"
+>
+  <slot />
+</TogglePrimitive.Root>

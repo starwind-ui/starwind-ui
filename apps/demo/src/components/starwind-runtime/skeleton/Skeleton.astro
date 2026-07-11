@@ -1,0 +1,11 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { skeleton } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "children">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div data-sw-skeleton class={skeleton({ class: className })} {...rest} data-slot="skeleton"></div>

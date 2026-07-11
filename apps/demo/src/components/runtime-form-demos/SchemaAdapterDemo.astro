@@ -1,0 +1,174 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/starwind-runtime/field";
+import { Form, FormErrorSummary } from "@/components/starwind-runtime/form";
+---
+
+<section class="border-border mb-10 border-b pb-10">
+  <div class="mb-5 space-y-2">
+    <h2 class="font-heading text-2xl font-semibold tracking-tight">Schema adapter</h2>
+    <p class="text-muted-foreground text-sm">
+      A small helper maps Zod parser issues into Field errors without coupling the runtime to Zod.
+    </p>
+  </div>
+
+  <Form id="runtime-schema-validation-form" class="grid gap-4">
+    <FormErrorSummary aria-label="Schema errors">
+      <p class="font-medium">Review these errors</p>
+    </FormErrorSummary>
+
+    <Field name="runtimeSchemaEmail">
+      <FieldLabel>Work email</FieldLabel>
+      <FieldControl id="runtime-schema-email" value="ada@personal.test" />
+      <FieldDescription>Use an @example.com address to pass the schema.</FieldDescription>
+      <FieldError match="customError">Use an @example.com work email.</FieldError>
+    </Field>
+
+    <Field name="runtimeSchemaProject">
+      <FieldLabel>Project key</FieldLabel>
+      <FieldControl id="runtime-schema-project" value="sw" />
+      <FieldDescription>Use at least four characters.</FieldDescription>
+      <FieldError match="customError">Use at least four characters.</FieldError>
+    </Field>
+
+    <Field name="_form">
+      <FieldError match="customError">The root project key is reserved.</FieldError>
+    </Field>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <Button type="submit">Validate schema</Button>
+      <Button type="reset" variant="ghost">Reset</Button>
+    </div>
+  </Form>
+
+  <output
+    id="runtime-schema-validation-output"
+    class="text-muted-foreground mt-3 block text-sm whitespace-pre-wrap"
+  >
+    Submit to map Zod errors into FieldError.
+  </output>
+</section>
+
+<script>
+  import { z } from "zod";
+  import {
+    createForm,
+    validateFormSchema,
+    type FormSchemaResult,
+    type FormValues,
+  } from "@starwind-ui/astro/form";
+
+  const schemaForm = document.querySelector<HTMLFormElement>("#runtime-schema-validation-form");
+  const schemaOutput = document.querySelector<HTMLOutputElement>(
+    "#runtime-schema-validation-output",
+  );
+
+  const renderSchemaOutput = (text: string) => {
+    if (!schemaOutput) return;
+    schemaOutput.value = text;
+    schemaOutput.textContent = text;
+  };
+
+  const readFormValue = (value: FormDataEntryValue | FormDataEntryValue[] | undefined) =>
+    Array.isArray(value) ? String(value[0] ?? "") : String(value ?? "");
+
+  const readFormValues = (formElement: HTMLFormElement): FormValues => {
+    const values: FormValues = {};
+    const data = new FormData(formElement);
+
+    data.forEach((value, key) => {
+      const currentValue = values[key];
+      if (currentValue === undefined) {
+        values[key] = value;
+        return;
+      }
+
+      if (Array.isArray(currentValue)) {
+        currentValue.push(value);
+        return;
+      }
+
+      values[key] = [currentValue, value];
+    });
+
+    return values;
+  };
+
+  type SchemaDemoErrorEntry = string | { readonly message: string };
+  type SchemaDemoErrors = Record<string, SchemaDemoErrorEntry | readonly SchemaDemoErrorEntry[]>;
+
+  const renderSchemaErrorLines = (errors: SchemaDemoErrors) =>
+    Object.entries(errors).flatMap(([key, input]) => {
+      const entries = Array.isArray(input) ? input : [input];
+      return entries.map((entry) => `${key}: ${typeof entry === "string" ? entry : entry.message}`);
+    });
+
+  const runtimeZodSchema = z
+    .object({
+      runtimeSchemaEmail: z.string().refine((value) => value.endsWith("@example.com"), {
+        message: "Use an @example.com work email.",
+      }),
+      runtimeSchemaProject: z.string().min(4, {
+        message: "Use at least four characters.",
+      }),
+    })
+    .refine((value) => value.runtimeSchemaProject.toLowerCase() !== "root", {
+      message: "The root project key is reserved.",
+    });
+
+  const runtimeZodParser = (values: FormValues): FormSchemaResult => {
+    const result = runtimeZodSchema.safeParse({
+      runtimeSchemaEmail: readFormValue(values.runtimeSchemaEmail),
+      runtimeSchemaProject: readFormValue(values.runtimeSchemaProject),
+    });
+
+    if (result.success) {
+      return { success: true };
+    }
+
+    return {
+      issues: result.error.issues.map((issue) => ({
+        message: issue.message,
+        path: issue.path.length > 0 ? issue.path.map(String) : undefined,
+      })),
+      success: false,
+    };
+  };
+
+  schemaForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    if (!(formElement instanceof HTMLFormElement)) return;
+
+    const formInstance = createForm(formElement);
+    formInstance.clearExternalErrors();
+
+    const validation = validateFormSchema(readFormValues(formElement), runtimeZodParser);
+    if (!validation.valid) {
+      formInstance.setExternalErrors(validation.errors, { clearOnChange: true });
+      renderSchemaOutput(`Zod rejected\n${renderSchemaErrorLines(validation.errors).join("\n")}`);
+      return;
+    }
+
+    const entries = Array.from(new FormData(formElement).entries()).map(
+      ([key, value]) => `${key}: ${value}`,
+    );
+    renderSchemaOutput(`Zod accepted\n${entries.join("\n")}`);
+  });
+
+  schemaForm?.addEventListener("reset", (event) => {
+    const formElement = event.currentTarget;
+    if (!(formElement instanceof HTMLFormElement)) return;
+
+    window.setTimeout(() => {
+      createForm(formElement).clearExternalErrors();
+      renderSchemaOutput("Submit to map Zod errors into FieldError.");
+    }, 0);
+  });
+</script>

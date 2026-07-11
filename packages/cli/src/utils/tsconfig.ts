@@ -1,7 +1,8 @@
 import * as p from "@clack/prompts";
 
-import { fileExists, readJsonFile, writeJsonFile } from "@/utils/fs.js";
+import { fileExists, readJsoncFile, writeJsonFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
+import type { StarwindFramework } from "@/utils/config.js";
 
 /**
  * Required tsconfig.json configuration for Starwind UI
@@ -15,6 +16,7 @@ const REQUIRED_TSCONFIG = {
     },
   },
 } as const;
+const REACT_PATH_ALIAS = "./src/*";
 
 interface TsConfigPaths {
   [key: string]: string[];
@@ -37,22 +39,29 @@ interface TsConfig {
  * @param config - The parsed tsconfig.json content
  * @returns Object indicating what's missing
  */
-export function validateTsConfig(config: TsConfig): {
+export function validateTsConfig(
+  config: TsConfig,
+  framework: StarwindFramework = "astro",
+): {
   hasExtends: boolean;
   hasBaseUrl: boolean;
   hasPathAlias: boolean;
   isComplete: boolean;
 } {
-  const hasExtends = config.extends === REQUIRED_TSCONFIG.extends;
-  const hasBaseUrl = config.compilerOptions?.baseUrl === REQUIRED_TSCONFIG.compilerOptions.baseUrl;
+  const hasExtends = framework === "react" || config.extends === REQUIRED_TSCONFIG.extends;
+  const hasBaseUrl =
+    framework === "react" ||
+    config.compilerOptions?.baseUrl === REQUIRED_TSCONFIG.compilerOptions.baseUrl;
 
   // Check if the @/* path alias exists and points to src/*
   const paths = config.compilerOptions?.paths;
+  const requiredPathAlias =
+    framework === "react" ? REACT_PATH_ALIAS : REQUIRED_TSCONFIG.compilerOptions.paths["@/*"][0];
   const hasPathAlias =
     paths !== undefined &&
     "@/*" in paths &&
     Array.isArray(paths["@/*"]) &&
-    paths["@/*"].includes("src/*");
+    paths["@/*"].includes(requiredPathAlias);
 
   return {
     hasExtends,
@@ -67,8 +76,11 @@ export function validateTsConfig(config: TsConfig): {
  * @param existingConfig - The existing tsconfig.json content
  * @returns The merged configuration
  */
-export function mergeTsConfig(existingConfig: TsConfig): TsConfig {
-  const validation = validateTsConfig(existingConfig);
+export function mergeTsConfig(
+  existingConfig: TsConfig,
+  framework: StarwindFramework = "astro",
+): TsConfig {
+  const validation = validateTsConfig(existingConfig, framework);
 
   // If already complete, return as-is
   if (validation.isComplete) {
@@ -78,7 +90,7 @@ export function mergeTsConfig(existingConfig: TsConfig): TsConfig {
   const merged: TsConfig = { ...existingConfig };
 
   // Add extends if missing
-  if (!validation.hasExtends) {
+  if (framework === "astro" && !validation.hasExtends) {
     merged.extends = REQUIRED_TSCONFIG.extends;
   }
 
@@ -88,7 +100,7 @@ export function mergeTsConfig(existingConfig: TsConfig): TsConfig {
   }
 
   // Add baseUrl if missing
-  if (!validation.hasBaseUrl) {
+  if (framework === "astro" && !validation.hasBaseUrl) {
     merged.compilerOptions.baseUrl = REQUIRED_TSCONFIG.compilerOptions.baseUrl;
   }
 
@@ -97,13 +109,9 @@ export function mergeTsConfig(existingConfig: TsConfig): TsConfig {
     if (!merged.compilerOptions.paths) {
       merged.compilerOptions.paths = {};
     }
-    // Only add the @/* alias if it doesn't exist or doesn't have src/*
-    if (
-      !merged.compilerOptions.paths["@/*"] ||
-      !merged.compilerOptions.paths["@/*"].includes("src/*")
-    ) {
-      merged.compilerOptions.paths["@/*"] = REQUIRED_TSCONFIG.compilerOptions.paths["@/*"];
-    }
+    merged.compilerOptions.paths["@/*"] = [
+      framework === "react" ? REACT_PATH_ALIAS : REQUIRED_TSCONFIG.compilerOptions.paths["@/*"][0],
+    ];
   }
 
   return merged;
@@ -113,13 +121,17 @@ export function mergeTsConfig(existingConfig: TsConfig): TsConfig {
  * Creates a new tsconfig.json with the required configuration
  * @returns The default tsconfig configuration
  */
-export function createDefaultTsConfig(): TsConfig {
+export function createDefaultTsConfig(framework: StarwindFramework = "astro"): TsConfig {
   return {
-    extends: REQUIRED_TSCONFIG.extends,
+    ...(framework === "astro" ? { extends: REQUIRED_TSCONFIG.extends } : {}),
     compilerOptions: {
-      baseUrl: REQUIRED_TSCONFIG.compilerOptions.baseUrl,
+      ...(framework === "astro" ? { baseUrl: REQUIRED_TSCONFIG.compilerOptions.baseUrl } : {}),
       paths: {
-        "@/*": [...REQUIRED_TSCONFIG.compilerOptions.paths["@/*"]],
+        "@/*": [
+          framework === "react"
+            ? REACT_PATH_ALIAS
+            : REQUIRED_TSCONFIG.compilerOptions.paths["@/*"][0],
+        ],
       },
     },
   };
@@ -130,16 +142,18 @@ export function createDefaultTsConfig(): TsConfig {
  * Creates the file if it doesn't exist, or updates it if configuration is missing
  * @returns true if successful, false otherwise
  */
-export async function setupTsConfig(): Promise<boolean> {
-  const TSCONFIG_PATH = "tsconfig.json";
-
+export async function setupTsConfig(framework: StarwindFramework = "astro"): Promise<boolean> {
   try {
+    const TSCONFIG_PATH =
+      framework === "react" && (await fileExists("tsconfig.app.json"))
+        ? "tsconfig.app.json"
+        : "tsconfig.json";
     const exists = await fileExists(TSCONFIG_PATH);
 
     if (exists) {
       // Read existing config
-      const existingConfig = (await readJsonFile(TSCONFIG_PATH)) as TsConfig;
-      const validation = validateTsConfig(existingConfig);
+      const existingConfig = (await readJsoncFile(TSCONFIG_PATH)) as TsConfig;
+      const validation = validateTsConfig(existingConfig, framework);
 
       if (validation.isComplete) {
         // Config is already complete, nothing to do
@@ -147,11 +161,11 @@ export async function setupTsConfig(): Promise<boolean> {
       }
 
       // Merge required configuration
-      const mergedConfig = mergeTsConfig(existingConfig);
+      const mergedConfig = mergeTsConfig(existingConfig, framework);
       await writeJsonFile(TSCONFIG_PATH, mergedConfig);
     } else {
       // Create new config file
-      const defaultConfig = createDefaultTsConfig();
+      const defaultConfig = createDefaultTsConfig(framework);
       await writeJsonFile(TSCONFIG_PATH, defaultConfig);
     }
 

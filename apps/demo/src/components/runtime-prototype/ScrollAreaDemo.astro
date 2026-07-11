@@ -1,0 +1,180 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { ScrollArea, ScrollBar } from "@/components/starwind-runtime/scroll-area";
+
+const scrollAreaItems = [
+  "Build contracts",
+  "Generate Astro",
+  "Generate React",
+  "Run typecheck",
+  "Wire demos",
+  "Smoke Astro",
+  "Smoke React",
+  "Review diff",
+  "Commit slice",
+  "Continue Select",
+  "Continue Combobox",
+  "Continue Toast",
+];
+const scrollAreaCells = [
+  "Root",
+  "Viewport",
+  "Content",
+  "Scrollbar",
+  "Thumb",
+  "Corner",
+  "Overflow start",
+  "Overflow end",
+  "Track click",
+  "Wheel scroll",
+  "Thumb drag",
+  "Resize observer",
+  "Mutation observer",
+  "Corner",
+  "RTL",
+  "Focus ring",
+  "Hidden native bar",
+  "Cleanup",
+];
+const horizontalItems = ["Runtime", "Astro", "React", "Combobox", "Popover", "Toast", "Carousel"];
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Scroll Area</h2>
+  <div class="grid gap-6 md:grid-cols-2">
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Vertical list</h3>
+      <ScrollArea
+        id="runtime-scroll-area-default"
+        class="h-40 w-full max-w-md rounded-md border"
+        viewportClass="p-4"
+      >
+        <div class="space-y-2">
+          {
+            scrollAreaItems.map((item) => (
+              <div class="bg-muted/50 rounded-md px-3 py-2 text-sm">{item}</div>
+            ))
+          }
+        </div>
+      </ScrollArea>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Two-axis content</h3>
+      <ScrollArea
+        id="runtime-scroll-area-both"
+        class="h-40 w-full max-w-md rounded-md border"
+        viewportClass="p-4"
+      >
+        <div class="grid w-[36rem] grid-cols-3 gap-3">
+          {
+            scrollAreaCells.map((cell) => (
+              <div class="bg-muted/50 rounded-md px-3 py-2 text-sm font-medium">{cell}</div>
+            ))
+          }
+        </div>
+        <ScrollBar id="runtime-scroll-area-both-vertical-scrollbar" slot="scrollbar" />
+        <ScrollBar
+          id="runtime-scroll-area-both-horizontal-scrollbar"
+          slot="scrollbar"
+          orientation="horizontal"
+        />
+      </ScrollArea>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Horizontal</h3>
+      <ScrollArea
+        id="runtime-scroll-area-horizontal"
+        class="w-full max-w-md rounded-md border"
+        viewportClass="p-4"
+      >
+        <div class="flex w-max gap-3">
+          {
+            horizontalItems.map((item) => (
+              <div class="bg-muted/50 w-36 shrink-0 rounded-md px-3 py-6 text-center text-sm font-medium">
+                {item}
+              </div>
+            ))
+          }
+        </div>
+        <ScrollBar
+          id="runtime-scroll-area-horizontal-scrollbar"
+          slot="scrollbar"
+          orientation="horizontal"
+        />
+      </ScrollArea>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Horizontal RTL</h3>
+      <ScrollArea
+        id="runtime-scroll-area-horizontal-rtl"
+        dir="rtl"
+        class="w-full max-w-md rounded-md border"
+        viewportClass="p-4"
+      >
+        <div class="flex w-max gap-3">
+          {
+            horizontalItems.map((item) => (
+              <div class="bg-muted/50 w-36 shrink-0 rounded-md px-3 py-6 text-center text-sm font-medium">
+                {item}
+              </div>
+            ))
+          }
+        </div>
+        <ScrollBar
+          id="runtime-scroll-area-horizontal-rtl-scrollbar"
+          slot="scrollbar"
+          orientation="horizontal"
+        />
+      </ScrollArea>
+    </div>
+
+    <div class="space-y-3 md:col-span-2">
+      <div class="flex items-center justify-between gap-3">
+        <h3 class="font-heading text-base font-semibold">Dynamic content</h3>
+        <Button id="runtime-scroll-area-dynamic-toggle" type="button" variant="outline" size="sm">
+          Toggle rows
+        </Button>
+      </div>
+      <ScrollArea
+        id="runtime-scroll-area-dynamic"
+        class="h-36 w-full max-w-md rounded-md border"
+        viewportClass="p-4"
+      >
+        <div class="space-y-2">
+          {
+            scrollAreaItems
+              .slice(0, 4)
+              .map((item) => <div class="bg-muted/50 rounded-md px-3 py-2 text-sm">{item}</div>)
+          }
+          <div class="hidden space-y-2" data-runtime-scroll-area-extra>
+            {
+              scrollAreaItems
+                .slice(4)
+                .map((item) => <div class="bg-muted/50 rounded-md px-3 py-2 text-sm">{item}</div>)
+            }
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+  </div>
+</section>
+
+<script>
+  const setupRuntimeScrollAreaDynamicDemo = () => {
+    const toggle = document.getElementById("runtime-scroll-area-dynamic-toggle");
+    const extra = document.querySelector<HTMLElement>("[data-runtime-scroll-area-extra]");
+    if (!(toggle instanceof HTMLElement) || !extra) return;
+    if (toggle.dataset.runtimeScrollAreaReady === "true") return;
+
+    toggle.dataset.runtimeScrollAreaReady = "true";
+    toggle.addEventListener("click", () => {
+      extra.classList.toggle("hidden");
+    });
+  };
+
+  setupRuntimeScrollAreaDynamicDemo();
+  document.addEventListener("astro:after-swap", setupRuntimeScrollAreaDynamicDemo);
+</script>

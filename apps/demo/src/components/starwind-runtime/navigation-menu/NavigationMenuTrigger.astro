@@ -1,0 +1,65 @@
+---
+import NavigationMenuPrimitive from "@starwind-ui/astro/navigation-menu";
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
+import type { HTMLAttributes } from "astro/types";
+import { navigationMenuIndicator, navigationMenuTrigger } from "./variants";
+
+type Props = HTMLAttributes<"button"> & {
+  asChild?: boolean;
+  disabled?: boolean;
+  openDelay?: number;
+  closeDelay?: number;
+  showIcon?: boolean;
+  iconClass?: string;
+};
+
+const {
+  asChild = false,
+  disabled = false,
+  openDelay,
+  closeDelay,
+  showIcon = true,
+  iconClass: iconClassName,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+{
+  asChild ? (
+    <NavigationMenuPrimitive.Trigger
+      class={navigationMenuTrigger({ class: className })}
+      asChild={asChild}
+      disabled={disabled}
+      openDelay={openDelay}
+      closeDelay={closeDelay}
+      {...rest}
+      data-slot="navigation-menu-trigger"
+    >
+      <slot />
+    </NavigationMenuPrimitive.Trigger>
+  ) : (
+    <NavigationMenuPrimitive.Trigger
+      class={navigationMenuTrigger({ class: className })}
+      asChild={asChild}
+      disabled={disabled}
+      openDelay={openDelay}
+      closeDelay={closeDelay}
+      {...rest}
+      data-slot="navigation-menu-trigger"
+    >
+      <slot />
+
+      {showIcon && (
+        <NavigationMenuPrimitive.Icon
+          class={navigationMenuIndicator({ class: iconClassName })}
+          data-slot="navigation-menu-indicator"
+        >
+          <slot name="icon">
+            <ChevronDown />
+          </slot>
+        </NavigationMenuPrimitive.Icon>
+      )}
+    </NavigationMenuPrimitive.Trigger>
+  )
+}

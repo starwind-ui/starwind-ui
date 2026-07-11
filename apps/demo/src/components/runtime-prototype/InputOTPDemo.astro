@@ -1,0 +1,96 @@
+---
+import {
+  InputOtp,
+  InputOtpGroup,
+  InputOtpSeparator,
+  InputOtpSlot,
+  REGEXP_ONLY_DIGITS_AND_CHARS,
+} from "@/components/starwind-runtime/input-otp";
+import { Label } from "@/components/starwind-runtime/label";
+import { Button } from "@/components/starwind-runtime/button";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Input OTP</h2>
+  <form data-runtime-input-otp-form class="grid gap-6 sm:grid-cols-2">
+    <div class="grid gap-2">
+      <Label for="runtime-input-otp-default" size="sm">One-time code</Label>
+      <InputOtp id="runtime-input-otp-default" name="runtime-input-otp-default" defaultValue="12">
+        <InputOtpGroup>
+          <InputOtpSlot index={0} />
+          <InputOtpSlot index={1} />
+          <InputOtpSlot index={2} />
+          <InputOtpSlot index={3} />
+          <InputOtpSlot index={4} />
+          <InputOtpSlot index={5} />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+    <div class="grid gap-2">
+      <Label for="runtime-input-otp-recovery" size="sm">Recovery code</Label>
+      <InputOtp
+        id="runtime-input-otp-recovery"
+        name="runtime-input-otp-recovery"
+        maxLength={6}
+        pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+      >
+        <InputOtpGroup>
+          <InputOtpSlot index={0} size="sm" />
+          <InputOtpSlot index={1} size="sm" />
+          <InputOtpSlot index={2} size="sm" />
+        </InputOtpGroup>
+        <InputOtpSeparator />
+        <InputOtpGroup>
+          <InputOtpSlot index={3} size="sm" />
+          <InputOtpSlot index={4} size="sm" />
+          <InputOtpSlot index={5} size="sm" />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+    <div class="grid gap-2">
+      <Label for="runtime-input-otp-disabled" size="sm">Disabled code</Label>
+      <InputOtp
+        id="runtime-input-otp-disabled"
+        name="runtime-input-otp-disabled"
+        defaultValue="654321"
+        disabled
+      >
+        <InputOtpGroup>
+          <InputOtpSlot index={0} />
+          <InputOtpSlot index={1} />
+          <InputOtpSlot index={2} />
+          <InputOtpSlot index={3} />
+          <InputOtpSlot index={4} />
+          <InputOtpSlot index={5} />
+        </InputOtpGroup>
+      </InputOtp>
+    </div>
+    <div class="grid content-end gap-2">
+      <Button type="submit" variant="outline" size="sm">Submit OTP</Button>
+      <output class="text-muted-foreground text-sm" data-runtime-input-otp-output>
+        Input OTP form data: pending
+      </output>
+    </div>
+  </form>
+</section>
+
+<script>
+  const setupRuntimeInputOtpForm = () => {
+    const form = document.querySelector<HTMLFormElement>("[data-runtime-input-otp-form]");
+    const output = document.querySelector<HTMLOutputElement>("[data-runtime-input-otp-output]");
+    if (!form || !output || form.dataset.runtimeInputOtpFormReady === "true") return;
+
+    form.dataset.runtimeInputOtpFormReady = "true";
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const entries = Array.from(new FormData(form).entries()).map(
+        ([name, value]) => `${name}: ${value}`,
+      );
+      output.value = `Input OTP form data: ${entries.join(", ")}`;
+      output.textContent = output.value;
+    });
+  };
+
+  setupRuntimeInputOtpForm();
+  document.addEventListener("astro:after-swap", setupRuntimeInputOtpForm);
+</script>

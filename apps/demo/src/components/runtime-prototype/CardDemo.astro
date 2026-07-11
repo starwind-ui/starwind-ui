@@ -1,0 +1,151 @@
+---
+import { Badge } from "@/components/starwind-runtime/badge";
+import { Button } from "@/components/starwind-runtime/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/starwind-runtime/card";
+import { Input } from "@/components/starwind-runtime/input";
+import { Label } from "@/components/starwind-runtime/label";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+} from "@/components/starwind-runtime/combobox";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Card</h2>
+  <div class="grid gap-4 md:grid-cols-2">
+    <Card size="sm" class="runtime-card-custom max-w-md">
+      <CardHeader>
+        <CardTitle>Portable card</CardTitle>
+        <CardDescription>Generated styled card anatomy</CardDescription>
+        <CardAction>
+          <span class="bg-muted rounded-md px-2 py-1 text-xs">Ready</span>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        <p class="text-muted-foreground">
+          Root size data flows into header, content, footer, title, and description styles.
+        </p>
+      </CardContent>
+      <CardFooter>
+        <span class="text-muted-foreground text-sm">Footer content</span>
+      </CardFooter>
+    </Card>
+
+    <Card class="runtime-card-default max-w-md">
+      <CardContent>Default card shell</CardContent>
+    </Card>
+
+    <Card class="runtime-card-image max-w-md overflow-hidden p-0">
+      <img
+        class="aspect-video w-full object-cover"
+        src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=960&q=80"
+        alt="Geometric building facade"
+        loading="lazy"
+      />
+      <CardHeader>
+        <CardTitle>Runtime preview</CardTitle>
+        <CardDescription>Image card with generated card anatomy.</CardDescription>
+        <CardAction>
+          <Badge variant="info" size="sm">Live</Badge>
+        </CardAction>
+      </CardHeader>
+      <CardFooter class="justify-between">
+        <span class="text-muted-foreground text-sm">Updated today</span>
+        <Button size="sm" variant="outline">Open</Button>
+      </CardFooter>
+    </Card>
+
+    <Card class="max-w-md md:col-span-2">
+      <form id="runtime-create-project-form" data-runtime-card-form class="flex flex-col gap-6">
+        <CardHeader>
+          <CardTitle>Create project</CardTitle>
+          <CardDescription>Deploy your new project in one-click.</CardDescription>
+        </CardHeader>
+        <CardContent class="grid gap-4">
+          <div class="grid gap-2">
+            <Label for="runtime-project-name" size="sm">Name</Label>
+            <Input
+              id="runtime-project-name"
+              name="name"
+              placeholder="Name of your project"
+              required
+            />
+          </div>
+          <div class="grid gap-2">
+            <Label for="runtime-project-framework" size="sm">Framework</Label>
+            <Combobox id="runtime-project-framework-combobox" name="framework" required>
+              <ComboboxInput id="runtime-project-framework" placeholder="Search framework" />
+              <ComboboxContent>
+                <ComboboxEmpty>No framework found.</ComboboxEmpty>
+                <ComboboxItem value="astro">Astro</ComboboxItem>
+                <ComboboxItem value="next">Next.js</ComboboxItem>
+                <ComboboxItem value="svelte">SvelteKit</ComboboxItem>
+                <ComboboxItem value="solid">SolidStart</ComboboxItem>
+              </ComboboxContent>
+            </Combobox>
+          </div>
+          <div class="grid gap-2">
+            <Label for="runtime-project-domain" size="sm">Domain</Label>
+            <Input
+              id="runtime-project-domain"
+              name="domain"
+              placeholder="runtime.starwind.dev"
+              defaultValue="runtime.starwind.dev"
+            />
+          </div>
+        </CardContent>
+        <CardFooter class="justify-between gap-3">
+          <Button type="button" variant="ghost">Cancel</Button>
+          <Button type="submit" variant="primary">Deploy</Button>
+        </CardFooter>
+      </form>
+    </Card>
+
+    <div class="max-w-md md:col-span-2">
+      <Button type="button" variant="primary" id="runtime-combobox-astro-btn">
+        Programmatically select "astro"
+      </Button>
+    </div>
+  </div>
+</section>
+
+<script>
+  const setupRuntimeCardForm = () => {
+    const form = document.querySelector<HTMLFormElement>("[data-runtime-card-form]");
+    if (!form || form.dataset.runtimeCardFormReady === "true") return;
+
+    form.dataset.runtimeCardFormReady = "true";
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const values = Object.fromEntries(formData.entries());
+      console.log(values);
+    });
+
+    const comboboxAstroButton = document.getElementById("runtime-combobox-astro-btn");
+    const frameworkCombobox = document.getElementById("runtime-project-framework-combobox");
+    comboboxAstroButton?.addEventListener("click", () => {
+      frameworkCombobox?.dispatchEvent(
+        new CustomEvent("starwind:set-value", {
+          detail: { value: "astro" },
+        }),
+      );
+
+      console.log('Dispatched event to select "astro"');
+    });
+  };
+
+  setupRuntimeCardForm();
+  document.addEventListener("astro:after-swap", setupRuntimeCardForm);
+</script>

@@ -1,0 +1,64 @@
+---
+import { RadioGroup, RadioGroupItem } from "@/components/starwind-runtime/radio-group";
+---
+
+<section class="mb-12">
+  <h2 id="runtime-radio-group-heading" class="font-heading mb-4 text-2xl font-semibold">
+    Radio Group
+  </h2>
+  <div class="grid gap-6 sm:grid-cols-2">
+    <RadioGroup
+      data-runtime-radio-group-default
+      defaultValue="standard"
+      name="runtime-delivery"
+      aria-labelledby="runtime-radio-group-heading"
+      class="runtime-radio-group-custom"
+    >
+      <div class="flex items-center gap-2 text-sm font-medium">
+        <RadioGroupItem
+          id="runtime-radio-group-standard"
+          value="standard"
+          variant="primary"
+          aria-label="Standard delivery"
+        />
+        Standard delivery
+      </div>
+      <div class="flex items-center gap-2 text-sm font-medium">
+        <RadioGroupItem
+          id="runtime-radio-group-express"
+          value="express"
+          variant="secondary"
+          aria-label="Express delivery"
+        />
+        Express delivery
+      </div>
+    </RadioGroup>
+
+    <RadioGroup
+      data-runtime-radio-group-disabled
+      defaultValue="sandbox"
+      name="runtime-disabled-radio"
+      aria-labelledby="runtime-radio-group-heading"
+      disabled
+    >
+      <div class="flex items-center gap-2 text-sm font-medium">
+        <RadioGroupItem
+          id="runtime-radio-group-disabled-sandbox"
+          value="sandbox"
+          variant="success"
+          aria-label="Sandbox"
+        />
+        Sandbox
+      </div>
+      <div class="flex items-center gap-2 text-sm font-medium">
+        <RadioGroupItem
+          id="runtime-radio-group-disabled-production"
+          value="production"
+          variant="warning"
+          aria-label="Production"
+        />
+        Production
+      </div>
+    </RadioGroup>
+  </div>
+</section>

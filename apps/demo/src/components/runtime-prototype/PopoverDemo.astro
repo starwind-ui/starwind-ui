@@ -1,0 +1,134 @@
+---
+import { button } from "@/components/starwind-runtime/button/variants";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/starwind-runtime/popover";
+
+const alignments = ["start", "center", "end"] as const;
+const sides = ["top", "right", "bottom", "left"] as const;
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Popover</h2>
+  <div class="space-y-4">
+    <div class="flex flex-wrap gap-3">
+      <Popover id="runtime-popover-default">
+        <PopoverTrigger class={button({ variant: "outline", size: "md" })}>
+          Open popover
+        </PopoverTrigger>
+        <PopoverContent
+          id="runtime-popover-content"
+          class="runtime-popover-custom"
+          side="bottom"
+          align="start"
+        >
+          <PopoverHeader>
+            <PopoverTitle>Runtime popover</PopoverTitle>
+            <PopoverDescription>
+              Popover uses a portaled floating popup with generated Starwind styling.
+            </PopoverDescription>
+          </PopoverHeader>
+        </PopoverContent>
+      </Popover>
+
+      <Popover id="runtime-popover-hover" openOnHover closeDelay={25}>
+        <PopoverTrigger class={button({ variant: "secondary", size: "sm" })}>
+          Hover popover
+        </PopoverTrigger>
+        <PopoverContent id="runtime-popover-hover-content" side="right" align="start">
+          <PopoverHeader>
+            <PopoverTitle>Hover popover</PopoverTitle>
+            <PopoverDescription>Hover can open and delay close from root data.</PopoverDescription>
+          </PopoverHeader>
+        </PopoverContent>
+      </Popover>
+
+      <Popover id="runtime-popover-as-child">
+        <PopoverTrigger asChild class={button({ variant: "ghost", size: "sm" })}>
+          <button id="runtime-popover-as-child-trigger" type="button"> As child popover </button>
+        </PopoverTrigger>
+        <PopoverContent id="runtime-popover-as-child-content" side="top" align="end">
+          <PopoverHeader>
+            <PopoverTitle>As child popover</PopoverTitle>
+            <PopoverDescription>
+              The trigger is a supplied child button with runtime attributes applied.
+            </PopoverDescription>
+          </PopoverHeader>
+        </PopoverContent>
+      </Popover>
+
+      <Popover id="runtime-popover-nested">
+        <PopoverTrigger class={button({ variant: "outline", size: "sm" })}>
+          Nested popover
+        </PopoverTrigger>
+        <PopoverContent id="runtime-popover-nested-content" side="bottom" align="start">
+          <PopoverHeader>
+            <PopoverTitle>Nested parent</PopoverTitle>
+            <PopoverDescription
+              >Nested floating content stays scoped to its trigger.</PopoverDescription
+            >
+          </PopoverHeader>
+          <div class="mt-3">
+            <Popover id="runtime-popover-nested-child">
+              <PopoverTrigger class={button({ variant: "secondary", size: "sm" })}>
+                Open child
+              </PopoverTrigger>
+              <PopoverContent id="runtime-popover-nested-child-content" side="right" align="start">
+                <PopoverHeader>
+                  <PopoverTitle>Nested child</PopoverTitle>
+                  <PopoverDescription>Child popover opened from parent content.</PopoverDescription>
+                </PopoverHeader>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+      {
+        alignments.map((align) => (
+          <Popover id={`runtime-popover-align-${align}`}>
+            <PopoverTrigger class={button({ variant: "outline", size: "sm" })}>
+              Align {align}
+            </PopoverTrigger>
+            <PopoverContent
+              id={`runtime-popover-align-${align}-content`}
+              side="bottom"
+              align={align}
+              sideOffset={8}
+            >
+              <PopoverTitle>Align {align}</PopoverTitle>
+            </PopoverContent>
+          </Popover>
+        ))
+      }
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+      {
+        sides.map((side, index) => (
+          <Popover id={`runtime-popover-side-${side}`}>
+            <PopoverTrigger class={button({ variant: "secondary", size: "sm" })}>
+              Side {side}
+            </PopoverTrigger>
+            <PopoverContent
+              id={`runtime-popover-side-${side}-content`}
+              class={index % 2 === 0 ? "duration-75" : "duration-200"}
+              side={side}
+              align="center"
+              sideOffset={10}
+            >
+              <PopoverTitle>Side {side}</PopoverTitle>
+            </PopoverContent>
+          </Popover>
+        ))
+      }
+    </div>
+  </div>
+</section>

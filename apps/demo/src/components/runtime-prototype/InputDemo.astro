@@ -1,0 +1,37 @@
+---
+import { Input } from "@/components/starwind-runtime/input";
+import { Label } from "@/components/starwind-runtime/label";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Input</h2>
+  <form data-runtime-input-form class="grid gap-4 sm:grid-cols-4">
+    <div class="grid gap-2">
+      <Label for="runtime-input-default" size="sm">Default input</Label>
+      <Input
+        id="runtime-input-default"
+        name="runtime-input-default"
+        class="runtime-input-custom"
+        defaultValue="Ada"
+        placeholder="Type a name"
+      />
+    </div>
+    <div class="grid gap-2">
+      <Label for="runtime-input-invalid" size="sm">Invalid input</Label>
+      <Input
+        id="runtime-input-invalid"
+        size="lg"
+        aria-invalid="true"
+        placeholder="Needs attention"
+      />
+    </div>
+    <div class="grid gap-2">
+      <Label for="runtime-input-disabled" size="sm">Disabled input</Label>
+      <Input id="runtime-input-disabled" disabled placeholder="Locked" />
+    </div>
+    <div class="grid gap-2">
+      <Label for="runtime-input-file" size="sm">File input</Label>
+      <Input id="runtime-input-file" name="runtime-input-file" type="file" />
+    </div>
+  </form>
+</section>

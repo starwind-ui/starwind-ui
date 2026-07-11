@@ -1,0 +1,329 @@
+---
+import "@/styles/global.css";
+
+import { ThemeInitScript } from "@starwind-ui/astro/theme";
+import BookOpen from "@tabler/icons/outline/book.svg";
+import PieChart from "@tabler/icons/outline/chart-pie.svg";
+import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+import Code from "@tabler/icons/outline/code.svg";
+import Frame from "@tabler/icons/outline/frame.svg";
+import LifeBuoy from "@tabler/icons/outline/lifebuoy.svg";
+import Map from "@tabler/icons/outline/map.svg";
+import Bot from "@tabler/icons/outline/robot.svg";
+import Send from "@tabler/icons/outline/send.svg";
+import Settings2 from "@tabler/icons/outline/settings-2.svg";
+import SquareTerminal from "@tabler/icons/outline/terminal-2.svg";
+import NestedDialogDemo from "@/components/runtime-prototype/NestedDialogDemo.astro";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/starwind-runtime/collapsible";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+} from "@/components/starwind-runtime/sidebar";
+import { ThemeToggle } from "@/components/starwind-runtime/theme-toggle";
+
+const navMain = [
+  {
+    title: "Playground",
+    url: "#",
+    icon: SquareTerminal,
+    isActive: true,
+    items: [
+      { title: "History", url: "#" },
+      { title: "Starred", url: "#" },
+      { title: "Settings", url: "#" },
+    ],
+  },
+  {
+    title: "Models",
+    url: "#",
+    icon: Bot,
+    items: [
+      { title: "Genesis", url: "#" },
+      { title: "Explorer", url: "#" },
+      { title: "Quantum", url: "#" },
+    ],
+  },
+  {
+    title: "Documentation",
+    url: "#",
+    icon: BookOpen,
+    items: [
+      { title: "Introduction", url: "#" },
+      { title: "Get Started", url: "#" },
+      { title: "Tutorials", url: "#" },
+      { title: "Changelog", url: "#" },
+    ],
+  },
+  {
+    title: "Settings",
+    url: "#",
+    icon: Settings2,
+    items: [
+      { title: "General", url: "#" },
+      { title: "Team", url: "#" },
+      { title: "Billing", url: "#" },
+      { title: "Limits", url: "#" },
+    ],
+  },
+];
+
+const navSecondary = [
+  { title: "Support", url: "#", icon: LifeBuoy },
+  { title: "Feedback", url: "#", icon: Send },
+];
+
+const projects = [
+  { name: "Design Engineering", url: "#", icon: Frame },
+  { name: "Sales & Marketing", url: "#", icon: PieChart },
+  { name: "Travel", url: "#", icon: Map },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Runtime Nested Sidebar Demo - Starwind UI</title>
+    <meta name="description" content="Runtime nested sidebar menu demo for Starwind UI" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <ThemeInitScript />
+  </head>
+
+  <body class="min-h-lvh">
+    <div id="runtime-nested-sidebar-demo" class="min-h-lvh">
+      <SidebarProvider keyboardShortcut="b">
+        <Sidebar collapsible="icon">
+          <SidebarHeader>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton size="lg">
+                  <div
+                    class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-10 items-center justify-center rounded-lg"
+                  >
+                    <Code class="size-5" aria-hidden="true" />
+                  </div>
+                  <div class="grid flex-1 text-left text-sm leading-tight">
+                    <span class="truncate font-semibold">Starwind UI</span>
+                    <span class="text-sidebar-foreground/70 truncate text-xs"
+                      >Runtime Enterprise</span
+                    >
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarHeader>
+
+          <SidebarSeparator />
+
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Platform</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {
+                    navMain.map((item) => (
+                      <Collapsible defaultOpen={item.isActive} class="group/collapsible">
+                        <SidebarMenuItem>
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton>
+                              <item.icon aria-hidden="true" />
+                              <span>{item.title}</span>
+                              <ChevronRight
+                                class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                                aria-hidden="true"
+                              />
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                          {item.items && (
+                            <CollapsibleContent>
+                              <SidebarMenuSub>
+                                {item.items.map((subItem) => (
+                                  <SidebarMenuSubItem>
+                                    <SidebarMenuSubButton href={subItem.url}>
+                                      <span>{subItem.title}</span>
+                                    </SidebarMenuSubButton>
+                                  </SidebarMenuSubItem>
+                                ))}
+                              </SidebarMenuSub>
+                            </CollapsibleContent>
+                          )}
+                        </SidebarMenuItem>
+                      </Collapsible>
+                    ))
+                  }
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel>Projects</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {
+                    projects.map((project) => (
+                      <SidebarMenuItem>
+                        <SidebarMenuButton href={project.url} tooltip={project.name}>
+                          <project.icon class="size-4" aria-hidden="true" />
+                          <span>{project.name}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))
+                  }
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup class="mt-auto">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {
+                    navSecondary.map((item) => (
+                      <SidebarMenuItem>
+                        <SidebarMenuButton href={item.url} tooltip={item.title}>
+                          <item.icon class="size-4" aria-hidden="true" />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))
+                  }
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+
+          <SidebarRail />
+        </Sidebar>
+
+        <SidebarInset>
+          <header class="bg-background sticky top-0 flex h-14 items-center gap-4 border-b px-4">
+            <SidebarTrigger id="runtime-nested-sidebar-trigger" />
+            <div class="flex-1">
+              <h1 class="text-lg font-semibold">Runtime Nested Menus Demo</h1>
+            </div>
+            <nav
+              class="hidden items-center gap-2 sm:flex"
+              aria-label="Runtime sidebar page navigation"
+            >
+              <a
+                href="/runtime-prototype/"
+                class="border-input bg-background hover:bg-muted hover:text-foreground rounded-md border px-3 py-1.5 text-sm font-medium shadow-xs transition-colors"
+              >
+                Prototype
+              </a>
+              <a
+                href="/pages/runtime-sidebar-demo"
+                class="border-input bg-background hover:bg-muted hover:text-foreground rounded-md border px-3 py-1.5 text-sm font-medium shadow-xs transition-colors"
+              >
+                Basic
+              </a>
+            </nav>
+            <ThemeToggle />
+          </header>
+
+          <main class="flex-1 p-6">
+            <div class="mx-auto max-w-4xl space-y-8">
+              <section>
+                <h2 class="mb-4 text-2xl font-bold">Nested Menu Items</h2>
+                <p class="text-muted-foreground mb-6">
+                  This demo showcases the nested menu feature using
+                  <code class="bg-muted rounded px-1.5 py-0.5 text-sm">SidebarMenuSub</code>,
+                  <code class="bg-muted rounded px-1.5 py-0.5 text-sm">SidebarMenuSubItem</code>,
+                  and
+                  <code class="bg-muted rounded px-1.5 py-0.5 text-sm">SidebarMenuSubButton</code>.
+                </p>
+
+                <div class="bg-muted/50 space-y-4 rounded-lg border p-6">
+                  <h3 class="font-semibold">Nested Menu Components</h3>
+                  <ul class="text-muted-foreground list-inside list-disc space-y-2 text-sm">
+                    <li>
+                      <strong>SidebarMenuSub:</strong> Container for sub-menu items with connecting border
+                    </li>
+                    <li><strong>SidebarMenuSubItem:</strong> Individual sub-menu item wrapper</li>
+                    <li>
+                      <strong>SidebarMenuSubButton:</strong> Clickable sub-menu item with smaller styling
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+              <NestedDialogDemo />
+
+              <section>
+                <h3 class="mb-4 text-xl font-semibold">Usage</h3>
+                <pre
+                  class="bg-muted overflow-x-auto rounded-lg border p-4 text-sm"><code>{`<SidebarMenuItem>
+  <CollapsibleTrigger asChild>
+    <SidebarMenuButton>
+      <Icon />
+      <span>Parent Item</span>
+      <ChevronRight class="ml-auto" />
+    </SidebarMenuButton>
+  </CollapsibleTrigger>
+  <CollapsibleContent>
+    <SidebarMenuSub>
+      <SidebarMenuSubItem>
+        <SidebarMenuSubButton href="#">
+          Sub Item 1
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
+      <SidebarMenuSubItem>
+        <SidebarMenuSubButton href="#">
+          Sub Item 2
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
+    </SidebarMenuSub>
+  </CollapsibleContent>
+</SidebarMenuItem>`}</code></pre>
+              </section>
+
+              <section>
+                <h3 class="mb-4 text-xl font-semibold">Navigation</h3>
+                <div class="flex flex-wrap gap-4">
+                  <a
+                    href="/pages/runtime-sidebar-demo"
+                    class="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                  >
+                    Basic runtime sidebar demo
+                  </a>
+                  <a
+                    href="/runtime-prototype/"
+                    class="bg-foreground text-background hover:bg-foreground/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                  >
+                    Back to runtime prototype
+                  </a>
+                </div>
+              </section>
+            </div>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
+  </body>
+</html>
+
+<style>
+  html {
+    scrollbar-gutter: stable;
+  }
+</style>

@@ -1,0 +1,13 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { inputGroupText } from "./variants";
+
+type Props = HTMLAttributes<"span">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<span class={inputGroupText({ class: className })} {...rest}>
+  <slot />
+</span>

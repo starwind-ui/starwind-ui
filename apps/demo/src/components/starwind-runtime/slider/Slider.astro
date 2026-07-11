@@ -1,0 +1,101 @@
+---
+import SliderPrimitive from "@starwind-ui/astro/slider";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { slider, sliderControl, sliderRange, sliderThumb, sliderTrack } from "./variants";
+
+interface Props
+  extends
+    Omit<HTMLAttributes<"div">, "defaultValue" | "onChange" | "value">,
+    VariantProps<typeof sliderRange>,
+    VariantProps<typeof sliderThumb> {
+  defaultValue?: number | number[];
+  disabled?: boolean;
+  form?: string;
+  largeStep?: number;
+  max?: number;
+  min?: number;
+  name?: string;
+  orientation?: "horizontal" | "vertical";
+  step?: number;
+  value?: number | number[];
+}
+
+const {
+  variant = "default",
+  defaultValue = 0,
+  disabled = false,
+  form,
+  largeStep = 10,
+  max = 100,
+  min = 0,
+  name,
+  orientation = "horizontal",
+  step = 1,
+  value,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const resolvedValue = value ?? defaultValue;
+const values = Array.isArray(resolvedValue) ? resolvedValue : [resolvedValue];
+const getPercentage = (item: number) => (max === min ? 0 : ((item - min) / (max - min)) * 100);
+const rangeStart = values.length > 1 ? getPercentage(Math.min(...values)) : 0;
+const rangeEnd =
+  values.length > 1 ? getPercentage(Math.max(...values)) : getPercentage(values[0] ?? min);
+const rangeStyle =
+  orientation === "horizontal"
+    ? { left: `${rangeStart}%`, width: `${rangeEnd - rangeStart}%` }
+    : { bottom: `${rangeStart}%`, height: `${rangeEnd - rangeStart}%` };
+---
+
+<SliderPrimitive.Root
+  class={slider({ class: className })}
+  defaultValue={defaultValue}
+  disabled={disabled}
+  form={form}
+  largeStep={largeStep}
+  max={max}
+  min={min}
+  name={name}
+  orientation={orientation}
+  step={step}
+  value={value}
+  {...rest}
+  data-slot="slider"
+>
+  <SliderPrimitive.Control
+    class={sliderControl()}
+    data-orientation={orientation}
+    data-slot="slider-control"
+  >
+    <SliderPrimitive.Track
+      class={sliderTrack()}
+      data-orientation={orientation}
+      data-slot="slider-track"
+    >
+      <SliderPrimitive.Indicator
+        class={sliderRange({ variant })}
+        data-orientation={orientation}
+        data-slot="slider-range"
+        style={rangeStyle}
+      />
+    </SliderPrimitive.Track>
+
+    {
+      values.map((_, index) => (
+        <SliderPrimitive.Thumb
+          class={sliderThumb({ variant })}
+          index={index}
+          style={
+            orientation === "horizontal"
+              ? { left: `${getPercentage(values[index] ?? min)}%` }
+              : { bottom: `${getPercentage(values[index] ?? min)}%` }
+          }
+          data-orientation={orientation}
+          data-slot="slider-thumb"
+        />
+      ))
+    }
+  </SliderPrimitive.Control>
+</SliderPrimitive.Root>

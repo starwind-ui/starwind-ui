@@ -1,0 +1,35 @@
+[data-sw-checkbox-check-icon] {
+  stroke-dasharray: 65;
+  stroke-dashoffset: 65;
+  opacity: 0;
+}
+
+[data-sw-checkbox][data-checked] [data-slot="checkbox-indicator"],
+[data-sw-checkbox][data-indeterminate] [data-slot="checkbox-indicator"] {
+  opacity: 1;
+}
+
+[data-sw-checkbox] [data-slot="checkbox-indicator"] > svg {
+  display: block;
+  margin: auto;
+}
+
+[data-sw-checkbox][data-checked] [data-slot="checkbox-indicator"] > [data-sw-checkbox-check-icon],
+[data-sw-checkbox][data-indeterminate]
+  [data-slot="checkbox-indicator"]
+  > [data-sw-checkbox-check-icon] {
+  animation: draw-check 0.3s ease forwards;
+  animation-delay: 0.15s;
+}
+
+@keyframes draw-check {
+  0% {
+    stroke-dashoffset: 65;
+    opacity: 1;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}

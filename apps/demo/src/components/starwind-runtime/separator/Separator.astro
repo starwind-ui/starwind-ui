@@ -1,0 +1,29 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { separator } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "role" | "aria-orientation"> &
+  VariantProps<typeof separator> & {
+    "data-slot"?: string;
+  };
+
+const {
+  orientation = "horizontal",
+  "data-slot": dataSlot = "separator",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<div
+  data-sw-separator
+  role="separator"
+  aria-orientation={orientation}
+  data-orientation={orientation}
+  class={separator({ orientation, class: className })}
+  {...rest}
+  data-slot={dataSlot}
+>
+</div>

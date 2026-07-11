@@ -1,0 +1,17 @@
+---
+import DialogPrimitive from "@starwind-ui/astro/dialog";
+import type { HTMLAttributes } from "astro/types";
+import { dialogDescription } from "./variants";
+
+type Props = HTMLAttributes<"p">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<DialogPrimitive.Description
+  class={dialogDescription({ class: className })}
+  {...rest}
+  data-slot="dialog-description"
+>
+  <slot />
+</DialogPrimitive.Description>

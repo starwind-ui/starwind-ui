@@ -16,9 +16,9 @@ export const dialogContent = tv({
     "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards transition-[translate,scale,opacity]",
     "fade-in zoom-in-95 slide-in-from-bottom-2",
     "fade-out zoom-out-95 slide-out-to-bottom-2",
-    "data-[state=open]:data-[nested-dialog-open]:-translate-y-[calc(50%-var(--nested-offset)*var(--nested-dialogs,1))]",
-    "data-[state=open]:data-[nested-dialog-open]:scale-[calc(1-var(--nested-scale)*var(--nested-dialogs,1))]",
-    "max-sm:data-[state=open]:data-[nested-dialog-open]:translate-y-[calc(var(--nested-offset)*var(--nested-dialogs,1))]",
+    "data-[state=open]:data-nested-dialog-open:-translate-y-[calc(50%-var(--nested-offset)*var(--nested-dialogs,1))]",
+    "data-[state=open]:data-nested-dialog-open:scale-[calc(1-var(--nested-scale)*var(--nested-dialogs,1))]",
+    "max-sm:data-[state=open]:data-nested-dialog-open:translate-y-[calc(var(--nested-offset)*var(--nested-dialogs,1))]",
   ],
 });
 

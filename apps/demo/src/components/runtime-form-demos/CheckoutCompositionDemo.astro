@@ -1,0 +1,233 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { Checkbox } from "@/components/starwind-runtime/checkbox";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+} from "@/components/starwind-runtime/combobox";
+import {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+  FieldValidity,
+} from "@/components/starwind-runtime/field";
+import { Form, FormErrorSummary } from "@/components/starwind-runtime/form";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/starwind-runtime/select";
+import { Textarea } from "@/components/starwind-runtime/textarea";
+---
+
+<section class="border-border mt-12 border-t pt-10">
+  <div class="mb-8 space-y-3">
+    <p class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+      Checkout composition
+    </p>
+    <h2 class="font-heading text-2xl font-semibold tracking-tight">Payment method</h2>
+    <p class="text-muted-foreground max-w-2xl text-sm">
+      A denser form composition with grouped fields, styled selects, combobox ownership, checkbox
+      ownership, validation feedback, and serialized form state.
+    </p>
+  </div>
+
+  <Form id="runtime-checkout-form" class="max-w-xl">
+    <FormErrorSummary aria-label="Checkout errors" class="mb-5">
+      <p class="font-medium">Review these fields</p>
+    </FormErrorSummary>
+
+    <FieldGroup>
+      <FieldSet>
+        <FieldLegend>Payment Method</FieldLegend>
+        <FieldDescription>All transactions are secure and encrypted.</FieldDescription>
+        <FieldGroup>
+          <Field name="checkoutCardName">
+            <FieldLabel>Name on card</FieldLabel>
+            <FieldControl
+              id="runtime-checkout-card-name"
+              autocomplete="cc-name"
+              placeholder="Evelyn Carter"
+              required
+            />
+            <FieldError match="valueMissing">Enter the name printed on the card.</FieldError>
+          </Field>
+
+          <Field name="checkoutCardNumber">
+            <FieldLabel>Card number</FieldLabel>
+            <FieldControl
+              id="runtime-checkout-card-number"
+              autocomplete="cc-number"
+              inputmode="numeric"
+              pattern="[0-9 ]{15,19}"
+              placeholder="1234 5678 9012 3456"
+              required
+            />
+            <FieldDescription>Enter the card number with or without spaces.</FieldDescription>
+            <FieldError match="valueMissing">Enter a card number.</FieldError>
+            <FieldError match="patternMismatch">Use 15 to 19 digits.</FieldError>
+            <FieldValidity match="valid">Card number format is ready.</FieldValidity>
+          </Field>
+
+          <div class="grid gap-4 sm:grid-cols-3">
+            <Field name="checkoutExpMonth">
+              <FieldLabel>Month</FieldLabel>
+              <Select required>
+                <SelectTrigger id="runtime-checkout-exp-month" placeholder="MM" />
+                <SelectContent size="sm">
+                  <SelectGroup>
+                    <SelectItem value="01">01</SelectItem>
+                    <SelectItem value="02">02</SelectItem>
+                    <SelectItem value="03">03</SelectItem>
+                    <SelectItem value="04">04</SelectItem>
+                    <SelectItem value="05">05</SelectItem>
+                    <SelectItem value="06">06</SelectItem>
+                    <SelectItem value="07">07</SelectItem>
+                    <SelectItem value="08">08</SelectItem>
+                    <SelectItem value="09">09</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="11">11</SelectItem>
+                    <SelectItem value="12">12</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <FieldError match="valueMissing">Choose a month.</FieldError>
+            </Field>
+
+            <Field name="checkoutExpYear">
+              <FieldLabel>Year</FieldLabel>
+              <Select required>
+                <SelectTrigger id="runtime-checkout-exp-year" placeholder="YYYY" />
+                <SelectContent size="sm">
+                  <SelectGroup>
+                    <SelectItem value="2026">2026</SelectItem>
+                    <SelectItem value="2027">2027</SelectItem>
+                    <SelectItem value="2028">2028</SelectItem>
+                    <SelectItem value="2029">2029</SelectItem>
+                    <SelectItem value="2030">2030</SelectItem>
+                    <SelectItem value="2031">2031</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <FieldError match="valueMissing">Choose a year.</FieldError>
+            </Field>
+
+            <Field name="checkoutCvv">
+              <FieldLabel>CVV</FieldLabel>
+              <FieldControl
+                id="runtime-checkout-cvv"
+                autocomplete="cc-csc"
+                inputmode="numeric"
+                maxlength="4"
+                pattern="[0-9]{3,4}"
+                placeholder="123"
+                required
+              />
+              <FieldError match="valueMissing">Enter the CVV.</FieldError>
+              <FieldError match="patternMismatch">Use 3 or 4 digits.</FieldError>
+            </Field>
+          </div>
+        </FieldGroup>
+      </FieldSet>
+
+      <FieldSeparator />
+
+      <FieldSet id="runtime-checkout-billing-fieldset">
+        <FieldLegend>Billing Address</FieldLegend>
+        <FieldDescription>The billing address associated with this payment method.</FieldDescription
+        >
+        <FieldGroup>
+          <Field name="checkoutSameAsShipping" orientation="horizontal">
+            <Checkbox id="runtime-checkout-same-as-shipping" defaultChecked value="yes" />
+            <FieldLabel for="runtime-checkout-same-as-shipping" class="font-normal">
+              Same as shipping address
+            </FieldLabel>
+          </Field>
+
+          <Field name="checkoutBillingCountry">
+            <FieldLabel>Billing country</FieldLabel>
+            <Combobox required defaultValue="us">
+              <ComboboxInput
+                id="runtime-checkout-billing-country"
+                placeholder="Choose a country"
+                showClear
+              />
+              <ComboboxContent>
+                <ComboboxEmpty>No country found.</ComboboxEmpty>
+                <ComboboxGroup>
+                  <ComboboxItem value="us">United States</ComboboxItem>
+                  <ComboboxItem value="ca">Canada</ComboboxItem>
+                  <ComboboxItem value="gb">United Kingdom</ComboboxItem>
+                  <ComboboxItem value="au">Australia</ComboboxItem>
+                  <ComboboxItem value="jp">Japan</ComboboxItem>
+                </ComboboxGroup>
+              </ComboboxContent>
+            </Combobox>
+            <FieldDescription>
+              The selected country is submitted through the runtime hidden input.
+            </FieldDescription>
+            <FieldError match="valueMissing">Choose a billing country.</FieldError>
+          </Field>
+
+          <Field name="checkoutComments">
+            <FieldLabel>Comments</FieldLabel>
+            <Textarea
+              id="runtime-checkout-comments"
+              class="resize-none"
+              placeholder="Add any delivery or billing notes"
+              rows="4"
+            />
+            <FieldDescription>Optional notes are included only when entered.</FieldDescription>
+          </Field>
+        </FieldGroup>
+      </FieldSet>
+
+      <Field orientation="horizontal">
+        <Button type="submit">Submit checkout</Button>
+        <Button id="runtime-checkout-reset" type="reset" variant="outline">Cancel</Button>
+      </Field>
+    </FieldGroup>
+  </Form>
+
+  <output
+    id="runtime-checkout-output"
+    class="border-border bg-muted text-muted-foreground mt-6 block min-h-24 max-w-xl rounded-md border p-4 text-sm whitespace-pre-wrap"
+  >
+    Submit the checkout form to inspect FormData.
+  </output>
+</section>
+
+<script>
+  const checkoutForm = document.querySelector<HTMLFormElement>("#runtime-checkout-form");
+  const checkoutOutput = document.querySelector<HTMLOutputElement>("#runtime-checkout-output");
+
+  checkoutForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = new FormData(checkoutForm);
+    const entries = Array.from(data.entries()).map(([key, value]) => `${key}: ${value}`);
+    if (!checkoutOutput) return;
+    const text = entries.length > 0 ? entries.join("\n") : "No enabled fields submitted.";
+    checkoutOutput.value = text;
+    checkoutOutput.textContent = text;
+  });
+
+  checkoutForm?.addEventListener("reset", () => {
+    window.setTimeout(() => {
+      if (!checkoutOutput) return;
+      checkoutOutput.value = "Submit the checkout form to inspect FormData.";
+      checkoutOutput.textContent = "Submit the checkout form to inspect FormData.";
+    }, 0);
+  });
+</script>

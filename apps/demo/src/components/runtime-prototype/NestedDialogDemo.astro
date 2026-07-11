@@ -1,0 +1,96 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { button } from "@/components/starwind-runtime/button/variants";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/starwind-runtime/dialog";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Dialog</h2>
+  <div class="flex flex-wrap items-center gap-3">
+    <Dialog id="runtime-nested-dialog-parent">
+      <DialogTrigger
+        id="runtime-nested-dialog-parent-trigger"
+        class={button({ variant: "outline", size: "md" })}
+      >
+        Open nested parent
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Runtime nested parent</DialogTitle>
+          <DialogDescription>
+            Mirrors the old Starwind nested dialog demo with deeper dialog levels.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="mt-4 flex-col gap-2 sm:flex-row">
+          <Dialog id="runtime-nested-dialog-level-one">
+            <DialogTrigger asChild>
+              <Button id="runtime-nested-dialog-level-one-trigger" variant="secondary" size="sm">
+                Open nested level 1
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Runtime nested level 1</DialogTitle>
+                <DialogDescription>
+                  This level can open another dialog without closing its parent.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter class="mt-4 flex-col gap-2 sm:flex-row">
+                <Dialog id="runtime-nested-dialog-level-two">
+                  <DialogTrigger asChild>
+                    <Button
+                      id="runtime-nested-dialog-level-two-trigger"
+                      variant="primary"
+                      size="sm"
+                    >
+                      Open nested level 2
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Runtime nested level 2</DialogTitle>
+                      <DialogDescription>
+                        Closing this second nested level should let the older dialogs resize
+                        immediately while this level exits.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter class="mt-4">
+                      <DialogClose asChild>
+                        <Button
+                          id="runtime-nested-dialog-level-two-close"
+                          variant="outline"
+                          size="sm"
+                        >
+                          Close level 2
+                        </Button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <DialogClose asChild>
+                  <Button id="runtime-nested-dialog-level-one-close" variant="outline" size="sm">
+                    Close level 1
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <DialogClose asChild>
+            <Button id="runtime-nested-dialog-parent-close" variant="outline" size="sm">
+              Close parent
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </div>
+</section>

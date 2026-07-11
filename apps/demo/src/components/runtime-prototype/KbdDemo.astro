@@ -1,0 +1,25 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { Kbd, KbdGroup } from "@/components/starwind-runtime/kbd";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind-runtime/tooltip";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Kbd</h2>
+  <div class="flex flex-wrap items-center gap-4">
+    <Kbd>Esc</Kbd>
+    <KbdGroup>
+      <Kbd>Ctrl</Kbd>
+      <Kbd>K</Kbd>
+    </KbdGroup>
+    <Tooltip id="runtime-tooltip-default" openDelay={0} closeDelay={25}>
+      <TooltipTrigger>
+        <Button variant="outline" size="sm">Shortcut help</Button>
+      </TooltipTrigger>
+      <TooltipContent id="runtime-tooltip-content" class="flex items-center gap-2" side="top">
+        <span>Press</span>
+        <Kbd>?</Kbd>
+      </TooltipContent>
+    </Tooltip>
+  </div>
+</section>

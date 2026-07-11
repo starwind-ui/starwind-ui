@@ -1,0 +1,36 @@
+---
+import AsyncAvailabilityDemo from "@/components/runtime-form-demos/AsyncAvailabilityDemo.astro";
+import CheckoutCompositionDemo from "@/components/runtime-form-demos/CheckoutCompositionDemo.astro";
+import CustomValidationDemo from "@/components/runtime-form-demos/CustomValidationDemo.astro";
+import DynamicFieldsDemo from "@/components/runtime-form-demos/DynamicFieldsDemo.astro";
+import FieldManagementDemo from "@/components/runtime-form-demos/FieldManagementDemo.astro";
+import FormTracerDemo from "@/components/runtime-form-demos/FormTracerDemo.astro";
+import InvalidStatesDemo from "@/components/runtime-form-demos/InvalidStatesDemo.astro";
+import SchemaAdapterDemo from "@/components/runtime-form-demos/SchemaAdapterDemo.astro";
+import ValidationPolicyDemo from "@/components/runtime-form-demos/ValidationPolicyDemo.astro";
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout title="Runtime Form Controls" description="Field and Fieldset runtime behavior test page">
+  <main class="container mx-auto max-w-3xl px-4 py-12">
+    <div class="mb-8 space-y-3">
+      <p class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+        Runtime form controls
+      </p>
+      <h1 class="font-heading text-4xl font-semibold tracking-tight">Field management</h1>
+      <p class="text-muted-foreground max-w-2xl">
+        Field, Field.Validity, Fieldset, and form grouping behavior in one focused demo.
+      </p>
+    </div>
+
+    <FormTracerDemo />
+    <ValidationPolicyDemo />
+    <CustomValidationDemo />
+    <AsyncAvailabilityDemo />
+    <SchemaAdapterDemo />
+    <DynamicFieldsDemo />
+    <FieldManagementDemo />
+    <CheckoutCompositionDemo />
+    <InvalidStatesDemo />
+  </main>
+</Layout>

@@ -1,0 +1,51 @@
+---
+import TooltipPrimitive from "@starwind-ui/astro/tooltip";
+import CaretUp from "@tabler/icons/filled/caret-up.svg";
+import type { HTMLAttributes } from "astro/types";
+import { tooltipCaret, tooltipContent } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "tabindex" | "tabIndex"> & {
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  sideOffset?: number;
+  avoidCollisions?: boolean;
+};
+
+const {
+  class: className,
+  side = "top",
+  align = "center",
+  sideOffset = 8,
+  avoidCollisions = true,
+  ...rest
+} = Astro.props;
+---
+
+<TooltipPrimitive.Portal data-slot="tooltip-portal">
+  <TooltipPrimitive.Positioner
+    side={side}
+    align={align}
+    sideOffset={sideOffset}
+    avoidCollisions={avoidCollisions}
+    class="isolate z-50"
+    data-slot="tooltip-positioner"
+  >
+    <TooltipPrimitive.Popup
+      class={tooltipContent({ class: className })}
+      side={side}
+      align={align}
+      sideOffset={sideOffset}
+      avoidCollisions={avoidCollisions}
+      {...rest}
+      data-slot="tooltip-content"
+    >
+      <slot>My tooltip!</slot>
+
+      <TooltipPrimitive.Arrow class={tooltipCaret()} data-slot="tooltip-arrow">
+        <slot name="icon">
+          <CaretUp />
+        </slot>
+      </TooltipPrimitive.Arrow>
+    </TooltipPrimitive.Popup>
+  </TooltipPrimitive.Positioner>
+</TooltipPrimitive.Portal>

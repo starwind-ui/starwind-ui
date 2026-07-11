@@ -1,0 +1,30 @@
+---
+import {
+  Dropzone,
+  DropzoneFilesList,
+  DropzoneLoadingIndicator,
+  DropzoneUploadIndicator,
+} from "@/components/starwind-runtime/dropzone";
+---
+
+<section class="mb-12" id="runtime-dropzone-demo">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Dropzone</h2>
+  <div class="grid gap-6">
+    <form class="grid gap-6" data-runtime-dropzone-form>
+      <Dropzone id="runtime-dropzone-default" name="runtime-dropzone-default" />
+
+      <Dropzone id="runtime-dropzone-multiple" name="runtime-dropzone-multiple" multiple>
+        <DropzoneUploadIndicator>
+          <span class="my-6 text-lg">Upload product media</span>
+        </DropzoneUploadIndicator>
+        <DropzoneLoadingIndicator />
+        <DropzoneFilesList />
+      </Dropzone>
+    </form>
+
+    <div class="grid gap-6 sm:grid-cols-2">
+      <Dropzone id="runtime-dropzone-uploading" name="runtime-dropzone-uploading" isUploading />
+      <Dropzone id="runtime-dropzone-disabled" name="runtime-dropzone-disabled" disabled />
+    </div>
+  </div>
+</section>

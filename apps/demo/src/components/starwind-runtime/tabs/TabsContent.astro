@@ -1,0 +1,22 @@
+---
+import TabsPrimitive from "@starwind-ui/astro/tabs";
+import type { HTMLAttributes } from "astro/types";
+import { tabsContent } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  keepMounted?: boolean;
+  value: string;
+};
+
+const { keepMounted, value, class: className, ...rest } = Astro.props;
+---
+
+<TabsPrimitive.Panel
+  class={tabsContent({ class: className })}
+  keepMounted={keepMounted}
+  value={value}
+  {...rest}
+  data-slot="tabs-content"
+>
+  <slot />
+</TabsPrimitive.Panel>

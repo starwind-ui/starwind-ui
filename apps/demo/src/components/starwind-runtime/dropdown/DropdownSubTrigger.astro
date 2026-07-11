@@ -1,0 +1,26 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownItem } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  inset?: boolean;
+  disabled?: boolean;
+};
+
+const { class: className, inset = false, disabled = false, ...rest } = Astro.props;
+
+const subTriggerClassName = className;
+---
+
+<MenuPrimitive.SubmenuTrigger
+  class={dropdownItem({ inset, disabled, class: subTriggerClassName })}
+  disabled={disabled}
+  {...rest}
+  data-slot="dropdown-sub-trigger"
+>
+  <slot />
+
+  <ChevronRight class="ml-auto size-4" />
+</MenuPrimitive.SubmenuTrigger>

@@ -1,0 +1,55 @@
+---
+import SelectPrimitive from "@starwind-ui/astro/select";
+import type { HTMLAttributes } from "astro/types";
+import { selectContent, selectList } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  align?: "start" | "center" | "end";
+  alignOffset?: number;
+  alignItemWithTrigger?: boolean;
+  avoidCollisions?: boolean;
+  side?: "top" | "right" | "bottom" | "left";
+  sideOffset?: number;
+  size?: "sm" | "md" | "lg";
+};
+
+const {
+  align = "start",
+  alignOffset = 0,
+  alignItemWithTrigger = true,
+  avoidCollisions = true,
+  class: className,
+  side = "bottom",
+  sideOffset = 4,
+  size = "md",
+  ...rest
+} = Astro.props;
+---
+
+<SelectPrimitive.Portal data-slot="select-portal">
+  <SelectPrimitive.Positioner
+    align={align}
+    alignOffset={alignOffset}
+    alignItemWithTrigger={alignItemWithTrigger}
+    avoidCollisions={avoidCollisions}
+    side={side}
+    sideOffset={sideOffset}
+    data-slot="select-positioner"
+  >
+    <SelectPrimitive.Popup
+      class={selectContent({ size, class: className })}
+      align={align}
+      alignOffset={alignOffset}
+      avoidCollisions={avoidCollisions}
+      side={side}
+      sideOffset={sideOffset}
+      data-align-trigger={alignItemWithTrigger ? "true" : "false"}
+      {...rest}
+      data-slot="select-content"
+    >
+      <SelectPrimitive.List class={selectList()} data-slot="select-list">
+        <slot />
+      </SelectPrimitive.List>
+    </SelectPrimitive.Popup>
+  </SelectPrimitive.Positioner>
+</SelectPrimitive.Portal>

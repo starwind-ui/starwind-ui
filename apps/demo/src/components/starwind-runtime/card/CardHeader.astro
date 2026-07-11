@@ -1,0 +1,13 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { cardHeader } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div data-sw-card-header class={cardHeader({ class: className })} {...rest} data-slot="card-header">
+  <slot />
+</div>

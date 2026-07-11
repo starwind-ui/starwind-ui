@@ -1,0 +1,57 @@
+---
+import Bold from "@tabler/icons/outline/bold.svg";
+import Heart from "@tabler/icons/outline/heart.svg";
+import Italic from "@tabler/icons/outline/italic.svg";
+import Star from "@tabler/icons/outline/star.svg";
+import Underline from "@tabler/icons/outline/underline.svg";
+import { Toggle } from "@/components/starwind-runtime/toggle";
+---
+
+<section class="mb-12" id="runtime-toggle-demo">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Toggle</h2>
+  <div class="space-y-4">
+    <div class="flex flex-wrap gap-3">
+      <Toggle id="runtime-toggle-default" class="runtime-toggle-custom">Default toggle</Toggle>
+      <Toggle id="runtime-toggle-pressed" defaultPressed>Default pressed</Toggle>
+      <Toggle id="runtime-toggle-disabled" disabled variant="outline"> Disabled toggle </Toggle>
+      <Toggle id="runtime-toggle-outline" variant="outline">Outline toggle</Toggle>
+      <Toggle id="runtime-toggle-controlled-off" defaultPressed pressed={false}>
+        Controlled off
+      </Toggle>
+      <Toggle id="runtime-toggle-non-native" nativeButton={false} variant="outline">
+        Non-native toggle
+      </Toggle>
+      <Toggle id="runtime-toggle-small" size="sm">Small toggle</Toggle>
+      <Toggle id="runtime-toggle-large" size="lg">Large toggle</Toggle>
+      <Toggle id="runtime-toggle-sync-primary" syncGroup="runtime-toggle-sync-demo">
+        Sync primary
+      </Toggle>
+      <Toggle id="runtime-toggle-sync-secondary" syncGroup="runtime-toggle-sync-demo">
+        Sync secondary
+      </Toggle>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+      <Toggle id="runtime-toggle-bold" aria-label="Toggle bold" size="sm" variant="outline">
+        <Bold />
+      </Toggle>
+      <Toggle id="runtime-toggle-italic" aria-label="Toggle italic" size="sm" variant="outline">
+        <Italic />
+      </Toggle>
+      <Toggle
+        id="runtime-toggle-underline"
+        aria-label="Toggle underline"
+        size="sm"
+        variant="outline"
+      >
+        <Underline />
+      </Toggle>
+      <Toggle id="runtime-toggle-favorite" aria-label="Toggle favorite" size="sm">
+        <Heart />
+      </Toggle>
+      <Toggle id="runtime-toggle-star" aria-label="Toggle star" size="sm">
+        <Star />
+      </Toggle>
+    </div>
+  </div>
+</section>

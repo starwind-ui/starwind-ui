@@ -1,0 +1,141 @@
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../kit";
+
+export function PaginationDemo() {
+  return (
+    <section className="space-y-4" id="runtime-pagination-demo">
+      <h2 className="font-heading text-xl font-semibold">Pagination</h2>
+      <div className="flex flex-col gap-6">
+        <Pagination id="runtime-pagination-default">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                id="runtime-pagination-default-previous"
+                href="#runtime-pagination-demo"
+              >
+                Prev
+              </PaginationPrevious>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink
+                id="runtime-pagination-default-page-1"
+                href="#runtime-pagination-demo"
+              >
+                1
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink
+                id="runtime-pagination-default-active"
+                href="#runtime-pagination-demo"
+                isActive
+              >
+                2
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#runtime-pagination-demo">3</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationEllipsis id="runtime-pagination-default-ellipsis" />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext id="runtime-pagination-default-next" href="#runtime-pagination-demo">
+                Next
+              </PaginationNext>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+
+        <Pagination id="runtime-pagination-sm">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious size="sm" href="#runtime-pagination-demo">
+                Prev
+              </PaginationPrevious>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink
+                id="runtime-pagination-sm-page-1"
+                size="icon-sm"
+                href="#runtime-pagination-demo"
+              >
+                1
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink size="icon-sm" href="#runtime-pagination-demo" isActive>
+                2
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink size="icon-sm" href="#runtime-pagination-demo">
+                3
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationEllipsis id="runtime-pagination-sm-ellipsis" size="icon-sm" />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext
+                id="runtime-pagination-sm-next"
+                size="sm"
+                href="#runtime-pagination-demo"
+              >
+                Next
+              </PaginationNext>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+
+        <Pagination id="runtime-pagination-lg">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious size="lg" href="#runtime-pagination-demo">
+                Prev
+              </PaginationPrevious>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink
+                id="runtime-pagination-lg-page-1"
+                size="icon-lg"
+                href="#runtime-pagination-demo"
+              >
+                1
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink size="icon-lg" href="#runtime-pagination-demo" isActive>
+                2
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink size="icon-lg" href="#runtime-pagination-demo">
+                3
+              </PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationEllipsis id="runtime-pagination-lg-ellipsis" size="icon-lg" />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext
+                id="runtime-pagination-lg-next"
+                size="lg"
+                href="#runtime-pagination-demo"
+              >
+                Next
+              </PaginationNext>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,24 @@
+---
+import CarouselPrimitive from "@starwind-ui/astro/carousel";
+import type { HTMLAttributes } from "astro/types";
+import { carousel } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  orientation?: "horizontal" | "vertical";
+  opts?: import("@starwind-ui/astro/carousel").CarouselOptions["opts"];
+  autoInit?: boolean;
+};
+
+const { orientation = "horizontal", opts, autoInit, class: className, ...rest } = Astro.props;
+---
+
+<CarouselPrimitive.Root
+  orientation={orientation}
+  opts={opts}
+  autoInit={autoInit}
+  class={carousel({ class: className })}
+  {...rest}
+  data-slot="carousel"
+>
+  <slot />
+</CarouselPrimitive.Root>

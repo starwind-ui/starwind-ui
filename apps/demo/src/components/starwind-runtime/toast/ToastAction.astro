@@ -1,0 +1,13 @@
+---
+import ToastPrimitive from "@starwind-ui/astro/toast";
+import type { HTMLAttributes } from "astro/types";
+import { toastAction } from "./variants";
+
+type Props = HTMLAttributes<"button">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ToastPrimitive.Action class={toastAction({ class: className })} {...rest} data-slot="toast-action">
+  <slot />
+</ToastPrimitive.Action>

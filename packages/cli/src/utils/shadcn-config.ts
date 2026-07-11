@@ -1,9 +1,17 @@
 import { PATHS } from "./constants.js";
+import {
+  resolveStarwindProRegistryConfig,
+  type StarwindConfig,
+  type StarwindProConfig,
+  type StarwindProRegistryConfig,
+  updateConfig,
+} from "./config.js";
 import { fileExists, readJsonFile, writeJsonFile } from "./fs.js";
 
 export interface ShadcnRegistry {
   url: string;
   headers?: Record<string, string>;
+  params?: Record<string, string>;
 }
 
 export interface ShadcnConfig {
@@ -24,6 +32,15 @@ export interface ShadcnConfig {
 }
 
 const COMPONENTS_JSON_PATH = "components.json";
+const STARWIND_PRO_REGISTRY_NAME = "@starwind-pro";
+
+export type StarwindProRegistryImportStatus = "missing" | "imported" | "matched" | "conflict";
+
+export interface StarwindProRegistryImportResult {
+  pro?: StarwindProConfig;
+  registry?: StarwindProRegistryConfig;
+  status: StarwindProRegistryImportStatus;
+}
 
 /**
  * Creates a default shadcn components.json configuration with Starwind Pro registry
@@ -35,7 +52,7 @@ export function createDefaultShadcnConfig(
   return {
     $schema: "https://ui.shadcn.com/schema.json",
     registries: {
-      "@starwind-pro": {
+      [STARWIND_PRO_REGISTRY_NAME]: {
         url: PATHS.STARWIND_PRO_REGISTRY,
         headers: {
           Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
@@ -52,7 +69,7 @@ export function createDefaultShadcnConfig(
       baseColor,
       cssVariables: true,
     },
-    style: "default",
+    style: "new-york",
     rsc: true,
   };
 }
@@ -98,7 +115,7 @@ export function addStarwindProRegistry(config: ShadcnConfig): ShadcnConfig {
   }
 
   // Add or update the Starwind Pro registry
-  updatedConfig.registries["@starwind-pro"] = {
+  updatedConfig.registries[STARWIND_PRO_REGISTRY_NAME] = {
     url: PATHS.STARWIND_PRO_REGISTRY,
     headers: {
       Authorization: "Bearer ${STARWIND_LICENSE_KEY}",
@@ -130,6 +147,128 @@ export async function setupShadcnProConfig(
   }
 }
 
+function isStringRecord(value: unknown): value is Record<string, string> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every((entry) => typeof entry === "string")
+  );
+}
+
+export function getStarwindProRegistryFromComponentsConfig(
+  config: ShadcnConfig,
+): StarwindProRegistryConfig | undefined {
+  const registry = config.registries?.[STARWIND_PRO_REGISTRY_NAME];
+  if (!registry || typeof registry.url !== "string" || registry.url.length === 0) {
+    return undefined;
+  }
+
+  const normalized: StarwindProRegistryConfig = {
+    url: registry.url,
+  };
+
+  if (registry.headers === undefined) {
+    normalized.headers = {};
+  } else {
+    if (!isStringRecord(registry.headers)) return undefined;
+    normalized.headers = { ...registry.headers };
+  }
+
+  if (registry.params !== undefined) {
+    if (!isStringRecord(registry.params)) return undefined;
+    normalized.params = { ...registry.params };
+  }
+
+  return normalized;
+}
+
+export async function readStarwindProRegistryFromComponentsJson(): Promise<
+  StarwindProRegistryConfig | undefined
+> {
+  if (!(await componentsJsonExists())) {
+    return undefined;
+  }
+
+  try {
+    return getStarwindProRegistryFromComponentsConfig(await readComponentsJson());
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizeResolvedProRegistryConfig(config: StarwindProRegistryConfig) {
+  return {
+    url: config.url ?? PATHS.STARWIND_PRO_REGISTRY,
+    headers: Object.fromEntries(
+      Object.entries(config.headers ?? {}).sort(([a], [b]) => a.localeCompare(b)),
+    ),
+    params: Object.fromEntries(
+      Object.entries(config.params ?? {}).sort(([a], [b]) => a.localeCompare(b)),
+    ),
+  };
+}
+
+function starwindProRegistryConfigsMatch(
+  starwindConfig: StarwindConfig,
+  componentsRegistry: StarwindProRegistryConfig,
+) {
+  const resolvedStarwindConfig = resolveStarwindProRegistryConfig(starwindConfig);
+
+  return (
+    JSON.stringify(normalizeResolvedProRegistryConfig(resolvedStarwindConfig)) ===
+    JSON.stringify(normalizeResolvedProRegistryConfig(componentsRegistry))
+  );
+}
+
+export function resolveStarwindProRegistryImport(
+  starwindConfig: StarwindConfig,
+  componentsRegistry: StarwindProRegistryConfig | undefined,
+  warn?: (message: string) => void,
+): StarwindProRegistryImportResult {
+  if (!componentsRegistry) {
+    return { status: "missing", pro: starwindConfig.pro };
+  }
+
+  if (starwindConfig.pro?.registry) {
+    if (!starwindProRegistryConfigsMatch(starwindConfig, componentsRegistry)) {
+      warn?.(
+        "Starwind Pro registry settings in starwind.config.json differ from components.json. Using starwind.config.json.",
+      );
+      return { status: "conflict", pro: starwindConfig.pro, registry: componentsRegistry };
+    }
+
+    return { status: "matched", pro: starwindConfig.pro, registry: componentsRegistry };
+  }
+
+  return {
+    status: "imported",
+    pro: {
+      registry: componentsRegistry,
+    },
+    registry: componentsRegistry,
+  };
+}
+
+export async function importStarwindProRegistryFromComponentsJson(
+  starwindConfig: StarwindConfig,
+  options: {
+    warn?: (message: string) => void;
+  } = {},
+): Promise<StarwindProRegistryImportResult> {
+  const result = resolveStarwindProRegistryImport(
+    starwindConfig,
+    await readStarwindProRegistryFromComponentsJson(),
+    options.warn,
+  );
+
+  if (result.status === "imported") {
+    await updateConfig({ pro: result.pro });
+  }
+
+  return result;
+}
+
 /**
  * Checks if the Starwind Pro registry is already configured with authorized URL
  */
@@ -140,7 +279,7 @@ export async function hasStarwindProRegistry(): Promise<boolean> {
 
   try {
     const config = await readComponentsJson();
-    const starwindProRegistry = config.registries?.["@starwind-pro"];
+    const starwindProRegistry = config.registries?.[STARWIND_PRO_REGISTRY_NAME];
 
     if (!starwindProRegistry?.url) {
       return false;

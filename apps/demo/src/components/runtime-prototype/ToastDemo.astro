@@ -1,0 +1,191 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { Toaster } from "@/components/starwind-runtime/toast";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Toast</h2>
+  <div class="flex flex-wrap items-center gap-3">
+    <Button id="runtime-toast-default" variant="outline">Default toast</Button>
+    <Button id="runtime-toast-success" variant="secondary">Success toast</Button>
+    <Button id="runtime-toast-error" variant="error">Error toast</Button>
+    <Button id="runtime-toast-warning" variant="warning">Warning toast</Button>
+    <Button id="runtime-toast-info" variant="info">Info toast</Button>
+    <Button id="runtime-toast-loading" variant="outline">Loading toast</Button>
+    <Button id="runtime-toast-action" variant="outline">Action toast</Button>
+    <Button id="runtime-toast-update" variant="outline">Update toast</Button>
+    <Button id="runtime-toast-update-sequence" variant="outline"> Create & update sequence </Button>
+    <Button id="runtime-toast-promise" variant="primary">Promise toast</Button>
+    <Button id="runtime-toast-promise-reject" variant="outline">Promise reject</Button>
+    <Button id="runtime-toast-many" variant="outline">Many toasts</Button>
+    <Button id="runtime-toast-dismiss" variant="ghost">Dismiss toasts</Button>
+  </div>
+  <p class="text-muted-foreground mt-3 text-sm" data-runtime-toast-action-count>Toast actions: 0</p>
+  <Toaster id="runtime-toast-viewport" duration={0} limit={5} />
+</section>
+
+<script>
+  import { toast } from "@starwind-ui/astro/toast";
+
+  const getElement = (id: string) => document.getElementById(id);
+  let toastActionCount = 0;
+
+  const updateToastActionCount = () => {
+    toastActionCount += 1;
+    const countElement = document.querySelector("[data-runtime-toast-action-count]");
+    if (countElement) {
+      countElement.textContent = `Toast actions: ${toastActionCount}`;
+    }
+  };
+
+  getElement("runtime-toast-default")?.addEventListener("click", () => {
+    toast("Runtime toast", {
+      description: "Generated Astro Toaster.",
+      duration: 0,
+    });
+  });
+
+  getElement("runtime-toast-success")?.addEventListener("click", () => {
+    toast.success("Sync complete", {
+      description: "Success variant and icon template.",
+      duration: 0,
+    });
+  });
+
+  getElement("runtime-toast-error")?.addEventListener("click", () => {
+    toast.error("Deploy failed", {
+      description: "Error variant and icon template.",
+      duration: 0,
+    });
+  });
+
+  getElement("runtime-toast-warning")?.addEventListener("click", () => {
+    toast.warning("Quota nearly full", {
+      description: "Warning variant and icon template.",
+      duration: 0,
+    });
+  });
+
+  getElement("runtime-toast-info")?.addEventListener("click", () => {
+    toast.info("Runtime note", {
+      description: "Info variant and icon template.",
+      duration: 0,
+    });
+  });
+
+  getElement("runtime-toast-loading")?.addEventListener("click", () => {
+    toast.loading("Uploading bundle", {
+      description: "Direct loading toast.",
+      duration: 0,
+    });
+  });
+
+  getElement("runtime-toast-action")?.addEventListener("click", () => {
+    toast.info("Undo available", {
+      action: {
+        label: "Undo",
+        onClick: updateToastActionCount,
+      },
+      description: "Action callback wired through the runtime manager.",
+      duration: 0,
+    });
+  });
+
+  getElement("runtime-toast-update")?.addEventListener("click", () => {
+    const id = toast.loading("Working on it", {
+      description: "This loading toast updates in place.",
+    });
+    window.setTimeout(() => {
+      toast.update(id, {
+        description: "The existing toast changed variant and content.",
+        duration: 0,
+        title: "Updated toast",
+        variant: "success",
+      });
+    }, 1200);
+  });
+
+  getElement("runtime-toast-update-sequence")?.addEventListener("click", () => {
+    const id = toast("Processing...", {
+      description: "Step 1 of 3",
+      duration: 0,
+    });
+
+    window.setTimeout(() => {
+      toast.update(id, {
+        description: "Step 2 of 3",
+        title: "Still working...",
+      });
+    }, 1500);
+
+    window.setTimeout(() => {
+      toast.update(id, {
+        description: "All steps finished",
+        duration: 0,
+        title: "Complete!",
+        variant: "success",
+      });
+    }, 3000);
+  });
+
+  getElement("runtime-toast-promise")?.addEventListener("click", () => {
+    const promise = new Promise<string>((resolve) => {
+      window.setTimeout(() => resolve("Astro"), 1200);
+    });
+
+    void toast.promise(promise, {
+      error: {
+        description: "Promise rejection path rendered.",
+        duration: 0,
+        title: "Promise failed",
+      },
+      loading: {
+        description: "Promise lifecycle starts as loading.",
+        duration: 0,
+        title: "Promise loading",
+      },
+      success: (value) => ({
+        description: "Promise lifecycle updated the toast.",
+        duration: 0,
+        title: `Loaded ${value}`,
+      }),
+    });
+  });
+
+  getElement("runtime-toast-promise-reject")?.addEventListener("click", () => {
+    const promise = new Promise<string>((_resolve, reject) => {
+      window.setTimeout(() => reject(new Error("Rejected")), 900);
+    });
+
+    void toast.promise(promise, {
+      error: {
+        description: "Promise rejection path rendered.",
+        duration: 0,
+        title: "Promise failed",
+      },
+      loading: {
+        description: "Waiting for rejected promise.",
+        duration: 0,
+        title: "Promise loading",
+      },
+      success: {
+        description: "This branch should not render.",
+        duration: 0,
+        title: "Promise resolved",
+      },
+    });
+  });
+
+  getElement("runtime-toast-many")?.addEventListener("click", () => {
+    Array.from({ length: 6 }, (_, index) => index + 1).forEach((index) => {
+      toast(`Runtime toast ${index}`, {
+        description: "Multiple toast limit coverage.",
+        duration: 0,
+      });
+    });
+  });
+
+  getElement("runtime-toast-dismiss")?.addEventListener("click", () => {
+    toast.dismiss();
+  });
+</script>

@@ -1,0 +1,20 @@
+---
+import SelectPrimitive from "@starwind-ui/astro/select";
+import type { HTMLAttributes } from "astro/types";
+import { selectValue } from "./variants";
+
+type Props = HTMLAttributes<"span"> & {
+  placeholder?: string;
+};
+
+const { class: className, placeholder, ...rest } = Astro.props;
+---
+
+<SelectPrimitive.Value
+  class={selectValue({ class: className })}
+  placeholder={placeholder}
+  {...rest}
+  data-slot="select-value"
+>
+  <slot />
+</SelectPrimitive.Value>

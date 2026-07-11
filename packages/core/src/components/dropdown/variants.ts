@@ -3,7 +3,7 @@ import { tv } from "tailwind-variants";
 export const dropdownCheckboxItem = tv({
   base: [
     "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 transition-colors outline-none select-none",
-    "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+    "data-disabled:pointer-events-none data-disabled:opacity-50",
     "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
   ],
   variants: {
@@ -62,7 +62,7 @@ export const dropdownContent = tv({
 export const dropdownItem = tv({
   base: [
     "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 transition-colors outline-none select-none",
-    "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+    "data-disabled:pointer-events-none data-disabled:opacity-50",
     "group/dropdown-item [&>svg]:size-4 [&>svg]:shrink-0",
   ],
   variants: {

@@ -1,0 +1,25 @@
+---
+import DropzonePrimitive from "@starwind-ui/astro/dropzone";
+import Loader2 from "@tabler/icons/outline/loader-2.svg";
+import type { HTMLAttributes } from "astro/types";
+import { dropzoneLoadingIndicator } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  isUploading?: boolean;
+};
+
+const { isUploading = false, class: className, ...rest } = Astro.props;
+---
+
+<DropzonePrimitive.LoadingIndicator
+  class={dropzoneLoadingIndicator({ class: className })}
+  isUploading={isUploading}
+  {...rest}
+  data-slot="dropzone-loading-indicator"
+>
+  <slot>
+    <Loader2 class="mx-auto size-10 animate-spin" aria-hidden={true} />
+
+    <p class="mt-1 text-sm">Uploading file(s)...</p>
+  </slot>
+</DropzonePrimitive.LoadingIndicator>

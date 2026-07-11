@@ -1,0 +1,11 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"li">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<li class={className} {...rest} data-slot="pagination-item">
+  <slot />
+</li>

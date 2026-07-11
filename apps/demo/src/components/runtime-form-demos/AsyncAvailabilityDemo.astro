@@ -1,0 +1,107 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  FieldValidity,
+} from "@/components/starwind-runtime/field";
+import { Form } from "@/components/starwind-runtime/form";
+---
+
+<section class="border-border mb-10 border-b pb-10">
+  <div class="mb-5 space-y-2">
+    <h2 class="font-heading text-2xl font-semibold tracking-tight">Async availability</h2>
+    <p class="text-muted-foreground text-sm">
+      Debounced validators can check remote-style rules and still block managed submit.
+    </p>
+  </div>
+
+  <Form
+    id="runtime-async-validation-form"
+    class="grid gap-4"
+    data-validation-timing="input"
+    data-error-visibility="input"
+  >
+    <Field name="runtimeAsyncHandle">
+      <FieldLabel>Team handle</FieldLabel>
+      <FieldControl id="runtime-async-handle" required value="starwind" autocomplete="off" />
+      <FieldDescription>Try "available", "taken", "admin", or "starwind".</FieldDescription>
+      <FieldError match="valueMissing">Enter a team handle.</FieldError>
+      <FieldError match="customError">Handle is unavailable.</FieldError>
+      <FieldValidity match="valid">Handle is available.</FieldValidity>
+    </Field>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <Button type="submit">Reserve handle</Button>
+      <Button type="reset" variant="ghost">Reset</Button>
+    </div>
+  </Form>
+
+  <output
+    id="runtime-async-validation-output"
+    class="text-muted-foreground mt-3 block text-sm whitespace-pre-wrap"
+  >
+    Type to run a debounced availability check.
+  </output>
+</section>
+
+<script>
+  import { createForm } from "@starwind-ui/astro/form";
+
+  const asyncForm = document.querySelector<HTMLFormElement>("#runtime-async-validation-form");
+  const asyncOutput = document.querySelector<HTMLOutputElement>("#runtime-async-validation-output");
+  const unavailableHandles = new Set(["admin", "starwind", "taken"]);
+
+  const renderAsyncOutput = (text: string) => {
+    if (!asyncOutput) return;
+    asyncOutput.value = text;
+    asyncOutput.textContent = text;
+  };
+
+  const checkHandleAvailability = (handle: string, signal: AbortSignal) =>
+    new Promise<string | null>((resolve) => {
+      const timer = window.setTimeout(() => {
+        resolve(unavailableHandles.has(handle) ? `"${handle}" is already reserved.` : null);
+      }, 350);
+
+      signal.addEventListener(
+        "abort",
+        () => {
+          window.clearTimeout(timer);
+          resolve(null);
+        },
+        { once: true },
+      );
+    });
+
+  if (asyncForm) {
+    createForm(asyncForm, {
+      asyncFieldValidators: {
+        runtimeAsyncHandle: async (value, { signal }) => {
+          const handle = String(value ?? "")
+            .trim()
+            .toLowerCase();
+          if (handle.length === 0) return null;
+
+          renderAsyncOutput(`Checking "${handle}"...`);
+          const error = await checkHandleAvailability(handle, signal);
+          if (!signal.aborted) {
+            renderAsyncOutput(error ?? `"${handle}" is available.`);
+          }
+          return error;
+        },
+      },
+      asyncValidationDebounceMs: 250,
+      onSubmit: ({ values }) => {
+        renderAsyncOutput(`Managed submit\nruntimeAsyncHandle: ${values.runtimeAsyncHandle}`);
+      },
+    });
+  }
+
+  asyncForm?.addEventListener("reset", () => {
+    window.setTimeout(() => renderAsyncOutput("Type to run a debounced availability check."), 0);
+  });
+</script>

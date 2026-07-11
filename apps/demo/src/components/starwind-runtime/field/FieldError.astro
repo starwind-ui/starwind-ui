@@ -1,0 +1,34 @@
+---
+import FieldPrimitive from "@starwind-ui/astro/field";
+import type { HTMLAttributes } from "astro/types";
+import { fieldError } from "./variants";
+
+interface Props extends HTMLAttributes<"div"> {
+  match?:
+    | boolean
+    | "badInput"
+    | "customError"
+    | "patternMismatch"
+    | "rangeOverflow"
+    | "rangeUnderflow"
+    | "stepMismatch"
+    | "tooLong"
+    | "tooShort"
+    | "typeMismatch"
+    | "valid"
+    | "valueMissing";
+  messageSource?: "children" | "validation";
+}
+
+const { match, messageSource, class: className, ...rest } = Astro.props;
+---
+
+<FieldPrimitive.Error
+  class={fieldError({ class: className })}
+  match={match}
+  messageSource={messageSource}
+  {...rest}
+  data-slot="field-error"
+>
+  <slot />
+</FieldPrimitive.Error>

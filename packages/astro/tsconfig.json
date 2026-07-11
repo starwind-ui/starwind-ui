@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@starwind-ui/runtime": ["../runtime/src/index.ts"],
+      "@starwind-ui/runtime/init-starwind": ["../runtime/src/init-starwind.ts"],
+      "@starwind-ui/runtime/theme": ["../runtime/src/theme/theme.ts"],
+      "@starwind-ui/runtime/*": ["../runtime/src/components/*/index.ts"]
+    },
+    "types": ["astro/client"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.astro"],
+  "exclude": ["node_modules"]
+}

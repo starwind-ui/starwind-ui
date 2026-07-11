@@ -1,0 +1,34 @@
+---
+import DialogPrimitive from "@starwind-ui/astro/dialog";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div"> & {
+  defaultOpen?: boolean;
+  closeOnEscape?: boolean;
+  closeOnOutsideInteract?: boolean;
+  modal?: boolean;
+};
+
+const {
+  defaultOpen = false,
+  closeOnEscape = true,
+  closeOnOutsideInteract = true,
+  modal = true,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const rootClassName = className;
+---
+
+<DialogPrimitive.Root
+  class={rootClassName}
+  defaultOpen={defaultOpen}
+  closeOnEscape={closeOnEscape}
+  closeOnOutsideInteract={closeOnOutsideInteract}
+  modal={modal}
+  {...rest}
+  data-slot="dialog"
+>
+  <slot />
+</DialogPrimitive.Root>

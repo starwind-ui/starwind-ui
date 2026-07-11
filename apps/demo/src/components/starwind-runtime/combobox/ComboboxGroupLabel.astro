@@ -1,0 +1,17 @@
+---
+import ComboboxPrimitive from "@starwind-ui/astro/combobox";
+import type { HTMLAttributes } from "astro/types";
+import { comboboxGroupLabel } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ComboboxPrimitive.GroupLabel
+  class={comboboxGroupLabel({ class: className })}
+  {...rest}
+  data-slot="combobox-group-label"
+>
+  <slot />
+</ComboboxPrimitive.GroupLabel>

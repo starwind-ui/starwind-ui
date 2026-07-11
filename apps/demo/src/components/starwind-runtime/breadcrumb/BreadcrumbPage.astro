@@ -1,0 +1,21 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { breadcrumbPage } from "./variants";
+
+type Props = HTMLAttributes<"span">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<span
+  data-sw-breadcrumb-page
+  role="link"
+  aria-disabled="true"
+  aria-current="page"
+  class={breadcrumbPage({ class: className })}
+  {...rest}
+  data-slot="breadcrumb-page"
+>
+  <slot />
+</span>

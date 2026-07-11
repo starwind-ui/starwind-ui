@@ -1,0 +1,58 @@
+---
+import RadioGroupPrimitive from "@starwind-ui/astro/radio-group";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { radioGroup } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "defaultValue" | "onChange"> &
+  VariantProps<typeof radioGroup> & {
+    defaultValue?: string;
+    disabled?: boolean;
+    form?: string;
+    legend?: string;
+    name?: string;
+    orientation?: "horizontal" | "vertical";
+    readOnly?: boolean;
+    required?: boolean;
+    value?: string;
+  };
+
+const {
+  defaultValue,
+  disabled = false,
+  form,
+  legend,
+  name,
+  orientation = "vertical",
+  readOnly = false,
+  required = false,
+  value,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<RadioGroupPrimitive.Root
+  class={radioGroup({ orientation, class: className })}
+  defaultValue={defaultValue}
+  disabled={disabled}
+  form={form}
+  name={name}
+  orientation={orientation}
+  readOnly={readOnly}
+  required={required}
+  value={value}
+  aria-label={legend}
+  {...rest}
+  data-slot="radio-group"
+>
+  {
+    legend && (
+      <div class="sr-only" data-slot="radio-group-legend">
+        {legend}
+      </div>
+    )
+  }
+
+  <slot />
+</RadioGroupPrimitive.Root>

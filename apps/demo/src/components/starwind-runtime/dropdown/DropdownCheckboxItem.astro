@@ -1,0 +1,53 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import Check from "@tabler/icons/outline/check.svg";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownCheckboxItem, dropdownCheckboxItemIndicator } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "aria-checked" | "role"> & {
+  checked?: boolean;
+  defaultChecked?: boolean;
+  closeOnClick?: boolean;
+  inset?: boolean;
+  disabled?: boolean;
+  indicatorClass?: string;
+  showIndicator?: boolean;
+};
+
+const {
+  class: className,
+  checked,
+  defaultChecked = false,
+  closeOnClick = false,
+  inset = false,
+  disabled = false,
+  indicatorClass: indicatorClassName,
+  showIndicator = true,
+  ...rest
+} = Astro.props;
+---
+
+<MenuPrimitive.CheckboxItem
+  class={dropdownCheckboxItem({ inset, disabled, class: className })}
+  checked={checked}
+  defaultChecked={defaultChecked}
+  closeOnClick={closeOnClick}
+  disabled={disabled}
+  {...rest}
+  data-slot="dropdown-checkbox-item"
+>
+  {
+    showIndicator && (
+      <MenuPrimitive.CheckboxItemIndicator
+        class={dropdownCheckboxItemIndicator({ class: indicatorClassName })}
+        data-slot="dropdown-checkbox-item-indicator"
+      >
+        <slot name="indicator">
+          <Check class="size-4" />
+        </slot>
+      </MenuPrimitive.CheckboxItemIndicator>
+    )
+  }
+
+  <slot />
+</MenuPrimitive.CheckboxItem>

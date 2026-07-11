@@ -1,0 +1,26 @@
+---
+import CarouselPrimitive from "@starwind-ui/astro/carousel";
+import ChevronLeft from "@tabler/icons/outline/chevron-left.svg";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { carouselControl, carouselPrevious } from "./variants";
+
+type Props = HTMLAttributes<"button"> & VariantProps<typeof carouselControl>;
+
+const { variant = "outline", size = "icon", class: className, ...rest } = Astro.props;
+
+const controlClassName = carouselPrevious({ class: className });
+---
+
+<CarouselPrimitive.Previous
+  aria-label="Previous slide"
+  class={carouselControl({ variant, size, class: controlClassName })}
+  {...rest}
+  data-slot="carousel-previous"
+>
+  <slot>
+    <ChevronLeft aria-hidden={true} />
+
+    <span class="sr-only">Previous slide</span>
+  </slot>
+</CarouselPrimitive.Previous>

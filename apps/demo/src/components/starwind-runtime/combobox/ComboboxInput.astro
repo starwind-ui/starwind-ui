@@ -1,0 +1,70 @@
+---
+import ComboboxPrimitive from "@starwind-ui/astro/combobox";
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
+import X from "@tabler/icons/outline/x.svg";
+import type { HTMLAttributes } from "astro/types";
+import { InputGroup, InputGroupAddon, InputGroupButton } from "../input-group";
+import { comboboxInput, comboboxInputGroup } from "./variants";
+
+type Props = HTMLAttributes<"input"> & {
+  showClear?: boolean;
+  showTrigger?: boolean;
+};
+
+const {
+  class: className,
+  disabled = false,
+  showClear = false,
+  showTrigger = true,
+  ...rest
+} = Astro.props;
+---
+
+<InputGroup class={comboboxInputGroup({ class: className })} data-sw-combobox-input-group="">
+  <ComboboxPrimitive.Input
+    class={comboboxInput()}
+    disabled={disabled}
+    {...rest}
+    data-slot="combobox-input"
+  />
+
+  <InputGroupAddon align="inline-end">
+    {
+      showTrigger && (
+        <ComboboxPrimitive.Trigger asChild={true} disabled={disabled} data-slot="combobox-trigger">
+          <InputGroupButton
+            size="icon-sm"
+            variant="ghost"
+            disabled={disabled}
+            class="group-has-data-[slot=combobox-clear]/input-group:hidden"
+            data-slot="combobox-trigger"
+          >
+            <ChevronDown class="text-muted-foreground pointer-events-none size-4" />
+          </InputGroupButton>
+        </ComboboxPrimitive.Trigger>
+      )
+    }
+
+    {
+      showClear && (
+        <ComboboxPrimitive.Clear
+          asChild={true}
+          disabled={disabled}
+          aria-label="Clear selection"
+          data-slot="combobox-clear"
+        >
+          <InputGroupButton
+            size="icon-sm"
+            variant="ghost"
+            disabled={disabled}
+            data-slot="combobox-clear"
+          >
+            <X class="text-muted-foreground pointer-events-none size-4" />
+          </InputGroupButton>
+        </ComboboxPrimitive.Clear>
+      )
+    }
+  </InputGroupAddon>
+
+  <slot />
+</InputGroup>

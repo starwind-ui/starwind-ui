@@ -1,0 +1,59 @@
+---
+import SidebarPrimitive from "@starwind-ui/astro/sidebar";
+import type { HTMLAttributes } from "astro/types";
+import { sidebarProvider } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  defaultOpen?: boolean;
+  defaultMobileOpen?: boolean;
+  keyboardShortcut?: string;
+  mobileQuery?: string;
+  persistOpen?: boolean;
+  persistenceKey?: string;
+  persistenceStorage?: "localStorage" | "cookie" | false;
+  persistenceMaxAge?: number;
+};
+
+const {
+  defaultOpen = true,
+  defaultMobileOpen = false,
+  keyboardShortcut = "b",
+  mobileQuery = "(max-width: 767.98px)",
+  persistOpen = false,
+  persistenceKey,
+  persistenceStorage,
+  persistenceMaxAge = 604800,
+  style,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const styleObj = typeof style === "string" ? {} : ((style as Record<string, string>) ?? {});
+const providerStyle =
+  typeof style === "string"
+    ? style
+    : {
+        "--sidebar-width": styleObj["--sidebar-width"] ?? "18rem",
+        "--sidebar-width-icon": styleObj["--sidebar-width-icon"] ?? "3.5rem",
+        ...styleObj,
+      };
+---
+
+<SidebarPrimitive.Provider
+  class={sidebarProvider({ class: className })}
+  defaultOpen={defaultOpen}
+  defaultMobileOpen={defaultMobileOpen}
+  data-keyboard-shortcut={keyboardShortcut}
+  data-mobile-query={mobileQuery}
+  keyboardShortcut={keyboardShortcut}
+  mobileQuery={mobileQuery}
+  persistOpen={persistOpen}
+  persistenceKey={persistenceKey}
+  persistenceStorage={persistenceStorage}
+  persistenceMaxAge={persistenceMaxAge}
+  style={providerStyle}
+  {...rest}
+  data-slot="sidebar-provider"
+>
+  <slot />
+</SidebarPrimitive.Provider>

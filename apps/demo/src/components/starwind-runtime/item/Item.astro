@@ -1,0 +1,20 @@
+---
+import type { HTMLTag, Polymorphic } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { item } from "./variants";
+
+type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & VariantProps<typeof item>;
+
+const {
+  variant = "default",
+  size = "default",
+  as: Tag = "div",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<Tag data-sw-item class={item({ variant, size, class: className })} {...rest} data-slot="item">
+  <slot />
+</Tag>

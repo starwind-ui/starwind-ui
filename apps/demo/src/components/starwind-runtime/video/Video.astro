@@ -1,0 +1,101 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { video } from "./variants";
+
+type Props = HTMLAttributes<"video"> &
+  HTMLAttributes<"iframe"> & {
+    src: string;
+    title?: string;
+    autoplay?: boolean;
+    muted?: boolean;
+    loop?: boolean;
+    controls?: boolean;
+    poster?: string;
+  };
+
+const {
+  src,
+  title = "Video",
+  autoplay = false,
+  muted = false,
+  loop = false,
+  controls = true,
+  poster,
+  srcdoc,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const videoType =
+  src.includes("youtube.com/shorts/") || src.includes("youtu.be/shorts/")
+    ? "youtube-shorts"
+    : src.includes("youtube.com") ||
+        src.includes("youtu.be") ||
+        src.includes("youtube-nocookie.com")
+      ? "youtube"
+      : "native";
+const youtubeId =
+  videoType !== "native"
+    ? ([
+        /youtube\.com\/shorts\/([^?&]+)/,
+        /youtube\.com\/watch\?v=([^&]+)/,
+        /youtube\.com\/embed\/([^?&]+)/,
+        /youtu\.be\/([^?&]+)/,
+        /youtube-nocookie\.com\/embed\/([^?&]+)/,
+      ]
+        .map((pattern) => src.match(pattern)?.[1])
+        .find(Boolean) ?? null)
+    : null;
+const isShort = videoType === "youtube-shorts";
+const embedUrl = youtubeId
+  ? (() => {
+      const params = new URLSearchParams();
+      if (autoplay) params.set("autoplay", "1");
+      if (muted) params.set("mute", "1");
+      if (loop) {
+        params.set("loop", "1");
+        params.set("playlist", youtubeId);
+      }
+      if (!controls) params.set("controls", "0");
+
+      const baseUrl = "https://www.youtube-nocookie.com/embed/" + youtubeId;
+      const queryString = params.toString();
+      return queryString ? baseUrl + "?" + queryString : baseUrl;
+    })()
+  : null;
+const iframeSrc = srcdoc ? undefined : (embedUrl ?? undefined);
+---
+
+{
+  videoType === "native" || !embedUrl ? (
+    <video
+      data-sw-video
+      class={video({ class: className })}
+      src={src}
+      autoplay={autoplay}
+      muted={muted}
+      loop={loop}
+      controls={controls}
+      poster={poster}
+      {...rest}
+      data-slot="video"
+    >
+      <track kind="captions" />
+    </video>
+  ) : (
+    <iframe
+      data-sw-video
+      class={video({ class: className })}
+      src={iframeSrc}
+      srcdoc={srcdoc}
+      title={title}
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+      data-video-type={isShort ? "youtube-shorts" : "youtube"}
+      {...rest}
+      data-slot="video"
+    />
+  )
+}

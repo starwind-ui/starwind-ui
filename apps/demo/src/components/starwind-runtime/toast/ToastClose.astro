@@ -1,0 +1,18 @@
+---
+import ToastPrimitive from "@starwind-ui/astro/toast";
+import X from "@tabler/icons/outline/x.svg";
+import type { HTMLAttributes } from "astro/types";
+import { toastClose } from "./variants";
+
+type Props = HTMLAttributes<"button"> & {
+  showIcon?: boolean;
+};
+
+const { class: className, showIcon = true, ...rest } = Astro.props;
+---
+
+<ToastPrimitive.Close class={toastClose({ class: className })} {...rest} data-slot="toast-close">
+  <slot />
+
+  {showIcon && <X class="size-4" />}
+</ToastPrimitive.Close>

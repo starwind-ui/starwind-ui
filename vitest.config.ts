@@ -14,5 +14,16 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    testTimeout: 60_000,
+    include: [
+      "scripts/**/*.test.ts",
+      "scripts/**/*.spec.ts",
+      "scripts/**/*.test.mjs",
+      "scripts/**/*.spec.mjs",
+      "packages/cli/src/**/*.test.ts",
+      "packages/cli/src/**/*.spec.ts",
+      "packages/cli/tests/**/*.test.ts",
+      "packages/cli/tests/**/*.spec.ts",
+    ],
   },
 });

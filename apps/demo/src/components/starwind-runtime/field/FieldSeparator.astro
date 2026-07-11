@@ -1,0 +1,29 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { Separator } from "../separator";
+import { fieldSeparator, fieldSeparatorContent } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+
+const hasContent = Astro.slots.has("default");
+---
+
+<div
+  class={fieldSeparator({ class: className })}
+  data-content={hasContent ? "true" : "false"}
+  {...rest}
+  data-slot="field-separator"
+>
+  <Separator class="absolute inset-0 top-1/2" />
+
+  {
+    hasContent && (
+      <span class={fieldSeparatorContent()} data-slot="field-separator-content">
+        <slot />
+      </span>
+    )
+  }
+</div>

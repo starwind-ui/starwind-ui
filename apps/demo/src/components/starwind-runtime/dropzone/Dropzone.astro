@@ -1,0 +1,41 @@
+---
+import DropzonePrimitive from "@starwind-ui/astro/dropzone";
+import type { HTMLAttributes } from "astro/types";
+import DropzoneFilesList from "./DropzoneFilesList.astro";
+import DropzoneLoadingIndicator from "./DropzoneLoadingIndicator.astro";
+import DropzoneUploadIndicator from "./DropzoneUploadIndicator.astro";
+import { dropzone } from "./variants";
+
+type Props = Omit<HTMLAttributes<"input">, "disabled" | "type"> & {
+  disabled?: boolean;
+  isUploading?: boolean;
+};
+
+const {
+  id,
+  disabled = false,
+  isUploading = false,
+  "aria-invalid": ariaInvalid,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<DropzonePrimitive.Root
+  id={id}
+  class={dropzone({ class: className })}
+  disabled={disabled}
+  isUploading={isUploading}
+  aria-invalid={ariaInvalid}
+  data-slot="dropzone"
+>
+  <slot>
+    <DropzoneUploadIndicator isUploading={isUploading} />
+
+    <DropzoneLoadingIndicator isUploading={isUploading} />
+
+    <DropzoneFilesList />
+  </slot>
+
+  <DropzonePrimitive.Input disabled={disabled} aria-invalid={ariaInvalid} {...rest} />
+</DropzonePrimitive.Root>

@@ -1,0 +1,29 @@
+---
+import { Switch } from "@/components/starwind-runtime/switch";
+---
+
+<section class="mb-12" id="runtime-switch-demo">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Switch</h2>
+  <div class="grid gap-4 sm:grid-cols-3">
+    <Switch
+      id="runtime-switch-default"
+      name="runtime-switch-default"
+      value="enabled"
+      uncheckedValue="disabled"
+      label="Runtime switch"
+      variant="primary"
+      class="runtime-switch-custom"
+    />
+    <Switch id="runtime-switch-checked" defaultChecked label="Default checked" />
+    <Switch id="runtime-switch-disabled" disabled label="Disabled switch" variant="secondary" />
+    <Switch
+      id="runtime-switch-readonly"
+      defaultChecked
+      readOnly
+      label="Read-only switch"
+      variant="warning"
+    />
+    <Switch id="runtime-switch-small" size="sm" label="Small switch" variant="info" />
+    <Switch id="runtime-switch-large" size="lg" label="Large switch" variant="success" />
+  </div>
+</section>

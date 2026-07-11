@@ -1,0 +1,94 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { Field, FieldControl, FieldError, FieldLabel } from "@/components/starwind-runtime/field";
+import { Form } from "@/components/starwind-runtime/form";
+---
+
+<section class="border-border mb-10 border-b pb-10">
+  <div class="mb-5 space-y-2">
+    <h2 class="font-heading text-2xl font-semibold tracking-tight">Dynamic fields</h2>
+    <p class="text-muted-foreground text-sm">
+      Add and remove optional fields after the Form runtime has already initialized.
+    </p>
+  </div>
+
+  <Form id="runtime-dynamic-fields-form" class="grid gap-4">
+    <Field name="runtimeDynamicTitle">
+      <FieldLabel>Title</FieldLabel>
+      <FieldControl id="runtime-dynamic-title" required value="Runtime forms" />
+      <FieldError match="valueMissing">Enter a title.</FieldError>
+    </Field>
+    <div id="runtime-dynamic-fields" class="grid gap-4"></div>
+    <div class="flex flex-wrap items-center gap-3">
+      <Button id="runtime-dynamic-toggle" type="button" variant="outline">
+        Add release notes
+      </Button>
+      <Button type="submit">Submit dynamic form</Button>
+      <Button type="reset" variant="ghost">Reset</Button>
+    </div>
+  </Form>
+
+  <output
+    id="runtime-dynamic-output"
+    class="text-muted-foreground mt-3 block text-sm whitespace-pre-wrap"
+  >
+    Submit to inspect dynamically registered fields.
+  </output>
+</section>
+
+<script>
+  const dynamicForm = document.querySelector<HTMLFormElement>("#runtime-dynamic-fields-form");
+  const dynamicMount = document.querySelector<HTMLElement>("#runtime-dynamic-fields");
+  const dynamicOutput = document.querySelector<HTMLOutputElement>("#runtime-dynamic-output");
+  const dynamicToggle = document.querySelector<HTMLButtonElement>("#runtime-dynamic-toggle");
+
+  const renderDynamicOutput = (text: string) => {
+    if (!dynamicOutput) return;
+    dynamicOutput.value = text;
+    dynamicOutput.textContent = text;
+  };
+
+  const syncDynamicToggle = () => {
+    if (!dynamicToggle || !dynamicMount) return;
+    dynamicToggle.textContent = dynamicMount.querySelector("[data-sw-field]")
+      ? "Remove release notes"
+      : "Add release notes";
+  };
+
+  dynamicToggle?.addEventListener("click", () => {
+    if (!dynamicMount) return;
+
+    const existing = dynamicMount.querySelector("[data-sw-field]");
+    if (existing) {
+      existing.remove();
+      syncDynamicToggle();
+      return;
+    }
+
+    dynamicMount.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div data-sw-field data-name="runtimeDynamicNotes">
+          <label data-sw-field-label>Release notes</label>
+          <textarea data-sw-field-control rows="3" placeholder="What changed?"></textarea>
+          <p data-sw-field-description>Added after initialization and submitted normally.</p>
+        </div>
+      `,
+    );
+    syncDynamicToggle();
+  });
+
+  dynamicForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = new FormData(dynamicForm);
+    const entries = Array.from(data.entries()).map(([key, value]) => `${key}: ${value}`);
+    renderDynamicOutput(entries.length > 0 ? entries.join("\n") : "No fields submitted.");
+  });
+
+  dynamicForm?.addEventListener("reset", () => {
+    window.setTimeout(
+      () => renderDynamicOutput("Submit to inspect dynamically registered fields."),
+      0,
+    );
+  });
+</script>

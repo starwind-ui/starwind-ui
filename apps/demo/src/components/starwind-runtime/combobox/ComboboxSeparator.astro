@@ -1,0 +1,15 @@
+---
+import ComboboxPrimitive from "@starwind-ui/astro/combobox";
+import type { HTMLAttributes } from "astro/types";
+import { comboboxSeparator } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ComboboxPrimitive.Separator
+  class={comboboxSeparator({ class: className })}
+  {...rest}
+  data-slot="combobox-separator"
+/>

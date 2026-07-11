@@ -1,0 +1,30 @@
+<div data-sw-select data-default-value="astro">
+  <span data-sw-select-label>Framework</span>
+  <button data-sw-select-trigger type="button">
+    <span data-sw-select-value>Astro</span>
+    <span data-sw-select-icon>v</span>
+  </button>
+  <div data-sw-select-positioner>
+    <div data-sw-select-popup>
+      <div data-sw-select-list>
+        <div data-sw-select-item data-value="astro">
+          <span data-sw-select-item-text>Astro</span>
+          <span data-sw-select-item-indicator></span>
+        </div>
+        <div data-sw-select-item data-value="react">
+          <span data-sw-select-item-text>React</span>
+          <span data-sw-select-item-indicator></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createSelect } from "@starwind-ui/runtime/select";
+
+  const root = document.querySelector("[data-sw-select]");
+  if (root) {
+    createSelect(root);
+  }
+</script>

@@ -1,10 +1,19 @@
-# Starwind UI
+<p align="center">
+  <img alt="Starwind UI" src="https://shieldcn.dev/header/gradient.svg?title=Starwind+UI&amp;mode=dark&amp;theme=blue" />
+</p>
 
-[![NPM version](https://img.shields.io/npm/v/starwind.svg?style=flat)](https://npmjs.org/package/starwind) [![NPM downloads](https://img.shields.io/npm/dm/starwind.svg?style=flat)](https://npmjs.org/package/starwind) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Twitter Follow](https://img.shields.io/twitter/follow/boston343builds.svg?style=social)](https://twitter.com/boston343builds)
+<p align="center">
+  <a href="https://github.com/starwind-ui/starwind-ui"><img alt="npm + stars" src="https://shieldcn.dev/group/npm/starwind+github/stars/starwind-ui/starwind-ui.svg" /></a>
+  <!-- <a href="https://www.npmjs.com/package/starwind"><img alt="badge" src="https://shieldcn.dev/npm/starwind.svg" /></a>
+  <a href="https://github.com/starwind-ui/starwind-ui"><img alt="badge" src="https://shieldcn.dev/github/starwind-ui/starwind-ui/stars.svg" /></a> -->
+  <a href="https://www.npmjs.com/package/starwind"><img alt="downloads" src="https://shieldcn.dev/npm/dm/starwind.svg" /></a>
+  <a href="https://x.com/boston343builds"><img alt="follow" src="https://shieldcn.dev/x/follow/boston343builds.svg?split=true" /></a>
+</p>
 
-**Create animated websites in record time.**
+**Astro-first, framework-portable UI components you can own.**
 
-Starwind UI is a collection of 49+ beautifully designed, animated, and accessible components built purely with Astro and vanilla JS. Inspired by [shadcn/ui](https://ui.shadcn.com/), components are added directly to your codebase, giving you full ownership and complete control.
+Starwind UI gives you accessible, Tailwind CSS components with Starwind/shadcn-style ergonomics,
+backed by a portable Runtime that powers Astro and React adapters today.
 
 **[Get Started →](https://starwind.dev/docs/getting-started/installation/)** &nbsp;|&nbsp; **[Explore Components](https://starwind.dev/docs/components/)**
 
@@ -13,10 +22,20 @@ Starwind UI is a collection of 49+ beautifully designed, animated, and accessibl
 - **🎯 Own Your Code** — Components live in your project, not hidden in `node_modules`. Customize everything.
 - **✨ Animated by Default** — Smooth, polished animations out of the box with Tailwind CSS v4.
 - **♿ Accessible** — Keyboard navigable and screen reader friendly. Built with a11y in mind.
-- **🚀 Zero Runtime Dependencies** — Pure Astro + vanilla JS. No heavy frameworks to slow you down.
+- **🚀 Portable Runtime** — Shared DOM behavior with generated Astro and React adapters.
 - **🛠️ CLI-Powered** — Add only what you need with a simple `npx starwind add` command.
 
 ## Quick Start
+
+To test the portable Runtime beta in an Astro or React project:
+
+```bash
+npx starwind@beta init
+npx starwind@beta add
+```
+
+The beta keeps Color Picker as a legacy Astro-only migration compatibility surface; it is not
+available for fresh Runtime or React installs.
 
 ### Initialize your project
 

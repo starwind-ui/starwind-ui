@@ -1,0 +1,20 @@
+---
+import InputOtpPrimitive from "@starwind-ui/astro/input-otp";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { inputOtpSlot } from "./variants";
+
+type Props = HTMLAttributes<"div"> &
+  VariantProps<typeof inputOtpSlot> & {
+    index?: number;
+  };
+
+const { size, index, class: className, ...rest } = Astro.props;
+---
+
+<InputOtpPrimitive.Slot
+  class={inputOtpSlot({ size, class: className })}
+  index={index}
+  {...rest}
+  data-slot="input-otp-slot"
+/>

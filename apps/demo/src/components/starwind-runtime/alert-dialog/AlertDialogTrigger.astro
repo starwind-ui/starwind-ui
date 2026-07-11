@@ -1,0 +1,37 @@
+---
+import AlertDialogPrimitive from "@starwind-ui/astro/alert-dialog";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"button"> & {
+  asChild?: boolean;
+  targetId?: string;
+};
+
+const { asChild = false, targetId, class: className, ...rest } = Astro.props;
+
+const triggerClassName = className;
+---
+
+{
+  asChild ? (
+    <div
+      class={triggerClassName}
+      data-as-child
+      data-sw-alert-dialog-target-id={targetId}
+      {...rest}
+      data-slot="alert-dialog-trigger"
+      data-sw-alert-dialog-trigger
+    >
+      <slot />
+    </div>
+  ) : (
+    <AlertDialogPrimitive.Trigger
+      class={triggerClassName}
+      targetId={targetId}
+      {...rest}
+      data-slot="alert-dialog-trigger"
+    >
+      <slot />
+    </AlertDialogPrimitive.Trigger>
+  )
+}

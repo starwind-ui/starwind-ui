@@ -1,0 +1,57 @@
+---
+import ComboboxPrimitive from "@starwind-ui/astro/combobox";
+import X from "@tabler/icons/outline/x.svg";
+import type { HTMLAttributes } from "astro/types";
+import { InputGroupButton } from "../input-group";
+import { comboboxClear } from "./variants";
+
+type Props = HTMLAttributes<"button"> & {
+  asChild?: boolean;
+  showIcon?: boolean;
+};
+
+const {
+  asChild = false,
+  class: className,
+  disabled = false,
+  showIcon = true,
+  ...rest
+} = Astro.props;
+---
+
+{
+  asChild ? (
+    <ComboboxPrimitive.Clear
+      class={comboboxClear({ class: className })}
+      asChild={asChild}
+      disabled={disabled}
+      {...rest}
+      aria-label="Clear selection"
+      data-slot="combobox-clear"
+    >
+      <slot />
+
+      {showIcon && <X />}
+    </ComboboxPrimitive.Clear>
+  ) : (
+    <ComboboxPrimitive.Clear
+      asChild={true}
+      disabled={disabled}
+      {...rest}
+      aria-label="Clear selection"
+      data-slot="combobox-clear"
+    >
+      <InputGroupButton
+        size="icon-sm"
+        variant="ghost"
+        disabled={disabled}
+        class={comboboxClear({ class: className })}
+        data-slot="combobox-clear"
+      >
+        <slot />
+
+        {showIcon && <X />}
+      </InputGroupButton>
+    </ComboboxPrimitive.Clear>
+  )
+}

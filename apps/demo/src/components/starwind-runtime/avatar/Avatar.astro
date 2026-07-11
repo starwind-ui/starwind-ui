@@ -1,0 +1,18 @@
+---
+import AvatarPrimitive from "@starwind-ui/astro/avatar";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { avatar } from "./variants";
+
+type Props = HTMLAttributes<"span"> & VariantProps<typeof avatar>;
+
+const { variant, size, class: className, ...rest } = Astro.props;
+---
+
+<AvatarPrimitive.Root
+  class={avatar({ variant, size, class: className })}
+  {...rest}
+  data-slot="avatar"
+>
+  <slot />
+</AvatarPrimitive.Root>

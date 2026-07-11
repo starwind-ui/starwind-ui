@@ -1,0 +1,17 @@
+---
+import DropzonePrimitive from "@starwind-ui/astro/dropzone";
+import type { HTMLAttributes } from "astro/types";
+import { dropzoneFilesList } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<DropzonePrimitive.FilesList
+  class={dropzoneFilesList({ class: className })}
+  aria-live="polite"
+  aria-label="Uploaded files"
+  {...rest}
+  data-slot="dropzone-files-list"
+/>

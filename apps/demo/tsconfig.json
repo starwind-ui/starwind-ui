@@ -5,6 +5,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@starwind-ui/runtime": ["../../packages/runtime/src/index.ts"],
+      "@starwind-ui/runtime/init-starwind": ["../../packages/runtime/src/init-starwind.ts"],
+      "@starwind-ui/runtime/theme": ["../../packages/runtime/src/theme/theme.ts"],
+      "@starwind-ui/runtime/*": ["../../packages/runtime/src/components/*/index.ts"],
       "@assets/*": ["src/assets/*"],
       "@/*": ["src/*"]
     }

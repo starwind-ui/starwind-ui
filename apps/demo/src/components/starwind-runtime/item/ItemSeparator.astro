@@ -1,0 +1,17 @@
+---
+import type { ComponentProps } from "astro/types";
+
+import { Separator } from "../separator";
+import { itemSeparator } from "./variants";
+
+type Props = ComponentProps<typeof Separator>;
+
+const { orientation = "horizontal", class: className, ...rest } = Astro.props;
+---
+
+<Separator
+  orientation={orientation}
+  class={itemSeparator({ class: className })}
+  {...rest}
+  data-slot="item-separator"
+/>

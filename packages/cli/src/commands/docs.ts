@@ -1,10 +1,11 @@
 import * as p from "@clack/prompts";
 
 import { highlighter } from "@/utils/highlighter.js";
-import { getAllComponents } from "@/utils/registry.js";
+import { loadRegistry, parseRegistrySource } from "@/utils/registry.js";
 
 interface DocsOptions {
   json?: boolean;
+  registry?: string;
 }
 
 const DOCS_BASE_URL = "https://starwind.dev/docs/components";
@@ -21,11 +22,12 @@ export async function docs(components: string[], options?: DocsOptions) {
   }
 
   try {
-    const registry = await getAllComponents();
+    const registrySource = parseRegistrySource(options?.registry) ?? { type: "bundled" as const };
+    const registry = await loadRegistry(registrySource);
     const results: { component: string; url: string }[] = [];
 
     for (const name of components) {
-      const exists = registry.find((c) => c.name === name);
+      const exists = registry.components.find((c) => c.name === name);
       if (!exists) {
         p.log.error(`Component ${highlighter.info(name)} not found in the Starwind registry.`);
         process.exit(1);

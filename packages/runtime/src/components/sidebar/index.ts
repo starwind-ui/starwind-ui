@@ -1,0 +1,15 @@
+export {
+  createSidebarController,
+  initSidebarController,
+  type SidebarControllerCleanup,
+  type SidebarControllerInstance,
+  type SidebarControllerOptions,
+  type SidebarMobileOpenChangeDetails,
+  type SidebarMobileOpenChangeReason,
+  type SidebarOpenChangeDetails,
+  type SidebarOpenChangeReason,
+  type SidebarOpenState,
+  type SidebarPersistenceStorage,
+  type SidebarSetMobileOpenOptions,
+  type SidebarSetOpenOptions,
+} from "./sidebar";

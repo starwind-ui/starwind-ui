@@ -1,0 +1,68 @@
+---
+import RadioPrimitive from "@starwind-ui/astro/radio";
+import CircleFilled from "@tabler/icons/filled/circle.svg";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { radioControl, radioIndicator, radioItem, radioWrapper } from "./variants";
+
+type Props = Omit<HTMLAttributes<"span">, "defaultChecked" | "onChange"> &
+  VariantProps<typeof radioWrapper> &
+  VariantProps<typeof radioControl> & {
+    checked?: boolean;
+    defaultChecked?: boolean;
+    disabled?: boolean;
+    form?: string;
+    id?: string;
+    name?: string;
+    nativeButton?: boolean;
+    readOnly?: boolean;
+    required?: boolean;
+    value: string;
+  };
+
+const {
+  variant,
+  size = "md",
+  checked,
+  defaultChecked,
+  disabled = false,
+  form,
+  id,
+  name,
+  nativeButton = false,
+  readOnly = false,
+  required = false,
+  value,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<div class={radioWrapper({ size })} data-slot="radio-group-item-wrapper">
+  <RadioPrimitive.Root
+    class={radioItem()}
+    checked={checked}
+    defaultChecked={defaultChecked}
+    disabled={disabled}
+    form={form}
+    id={id}
+    name={name}
+    nativeButton={nativeButton}
+    readOnly={readOnly}
+    required={required}
+    value={value}
+    {...rest}
+    data-slot="radio-group-item"
+  >
+    <span class={radioControl({ variant, class: className })} data-slot="radio-group-item-control">
+      <RadioPrimitive.Indicator
+        class={radioIndicator({ size })}
+        data-slot="radio-group-item-indicator"
+      >
+        <slot name="icon">
+          <CircleFilled />
+        </slot>
+      </RadioPrimitive.Indicator>
+    </span>
+  </RadioPrimitive.Root>
+</div>

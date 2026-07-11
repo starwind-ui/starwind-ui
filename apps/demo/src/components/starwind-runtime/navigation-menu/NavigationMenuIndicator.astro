@@ -1,0 +1,20 @@
+---
+import NavigationMenuPrimitive from "@starwind-ui/astro/navigation-menu";
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
+import type { HTMLAttributes } from "astro/types";
+import { navigationMenuIndicator } from "./variants";
+
+type Props = HTMLAttributes<"span">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<NavigationMenuPrimitive.Icon
+  class={navigationMenuIndicator({ class: className })}
+  {...rest}
+  data-slot="navigation-menu-indicator"
+>
+  <slot>
+    <ChevronDown />
+  </slot>
+</NavigationMenuPrimitive.Icon>

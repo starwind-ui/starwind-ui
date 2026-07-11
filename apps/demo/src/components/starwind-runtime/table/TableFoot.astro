@@ -1,0 +1,13 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { tableFoot } from "./variants";
+
+type Props = HTMLAttributes<"tfoot">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<tfoot class={tableFoot({ class: className })} {...rest} data-slot="table-foot">
+  <slot />
+</tfoot>

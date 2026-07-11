@@ -1,0 +1,12 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<MenuPrimitive.Group class={className} {...rest} data-slot="dropdown-group">
+  <slot />
+</MenuPrimitive.Group>

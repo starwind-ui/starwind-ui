@@ -1,0 +1,30 @@
+---
+import SheetPrimitive from "@starwind-ui/astro/drawer";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"button"> & {
+  asChild?: boolean;
+};
+
+const { asChild = false, class: className, ...rest } = Astro.props;
+
+const closeClassName = className;
+---
+
+{
+  asChild ? (
+    <div
+      class={closeClassName}
+      data-as-child
+      {...rest}
+      data-slot="sheet-close"
+      data-sw-drawer-close
+    >
+      <slot />
+    </div>
+  ) : (
+    <SheetPrimitive.Close class={closeClassName} {...rest} data-slot="sheet-close">
+      <slot>Close</slot>
+    </SheetPrimitive.Close>
+  )
+}

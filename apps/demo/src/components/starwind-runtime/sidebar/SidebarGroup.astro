@@ -1,0 +1,15 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { sidebarGroup } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  "data-slot"?: string;
+};
+
+const { "data-slot": dataSlot = "sidebar-group", class: className, ...rest } = Astro.props;
+---
+
+<div class={sidebarGroup({ class: className })} data-sidebar="group" {...rest} data-slot={dataSlot}>
+  <slot />
+</div>

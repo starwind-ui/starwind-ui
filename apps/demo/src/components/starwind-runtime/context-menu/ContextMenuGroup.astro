@@ -1,0 +1,12 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ContextMenuPrimitive.Group class={className} {...rest} data-slot="context-menu-group">
+  <slot />
+</ContextMenuPrimitive.Group>

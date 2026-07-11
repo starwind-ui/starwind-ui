@@ -1,0 +1,26 @@
+---
+import ToastPrimitive from "@starwind-ui/astro/toast";
+import X from "@tabler/icons/outline/x.svg";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { toastClose, toastContent, toastItem } from "./variants";
+
+type Props = HTMLAttributes<"div"> & VariantProps<typeof toastItem>;
+
+const { class: className, variant = "default", ...rest } = Astro.props;
+---
+
+<ToastPrimitive.Root
+  class={toastItem({ variant, class: className })}
+  variant={variant}
+  {...rest}
+  data-slot="toast"
+>
+  <ToastPrimitive.Content class={toastContent()} data-slot="toast-content">
+    <slot />
+  </ToastPrimitive.Content>
+
+  <ToastPrimitive.Close class={toastClose()} data-slot="toast-close">
+    <X class="size-4" />
+  </ToastPrimitive.Close>
+</ToastPrimitive.Root>

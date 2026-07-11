@@ -3,7 +3,7 @@ import { tv } from "tailwind-variants";
 export const textarea = tv({
   base: [
     "border-input dark:bg-input/30 text-foreground ring-offset-background min-h-10 w-full rounded-md border bg-transparent shadow-xs",
-    "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] focus-visible:ring-3",
+    "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] focus-visible:ring-3 focus-visible:transition-none",
     "file:text-foreground file:border-0 file:bg-transparent file:text-sm file:font-medium",
     "disabled:cursor-not-allowed disabled:opacity-50",
     "aria-invalid:border-error aria-invalid:focus-visible:ring-error/40",

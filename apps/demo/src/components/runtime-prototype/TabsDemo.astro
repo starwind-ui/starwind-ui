@@ -1,0 +1,71 @@
+---
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind-runtime/tabs";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Tabs</h2>
+  <div class="grid gap-6 sm:grid-cols-2">
+    <Tabs id="runtime-tabs-default" defaultValue="account" class="runtime-tabs-custom">
+      <TabsList aria-label="Runtime tabs">
+        <TabsTrigger value="account">Account</TabsTrigger>
+        <TabsTrigger value="security">Security</TabsTrigger>
+        <TabsTrigger value="disabled" disabled>Disabled</TabsTrigger>
+      </TabsList>
+      <TabsContent value="account">Account settings content</TabsContent>
+      <TabsContent value="security">Security settings content</TabsContent>
+      <TabsContent value="disabled">Disabled settings content</TabsContent>
+    </Tabs>
+
+    <Tabs id="runtime-tabs-automatic" defaultValue="one" orientation="vertical">
+      <TabsList aria-label="Automatic runtime tabs" activateOnFocus>
+        <TabsTrigger value="one">One</TabsTrigger>
+        <TabsTrigger value="two">Two</TabsTrigger>
+      </TabsList>
+      <TabsContent value="one">First automatic panel</TabsContent>
+      <TabsContent value="two">Second automatic panel</TabsContent>
+    </Tabs>
+
+    <Tabs id="runtime-tabs-sync-a" defaultValue="overview" syncKey="runtime-tabs-sync-demo">
+      <TabsList aria-label="Runtime synced tabs A">
+        <TabsTrigger id="runtime-tabs-sync-a-overview" value="overview"> Overview A </TabsTrigger>
+        <TabsTrigger id="runtime-tabs-sync-a-activity" value="activity"> Activity A </TabsTrigger>
+      </TabsList>
+      <TabsContent value="overview">Synced overview panel A</TabsContent>
+      <TabsContent value="activity">Synced activity panel A</TabsContent>
+    </Tabs>
+
+    <Tabs id="runtime-tabs-sync-b" defaultValue="overview" syncKey="runtime-tabs-sync-demo">
+      <TabsList aria-label="Runtime synced tabs B">
+        <TabsTrigger id="runtime-tabs-sync-b-overview" value="overview"> Overview B </TabsTrigger>
+        <TabsTrigger id="runtime-tabs-sync-b-activity" value="activity"> Activity B </TabsTrigger>
+      </TabsList>
+      <TabsContent value="overview">Synced overview panel B</TabsContent>
+      <TabsContent value="activity">Synced activity panel B</TabsContent>
+    </Tabs>
+
+    <Tabs id="runtime-tabs-nested-parent" defaultValue="parent-one" class="sm:col-span-2">
+      <TabsList aria-label="Runtime nested parent tabs">
+        <TabsTrigger id="runtime-tabs-nested-parent-one" value="parent-one"> Parent 1 </TabsTrigger>
+        <TabsTrigger id="runtime-tabs-nested-parent-two" value="parent-two"> Parent 2 </TabsTrigger>
+        <TabsTrigger id="runtime-tabs-nested-parent-three" value="parent-three">
+          Parent 3
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="parent-one">Runtime parent tab 1 content</TabsContent>
+      <TabsContent value="parent-two">
+        <div class="grid gap-3">
+          <p class="text-muted-foreground text-sm">Parent tab 2 contains child tabs.</p>
+          <Tabs id="runtime-tabs-nested-child" defaultValue="child-a">
+            <TabsList aria-label="Runtime nested child tabs">
+              <TabsTrigger id="runtime-tabs-nested-child-a" value="child-a"> Child A </TabsTrigger>
+              <TabsTrigger id="runtime-tabs-nested-child-b" value="child-b"> Child B </TabsTrigger>
+            </TabsList>
+            <TabsContent value="child-a">Runtime child tab A content</TabsContent>
+            <TabsContent value="child-b">Runtime child tab B content</TabsContent>
+          </Tabs>
+        </div>
+      </TabsContent>
+      <TabsContent value="parent-three">Runtime parent tab 3 content</TabsContent>
+    </Tabs>
+  </div>
+</section>

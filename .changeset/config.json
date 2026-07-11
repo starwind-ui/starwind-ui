@@ -2,10 +2,10 @@
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": true,
-  "fixed": [["@starwind-ui/core", "starwind"]],
+  "fixed": [["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"]],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["demo"]
+  "ignore": ["demo", "react-demo"]
 }

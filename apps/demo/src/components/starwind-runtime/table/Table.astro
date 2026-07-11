@@ -1,0 +1,16 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { table } from "./variants";
+
+type Props = HTMLAttributes<"table"> & VariantProps<typeof table>;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div data-slot="table-container" class="relative w-full overflow-x-auto">
+  <table class={table({ class: className })} {...rest} data-slot="table">
+    <slot />
+  </table>
+</div>

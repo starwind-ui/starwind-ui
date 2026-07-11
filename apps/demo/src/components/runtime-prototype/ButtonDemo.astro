@@ -1,0 +1,63 @@
+---
+import Copy from "@tabler/icons/outline/copy.svg";
+import Plus from "@tabler/icons/outline/plus.svg";
+import Search from "@tabler/icons/outline/search.svg";
+import Settings from "@tabler/icons/outline/settings.svg";
+import { Button } from "@/components/starwind-runtime/button";
+
+const buttonVariants = [
+  "default",
+  "primary",
+  "secondary",
+  "outline",
+  "ghost",
+  "info",
+  "success",
+  "warning",
+  "error",
+] as const;
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Button</h2>
+  <div class="space-y-4">
+    <div class="flex flex-wrap gap-3">
+      <Button id="runtime-button-default">Default</Button>
+      <Button id="runtime-button-submit" type="submit">Submit</Button>
+      {
+        buttonVariants
+          .slice(1)
+          .map((variant) => (
+            <Button variant={variant}>{variant.charAt(0).toUpperCase() + variant.slice(1)}</Button>
+          ))
+      }
+      <Button id="runtime-button-disabled" disabled>Disabled</Button>
+      <Button id="runtime-button-focusable-disabled" disabled focusableWhenDisabled>
+        Focusable disabled
+      </Button>
+      <Button id="runtime-button-anchor" href="/" variant="outline">Anchor</Button>
+      <Button id="runtime-button-anchor-ghost" href="/" variant="ghost"> Anchor stays link </Button>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+      <Button size="icon-sm" variant="outline" aria-label="Search">
+        <Search />
+      </Button>
+      <Button size="icon" variant="secondary" aria-label="Copy">
+        <Copy />
+      </Button>
+      <Button size="icon-lg" variant="primary" aria-label="Add">
+        <Plus />
+      </Button>
+      <Button variant="outline">
+        <Settings class="size-4" />
+        Settings
+      </Button>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+      <Button class="rounded-full px-6">Rounded override</Button>
+      <Button variant="outline" class="border-dashed shadow-none">Dashed override</Button>
+    </div>
+  </div>
+</section>

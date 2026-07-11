@@ -1,0 +1,65 @@
+---
+import ProgressPrimitive from "@starwind-ui/astro/progress";
+import type { HTMLAttributes } from "astro/types";
+import { progress, progressIndicator, progressTrack } from "./variants";
+
+interface Props extends Omit<HTMLAttributes<"div">, "value"> {
+  label?: string;
+  max?: number;
+  min?: number;
+  value?: number | null;
+  variant?: "default" | "primary" | "secondary" | "info" | "success" | "warning" | "error";
+}
+
+const {
+  label,
+  value = null,
+  max = 100,
+  min = 0,
+  variant = "default",
+  class: className,
+  ...rest
+} = Astro.props;
+
+const ariaLabel = rest["aria-label"] ?? label;
+const progressValue = value == null || Number.isNaN(Number(value)) ? null : Number(value);
+const isIndeterminate = progressValue === null;
+const boundedMin = Number.isFinite(min) ? min : 0;
+const boundedMax = Number.isFinite(max) ? max : 100;
+const progressPercent = isIndeterminate
+  ? 0
+  : boundedMax === boundedMin
+    ? progressValue >= boundedMax
+      ? 100
+      : 0
+    : Math.round(
+        Math.min(
+          Math.max(((progressValue - boundedMin) / (boundedMax - boundedMin)) * 100, 0),
+          100,
+        ),
+      );
+const indicatorStyle = isIndeterminate
+  ? undefined
+  : { transform: `translateX(-${100 - progressPercent}%)` };
+---
+
+<ProgressPrimitive.Root
+  class={progress({ variant: isIndeterminate ? "indeterminate" : undefined, class: className })}
+  max={boundedMax}
+  min={boundedMin}
+  value={progressValue}
+  {...rest}
+  aria-label={ariaLabel}
+  data-slot="progress"
+>
+  <ProgressPrimitive.Track class={progressTrack()} data-slot="progress-track">
+    <ProgressPrimitive.Indicator
+      class={progressIndicator({
+        variant: isIndeterminate ? "indeterminate" : undefined,
+        color: variant,
+      })}
+      style={indicatorStyle}
+      data-slot="progress-indicator"
+    />
+  </ProgressPrimitive.Track>
+</ProgressPrimitive.Root>

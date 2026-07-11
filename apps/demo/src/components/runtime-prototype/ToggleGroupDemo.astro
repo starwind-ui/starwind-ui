@@ -1,0 +1,35 @@
+---
+import { Toggle } from "@/components/starwind-runtime/toggle";
+import { ToggleGroup, ToggleGroupItem } from "@/components/starwind-runtime/toggle-group";
+---
+
+<section class="mb-12">
+  <h2 id="runtime-toggle-group-heading" class="font-heading mb-4 text-2xl font-semibold">
+    Toggle Group
+  </h2>
+  <div class="grid gap-6 sm:grid-cols-2">
+    <ToggleGroup
+      data-runtime-toggle-group-default
+      defaultValue={["bold"]}
+      aria-labelledby="runtime-toggle-group-heading"
+      class="runtime-toggle-group-custom"
+    >
+      <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
+      <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
+      <ToggleGroupItem value="underline">Underline</ToggleGroupItem>
+    </ToggleGroup>
+
+    <ToggleGroup
+      data-runtime-toggle-group-multiple
+      multiple
+      orientation="vertical"
+      variant="outline"
+      defaultValue={["left"]}
+      aria-labelledby="runtime-toggle-group-heading"
+    >
+      <ToggleGroupItem value="left">Left</ToggleGroupItem>
+      <ToggleGroupItem value="center">Center</ToggleGroupItem>
+      <ToggleGroupItem value="right">Right</ToggleGroupItem>
+    </ToggleGroup>
+  </div>
+</section>

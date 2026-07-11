@@ -1,0 +1,25 @@
+---
+import ScrollAreaPrimitive from "@starwind-ui/astro/scroll-area";
+import type { HTMLAttributes } from "astro/types";
+import { scrollAreaScrollbar, scrollAreaThumb } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  keepMounted?: boolean;
+  orientation?: "horizontal" | "vertical";
+};
+
+const { keepMounted = false, orientation = "vertical", class: className, ...rest } = Astro.props;
+---
+
+<ScrollAreaPrimitive.Scrollbar
+  class={scrollAreaScrollbar({ class: className })}
+  keepMounted={keepMounted}
+  orientation={orientation}
+  {...rest}
+  data-orientation={orientation}
+  data-slot="scroll-area-scrollbar"
+>
+  <slot>
+    <ScrollAreaPrimitive.Thumb class={scrollAreaThumb()} data-slot="scroll-area-thumb" />
+  </slot>
+</ScrollAreaPrimitive.Scrollbar>

@@ -1,6 +1,7 @@
 ---
 import "@/styles/global.css";
 
+import { ThemeInitScript } from "@starwind-ui/astro/theme";
 import Bell from "@tabler/icons/outline/bell.svg";
 import Calendar from "@tabler/icons/outline/calendar.svg";
 import ChevronUp from "@tabler/icons/outline/chevron-up.svg";
@@ -13,7 +14,6 @@ import Search from "@tabler/icons/outline/search.svg";
 import Settings from "@tabler/icons/outline/settings.svg";
 import Sparkles from "@tabler/icons/outline/sparkles.svg";
 import User from "@tabler/icons/outline/user.svg";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind/avatar";
 import {
   Dropdown,
@@ -60,31 +60,7 @@ const menuItems = [
     <meta name="description" content="Sidebar component demo for Starwind UI" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <script is:inline>
-      function initTheme() {
-        const colorTheme = localStorage.getItem("colorTheme");
-        if (!colorTheme) {
-          if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            document.documentElement.classList.add("dark");
-            localStorage.setItem("colorTheme", "dark");
-          } else {
-            document.documentElement.classList.remove("dark");
-            localStorage.setItem("colorTheme", "light");
-          }
-        } else {
-          if (colorTheme === "dark") {
-            document.documentElement.classList.add("dark");
-          } else if (colorTheme === "light") {
-            document.documentElement.classList.remove("dark");
-          } else if (colorTheme === "system") {
-            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-            document.documentElement.classList.toggle("dark", prefersDark);
-          }
-        }
-      }
-      initTheme();
-      document.addEventListener("astro:after-swap", initTheme);
-    </script>
+    <ThemeInitScript />
   </head>
 
   <body class="min-h-lvh">

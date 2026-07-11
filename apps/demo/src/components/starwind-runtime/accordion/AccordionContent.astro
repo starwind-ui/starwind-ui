@@ -1,0 +1,19 @@
+---
+import AccordionPrimitive from "@starwind-ui/astro/accordion";
+import type { HTMLAttributes } from "astro/types";
+import { accordionContent } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<AccordionPrimitive.Panel
+  class={accordionContent({ class: className })}
+  {...rest}
+  data-slot="accordion-content"
+>
+  <div class="pt-0 pb-4">
+    <slot />
+  </div>
+</AccordionPrimitive.Panel>

@@ -1,0 +1,126 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { Label } from "@/components/starwind-runtime/label";
+import { Slider } from "@/components/starwind-runtime/slider";
+
+const sliderVariants = [
+  "default",
+  "primary",
+  "secondary",
+  "info",
+  "success",
+  "warning",
+  "error",
+] as const;
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Slider</h2>
+  <form data-runtime-slider-form class="grid gap-6 sm:grid-cols-2">
+    <div class="grid gap-3">
+      <Label for="runtime-slider-volume" size="sm">Volume</Label>
+      <Slider
+        id="runtime-slider-volume"
+        name="volume"
+        defaultValue={25}
+        variant="primary"
+        aria-label="Runtime volume"
+      />
+    </div>
+    <div class="grid gap-3">
+      <Label for="runtime-slider-price" size="sm">Price range</Label>
+      <Slider
+        id="runtime-slider-price"
+        name="price"
+        defaultValue={[20, 80]}
+        variant="secondary"
+        aria-label="Runtime price range"
+      />
+    </div>
+    <div class="grid gap-3">
+      <Label for="runtime-slider-step" size="sm">Step</Label>
+      <Slider
+        id="runtime-slider-step"
+        defaultValue={50}
+        step={10}
+        variant="success"
+        aria-label="Runtime step slider"
+      />
+    </div>
+    <div class="grid h-32 gap-3">
+      <Label for="runtime-slider-vertical" size="sm">Vertical</Label>
+      <Slider
+        id="runtime-slider-vertical"
+        defaultValue={60}
+        orientation="vertical"
+        variant="warning"
+        aria-label="Runtime vertical slider"
+      />
+    </div>
+    <div class="grid gap-3 sm:col-span-2">
+      <h3 class="font-heading text-base font-semibold">Variants</h3>
+      <div class="grid gap-4 md:grid-cols-2">
+        {
+          sliderVariants.map((variant, index) => (
+            <div class="grid gap-2">
+              <Label for={`runtime-slider-variant-${variant}`} size="sm">
+                {variant}
+              </Label>
+              <Slider
+                id={`runtime-slider-variant-${variant}`}
+                defaultValue={20 + index * 10}
+                variant={variant}
+                aria-label={`Runtime ${variant} slider`}
+              />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+    <div class="grid gap-3">
+      <Label for="runtime-slider-disabled" size="sm">Disabled</Label>
+      <Slider
+        id="runtime-slider-disabled"
+        defaultValue={35}
+        disabled
+        variant="info"
+        aria-label="Runtime disabled slider"
+      />
+    </div>
+    <div class="grid gap-3">
+      <Label for="runtime-slider-form-value" size="sm">Form value</Label>
+      <Slider
+        id="runtime-slider-form-value"
+        name="runtime-slider-form-value"
+        defaultValue={42}
+        variant="error"
+        aria-label="Runtime form slider"
+      />
+      <Button type="submit" variant="outline" size="sm">Submit sliders</Button>
+      <output class="text-muted-foreground text-sm" data-runtime-slider-output>
+        Slider form data: pending
+      </output>
+    </div>
+  </form>
+</section>
+
+<script>
+  const setupRuntimeSliderForm = () => {
+    const form = document.querySelector<HTMLFormElement>("[data-runtime-slider-form]");
+    const output = document.querySelector<HTMLOutputElement>("[data-runtime-slider-output]");
+    if (!form || !output || form.dataset.runtimeSliderFormReady === "true") return;
+
+    form.dataset.runtimeSliderFormReady = "true";
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const entries = Array.from(new FormData(form).entries()).map(
+        ([name, value]) => `${name}: ${value}`,
+      );
+      output.value = `Slider form data: ${entries.join(", ")}`;
+      output.textContent = output.value;
+    });
+  };
+
+  setupRuntimeSliderForm();
+  document.addEventListener("astro:after-swap", setupRuntimeSliderForm);
+</script>

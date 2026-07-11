@@ -1,0 +1,106 @@
+---
+import { button } from "@/components/starwind-runtime/button/variants";
+import {
+  Dropdown,
+  DropdownCheckboxItem,
+  DropdownCheckboxItemIndicator,
+  DropdownContent,
+  DropdownGroup,
+  DropdownItem,
+  DropdownLabel,
+  DropdownRadioGroup,
+  DropdownRadioItem,
+  DropdownRadioItemIndicator,
+  DropdownSeparator,
+  DropdownShortcut,
+  DropdownSub,
+  DropdownSubContent,
+  DropdownSubTrigger,
+  DropdownTrigger,
+} from "@/components/starwind-runtime/dropdown";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Dropdown</h2>
+  <div class="flex flex-wrap gap-3">
+    <Dropdown id="runtime-dropdown-default">
+      <DropdownTrigger
+        id="runtime-dropdown-trigger"
+        class={button({ variant: "outline", size: "md" })}
+      >
+        Open menu
+      </DropdownTrigger>
+      <DropdownContent
+        id="runtime-dropdown-content"
+        class="runtime-dropdown-custom"
+        side="bottom"
+        align="start"
+      >
+        <DropdownLabel>Workspace</DropdownLabel>
+        <DropdownGroup>
+          <DropdownItem id="runtime-dropdown-account">
+            Account
+            <DropdownShortcut>Ctrl+A</DropdownShortcut>
+          </DropdownItem>
+          <DropdownCheckboxItem id="runtime-dropdown-checkbox" defaultChecked showIndicator={false}>
+            <DropdownCheckboxItemIndicator
+              id="runtime-dropdown-checkbox-exported-indicator"
+              class="text-primary"
+            >
+              <span class="text-[10px] leading-none font-bold">on</span>
+            </DropdownCheckboxItemIndicator>
+            Email updates
+          </DropdownCheckboxItem>
+          <DropdownRadioGroup
+            id="runtime-dropdown-radio-group"
+            defaultValue="compact"
+            aria-label="Dropdown density"
+          >
+            <DropdownRadioItem
+              id="runtime-dropdown-radio-compact"
+              value="compact"
+              showIndicator={false}
+            >
+              <DropdownRadioItemIndicator
+                id="runtime-dropdown-radio-compact-exported-indicator"
+                class="text-primary"
+              >
+                <span class="size-2 rounded-sm bg-current"></span>
+              </DropdownRadioItemIndicator>
+              Compact density
+            </DropdownRadioItem>
+            <DropdownRadioItem id="runtime-dropdown-radio-spacious" value="spacious">
+              Spacious density
+            </DropdownRadioItem>
+          </DropdownRadioGroup>
+          <DropdownSub>
+            <DropdownSubTrigger id="runtime-dropdown-sub-trigger"> More tools </DropdownSubTrigger>
+            <DropdownSubContent id="runtime-dropdown-sub-content">
+              <DropdownItem id="runtime-dropdown-invite"> Invite team </DropdownItem>
+            </DropdownSubContent>
+          </DropdownSub>
+        </DropdownGroup>
+        <DropdownSeparator />
+        <DropdownItem disabled>Disabled item</DropdownItem>
+      </DropdownContent>
+    </Dropdown>
+
+    <Dropdown id="runtime-dropdown-hover" openOnHover closeDelay={25}>
+      <DropdownTrigger class={button({ variant: "secondary", size: "sm" })}>
+        Hover menu
+      </DropdownTrigger>
+      <DropdownContent id="runtime-dropdown-hover-content" side="right">
+        <DropdownItem>Hover opened item</DropdownItem>
+      </DropdownContent>
+    </Dropdown>
+
+    <Dropdown id="runtime-dropdown-as-child">
+      <DropdownTrigger asChild class={button({ variant: "ghost", size: "sm" })}>
+        <button id="runtime-dropdown-as-child-trigger" type="button"> As child menu </button>
+      </DropdownTrigger>
+      <DropdownContent id="runtime-dropdown-as-child-content" side="bottom">
+        <DropdownItem id="runtime-dropdown-as-child-item"> Child trigger action </DropdownItem>
+      </DropdownContent>
+    </Dropdown>
+  </div>
+</section>

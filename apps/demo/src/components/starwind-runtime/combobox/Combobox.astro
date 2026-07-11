@@ -1,0 +1,60 @@
+---
+import ComboboxPrimitive from "@starwind-ui/astro/combobox";
+import type { HTMLAttributes } from "astro/types";
+import { combobox } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "defaultValue" | "onChange"> & {
+  autoComplete?: string;
+  defaultInputValue?: string;
+  defaultOpen?: boolean;
+  defaultValue?: string | null;
+  disabled?: boolean;
+  filterMode?: "contains" | "startsWith";
+  form?: string;
+  highlightItemOnHover?: boolean;
+  locale?: string;
+  modal?: boolean;
+  name?: string;
+  readOnly?: boolean;
+  required?: boolean;
+};
+
+const {
+  autoComplete,
+  defaultInputValue,
+  defaultOpen = false,
+  defaultValue,
+  disabled = false,
+  filterMode = "contains",
+  form,
+  highlightItemOnHover = true,
+  locale,
+  modal = false,
+  name,
+  readOnly = false,
+  required = false,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<ComboboxPrimitive.Root
+  class={combobox({ class: className })}
+  autoComplete={autoComplete}
+  defaultInputValue={defaultInputValue}
+  defaultOpen={defaultOpen}
+  defaultValue={defaultValue}
+  disabled={disabled}
+  filterMode={filterMode}
+  form={form}
+  highlightItemOnHover={highlightItemOnHover}
+  locale={locale}
+  modal={modal}
+  name={name}
+  readOnly={readOnly}
+  required={required}
+  {...rest}
+  data-slot="combobox"
+>
+  <slot />
+</ComboboxPrimitive.Root>

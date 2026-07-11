@@ -1,0 +1,91 @@
+---
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuCheckboxItemIndicator,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuRadioItemIndicator,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "@/components/starwind-runtime/context-menu";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Context Menu</h2>
+  <ContextMenu id="runtime-context-menu-default">
+    <ContextMenuTrigger
+      id="runtime-context-menu-trigger"
+      class="border-input bg-card text-card-foreground focus-visible:ring-outline/50 flex min-h-28 w-full max-w-md items-center justify-center rounded-md border border-dashed px-6 py-4 text-sm outline-none select-none focus-visible:ring-3"
+    >
+      Right click this area
+    </ContextMenuTrigger>
+    <ContextMenuContent
+      id="runtime-context-menu-content"
+      class="runtime-context-menu-custom"
+      side="bottom"
+      align="start"
+    >
+      <ContextMenuLabel>Canvas</ContextMenuLabel>
+      <ContextMenuGroup>
+        <ContextMenuItem id="runtime-context-menu-rename">
+          Rename
+          <ContextMenuShortcut>F2</ContextMenuShortcut>
+        </ContextMenuItem>
+        <ContextMenuCheckboxItem
+          id="runtime-context-menu-checkbox"
+          defaultChecked
+          showIndicator={false}
+        >
+          <ContextMenuCheckboxItemIndicator
+            id="runtime-context-menu-checkbox-exported-indicator"
+            class="text-primary"
+          >
+            <span class="text-[10px] leading-none font-bold">on</span>
+          </ContextMenuCheckboxItemIndicator>
+          Show guides
+        </ContextMenuCheckboxItem>
+        <ContextMenuRadioGroup
+          id="runtime-context-menu-radio-group"
+          defaultValue="grid"
+          aria-label="Canvas snap mode"
+        >
+          <ContextMenuRadioItem
+            id="runtime-context-menu-radio-grid"
+            value="grid"
+            showIndicator={false}
+          >
+            <ContextMenuRadioItemIndicator
+              id="runtime-context-menu-radio-grid-exported-indicator"
+              class="text-primary"
+            >
+              <span class="size-2 rounded-sm bg-current"></span>
+            </ContextMenuRadioItemIndicator>
+            Snap to grid
+          </ContextMenuRadioItem>
+          <ContextMenuRadioItem id="runtime-context-menu-radio-freeform" value="freeform">
+            Freeform
+          </ContextMenuRadioItem>
+        </ContextMenuRadioGroup>
+        <ContextMenuSub>
+          <ContextMenuSubTrigger id="runtime-context-menu-sub-trigger">
+            Insert
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent id="runtime-context-menu-sub-content">
+            <ContextMenuItem id="runtime-context-menu-frame">Frame</ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+      </ContextMenuGroup>
+      <ContextMenuSeparator />
+      <ContextMenuItem disabled>Locked action</ContextMenuItem>
+    </ContextMenuContent>
+  </ContextMenu>
+</section>

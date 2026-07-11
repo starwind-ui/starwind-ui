@@ -1,0 +1,33 @@
+---
+import PreviewCardPrimitive from "@starwind-ui/astro/preview-card";
+import type { HTMLAttributes } from "astro/types";
+import { hoverCardTrigger } from "./variants";
+
+type Props = HTMLAttributes<"a"> & {
+  asChild?: boolean;
+  closeDelay?: number;
+  disabled?: boolean;
+  openDelay?: number;
+};
+
+const {
+  asChild = false,
+  closeDelay,
+  disabled = false,
+  openDelay,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<PreviewCardPrimitive.Trigger
+  class={hoverCardTrigger({ class: className })}
+  asChild={asChild}
+  closeDelay={closeDelay}
+  disabled={disabled}
+  openDelay={openDelay}
+  {...rest}
+  data-slot="hover-card-trigger"
+>
+  <slot />
+</PreviewCardPrimitive.Trigger>

@@ -1,0 +1,19 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { itemMedia } from "./variants";
+
+type Props = HTMLAttributes<"div"> & VariantProps<typeof itemMedia>;
+
+const { variant = "default", class: className, ...rest } = Astro.props;
+---
+
+<div
+  class={itemMedia({ variant, class: className })}
+  data-variant={variant}
+  {...rest}
+  data-slot="item-media"
+>
+  <slot />
+</div>

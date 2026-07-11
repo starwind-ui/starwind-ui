@@ -1,0 +1,55 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import type { HTMLAttributes } from "astro/types";
+import { contextMenuRadioItem, contextMenuRadioItemIndicator } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "aria-checked" | "role"> & {
+  value: string;
+  checked?: boolean;
+  defaultChecked?: boolean;
+  closeOnClick?: boolean;
+  inset?: boolean;
+  disabled?: boolean;
+  indicatorClass?: string;
+  showIndicator?: boolean;
+};
+
+const {
+  class: className,
+  value,
+  checked,
+  defaultChecked = false,
+  closeOnClick = false,
+  inset = false,
+  disabled = false,
+  indicatorClass: indicatorClassName,
+  showIndicator = true,
+  ...rest
+} = Astro.props;
+---
+
+<ContextMenuPrimitive.RadioItem
+  class={contextMenuRadioItem({ inset, disabled, class: className })}
+  value={value}
+  checked={checked}
+  defaultChecked={defaultChecked}
+  closeOnClick={closeOnClick}
+  disabled={disabled}
+  {...rest}
+  data-slot="context-menu-radio-item"
+>
+  {
+    showIndicator && (
+      <ContextMenuPrimitive.RadioItemIndicator
+        class={contextMenuRadioItemIndicator({ class: indicatorClassName })}
+        data-slot="context-menu-radio-item-indicator"
+      >
+        <slot name="indicator">
+          <span class="size-2 rounded-full bg-current" />
+        </slot>
+      </ContextMenuPrimitive.RadioItemIndicator>
+    )
+  }
+
+  <slot />
+</ContextMenuPrimitive.RadioItem>

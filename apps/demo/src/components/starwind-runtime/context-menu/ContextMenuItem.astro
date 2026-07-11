@@ -1,0 +1,21 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import type { HTMLAttributes } from "astro/types";
+import { contextMenuItem } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  inset?: boolean;
+  disabled?: boolean;
+};
+
+const { class: className, inset = false, disabled = false, ...rest } = Astro.props;
+---
+
+<ContextMenuPrimitive.Item
+  class={contextMenuItem({ inset, disabled, class: className })}
+  disabled={disabled}
+  {...rest}
+  data-slot="context-menu-item"
+>
+  <slot />
+</ContextMenuPrimitive.Item>

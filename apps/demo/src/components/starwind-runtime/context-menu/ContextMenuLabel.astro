@@ -1,0 +1,19 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import type { HTMLAttributes } from "astro/types";
+import { contextMenuLabel } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  inset?: boolean;
+};
+
+const { class: className, inset = false, ...rest } = Astro.props;
+---
+
+<ContextMenuPrimitive.Label
+  class={contextMenuLabel({ inset, class: className })}
+  {...rest}
+  data-slot="context-menu-label"
+>
+  <slot />
+</ContextMenuPrimitive.Label>

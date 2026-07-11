@@ -1,0 +1,19 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div"> & {
+  closeDelay?: number;
+};
+
+const { class: className, closeDelay = 200, ...rest } = Astro.props;
+---
+
+<MenuPrimitive.SubmenuRoot
+  class={["relative", className].filter(Boolean).join(" ")}
+  closeDelay={closeDelay}
+  {...rest}
+  data-slot="dropdown-sub"
+>
+  <slot />
+</MenuPrimitive.SubmenuRoot>

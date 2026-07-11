@@ -1,0 +1,23 @@
+---
+import { Separator } from "@/components/starwind-runtime/separator";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Separator</h2>
+  <div class="max-w-md space-y-4">
+    <div>
+      <h3 class="font-heading text-base font-semibold">Runtime separator</h3>
+      <p class="text-muted-foreground text-sm">
+        Horizontal and vertical orientations use the same primitive.
+      </p>
+    </div>
+    <Separator id="runtime-separator-horizontal" class="runtime-separator-custom" />
+    <div class="text-muted-foreground flex h-5 items-center gap-4 text-sm">
+      <span>Docs</span>
+      <Separator id="runtime-separator-vertical" orientation="vertical" />
+      <span>Components</span>
+      <Separator orientation="vertical" />
+      <span>Runtime</span>
+    </div>
+  </div>
+</section>

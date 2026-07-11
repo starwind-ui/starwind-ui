@@ -1,0 +1,37 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownContent } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  sideOffset?: number;
+  avoidCollisions?: boolean;
+};
+
+const {
+  class: className,
+  side = "right",
+  align = "start",
+  sideOffset = 0,
+  avoidCollisions = true,
+  ...rest
+} = Astro.props;
+
+const subContentClassName = className;
+---
+
+<MenuPrimitive.Portal data-slot="dropdown-sub-portal">
+  <MenuPrimitive.Popup
+    class={dropdownContent({ class: subContentClassName })}
+    side={side}
+    align={align}
+    sideOffset={sideOffset}
+    avoidCollisions={avoidCollisions}
+    {...rest}
+    data-slot="dropdown-sub-content"
+  >
+    <slot />
+  </MenuPrimitive.Popup>
+</MenuPrimitive.Portal>

@@ -1,0 +1,35 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import type { HTMLAttributes } from "astro/types";
+import { contextMenuContent } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  sideOffset?: number;
+  avoidCollisions?: boolean;
+};
+
+const {
+  class: className,
+  side = "bottom",
+  align = "start",
+  sideOffset = 4,
+  avoidCollisions = true,
+  ...rest
+} = Astro.props;
+---
+
+<ContextMenuPrimitive.Portal data-slot="context-menu-portal">
+  <ContextMenuPrimitive.Popup
+    class={contextMenuContent({ class: className })}
+    side={side}
+    align={align}
+    sideOffset={sideOffset}
+    avoidCollisions={avoidCollisions}
+    {...rest}
+    data-slot="context-menu-content"
+  >
+    <slot />
+  </ContextMenuPrimitive.Popup>
+</ContextMenuPrimitive.Portal>

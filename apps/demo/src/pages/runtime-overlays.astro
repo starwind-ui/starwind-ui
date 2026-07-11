@@ -1,0 +1,232 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/starwind-runtime/dialog";
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+  DropdownSeparator,
+  DropdownTrigger,
+} from "@/components/starwind-runtime/dropdown";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/starwind-runtime/popover";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/starwind-runtime/sheet";
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout title="Runtime Overlay Lifecycle" description="Dialog and drawer lifecycle test page">
+  <main class="container mx-auto max-w-3xl px-4 py-12">
+    <div class="mb-8 space-y-3">
+      <p class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+        Runtime overlays
+      </p>
+      <h1 class="font-heading text-4xl font-semibold tracking-tight">Overlay lifecycle</h1>
+      <p class="text-muted-foreground max-w-2xl">
+        Dialog and sheet roots report close reasons, cancelable dismissal, and close completion
+        after exit motion.
+      </p>
+    </div>
+
+    <div class="space-y-8">
+      <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold">Dialog</h2>
+          <div class="flex flex-wrap gap-2">
+            <Button id="runtime-dialog-open" type="button" variant="outline" size="sm">Open</Button>
+            <Button id="runtime-dialog-close" type="button" variant="outline" size="sm">
+              Programmatic close
+            </Button>
+          </div>
+        </div>
+
+        <Dialog id="runtime-lifecycle-dialog">
+          <DialogTrigger asChild>
+            <Button type="button">Open dialog</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Lifecycle dialog</DialogTitle>
+              <DialogDescription>
+                Close this dialog with the button, Escape, or backdrop to inspect event reasons.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button data-sw-dialog-close type="button" variant="outline">Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </section>
+
+      <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold">Sheet</h2>
+          <div class="flex flex-wrap gap-2">
+            <Button id="runtime-sheet-open" type="button" variant="outline" size="sm">Open</Button>
+            <Button id="runtime-sheet-close" type="button" variant="outline" size="sm">
+              Programmatic close
+            </Button>
+          </div>
+        </div>
+
+        <Sheet id="runtime-lifecycle-sheet">
+          <SheetTrigger asChild>
+            <Button type="button">Open sheet</Button>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Lifecycle sheet</SheetTitle>
+              <SheetDescription>
+                This sheet uses the shared Dialog lifecycle without drawer swipe or snap behavior.
+              </SheetDescription>
+            </SheetHeader>
+            <SheetFooter>
+              <Button data-sw-drawer-close type="button" variant="outline">Close</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      </section>
+
+      <section class="space-y-4">
+        <div>
+          <h2 class="text-lg font-semibold">Popover</h2>
+          <p class="text-muted-foreground text-sm">
+            Floating close completion waits for exit motion before cleanup.
+          </p>
+        </div>
+
+        <Popover id="runtime-lifecycle-popover">
+          <PopoverTrigger asChild>
+            <Button type="button" variant="outline">Open popover</Button>
+          </PopoverTrigger>
+          <PopoverContent>
+            <PopoverHeader>
+              <PopoverTitle>Lifecycle popover</PopoverTitle>
+              <PopoverDescription>
+                Close from the button, Escape, trigger, or outside press to inspect reasons.
+              </PopoverDescription>
+            </PopoverHeader>
+            <Button data-sw-popover-close type="button" variant="outline" size="sm"> Close </Button>
+          </PopoverContent>
+        </Popover>
+      </section>
+
+      <section class="space-y-4">
+        <div>
+          <h2 class="text-lg font-semibold">Dropdown</h2>
+          <p class="text-muted-foreground text-sm">
+            Menu item, Escape, trigger, and outside closes all report lifecycle reasons.
+          </p>
+        </div>
+
+        <Dropdown id="runtime-lifecycle-menu">
+          <DropdownTrigger asChild>
+            <Button type="button" variant="outline">Open menu</Button>
+          </DropdownTrigger>
+          <DropdownContent>
+            <DropdownLabel>Lifecycle actions</DropdownLabel>
+            <DropdownSeparator />
+            <DropdownItem>Archive</DropdownItem>
+            <DropdownItem>Duplicate</DropdownItem>
+          </DropdownContent>
+        </Dropdown>
+      </section>
+
+      <section class="space-y-3">
+        <label class="flex w-fit items-center gap-2 text-sm">
+          <input id="runtime-overlay-cancel-outside" type="checkbox" checked />
+          <span>Cancel outside dismissal</span>
+        </label>
+        <output
+          id="runtime-overlay-output"
+          class="border-border bg-muted text-muted-foreground block min-h-36 rounded-md border p-4 text-sm whitespace-pre-wrap"
+        ></output>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  const output = document.querySelector<HTMLOutputElement>("#runtime-overlay-output");
+  const cancelOutsideInput = document.querySelector<HTMLInputElement>(
+    "#runtime-overlay-cancel-outside",
+  );
+  const logs: string[] = [];
+
+  const writeLog = (message: string) => {
+    logs.unshift(message);
+    logs.splice(8);
+    if (output) output.value = logs.join("\n");
+  };
+
+  const wireOverlay = (root: HTMLElement | null, name: string) => {
+    if (!root) return;
+
+    root.addEventListener("starwind:open-change", (event) => {
+      if (!(event instanceof CustomEvent)) return;
+
+      const detail = event.detail as { open: boolean; reason: string };
+      if (!detail.open && detail.reason === "outside-press" && cancelOutsideInput?.checked) {
+        event.preventDefault();
+        writeLog(`${name}: canceled outside-press`);
+        return;
+      }
+
+      writeLog(`${name}: ${detail.open ? "opened" : "closing"} via ${detail.reason}`);
+    });
+
+    root.addEventListener("starwind:close-complete", (event) => {
+      if (!(event instanceof CustomEvent)) return;
+
+      const detail = event.detail as { reason: string };
+      writeLog(`${name}: close complete after ${detail.reason}`);
+    });
+  };
+
+  const dialog = document.querySelector<HTMLElement>("#runtime-lifecycle-dialog");
+  const sheet = document.querySelector<HTMLElement>("#runtime-lifecycle-sheet");
+  const popover = document.querySelector<HTMLElement>("#runtime-lifecycle-popover");
+  const menu = document.querySelector<HTMLElement>("#runtime-lifecycle-menu");
+
+  wireOverlay(dialog, "Dialog");
+  wireOverlay(sheet, "Sheet");
+  wireOverlay(popover, "Popover");
+  wireOverlay(menu, "Menu");
+
+  document.querySelector("#runtime-dialog-open")?.addEventListener("click", () => {
+    dialog?.dispatchEvent(new CustomEvent("dialog:open", { bubbles: true }));
+  });
+  document.querySelector("#runtime-dialog-close")?.addEventListener("click", () => {
+    dialog?.dispatchEvent(new CustomEvent("dialog:close", { bubbles: true }));
+  });
+  document.querySelector("#runtime-sheet-open")?.addEventListener("click", () => {
+    sheet?.dispatchEvent(new CustomEvent("dialog:open", { bubbles: true }));
+  });
+  document.querySelector("#runtime-sheet-close")?.addEventListener("click", () => {
+    sheet?.dispatchEvent(new CustomEvent("dialog:close", { bubbles: true }));
+  });
+
+  writeLog("Waiting for overlay lifecycle events.");
+</script>

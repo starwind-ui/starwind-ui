@@ -1,0 +1,13 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { alertDialogFooter } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class={alertDialogFooter({ class: className })} {...rest} data-slot="alert-dialog-footer">
+  <slot />
+</div>

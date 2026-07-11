@@ -1,0 +1,17 @@
+---
+import SelectPrimitive from "@starwind-ui/astro/select";
+import type { HTMLAttributes } from "astro/types";
+import { selectItemIndicator } from "./variants";
+
+type Props = HTMLAttributes<"span">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<SelectPrimitive.ItemIndicator
+  class={selectItemIndicator({ class: className })}
+  {...rest}
+  data-slot="select-item-indicator"
+>
+  <slot />
+</SelectPrimitive.ItemIndicator>

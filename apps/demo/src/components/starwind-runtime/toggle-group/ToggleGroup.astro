@@ -1,0 +1,54 @@
+---
+import ToggleGroupPrimitive from "@starwind-ui/astro/toggle-group";
+import type { HTMLAttributes } from "astro/types";
+import { toggleGroup } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "defaultValue" | "onChange"> & {
+  defaultValue?: string[];
+  disabled?: boolean;
+  loopFocus?: boolean;
+  multiple?: boolean;
+  orientation?: "horizontal" | "vertical";
+  size?: "sm" | "md" | "lg";
+  spacing?: number;
+  variant?: "default" | "outline";
+};
+
+const {
+  variant = "default",
+  size = "md",
+  spacing = 2,
+  defaultValue,
+  disabled = false,
+  loopFocus,
+  multiple = false,
+  orientation = "horizontal",
+  style,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const toggleGroupStyle =
+  typeof style === "string"
+    ? `--gap: ${spacing}; ${style}`
+    : { "--gap": spacing, ...(style ?? {}) };
+---
+
+<ToggleGroupPrimitive.Root
+  class={toggleGroup({ class: className })}
+  data-variant={variant}
+  data-size={size}
+  data-spacing={spacing}
+  data-horizontal={orientation === "horizontal" ? "" : undefined}
+  data-vertical={orientation === "vertical" ? "" : undefined}
+  defaultValue={defaultValue}
+  disabled={disabled}
+  loopFocus={loopFocus}
+  multiple={multiple}
+  orientation={orientation}
+  style={toggleGroupStyle}
+  {...rest}
+  data-slot="toggle-group"
+>
+  <slot />
+</ToggleGroupPrimitive.Root>

@@ -1,0 +1,33 @@
+---
+import FieldPrimitive from "@starwind-ui/astro/field";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { fieldValidity } from "./variants";
+
+interface Props extends HTMLAttributes<"div">, VariantProps<typeof fieldValidity> {
+  match?:
+    | boolean
+    | "badInput"
+    | "customError"
+    | "patternMismatch"
+    | "rangeOverflow"
+    | "rangeUnderflow"
+    | "stepMismatch"
+    | "tooLong"
+    | "tooShort"
+    | "typeMismatch"
+    | "valid"
+    | "valueMissing";
+}
+
+const { match, class: className, ...rest } = Astro.props;
+---
+
+<FieldPrimitive.Validity
+  class={fieldValidity({ class: className })}
+  match={match}
+  {...rest}
+  data-slot="field-validity"
+>
+  <slot />
+</FieldPrimitive.Validity>

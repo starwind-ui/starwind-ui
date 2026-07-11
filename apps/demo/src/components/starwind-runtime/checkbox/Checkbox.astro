@@ -1,0 +1,85 @@
+---
+import Check from "@tabler/icons/outline/check.svg";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import "./styles.css";
+import CheckboxPrimitive from "@starwind-ui/astro/checkbox";
+import { checkbox, checkboxIndicator, checkboxLabel, checkboxWrapper } from "./variants";
+
+type Props = Omit<HTMLAttributes<"span">, "defaultChecked" | "id" | "onChange"> &
+  VariantProps<typeof checkbox> & {
+    checked?: boolean;
+    defaultChecked?: boolean;
+    disabled?: boolean;
+    form?: string;
+    id?: string;
+    indeterminate?: boolean;
+    label?: string;
+    name?: string;
+    nativeButton?: boolean;
+    readOnly?: boolean;
+    required?: boolean;
+    uncheckedValue?: string;
+    value?: string;
+  };
+
+const {
+  variant,
+  size,
+  checked,
+  defaultChecked,
+  disabled = false,
+  form,
+  id,
+  indeterminate = false,
+  label,
+  name,
+  nativeButton = false,
+  readOnly = false,
+  required = false,
+  uncheckedValue,
+  value,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const ariaLabel = rest["aria-label"] ?? label;
+---
+
+<div class={checkboxWrapper()} data-sw-checkbox-wrapper data-slot="checkbox-wrapper">
+  <CheckboxPrimitive.Root
+    class={checkbox({ variant, size, class: className })}
+    checked={checked}
+    defaultChecked={defaultChecked}
+    disabled={disabled}
+    form={form}
+    id={id}
+    indeterminate={indeterminate}
+    name={name}
+    nativeButton={nativeButton}
+    readOnly={readOnly}
+    required={required}
+    uncheckedValue={uncheckedValue}
+    value={value}
+    {...rest}
+    aria-label={ariaLabel}
+    data-slot="checkbox"
+  >
+    <CheckboxPrimitive.Indicator
+      keepMounted
+      class={checkboxIndicator({ variant, size })}
+      data-slot="checkbox-indicator"
+    >
+      <Check data-sw-checkbox-check-icon />
+    </CheckboxPrimitive.Indicator>
+  </CheckboxPrimitive.Root>
+
+  {
+    label && (
+      <label for={id} class={checkboxLabel({ size })} data-slot="checkbox-label">
+        {label}
+      </label>
+    )
+  }
+</div>

@@ -8,19 +8,21 @@ onlyBuiltDependencies:
 allowBuilds:
   esbuild: true
   sharp: true
+peerDependencyRules:
+  allowAny:
+    - "astro"
+    - "vite"
 
 resolutionMode: highest
 
 # 2 day minimum release age
 minimumReleaseAge: 2880
-# minimumReleaseAge: 0
 minimumReleaseAgeStrict: true
 
 # allow starwind related packages and others I created
 minimumReleaseAgeExclude:
   - "starwind"
   - "@starwind-ui/*"
-  - "@biomejs/biome"
   # below packages are missing the "time" field
   - "@tailwindcss/oxide"
   - "@astrojs/markdown-remark"

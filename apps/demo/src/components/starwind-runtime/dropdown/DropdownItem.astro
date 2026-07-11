@@ -1,0 +1,21 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownItem } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  inset?: boolean;
+  disabled?: boolean;
+};
+
+const { class: className, inset = false, disabled = false, ...rest } = Astro.props;
+---
+
+<MenuPrimitive.Item
+  class={dropdownItem({ inset, disabled, class: className })}
+  disabled={disabled}
+  {...rest}
+  data-slot="dropdown-item"
+>
+  <slot />
+</MenuPrimitive.Item>
