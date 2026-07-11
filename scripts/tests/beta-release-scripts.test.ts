@@ -67,11 +67,14 @@ describe("beta release scripts", () => {
     expect(root.scripts?.["release:beta:prepare"]).toBe(
       "pnpm runtime:generate:all && pnpm runtime:registry:generate && pnpm runtime:build && pnpm --filter=@starwind-ui/astro typecheck && pnpm react:build && pnpm cli:build",
     );
+    expect(root.scripts?.["release:beta:artifacts"]).toBe(
+      "pnpm runtime:build && pnpm react:build && pnpm cli:build",
+    );
     expect(root.scripts?.["publish:beta:dry-run"]).toBe(
-      "pnpm release:beta:prepare && pnpm release:beta:gate && node scripts/release-beta-packages.mjs --dry-run",
+      "pnpm release:beta:prepare && pnpm release:beta:gate && pnpm release:beta:artifacts && node scripts/release-beta-packages.mjs --dry-run",
     );
     expect(root.scripts?.["publish:beta"]).toBe(
-      "pnpm release:beta:prepare && pnpm release:beta:gate && node scripts/release-beta-packages.mjs --publish",
+      "pnpm release:beta:prepare && pnpm release:beta:gate && pnpm release:beta:artifacts && node scripts/release-beta-packages.mjs --publish",
     );
     expect(root.scripts?.["release:beta:gate"]).toContain("pnpm verify");
     expect(root.scripts?.["release:beta:gate"]).toContain("pnpm runtime:size:check");
