@@ -1,0 +1,17 @@
+---
+import NavigationMenuPrimitive from "@starwind-ui/astro/navigation-menu";
+import type { HTMLAttributes } from "astro/types";
+import { navigationMenuList } from "./variants";
+
+type Props = HTMLAttributes<"ul">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<NavigationMenuPrimitive.List
+  class={navigationMenuList({ class: className })}
+  {...rest}
+  data-slot="navigation-menu-list"
+>
+  <slot />
+</NavigationMenuPrimitive.List>

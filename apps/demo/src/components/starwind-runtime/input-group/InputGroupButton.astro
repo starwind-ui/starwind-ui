@@ -1,0 +1,22 @@
+---
+import type { ComponentProps } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { Button } from "../button";
+import { inputGroupButton } from "./variants";
+
+type Props = Omit<ComponentProps<typeof Button>, "size"> & VariantProps<typeof inputGroupButton>;
+
+const { type = "button", variant = "ghost", size, class: className, ...rest } = Astro.props;
+---
+
+<Button
+  type={type}
+  data-size={size}
+  size={size}
+  variant={variant}
+  class={inputGroupButton({ size, class: className })}
+  {...rest}
+>
+  <slot />
+</Button>

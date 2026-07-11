@@ -1,0 +1,17 @@
+---
+import InputOtpPrimitive from "@starwind-ui/astro/input-otp";
+import type { HTMLAttributes } from "astro/types";
+import { inputOtpGroup } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<InputOtpPrimitive.Group
+  class={inputOtpGroup({ class: className })}
+  {...rest}
+  data-slot="input-otp-group"
+>
+  <slot />
+</InputOtpPrimitive.Group>

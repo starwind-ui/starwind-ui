@@ -1,0 +1,177 @@
+import { expect, readGeneratedFile } from "../shared.js";
+
+export async function assertAstroStyledStateOutput(outputRoot: string): Promise<void> {
+  const tabs = await readGeneratedFile(outputRoot, "tabs/Tabs.astro");
+  const tabsList = await readGeneratedFile(outputRoot, "tabs/TabsList.astro");
+  const tabsTrigger = await readGeneratedFile(outputRoot, "tabs/TabsTrigger.astro");
+  const tabsContent = await readGeneratedFile(outputRoot, "tabs/TabsContent.astro");
+  const tabsVariants = await readGeneratedFile(outputRoot, "tabs/variants.ts");
+  const tabsIndex = await readGeneratedFile(outputRoot, "tabs/index.ts");
+  const toggleComponent = await readGeneratedFile(outputRoot, "toggle/Toggle.astro");
+  const toggleVariants = await readGeneratedFile(outputRoot, "toggle/variants.ts");
+  const toggleIndex = await readGeneratedFile(outputRoot, "toggle/index.ts");
+  const toggleGroup = await readGeneratedFile(outputRoot, "toggle-group/ToggleGroup.astro");
+  const toggleGroupItem = await readGeneratedFile(outputRoot, "toggle-group/ToggleGroupItem.astro");
+  const toggleGroupVariants = await readGeneratedFile(outputRoot, "toggle-group/variants.ts");
+  const toggleGroupIndex = await readGeneratedFile(outputRoot, "toggle-group/index.ts");
+  const button = await readGeneratedFile(outputRoot, "button/Button.astro");
+  const accordion = await readGeneratedFile(outputRoot, "accordion/Accordion.astro");
+  const accordionContent = await readGeneratedFile(outputRoot, "accordion/AccordionContent.astro");
+  const accordionItem = await readGeneratedFile(outputRoot, "accordion/AccordionItem.astro");
+  const accordionVariants = await readGeneratedFile(outputRoot, "accordion/variants.ts");
+  const collapsible = await readGeneratedFile(outputRoot, "collapsible/Collapsible.astro");
+  const collapsibleTrigger = await readGeneratedFile(
+    outputRoot,
+    "collapsible/CollapsibleTrigger.astro",
+  );
+  const collapsibleContent = await readGeneratedFile(
+    outputRoot,
+    "collapsible/CollapsibleContent.astro",
+  );
+  const collapsibleVariants = await readGeneratedFile(outputRoot, "collapsible/variants.ts");
+
+  expect(tabs).toContain('TabsPrimitive from "../primitives/astro/tabs"');
+  expect(tabs).toContain("<TabsPrimitive.Root");
+  expect(tabs).toContain("syncKey?: string;");
+  expect(tabs).toContain("defaultValue={defaultValue}");
+  expect(tabs).toContain("orientation={orientation}");
+  expect(tabs).toContain("syncKey={syncKey}");
+  expect(tabs).toContain("value={value}");
+  expect(tabs).toContain("tabs({ class: className })");
+  expect(tabs).toContain('data-slot="tabs"');
+  expect(tabs).not.toContain("@starwind-ui/runtime");
+  expect(tabsList).toContain("<TabsPrimitive.List");
+  expect(tabsList).toContain("activateOnFocus={activateOnFocus}");
+  expect(tabsList).toContain("loopFocus={loopFocus}");
+  expect(tabsList).toContain("tabsList({ class: className })");
+  expect(tabsList).toContain('data-slot="tabs-list"');
+  expect(tabsTrigger).toContain("<TabsPrimitive.Tab");
+  expect(tabsTrigger).toContain("value={value}");
+  expect(tabsTrigger).toContain("disabled={disabled}");
+  expect(tabsTrigger).toContain("tabsTrigger({ class: className })");
+  expect(tabsTrigger).toContain('data-slot="tabs-trigger"');
+  expect(tabsContent).toContain("<TabsPrimitive.Panel");
+  expect(tabsContent).toContain("keepMounted={keepMounted}");
+  expect(tabsContent).toContain("value={value}");
+  expect(tabsContent).toContain("tabsContent({ class: className })");
+  expect(tabsContent).toContain('data-slot="tabs-content"');
+  expect(tabsVariants).not.toContain("starwind-tabs");
+  expect(tabsVariants).toContain("bg-muted text-muted-foreground inline-flex");
+  expect(tabsVariants).toContain("data-[state=active]:bg-background");
+  expect(tabsIndex).toContain("TabsContent");
+  expect(tabsIndex).toContain("Root: Tabs");
+  expect(tabsIndex).toContain("List: TabsList");
+  expect(tabsIndex).toContain("Trigger: TabsTrigger");
+  expect(tabsIndex).toContain("Content: TabsContent");
+  expect(toggleComponent).toContain('TogglePrimitive from "../primitives/astro/toggle"');
+  expect(toggleComponent).toContain("<TogglePrimitive.Root");
+  expect(toggleComponent).toContain("pressed?: boolean;");
+  expect(toggleComponent).toContain("defaultPressed?: boolean;");
+  expect(toggleComponent).toContain("disabled?: boolean;");
+  expect(toggleComponent).toContain("nativeButton?: boolean;");
+  expect(toggleComponent).toContain('"data-slot"?: string;');
+  expect(toggleComponent).toContain("syncGroup?: string;");
+  expect(toggleComponent).toContain("value?: string;");
+  expect(toggleComponent).toContain("nativeButton={nativeButton}");
+  expect(toggleComponent).toContain("syncGroup={syncGroup}");
+  expect(toggleComponent).toContain("toggle({ variant, size, class: className })");
+  expect(toggleComponent).toContain('"data-slot": dataSlot = "toggle"');
+  expect(toggleComponent).toContain("data-slot={dataSlot}");
+  expect(toggleComponent).not.toContain("@starwind-ui/runtime");
+  expect(toggleVariants).not.toContain("starwind-runtime-toggle");
+  expect(toggleVariants).toContain("inline-flex items-center");
+  expect(toggleVariants).toContain("data-[state=on]:bg-muted");
+  expect(toggleVariants).toContain("hover:bg-muted hover:text-foreground");
+  expect(toggleVariants).toContain("h-11 min-w-11 px-2.5 text-base");
+  expect(toggleIndex).toContain("export default Toggle;");
+  expect(toggleIndex).not.toContain("Root: Toggle");
+  expect(toggleGroup).toContain('ToggleGroupPrimitive from "../primitives/astro/toggle-group"');
+  expect(toggleGroup).toContain("<ToggleGroupPrimitive.Root");
+  expect(toggleGroup).toContain("defaultValue={defaultValue}");
+  expect(toggleGroup).toContain('variant = "default"');
+  expect(toggleGroup).toContain('size = "md"');
+  expect(toggleGroup).toContain("spacing = 2");
+  expect(toggleGroup).toContain("data-variant={variant}");
+  expect(toggleGroup).toContain("data-size={size}");
+  expect(toggleGroup).toContain("data-spacing={spacing}");
+  expect(toggleGroup).toContain('data-horizontal={orientation === "horizontal" ? "" : undefined}');
+  expect(toggleGroup).toContain('data-vertical={orientation === "vertical" ? "" : undefined}');
+  expect(toggleGroup).toContain("loopFocus={loopFocus}");
+  expect(toggleGroup).toContain("multiple={multiple}");
+  expect(toggleGroup).toContain("orientation={orientation}");
+  expect(toggleGroup).toContain("toggleGroup({ class: className })");
+  expect(toggleGroup).toContain("style={toggleGroupStyle}");
+  expect(toggleGroup).toContain('data-slot="toggle-group"');
+  expect(toggleGroup).not.toContain("@starwind-ui/runtime");
+  expect(toggleGroup).not.toContain("<ToggleGroupItem");
+  expect(toggleGroupItem).toContain('TogglePrimitive from "../primitives/astro/toggle"');
+  expect(toggleGroupItem).toContain("<TogglePrimitive.Root");
+  expect(toggleGroupItem).toContain("toggleGroupItem({ variant, size, class: className })");
+  expect(toggleGroupItem).toContain("data-variant={variant}");
+  expect(toggleGroupItem).toContain("data-size={size}");
+  expect(toggleGroupItem).toContain('data-slot="toggle-group-item"');
+  expect(toggleGroupVariants).not.toContain("starwind-toggle-group");
+  expect(toggleGroupVariants).not.toContain("starwind-runtime-toggle");
+  expect(toggleGroupVariants).toContain("group/toggle-group flex");
+  expect(toggleGroupVariants).toContain("gap-[--spacing(var(--gap))]");
+  expect(toggleGroupVariants).toContain("inline-flex shrink-0 items-center justify-center");
+  expect(toggleGroupVariants).toContain("data-[state=on]:bg-muted");
+  expect(toggleGroupVariants).toContain("hover:bg-muted hover:text-foreground");
+  expect(toggleGroupVariants).toContain("group-data-[spacing=0]/toggle-group:rounded-none");
+  expect(toggleGroupVariants).toContain("data-vertical:flex-col");
+  expect(toggleGroupVariants).toContain(
+    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-l-lg",
+  );
+  expect(toggleGroupVariants).toContain(
+    "group-data-vertical/toggle-group:group-data-[spacing=0]/toggle-group:first:rounded-t-lg",
+  );
+  expect(toggleGroupVariants).toContain(
+    "group-data-horizontal/toggle-group:group-data-[spacing=0]/toggle-group:group-data-[variant=outline]/toggle-group:border-l-0",
+  );
+  expect(toggleGroupIndex).toContain("ToggleGroupItem");
+  expect(toggleGroupIndex).toContain("Root: ToggleGroup");
+  expect(toggleGroupIndex).toContain("Item: ToggleGroupItem");
+  expect(button).toContain('ButtonPrimitive from "../primitives/astro/button"');
+  expect(button).toContain("focusableWhenDisabled?: boolean;");
+  expect(button).not.toContain("nativeButton?: boolean;");
+  expect(button).toContain('as?: "button" | "a";');
+  expect(button).toContain("href");
+  expect(button).toContain("as: buttonAs");
+  expect(button).toContain('buttonAs === "a" || href !== undefined');
+  expect(button).toContain('"data-slot": dataSlot = "button"');
+  expect(button).toContain("<a");
+  expect(button).toContain("href={disabled ? undefined : href}");
+  expect(button).toContain('aria-disabled={disabled ? "true" : undefined}');
+  expect(button).toContain('data-disabled={disabled ? "" : undefined}');
+  expect(button).toContain("data-slot={dataSlot}");
+  expect(button).toContain("<ButtonPrimitive.Root");
+  expect(button).toContain("disabled={disabled}");
+  expect(button).toContain("focusableWhenDisabled={focusableWhenDisabled}");
+  expect(button).not.toContain("nativeButton={nativeButton}");
+  expect(button).not.toContain('import { createButton } from "@starwind-ui/runtime"');
+  expect(button).not.toContain("<script>");
+  expect(accordion).toContain('AccordionPrimitive from "../primitives/astro/accordion"');
+  expect(accordion).toContain("<AccordionPrimitive.Root");
+  expect(accordion).not.toContain("@starwind-ui/runtime");
+  expect(accordion).toContain("defaultValue={defaultValue}");
+  expect(accordionContent).toContain("<AccordionPrimitive.Panel");
+  expect(accordionItem).toContain("<AccordionPrimitive.Item");
+  expect(accordionItem).toContain("value={value}");
+  expect(accordionVariants).toContain("data-[state=closed]:animate-accordion-up");
+  expect(collapsible).toContain('CollapsiblePrimitive from "../primitives/astro/collapsible"');
+  expect(collapsible).toContain("<CollapsiblePrimitive.Root");
+  expect(collapsible).not.toContain("@starwind-ui/runtime");
+  expect(collapsible).toContain("defaultOpen={defaultOpen}");
+  expect(collapsibleTrigger).toContain("<CollapsiblePrimitive.Trigger");
+  expect(collapsibleTrigger).toContain("asChild={asChild}");
+  expect(collapsibleTrigger).toContain("collapsibleTrigger({ class: className })");
+  expect(collapsibleTrigger).toContain('data-slot="collapsible-trigger"');
+  expect(collapsibleTrigger).not.toContain("data-as-child");
+  expect(collapsibleContent).toContain("<CollapsiblePrimitive.Panel");
+  expect(collapsibleVariants).not.toContain("starwind-collapsible");
+  expect(collapsibleVariants).not.toContain("animate-collapsible");
+  expect(collapsibleVariants).not.toContain("data-[state=closed]:h-0");
+  expect(collapsibleVariants).not.toContain("overflow-hidden");
+  expect(collapsibleVariants).not.toContain("animate-accordion");
+  expect(collapsibleVariants).not.toContain("transform-gpu overflow-hidden");
+}

@@ -1,0 +1,20 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { InputGroup } from "../input-group";
+import { comboboxInputGroup } from "./variants";
+
+type Props = HTMLAttributes<"div"> & VariantProps<typeof comboboxInputGroup>;
+
+const { class: className, size = "md", ...rest } = Astro.props;
+---
+
+<InputGroup
+  class={comboboxInputGroup({ size, class: className })}
+  {...rest}
+  data-sw-combobox-input-group=""
+  data-slot="combobox-input-group"
+>
+  <slot />
+</InputGroup>

@@ -1,11 +1,10 @@
 import * as p from "@clack/prompts";
 
-import { getConfig } from "@/utils/config.js";
+import { getConfig, hasStarwindProAuthConfig, setupStarwindProConfig } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
 import { checkStarwindProEnv, setupStarwindProEnv } from "@/utils/env.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
-import { hasStarwindProRegistry, setupShadcnProConfig } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
 
 import { init } from "./init.js";
@@ -97,33 +96,29 @@ export async function setup(options?: SetupOptions) {
 }
 
 async function runProSetup() {
-  p.log.info(highlighter.info("Setting up Starwind Pro..."));
+  p.log.info(highlighter.info("Setting up Starwind Pro paid authorization..."));
 
   const configTasks = [];
-  const hasRegistry = await hasStarwindProRegistry();
   const hasEnv = await checkStarwindProEnv();
+  let hasProAuthConfig = false;
 
-  if (hasRegistry && hasEnv) {
-    p.log.info(highlighter.info("Starwind Pro registry and environment already configured"));
+  try {
+    const config = await getConfig();
+    hasProAuthConfig = hasStarwindProAuthConfig(config);
+  } catch {
+    // If config can't be read, try writing the Pro config and let updateConfig report any failure.
+  }
+
+  if (hasProAuthConfig && hasEnv) {
+    p.log.info(highlighter.info("Starwind Pro paid authorization is already configured"));
   } else {
-    let cssFile: string = PATHS.LOCAL_CSS_FILE;
-    let baseColor = "neutral";
-
-    try {
-      const config = await getConfig();
-      if (config.tailwind?.css) cssFile = config.tailwind.css;
-      if (config.tailwind?.baseColor) baseColor = config.tailwind.baseColor;
-    } catch {
-      // Use defaults if config can't be read
-    }
-
-    if (!hasRegistry) {
+    if (!hasProAuthConfig) {
       configTasks.push({
-        title: "Setting up Starwind Pro registry",
+        title: "Configuring Starwind Pro authorization",
         task: async () => {
-          await setupShadcnProConfig(cssFile, baseColor);
+          await setupStarwindProConfig();
           await sleep(250);
-          return "Configured Starwind Pro registry in components.json";
+          return "Configured Starwind Pro authorization in starwind.config.json";
         },
       });
     }
@@ -149,7 +144,7 @@ async function runProSetup() {
 
   await sleep(250);
 
-  const nextStepsMessage = `Starwind Pro is now configured! You can install pro components using:\n${highlighter.info("npx starwind@latest add @starwind-pro/component-name")}\n\nMake sure to set your ${highlighter.infoBright("STARWIND_LICENSE_KEY")} environment variable in ${highlighter.infoBright(".env.local")}`;
+  const nextStepsMessage = `Starwind Pro is now configured! You can install pro components using \n${highlighter.info("starwind add @starwind-pro/component-name")}\n\nAdd your license key to ${highlighter.infoBright(".env.local")} as ${highlighter.infoBright("STARWIND_LICENSE_KEY")}`;
 
   p.note(nextStepsMessage, "Next steps");
 

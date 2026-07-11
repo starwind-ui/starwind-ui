@@ -1,0 +1,91 @@
+---
+import Moon from "@tabler/icons/outline/moon.svg";
+import Sun from "@tabler/icons/outline/sun.svg";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { themeToggle } from "./variants";
+
+type Props = Omit<
+  HTMLAttributes<"button">,
+  "aria-pressed" | "defaultPressed" | "disabled" | "onChange" | "type" | "value"
+> &
+  VariantProps<typeof themeToggle> & {
+    ariaLabel?: string;
+    defaultPressed?: boolean;
+    disabled?: boolean;
+    "data-slot"?: string;
+    pressed?: boolean;
+    syncGroup?: string;
+    value?: string;
+  };
+
+const {
+  ariaLabel = "Toggle theme",
+  variant = "outline",
+  size = "md",
+  defaultPressed,
+  disabled = false,
+  pressed,
+  syncGroup = "starwind-theme",
+  value,
+  "data-slot": dataSlot = "theme-toggle",
+  class: className,
+  ...rest
+} = Astro.props;
+
+const initialPressed = pressed ?? defaultPressed ?? false;
+---
+
+<button
+  class={themeToggle({ variant, size, class: className })}
+  type="button"
+  disabled={disabled}
+  aria-label={ariaLabel}
+  aria-pressed={initialPressed ? "true" : "false"}
+  data-state={initialPressed ? "on" : "off"}
+  data-sw-toggle
+  data-sw-theme-toggle
+  data-sw-theme-control
+  data-theme-on="dark"
+  data-theme-off="light"
+  data-sync-group={syncGroup}
+  data-value={value}
+  data-pressed={initialPressed ? "" : undefined}
+  data-unpressed={initialPressed ? undefined : ""}
+  data-disabled={disabled ? "" : undefined}
+  {...rest}
+  data-slot={dataSlot}
+>
+  <slot>
+    <span class="size-5" data-theme-icon-wrapper>
+      <slot name="light-icon">
+        <Sun
+          class="hidden size-5 group-data-[state=off]:data-ready:block"
+          aria-hidden="true"
+          data-theme-icon
+        />
+      </slot>
+
+      <slot name="dark-icon">
+        <Moon
+          class="hidden size-5 group-data-[state=on]:data-ready:block"
+          aria-hidden="true"
+          data-theme-icon
+        />
+      </slot>
+    </span>
+  </slot>
+</button>
+
+<script>
+  import { initThemeController } from "@starwind-ui/astro/theme";
+
+  const setupThemeController = () => {
+    initThemeController();
+  };
+
+  setupThemeController();
+  document.addEventListener("astro:after-swap", setupThemeController);
+  document.addEventListener("starwind:init", setupThemeController);
+</script>

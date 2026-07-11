@@ -1,0 +1,48 @@
+---
+import SheetPrimitive from "@starwind-ui/astro/drawer";
+import X from "@tabler/icons/outline/x.svg";
+import type { HTMLAttributes } from "astro/types";
+import { Button } from "../button";
+import { sheetBackdrop, sheetCloseButton, sheetContent } from "./variants";
+
+type Props = HTMLAttributes<"dialog"> & {
+  side?: "top" | "right" | "bottom" | "left";
+};
+
+const { class: className, side = "right", ...rest } = Astro.props;
+---
+
+<slot name="backdrop">
+  <SheetPrimitive.Backdrop
+    class={sheetBackdrop()}
+    data-state="closed"
+    hidden
+    data-slot="sheet-backdrop"
+  />
+</slot>
+
+<SheetPrimitive.Popup
+  class={sheetContent({ side, class: className })}
+  data-state="closed"
+  side={side}
+  {...rest}
+  data-slot="sheet-content"
+>
+  <slot />
+
+  <Button
+    variant="ghost"
+    size="icon-sm"
+    class={sheetCloseButton()}
+    data-slot="sheet-close"
+    data-sw-drawer-close
+  >
+    <slot name="icon">
+      <X class="size-5 transition-opacity" />
+    </slot>
+
+    <span class="sr-only">Close sheet</span>
+  </Button>
+
+  <div class="pointer-events-none fixed inset-0" data-floating-root data-slot="floating-root"></div>
+</SheetPrimitive.Popup>

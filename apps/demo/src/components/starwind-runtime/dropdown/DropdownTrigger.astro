@@ -1,0 +1,23 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownTrigger } from "./variants";
+
+type Props = HTMLAttributes<"button"> & {
+  asChild?: boolean;
+};
+
+const { asChild = false, class: className, ...rest } = Astro.props;
+
+const triggerBaseClassName = dropdownTrigger({ class: className });
+const triggerClassName = asChild ? className : triggerBaseClassName;
+---
+
+<MenuPrimitive.Trigger
+  class={triggerClassName}
+  asChild={asChild}
+  {...rest}
+  data-slot="dropdown-trigger"
+>
+  <slot />
+</MenuPrimitive.Trigger>

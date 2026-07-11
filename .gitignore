@@ -1,11 +1,19 @@
 # build output
 dist/
+*.tsbuildinfo
+.eslintcache
 
 # internal context
 .context/
-docs/
+.local/
 .agents/
+.codex/
 .devin/
+.scratch/
+.out-of-scope/
+plans/
+.scratch/react-primitive-runtime-audit/generated-check/
+.scratch/archive/**/generated-check/
 
 # generated types
 .astro/
@@ -25,6 +33,7 @@ pnpm-debug.log*
 # vitest
 coverage/
 **/.vitest-attachments/
+**/__screenshots__/
 
 # environment variables
 .env

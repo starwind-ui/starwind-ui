@@ -1,0 +1,52 @@
+---
+import ButtonPrimitive from "@starwind-ui/astro/button";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { button } from "./variants";
+
+interface Props
+  extends HTMLAttributes<"button">, Omit<HTMLAttributes<"a">, "type">, VariantProps<typeof button> {
+  as?: "button" | "a";
+  "data-slot"?: string;
+  focusableWhenDisabled?: boolean;
+}
+
+const {
+  variant,
+  size,
+  as: buttonAs,
+  href,
+  disabled = false,
+  focusableWhenDisabled,
+  "data-slot": dataSlot = "button",
+  tabindex,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+{
+  buttonAs === "a" || href !== undefined ? (
+    <a
+      class={button({ variant, size, class: className })}
+      href={disabled ? undefined : href}
+      aria-disabled={disabled ? "true" : undefined}
+      data-disabled={disabled ? "" : undefined}
+      {...rest}
+      tabindex={disabled ? -1 : tabindex}
+      data-slot={dataSlot}
+    >
+      <slot />
+    </a>
+  ) : (
+    <ButtonPrimitive.Root
+      class={button({ variant, size, class: className })}
+      disabled={disabled}
+      focusableWhenDisabled={focusableWhenDisabled}
+      {...rest}
+      data-slot={dataSlot}
+    >
+      <slot />
+    </ButtonPrimitive.Root>
+  )
+}

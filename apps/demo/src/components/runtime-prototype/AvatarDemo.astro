@@ -1,0 +1,23 @@
+---
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind-runtime/avatar";
+
+const avatarImageSrc = "https://avatars.githubusercontent.com/u/96832297?v=4";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Avatar</h2>
+  <div class="flex flex-wrap gap-4">
+    <Avatar id="runtime-avatar-loaded" variant="primary" size="lg" class="runtime-avatar-custom">
+      <AvatarImage src={avatarImageSrc} alt="Jane Doe" />
+      <AvatarFallback>JD</AvatarFallback>
+    </Avatar>
+    <Avatar id="runtime-avatar-error" variant="error">
+      <AvatarImage src={avatarImageSrc} alt="Error state" />
+      <AvatarFallback>ER</AvatarFallback>
+    </Avatar>
+    <Avatar id="runtime-avatar-delayed" variant="warning" size="sm">
+      <AvatarImage src={avatarImageSrc} alt="Delayed fallback" />
+      <AvatarFallback delay={1000}>DL</AvatarFallback>
+    </Avatar>
+  </div>
+</section>

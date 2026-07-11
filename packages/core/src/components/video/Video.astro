@@ -65,7 +65,7 @@ function getYouTubeId(url: string): string | null {
 /**
  * Builds YouTube embed URL with parameters
  */
-function buildYouTubeEmbedUrl(videoId: string, isShort: boolean): string {
+function buildYouTubeEmbedUrl(videoId: string): string {
   const params = new URLSearchParams();
   if (autoplay) params.set("autoplay", "1");
   if (muted) params.set("mute", "1");
@@ -83,7 +83,7 @@ function buildYouTubeEmbedUrl(videoId: string, isShort: boolean): string {
 const videoType = getVideoType(src);
 const youtubeId = videoType !== "native" ? getYouTubeId(src) : null;
 const isShort = videoType === "youtube-shorts";
-const embedUrl = youtubeId ? buildYouTubeEmbedUrl(youtubeId, isShort) : null;
+const embedUrl = youtubeId ? buildYouTubeEmbedUrl(youtubeId) : null;
 ---
 
 {

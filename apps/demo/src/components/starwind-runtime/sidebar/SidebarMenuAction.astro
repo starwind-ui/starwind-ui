@@ -1,0 +1,29 @@
+---
+import type { ComponentProps } from "astro/types";
+
+import { Button } from "../button";
+import { sidebarMenuAction } from "./variants";
+
+type Props = ComponentProps<typeof Button> & {
+  showOnHover?: boolean;
+};
+
+const {
+  showOnHover = false,
+  variant = "ghost",
+  size = "icon-sm",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<Button
+  variant={variant}
+  size={size}
+  class={sidebarMenuAction({ showOnHover, class: className })}
+  data-sidebar="menu-action"
+  {...rest}
+  data-slot="sidebar-menu-action"
+>
+  <slot />
+</Button>

@@ -1,0 +1,70 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { Progress } from "@/components/starwind-runtime/progress";
+
+const progressVariants = [
+  "default",
+  "primary",
+  "secondary",
+  "info",
+  "success",
+  "warning",
+  "error",
+] as const;
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Progress</h2>
+  <div class="max-w-lg space-y-4">
+    <Progress
+      id="runtime-progress-default"
+      value={40}
+      variant="primary"
+      label="Runtime upload progress"
+    />
+    <div class="grid gap-3">
+      {
+        progressVariants.map((variant, index) => (
+          <div class="grid gap-1">
+            <span class="text-sm font-medium capitalize">{variant}</span>
+            <Progress
+              id={`runtime-progress-variant-${variant}`}
+              value={15 + index * 12}
+              variant={variant}
+              label={`Runtime ${variant} progress`}
+            />
+          </div>
+        ))
+      }
+    </div>
+    <Progress id="runtime-progress-indeterminate" variant="warning" label="Runtime sync progress" />
+    <Progress
+      id="runtime-progress-updating"
+      value={25}
+      variant="success"
+      label="Runtime processing progress"
+    />
+    <Button id="runtime-progress-toggle" variant="outline">Toggle Progress (25% to 75%)</Button>
+  </div>
+</section>
+
+<script>
+  function setupRuntimeProgressExample() {
+    const progressElement = document.getElementById("runtime-progress-updating");
+    const toggleButton = document.getElementById("runtime-progress-toggle");
+
+    if (!(progressElement instanceof HTMLElement) || !(toggleButton instanceof HTMLElement)) return;
+    if (toggleButton.dataset.runtimeProgressToggleReady === "true") return;
+
+    toggleButton.dataset.runtimeProgressToggleReady = "true";
+    toggleButton.addEventListener("click", () => {
+      const currentValue = Number(progressElement.getAttribute("data-value"));
+      const nextValue = currentValue === 75 ? 25 : 75;
+
+      progressElement.setAttribute("data-value", String(nextValue));
+    });
+  }
+
+  setupRuntimeProgressExample();
+  document.addEventListener("astro:after-swap", setupRuntimeProgressExample);
+</script>

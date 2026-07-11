@@ -10,7 +10,8 @@ This repository is a monorepo.
 - We use [Turborepo](https://turbo.build/repo) as our build system.
 - [Tsup](https://tsup.egoist.sh/) to bundle packages.
 - [Changeset](https://changeset.dev/) to manage versioning.
-- [Node.js](https://nodejs.org/en) 20.6.0+ is required.
+- [Node.js](https://nodejs.org/en) 22.12.0 or newer is required.
+- [pnpm](https://pnpm.io) 11.8.0 is the repository package manager.
 
 ## Development
 
@@ -21,13 +22,19 @@ You can fork this repo by clicking the fork button in the top right corner of th
 ### Clone to your local machine
 
 ```bash
-git clone https://github.com/your-username/starwind.git
+git clone https://github.com/starwind-ui/starwind-ui.git
 ```
 
 ### Navigate to the root folder
 
 ```bash
-cd starwind
+cd starwind-ui
+```
+
+### Install dependencies
+
+```bash
+pnpm install
 ```
 
 ### Create a new branch
@@ -58,25 +65,22 @@ pnpm demo:dev
 
 To run the CLI locally, you can follow the workflow below:
 
-1. Start by building the project. This builds the CLI, core components, and
-   demo projects.
-
-```bash
-pnpm build
-```
-
-2. Install the built CLI globally on your own machine. This will allow you to
-   run the CLI from anywhere on your machine. NOTE: you will need to install yalc globally for this with `pnpm add -g yalc`
+1. Build and globally link the local Runtime, Astro adapter, React adapter, and CLI packages.
 
 ```bash
 pnpm l
 ```
 
-3. Test the CLI by running `starwind` in another terminal. You should see the help
-   message for the CLI.
+2. Verify the linked CLI from another terminal.
 
 ```bash
-pnpm starwind
+starwind --help
+```
+
+3. Unlink the local packages when you finish testing.
+
+```bash
+pnpm ul
 ```
 
 ## Conventions
@@ -121,8 +125,8 @@ https://www.conventionalcommits.org/ or check out the
 
 3. Make and commit your changes following the
    [commit convention](https://github.com/starwind-ui/starwind-ui/blob/main/CONTRIBUTING.md#commit-convention).
-   As you develop, you can run `pnpm lint` and
-   `pnpm build` e.g. `pnpm lint && pnpm build` to make sure everything works as expected.
+   Before opening a pull request, run `pnpm check`, `pnpm test:all`, and `pnpm build`. Run
+   `pnpm verify` for the complete local CI-equivalent gate.
 
 4. Please note that you might have to run `git fetch origin main:master` (where
    origin will be your fork on GitHub).

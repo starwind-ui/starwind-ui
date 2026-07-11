@@ -1,0 +1,55 @@
+---
+import InputOtpPrimitive from "@starwind-ui/astro/input-otp";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { inputOtp } from "./variants";
+
+interface Props
+  extends
+    Omit<HTMLAttributes<"div">, "defaultValue" | "id" | "onChange" | "pattern" | "value">,
+    VariantProps<typeof inputOtp> {
+  defaultValue?: string;
+  disabled?: boolean;
+  form?: string;
+  id?: string;
+  maxLength?: number;
+  name?: string;
+  pattern?: RegExp | string;
+  readOnly?: boolean;
+  required?: boolean;
+  value?: string;
+}
+
+const {
+  defaultValue,
+  disabled = false,
+  form,
+  id,
+  maxLength = 6,
+  name,
+  pattern,
+  readOnly = false,
+  required = false,
+  value,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<InputOtpPrimitive.Root
+  class={inputOtp({ class: className })}
+  defaultValue={defaultValue}
+  disabled={disabled}
+  form={form}
+  id={id}
+  maxLength={maxLength}
+  name={name}
+  pattern={pattern}
+  readOnly={readOnly}
+  required={required}
+  value={value}
+  {...rest}
+  data-slot="input-otp"
+>
+  <slot />
+</InputOtpPrimitive.Root>

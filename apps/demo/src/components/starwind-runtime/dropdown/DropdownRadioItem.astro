@@ -1,0 +1,55 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownRadioItem, dropdownRadioItemIndicator } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "aria-checked" | "role"> & {
+  value: string;
+  checked?: boolean;
+  defaultChecked?: boolean;
+  closeOnClick?: boolean;
+  inset?: boolean;
+  disabled?: boolean;
+  indicatorClass?: string;
+  showIndicator?: boolean;
+};
+
+const {
+  class: className,
+  value,
+  checked,
+  defaultChecked = false,
+  closeOnClick = false,
+  inset = false,
+  disabled = false,
+  indicatorClass: indicatorClassName,
+  showIndicator = true,
+  ...rest
+} = Astro.props;
+---
+
+<MenuPrimitive.RadioItem
+  class={dropdownRadioItem({ inset, disabled, class: className })}
+  value={value}
+  checked={checked}
+  defaultChecked={defaultChecked}
+  closeOnClick={closeOnClick}
+  disabled={disabled}
+  {...rest}
+  data-slot="dropdown-radio-item"
+>
+  {
+    showIndicator && (
+      <MenuPrimitive.RadioItemIndicator
+        class={dropdownRadioItemIndicator({ class: indicatorClassName })}
+        data-slot="dropdown-radio-item-indicator"
+      >
+        <slot name="indicator">
+          <span class="size-2 rounded-full bg-current" />
+        </slot>
+      </MenuPrimitive.RadioItemIndicator>
+    )
+  }
+
+  <slot />
+</MenuPrimitive.RadioItem>

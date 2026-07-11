@@ -1,0 +1,17 @@
+---
+import ScrollAreaPrimitive from "@starwind-ui/astro/scroll-area";
+import type { HTMLAttributes } from "astro/types";
+import { scrollAreaContent } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ScrollAreaPrimitive.Content
+  class={scrollAreaContent({ class: className })}
+  {...rest}
+  data-slot="scroll-area-content"
+>
+  <slot />
+</ScrollAreaPrimitive.Content>

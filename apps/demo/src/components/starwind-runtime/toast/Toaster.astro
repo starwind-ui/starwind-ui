@@ -1,0 +1,226 @@
+---
+import AlertTriangle from "@tabler/icons/outline/alert-triangle.svg";
+import CircleCheck from "@tabler/icons/outline/circle-check.svg";
+import CircleX from "@tabler/icons/outline/circle-x.svg";
+import InfoCircle from "@tabler/icons/outline/info-circle.svg";
+import Loader2 from "@tabler/icons/outline/loader-2.svg";
+import X from "@tabler/icons/outline/x.svg";
+import type { HTMLAttributes } from "astro/types";
+
+import "./styles.css";
+import ToastPrimitive from "@starwind-ui/astro/toast";
+import {
+  toastAction,
+  toastClose,
+  toastContent,
+  toastDescription,
+  toastItem,
+  toastTitle,
+  toastViewport,
+} from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  position?:
+    | "top-left"
+    | "top-center"
+    | "top-right"
+    | "bottom-left"
+    | "bottom-center"
+    | "bottom-right";
+  limit?: number;
+  gap?: string;
+  peek?: string;
+  duration?: number;
+};
+
+const {
+  class: className,
+  duration = 5000,
+  gap = "0.5rem",
+  limit = 3,
+  peek = "1rem",
+  position = "bottom-right",
+  style,
+  ...rest
+} = Astro.props;
+
+const viewportStyle = [`--gap: ${gap}`, `--peek: ${peek}`, style].filter(Boolean).join("; ");
+---
+
+<ToastPrimitive.Viewport
+  class={toastViewport({ class: className })}
+  duration={duration}
+  limit={limit}
+  position={position}
+  style={viewportStyle}
+  {...rest}
+  data-slot="toast-viewport"
+>
+  <slot>
+    <ToastPrimitive.Template variant="default">
+      <ToastPrimitive.Root
+        class={toastItem({ variant: "default" })}
+        variant={"default"}
+        data-slot="toast"
+      >
+        <ToastPrimitive.Content class={toastContent()} data-slot="toast-content">
+          <ToastPrimitive.Title class={toastTitle({ variant: "default" })} data-slot="toast-title">
+            <ToastPrimitive.TitleText data-slot="toast-title-text">Title</ToastPrimitive.TitleText>
+          </ToastPrimitive.Title>
+
+          <ToastPrimitive.Description class={toastDescription()} data-slot="toast-description">
+            Description
+          </ToastPrimitive.Description>
+
+          <ToastPrimitive.Action class={toastAction()} data-slot="toast-action">
+            Action
+          </ToastPrimitive.Action>
+        </ToastPrimitive.Content>
+
+        <ToastPrimitive.Close class={toastClose()} data-slot="toast-close">
+          <X class="size-4" />
+        </ToastPrimitive.Close>
+      </ToastPrimitive.Root>
+    </ToastPrimitive.Template>
+
+    <ToastPrimitive.Template variant="success">
+      <ToastPrimitive.Root
+        class={toastItem({ variant: "success" })}
+        variant={"success"}
+        data-slot="toast"
+      >
+        <ToastPrimitive.Content class={toastContent()} data-slot="toast-content">
+          <ToastPrimitive.Title class={toastTitle({ variant: "success" })} data-slot="toast-title">
+            <CircleCheck />
+
+            <ToastPrimitive.TitleText data-slot="toast-title-text">Title</ToastPrimitive.TitleText>
+          </ToastPrimitive.Title>
+
+          <ToastPrimitive.Description class={toastDescription()} data-slot="toast-description">
+            Description
+          </ToastPrimitive.Description>
+
+          <ToastPrimitive.Action class={toastAction()} data-slot="toast-action">
+            Action
+          </ToastPrimitive.Action>
+        </ToastPrimitive.Content>
+
+        <ToastPrimitive.Close class={toastClose()} data-slot="toast-close">
+          <X class="size-4" />
+        </ToastPrimitive.Close>
+      </ToastPrimitive.Root>
+    </ToastPrimitive.Template>
+
+    <ToastPrimitive.Template variant="error">
+      <ToastPrimitive.Root
+        class={toastItem({ variant: "error" })}
+        variant={"error"}
+        data-slot="toast"
+      >
+        <ToastPrimitive.Content class={toastContent()} data-slot="toast-content">
+          <ToastPrimitive.Title class={toastTitle({ variant: "error" })} data-slot="toast-title">
+            <CircleX />
+
+            <ToastPrimitive.TitleText data-slot="toast-title-text">Title</ToastPrimitive.TitleText>
+          </ToastPrimitive.Title>
+
+          <ToastPrimitive.Description class={toastDescription()} data-slot="toast-description">
+            Description
+          </ToastPrimitive.Description>
+
+          <ToastPrimitive.Action class={toastAction()} data-slot="toast-action">
+            Action
+          </ToastPrimitive.Action>
+        </ToastPrimitive.Content>
+
+        <ToastPrimitive.Close class={toastClose()} data-slot="toast-close">
+          <X class="size-4" />
+        </ToastPrimitive.Close>
+      </ToastPrimitive.Root>
+    </ToastPrimitive.Template>
+
+    <ToastPrimitive.Template variant="warning">
+      <ToastPrimitive.Root
+        class={toastItem({ variant: "warning" })}
+        variant={"warning"}
+        data-slot="toast"
+      >
+        <ToastPrimitive.Content class={toastContent()} data-slot="toast-content">
+          <ToastPrimitive.Title class={toastTitle({ variant: "warning" })} data-slot="toast-title">
+            <AlertTriangle />
+
+            <ToastPrimitive.TitleText data-slot="toast-title-text">Title</ToastPrimitive.TitleText>
+          </ToastPrimitive.Title>
+
+          <ToastPrimitive.Description class={toastDescription()} data-slot="toast-description">
+            Description
+          </ToastPrimitive.Description>
+
+          <ToastPrimitive.Action class={toastAction()} data-slot="toast-action">
+            Action
+          </ToastPrimitive.Action>
+        </ToastPrimitive.Content>
+
+        <ToastPrimitive.Close class={toastClose()} data-slot="toast-close">
+          <X class="size-4" />
+        </ToastPrimitive.Close>
+      </ToastPrimitive.Root>
+    </ToastPrimitive.Template>
+
+    <ToastPrimitive.Template variant="info">
+      <ToastPrimitive.Root
+        class={toastItem({ variant: "info" })}
+        variant={"info"}
+        data-slot="toast"
+      >
+        <ToastPrimitive.Content class={toastContent()} data-slot="toast-content">
+          <ToastPrimitive.Title class={toastTitle({ variant: "info" })} data-slot="toast-title">
+            <InfoCircle />
+
+            <ToastPrimitive.TitleText data-slot="toast-title-text">Title</ToastPrimitive.TitleText>
+          </ToastPrimitive.Title>
+
+          <ToastPrimitive.Description class={toastDescription()} data-slot="toast-description">
+            Description
+          </ToastPrimitive.Description>
+
+          <ToastPrimitive.Action class={toastAction()} data-slot="toast-action">
+            Action
+          </ToastPrimitive.Action>
+        </ToastPrimitive.Content>
+
+        <ToastPrimitive.Close class={toastClose()} data-slot="toast-close">
+          <X class="size-4" />
+        </ToastPrimitive.Close>
+      </ToastPrimitive.Root>
+    </ToastPrimitive.Template>
+
+    <ToastPrimitive.Template variant="loading">
+      <ToastPrimitive.Root
+        class={toastItem({ variant: "default" })}
+        variant={"default"}
+        data-slot="toast"
+      >
+        <ToastPrimitive.Content class={toastContent()} data-slot="toast-content">
+          <ToastPrimitive.Title class={toastTitle({ variant: "loading" })} data-slot="toast-title">
+            <Loader2 class="animate-spin" />
+
+            <ToastPrimitive.TitleText data-slot="toast-title-text">Title</ToastPrimitive.TitleText>
+          </ToastPrimitive.Title>
+
+          <ToastPrimitive.Description class={toastDescription()} data-slot="toast-description">
+            Description
+          </ToastPrimitive.Description>
+
+          <ToastPrimitive.Action class={toastAction()} data-slot="toast-action">
+            Action
+          </ToastPrimitive.Action>
+        </ToastPrimitive.Content>
+
+        <ToastPrimitive.Close class={toastClose()} data-slot="toast-close">
+          <X class="size-4" />
+        </ToastPrimitive.Close>
+      </ToastPrimitive.Root>
+    </ToastPrimitive.Template>
+  </slot>
+</ToastPrimitive.Viewport>

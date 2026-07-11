@@ -1,0 +1,18 @@
+---
+import FieldPrimitive from "@starwind-ui/astro/field";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { fieldLabel } from "./variants";
+
+type Props = HTMLAttributes<"label"> & VariantProps<typeof fieldLabel>;
+
+const { size, class: className, ...rest } = Astro.props;
+---
+
+<FieldPrimitive.Label
+  class={fieldLabel({ size, class: className })}
+  {...rest}
+  data-slot="field-label"
+>
+  <slot />
+</FieldPrimitive.Label>

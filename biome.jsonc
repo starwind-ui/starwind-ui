@@ -10,7 +10,16 @@
       "!**/smoke/**",
       "!**/fixtures/**",
       "!**/_temp-fixtures/**",
-      "!**/vendor/**"
+      "!**/vendor/**",
+      "!.local/**",
+      "!scripts/portable-runtime/docs/layered-docs/generated/**",
+      "!**/vendor/**",
+      "!**/build/**",
+      "!**/.astro/**",
+      "!**/.wrangler/**",
+      "!**/dist/**",
+      "!**/node_modules/**",
+      "!**/.devin/**"
     ]
   },
   "vcs": {
@@ -106,7 +115,13 @@
         "**/packages/cli/**/*.ts",
         "**/toast/**/*.ts",
         "**/carousel/**/*.ts",
-        "scripts/**/*"
+        "**/tooltip/**/*.ts",
+        "scripts/**/*",
+        "!**/build/**",
+        "!**/.astro/**",
+        "!**/.wrangler/**",
+        "!**/dist/**",
+        "!**/node_modules/**"
       ],
       "linter": {
         "rules": {

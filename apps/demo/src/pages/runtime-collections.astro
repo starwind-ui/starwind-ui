@@ -1,0 +1,485 @@
+---
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/starwind-runtime/accordion";
+import { Button } from "@/components/starwind-runtime/button";
+import { Checkbox } from "@/components/starwind-runtime/checkbox";
+import { CheckboxGroup } from "@/components/starwind-runtime/checkbox-group";
+import { RadioGroup, RadioGroupItem } from "@/components/starwind-runtime/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/starwind-runtime/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/starwind-runtime/toggle-group";
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout title="Runtime Dynamic Collections" description="Dynamic runtime collection test page">
+  <main class="container mx-auto max-w-3xl px-4 py-12">
+    <div class="mb-8 space-y-3">
+      <p class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+        Runtime collections
+      </p>
+      <h1 class="font-heading text-4xl font-semibold tracking-tight">Dynamic item sets</h1>
+      <p class="text-muted-foreground max-w-2xl">
+        Choice groups keep value, disabled state, and keyboard order current as items change.
+      </p>
+    </div>
+
+    <div class="space-y-8">
+      <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold">Toggle group</h2>
+          <div class="flex flex-wrap gap-2">
+            <Button id="runtime-toggle-add" type="button" variant="outline" size="sm">Add</Button>
+            <Button id="runtime-toggle-disable" type="button" variant="outline" size="sm">
+              Disable
+            </Button>
+            <Button id="runtime-toggle-remove" type="button" variant="outline" size="sm">
+              Remove
+            </Button>
+            <Button id="runtime-toggle-reorder" type="button" variant="outline" size="sm">
+              Reorder
+            </Button>
+          </div>
+        </div>
+        <ToggleGroup id="runtime-dynamic-toggle" defaultValue={["bold"]} variant="outline">
+          <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
+          <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
+          <ToggleGroupItem value="underline">Underline</ToggleGroupItem>
+        </ToggleGroup>
+      </section>
+
+      <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold">Radio group</h2>
+          <div class="flex flex-wrap gap-2">
+            <Button id="runtime-radio-add" type="button" variant="outline" size="sm">Add</Button>
+            <Button id="runtime-radio-disable" type="button" variant="outline" size="sm">
+              Disable
+            </Button>
+            <Button id="runtime-radio-remove" type="button" variant="outline" size="sm">
+              Remove
+            </Button>
+            <Button id="runtime-radio-reorder" type="button" variant="outline" size="sm">
+              Reorder
+            </Button>
+          </div>
+        </div>
+        <RadioGroup
+          id="runtime-dynamic-radio"
+          defaultValue="standard"
+          legend="Fulfillment speed"
+          name="runtimeFulfillmentSpeed"
+        >
+          <label
+            class="flex w-fit items-center gap-3 text-sm"
+            data-runtime-radio-row
+            data-runtime-radio-template
+            for="runtime-radio-standard"
+          >
+            <RadioGroupItem id="runtime-radio-standard" value="standard" />
+            <span data-runtime-radio-label>Standard</span>
+          </label>
+          <label
+            class="flex w-fit items-center gap-3 text-sm"
+            data-runtime-radio-row
+            for="runtime-radio-express"
+          >
+            <RadioGroupItem id="runtime-radio-express" value="express" />
+            <span data-runtime-radio-label>Express</span>
+          </label>
+          <label
+            class="flex w-fit items-center gap-3 text-sm"
+            data-runtime-radio-row
+            for="runtime-radio-priority"
+          >
+            <RadioGroupItem id="runtime-radio-priority" value="priority" />
+            <span data-runtime-radio-label>Priority</span>
+          </label>
+        </RadioGroup>
+      </section>
+
+      <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold">Checkbox group</h2>
+          <div class="flex flex-wrap gap-2">
+            <Button id="runtime-checkbox-add" type="button" variant="outline" size="sm">Add</Button>
+            <Button id="runtime-checkbox-disable" type="button" variant="outline" size="sm">
+              Disable
+            </Button>
+            <Button id="runtime-checkbox-remove" type="button" variant="outline" size="sm">
+              Remove
+            </Button>
+          </div>
+        </div>
+        <CheckboxGroup id="runtime-dynamic-checkbox" defaultValue={["security"]}>
+          <Checkbox
+            id="runtime-checkbox-security"
+            name="runtimeFeatures"
+            value="security"
+            label="Security"
+            data-runtime-checkbox-template
+          />
+          <Checkbox
+            id="runtime-checkbox-analytics"
+            name="runtimeFeatures"
+            value="analytics"
+            label="Analytics"
+          />
+          <Checkbox
+            id="runtime-checkbox-exports"
+            name="runtimeFeatures"
+            value="exports"
+            label="Exports"
+          />
+        </CheckboxGroup>
+      </section>
+
+      <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold">Accordion</h2>
+          <div class="flex flex-wrap gap-2">
+            <Button id="runtime-accordion-add" type="button" variant="outline" size="sm">
+              Add
+            </Button>
+            <Button id="runtime-accordion-disable" type="button" variant="outline" size="sm">
+              Disable
+            </Button>
+            <Button id="runtime-accordion-remove" type="button" variant="outline" size="sm">
+              Remove
+            </Button>
+            <Button id="runtime-accordion-reorder" type="button" variant="outline" size="sm">
+              Reorder
+            </Button>
+          </div>
+        </div>
+        <Accordion id="runtime-dynamic-accordion" collapsible defaultValue="shipping">
+          <AccordionItem value="shipping" data-runtime-accordion-template>
+            <AccordionTrigger>Shipping</AccordionTrigger>
+            <AccordionContent>Shipping content</AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="billing">
+            <AccordionTrigger>Billing</AccordionTrigger>
+            <AccordionContent>Billing content</AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="returns">
+            <AccordionTrigger>Returns</AccordionTrigger>
+            <AccordionContent>Returns content</AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </section>
+
+      <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold">Select</h2>
+          <div class="flex flex-wrap gap-2">
+            <Button id="runtime-select-add" type="button" variant="outline" size="sm">Add</Button>
+            <Button id="runtime-select-disable" type="button" variant="outline" size="sm">
+              Disable
+            </Button>
+            <Button id="runtime-select-remove" type="button" variant="outline" size="sm">
+              Remove
+            </Button>
+            <Button id="runtime-select-reorder" type="button" variant="outline" size="sm">
+              Reorder
+            </Button>
+          </div>
+        </div>
+        <Select id="runtime-dynamic-select" defaultValue="system" name="runtimeTheme">
+          <SelectTrigger placeholder="Theme" />
+          <SelectContent id="runtime-dynamic-select-content" alignItemWithTrigger={false}>
+            <SelectItem value="light" data-runtime-select-template>Light</SelectItem>
+            <SelectItem value="system">System</SelectItem>
+            <SelectItem value="dark">Dark</SelectItem>
+            <SelectItem value="contrast">High contrast</SelectItem>
+          </SelectContent>
+        </Select>
+      </section>
+    </div>
+
+    <output
+      id="runtime-collections-output"
+      class="border-border bg-muted text-muted-foreground mt-8 block min-h-24 rounded-md border p-4 text-sm whitespace-pre-wrap"
+    ></output>
+  </main>
+</Layout>
+
+<script>
+  const output = document.querySelector<HTMLOutputElement>("#runtime-collections-output");
+  const toggleGroup = document.querySelector<HTMLElement>("#runtime-dynamic-toggle");
+  const radioGroup = document.querySelector<HTMLElement>("#runtime-dynamic-radio");
+  const checkboxGroup = document.querySelector<HTMLElement>("#runtime-dynamic-checkbox");
+  const accordion = document.querySelector<HTMLElement>("#runtime-dynamic-accordion");
+  const select = document.querySelector<HTMLElement>("#runtime-dynamic-select");
+  const selectContent = document.querySelector<HTMLElement>("#runtime-dynamic-select-content");
+
+  const refreshOutput = () => {
+    if (!output) return;
+
+    const text = [
+      `Toggle: ${toggleGroup?.getAttribute("data-value") ?? "[]"}`,
+      `Radio: ${radioGroup?.getAttribute("data-value") ?? ""}`,
+      `Checkbox: ${checkboxGroup?.getAttribute("data-value") ?? "[]"}`,
+      `Accordion: ${getOpenAccordionValues().join(", ") || "closed"}`,
+      `Select: ${select?.getAttribute("data-value") ?? ""}`,
+    ].join("\n");
+
+    output.value = text;
+    output.textContent = text;
+  };
+
+  const queueOutput = () => {
+    queueMicrotask(() => queueMicrotask(refreshOutput));
+  };
+
+  const getToggle = (value: string) =>
+    toggleGroup?.querySelector<HTMLButtonElement>(`[data-sw-toggle][data-value="${value}"]`) ??
+    null;
+
+  const getRadio = (value: string) =>
+    radioGroup?.querySelector<HTMLElement>(`[data-sw-radio][data-value="${value}"]`) ?? null;
+
+  const getRadioRow = (value: string) =>
+    getRadio(value)?.closest<HTMLElement>("[data-runtime-radio-row]");
+
+  const getCheckbox = (value: string) =>
+    checkboxGroup?.querySelector<HTMLElement>(`[data-sw-checkbox][data-value="${value}"]`) ?? null;
+
+  const getCheckboxWrapper = (value: string) =>
+    getCheckbox(value)?.closest<HTMLElement>("[data-sw-checkbox-wrapper]");
+
+  const getAccordionItem = (value: string) =>
+    accordion?.querySelector<HTMLElement>(`[data-sw-accordion-item][data-value="${value}"]`) ??
+    null;
+
+  const getOpenAccordionValues = () =>
+    Array.from(
+      accordion?.querySelectorAll<HTMLElement>("[data-sw-accordion-item][data-state='open']") ?? [],
+    ).map((item) => item.getAttribute("data-value") ?? "");
+
+  const getSelectList = () =>
+    selectContent?.querySelector<HTMLElement>("[data-sw-select-list]") ?? null;
+
+  const getSelectItem = (value: string) =>
+    selectContent?.querySelector<HTMLElement>(`[data-sw-select-item][data-value="${value}"]`) ??
+    null;
+
+  document.querySelector("#runtime-toggle-add")?.addEventListener("click", () => {
+    if (!toggleGroup || getToggle("strike")) return;
+
+    const template = getToggle("bold");
+    const item = template?.cloneNode(true) as HTMLButtonElement | undefined;
+    if (!item) return;
+
+    item.textContent = "Strike";
+    item.setAttribute("data-value", "strike");
+    item.removeAttribute("data-pressed");
+    item.setAttribute("data-state", "off");
+    item.setAttribute("aria-pressed", "false");
+    toggleGroup.append(item);
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-toggle-disable")?.addEventListener("click", () => {
+    const item = getToggle("italic");
+    if (!item) return;
+
+    item.toggleAttribute("data-disabled");
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-toggle-remove")?.addEventListener("click", () => {
+    getToggle("strike")?.remove();
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-toggle-reorder")?.addEventListener("click", () => {
+    const underline = getToggle("underline");
+    const bold = getToggle("bold");
+    if (!toggleGroup || !underline || !bold) return;
+
+    toggleGroup.insertBefore(underline, bold);
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-radio-add")?.addEventListener("click", () => {
+    if (!radioGroup || getRadio("drone")) return;
+
+    const template = radioGroup.querySelector<HTMLElement>("[data-runtime-radio-template]");
+    const row = template?.cloneNode(true) as HTMLElement | undefined;
+    const radio = row?.querySelector<HTMLElement>("[data-sw-radio]");
+    const input = row?.querySelector<HTMLInputElement>("[data-sw-radio-input]");
+    const label = row?.querySelector<HTMLElement>("[data-runtime-radio-label]");
+    if (!row || !radio || !label) return;
+
+    input?.removeAttribute("id");
+    if (input) input.checked = false;
+    radio.setAttribute("data-id", "runtime-radio-drone");
+    radio.setAttribute("data-value", "drone");
+    radio.removeAttribute("data-checked");
+    radio.setAttribute("aria-checked", "false");
+    label.textContent = "Drone";
+    row.removeAttribute("data-runtime-radio-template");
+    radioGroup.append(row);
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-radio-disable")?.addEventListener("click", () => {
+    const item = getRadio("express");
+    if (!item) return;
+
+    item.toggleAttribute("data-disabled");
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-radio-remove")?.addEventListener("click", () => {
+    getRadioRow("drone")?.remove();
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-radio-reorder")?.addEventListener("click", () => {
+    const priority = getRadioRow("priority");
+    const standard = getRadioRow("standard");
+    if (!radioGroup || !priority || !standard) return;
+
+    radioGroup.insertBefore(priority, standard);
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-checkbox-add")?.addEventListener("click", () => {
+    if (!checkboxGroup || getCheckbox("audit")) return;
+
+    const template = checkboxGroup.querySelector<HTMLElement>("[data-runtime-checkbox-template]");
+    const wrapper = template
+      ?.closest<HTMLElement>("[data-sw-checkbox-wrapper]")
+      ?.cloneNode(true) as HTMLElement | undefined;
+    const checkbox = wrapper?.querySelector<HTMLElement>("[data-sw-checkbox]");
+    const input = wrapper?.querySelector<HTMLInputElement>("[data-sw-checkbox-input]");
+    const label = wrapper?.querySelector<HTMLLabelElement>("label");
+    if (!wrapper || !checkbox || !label) return;
+
+    input?.removeAttribute("id");
+    if (input) input.checked = false;
+    checkbox.setAttribute("data-id", "runtime-checkbox-audit");
+    checkbox.setAttribute("data-value", "audit");
+    checkbox.removeAttribute("data-checked");
+    checkbox.setAttribute("aria-checked", "false");
+    label.htmlFor = "runtime-checkbox-audit";
+    label.textContent = "Audit trail";
+    checkboxGroup.append(wrapper);
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-checkbox-disable")?.addEventListener("click", () => {
+    const item = getCheckbox("analytics");
+    if (!item) return;
+
+    item.toggleAttribute("data-disabled");
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-checkbox-remove")?.addEventListener("click", () => {
+    getCheckboxWrapper("audit")?.remove();
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-accordion-add")?.addEventListener("click", () => {
+    if (!accordion || getAccordionItem("tracking")) return;
+
+    const template = accordion.querySelector<HTMLElement>("[data-runtime-accordion-template]");
+    const item = template?.cloneNode(true) as HTMLElement | undefined;
+    const trigger = item?.querySelector<HTMLButtonElement>("[data-sw-accordion-trigger]");
+    const content = item?.querySelector<HTMLElement>("[data-sw-accordion-content]");
+    if (!item || !trigger || !content) return;
+
+    trigger.removeAttribute("id");
+    content.removeAttribute("id");
+    item.setAttribute("data-value", "tracking");
+    item.removeAttribute("data-state");
+    item.removeAttribute("data-runtime-accordion-template");
+    trigger.textContent = "Tracking";
+    trigger.setAttribute("aria-expanded", "false");
+    content.textContent = "Tracking content";
+    accordion.append(item);
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-accordion-disable")?.addEventListener("click", () => {
+    const item = getAccordionItem("billing");
+    if (!item) return;
+
+    item.toggleAttribute("data-disabled");
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-accordion-remove")?.addEventListener("click", () => {
+    getAccordionItem("tracking")?.remove();
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-accordion-reorder")?.addEventListener("click", () => {
+    const returns = getAccordionItem("returns");
+    const shipping = getAccordionItem("shipping");
+    if (!accordion || !returns || !shipping) return;
+
+    accordion.insertBefore(returns, shipping);
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-select-add")?.addEventListener("click", () => {
+    const list = getSelectList();
+    if (!list || getSelectItem("solarized")) return;
+
+    const template = selectContent?.querySelector<HTMLElement>("[data-runtime-select-template]");
+    const item = template?.cloneNode(true) as HTMLElement | undefined;
+    const text = item?.querySelector<HTMLElement>("[data-sw-select-item-text]");
+    const indicator = item?.querySelector<HTMLElement>("[data-sw-select-item-indicator]");
+    if (!item || !text) return;
+
+    item.removeAttribute("id");
+    item.removeAttribute("aria-selected");
+    item.removeAttribute("data-highlighted");
+    item.removeAttribute("data-runtime-select-template");
+    item.removeAttribute("data-selected");
+    item.setAttribute("data-value", "solarized");
+    text.textContent = "Solarized";
+    if (indicator) indicator.hidden = true;
+    list.append(item);
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-select-disable")?.addEventListener("click", () => {
+    const item = getSelectItem("contrast");
+    if (!item) return;
+
+    item.toggleAttribute("data-disabled");
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-select-remove")?.addEventListener("click", () => {
+    getSelectItem("solarized")?.remove();
+    queueOutput();
+  });
+
+  document.querySelector("#runtime-select-reorder")?.addEventListener("click", () => {
+    const list = getSelectList();
+    const dark = getSelectItem("dark");
+    const light = getSelectItem("light");
+    if (!list || !dark || !light) return;
+
+    list.insertBefore(dark, light);
+    queueOutput();
+  });
+
+  [toggleGroup, radioGroup, checkboxGroup, accordion, select].forEach((group) => {
+    group?.addEventListener("starwind:value-change", queueOutput);
+  });
+
+  refreshOutput();
+</script>

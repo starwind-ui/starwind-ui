@@ -1,0 +1,37 @@
+---
+import ToastPrimitive from "@starwind-ui/astro/toast";
+import AlertTriangle from "@tabler/icons/outline/alert-triangle.svg";
+import CircleCheck from "@tabler/icons/outline/circle-check.svg";
+import CircleX from "@tabler/icons/outline/circle-x.svg";
+import InfoCircle from "@tabler/icons/outline/info-circle.svg";
+import Loader2 from "@tabler/icons/outline/loader-2.svg";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { toastTitle } from "./variants";
+
+type Props = HTMLAttributes<"div"> & VariantProps<typeof toastTitle>;
+
+const { class: className, variant = "default", ...rest } = Astro.props;
+---
+
+<ToastPrimitive.Title
+  class={toastTitle({ variant, class: className })}
+  {...rest}
+  data-slot="toast-title"
+>
+  <slot name="icon">
+    {variant === "success" && <CircleCheck />}
+
+    {variant === "error" && <CircleX />}
+
+    {variant === "warning" && <AlertTriangle />}
+
+    {variant === "info" && <InfoCircle />}
+
+    {variant === "loading" && <Loader2 class="animate-spin" />}
+  </slot>
+
+  <ToastPrimitive.TitleText data-slot="toast-title-text">
+    <slot />
+  </ToastPrimitive.TitleText>
+</ToastPrimitive.Title>

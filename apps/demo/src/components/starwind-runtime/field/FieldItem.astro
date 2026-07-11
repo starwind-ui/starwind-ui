@@ -1,0 +1,13 @@
+---
+import FieldPrimitive from "@starwind-ui/astro/field";
+import type { HTMLAttributes } from "astro/types";
+import { fieldItem } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<FieldPrimitive.Item class={fieldItem({ class: className })} {...rest} data-slot="field-item">
+  <slot />
+</FieldPrimitive.Item>

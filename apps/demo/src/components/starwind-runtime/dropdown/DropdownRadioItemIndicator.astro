@@ -1,0 +1,17 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownRadioItemIndicator } from "./variants";
+
+type Props = HTMLAttributes<"span">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<MenuPrimitive.RadioItemIndicator
+  class={dropdownRadioItemIndicator({ class: className })}
+  {...rest}
+  data-slot="dropdown-radio-item-indicator"
+>
+  <slot />
+</MenuPrimitive.RadioItemIndicator>

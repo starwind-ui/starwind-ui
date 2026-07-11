@@ -1,0 +1,21 @@
+---
+import FieldsetPrimitive from "@starwind-ui/astro/fieldset";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { fieldSet } from "./variants";
+
+interface Props extends HTMLAttributes<"fieldset">, VariantProps<typeof fieldSet> {
+  disabled?: boolean;
+}
+
+const { disabled = false, class: className, ...rest } = Astro.props;
+---
+
+<FieldsetPrimitive.Root
+  class={fieldSet({ class: className })}
+  disabled={disabled}
+  {...rest}
+  data-slot="field-set"
+>
+  <slot />
+</FieldsetPrimitive.Root>

@@ -1,0 +1,50 @@
+---
+import ComboboxPrimitive from "@starwind-ui/astro/combobox";
+import Check from "@tabler/icons/outline/check.svg";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { comboboxItem, comboboxItemIndicator, comboboxItemText } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "role"> &
+  VariantProps<typeof comboboxItem> & {
+    disabled?: boolean;
+    indicatorClass?: string;
+    showIndicator?: boolean;
+    value: string;
+  };
+
+const {
+  class: className,
+  disabled = false,
+  indicatorClass: indicatorClassName,
+  inset = false,
+  showIndicator = true,
+  value,
+  ...rest
+} = Astro.props;
+---
+
+<ComboboxPrimitive.Item
+  class={comboboxItem({ inset, disabled, class: className })}
+  disabled={disabled}
+  value={value}
+  {...rest}
+  data-slot="combobox-item"
+>
+  <ComboboxPrimitive.ItemText class={comboboxItemText()} data-slot="combobox-item-text">
+    <slot />
+  </ComboboxPrimitive.ItemText>
+
+  {
+    showIndicator && (
+      <ComboboxPrimitive.ItemIndicator
+        class={comboboxItemIndicator({ class: indicatorClassName })}
+        data-slot="combobox-item-indicator"
+      >
+        <slot name="indicator">
+          <Check class="size-4" />
+        </slot>
+      </ComboboxPrimitive.ItemIndicator>
+    )
+  }
+</ComboboxPrimitive.Item>

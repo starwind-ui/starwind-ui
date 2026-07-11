@@ -1,0 +1,20 @@
+---
+import CollapsiblePrimitive from "@starwind-ui/astro/collapsible";
+import type { HTMLAttributes } from "astro/types";
+import { collapsibleTrigger } from "./variants";
+
+type Props = HTMLAttributes<"button"> & {
+  asChild?: boolean;
+};
+
+const { asChild = false, class: className, ...rest } = Astro.props;
+---
+
+<CollapsiblePrimitive.Trigger
+  class={collapsibleTrigger({ class: className })}
+  asChild={asChild}
+  {...rest}
+  data-slot="collapsible-trigger"
+>
+  <slot />
+</CollapsiblePrimitive.Trigger>

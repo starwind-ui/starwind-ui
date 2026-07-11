@@ -1,0 +1,67 @@
+---
+import { Alert, AlertDescription, AlertTitle } from "@/components/starwind-runtime/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/starwind-runtime/alert-dialog";
+import { button } from "@/components/starwind-runtime/button/variants";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/starwind-runtime/dialog";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Alert Dialog</h2>
+  <div class="space-y-4">
+    <AlertDialog id="runtime-alert-dialog-default">
+      <AlertDialogTrigger class={button({ variant: "error", size: "md" })}>
+        Discard draft
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Discard draft?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. The default Alert Dialog requires an explicit action or
+            cancel button.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction>Discard</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog id="runtime-alert-dialog-outside" closeOnOutsideInteract>
+      <AlertDialogTrigger class={button({ variant: "outline", size: "sm" })}>
+        Open dismissible alert
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Dismissible alert dialog</AlertDialogTitle>
+          <AlertDialogDescription>
+            This example opts into outside interaction closing for runtime coverage.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction>Continue</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </div>
+</section>

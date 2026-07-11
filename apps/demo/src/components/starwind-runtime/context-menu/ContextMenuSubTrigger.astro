@@ -1,0 +1,26 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+import type { HTMLAttributes } from "astro/types";
+import { contextMenuItem } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  inset?: boolean;
+  disabled?: boolean;
+};
+
+const { class: className, inset = false, disabled = false, ...rest } = Astro.props;
+
+const subTriggerClassName = className;
+---
+
+<ContextMenuPrimitive.SubmenuTrigger
+  class={contextMenuItem({ inset, disabled, class: subTriggerClassName })}
+  disabled={disabled}
+  {...rest}
+  data-slot="context-menu-sub-trigger"
+>
+  <slot />
+
+  <ChevronRight class="ml-auto size-4" />
+</ContextMenuPrimitive.SubmenuTrigger>

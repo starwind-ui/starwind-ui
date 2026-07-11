@@ -1,0 +1,51 @@
+---
+import SelectPrimitive from "@starwind-ui/astro/select";
+import type { HTMLAttributes } from "astro/types";
+import { select } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "defaultValue" | "onChange"> & {
+  autoComplete?: string;
+  defaultOpen?: boolean;
+  defaultValue?: string | null;
+  disabled?: boolean;
+  form?: string;
+  highlightItemOnHover?: boolean;
+  modal?: boolean;
+  name?: string;
+  readOnly?: boolean;
+  required?: boolean;
+};
+
+const {
+  autoComplete,
+  defaultOpen = false,
+  defaultValue,
+  disabled = false,
+  form,
+  highlightItemOnHover = true,
+  modal = true,
+  name,
+  readOnly = false,
+  required = false,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<SelectPrimitive.Root
+  class={select({ class: className })}
+  autoComplete={autoComplete}
+  defaultOpen={defaultOpen}
+  defaultValue={defaultValue}
+  disabled={disabled}
+  form={form}
+  highlightItemOnHover={highlightItemOnHover}
+  modal={modal}
+  name={name}
+  readOnly={readOnly}
+  required={required}
+  {...rest}
+  data-slot="select"
+>
+  <slot />
+</SelectPrimitive.Root>

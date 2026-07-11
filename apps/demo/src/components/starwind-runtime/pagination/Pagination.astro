@@ -1,0 +1,19 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { pagination } from "./variants";
+
+type Props = HTMLAttributes<"nav">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<nav
+  role="navigation"
+  aria-label="pagination"
+  class={pagination({ class: className })}
+  {...rest}
+  data-slot="pagination"
+>
+  <slot />
+</nav>

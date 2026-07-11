@@ -1,0 +1,25 @@
+---
+import { Label } from "@/components/starwind-runtime/label";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Label</h2>
+  <div class="grid gap-4 sm:grid-cols-4">
+    <div class="grid gap-2">
+      <Label for="runtime-label-sm" size="sm">Small label</Label>
+      <input id="runtime-label-sm" class="h-9 rounded-md border px-3" />
+    </div>
+    <div class="grid gap-2">
+      <Label for="runtime-label-md">Default label</Label>
+      <input id="runtime-label-md" class="h-10 rounded-md border px-3" />
+    </div>
+    <div class="grid gap-2">
+      <Label for="runtime-label-lg" size="lg">Large label</Label>
+      <input id="runtime-label-lg" class="h-11 rounded-md border px-3" disabled />
+    </div>
+    <div class="grid gap-2">
+      <input id="runtime-label-peer" class="peer h-9 rounded-md border px-3" disabled />
+      <Label for="runtime-label-peer" size="sm">Peer disabled label</Label>
+    </div>
+  </div>
+</section>

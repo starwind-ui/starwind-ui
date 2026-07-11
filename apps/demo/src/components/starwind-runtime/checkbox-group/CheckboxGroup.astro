@@ -1,0 +1,24 @@
+---
+import CheckboxGroupPrimitive from "@starwind-ui/astro/checkbox-group";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { checkboxGroup } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "defaultValue" | "onChange"> &
+  VariantProps<typeof checkboxGroup> & {
+    defaultValue?: string[];
+    disabled?: boolean;
+  };
+
+const { defaultValue, disabled = false, class: className, ...rest } = Astro.props;
+---
+
+<CheckboxGroupPrimitive.Root
+  class={checkboxGroup({ class: className })}
+  defaultValue={defaultValue}
+  disabled={disabled}
+  {...rest}
+  data-slot="checkbox-group"
+>
+  <slot />
+</CheckboxGroupPrimitive.Root>

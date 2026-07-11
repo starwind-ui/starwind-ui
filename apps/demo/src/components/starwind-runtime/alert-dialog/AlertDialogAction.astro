@@ -1,0 +1,43 @@
+---
+import type { ComponentProps } from "astro/types";
+
+import { Button } from "../button";
+import { alertDialogAction, alertDialogActionAsChild } from "./variants";
+
+type Props = ComponentProps<typeof Button> & {
+  asChild?: boolean;
+};
+
+const {
+  asChild = false,
+  variant = "default",
+  size = "md",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+{
+  asChild ? (
+    <div
+      class={alertDialogActionAsChild({ variant, size, class: className })}
+      data-as-child
+      {...rest}
+      data-slot="alert-dialog-action"
+      data-sw-alert-dialog-close
+    >
+      <slot />
+    </div>
+  ) : (
+    <Button
+      variant={variant}
+      size={size}
+      class={alertDialogAction({ class: className })}
+      {...rest}
+      data-slot="alert-dialog-action"
+      data-sw-alert-dialog-close
+    >
+      <slot />
+    </Button>
+  )
+}

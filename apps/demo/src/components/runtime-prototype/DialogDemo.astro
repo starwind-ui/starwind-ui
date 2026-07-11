@@ -1,0 +1,164 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { button } from "@/components/starwind-runtime/button/variants";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/starwind-runtime/dialog";
+import { Input } from "@/components/starwind-runtime/input";
+import { Label } from "@/components/starwind-runtime/label";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Dialog</h2>
+  <div class="flex flex-wrap items-center gap-3">
+    <Dialog id="runtime-dialog-default">
+      <DialogTrigger class={button({ variant: "primary", size: "md" })}>
+        Open dialog
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Runtime dialog</DialogTitle>
+          <DialogDescription>
+            This dialog uses the generated styled Astro wrapper and the native-dialog runtime
+            controller.
+          </DialogDescription>
+        </DialogHeader>
+        <div class="py-4">
+          <label class="grid gap-2 text-sm font-medium">
+            Example input
+            <input
+              class="border-input bg-background focus-visible:ring-outline/50 h-10 rounded-md border px-3 outline-none focus-visible:ring-3"
+              value="Focus trap target"
+            />
+          </label>
+        </div>
+        <DialogFooter>
+          <DialogClose class={button({ variant: "outline", size: "sm" })}> Close </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <DialogTrigger
+      targetId="runtime-dialog-edit-profile"
+      class={button({ variant: "outline", size: "md" })}
+    >
+      Edit profile
+    </DialogTrigger>
+
+    <Dialog id="runtime-dialog-edit-profile">
+      <DialogTrigger asChild>
+        <Button id="runtime-dialog-edit-profile-trigger" variant="secondary">
+          Open edit form
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit profile</DialogTitle>
+          <DialogDescription>Update the profile details used in the runtime demo.</DialogDescription
+          >
+        </DialogHeader>
+        <div class="grid gap-4 py-4">
+          <div class="grid gap-2">
+            <Label for="runtime-dialog-name" size="sm">Name</Label>
+            <Input id="runtime-dialog-name" defaultValue="Ada Lovelace" />
+          </div>
+          <div class="grid gap-2">
+            <Label for="runtime-dialog-username" size="sm">Username</Label>
+            <Input id="runtime-dialog-username" defaultValue="@ada" />
+          </div>
+        </div>
+        <DialogFooter class="gap-2">
+          <DialogClose asChild>
+            <Button variant="outline" size="sm">Cancel</Button>
+          </DialogClose>
+          <DialogClose asChild>
+            <Button variant="primary" size="sm">Save changes</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog id="runtime-nested-dialog-parent">
+      <DialogTrigger asChild>
+        <Button id="runtime-nested-dialog-parent-trigger" variant="outline">
+          Open nested parent
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Runtime nested parent</DialogTitle>
+          <DialogDescription>
+            Mirrors the old Starwind nested dialog demo with deeper dialog levels.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="mt-4 flex-col gap-2 sm:flex-row">
+          <Dialog id="runtime-nested-dialog-level-one">
+            <DialogTrigger asChild>
+              <Button id="runtime-nested-dialog-level-one-trigger" variant="secondary" size="sm">
+                Open nested level 1
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Runtime nested level 1</DialogTitle>
+                <DialogDescription>
+                  This level can open another dialog without closing its parent.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter class="mt-4 flex-col gap-2 sm:flex-row">
+                <Dialog id="runtime-nested-dialog-level-two">
+                  <DialogTrigger asChild>
+                    <Button
+                      id="runtime-nested-dialog-level-two-trigger"
+                      variant="primary"
+                      size="sm"
+                    >
+                      Open nested level 2
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Runtime nested level 2</DialogTitle>
+                      <DialogDescription>
+                        Closing this second nested level should let the older dialogs resize
+                        immediately while this level exits.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter class="mt-4">
+                      <DialogClose asChild>
+                        <Button
+                          id="runtime-nested-dialog-level-two-close"
+                          variant="outline"
+                          size="sm"
+                        >
+                          Close level 2
+                        </Button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <DialogClose asChild>
+                  <Button id="runtime-nested-dialog-level-one-close" variant="outline" size="sm">
+                    Close level 1
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <DialogClose asChild>
+            <Button id="runtime-nested-dialog-parent-close" variant="outline" size="sm">
+              Close parent
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </div>
+</section>

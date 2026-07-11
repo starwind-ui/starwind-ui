@@ -1,0 +1,69 @@
+---
+import { Checkbox } from "@/components/starwind-runtime/checkbox";
+import {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldItem,
+  FieldLabel,
+  FieldSeparator,
+} from "@/components/starwind-runtime/field";
+import { RadioGroup, RadioGroupItem } from "@/components/starwind-runtime/radio-group";
+import { Switch } from "@/components/starwind-runtime/switch";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Field</h2>
+  <form data-runtime-field-form class="grid gap-6 sm:grid-cols-2">
+    <Field id="runtime-field-input" name="runtime-field-input" class="runtime-field-input">
+      <FieldLabel size="sm">Display name</FieldLabel>
+      <FieldControl id="runtime-field-input-control" required placeholder="Type a display name" />
+      <FieldDescription id="runtime-field-input-description">
+        This name is visible in shared spaces.
+      </FieldDescription>
+      <FieldError id="runtime-field-input-error" match="valueMissing">
+        Enter a display name.
+      </FieldError>
+    </Field>
+
+    <Field id="runtime-field-checkbox" name="runtime-field-checkbox">
+      <FieldItem>
+        <Checkbox id="runtime-field-checkbox-control" value="accepted" />
+        <div class="grid gap-1">
+          <FieldLabel size="sm">Accept updates</FieldLabel>
+          <FieldDescription>Receive product and security updates.</FieldDescription>
+        </div>
+      </FieldItem>
+    </Field>
+
+    <FieldSeparator class="sm:col-span-2">Preferences</FieldSeparator>
+
+    <Field id="runtime-field-radio" name="runtime-field-radio">
+      <FieldLabel size="sm">Plan</FieldLabel>
+      <RadioGroup id="runtime-field-radio-group" class="grid gap-3">
+        <div class="flex items-center gap-2">
+          <RadioGroupItem id="runtime-field-radio-basic" value="basic" />
+          <span class="text-sm">Basic</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <RadioGroupItem id="runtime-field-radio-pro" value="pro" />
+          <span class="text-sm">Pro</span>
+        </div>
+      </RadioGroup>
+      <FieldDescription>Choose the plan used for billing.</FieldDescription>
+    </Field>
+
+    <Field id="runtime-field-switch" name="runtime-field-switch">
+      <FieldItem>
+        <Switch id="runtime-field-switch-control" value="enabled" uncheckedValue="disabled" />
+        <div class="grid gap-1">
+          <FieldLabel size="sm">Billing alerts</FieldLabel>
+          <FieldDescription>Send alerts before renewal.</FieldDescription>
+        </div>
+      </FieldItem>
+    </Field>
+
+    <FieldSeparator class="sm:col-span-2" />
+  </form>
+</section>

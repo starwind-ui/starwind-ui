@@ -1,0 +1,46 @@
+---
+import NavigationMenuPrimitive from "@starwind-ui/astro/navigation-menu";
+import type { HTMLAttributes } from "astro/types";
+import { navigationMenuPopup, navigationMenuPositioner, navigationMenuViewport } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  sideOffset?: number;
+  alignOffset?: number;
+  avoidCollisions?: boolean;
+  collisionPadding?: number;
+};
+
+const {
+  side = "bottom",
+  align = "start",
+  sideOffset = 8,
+  alignOffset = 0,
+  avoidCollisions = true,
+  collisionPadding = 8,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<NavigationMenuPrimitive.Portal data-slot="navigation-menu-portal">
+  <NavigationMenuPrimitive.Positioner
+    class={navigationMenuPositioner({ class: className })}
+    side={side}
+    align={align}
+    sideOffset={sideOffset}
+    alignOffset={alignOffset}
+    avoidCollisions={avoidCollisions}
+    collisionPadding={collisionPadding}
+    {...rest}
+    data-slot="navigation-menu-positioner"
+  >
+    <NavigationMenuPrimitive.Popup class={navigationMenuPopup()} data-slot="navigation-menu-popup">
+      <NavigationMenuPrimitive.Viewport
+        class={navigationMenuViewport()}
+        data-slot="navigation-menu-viewport"
+      />
+    </NavigationMenuPrimitive.Popup>
+  </NavigationMenuPrimitive.Positioner>
+</NavigationMenuPrimitive.Portal>

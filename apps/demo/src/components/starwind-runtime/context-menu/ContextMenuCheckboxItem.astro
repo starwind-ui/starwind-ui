@@ -1,0 +1,53 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import Check from "@tabler/icons/outline/check.svg";
+import type { HTMLAttributes } from "astro/types";
+import { contextMenuCheckboxItem, contextMenuCheckboxItemIndicator } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "aria-checked" | "role"> & {
+  checked?: boolean;
+  defaultChecked?: boolean;
+  closeOnClick?: boolean;
+  inset?: boolean;
+  disabled?: boolean;
+  indicatorClass?: string;
+  showIndicator?: boolean;
+};
+
+const {
+  class: className,
+  checked,
+  defaultChecked = false,
+  closeOnClick = false,
+  inset = false,
+  disabled = false,
+  indicatorClass: indicatorClassName,
+  showIndicator = true,
+  ...rest
+} = Astro.props;
+---
+
+<ContextMenuPrimitive.CheckboxItem
+  class={contextMenuCheckboxItem({ inset, disabled, class: className })}
+  checked={checked}
+  defaultChecked={defaultChecked}
+  closeOnClick={closeOnClick}
+  disabled={disabled}
+  {...rest}
+  data-slot="context-menu-checkbox-item"
+>
+  {
+    showIndicator && (
+      <ContextMenuPrimitive.CheckboxItemIndicator
+        class={contextMenuCheckboxItemIndicator({ class: indicatorClassName })}
+        data-slot="context-menu-checkbox-item-indicator"
+      >
+        <slot name="indicator">
+          <Check class="size-4" />
+        </slot>
+      </ContextMenuPrimitive.CheckboxItemIndicator>
+    )
+  }
+
+  <slot />
+</ContextMenuPrimitive.CheckboxItem>

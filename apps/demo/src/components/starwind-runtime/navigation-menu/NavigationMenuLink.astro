@@ -1,0 +1,22 @@
+---
+import NavigationMenuPrimitive from "@starwind-ui/astro/navigation-menu";
+import type { HTMLAttributes } from "astro/types";
+import { navigationMenuLink } from "./variants";
+
+type Props = HTMLAttributes<"a"> & {
+  active?: boolean;
+  closeOnClick?: boolean;
+};
+
+const { active = false, closeOnClick = true, class: className, ...rest } = Astro.props;
+---
+
+<NavigationMenuPrimitive.Link
+  class={navigationMenuLink({ class: className })}
+  active={active}
+  closeOnClick={closeOnClick}
+  {...rest}
+  data-slot="navigation-menu-link"
+>
+  <slot />
+</NavigationMenuPrimitive.Link>

@@ -1,0 +1,13 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { alertTitle } from "./variants";
+
+type Props = HTMLAttributes<"h5">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<h5 data-sw-alert-title class={alertTitle({ class: className })} {...rest} data-slot="alert-title">
+  <slot />
+</h5>

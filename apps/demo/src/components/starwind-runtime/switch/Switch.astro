@@ -1,0 +1,93 @@
+---
+import SwitchPrimitive from "@starwind-ui/astro/switch";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { switchButton, switchLabel, switchToggle, switchWrapper } from "./variants";
+
+type Props = Omit<
+  HTMLAttributes<"button">,
+  "aria-checked" | "defaultChecked" | "onChange" | "role" | "type"
+> &
+  VariantProps<typeof switchButton> &
+  VariantProps<typeof switchToggle> & {
+    checked?: boolean;
+    defaultChecked?: boolean;
+    disabled?: boolean;
+    form?: string;
+    id: string;
+    label?: string;
+    name?: string;
+    padding?: number;
+    readOnly?: boolean;
+    required?: boolean;
+    uncheckedValue?: string;
+    value?: string;
+  };
+
+const {
+  variant = "default",
+  size = "md",
+  checked,
+  defaultChecked,
+  disabled = false,
+  form,
+  id,
+  label,
+  name,
+  padding,
+  readOnly = false,
+  required = false,
+  uncheckedValue,
+  value,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const resolvedPadding = padding ?? (size === "sm" ? 2.5 : size === "lg" ? 4 : 3);
+const sizeMultiplier = size === "sm" ? 4 : size === "lg" ? 6 : 5;
+const ariaLabel = rest["aria-label"] ?? label ?? "switch";
+const switchStyle = {
+  "--padding": `${resolvedPadding}px`,
+  "--height": `calc((var(--spacing) * ${sizeMultiplier}) + (var(--padding) * 2))`,
+  "--width": `calc((var(--spacing) * ${sizeMultiplier} * 2) + (var(--padding) * 3))`,
+  "--border-offset": "1px",
+};
+const thumbStyle = {
+  "--translation": `calc((var(--spacing) * ${sizeMultiplier}) + (var(--padding) * 2) - var(--border-offset))`,
+};
+---
+
+<div class={switchWrapper()} data-sw-switch-wrapper data-slot="switch-wrapper">
+  <SwitchPrimitive.Root
+    class={switchButton({ variant, class: className })}
+    checked={checked}
+    defaultChecked={defaultChecked}
+    disabled={disabled}
+    form={form}
+    id={id}
+    name={name}
+    nativeButton
+    readOnly={readOnly}
+    required={required}
+    uncheckedValue={uncheckedValue}
+    value={value}
+    style={switchStyle}
+    {...rest}
+    aria-label={ariaLabel}
+    data-slot="switch-button"
+  >
+    <SwitchPrimitive.Thumb
+      class={switchToggle({ size })}
+      style={thumbStyle}
+      data-slot="switch-toggle"
+    />
+  </SwitchPrimitive.Root>
+
+  {
+    label && (
+      <label for={id} class={switchLabel({ size })} data-slot="switch-label">
+        {label}
+      </label>
+    )
+  }
+</div>

@@ -1,0 +1,24 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { sidebarMenuSubButton } from "./variants";
+
+type Props = HTMLAttributes<"a"> &
+  VariantProps<typeof sidebarMenuSubButton> & {
+    isActive?: boolean;
+  };
+
+const { size = "md", isActive = false, class: className, ...rest } = Astro.props;
+---
+
+<a
+  class={sidebarMenuSubButton({ size, class: className })}
+  data-sidebar="menu-sub-button"
+  data-size={size}
+  data-active={isActive}
+  {...rest}
+  data-slot="sidebar-menu-sub-button"
+>
+  <slot />
+</a>

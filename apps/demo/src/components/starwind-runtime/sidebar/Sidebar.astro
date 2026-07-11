@@ -1,0 +1,88 @@
+---
+import SidebarPrimitive from "@starwind-ui/astro/sidebar";
+import type { HTMLAttributes } from "astro/types";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "../sheet";
+import {
+  sidebar,
+  sidebarContainer,
+  sidebarGap,
+  sidebarInner,
+  sidebarMobileContent,
+} from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  side?: "left" | "right";
+  variant?: "sidebar" | "floating" | "inset";
+  collapsible?: "offcanvas" | "icon" | "none";
+};
+
+const {
+  side = "left",
+  variant = "sidebar",
+  collapsible = "offcanvas",
+  class: className,
+  ...rest
+} = Astro.props;
+
+const mobileStyle = { "--sidebar-width": "18rem" };
+---
+
+{
+  collapsible === "none" ? (
+    <div
+      class={[
+        "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      {...rest}
+      data-slot="sidebar"
+    >
+      <slot />
+    </div>
+  ) : (
+    <>
+      <SidebarPrimitive.Sidebar
+        class={sidebar({ class: className })}
+        data-state="expanded"
+        data-collapsible=""
+        data-collapsible-mode={collapsible}
+        collapsible={collapsible}
+        data-variant={variant}
+        variant={variant}
+        data-side={side}
+        side={side}
+        data-slot="sidebar"
+      >
+        <div data-slot="sidebar-gap" class={sidebarGap({ variant })} />
+
+        <div class={sidebarContainer({ side, variant })} {...rest} data-slot="sidebar-container">
+          <div data-sidebar="sidebar" data-slot="sidebar-inner" class={sidebarInner({ variant })}>
+            <slot />
+          </div>
+        </div>
+      </SidebarPrimitive.Sidebar>
+
+      <Sheet class="md:hidden" data-sidebar="mobile" data-slot="sidebar-mobile">
+        <SheetContent
+          side={side}
+          class={sidebarMobileContent()}
+          style={mobileStyle}
+          data-sidebar="sidebar"
+          data-slot="sidebar-mobile-content"
+        >
+          <SheetHeader class="sr-only">
+            <SheetTitle>Sidebar</SheetTitle>
+
+            <SheetDescription>Mobile navigation sidebar</SheetDescription>
+          </SheetHeader>
+
+          <div class="flex h-full w-full flex-col">
+            <slot />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}

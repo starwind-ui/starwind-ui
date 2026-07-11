@@ -1,0 +1,175 @@
+---
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/starwind-runtime/carousel";
+
+const slides = Array.from({ length: 5 }, (_, index) => index + 1);
+const manySlides = Array.from({ length: 8 }, (_, index) => index + 1);
+---
+
+<section id="runtime-carousel-demo" class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Carousel</h2>
+  <div class="grid gap-8">
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Default</h3>
+      <div class="px-12">
+        <Carousel
+          id="runtime-carousel-default"
+          aria-label="Default carousel"
+          class="mx-auto w-full max-w-xs"
+        >
+          <CarouselContent>
+            {
+              slides.map((slide) => (
+                <CarouselItem>
+                  <div class="bg-muted/50 flex aspect-square items-center justify-center rounded-md border text-3xl font-semibold">
+                    {slide}
+                  </div>
+                </CarouselItem>
+              ))
+            }
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Multiple items</h3>
+      <div class="px-12">
+        <Carousel
+          id="runtime-carousel-multiple"
+          aria-label="Multiple item carousel"
+          opts={{ align: "start" }}
+          class="mx-auto w-full max-w-xl"
+        >
+          <CarouselContent>
+            {
+              manySlides.map((slide) => (
+                <CarouselItem class="sm:basis-1/2">
+                  <div class="bg-muted/50 flex aspect-square items-center justify-center rounded-md border text-2xl font-semibold">
+                    {slide}
+                  </div>
+                </CarouselItem>
+              ))
+            }
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Vertical</h3>
+      <div class="px-12 py-12">
+        <Carousel
+          id="runtime-carousel-vertical"
+          aria-label="Vertical carousel"
+          orientation="vertical"
+          opts={{ align: "start" }}
+          class="mx-auto w-full max-w-xs"
+        >
+          <CarouselContent class="h-56">
+            {
+              slides.map((slide) => (
+                <CarouselItem class="basis-1/2">
+                  <div class="bg-muted/50 flex h-full items-center justify-center rounded-md border text-3xl font-semibold">
+                    {slide}
+                  </div>
+                </CarouselItem>
+              ))
+            }
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
+      </div>
+    </div>
+
+    <div class="grid gap-8 md:grid-cols-2">
+      <div class="space-y-3">
+        <h3 class="font-heading text-base font-semibold">Looping</h3>
+        <div class="px-12">
+          <Carousel
+            id="runtime-carousel-loop"
+            aria-label="Looping carousel"
+            opts={{ align: "start", loop: true }}
+            class="mx-auto w-full max-w-xs"
+          >
+            <CarouselContent>
+              {
+                slides.map((slide) => (
+                  <CarouselItem>
+                    <div class="bg-muted/50 flex aspect-square items-center justify-center rounded-md border text-3xl font-semibold">
+                      {slide}
+                    </div>
+                  </CarouselItem>
+                ))
+              }
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="font-heading text-base font-semibold">Autoplay plugin</h3>
+        <div class="px-12">
+          <Carousel
+            id="runtime-carousel-plugin"
+            aria-label="Plugin carousel"
+            autoInit={false}
+            opts={{ align: "start", loop: true }}
+            class="mx-auto w-full max-w-xs"
+          >
+            <CarouselContent>
+              {
+                slides.map((slide) => (
+                  <CarouselItem>
+                    <div class="bg-muted/50 flex aspect-square items-center justify-center rounded-md border text-3xl font-semibold">
+                      {slide}
+                    </div>
+                  </CarouselItem>
+                ))
+              }
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import Autoplay from "embla-carousel-autoplay";
+  import { createCarousel } from "@starwind-ui/astro/carousel";
+
+  const setupCarouselAutoplayDemo = () => {
+    const root = document.getElementById("runtime-carousel-plugin");
+    if (!(root instanceof HTMLElement)) return;
+
+    const carousel = createCarousel(root, {
+      opts: { align: "start", loop: true },
+      plugins: [Autoplay({ delay: 1400, stopOnInteraction: false, stopOnMouseEnter: true })],
+    });
+
+    if (carousel.api.plugins().autoplay) {
+      root.setAttribute("data-plugin-ready", "true");
+    } else {
+      root.removeAttribute("data-plugin-ready");
+    }
+  };
+
+  setupCarouselAutoplayDemo();
+  document.addEventListener("astro:after-swap", setupCarouselAutoplayDemo);
+  document.addEventListener("starwind:init", setupCarouselAutoplayDemo);
+</script>

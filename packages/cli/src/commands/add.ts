@@ -1,31 +1,64 @@
 import * as p from "@clack/prompts";
-import { execa } from "execa";
 
-import type { InstallResult } from "@/utils/component.js";
-import { getConfig, updateConfig } from "@/utils/config.js";
+import { getConfigState, type StarwindConfig, type StarwindFramework } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
-import { installComponent } from "@/utils/install.js";
-import { getShadcnCommand } from "@/utils/package-manager.js";
+import { detectPackageManager } from "@/utils/package-manager.js";
+import { installProRegistryItems, type ProRegistryInstallSummary } from "@/utils/pro-registry.js";
 import { selectComponents } from "@/utils/prompts.js";
-import { getAllComponents } from "@/utils/registry.js";
-import { hasStarwindProRegistry, setupShadcnProConfig } from "@/utils/shadcn-config.js";
+import {
+  getConfiguredRegistrySource,
+  loadRegistry,
+  parseRegistrySource,
+  type Component,
+  type RegistrySource,
+  type StarwindRegistry,
+} from "@/utils/registry.js";
+import { installRuntimeComponents } from "@/utils/runtime-component.js";
+import { importStarwindProRegistryFromComponentsJson } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
 import { isValidComponent } from "@/utils/validate.js";
 
 import { init } from "./init.js";
+import { migrate } from "./migrate.js";
 
 interface AddOptions {
   all?: boolean;
   yes?: boolean;
   overwrite?: boolean;
   packageManager?: "npm" | "pnpm" | "yarn";
+  registry?: string;
+  framework?: StarwindFramework;
 }
+
+type AddResult = {
+  name: string;
+  status: "installed" | "skipped" | "failed";
+  version?: string;
+  error?: string;
+};
+
+type RuntimeRegistrySelection =
+  | {
+      availableComponents: Component[];
+      mode: "single";
+      registry: StarwindRegistry;
+      source?: RegistrySource;
+    }
+  | {
+      availableComponents: Component[];
+      customRegistry: StarwindRegistry;
+      customSource: RegistrySource;
+      defaultRegistry: StarwindRegistry;
+      defaultSource?: RegistrySource;
+      mode: "overlay";
+    };
 
 export async function add(components?: string[], options?: AddOptions) {
   try {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
+    const packageManager = options?.packageManager ?? detectPackageManager().name;
 
     // Check if starwind.config.json exists
     const configExists = await fileExists(PATHS.LOCAL_CONFIG_FILE);
@@ -44,7 +77,7 @@ export async function add(components?: string[], options?: AddOptions) {
       }
 
       if (shouldInit) {
-        await init(true, { defaults: options?.yes, packageManager: options?.packageManager });
+        await init(true, { defaults: options?.yes, packageManager });
       } else {
         p.log.error(
           `Please initialize starwind with ${highlighter.info("starwind init")} before adding components`,
@@ -53,18 +86,120 @@ export async function add(components?: string[], options?: AddOptions) {
       }
     }
 
+    let detectedConfigState = await getConfigState();
+    let configState = detectedConfigState.status === "missing" ? undefined : detectedConfigState;
+
+    if (!configState) {
+      p.log.error(
+        "No Runtime Starwind configuration found. Run `starwind init` before adding components.",
+      );
+      process.exit(1);
+    }
+
+    if (configState?.status === "legacy") {
+      const shouldMigrate = options?.yes
+        ? true
+        : await p.confirm({
+            message:
+              "This project already has a legacy Starwind config. Would you like to run `starwind migrate` now?",
+            initialValue: true,
+          });
+
+      if (p.isCancel(shouldMigrate)) {
+        p.cancel("Operation cancelled");
+        process.exit(0);
+      }
+
+      if (!shouldMigrate) {
+        p.log.warn(
+          "This project uses the legacy Starwind component setup. Run `starwind migrate` before adding Runtime components.",
+        );
+        return;
+      }
+
+      await migrate({
+        packageManager,
+        withinInit: true,
+        yes: options?.yes,
+      });
+
+      detectedConfigState = await getConfigState();
+      configState = detectedConfigState.status === "missing" ? undefined : detectedConfigState;
+
+      if (!configState || configState.status !== "current") {
+        p.log.warn(
+          "Starwind migration did not produce a Runtime config. Run `starwind migrate` before adding Runtime components.",
+        );
+        return;
+      }
+    }
+
+    const runtimeConfig: StarwindConfig | undefined =
+      configState.status === "current" ? configState.config : undefined;
+    const explicitRuntimeRegistrySource = parseRegistrySource(options?.registry);
+    const configuredRuntimeRegistrySource = runtimeConfig
+      ? getConfiguredRegistrySource(runtimeConfig)
+      : undefined;
+    const runtimeRegistrySource: RegistrySource | undefined =
+      explicitRuntimeRegistrySource ?? configuredRuntimeRegistrySource;
+    let runtimeRegistrySelection: RuntimeRegistrySelection | undefined;
+
+    const getRuntimeRegistrySelection = async (): Promise<RuntimeRegistrySelection> => {
+      if (runtimeRegistrySelection) return runtimeRegistrySelection;
+
+      if (explicitRuntimeRegistrySource) {
+        const [customRegistry, defaultRegistry] = await Promise.all([
+          loadRegistry(explicitRuntimeRegistrySource),
+          loadRegistry(configuredRuntimeRegistrySource),
+        ]);
+
+        runtimeRegistrySelection = {
+          availableComponents: mergeOverlayComponents(
+            customRegistry.components,
+            defaultRegistry.components,
+            options?.framework ?? runtimeConfig?.framework,
+          ),
+          customRegistry,
+          customSource: explicitRuntimeRegistrySource,
+          defaultRegistry,
+          defaultSource: configuredRuntimeRegistrySource,
+          mode: "overlay",
+        };
+        return runtimeRegistrySelection;
+      }
+
+      const registry = await loadRegistry(runtimeRegistrySource);
+      runtimeRegistrySelection = {
+        availableComponents: registry.components,
+        mode: "single",
+        registry,
+        source: runtimeRegistrySource,
+      };
+      return runtimeRegistrySelection;
+    };
+
     let componentsToInstall: string[] = [];
     const registryComponents: string[] = [];
-    let registryResults: { success: string[]; failed: string[] } | null = null;
+    let registryResults: ProRegistryInstallSummary | null = null;
 
     // ================================================================
     //                  Get components to install
     // ================================================================
     if (options?.all) {
       // Get all available components
-      const availableComponents = await getAllComponents();
-      componentsToInstall = availableComponents.map((c) => c.name);
-      p.log.info(`Adding all ${componentsToInstall.length} available components...`);
+      const availableComponents = (await getRuntimeRegistrySelection()).availableComponents;
+      const installableComponents = filterUninstalledComponents(
+        availableComponents,
+        runtimeConfig,
+        options?.framework,
+      );
+      if (installableComponents.length === 0) {
+        p.log.warn("All available components are already installed.");
+        p.cancel("No components selected");
+        return process.exit(0);
+      }
+      componentsToInstall = installableComponents.map((c) => c.name);
+      p.log.info(`Adding all ${componentsToInstall.length} uninstalled components...`);
     } else if (components && components.length > 0) {
       // Separate registry components from regular components
       const regularComponents: string[] = [];
@@ -79,84 +214,43 @@ export async function add(components?: string[], options?: AddOptions) {
 
       // Handle registry components (e.g., @starwind-pro/login1)
       if (registryComponents.length > 0) {
-        // Check if Starwind Pro registry is configured
-        const hasProRegistry = await hasStarwindProRegistry();
+        let proInstallConfig = runtimeConfig;
 
-        if (!hasProRegistry) {
-          const shouldSetupPro = options?.yes
-            ? true
-            : await p.confirm({
-                message: `Starwind Pro registry not configured. Would you like to set it up now to install ${registryComponents.join(", ")}?`,
-                initialValue: true,
-              });
+        if (runtimeConfig) {
+          const proRegistryImport = await importStarwindProRegistryFromComponentsJson(
+            runtimeConfig,
+            {
+              warn: (message) => p.log.warn(message),
+            },
+          );
 
-          if (p.isCancel(shouldSetupPro)) {
-            p.cancel("Operation cancelled");
-            process.exit(0);
-          }
-
-          if (shouldSetupPro) {
-            p.log.info(highlighter.info("Setting up Starwind Pro configuration..."));
-
-            // Get CSS file and base color from existing config or use defaults
-            let cssFile: string = PATHS.LOCAL_CSS_FILE;
-            let baseColor: string = "neutral";
-
-            try {
-              const config = await getConfig();
-              cssFile = config.tailwind?.css || PATHS.LOCAL_CSS_FILE;
-              baseColor = config.tailwind?.baseColor || "neutral";
-            } catch {
-              // Use defaults if config can't be read
-            }
-
-            await setupShadcnProConfig(cssFile, baseColor);
-            p.log.success("Starwind Pro registry configured successfully!");
-          } else {
-            p.log.error("Cannot install registry components without Starwind Pro configuration");
-            p.cancel("Operation cancelled");
-            process.exit(1);
+          if (proRegistryImport.pro) {
+            proInstallConfig = {
+              ...runtimeConfig,
+              pro: proRegistryImport.pro,
+            };
           }
         }
 
-        p.log.info(`Installing registry components: ${registryComponents.join(", ")}`);
-
-        const [command, baseArgs] = await getShadcnCommand();
-        registryResults = {
-          success: [] as string[],
-          failed: [] as string[],
-        };
-
-        for (const registryComponent of registryComponents) {
-          try {
-            p.log.info(`Installing ${highlighter.info(registryComponent)}`);
-
-            await execa(
-              command,
-              [
-                ...baseArgs,
-                "add",
-                "--yes",
-                ...(options?.overwrite ? ["--overwrite"] : []),
-                registryComponent,
-              ],
-              {
-                stdio: "inherit",
-                cwd: process.cwd(),
-              },
-            );
-
-            registryResults.success.push(registryComponent);
-          } catch (error) {
-            registryResults.failed.push(registryComponent);
-          }
+        if (!proInstallConfig) {
+          p.log.error(
+            "No Runtime Starwind configuration found. Run `starwind init` before adding Pro registry components.",
+          );
+          process.exit(1);
         }
+
+        p.log.info(`Installing Pro registry components: ${registryComponents.join(", ")}`);
+        registryResults = await installProRegistryItems(registryComponents, {
+          config: proInstallConfig,
+          overwrite: options?.overwrite,
+          packageManager,
+        });
       }
 
       // Handle regular Starwind components
       if (regularComponents.length > 0) {
         // Get all available components once to avoid multiple registry calls
-        const availableComponents = await getAllComponents();
+        const availableComponents = (await getRuntimeRegistrySelection()).availableComponents;
 
         // Filter valid components and collect invalid ones
         const { valid, invalid } = await regularComponents.reduce<
@@ -195,8 +289,21 @@ export async function add(components?: string[], options?: AddOptions) {
       }
     } else {
       // If no components provided, show the interactive prompt
-      const selected = await selectComponents();
-      if (!selected) {
+      const availableComponents = (await getRuntimeRegistrySelection()).availableComponents;
+      const installableComponents = filterUninstalledComponents(
+        availableComponents,
+        runtimeConfig,
+        options?.framework,
+      );
+
+      if (installableComponents.length === 0) {
+        p.log.warn("All available components are already installed.");
+        p.cancel("No components selected");
+        return process.exit(0);
+      }
+
+      const selected = await selectComponents(installableComponents);
+      if (!selected || selected.length === 0) {
         p.cancel("No components selected");
         return process.exit(0);
       }
@@ -210,9 +317,9 @@ export async function add(components?: string[], options?: AddOptions) {
     }
 
     const results = {
-      installed: [] as InstallResult[],
-      skipped: [] as InstallResult[],
-      failed: [] as InstallResult[],
+      installed: [] as AddResult[],
+      skipped: [] as AddResult[],
+      failed: [] as AddResult[],
     };
 
     // Track components installed during this session to avoid duplicates
@@ -223,7 +330,7 @@ export async function add(components?: string[], options?: AddOptions) {
      * If a component was already installed this session, it won't be added again.
      * If a component shows as "skipped" but was installed this session, ignore it.
      */
-    const addResult = (result: InstallResult) => {
+    const addResult = (result: AddResult) => {
       const name = result.name;
 
       if (result.status === "installed") {
@@ -245,47 +352,45 @@ export async function add(components?: string[], options?: AddOptions) {
     // ================================================================
     //                      Install components
     // ================================================================
-    const installedComponents = [];
-    for (const comp of componentsToInstall) {
-      // Skip if already installed this session (as a dependency of a previous component)
-      if (installedThisSession.has(comp)) {
-        continue;
-      }
-
-      const result = await installComponent(comp, {
-        skipPrompts: options?.yes,
-        overwrite: options?.overwrite,
-        packageManager: options?.packageManager,
-      });
-
-      // Process dependency results first (they were installed before the main component)
-      if (result.dependencyResults) {
-        for (const depResult of result.dependencyResults) {
-          addResult(depResult);
-        }
-      }
-
-      // Process main component result
-      addResult(result);
-
-      if (result.status === "installed") {
-        installedComponents.push({ name: result.name, version: result.version! });
-      }
+    if (!runtimeConfig) {
+      p.log.error(
+        "No Runtime Starwind configuration found. Run `starwind init` before adding components.",
+      );
+      process.exit(1);
     }
 
-    // ================================================================
-    //                     Update Config File
-    // ================================================================
-    // Note: updateConfig with appendComponents: true will deduplicate by component name,
-    // so even if a component was already added by installStarwindDependencies, it won't duplicate
-    if (installedComponents.length > 0) {
-      try {
-        await updateConfig({ components: installedComponents }, { appendComponents: true });
-      } catch (error) {
-        p.log.error(
-          `Failed to update config: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-        process.exit(1);
+    if (componentsToInstall.length > 0) {
+      const registrySelection = await getRuntimeRegistrySelection();
+      const runtimeResults = await installRuntimeComponents(componentsToInstall, {
+        config: runtimeConfig,
+        framework: options?.framework,
+        skipPrompts: options?.yes,
+        overwrite: options?.overwrite,
+        packageManager,
+        registry:
+          registrySelection.mode === "overlay"
+            ? registrySelection.customRegistry
+            : registrySelection.registry,
+        registryMode: registrySelection.mode === "overlay" ? "custom" : "default",
+        registryOverlay:
+          registrySelection.mode === "overlay"
+            ? {
+                fallbackRegistry: registrySelection.defaultRegistry,
+                fallbackRegistrySource: registrySelection.defaultSource,
+              }
+            : undefined,
+        registrySource:
+          registrySelection.mode === "overlay"
+            ? registrySelection.customSource
+            : registrySelection.source,
+      });
+
+      for (const result of [
+        ...runtimeResults.installed,
+        ...runtimeResults.skipped,
+        ...runtimeResults.failed,
+      ]) {
+        addResult(result);
       }
     }
 
@@ -304,8 +409,12 @@ export async function add(components?: string[], options?: AddOptions) {
 
     if (results.skipped.length > 0) {
       p.log.warn(
-        `${highlighter.warn("Skipped components (already installed):")}\n${results.skipped
-          .map((r) => `  ${r.name} v${r.version}`)
+        `${highlighter.warn("Skipped components:")}\n${results.skipped
+          .map((r) =>
+            r.error
+              ? `  ${r.name} - ${r.error}`
+              : `  ${r.name}${r.version ? ` v${r.version}` : ""} (already installed)`,
+          )
           .join("\n")}`,
       );
     }
@@ -321,17 +430,26 @@ ${results.installed.map((r) => `  ${r.name} v${r.version}`).join("\n")}`,
     if (registryResults) {
       if (registryResults.failed.length > 0) {
         p.log.error(
-          `${highlighter.error("Failed to install registry components:")}
-${registryResults.failed
-  .map((name) => `  ${name} - see the error message above for further details`)
-  .join("\n")}`,
+          `${highlighter.error("Failed to install Pro registry components:")}
+${registryResults.failed.map((result) => `  ${result.name} - ${result.error ?? "Unknown error"}`).join("\n")}`,
+        );
+
+        if (hasProAuthorizationFailure(registryResults)) {
+          p.note(getProAuthorizationNote(), "Starwind Pro authorization");
+        }
+      }
+
+      if (registryResults.skipped.length > 0) {
+        p.log.warn(
+          `${highlighter.warn("Skipped Pro registry components:")}
+${registryResults.skipped.map((result) => `  ${result.name}`).join("\n")}`,
         );
       }
 
-      if (registryResults.success.length > 0) {
+      if (registryResults.installed.length > 0) {
         p.log.success(
-          `${highlighter.success("Successfully installed registry components:")}
-${registryResults.success.map((name) => `  ${name}`).join("\n")}`,
+          `${highlighter.success("Successfully installed Pro registry components:")}
+${registryResults.installed.map((result) => `  ${result.name}`).join("\n")}`,
         );
       }
     }
@@ -344,4 +462,61 @@ ${registryResults.success.map((name) => `  ${name}`).join("\n")}`,
     p.cancel("Operation cancelled");
     process.exit(1);
   }
+}
+
+function filterUninstalledComponents(
+  availableComponents: Component[],
+  config: StarwindConfig | undefined,
+  framework?: StarwindFramework,
+): Component[] {
+  const targetFramework = framework ?? config?.framework;
+  const installedNames = new Set(
+    (config?.components ?? [])
+      .filter((component) => component.source !== "legacy")
+      .filter((component) => (component.framework ?? config?.framework) === targetFramework)
+      .map((component) => component.name),
+  );
+  return availableComponents
+    .filter(
+      (component) => !targetFramework || !component.targets || component.targets[targetFramework],
+    )
+    .filter((component) => !installedNames.has(component.name));
+}
+
+function mergeOverlayComponents(
+  customComponents: Component[],
+  defaultComponents: Component[],
+  framework?: StarwindFramework,
+): Component[] {
+  const mergedComponents: Component[] = [];
+  const seenNames = new Set<string>();
+
+  const componentNames = new Set([
+    ...customComponents.map((component) => component.name),
+    ...defaultComponents.map((component) => component.name),
+  ]);
+
+  for (const name of componentNames) {
+    const customComponent = customComponents.find((component) => component.name === name);
+    const defaultComponent = defaultComponents.find((component) => component.name === name);
+    const selectedComponent =
+      framework && customComponent && !customComponent.targets?.[framework]
+        ? (defaultComponent ?? customComponent)
+        : (customComponent ?? defaultComponent);
+
+    if (!selectedComponent || seenNames.has(selectedComponent.name)) continue;
+
+    seenNames.add(selectedComponent.name);
+    mergedComponents.push(selectedComponent);
+  }
+
+  return mergedComponents;
+}
+
+function hasProAuthorizationFailure(registryResults: ProRegistryInstallSummary): boolean {
+  return registryResults.failed.some((result) => result.authFailure);
+}
+
+function getProAuthorizationNote(): string {
+  return `Obtain a Starwind Pro license at ${highlighter.info("https://pro.starwind.dev")}\n\nThen add your license key to ${highlighter.infoBright(".env.local")} as ${highlighter.infoBright("STARWIND_LICENSE_KEY")}`;
 }

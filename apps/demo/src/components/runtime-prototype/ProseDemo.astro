@@ -1,0 +1,29 @@
+---
+import { Prose } from "@/components/starwind-runtime/prose";
+---
+
+<section class="mb-12" id="runtime-prose-demo">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Prose</h2>
+
+  <Prose class="runtime-prose-custom max-w-[32.5rem]">
+    <h3 id="runtime-prose-heading">Portable typography</h3>
+    <p id="runtime-prose-paragraph">
+      Prose styles markdown-like content with Starwind spacing, heading, link, list, and code
+      treatment while keeping the wrapper easy to customize.
+    </p>
+    <ul id="runtime-prose-list">
+      <li>Scoped list markers</li>
+      <li>
+        Inline <code id="runtime-prose-code">code</code> receives the prose treatment.
+      </li>
+    </ul>
+    <div class="not-sw-prose">
+      <h3 id="runtime-prose-escaped-heading">Escaped heading</h3>
+      <p>
+        Escaped content keeps native inline
+        <code id="runtime-prose-escaped-code">code</code>
+        styling.
+      </p>
+    </div>
+  </Prose>
+</section>

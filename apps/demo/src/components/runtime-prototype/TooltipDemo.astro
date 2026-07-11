@@ -1,0 +1,172 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind-runtime/tooltip";
+
+const sideExamples = [
+  { side: "top", label: "Top" },
+  { side: "right", label: "Right" },
+  { side: "bottom", label: "Bottom" },
+  { side: "left", label: "Left" },
+] as const;
+
+const alignExamples = [
+  { align: "start", label: "Start" },
+  { align: "center", label: "Center" },
+  { align: "end", label: "End" },
+] as const;
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Tooltip</h2>
+  <div class="space-y-6">
+    <div class="flex min-h-28 flex-wrap items-center justify-center gap-4 sm:px-20">
+      {
+        sideExamples.map(({ side, label }) => (
+          <Tooltip id={`runtime-tooltip-side-${side}`} openDelay={0} closeDelay={0}>
+            <TooltipTrigger>
+              <Button id={`runtime-tooltip-side-${side}-trigger`} variant="outline" size="sm">
+                {label} side
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent
+              id={`runtime-tooltip-side-${side}-content`}
+              side={side}
+              avoidCollisions={false}
+              class="duration-0"
+            >
+              {label} tooltip
+            </TooltipContent>
+          </Tooltip>
+        ))
+      }
+    </div>
+
+    <div class="flex min-h-28 flex-wrap items-center justify-center gap-4 sm:px-20">
+      {
+        alignExamples.map(({ align, label }) => (
+          <Tooltip id={`runtime-tooltip-align-${align}`} openDelay={0} closeDelay={0}>
+            <TooltipTrigger>
+              <Button id={`runtime-tooltip-align-${align}-trigger`} variant="secondary" size="sm">
+                {label} align
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent
+              id={`runtime-tooltip-align-${align}-content`}
+              side="bottom"
+              align={align}
+              avoidCollisions={false}
+              class="duration-0"
+            >
+              {label} aligned tooltip
+            </TooltipContent>
+          </Tooltip>
+        ))
+      }
+    </div>
+
+    <div class="flex min-h-28 flex-wrap items-center justify-center gap-4 sm:px-20">
+      <Tooltip id="runtime-tooltip-offset" openDelay={0} closeDelay={0}>
+        <TooltipTrigger>
+          <Button id="runtime-tooltip-offset-trigger" variant="ghost" size="sm">
+            Offset placement
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent
+          id="runtime-tooltip-offset-content"
+          side="right"
+          align="center"
+          sideOffset={16}
+          avoidCollisions={false}
+          class="duration-0"
+        >
+          16px offset
+        </TooltipContent>
+      </Tooltip>
+    </div>
+
+    <div class="flex min-h-28 flex-wrap items-center justify-center gap-4 sm:px-20">
+      <Tooltip id="runtime-tooltip-default-open" defaultOpen>
+        <TooltipTrigger asChild>
+          <Button id="runtime-tooltip-default-open-trigger" variant="outline" size="sm">
+            Default open
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent id="runtime-tooltip-default-open-content" side="top" align="center">
+          Ready on load
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip id="runtime-tooltip-animated" openDelay={250} closeDelay={300}>
+        <TooltipTrigger asChild>
+          <Button id="runtime-tooltip-animated-trigger" variant="secondary" size="sm">
+            Animated timing
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent
+          id="runtime-tooltip-animated-content"
+          side="bottom"
+          align="center"
+          sideOffset={10}
+          class="duration-[180ms]"
+        >
+          Opens and closes with motion
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip
+        id="runtime-tooltip-dismissal"
+        closeOnEscape={false}
+        closeOnOutsideInteract={false}
+        openDelay={150}
+        closeDelay={150}
+      >
+        <TooltipTrigger asChild>
+          <Button id="runtime-tooltip-dismissal-trigger" variant="outline" size="sm">
+            Dismissal props
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent id="runtime-tooltip-dismissal-content" side="left" align="center">
+          Escape and outside close are disabled
+        </TooltipContent>
+      </Tooltip>
+    </div>
+
+    <div class="flex min-h-28 flex-wrap items-center justify-center gap-4 sm:px-20">
+      <Tooltip id="runtime-tooltip-root-delay" openDelay={400} closeDelay={250}>
+        <TooltipTrigger asChild>
+          <Button id="runtime-tooltip-root-delay-trigger" variant="ghost" size="sm">
+            Root timing
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent id="runtime-tooltip-root-delay-content" side="right" align="center">
+          Root-level delays
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip
+        id="runtime-tooltip-no-hoverable"
+        disableHoverableContent
+        openDelay={200}
+        closeDelay={300}
+      >
+        <TooltipTrigger asChild>
+          <Button id="runtime-tooltip-no-hoverable-trigger" variant="secondary" size="sm">
+            No hoverable content
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent id="runtime-tooltip-no-hoverable-content" side="bottom" align="end">
+          Content hover does not keep it open
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip id="runtime-tooltip-disabled" disabled openDelay={0} closeDelay={0}>
+        <TooltipTrigger asChild disabled>
+          <Button id="runtime-tooltip-disabled-trigger" variant="outline" size="sm" disabled>
+            Disabled
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent id="runtime-tooltip-disabled-content"> Disabled tooltip </TooltipContent>
+      </Tooltip>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,22 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import type { HTMLAttributes } from "astro/types";
+import { contextMenuRadioGroup } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  value?: string;
+  defaultValue?: string;
+};
+
+const { class: className, value, defaultValue, ...rest } = Astro.props;
+---
+
+<ContextMenuPrimitive.RadioGroup
+  class={contextMenuRadioGroup({ class: className })}
+  value={value}
+  defaultValue={defaultValue}
+  {...rest}
+  data-slot="context-menu-radio-group"
+>
+  <slot />
+</ContextMenuPrimitive.RadioGroup>

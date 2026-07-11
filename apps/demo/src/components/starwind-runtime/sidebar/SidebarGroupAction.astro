@@ -1,0 +1,21 @@
+---
+import type { ComponentProps } from "astro/types";
+
+import { Button } from "../button";
+import { sidebarGroupAction } from "./variants";
+
+type Props = ComponentProps<typeof Button>;
+
+const { variant = "ghost", size = "icon-sm", class: className, ...rest } = Astro.props;
+---
+
+<Button
+  variant={variant}
+  size={size}
+  class={sidebarGroupAction({ class: className })}
+  data-sidebar="group-action"
+  {...rest}
+  data-slot="sidebar-group-action"
+>
+  <slot />
+</Button>

@@ -1,0 +1,33 @@
+---
+import InputPrimitive from "@starwind-ui/astro/input";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { input } from "./variants";
+
+interface Props
+  extends
+    Omit<HTMLAttributes<"input">, "children" | "defaultValue" | "size" | "value">,
+    VariantProps<typeof input> {
+  defaultValue?: string | number | string[];
+  value?: string | number | string[];
+}
+
+const {
+  size,
+  defaultValue,
+  disabled = false,
+  value,
+  "data-slot": dataSlot = "input",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<InputPrimitive.Root
+  class={input({ size, class: className })}
+  defaultValue={defaultValue}
+  disabled={disabled}
+  value={value}
+  data-slot={dataSlot}
+  {...rest}
+/>

@@ -1,0 +1,41 @@
+---
+import ComboboxPrimitive from "@starwind-ui/astro/combobox";
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
+import type { HTMLAttributes } from "astro/types";
+import { comboboxTrigger } from "./variants";
+
+type Props = HTMLAttributes<"button"> & {
+  asChild?: boolean;
+  iconClass?: string;
+  showIcon?: boolean;
+};
+
+const {
+  asChild = false,
+  class: className,
+  iconClass: iconClassName,
+  showIcon = true,
+  ...rest
+} = Astro.props;
+---
+
+<ComboboxPrimitive.Trigger
+  class={comboboxTrigger({ class: className })}
+  asChild={asChild}
+  {...rest}
+  data-slot="combobox-trigger"
+>
+  <slot />
+
+  {
+    !asChild && showIcon && (
+      <slot name="icon">
+        <ChevronDown
+          class={["text-muted-foreground pointer-events-none size-4", iconClassName]
+            .filter(Boolean)
+            .join(" ")}
+        />
+      </slot>
+    )
+  }
+</ComboboxPrimitive.Trigger>

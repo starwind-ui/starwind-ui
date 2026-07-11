@@ -1,0 +1,22 @@
+---
+import AccordionPrimitive from "@starwind-ui/astro/accordion";
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
+import type { HTMLAttributes } from "astro/types";
+import { accordionTrigger } from "./variants";
+
+type Props = HTMLAttributes<"button">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<AccordionPrimitive.Trigger
+  class={accordionTrigger({ class: className })}
+  {...rest}
+  data-slot="accordion-trigger"
+>
+  <slot />
+
+  <slot name="icon">
+    <ChevronDown class="size-5 shrink-0 transition-transform duration-200" />
+  </slot>
+</AccordionPrimitive.Trigger>

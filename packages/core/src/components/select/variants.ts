@@ -33,8 +33,8 @@ export const selectContentInner = tv({
 export const selectItem = tv({
   base: [
     "relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-8 pl-2 outline-none select-none",
-    "data-[active]:bg-accent data-[active]:text-accent-foreground",
-    "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+    "data-active:bg-accent data-active:text-accent-foreground",
+    "data-disabled:pointer-events-none data-disabled:opacity-50",
     "not-aria-selected:[&_svg]:hidden aria-selected:[&_svg]:flex",
   ],
 });
@@ -58,7 +58,7 @@ export const selectTrigger = tv({
   base: [
     "starwind-select-trigger",
     "border-input dark:bg-input/30 text-foreground ring-offset-background flex items-center justify-between gap-2 rounded-md border bg-transparent shadow-xs",
-    "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3",
+    "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3 focus-visible:transition-none",
     "disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
     "aria-invalid:border-error aria-invalid:focus:ring-error/40 aria-invalid:focus:ring-3",
   ],

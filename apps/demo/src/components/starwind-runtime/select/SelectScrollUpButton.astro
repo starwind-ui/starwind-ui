@@ -1,0 +1,17 @@
+---
+import SelectPrimitive from "@starwind-ui/astro/select";
+import type { HTMLAttributes } from "astro/types";
+import { selectScrollButton } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<SelectPrimitive.ScrollUpArrow
+  class={selectScrollButton({ class: className })}
+  {...rest}
+  data-slot="select-scroll-up-button"
+>
+  <slot />
+</SelectPrimitive.ScrollUpArrow>

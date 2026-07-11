@@ -1,0 +1,46 @@
+---
+import X from "@tabler/icons/outline/x.svg";
+import type { HTMLAttributes } from "astro/types";
+
+import "./styles.css";
+import DialogPrimitive from "@starwind-ui/astro/dialog";
+import { Button } from "../button";
+import { dialogBackdrop, dialogCloseButton, dialogContent } from "./variants";
+
+type Props = HTMLAttributes<"dialog">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<slot name="backdrop">
+  <DialogPrimitive.Backdrop
+    class={dialogBackdrop()}
+    data-state="closed"
+    hidden
+    data-slot="dialog-backdrop"
+  />
+</slot>
+
+<DialogPrimitive.Popup
+  class={dialogContent({ class: className })}
+  data-state="closed"
+  {...rest}
+  data-slot="dialog-content"
+>
+  <slot />
+
+  <Button
+    variant="ghost"
+    size="icon-sm"
+    class={dialogCloseButton()}
+    aria-label="Close dialog"
+    data-slot="dialog-close"
+    data-sw-dialog-close
+  >
+    <slot name="icon">
+      <X class="size-5 transition-opacity" />
+    </slot>
+
+    <span class="sr-only">Close</span>
+  </Button>
+</DialogPrimitive.Popup>

@@ -1,0 +1,42 @@
+---
+import TooltipPrimitive from "@starwind-ui/astro/tooltip";
+import type { HTMLAttributes } from "astro/types";
+import { tooltip } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  defaultOpen?: boolean;
+  closeDelay?: number;
+  closeOnEscape?: boolean;
+  closeOnOutsideInteract?: boolean;
+  disabled?: boolean;
+  disableHoverableContent?: boolean;
+  openDelay?: number;
+};
+
+const {
+  defaultOpen = false,
+  closeDelay = 200,
+  closeOnEscape = true,
+  closeOnOutsideInteract = true,
+  disabled = false,
+  disableHoverableContent = false,
+  openDelay = 200,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<TooltipPrimitive.Root
+  class={tooltip({ class: className })}
+  defaultOpen={defaultOpen}
+  closeDelay={closeDelay}
+  closeOnEscape={closeOnEscape}
+  closeOnOutsideInteract={closeOnOutsideInteract}
+  disabled={disabled}
+  disableHoverableContent={disableHoverableContent}
+  openDelay={openDelay}
+  {...rest}
+  data-slot="tooltip"
+>
+  <slot />
+</TooltipPrimitive.Root>

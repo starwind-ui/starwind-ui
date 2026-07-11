@@ -1,0 +1,29 @@
+---
+import SidebarPrimitive from "@starwind-ui/astro/sidebar";
+import LayoutSidebar from "@tabler/icons/outline/layout-sidebar.svg";
+import type { ComponentProps } from "astro/types";
+import { Button } from "../button";
+import { sidebarTrigger } from "./variants";
+
+type Props = ComponentProps<typeof Button>;
+
+const { size = "icon-sm", variant = "ghost", class: className, ...rest } = Astro.props;
+---
+
+<SidebarPrimitive.Trigger asChild={true}>
+  <Button
+    variant={variant}
+    size={size}
+    class={sidebarTrigger({ class: className })}
+    data-sidebar="trigger"
+    aria-label="Toggle Sidebar"
+    {...rest}
+    data-slot="sidebar-trigger"
+  >
+    <slot name="icon">
+      <LayoutSidebar aria-hidden="true" />
+    </slot>
+
+    <span class="sr-only">Toggle Sidebar</span>
+  </Button>
+</SidebarPrimitive.Trigger>

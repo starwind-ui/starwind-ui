@@ -1,0 +1,168 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import {
+  Field,
+  FieldContent,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+  FieldTitle,
+  FieldValidity,
+} from "@/components/starwind-runtime/field";
+import { Form } from "@/components/starwind-runtime/form";
+---
+
+<Form id="runtime-form-management" class="space-y-8">
+  <FieldSet id="runtime-form-account-fieldset">
+    <FieldLegend>Account details</FieldLegend>
+    <FieldGroup>
+      <Field name="runtimeAccountEmail">
+        <FieldLabel>Email</FieldLabel>
+        <FieldControl
+          id="runtime-account-email"
+          type="email"
+          required
+          placeholder="ada@example.com"
+        />
+        <FieldDescription>Used for runtime validation and form serialization.</FieldDescription>
+        <FieldError match="valueMissing">Enter an email address.</FieldError>
+        <FieldError match="typeMismatch">Use a valid email address.</FieldError>
+        <FieldValidity match="valid">Email looks good.</FieldValidity>
+      </Field>
+
+      <Field name="runtimeAccountHandle" orientation="responsive">
+        <FieldLabel>Handle</FieldLabel>
+        <FieldContent>
+          <FieldControl id="runtime-account-handle" required minlength="3" placeholder="starwind" />
+          <FieldDescription
+            >Responsive Field layout keeps label and control associated.</FieldDescription
+          >
+          <FieldError match="valueMissing">Choose a handle.</FieldError>
+          <FieldError match="tooShort">Use at least three characters.</FieldError>
+          <FieldValidity match="valid">Handle length is ready.</FieldValidity>
+        </FieldContent>
+      </Field>
+
+      <Field name="runtimeAccountInviteCode">
+        <FieldLabel>Invite code</FieldLabel>
+        <FieldControl id="runtime-account-invite-code" value="used-code" placeholder="used-code" />
+        <FieldDescription>Submitting "used-code" simulates a server response.</FieldDescription>
+        <FieldError match="customError">Invite code was already used.</FieldError>
+      </Field>
+    </FieldGroup>
+  </FieldSet>
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="space-y-1">
+      <h2 class="text-foreground text-base font-medium">Shipping group</h2>
+      <p class="text-muted-foreground text-sm">
+        Toggle this group to verify disabled inheritance into child Field controls.
+      </p>
+    </div>
+    <Button id="runtime-form-toggle-shipping" type="button" variant="outline" size="sm">
+      Disable group
+    </Button>
+  </div>
+
+  <FieldSet id="runtime-form-shipping-fieldset" data-runtime-form-shipping>
+    <FieldLegend class="sr-only">Shipping group</FieldLegend>
+    <FieldGroup variant="outline">
+      <FieldTitle>Delivery address</FieldTitle>
+      <Field name="runtimeShippingAddress">
+        <FieldLabel>Street address</FieldLabel>
+        <FieldControl id="runtime-shipping-address" placeholder="1 Infinite Loop" />
+        <FieldDescription>Fieldset disabled state should reach this input.</FieldDescription>
+      </Field>
+      <FieldSeparator>Optional</FieldSeparator>
+      <Field name="runtimeShippingInstructions">
+        <FieldLabel>Instructions</FieldLabel>
+        <FieldControl id="runtime-shipping-instructions" placeholder="Leave at desk" />
+      </Field>
+    </FieldGroup>
+  </FieldSet>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <Button type="submit">Submit form</Button>
+    <Button id="runtime-form-reset" type="reset" variant="ghost">Reset</Button>
+  </div>
+</Form>
+
+<output
+  id="runtime-form-output"
+  class="border-border bg-muted text-muted-foreground mt-8 block min-h-24 rounded-md border p-4 text-sm whitespace-pre-wrap"
+>
+  Submit the form to inspect FormData.
+</output>
+
+<script>
+  import { createForm } from "@starwind-ui/astro/form";
+
+  const form = document.querySelector<HTMLFormElement>("#runtime-form-management");
+  const output = document.querySelector<HTMLOutputElement>("#runtime-form-output");
+  const shippingFieldset = document.querySelector<HTMLFieldSetElement>(
+    "[data-runtime-form-shipping]",
+  );
+  const toggleShipping = document.querySelector<HTMLButtonElement>("#runtime-form-toggle-shipping");
+
+  const renderOutput = (text: string) => {
+    if (!output) return;
+    output.value = text;
+    output.textContent = text;
+  };
+
+  const syncToggle = () => {
+    if (!shippingFieldset || !toggleShipping) return;
+    toggleShipping.textContent = shippingFieldset.disabled ? "Enable group" : "Disable group";
+  };
+
+  toggleShipping?.addEventListener("click", () => {
+    if (!shippingFieldset) return;
+    const disabled = !shippingFieldset.disabled;
+    shippingFieldset.disabled = disabled;
+    shippingFieldset.toggleAttribute("data-disabled", disabled);
+    syncToggle();
+  });
+
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    if (!(formElement instanceof HTMLFormElement)) return;
+
+    const formInstance = createForm(formElement);
+    const data = new FormData(formElement);
+    formInstance.clearExternalErrors("runtimeAccountInviteCode");
+    if (data.get("runtimeAccountInviteCode") === "used-code") {
+      formInstance.setExternalErrors(
+        {
+          runtimeAccountInviteCode: {
+            message: "Invite code was already used.",
+            source: "server",
+          },
+        },
+        { clearOnChange: true },
+      );
+      renderOutput("Server rejected runtimeAccountInviteCode. Change the invite code to clear it.");
+      return;
+    }
+
+    const entries = Array.from(data.entries()).map(([key, value]) => `${key}: ${value}`);
+    renderOutput(entries.length > 0 ? entries.join("\n") : "No enabled fields submitted.");
+  });
+
+  form?.addEventListener("reset", (event) => {
+    const formElement = event.currentTarget;
+    if (!(formElement instanceof HTMLFormElement)) return;
+
+    window.setTimeout(() => {
+      createForm(formElement).clearExternalErrors();
+      renderOutput("Submit the form to inspect FormData.");
+    }, 0);
+  });
+
+  syncToggle();
+</script>

@@ -1,0 +1,187 @@
+import type { RuntimeAdapterContract } from "../types.js";
+
+export const switchRuntimeAdapterContract = {
+  component: "switch",
+  category: "single-boolean-control",
+  displayName: "Switch",
+  runtime: {
+    factory: "createSwitch",
+    importSource: "@starwind-ui/runtime/switch",
+    rootPart: "root",
+    optionProps: [
+      "checked",
+      "defaultChecked",
+      "disabled",
+      "form",
+      "id",
+      "name",
+      "readOnly",
+      "required",
+      "uncheckedValue",
+      "value",
+    ],
+    destroys: true,
+  },
+  parts: [
+    {
+      name: "root",
+      defaultElement: "span",
+      discoveryAttribute: "data-sw-switch",
+      forwardsRef: true,
+      ownsRuntime: true,
+      role: "switch",
+      initialAttributes: [
+        { name: "aria-checked", source: "state" },
+        { name: "aria-readonly", source: "prop" },
+        { name: "aria-required", source: "prop" },
+        { name: "data-checked", source: "state" },
+        { name: "data-default-checked", source: "prop" },
+        { name: "data-disabled", source: "prop" },
+        { name: "data-filled", source: "state" },
+        { name: "data-form", source: "prop" },
+        { name: "data-id", source: "prop" },
+        { name: "data-name", source: "prop" },
+        { name: "data-readonly", source: "prop" },
+        { name: "data-required", source: "prop" },
+        { name: "data-unchecked", source: "state" },
+        { name: "data-unchecked-value", source: "prop" },
+        { name: "data-value", source: "prop" },
+      ],
+    },
+    {
+      name: "thumb",
+      defaultElement: "span",
+      discoveryAttribute: "data-sw-switch-thumb",
+      forwardsRef: true,
+    },
+    {
+      name: "input",
+      defaultElement: "input",
+      discoveryAttribute: "data-sw-switch-input",
+      initialAttributes: [
+        { name: "type", source: "constant", value: "checkbox" },
+        { name: "aria-hidden", source: "constant", value: "true" },
+        { name: "tabIndex", source: "constant", value: "-1" },
+      ],
+    },
+    {
+      name: "uncheckedInput",
+      defaultElement: "input",
+      discoveryAttribute: "data-sw-switch-unchecked-input",
+      initialAttributes: [{ name: "type", source: "constant", value: "hidden" }],
+    },
+  ],
+  props: [
+    { name: "checked", kind: "control", type: "boolean" },
+    { defaultValue: "false", name: "defaultChecked", kind: "control", type: "boolean" },
+    { defaultValue: "false", name: "disabled", kind: "option", type: "boolean" },
+    { name: "form", kind: "option", type: "string" },
+    { name: "id", kind: "option", type: "string" },
+    { name: "name", kind: "option", type: "string" },
+    {
+      defaultValue: "false",
+      name: "nativeButton",
+      kind: "rendering",
+      targets: ["root"],
+      type: "boolean",
+    },
+    { defaultValue: "false", name: "readOnly", kind: "option", type: "boolean" },
+    { defaultValue: "false", name: "required", kind: "option", type: "boolean" },
+    { name: "uncheckedValue", kind: "option", type: "string" },
+    { name: "value", kind: "option", type: "string" },
+    { name: "onCheckedChange", kind: "callback", type: "SwitchCheckedChangeDetails" },
+  ],
+  stateModels: [
+    {
+      name: "checked",
+      controlledProp: "checked",
+      defaultProp: "defaultChecked",
+      initialAttribute: "data-default-checked",
+      runtimeGetter: "getChecked",
+      runtimeSetter: "setChecked",
+      valueType: "boolean",
+      controlledStateSync: "unsupported",
+    },
+  ],
+  events: [
+    {
+      name: "checkedChange",
+      callbackProp: "onCheckedChange",
+      detailsType: "SwitchCheckedChangeDetails",
+      domEvent: "starwind:checked-change",
+      emitsFrom: "root",
+      valueProperty: "checked",
+      valueType: "boolean",
+    },
+  ],
+  setters: [
+    { method: "setChecked", options: { emit: false }, stateModel: "checked", suppressesEmit: true },
+    { method: "setDisabled", prop: "disabled" },
+    { method: "setFormOptions", props: ["form", "name", "required", "uncheckedValue", "value"] },
+  ],
+  form: {
+    hiddenInput: { part: "input", type: "checkbox" },
+    fieldIntegration: true,
+    props: ["form", "id", "name", "required", "uncheckedValue", "value"],
+  },
+  refs: [
+    { part: "root", public: true },
+    { part: "thumb", public: true },
+    { part: "input", public: true },
+  ],
+  initialMarkup: [
+    {
+      part: "root",
+      attributes: [
+        "data-sw-switch",
+        "role",
+        "aria-checked",
+        "data-checked",
+        "data-unchecked",
+        "data-default-checked",
+        "data-disabled",
+      ],
+      reason: "The visible switch needs ARIA and state styling before the controller attaches.",
+    },
+    {
+      part: "input",
+      attributes: ["data-sw-switch-input"],
+      reason:
+        "The runtime needs the sibling input placeholder so it can attach form state after hydration.",
+    },
+  ],
+  frameworkNotes: {
+    astro: ["Render uncontrolled initial checked state; runtime owns updates after hydration."],
+    react: [
+      "Bridge controlled checked updates through setChecked and resync uncontrolled state after form resets.",
+    ],
+  },
+  escapeHatches: [
+    {
+      affectedFrameworks: ["astro", "react", "solid", "svelte", "vue"],
+      boundary:
+        "The component template still owns native button vs span rendering, React inputRef composition, sibling hidden input placement, and form-reset sync timing.",
+      contractOwnedFacts: [
+        "component id",
+        "display name",
+        "runtime factory/import",
+        "root/thumb/input parts and discovery attributes",
+        "public prop names and defaults",
+        "checked state model",
+        "checked-change event/callback/details value",
+        "checked and disabled setter names",
+        "form props and runtime-created unchecked input part",
+        "initial root/input placeholder attributes",
+      ],
+      demotionCriteria:
+        "Demote when a shared boolean form-control template can express native/non-native element branching, hidden input placement, and framework ref wiring.",
+      reason:
+        "Switch shares the boolean-control model but still has framework-specific form input and reset synchronization choreography.",
+      tests: [
+        "scripts/portable-runtime/tests/generator-structure.test.ts",
+        "scripts/portable-runtime/tests/generate-astro-wrappers.test.ts",
+        "scripts/portable-runtime/tests/generate-react-wrappers.test.ts",
+      ],
+    },
+  ],
+} as const satisfies RuntimeAdapterContract;

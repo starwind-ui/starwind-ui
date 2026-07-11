@@ -1,0 +1,115 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/starwind-runtime/hover-card";
+
+const sideExamples = [
+  { side: "top", label: "Top" },
+  { side: "right", label: "Right" },
+  { side: "bottom", label: "Bottom" },
+  { side: "left", label: "Left" },
+] as const;
+---
+
+<section class="mb-12" id="runtime-hover-card-demo">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Hover Card</h2>
+  <div class="space-y-6">
+    <div class="flex min-h-36 flex-wrap items-center justify-center gap-4 sm:px-20">
+      {
+        sideExamples.map(({ side, label }) => (
+          <HoverCard id={`runtime-hover-card-side-${side}`} openDelay={0} closeDelay={0}>
+            <HoverCardTrigger asChild>
+              <Button id={`runtime-hover-card-side-${side}-trigger`} variant="outline" size="sm">
+                {label} side
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent
+              id={`runtime-hover-card-side-${side}-content`}
+              side={side}
+              avoidCollisions={false}
+              class="duration-0"
+            >
+              <div class="space-y-1">
+                <p class="text-sm font-medium">{label} preview</p>
+                <p class="text-muted-foreground text-sm">
+                  Content follows the requested side and remains hoverable.
+                </p>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        ))
+      }
+    </div>
+
+    <div class="flex min-h-36 flex-wrap items-center justify-center gap-4 sm:px-20">
+      <HoverCard id="runtime-hover-card-aligned" openDelay={100} closeDelay={250}>
+        <HoverCardTrigger asChild>
+          <Button id="runtime-hover-card-aligned-trigger" variant="secondary" size="sm">
+            End aligned
+          </Button>
+        </HoverCardTrigger>
+        <HoverCardContent
+          id="runtime-hover-card-aligned-content"
+          side="bottom"
+          align="end"
+          sideOffset={12}
+          class="duration-[160ms]"
+        >
+          <div class="space-y-1">
+            <p class="text-sm font-medium">Aligned preview</p>
+            <p class="text-muted-foreground text-sm">Offset and close timing use root props.</p>
+          </div>
+        </HoverCardContent>
+      </HoverCard>
+
+      <HoverCard
+        id="runtime-hover-card-no-hoverable"
+        disableHoverableContent
+        openDelay={150}
+        closeDelay={300}
+      >
+        <HoverCardTrigger asChild>
+          <Button id="runtime-hover-card-no-hoverable-trigger" variant="ghost" size="sm">
+            Non-hoverable
+          </Button>
+        </HoverCardTrigger>
+        <HoverCardContent
+          id="runtime-hover-card-no-hoverable-content"
+          side="top"
+          align="center"
+          class="duration-[160ms]"
+        >
+          <p class="text-sm">Leaving the trigger starts the close timer immediately.</p>
+        </HoverCardContent>
+      </HoverCard>
+
+      <HoverCard id="runtime-hover-card-as-child" openDelay={0} closeDelay={150}>
+        <HoverCardTrigger asChild>
+          <a
+            id="runtime-hover-card-as-child-trigger"
+            href="#runtime-hover-card-as-child"
+            class="text-primary text-sm font-medium underline-offset-4 hover:underline"
+          >
+            As child link
+          </a>
+        </HoverCardTrigger>
+        <HoverCardContent
+          id="runtime-hover-card-as-child-content"
+          side="right"
+          align="start"
+          class="duration-[120ms]"
+        >
+          <div class="space-y-1">
+            <p class="text-sm font-medium">Linked trigger</p>
+            <p class="text-muted-foreground text-sm">
+              Runtime attributes transfer to the supplied anchor.
+            </p>
+          </div>
+        </HoverCardContent>
+      </HoverCard>
+    </div>
+  </div>
+</section>

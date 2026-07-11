@@ -1,6 +1,8 @@
 # Ignore artifacts:
 dist
 .astro
+coverage
+**/coverage
 
 # Ignore node_modules
 node_modules
@@ -32,6 +34,11 @@ pnpm-workspace.yaml
 .agents
 artifacts/superpowers
 ai-context
+.scratch
+
+# local projects
+.local
+scripts/portable-runtime/docs/layered-docs/generated/**
 
 # turbo files
 **/.turbo

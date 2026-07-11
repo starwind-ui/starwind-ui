@@ -1,0 +1,19 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownLabel } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  inset?: boolean;
+};
+
+const { class: className, inset = false, ...rest } = Astro.props;
+---
+
+<MenuPrimitive.Label
+  class={dropdownLabel({ inset, class: className })}
+  {...rest}
+  data-slot="dropdown-label"
+>
+  <slot />
+</MenuPrimitive.Label>

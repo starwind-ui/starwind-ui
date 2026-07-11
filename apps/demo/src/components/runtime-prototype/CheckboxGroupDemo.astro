@@ -1,0 +1,54 @@
+---
+import { Checkbox } from "@/components/starwind-runtime/checkbox";
+import { CheckboxGroup } from "@/components/starwind-runtime/checkbox-group";
+---
+
+<section class="mb-12">
+  <h2 id="runtime-checkbox-group-heading" class="font-heading mb-4 text-2xl font-semibold">
+    Checkbox Group
+  </h2>
+  <div class="grid gap-6 sm:grid-cols-2">
+    <CheckboxGroup
+      data-runtime-checkbox-group-default
+      defaultValue={["email"]}
+      aria-labelledby="runtime-checkbox-group-heading"
+      class="runtime-checkbox-group-custom"
+    >
+      <Checkbox
+        id="runtime-checkbox-group-email"
+        name="runtime-preferences"
+        value="email"
+        label="Email alerts"
+        variant="primary"
+      />
+      <Checkbox
+        id="runtime-checkbox-group-sms"
+        name="runtime-preferences"
+        value="sms"
+        label="SMS alerts"
+        variant="secondary"
+      />
+    </CheckboxGroup>
+
+    <CheckboxGroup
+      data-runtime-checkbox-group-disabled
+      aria-labelledby="runtime-checkbox-group-heading"
+      disabled
+    >
+      <Checkbox
+        id="runtime-checkbox-group-disabled-security"
+        name="runtime-disabled-preferences"
+        value="security"
+        label="Security notices"
+        variant="success"
+      />
+      <Checkbox
+        id="runtime-checkbox-group-disabled-product"
+        name="runtime-disabled-preferences"
+        value="product"
+        label="Product updates"
+        variant="warning"
+      />
+    </CheckboxGroup>
+  </div>
+</section>

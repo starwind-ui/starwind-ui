@@ -1,0 +1,95 @@
+---
+import Heart from "@tabler/icons/outline/heart.svg";
+import Star from "@tabler/icons/outline/star.svg";
+
+import { Button } from "@/components/starwind-runtime/button";
+import { Label } from "@/components/starwind-runtime/label";
+import { NativeSelect, NativeSelectOption } from "@/components/starwind-runtime/native-select";
+import { Switch } from "@/components/starwind-runtime/switch";
+import { ThemeToggle } from "@/components/starwind-runtime/theme-toggle";
+---
+
+<section class="mb-12" id="runtime-theme-toggle-demo">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Theme Toggle</h2>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div class="space-y-3">
+      <h3 class="text-sm font-medium">Toggles</h3>
+      <div class="flex flex-wrap gap-2">
+        <ThemeToggle id="runtime-theme-toggle-primary" />
+        <ThemeToggle id="runtime-theme-toggle-secondary" />
+        <ThemeToggle id="runtime-theme-toggle-custom" ariaLabel="Toggle theme with custom icons">
+          <Heart
+            slot="light-icon"
+            class="hidden size-5 group-data-[state=off]:data-ready:block"
+            aria-hidden="true"
+            data-theme-icon
+          />
+          <Star
+            slot="dark-icon"
+            class="hidden size-5 group-data-[state=on]:data-ready:block"
+            aria-hidden="true"
+            data-theme-icon
+          />
+        </ThemeToggle>
+      </div>
+    </div>
+
+    <div class="grid gap-4">
+      <div class="grid gap-2">
+        <Label for="runtime-theme-native-select">Theme select</Label>
+        <NativeSelect
+          id="runtime-theme-native-select"
+          name="runtime-theme-native-select"
+          data-sw-theme-control
+          defaultValue="system"
+        >
+          <NativeSelectOption value="light">Light</NativeSelectOption>
+          <NativeSelectOption value="system">System</NativeSelectOption>
+          <NativeSelectOption value="dark">Dark</NativeSelectOption>
+        </NativeSelect>
+      </div>
+
+      <Switch
+        id="runtime-theme-switch"
+        label="Theme switch"
+        data-sw-theme-control
+        data-theme-on="dark"
+        data-theme-off="light"
+      />
+
+      <div class="flex flex-wrap gap-2">
+        <Button
+          id="runtime-theme-value-light"
+          type="button"
+          variant="outline"
+          size="sm"
+          data-sw-theme-control
+          data-theme-value="light"
+        >
+          Light
+        </Button>
+        <Button
+          id="runtime-theme-value-system"
+          type="button"
+          variant="outline"
+          size="sm"
+          data-sw-theme-control
+          data-theme-value="system"
+        >
+          System
+        </Button>
+        <Button
+          id="runtime-theme-value-dark"
+          type="button"
+          variant="outline"
+          size="sm"
+          data-sw-theme-control
+          data-theme-value="dark"
+        >
+          Dark
+        </Button>
+      </div>
+    </div>
+  </div>
+</section>

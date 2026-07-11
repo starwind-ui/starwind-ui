@@ -1,0 +1,20 @@
+---
+import ComboboxPrimitive from "@starwind-ui/astro/combobox";
+import type { HTMLAttributes } from "astro/types";
+import { comboboxValue } from "./variants";
+
+type Props = HTMLAttributes<"span"> & {
+  placeholder?: string;
+};
+
+const { class: className, placeholder, ...rest } = Astro.props;
+---
+
+<ComboboxPrimitive.Value
+  class={comboboxValue({ class: className })}
+  placeholder={placeholder}
+  {...rest}
+  data-slot="combobox-value"
+>
+  <slot />
+</ComboboxPrimitive.Value>

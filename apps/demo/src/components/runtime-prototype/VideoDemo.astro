@@ -1,0 +1,40 @@
+---
+import { Video } from "@/components/starwind-runtime/video";
+
+const poster = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+---
+
+<section class="mb-12" id="runtime-video-demo">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Video</h2>
+
+  <div class="grid gap-4 md:grid-cols-3">
+    <Video
+      id="runtime-video-native"
+      class="rounded-md border"
+      src="data:video/mp4;base64,AAAA"
+      muted
+      loop
+      controls
+      poster={poster}
+    />
+
+    <Video
+      id="runtime-video-youtube"
+      src="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list"
+      title="Runtime YouTube demo"
+      autoplay
+      muted
+      loop
+      controls={false}
+      srcdoc="<p>Runtime YouTube demo</p>"
+    />
+
+    <Video
+      id="runtime-video-shorts"
+      src="https://www.youtube.com/shorts/mLwBgC7NgVM"
+      title="Runtime Shorts demo"
+      class="aspect-square"
+      srcdoc="<p>Runtime Shorts demo</p>"
+    />
+  </div>
+</section>

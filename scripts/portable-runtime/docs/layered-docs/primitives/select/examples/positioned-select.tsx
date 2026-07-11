@@ -1,0 +1,27 @@
+import { Select } from "@starwind-ui/react/select";
+
+export function Example() {
+  return (
+    <Select.Root defaultValue="astro">
+      <Select.Label>Framework</Select.Label>
+      <Select.Trigger>
+        <Select.Value>Astro</Select.Value>
+        <Select.Icon>v</Select.Icon>
+      </Select.Trigger>
+      <Select.Positioner>
+        <Select.Popup>
+          <Select.List>
+            <Select.Item value="astro">
+              <Select.ItemText>Astro</Select.ItemText>
+              <Select.ItemIndicator />
+            </Select.Item>
+            <Select.Item value="react">
+              <Select.ItemText>React</Select.ItemText>
+              <Select.ItemIndicator />
+            </Select.Item>
+          </Select.List>
+        </Select.Popup>
+      </Select.Positioner>
+    </Select.Root>
+  );
+}

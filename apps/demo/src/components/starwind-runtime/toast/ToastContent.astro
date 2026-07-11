@@ -1,0 +1,17 @@
+---
+import ToastPrimitive from "@starwind-ui/astro/toast";
+import type { HTMLAttributes } from "astro/types";
+import { toastContent } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ToastPrimitive.Content
+  class={toastContent({ class: className })}
+  {...rest}
+  data-slot="toast-content"
+>
+  <slot />
+</ToastPrimitive.Content>

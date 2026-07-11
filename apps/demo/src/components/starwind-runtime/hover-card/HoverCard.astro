@@ -1,0 +1,39 @@
+---
+import PreviewCardPrimitive from "@starwind-ui/astro/preview-card";
+import type { HTMLAttributes } from "astro/types";
+import { hoverCard } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  defaultOpen?: boolean;
+  closeDelay?: number;
+  closeOnEscape?: boolean;
+  closeOnOutsideInteract?: boolean;
+  disableHoverableContent?: boolean;
+  openDelay?: number;
+};
+
+const {
+  defaultOpen = false,
+  closeDelay = 300,
+  closeOnEscape = true,
+  closeOnOutsideInteract = true,
+  disableHoverableContent = false,
+  openDelay = 600,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<PreviewCardPrimitive.Root
+  class={hoverCard({ class: className })}
+  defaultOpen={defaultOpen}
+  closeDelay={closeDelay}
+  closeOnEscape={closeOnEscape}
+  closeOnOutsideInteract={closeOnOutsideInteract}
+  disableHoverableContent={disableHoverableContent}
+  openDelay={openDelay}
+  {...rest}
+  data-slot="hover-card"
+>
+  <slot />
+</PreviewCardPrimitive.Root>

@@ -1,0 +1,35 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { badge } from "./variants";
+
+type Props = HTMLAttributes<"div"> &
+  Omit<HTMLAttributes<"a">, "type"> &
+  Omit<VariantProps<typeof badge>, "isLink">;
+
+const { variant, tone, appearance, eyebrow, size, class: className, ...rest } = Astro.props;
+
+const usesComposedBadgeStyle = tone !== undefined || appearance !== undefined;
+const resolvedVariant = (usesComposedBadgeStyle ? null : variant) as typeof variant;
+const resolvedTone = usesComposedBadgeStyle ? (tone ?? "neutral") : undefined;
+const resolvedAppearance = usesComposedBadgeStyle ? (appearance ?? "soft") : undefined;
+const Tag = rest.href ? "a" : "div";
+---
+
+<Tag
+  data-sw-badge
+  class={badge({
+    variant: resolvedVariant,
+    tone: resolvedTone,
+    appearance: resolvedAppearance,
+    eyebrow,
+    size,
+    isLink: Boolean(rest.href),
+    class: className,
+  })}
+  {...rest}
+  data-slot="badge"
+>
+  <slot />
+</Tag>

@@ -1,0 +1,51 @@
+---
+import ComboboxPrimitive from "@starwind-ui/astro/combobox";
+import type { HTMLAttributes } from "astro/types";
+import { comboboxContent, comboboxList } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  align?: "start" | "center" | "end";
+  alignOffset?: number;
+  avoidCollisions?: boolean;
+  side?: "top" | "right" | "bottom" | "left";
+  sideOffset?: number;
+  size?: "sm" | "md" | "lg";
+};
+
+const {
+  align = "start",
+  alignOffset = 0,
+  avoidCollisions = true,
+  class: className,
+  side = "bottom",
+  sideOffset = 4,
+  size = "md",
+  ...rest
+} = Astro.props;
+---
+
+<ComboboxPrimitive.Portal data-slot="combobox-portal">
+  <ComboboxPrimitive.Positioner
+    align={align}
+    alignOffset={alignOffset}
+    avoidCollisions={avoidCollisions}
+    side={side}
+    sideOffset={sideOffset}
+    data-slot="combobox-positioner"
+  >
+    <ComboboxPrimitive.Popup
+      class={comboboxContent({ size, class: className })}
+      align={align}
+      alignOffset={alignOffset}
+      avoidCollisions={avoidCollisions}
+      side={side}
+      sideOffset={sideOffset}
+      {...rest}
+      data-slot="combobox-content"
+    >
+      <ComboboxPrimitive.List class={comboboxList()} data-slot="combobox-list">
+        <slot />
+      </ComboboxPrimitive.List>
+    </ComboboxPrimitive.Popup>
+  </ComboboxPrimitive.Positioner>
+</ComboboxPrimitive.Portal>

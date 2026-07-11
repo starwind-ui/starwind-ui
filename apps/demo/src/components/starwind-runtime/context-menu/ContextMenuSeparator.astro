@@ -1,0 +1,15 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import type { HTMLAttributes } from "astro/types";
+import { contextMenuSeparator } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ContextMenuPrimitive.Separator
+  class={contextMenuSeparator({ class: className })}
+  {...rest}
+  data-slot="context-menu-separator"
+/>

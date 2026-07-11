@@ -1,0 +1,17 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import type { HTMLAttributes } from "astro/types";
+import { contextMenuShortcut } from "./variants";
+
+type Props = HTMLAttributes<"span">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ContextMenuPrimitive.Shortcut
+  class={contextMenuShortcut({ class: className })}
+  {...rest}
+  data-slot="context-menu-shortcut"
+>
+  <slot />
+</ContextMenuPrimitive.Shortcut>

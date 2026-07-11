@@ -1,0 +1,50 @@
+---
+import SelectPrimitive from "@starwind-ui/astro/select";
+import Check from "@tabler/icons/outline/check.svg";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { selectItem, selectItemIndicator, selectItemText } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "role"> &
+  VariantProps<typeof selectItem> & {
+    disabled?: boolean;
+    indicatorClass?: string;
+    showIndicator?: boolean;
+    value: string;
+  };
+
+const {
+  class: className,
+  disabled = false,
+  indicatorClass: indicatorClassName,
+  inset = false,
+  showIndicator = true,
+  value,
+  ...rest
+} = Astro.props;
+---
+
+<SelectPrimitive.Item
+  class={selectItem({ inset, disabled, class: className })}
+  disabled={disabled}
+  value={value}
+  {...rest}
+  data-slot="select-item"
+>
+  <SelectPrimitive.ItemText class={selectItemText()} data-slot="select-item-text">
+    <slot />
+  </SelectPrimitive.ItemText>
+
+  {
+    showIndicator && (
+      <SelectPrimitive.ItemIndicator
+        class={selectItemIndicator({ class: indicatorClassName })}
+        data-slot="select-item-indicator"
+      >
+        <slot name="indicator">
+          <Check class="size-4" />
+        </slot>
+      </SelectPrimitive.ItemIndicator>
+    )
+  }
+</SelectPrimitive.Item>

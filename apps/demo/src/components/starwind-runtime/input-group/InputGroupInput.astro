@@ -1,0 +1,12 @@
+---
+import type { ComponentProps } from "astro/types";
+
+import { Input } from "../input";
+import { inputGroupInput } from "./variants";
+
+type Props = ComponentProps<typeof Input>;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<Input class={inputGroupInput({ class: className })} {...rest} data-slot="input-group-control" />

@@ -1,0 +1,31 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { Skeleton } from "../skeleton";
+import { sidebarMenuSkeleton } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  showIcon?: boolean;
+  width?: string;
+};
+
+const { showIcon = false, width, class: className, ...rest } = Astro.props;
+
+const skeletonWidth = width ?? "70%";
+const skeletonStyle = { "--skeleton-width": skeletonWidth };
+---
+
+<div
+  class={sidebarMenuSkeleton({ class: className })}
+  data-sidebar="menu-skeleton"
+  {...rest}
+  data-slot="sidebar-menu-skeleton"
+>
+  {showIcon && <Skeleton class="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />}
+
+  <Skeleton
+    class="h-4 max-w-(--skeleton-width) flex-1"
+    style={skeletonStyle}
+    data-sidebar="menu-skeleton-text"
+  />
+</div>

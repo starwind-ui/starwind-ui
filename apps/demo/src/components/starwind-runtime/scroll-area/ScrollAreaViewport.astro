@@ -1,0 +1,19 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import "./styles.css";
+import ScrollAreaPrimitive from "@starwind-ui/astro/scroll-area";
+import { scrollAreaViewport } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ScrollAreaPrimitive.Viewport
+  class={scrollAreaViewport({ class: className })}
+  {...rest}
+  data-slot="scroll-area-viewport"
+>
+  <slot />
+</ScrollAreaPrimitive.Viewport>

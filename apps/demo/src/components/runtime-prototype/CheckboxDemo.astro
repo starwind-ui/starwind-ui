@@ -1,0 +1,46 @@
+---
+import { Checkbox } from "@/components/starwind-runtime/checkbox";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Checkbox</h2>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <Checkbox
+      id="runtime-checkbox-default"
+      name="runtime-checkbox-default"
+      value="accepted"
+      label="Accept runtime terms"
+      variant="primary"
+      class="runtime-checkbox-custom"
+    />
+    <Checkbox id="runtime-checkbox-checked" defaultChecked label="Default checked" />
+    <Checkbox
+      id="runtime-checkbox-indeterminate"
+      indeterminate
+      label="Indeterminate parent"
+      variant="warning"
+    />
+    <Checkbox
+      id="runtime-checkbox-disabled"
+      disabled
+      label="Disabled checkbox"
+      variant="secondary"
+    />
+    <Checkbox
+      id="runtime-checkbox-small"
+      name="runtime-checkbox-small"
+      value="accepted"
+      label="Small"
+      variant="primary"
+      size="sm"
+    />
+    <Checkbox
+      id="runtime-checkbox-large"
+      name="runtime-checkbox-large"
+      value="accepted"
+      label="Large"
+      variant="primary"
+      size="lg"
+    />
+  </div>
+</section>

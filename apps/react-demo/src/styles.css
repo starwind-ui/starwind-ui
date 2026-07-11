@@ -1,0 +1,11 @@
+@import "../../demo/src/styles/starwind.css";
+
+@source "./**/*.{ts,tsx}";
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  min-width: 320px;
+}

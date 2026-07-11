@@ -1,0 +1,101 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/starwind-runtime/field";
+import { Form } from "@/components/starwind-runtime/form";
+---
+
+<section class="border-border mb-10 border-b pb-10">
+  <div class="mb-5 space-y-2">
+    <h2 class="font-heading text-2xl font-semibold tracking-tight">
+      Custom validation and managed submit
+    </h2>
+    <p class="text-muted-foreground text-sm">
+      Field and form validators add domain rules while the managed submit path receives plain form
+      values.
+    </p>
+  </div>
+
+  <Form id="runtime-custom-validation-form" class="grid gap-4">
+    <Field name="runtimeCustomWorkspace">
+      <FieldLabel>Workspace slug</FieldLabel>
+      <FieldControl id="runtime-custom-workspace" required value="starwind" />
+      <FieldError match="valueMissing">Enter a workspace slug.</FieldError>
+    </Field>
+
+    <Field name="runtimeCustomProject">
+      <FieldLabel>Project slug</FieldLabel>
+      <FieldControl id="runtime-custom-project" required value="starwind" />
+      <FieldDescription>Try "admin" or the same value as the workspace slug.</FieldDescription>
+      <FieldError match="valueMissing">Enter a project slug.</FieldError>
+      <FieldError match="customError" messageSource="validation">
+        Project slug must pass custom validation.
+      </FieldError>
+    </Field>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <Button type="submit">Create project</Button>
+      <Button type="reset" variant="ghost">Reset</Button>
+    </div>
+  </Form>
+
+  <output
+    id="runtime-custom-validation-output"
+    class="text-muted-foreground mt-3 block text-sm whitespace-pre-wrap"
+  >
+    Submit to run custom validators.
+  </output>
+</section>
+
+<script>
+  import { createForm } from "@starwind-ui/astro/form";
+
+  const customForm = document.querySelector<HTMLFormElement>("#runtime-custom-validation-form");
+  const customOutput = document.querySelector<HTMLOutputElement>(
+    "#runtime-custom-validation-output",
+  );
+
+  const renderCustomOutput = (text: string) => {
+    if (!customOutput) return;
+    customOutput.value = text;
+    customOutput.textContent = text;
+  };
+
+  const readFormValue = (value: FormDataEntryValue | FormDataEntryValue[] | undefined) =>
+    Array.isArray(value) ? String(value[0] ?? "") : String(value ?? "");
+
+  if (customForm) {
+    createForm(customForm, {
+      fieldValidators: {
+        runtimeCustomProject: (value) =>
+          value === "admin" ? "The admin project slug is reserved." : null,
+      },
+      formValidators: (values) => {
+        const workspace = readFormValue(values.runtimeCustomWorkspace);
+        const project = readFormValue(values.runtimeCustomProject);
+
+        return workspace.length > 0 && project === workspace
+          ? {
+              runtimeCustomProject: "Project slug must differ from the workspace slug.",
+            }
+          : null;
+      },
+      onSubmit: ({ values }) => {
+        const entries = Object.entries(values).map(([key, value]) => {
+          const renderedValue = Array.isArray(value) ? value.join(", ") : value;
+          return `${key}: ${renderedValue}`;
+        });
+        renderCustomOutput(`Managed submit\n${entries.join("\n")}`);
+      },
+    });
+  }
+
+  customForm?.addEventListener("reset", () => {
+    window.setTimeout(() => renderCustomOutput("Submit to run custom validators."), 0);
+  });
+</script>

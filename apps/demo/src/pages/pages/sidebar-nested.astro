@@ -1,6 +1,7 @@
 ---
 import "@/styles/global.css";
 
+import { ThemeInitScript } from "@starwind-ui/astro/theme";
 import BookOpen from "@tabler/icons/outline/book.svg";
 import PieChart from "@tabler/icons/outline/chart-pie.svg";
 import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
@@ -13,7 +14,6 @@ import Bot from "@tabler/icons/outline/robot.svg";
 import Send from "@tabler/icons/outline/send.svg";
 import Settings2 from "@tabler/icons/outline/settings-2.svg";
 import SquareTerminal from "@tabler/icons/outline/terminal-2.svg";
-
 import {
   AccordionDemo,
   AlertDemo,
@@ -147,31 +147,7 @@ const projects = [
     <meta name="description" content="Nested sidebar menu demo for Starwind UI" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <script is:inline>
-      function initTheme() {
-        const colorTheme = localStorage.getItem("colorTheme");
-        if (!colorTheme) {
-          if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            document.documentElement.classList.add("dark");
-            localStorage.setItem("colorTheme", "dark");
-          } else {
-            document.documentElement.classList.remove("dark");
-            localStorage.setItem("colorTheme", "light");
-          }
-        } else {
-          if (colorTheme === "dark") {
-            document.documentElement.classList.add("dark");
-          } else if (colorTheme === "light") {
-            document.documentElement.classList.remove("dark");
-          } else if (colorTheme === "system") {
-            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-            document.documentElement.classList.toggle("dark", prefersDark);
-          }
-        }
-      }
-      initTheme();
-      document.addEventListener("astro:after-swap", initTheme);
-    </script>
+    <ThemeInitScript />
   </head>
 
   <body class="min-h-lvh">

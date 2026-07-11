@@ -1,0 +1,280 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import { Checkbox } from "@/components/starwind-runtime/checkbox";
+import { CheckboxGroup } from "@/components/starwind-runtime/checkbox-group";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+} from "@/components/starwind-runtime/combobox";
+import {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldItem,
+  FieldLabel,
+} from "@/components/starwind-runtime/field";
+import { Form, FormErrorSummary } from "@/components/starwind-runtime/form";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/starwind-runtime/input-group";
+import { InputOtp, InputOtpGroup, InputOtpSlot } from "@/components/starwind-runtime/input-otp";
+import { NativeSelect, NativeSelectOption } from "@/components/starwind-runtime/native-select";
+import { RadioGroup, RadioGroupItem } from "@/components/starwind-runtime/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/starwind-runtime/select";
+import { Slider } from "@/components/starwind-runtime/slider";
+import { Switch } from "@/components/starwind-runtime/switch";
+import { Textarea } from "@/components/starwind-runtime/textarea";
+---
+
+<section class="border-border mt-12 border-t pt-10">
+  <div class="mb-8 space-y-3">
+    <p class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+      Invalid state visibility
+    </p>
+    <h2 class="font-heading text-2xl font-semibold tracking-tight">All form controls</h2>
+    <p class="text-muted-foreground max-w-2xl text-sm">
+      Every field below receives the same runtime external error path so the visible invalid state
+      can be compared across native, styled, and composite controls.
+    </p>
+  </div>
+
+  <Form id="runtime-invalid-states-form" class="space-y-6">
+    <FormErrorSummary aria-label="Invalid state errors">
+      <p class="font-medium">Visible invalid states</p>
+    </FormErrorSummary>
+
+    <FieldGroup variant="outline">
+      <Field name="runtimeInvalidInput">
+        <FieldLabel>Input</FieldLabel>
+        <FieldControl id="runtime-invalid-input" placeholder="Display name" />
+        <FieldDescription>Native input receives data-error-visible through Field.</FieldDescription>
+        <FieldError match="customError" messageSource="validation">
+          Input validation message.
+        </FieldError>
+      </Field>
+
+      <Field name="runtimeInvalidTextarea">
+        <FieldLabel>Textarea</FieldLabel>
+        <Textarea id="runtime-invalid-textarea" rows="3" placeholder="Project notes" />
+        <FieldError match="customError" messageSource="validation">
+          Textarea validation message.
+        </FieldError>
+      </Field>
+
+      <Field name="runtimeInvalidInputGroup">
+        <FieldLabel>Input group</FieldLabel>
+        <InputGroup>
+          <InputGroupAddon>@</InputGroupAddon>
+          <InputGroupInput id="runtime-invalid-input-group" placeholder="workspace" />
+        </InputGroup>
+        <FieldError match="customError" messageSource="validation">
+          Input group validation message.
+        </FieldError>
+      </Field>
+
+      <Field name="runtimeInvalidNativeSelect">
+        <FieldLabel>Native select</FieldLabel>
+        <NativeSelect id="runtime-invalid-native-select">
+          <NativeSelectOption value="">Choose a region</NativeSelectOption>
+          <NativeSelectOption value="na">North America</NativeSelectOption>
+          <NativeSelectOption value="eu">Europe</NativeSelectOption>
+        </NativeSelect>
+        <FieldError match="customError" messageSource="validation">
+          Native select validation message.
+        </FieldError>
+      </Field>
+
+      <Field name="runtimeInvalidSelect">
+        <FieldLabel>Select</FieldLabel>
+        <Select>
+          <SelectTrigger id="runtime-invalid-select" placeholder="Choose role" />
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="owner">Owner</SelectItem>
+              <SelectItem value="editor">Editor</SelectItem>
+              <SelectItem value="viewer">Viewer</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <FieldError match="customError" messageSource="validation">
+          Select validation message.
+        </FieldError>
+      </Field>
+
+      <Field name="runtimeInvalidCombobox">
+        <FieldLabel>Combobox</FieldLabel>
+        <Combobox>
+          <ComboboxInput id="runtime-invalid-combobox" placeholder="Choose country" showClear />
+          <ComboboxContent>
+            <ComboboxEmpty>No country found.</ComboboxEmpty>
+            <ComboboxGroup>
+              <ComboboxItem value="us">United States</ComboboxItem>
+              <ComboboxItem value="ca">Canada</ComboboxItem>
+              <ComboboxItem value="gb">United Kingdom</ComboboxItem>
+            </ComboboxGroup>
+          </ComboboxContent>
+        </Combobox>
+        <FieldError match="customError" messageSource="validation">
+          Combobox validation message.
+        </FieldError>
+      </Field>
+
+      <Field name="runtimeInvalidCheckbox" orientation="horizontal">
+        <FieldItem>
+          <Checkbox id="runtime-invalid-checkbox" value="accepted" />
+          <div class="grid gap-1">
+            <FieldLabel for="runtime-invalid-checkbox">Checkbox</FieldLabel>
+            <FieldDescription>Standalone checkbox surface.</FieldDescription>
+            <FieldError match="customError" messageSource="validation">
+              Checkbox validation message.
+            </FieldError>
+          </div>
+        </FieldItem>
+      </Field>
+
+      <Field name="runtimeInvalidCheckboxGroup">
+        <FieldLabel>Checkbox group</FieldLabel>
+        <CheckboxGroup>
+          <Checkbox id="runtime-invalid-checkbox-security" value="security" label="Security" />
+          <Checkbox id="runtime-invalid-checkbox-analytics" value="analytics" label="Analytics" />
+          <Checkbox id="runtime-invalid-checkbox-exports" value="exports" label="Exports" />
+        </CheckboxGroup>
+        <FieldError match="customError" messageSource="validation">
+          Checkbox group validation message.
+        </FieldError>
+      </Field>
+
+      <Field name="runtimeInvalidRadioGroup">
+        <FieldLabel>Radio group</FieldLabel>
+        <RadioGroup legend="Invalid radio group">
+          <label class="flex w-fit items-center gap-3 text-sm" for="runtime-invalid-radio-basic">
+            <RadioGroupItem id="runtime-invalid-radio-basic" value="basic" />
+            <span>Basic</span>
+          </label>
+          <label class="flex w-fit items-center gap-3 text-sm" for="runtime-invalid-radio-pro">
+            <RadioGroupItem id="runtime-invalid-radio-pro" value="pro" />
+            <span>Pro</span>
+          </label>
+        </RadioGroup>
+        <FieldError match="customError" messageSource="validation">
+          Radio group validation message.
+        </FieldError>
+      </Field>
+
+      <Field name="runtimeInvalidSwitch" orientation="horizontal">
+        <FieldItem>
+          <Switch id="runtime-invalid-switch" value="enabled" uncheckedValue="disabled" />
+          <div class="grid gap-1">
+            <FieldLabel for="runtime-invalid-switch">Switch</FieldLabel>
+            <FieldDescription>Switch button receives the field error state.</FieldDescription>
+            <FieldError match="customError" messageSource="validation">
+              Switch validation message.
+            </FieldError>
+          </div>
+        </FieldItem>
+      </Field>
+
+      <Field name="runtimeInvalidSlider">
+        <FieldLabel>Slider</FieldLabel>
+        <Slider id="runtime-invalid-slider" defaultValue={35} />
+        <FieldError match="customError" messageSource="validation">
+          Slider validation message.
+        </FieldError>
+      </Field>
+
+      <Field name="runtimeInvalidOtp">
+        <FieldLabel>Input OTP</FieldLabel>
+        <InputOtp id="runtime-invalid-otp" maxLength={6}>
+          <InputOtpGroup>
+            <InputOtpSlot index={0} />
+            <InputOtpSlot index={1} />
+            <InputOtpSlot index={2} />
+            <InputOtpSlot index={3} />
+            <InputOtpSlot index={4} />
+            <InputOtpSlot index={5} />
+          </InputOtpGroup>
+        </InputOtp>
+        <FieldError match="customError" messageSource="validation">
+          Input OTP validation message.
+        </FieldError>
+      </Field>
+    </FieldGroup>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <Button id="runtime-invalid-states-show" type="button">Show errors</Button>
+      <Button id="runtime-invalid-states-clear" type="button" variant="ghost">Clear errors</Button>
+    </div>
+  </Form>
+
+  <output
+    id="runtime-invalid-states-output"
+    class="border-border bg-muted text-muted-foreground mt-6 block rounded-md border p-4 text-sm"
+  >
+    External validation errors are applied on load.
+  </output>
+</section>
+
+<script>
+  import { createForm } from "@starwind-ui/astro/form";
+
+  const invalidStateErrors = {
+    runtimeInvalidCheckbox: "Checkbox validation message.",
+    runtimeInvalidCheckboxGroup: "Checkbox group validation message.",
+    runtimeInvalidCombobox: "Combobox validation message.",
+    runtimeInvalidInput: "Input validation message.",
+    runtimeInvalidInputGroup: "Input group validation message.",
+    runtimeInvalidNativeSelect: "Native select validation message.",
+    runtimeInvalidOtp: "Input OTP validation message.",
+    runtimeInvalidRadioGroup: "Radio group validation message.",
+    runtimeInvalidSelect: "Select validation message.",
+    runtimeInvalidSlider: "Slider validation message.",
+    runtimeInvalidSwitch: "Switch validation message.",
+    runtimeInvalidTextarea: "Textarea validation message.",
+  };
+
+  const form = document.querySelector<HTMLFormElement>("#runtime-invalid-states-form");
+  const showButton = document.querySelector<HTMLButtonElement>("#runtime-invalid-states-show");
+  const clearButton = document.querySelector<HTMLButtonElement>("#runtime-invalid-states-clear");
+  const output = document.querySelector<HTMLOutputElement>("#runtime-invalid-states-output");
+
+  const renderOutput = (text: string) => {
+    if (!output) return;
+    output.value = text;
+    output.textContent = text;
+  };
+
+  const applyInvalidStates = () => {
+    if (!form) return;
+    createForm(form).setExternalErrors(invalidStateErrors);
+    renderOutput("External validation errors are visible on every field.");
+  };
+
+  const clearInvalidStates = () => {
+    if (!form) return;
+    createForm(form).clearExternalErrors();
+    renderOutput("External validation errors cleared.");
+  };
+
+  showButton?.addEventListener("click", applyInvalidStates);
+  clearButton?.addEventListener("click", clearInvalidStates);
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    applyInvalidStates();
+  });
+
+  window.setTimeout(applyInvalidStates, 0);
+</script>

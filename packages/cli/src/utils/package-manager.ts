@@ -4,6 +4,8 @@ import { resolve } from "node:path";
 import * as p from "@clack/prompts";
 import { execa } from "execa";
 
+import { parsePackageSpec } from "./package-spec.js";
+
 export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
 
 /**
@@ -139,16 +141,8 @@ export function getCurrentPackageManager(): PackageManager | null {
 export function detectPackageManager(options: PackageManagerOptions = {}): PackageManagerInfo {
   const { cwd = process.cwd(), defaultManager = "npm" } = options;
 
-  // First try to detect from npm_config_user_agent
-  const current = getCurrentPackageManager();
-  if (current) {
-    return {
-      name: current,
-      ...PACKAGE_MANAGER_COMMANDS[current],
-    };
-  }
-
-  // Determine priorities for checking lock files
+  // A project lockfile is a stronger signal than the package manager that
+  // happened to invoke the CLI (for example, `npx starwind` in a pnpm app).
   const packageManagers: PackageManager[] = ["pnpm", "yarn", "bun", "npm"];
 
   // Check for each lock file
@@ -162,6 +156,15 @@ export function detectPackageManager(options: PackageManagerOptions = {}): Packa
         ...PACKAGE_MANAGER_COMMANDS[pm],
       };
     }
+  }
+
+  // Fall back to the invoking package manager for projects without a lockfile.
+  const current = getCurrentPackageManager();
+  if (current) {
+    return {
+      name: current,
+      ...PACKAGE_MANAGER_COMMANDS[current],
+    };
   }
 
   // Return the default package manager if no lock file is found
@@ -239,12 +242,22 @@ export async function installDependencies(
   dev = false,
   force = false,
 ): Promise<void> {
-  const args = [
-    pm === "npm" ? "install" : "add",
-    ...packages,
-    dev ? (pm === "npm" || pm === "pnpm" ? "-D" : "--dev") : "",
-    force ? "--force" : "",
-  ].filter(Boolean);
+  await execa(pm, buildInstallDependencyArgs(packages, pm, dev, force));
+}
 
-  await execa(pm, args);
+export function buildInstallDependencyArgs(
+  packages: string[],
+  pm: PackageManager,
+  dev = false,
+  force = false,
+): string[] {
+  const validatedPackages = packages.map((packageSpec) =>
+    parsePackageSpec(packageSpec, "package dependency"),
+  );
+  const managerOptions = [
+    dev ? (pm === "npm" || pm === "pnpm" ? "-D" : "--dev") : undefined,
+    force ? "--force" : undefined,
+  ].filter((option): option is string => option !== undefined);
+
+  return [pm === "npm" ? "install" : "add", ...managerOptions, "--", ...validatedPackages];
 }

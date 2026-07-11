@@ -1,0 +1,17 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownShortcut } from "./variants";
+
+type Props = HTMLAttributes<"span">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<MenuPrimitive.Shortcut
+  class={dropdownShortcut({ class: className })}
+  {...rest}
+  data-slot="dropdown-shortcut"
+>
+  <slot />
+</MenuPrimitive.Shortcut>

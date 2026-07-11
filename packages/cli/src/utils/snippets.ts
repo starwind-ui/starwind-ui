@@ -50,7 +50,7 @@ export async function setupSnippets() {
   if (await fileExists(targetPath)) {
     try {
       existingSnippets = await readJsonFile(targetPath);
-    } catch (error) {
+    } catch {
       // If file is empty or invalid JSON, start with empty object
       existingSnippets = {};
     }

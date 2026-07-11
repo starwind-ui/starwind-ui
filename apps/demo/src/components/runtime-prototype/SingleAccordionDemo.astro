@@ -1,0 +1,81 @@
+---
+import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/starwind-runtime/accordion";
+---
+
+<section class="mb-12 grid gap-8 md:grid-cols-2">
+  <div>
+    <h2 class="font-heading mb-4 text-2xl font-semibold">Single Accordion</h2>
+    <Accordion defaultValue="shipping" collapsible>
+      <AccordionItem value="shipping">
+        <AccordionTrigger>Shipping</AccordionTrigger>
+        <AccordionContent>
+          Orders ship from the closest available fulfillment region when inventory allows.
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="billing">
+        <AccordionTrigger>Billing</AccordionTrigger>
+        <AccordionContent>
+          Billing details can be updated before an invoice is finalized.
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="disabled" disabled>
+        <AccordionTrigger>Disabled item</AccordionTrigger>
+        <AccordionContent>This item should not open.</AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  </div>
+
+  <div>
+    <h2 class="font-heading mb-4 text-2xl font-semibold">Multiple Accordion</h2>
+    <Accordion type="multiple" defaultValue={["performance", "adapters"]}>
+      <AccordionItem value="performance">
+        <AccordionTrigger>Performance</AccordionTrigger>
+        <AccordionContent>
+          State transitions stay small and testable while DOM work is handled by the controller.
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="adapters">
+        <AccordionTrigger>Adapters</AccordionTrigger>
+        <AccordionContent>
+          The styled Astro adapter can diverge ergonomically from the primitive anatomy.
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem value="raw-html">
+        <AccordionTrigger>Raw HTML</AccordionTrigger>
+        <AccordionContent>
+          Raw HTML users can initialize matching data attributes with initStarwind().
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  </div>
+
+  <div class="md:col-span-2">
+    <h2 class="font-heading mb-4 text-2xl font-semibold">Custom Accordion</h2>
+    <Accordion defaultValue="runtime" collapsible class="grid gap-3">
+      <AccordionItem class="bg-muted/30 rounded-md border px-4" value="runtime">
+        <AccordionTrigger class="py-3">
+          Runtime behavior
+          <ChevronRight slot="icon" class="size-5 shrink-0 transition-transform duration-200" />
+        </AccordionTrigger>
+        <AccordionContent class="text-muted-foreground">
+          The custom item keeps runtime state, keyboard controls, and generated panel animation.
+        </AccordionContent>
+      </AccordionItem>
+      <AccordionItem class="bg-background rounded-md border px-4 shadow-xs" value="styling">
+        <AccordionTrigger class="py-3">
+          Custom styling
+          <ChevronRight slot="icon" class="size-5 shrink-0 transition-transform duration-200" />
+        </AccordionTrigger>
+        <AccordionContent class="text-muted-foreground">
+          Item, trigger, content, and icon classes can be customized without changing the runtime.
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  </div>
+</section>

@@ -1,0 +1,34 @@
+---
+import { Label } from "@/components/starwind-runtime/label";
+import { Textarea } from "@/components/starwind-runtime/textarea";
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Textarea</h2>
+  <form data-runtime-textarea-form class="grid gap-4 sm:grid-cols-3">
+    <div class="grid gap-2">
+      <Label for="runtime-textarea-default" size="sm">Default textarea</Label>
+      <Textarea
+        id="runtime-textarea-default"
+        name="message"
+        class="runtime-textarea-custom"
+        placeholder="Write a note"
+        rows="3"
+      />
+    </div>
+    <div class="grid gap-2">
+      <Label for="runtime-textarea-invalid" size="sm">Invalid textarea</Label>
+      <Textarea
+        id="runtime-textarea-invalid"
+        size="lg"
+        aria-invalid="true"
+        placeholder="Needs attention"
+        rows="3"
+      />
+    </div>
+    <div class="grid gap-2">
+      <Label for="runtime-textarea-disabled" size="sm">Disabled textarea</Label>
+      <Textarea id="runtime-textarea-disabled" disabled placeholder="Locked" rows="3" />
+    </div>
+  </form>
+</section>

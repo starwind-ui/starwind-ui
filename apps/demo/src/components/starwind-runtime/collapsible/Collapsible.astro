@@ -1,0 +1,22 @@
+---
+import CollapsiblePrimitive from "@starwind-ui/astro/collapsible";
+import type { HTMLAttributes } from "astro/types";
+import { collapsible } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  defaultOpen?: boolean;
+  disabled?: boolean;
+};
+
+const { defaultOpen = false, disabled = false, class: className, ...rest } = Astro.props;
+---
+
+<CollapsiblePrimitive.Root
+  class={collapsible({ class: className })}
+  defaultOpen={defaultOpen}
+  disabled={disabled}
+  {...rest}
+  data-slot="collapsible"
+>
+  <slot />
+</CollapsiblePrimitive.Root>

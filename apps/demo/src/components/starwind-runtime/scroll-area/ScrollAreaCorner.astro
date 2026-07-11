@@ -1,0 +1,17 @@
+---
+import ScrollAreaPrimitive from "@starwind-ui/astro/scroll-area";
+import type { HTMLAttributes } from "astro/types";
+import { scrollAreaCorner } from "./variants";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<ScrollAreaPrimitive.Corner
+  class={scrollAreaCorner({ class: className })}
+  {...rest}
+  data-slot="scroll-area-corner"
+>
+  <slot />
+</ScrollAreaPrimitive.Corner>

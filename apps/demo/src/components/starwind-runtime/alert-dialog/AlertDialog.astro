@@ -1,0 +1,34 @@
+---
+import AlertDialogPrimitive from "@starwind-ui/astro/alert-dialog";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div"> & {
+  defaultOpen?: boolean;
+  closeOnEscape?: boolean;
+  closeOnOutsideInteract?: boolean;
+  modal?: boolean;
+};
+
+const {
+  defaultOpen = false,
+  closeOnEscape = true,
+  closeOnOutsideInteract = false,
+  modal = true,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const rootClassName = className;
+---
+
+<AlertDialogPrimitive.Root
+  class={rootClassName}
+  defaultOpen={defaultOpen}
+  closeOnEscape={closeOnEscape}
+  closeOnOutsideInteract={closeOnOutsideInteract}
+  modal={modal}
+  {...rest}
+  data-slot="alert-dialog"
+>
+  <slot />
+</AlertDialogPrimitive.Root>

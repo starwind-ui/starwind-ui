@@ -1,0 +1,17 @@
+---
+import SheetPrimitive from "@starwind-ui/astro/drawer";
+import type { HTMLAttributes } from "astro/types";
+import { sheetDescription } from "./variants";
+
+type Props = HTMLAttributes<"p">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<SheetPrimitive.Description
+  class={sheetDescription({ class: className })}
+  {...rest}
+  data-slot="sheet-description"
+>
+  <slot />
+</SheetPrimitive.Description>

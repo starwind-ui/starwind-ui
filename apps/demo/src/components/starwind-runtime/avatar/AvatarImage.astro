@@ -1,0 +1,19 @@
+---
+import AvatarPrimitive from "@starwind-ui/astro/avatar";
+import type { HTMLAttributes } from "astro/types";
+import { avatarImage } from "./variants";
+
+type Props = Omit<HTMLAttributes<"img">, "children"> & {
+  alt: string;
+  src?: string;
+  image?: ImageMetadata;
+};
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<AvatarPrimitive.Image
+  class={avatarImage({ class: className })}
+  {...rest}
+  data-slot="avatar-image"
+/>

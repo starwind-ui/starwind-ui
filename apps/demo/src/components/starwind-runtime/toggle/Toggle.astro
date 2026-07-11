@@ -1,0 +1,48 @@
+---
+import TogglePrimitive from "@starwind-ui/astro/toggle";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { toggle } from "./variants";
+
+type Props = Omit<
+  HTMLAttributes<"button">,
+  "aria-pressed" | "defaultPressed" | "disabled" | "onChange" | "type" | "value"
+> &
+  VariantProps<typeof toggle> & {
+    defaultPressed?: boolean;
+    disabled?: boolean;
+    nativeButton?: boolean;
+    "data-slot"?: string;
+    pressed?: boolean;
+    syncGroup?: string;
+    value?: string;
+  };
+
+const {
+  variant,
+  size,
+  defaultPressed,
+  disabled = false,
+  nativeButton,
+  pressed,
+  syncGroup,
+  value,
+  "data-slot": dataSlot = "toggle",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<TogglePrimitive.Root
+  class={toggle({ variant, size, class: className })}
+  defaultPressed={defaultPressed}
+  disabled={disabled}
+  nativeButton={nativeButton}
+  pressed={pressed}
+  syncGroup={syncGroup}
+  value={value}
+  {...rest}
+  data-slot={dataSlot}
+>
+  <slot />
+</TogglePrimitive.Root>

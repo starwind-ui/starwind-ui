@@ -1,0 +1,39 @@
+---
+import PopoverPrimitive from "@starwind-ui/astro/popover";
+import type { HTMLAttributes } from "astro/types";
+import { popover } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  defaultOpen?: boolean;
+  closeOnEscape?: boolean;
+  closeOnOutsideInteract?: boolean;
+  modal?: boolean;
+  openOnHover?: boolean;
+  closeDelay?: number;
+};
+
+const {
+  defaultOpen = false,
+  closeOnEscape = true,
+  closeOnOutsideInteract = true,
+  modal = false,
+  openOnHover = false,
+  closeDelay = 200,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<PopoverPrimitive.Root
+  class={popover({ class: className })}
+  defaultOpen={defaultOpen}
+  closeOnEscape={closeOnEscape}
+  closeOnOutsideInteract={closeOnOutsideInteract}
+  modal={modal}
+  openOnHover={openOnHover}
+  closeDelay={closeDelay}
+  {...rest}
+  data-slot="popover"
+>
+  <slot />
+</PopoverPrimitive.Root>

@@ -1,0 +1,26 @@
+---
+import Dots from "@tabler/icons/outline/dots.svg";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { paginationEllipsis } from "./variants";
+
+type Props = HTMLAttributes<"span"> & VariantProps<typeof paginationEllipsis>;
+
+const { size, class: className, ...rest } = Astro.props;
+---
+
+<span
+  aria-hidden
+  class={paginationEllipsis({ size, class: className })}
+  {...rest}
+  data-slot="pagination-ellipsis"
+>
+  <slot name="icon">
+    <Dots class="size-4" />
+  </slot>
+
+  <slot>
+    <span class="sr-only">More pages</span>
+  </slot>
+</span>

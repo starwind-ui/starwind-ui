@@ -1,0 +1,25 @@
+---
+import FieldPrimitive from "@starwind-ui/astro/field";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { fieldControl } from "./variants";
+
+interface Props
+  extends
+    Omit<HTMLAttributes<"input">, "children" | "defaultValue" | "size" | "value">,
+    VariantProps<typeof fieldControl> {
+  defaultValue?: string | number | string[];
+  value?: string | number | string[];
+}
+
+const { size, defaultValue, disabled = false, value, class: className, ...rest } = Astro.props;
+---
+
+<FieldPrimitive.Control
+  class={fieldControl({ size, class: className })}
+  defaultValue={defaultValue}
+  disabled={disabled}
+  value={value}
+  {...rest}
+  data-slot="field-control"
+/>

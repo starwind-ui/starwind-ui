@@ -1,0 +1,19 @@
+---
+import ContextMenuPrimitive from "@starwind-ui/astro/context-menu";
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div"> & {
+  closeDelay?: number;
+};
+
+const { class: className, closeDelay = 200, ...rest } = Astro.props;
+---
+
+<ContextMenuPrimitive.SubmenuRoot
+  class={["relative", className].filter(Boolean).join(" ")}
+  closeDelay={closeDelay}
+  {...rest}
+  data-slot="context-menu-sub"
+>
+  <slot />
+</ContextMenuPrimitive.SubmenuRoot>

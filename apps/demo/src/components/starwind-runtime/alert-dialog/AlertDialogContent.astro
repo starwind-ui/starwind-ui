@@ -1,0 +1,28 @@
+---
+import AlertDialogPrimitive from "@starwind-ui/astro/alert-dialog";
+import type { HTMLAttributes } from "astro/types";
+import { alertDialogBackdrop, alertDialogContent } from "./variants";
+
+type Props = HTMLAttributes<"dialog">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<slot name="backdrop">
+  <AlertDialogPrimitive.Backdrop
+    class={alertDialogBackdrop()}
+    data-state="closed"
+    hidden
+    data-slot="alert-dialog-backdrop"
+  />
+</slot>
+
+<AlertDialogPrimitive.Popup
+  class={alertDialogContent({ class: className })}
+  role="alertdialog"
+  data-state="closed"
+  {...rest}
+  data-slot="alert-dialog-content"
+>
+  <slot />
+</AlertDialogPrimitive.Popup>

@@ -17,6 +17,7 @@ export const tooltipContent = tv({
 export const tooltipCaret = tv({
   base: [
     "text-foreground absolute z-50 size-4",
+    "[&>svg]:absolute [&>svg]:inset-0 [&>svg]:block [&>svg]:size-4 [&>svg]:fill-current",
     "group-data-[side=top]:bottom-0 group-data-[side=top]:left-1/2 group-data-[side=top]:-translate-x-1/2 group-data-[side=top]:translate-y-[calc(50%+1px)] group-data-[side=top]:rotate-180",
     "group-data-[side=bottom]:top-0 group-data-[side=bottom]:left-1/2 group-data-[side=bottom]:-translate-x-1/2 group-data-[side=bottom]:-translate-y-[calc(50%+1px)]",
     "group-data-[side=left]:top-1/2 group-data-[side=left]:right-0 group-data-[side=left]:translate-x-[calc(50%+1px)] group-data-[side=left]:-translate-y-1/2 group-data-[side=left]:rotate-90",

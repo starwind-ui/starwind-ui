@@ -44,6 +44,7 @@ const {
   tabindex={-1}
   style={`--gap: ${gap}; --peek: ${peek};`}
   {...rest}
+  data-starwind-toast-viewport
   data-slot="toast-viewport"
 >
   <!-- Hidden templates for each variant - JS will clone these -->
@@ -942,7 +943,7 @@ const {
 
   const setupToasts = () => {
     // Find the viewport in the current DOM
-    const viewport = document.querySelector(".starwind-toast-viewport") as HTMLElement | null;
+    const viewport = document.querySelector("[data-starwind-toast-viewport]") as HTMLElement | null;
 
     if (!viewport) {
       // No viewport on this page, destroy existing manager and clear references

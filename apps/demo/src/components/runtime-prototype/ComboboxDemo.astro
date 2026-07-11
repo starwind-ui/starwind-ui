@@ -1,0 +1,150 @@
+---
+import { button } from "@/components/starwind-runtime/button/variants";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxGroupLabel,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxSeparator,
+  ComboboxTrigger,
+} from "@/components/starwind-runtime/combobox";
+import { InputGroupAddon } from "@/components/starwind-runtime/input-group";
+
+const comboboxFruits = [
+  { label: "Apple", value: "apple" },
+  { label: "Apricot", value: "apricot" },
+  { label: "Banana", value: "banana" },
+  { disabled: true, label: "Dragonfruit", value: "dragonfruit" },
+];
+const comboboxCities = [
+  { label: "Kyoto", value: "kyoto" },
+  { label: "Lisbon", value: "lisbon" },
+  { label: "Montreal", value: "montreal" },
+];
+const comboboxDesserts = [
+  { label: "Apple tart", value: "apple-tart" },
+  { label: "Banana split", value: "banana-split" },
+  { label: "Cafe", value: "coffee-shop" },
+  { label: "Creme brulee", value: "custard" },
+];
+---
+
+<section class="mb-12">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Combobox</h2>
+  <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <form data-runtime-combobox-form class="space-y-3" onsubmit="event.preventDefault()">
+      <h3 class="font-heading text-base font-semibold">Uncontrolled searchable value</h3>
+      <Combobox id="runtime-combobox-fruit" defaultValue="banana" name="runtimeFruit" required>
+        <ComboboxLabel>Fruit</ComboboxLabel>
+        <ComboboxInput id="runtime-combobox-fruit-input" placeholder="Search fruit" />
+        <ComboboxContent id="runtime-combobox-fruit-content">
+          <ComboboxEmpty>No fruit found.</ComboboxEmpty>
+          <ComboboxGroup>
+            <ComboboxGroupLabel>Common fruit</ComboboxGroupLabel>
+            {
+              comboboxFruits.map((item) => (
+                <ComboboxItem
+                  id={`runtime-combobox-fruit-${item.value}`}
+                  value={item.value}
+                  disabled={item.disabled}
+                >
+                  {item.label}
+                </ComboboxItem>
+              ))
+            }
+          </ComboboxGroup>
+          <ComboboxSeparator />
+          <ComboboxItem id="runtime-combobox-fruit-pear" value="pear"> Pear </ComboboxItem>
+        </ComboboxContent>
+      </Combobox>
+    </form>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">asChild trigger</h3>
+      <Combobox id="runtime-combobox-city" defaultValue="kyoto" name="runtimeCity">
+        <ComboboxLabel>City</ComboboxLabel>
+        <ComboboxInput
+          id="runtime-combobox-city-input"
+          placeholder="Search city"
+          showTrigger={false}
+          class="h-9 text-sm [&_[data-slot=combobox-input]]:text-sm"
+        >
+          <InputGroupAddon align="inline-end">
+            <ComboboxTrigger asChild showIcon={false}>
+              <button
+                id="runtime-combobox-city-trigger"
+                type="button"
+                class={button({ variant: "outline", size: "sm" })}
+              >
+                Cities
+              </button>
+            </ComboboxTrigger>
+          </InputGroupAddon>
+        </ComboboxInput>
+        <ComboboxContent id="runtime-combobox-city-content" sideOffset={8}>
+          <ComboboxEmpty>No city found.</ComboboxEmpty>
+          {
+            comboboxCities.map((item) => (
+              <ComboboxItem id={`runtime-combobox-city-${item.value}`} value={item.value}>
+                {item.label}
+              </ComboboxItem>
+            ))
+          }
+        </ComboboxContent>
+      </Combobox>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Read-only form metadata</h3>
+      <Combobox
+        id="runtime-combobox-readonly"
+        defaultValue="kyoto"
+        name="runtimeReadonlyCity"
+        form="runtime-settings-form"
+        autoComplete="address-level2"
+        readOnly
+      >
+        <ComboboxLabel>Read-only city</ComboboxLabel>
+        <ComboboxInput id="runtime-combobox-readonly-input" placeholder="Search city" />
+        <ComboboxContent id="runtime-combobox-readonly-content">
+          <ComboboxEmpty>No city found.</ComboboxEmpty>
+          {
+            comboboxCities.map((item) => (
+              <ComboboxItem id={`runtime-combobox-readonly-${item.value}`} value={item.value}>
+                {item.label}
+              </ComboboxItem>
+            ))
+          }
+        </ComboboxContent>
+      </Combobox>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Starts-with filtering</h3>
+      <Combobox
+        id="runtime-combobox-starts-with"
+        name="runtimeDessert"
+        filterMode="startsWith"
+        locale="en"
+        highlightItemOnHover={false}
+      >
+        <ComboboxLabel>Dessert</ComboboxLabel>
+        <ComboboxInput id="runtime-combobox-starts-with-input" placeholder="Search dessert" />
+        <ComboboxContent id="runtime-combobox-starts-with-content">
+          <ComboboxEmpty>No dessert found.</ComboboxEmpty>
+          {
+            comboboxDesserts.map((item) => (
+              <ComboboxItem id={`runtime-combobox-starts-with-${item.value}`} value={item.value}>
+                {item.label}
+              </ComboboxItem>
+            ))
+          }
+        </ComboboxContent>
+      </Combobox>
+    </div>
+  </div>
+</section>

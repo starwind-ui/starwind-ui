@@ -1,0 +1,82 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import "./styles.css";
+import SidebarPrimitive from "@starwind-ui/astro/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../tooltip";
+import { sidebarMenuButton } from "./variants";
+
+type Props = HTMLAttributes<"button"> &
+  Omit<HTMLAttributes<"a">, "type"> &
+  VariantProps<typeof sidebarMenuButton> & {
+    asChild?: boolean;
+    isActive?: boolean;
+    tooltip?: string;
+  };
+
+const {
+  asChild = false,
+  isActive = false,
+  tooltip,
+  variant,
+  size = "default",
+  href,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const Tag = asChild ? "div" : href ? "a" : "button";
+const buttonClassName = sidebarMenuButton({ variant, size, class: className });
+---
+
+{
+  Boolean(tooltip) ? (
+    <Tooltip openDelay={0} closeDelay={0} class="w-full">
+      <TooltipTrigger class="w-full">
+        <SidebarPrimitive.MenuButton asChild={true}>
+          <Tag
+            class={buttonClassName}
+            data-sidebar="menu-button"
+            data-size={size}
+            data-active={isActive}
+            data-tooltip={tooltip}
+            href={href}
+            data-slot="sidebar-menu-button"
+            type={Tag === "button" ? "button" : undefined}
+            data-as-child={asChild ? true : undefined}
+            {...rest}
+          >
+            <slot />
+          </Tag>
+        </SidebarPrimitive.MenuButton>
+      </TooltipTrigger>
+
+      <TooltipContent
+        side="right"
+        align="center"
+        class="whitespace-nowrap"
+        data-sw-sidebar-tooltip-content
+      >
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
+  ) : (
+    <SidebarPrimitive.MenuButton asChild={true}>
+      <Tag
+        class={buttonClassName}
+        data-sidebar="menu-button"
+        data-size={size}
+        data-active={isActive}
+        data-tooltip={tooltip}
+        href={href}
+        data-slot="sidebar-menu-button"
+        type={Tag === "button" ? "button" : undefined}
+        data-as-child={asChild ? true : undefined}
+        {...rest}
+      >
+        <slot />
+      </Tag>
+    </SidebarPrimitive.MenuButton>
+  )
+}

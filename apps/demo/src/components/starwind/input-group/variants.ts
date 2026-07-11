@@ -2,7 +2,7 @@ import { tv } from "tailwind-variants";
 
 export const inputGroup = tv({
   base: [
-    "border-input dark:bg-input/30 group/input-group relative flex h-11 w-full min-w-0 items-center rounded-lg border transition-colors outline-none",
+    "border-input dark:bg-input/30 group/input-group relative flex h-11 w-full min-w-0 items-center rounded-lg border transition-[color,box-shadow] outline-none focus-within:transition-none",
     "has-[[data-slot=input-group-control]:focus-visible]:border-outline has-[[data-slot=input-group-control]:focus-visible]:ring-outline/50 has-[[data-slot=input-group-control]:focus-visible]:ring-3",
     "has-[[data-slot][aria-invalid=true]]:border-error has-[[data-slot][aria-invalid=true]]:ring-error/40 has-[[data-slot][aria-invalid=true]]:ring-3",
     "has-disabled:bg-input/50 has-disabled:opacity-50",

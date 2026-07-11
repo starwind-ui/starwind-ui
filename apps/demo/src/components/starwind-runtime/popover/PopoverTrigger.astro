@@ -1,0 +1,20 @@
+---
+import PopoverPrimitive from "@starwind-ui/astro/popover";
+import type { HTMLAttributes } from "astro/types";
+import { popoverTrigger } from "./variants";
+
+type Props = HTMLAttributes<"button"> & {
+  asChild?: boolean;
+};
+
+const { asChild = false, class: className, ...rest } = Astro.props;
+---
+
+<PopoverPrimitive.Trigger
+  class={popoverTrigger({ class: className })}
+  asChild={asChild}
+  {...rest}
+  data-slot="popover-trigger"
+>
+  <slot />
+</PopoverPrimitive.Trigger>

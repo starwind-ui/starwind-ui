@@ -2,7 +2,7 @@ import { tv } from "tailwind-variants";
 
 export const slider = tv({
   slots: {
-    root: "starwind-slider relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto",
+    root: "starwind-slider relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto",
     control:
       "starwind-slider-control relative w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-auto",
     track:

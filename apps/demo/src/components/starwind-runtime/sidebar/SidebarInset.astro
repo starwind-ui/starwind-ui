@@ -1,0 +1,15 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { sidebarInset } from "./variants";
+
+type Props = HTMLAttributes<"main"> & {
+  "data-slot"?: string;
+};
+
+const { "data-slot": dataSlot = "sidebar-inset", class: className, ...rest } = Astro.props;
+---
+
+<main class={sidebarInset({ class: className })} {...rest} data-slot={dataSlot}>
+  <slot />
+</main>

@@ -1,0 +1,20 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import { sidebarFooter } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  "data-slot"?: string;
+};
+
+const { "data-slot": dataSlot = "sidebar-footer", class: className, ...rest } = Astro.props;
+---
+
+<div
+  class={sidebarFooter({ class: className })}
+  data-sidebar="footer"
+  {...rest}
+  data-slot={dataSlot}
+>
+  <slot />
+</div>

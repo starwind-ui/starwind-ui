@@ -1,0 +1,40 @@
+import { AspectRatio } from "../kit";
+
+const aspectRatioImageSrc =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop stop-color='%230f766e'/%3E%3Cstop offset='0.55' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%23f59e0b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1600' height='900' fill='url(%23g)'/%3E%3Ccircle cx='1240' cy='230' r='170' fill='%23ffffff' fill-opacity='0.24'/%3E%3Cpath d='M0 700 380 430 720 640 1040 360 1600 740V900H0Z' fill='%230f172a' fill-opacity='0.5'/%3E%3C/svg%3E";
+
+export function AspectRatioDemo() {
+  return (
+    <section className="space-y-4" id="runtime-aspect-ratio-demo">
+      <h2 className="font-heading text-xl font-semibold">Aspect Ratio</h2>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div className="space-y-2">
+          <p className="text-sm font-medium">16:9 Media</p>
+          <AspectRatio
+            id="runtime-aspect-ratio-wide"
+            ratio={16 / 9}
+            className="bg-muted overflow-hidden rounded-lg"
+          >
+            <img
+              src={aspectRatioImageSrc}
+              alt="Layered abstract landscape"
+              className="h-full w-full object-cover"
+            />
+          </AspectRatio>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Square Article</p>
+          <AspectRatio
+            id="runtime-aspect-ratio-square"
+            as="article"
+            className="bg-muted flex flex-col justify-end rounded-lg border p-4"
+          >
+            <p className="text-sm font-medium">Runtime layout</p>
+            <p className="text-muted-foreground text-sm">The default ratio renders as a square.</p>
+          </AspectRatio>
+        </div>
+      </div>
+    </section>
+  );
+}

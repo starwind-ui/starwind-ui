@@ -1,11 +1,11 @@
 {
   "name": "starwind",
-  "version": "2.0.1",
-  "description": "Add beautifully designed components to your Astro applications",
+  "version": "3.0.0-beta.1",
+  "description": "Install and manage Starwind UI components in Astro and React applications",
   "license": "MIT",
   "homepage": "https://starwind.dev/",
   "author": {
-    "name": "webreaper",
+    "name": "boston343",
     "url": "https://x.com/boston343builds"
   },
   "repository": {
@@ -20,6 +20,8 @@
     "astro",
     "astro-component",
     "astro-ui",
+    "react",
+    "react-component",
     "withastro",
     "ui",
     "accessibility",
@@ -40,25 +42,23 @@
     "dev": "tsup --watch",
     "cli:link": "pnpm add --global . --ignore-scripts",
     "cli:unlink": "pnpm rm --global starwind",
-    "cli:yalc:link": "yalc publish && yalc link @starwind-ui/core",
-    "cli:yalc:unlink": "yalc remove @starwind-ui/core && yalc remove starwind",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
-    "format:write": "prettier --write \"**/*.{ts,tsx,md,json}\" --cache",
+    "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{ts,tsx,md,json}\"",
+    "format:write": "prettier --ignore-path ../../.prettierignore --write \"**/*.{ts,tsx,md,json}\" --cache",
     "publish:beta": "pnpm publish --tag beta --access public",
     "publish:next": "pnpm publish --tag next --access public",
     "publish:release": "pnpm publish --access public"
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
-    "@starwind-ui/core": "2.0.1",
     "chalk": "^5.6.2",
     "commander": "^14.0.2",
     "execa": "^9.6.0",
     "fs-extra": "^11.3.2",
+    "jsonc-parser": "^3.3.1",
     "semver": "^7.7.3",
     "zod": "^3.25.74"
   },

@@ -1,0 +1,55 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import {
+  Field,
+  FieldControl,
+  FieldDescription,
+  FieldLabel,
+} from "@/components/starwind-runtime/field";
+import { Form } from "@/components/starwind-runtime/form";
+---
+
+<section class="border-border mb-10 border-b pb-10">
+  <Form id="runtime-form-tracer" class="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+    <Field name="runtimeTracerName">
+      <FieldLabel>Form tracer</FieldLabel>
+      <FieldControl
+        id="runtime-form-tracer-name"
+        required
+        value="Ada Lovelace"
+        placeholder="Ada Lovelace"
+      />
+      <FieldDescription>One Form, one Field, normal FormData.</FieldDescription>
+    </Field>
+    <Button type="submit">Trace</Button>
+  </Form>
+
+  <output
+    id="runtime-form-tracer-output"
+    class="text-muted-foreground mt-3 block text-sm whitespace-pre-wrap"
+  >
+    Submit the tracer form to inspect its field.
+  </output>
+</section>
+
+<script>
+  const tracerForm = document.querySelector<HTMLFormElement>("#runtime-form-tracer");
+  const tracerOutput = document.querySelector<HTMLOutputElement>("#runtime-form-tracer-output");
+
+  const renderTracerOutput = (text: string) => {
+    if (!tracerOutput) return;
+    tracerOutput.value = text;
+    tracerOutput.textContent = text;
+  };
+
+  tracerForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = new FormData(tracerForm);
+    const entries = Array.from(data.entries()).map(([key, value]) => `${key}: ${value}`);
+    renderTracerOutput(entries.length > 0 ? entries.join("\n") : "No field submitted.");
+  });
+
+  tracerForm?.addEventListener("reset", () => {
+    window.setTimeout(() => renderTracerOutput("Submit the tracer form to inspect its field."), 0);
+  });
+</script>

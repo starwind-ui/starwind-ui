@@ -1,13 +1,25 @@
 import * as p from "@clack/prompts";
 
-import { type RemoveResult, removeComponent } from "@/utils/component.js";
-import { getConfig, updateConfig } from "@/utils/config.js";
+import { type RemoveResult, type RemoveTarget, removeComponent } from "@/utils/component.js";
+import {
+  type ComponentConfig,
+  getConfig,
+  getStyledComponentDir,
+  type StarwindConfig,
+  type StarwindFramework,
+  updateConfig,
+} from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { sleep } from "@/utils/sleep.js";
 
-export async function remove(components?: string[], options?: { all?: boolean }) {
+interface RemoveOptions {
+  all?: boolean;
+  framework?: StarwindFramework | "all";
+}
+
+export async function remove(components?: string[], options?: RemoveOptions) {
   try {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
 
@@ -19,28 +31,31 @@ export async function remove(components?: string[], options?: { all?: boolean })
       process.exit(1);
     }
 
-    // Get current config and installed components
+    // Read and validate config before planning any filesystem mutations.
     const config = await getConfig();
-    const installedComponents = config.components;
+    const installedTargets = getInstalledRemovalTargets(config);
 
-    if (installedComponents.length === 0) {
+    if (installedTargets.length === 0) {
       p.log.warn("No components are currently installed.");
       process.exit(0);
     }
 
-    let componentsToRemove: string[] = [];
+    const frameworkScope = options?.framework ?? getPrimaryFramework(config);
+    const scopedTargets = installedTargets.filter(
+      (target) => frameworkScope === "all" || target.framework === frameworkScope,
+    );
+    let targetsToRemove: RemoveTarget[] = [];
 
     // ================================================================
     //                     Get components to remove
     // ================================================================
     if (options?.all) {
-      // Remove all installed components
-      componentsToRemove = installedComponents.map((comp) => comp.name);
-      p.log.info(`Removing all ${componentsToRemove.length} installed components...`);
+      targetsToRemove = scopedTargets;
+      p.log.info(`Removing all ${targetsToRemove.length} installed components...`);
     } else if (components && components.length > 0) {
-      // Validate that all specified components are installed
-      const invalid = components.filter(
-        (comp) => !installedComponents.some((ic) => ic.name === comp),
+      const requestedNames = [...new Set(components)];
+      const invalid = requestedNames.filter(
+        (name) => !scopedTargets.some((target) => target.name === name),
       );
 
       if (invalid.length > 0) {
@@ -51,19 +66,19 @@ export async function remove(components?: string[], options?: { all?: boolean })
         );
       }
 
-      componentsToRemove = components.filter((comp) =>
-        installedComponents.some((ic) => ic.name === comp),
-      );
+      const requestedNameSet = new Set(requestedNames);
+      targetsToRemove = scopedTargets.filter((target) => requestedNameSet.has(target.name));
 
-      if (componentsToRemove.length === 0) {
+      if (targetsToRemove.length === 0) {
         p.log.warn("No valid components to remove");
         process.exit(0);
       }
     } else {
-      // Show interactive prompt with installed components
-      const choices = installedComponents.map((comp) => ({
-        value: comp.name,
-        label: comp.name,
+      const choices = scopedTargets.map((target) => ({
+        value: getRemovalTargetKey(target),
+        label: hasDuplicateName(scopedTargets, target.name)
+          ? formatRemovalTarget(target)
+          : target.name,
       }));
 
       const selected = await p.multiselect({
@@ -76,19 +91,22 @@ export async function remove(components?: string[], options?: { all?: boolean })
         process.exit(0);
       }
 
-      componentsToRemove = selected as string[];
+      const selectedKeys = new Set(selected as string[]);
+      targetsToRemove = scopedTargets.filter((target) =>
+        selectedKeys.has(getRemovalTargetKey(target)),
+      );
     }
 
-    if (componentsToRemove.length === 0) {
+    if (targetsToRemove.length === 0) {
       p.log.warn("No components selected for removal");
       process.exit(0);
     }
 
-    // Confirm removal
+    // Confirm removal using the exact framework-qualified identities.
     const confirmed = await p.confirm({
-      message: `Remove ${componentsToRemove
-        .map((comp) => highlighter.info(comp))
-        .join(", ")} ${componentsToRemove.length > 1 ? "components" : "component"}?`,
+      message: `Remove ${targetsToRemove
+        .map((target) => highlighter.info(formatRemovalTarget(target)))
+        .join(", ")} ${targetsToRemove.length > 1 ? "components" : "component"}?`,
     });
 
     if (!confirmed || p.isCancel(confirmed)) {
@@ -104,8 +122,8 @@ export async function remove(components?: string[], options?: { all?: boolean })
     // ================================================================
     //                     Remove Components
     // ================================================================
-    for (const comp of componentsToRemove) {
-      const result = await removeComponent(comp, config.componentDir);
+    for (const target of targetsToRemove) {
+      const result = await removeComponent(target);
       if (result.status === "removed") {
         results.removed.push(result);
       } else {
@@ -116,17 +134,14 @@ export async function remove(components?: string[], options?: { all?: boolean })
     // ================================================================
     //                     Update Config File
     // ================================================================
-    // Update config file by writing the filtered components directly
-    const updatedComponents = config.components.filter(
-      (comp) => !componentsToRemove.includes(comp.name),
-    );
-    await updateConfig(
-      {
-        ...config,
-        components: updatedComponents,
-      },
-      { appendComponents: false },
-    );
+    if (results.removed.length > 0) {
+      const successfulKeys = new Set(results.removed.map(getRemovalTargetKey));
+      const updatedComponents = config.components.filter(
+        (component) => !successfulKeys.has(getComponentConfigKey(config, component)),
+      );
+
+      await updateConfig({ components: updatedComponents }, { appendComponents: false });
+    }
 
     // ================================================================
     //                     Removal summary
@@ -136,7 +151,7 @@ export async function remove(components?: string[], options?: { all?: boolean })
     if (results.failed.length > 0) {
       p.log.error(
         `${highlighter.error("Failed to remove components:")}\n${results.failed
-          .map((r) => `  ${r.name} - ${r.error}`)
+          .map((result) => `  ${formatRemovalTarget(result)} - ${result.error}`)
           .join("\n")}`,
       );
     }
@@ -144,7 +159,7 @@ export async function remove(components?: string[], options?: { all?: boolean })
     if (results.removed.length > 0) {
       p.log.success(
         `${highlighter.success("Successfully removed components:")}\n${results.removed
-          .map((r) => `  ${r.name}`)
+          .map((result) => `  ${formatRemovalTarget(result)}`)
           .join("\n")}`,
       );
     }
@@ -162,4 +177,80 @@ export async function remove(components?: string[], options?: { all?: boolean })
     p.cancel("Operation cancelled");
     process.exit(1);
   }
+}
+
+function getInstalledRemovalTargets(config: StarwindConfig): RemoveTarget[] {
+  const targets = new Map<string, RemoveTarget>();
+
+  for (const component of config.components) {
+    const framework = getComponentFramework(config, component);
+    const configuredComponentDir = getStyledComponentDir(config, framework);
+    const componentDir = isLegacyComponent(config, component)
+      ? getLegacyStarwindComponentDir(configuredComponentDir)
+      : configuredComponentDir;
+    const target = {
+      name: component.name,
+      framework,
+      componentDir,
+    };
+
+    targets.set(getRemovalTargetKey(target), target);
+  }
+
+  return [...targets.values()];
+}
+
+function getPrimaryFramework(config: StarwindConfig): StarwindFramework {
+  if (config.framework === "astro" || config.framework === "react") {
+    return config.framework;
+  }
+
+  if (config.version !== 2) {
+    return "astro";
+  }
+
+  throw new Error("Unable to resolve the primary framework for installed components.");
+}
+
+function getComponentFramework(
+  config: StarwindConfig,
+  component: ComponentConfig,
+): StarwindFramework {
+  if (component.framework === "astro" || component.framework === "react") {
+    return component.framework;
+  }
+
+  if (component.source === "legacy" || config.version !== 2) {
+    return getPrimaryFramework(config);
+  }
+
+  throw new Error(`Unable to resolve the framework for component "${component.name}".`);
+}
+
+function isLegacyComponent(config: StarwindConfig, component: ComponentConfig): boolean {
+  return component.source === "legacy" || config.version !== 2;
+}
+
+function getLegacyStarwindComponentDir(componentDir: string): string {
+  const normalized = componentDir.replace(/\\/g, "/").replace(/\/+$/, "");
+
+  return normalized.endsWith("/starwind") || normalized === "starwind"
+    ? normalized
+    : `${normalized}/starwind`;
+}
+
+function getComponentConfigKey(config: StarwindConfig, component: ComponentConfig): string {
+  return `${getComponentFramework(config, component)}:${component.name}`;
+}
+
+function getRemovalTargetKey(target: Pick<RemoveTarget, "framework" | "name">): string {
+  return `${target.framework}:${target.name}`;
+}
+
+function hasDuplicateName(targets: RemoveTarget[], name: string): boolean {
+  return targets.filter((target) => target.name === name).length > 1;
+}
+
+function formatRemovalTarget(target: Pick<RemoveTarget, "framework" | "name">): string {
+  return `${target.name} [${target.framework}]`;
 }

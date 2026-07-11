@@ -1,0 +1,60 @@
+{
+  "name": "@starwind-ui/react",
+  "version": "0.1.0-beta.1",
+  "description": "React primitive adapters for Starwind UI Runtime components",
+  "license": "MIT",
+  "author": {
+    "name": "boston343",
+    "url": "https://x.com/boston343builds"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/starwind-ui/starwind-ui.git",
+    "directory": "packages/react"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{ts,tsx,md,json}\"",
+    "format:write": "prettier --ignore-path ../../.prettierignore --write \"**/*.{ts,tsx,md,json}\" --cache",
+    "publish:beta": "pnpm publish --tag beta --access public",
+    "publish:next": "pnpm publish --tag next --access public",
+    "publish:release": "pnpm publish --access public"
+  },
+  "dependencies": {
+    "@starwind-ui/runtime": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

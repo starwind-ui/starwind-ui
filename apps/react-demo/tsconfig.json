@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "types": ["vite/client"],
+    "paths": {
+      "@starwind-ui/react": ["../../packages/react/src/index.ts"],
+      "@starwind-ui/react/*": ["../../packages/react/src/*/index.ts"],
+      "@starwind-ui/runtime": ["../../packages/runtime/src/index.ts"],
+      "@starwind-ui/runtime/init-starwind": ["../../packages/runtime/src/init-starwind.ts"],
+      "@starwind-ui/runtime/theme": ["../../packages/runtime/src/theme/theme.ts"],
+      "@starwind-ui/runtime/*": ["../../packages/runtime/src/components/*/index.ts"]
+    }
+  },
+  "include": [
+    "src",
+    "vite.config.ts",
+    "../../packages/react/src/**/*.ts",
+    "../../packages/react/src/**/*.tsx",
+    "../../packages/runtime/src/**/*.ts"
+  ],
+  "exclude": [
+    "../../packages/runtime/src/**/*.test.ts",
+    "../../packages/runtime/src/**/*.browser.test.ts"
+  ],
+  "references": []
+}

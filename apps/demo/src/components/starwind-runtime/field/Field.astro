@@ -1,0 +1,47 @@
+---
+import FieldPrimitive from "@starwind-ui/astro/field";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { field } from "./variants";
+
+interface Props extends HTMLAttributes<"div">, VariantProps<typeof field> {
+  dirty?: boolean;
+  disabled?: boolean;
+  errorVisibility?: import("@starwind-ui/astro/form").FormValidationTiming;
+  invalid?: boolean;
+  name?: string;
+  revalidationTiming?: import("@starwind-ui/astro/form").FormValidationTiming;
+  touched?: boolean;
+  validationTiming?: import("@starwind-ui/astro/form").FormValidationTiming;
+}
+
+const {
+  dirty,
+  disabled = false,
+  errorVisibility,
+  invalid,
+  name,
+  orientation,
+  revalidationTiming,
+  touched,
+  validationTiming,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<FieldPrimitive.Root
+  class={field({ orientation, class: className })}
+  dirty={dirty}
+  disabled={disabled}
+  errorVisibility={errorVisibility}
+  invalid={invalid}
+  name={name}
+  revalidationTiming={revalidationTiming}
+  touched={touched}
+  validationTiming={validationTiming}
+  {...rest}
+  data-slot="field"
+>
+  <slot />
+</FieldPrimitive.Root>

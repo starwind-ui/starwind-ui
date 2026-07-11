@@ -1,0 +1,14 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import { fieldTitle } from "./variants";
+
+type Props = HTMLAttributes<"div"> & VariantProps<typeof fieldTitle>;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class={fieldTitle({ class: className })} {...rest} data-slot="field-title">
+  <slot />
+</div>

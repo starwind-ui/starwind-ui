@@ -1,0 +1,27 @@
+---
+import Dots from "@tabler/icons/outline/dots.svg";
+import type { HTMLAttributes } from "astro/types";
+
+import { breadcrumbEllipsis } from "./variants";
+
+type Props = HTMLAttributes<"span">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<span
+  data-sw-breadcrumb-ellipsis
+  role="presentation"
+  aria-hidden="true"
+  class={breadcrumbEllipsis({ class: className })}
+  {...rest}
+  data-slot="breadcrumb-ellipsis"
+>
+  <slot name="icon">
+    <Dots />
+  </slot>
+
+  <slot>
+    <span class="sr-only">More</span>
+  </slot>
+</span>

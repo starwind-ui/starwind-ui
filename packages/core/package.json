@@ -4,7 +4,7 @@
   "description": "Starwind UI core components and registry",
   "license": "MIT",
   "author": {
-    "name": "webreaper",
+    "name": "boston343",
     "url": "https://x.com/boston343builds"
   },
   "repository": {
@@ -31,17 +31,13 @@
     "build": "pnpm clean && tsup",
     "clean": "node -e \"require('fs-extra').remove('dist')\"",
     "dev": "tsup --watch",
-    "core:link": "yalc publish",
-    "core:unlink": "yalc remove @starwind-ui/core",
-    "core:yalc:link": "yalc publish",
-    "core:yalc:unlink": "yalc remove @starwind-ui/core",
     "publish:beta": "pnpm publish --tag beta --access public",
     "publish:next": "pnpm publish --tag next --access public",
     "publish:release": "pnpm publish --access public"
   },
   "devDependencies": {
     "@types/node": "^24.12.4",
-    "astro": "^5.11.0",
+    "astro": "^7.0.0",
     "fs-extra": "^11.3.3",
     "glob": "^13.0.0",
     "tailwindcss": "^4.1.11",

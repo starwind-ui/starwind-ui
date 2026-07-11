@@ -1,0 +1,18 @@
+---
+import SidebarPrimitive from "@starwind-ui/astro/sidebar";
+import type { HTMLAttributes } from "astro/types";
+import { sidebarRail } from "./variants";
+
+type Props = HTMLAttributes<"button">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<SidebarPrimitive.Rail
+  class={sidebarRail({ class: className })}
+  data-sidebar="rail"
+  aria-label="Toggle Sidebar"
+  tabindex="-1"
+  {...rest}
+  data-slot="sidebar-rail"
+/>

@@ -1,0 +1,185 @@
+---
+import Bell from "@tabler/icons/outline/bell.svg";
+import ChartBar from "@tabler/icons/outline/chart-bar.svg";
+import Dots from "@tabler/icons/outline/dots.svg";
+import Folder from "@tabler/icons/outline/folder.svg";
+import Home from "@tabler/icons/outline/home.svg";
+import Plus from "@tabler/icons/outline/plus.svg";
+import Search from "@tabler/icons/outline/search.svg";
+import Settings from "@tabler/icons/outline/settings.svg";
+import UserCircle from "@tabler/icons/outline/user-circle.svg";
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupAction,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSkeleton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+} from "@/components/starwind-runtime/sidebar";
+---
+
+<section class="mb-12" id="runtime-sidebar-demo">
+  <h2 class="font-heading mb-4 text-2xl font-semibold">Sidebar</h2>
+
+  <SidebarProvider
+    class="relative min-h-[34rem] overflow-hidden rounded-lg border"
+    keyboardShortcut="b"
+    persistOpen
+    persistenceStorage="localStorage"
+    persistenceKey="starwind-runtime-sidebar-prototype-open"
+  >
+    <Sidebar
+      collapsible="icon"
+      variant="inset"
+      class="relative [&_[data-slot=sidebar-container]]:!absolute [&_[data-slot=sidebar-container]]:!h-full"
+    >
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton variant="outline" size="lg" tooltip="Starwind">
+              <div
+                class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-10 items-center justify-center rounded-lg"
+              >
+                <span class="text-sm font-semibold">SW</span>
+              </div>
+              <div class="grid flex-1 text-left text-sm leading-tight">
+                <span class="truncate font-semibold">Starwind</span>
+                <span class="text-sidebar-foreground/70 truncate text-xs">Runtime demo</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <div class="relative group-data-[collapsible=icon]:hidden">
+          <Search
+            class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+            aria-hidden="true"
+          />
+          <SidebarInput placeholder="Search workspace" class="pl-9" />
+        </div>
+      </SidebarHeader>
+
+      <SidebarSeparator />
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+          <SidebarGroupAction aria-label="Create workspace item">
+            <Plus aria-hidden="true" />
+          </SidebarGroupAction>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#" isActive tooltip="Home">
+                  <Home aria-hidden="true" />
+                  <span>Home</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#" tooltip="Reports">
+                  <ChartBar aria-hidden="true" />
+                  <span>Reports</span>
+                </SidebarMenuButton>
+                <SidebarMenuBadge>12</SidebarMenuBadge>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#" tooltip="Projects">
+                  <Folder aria-hidden="true" />
+                  <span>Projects</span>
+                </SidebarMenuButton>
+                <SidebarMenuAction showOnHover aria-label="Project actions">
+                  <Dots aria-hidden="true" />
+                </SidebarMenuAction>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Nested</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip="Settings">
+                  <Settings aria-hidden="true" />
+                  <span>Settings</span>
+                </SidebarMenuButton>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton href="#" isActive>
+                      <span>Profile</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton href="#">
+                      <span>Team</span>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              </SidebarMenuItem>
+              <SidebarMenuSkeleton />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton variant="outline" size="lg" tooltip="Account">
+              <UserCircle aria-hidden="true" />
+              <div class="grid flex-1 text-left text-sm leading-tight">
+                <span class="truncate font-semibold">Demo User</span>
+                <span class="text-sidebar-foreground/70 truncate text-xs">demo@example.com</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+
+      <SidebarRail />
+    </Sidebar>
+
+    <SidebarInset>
+      <header class="flex h-14 items-center gap-3 border-b px-4">
+        <SidebarTrigger id="runtime-sidebar-trigger" />
+        <div class="min-w-0 flex-1">
+          <h3 class="truncate text-sm font-medium">Runtime Sidebar Fixture</h3>
+        </div>
+        <Bell class="text-muted-foreground size-4" aria-hidden="true" />
+      </header>
+
+      <div class="grid flex-1 gap-4 p-4 md:grid-cols-2">
+        <div class="bg-muted/50 rounded-lg border p-4">
+          <p class="text-sm font-medium">Keyboard and trigger state</p>
+          <p class="text-muted-foreground mt-2 text-sm">
+            Toggle with the trigger, rail, or Ctrl+B while focus is outside an input.
+          </p>
+        </div>
+        <div class="bg-muted/50 rounded-lg border p-4">
+          <p class="text-sm font-medium">Collapsed tooltips</p>
+          <p class="text-muted-foreground mt-2 text-sm">
+            Menu tooltips are gated until the icon sidebar is collapsed.
+          </p>
+        </div>
+      </div>
+    </SidebarInset>
+  </SidebarProvider>
+</section>
