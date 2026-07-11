@@ -26,6 +26,7 @@
     "test:coverage": "vitest run --coverage",
     "test:coverage:all": "pnpm test:coverage && pnpm runtime:test:coverage",
     "test:homes": "node scripts/check-test-homes.mjs",
+    "test:published-beta": "node scripts/published-beta-acceptance.mjs",
     "cli:dev": "pnpm --filter=starwind dev",
     "cli:build": "pnpm --filter=starwind build",
     "cli:start": "pnpm --filter=starwind start:dev",

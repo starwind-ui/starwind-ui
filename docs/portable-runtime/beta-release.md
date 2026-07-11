@@ -69,6 +69,18 @@ the Astro/React dependencies on Runtime. Then install `starwind@beta` in disposa
 projects, add `button`, `dialog`, and `context-menu`, build both projects, and exercise Dialog and
 Context Menu behavior in a browser.
 
+Run the persistent published-package acceptance harness with the exact CLI version:
+
+```bash
+pnpm test:published-beta -- --version 3.0.0-beta.1
+```
+
+The harness creates disposable Astro and React projects, installs the exact published CLI, verifies
+the installed adapter and Runtime beta versions, builds both projects, and checks Dialog and Context
+Menu behavior in Chromium. It removes temporary projects after the run. The public repository also
+exposes the same check as the manually dispatched **Published Beta Acceptance** workflow, with logs,
+screenshots on browser failure, and a package-version summary uploaded as workflow diagnostics.
+
 ## Partial publish recovery
 
 If publishing fails, stop and query all four exact versions on npm. Continue only when the packages
