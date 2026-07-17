@@ -10,5 +10,15 @@
     "@starwind-ui/react": "0.1.0-beta.1",
     "@starwind-ui/runtime": "0.1.0-beta.1"
   },
-  "changesets": ["cli-runtime-release", "runtime-adapter-platform"]
+  "changesets": [
+    "accordion-collapsible-default",
+    "button-runtime-boundary",
+    "cli-color-picker",
+    "cli-runtime-release",
+    "dialog-sheet-entry-animation-timing",
+    "runtime-adapter-platform",
+    "runtime-beta-release-preparation",
+    "runtime-color-picker",
+    "secondary-button-token-hover"
+  ]
 }
