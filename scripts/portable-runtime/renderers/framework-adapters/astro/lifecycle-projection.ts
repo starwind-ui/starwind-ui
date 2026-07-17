@@ -12,6 +12,13 @@ type AstroRuntimeSetupArgs = {
   setupFunction: string;
 };
 
+type AstroConditionalRuntimeSetupArgs = AstroRuntimeSetupArgs & {
+  disabledAttribute: string;
+  setter: string;
+  truthyAttribute: string;
+  truthyValue: string;
+};
+
 type AstroRuntimeSetupWithCleanupArgs = AstroRuntimeSetupArgs & {
   destroyFunction: string;
   instancesName: string;
@@ -21,9 +28,27 @@ type AstroRuntimeSetupWithCleanupArgs = AstroRuntimeSetupArgs & {
 type AstroLifecycleProjection = {
   printFileEnvelope(contents: string): string;
   printRestPropsBinding(args: AstroRestPropsBindingArgs): string;
+  printConditionalRuntimeSetup(args: AstroConditionalRuntimeSetupArgs): string;
   printRuntimeSetup(args: AstroRuntimeSetupArgs): string;
   printRuntimeSetupWithCleanup(args: AstroRuntimeSetupWithCleanupArgs): string;
 };
+
+function printConditionalRuntimeSetup({
+  disabledAttribute,
+  elementName,
+  factory,
+  importSource,
+  selectorAttribute,
+  setter,
+  setupFunction,
+  truthyAttribute,
+  truthyValue,
+}: AstroConditionalRuntimeSetupArgs): string {
+  const selector = `[${selectorAttribute}][${truthyAttribute}="${truthyValue}"]`;
+  const selectorLiteral = `'${selector}'`;
+
+  return `\n<script>\n  import { ${factory} } from "${importSource}";\n\n  const getInitCandidates = (event: Event | undefined, selector: string): HTMLButtonElement[] => {\n    const initRoot =\n      event?.type === "starwind:init" && event instanceof CustomEvent\n        ? event.detail?.root\n        : undefined;\n    const scopedRoot: Document | DocumentFragment | Element = isQueryableRoot(initRoot)\n      ? initRoot\n      : document;\n    const candidates = Array.from(scopedRoot.querySelectorAll<HTMLButtonElement>(selector));\n\n    if (scopedRoot instanceof HTMLButtonElement && scopedRoot.matches(selector)) {\n      candidates.unshift(scopedRoot);\n    }\n\n    return candidates;\n  };\n\n  const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>\n    value instanceof Document || value instanceof DocumentFragment || value instanceof Element;\n\n  const ${setupFunction} = (event?: Event) => {\n    getInitCandidates(event, ${selectorLiteral}).forEach((${elementName}) =>\n      ${factory}(${elementName}).${setter}(${elementName}.hasAttribute("${disabledAttribute}")),\n    );\n  };\n\n  ${setupFunction}();\n  document.addEventListener("astro:after-swap", ${setupFunction});\n  document.addEventListener("starwind:init", ${setupFunction});\n</script>\n`;
+}
 
 function printFileEnvelope(contents: string): string {
   return `---\n${contents}\n---`;
@@ -63,6 +88,7 @@ function printRuntimeSetupWithCleanup({
 }
 
 export const astroLifecycleProjection = {
+  printConditionalRuntimeSetup,
   printFileEnvelope,
   printRestPropsBinding,
   printRuntimeSetup,

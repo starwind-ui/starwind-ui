@@ -42,7 +42,7 @@
     "runtime:unlink": "pnpm rm --global @starwind-ui/runtime",
     "core:build": "pnpm --filter=@starwind-ui/core build",
     "core:dev": "pnpm --filter=@starwind-ui/core dev",
-    "l": "pnpm runtime:build && pnpm react:build && pnpm cli:build && pnpm runtime:link && pnpm astro:link && pnpm react:link && pnpm cli:link",
+    "l": "pnpm build && pnpm runtime:link && pnpm astro:link && pnpm react:link && pnpm cli:link",
     "ul": "pnpm astro:unlink && pnpm react:unlink && pnpm runtime:unlink && pnpm cli:unlink",
     "demo:dev": "pnpm --filter=demo dev",
     "demo:build": "pnpm --filter=demo build",

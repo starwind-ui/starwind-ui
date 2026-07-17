@@ -1897,9 +1897,15 @@ describe("portable runtime generator structure", () => {
     expect(actionSurfaceFamily).toContain("focusableWhenDisabled: getAdapterFamilyProp(");
     expect(actionSurfaceFamily).toContain('getPlanProp(plan, "focusableWhenDisabled")');
     expect(actionSurfaceFamily).toContain('type: getAdapterFamilyProp(getPlanProp(plan, "type"))');
+    expect(actionSurfaceFamily).toContain('getRuntimeOptionProps(plan, ["disabled"])');
+    expect(actionSurfaceFamily).toContain('getSetterForProp(plan, "disabled")');
+    expect(actionSurfaceFamily).toContain('truthyValue: "true"');
     expect(outputModelBuilder).not.toContain("isButtonRootOutput");
     expect(reactActionSurfacePrinter).toContain("focusableWhenDisabled");
     expect(reactActionSurfacePrinter).toContain("${facts.runtime.factory}(root");
+    expect(reactActionSurfacePrinter).toContain("facts.runtime.disabledSetter.method");
+    expect(reactActionSurfacePrinter).toContain("dependencies: [focusableWhenDisabled]");
+    expect(reactActionSurfacePrinter).toContain("dependencies: [disabled]");
   });
 
   it("uses Input contract value, event, form, and native-input-value facts in its renderers", async () => {

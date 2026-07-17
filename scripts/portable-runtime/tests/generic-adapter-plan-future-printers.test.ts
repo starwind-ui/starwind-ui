@@ -39,7 +39,10 @@ describe("GenericAdapterPlan future framework tracer printers", () => {
     expect(buttonRoot).toContain('<script setup lang="ts">');
     expect(buttonRoot).toContain("const props = withDefaults(\n  defineProps<");
     expect(buttonRoot).toContain("onMounted(() => {");
+    expect(buttonRoot).toContain("if (!root.value || !props.focusableWhenDisabled)");
     expect(buttonRoot).toContain("createButton(root.value, {");
+    expect(buttonRoot).not.toContain("focusableWhenDisabled: props.focusableWhenDisabled");
+    expect(buttonRoot).toContain("instance?.setDisabled(disabled);");
     expect(buttonRoot).toContain(":data-disabled=\"props.disabled ? '' : undefined\"");
     expect(buttonRoot).toContain("<slot />");
 
@@ -122,9 +125,12 @@ describe("GenericAdapterPlan future framework tracer printers", () => {
     const buttonRoot = firstRun.find((file) => file.path.endsWith("ButtonRoot.tsx"))?.contents;
     const toggleRoot = firstRun.find((file) => file.path.endsWith("ToggleRoot.tsx"))?.contents;
 
-    expect(buttonRoot).toContain("import { mergeProps, onCleanup, onMount, splitProps }");
+    expect(buttonRoot).toContain("import { createEffect, mergeProps, onCleanup, splitProps }");
     expect(buttonRoot).toContain("export type ButtonRootProps =");
-    expect(buttonRoot).toContain("const instance = createButton(root, {");
+    expect(buttonRoot).toContain("if (!local.focusableWhenDisabled)");
+    expect(buttonRoot).toContain("instance ??= createButton(root, {");
+    expect(buttonRoot).not.toContain("focusableWhenDisabled: local.focusableWhenDisabled");
+    expect(buttonRoot).toContain("instance?.setDisabled(local.disabled);");
     expect(buttonRoot).toContain("data-sw-button");
     expect(buttonRoot).toContain("{local.children}");
 

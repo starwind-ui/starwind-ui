@@ -304,6 +304,15 @@ export type AdapterActionSurfaceFacts = {
     type: AdapterFamilyProp;
   };
   runtime: {
+    conditionalInit: {
+      attribute: string;
+      prop: string;
+      truthyValue: string;
+    };
+    disabledSetter: {
+      method: string;
+      prop: string;
+    };
     factory: string;
     importSource: string;
     optionProps: string[];

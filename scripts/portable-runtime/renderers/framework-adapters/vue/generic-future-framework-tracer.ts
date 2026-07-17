@@ -80,7 +80,96 @@ function renderVueButtonRoot(plan: GenericAdapterPlan, part: GenericAdapterPlanP
   const disabledDefault = getPlanPropDefault(plan, "disabled");
   const focusableWhenDisabledDefault = getPlanPropDefault(plan, "focusableWhenDisabled");
 
+  if (plan.component === "button") {
+    return renderConditionalVueButtonRoot(
+      plan,
+      part,
+      disabledDefault,
+      focusableWhenDisabledDefault,
+    );
+  }
+
   return `<!-- Non-shipping future framework tracer fixture. Do not publish, export, register, or copy into demo dependencies. -->\n<script setup lang="ts">\nimport { ${factory} } from "${plan.runtime.importSource}";\nimport { onBeforeUnmount, onMounted, ref, watch } from "vue";\n\nconst props = withDefaults(\n  defineProps<{\n    disabled?: boolean;\n    focusableWhenDisabled?: boolean;\n    type?: "button" | "submit" | "reset";\n  }>(),\n  {\n    disabled: ${disabledDefault},\n    focusableWhenDisabled: ${focusableWhenDisabledDefault},\n    type: "button",\n  },\n);\n\nconst root = ref<HTMLButtonElement | null>(null);\nlet instance: ReturnType<typeof ${factory}> | undefined;\n\nfunction setup() {\n  instance?.destroy();\n  instance = root.value\n    ? ${factory}(root.value, {\n        disabled: props.disabled,\n        focusableWhenDisabled: props.focusableWhenDisabled,\n      })\n    : undefined;\n}\n\nonMounted(() => {\n  setup();\n});\n\nwatch(\n  () => [props.disabled, props.focusableWhenDisabled] as const,\n  () => {\n    setup();\n  },\n);\n\nonBeforeUnmount(() => {\n  instance?.destroy();\n  instance = undefined;\n});\n</script>\n\n<template>\n  <button\n    ref="root"\n    ${part.discoveryAttribute}\n    :aria-disabled="props.disabled && props.focusableWhenDisabled ? 'true' : undefined"\n    :data-disabled="props.disabled ? '' : undefined"\n    :data-focusable-when-disabled="props.focusableWhenDisabled ? 'true' : undefined"\n    :disabled="props.disabled && !props.focusableWhenDisabled"\n    :type="props.type"\n  >\n    <slot />\n  </button>\n</template>\n`;
+}
+
+function renderConditionalVueButtonRoot(
+  plan: GenericAdapterPlan,
+  part: GenericAdapterPlanPart,
+  disabledDefault: string,
+  focusableWhenDisabledDefault: string,
+): string {
+  const factory = plan.runtime.factory;
+
+  return `<!-- Non-shipping future framework tracer fixture. Do not publish, export, register, or copy into demo dependencies. -->
+<script setup lang="ts">
+import { ${factory} } from "${plan.runtime.importSource}";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+
+const props = withDefaults(
+  defineProps<{
+    disabled?: boolean;
+    focusableWhenDisabled?: boolean;
+    type?: "button" | "submit" | "reset";
+  }>(),
+  {
+    disabled: ${disabledDefault},
+    focusableWhenDisabled: ${focusableWhenDisabledDefault},
+    type: "button",
+  },
+);
+
+const root = ref<HTMLButtonElement | null>(null);
+let instance: ReturnType<typeof ${factory}> | undefined;
+
+function setup() {
+  instance?.destroy();
+  instance = undefined;
+
+  if (!root.value || !props.focusableWhenDisabled) return;
+
+  instance = ${factory}(root.value, {
+    disabled: props.disabled,
+  });
+}
+
+onMounted(() => {
+  setup();
+});
+
+watch(
+  () => props.focusableWhenDisabled,
+  () => {
+    setup();
+  },
+);
+
+watch(
+  () => props.disabled,
+  (disabled) => {
+    instance?.setDisabled(disabled);
+  },
+);
+
+onBeforeUnmount(() => {
+  instance?.destroy();
+  instance = undefined;
+});
+</script>
+
+<template>
+  <button
+    ref="root"
+    ${part.discoveryAttribute}
+    :aria-disabled="props.disabled && props.focusableWhenDisabled ? 'true' : undefined"
+    :data-disabled="props.disabled ? '' : undefined"
+    :data-focusable-when-disabled="props.focusableWhenDisabled ? 'true' : undefined"
+    :disabled="props.disabled && !props.focusableWhenDisabled"
+    :type="props.type"
+  >
+    <slot />
+  </button>
+</template>
+`;
 }
 
 function renderVueToggleRoot(plan: GenericAdapterPlan, part: GenericAdapterPlanPart): string {

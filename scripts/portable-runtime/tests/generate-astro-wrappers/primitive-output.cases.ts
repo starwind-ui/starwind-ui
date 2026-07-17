@@ -470,7 +470,10 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(buttonRoot).not.toContain(removedAttr("data-sw-button", "focusable-when-disabled"));
     expect(buttonRoot).not.toContain(removedAttr("data-sw-button", "native"));
     expect(buttonRoot).not.toContain("const Tag");
-    expect(buttonRoot).toContain("createButton(button)");
+    expect(buttonRoot).toContain('[data-sw-button][data-focusable-when-disabled="true"]');
+    expect(buttonRoot).toContain(
+      'createButton(button)).setDisabled(button.hasAttribute("data-disabled"))',
+    );
     expect(buttonRoot).not.toContain("tailwind-variants");
 
     expect(accordionRoot).toContain(

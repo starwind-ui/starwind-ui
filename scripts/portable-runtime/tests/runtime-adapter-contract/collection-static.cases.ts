@@ -11,7 +11,8 @@ export function defineRuntimeCollectionStaticTests(): void {
     expect(button.runtime).toMatchObject({
       factory: "createButton",
       importSource: "@starwind-ui/runtime/button",
-      optionProps: ["disabled", "focusableWhenDisabled"],
+      optionPropLifecycles: { disabled: "setter-backed" },
+      optionProps: ["disabled"],
       rootPart: "root",
     });
     expect(button.parts).toEqual([
@@ -34,9 +35,16 @@ export function defineRuntimeCollectionStaticTests(): void {
       { kind: "attribute", name: "type", targets: ["root"], type: "button | submit | reset" },
     ]);
     expect(button.refs).toEqual([{ part: "root", public: true }]);
+    expect(button.setters).toEqual([{ method: "setDisabled", prop: "disabled" }]);
     expect(button.initialMarkup).toContainEqual(
       expect.objectContaining({
-        attributes: ["data-sw-button", "type", "data-disabled", "aria-disabled"],
+        attributes: [
+          "data-sw-button",
+          "data-focusable-when-disabled",
+          "type",
+          "data-disabled",
+          "aria-disabled",
+        ],
         part: "root",
       }),
     );

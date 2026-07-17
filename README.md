@@ -15,11 +15,11 @@
 Starwind UI gives you accessible, Tailwind CSS components with Starwind/shadcn-style ergonomics,
 backed by a portable Runtime that powers Astro and React adapters today.
 
-**[Get Started →](https://starwind.dev/docs/getting-started/installation/)** &nbsp;|&nbsp; **[Explore Components](https://starwind.dev/docs/components/)**
+**[Explore Components](https://starwind.dev/docs/components/)**
 
 ## Why Starwind?
 
-- **🎯 Own Your Code** — Components live in your project, not hidden in `node_modules`. Customize everything.
+- **🎯 Own Your Code** — Styled components live in your project, where you can understand and customize them.
 - **✨ Animated by Default** — Smooth, polished animations out of the box with Tailwind CSS v4.
 - **♿ Accessible** — Keyboard navigable and screen reader friendly. Built with a11y in mind.
 - **🚀 Portable Runtime** — Shared DOM behavior with generated Astro and React adapters.
@@ -27,7 +27,7 @@ backed by a portable Runtime that powers Astro and React adapters today.
 
 > Looking for the main package? See [starwind-ui/cli](/packages/cli/README.md).
 
-## Quick Start
+## Runtime Beta — Astro and React
 
 The portable Runtime is currently available through the `beta` channel for Astro and React:
 
@@ -35,17 +35,15 @@ The portable Runtime is currently available through the `beta` channel for Astro
 npx starwind@beta init
 ```
 
-Color Picker is not part of the Runtime beta. Existing Astro projects can migrate its recognized
-legacy implementation through a compatibility bridge, but fresh Runtime and React installs do not
-include it.
+## Stable — Astro
 
-### Initialize your project
+Initialize an Astro project with the current stable release:
 
 ```bash
 npx starwind@latest init
 ```
 
-### Select components to add
+Then select components to add:
 
 ```bash
 npx starwind@latest add
@@ -53,36 +51,20 @@ npx starwind@latest add
 
 ## Runtime Architecture
 
-Runtime behavior is framework-neutral. Adapter contracts and plans describe the component facts,
-the Adapter Output Model describes the generated files, and target Framework Adapters turn that
-model into Astro, React, and future framework packages.
+Starwind components use a framework adapter backed by the shared, framework-neutral Runtime.
 
 ```mermaid
 flowchart TD
-  Runtime["@starwind-ui/runtime<br/>behavior controllers"]
-  Contract["Runtime Adapter Contract<br/>framework-neutral facts"]
-  Generic["Generic Adapter Plan"]
-  Static["Static Adapter Plan"]
-  Family["Adapter Family Plan"]
-  Spec["Specialized Adapter Spec<br/>component-specific adapter vocabulary"]
-  Output["Adapter Output Model<br/>generated file description"]
-  Framework["Framework Adapter layer<br/>Astro, React, future Vue/Solid/Svelte"]
-  Astro["packages/astro<br/>generated .astro adapters"]
-  React["packages/react<br/>generated .tsx adapters"]
-  Future["future adapter package<br/>generated framework files"]
+  App["Your application"]
+  Components["Starwind components you own<br/>Tailwind CSS + framework markup"]
+  Adapter["Framework adapter<br/>Astro or React"]
+  Runtime["Starwind Runtime<br/>shared accessible behavior"]
+  Browser["Browser APIs and the DOM"]
 
-  Runtime --> Contract
-  Contract --> Generic
-  Generic --> Static
-  Generic --> Family
-  Contract --> Spec
-  Static --> Output
-  Family --> Output
-  Spec --> Output
-  Output --> Framework
-  Framework --> Astro
-  Framework --> React
-  Framework --> Future
+  App --> Components
+  Components --> Adapter
+  Adapter --> Runtime
+  Runtime --> Browser
 ```
 
 See [Portable Runtime](docs/portable-runtime/README.md) for the current implementation details.

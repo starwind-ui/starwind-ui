@@ -11,9 +11,7 @@ export function printReactActionSurfaceComponent(
   return printReactActionSurfaceRoot(family.facts);
 }
 
-export function printReactActionSurfaceIndex(
-  family: AdapterActionSurfaceIndexProjection,
-): string {
+export function printReactActionSurfaceIndex(family: AdapterActionSurfaceIndexProjection): string {
   const facts = family.facts;
   const imports = facts.index.importMembers
     .map((member) => `import ${member.name} from "${member.from}";`)
@@ -37,17 +35,24 @@ function printReactActionSurfaceRoot(facts: AdapterActionSurfaceFacts): string {
   const part = facts.parts.root;
   const elementType = getElementType(part.defaultElement);
   const propsType = `${exportName}Props`;
-  const rootRef = reactLifecycleProjection.printRootRef({ elementType, indentation: "  " });
+  const rootRef = `${reactLifecycleProjection.printRootRef({ elementType, indentation: "  " })}\n  const instanceRef = React.useRef<ReturnType<typeof ${facts.runtime.factory}> | null>(null);\n  const disabledRef = React.useRef(${disabled});\n  disabledRef.current = ${disabled};`;
   const composedRef = reactLifecycleProjection.printComposedRefCallback({
     elementType,
     indentation: "  ",
   });
-  const runtimeEffect = reactLifecycleProjection.printEffect({
-    body: `const root = rootRef.current;\nif (!root) return;\n\nconst instance = ${facts.runtime.factory}(root, {\n  ${disabled},\n  ${focusableWhenDisabled},\n});\n\nreturn () => {\n  instance.destroy();\n};`,
-    dependencies: facts.runtime.optionProps,
+  const conditionalRuntimeEffect = reactLifecycleProjection.printEffect({
+    body: `if (!${focusableWhenDisabled}) {\n  instanceRef.current?.destroy();\n  instanceRef.current = null;\n  return;\n}\n\nconst root = rootRef.current;\nif (!root) return;\n\nconst instance = ${facts.runtime.factory}(root, {\n  ${disabled}: disabledRef.current,\n});\ninstanceRef.current = instance;\n\nreturn () => {\n  if (instanceRef.current === instance) {\n    instanceRef.current = null;\n  }\n  instance.destroy();\n};`,
+    dependencies: [focusableWhenDisabled],
     hook: "useIsomorphicLayoutEffect",
     indentation: "  ",
   });
+  const disabledSetterEffect = reactLifecycleProjection.printEffect({
+    body: `instanceRef.current?.${facts.runtime.disabledSetter.method}(${disabled});`,
+    dependencies: [disabled],
+    hook: "useIsomorphicLayoutEffect",
+    indentation: "  ",
+  });
+  const runtimeEffect = `${conditionalRuntimeEffect}\n\n${disabledSetterEffect}`;
   const protectedDiscovery = part.discoveryAttributeOwnership === "protected";
   const leadingDiscoveryAttribute = protectedDiscovery ? "" : `\n      ${part.discoveryAttribute}`;
   const trailingDiscoveryAttribute = protectedDiscovery ? `\n      ${part.discoveryAttribute}` : "";

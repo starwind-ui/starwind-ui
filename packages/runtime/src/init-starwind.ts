@@ -34,6 +34,7 @@ import { createToastManager } from "./components/toast";
 import { createToggle } from "./components/toggle";
 import { createToggleGroup } from "./components/toggle-group";
 import { createTooltip } from "./components/tooltip";
+import { readBooleanAttribute } from "./internal/dom";
 import { initThemeController } from "./theme/theme";
 
 export type StarwindCleanup = {
@@ -68,8 +69,12 @@ const initializerEntries = [
   },
   {
     cleanupOrder: 0,
-    create: (buttonRoot) => createButton(buttonRoot),
-    selector: "[data-sw-button]",
+    create: (buttonRoot) =>
+      buttonRoot instanceof HTMLButtonElement &&
+      readBooleanAttribute(buttonRoot, "data-focusable-when-disabled", false)
+        ? createButton(buttonRoot)
+        : null,
+    selector: "[data-sw-button][data-focusable-when-disabled]",
   },
   {
     cleanupOrder: 1,

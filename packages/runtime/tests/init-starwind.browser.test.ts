@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createButton } from "../src/components/button";
 import { initStarwind } from "../src/init-starwind";
 
 type TrackedCleanup = ReturnType<typeof initStarwind>;
@@ -51,16 +52,80 @@ describe("initStarwind", () => {
     expect(document.querySelector<HTMLElement>("[data-sw-accordion-content]")!.hidden).toBe(false);
   });
 
-  it("initializes buttons under the provided root", () => {
+  it.each([
+    ["ordinary buttons", ""],
+    ["ordinary disabled buttons", " disabled"],
+    ["false-valued opt-ins", ' data-focusable-when-disabled="false"'],
+  ])("does not initialize %s", (_name, attribute) => {
     document.body.innerHTML = `
       <section id="target">
-        <button data-sw-button>Save</button>
+        <button data-sw-button${attribute}>Save</button>
       </section>
     `;
+    const button = document.querySelector<HTMLButtonElement>("[data-sw-button]")!;
+    const addEventListener = vi.spyOn(button, "addEventListener");
 
     initStarwindForTest(document.querySelector("#target")!);
 
-    expect(document.querySelector<HTMLButtonElement>("[data-sw-button]")!.type).toBe("button");
+    expect(addEventListener).not.toHaveBeenCalled();
+    expect(button.getAttribute("type")).toBeNull();
+
+    const directInstance = createButton(button, { disabled: true });
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    directInstance.destroy();
+  });
+
+  it.each([
+    ["present", ""],
+    ["true-valued", '="true"'],
+    ["other truthy-valued", '="yes"'],
+  ])("initializes an initially enabled button with a %s opt-in", (_name, value) => {
+    document.body.innerHTML = `
+      <section id="target">
+        <button data-sw-button data-focusable-when-disabled${value}>Save</button>
+      </section>
+    `;
+    const button = document.querySelector<HTMLButtonElement>("[data-sw-button]")!;
+    const onClick = vi.fn();
+    button.addEventListener("click", onClick);
+
+    initStarwindForTest(document.querySelector("#target")!);
+    const instance = createButton(button);
+    instance.setDisabled(true);
+    button.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("initializes an initially disabled opted-in button", () => {
+    document.body.innerHTML = `
+      <button data-sw-button data-focusable-when-disabled disabled>Save</button>
+    `;
+    const button = document.querySelector<HTMLButtonElement>("[data-sw-button]")!;
+
+    initStarwindForTest();
+
+    expect(button.disabled).toBe(false);
+    expect(button.hasAttribute("data-disabled")).toBe(true);
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("skips malformed non-button matches without interrupting initialization", () => {
+    document.body.innerHTML = `
+      <div data-sw-button data-focusable-when-disabled>Malformed button</div>
+      <button data-sw-toggle>Bold</button>
+    `;
+
+    expect(() => initStarwindForTest()).not.toThrow();
+
+    const malformed = document.querySelector<HTMLElement>("[data-sw-button]")!;
+    const toggle = document.querySelector<HTMLButtonElement>("[data-sw-toggle]")!;
+    toggle.click();
+
+    expect(malformed.getAttribute("role")).toBeNull();
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
   });
 
   it("initializes color pickers only under the provided root", () => {
@@ -124,10 +189,10 @@ describe("initStarwind", () => {
   it("scans the provided root once for initializer candidates", () => {
     document.body.innerHTML = `
       <section id="target">
-        <button data-sw-button>Save</button>
+        <button data-sw-button data-focusable-when-disabled>Save</button>
         <button data-sw-toggle>Bold</button>
       </section>
-      <button id="outside" data-sw-button>Outside</button>
+      <button id="outside" data-sw-button data-focusable-when-disabled disabled>Outside</button>
     `;
     const target = document.querySelector<HTMLElement>("#target")!;
     const querySelectorAll = vi.spyOn(target, "querySelectorAll");
@@ -135,20 +200,22 @@ describe("initStarwind", () => {
     initStarwindForTest(target);
 
     expect(querySelectorAll).toHaveBeenCalledTimes(1);
-    expect(String(querySelectorAll.mock.calls[0]?.[0])).toContain("[data-sw-button]");
+    expect(String(querySelectorAll.mock.calls[0]?.[0])).toContain(
+      "[data-sw-button][data-focusable-when-disabled]",
+    );
     expect(String(querySelectorAll.mock.calls[0]?.[0])).toContain("[data-sw-toggle]");
-    expect(target.querySelector<HTMLButtonElement>("[data-sw-button]")!.type).toBe("button");
-    expect(document.querySelector<HTMLButtonElement>("#outside")!.type).toBe("submit");
+    expect(target.querySelector<HTMLButtonElement>("[data-sw-button]")!.disabled).toBe(false);
+    expect(document.querySelector<HTMLButtonElement>("#outside")!.disabled).toBe(true);
   });
 
   it("preserves querySelectorAll root-element exclusion behavior", () => {
     document.body.innerHTML = `
-      <button id="target" data-sw-button>Save</button>
+      <button id="target" data-sw-button data-focusable-when-disabled disabled>Save</button>
     `;
 
     initStarwindForTest(document.querySelector("#target")!);
 
-    expect(document.querySelector<HTMLButtonElement>("#target")!.type).toBe("submit");
+    expect(document.querySelector<HTMLButtonElement>("#target")!.disabled).toBe(true);
   });
 
   it("initializes inputs under the provided root", () => {
@@ -484,21 +551,21 @@ describe("initStarwind", () => {
     ).toBe('["bold"]');
   });
 
-  it("cleanup destroys initialized buttons", () => {
+  it("cleanup destroys initialized opted-in buttons", () => {
     document.body.innerHTML = `
-      <div data-sw-button data-native="false">Open</div>
+      <button data-sw-button data-focusable-when-disabled disabled>Save</button>
     `;
 
-    const button = document.querySelector<HTMLElement>("[data-sw-button]")!;
+    const button = document.querySelector<HTMLButtonElement>("[data-sw-button]")!;
     const onClick = vi.fn();
     const cleanup = initStarwindForTest();
     button.addEventListener("click", onClick);
 
-    button.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
-    expect(onClick).toHaveBeenCalledTimes(1);
+    button.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(onClick).not.toHaveBeenCalled();
 
     cleanup.destroy();
-    button.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
+    button.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
 
     expect(onClick).toHaveBeenCalledTimes(1);
   });

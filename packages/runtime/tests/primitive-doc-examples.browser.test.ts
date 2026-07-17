@@ -10,6 +10,7 @@ type RuntimeInstance = {
   getOpen?: () => boolean;
   getValue?: () => string;
   setChecked?: (checked: boolean, options?: { emit?: boolean }) => void;
+  setDisabled?: (disabled: boolean) => void;
   setOpen?: (open: boolean, options?: { emit?: boolean }) => void;
   setValue?: (value: string, options?: { emit?: boolean }) => void;
 };
@@ -56,6 +57,21 @@ describe("primitive docs raw HTML examples", () => {
   }
 
   it("preserves representative behavior in generated raw HTML examples", () => {
+    const button = mountRawHtmlExample("button");
+    expect(button.root).toBeInstanceOf(HTMLButtonElement);
+    expect(button.root.getAttribute("type")).toBe("button");
+    expect(button.root.hasAttribute("data-focusable-when-disabled")).toBe(true);
+    button.root.focus();
+    button.instance.setDisabled?.(true);
+    expect(document.activeElement).toBe(button.root);
+    expect(button.root.getAttribute("aria-disabled")).toBe("true");
+    expect(button.root.hasAttribute("data-disabled")).toBe(true);
+    expect((button.root as HTMLButtonElement).disabled).toBe(false);
+    button.instance.setDisabled?.(false);
+    expect(button.root.hasAttribute("aria-disabled")).toBe(false);
+    expect(button.root.hasAttribute("data-disabled")).toBe(false);
+    button.instance.destroy?.();
+
     const checkbox = mountRawHtmlExample("checkbox");
     checkbox.instance.setChecked?.(true, { emit: false });
     expect(checkbox.instance.getChecked?.()).toBe(true);

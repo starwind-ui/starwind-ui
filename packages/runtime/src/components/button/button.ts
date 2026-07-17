@@ -1,24 +1,25 @@
-import { assertHTMLElement, readBooleanAttribute, setBooleanAttribute } from "../../internal/dom";
+import { assertHTMLElement, setBooleanAttribute } from "../../internal/dom";
 
 export type ButtonOptions = {
   disabled?: boolean;
-  focusableWhenDisabled?: boolean;
-  nativeButton?: boolean;
 };
 
 export type ButtonInstance = {
-  readonly root: HTMLElement;
+  readonly root: HTMLButtonElement;
   destroy(): void;
+  setDisabled(disabled: boolean): void;
 };
 
 const BUTTON_ROOT_ATTRIBUTE = "data-sw-button";
-const BUTTON_FOCUSABLE_WHEN_DISABLED_ATTRIBUTE = "data-focusable-when-disabled";
-const BUTTON_NATIVE_ATTRIBUTE = "data-native";
 
-const instances = new WeakMap<HTMLElement, ButtonController>();
+const instances = new WeakMap<HTMLButtonElement, ButtonController>();
 
-export function createButton(root: HTMLElement, options: ButtonOptions = {}): ButtonInstance {
+export function createButton(root: HTMLButtonElement, options: ButtonOptions = {}): ButtonInstance {
   assertHTMLElement(root, "createButton root");
+
+  if (!(root instanceof HTMLButtonElement)) {
+    throw new TypeError("createButton root must be an HTMLButtonElement.");
+  }
 
   const existing = instances.get(root);
   if (existing) return existing;
@@ -29,23 +30,15 @@ export function createButton(root: HTMLElement, options: ButtonOptions = {}): Bu
 }
 
 class ButtonController implements ButtonInstance {
-  readonly root: HTMLElement;
+  readonly root: HTMLButtonElement;
 
   private readonly abortController = new AbortController();
-  private readonly disabled: boolean;
-  private readonly focusableWhenDisabled: boolean;
-  private readonly nativeButton: boolean;
   private destroyed = false;
+  private disabled: boolean;
 
-  constructor(root: HTMLElement, options: ButtonOptions) {
+  constructor(root: HTMLButtonElement, options: ButtonOptions) {
     this.root = root;
     this.disabled = options.disabled ?? isDisabled(root);
-    this.focusableWhenDisabled =
-      options.focusableWhenDisabled ??
-      readBooleanAttribute(root, BUTTON_FOCUSABLE_WHEN_DISABLED_ATTRIBUTE, false);
-    this.nativeButton =
-      options.nativeButton ??
-      readBooleanAttribute(root, BUTTON_NATIVE_ATTRIBUTE, root instanceof HTMLButtonElement);
 
     this.render();
     this.bindEvents();
@@ -59,140 +52,66 @@ class ButtonController implements ButtonInstance {
     this.destroyed = true;
   }
 
-  private render(): void {
-    this.root.setAttribute(BUTTON_ROOT_ATTRIBUTE, "");
-    setBooleanAttribute(this.root, "data-disabled", this.disabled);
+  setDisabled(disabled: boolean): void {
+    if (this.disabled === disabled) return;
 
-    if (this.root instanceof HTMLButtonElement) {
-      if (!this.root.getAttribute("type")) {
-        this.root.setAttribute("type", "button");
-      }
-
-      this.root.disabled = this.disabled && !this.focusableWhenDisabled;
-      setAriaDisabled(this.root, this.disabled && this.focusableWhenDisabled);
-      return;
-    }
-
-    if (this.isLink()) {
-      this.renderLink();
-      return;
-    }
-
-    if (!this.nativeButton) {
-      if (!this.root.getAttribute("role")) {
-        this.root.setAttribute("role", "button");
-      }
-
-      if (!this.root.hasAttribute("tabindex")) {
-        this.root.tabIndex = this.disabled && !this.focusableWhenDisabled ? -1 : 0;
-      }
-    }
-
-    setAriaDisabled(this.root, this.disabled);
+    this.disabled = disabled;
+    this.render();
   }
 
-  private renderLink(): void {
+  private render(): void {
+    this.root.setAttribute(BUTTON_ROOT_ATTRIBUTE, "");
+    this.root.disabled = false;
+    setBooleanAttribute(this.root, "data-disabled", this.disabled);
     setAriaDisabled(this.root, this.disabled);
-
-    if (this.disabled && !this.focusableWhenDisabled && !this.root.hasAttribute("tabindex")) {
-      this.root.tabIndex = -1;
-    }
   }
 
   private bindEvents(): void {
     const { signal } = this.abortController;
 
-    this.root.addEventListener("click", this.handleClick, { capture: true, signal });
-    this.root.addEventListener("mousedown", this.handleMouseDown, { capture: true, signal });
-    this.root.addEventListener("pointerdown", this.handlePointerDown, { capture: true, signal });
-    this.root.addEventListener("keydown", this.handleKeyDown, { capture: true, signal });
-    this.root.addEventListener("keyup", this.handleKeyUp, { capture: true, signal });
+    this.root.addEventListener("click", this.handleActivationEvent, { capture: true, signal });
+    this.root.addEventListener("mousedown", this.handleActivationEvent, { capture: true, signal });
+    this.root.addEventListener("pointerdown", this.handleActivationEvent, {
+      capture: true,
+      signal,
+    });
+    this.root.addEventListener("keydown", this.handleKeyboardEvent, { capture: true, signal });
+    this.root.addEventListener("keyup", this.handleKeyboardEvent, { capture: true, signal });
   }
 
-  private readonly handleClick = (event: MouseEvent): void => {
+  private readonly handleActivationEvent = (event: Event): void => {
     this.suppressDisabledEvent(event);
   };
 
-  private readonly handleMouseDown = (event: MouseEvent): void => {
+  private readonly handleKeyboardEvent = (event: KeyboardEvent): void => {
+    if (event.target !== this.root || !isActivationKey(event)) return;
+
     this.suppressDisabledEvent(event);
   };
 
-  private readonly handlePointerDown = (event: PointerEvent): void => {
-    this.suppressDisabledEvent(event);
-  };
-
-  private readonly handleKeyDown = (event: KeyboardEvent): void => {
-    if (this.suppressDisabledKeyboardEvent(event)) return;
-    if (!this.shouldHandleKeyboardEvent(event)) return;
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      this.root.click();
-      return;
-    }
-
-    if (event.key === " ") {
-      event.preventDefault();
-    }
-  };
-
-  private readonly handleKeyUp = (event: KeyboardEvent): void => {
-    if (this.suppressDisabledKeyboardEvent(event)) return;
-    if (!this.shouldHandleKeyboardEvent(event)) return;
-
-    if (event.key === " ") {
-      event.preventDefault();
-      this.root.click();
-    }
-  };
-
-  private shouldHandleKeyboardEvent(event: KeyboardEvent): boolean {
-    if (event.target !== this.root) return false;
-    if (this.root instanceof HTMLButtonElement) return false;
-    if (this.isLink()) return false;
-
-    return !this.nativeButton && (event.key === "Enter" || event.key === " ");
-  }
-
-  private suppressDisabledEvent(event: Event): boolean {
-    if (!this.disabled) return false;
+  private suppressDisabledEvent(event: Event): void {
+    if (!this.disabled) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
-    return true;
-  }
-
-  private suppressDisabledKeyboardEvent(event: KeyboardEvent): boolean {
-    if (!this.disabled) return false;
-    if (event.target !== this.root) return false;
-    if (!isActivationKey(event)) return false;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    return true;
-  }
-
-  private isLink(): boolean {
-    return this.root instanceof HTMLAnchorElement && this.root.hasAttribute("href");
   }
 }
 
-function isDisabled(element: HTMLElement): boolean {
+function isDisabled(button: HTMLButtonElement): boolean {
   return (
-    (element instanceof HTMLButtonElement && element.disabled) ||
-    element.hasAttribute("disabled") ||
-    element.hasAttribute("data-disabled") ||
-    element.getAttribute("aria-disabled") === "true"
+    button.disabled ||
+    button.hasAttribute("data-disabled") ||
+    button.getAttribute("aria-disabled") === "true"
   );
 }
 
-function setAriaDisabled(element: HTMLElement, disabled: boolean): void {
+function setAriaDisabled(button: HTMLButtonElement, disabled: boolean): void {
   if (disabled) {
-    element.setAttribute("aria-disabled", "true");
+    button.setAttribute("aria-disabled", "true");
     return;
   }
 
-  element.removeAttribute("aria-disabled");
+  button.removeAttribute("aria-disabled");
 }
 
 function isActivationKey(event: KeyboardEvent): boolean {

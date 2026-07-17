@@ -40,7 +40,6 @@ type MigrationReport = {
   legacy: string[];
   migrated: string[];
   skipped: string[];
-  compatibility: string[];
   codemods: {
     applied: string[];
     skipped: string[];
@@ -97,7 +96,6 @@ export async function migrate(options?: MigrateOptions): Promise<void> {
         skipped: [],
         unavailable: [],
       },
-      compatibility: [],
     };
 
     const existingFolders = await listDirectories(componentDir);
@@ -157,34 +155,10 @@ export async function migrate(options?: MigrateOptions): Promise<void> {
       }
     }
 
-    const hasLegacyColorPicker = legacyConfig.components.some(
-      (component) => component.name === "color-picker",
-    );
-    const canBridgeLegacyColorPicker = hasLegacyColorPicker
-      ? await canApplyLegacyColorPickerSelectBridge(componentDir)
-      : false;
-    const keepLegacySelect = hasLegacyColorPicker && !canBridgeLegacyColorPicker;
-    if (keepLegacySelect) {
-      report.compatibility.push(
-        "Color Picker is customized, so Select remains legacy to preserve compatibility; unrelated components will continue migrating.",
-      );
-    }
-
     const componentsToMigrate: string[] = [];
     const conflicts: MigrationPlanItem[] = [];
 
     for (const item of migrationPlan.values()) {
-      if (item.component.name === "select" && keepLegacySelect) {
-        const legacySelect = item.legacyComponent ??
-          legacyConfig.components.find((component) => component.name === "select") ?? {
-            name: "select",
-            version: "0.0.0",
-          };
-        report.legacy.push("select");
-        legacyComponents.set("select", toLegacyComponent(legacySelect));
-        continue;
-      }
-
       const componentPath = path.join(componentDir, item.component.name);
       const hasExistingFolder = await fs.pathExists(componentPath);
 
@@ -310,17 +284,6 @@ export async function migrate(options?: MigrateOptions): Promise<void> {
           skipPrompts: options?.yes,
         });
         report.codemods[codemodResult].push(formatRenameCodemodLabel(item.rename));
-      }
-
-      if (hasLegacyColorPicker && installedNames.has("select")) {
-        const bridgeResult = await applyLegacyColorPickerSelectBridge(componentDir);
-        report.compatibility.push(
-          bridgeResult === "applied"
-            ? "Color Picker remains legacy Astro-only; added its Runtime Select event bridge."
-            : bridgeResult === "already-applied"
-              ? "Color Picker remains legacy Astro-only; its Runtime Select event bridge was already present."
-              : "Color Picker remains legacy Astro-only and customized; verify its Select integration manually.",
-        );
       }
     }
 
@@ -611,59 +574,6 @@ ${formatIndentedList(report.codemods.unavailable)}`,
 ${formatIndentedList(report.custom)}`,
     );
   }
-
-  report.compatibility.forEach((message) => p.log.warn(highlighter.warn(message)));
-}
-
-type ColorPickerBridgeResult = "already-applied" | "applied" | "unavailable";
-
-async function canApplyLegacyColorPickerSelectBridge(componentDir: string): Promise<boolean> {
-  const relativePath = path.posix.join(
-    componentDir.replace(/\\/g, "/"),
-    "color-picker/ColorPicker.astro",
-  );
-  if (!(await fs.pathExists(relativePath))) return false;
-
-  const content = await fs.readFile(relativePath, "utf8");
-  return (
-    content.includes('"starwind:value-change", handleColorFormatChange') ||
-    /colorFormatSelect\.addEventListener\(\s*"starwind-select:change",\s*\(event: Event\) => \{([\s\S]*?)\},\s*\{ signal: abortController\.signal \},\s*\);/.test(
-      content,
-    )
-  );
-}
-
-async function applyLegacyColorPickerSelectBridge(
-  componentDir: string,
-): Promise<ColorPickerBridgeResult> {
-  const relativePath = path.posix.join(
-    componentDir.replace(/\\/g, "/"),
-    "color-picker/ColorPicker.astro",
-  );
-  if (!(await fs.pathExists(relativePath))) return "unavailable";
-
-  const content = await fs.readFile(relativePath, "utf8");
-  if (content.includes('"starwind:value-change", handleColorFormatChange')) {
-    return "already-applied";
-  }
-
-  const listenerPattern =
-    /colorFormatSelect\.addEventListener\(\s*"starwind-select:change",\s*\(event: Event\) => \{([\s\S]*?)\},\s*\{ signal: abortController\.signal \},\s*\);/;
-  const match = content.match(listenerPattern);
-  if (!match) return "unavailable";
-
-  const body = match[1]!;
-  const replacement = `const handleColorFormatChange = (event: Event) => {${body}};
-
-    colorFormatSelect.addEventListener("starwind-select:change", handleColorFormatChange, {
-      signal: abortController.signal,
-    });
-    colorFormatSelect.addEventListener("starwind:value-change", handleColorFormatChange, {
-      signal: abortController.signal,
-    });`;
-  const destination = await resolveProjectMutationPath(relativePath);
-  await fs.writeFile(destination, content.replace(listenerPattern, replacement), "utf8");
-  return "applied";
 }
 
 function formatIndentedList(items: string[]): string {

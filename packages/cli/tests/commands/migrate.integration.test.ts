@@ -166,6 +166,25 @@ const registryFixture: registry.StarwindRegistry = {
       },
     },
     {
+      name: "color-picker",
+      version: "0.1.0",
+      type: "component",
+      dependencies: [],
+      targets: {
+        astro: {
+          files: [
+            {
+              path: "src/components/starwind/color-picker/ColorPicker.astro",
+              content:
+                '---\nimport ColorPickerPrimitive from "@starwind-ui/astro/color-picker";\n---\n<ColorPickerPrimitive.Root data-slot="color-picker" />\n',
+            },
+          ],
+          componentDependencies: ["select"],
+          packageRequirements: [{ name: "@starwind-ui/astro", range: "^1.0.0" }],
+        },
+      },
+    },
+    {
       name: "select",
       version: "2.0.0",
       type: "component",
@@ -379,7 +398,7 @@ describe.sequential("migrate command", () => {
     expect(loggedOutput).not.toContain("Unavailable codemods");
   });
 
-  it("keeps the legacy Astro Color Picker working with Runtime Select events", async () => {
+  it("migrates customized legacy Color Picker and Select components to Runtime versions", async () => {
     await writeLegacyConfig([
       { name: "color-picker", version: "1.0.0" },
       { name: "select", version: "1.0.0" },
@@ -388,21 +407,7 @@ describe.sequential("migrate command", () => {
       tempDir,
       "color-picker",
       "ColorPicker.astro",
-      `<script>
-  const colorFormatSelect = document.querySelector("select")!;
-  const abortController = new AbortController();
-  let currentColorFormat = "hex";
-  const updateTextInput = () => {};
-  type ColorPickerChangeEvent = CustomEvent<{ value: string }>;
-  colorFormatSelect.addEventListener(
-    "starwind-select:change",
-    (event: Event) => {
-      currentColorFormat = (event as ColorPickerChangeEvent).detail.value;
-      updateTextInput();
-    },
-    { signal: abortController.signal },
-  );
-</script>`,
+      "<script>/* customized legacy color picker */</script>",
     );
     await writeComponent(tempDir, "select", "Select.astro", "<div>legacy select</div>");
 
@@ -412,50 +417,24 @@ describe.sequential("migrate command", () => {
       join(tempDir, "src", "components", "starwind", "color-picker", "ColorPicker.astro"),
       "utf8",
     );
-    expect(colorPicker).toContain(
-      'colorFormatSelect.addEventListener("starwind-select:change", handleColorFormatChange',
-    );
-    expect(colorPicker).toContain(
-      'colorFormatSelect.addEventListener("starwind:value-change", handleColorFormatChange',
-    );
-    expect(getLoggedOutput()).toContain("Color Picker remains legacy Astro-only");
+    expect(colorPicker).toContain("@starwind-ui/astro/color-picker");
+    await expect(
+      readFile(join(tempDir, "src", "components", "starwind", "select", "Select.astro"), "utf8"),
+    ).resolves.toContain('data-slot="select"');
 
     const config = JSON.parse(await readFile("starwind.config.json", "utf8"));
     expect(config.components).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ name: "color-picker", source: "legacy" }),
+        expect.objectContaining({ name: "color-picker", framework: "astro", version: "0.1.0" }),
         expect.objectContaining({ name: "select", framework: "astro", version: "2.0.0" }),
       ]),
     );
-  });
-
-  it("keeps Select legacy when a customized Color Picker cannot be bridged", async () => {
-    await writeLegacyConfig([
-      { name: "color-picker", version: "1.0.0" },
-      { name: "select", version: "1.0.0" },
-      { name: "button", version: "1.0.0" },
-    ]);
-    await writeComponent(
-      tempDir,
-      "color-picker",
-      "ColorPicker.astro",
-      "<script>/* customized format integration */</script>",
+    expect(config.components).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ source: "legacy" })]),
     );
-    await writeComponent(tempDir, "select", "Select.astro", "<div>legacy select</div>");
-
-    await migrate({ packageManager: "pnpm", yes: true });
-
-    await expect(
-      readFile(join(tempDir, "src", "components", "starwind", "select", "Select.astro"), "utf8"),
-    ).resolves.toContain("legacy select");
-    const config = JSON.parse(await readFile("starwind.config.json", "utf8"));
-    expect(config.components).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ name: "select", source: "legacy" }),
-        expect.objectContaining({ name: "button", framework: "astro", version: "2.0.0" }),
-      ]),
+    expect(getLoggedOutput()).not.toMatch(
+      /Color Picker.*legacy|legacy Astro-only|Select remains legacy/,
     );
-    expect(getLoggedOutput()).toContain("Select remains legacy");
   });
 
   it("does not reinstall registry packages already present as local links", async () => {
