@@ -29,7 +29,10 @@ import {
 } from "../generate-cli-registry.js";
 import { getPrimitiveFrameworkAdapterTarget } from "../renderers/framework-adapters/index.js";
 
-const CURRENT_BETA_PACKAGE_RANGE = "^0.1.0-beta.1";
+const runtimePackage = JSON.parse(
+  await readFile(new URL("../../../packages/runtime/package.json", import.meta.url), "utf8"),
+) as { version: string };
+const CURRENT_BETA_PACKAGE_RANGE = `^${runtimePackage.version}`;
 
 describe("generateCliRegistry", () => {
   let tempRoot: string;
