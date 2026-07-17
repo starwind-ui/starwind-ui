@@ -64,9 +64,7 @@ describe("release package tooling", () => {
     expect(root.scripts?.["publish:release:dry-run"]).toContain(
       "node scripts/release-packages.mjs --dry-run",
     );
-    expect(root.scripts?.["publish:release"]).toContain(
-      "node scripts/release-packages.mjs --publish",
-    );
+    expect(root.scripts?.["publish:release"]).toBe("node scripts/release-packages.mjs --publish");
     expect(root.scripts?.["publish:beta:dry-run"]).toBe("pnpm publish:release:dry-run");
     expect(root.scripts?.["publish:beta"]).toBe("pnpm publish:release");
     expect(root.scripts?.["release:gate"]).toContain("pnpm verify");
