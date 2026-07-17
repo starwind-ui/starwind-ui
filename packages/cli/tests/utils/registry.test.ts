@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -12,7 +13,10 @@ import {
   type StarwindRegistry,
 } from "../../src/utils/registry.js";
 
-const CURRENT_BETA_PACKAGE_RANGE = "^0.1.0-beta.1";
+const runtimePackage = JSON.parse(
+  readFileSync(new URL("../../../runtime/package.json", import.meta.url), "utf8"),
+) as { version: string };
+const CURRENT_BETA_PACKAGE_RANGE = `^${runtimePackage.version}`;
 
 const validRegistry: StarwindRegistry = {
   $schema: "https://starwind.dev/registry-schema.v2.json",

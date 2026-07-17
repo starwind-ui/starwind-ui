@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PATHS } from "../../src/utils/constants.js";
@@ -55,6 +57,12 @@ import * as tsconfig from "../../src/utils/tsconfig.js";
 import * as viteConfig from "../../src/utils/vite-config.js";
 import { init } from "../../src/commands/init.js";
 import { migrate } from "../../src/commands/migrate.js";
+
+const runtimePackage = JSON.parse(
+  readFileSync(new URL("../../../runtime/package.json", import.meta.url), "utf8"),
+) as { version: string };
+const CURRENT_ASTRO_SPEC = `@starwind-ui/astro@${runtimePackage.version}`;
+const CURRENT_REACT_SPEC = `@starwind-ui/react@${runtimePackage.version}`;
 
 const mockTasks = vi.mocked(clackPrompts.tasks);
 const mockGroup = vi.mocked(clackPrompts.group);
@@ -164,10 +172,7 @@ describe("init command", () => {
     expect(mockSetupReactViteConfig).toHaveBeenCalled();
     expect(mockSetupReactCssImport).toHaveBeenCalledWith(PATHS.LOCAL_CSS_FILE);
     expect(mockSetupTsConfig).toHaveBeenCalledWith("react");
-    expect(mockInstallDependencies).toHaveBeenCalledWith(
-      ["@starwind-ui/react@0.1.0-beta.1"],
-      "pnpm",
-    );
+    expect(mockInstallDependencies).toHaveBeenCalledWith([CURRENT_REACT_SPEC], "pnpm");
   });
 
   it("configures Pro authorization during fresh init without shadcn components config", async () => {
@@ -235,10 +240,7 @@ describe("init command", () => {
       }),
       { appendComponents: false },
     );
-    expect(mockInstallDependencies).toHaveBeenCalledWith(
-      ["@starwind-ui/react@0.1.0-beta.1"],
-      "pnpm",
-    );
+    expect(mockInstallDependencies).toHaveBeenCalledWith([CURRENT_REACT_SPEC], "pnpm");
 
     vi.clearAllMocks();
     mockDefaultProject();
@@ -251,10 +253,7 @@ describe("init command", () => {
       }),
       { appendComponents: false },
     );
-    expect(mockInstallDependencies).toHaveBeenCalledWith(
-      ["@starwind-ui/astro@0.1.0-beta.1"],
-      "pnpm",
-    );
+    expect(mockInstallDependencies).toHaveBeenCalledWith([CURRENT_ASTRO_SPEC], "pnpm");
   });
 
   it("recommends migrate for legacy configs before writing runtime setup", async () => {

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -42,7 +43,10 @@ import * as packageManager from "../../src/utils/package-manager.js";
 const mockInstallDependencies = vi.mocked(packageManager.installDependencies);
 const mockConfirm = vi.mocked(clackPrompts.confirm);
 const mockLog = vi.mocked(clackPrompts.log);
-const CURRENT_BETA_RUNTIME_SPEC = "@starwind-ui/runtime@^0.1.0-beta.1";
+const runtimePackage = JSON.parse(
+  readFileSync(new URL("../../../runtime/package.json", import.meta.url), "utf8"),
+) as { version: string };
+const CURRENT_BETA_RUNTIME_SPEC = `@starwind-ui/runtime@^${runtimePackage.version}`;
 
 describe.sequential("primitives add integration", () => {
   let tempDir = "";

@@ -56,6 +56,7 @@
     "check": "pnpm lint:check && pnpm typecheck && pnpm format:check",
     "verify": "pnpm check && pnpm test:all && pnpm test:homes && pnpm runtime:generate:test && pnpm runtime:generate:typecheck && pnpm runtime:docs:metadata:check && pnpm build && pnpm audit --prod --audit-level high",
     "version": "changeset version",
+    "release:version": "changeset version && pnpm runtime:registry:generate",
     "local:release": "pnpm build && changeset version && changeset publish",
     "release:prepare": "pnpm runtime:generate:all && pnpm runtime:registry:generate && pnpm runtime:build && pnpm --filter=@starwind-ui/astro typecheck && pnpm react:build && pnpm cli:build",
     "release:gate": "pnpm verify && pnpm demo:smoke && pnpm react-demo:smoke && pnpm runtime:size:check",

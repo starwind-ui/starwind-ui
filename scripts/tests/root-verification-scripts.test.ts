@@ -64,5 +64,6 @@ describe("root verification scripts", () => {
 
     expect(releaseWorkflow).toContain("uses: ./.github/workflows/verify.yml");
     expect(releaseWorkflow).toMatch(/release:\s+name: Release\s+needs: verify/);
+    expect(releaseWorkflow).toContain("version: pnpm release:version");
   });
 });

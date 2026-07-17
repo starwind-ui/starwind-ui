@@ -25,7 +25,6 @@ type PackageJson = {
 
 type PackageRequirement = { name: string; range: string };
 
-const CURRENT_RUNTIME_RANGE = "^0.1.0-beta.1";
 const STARWIND_RUNTIME_DEPENDENCIES = new Set([
   "@starwind-ui/runtime",
   "@starwind-ui/astro",
@@ -59,6 +58,9 @@ describe("release package tooling", () => {
 
   it("exposes generic release commands and beta compatibility aliases", async () => {
     const root = await readJson<PackageJson>("package.json");
+    expect(root.scripts?.["release:version"]).toBe(
+      "changeset version && pnpm runtime:registry:generate",
+    );
     expect(root.scripts?.["publish:release:dry-run"]).toContain(
       "node scripts/release-packages.mjs --dry-run",
     );
@@ -212,6 +214,10 @@ describe("release package tooling", () => {
   });
 
   it("keeps generated Runtime package requirements publishable", async () => {
+    const runtimePackage = await readJson<Required<Pick<PackageJson, "version">>>(
+      "packages/runtime/package.json",
+    );
+    const currentRuntimeRange = `^${runtimePackage.version}`;
     const values = [
       await readJson<unknown>("packages/cli/src/registry/bundled-registry.json"),
       await readJson<unknown>("packages/cli/src/registry/primitive-vendoring-artifacts.json"),
@@ -222,7 +228,7 @@ describe("release package tooling", () => {
       expect(requirement.range).not.toContain("workspace:");
       expect(requirement.range).not.toBe("*");
       if (STARWIND_RUNTIME_DEPENDENCIES.has(requirement.name)) {
-        expect(requirement.range).toBe(CURRENT_RUNTIME_RANGE);
+        expect(requirement.range).toBe(currentRuntimeRange);
       }
     }
   });
