@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,6 +19,11 @@ import {
 const fixtureRepoRoot = path.normalize("C:/repo/starwind-ui");
 const fixtureTmpRoot = path.normalize("C:/tmp/starwind-package-size-comparison");
 const realRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const packageSizeDiagnosticsPath = path.join(
+  realRepoRoot,
+  "docs/portable-runtime/diagnostics/package-size-diagnostics.md",
+);
+const privateDiagnosticsIt = existsSync(packageSizeDiagnosticsPath) ? it : it.skip;
 
 describe("source contribution report", () => {
   it("groups Starwind all-three metafile inputs by source category", () => {
@@ -176,13 +181,9 @@ describe("source contribution report", () => {
     });
   });
 
-  it("keeps shared headings public and source-contribution headings diagnostic-only", () => {
+  it("keeps shared headings public and source-contribution headings private", () => {
     const publicReport = readFileSync(
       path.join(realRepoRoot, "docs/portable-runtime/package-size-comparison.md"),
-      "utf8",
-    );
-    const diagnosticReport = readFileSync(
-      path.join(realRepoRoot, "docs/portable-runtime/diagnostics/package-size-diagnostics.md"),
       "utf8",
     );
 
@@ -191,6 +192,11 @@ describe("source contribution report", () => {
     expect(publicReport).toContain("## Isolated vs Combined Support Costs");
     expect(publicReport).toContain("## Starwind Component Matches");
     expect(publicReport).not.toContain("## Starwind Source Contribution Analysis");
+  });
+
+  privateDiagnosticsIt("keeps source-contribution headings in private diagnostics", () => {
+    const diagnosticReport = readFileSync(packageSizeDiagnosticsPath, "utf8");
+
     expect(diagnosticReport).toContain("## Starwind Source Contribution Analysis");
     expect(diagnosticReport).toContain("### All-three overlap - Starwind");
     expect(diagnosticReport).toContain("### Field cold import - Starwind");
@@ -279,71 +285,71 @@ describe("source contribution report", () => {
     expect(colorPickerRebaselineEvidence.overlap.components).toEqual(summary.overlap.components);
   });
 
-  it("keeps the checked report byte-aligned with the generated rebaseline section", () => {
-    const report = readFileSync(
-      path.join(realRepoRoot, "docs/portable-runtime/diagnostics/package-size-diagnostics.md"),
-      "utf8",
-    );
-    const expectedBlock = formatColorPickerRebaselineMarkdown().join("\n");
-    const generatedBlock = getSection(
-      report,
-      "### Color Picker Rebaseline Evidence",
-      "### Headline Package Budgets",
-    );
+  privateDiagnosticsIt(
+    "keeps the checked report byte-aligned with the generated rebaseline section",
+    () => {
+      const report = readFileSync(packageSizeDiagnosticsPath, "utf8");
+      const expectedBlock = formatColorPickerRebaselineMarkdown().join("\n");
+      const generatedBlock = getSection(
+        report,
+        "### Color Picker Rebaseline Evidence",
+        "### Headline Package Budgets",
+      );
 
-    expect(generatedBlock).toBe(expectedBlock);
-    expect(report.match(/### Color Picker Rebaseline Evidence/g)).toHaveLength(1);
-    expect(generatedBlock).toContain(
-      "| Starwind/Zag overlap | 116,526 B | 118,786 B | +2,260 B | 117,760 B | 1,234 B | 120,020 B | 1,234 B |",
-    );
-    expect(generatedBlock).toContain("| Runtime category | 318,380 B | 326,682 B | +8,302 B |");
-    expect(generatedBlock).toContain("| Color Picker source contribution | 0 B | 0 B | 0 B |");
-    expect(generatedBlock).toContain(
-      "The overlap is 1,026 B above its old ceiling, but its comparison membership remains 28 and excludes Color Picker.",
-    );
-    expect(generatedBlock).toContain("Starwind 12,474 B gzip versus Zag 29,519 B gzip.");
-  });
+      expect(generatedBlock).toBe(expectedBlock);
+      expect(report.match(/### Color Picker Rebaseline Evidence/g)).toHaveLength(1);
+      expect(generatedBlock).toContain(
+        "| Starwind/Zag overlap | 116,526 B | 118,786 B | +2,260 B | 117,760 B | 1,234 B | 120,020 B | 1,234 B |",
+      );
+      expect(generatedBlock).toContain("| Runtime category | 318,380 B | 326,682 B | +8,302 B |");
+      expect(generatedBlock).toContain("| Color Picker source contribution | 0 B | 0 B | 0 B |");
+      expect(generatedBlock).toContain(
+        "The overlap is 1,026 B above its old ceiling, but its comparison membership remains 28 and excludes Color Picker.",
+      );
+      expect(generatedBlock).toContain("Starwind 12,474 B gzip versus Zag 29,519 B gzip.");
+    },
+  );
 
-  it("validates the generated architecture section shape and method guardrails", () => {
-    const report = readFileSync(
-      path.join(realRepoRoot, "docs/portable-runtime/diagnostics/package-size-diagnostics.md"),
-      "utf8",
-    );
-    const architectureBlock = getSourceContributionBlock(report);
-    const normalizedArchitectureBlock = normalizeMarkdownTableRows(architectureBlock);
-    const architectureHeadings = [...architectureBlock.matchAll(/^### (.+)$/gm)].map(
-      (match) => match[1],
-    );
+  privateDiagnosticsIt(
+    "validates the generated architecture section shape and method guardrails",
+    () => {
+      const report = readFileSync(packageSizeDiagnosticsPath, "utf8");
+      const architectureBlock = getSourceContributionBlock(report);
+      const normalizedArchitectureBlock = normalizeMarkdownTableRows(architectureBlock);
+      const architectureHeadings = [...architectureBlock.matchAll(/^### (.+)$/gm)].map(
+        (match) => match[1],
+      );
 
-    expect(report).toContain(
-      "- Source-contribution rows use esbuild metafile `bytesInOutput` from selected Starwind measurement rows. They are minified byte-attribution diagnostics before gzip, not public package-size comparison rows.",
-    );
-    expect(report).toContain(
-      "- Bundle rows use the generated entry chunk and static import graph; dynamic import chunks are excluded from current min+gzip rows because they remain lazy-loaded.",
-    );
-    expect(report).toContain(
-      "- Use `Starwind-Matched Support` when you want a fair support-surface comparison rather than a whole-catalog comparison.",
-    );
-    expect(report).toContain(
-      "This architecture-only section identifies which Starwind source categories contribute most to selected measured bundles.",
-    );
-    expect(architectureBlock).toContain(
-      "This section is architecture analysis, not an apples-to-apples public marketing table.",
-    );
-    expect(normalizedArchitectureBlock).toContain(
-      "| Category | Minified bytes in output | Share |",
-    );
-    expect(normalizedArchitectureBlock).toContain(
-      "| Rank | Category | Source owner | Minified bytes in output |",
-    );
-    expect(architectureHeadings).toEqual([
-      "All-three overlap - Starwind",
-      "Field cold import - Starwind",
-    ]);
-    expect(architectureHeadings.every((heading) => heading.endsWith(" - Starwind"))).toBe(true);
-    expect(normalizedArchitectureBlock).toBe(expectedGeneratedArchitectureBlock());
-    expect(report).not.toContain("Competitor source contribution");
-  });
+      expect(report).toContain(
+        "- Source-contribution rows use esbuild metafile `bytesInOutput` from selected Starwind measurement rows. They are minified byte-attribution diagnostics before gzip, not public package-size comparison rows.",
+      );
+      expect(report).toContain(
+        "- Bundle rows use the generated entry chunk and static import graph; dynamic import chunks are excluded from current min+gzip rows because they remain lazy-loaded.",
+      );
+      expect(report).toContain(
+        "- Use `Starwind-Matched Support` when you want a fair support-surface comparison rather than a whole-catalog comparison.",
+      );
+      expect(report).toContain(
+        "This architecture-only section identifies which Starwind source categories contribute most to selected measured bundles.",
+      );
+      expect(architectureBlock).toContain(
+        "This section is architecture analysis, not an apples-to-apples public marketing table.",
+      );
+      expect(normalizedArchitectureBlock).toContain(
+        "| Category | Minified bytes in output | Share |",
+      );
+      expect(normalizedArchitectureBlock).toContain(
+        "| Rank | Category | Source owner | Minified bytes in output |",
+      );
+      expect(architectureHeadings).toEqual([
+        "All-three overlap - Starwind",
+        "Field cold import - Starwind",
+      ]);
+      expect(architectureHeadings.every((heading) => heading.endsWith(" - Starwind"))).toBe(true);
+      expect(normalizedArchitectureBlock).toBe(expectedGeneratedArchitectureBlock());
+      expect(report).not.toContain("Competitor source contribution");
+    },
+  );
 });
 
 function minimalAnalysis(label, sourceOwner) {
