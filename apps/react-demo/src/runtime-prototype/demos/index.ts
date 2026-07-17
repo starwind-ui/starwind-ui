@@ -12,6 +12,7 @@ export { CarouselDemo } from "./CarouselDemo";
 export { CheckboxDemo } from "./CheckboxDemo";
 export { CheckboxGroupDemo } from "./CheckboxGroupDemo";
 export { CollapsibleDemo } from "./CollapsibleDemo";
+export { ColorPickerDemo } from "./ColorPickerDemo";
 export { ComboboxDemo } from "./ComboboxDemo";
 export { ContextMenuDemo } from "./ContextMenuDemo";
 export { ControlledReactDemo } from "./ControlledReactDemo";

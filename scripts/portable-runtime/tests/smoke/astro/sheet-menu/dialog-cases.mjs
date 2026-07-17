@@ -1,5 +1,16 @@
+import { verifyDialogEntryAnimationGestures } from "../../shared/dialog-entry-animation.mjs";
+
 export async function verifyAstroDialogCases({ page }) {
-  await page.getByRole("button", { name: "Open dialog" }).click();
+  await verifyDialogEntryAnimationGestures({
+    backdrop: '#runtime-dialog-default > [data-slot="dialog-backdrop"]',
+    content: page.locator('#runtime-dialog-default [data-slot="dialog-content"]'),
+    expectedDuration: 200,
+    label: "Astro Dialog",
+    page,
+    trigger: page.getByRole("button", { name: "Open dialog", exact: true }),
+  });
+
+  await page.getByRole("button", { name: "Open dialog", exact: true }).click();
   await page.getByRole("heading", { name: "Runtime dialog" }).waitFor();
 
   const openDialogs = await page.locator("dialog[open]").count();

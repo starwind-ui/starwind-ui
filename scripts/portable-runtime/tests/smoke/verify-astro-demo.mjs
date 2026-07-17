@@ -2,7 +2,10 @@ import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { verifyAstroCarouselCases } from "./astro/carousel-cases.mjs";
+import {
+  verifyAstroCarouselCases,
+  verifyAstroCarouselClientRouterCase,
+} from "./astro/carousel-cases.mjs";
 import { verifyAstroFormControlCases } from "./astro/form-control-cases.mjs";
 import { verifyAstroFoundationCases } from "./astro/foundation-cases.mjs";
 import { verifyAstroMediaOverlayCases } from "./astro/media-overlay-cases.mjs";
@@ -17,6 +20,7 @@ const REACT_DEMO_ROOT = path.join(REPO_ROOT, "apps/react-demo");
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.STARWIND_ASTRO_SMOKE_PORT ?? "4325");
 const RUNTIME_PROTOTYPE_PATH = "/runtime-prototype/";
+const CAROUSEL_CLIENT_ROUTER_START_PATH = "/smoke/carousel-client-router-start/";
 const SERVER_MODE = process.env.STARWIND_ASTRO_SMOKE_SERVER_MODE ?? "preview";
 const SERVER_COMMAND = SERVER_MODE === "dev" ? "dev" : "preview";
 const SHOULD_SPAWN_SERVER = SERVER_MODE !== "external";
@@ -55,7 +59,9 @@ preview?.stderr?.on("data", (chunk) => {
 });
 
 try {
-  const url = `http://${HOST}:${PORT}${RUNTIME_PROTOTYPE_PATH}`;
+  const baseUrl = `http://${HOST}:${PORT}`;
+  const url = `${baseUrl}${RUNTIME_PROTOTYPE_PATH}`;
+  const carouselClientRouterStartUrl = `${baseUrl}${CAROUSEL_CLIENT_ROUTER_START_PATH}`;
   browser = await chromium.launch({ headless: true });
 
   page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -95,7 +101,7 @@ try {
   });
   await installExternalVideoRequestGuard(page, messages);
 
-  await waitForAstroSmokePage(page, url, {
+  await waitForAstroSmokePage(page, carouselClientRouterStartUrl, {
     getServerExitCode: () => preview?.exitCode ?? null,
     getServerOutput: () => previewOutput,
     serverCommand: SERVER_COMMAND,
@@ -106,8 +112,13 @@ try {
     throw new Error(messages.join("\n"));
   }
 
+  await verifyAstroCarouselClientRouterCase({ page, baseUrl });
+  await page.goto(url, {
+    waitUntil: SERVER_MODE === "dev" ? "domcontentloaded" : "networkidle",
+  });
   await page.getByRole("heading", { name: "Portable runtime prototype" }).waitFor();
   await verifyAstroAppNav({ page });
+  await verifyAstroColorPickerCases({ page });
 
   await verifyAstroFoundationCases({ page });
   await verifyAstroCarouselCases({ page });
@@ -285,6 +296,174 @@ async function verifyAstroAppNav({ page }) {
       )
     );
   });
+}
+
+async function verifyAstroColorPickerCases({ page }) {
+  const root = page.locator("#canonical-color-picker-root");
+  const trigger = page.getByTestId("canonical-color-picker-trigger");
+  const nativeRoot = page.getByTestId("canonical-native-color-picker");
+  const nativeSelect = nativeRoot.locator('[data-slot="color-picker-native-format-select"]');
+
+  await root.waitFor();
+  const swatchOnlyTrigger = page.getByTestId("canonical-color-picker-swatch-trigger");
+  if (
+    (await swatchOnlyTrigger.count()) !== 1 ||
+    (await swatchOnlyTrigger.locator('[data-slot="color-picker-value-swatch"]').count()) !== 1 ||
+    (await swatchOnlyTrigger.locator('[data-slot="color-picker-value-text"]').count()) !== 0
+  ) {
+    throw new Error("Canonical swatch-only Color Picker trigger is not a swatch-only button.");
+  }
+  const swatchOnlyPaint = await swatchOnlyTrigger
+    .locator('[data-slot="color-picker-value-swatch"]')
+    .evaluate((swatch) => ({
+      color: getComputedStyle(swatch).getPropertyValue("--sw-color-picker-swatch-color").trim(),
+      height: swatch.getBoundingClientRect().height,
+      width: swatch.getBoundingClientRect().width,
+    }));
+  if (swatchOnlyPaint.color === "" || swatchOnlyPaint.height === 0 || swatchOnlyPaint.width === 0) {
+    throw new Error(
+      `Canonical swatch-only Color Picker trigger is not visibly painted: ${JSON.stringify(swatchOnlyPaint)}`,
+    );
+  }
+  if ((await nativeSelect.inputValue()) !== "rgb") {
+    throw new Error("Canonical native Color Picker did not preserve its RGB initial selection.");
+  }
+
+  const falsePresenceAttributes = await root.evaluate((colorPicker) => {
+    const presenceAttributes = new Set([
+      "data-alpha",
+      "data-disabled",
+      "data-dragging",
+      "data-focused",
+      "data-invalid",
+      "data-readonly",
+      "data-required",
+      "data-selected",
+    ]);
+    return [colorPicker, ...colorPicker.querySelectorAll("*")]
+      .flatMap((element) => Array.from(element.attributes))
+      .filter((attribute) => presenceAttributes.has(attribute.name) && attribute.value === "false")
+      .map((attribute) => attribute.name);
+  });
+  if (falsePresenceAttributes.length > 0) {
+    throw new Error(
+      `Canonical Color Picker serialized false presence attributes: ${falsePresenceAttributes.join(", ")}`,
+    );
+  }
+
+  await trigger.click();
+  const content = page.getByTestId("canonical-color-picker-content");
+  await content.waitFor();
+  await page.waitForFunction(
+    () =>
+      getComputedStyle(document.querySelector('[data-testid="canonical-color-picker-content"]'))
+        .transform === "none",
+  );
+  const triggerBox = await trigger.boundingBox();
+  const initialContentBox = await content.boundingBox();
+  if (
+    (await content.getAttribute("data-side")) !== "bottom" ||
+    (await content.getAttribute("data-align")) !== "start"
+  ) {
+    throw new Error(
+      `Canonical Color Picker must open below and start-aligned to its trigger (side=${await content.getAttribute("data-side")}, align=${await content.getAttribute("data-align")}, trigger=${JSON.stringify(await trigger.boundingBox())}, content=${JSON.stringify(initialContentBox)}, viewport=${JSON.stringify(await page.evaluate(() => ({ height: innerHeight, scrollY })))}).`,
+    );
+  }
+  if (
+    triggerBox === null ||
+    initialContentBox === null ||
+    initialContentBox.y < triggerBox.y + triggerBox.height
+  ) {
+    throw new Error(
+      `Canonical Color Picker content must be geometrically below its trigger (trigger=${JSON.stringify(triggerBox)}, content=${JSON.stringify(initialContentBox)}).`,
+    );
+  }
+  if (/zoom-out|slide-out-to/.test((await content.getAttribute("class")) ?? "")) {
+    throw new Error("Canonical Color Picker close motion must be fade-only.");
+  }
+  const valueInputClass =
+    (await content.locator('[data-slot="color-picker-value-input"]').getAttribute("class")) ?? "";
+  for (const inputClass of ["dark:bg-input/30", "shadow-xs", "transition-[color,box-shadow]"]) {
+    if (!valueInputClass.includes(inputClass)) {
+      throw new Error(`Canonical Color Picker value field is missing Input styling: ${inputClass}`);
+    }
+  }
+  const areaThumb = content.locator('[data-slot="color-picker-area-thumb"]');
+  const hueSlider = content.locator(
+    '[data-slot="color-picker-channel-slider"][data-channel="hue"]',
+  );
+  const hueThumb = hueSlider.locator('[data-slot="color-picker-channel-slider-thumb"]');
+  const thumbPaint = await Promise.all(
+    [
+      [areaThumb, "--sw-color-picker-area-thumb-color"],
+      [hueThumb, "--sw-color-picker-channel-thumb-color"],
+    ].map(([locator, property]) =>
+      locator.evaluate(
+        (thumb, variable) => getComputedStyle(thumb).getPropertyValue(variable).trim(),
+        property,
+      ),
+    ),
+  );
+  if (thumbPaint.some((paint) => paint === "")) {
+    throw new Error(`Canonical Color Picker thumb paint is missing: ${JSON.stringify(thumbPaint)}`);
+  }
+  const hueGeometry = await hueSlider.evaluate((slider) => {
+    const thumb = slider.querySelector('[data-slot="color-picker-channel-slider-thumb"]');
+    return {
+      trackHeight: slider.getBoundingClientRect().height,
+      thumbHeight: thumb?.getBoundingClientRect().height ?? 0,
+    };
+  });
+  if (hueGeometry.thumbHeight <= hueGeometry.trackHeight) {
+    throw new Error(
+      `Color Picker slider thumb must be taller than its track: ${JSON.stringify(hueGeometry)}`,
+    );
+  }
+
+  await content.getByRole("combobox", { name: "Color format" }).click();
+  const formatPositioner = page.locator(
+    '#canonical-color-picker-root > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
+  );
+  if (
+    (await formatPositioner.count()) !== 1 ||
+    (await formatPositioner.evaluate((element) => getComputedStyle(element).zIndex)) !== "60"
+  ) {
+    throw new Error("Canonical format Select did not elevate its marked positioner.");
+  }
+  await page.getByRole("listbox").getByRole("option", { name: "HSL", exact: true }).click();
+  if ((await root.getAttribute("data-format")) !== "hsl" || !(await content.isVisible())) {
+    throw new Error(
+      "Nested format Select did not synchronize while preserving the parent Popover.",
+    );
+  }
+  const changedContentBox = await content.boundingBox();
+  if (
+    initialContentBox === null ||
+    changedContentBox === null ||
+    Math.abs(initialContentBox.x - changedContentBox.x) > 1
+  ) {
+    throw new Error("Canonical Color Picker placement jittered after its input width changed.");
+  }
+
+  const beforeSwatch = await root.getAttribute("data-value");
+  await content.getByRole("button", { name: "Sky swatch" }).click();
+  if ((await root.getAttribute("data-value")) === beforeSwatch) {
+    throw new Error("Canonical consumer swatch did not update the Color Picker value.");
+  }
+
+  await page.keyboard.press("Escape");
+  await content.waitFor({ state: "hidden" });
+  if (!(await trigger.evaluate((element) => element === document.activeElement))) {
+    throw new Error("Canonical Color Picker did not restore focus to its trigger.");
+  }
+
+  await nativeSelect.selectOption("hsb");
+  if (
+    (await nativeRoot.getAttribute("data-format")) !== "hsb" ||
+    (await nativeSelect.inputValue()) !== "hsb"
+  ) {
+    throw new Error("Canonical native format control did not synchronize to HSB.");
+  }
 }
 
 async function verifyAstroSidebarInsetNav({ page, expectedLinks }) {

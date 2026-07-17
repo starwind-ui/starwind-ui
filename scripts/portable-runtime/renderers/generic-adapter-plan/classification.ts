@@ -41,6 +41,7 @@ const GENERIC_ADAPTER_PLAN_COVERAGE_MANIFEST = {
     "context-menu",
     "navigation-menu",
     "combobox",
+    "color-picker",
     "tooltip",
     "preview-card",
     "sidebar",
@@ -159,6 +160,12 @@ const CUSTOM_ISLAND_DETAIL_REASONS: Partial<Record<string, readonly string[]>> =
     "clear action metadata",
     "item text extraction boundary",
     "runtime-owned filtering, editable input control, clear action, collection registration, item text extraction, hidden input sync, keyboard navigation, portal/floating updates, and dismissal",
+  ],
+  "color-picker": [
+    "compound color area, repeatable channel controls, swatches, and form bridge metadata",
+    "value and format controlled-state synchronization with refresh-before-sync ordering",
+    "immutable ColorPickerColor facade and parseColor value re-export",
+    "Runtime-owned parsing, color state, drafts, pointer/keyboard interaction, accessibility reflection, form synchronization, and EyeDropper behavior",
   ],
   menu: [
     "missing Specialized Adapter Spec recipes for root menu versus submenu ownership",

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe } from "vitest";
 
 import { defineReactCarouselOutputTests } from "./generate-react-wrappers/carousel-output.cases.js";
 import { defineReactCompositionOutputTests } from "./generate-react-wrappers/composition-output.cases.js";
+import { defineReactColorPickerOutputTests } from "./generate-react-wrappers/color-picker-output.cases.js";
 import { defineReactDropzoneOutputTests } from "./generate-react-wrappers/dropzone-output.cases.js";
 import { defineReactFamilyOutputTests } from "./generate-react-wrappers/family-output.cases.js";
 import { defineReactLayoutEffectOutputTests } from "./generate-react-wrappers/layout-effect-output.cases.js";
@@ -29,6 +30,7 @@ describe("generateReactWrappers", () => {
   });
 
   defineReactPrimitiveOutputTests(getTempRoot);
+  defineReactColorPickerOutputTests(getTempRoot);
   defineReactCarouselOutputTests(getTempRoot);
   defineReactPreviewCardOutputTests(getTempRoot);
   defineReactDropzoneOutputTests(getTempRoot);

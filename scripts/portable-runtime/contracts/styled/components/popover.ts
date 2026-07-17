@@ -25,11 +25,22 @@ export const popoverStyledContract: StyledAdapterContract = {
       base: [
         "bg-popover text-popover-foreground z-50 flex w-72 flex-col gap-2.5 overflow-x-hidden overflow-y-auto rounded-lg border p-2.5 shadow-md",
         "data-[state=open]:animate-in fade-in zoom-in-95 outline-none",
-        "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
-        "data-[side=bottom]:slide-in-from-top-2 data-[side=bottom]:slide-out-to-top-2 data-[side=top]:slide-in-from-bottom-2 data-[side=top]:slide-out-to-bottom-2",
-        "data-[side=right]:slide-in-from-left-2 data-[side=right]:slide-out-to-left-2 data-[side=left]:slide-in-from-right-2 data-[side=left]:slide-out-to-right-2",
+        "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out",
+        "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
+        "data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2",
         "origin-(--transform-origin) pointer-events-auto fixed isolate will-change-transform",
       ],
+      variants: {
+        exitMotion: {
+          popover: [
+            "zoom-out-95",
+            "data-[side=bottom]:slide-out-to-top-2 data-[side=top]:slide-out-to-bottom-2",
+            "data-[side=right]:slide-out-to-left-2 data-[side=left]:slide-out-to-right-2",
+          ],
+          fade: "",
+        },
+      },
+      defaultVariants: { exitMotion: "popover" },
     },
     popoverDescription: { base: "text-muted-foreground" },
     popoverHeader: { base: "flex flex-col gap-1" },
@@ -166,7 +177,10 @@ export const popoverStyledContract: StyledAdapterContract = {
       exportName: "PopoverContent",
       primitiveAliases: { popover: "PopoverPrimitive" },
       props: {
-        extends: [{ type: "htmlAttributes", element: "div" }],
+        extends: [
+          { type: "htmlAttributes", element: "div" },
+          { type: "variantProps", variant: "popoverContent" },
+        ],
         fields: [
           { name: "side", optional: true, type: '"top" | "right" | "bottom" | "left"' },
           { name: "align", optional: true, type: '"start" | "center" | "end"' },
@@ -181,6 +195,7 @@ export const popoverStyledContract: StyledAdapterContract = {
           { name: "align", defaultValue: '"center"' },
           { name: "sideOffset", defaultValue: "4" },
           { name: "avoidCollisions", defaultValue: "true" },
+          { name: "exitMotion", defaultValue: '"popover"' },
         ],
         rest: "rest",
       },
@@ -201,7 +216,7 @@ export const popoverStyledContract: StyledAdapterContract = {
                   value: {
                     type: "classVariant",
                     variant: "popoverContent",
-                    args: { class: "className" },
+                    args: { exitMotion: "exitMotion", class: "className" },
                   },
                 },
                 { name: "side", value: { type: "variable", name: "side" } },

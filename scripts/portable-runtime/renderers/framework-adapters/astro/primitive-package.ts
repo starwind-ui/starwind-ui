@@ -3,6 +3,7 @@ import { rm } from "node:fs/promises";
 import { appendRuntimeTypeFacades, renderPrimitiveIndex } from "../../primitive-index.js";
 import { createTsHeader, writeGeneratedFile } from "../../shared.js";
 import type { FrameworkAdapterTargetPrimitivePackageGenerator } from "../types.js";
+import { renderAstroColorPickerRenderProjectionFile } from "./color-picker.js";
 import { createAstroHeader } from "./headers.js";
 import { renderAstroControllerLifecycleFile } from "./primitive-output-writer.js";
 
@@ -23,6 +24,11 @@ export const generateAstroPrimitivePackage: FrameworkAdapterTargetPrimitivePacka
         `${outputRoot}/internal`,
         "controller-lifecycle.ts",
         renderAstroControllerLifecycleFile(moduleHeader),
+      ),
+      writeGeneratedFile(
+        `${outputRoot}/color-picker`,
+        "ColorPickerRenderProjection.ts",
+        renderAstroColorPickerRenderProjectionFile(moduleHeader),
       ),
       writeGeneratedFile(outputRoot, "index.ts", renderPrimitiveIndex(moduleHeader)),
     ]);

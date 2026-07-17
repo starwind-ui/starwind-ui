@@ -58,7 +58,6 @@ export function ControlledReactDemo() {
           setControlledAccordionValue(details.value);
           setControlledAccordionChanges((count) => count + 1);
         }}
-        collapsible
       >
         <AccordionItem value="controlled-shipping">
           <AccordionTrigger>Controlled shipping</AccordionTrigger>

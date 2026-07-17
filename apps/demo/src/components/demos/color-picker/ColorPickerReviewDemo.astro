@@ -1,0 +1,244 @@
+---
+import { Button } from "@/components/starwind-runtime/button";
+import {
+  ColorPicker,
+  ColorPickerHiddenInput,
+  ColorPickerInput,
+  ColorPickerLabel,
+  ColorPickerRoot,
+  ColorPickerValueSwatch,
+} from "@/components/starwind-runtime/color-picker";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/starwind-runtime/dialog";
+import PickerSurface from "./PickerSurface.astro";
+
+const formats = [
+  { format: "hex", value: "#2563eb", label: "HEX" },
+  { format: "rgb", value: "rgb(37, 99, 235)", label: "RGB" },
+  { format: "hsl", value: "hsl(221, 83%, 53%)", label: "HSL" },
+  { format: "hsb", value: "hsb(221, 84%, 92%)", label: "HSB" },
+] as const;
+---
+
+<div class="space-y-12" data-testid="color-picker-review">
+  <section class="space-y-4" aria-labelledby="popup-heading">
+    <h2 id="popup-heading" class="text-2xl font-semibold">Default popup</h2>
+    <p class="text-muted-foreground">
+      Keyboard, pointer, swatches, alpha, EyeDropper UI, and popup focus return.
+    </p>
+    <ColorPicker id="popup-picker" defaultValue="#ff000080" format="hex" alpha>
+      {
+        (initial) => (
+          <PickerSurface initial={initial} id="popup" label="Brand color" popup alpha clear />
+        )
+      }
+    </ColorPicker>
+    <output
+      id="popup-events"
+      data-testid="popup-events"
+      class="bg-muted block min-h-16 rounded-md p-3 text-sm"
+      aria-live="polite">changes: 0; commits: 0</output
+    >
+  </section>
+
+  <section class="space-y-4" aria-labelledby="inline-heading">
+    <h2 id="inline-heading" class="text-2xl font-semibold">Inline editor and formats</h2>
+    <ColorPickerRoot
+      id="inline-picker"
+      defaultValue="hsb(210, 70%, 80%)"
+      format="hsb"
+      alpha={false}
+    >
+      {
+        (initial) => (
+          <PickerSurface
+            initial={initial}
+            id="inline"
+            label="Inline color"
+            alpha={false}
+            channels
+          />
+        )
+      }
+    </ColorPickerRoot>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        formats.map(({ format, value, label }) => (
+          <ColorPickerRoot
+            defaultValue={value}
+            format={format}
+            alpha={false}
+            data-testid={`format-${format}`}
+          >
+            {(initial) => (
+              <Fragment>
+                <ColorPickerLabel initial={initial.label.initial}>{label}</ColorPickerLabel>
+                <div class="mt-2 flex items-center gap-2">
+                  <ColorPickerValueSwatch initial={initial} />
+                  <ColorPickerInput
+                    initial={initial}
+                    formatControl={format === "rgb" ? "native" : "select"}
+                    data-testid={`format-${format}-input`}
+                  />
+                </div>
+                <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
+              </Fragment>
+            )}
+          </ColorPickerRoot>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="space-y-4" aria-labelledby="states-heading">
+    <h2 id="states-heading" class="text-2xl font-semibold">Focused compositions and states</h2>
+    <div class="grid gap-4 md:grid-cols-4">
+      <ColorPickerRoot defaultValue="#14b8a6" format="hex" data-testid="input-only-root">
+        {
+          (initial) => (
+            <Fragment>
+              <>
+                <ColorPickerLabel initial={initial.label.initial}>Input focused</ColorPickerLabel>
+                <ColorPickerInput initial={initial} data-testid="input-only" />
+                <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
+              </>
+            </Fragment>
+          )
+        }
+      </ColorPickerRoot>
+      <ColorPickerRoot defaultValue="#e11d48" disabled data-testid="disabled-picker-root">
+        {
+          (initial) => (
+            <Fragment>
+              <>
+                <ColorPickerLabel initial={initial.label.initial}>Disabled</ColorPickerLabel>
+                <ColorPickerInput initial={initial} data-testid="disabled-picker" />
+                <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
+              </>
+            </Fragment>
+          )
+        }
+      </ColorPickerRoot>
+      <ColorPickerRoot defaultValue="#f59e0b" data-testid="swatch-only-root">
+        {
+          (initial) => (
+            <Fragment>
+              <ColorPickerLabel initial={initial.label.initial}>Swatch focused</ColorPickerLabel>
+              <ColorPickerValueSwatch initial={initial} data-testid="swatch-only" />
+              <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
+            </Fragment>
+          )
+        }
+      </ColorPickerRoot>
+      <ColorPickerRoot defaultValue="#7c3aed" readOnly data-testid="readonly-picker-root">
+        {
+          (initial) => (
+            <Fragment>
+              <>
+                <ColorPickerLabel initial={initial.label.initial}>Read only</ColorPickerLabel>
+                <ColorPickerInput initial={initial} data-testid="readonly-picker" />
+                <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
+              </>
+            </Fragment>
+          )
+        }
+      </ColorPickerRoot>
+    </div>
+  </section>
+
+  <section class="space-y-4" aria-labelledby="form-heading">
+    <h2 id="form-heading" class="text-2xl font-semibold">Required and empty form values</h2>
+    <form id="color-picker-form" class="space-y-4" data-testid="color-picker-form">
+      <ColorPickerRoot
+        id="required-picker"
+        defaultValue="#000000"
+        allowEmpty
+        required
+        name="accent"
+        format="hex"
+      >
+        {
+          (initial) => (
+            <PickerSurface
+              initial={initial}
+              id="required"
+              label="Required accent"
+              alpha={false}
+              clear
+            />
+          )
+        }
+      </ColorPickerRoot>
+      <div class="flex gap-2">
+        <Button type="submit">Submit palette</Button><Button type="reset" variant="outline"
+          >Reset palette</Button
+        >
+      </div>
+      <output
+        id="form-output"
+        data-testid="form-output"
+        class="bg-muted block min-h-12 rounded-md p-3 text-sm">Not submitted</output
+      >
+    </form>
+  </section>
+
+  <section class="space-y-4" aria-labelledby="dialog-heading">
+    <h2 id="dialog-heading" class="text-2xl font-semibold">Nested Dialog</h2>
+    <Dialog id="color-picker-dialog">
+      <DialogTrigger asChild
+        ><Button data-testid="open-dialog-trigger">Open dialog color picker</Button></DialogTrigger
+      >
+      <DialogContent aria-label="Dialog color editor">
+        <DialogHeader
+          ><DialogTitle>Dialog theme color</DialogTitle><DialogDescription
+            >The popup remains scoped and interactive inside a modal overlay.</DialogDescription
+          ></DialogHeader
+        >
+        <ColorPicker id="dialog-picker" defaultValue="#0ea5e9" format="hex">
+          {(initial) => <PickerSurface initial={initial} id="dialog" label="Dialog color" popup />}
+        </ColorPicker>
+      </DialogContent>
+    </Dialog>
+  </section>
+</div>
+
+<script>
+  const popup = document.querySelector<HTMLElement>("#popup-picker");
+  const popupOutput = document.querySelector<HTMLOutputElement>("#popup-events");
+  let changes = 0;
+  let commits = 0;
+  const renderEvents = () => {
+    if (popupOutput) popupOutput.textContent = `changes: ${changes}; commits: ${commits}`;
+  };
+  popup?.addEventListener("starwind:value-change", () => {
+    changes += 1;
+    renderEvents();
+  });
+  popup?.addEventListener("starwind:value-committed", () => {
+    commits += 1;
+    renderEvents();
+  });
+
+  const form = document.querySelector<HTMLFormElement>("#color-picker-form");
+  const formOutput = document.querySelector<HTMLOutputElement>("#form-output");
+  document
+    .querySelector<HTMLButtonElement>("#required-picker [data-slot='color-picker-clear']")
+    ?.click();
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+    const data = new FormData(form);
+    if (formOutput) formOutput.textContent = `accent: ${String(data.get("accent") ?? "")}`;
+  });
+  form?.addEventListener("reset", () =>
+    queueMicrotask(() => {
+      if (formOutput) formOutput.textContent = "Reset complete";
+    }),
+  );
+</script>

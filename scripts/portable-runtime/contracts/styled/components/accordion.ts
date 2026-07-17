@@ -59,7 +59,7 @@ export const accordionStyledContract: StyledAdapterContract = {
           { name: "type", defaultValue: '"single"' },
           { name: "defaultValue" },
           { name: "value", frameworks: ["react"] },
-          { name: "collapsible", defaultValue: "false" },
+          { name: "collapsible", defaultValue: "true" },
           { name: "onValueChange", frameworks: ["react"] },
           { name: "class", alias: "className" },
         ],

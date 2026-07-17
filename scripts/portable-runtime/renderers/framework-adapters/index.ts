@@ -73,6 +73,16 @@ export {
   SVELTE_FRAMEWORK_ADAPTER_DEFERRED,
 } from "./future-readiness.js";
 export { reactFrameworkAdapter, reactFrameworkAdapterTarget } from "./react/index.js";
+export type {
+  AdapterColorPickerComponentProjection,
+  AdapterColorPickerEvent,
+  AdapterColorPickerFacts,
+  AdapterColorPickerIndexProjection,
+  AdapterColorPickerPart,
+  AdapterColorPickerPartName,
+  AdapterColorPickerSetter,
+  AdapterColorPickerState,
+} from "../primitive-output-model/index.js";
 export { solidFrameworkAdapter, solidFrameworkAdapterReadiness } from "./solid/index.js";
 export { defineFrameworkAdapterTarget } from "./target-definition.js";
 export {

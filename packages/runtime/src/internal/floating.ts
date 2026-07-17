@@ -5,6 +5,7 @@ import {
   offset,
   type Placement,
   type ReferenceElement,
+  size,
   type Strategy,
   shift,
 } from "@floating-ui/dom";
@@ -58,6 +59,8 @@ type ResolveFloatingPortalTargetOptions = {
 const DEFAULT_FLOATING_ROOT_SELECTOR = "[data-floating-root]";
 const DEFAULT_DIALOG_FLOATING_HOST_SELECTOR =
   'dialog[data-slot="dialog-content"], dialog[data-slot="sheet-content"], dialog[data-slot="drawer-content"]';
+const FLOATING_AVAILABLE_HEIGHT_PROPERTY = "--sw-floating-available-height";
+const FLOATING_AVAILABLE_WIDTH_PROPERTY = "--sw-floating-available-width";
 
 export function createFloatingPositioner(options: FloatingPositionerOptions): FloatingPositioner {
   let cleanupAutoUpdate: (() => void) | null = null;
@@ -193,7 +196,22 @@ async function updateFloatingPosition({
   } = getOptions();
   const middleware = [
     offset({ alignmentAxis: alignOffset, mainAxis: sideOffset }),
-    avoidCollisions ? flip({ padding: viewportPadding }) : null,
+    size({
+      apply({ availableHeight, availableWidth, elements }) {
+        elements.floating.style.setProperty(
+          FLOATING_AVAILABLE_HEIGHT_PROPERTY,
+          `${Math.max(0, availableHeight)}px`,
+        );
+        elements.floating.style.setProperty(
+          FLOATING_AVAILABLE_WIDTH_PROPERTY,
+          `${Math.max(0, availableWidth)}px`,
+        );
+      },
+      padding: viewportPadding,
+    }),
+    avoidCollisions
+      ? flip({ fallbackStrategy: "initialPlacement", padding: viewportPadding })
+      : null,
     avoidCollisions && !preserveAnchor
       ? shift({ crossAxis: true, padding: viewportPadding })
       : null,

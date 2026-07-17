@@ -1,0 +1,68 @@
+---
+import {
+  ColorPickerContent,
+  ColorPickerControl,
+  ColorPickerHiddenInput,
+  ColorPickerInput,
+  ColorPickerLabel,
+  ColorPickerTrigger,
+  ColorPickerValueSwatch,
+} from "@/components/starwind-runtime/color-picker";
+import ColorPickerEditor from "./ColorPickerEditor.astro";
+
+interface Props {
+  initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+  id: string;
+  label: string;
+  popup?: boolean;
+  alpha?: boolean;
+  channels?: boolean;
+  swatches?: boolean;
+  clear?: boolean;
+}
+
+const {
+  initial,
+  id,
+  label,
+  popup = false,
+  alpha = true,
+  channels = false,
+  swatches = true,
+  clear = false,
+} = Astro.props;
+---
+
+<ColorPickerLabel id={`${id}-label`} initial={initial.label.initial}>{label}</ColorPickerLabel>
+<ColorPickerControl initial={initial.control.initial}>
+  <ColorPickerValueSwatch initial={initial} />
+  {
+    popup ? (
+      <ColorPickerTrigger
+        initial={initial}
+        aria-label={`Open ${label.toLowerCase()}`}
+        data-testid={`${id}-trigger`}
+      />
+    ) : (
+      <ColorPickerInput initial={initial} data-testid={`${id}-control-input`} />
+    )
+  }
+</ColorPickerControl>
+{
+  popup ? (
+    <ColorPickerContent
+      initial={initial}
+      alpha={alpha}
+      showEyeDropper
+      showClear={clear}
+      aria-label={`${label} editor`}
+    >
+      <ColorPickerEditor {initial} {id} {label} {alpha} {channels} {swatches} {clear} />
+    </ColorPickerContent>
+  ) : (
+    <div class="mt-3 space-y-3 rounded-lg border p-4" data-testid={`${id}-inline`}>
+      <ColorPickerEditor {initial} {id} {label} {alpha} {channels} {swatches} {clear} />
+    </div>
+  )
+}
+<ColorPickerHiddenInput initial={initial.hiddenInput.initial} />

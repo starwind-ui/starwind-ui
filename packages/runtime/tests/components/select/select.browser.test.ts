@@ -813,6 +813,51 @@ describe("createSelect", () => {
     expect(getValue().textContent).toBe("System");
   });
 
+  it("updates disabled and read-only state from validated root-scoped commands", () => {
+    const root = renderSelect({ defaultValue: "system" });
+    createSelect(root);
+
+    root.dispatchEvent(new CustomEvent("starwind:set-disabled", { detail: { disabled: true } }));
+    root.dispatchEvent(new CustomEvent("starwind:set-readonly", { detail: { readOnly: true } }));
+
+    expect(root).toHaveAttribute("data-disabled");
+    expect(root).toHaveAttribute("data-readonly");
+    expect(getTrigger()).toBeDisabled();
+    expect(getTrigger()).toHaveAttribute("aria-readonly", "true");
+
+    for (const [type, detail] of [
+      ["starwind:set-disabled", { disabled: "false" }],
+      ["starwind:set-disabled", { readOnly: false }],
+      ["starwind:set-readonly", { readOnly: 0 }],
+      ["starwind:set-readonly", { disabled: false }],
+    ] as const) {
+      root.dispatchEvent(new CustomEvent(type, { detail }));
+    }
+    document.dispatchEvent(
+      new CustomEvent("starwind:set-disabled", { detail: { disabled: false } }),
+    );
+    document.dispatchEvent(
+      new CustomEvent("starwind:set-readonly", { detail: { readOnly: false } }),
+    );
+
+    expect(root).toHaveAttribute("data-disabled");
+    expect(root).toHaveAttribute("data-readonly");
+  });
+
+  it("removes disabled and read-only command listeners when destroyed", () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const select = createSelect(root);
+    select.destroy();
+
+    root.dispatchEvent(new CustomEvent("starwind:set-disabled", { detail: { disabled: true } }));
+    root.dispatchEvent(new CustomEvent("starwind:set-readonly", { detail: { readOnly: true } }));
+
+    expect(root).not.toHaveAttribute("data-disabled");
+    expect(root).not.toHaveAttribute("data-readonly");
+    expect(getTrigger()).not.toBeDisabled();
+    expect(getTrigger()).toHaveAttribute("aria-readonly", "false");
+  });
+
   it("uses same-task option additions for imperative value updates", async () => {
     const root = renderSelect({ defaultValue: "system" });
     const select = createSelect(root);

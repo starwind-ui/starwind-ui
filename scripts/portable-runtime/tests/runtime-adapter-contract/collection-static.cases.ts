@@ -563,7 +563,7 @@ export function defineRuntimeCollectionStaticTests(): void {
       expect.objectContaining({ defaultValue: '"single"', name: "type" }),
     );
     expect(accordion.props).toContainEqual(
-      expect.objectContaining({ defaultValue: "false", name: "collapsible" }),
+      expect.objectContaining({ defaultValue: "true", name: "collapsible" }),
     );
     expect(accordion.props).toContainEqual(
       expect.objectContaining({ name: "value", targets: ["item"], type: "string" }),

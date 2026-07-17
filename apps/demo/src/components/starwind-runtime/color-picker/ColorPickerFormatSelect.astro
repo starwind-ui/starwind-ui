@@ -1,0 +1,40 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import "./styles.css";
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "../select";
+import { colorPickerFormatSelectTrigger } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  size?: "sm" | "md" | "lg";
+  initial?: import("@starwind-ui/astro/color-picker").ColorPickerInitialPartProjection;
+};
+
+const { initial, class: className, size = "md", ...rest } = Astro.props;
+---
+
+<ColorPickerPrimitive.FormatControl
+  initial={initial}
+  class={["shrink-0", className].filter(Boolean).join(" ")}
+  {...rest}
+  data-slot="color-picker-format-control"
+>
+  <Select>
+    <SelectTrigger
+      size={size}
+      aria-label="Color format"
+      class={colorPickerFormatSelectTrigger({ size })}
+    />
+
+    <SelectContent size={size} data-sw-color-picker-format-options="">
+      <SelectItem value="hex">HEX</SelectItem>
+
+      <SelectItem value="rgb">RGB</SelectItem>
+
+      <SelectItem value="hsl">HSL</SelectItem>
+
+      <SelectItem value="hsb">HSB</SelectItem>
+    </SelectContent>
+  </Select>
+</ColorPickerPrimitive.FormatControl>

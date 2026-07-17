@@ -13,6 +13,7 @@ import { carouselStyledContract } from "./carousel.js";
 import { checkboxStyledContract } from "./checkbox.js";
 import { checkboxGroupStyledContract } from "./checkbox-group.js";
 import { collapsibleStyledContract } from "./collapsible.js";
+import { colorPickerStyledContract } from "./color-picker.js";
 import { comboboxStyledContract } from "./combobox.js";
 import { contextMenuStyledContract } from "./context-menu.js";
 import { dialogStyledContract } from "./dialog.js";
@@ -70,6 +71,7 @@ export const starwindStyledContracts: StyledAdapterContract[] = [
   checkboxStyledContract,
   checkboxGroupStyledContract,
   comboboxStyledContract,
+  colorPickerStyledContract,
   inputStyledContract,
   inputGroupStyledContract,
   inputOtpStyledContract,

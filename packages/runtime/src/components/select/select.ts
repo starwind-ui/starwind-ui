@@ -534,6 +534,28 @@ class SelectController implements SelectInstance {
       { signal },
     );
 
+    this.root.addEventListener(
+      "starwind:set-disabled",
+      (event) => {
+        const detail = readBooleanCommandDetail(event, "disabled");
+        if (!detail) return;
+
+        this.setDisabled(detail.disabled);
+      },
+      { signal },
+    );
+
+    this.root.addEventListener(
+      "starwind:set-readonly",
+      (event) => {
+        const detail = readBooleanCommandDetail(event, "readOnly");
+        if (!detail) return;
+
+        this.setReadOnly(detail.readOnly);
+      },
+      { signal },
+    );
+
     trigger.addEventListener(
       "pointerdown",
       (event) => {
@@ -642,6 +664,7 @@ class SelectController implements SelectInstance {
             break;
           case "Escape":
             event.preventDefault();
+            event.stopPropagation();
             this.requestOpen(false, { event, reason: "escape-key" });
             break;
           case "Enter":
@@ -1034,7 +1057,11 @@ class SelectController implements SelectInstance {
   private readonly handleFormReset = (): void => {
     this.clearResetTimer();
     this.resetTimer = window.setTimeout(() => {
-      this.valueState = this.initialValue;
+      const currentDefaultValue = this.root.getAttribute(SELECT_DEFAULT_VALUE_ATTRIBUTE);
+      this.valueState =
+        currentDefaultValue === null
+          ? this.initialValue
+          : (normalizeValue(currentDefaultValue) ?? null);
       this.applyValueState(this.valueState);
       this.resetTimer = undefined;
     }, 0);
@@ -1818,6 +1845,18 @@ function readSetValueCommandDetail(event: Event): SetValueCommandDetail | null {
     emit: typeof detail.emit === "boolean" ? detail.emit : undefined,
     value: detail.value,
   };
+}
+
+function readBooleanCommandDetail<K extends string>(
+  event: Event,
+  key: K,
+): Record<K, boolean> | null {
+  if (!(event instanceof CustomEvent) || !event.detail || typeof event.detail !== "object") {
+    return null;
+  }
+
+  const detail = event.detail as Partial<Record<K, unknown>>;
+  return typeof detail[key] === "boolean" ? ({ [key]: detail[key] } as Record<K, boolean>) : null;
 }
 
 function isDisabledElement(element: HTMLElement): boolean {

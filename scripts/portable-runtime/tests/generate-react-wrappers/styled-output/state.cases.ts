@@ -168,6 +168,7 @@ export async function assertReactStyledStateOutput(outputRoot: string): Promise<
   expect(accordion).toContain('AccordionPrimitive from "../primitives/react/accordion"');
   expect(accordion).toContain("<AccordionPrimitive.Root");
   expect(accordion).not.toContain('from "@starwind-ui/runtime"');
+  expect(accordion).toContain("collapsible = true");
   expect(accordion).toContain("defaultValue={defaultValue}");
   expect(accordion).toContain('value?: import("@starwind-ui/runtime").AccordionValue;');
   expect(accordion).toContain("value={value}");

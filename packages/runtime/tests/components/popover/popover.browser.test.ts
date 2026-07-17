@@ -227,6 +227,56 @@ describe("createPopover", () => {
     expect(getPopup().style.top).not.toBe("");
   });
 
+  it("keeps collision-aware content from shifting across its trigger", async () => {
+    const root = renderPopover();
+    const trigger = getTrigger();
+    const popup = getPopup();
+    trigger.style.position = "fixed";
+    trigger.style.left = "100px";
+    trigger.style.top = "50vh";
+    trigger.style.width = "120px";
+    trigger.style.height = "32px";
+    popup.style.width = "240px";
+    popup.style.height = "calc(50vh + 24px)";
+    popup.style.maxHeight = "var(--sw-floating-available-height)";
+
+    createPopover(root);
+    trigger.click();
+    await waitForFloatingPosition();
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const popupRect = popup.getBoundingClientRect();
+    expect(popupRect.bottom <= triggerRect.top || popupRect.top >= triggerRect.bottom).toBe(true);
+    expect(popupRect.top).toBeGreaterThanOrEqual(8);
+    expect(popupRect.bottom).toBeLessThanOrEqual(window.innerHeight - 8);
+  });
+
+  it("preserves document scroll while moving focus into the opened popup", async () => {
+    const root = renderPopover();
+    const firstControl = document.createElement("input");
+    firstControl.setAttribute("aria-label", "Saturation");
+    getPopup().prepend(firstControl);
+    const focus = vi.spyOn(firstControl, "focus");
+
+    const pageSpacer = document.createElement("div");
+    pageSpacer.style.height = "2000px";
+    document.body.append(pageSpacer);
+    createPopover(root);
+    window.scrollTo(0, 300);
+    await waitForAnimationFrame();
+    const scrollY = window.scrollY;
+    expect(scrollY).toBeGreaterThan(0);
+
+    getTrigger().click();
+    await waitForFloatingPosition();
+
+    expect(document.activeElement).toBe(firstControl);
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(window.scrollY).toBe(scrollY);
+
+    window.scrollTo(0, 0);
+  });
+
   it("syncs optional backdrop visibility and state with the popover", () => {
     const popover = createPopover(renderPopover({ withBackdrop: true }));
 
@@ -1083,6 +1133,10 @@ async function waitForMicrotasks(): Promise<void> {
 
 async function waitForFloatingPosition(): Promise<void> {
   await waitForMicrotasks();
-  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  await waitForAnimationFrame();
   await waitForMicrotasks();
+}
+
+async function waitForAnimationFrame(): Promise<void> {
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 }

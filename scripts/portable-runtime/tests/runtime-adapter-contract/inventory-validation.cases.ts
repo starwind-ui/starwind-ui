@@ -49,6 +49,7 @@ export function defineRuntimeInventoryValidationTests(): void {
       "select",
       "sidebar",
       "combobox",
+      "color-picker",
       "toast",
     ]);
 
@@ -87,6 +88,7 @@ export function defineRuntimeInventoryValidationTests(): void {
       "floating-value-control",
       "presence-disclosure-control",
       "floating-value-control",
+      "form-value-control",
       "notification-system",
     ]);
   });

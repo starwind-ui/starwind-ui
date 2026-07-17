@@ -24,7 +24,7 @@ export type AccordionRootProps = Omit<
 };
 
 const AccordionRoot = React.forwardRef<HTMLDivElement, AccordionRootProps>(function AccordionRoot(
-  { type = "single", defaultValue, value, collapsible = false, onValueChange, ...props },
+  { type = "single", defaultValue, value, collapsible = true, onValueChange, ...props },
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -95,7 +95,7 @@ const AccordionRoot = React.forwardRef<HTMLDivElement, AccordionRootProps>(funct
       data-sw-accordion
       data-type={type}
       data-default-value={defaultValueAttribute}
-      data-collapsible={collapsible ? "true" : undefined}
+      data-collapsible={String(collapsible)}
       data-state="closed"
       ref={composedRef}
       {...props}

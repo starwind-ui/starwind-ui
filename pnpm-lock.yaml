@@ -265,6 +265,9 @@ importers:
         specifier: workspace:*
         version: link:../runtime
     devDependencies:
+      '@types/node':
+        specifier: ^24.12.4
+        version: 24.12.4
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.17

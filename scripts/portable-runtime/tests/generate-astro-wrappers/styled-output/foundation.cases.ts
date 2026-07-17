@@ -6,6 +6,8 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   const badge = await readGeneratedFile(outputRoot, "badge/Badge.astro");
   const badgeVariants = await readGeneratedFile(outputRoot, "badge/variants.ts");
   const badgeIndex = await readGeneratedFile(outputRoot, "badge/index.ts");
+  const buttonVariants = await readGeneratedFile(outputRoot, "button/variants.ts");
+  const alertDialogVariants = await readGeneratedFile(outputRoot, "alert-dialog/variants.ts");
   const label = await readGeneratedFile(outputRoot, "label/Label.astro");
   const labelVariants = await readGeneratedFile(outputRoot, "label/variants.ts");
   const labelIndex = await readGeneratedFile(outputRoot, "label/index.ts");
@@ -165,6 +167,12 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(badgeVariants).toContain("border-primary-accent/40 text-primary-accent");
   expect(badgeIndex).toContain("export default Badge;");
   expect(badgeIndex).not.toContain("Root: Badge");
+  const secondaryButtonClass =
+    "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] focus-visible:ring-secondary/50";
+  expect(buttonVariants).toContain(secondaryButtonClass);
+  expect(buttonVariants).not.toContain("hover:bg-secondary/90");
+  expect(alertDialogVariants).toContain(secondaryButtonClass);
+  expect(alertDialogVariants).not.toContain("hover:bg-secondary/90");
   expect(label).not.toContain("../primitives");
   expect(label).toContain('type Props = HTMLAttributes<"label"> & VariantProps<typeof label>;');
   expect(label).toContain("<label");

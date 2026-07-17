@@ -11,6 +11,7 @@ export { default as CarouselDemo } from "./CarouselDemo.astro";
 export { default as CheckboxDemo } from "./CheckboxDemo.astro";
 export { default as CheckboxGroupDemo } from "./CheckboxGroupDemo.astro";
 export { default as CollapsibleDemo } from "./CollapsibleDemo.astro";
+export { default as ColorPickerDemo } from "./color-picker/ColorPickerDemo.astro";
 export { default as ComboboxDemo } from "./ComboboxDemo.astro";
 export { default as ContextMenuDemo } from "./ContextMenuDemo.astro";
 export { default as DialogDemo } from "./DialogDemo.astro";

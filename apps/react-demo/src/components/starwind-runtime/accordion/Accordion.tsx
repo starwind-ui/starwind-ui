@@ -17,7 +17,7 @@ function Accordion(props: AccordionProps) {
     type = "single",
     defaultValue,
     value,
-    collapsible = false,
+    collapsible = true,
     onValueChange,
     className,
     children,

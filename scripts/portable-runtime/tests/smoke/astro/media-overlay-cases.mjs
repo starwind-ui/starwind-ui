@@ -1,6 +1,7 @@
 import { verifyTooltipPlacements, verifyTooltipPropExamples } from "../shared/tooltip.mjs";
 import { verifyHoverCardCases } from "../shared/hover-card.mjs";
 import { verifyVideoCases } from "../shared/video.mjs";
+import { verifyDialogEntryAnimationGestures } from "../shared/dialog-entry-animation.mjs";
 
 export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview" }) {
   await verifyVideoCases({
@@ -481,6 +482,29 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     return content instanceof HTMLElement && content.hidden;
   });
 
+  const billingContent = page
+    .locator('[data-sw-accordion-item][data-value="billing"] [data-sw-accordion-content]')
+    .first();
+  await page.getByRole("button", { name: "Billing" }).click();
+  await page.waitForFunction(() => {
+    const content = document.querySelector(
+      '[data-sw-accordion-item][data-value="billing"] [data-sw-accordion-content]',
+    );
+    return content instanceof HTMLElement && content.hidden;
+  });
+  if ((await billingContent.getAttribute("data-state")) !== "closed") {
+    throw new Error("Expected the default Astro accordion to close its last open item.");
+  }
+
+  const requiredOpenAccordion = page.locator("#runtime-required-open-accordion");
+  const requiredOpenTrigger = requiredOpenAccordion.getByRole("button", {
+    name: "Runtime behavior",
+  });
+  await requiredOpenTrigger.click();
+  if ((await requiredOpenTrigger.getAttribute("aria-expanded")) !== "true") {
+    throw new Error("Expected collapsible={false} to retain the open Astro accordion item.");
+  }
+
   await page.getByRole("button", { name: "Discard draft" }).click();
   await page.getByRole("heading", { name: "Discard draft?" }).waitFor();
 
@@ -557,6 +581,15 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     throw new Error("Expected opt-in Astro Alert Dialog outside click to begin closing.");
   }
   await page.waitForFunction(() => document.querySelectorAll("dialog[open]").length === 0);
+
+  await verifyDialogEntryAnimationGestures({
+    backdrop: '#runtime-sheet-default [data-slot="sheet-backdrop"]',
+    content: page.locator('#runtime-sheet-default [data-slot="sheet-content"]'),
+    expectedDuration: 500,
+    label: "Astro Sheet",
+    page,
+    trigger: page.getByRole("button", { exact: true, name: "Open sheet" }),
+  });
 
   await page.getByRole("button", { exact: true, name: "Open sheet" }).click();
   await page.getByRole("heading", { name: "Runtime sheet" }).waitFor();

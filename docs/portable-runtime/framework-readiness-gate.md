@@ -78,7 +78,7 @@ the target home.
 
 ## Current Primitive Surface
 
-The current Primitive adapter inventory is 35 component families.
+The current Primitive adapter inventory is 36 component families.
 
 Adapter Family Plan components:
 
@@ -120,6 +120,7 @@ Specialized Adapter Spec generated primitives:
 - `select`
 - `sidebar`
 - `combobox`
+- `color-picker`
 
 Current manual islands:
 
@@ -199,7 +200,7 @@ Use this tier only when the target can be maintained as a first-party adapter.
 
 Requirements:
 
-- All 35 Primitive contracts are either generated for the target or have an accepted, documented
+- All 36 Primitive contracts are either generated for the target or have an accepted, documented
   non-shipping decision.
 - Every manual island escape hatch supported by the target has a component renderer or typed adapter
   family plan with explicit contract-owned facts and escape hatches.
@@ -260,7 +261,7 @@ Before any target leaves Tier 0:
   wrappers.
 - Generic Adapter Plan validation must pass for every family the target Framework Adapter consumes.
 - Framework Adapter conformance tests must pass for the target home.
-- Coverage classification must be current for all 35 Primitive contracts.
+- Coverage classification must be current for all 36 Primitive contracts.
 - Every escape hatch used by a supported component must name affected frameworks, boundary, reason,
   contract-owned facts, demotion criteria, and tests.
 - Any target-specific omission must be represented as a documented framework note, unsupported
@@ -286,7 +287,7 @@ High-complexity islands remain human-gated:
 
 - None.
 
-`select`, `menu`, `context-menu`, `navigation-menu`, `combobox`, `tooltip`, `preview-card`,
+`select`, `menu`, `context-menu`, `navigation-menu`, `combobox`, `color-picker`, `tooltip`, `preview-card`,
 `tabs`, `accordion`, `sidebar`, `slider`, `input-otp`, `dropzone`, `field`, `carousel`, and `toast`
 are no longer manual islands. They are Specialized Adapter Spec generated for Astro and React, with
 Vue and Solid represented only by non-shipping tracer fixtures where fixture support exists. The
@@ -372,8 +373,8 @@ more target code.
 
 Use these files together when evaluating readiness:
 
-- `docs/portable-runtime/evaluations/generic-adapter-plan-coverage.md`
-- `docs/portable-runtime/evaluations/menu-specialized-adapter-spec-evaluation.md`
+- `scripts/portable-runtime/renderers/primitive-inventory.ts`
+- `scripts/portable-runtime/renderers/primitive-generator-registry.ts`
 - `scripts/portable-runtime/contracts/primitive/types.ts`
 - `scripts/portable-runtime/contracts/primitive/validation.ts`
 - `scripts/portable-runtime/contracts/styled/types.ts`
@@ -387,3 +388,4 @@ Use these files together when evaluating readiness:
   current Adapter Family Plan output-model registry and remaining inline family builders
 - `scripts/portable-runtime/tests/specialized-adapter-spec.test.ts`
 - `scripts/portable-runtime/tests/generic-adapter-plan.test.ts`
+- `scripts/portable-runtime/tests/primitive-generator-registry.test.ts`

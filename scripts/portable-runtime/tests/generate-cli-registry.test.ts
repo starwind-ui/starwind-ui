@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   buttonRuntimeAdapterContract,
   checkboxRuntimeAdapterContract,
+  colorPickerRuntimeAdapterContract,
   popoverRuntimeAdapterContract,
   runtimeAdapterContracts,
 } from "../contracts/primitive/representatives.js";
@@ -1084,6 +1085,20 @@ describe("generateCliRegistry", () => {
         0,
       );
     }
+
+    for (const artifact of artifactSet.primitives) {
+      const registration = getPrimitiveFrameworkAdapterTarget(artifact.framework);
+
+      assertSafeInstallPaths(artifact.files, DEFAULT_PRIMITIVE_INSTALL_ROOT);
+      assertInstallGraphSourceClosure({
+        files: artifact.files,
+        generatedImportCandidateExtensions:
+          registration.cliRegistry.generatedImportCandidateExtensions,
+        installRoot: DEFAULT_PRIMITIVE_INSTALL_ROOT,
+      });
+      assertNoMonorepoOnlyImports(artifact.files);
+    }
+
     expect(artifactComponents).not.toContain("theme");
   });
 
@@ -1219,6 +1234,211 @@ describe("generateCliRegistry", () => {
     expect(Object.keys(versionManifest.primitives).sort()).toEqual(contractNames);
   });
 
+  it("publishes deterministic, source-closed Color Picker candidates for Astro and React", async () => {
+    const styledContract = starwindStyledContracts.find(
+      (contract) => contract.component === "color-picker",
+    );
+    const styledVersionManifest = await loadRegistryVersionManifest();
+    const primitiveVersionManifest = await loadPrimitiveVersionManifest();
+    const [styledVersionManifestSource, primitiveVersionManifestSource] = await Promise.all([
+      readFile(path.join(process.cwd(), DEFAULT_REGISTRY_VERSION_MANIFEST), "utf8"),
+      readFile(path.join(process.cwd(), DEFAULT_PRIMITIVE_VERSION_MANIFEST), "utf8"),
+    ]);
+    const styledComponentCandidates = [
+      "ColorPicker",
+      "ColorPickerArea",
+      "ColorPickerAreaThumb",
+      "ColorPickerChannelInput",
+      "ColorPickerChannelSlider",
+      "ColorPickerClear",
+      "ColorPickerContent",
+      "ColorPickerControl",
+      "ColorPickerEyeDropper",
+      "ColorPickerFormatSelect",
+      "ColorPickerHiddenInput",
+      "ColorPickerInput",
+      "ColorPickerLabel",
+      "ColorPickerNativeFormatSelect",
+      "ColorPickerRoot",
+      "ColorPickerSliders",
+      "ColorPickerSwatch",
+      "ColorPickerSwatchGroup",
+      "ColorPickerTrigger",
+      "ColorPickerValueInput",
+      "ColorPickerValueSwatch",
+    ] as const;
+    const styledCandidatePaths = new Map<"astro" | "react", string[]>();
+    const primitiveCandidatePaths = new Map<"astro" | "react", string[]>();
+
+    expect(styledContract).toBeDefined();
+    expect(styledVersionManifest.components["color-picker"]).toBe("0.1.0");
+    expect(primitiveVersionManifest.primitives["color-picker"]).toBe("0.1.0");
+    expect(styledComponentCandidates).toHaveLength(21);
+
+    const firstRegistry = await buildRuntimeRegistry({
+      contracts: [styledContract!],
+      tempRoot: path.join(tempRoot, "color-picker-registry-first"),
+    });
+    const secondRegistry = await buildRuntimeRegistry({
+      contracts: [styledContract!],
+      tempRoot: path.join(tempRoot, "color-picker-registry-second"),
+    });
+    const firstPrimitiveArtifacts = await buildPrimitiveVendoringArtifacts({
+      contracts: [colorPickerRuntimeAdapterContract],
+      tempRoot: path.join(tempRoot, "color-picker-primitives-first"),
+    });
+    const secondPrimitiveArtifacts = await buildPrimitiveVendoringArtifacts({
+      contracts: [colorPickerRuntimeAdapterContract],
+      tempRoot: path.join(tempRoot, "color-picker-primitives-second"),
+    });
+
+    expect(firstRegistry).toEqual(secondRegistry);
+    expect(firstPrimitiveArtifacts).toEqual(secondPrimitiveArtifacts);
+    expect(firstRegistry.$schema).toBe("https://starwind.dev/registry-schema.v2.json");
+    expect(firstPrimitiveArtifacts.$schema).toBe(
+      "https://starwind.dev/primitive-vendoring-artifacts-schema.v1.json",
+    );
+
+    const styled = getRegistryComponentWithTargets(firstRegistry, "color-picker");
+    expect(styled.version).toBe("0.1.0");
+
+    for (const framework of ["astro", "react"] as const) {
+      const target = styled.targets[framework];
+      const registration = getPrimitiveFrameworkAdapterTarget(framework);
+      const adapterPackage = framework === "astro" ? "@starwind-ui/astro" : "@starwind-ui/react";
+      const expectedPackageNames =
+        framework === "astro"
+          ? [adapterPackage, "@tabler/icons", "astro", "tailwind-variants"]
+          : [adapterPackage, "@tabler/icons-react", "react", "tailwind-variants"];
+
+      const expectedStyledPaths = [
+        ...styledComponentCandidates.map(
+          (component) =>
+            `${DEFAULT_COMPONENT_INSTALL_ROOT}/color-picker/${component}${registration.adapter.fileExtension}`,
+        ),
+        `${DEFAULT_COMPONENT_INSTALL_ROOT}/color-picker/index.ts`,
+        `${DEFAULT_COMPONENT_INSTALL_ROOT}/color-picker/styles.css`,
+        `${DEFAULT_COMPONENT_INSTALL_ROOT}/color-picker/variants.ts`,
+      ].sort();
+      const actualStyledPaths = target.files.map((file) => file.path).sort();
+
+      expect(target.componentDependencies).toEqual(["input", "native-select", "popover", "select"]);
+      expect(target.packageRequirements.map((requirement) => requirement.name)).toEqual(
+        expectedPackageNames,
+      );
+      expect(target.packageRequirements).toEqual(
+        expect.arrayContaining([{ name: adapterPackage, range: CURRENT_BETA_PACKAGE_RANGE }]),
+      );
+      expect(JSON.stringify(target.packageRequirements)).not.toContain("workspace:");
+      expect(target.files).toHaveLength(styledComponentCandidates.length + 3);
+      expect(actualStyledPaths).toEqual(expectedStyledPaths);
+      styledCandidatePaths.set(
+        framework,
+        actualStyledPaths.map((filePath) =>
+          filePath.replace(registration.adapter.fileExtension, ".component"),
+        ),
+      );
+      assertSafeInstallPaths(target.files, DEFAULT_COMPONENT_INSTALL_ROOT);
+      assertInstallGraphSourceClosure({
+        componentDependencies: target.componentDependencies,
+        files: target.files,
+        generatedImportCandidateExtensions:
+          registration.cliRegistry.generatedImportCandidateExtensions,
+        installRoot: DEFAULT_COMPONENT_INSTALL_ROOT,
+      });
+      assertNoMonorepoOnlyImports(target.files);
+    }
+
+    for (const framework of ["astro", "react"] as const) {
+      const registration = getPrimitiveFrameworkAdapterTarget(framework);
+      const artifact = firstPrimitiveArtifacts.primitives.find(
+        (primitive) => primitive.component === "color-picker" && primitive.framework === framework,
+      );
+      const expectedPackageNames =
+        framework === "astro"
+          ? ["@starwind-ui/runtime", "astro"]
+          : ["@starwind-ui/runtime", "react", "react-dom"];
+
+      expect(artifact, `${framework}:color-picker`).toBeDefined();
+      expect(artifact?.version).toBe("0.1.0");
+      expect(artifact?.packageRequirements.map((requirement) => requirement.name)).toEqual(
+        expectedPackageNames,
+      );
+      expect(artifact?.packageRequirements).toEqual(
+        expect.arrayContaining([
+          { name: "@starwind-ui/runtime", range: CURRENT_BETA_PACKAGE_RANGE },
+        ]),
+      );
+      expect(JSON.stringify(artifact?.packageRequirements)).not.toContain("workspace:");
+      expect(artifact?.files).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/color-picker/ColorPickerRoot${registration.adapter.fileExtension}`,
+          }),
+          expect.objectContaining({
+            path: `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/color-picker/ColorPickerFormatControl${registration.adapter.fileExtension}`,
+          }),
+          expect.objectContaining({
+            path: `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/color-picker/index.ts`,
+          }),
+        ]),
+      );
+
+      const colorPickerInstallRoot = `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/color-picker/`;
+      primitiveCandidatePaths.set(
+        framework,
+        artifact!.files
+          .map((file) => file.path)
+          .filter(
+            (filePath) =>
+              filePath.startsWith(colorPickerInstallRoot) &&
+              !filePath.endsWith("ColorPickerRenderProjection.ts"),
+          )
+          .map((filePath) => filePath.replace(registration.adapter.fileExtension, ".component"))
+          .sort(),
+      );
+
+      if (framework === "astro") {
+        expect(artifact?.files).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              path: `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/internal/controller-lifecycle.ts`,
+            }),
+          ]),
+        );
+      } else {
+        expect(artifact?.files).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              path: `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/internal/compose-refs.ts`,
+            }),
+            expect.objectContaining({
+              path: `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/internal/use-isomorphic-layout-effect.ts`,
+            }),
+          ]),
+        );
+      }
+
+      assertSafeInstallPaths(artifact!.files, DEFAULT_PRIMITIVE_INSTALL_ROOT);
+      assertInstallGraphSourceClosure({
+        files: artifact!.files,
+        generatedImportCandidateExtensions:
+          registration.cliRegistry.generatedImportCandidateExtensions,
+        installRoot: DEFAULT_PRIMITIVE_INSTALL_ROOT,
+      });
+      assertNoMonorepoOnlyImports(artifact!.files);
+    }
+
+    expect(styledCandidatePaths.get("astro")).toEqual(styledCandidatePaths.get("react"));
+    expect(primitiveCandidatePaths.get("astro")).toEqual(primitiveCandidatePaths.get("react"));
+    await expect(
+      readFile(path.join(process.cwd(), DEFAULT_REGISTRY_VERSION_MANIFEST), "utf8"),
+    ).resolves.toBe(styledVersionManifestSource);
+    await expect(
+      readFile(path.join(process.cwd(), DEFAULT_PRIMITIVE_VERSION_MANIFEST), "utf8"),
+    ).resolves.toBe(primitiveVersionManifestSource);
+  });
+
   it("keeps the committed primitive vendoring artifacts synced with generated source", async () => {
     const committedArtifacts = JSON.parse(
       await readFile(
@@ -1287,6 +1507,91 @@ function normalizeGeneratedPackageContentForVendoring(content: string): string {
   expect(normalized).not.toContain("Do not edit by hand; update the contract/template instead.");
 
   return normalized;
+}
+
+type InstallGraphFile = {
+  content: string;
+  path: string;
+};
+
+function assertSafeInstallPaths(files: readonly InstallGraphFile[], installRoot: string): void {
+  expect(new Set(files.map((file) => file.path)).size).toBe(files.length);
+
+  for (const file of files) {
+    expect(file.path, file.path).not.toContain("\\");
+    expect(file.path, file.path).toBe(path.posix.normalize(file.path));
+    expect(file.path, file.path).toMatch(new RegExp(`^${escapeRegExp(installRoot)}/`));
+    expect(file.path, file.path).not.toMatch(/(^|\/)\.\.?($|\/)/);
+    expect(path.posix.isAbsolute(file.path), file.path).toBe(false);
+  }
+}
+
+function assertInstallGraphSourceClosure(options: {
+  componentDependencies?: readonly string[];
+  files: readonly InstallGraphFile[];
+  generatedImportCandidateExtensions: readonly string[];
+  installRoot: string;
+}): void {
+  const filePaths = new Set(options.files.map((file) => file.path));
+  const componentDependencyRoots = new Set(
+    (options.componentDependencies ?? []).map((dependency) =>
+      path.posix.join(options.installRoot, dependency),
+    ),
+  );
+
+  for (const file of options.files) {
+    for (const importSource of collectTestImportSources(file.content)) {
+      if (!importSource.startsWith(".")) continue;
+
+      const importBase = path.posix.normalize(
+        path.posix.join(path.posix.dirname(file.path), importSource),
+      );
+      const resolvedFile = getLocalGeneratedImportCandidates(
+        importBase,
+        options.generatedImportCandidateExtensions,
+      ).find((candidate) => filePaths.has(candidate));
+      const resolvedComponentDependency = [...componentDependencyRoots].find(
+        (dependencyRoot) =>
+          importBase === dependencyRoot || importBase.startsWith(`${dependencyRoot}/`),
+      );
+
+      expect(
+        resolvedFile ?? resolvedComponentDependency,
+        `${file.path} has unresolved local import ${importSource}`,
+      ).toBeDefined();
+    }
+  }
+}
+
+function assertNoMonorepoOnlyImports(files: readonly InstallGraphFile[]): void {
+  for (const file of files) {
+    for (const importSource of collectTestImportSources(file.content)) {
+      expect(importSource, `${file.path} imports a monorepo-only source`).not.toMatch(
+        /^(?:@\/|apps\/|packages\/|\.local\/)/,
+      );
+    }
+  }
+}
+
+function collectTestImportSources(source: string): string[] {
+  const importSources = new Set<string>();
+  const staticImportPattern =
+    /(?:import|export)\s+(?:type\s+)?(?:[^"';]*?\s+from\s+)?["']([^"']+)["']/g;
+  const dynamicImportPattern = /import\(["']([^"']+)["']\)/g;
+
+  for (const match of source.matchAll(staticImportPattern)) {
+    importSources.add(match[1]);
+  }
+
+  for (const match of source.matchAll(dynamicImportPattern)) {
+    importSources.add(match[1]);
+  }
+
+  return [...importSources];
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function expectedPackageRange(version: string): string {

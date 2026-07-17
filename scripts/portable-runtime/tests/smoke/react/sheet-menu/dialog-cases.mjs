@@ -1,5 +1,16 @@
+import { verifyDialogEntryAnimationGestures } from "../../shared/dialog-entry-animation.mjs";
+
 export async function verifyReactDialogCases({ page }) {
-  await page.getByRole("button", { name: "Open dialog" }).click();
+  await verifyDialogEntryAnimationGestures({
+    backdrop: '#react-runtime-dialog-default > [data-slot="dialog-backdrop"]',
+    content: page.locator('#react-runtime-dialog-default [data-slot="dialog-content"]'),
+    expectedDuration: 200,
+    label: "React Dialog",
+    page,
+    trigger: page.getByRole("button", { name: "Open dialog", exact: true }),
+  });
+
+  await page.getByRole("button", { name: "Open dialog", exact: true }).click();
   await page.getByRole("heading", { name: "Native dialog from React" }).waitFor();
 
   const openDialogs = await page.locator("dialog[open]").count();
@@ -7,7 +18,10 @@ export async function verifyReactDialogCases({ page }) {
     throw new Error(`Expected one open dialog, found ${openDialogs}.`);
   }
 
-  await page.locator('[data-slot="dialog-close"]').first().click();
+  await page
+    .locator("#react-runtime-dialog-default")
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
   const closingDialog = await page.locator('dialog[data-state="closed"][open]').count();
   const closingBackdropState = await page
     .locator('#react-runtime-dialog-default > [data-slot="dialog-backdrop"]')

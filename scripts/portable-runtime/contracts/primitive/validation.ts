@@ -222,6 +222,133 @@ function validateContract(
     }
   }
 
+  const initialProjection = contract.initialStateProjection;
+  if (initialProjection) {
+    if (!initialProjection.importSource?.trim()) {
+      issues.push(
+        issue(contract, "initialStateProjection.importSource", "Missing projection import source."),
+      );
+    }
+    if (!initialProjection.createFunction?.trim()) {
+      issues.push(
+        issue(contract, "initialStateProjection.createFunction", "Missing state create function."),
+      );
+    }
+    if (!initialProjection.projectFunction?.trim()) {
+      issues.push(
+        issue(contract, "initialStateProjection.projectFunction", "Missing part project function."),
+      );
+    }
+    if (!/^data-[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(initialProjection.ownershipAttribute)) {
+      issues.push(
+        issue(
+          contract,
+          "initialStateProjection.ownershipAttribute",
+          "Projection ownership attribute must be a lowercase kebab-case data attribute.",
+        ),
+      );
+    }
+    const seenRootProps = new Set<string>();
+    for (const prop of initialProjection.rootStateProps) {
+      if (seenRootProps.has(prop)) {
+        issues.push(
+          issue(
+            contract,
+            "initialStateProjection.rootStateProps",
+            `Duplicate root state prop "${prop}".`,
+          ),
+        );
+      }
+      seenRootProps.add(prop);
+      requireProp(contract, props, prop, `initialStateProjection.rootStateProps.${prop}`, issues);
+    }
+    const dependencyParts = initialProjection.compositionDependencies.map((entry) => entry.part);
+    const contractParts = contract.parts.map((part) => part.name);
+    if (
+      dependencyParts.length !== contractParts.length ||
+      dependencyParts.some((part, index) => part !== contractParts[index])
+    ) {
+      issues.push(
+        issue(
+          contract,
+          "initialStateProjection.compositionDependencies",
+          "Projection composition dependencies must cover every part once in contract part order.",
+        ),
+      );
+    }
+    const seenDependencyParts = new Set<string>();
+    for (const entry of initialProjection.compositionDependencies) {
+      if (seenDependencyParts.has(entry.part)) {
+        issues.push(
+          issue(
+            contract,
+            `initialStateProjection.compositionDependencies.${entry.part}`,
+            `Duplicate projection dependency entry for part "${entry.part}".`,
+          ),
+        );
+      }
+      seenDependencyParts.add(entry.part);
+      requirePart(
+        contract,
+        parts,
+        entry.part,
+        `initialStateProjection.compositionDependencies.${entry.part}.part`,
+        issues,
+      );
+      const seenDependencies = new Set<string>();
+      for (const dependency of entry.dependsOn) {
+        if (seenDependencies.has(dependency)) {
+          issues.push(
+            issue(
+              contract,
+              `initialStateProjection.compositionDependencies.${entry.part}.dependsOn`,
+              `Duplicate composition dependency "${dependency}".`,
+            ),
+          );
+        }
+        seenDependencies.add(dependency);
+        requirePart(
+          contract,
+          parts,
+          dependency,
+          `initialStateProjection.compositionDependencies.${entry.part}.dependsOn`,
+          issues,
+        );
+      }
+    }
+  }
+
+  const cssVariableNames = new Set<string>();
+  for (const [index, cssVariable] of (contract.cssVariables ?? []).entries()) {
+    const basePath = `cssVariables.${index}`;
+    if (!/^--[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(cssVariable.name)) {
+      issues.push(
+        issue(
+          contract,
+          `${basePath}.name`,
+          `Invalid CSS variable name "${cssVariable.name}"; expected a lowercase kebab-case custom property.`,
+        ),
+      );
+    }
+    if (cssVariableNames.has(cssVariable.name)) {
+      issues.push(
+        issue(contract, `${basePath}.name`, `Duplicate CSS variable "${cssVariable.name}".`),
+      );
+    }
+    cssVariableNames.add(cssVariable.name);
+    if (!cssVariable.description?.trim()) {
+      issues.push(
+        issue(contract, `${basePath}.description`, "CSS variable is missing a description."),
+      );
+    }
+    if (!cssVariable.parts?.length) {
+      issues.push(issue(contract, `${basePath}.parts`, "CSS variable must reference a part."));
+    }
+    for (const part of cssVariable.parts ?? []) {
+      requirePart(contract, parts, part, `${basePath}.parts`, issues);
+    }
+  }
+
   for (const [index, escapeHatch] of (contract.escapeHatches ?? []).entries()) {
     validateEscapeHatch(contract, escapeHatch, index, issues);
   }

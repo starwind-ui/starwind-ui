@@ -95,6 +95,12 @@ import {
   printReactCompositeMenuOverlayIndex,
 } from "./composite-menu-overlay.js";
 import {
+  printReactColorPickerComponent,
+  printReactColorPickerIndex,
+  type ReactColorPickerComponentProjection,
+  type ReactColorPickerIndexProjection,
+} from "./color-picker.js";
+import {
   printReactEditableCollectionOverlayComponent,
   printReactEditableCollectionOverlayHelper,
   printReactEditableCollectionOverlayIndex,
@@ -217,6 +223,15 @@ export const reactFrameworkAdapter = defineFrameworkAdapter({
     };
   },
   printIndexFile(file) {
+    if (isReactColorPickerIndexProjection(file.family)) {
+      return {
+        contents: printReactColorPickerIndex(
+          file.family as unknown as ReactColorPickerIndexProjection,
+        ),
+        path: file.path,
+      };
+    }
+
     if (file.family?.kind === "action-surface") {
       return {
         contents: printReactActionSurfaceIndex(file.family),
@@ -446,6 +461,12 @@ export const reactFrameworkAdapter = defineFrameworkAdapter({
 function printReactComponent(file: AdapterComponentFile): string {
   const component = file.component;
 
+  if (isReactColorPickerComponentProjection(component.family)) {
+    return printReactColorPickerComponent(
+      component.family as unknown as ReactColorPickerComponentProjection,
+    );
+  }
+
   if (component.family?.kind === "action-surface") {
     return printReactActionSurfaceComponent(component.family);
   }
@@ -567,6 +588,18 @@ function printReactComponent(file: AdapterComponentFile): string {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function isReactColorPickerComponentProjection(
+  family: AdapterComponentModel["family"] | undefined,
+): boolean {
+  return (family as { kind?: string } | undefined)?.kind === "react-color-picker";
+}
+
+function isReactColorPickerIndexProjection(
+  family: AdapterIndexFile["family"] | undefined,
+): boolean {
+  return (family as { kind?: string } | undefined)?.kind === "react-color-picker";
 }
 
 function applyReactFamilyPrintNormalizations(file: AdapterComponentFile, contents: string): string {
@@ -1582,7 +1615,7 @@ function printReactRepeatedDisclosureRoot(facts: AdapterRepeatedDisclosureFacts)
   const collapsibleProp = facts.props.collapsible.name;
   const event = facts.events.valueChange;
 
-  return `import { type ${facts.state.type}, type ${event.detailsType}, ${facts.runtime.factory} } from "${facts.runtime.importSource}";\nimport * as React from "react";\n\nexport type ${root}Props = Omit<React.HTMLAttributes<HTMLDivElement>, "${defaultValueProp}" | "onChange"> & {\n  ${typeProp}?: ${facts.props.type.type};\n  ${defaultValueProp}?: ${facts.state.type};\n  ${valueProp}?: ${facts.state.type};\n  ${collapsibleProp}?: ${facts.props.collapsible.type};\n  ${event.callbackProp}?: (details: ${event.detailsType}) => void;\n};\n\nconst ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(\n  {\n    ${typeProp} = ${facts.props.type.defaultValue},\n    ${defaultValueProp},\n    ${valueProp},\n    ${collapsibleProp} = ${facts.props.collapsible.defaultValue},\n    ${event.callbackProp},\n    ...props\n  },\n  forwardedRef,\n) {\n  const rootRef = React.useRef<HTMLDivElement>(null);\n  const instanceRef = React.useRef<ReturnType<typeof ${facts.runtime.factory}> | undefined>(undefined);\n  const ${event.callbackProp}Ref = React.useRef(${event.callbackProp});\n  const ${valueProp}Ref = React.useRef(${valueProp});\n  const ${defaultValueProp}Ref = React.useRef(${defaultValueProp});\n  const [uncontrolledValue, setUncontrolledValueState] = React.useState<${facts.state.type} | undefined>(\n    () => ${defaultValueProp}Ref.current,\n  );\n  const uncontrolledValueRef = React.useRef(uncontrolledValue);\n\n  const setUncontrolledValue = React.useCallback((nextValue: ${facts.state.type}) => {\n    uncontrolledValueRef.current = nextValue;\n    setUncontrolledValueState(nextValue);\n  }, []);\n\n  React.useEffect(() => {\n    ${event.callbackProp}Ref.current = ${event.callbackProp};\n  }, [${event.callbackProp}]);\n\n  React.useEffect(() => {\n    ${valueProp}Ref.current = ${valueProp};\n  }, [${valueProp}]);\n\n  const composedRef = React.useCallback((node: HTMLDivElement | null) => {\n    rootRef.current = node;\n    setRef(forwardedRef, node);\n  }, [forwardedRef]);\n\n  React.useEffect(() => {\n    const root = rootRef.current;\n    if (!root) return;\n\n    const instance = ${facts.runtime.factory}(root, {\n      ${typeProp},\n      ${defaultValueProp}: uncontrolledValueRef.current,\n      ${collapsibleProp},\n      ...(${valueProp}Ref.current !== undefined ? { ${valueProp}: ${valueProp}Ref.current } : {}),\n    });\n    instanceRef.current = instance;\n    const unsubscribe = instance.subscribe("${event.name}", (details) => {\n      ${event.callbackProp}Ref.current?.(details);\n      if (${valueProp}Ref.current === undefined) {\n        setUncontrolledValue(details.${event.valueProperty});\n      }\n    });\n\n    return () => {\n      unsubscribe();\n      instance.destroy();\n      if (instanceRef.current === instance) {\n        instanceRef.current = undefined;\n      }\n    };\n  }, [${typeProp}, ${collapsibleProp}]);\n\n  React.useEffect(() => {\n    if (${valueProp} === undefined) return;\n    const instance = instanceRef.current;\n    if (!instance) return;\n    if (${facts.valueEqualityHelper}(instance.${facts.state.getter}(), ${valueProp})) return;\n\n    instance.${facts.setter.method}(${valueProp}, ${formatOptions(facts.setter.options)});\n  }, [${valueProp}]);\n\n  const defaultValueAttribute = Array.isArray(${defaultValueProp}Ref.current)\n    ? JSON.stringify(${defaultValueProp}Ref.current)\n    : ${defaultValueProp}Ref.current;\n\n  return (\n    <${facts.parts.root.defaultElement}\n      ${facts.attrs.root}\n      ${facts.attrs.type}={${typeProp}}\n      ${facts.attrs.defaultValue}={defaultValueAttribute}\n      ${facts.attrs.collapsible}={${collapsibleProp} ? "true" : undefined}\n      ${facts.attrs.rootState}="closed"\n      ref={composedRef}\n      {...props}\n    />\n  );\n});\n\n${root}.displayName = "${facts.displayName}.Root";\n\nexport default ${root};\n\nfunction ${facts.valueEqualityHelper}(left: ${facts.state.type}, right: ${facts.state.type}): boolean {\n  if (Array.isArray(left) || Array.isArray(right)) {\n    return JSON.stringify(left) === JSON.stringify(right);\n  }\n\n  return left === right;\n}\n\n${renderSetRefFunction()}`;
+  return `import { type ${facts.state.type}, type ${event.detailsType}, ${facts.runtime.factory} } from "${facts.runtime.importSource}";\nimport * as React from "react";\n\nexport type ${root}Props = Omit<React.HTMLAttributes<HTMLDivElement>, "${defaultValueProp}" | "onChange"> & {\n  ${typeProp}?: ${facts.props.type.type};\n  ${defaultValueProp}?: ${facts.state.type};\n  ${valueProp}?: ${facts.state.type};\n  ${collapsibleProp}?: ${facts.props.collapsible.type};\n  ${event.callbackProp}?: (details: ${event.detailsType}) => void;\n};\n\nconst ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(\n  {\n    ${typeProp} = ${facts.props.type.defaultValue},\n    ${defaultValueProp},\n    ${valueProp},\n    ${collapsibleProp} = ${facts.props.collapsible.defaultValue},\n    ${event.callbackProp},\n    ...props\n  },\n  forwardedRef,\n) {\n  const rootRef = React.useRef<HTMLDivElement>(null);\n  const instanceRef = React.useRef<ReturnType<typeof ${facts.runtime.factory}> | undefined>(undefined);\n  const ${event.callbackProp}Ref = React.useRef(${event.callbackProp});\n  const ${valueProp}Ref = React.useRef(${valueProp});\n  const ${defaultValueProp}Ref = React.useRef(${defaultValueProp});\n  const [uncontrolledValue, setUncontrolledValueState] = React.useState<${facts.state.type} | undefined>(\n    () => ${defaultValueProp}Ref.current,\n  );\n  const uncontrolledValueRef = React.useRef(uncontrolledValue);\n\n  const setUncontrolledValue = React.useCallback((nextValue: ${facts.state.type}) => {\n    uncontrolledValueRef.current = nextValue;\n    setUncontrolledValueState(nextValue);\n  }, []);\n\n  React.useEffect(() => {\n    ${event.callbackProp}Ref.current = ${event.callbackProp};\n  }, [${event.callbackProp}]);\n\n  React.useEffect(() => {\n    ${valueProp}Ref.current = ${valueProp};\n  }, [${valueProp}]);\n\n  const composedRef = React.useCallback((node: HTMLDivElement | null) => {\n    rootRef.current = node;\n    setRef(forwardedRef, node);\n  }, [forwardedRef]);\n\n  React.useEffect(() => {\n    const root = rootRef.current;\n    if (!root) return;\n\n    const instance = ${facts.runtime.factory}(root, {\n      ${typeProp},\n      ${defaultValueProp}: uncontrolledValueRef.current,\n      ${collapsibleProp},\n      ...(${valueProp}Ref.current !== undefined ? { ${valueProp}: ${valueProp}Ref.current } : {}),\n    });\n    instanceRef.current = instance;\n    const unsubscribe = instance.subscribe("${event.name}", (details) => {\n      ${event.callbackProp}Ref.current?.(details);\n      if (${valueProp}Ref.current === undefined) {\n        setUncontrolledValue(details.${event.valueProperty});\n      }\n    });\n\n    return () => {\n      unsubscribe();\n      instance.destroy();\n      if (instanceRef.current === instance) {\n        instanceRef.current = undefined;\n      }\n    };\n  }, [${typeProp}, ${collapsibleProp}]);\n\n  React.useEffect(() => {\n    if (${valueProp} === undefined) return;\n    const instance = instanceRef.current;\n    if (!instance) return;\n    if (${facts.valueEqualityHelper}(instance.${facts.state.getter}(), ${valueProp})) return;\n\n    instance.${facts.setter.method}(${valueProp}, ${formatOptions(facts.setter.options)});\n  }, [${valueProp}]);\n\n  const defaultValueAttribute = Array.isArray(${defaultValueProp}Ref.current)\n    ? JSON.stringify(${defaultValueProp}Ref.current)\n    : ${defaultValueProp}Ref.current;\n\n  return (\n    <${facts.parts.root.defaultElement}\n      ${facts.attrs.root}\n      ${facts.attrs.type}={${typeProp}}\n      ${facts.attrs.defaultValue}={defaultValueAttribute}\n      ${facts.attrs.collapsible}={String(${collapsibleProp})}\n      ${facts.attrs.rootState}="closed"\n      ref={composedRef}\n      {...props}\n    />\n  );\n});\n\n${root}.displayName = "${facts.displayName}.Root";\n\nexport default ${root};\n\nfunction ${facts.valueEqualityHelper}(left: ${facts.state.type}, right: ${facts.state.type}): boolean {\n  if (Array.isArray(left) || Array.isArray(right)) {\n    return JSON.stringify(left) === JSON.stringify(right);\n  }\n\n  return left === right;\n}\n\n${renderSetRefFunction()}`;
 }
 
 function printReactRepeatedDisclosureItem(facts: AdapterRepeatedDisclosureFacts): string {

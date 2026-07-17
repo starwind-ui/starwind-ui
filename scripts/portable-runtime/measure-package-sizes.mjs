@@ -26,6 +26,10 @@ const TMP_ROOT = path.join(
 );
 const NODE_MODULES_ROOT = path.join(TMP_ROOT, "node_modules");
 const REPORT_PATH = path.join(REPO_ROOT, "docs/portable-runtime/package-size-comparison.md");
+const DIAGNOSTIC_REPORT_PATH = path.join(
+  REPO_ROOT,
+  "docs/portable-runtime/diagnostics/package-size-diagnostics.md",
+);
 const CHECK_ONLY = process.argv.includes("--check");
 
 const requireFromRepo = createRequire(path.join(REPO_ROOT, "package.json"));
@@ -199,6 +203,90 @@ const matchedSupportSets = [
   },
 ];
 
+const starwindZagOverlapMappings = matchedSupportSets.find(
+  (set) => set.key === "starwind-zag-overlap",
+).mappings;
+
+export const colorPickerRebaselineEvidence = {
+  fixedPointCommit: "8a046cdaaed10184089b242f258c8a2318cf8b5e",
+  headlineRows: [
+    {
+      label: "@starwind-ui/runtime",
+      oldCeilingBytes: 114_688,
+      postFeatureBaselineGzipBytes: 126_295,
+      preFeatureGzipBytes: 113_040,
+    },
+    {
+      label: "@starwind-ui/react (adapter only)",
+      oldCeilingBytes: 31_744,
+      postFeatureBaselineGzipBytes: 35_194,
+      preFeatureGzipBytes: 31_118,
+    },
+    {
+      label: "@starwind-ui/react + runtime",
+      oldCeilingBytes: 148_480,
+      postFeatureBaselineGzipBytes: 164_250,
+      preFeatureGzipBytes: 145_790,
+    },
+  ],
+  overlap: {
+    categoryRows: [
+      {
+        label: "Runtime category",
+        postFeatureBaselineMinifiedBytes: 326_682,
+        preFeatureMinifiedBytes: 318_380,
+      },
+      {
+        label: "React adapter category",
+        postFeatureBaselineMinifiedBytes: 110_100,
+        preFeatureMinifiedBytes: 110_100,
+      },
+      {
+        label: "Third-party category",
+        postFeatureBaselineMinifiedBytes: 34_207,
+        preFeatureMinifiedBytes: 34_207,
+      },
+      {
+        label: "Other category",
+        postFeatureBaselineMinifiedBytes: 97,
+        preFeatureMinifiedBytes: 97,
+      },
+    ],
+    components: starwindZagOverlapMappings.map((mapping) => mapping.starwind),
+    excludedComponent: "color-picker",
+    label: "Starwind/Zag overlap",
+    oldCeilingBytes: 117_760,
+    ownerRows: [
+      {
+        label: "src/components/dialog/dialog.ts",
+        postFeatureBaselineMinifiedBytes: 15_077,
+        preFeatureMinifiedBytes: 11_129,
+      },
+      {
+        label: "src/components/field/field-control-bridge.ts",
+        postFeatureBaselineMinifiedBytes: 5_229,
+        preFeatureMinifiedBytes: 1_449,
+      },
+      {
+        label: "src/internal/events.ts",
+        postFeatureBaselineMinifiedBytes: 700,
+        preFeatureMinifiedBytes: 126,
+      },
+      {
+        label: "Color Picker source contribution",
+        postFeatureBaselineMinifiedBytes: 0,
+        preFeatureMinifiedBytes: 0,
+      },
+    ],
+    postFeatureBaselineGzipBytes: 118_786,
+    preFeatureGzipBytes: 116_526,
+  },
+  standaloneComparator: {
+    starwindGzipBytes: 12_474,
+    zagGzipBytes: 29_519,
+  },
+};
+
 const externalPackages = [
   "@base-ui/react",
   ...zagFrameworkAdapters,
@@ -252,6 +340,14 @@ const bundleRows = [
     label: "@starwind-ui/runtime",
     entry: 'import * as runtime from "@starwind-ui/runtime"; console.log(runtime);',
     plugins: [starwindRuntimeAlias],
+  },
+  {
+    group: "Standalone Color Picker",
+    label: "@starwind-ui/runtime/color-picker",
+    entry:
+      'import * as colorPicker from "@starwind-ui/runtime/color-picker"; console.log(colorPicker);',
+    plugins: [starwindRuntimeAlias],
+    note: "Standalone Runtime Color Picker subpath, compared directly with the Zag Color Picker machine.",
   },
   {
     group: "Starwind",
@@ -401,68 +497,209 @@ const supportRows = [
   ]),
 ];
 
-prepareTempInstall();
+async function main() {
+  prepareTempInstall();
 
-const bundleResults = [];
-for (const row of bundleRows) {
-  bundleResults.push(await measureBundle(row));
-}
+  const bundleResults = [];
+  for (const row of bundleRows) {
+    bundleResults.push(await measureBundle(row));
+  }
 
-const supportResults = [];
-for (const row of supportRows) {
-  supportResults.push(await measureBundle(row));
-}
+  const supportResults = [];
+  for (const row of supportRows) {
+    supportResults.push(await measureBundle(row));
+  }
 
-const sourceContributionAnalyses = buildSourceContributionAnalyses({
-  repoRoot: REPO_ROOT,
-  results: addSourceContributionContexts(supportResults),
-  tmpRoot: TMP_ROOT,
-});
-
-const sourcePayloadResults = [
-  await measurePublishedSourcePayload({
-    group: "Starwind source payload",
-    label: "@starwind-ui/astro",
-    packageDir: path.join(REPO_ROOT, "packages/astro"),
-    note: "Source-published Astro package; measured published .astro/.ts source payload, not compiled Astro output.",
-  }),
-  await measurePublishedSourcePayload({
-    group: "Starwind source payload",
-    label: "@starwind-ui/runtime",
-    packageDir: path.join(REPO_ROOT, "packages/runtime"),
-  }),
-  await measurePublishedSourcePayload({
-    group: "Starwind source payload",
-    label: "@starwind-ui/react",
-    packageDir: path.join(REPO_ROOT, "packages/react"),
-  }),
-];
-
-const packageBudgetResults = evaluatePackageSizeBudgets({ bundleResults, supportResults });
-if (CHECK_ONLY) {
-  console.log("Package size budgets evaluated without rewriting the comparison report.");
-} else {
-  writeReport({
-    bundleResults,
-    packageBudgetResults,
-    sourceContributionAnalyses,
-    sourcePayloadResults,
-    supportResults,
+  const sourceContributionAnalyses = buildSourceContributionAnalyses({
+    repoRoot: REPO_ROOT,
+    results: addSourceContributionContexts(supportResults),
+    tmpRoot: TMP_ROOT,
   });
-  console.log(`Wrote ${REPORT_PATH}`);
+
+  const sourcePayloadResults = [
+    await measurePublishedSourcePayload({
+      group: "Starwind source payload",
+      label: "@starwind-ui/astro",
+      packageDir: path.join(REPO_ROOT, "packages/astro"),
+      note: "Source-published Astro package; measured published .astro/.ts source payload, not compiled Astro output.",
+    }),
+    await measurePublishedSourcePayload({
+      group: "Starwind source payload",
+      label: "@starwind-ui/runtime",
+      packageDir: path.join(REPO_ROOT, "packages/runtime"),
+    }),
+    await measurePublishedSourcePayload({
+      group: "Starwind source payload",
+      label: "@starwind-ui/react",
+      packageDir: path.join(REPO_ROOT, "packages/react"),
+    }),
+  ];
+
+  const packageBudgetResults = evaluatePackageSizeBudgets({ bundleResults, supportResults });
+  const colorPickerCheck = evaluateColorPickerSizeComparison(bundleResults);
+  packageBudgetResults.colorPickerCheck = colorPickerCheck;
+  if (colorPickerCheck.failure) {
+    packageBudgetResults.failures.push(colorPickerCheck.failure);
+  }
+
+  const reportsWritten = writePackageSizeReports(
+    {
+      bundleResults,
+      packageBudgetResults,
+      sourceContributionAnalyses,
+      sourcePayloadResults,
+      supportResults,
+    },
+    { checkOnly: CHECK_ONLY },
+  );
+  if (!reportsWritten) {
+    console.log("Package size budgets evaluated without rewriting the comparison report.");
+  } else {
+    console.log(`Wrote ${REPORT_PATH}`);
+    console.log(`Wrote ${DIAGNOSTIC_REPORT_PATH}`);
+  }
+
+  if (packageBudgetResults.advisories.length > 0) {
+    console.warn(
+      `\nPackage size comparison advisories:\n\n${packageBudgetResults.advisories.join("\n\n")}`,
+    );
+  }
+
+  if (packageBudgetResults.failures.length > 0) {
+    console.error(
+      `\nPackage size budget check failed:\n\n${packageBudgetResults.failures.join("\n\n")}`,
+    );
+    process.exitCode = 1;
+  }
 }
 
-if (packageBudgetResults.advisories.length > 0) {
-  console.warn(
-    `\nPackage size comparison advisories:\n\n${packageBudgetResults.advisories.join("\n\n")}`,
-  );
+export function evaluateColorPickerSizeComparison(bundleResults) {
+  const starwind = bundleResults.find((row) => row.label === "@starwind-ui/runtime/color-picker");
+  const zag = bundleResults.find((row) => row.label === "@zag-js/color-picker");
+  const starwindGzipBytes = starwind?.gzipBytes ?? null;
+  const zagGzipBytes = zag?.gzipBytes ?? null;
+  let failure = null;
+
+  if (starwindGzipBytes == null) {
+    failure =
+      "Standalone Color Picker comparison could not be evaluated: missing @starwind-ui/runtime/color-picker min+gzip measurement.";
+  } else if (zagGzipBytes == null) {
+    failure =
+      "Standalone Color Picker comparison could not be evaluated: missing @zag-js/color-picker min+gzip measurement.";
+  } else if (starwindGzipBytes > zagGzipBytes) {
+    failure = `Standalone Color Picker comparison failed: @starwind-ui/runtime/color-picker ${formatExactBytes(
+      starwindGzipBytes,
+    )} > @zag-js/color-picker ${formatExactBytes(zagGzipBytes)}.`;
+  }
+
+  return {
+    differenceGzipBytes:
+      starwindGzipBytes == null || zagGzipBytes == null ? null : zagGzipBytes - starwindGzipBytes,
+    failure,
+    starwindGzipBytes,
+    starwindMinifiedBytes: starwind?.minifiedBytes ?? null,
+    status: failure ? "Fail" : "Pass",
+    zagGzipBytes,
+    zagMinifiedBytes: zag?.minifiedBytes ?? null,
+  };
 }
 
-if (packageBudgetResults.failures.length > 0) {
-  console.error(
-    `\nPackage size budget check failed:\n\n${packageBudgetResults.failures.join("\n\n")}`,
-  );
-  process.exitCode = 1;
+export function formatColorPickerSizeComparisonMarkdown(comparison) {
+  return [
+    "### Standalone Color Picker Comparison",
+    "",
+    "The Runtime Color Picker subpath is measured independently from Starwind's aggregate support sets. Its gzip gate must not exceed the existing standalone Zag Color Picker machine row.",
+    "",
+    "| Check | Starwind minified | Starwind min+gzip | Zag minified | Zag min+gzip | Gzip headroom | Gate |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
+    [
+      "Runtime Color Picker vs Zag Color Picker",
+      formatExactBytes(comparison.starwindMinifiedBytes),
+      formatExactBytes(comparison.starwindGzipBytes),
+      formatExactBytes(comparison.zagMinifiedBytes),
+      formatExactBytes(comparison.zagGzipBytes),
+      formatExactBytes(comparison.differenceGzipBytes),
+      comparison.status,
+    ]
+      .join(" | ")
+      .replace(/^/, "| ")
+      .replace(/$/, " |"),
+  ];
+}
+
+export function buildColorPickerRebaselineSummary(evidence = colorPickerRebaselineEvidence) {
+  const toBudgetRow = (row) => {
+    const oldHeadroomBytes = row.oldCeilingBytes - row.preFeatureGzipBytes;
+
+    return {
+      ...row,
+      deltaBytes: row.postFeatureBaselineGzipBytes - row.preFeatureGzipBytes,
+      newCeilingBytes: row.postFeatureBaselineGzipBytes + oldHeadroomBytes,
+      newHeadroomBytes: oldHeadroomBytes,
+      oldHeadroomBytes,
+    };
+  };
+  const toContributionRow = (row) => ({
+    ...row,
+    deltaBytes: row.postFeatureBaselineMinifiedBytes - row.preFeatureMinifiedBytes,
+  });
+  const headlineRows = evidence.headlineRows.map(toBudgetRow);
+  const overlapBudgetRow = toBudgetRow(evidence.overlap);
+  const categoryRows = evidence.overlap.categoryRows.map(toContributionRow);
+  const ownerRows = evidence.overlap.ownerRows.map(toContributionRow);
+
+  return {
+    ...evidence,
+    categoryRows,
+    headlineRows,
+    membershipCount: evidence.overlap.components.length,
+    overlapBudgetRow,
+    overlapOldCeilingOverageBytes:
+      evidence.overlap.postFeatureBaselineGzipBytes - evidence.overlap.oldCeilingBytes,
+    ownerDeltaSumBytes: ownerRows.reduce((sum, row) => sum + row.deltaBytes, 0),
+    ownerRows,
+    runtimeCategoryDeltaBytes: categoryRows.find((row) => row.label === "Runtime category")
+      .deltaBytes,
+  };
+}
+
+export function formatColorPickerRebaselineMarkdown(evidence = colorPickerRebaselineEvidence) {
+  const summary = buildColorPickerRebaselineSummary(evidence);
+  const budgetRows = [...summary.headlineRows, summary.overlapBudgetRow];
+  const contributionRows = [...summary.categoryRows, ...summary.ownerRows];
+
+  return [
+    "### Color Picker Rebaseline Evidence",
+    "",
+    `The pre-feature fixed point is commit \`${summary.fixedPointCommit}\`, the parent of the first Color Picker implementation commit. It was exported with \`git archive\`, installed from the locked local pnpm store, rebuilt with \`pnpm runtime:build\` and \`pnpm react:build\`, and measured with the same esbuild, static-import, minification, and gzip settings described above. The post-feature values below are the fixed Color Picker release rebaseline snapshot, not live measurements from each report regeneration. Exact snapshot bytes are the policy source; the live generated tables below remain the current public summary.`,
+    "",
+    "| Gate | Pre-feature gzip | Post-feature rebaseline gzip | Delta | Old ceiling | Old headroom | New ceiling | New headroom |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ...budgetRows.map(
+      (row) =>
+        `| ${row.label.startsWith("@") ? `\`${row.label}\`` : row.label} | ${formatEvidenceBytes(row.preFeatureGzipBytes)} | ${formatEvidenceBytes(row.postFeatureBaselineGzipBytes)} | ${formatEvidenceDelta(row.deltaBytes)} | ${formatEvidenceBytes(row.oldCeilingBytes)} | ${formatEvidenceBytes(row.oldHeadroomBytes)} | ${formatEvidenceBytes(row.newCeilingBytes)} | ${formatEvidenceBytes(row.newHeadroomBytes)} |`,
+    ),
+    "",
+    `The overlap is ${formatEvidenceBytes(summary.overlapOldCeilingOverageBytes)} above its old ceiling, but its comparison membership remains ${summary.membershipCount} and excludes Color Picker. Metafile \`bytesInOutput\` attributes the full ${formatEvidenceDelta(summary.runtimeCategoryDeltaBytes)} minified-byte increase to approved shared Runtime behavior; the React adapter, third-party, and other categories are unchanged.`,
+    "",
+    "| Overlap contribution | Pre-feature minified | Post-feature rebaseline minified | Delta |",
+    "| --- | ---: | ---: | ---: |",
+    ...contributionRows.map(
+      (row) =>
+        `| ${row.label.includes("/") ? `\`${row.label}\`` : row.label} | ${formatEvidenceBytes(row.preFeatureMinifiedBytes)} | ${formatEvidenceBytes(row.postFeatureBaselineMinifiedBytes)} | ${formatEvidenceDelta(row.deltaBytes)} |`,
+    ),
+    "",
+    `The three shared source-owner deltas sum to the Runtime category delta exactly. The standalone Color Picker comparator remains isolated and unchanged at Starwind ${formatEvidenceBytes(summary.standaloneComparator.starwindGzipBytes)} gzip versus Zag ${formatEvidenceBytes(summary.standaloneComparator.zagGzipBytes)} gzip.`,
+  ];
+}
+
+function formatEvidenceBytes(bytes) {
+  return `${bytes.toLocaleString("en-US")} B`;
+}
+
+function formatEvidenceDelta(bytes) {
+  if (bytes === 0) return "0 B";
+  return `${bytes > 0 ? "+" : ""}${bytes.toLocaleString("en-US")} B`;
 }
 
 function prepareTempInstall() {
@@ -671,14 +908,14 @@ function namespaceImports(specifiers, prefix) {
 console.log(${specifiers.map((_, index) => `${prefix}${index}`).join(", ")});`;
 }
 
-function writeReport({
+export function formatDiagnosticPackageSizeReport({
   bundleResults,
+  generatedDate,
   packageBudgetResults,
   sourceContributionAnalyses,
   sourcePayloadResults,
   supportResults,
 }) {
-  const now = new Date().toISOString().slice(0, 10);
   const headlineLabels = [
     "@base-ui/react",
     "Zag React adapter + all documented component machines",
@@ -723,7 +960,7 @@ function writeReport({
   const lines = [
     "# Package Size Comparison",
     "",
-    `Generated: ${now}`,
+    `Generated: ${generatedDate}`,
     "",
     "## Method",
     "",
@@ -745,6 +982,8 @@ function writeReport({
     "## Budget Checks",
     "",
     "`pnpm runtime:size` fails when any row in this section fails. Rows outside this section are context-only measurements.",
+    "",
+    ...formatColorPickerRebaselineMarkdown(),
     "",
     "### Headline Package Budgets",
     "",
@@ -791,6 +1030,8 @@ function writeReport({
         .replace(/^/, "| ")
         .replace(/$/, " |"),
     ),
+    "",
+    ...formatColorPickerSizeComparisonMarkdown(packageBudgetResults.colorPickerCheck),
     "",
     "## At A Glance",
     "",
@@ -932,13 +1173,96 @@ function writeReport({
     "- Base UI is React-only and ships one large tree-shakeable package; component sample rows are better comparisons to Zag's per-machine rows than the Base UI root row.",
   ];
 
-  writeFileSync(REPORT_PATH, `${lines.join("\n")}\n`);
+  return `${lines.join("\n")}\n`;
+}
+
+const publicPackageSizeSections = [
+  "Method",
+  "At A Glance",
+  "Starwind-Matched Support",
+  "Isolated vs Combined Support Costs",
+  "Starwind Component Matches",
+  "Starwind Published Source Payloads",
+  "Reading The Numbers",
+];
+
+export function formatPublicPackageSizeReport(input) {
+  return formatPublicPackageSizeReportFromDiagnostic(formatDiagnosticPackageSizeReport(input));
+}
+
+export function formatPackageSizeReports(input) {
+  const diagnosticReport = formatDiagnosticPackageSizeReport(input);
+  return {
+    diagnosticReport,
+    publicReport: formatPublicPackageSizeReportFromDiagnostic(diagnosticReport),
+  };
+}
+
+function formatPublicPackageSizeReportFromDiagnostic(diagnosticReport) {
+  const sections = splitMarkdownSections(diagnosticReport);
+  const publicSections = publicPackageSizeSections.map((heading) => {
+    const section = sections.get(heading);
+    if (!section) throw new Error(`Missing package-size report section: ${heading}`);
+
+    if (heading === "Method") {
+      return section.filter(
+        (line) => !line.startsWith("- Source-contribution rows use esbuild metafile"),
+      );
+    }
+    if (heading === "Reading The Numbers") {
+      return section.filter(
+        (line) => !line.startsWith("- Use `Starwind Source Contribution Analysis`"),
+      );
+    }
+    return section;
+  });
+  const [title, generated] = diagnosticReport.split("\n\n", 2);
+
+  return `${[title, generated, ...publicSections.map((section) => section.join("\n"))].join("\n\n").trim()}\n`;
+}
+
+function splitMarkdownSections(report) {
+  const sections = new Map();
+  let heading = null;
+
+  for (const line of report.trimEnd().split("\n")) {
+    const match = line.match(/^## (.+)$/);
+    if (match) {
+      heading = match[1];
+      sections.set(heading, [line]);
+    } else if (heading) {
+      sections.get(heading).push(line);
+    }
+  }
+
+  return sections;
+}
+
+export function writePackageSizeReports(
+  input,
+  { checkOnly = false, diagnosticPath = DIAGNOSTIC_REPORT_PATH, publicPath = REPORT_PATH } = {},
+) {
+  if (checkOnly) return false;
+
+  const reports = formatPackageSizeReports({
+    ...input,
+    generatedDate: input.generatedDate ?? new Date().toISOString().slice(0, 10),
+  });
+  mkdirSync(path.dirname(diagnosticPath), { recursive: true });
+  writeFileSync(publicPath, reports.publicReport);
+  writeFileSync(diagnosticPath, reports.diagnosticReport);
+  return true;
 }
 
 function formatBytes(bytes) {
   if (bytes == null) return "";
   if (bytes < 1024) return `${bytes} B`;
   return `${(bytes / 1024).toFixed(1)} KiB`;
+}
+
+function formatExactBytes(bytes) {
+  if (bytes == null) return "N/A";
+  return `${Math.round(bytes).toLocaleString("en-US")} B (${formatBytes(bytes)})`;
 }
 
 function findSupportResult(results, comparisonSet, provider) {
@@ -1068,4 +1392,13 @@ function slug(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+function isMainModule() {
+  const entryPath = process.argv[1];
+  return entryPath != null && path.resolve(entryPath) === fileURLToPath(import.meta.url);
+}
+
+if (isMainModule()) {
+  await main();
 }

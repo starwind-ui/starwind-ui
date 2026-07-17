@@ -1,0 +1,141 @@
+[data-slot="color-picker-area-background"] {
+  background:
+    var(
+      --sw-color-picker-area-background-overlay,
+      linear-gradient(to top, #000, transparent),
+      linear-gradient(to right, #fff, transparent)
+    ),
+    var(--sw-color-picker-area-background, hsl(var(--sw-color-picker-hue) 100% 50%));
+}
+[data-slot="color-picker-channel-slider"] {
+  --sw-color-picker-channel-gradient-direction: to right;
+  --sw-color-picker-channel-gradient: linear-gradient(
+    var(--sw-color-picker-channel-gradient-direction),
+    transparent,
+    var(--sw-color-picker-color, #000)
+  );
+}
+[data-slot="color-picker-channel-slider"][data-orientation="vertical"] {
+  --sw-color-picker-channel-gradient-direction: to top;
+}
+[data-slot="color-picker-channel-slider"][data-channel="hue"] {
+  --sw-color-picker-channel-gradient: linear-gradient(
+    var(--sw-color-picker-channel-gradient-direction),
+    #f00 0%,
+    #ff0 16.67%,
+    #0f0 33.33%,
+    #0ff 50%,
+    #00f 66.67%,
+    #f0f 83.33%,
+    #f00 100%
+  );
+}
+[data-slot="color-picker-channel-slider"][data-channel="alpha"] {
+  --sw-color-picker-channel-gradient: linear-gradient(
+    var(--sw-color-picker-channel-gradient-direction),
+    rgb(from var(--sw-color-picker-color, #000) r g b / 0),
+    rgb(from var(--sw-color-picker-color, #000) r g b / 1)
+  );
+}
+[data-slot="color-picker-channel-slider"][data-channel="saturation"] {
+  --sw-color-picker-channel-gradient: linear-gradient(
+    var(--sw-color-picker-channel-gradient-direction),
+    hsl(var(--sw-color-picker-hue, 0) 0% 50%),
+    hsl(var(--sw-color-picker-hue, 0) 100% 50%)
+  );
+}
+[data-slot="color-picker-channel-slider"][data-channel="brightness"] {
+  --sw-color-picker-channel-gradient: linear-gradient(
+    var(--sw-color-picker-channel-gradient-direction),
+    #000,
+    hsl(var(--sw-color-picker-hue, 0) 100% 50%)
+  );
+}
+[data-slot="color-picker-channel-slider"][data-channel="lightness"] {
+  --sw-color-picker-channel-gradient: linear-gradient(
+    var(--sw-color-picker-channel-gradient-direction),
+    #000,
+    hsl(var(--sw-color-picker-hue, 0) 100% 50%),
+    #fff
+  );
+}
+[data-slot="color-picker-channel-slider"][data-channel="red"] {
+  --sw-color-picker-channel-gradient: linear-gradient(
+    var(--sw-color-picker-channel-gradient-direction),
+    rgb(from var(--sw-color-picker-color, #000) 0 g b),
+    rgb(from var(--sw-color-picker-color, #000) 255 g b)
+  );
+}
+[data-slot="color-picker-channel-slider"][data-channel="green"] {
+  --sw-color-picker-channel-gradient: linear-gradient(
+    var(--sw-color-picker-channel-gradient-direction),
+    rgb(from var(--sw-color-picker-color, #000) r 0 b),
+    rgb(from var(--sw-color-picker-color, #000) r 255 b)
+  );
+}
+[data-slot="color-picker-channel-slider"][data-channel="blue"] {
+  --sw-color-picker-channel-gradient: linear-gradient(
+    var(--sw-color-picker-channel-gradient-direction),
+    rgb(from var(--sw-color-picker-color, #000) r g 0),
+    rgb(from var(--sw-color-picker-color, #000) r g 255)
+  );
+}
+[data-slot="color-picker-channel-slider-track"] {
+  background: var(--sw-color-picker-channel-gradient);
+}
+[data-slot="color-picker-transparency-grid"] {
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #d4d4d8 25%, transparent 25%),
+    linear-gradient(-45deg, #d4d4d8 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d4d4d8 75%),
+    linear-gradient(-45deg, transparent 75%, #d4d4d8 75%);
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0;
+  background-size: 8px 8px;
+}
+[data-slot="color-picker-value-swatch-color"],
+[data-slot="color-picker-swatch-color"] {
+  background: var(--sw-color-picker-swatch-color);
+}
+[data-slot="color-picker-value-swatch"] {
+  background-color: #fff;
+  background-image:
+    linear-gradient(
+      var(--sw-color-picker-swatch-color, transparent),
+      var(--sw-color-picker-swatch-color, transparent)
+    ),
+    linear-gradient(45deg, #d4d4d8 25%, transparent 25%),
+    linear-gradient(-45deg, #d4d4d8 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d4d4d8 75%),
+    linear-gradient(-45deg, transparent 75%, #d4d4d8 75%);
+  background-position:
+    0 0,
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0;
+  background-size:
+    100% 100%,
+    8px 8px,
+    8px 8px,
+    8px 8px,
+    8px 8px;
+}
+[data-slot="color-picker-value-swatch"] > [data-slot="color-picker-transparency-grid"],
+[data-slot="color-picker-value-swatch"] > [data-slot="color-picker-value-swatch-color"] {
+  display: none;
+}
+[data-slot="color-picker-footer"][data-has-swatches="false"]:not(
+    :has([data-slot="color-picker-clear"]:not([hidden]))
+  )
+  > [data-slot="color-picker-separator"] {
+  display: none;
+}
+[data-sw-color-picker][data-floating-root]
+  > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options]) {
+  z-index: 60;
+}

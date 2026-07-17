@@ -31,8 +31,29 @@ export type RuntimeAdapterContract = {
   refs?: PrimitiveRefContract[];
   asChild?: PrimitiveAsChildContract[];
   initialMarkup?: PrimitiveInitialMarkupContract[];
+  initialStateProjection?: PrimitiveInitialStateProjectionContract;
+  cssVariables?: PrimitiveCssVariableContract[];
   frameworkNotes?: Partial<Record<FrameworkTarget, string[]>>;
   escapeHatches?: PrimitiveEscapeHatchContract[];
+};
+
+export type PrimitiveInitialStateProjectionContract = {
+  importSource: "@starwind-ui/runtime" | `@starwind-ui/runtime/${string}`;
+  createFunction: string;
+  projectFunction: string;
+  ownershipAttribute: `data-${string}`;
+  rootStateProps: readonly string[];
+  compositionDependencies: readonly {
+    part: string;
+    dependsOn: readonly string[];
+  }[];
+};
+
+export type PrimitiveCssVariableContract = {
+  name: `--${string}`;
+  description: string;
+  parts: readonly [string, ...string[]];
+  source: "runtime" | "styled-adapter";
 };
 
 export type RuntimeBridgeContract = {

@@ -1,0 +1,54 @@
+---
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { NativeSelectOption } from "../native-select";
+import {
+  colorPickerNativeFormatSelect,
+  colorPickerNativeFormatSelectIcon,
+  colorPickerNativeFormatSelectWrapper,
+} from "./variants";
+
+type Props = Omit<HTMLAttributes<"select">, "size"> &
+  VariantProps<typeof colorPickerNativeFormatSelect> & {
+    initial?: import("@starwind-ui/astro/color-picker").ColorPickerInitialPartProjection;
+  };
+
+const { initial, class: className, size = "md", ...rest } = Astro.props;
+---
+
+<div
+  class={colorPickerNativeFormatSelectWrapper()}
+  data-slot="color-picker-native-format-select-wrapper"
+>
+  <ColorPickerPrimitive.FormatSelect
+    initial={initial}
+    class={colorPickerNativeFormatSelect({ size, class: className })}
+    aria-label="Color format"
+    {...rest}
+    data-slot="color-picker-native-format-select"
+  >
+    <NativeSelectOption value="hex" selected={(initial?.properties.value ?? rest.value) === "hex"}>
+      HEX
+    </NativeSelectOption>
+
+    <NativeSelectOption value="rgb" selected={(initial?.properties.value ?? rest.value) === "rgb"}>
+      RGB
+    </NativeSelectOption>
+
+    <NativeSelectOption value="hsl" selected={(initial?.properties.value ?? rest.value) === "hsl"}>
+      HSL
+    </NativeSelectOption>
+
+    <NativeSelectOption value="hsb" selected={(initial?.properties.value ?? rest.value) === "hsb"}>
+      HSB
+    </NativeSelectOption>
+  </ColorPickerPrimitive.FormatSelect>
+
+  <ChevronDown
+    class={colorPickerNativeFormatSelectIcon({ size })}
+    aria-hidden="true"
+    data-slot="color-picker-native-format-select-icon"
+  />
+</div>

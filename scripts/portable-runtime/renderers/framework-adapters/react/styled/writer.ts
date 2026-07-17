@@ -6,6 +6,7 @@ import {
   projectStyledOutputModel,
   type StyledOutputComponent,
   type StyledOutputComponentGroup,
+  type StyledOutputRenderNode,
 } from "../../../styled-output-model/index.js";
 import { REACT_FRAMEWORK } from "./constants.js";
 import { isForFramework } from "./formatting.js";
@@ -104,19 +105,47 @@ function renderComponent(
   primitiveImportBase: string | undefined,
   tsHeader: string,
 ): string {
-  const primitiveAliases = getReactPrimitiveAliases(component);
-  const runtimeImportContext = getRuntimeImportRewriteContext(component, primitiveImportBase);
+  const renderedComponent = component.forwardRef ? projectForwardedRef(component) : component;
+  const primitiveAliases = getReactPrimitiveAliases(renderedComponent);
+  const runtimeImportContext = getRuntimeImportRewriteContext(
+    renderedComponent,
+    primitiveImportBase,
+  );
   const imports = renderComponentImports(
     group,
-    component,
+    renderedComponent,
     outputRoot,
     dir,
     primitiveOutputRoot,
     primitiveImportBase,
     runtimeImportContext,
   );
-  const props = renderProps(component, runtimeImportContext);
-  const componentBody = renderComponentBody(component, primitiveAliases, runtimeImportContext);
+  const props = renderProps(renderedComponent, runtimeImportContext);
+  const componentBody = renderComponentBody(
+    renderedComponent,
+    primitiveAliases,
+    runtimeImportContext,
+  );
+
+  if (component.forwardRef) {
+    return `${tsHeader}${imports}
+
+${props}
+
+const ${component.exportName} = React.forwardRef<${component.forwardRef.targetType}, ${component.exportName}Props>(
+  function ${component.exportName}(props, forwardedRef) {
+${componentBody
+  .split("\n")
+  .map((line) => (line ? `  ${line}` : line))
+  .join("\n")}
+  },
+);
+
+${component.exportName}.displayName = "${component.exportName}";
+
+export default ${component.exportName};
+`;
+  }
 
   return `${tsHeader}${imports}
 
@@ -128,4 +157,33 @@ ${componentBody}
 
 export default ${component.exportName};
 `;
+}
+
+function projectForwardedRef(component: StyledOutputComponent): StyledOutputComponent {
+  const projected = structuredClone(component);
+  if (projected.destructure) {
+    projected.destructure.props = projected.destructure.props.filter(({ name }) => name !== "ref");
+  }
+  projectForwardedRefNodes(projected.render);
+  return projected;
+}
+
+function projectForwardedRefNodes(nodes: StyledOutputRenderNode[]): void {
+  for (const node of nodes) {
+    if ("attrs" in node) {
+      node.attrs = node.attrs.map((attribute) =>
+        attribute.name === "ref" &&
+        attribute.value?.type === "variable" &&
+        attribute.value.name === "ref"
+          ? { ...attribute, value: { type: "variable", name: "forwardedRef" } }
+          : attribute,
+      );
+    }
+    if ("children" in node) projectForwardedRefNodes(node.children);
+    if (node.type === "condition") {
+      projectForwardedRefNodes(node.then);
+      projectForwardedRefNodes(node.else);
+    }
+    if (node.type === "slot") projectForwardedRefNodes(node.fallback);
+  }
 }

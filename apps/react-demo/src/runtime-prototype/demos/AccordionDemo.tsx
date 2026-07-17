@@ -11,7 +11,7 @@ export function AccordionDemo() {
     <section className="grid gap-8 md:grid-cols-2">
       <div>
         <h2 className="font-heading mb-4 text-xl font-semibold">Single Accordion</h2>
-        <Accordion defaultValue="shipping" collapsible>
+        <Accordion defaultValue="shipping">
           <AccordionItem value="shipping">
             <AccordionTrigger>Shipping options</AccordionTrigger>
             <AccordionContent>
@@ -57,8 +57,13 @@ export function AccordionDemo() {
       </div>
 
       <div className="md:col-span-2">
-        <h2 className="font-heading mb-4 text-xl font-semibold">Custom Accordion</h2>
-        <Accordion defaultValue="runtime" collapsible className="grid gap-3">
+        <h2 className="font-heading mb-4 text-xl font-semibold">Required-open Accordion</h2>
+        <Accordion
+          id="react-runtime-required-open-accordion"
+          defaultValue="runtime"
+          collapsible={false}
+          className="grid gap-3"
+        >
           <AccordionItem className="bg-muted/30 rounded-md border px-4" value="runtime">
             <AccordionTrigger
               className="py-3"

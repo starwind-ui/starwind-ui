@@ -7,6 +7,7 @@ import { checkboxRuntimeAdapterContract } from "./components/checkbox.js";
 import { checkboxGroupRuntimeAdapterContract } from "./components/checkbox-group.js";
 import { collapsibleRuntimeAdapterContract } from "./components/collapsible.js";
 import { comboboxRuntimeAdapterContract } from "./components/combobox.js";
+import { colorPickerRuntimeAdapterContract } from "./color-picker.js";
 import { contextMenuRuntimeAdapterContract } from "./components/context-menu.js";
 import { dialogRuntimeAdapterContract } from "./components/dialog.js";
 import { drawerRuntimeAdapterContract } from "./components/drawer.js";
@@ -45,6 +46,7 @@ export {
   checkboxRuntimeAdapterContract,
   collapsibleRuntimeAdapterContract,
   comboboxRuntimeAdapterContract,
+  colorPickerRuntimeAdapterContract,
   contextMenuRuntimeAdapterContract,
   dialogRuntimeAdapterContract,
   drawerRuntimeAdapterContract,
@@ -108,6 +110,7 @@ export const runtimeAdapterContracts = [
   selectRuntimeAdapterContract,
   sidebarRuntimeAdapterContract,
   comboboxRuntimeAdapterContract,
+  colorPickerRuntimeAdapterContract,
   toastRuntimeAdapterContract,
 ] as const satisfies readonly RuntimeAdapterContract[];
 

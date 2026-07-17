@@ -13,7 +13,7 @@
       "@starwind-ui/runtime/theme": ["../runtime/src/theme/theme.ts"],
       "@starwind-ui/runtime/*": ["../runtime/src/components/*/index.ts"]
     },
-    "types": ["react", "react-dom"],
+    "types": ["node", "react", "react-dom"],
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "tsup.config.ts"],

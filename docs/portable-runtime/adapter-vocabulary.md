@@ -1,7 +1,7 @@
 # Adapter Vocabulary
 
 Status: current
-Date: 2026-07-01
+Date: 2026-07-16
 
 This document is the current vocabulary guide for Starwind's portable runtime adapter generator.
 It names the architecture in terms that are easier to explain than the first implementation names.
@@ -177,6 +177,9 @@ runtime data attributes, or CLI commands as part of this vocabulary cleanup.
 
 ## Current Buckets
 
+The current source-owned Runtime-backed Primitive surface contains 36 component families: 19 use
+Adapter Family Plans and 17 use Specialized Adapter Specs.
+
 Adapter Family Plan components:
 
 - `button`
@@ -216,6 +219,7 @@ Specialized Adapter Spec components:
 - `select`
 - `sidebar`
 - `combobox`
+- `color-picker`
 - `toast`
 
 Custom islands:

@@ -1,0 +1,22 @@
+---
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { colorPickerControl } from "./variants";
+
+type Props = HTMLAttributes<"div"> &
+  VariantProps<typeof colorPickerControl> & {
+    initial?: import("@starwind-ui/astro/color-picker").ColorPickerInitialPartProjection;
+  };
+
+const { initial, class: className, size = "md", ...rest } = Astro.props;
+---
+
+<ColorPickerPrimitive.Control
+  initial={initial}
+  class={colorPickerControl({ size, class: className })}
+  {...rest}
+  data-slot="color-picker-control"
+>
+  <slot />
+</ColorPickerPrimitive.Control>

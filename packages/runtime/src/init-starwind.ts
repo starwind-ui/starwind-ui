@@ -6,6 +6,7 @@ import { createCarousel } from "./components/carousel";
 import { createCheckbox } from "./components/checkbox";
 import { createCheckboxGroup } from "./components/checkbox-group";
 import { createCollapsible } from "./components/collapsible";
+import { createColorPicker } from "./components/color-picker";
 import { createCombobox } from "./components/combobox";
 import { createContextMenu } from "./components/context-menu";
 import { createDialog } from "./components/dialog";
@@ -99,6 +100,11 @@ const initializerEntries = [
     cleanupOrder: 5,
     create: (sliderRoot) => createSlider(sliderRoot),
     selector: "[data-sw-slider]",
+  },
+  {
+    cleanupOrder: 5,
+    create: (colorPickerRoot) => createColorPicker(colorPickerRoot),
+    selector: "[data-sw-color-picker]",
   },
   {
     cleanupOrder: 6,

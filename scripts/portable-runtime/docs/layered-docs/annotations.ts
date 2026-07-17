@@ -4,6 +4,7 @@ import type {
   PrimitiveDocsEnrichment,
   StyledDocsAnnotation,
 } from "./types.js";
+import { colorPickerPrimitiveDocsAuthoredExamples } from "./examples.js";
 
 const componentPage = (slug: string, status: DocsPageStatus = "published") => ({
   status,
@@ -134,6 +135,47 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     groupId: "form-input",
     docsPage: componentPage("checkbox"),
     foundation: { type: "direct-primitive" },
+  },
+  "color-picker": {
+    groupId: "form-input",
+    docsPage: componentPage("color-picker"),
+    foundation: { type: "direct-primitive" },
+    styledApi: {
+      ColorPickerRoot: {
+        props: {
+          format: { description: "Sets the editable color format." },
+          dir: { description: "Sets the picker direction explicitly." },
+        },
+      },
+      ColorPickerTrigger: {
+        props: {
+          showValueText: { description: "Shows the formatted value beside the trigger swatch." },
+        },
+      },
+      ColorPickerContent: {
+        props: {
+          alpha: { description: "Includes alpha controls in the picker content." },
+          showEyeDropper: { description: "Shows the EyeDropper trigger when supported." },
+        },
+      },
+      ColorPickerSliders: {
+        props: { alpha: { description: "Includes an alpha channel slider." } },
+      },
+      ColorPickerChannelSlider: {
+        props: { channel: { description: "Selects the channel rendered by this slider." } },
+      },
+      ColorPickerChannelInput: {
+        props: { channel: { description: "Selects the channel edited by this input." } },
+      },
+      ColorPickerInput: {
+        props: {
+          formatControl: {
+            description:
+              "Chooses the composite Select or progressively enhanced native format control.",
+          },
+        },
+      },
+    },
   },
   "checkbox-group": {
     groupId: "form-input",
@@ -418,6 +460,191 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
 };
 
 export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = {
+  "color-picker": {
+    summary:
+      "Color Picker coordinates color parsing, two-dimensional area input, channel controls, editable values, presets, and native form submission.",
+    behaviorNotes: [
+      "Runtime owns parsing, immutable color values, editing drafts, pointer and keyboard interactions, accessibility reflection, and form synchronization.",
+      "Value changes are cancellable before commit; committed-value and format events run after the accepted state is reflected.",
+      "FormatSelect is the native progressive-enhancement path. FormatControl wraps one Runtime-backed Select without making Select a required Color Picker Runtime dependency.",
+      "Programmatic updates, controlled framework props, refresh, and form reset synchronize native and composite format controls without duplicate format or Select value events.",
+    ],
+    usageGuidelines: [
+      {
+        title: "Compose only the controls your picker needs.",
+        description:
+          "Area, channel, text-entry, format, swatch, clear, and EyeDropper parts share one Root state model and can be arranged for the product workflow.",
+      },
+      {
+        title: "Use HiddenInput for native forms.",
+        description:
+          "It is the sole submitting control and carries the accepted canonical color string, name, form association, and required state.",
+      },
+      {
+        title: "Choose one format-control path.",
+        description:
+          "Use FormatSelect for native progressive enhancement or place one Select Root inside FormatControl for a composite popup. Both edit the same hex, rgb, hsl, or hsb format state.",
+      },
+      {
+        title: "Start with the styled Color Picker for product UI.",
+        description:
+          "The related styled component composes Popover, Select, and Native Select around this Primitive contract; use the Primitive parts when you need custom anatomy.",
+      },
+    ],
+    sections: [
+      {
+        title: "Format Controls",
+        content:
+          'FormatSelect is a native `<select>` and remains useful before JavaScript initializes. FormatControl is the discovery wrapper for one composite Select Root; Select continues to own popup, focus, keyboard, and item behavior. Do not render both paths for the same user-facing control.\n\n::example{id="composite-format-control"}\n\nUse the native path when browser-native interaction and progressive enhancement are the priority.\n\n::example{id="native-format-select"}',
+      },
+      {
+        title: "State, Events, and Commands",
+        content:
+          "The `value` and `format` state models are reflected across every owned part. Listen for cancellable `starwind:value-change`, committed `starwind:value-committed`, and post-commit `starwind:format-change` events on Root. Use the controller setters for application state; `setValue` and `setFormat` accept `{ emit: false }` for silent synchronization. For a composite control, Color Picker internally sends `starwind:set-value`, `starwind:set-disabled`, and `starwind:set-readonly` commands to the nested Select. A canceled Select value change is ignored, and its nested value event does not escape as a Color Picker value event.",
+      },
+      {
+        title: "Forms and Reset",
+        content:
+          "HiddenInput is the sole submitted color field. Keep `name`, `form`, and `required` on Color Picker Root rather than either format control; Runtime removes form ownership from the composite Select. Native form reset restores the initial value and format, clears drafts, and silently reconciles both native and composite controls.",
+      },
+      {
+        title: "Styling Color Thumbs",
+        content:
+          "Runtime writes `--sw-color-picker-area-thumb-color` on AreaThumb and `--sw-color-picker-channel-thumb-color` on ChannelSliderThumb. The area value is opaque, ordinary channel thumbs use the accepted color, alpha preserves transparency, and empty values clear both variables. Paint an inner layer from these variables so the thumb remains visible at track boundaries without changing its position or interaction geometry.",
+      },
+      {
+        title: "Accessibility",
+        content:
+          "Area and channel controls expose native range inputs for keyboard operation. Swatches are native buttons with selected state reflected through `aria-pressed`. Give FormatSelect an accessible label; for FormatControl, label the nested Select Trigger and let Select own combobox and listbox semantics. Supply localized value and color descriptions with `getAriaValueText`, `getAreaRoleDescription`, and `getColorDescription` when the defaults do not fit your interface.",
+      },
+    ],
+    authoredExamples: colorPickerPrimitiveDocsAuthoredExamples,
+    frameworkNotes: {
+      astro: [
+        "Use Root's render projection when non-default initial state must be reflected coherently across descendant area, channel, swatch, and hidden-input parts before hydration.",
+      ],
+      react: [
+        "Value and format can be controlled; adapters synchronize them through non-emitting Runtime setters while preserving cancellable Runtime change details.",
+      ],
+      "raw-html": [
+        "Render the documented data-sw-* anatomy, then initialize one createColorPicker controller from the root element. Initialize a nested Select controller as well when using FormatControl.",
+      ],
+    },
+    parts: {
+      root: {
+        description:
+          "Owns the Color Picker Runtime controller and shared value, format, interaction, locale, and form options.",
+      },
+      label: { description: "Labels the color picker." },
+      control: { description: "Groups the visible picker controls." },
+      valueInput: { description: "Accepts and validates a complete color string draft." },
+      valueSwatch: { description: "Displays the currently accepted color." },
+      valueText: { description: "Displays the currently accepted color as text." },
+      area: {
+        description: "Coordinates two color channels across horizontal and vertical axes.",
+        props: {
+          xChannel: "Selects the channel controlled by the horizontal axis.",
+          yChannel: "Selects the channel controlled by the vertical axis.",
+        },
+      },
+      areaBackground: { description: "Paints the two-dimensional color-area background." },
+      areaThumb: { description: "Shows the accepted position in the color area." },
+      areaInput: {
+        description: "Provides a native range input for one color-area axis.",
+        props: { axis: "Selects the controlled area axis.", step: "Sets the range step." },
+      },
+      channelSlider: {
+        description: "Coordinates one color channel along a horizontal or vertical track.",
+        props: {
+          channel: "Selects the controlled color channel.",
+          orientation: "Sets the slider orientation.",
+        },
+      },
+      channelSliderTrack: { description: "Paints the selected channel's range." },
+      channelSliderThumb: { description: "Shows the accepted channel position." },
+      channelSliderInput: {
+        description: "Provides the native range input for a channel slider.",
+        props: { step: "Sets the range step." },
+      },
+      channelInput: {
+        description: "Accepts and validates a numeric channel draft.",
+        props: { channel: "Selects the edited color channel." },
+      },
+      formatSelect: {
+        description:
+          "The progressively enhanced native select for hex, rgb, hsl, and hsb editing formats.",
+        dataAttributes: {
+          "data-sw-color-picker-format-select":
+            "Runtime discovery hook for the native format control.",
+        },
+      },
+      formatControl: {
+        description:
+          "Wraps one Runtime-backed Select Root as the composite format control without reimplementing Select behavior.",
+        dataAttributes: {
+          "data-sw-color-picker-format-control":
+            "Runtime discovery hook for the composite format-control wrapper.",
+          "data-format": "The accepted hex, rgb, hsl, or hsb editing format.",
+          "data-disabled": "Present when Color Picker disables the composite Select.",
+          "data-readonly": "Present when Color Picker makes the composite Select read-only.",
+        },
+      },
+      transparencyGrid: {
+        description: "Provides a checkerboard surface beneath translucent colors.",
+      },
+      swatchGroup: { description: "Groups preset color swatches." },
+      swatch: {
+        description: "Selects a preset color with native button semantics.",
+        props: {
+          swatchValue: "Sets the preset color.",
+          swatchDisabled: "Disables this swatch.",
+        },
+      },
+      eyeDropperTrigger: {
+        description: "Opens the platform EyeDropper when that capability is available.",
+      },
+      clear: { description: "Clears the value when empty values are allowed." },
+      hiddenInput: { description: "The sole hidden native input used for form submission." },
+    },
+    props: {
+      value: "Controls the accepted color value.",
+      defaultValue: "Sets the initial uncontrolled color value.",
+      format: "Controls the color string format.",
+      alpha: "Enables alpha-channel editing.",
+      allowEmpty: "Allows the accepted value to be null.",
+      disabled: "Disables every interactive picker part.",
+      readOnly: "Prevents edits while preserving focus and value inspection.",
+      name: "Sets the submitted form field name.",
+      form: "Associates the hidden input with an external form.",
+      required: "Marks the hidden form input as required.",
+      locale: "Sets the locale used for accessible color descriptions.",
+      dir: "Sets left-to-right or right-to-left direction explicitly.",
+      getAriaValueText: "Customizes accessible range value text.",
+      getAreaRoleDescription: "Customizes the color-area role description.",
+      getColorDescription: "Customizes the accessible description of a color.",
+      onValueChange: "Receives cancellable continuous value-change details before commit.",
+      onValueCommitted: "Receives the accepted value when an interaction commits.",
+      onFormatChange: "Receives the accepted format after it changes.",
+    },
+    stateModels: {
+      value: "The accepted immutable color value, or null when empty values are allowed.",
+      format: "The accepted color string format used by editable and display parts.",
+    },
+    events: {
+      valueChange: "Cancelable continuous change emitted before a proposed value commits.",
+      valueCommitted: "Emitted after an accepted interaction value commits.",
+      formatChange: "Emitted after the accepted string format changes.",
+    },
+    setters: {
+      setValue: "Synchronizes the accepted value and can suppress event emission.",
+      setFormat: "Synchronizes the accepted format and can suppress event emission.",
+      setDisabled: "Updates disabled state across every interactive part.",
+      setReadOnly: "Updates readonly state across editable parts.",
+      setName: "Updates the hidden input's form field name.",
+      setOptions:
+        "Refreshes mutable locale, direction, accessibility, alpha, empty, and form options.",
+    },
+  },
   checkbox: {
     summary:
       "Checkbox coordinates a visible boolean control, indicator presence, and hidden form inputs for boolean form state.",
@@ -515,11 +742,6 @@ export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = 
         title: "Shared Viewport",
         content:
           "Content panels are authored inside items, then moved into the shared viewport while active so the popup can animate size and direction consistently.",
-      },
-      {
-        title: "Deferred Base UI Parity",
-        content:
-          "Backdrop, provider-level delay grouping, nested Navigation Menu roots, responsive drawer behavior, actions refs, and open-change-complete callbacks are not part of the v1 Navigation Menu contract.",
       },
     ],
     parts: {

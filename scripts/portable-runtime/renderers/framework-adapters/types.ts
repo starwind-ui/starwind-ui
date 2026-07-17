@@ -3,6 +3,10 @@ import type {
   StyledOutputComponentGroup,
   StyledOutputModel,
 } from "../styled-output-model/types.js";
+import type {
+  AdapterColorPickerComponentProjection,
+  AdapterColorPickerIndexProjection,
+} from "../primitive-output-model/index.js";
 
 export type FrameworkAdapterTarget = "astro" | "react" | "solid" | "svelte" | "vue" | (string & {});
 
@@ -197,6 +201,7 @@ export type AdapterComponentFamilyProjection =
   | AdapterAnchoredMenuOverlayComponentProjection
   | AdapterBooleanFormControlComponentProjection
   | AdapterCompositeMenuOverlayComponentProjection
+  | AdapterColorPickerComponentProjection
   | AdapterControlledValuePresenceComponentProjection
   | AdapterDisclosurePresenceComponentProjection
   | AdapterEditableCollectionOverlayComponentProjection
@@ -235,6 +240,7 @@ export type AdapterFamilyIndexProjection =
   | AdapterAnchoredMenuOverlayIndexProjection
   | AdapterBooleanFormControlIndexProjection
   | AdapterCompositeMenuOverlayIndexProjection
+  | AdapterColorPickerIndexProjection
   | AdapterControlledValuePresenceIndexProjection
   | AdapterDisclosurePresenceIndexProjection
   | AdapterEditableCollectionOverlayIndexProjection

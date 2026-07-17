@@ -10,6 +10,7 @@ import { runtimeAdapterContracts } from "../contracts/primitive/representatives.
 import { starwindStyledContracts } from "../contracts/styled/components/index.js";
 import type { StyledAdapterContract } from "../contracts/styled/types.js";
 import { styledDocsAnnotations } from "../docs/layered-docs/annotations.js";
+import { colorPickerPrimitiveDocsAuthoredExamples } from "../docs/layered-docs/examples.js";
 import type { LayeredDocsMetadata, PrimitiveDocsEnrichment } from "../docs/layered-docs/types.js";
 import * as layeredDocsGenerator from "../generate-layered-docs-metadata.js";
 import { buildStyledApiMetadata } from "../docs/layered-docs/generator/build-styled-api.js";
@@ -67,7 +68,11 @@ const toTestDisplayTitle = (value: string) =>
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join(" ");
 
-const toTestPascalCase = (value: string) => `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+const toTestPascalCase = (value: string) =>
+  value
+    .split("-")
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join("");
 
 const writePrimitiveUsageFixture = async (
   primitiveId: string,
@@ -856,13 +861,18 @@ describe("generateLayeredDocsMetadata", () => {
       'import { NavigationMenu } from "@starwind-ui/react/navigation-menu";',
     );
 
-    const deferredBoundaryText = [
+    const publicSectionTitles =
+      primitive?.docsReference.sections.map((section) => section.title) ?? [];
+    expect(publicSectionTitles).toContain("Shared Viewport");
+    expect(publicSectionTitles).not.toContain("Deferred Base UI Parity");
+
+    const publicDocsText = [
       ...(primitive?.docsReference.behaviorNotes ?? []),
       ...(primitive?.docsReference.sections.map((section) => section.content) ?? []),
     ].join("\n");
-    expect(deferredBoundaryText).toContain("nested Navigation Menu roots");
-    expect(deferredBoundaryText).toContain("provider-level delay grouping");
-    expect(deferredBoundaryText).toContain("open-change-complete callbacks");
+    expect(publicDocsText).not.toContain("nested Navigation Menu roots");
+    expect(publicDocsText).not.toContain("provider-level delay grouping");
+    expect(publicDocsText).not.toContain("open-change-complete callbacks");
 
     const primitiveSource = JSON.stringify(primitive);
     const normalizedPrimitiveSource = primitiveSource.toLowerCase();
@@ -1101,6 +1111,153 @@ describe("generateLayeredDocsMetadata", () => {
     );
   });
 
+  it("publishes source-backed Color Picker format, state, form, and styling documentation", () => {
+    const metadata = buildLayeredDocsMetadata();
+    const colorPicker = metadata.primitives.find((primitive) => primitive.id === "color-picker");
+
+    expect(colorPicker).toBeDefined();
+    expect(colorPicker?.docsReference.anatomy.parts).toEqual([
+      "root",
+      "label",
+      "control",
+      "valueInput",
+      "valueSwatch",
+      "valueText",
+      "area",
+      "areaBackground",
+      "areaThumb",
+      "areaInput",
+      "channelSlider",
+      "channelSliderTrack",
+      "channelSliderThumb",
+      "channelSliderInput",
+      "channelInput",
+      "formatSelect",
+      "formatControl",
+      "transparencyGrid",
+      "swatchGroup",
+      "swatch",
+      "eyeDropperTrigger",
+      "clear",
+      "hiddenInput",
+    ]);
+    expect(colorPicker?.docsReference.authoredExamples).toEqual(
+      colorPickerPrimitiveDocsAuthoredExamples,
+    );
+    expect(colorPicker?.docsReference.sections.map((section) => section.title)).toEqual([
+      "Format Controls",
+      "State, Events, and Commands",
+      "Forms and Reset",
+      "Styling Color Thumbs",
+      "Accessibility",
+    ]);
+
+    const formatSelect = colorPicker?.docsReference.apiReference.parts.find(
+      (part) => part.part === "formatSelect",
+    );
+    const formatControl = colorPicker?.docsReference.apiReference.parts.find(
+      (part) => part.part === "formatControl",
+    );
+    expect(formatSelect).toMatchObject({
+      defaultElement: "select",
+      discoveryAttribute: "data-sw-color-picker-format-select",
+    });
+    expect(formatControl).toMatchObject({
+      defaultElement: "div",
+      discoveryAttribute: "data-sw-color-picker-format-control",
+    });
+    expect(formatControl?.dataAttributes.map((attribute) => attribute.name)).toEqual([
+      "data-sw-color-picker-format-control",
+      "data-format",
+      "data-disabled",
+      "data-readonly",
+    ]);
+    expect(colorPicker?.stateModels.map((state) => state.name)).toEqual(["value", "format"]);
+    expect(colorPicker?.events.map((event) => event.domEvent)).toEqual([
+      "starwind:value-change",
+      "starwind:value-committed",
+      "starwind:format-change",
+    ]);
+    expect(colorPicker?.setters.map((setter) => setter.method)).toEqual([
+      "setValue",
+      "setFormat",
+      "setDisabled",
+      "setReadOnly",
+      "setName",
+      "setOptions",
+    ]);
+    expect(colorPicker?.cssVariables).toEqual(
+      expect.arrayContaining([
+        {
+          name: "--sw-color-picker-area-thumb-color",
+          description: "Resolved display color painted by the color-area thumb.",
+          parts: ["areaThumb"],
+          source: "runtime",
+        },
+        {
+          name: "--sw-color-picker-channel-thumb-color",
+          description: "Resolved display color painted by a channel slider thumb.",
+          parts: ["channelSliderThumb"],
+          source: "runtime",
+        },
+      ]),
+    );
+    expect(colorPicker?.docsReference.apiReference.relatedStyledComponents).toContainEqual({
+      id: "color-picker",
+      title: "Color Picker",
+      docsPath: "/docs/components/color-picker/",
+      foundationType: "direct-primitive",
+    });
+
+    for (const example of colorPicker?.docsReference.authoredExamples ?? []) {
+      expect(example.frameworks.map((framework) => framework.framework)).toEqual([
+        "astro",
+        "react",
+        "raw-html",
+      ]);
+      for (const framework of example.frameworks) {
+        expect(framework.source).toContain(
+          "scripts/portable-runtime/docs/layered-docs/examples.ts#color-picker-",
+        );
+        expect(framework.code).toContain("hex");
+        expect(framework.code).toContain("rgb");
+        expect(framework.code).toContain("hsl");
+        expect(framework.code).toContain("hsb");
+      }
+    }
+
+    const compositeExample = colorPicker?.docsReference.authoredExamples.find(
+      (example) => example.id === "composite-format-control",
+    );
+    expect(compositeExample?.frameworks.map((framework) => framework.code).join("\n")).toContain(
+      "ColorPicker.FormatControl",
+    );
+    expect(compositeExample?.frameworks.map((framework) => framework.code).join("\n")).toContain(
+      "data-sw-color-picker-format-control",
+    );
+    expect(compositeExample?.frameworks.map((framework) => framework.code).join("\n")).toContain(
+      "createSelect",
+    );
+    expect(
+      compositeExample?.frameworks
+        .filter((framework) => framework.framework !== "raw-html")
+        .map((framework) => framework.code)
+        .join("\n"),
+    ).not.toContain("<Select.Input");
+    expect(
+      compositeExample?.frameworks.find((framework) => framework.framework === "raw-html")?.code,
+    ).toContain('<input data-sw-select-input type="hidden" />');
+    const nativeExample = colorPicker?.docsReference.authoredExamples.find(
+      (example) => example.id === "native-format-select",
+    );
+    expect(nativeExample?.frameworks.map((framework) => framework.code).join("\n")).toContain(
+      "ColorPicker.FormatSelect",
+    );
+    expect(nativeExample?.frameworks.map((framework) => framework.code).join("\n")).toContain(
+      "data-sw-color-picker-format-select",
+    );
+  });
+
   it("tracks primitive reference description completeness for representative primitives", () => {
     const metadata = buildLayeredDocsMetadata();
     const requiredPrimitiveIds = ["button", "checkbox", "menu"];
@@ -1249,9 +1406,8 @@ describe("generateLayeredDocsMetadata", () => {
         (candidate) => candidate.id === contract.component,
       );
       const rootPart = contract.parts.find((part) => part.name === contract.runtime.rootPart);
-      const rootNamespaceName = `${contract.displayName}.${toTestPascalCase(
-        contract.runtime.rootPart,
-      )}`;
+      const namespace = toTestPascalCase(contract.component);
+      const rootNamespaceName = `${namespace}.${toTestPascalCase(contract.runtime.rootPart)}`;
       const examplesByFramework = new Map(
         primitive?.docsReference.examples.map((example) => [example.framework, example]) ?? [],
       );
@@ -1285,7 +1441,7 @@ describe("generateLayeredDocsMetadata", () => {
         source: `scripts/portable-runtime/docs/layered-docs/examples.ts#${contract.component}-basic-astro`,
       });
       expect(astroExample?.code).toContain(
-        `import { ${contract.displayName} } from "@starwind-ui/astro/${contract.component}";`,
+        `import { ${namespace} } from "@starwind-ui/astro/${contract.component}";`,
       );
       expect(astroExample?.code).toContain(`<${rootNamespaceName}`);
 
@@ -1296,7 +1452,7 @@ describe("generateLayeredDocsMetadata", () => {
         source: `scripts/portable-runtime/docs/layered-docs/examples.ts#${contract.component}-basic-react`,
       });
       expect(reactExample?.code).toContain(
-        `import { ${contract.displayName} } from "@starwind-ui/react/${contract.component}";`,
+        `import { ${namespace} } from "@starwind-ui/react/${contract.component}";`,
       );
       expect(reactExample?.code).toContain(`<${rootNamespaceName}`);
     }
@@ -2540,6 +2696,10 @@ describe("generateLayeredDocsMetadata", () => {
         path.join(docsRoot, "src/docs/data/docs/en/primitives/checkbox.mdx"),
         "utf8",
       );
+      const colorPickerPrimitiveSource = await readFile(
+        path.join(docsRoot, "src/docs/data/docs/en/primitives/color-picker.mdx"),
+        "utf8",
+      );
       const comboboxPrimitiveSource = await readFile(
         path.join(docsRoot, "src/docs/data/docs/en/primitives/combobox.mdx"),
         "utf8",
@@ -2550,6 +2710,10 @@ describe("generateLayeredDocsMetadata", () => {
       );
       const menuPrimitiveSource = await readFile(
         path.join(docsRoot, "src/docs/data/docs/en/primitives/menu.mdx"),
+        "utf8",
+      );
+      const navigationMenuPrimitiveSource = await readFile(
+        path.join(docsRoot, "src/docs/data/docs/en/primitives/navigation-menu.mdx"),
         "utf8",
       );
       const selectPrimitiveSource = await readFile(
@@ -2571,6 +2735,21 @@ describe("generateLayeredDocsMetadata", () => {
       expect(docsTypesSource).toContain("export type LayeredDocsMetadata");
       expect(primitiveIndexSource).toContain("title: Runtime Primitives");
       expect(primitiveIndexSource).toContain("<PrimitiveInventory />");
+      expectSubstringsInOrder(primitiveIndexSource, [
+        "Starwind currently exposes 36 Runtime-backed primitives for Astro and React.",
+        "<PrimitiveInventory />",
+        "## Installation",
+        "npm install @starwind-ui/astro",
+        "npm install @starwind-ui/react",
+        "[Getting Started Primitives guide](/docs/getting-started/primitives/)",
+        "## Import Pattern",
+        'import { Accordion } from "@starwind-ui/astro/accordion";',
+        'import { Accordion } from "@starwind-ui/react/accordion";',
+        "`primitiveDirs.<framework>` destination instead.",
+        "## Styling and Composition",
+        "[styled component](/docs/components/)",
+        "[Runtime reference](/docs/runtime/)",
+      ]);
       for (const primitive of metadata.primitives) {
         const primitiveSource = await readFile(
           path.join(primitivePagesRoot, `${primitive.id}.mdx`),
@@ -2662,6 +2841,11 @@ describe("generateLayeredDocsMetadata", () => {
       expect(menuPrimitiveSource).toContain("## Runtime API");
       expect(menuPrimitiveSource).not.toContain("## Runtime Factory");
       expect(menuPrimitiveSource).not.toContain("<PrimitiveFloatingBehavior");
+      expect(navigationMenuPrimitiveSource).toContain("## Shared Viewport");
+      expect(navigationMenuPrimitiveSource).not.toContain("## Deferred Base UI Parity");
+      expect(navigationMenuPrimitiveSource).not.toContain("nested Navigation Menu roots");
+      expect(navigationMenuPrimitiveSource).not.toContain("provider-level delay grouping");
+      expect(navigationMenuPrimitiveSource).not.toContain("open-change-complete callbacks");
       expectSubstringsInOrder(menuPrimitiveSource, [
         "## Anatomy",
         "<DocsTabs",
@@ -2698,6 +2882,86 @@ describe("generateLayeredDocsMetadata", () => {
       ]);
       expect(selectPrimitiveSource).not.toContain('::example{id="positioned-select"}');
       expect(checkboxPrimitiveSource).not.toContain("## Demo");
+      const colorPicker = metadata.primitives.find((primitive) => primitive.id === "color-picker");
+      expect(colorPicker?.cssVariables).toContainEqual({
+        name: "--sw-color-picker-color",
+        description: "Canonical accepted color serialized for CSS painting.",
+        parts: ["root"],
+        source: "runtime",
+      });
+      expect(colorPicker?.cssVariables).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "--sw-color-picker-area-thumb-color",
+            parts: ["areaThumb"],
+            source: "runtime",
+          }),
+          expect.objectContaining({
+            name: "--sw-color-picker-channel-thumb-color",
+            parts: ["channelSliderThumb"],
+            source: "runtime",
+          }),
+        ]),
+      );
+      expect(colorPicker?.docsReference.apiReference.relatedStyledComponents).toContainEqual(
+        expect.objectContaining({
+          id: "color-picker",
+          docsPath: "/docs/components/color-picker/",
+        }),
+      );
+      expectSubstringsInOrder(colorPickerPrimitiveSource, [
+        "## Usage Guidelines",
+        "## Anatomy",
+        'import { ColorPicker } from "@starwind-ui/astro/color-picker";',
+        'import { ColorPicker } from "@starwind-ui/react/color-picker";',
+        'import { createColorPicker } from "@starwind-ui/runtime/color-picker";',
+        "## Format Controls",
+        "### Composite Format Control",
+        'import { Select } from "@starwind-ui/astro/select";',
+        'import { Select } from "@starwind-ui/react/select";',
+        'import { createSelect } from "@starwind-ui/runtime/select";',
+        "### Native Format Select",
+        "## State, Events, and Commands",
+        "`starwind:value-change`",
+        "`starwind:set-value`",
+        "## Forms and Reset",
+        "HiddenInput is the sole submitted color field.",
+        "## Styling Color Thumbs",
+        "`--sw-color-picker-area-thumb-color`",
+        "`--sw-color-picker-channel-thumb-color`",
+        "## Accessibility",
+        "## API Reference",
+        "### Format Select",
+        "### Format Control",
+        "### Hidden Input",
+        "## Runtime API",
+        "## Form Participation",
+        "## CSS Variables",
+        "`--sw-color-picker-color`",
+        "`--sw-color-picker-transparency-grid-size`",
+        "## Related Styled Components",
+      ]);
+      const colorPickerCssVariablesSlice = colorPickerPrimitiveSource.slice(
+        colorPickerPrimitiveSource.indexOf("## CSS Variables"),
+        colorPickerPrimitiveSource.indexOf("## Related Styled Components"),
+      );
+      expect(colorPickerCssVariablesSlice).toContain("`--sw-color-picker-area-thumb-color`");
+      expect(colorPickerCssVariablesSlice).toContain("`--sw-color-picker-channel-thumb-color`");
+      expect(colorPickerPrimitiveSource).toContain(
+        '<PrimitiveRelatedStyledComponents docId="primitives/color-picker" />',
+      );
+      expect(colorPickerPrimitiveSource).toContain("data-sw-color-picker-area-input");
+      expect(colorPickerPrimitiveSource).toContain("data-sw-color-picker-format-control");
+      expect(colorPickerPrimitiveSource).toContain("data-sw-color-picker-format-select");
+      expect(colorPickerPrimitiveSource).toContain("data-sw-color-picker-hidden-input");
+      expect(colorPickerPrimitiveSource).toContain('data-value="#3b82f6"');
+      expect(colorPickerPrimitiveSource).toContain('<option value="hex">HEX</option>');
+      expect(colorPickerPrimitiveSource).toContain('<option value="rgb">RGB</option>');
+      expect(colorPickerPrimitiveSource).toContain('<option value="hsl">HSL</option>');
+      expect(colorPickerPrimitiveSource).toContain('<option value="hsb">HSB</option>');
+      expect(colorPickerPrimitiveSource).not.toContain('::example{id="composite-format-control"}');
+      expect(colorPickerPrimitiveSource).not.toContain('::example{id="native-format-select"}');
+      expect(colorPickerPrimitiveSource).not.toContain("data-swatch-value");
       expectSubstringsInOrder(checkboxPrimitiveSource, [
         "## Usage Guidelines",
         "- **Use Checkbox for one independent boolean value.**",

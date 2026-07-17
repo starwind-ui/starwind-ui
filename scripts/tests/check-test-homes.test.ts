@@ -12,6 +12,7 @@ describe("test file home guardrail", () => {
         "scripts/portable-runtime/tests/smoke/verify-astro-demo.mjs",
         "scripts/portable-runtime/tests/smoke/astro/carousel-cases.mjs",
         "packages/cli/tests/commands/init.test.ts",
+        "packages/react/tests/color-picker.browser.test.tsx",
         "packages/runtime/tests/components/button/button.browser.test.ts",
       ]),
     ).toEqual([]);

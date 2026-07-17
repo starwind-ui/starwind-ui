@@ -1,15 +1,21 @@
 const headlinePackageBudgets = [
   {
     label: "@starwind-ui/runtime",
-    maxGzipBytes: 112 * 1024,
+    // 8a046cdaa pre-feature: 113,040 B; post-feature rebaseline: 126,295 B (+13,255 B).
+    // Preserve the former 1,648 B of absolute headroom exactly.
+    maxGzipBytes: 127_943,
   },
   {
     label: "@starwind-ui/react (adapter only)",
-    maxGzipBytes: 31 * 1024,
+    // 8a046cdaa pre-feature: 31,118 B; post-feature rebaseline: 35,194 B (+4,076 B).
+    // Preserve the former 626 B of absolute headroom exactly.
+    maxGzipBytes: 35_820,
   },
   {
     label: "@starwind-ui/react + runtime",
-    maxGzipBytes: 145 * 1024,
+    // 8a046cdaa pre-feature: 145,790 B; post-feature rebaseline: 164,250 B (+18,460 B).
+    // Preserve the former 2,690 B of absolute headroom exactly.
+    maxGzipBytes: 166_940,
   },
 ];
 
@@ -24,7 +30,11 @@ const matchedSupportBudgets = [
     comparisonSet: "starwind-zag-overlap",
     compareProviders: ["zag"],
     label: "Starwind/Zag overlap",
-    maxStarwindGzipBytes: 115 * 1024,
+    // 8a046cdaa pre-feature: 116,526 B; post-feature rebaseline: 118,786 B
+    // (+2,260 B), or 1,026 B
+    // over the old ceiling. Membership remains 28 with Color Picker at 0 B. The
+    // exact +8,302 minified Runtime delta is documented in the checked report.
+    maxStarwindGzipBytes: 120_020,
   },
   {
     comparisonSet: "starwind-base-overlap",
@@ -42,6 +52,21 @@ const fieldColdImportBudgets = [
     provider: "starwind",
   },
 ];
+
+export function getPackageSizeBudgetCeilings() {
+  return Object.freeze({
+    headline: Object.freeze(
+      Object.fromEntries(
+        headlinePackageBudgets.map((budget) => [budget.label, budget.maxGzipBytes]),
+      ),
+    ),
+    matchedSupport: Object.freeze(
+      Object.fromEntries(
+        matchedSupportBudgets.map((budget) => [budget.comparisonSet, budget.maxStarwindGzipBytes]),
+      ),
+    ),
+  });
+}
 
 export function evaluatePackageSizeBudgets({ bundleResults, supportResults }) {
   const advisories = [];
@@ -209,5 +234,5 @@ function formatProvider(provider) {
 function formatBudgetBytes(bytes) {
   if (bytes == null) return "missing";
   if (bytes < 1024) return `${bytes} B`;
-  return `${(bytes / 1024).toFixed(1)} KiB`;
+  return `${Math.round(bytes).toLocaleString("en-US")} B (${(bytes / 1024).toFixed(1)} KiB)`;
 }

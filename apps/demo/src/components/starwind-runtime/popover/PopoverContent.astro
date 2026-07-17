@@ -1,14 +1,16 @@
 ---
 import PopoverPrimitive from "@starwind-ui/astro/popover";
 import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
 import { popoverContent } from "./variants";
 
-type Props = HTMLAttributes<"div"> & {
-  side?: "top" | "right" | "bottom" | "left";
-  align?: "start" | "center" | "end";
-  sideOffset?: number;
-  avoidCollisions?: boolean;
-};
+type Props = HTMLAttributes<"div"> &
+  VariantProps<typeof popoverContent> & {
+    side?: "top" | "right" | "bottom" | "left";
+    align?: "start" | "center" | "end";
+    sideOffset?: number;
+    avoidCollisions?: boolean;
+  };
 
 const {
   class: className,
@@ -16,13 +18,14 @@ const {
   align = "center",
   sideOffset = 4,
   avoidCollisions = true,
+  exitMotion = "popover",
   ...rest
 } = Astro.props;
 ---
 
 <PopoverPrimitive.Portal data-slot="popover-portal">
   <PopoverPrimitive.Popup
-    class={popoverContent({ class: className })}
+    class={popoverContent({ exitMotion, class: className })}
     side={side}
     align={align}
     sideOffset={sideOffset}

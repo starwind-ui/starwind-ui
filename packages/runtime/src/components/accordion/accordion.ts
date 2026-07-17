@@ -101,7 +101,7 @@ class AccordionController implements AccordionInstance {
   constructor(root: HTMLElement, options: AccordionOptions) {
     this.root = root;
     this.type = readAccordionType(root, options.type);
-    this.collapsible = options.collapsible ?? readBooleanAttribute(root, "data-collapsible", false);
+    this.collapsible = options.collapsible ?? readBooleanAttribute(root, "data-collapsible", true);
     this.controlled = Object.hasOwn(options, "value");
     this.onValueChange = options.onValueChange;
 
@@ -272,7 +272,7 @@ class AccordionController implements AccordionInstance {
     const anyOpen = this.items.some((item) => isAccordionItemOpen(this.value, item.value));
     this.root.setAttribute("data-state", anyOpen ? "open" : "closed");
     this.root.setAttribute("data-type", this.type);
-    setBooleanAttribute(this.root, "data-collapsible", this.collapsible);
+    this.root.setAttribute("data-collapsible", String(this.collapsible));
 
     this.items.forEach((item, index) => {
       const open = isAccordionItemOpen(this.value, item.value);

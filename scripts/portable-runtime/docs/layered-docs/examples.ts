@@ -1,6 +1,7 @@
 import { runtimeAdapterContracts } from "../../contracts/primitive/representatives.js";
 import type { RuntimeAdapterContract } from "../../contracts/primitive/types.js";
 import type {
+  PrimitiveDocsAuthoredExampleMetadata,
   PrimitiveDocsExampleCoveragePolicy,
   PrimitiveDocsExampleRegistry,
   PrimitiveDocsExampleRegistryEntry,
@@ -35,6 +36,200 @@ type ExamplePropValue =
 
 const stringProp = (value: string): ExamplePropValue => ({ kind: "string", value });
 const numberProp = (value: number): ExamplePropValue => ({ kind: "number", value });
+
+export const colorPickerPrimitiveDocsAuthoredExamples = [
+  {
+    id: "composite-format-control",
+    title: "Composite Format Control",
+    summary:
+      "Compose FormatControl around one Runtime-backed Select. Color Picker owns the accepted format and synchronizes Select without creating another form value.",
+    frameworks: [
+      {
+        framework: "astro",
+        language: "astro",
+        source: `${EXAMPLES_SOURCE_PATH}#color-picker-composite-format-control-astro`,
+        code: `---
+import { ColorPicker } from "@starwind-ui/astro/color-picker";
+import { Select } from "@starwind-ui/astro/select";
+---
+
+<ColorPicker.Root defaultValue="#3b82f6" format="hex" name="accent">
+  <ColorPicker.ValueInput />
+  <ColorPicker.FormatControl>
+    <Select.Root defaultValue="hex">
+      <Select.Trigger aria-label="Color format">
+        <Select.Value>HEX</Select.Value>
+      </Select.Trigger>
+      <Select.Positioner>
+        <Select.Popup>
+          <Select.List>
+            <Select.Item value="hex"><Select.ItemText>HEX</Select.ItemText></Select.Item>
+            <Select.Item value="rgb"><Select.ItemText>RGB</Select.ItemText></Select.Item>
+            <Select.Item value="hsl"><Select.ItemText>HSL</Select.ItemText></Select.Item>
+            <Select.Item value="hsb"><Select.ItemText>HSB</Select.ItemText></Select.Item>
+          </Select.List>
+        </Select.Popup>
+      </Select.Positioner>
+    </Select.Root>
+  </ColorPicker.FormatControl>
+  <ColorPicker.HiddenInput />
+</ColorPicker.Root>`,
+      },
+      {
+        framework: "react",
+        language: "tsx",
+        source: `${EXAMPLES_SOURCE_PATH}#color-picker-composite-format-control-react`,
+        code: `import { ColorPicker } from "@starwind-ui/react/color-picker";
+import { Select } from "@starwind-ui/react/select";
+
+export function CompositeFormatControl() {
+  return (
+    <ColorPicker.Root defaultValue="#3b82f6" format="hex" name="accent">
+      <ColorPicker.ValueInput />
+      <ColorPicker.FormatControl>
+        <Select.Root defaultValue="hex">
+          <Select.Trigger aria-label="Color format">
+            <Select.Value>HEX</Select.Value>
+          </Select.Trigger>
+          <Select.Positioner>
+            <Select.Popup>
+              <Select.List>
+                <Select.Item value="hex"><Select.ItemText>HEX</Select.ItemText></Select.Item>
+                <Select.Item value="rgb"><Select.ItemText>RGB</Select.ItemText></Select.Item>
+                <Select.Item value="hsl"><Select.ItemText>HSL</Select.ItemText></Select.Item>
+                <Select.Item value="hsb"><Select.ItemText>HSB</Select.ItemText></Select.Item>
+              </Select.List>
+            </Select.Popup>
+          </Select.Positioner>
+        </Select.Root>
+      </ColorPicker.FormatControl>
+      <ColorPicker.HiddenInput />
+    </ColorPicker.Root>
+  );
+}`,
+      },
+      {
+        framework: "raw-html",
+        language: "html",
+        source: `${EXAMPLES_SOURCE_PATH}#color-picker-composite-format-control-html`,
+        code: `<div data-sw-color-picker role="group">
+  <input data-sw-color-picker-value-input value="#3b82f6" />
+  <div data-sw-color-picker-format-control>
+    <div data-sw-select data-default-value="hex">
+      <button data-sw-select-trigger type="button" aria-label="Color format">
+        <span data-sw-select-value>HEX</span>
+      </button>
+      <div data-sw-select-positioner>
+        <div data-sw-select-popup hidden>
+          <div data-sw-select-list>
+            <div data-sw-select-item data-value="hex"><span data-sw-select-item-text>HEX</span></div>
+            <div data-sw-select-item data-value="rgb"><span data-sw-select-item-text>RGB</span></div>
+            <div data-sw-select-item data-value="hsl"><span data-sw-select-item-text>HSL</span></div>
+            <div data-sw-select-item data-value="hsb"><span data-sw-select-item-text>HSB</span></div>
+          </div>
+        </div>
+      </div>
+      <input data-sw-select-input type="hidden" />
+    </div>
+  </div>
+  <input data-sw-color-picker-hidden-input type="text" name="accent" aria-hidden="true" tabindex="-1" />
+</div>
+
+<script type="module">
+  import { createColorPicker } from "@starwind-ui/runtime/color-picker";
+  import { createSelect } from "@starwind-ui/runtime/select";
+
+  const root = document.querySelector("[data-sw-color-picker]");
+  const selectRoot = root?.querySelector("[data-sw-select]");
+  if (root && selectRoot) {
+    createSelect(selectRoot);
+    createColorPicker(root, {
+      defaultValue: "#3b82f6",
+      format: "hex",
+      name: "accent",
+    });
+  }
+</script>`,
+      },
+    ],
+  },
+  {
+    id: "native-format-select",
+    title: "Native Format Select",
+    summary:
+      "Use FormatSelect for a progressively enhanced native select with the same hex, rgb, hsl, and hsb format state.",
+    frameworks: [
+      {
+        framework: "astro",
+        language: "astro",
+        source: `${EXAMPLES_SOURCE_PATH}#color-picker-native-format-select-astro`,
+        code: `---
+import { ColorPicker } from "@starwind-ui/astro/color-picker";
+---
+
+<ColorPicker.Root defaultValue="#3b82f6" format="hex" name="accent">
+  <ColorPicker.ValueInput />
+  <ColorPicker.FormatSelect aria-label="Color format">
+    <option value="hex">HEX</option>
+    <option value="rgb">RGB</option>
+    <option value="hsl">HSL</option>
+    <option value="hsb">HSB</option>
+  </ColorPicker.FormatSelect>
+  <ColorPicker.HiddenInput />
+</ColorPicker.Root>`,
+      },
+      {
+        framework: "react",
+        language: "tsx",
+        source: `${EXAMPLES_SOURCE_PATH}#color-picker-native-format-select-react`,
+        code: `import { ColorPicker } from "@starwind-ui/react/color-picker";
+
+export function NativeFormatSelect() {
+  return (
+    <ColorPicker.Root defaultValue="#3b82f6" format="hex" name="accent">
+      <ColorPicker.ValueInput />
+      <ColorPicker.FormatSelect aria-label="Color format">
+        <option value="hex">HEX</option>
+        <option value="rgb">RGB</option>
+        <option value="hsl">HSL</option>
+        <option value="hsb">HSB</option>
+      </ColorPicker.FormatSelect>
+      <ColorPicker.HiddenInput />
+    </ColorPicker.Root>
+  );
+}`,
+      },
+      {
+        framework: "raw-html",
+        language: "html",
+        source: `${EXAMPLES_SOURCE_PATH}#color-picker-native-format-select-html`,
+        code: `<div data-sw-color-picker role="group">
+  <input data-sw-color-picker-value-input value="#3b82f6" />
+  <select data-sw-color-picker-format-select aria-label="Color format">
+    <option value="hex">HEX</option>
+    <option value="rgb">RGB</option>
+    <option value="hsl">HSL</option>
+    <option value="hsb">HSB</option>
+  </select>
+  <input data-sw-color-picker-hidden-input type="text" name="accent" aria-hidden="true" tabindex="-1" />
+</div>
+
+<script type="module">
+  import { createColorPicker } from "@starwind-ui/runtime/color-picker";
+
+  const root = document.querySelector("[data-sw-color-picker]");
+  if (root) {
+    createColorPicker(root, {
+      defaultValue: "#3b82f6",
+      format: "hex",
+      name: "accent",
+    });
+  }
+</script>`,
+      },
+    ],
+  },
+] as const satisfies readonly PrimitiveDocsAuthoredExampleMetadata[];
 
 const primitiveExampleLayouts: Partial<Record<string, readonly ExampleNode[]>> = {
   accordion: [
@@ -77,6 +272,43 @@ const primitiveExampleLayouts: Partial<Record<string, readonly ExampleNode[]>> =
     { part: "next", text: "Next" },
   ],
   checkbox: [{ part: "indicator" }, { part: "input" }],
+  "color-picker": [
+    { part: "label", text: "Color" },
+    {
+      part: "control",
+      children: [{ part: "valueSwatch" }, { part: "valueInput" }, { part: "valueText" }],
+    },
+    {
+      part: "area",
+      props: { xChannel: stringProp("saturation"), yChannel: stringProp("brightness") },
+      children: [
+        { part: "areaBackground" },
+        { part: "areaThumb" },
+        { part: "areaInput", props: { axis: stringProp("x") } },
+        { part: "areaInput", props: { axis: stringProp("y") } },
+      ],
+    },
+    {
+      part: "channelSlider",
+      props: { channel: stringProp("hue") },
+      children: [
+        { part: "channelSliderTrack" },
+        { part: "channelSliderThumb" },
+        { part: "channelSliderInput" },
+      ],
+    },
+    { part: "channelInput", props: { channel: stringProp("hue") } },
+    { part: "formatSelect" },
+    { part: "formatControl" },
+    { part: "transparencyGrid" },
+    {
+      part: "swatchGroup",
+      children: [{ part: "swatch", props: { swatchValue: stringProp("#3b82f6") } }],
+    },
+    { part: "eyeDropperTrigger", text: "Pick from screen" },
+    { part: "clear", text: "Clear" },
+    { part: "hiddenInput" },
+  ],
   collapsible: [
     { part: "trigger", text: "Toggle details" },
     { part: "panel", text: "Collapsible content" },
@@ -408,23 +640,25 @@ function renderRawHtmlExample(contract: RuntimeAdapterContract) {
 }
 
 function renderAstroExample(contract: RuntimeAdapterContract) {
+  const namespace = toPascalCase(contract.component);
   const rootPart = getRootPart(contract);
   const children = getExampleLayout(contract);
   const markup = renderAdapterNode(contract, { part: rootPart.name, children }, 0, "astro");
 
   return `---
-import { ${contract.displayName} } from "@starwind-ui/astro/${contract.component}";
+import { ${namespace} } from "@starwind-ui/astro/${contract.component}";
 ---
 
 ${markup}`;
 }
 
 function renderReactExample(contract: RuntimeAdapterContract) {
+  const namespace = toPascalCase(contract.component);
   const rootPart = getRootPart(contract);
   const children = getExampleLayout(contract);
   const markup = renderAdapterNode(contract, { part: rootPart.name, children }, 4, "react");
 
-  return `import { ${contract.displayName} } from "@starwind-ui/react/${contract.component}";
+  return `import { ${namespace} } from "@starwind-ui/react/${contract.component}";
 
 export function Example() {
   return (
@@ -488,7 +722,7 @@ function renderAdapterNode(
   }
 
   const indent = " ".repeat(depth);
-  const memberName = `${contract.displayName}.${toPascalCase(part.name)}`;
+  const memberName = `${toPascalCase(contract.component)}.${toPascalCase(part.name)}`;
   const attributes = renderAdapterAttributes(contract, part, node.props, framework);
   const children = (node.children ?? [])
     .map((child) => renderAdapterNode(contract, child, depth + 2, framework))
@@ -620,6 +854,15 @@ function getExampleValueForProp(
 }
 
 function getHtmlAttributeForProp(part: PrimitivePart, propName: string) {
+  const semanticPropAliases: Readonly<Record<string, string>> = {
+    swatchDisabled: "data-disabled",
+    swatchValue: "data-value",
+  };
+
+  if (semanticPropAliases[propName]) {
+    return semanticPropAliases[propName];
+  }
+
   const directAttribute = part.initialAttributes?.find(
     (attribute) =>
       attribute.source === "prop" && toPropNameFromAttribute(attribute.name) === propName,

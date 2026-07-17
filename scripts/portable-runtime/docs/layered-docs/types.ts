@@ -369,6 +369,13 @@ export type PrimitiveInitialMarkupMetadata = {
   readonly reason: string;
 };
 
+export type PrimitiveCssVariableMetadata = {
+  readonly name: `--${string}`;
+  readonly description: string;
+  readonly parts: readonly string[];
+  readonly source: "runtime" | "styled-adapter";
+};
+
 export type PrimitiveDocsFrameworkTarget =
   | "raw-html"
   | "astro"
@@ -570,6 +577,7 @@ export type PrimitiveDocsMetadata = {
   readonly refs: readonly PrimitiveRefMetadata[];
   readonly asChild: readonly PrimitiveAsChildMetadata[];
   readonly initialMarkup: readonly PrimitiveInitialMarkupMetadata[];
+  readonly cssVariables?: readonly PrimitiveCssVariableMetadata[];
   readonly form?: PrimitiveFormMetadata;
   readonly presence?: PrimitivePresenceMetadata;
   readonly floating?: PrimitiveFloatingMetadata;

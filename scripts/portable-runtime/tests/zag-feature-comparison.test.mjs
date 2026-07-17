@@ -1,8 +1,12 @@
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
   renderZagFeatureComparisonReport,
   validateZagFeatureComparison,
+  writeZagFeatureComparisonReport,
 } from "../generate-zag-feature-comparison.mjs";
 import {
   comparisonMetadata,
@@ -135,6 +139,62 @@ describe("Zag feature comparison data", () => {
       "| Fallback | Fallback delay, missing source handling, srcset-only images, and responsive source changes | `supported` | `partial` | `none` |",
     );
     expect(report).not.toContain("_Feature rows pending._");
+  });
+
+  it("accepts a missing private diagnostic after validating source data", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "starwind-zag-check-"));
+
+    try {
+      await expect(
+        writeZagFeatureComparisonReport({
+          check: true,
+          outputPath: path.join(root, "diagnostics", "zag-feature-comparison.md"),
+          requireFeatureRows: true,
+        }),
+      ).resolves.toBeUndefined();
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  it("creates the configured diagnostics directory before writing a report", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "starwind-zag-write-"));
+    const outputPath = path.join(root, "diagnostics", "zag-feature-comparison.md");
+
+    try {
+      await writeZagFeatureComparisonReport({ outputPath, requireFeatureRows: true });
+
+      expect(existsSync(outputPath)).toBe(true);
+      expect(readFileSync(outputPath, "utf8")).toContain("# Zag Runtime Feature Comparison");
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  it("enforces exact private diagnostic drift when the artifact exists", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "starwind-zag-check-"));
+    const outputPath = path.join(root, "zag-feature-comparison.md");
+
+    try {
+      writeFileSync(outputPath, "stale\n");
+      await expect(
+        writeZagFeatureComparisonReport({ check: true, outputPath, requireFeatureRows: true }),
+      ).rejects.toThrow("is out of date");
+
+      writeFileSync(
+        outputPath,
+        renderZagFeatureComparisonReport({
+          comparisonRows,
+          overlapComponents,
+          runtimeOnlyComponents,
+        }),
+      );
+      await expect(
+        writeZagFeatureComparisonReport({ check: true, outputPath, requireFeatureRows: true }),
+      ).resolves.toBeUndefined();
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
   });
 
   it("keeps public framing guardrails aligned with public README wording", () => {

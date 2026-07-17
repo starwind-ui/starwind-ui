@@ -1,0 +1,23 @@
+---
+import ColorPickerReviewDemo from "@/components/demos/color-picker/ColorPickerReviewDemo.astro";
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout
+  title="Runtime Color Picker"
+  description="Astro Runtime Color Picker product review and smoke page"
+>
+  <main class="container mx-auto max-w-5xl px-4 py-12">
+    <header class="mb-10 space-y-3">
+      <p class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+        Runtime component review
+      </p>
+      <h1 class="font-heading text-4xl font-semibold tracking-tight">Color Picker</h1>
+      <p class="text-muted-foreground max-w-3xl">
+        Review popup and inline composition, formats, alpha, forms, invalid drafts, fixed states,
+        nested overlays, and public interaction events.
+      </p>
+    </header>
+    <ColorPickerReviewDemo />
+  </main>
+</Layout>

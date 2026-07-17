@@ -1,0 +1,61 @@
+---
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { colorPicker } from "./variants";
+
+type Props = Omit<HTMLAttributes<"div">, "value" | "defaultValue" | "onChange" | "dir"> &
+  VariantProps<typeof colorPicker> & {
+    defaultValue?: import("@starwind-ui/astro/color-picker").ColorPickerValue;
+    format?: import("@starwind-ui/astro/color-picker").ColorPickerFormat;
+    alpha?: boolean;
+    allowEmpty?: boolean;
+    disabled?: boolean;
+    readOnly?: boolean;
+    name?: string;
+    form?: string;
+    required?: boolean;
+    locale?: string;
+    dir?: import("@starwind-ui/astro/color-picker").ColorPickerDirection;
+  };
+
+const {
+  defaultValue = "#000000",
+  format = "hex",
+  alpha = true,
+  allowEmpty = false,
+  disabled = false,
+  readOnly = false,
+  name,
+  form,
+  required = false,
+  locale,
+  dir,
+  class: className,
+  size = "md",
+  ...rest
+} = Astro.props;
+---
+
+<ColorPickerPrimitive.Root
+  class={colorPicker({ size, class: className })}
+  defaultValue={defaultValue}
+  format={format}
+  alpha={alpha}
+  allowEmpty={allowEmpty}
+  disabled={disabled}
+  readOnly={readOnly}
+  name={name}
+  form={form}
+  required={required}
+  locale={locale}
+  dir={dir}
+  {...rest}
+  data-slot="color-picker"
+>
+  {
+    async (initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection) => (
+      <Fragment set:html={await Astro.slots.render("default", [initial])} />
+    )
+  }
+</ColorPickerPrimitive.Root>

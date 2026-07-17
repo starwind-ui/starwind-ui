@@ -74,7 +74,7 @@ export const accordionRuntimeAdapterContract = {
       kind: "option",
       type: '"single" | "multiple"',
     },
-    { defaultValue: "false", name: "collapsible", kind: "option", type: "boolean" },
+    { defaultValue: "true", name: "collapsible", kind: "option", type: "boolean" },
     { name: "onValueChange", kind: "callback", type: "AccordionValueChangeDetails" },
     { name: "value", kind: "option", targets: ["item"], type: "string" },
     {

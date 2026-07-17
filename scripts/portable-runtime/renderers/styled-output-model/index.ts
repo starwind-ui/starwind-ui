@@ -165,6 +165,7 @@ function projectStyledOutputComponent(component: StyledComponentContract): Style
         }
       : undefined,
     exportName: component.exportName,
+    forwardRef: component.forwardRef ? { ...component.forwardRef } : undefined,
     imports: (component.imports ?? []).map(projectImport),
     primitiveAliases: Object.entries(component.primitiveAliases ?? {}).map(
       ([primitiveComponent, alias]) => ({
@@ -203,6 +204,7 @@ function toStyledComponentContract(component: StyledOutputComponent): StyledComp
       : undefined,
     exportName: component.exportName,
     fileName: component.sourceFileName,
+    forwardRef: component.forwardRef ? { ...component.forwardRef } : undefined,
     imports: component.imports.map(toImport),
     primitiveAliases:
       component.primitiveAliases.length > 0

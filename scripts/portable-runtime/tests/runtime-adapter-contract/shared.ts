@@ -27,6 +27,7 @@ const CONTRACT_RUNTIME_ALIGNMENT_FILES = {
   select: "select/select.ts",
   sidebar: "sidebar/sidebar.ts",
   combobox: "combobox/combobox.ts",
+  "color-picker": ["color-picker/color-picker.ts", "color-picker/controller.ts"],
   toast: "toast/toast.ts",
 } as const;
 
@@ -62,6 +63,7 @@ const RUNTIME_CONTRACT_EXPORTS = [
   "selectRuntimeAdapterContract",
   "sidebarRuntimeAdapterContract",
   "comboboxRuntimeAdapterContract",
+  "colorPickerRuntimeAdapterContract",
   "toastRuntimeAdapterContract",
 ] as const;
 

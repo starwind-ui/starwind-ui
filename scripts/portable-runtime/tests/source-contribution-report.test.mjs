@@ -1,9 +1,15 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { getPackageSizeBudgetCeilings } from "../package-size-budget-checks.mjs";
+import {
+  buildColorPickerRebaselineSummary,
+  colorPickerRebaselineEvidence,
+  formatColorPickerRebaselineMarkdown,
+} from "../measure-package-sizes.mjs";
 import {
   buildSourceContributionContext,
   buildSourceContributionAnalyses,
@@ -13,6 +19,11 @@ import {
 const fixtureRepoRoot = path.normalize("C:/repo/starwind-ui");
 const fixtureTmpRoot = path.normalize("C:/tmp/starwind-package-size-comparison");
 const realRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const packageSizeDiagnosticsPath = path.join(
+  realRepoRoot,
+  "docs/portable-runtime/diagnostics/package-size-diagnostics.md",
+);
+const privateDiagnosticsIt = existsSync(packageSizeDiagnosticsPath) ? it : it.skip;
 
 describe("source contribution report", () => {
   it("groups Starwind all-three metafile inputs by source category", () => {
@@ -170,67 +181,175 @@ describe("source contribution report", () => {
     });
   });
 
-  it("keeps public comparison headings in the generated report", () => {
-    const report = readFileSync(
+  it("keeps shared headings public and source-contribution headings private", () => {
+    const publicReport = readFileSync(
       path.join(realRepoRoot, "docs/portable-runtime/package-size-comparison.md"),
       "utf8",
     );
 
-    expect(report).toContain("## At A Glance");
-    expect(report).toContain("## Starwind-Matched Support");
-    expect(report).toContain("## Isolated vs Combined Support Costs");
-    expect(report).toContain("## Starwind Source Contribution Analysis");
-    expect(report).toContain("### All-three overlap - Starwind");
-    expect(report).toContain("### Field cold import - Starwind");
-    expect(report).toContain(
+    expect(publicReport).toContain("## At A Glance");
+    expect(publicReport).toContain("## Starwind-Matched Support");
+    expect(publicReport).toContain("## Isolated vs Combined Support Costs");
+    expect(publicReport).toContain("## Starwind Component Matches");
+    expect(publicReport).not.toContain("## Starwind Source Contribution Analysis");
+  });
+
+  privateDiagnosticsIt("keeps source-contribution headings in private diagnostics", () => {
+    const diagnosticReport = readFileSync(packageSizeDiagnosticsPath, "utf8");
+
+    expect(diagnosticReport).toContain("## Starwind Source Contribution Analysis");
+    expect(diagnosticReport).toContain("### All-three overlap - Starwind");
+    expect(diagnosticReport).toContain("### Field cold import - Starwind");
+    expect(diagnosticReport).toContain(
       "Cold import baseline for Field; lowering this can be a win even if aggregate savings percentage falls.",
     );
-    expect(report).toContain("## Starwind Component Matches");
-    expect(report.indexOf("## Starwind Source Contribution Analysis")).toBeLessThan(
-      report.indexOf("## Starwind Component Matches"),
+    expect(diagnosticReport.indexOf("## Starwind Source Contribution Analysis")).toBeLessThan(
+      diagnosticReport.indexOf("## Starwind Component Matches"),
     );
   });
 
-  it("validates the generated architecture section shape and method guardrails", () => {
-    const report = readFileSync(
-      path.join(realRepoRoot, "docs/portable-runtime/package-size-comparison.md"),
-      "utf8",
-    );
-    const architectureBlock = getSourceContributionBlock(report);
-    const normalizedArchitectureBlock = normalizeMarkdownTableRows(architectureBlock);
-    const architectureHeadings = [...architectureBlock.matchAll(/^### (.+)$/gm)].map(
-      (match) => match[1],
-    );
+  it("derives exact Color Picker rebaseline arithmetic from machine-readable evidence", () => {
+    const summary = buildColorPickerRebaselineSummary();
 
-    expect(report).toContain(
-      "- Source-contribution rows use esbuild metafile `bytesInOutput` from selected Starwind measurement rows. They are minified byte-attribution diagnostics before gzip, not public package-size comparison rows.",
-    );
-    expect(report).toContain(
-      "- Bundle rows use the generated entry chunk and static import graph; dynamic import chunks are excluded from current min+gzip rows because they remain lazy-loaded.",
-    );
-    expect(report).toContain(
-      "- Use `Starwind-Matched Support` when you want a fair support-surface comparison rather than a whole-catalog comparison.",
-    );
-    expect(report).toContain(
-      "This architecture-only section identifies which Starwind source categories contribute most to selected measured bundles.",
-    );
-    expect(architectureBlock).toContain(
-      "This section is architecture analysis, not an apples-to-apples public marketing table.",
-    );
-    expect(normalizedArchitectureBlock).toContain(
-      "| Category | Minified bytes in output | Share |",
-    );
-    expect(normalizedArchitectureBlock).toContain(
-      "| Rank | Category | Source owner | Minified bytes in output |",
-    );
-    expect(architectureHeadings).toEqual([
-      "All-three overlap - Starwind",
-      "Field cold import - Starwind",
+    expect(summary.headlineRows).toEqual([
+      expect.objectContaining({
+        deltaBytes: 13_255,
+        label: "@starwind-ui/runtime",
+        newCeilingBytes: 127_943,
+        newHeadroomBytes: 1_648,
+        oldCeilingBytes: 114_688,
+        oldHeadroomBytes: 1_648,
+        postFeatureBaselineGzipBytes: 126_295,
+        preFeatureGzipBytes: 113_040,
+      }),
+      expect.objectContaining({
+        deltaBytes: 4_076,
+        label: "@starwind-ui/react (adapter only)",
+        newCeilingBytes: 35_820,
+        oldHeadroomBytes: 626,
+        postFeatureBaselineGzipBytes: 35_194,
+        preFeatureGzipBytes: 31_118,
+      }),
+      expect.objectContaining({
+        deltaBytes: 18_460,
+        label: "@starwind-ui/react + runtime",
+        newCeilingBytes: 166_940,
+        oldHeadroomBytes: 2_690,
+        postFeatureBaselineGzipBytes: 164_250,
+        preFeatureGzipBytes: 145_790,
+      }),
     ]);
-    expect(architectureHeadings.every((heading) => heading.endsWith(" - Starwind"))).toBe(true);
-    expect(normalizedArchitectureBlock).toBe(expectedGeneratedArchitectureBlock());
-    expect(report).not.toContain("Competitor source contribution");
+    expect(summary.overlapBudgetRow).toEqual(
+      expect.objectContaining({
+        deltaBytes: 2_260,
+        newCeilingBytes: 120_020,
+        newHeadroomBytes: 1_234,
+        oldCeilingBytes: 117_760,
+        oldHeadroomBytes: 1_234,
+        postFeatureBaselineGzipBytes: 118_786,
+        preFeatureGzipBytes: 116_526,
+      }),
+    );
+    expect(summary.overlapOldCeilingOverageBytes).toBe(1_026);
+    expect(summary.categoryRows.map((row) => row.deltaBytes)).toEqual([8_302, 0, 0, 0]);
+    expect(summary.ownerRows.map((row) => row.deltaBytes)).toEqual([3_948, 3_780, 574, 0]);
+    expect(summary.ownerDeltaSumBytes).toBe(summary.runtimeCategoryDeltaBytes);
+    expect(summary.ownerDeltaSumBytes).toBe(8_302);
+    expect(summary.standaloneComparator).toEqual({
+      starwindGzipBytes: 12_474,
+      zagGzipBytes: 29_519,
+    });
   });
+
+  it("ties every derived rebaseline ceiling to the enforced budget policy", () => {
+    const summary = buildColorPickerRebaselineSummary();
+    const ceilings = getPackageSizeBudgetCeilings();
+
+    expect(
+      Object.fromEntries(summary.headlineRows.map((row) => [row.label, row.newCeilingBytes])),
+    ).toEqual(ceilings.headline);
+    expect(summary.overlapBudgetRow.newCeilingBytes).toBe(
+      ceilings.matchedSupport["starwind-zag-overlap"],
+    );
+    expect(Object.isFrozen(ceilings)).toBe(true);
+    expect(Object.isFrozen(ceilings.headline)).toBe(true);
+    expect(Object.isFrozen(ceilings.matchedSupport)).toBe(true);
+  });
+
+  it("derives the 28-component overlap membership and excludes Color Picker", () => {
+    const summary = buildColorPickerRebaselineSummary();
+
+    expect(summary.membershipCount).toBe(28);
+    expect(summary.overlap.components).toHaveLength(28);
+    expect(summary.overlap.components).not.toContain(summary.overlap.excludedComponent);
+    expect(colorPickerRebaselineEvidence.overlap.components).toEqual(summary.overlap.components);
+  });
+
+  privateDiagnosticsIt(
+    "keeps the checked report byte-aligned with the generated rebaseline section",
+    () => {
+      const report = readFileSync(packageSizeDiagnosticsPath, "utf8");
+      const expectedBlock = formatColorPickerRebaselineMarkdown().join("\n");
+      const generatedBlock = getSection(
+        report,
+        "### Color Picker Rebaseline Evidence",
+        "### Headline Package Budgets",
+      );
+
+      expect(generatedBlock).toBe(expectedBlock);
+      expect(report.match(/### Color Picker Rebaseline Evidence/g)).toHaveLength(1);
+      expect(generatedBlock).toContain(
+        "| Starwind/Zag overlap | 116,526 B | 118,786 B | +2,260 B | 117,760 B | 1,234 B | 120,020 B | 1,234 B |",
+      );
+      expect(generatedBlock).toContain("| Runtime category | 318,380 B | 326,682 B | +8,302 B |");
+      expect(generatedBlock).toContain("| Color Picker source contribution | 0 B | 0 B | 0 B |");
+      expect(generatedBlock).toContain(
+        "The overlap is 1,026 B above its old ceiling, but its comparison membership remains 28 and excludes Color Picker.",
+      );
+      expect(generatedBlock).toContain("Starwind 12,474 B gzip versus Zag 29,519 B gzip.");
+    },
+  );
+
+  privateDiagnosticsIt(
+    "validates the generated architecture section shape and method guardrails",
+    () => {
+      const report = readFileSync(packageSizeDiagnosticsPath, "utf8");
+      const architectureBlock = getSourceContributionBlock(report);
+      const normalizedArchitectureBlock = normalizeMarkdownTableRows(architectureBlock);
+      const architectureHeadings = [...architectureBlock.matchAll(/^### (.+)$/gm)].map(
+        (match) => match[1],
+      );
+
+      expect(report).toContain(
+        "- Source-contribution rows use esbuild metafile `bytesInOutput` from selected Starwind measurement rows. They are minified byte-attribution diagnostics before gzip, not public package-size comparison rows.",
+      );
+      expect(report).toContain(
+        "- Bundle rows use the generated entry chunk and static import graph; dynamic import chunks are excluded from current min+gzip rows because they remain lazy-loaded.",
+      );
+      expect(report).toContain(
+        "- Use `Starwind-Matched Support` when you want a fair support-surface comparison rather than a whole-catalog comparison.",
+      );
+      expect(report).toContain(
+        "This architecture-only section identifies which Starwind source categories contribute most to selected measured bundles.",
+      );
+      expect(architectureBlock).toContain(
+        "This section is architecture analysis, not an apples-to-apples public marketing table.",
+      );
+      expect(normalizedArchitectureBlock).toContain(
+        "| Category | Minified bytes in output | Share |",
+      );
+      expect(normalizedArchitectureBlock).toContain(
+        "| Rank | Category | Source owner | Minified bytes in output |",
+      );
+      expect(architectureHeadings).toEqual([
+        "All-three overlap - Starwind",
+        "Field cold import - Starwind",
+      ]);
+      expect(architectureHeadings.every((heading) => heading.endsWith(" - Starwind"))).toBe(true);
+      expect(normalizedArchitectureBlock).toBe(expectedGeneratedArchitectureBlock());
+      expect(report).not.toContain("Competitor source contribution");
+    },
+  );
 });
 
 function minimalAnalysis(label, sourceOwner) {
@@ -252,6 +371,16 @@ function minimalAnalysis(label, sourceOwner) {
 function getSourceContributionBlock(report) {
   const start = report.indexOf("## Starwind Source Contribution Analysis");
   const end = report.indexOf("## Starwind Component Matches");
+
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+
+  return report.slice(start, end).trim();
+}
+
+function getSection(report, startHeading, endHeading) {
+  const start = report.indexOf(startHeading);
+  const end = report.indexOf(endHeading);
 
   expect(start).toBeGreaterThanOrEqual(0);
   expect(end).toBeGreaterThan(start);
@@ -301,29 +430,29 @@ This section is architecture analysis, not an apples-to-apples public marketing 
 
 | Components | Combined min+gzip | Isolated per-component sum | Shared-code savings | Interpretation |
 | ---: | ---: | ---: | ---: | --- |
-| 26 | 101.9 KiB | 224.6 KiB | 122.7 KiB (54.6%) | Use both columns: lower combined size is good, but higher savings can also come from higher isolated imports. |
+| 26 | 104.7 KiB | 240.0 KiB | 135.3 KiB (56.4%) | Use both columns: lower combined size is good, but higher savings can also come from higher isolated imports. |
 
 | Category | Minified bytes in output | Share |
 | --- | ---: | ---: |
-| Runtime | 299.8 KiB | 71.7% |
-| React adapter | 102.8 KiB | 24.6% |
-| Third-party | 15.4 KiB | 3.7% |
+| Runtime | 308.8 KiB | 72.1% |
+| React adapter | 102.8 KiB | 24.0% |
+| Third-party | 16.3 KiB | 3.8% |
 | Other | 91 B | 0.0% |
 
 | Rank | Category | Source owner | Minified bytes in output |
 | ---: | --- | --- | ---: |
-| 1 | Runtime | \`src/components/select/select.ts\` | 30.4 KiB |
+| 1 | Runtime | \`src/components/select/select.ts\` | 30.9 KiB |
 | 2 | Runtime | \`src/components/combobox/combobox.ts\` | 28.4 KiB |
 | 3 | Runtime | \`src/components/menu/menu.ts\` | 28.0 KiB |
 | 4 | Runtime | \`src/components/slider/slider.ts\` | 19.3 KiB |
 | 5 | Runtime | \`src/components/toast/toast.ts\` | 15.0 KiB |
-| 6 | React adapter | \`src/combobox/ComboboxClear.tsx\` | 13.7 KiB |
-| 7 | Runtime | \`src/components/popover/popover.ts\` | 13.1 KiB |
-| 8 | Runtime | \`src/components/scroll-area/scroll-area.ts\` | 12.8 KiB |
-| 9 | Runtime | \`src/components/input-otp/input-otp.ts\` | 11.9 KiB |
-| 10 | Runtime | \`src/components/tabs/tabs.ts\` | 11.5 KiB |
-| 11 | Runtime | \`src/components/tooltip/tooltip.ts\` | 11.4 KiB |
-| 12 | Runtime | \`src/components/dialog/dialog.ts\` | 10.9 KiB |
+| 6 | Runtime | \`src/components/dialog/dialog.ts\` | 14.7 KiB |
+| 7 | React adapter | \`src/combobox/ComboboxClear.tsx\` | 13.7 KiB |
+| 8 | Runtime | \`src/components/popover/popover.ts\` | 13.2 KiB |
+| 9 | Runtime | \`src/components/scroll-area/scroll-area.ts\` | 12.8 KiB |
+| 10 | Runtime | \`src/components/input-otp/input-otp.ts\` | 11.9 KiB |
+| 11 | Runtime | \`src/components/tabs/tabs.ts\` | 11.5 KiB |
+| 12 | Runtime | \`src/components/tooltip/tooltip.ts\` | 11.4 KiB |
 
 ### Field cold import - Starwind
 
@@ -331,18 +460,18 @@ This section is architecture analysis, not an apples-to-apples public marketing 
 
 | Components | Combined min+gzip | Isolated per-component sum | Shared-code savings | Interpretation |
 | ---: | ---: | ---: | ---: | --- |
-| 1 | 8.4 KiB | 8.4 KiB | 0 B (0.0%) | Cold import baseline for Field; lowering this can be a win even if aggregate savings percentage falls. |
+| 1 | 9.5 KiB | 9.5 KiB | 0 B (0.0%) | Cold import baseline for Field; lowering this can be a win even if aggregate savings percentage falls. |
 
 | Category | Minified bytes in output | Share |
 | --- | ---: | ---: |
-| Runtime | 25.7 KiB | 85.4% |
-| React adapter | 4.4 KiB | 14.6% |
-| Other | 16 B | 0.1% |
+| Runtime | 30.1 KiB | 87.2% |
+| React adapter | 4.4 KiB | 12.7% |
+| Other | 16 B | 0.0% |
 
 | Rank | Category | Source owner | Minified bytes in output |
 | ---: | --- | --- | ---: |
-| 1 | Runtime | \`src/components/field/field.ts\` | 16.2 KiB |
-| 2 | Runtime | \`src/components/field/field-control-bridge.ts\` | 4.5 KiB |
+| 1 | Runtime | \`src/components/field/field.ts\` | 16.9 KiB |
+| 2 | Runtime | \`src/components/field/field-control-bridge.ts\` | 8.2 KiB |
 | 3 | Runtime | \`src/components/input/input.ts\` | 3.5 KiB |
 | 4 | React adapter | \`src/field/FieldControl.tsx\` | 2.6 KiB |
 | 5 | Runtime | \`src/internal/dom.ts\` | 1.5 KiB |

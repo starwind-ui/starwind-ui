@@ -1,0 +1,323 @@
+---
+import {
+  ColorPicker,
+  ColorPickerContent,
+  ColorPickerControl,
+  ColorPickerHiddenInput,
+  ColorPickerInput,
+  ColorPickerLabel,
+  ColorPickerRoot,
+  ColorPickerSwatch,
+  ColorPickerSwatchGroup,
+  ColorPickerTrigger,
+} from "@/components/starwind-runtime/color-picker";
+
+const swatches = [
+  { label: "Red", value: "#ef4444" },
+  { label: "Amber", value: "#f59e0b" },
+  { label: "Emerald", value: "#10b981" },
+  { label: "Sky", value: "#0ea5e9" },
+  { label: "Violet", value: "#8b5cf6" },
+] as const;
+
+const sizes = [
+  { label: "Small", size: "sm", value: "#ef4444" },
+  { label: "Medium", size: "md", value: "#10b981" },
+  { label: "Large", size: "lg", value: "#8b5cf6" },
+] as const;
+
+const anatomy = [
+  ["Closed control", "ColorPickerLabel + ColorPickerControl + ColorPickerTrigger"],
+  ["Color surface", "ColorPickerArea + ColorPickerAreaThumb"],
+  ["Channels", "ColorPickerSliders + ColorPickerChannelSlider"],
+  ["Exact editing", "ColorPickerValueInput + ColorPickerFormatSelect"],
+  ["Native editing", "ColorPickerNativeFormatSelect"],
+  ["Actions", "ColorPickerEyeDropper + ColorPickerClear"],
+  ["Consumer colors", "ColorPickerSwatchGroup + ColorPickerSwatch"],
+  ["Form value", "ColorPickerHiddenInput"],
+] as const;
+---
+
+<section class="mb-12 space-y-4" data-testid="canonical-docs-color-picker">
+  <header class="space-y-1">
+    <div
+      class="bg-primary text-primary-foreground inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide uppercase"
+    >
+      Canonical docs example
+    </div>
+    <h2 class="font-heading text-2xl font-semibold">Proposed documentation default</h2>
+    <p class="text-muted-foreground max-w-3xl">
+      This is the main styled example currently shown first on the Color Picker documentation page.
+      Use this isolated copy to establish the canonical appearance and composition.
+    </p>
+  </header>
+
+  <div class="bg-card rounded-xl border p-6 shadow-sm">
+    <div class="w-full max-w-sm" data-color-picker-example="default">
+      <ColorPicker
+        id="runtime-prototype-docs-canonical-color-picker"
+        defaultValue="#ff000080"
+        format="hex"
+        alpha
+        name="brand-color"
+      >
+        {
+          (initial) => (
+            <Fragment>
+              <ColorPickerLabel initial={initial.label.initial}>Brand color</ColorPickerLabel>
+              <ColorPickerControl initial={initial.control.initial}>
+                <ColorPickerTrigger
+                  initial={initial}
+                  showValueText
+                  aria-label="Open brand color picker"
+                />
+              </ColorPickerControl>
+              <ColorPickerContent initial={initial} aria-label="Brand color editor">
+                <ColorPickerSwatchGroup
+                  slot="swatches"
+                  initial={initial.swatchGroup.initial}
+                  aria-label="Suggested brand colors"
+                >
+                  {swatches.map(({ label, value }) => (
+                    <ColorPickerSwatch
+                      initial={initial}
+                      value={value}
+                      aria-label={`${label} swatch`}
+                    />
+                  ))}
+                </ColorPickerSwatchGroup>
+              </ColorPickerContent>
+              <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
+            </Fragment>
+          )
+        }
+      </ColorPicker>
+    </div>
+  </div>
+</section>
+
+<section class="mb-12 space-y-3" data-testid="canonical-color-picker">
+  <header class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+    <h2 class="font-heading text-2xl font-semibold">Color Picker</h2>
+    <p class="text-muted-foreground max-w-3xl">
+      Styled Popover composition with Starwind format controls, actions, and consumer swatches.
+    </p>
+  </header>
+
+  <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]">
+    <div class="bg-card space-y-4 rounded-xl border p-3 shadow-sm">
+      <ColorPicker
+        id="canonical-color-picker-root"
+        defaultValue="rgba(255, 0, 0, 0.5)"
+        format="hex"
+        alpha
+        allowEmpty
+        name="canonicalColor"
+      >
+        {
+          (initial) => (
+            <Fragment>
+              <ColorPickerLabel initial={initial.label.initial}>Brand color</ColorPickerLabel>
+              <ColorPickerControl initial={initial.control.initial}>
+                <ColorPickerTrigger
+                  initial={initial}
+                  aria-label="Open canonical brand color picker"
+                  data-testid="canonical-color-picker-trigger"
+                >
+                  Brand
+                </ColorPickerTrigger>
+              </ColorPickerControl>
+              <ColorPickerContent
+                initial={initial}
+                showClear
+                avoidCollisions={false}
+                aria-label="Canonical brand color editor"
+                data-testid="canonical-color-picker-content"
+              >
+                <ColorPickerSwatchGroup
+                  slot="swatches"
+                  initial={initial.swatchGroup.initial}
+                  aria-label="Suggested brand colors"
+                  data-testid="canonical-color-picker-swatches"
+                >
+                  {swatches.map(({ label, value }) => (
+                    <ColorPickerSwatch
+                      initial={initial}
+                      value={value}
+                      aria-label={`${label} swatch`}
+                    />
+                  ))}
+                </ColorPickerSwatchGroup>
+              </ColorPickerContent>
+              <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
+            </Fragment>
+          )
+        }
+      </ColorPicker>
+      <p class="text-muted-foreground text-sm">
+        The red default places the area and hue thumbs on track boundaries so their projected fill
+        remains directly reviewable.
+      </p>
+    </div>
+
+    <div class="bg-card space-y-4 rounded-xl border p-3 shadow-sm">
+      <h3 class="font-heading text-base font-semibold">Native format control</h3>
+      <p class="text-muted-foreground text-sm">
+        The native option keeps progressive enhancement while sharing the same value editor and
+        Color Picker state.
+      </p>
+      <ColorPickerRoot
+        id="canonical-native-color-picker"
+        defaultValue="rgb(37, 99, 235)"
+        format="rgb"
+        alpha={false}
+        data-testid="canonical-native-color-picker"
+      >
+        {
+          (initial) => (
+            <Fragment>
+              <ColorPickerLabel initial={initial.label.initial}>Accent color</ColorPickerLabel>
+              <ColorPickerInput
+                initial={initial}
+                formatControl="native"
+                data-testid="canonical-native-color-picker-input"
+              />
+              <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
+            </Fragment>
+          )
+        }
+      </ColorPickerRoot>
+    </div>
+  </div>
+
+  <div class="bg-card space-y-4 rounded-xl border p-5 shadow-sm">
+    <div class="space-y-1">
+      <h3 class="font-heading text-base font-semibold">Swatch-only trigger</h3>
+      <p class="text-muted-foreground text-sm">
+        The same Popover composition can use a compact color swatch button without value text.
+      </p>
+    </div>
+    <ColorPicker defaultValue="#0ea5e9" format="hex" alpha={false} name="swatchOnlyColor">
+      {
+        (initial) => (
+          <Fragment>
+            <ColorPickerLabel initial={initial.label.initial}>Swatch-only color</ColorPickerLabel>
+            <ColorPickerControl initial={initial.control.initial}>
+              <ColorPickerTrigger
+                initial={initial}
+                showValueText={false}
+                class="size-11 p-2"
+                aria-label="Open swatch-only color picker"
+                data-testid="canonical-color-picker-swatch-trigger"
+              />
+            </ColorPickerControl>
+            <ColorPickerContent
+              initial={initial}
+              alpha={false}
+              showEyeDropper={false}
+              aria-label="Swatch-only color editor"
+            />
+            <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
+          </Fragment>
+        )
+      }
+    </ColorPicker>
+  </div>
+
+  <div
+    class="bg-card space-y-4 rounded-xl border p-5 shadow-sm"
+    data-testid="ineligible-clear-color-picker"
+  >
+    <div class="space-y-1">
+      <h3 class="font-heading text-base font-semibold">Ineligible Clear action</h3>
+      <p class="text-muted-foreground text-sm">
+        Requesting Clear without allowing empty values keeps both the action and its separator
+        hidden.
+      </p>
+    </div>
+    <ColorPicker
+      id="ineligible-clear-color-picker-root"
+      defaultValue="#14b8a6"
+      format="hex"
+      alpha={false}
+      allowEmpty={false}
+    >
+      {
+        (initial) => (
+          <Fragment>
+            <ColorPickerLabel initial={initial.label.initial}>Protected color</ColorPickerLabel>
+            <ColorPickerControl initial={initial.control.initial}>
+              <ColorPickerTrigger
+                initial={initial}
+                aria-label="Open protected color picker"
+                data-testid="ineligible-clear-color-picker-trigger"
+              />
+            </ColorPickerControl>
+            <ColorPickerContent
+              initial={initial}
+              alpha={false}
+              showEyeDropper={false}
+              showClear={true}
+              aria-label="Protected color editor"
+              data-testid="ineligible-clear-color-picker-content"
+            />
+          </Fragment>
+        )
+      }
+    </ColorPicker>
+  </div>
+
+  <div class="space-y-3" data-testid="canonical-color-picker-sizes">
+    <h3 class="font-heading text-base font-semibold">Starwind size scale</h3>
+    <div class="grid gap-4 sm:grid-cols-3">
+      {
+        sizes.map(({ label, size, value }) => (
+          <div class="bg-card rounded-xl border p-4">
+            <ColorPicker defaultValue={value} format="hex" alpha={false} size={size}>
+              {(initial) => (
+                <Fragment>
+                  <ColorPickerLabel initial={initial.label.initial} size={size}>
+                    {label}
+                  </ColorPickerLabel>
+                  <ColorPickerControl initial={initial.control.initial} size={size}>
+                    <ColorPickerTrigger
+                      initial={initial}
+                      size={size}
+                      aria-label={`Open ${label.toLowerCase()} color picker`}
+                      data-testid={`canonical-color-picker-${size}-trigger`}
+                    >
+                      {label}
+                    </ColorPickerTrigger>
+                  </ColorPickerControl>
+                  <ColorPickerContent
+                    initial={initial}
+                    size={size}
+                    alpha={false}
+                    showEyeDropper={false}
+                    aria-label={`${label} color editor`}
+                  />
+                </Fragment>
+              )}
+            </ColorPicker>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="space-y-3" aria-labelledby="color-picker-anatomy-heading">
+    <h3 id="color-picker-anatomy-heading" class="font-heading text-base font-semibold">
+      Public anatomy
+    </h3>
+    <dl class="bg-border grid gap-px overflow-hidden rounded-xl border sm:grid-cols-2">
+      {
+        anatomy.map(([label, components]) => (
+          <div class="bg-card grid gap-1 p-4">
+            <dt class="font-medium">{label}</dt>
+            <dd class="text-muted-foreground font-mono text-xs leading-relaxed">{components}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>

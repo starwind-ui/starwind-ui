@@ -1,4 +1,5 @@
 import { runtimeAdapterContracts } from "../contracts/primitive/representatives.js";
+import { colorPickerRuntimeFacade } from "../contracts/primitive/color-picker.js";
 import type { RuntimeAdapterContract } from "../contracts/primitive/types.js";
 import type { PrimitiveGeneratorSource } from "./primitive-generator-types.js";
 
@@ -100,6 +101,14 @@ const primitiveRuntimeAdapterFacts = [
         "ComboboxOpenChangeDetails",
         "ComboboxValueChangeDetails",
       ],
+    },
+  },
+  {
+    component: "color-picker",
+    generation: { source: "specialized-adapter-spec", strategy: "specialized-adapter-spec" },
+    runtimeFacades: {
+      types: colorPickerRuntimeFacade.types,
+      values: colorPickerRuntimeFacade.values,
     },
   },
   {
@@ -309,6 +318,7 @@ const primitiveVendoringComponentOrder: readonly string[] = [
   "select",
   "sidebar",
   "combobox",
+  "color-picker",
   "toast",
 ] as const;
 

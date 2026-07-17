@@ -5,7 +5,10 @@ import zlib from "node:zlib";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const distRoot = path.join(repoRoot, "apps/demo/dist");
-const reportPath = path.join(repoRoot, "docs/portable-runtime/astro-demo-bundle-report.md");
+const reportPath = path.join(
+  repoRoot,
+  "docs/portable-runtime/diagnostics/astro-demo-bundle-report.md",
+);
 
 const runtimeNestedSidebarForbiddenAssets = [
   [/^init-starwind\./, "global initStarwind bundle"],
@@ -78,8 +81,15 @@ const routeExpectations = [
       maxInitialExternalGzipBytes: 34_000,
       maxInitialExternalRawBytes: 100_000,
       maxInitialJsGzipBytes: 36_000,
-      maxStaticChunkCount: 18,
+      maxStaticChunkCount: 19,
     },
+    attributedStaticChunks: [
+      {
+        assetPattern: /^controller-lifecycle\./,
+        importerPattern: /^SidebarProvider\.astro_astro_type_script_index_0_lang\./,
+        note: "pre-feature report recorded 18 chunks; the shared Astro controller lifecycle is now extracted from SidebarProvider (680 B raw), with no Color Picker asset in the initial graph",
+      },
+    ],
     forbiddenAssets: runtimeNestedSidebarForbiddenAssets,
     label: "Runtime nested sidebar",
     route: "pages/runtime-nested-sidebar/index.html",
@@ -130,6 +140,7 @@ function analyzeRoute(expectation) {
 
   const html = fs.readFileSync(htmlPath, "utf8");
   const initialGraph = collectRouteJsGraph(html);
+  const staticImportEdges = collectStaticImportEdges(initialGraph);
   const dynamicGraph = collectDynamicJsGraph(initialGraph);
   const initialAssets = initialGraph.map(readAssetStats);
   const dynamicAssets = dynamicGraph.map(readAssetStats);
@@ -139,6 +150,7 @@ function analyzeRoute(expectation) {
   const dynamicOnly = summarizeAssets(dynamicAssets);
 
   return {
+    attributedStaticChunks: expectation.attributedStaticChunks,
     budget: expectation.budget,
     dynamicAssets,
     dynamicOnly,
@@ -154,6 +166,7 @@ function analyzeRoute(expectation) {
       gzipBytes: gzipSize(html),
       rawBytes: Buffer.byteLength(html),
     },
+    staticImportEdges,
   };
 }
 
@@ -201,7 +214,40 @@ function validateRouteReport(report) {
     );
   }
 
+  for (const attribution of report.attributedStaticChunks ?? []) {
+    if (!findAttributedStaticChunk(report, attribution)) {
+      routeFailures.push(
+        `${report.route} did not preserve attributed static chunk evidence for ${attribution.note}.`,
+      );
+    }
+  }
+
   return routeFailures;
+}
+
+function collectStaticImportEdges(graph) {
+  const graphSet = new Set(graph);
+  const edges = [];
+
+  for (const importer of graph) {
+    const importerPath = resolveDistAsset(importer);
+    if (!fs.existsSync(importerPath)) continue;
+
+    const source = fs.readFileSync(importerPath, "utf8");
+    for (const imported of collectStaticJsImports(source, importerPath)) {
+      if (graphSet.has(imported)) edges.push({ imported, importer });
+    }
+  }
+
+  return edges;
+}
+
+export function findAttributedStaticChunk(report, attribution) {
+  return report.staticImportEdges.find(
+    ({ imported, importer }) =>
+      attribution.assetPattern.test(path.posix.basename(imported)) &&
+      attribution.importerPattern.test(path.posix.basename(importer)),
+  );
 }
 
 function collectRouteJsGraph(html) {
@@ -427,7 +473,7 @@ function resolveDistAsset(asset) {
   return path.join(distRoot, asset.replace(/^\//, ""));
 }
 
-function writeMarkdownReport(reports) {
+export function writeMarkdownReport(reports, outputPath = reportPath) {
   const lines = [
     "# Astro Demo Bundle Report",
     "",
@@ -439,6 +485,7 @@ function writeMarkdownReport(reports) {
     "- Initial/static external JavaScript follows route HTML JS assets and their static `import`/`export ... from` edges.",
     "- Inline scripts are counted separately so JavaScript embedded in HTML is not hidden from comparisons.",
     "- Dynamic imports are reported separately and are not counted as initial JavaScript.",
+    "- Attributed static chunks record the exact generated importer edge that justifies a route-specific chunk budget.",
     "- Gzip uses Node zlib default gzip settings on each asset or inline script.",
     "",
     "## Route Summary",
@@ -486,7 +533,8 @@ function writeMarkdownReport(reports) {
     lines.pop();
   }
 
-  fs.writeFileSync(reportPath, `${lines.join("\n")}\n`);
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, `${lines.join("\n")}\n`);
 }
 
 function formatRouteDetail(report) {
@@ -497,6 +545,19 @@ function formatRouteDetail(report) {
     "",
     `Route: \`${report.route}\``,
     "",
+    ...(report.attributedStaticChunks?.length
+      ? [
+          "### Attributed Static Chunks",
+          "",
+          "| Chunk | Static importer | Evidence |",
+          "| --- | --- | --- |",
+          ...report.attributedStaticChunks.map((attribution) => {
+            const match = findAttributedStaticChunk(report, attribution);
+            return `| \`${match?.imported ?? "missing"}\` | \`${match?.importer ?? "missing"}\` | ${attribution.note} |`;
+          }),
+          "",
+        ]
+      : []),
     "### Largest Initial/Static Contributors",
     "",
     "| Asset | Raw | Gzip |",

@@ -24,7 +24,53 @@ sidebar:
 
 import PrimitiveInventory from "@/docs/components/primitive-reference/PrimitiveInventory.astro";
 
+Starwind currently exposes 36 Runtime-backed primitives for Astro and React. They use the same
+use-case groups as the styled component overview, making it easy to move between the styled and
+behavior-first layers.
+
 <PrimitiveInventory />
+
+## Installation
+
+\`starwind init\` installs the Primitive adapter for your project's primary framework. If you are
+configuring Starwind manually, install the package that matches the files you are authoring:
+
+\`\`\`bash
+npm install @starwind-ui/astro
+# or
+npm install @starwind-ui/react
+\`\`\`
+
+You can also copy Primitive adapter source into your project with \`starwind primitives add\`. See
+the [Getting Started Primitives guide](/docs/getting-started/primitives/) for the package, vendored
+source, and Runtime/raw HTML tradeoffs.
+
+## Import Pattern
+
+Import each Primitive from its framework package and component subpath. The individual reference
+pages show the available parts and complete examples for both frameworks.
+
+**Astro**
+
+\`\`\`ts
+import { Accordion } from "@starwind-ui/astro/accordion";
+\`\`\`
+
+**React**
+
+\`\`\`ts
+import { Accordion } from "@starwind-ui/react/accordion";
+\`\`\`
+
+When you vendor Primitive source, import from the configured \`primitiveDir\` or
+\`primitiveDirs.<framework>\` destination instead.
+
+## Styling and Composition
+
+Primitives provide behavior and framework-native anatomy without Starwind's styled wrapper. You
+own the rendered markup and styling while the adapter coordinates the underlying Runtime contract.
+Start with a [styled component](/docs/components/) when you want ready-to-render UI, or continue to
+the [Runtime reference](/docs/runtime/) when you need to initialize behavior against raw HTML.
 `;
 
 export const renderPrimitiveReferencePage = (primitive: PrimitiveDocsMetadata) =>
@@ -65,6 +111,8 @@ const renderBaseUiStylePrimitiveReferenceMarkdown = (primitive: PrimitiveDocsMet
     renderPrimitiveRuntimeApiReference(primitive),
     "",
     renderPrimitiveFormReference(primitive),
+    "",
+    renderPrimitiveCssVariablesReference(primitive),
     "",
     renderPrimitiveRelatedStyledComponentsReference(primitive),
   ]);
@@ -523,6 +571,23 @@ const renderPrimitiveFormReference = (primitive: PrimitiveDocsMetadata) =>
             ],
             ["Field integration", formatBoolean(primitive.form.fieldIntegration === true)],
           ],
+        ),
+      ])
+    : undefined;
+
+const renderPrimitiveCssVariablesReference = (primitive: PrimitiveDocsMetadata) =>
+  (primitive.cssVariables?.length ?? 0) > 0
+    ? joinMarkdownSections([
+        "## CSS Variables",
+        "",
+        renderMarkdownTable(
+          ["Variable", "Parts", "Source", "Description"],
+          (primitive.cssVariables ?? []).map((variable) => [
+            `\`${variable.name}\``,
+            formatMarkdownList(variable.parts.map((part) => `\`${part}\``)),
+            variable.source,
+            variable.description,
+          ]),
         ),
       ])
     : undefined;

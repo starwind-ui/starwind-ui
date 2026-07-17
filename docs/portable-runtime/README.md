@@ -35,8 +35,8 @@ policy; shared generators model framework-neutral facts.
 
 ## Current Exceptions And Follow-Ups
 
-Vue and Solid targets are non-shipping architecture fixtures. Svelte remains deferred, and the Core
-color picker remains outside the Runtime adapter surface for this beta.
+Astro and React currently expose the same 36 Runtime-backed Primitive families, including Color
+Picker. Vue and Solid targets are non-shipping architecture fixtures, and Svelte remains deferred.
 
 ## Beta Packages
 
@@ -44,11 +44,9 @@ The Runtime, Astro adapter, and React adapter packages are versioned in lockstep
 alongside them so generated styled components and vendored Primitive sources request compatible
 package versions.
 
-The beta supports Astro and React. Future-framework fixtures in generator tests are non-shipping
-architecture checks and are not public framework support.
-
-The existing Core color picker remains an Astro implementation and does not have a Runtime or React
-adapter in this beta.
+The beta supports Astro and React across the current 36-family Primitive surface. Future-framework
+fixtures in generator tests are non-shipping architecture checks and are not public framework
+support.
 
 ## Development
 

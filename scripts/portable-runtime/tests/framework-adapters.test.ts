@@ -4,6 +4,7 @@ import { isAbsolute, join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
 import { checkboxGroupRuntimeAdapterContract } from "../contracts/primitive/representatives.js";
 import { buttonStyledContract } from "../contracts/styled/components/button.js";
+import { colorPickerStyledContract } from "../contracts/styled/components/color-picker.js";
 import { inputOtpStyledContract } from "../contracts/styled/components/input-otp.js";
 import { separatorStyledContract } from "../contracts/styled/components/separator.js";
 import { toggleStyledContract } from "../contracts/styled/components/toggle.js";
@@ -377,6 +378,21 @@ describe("Framework Adapter seam", () => {
       model.componentGroups.map(toStyledAdapterContract),
     );
     expect(roundTrippedModel).toEqual(model);
+  });
+
+  it("projects styled forward-ref intent and target type through the output model", () => {
+    const model = projectStyledOutputModel([colorPickerStyledContract]);
+    const components = model.componentGroups[0]?.components;
+
+    expect(components?.find(({ exportName }) => exportName === "ColorPicker")?.forwardRef).toEqual({
+      targetType: "HTMLDivElement",
+    });
+    expect(
+      components?.find(({ exportName }) => exportName === "ColorPickerRoot")?.forwardRef,
+    ).toEqual({ targetType: "HTMLDivElement" });
+    expect(projectStyledOutputModel(model.componentGroups.map(toStyledAdapterContract))).toEqual(
+      model,
+    );
   });
 
   it("routes all styled output through the Styled Output Model before target writing", () => {

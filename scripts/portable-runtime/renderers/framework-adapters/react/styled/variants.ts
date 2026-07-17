@@ -1,5 +1,6 @@
 import { renderTsValue } from "../../../shared.js";
 import type { StyledOutputComponentGroup } from "../../../styled-output-model/index.js";
+import { renderNamedImport } from "./formatting.js";
 
 export function renderVariants(group: StyledOutputComponentGroup, tsHeader: string): string {
   const variantAliases = group.variantAliases ?? [];
@@ -7,8 +8,8 @@ export function renderVariants(group: StyledOutputComponentGroup, tsHeader: stri
 
   const usesTv = group.variants.length > 0 || variantAliases.some((alias) => alias.defaultVariants);
   const imports = [
-    ...renderVariantAliasImports(variantAliases),
     ...(usesTv ? ['import { tv } from "tailwind-variants";'] : []),
+    ...renderVariantAliasImports(variantAliases),
   ].join("\n");
 
   const aliases = variantAliases.map((alias) => renderVariantAliasExport(alias)).join("\n");
@@ -41,11 +42,24 @@ function renderVariantAliasExport(
 function renderVariantAliasImports(
   variantAliases: NonNullable<StyledOutputComponentGroup["variantAliases"]>,
 ): string[] {
-  return variantAliases.map((alias) => {
+  const importsBySource = new Map<string, Array<{ localName: string; specifier: string }>>();
+
+  for (const alias of variantAliases) {
     const localName = alias.localName ?? alias.importName;
     const specifier =
       localName === alias.importName ? alias.importName : `${alias.importName} as ${localName}`;
+    const sourceImports = importsBySource.get(alias.source) ?? [];
 
-    return `import { ${specifier} } from "${alias.source}";`;
-  });
+    sourceImports.push({ localName, specifier });
+    importsBySource.set(alias.source, sourceImports);
+  }
+
+  return [...importsBySource].map(([source, sourceImports]) =>
+    renderNamedImport(
+      sourceImports
+        .sort((left, right) => left.localName.localeCompare(right.localName))
+        .map(({ specifier }) => specifier),
+      source,
+    ),
+  );
 }

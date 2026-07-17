@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -830,6 +831,7 @@ describe("GenericAdapterPlan", () => {
       "select",
       "sidebar",
       "combobox",
+      "color-picker",
       "toast",
     ]);
     expect(
@@ -867,6 +869,12 @@ describe("GenericAdapterPlan", () => {
     });
     expect(classifications.find((entry) => entry.component === "combobox")).toEqual({
       component: "combobox",
+      reason:
+        "Generated through a component-specific Specialized Adapter Spec while preserving existing Astro and React output and keeping behavior in Runtime.",
+      strategy: "specialized-adapter-spec",
+    });
+    expect(classifications.find((entry) => entry.component === "color-picker")).toEqual({
+      component: "color-picker",
       reason:
         "Generated through a component-specific Specialized Adapter Spec while preserving existing Astro and React output and keeping behavior in Runtime.",
       strategy: "specialized-adapter-spec",
@@ -1069,25 +1077,62 @@ describe("GenericAdapterPlan", () => {
     });
   });
 
-  it("keeps the checked-in generic-adapter-plan coverage report current", () => {
+  it("validates generic-adapter-plan coverage in memory and checks private drift when present", () => {
     const reportPath = join(
       process.cwd(),
-      "docs/portable-runtime/evaluations/generic-adapter-plan-coverage.md",
+      "docs/portable-runtime/diagnostics/generic-adapter-plan-coverage.md",
+    );
+    const report = renderGenericAdapterPlanCoverageReport(
+      runtimeAdapterContracts,
+      genericAdapterFutureFrameworkTracerClassifications,
     );
 
-    expect(readFileSync(reportPath, "utf8")).toBe(
-      renderGenericAdapterPlanCoverageReport(
-        runtimeAdapterContracts,
-        genericAdapterFutureFrameworkTracerClassifications,
-      ),
-    );
-    const report = readFileSync(reportPath, "utf8");
     expect(report).not.toContain("static-adapter-plan");
     expect(report).toMatch(/^\| Adapter Family Plan \(`adapter-family-plan`\)\s+\|\s+19 \|$/m);
     expect(report).toMatch(
-      /^\| Specialized Adapter Spec \(`specialized-adapter-spec`\)\s+\|\s+16 \|$/m,
+      /^\| Specialized Adapter Spec \(`specialized-adapter-spec`\)\s+\|\s+17 \|$/m,
     );
     expect(report).toMatch(/^\| Manual Island Escape Hatch \(`custom-island`\)\s+\|\s+0 \|$/m);
+
+    expectOptionalPrivateReportToMatch(reportPath, report);
+  });
+
+  it("accepts an absent private generic-adapter-plan coverage diagnostic", () => {
+    const report = renderGenericAdapterPlanCoverageReport(
+      runtimeAdapterContracts,
+      genericAdapterFutureFrameworkTracerClassifications,
+    );
+    const missingPath = join(
+      process.cwd(),
+      "docs/portable-runtime/diagnostics/missing-generic-adapter-plan-coverage.md",
+    );
+
+    expect(() => expectOptionalPrivateReportToMatch(missingPath, report)).not.toThrow();
+  });
+
+  it("enforces private generic-adapter-plan coverage drift when the artifact exists", () => {
+    const root = mkdtempSync(join(tmpdir(), "starwind-generic-coverage-"));
+    const reportPath = join(root, "generic-adapter-plan-coverage.md");
+
+    try {
+      writeFileSync(reportPath, "stale\n");
+      expect(() => expectOptionalPrivateReportToMatch(reportPath, "current\n")).toThrow();
+
+      writeFileSync(reportPath, "current\n");
+      expect(() => expectOptionalPrivateReportToMatch(reportPath, "current\n")).not.toThrow();
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  it("does not treat private generic coverage read failures as absence", () => {
+    const root = mkdtempSync(join(tmpdir(), "starwind-generic-coverage-"));
+
+    try {
+      expect(() => expectOptionalPrivateReportToMatch(root, "current\n")).toThrow();
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
   });
 
   it("keeps the future-framework readiness gate aligned with coverage classifications", () => {
@@ -1113,6 +1158,7 @@ describe("GenericAdapterPlan", () => {
     expect(readinessSpecializedAdapterSpecList).toContain("- `context-menu`");
     expect(readinessSpecializedAdapterSpecList).toContain("- `navigation-menu`");
     expect(readinessSpecializedAdapterSpecList).toContain("- `combobox`");
+    expect(readinessSpecializedAdapterSpecList).toContain("- `color-picker`");
     expect(readinessSpecializedAdapterSpecList).toContain("- `tooltip`");
     expect(readinessSpecializedAdapterSpecList).toContain("- `preview-card`");
     expect(readinessSpecializedAdapterSpecList).toContain("- `tabs`");
@@ -1128,6 +1174,7 @@ describe("GenericAdapterPlan", () => {
     expect(readinessManualIslandList).not.toContain("- `tabs`");
     expect(readinessManualIslandList).not.toContain("- `accordion`");
     expect(readinessManualIslandList).not.toContain("- `combobox`");
+    expect(readinessManualIslandList).not.toContain("- `color-picker`");
     expect(readinessManualIslandList).not.toContain("- `select`");
     expect(readinessManualIslandList).not.toContain("- `menu`");
     expect(readinessManualIslandList).not.toContain("- `context-menu`");
@@ -1166,8 +1213,9 @@ describe("GenericAdapterPlan", () => {
   });
 
   it("keeps Specialized Adapter Spec migrations out of current manual-island coverage", () => {
-    const coverage = readWorkspaceFile(
-      "docs/portable-runtime/evaluations/generic-adapter-plan-coverage.md",
+    const coverage = renderGenericAdapterPlanCoverageReport(
+      runtimeAdapterContracts,
+      genericAdapterFutureFrameworkTracerClassifications,
     );
     const manualIslandSection = readMarkdownSection(coverage, "Manual Island Escape Hatches");
 
@@ -1177,6 +1225,7 @@ describe("GenericAdapterPlan", () => {
       "context-menu",
       "navigation-menu",
       "combobox",
+      "color-picker",
       "tooltip",
       "preview-card",
       "tabs",
@@ -1195,8 +1244,17 @@ describe("GenericAdapterPlan", () => {
 
   it("keeps active readiness and coverage docs on accepted adapter vocabulary", () => {
     const activeDocs = [
-      "docs/portable-runtime/framework-readiness-gate.md",
-      "docs/portable-runtime/evaluations/generic-adapter-plan-coverage.md",
+      {
+        name: "docs/portable-runtime/framework-readiness-gate.md",
+        source: readWorkspaceFile("docs/portable-runtime/framework-readiness-gate.md"),
+      },
+      {
+        name: "rendered generic adapter plan coverage",
+        source: renderGenericAdapterPlanCoverageReport(
+          runtimeAdapterContracts,
+          genericAdapterFutureFrameworkTracerClassifications,
+        ),
+      },
     ];
     const deprecatedPhrases = [
       ["Primitive", "AdapterContract"].join(""),
@@ -1214,10 +1272,9 @@ describe("GenericAdapterPlan", () => {
       ["Custom", " Islands"].join(""),
     ];
 
-    for (const file of activeDocs) {
-      const source = readWorkspaceFile(file);
+    for (const { name, source } of activeDocs) {
       for (const phrase of deprecatedPhrases) {
-        expect(source, `${file} contains deprecated vocabulary: ${phrase}`).not.toContain(phrase);
+        expect(source, `${name} contains deprecated vocabulary: ${phrase}`).not.toContain(phrase);
       }
     }
   });
@@ -1225,7 +1282,6 @@ describe("GenericAdapterPlan", () => {
   it("keeps durable generator architecture docs aligned with the current target-authoring flow", () => {
     const readme = readWorkspaceFile("docs/portable-runtime/README.md").replace(/\s+/g, " ");
     const vocabulary = readWorkspaceFile("docs/portable-runtime/adapter-vocabulary.md");
-    const generatorNotes = readWorkspaceFile("docs/portable-runtime/generator-notes.md");
     const readinessGate = readWorkspaceFile("docs/portable-runtime/framework-readiness-gate.md");
 
     expect(readme).toContain("## Primitive Creation Flow");
@@ -1246,12 +1302,16 @@ describe("GenericAdapterPlan", () => {
     expect(vocabulary).toContain("targetRegistration.styled.write");
     expect(vocabulary).toContain("one target home plus one target registration");
 
-    expect(generatorNotes).toContain("## Primitive Creation Flow");
-    expect(generatorNotes).toContain("## Styled Component Creation Flow");
-    expect(generatorNotes).toContain("## Current Exceptions And Follow-Ups");
-    expect(generatorNotes).toContain("primitive-index.ts` consumes that inventory");
-    expect(generatorNotes).toContain("Raw prebuilt generated-file wrappers");
-    expect(generatorNotes).toContain("Media Status");
+    const generatorNotesPath = join(process.cwd(), "docs/portable-runtime/generator-notes.md");
+    if (existsSync(generatorNotesPath)) {
+      const generatorNotes = readFileSync(generatorNotesPath, "utf8");
+      expect(generatorNotes).toContain("## Primitive Creation Flow");
+      expect(generatorNotes).toContain("## Styled Component Creation Flow");
+      expect(generatorNotes).toContain("## Current Exceptions And Follow-Ups");
+      expect(generatorNotes).toContain("primitive-index.ts` consumes that inventory");
+      expect(generatorNotes).toContain("Raw prebuilt generated-file wrappers");
+      expect(generatorNotes).toContain("Media Status");
+    }
 
     expect(readinessGate).toContain("Target Home Checklist");
     expect(readinessGate).toContain("target-registry.ts");
@@ -1265,6 +1325,22 @@ describe("GenericAdapterPlan", () => {
 
 function expectAdapterFamilyPlan(contract: RuntimeAdapterContract, familyPlanId: string): void {
   expect(getGenericAdapterOutputFamilyPlanId(buildGenericAdapterPlan(contract))).toBe(familyPlanId);
+}
+
+function expectOptionalPrivateReportToMatch(reportPath: string, expected: string): void {
+  let actual: string;
+  try {
+    actual = readFileSync(reportPath, "utf8");
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") return;
+    throw error;
+  }
+
+  expect(actual).toBe(expected);
+}
+
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error;
 }
 
 function expectPrintedFilesToMatchPackage(
