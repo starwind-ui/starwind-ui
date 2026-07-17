@@ -923,6 +923,7 @@ describe("Framework Adapter seam", () => {
 
   it("exposes concrete Astro lifecycle projection helpers from the Astro target home", () => {
     expect(Object.keys(astroLifecycleProjection).sort()).toEqual([
+      "printConditionalRuntimeSetup",
       "printFileEnvelope",
       "printRestPropsBinding",
       "printRuntimeSetup",

@@ -19,6 +19,9 @@ const ButtonRoot = React.forwardRef<HTMLButtonElement, ButtonRootProps>(function
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLButtonElement>(null);
+  const instanceRef = React.useRef<ReturnType<typeof createButton> | null>(null);
+  const disabledRef = React.useRef(disabled);
+  disabledRef.current = disabled;
 
   const composedRef = React.useCallback(
     (node: HTMLButtonElement | null) => {
@@ -29,18 +32,31 @@ const ButtonRoot = React.forwardRef<HTMLButtonElement, ButtonRootProps>(function
   );
 
   useIsomorphicLayoutEffect(() => {
+    if (!focusableWhenDisabled) {
+      instanceRef.current?.destroy();
+      instanceRef.current = null;
+      return;
+    }
+
     const root = rootRef.current;
     if (!root) return;
 
     const instance = createButton(root, {
-      disabled,
-      focusableWhenDisabled,
+      disabled: disabledRef.current,
     });
+    instanceRef.current = instance;
 
     return () => {
+      if (instanceRef.current === instance) {
+        instanceRef.current = null;
+      }
       instance.destroy();
     };
-  }, [disabled, focusableWhenDisabled]);
+  }, [focusableWhenDisabled]);
+
+  useIsomorphicLayoutEffect(() => {
+    instanceRef.current?.setDisabled(disabled);
+  }, [disabled]);
 
   return (
     <button

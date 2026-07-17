@@ -8,7 +8,8 @@ export const buttonRuntimeAdapterContract = {
     factory: "createButton",
     importSource: "@starwind-ui/runtime/button",
     rootPart: "root",
-    optionProps: ["disabled", "focusableWhenDisabled"],
+    optionProps: ["disabled"],
+    optionPropLifecycles: { disabled: "setter-backed" },
     destroys: true,
   },
   parts: [
@@ -36,16 +37,28 @@ export const buttonRuntimeAdapterContract = {
     },
     { name: "type", kind: "attribute", targets: ["root"], type: "button | submit | reset" },
   ],
+  setters: [{ method: "setDisabled", prop: "disabled" }],
   refs: [{ part: "root", public: true }],
   initialMarkup: [
     {
       part: "root",
-      attributes: ["data-sw-button", "type", "data-disabled", "aria-disabled"],
-      reason: "The semantic button must be usable before the runtime controller attaches.",
+      attributes: [
+        "data-sw-button",
+        "data-focusable-when-disabled",
+        "type",
+        "data-disabled",
+        "aria-disabled",
+      ],
+      reason:
+        "Native button markup owns ordinary behavior; the focusable-disabled attribute conditionally opts the root into Runtime.",
     },
   ],
   frameworkNotes: {
-    astro: ["Render static button markup and self-initialize the root script."],
-    react: ["Create the controller in an effect and recreate when option props change."],
+    astro: [
+      "Initialize only focusable-disabled roots and bridge later scoped initialization through setDisabled.",
+    ],
+    react: [
+      "Create and destroy with focusableWhenDisabled changes; bridge disabled changes through setDisabled.",
+    ],
   },
 } as const satisfies RuntimeAdapterContract;

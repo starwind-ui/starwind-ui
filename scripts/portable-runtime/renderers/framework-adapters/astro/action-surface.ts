@@ -11,9 +11,7 @@ export function printAstroActionSurfaceComponent(
   return printAstroActionSurfaceRoot(family.facts);
 }
 
-export function printAstroActionSurfaceIndex(
-  family: AdapterActionSurfaceIndexProjection,
-): string {
+export function printAstroActionSurfaceIndex(family: AdapterActionSurfaceIndexProjection): string {
   const facts = family.facts;
   const extension = ".astro";
   const imports = facts.index.importMembers
@@ -35,12 +33,16 @@ function printAstroActionSurfaceRoot(facts: AdapterActionSurfaceFacts): string {
   const focusableWhenDisabled = facts.props.focusableWhenDisabled.name;
   const type = facts.props.type.name;
   const part = facts.parts.root;
-  const runtimeScript = astroLifecycleProjection.printRuntimeSetup({
+  const runtimeScript = astroLifecycleProjection.printConditionalRuntimeSetup({
+    disabledAttribute: facts.attrs.stateDisabled,
     elementName: "button",
     factory: facts.runtime.factory,
     importSource: facts.runtime.importSource,
     selectorAttribute: part.discoveryAttribute,
+    setter: facts.runtime.disabledSetter.method,
     setupFunction: facts.runtime.setupFunction,
+    truthyAttribute: facts.runtime.conditionalInit.attribute,
+    truthyValue: facts.runtime.conditionalInit.truthyValue,
   });
   const protectedDiscovery = part.discoveryAttributeOwnership === "protected";
   const leadingDiscoveryAttribute = protectedDiscovery ? "" : `\n  ${part.discoveryAttribute}`;

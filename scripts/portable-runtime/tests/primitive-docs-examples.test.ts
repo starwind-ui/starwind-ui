@@ -19,6 +19,17 @@ type AstroCompiler = {
 };
 
 describe("primitive docs examples", () => {
+  it("documents the native focusable-disabled Button lifecycle in raw HTML", () => {
+    const source = primitiveDocsExamples.button?.basic?.["raw-html"]?.code;
+
+    expect(source).toContain(
+      '<button data-sw-button type="button" data-focusable-when-disabled="">Button</button>',
+    );
+    expect(source).toContain("const instance = createButton(root);");
+    expect(source).toContain("instance.setDisabled(true)");
+    expect(source).not.toMatch(/nativeButton|data-native|role="button"/);
+  });
+
   it("keeps raw HTML examples aligned with runtime exports and contract discovery attributes", async () => {
     for (const contract of runtimeAdapterContracts) {
       const example = primitiveDocsExamples[contract.component]?.basic?.["raw-html"];

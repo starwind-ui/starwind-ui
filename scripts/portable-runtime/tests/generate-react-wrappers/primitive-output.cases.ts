@@ -445,14 +445,19 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       buttonRoot.indexOf("{...props}"),
     );
     expect(buttonRoot.indexOf("{...props}")).toBeLessThan(buttonRoot.indexOf("data-sw-button"));
-    expect(buttonRoot).toContain("createButton(root");
+    expect(buttonRoot).toContain(
+      "const instanceRef = React.useRef<ReturnType<typeof createButton> | null>(null);",
+    );
+    expect(buttonRoot).toContain("if (!focusableWhenDisabled)");
+    expect(buttonRoot).toContain("instanceRef.current?.setDisabled(disabled)");
     expect(buttonRoot).toContain("useIsomorphicLayoutEffect(() =>");
     expect(buttonRoot).not.toContain("React.useEffect(() =>");
     expect(buttonRoot).toContain("data-focusable-when-disabled");
     expect(buttonRoot).toContain('data-disabled={disabled ? "" : undefined}');
     expect(buttonRoot).toContain("React.forwardRef<HTMLButtonElement, ButtonRootProps>");
     expect(buttonRoot).toContain("const rootRef = React.useRef<HTMLButtonElement>(null)");
-    expect(buttonRoot).toContain("[disabled, focusableWhenDisabled]");
+    expect(buttonRoot).toContain("[focusableWhenDisabled]");
+    expect(buttonRoot).toContain("[disabled]");
     expect(buttonRoot).not.toContain("AnchorHTMLAttributes");
     expect(buttonRoot).not.toContain("href?: string");
     expect(buttonRoot).not.toContain("nativeButton");

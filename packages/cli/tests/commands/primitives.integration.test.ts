@@ -132,7 +132,7 @@ describe.sequential("primitives add integration", () => {
     expect(updatedConfig.primitives).toEqual([
       {
         name: "button",
-        version: "0.1.0",
+        version: "0.1.1",
         framework: "astro",
         source: "bundled",
       },
@@ -178,7 +178,7 @@ describe.sequential("primitives add integration", () => {
       },
       {
         name: "button",
-        version: "0.1.0",
+        version: "0.1.1",
         framework: "astro",
         source: "bundled",
       },

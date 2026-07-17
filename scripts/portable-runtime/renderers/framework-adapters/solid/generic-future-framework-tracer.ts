@@ -60,7 +60,94 @@ function renderSolidButtonRoot(plan: GenericAdapterPlan, part: GenericAdapterPla
   const disabledDefault = getPlanPropDefault(plan, "disabled");
   const focusableWhenDisabledDefault = getPlanPropDefault(plan, "focusableWhenDisabled");
 
+  if (plan.component === "button") {
+    return renderConditionalSolidButtonRoot(
+      plan,
+      part,
+      disabledDefault,
+      focusableWhenDisabledDefault,
+    );
+  }
+
   return `/* Non-shipping future framework tracer fixture. Do not publish, export, register, or copy into demo dependencies. */\nimport { ${factory} } from "${plan.runtime.importSource}";\nimport { mergeProps, onCleanup, onMount, splitProps } from "solid-js";\nimport type { JSX } from "solid-js";\n\nexport type ButtonRootProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {\n  disabled?: boolean;\n  focusableWhenDisabled?: boolean;\n  type?: "button" | "submit" | "reset";\n};\n\nexport function ButtonRoot(allProps: ButtonRootProps) {\n  const props = mergeProps(\n    {\n      disabled: ${disabledDefault},\n      focusableWhenDisabled: ${focusableWhenDisabledDefault},\n      type: "button" as const,\n    },\n    allProps,\n  );\n  const [local, rest] = splitProps(props, [\n    "children",\n    "disabled",\n    "focusableWhenDisabled",\n    "type",\n  ]);\n  let root!: HTMLButtonElement;\n\n  onMount(() => {\n    const instance = ${factory}(root, {\n      disabled: local.disabled,\n      focusableWhenDisabled: local.focusableWhenDisabled,\n    });\n\n    onCleanup(() => {\n      instance.destroy();\n    });\n  });\n\n  return (\n    <button\n      ref={root}\n      ${part.discoveryAttribute}\n      aria-disabled={local.disabled && local.focusableWhenDisabled ? "true" : undefined}\n      data-disabled={local.disabled ? "" : undefined}\n      data-focusable-when-disabled={local.focusableWhenDisabled ? "true" : undefined}\n      disabled={local.disabled && !local.focusableWhenDisabled}\n      type={local.type}\n      {...rest}\n    >\n      {local.children}\n    </button>\n  );\n}\n\nexport default ButtonRoot;\n`;
+}
+
+function renderConditionalSolidButtonRoot(
+  plan: GenericAdapterPlan,
+  part: GenericAdapterPlanPart,
+  disabledDefault: string,
+  focusableWhenDisabledDefault: string,
+): string {
+  const factory = plan.runtime.factory;
+
+  return `/* Non-shipping future framework tracer fixture. Do not publish, export, register, or copy into demo dependencies. */
+import { ${factory} } from "${plan.runtime.importSource}";
+import { createEffect, mergeProps, onCleanup, splitProps } from "solid-js";
+import type { JSX } from "solid-js";
+
+export type ButtonRootProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> & {
+  disabled?: boolean;
+  focusableWhenDisabled?: boolean;
+  type?: "button" | "submit" | "reset";
+};
+
+export function ButtonRoot(allProps: ButtonRootProps) {
+  const props = mergeProps(
+    {
+      disabled: ${disabledDefault},
+      focusableWhenDisabled: ${focusableWhenDisabledDefault},
+      type: "button" as const,
+    },
+    allProps,
+  );
+  const [local, rest] = splitProps(props, [
+    "children",
+    "disabled",
+    "focusableWhenDisabled",
+    "type",
+  ]);
+  let root!: HTMLButtonElement;
+  let instance: ReturnType<typeof ${factory}> | undefined;
+
+  createEffect(() => {
+    if (!local.focusableWhenDisabled) {
+      instance?.destroy();
+      instance = undefined;
+      return;
+    }
+
+    instance ??= ${factory}(root, {
+      disabled: local.disabled,
+    });
+  });
+
+  createEffect(() => {
+    instance?.setDisabled(local.disabled);
+  });
+
+  onCleanup(() => {
+    instance?.destroy();
+    instance = undefined;
+  });
+
+  return (
+    <button
+      ref={root}
+      ${part.discoveryAttribute}
+      aria-disabled={local.disabled && local.focusableWhenDisabled ? "true" : undefined}
+      data-disabled={local.disabled ? "" : undefined}
+      data-focusable-when-disabled={local.focusableWhenDisabled ? "true" : undefined}
+      disabled={local.disabled && !local.focusableWhenDisabled}
+      type={local.type}
+      {...rest}
+    >
+      {local.children}
+    </button>
+  );
+}
+
+export default ButtonRoot;
+`;
 }
 
 function renderSolidToggleRoot(plan: GenericAdapterPlan, part: GenericAdapterPlanPart): string {

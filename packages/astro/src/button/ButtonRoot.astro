@@ -31,7 +31,7 @@ const { type = "button", disabled = false, focusableWhenDisabled = false, ...res
     trackAstroController,
   } from "../internal/controller-lifecycle";
 
-  const getInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {
+  const getInitCandidates = (event: Event | undefined, selector: string): HTMLButtonElement[] => {
     const initRoot =
       event?.type === "starwind:init" && event instanceof CustomEvent
         ? event.detail?.root
@@ -39,10 +39,10 @@ const { type = "button", disabled = false, focusableWhenDisabled = false, ...res
     const scopedRoot: Document | DocumentFragment | Element = isQueryableRoot(initRoot)
       ? initRoot
       : document;
-    const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));
+    const candidates = Array.from(scopedRoot.querySelectorAll<HTMLButtonElement>(selector));
 
-    if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {
-      candidates.unshift(scopedRoot as HTMLElement);
+    if (scopedRoot instanceof HTMLButtonElement && scopedRoot.matches(selector)) {
+      candidates.unshift(scopedRoot);
     }
 
     return candidates;
@@ -52,8 +52,11 @@ const { type = "button", disabled = false, focusableWhenDisabled = false, ...res
     value instanceof Document || value instanceof DocumentFragment || value instanceof Element;
 
   const setupButtons = (event?: Event) => {
-    getInitCandidates(event, "[data-sw-button]").forEach((button) =>
-      trackAstroController("ButtonRoot", button, createButton(button)),
+    getInitCandidates(event, '[data-sw-button][data-focusable-when-disabled="true"]').forEach(
+      (button) =>
+        trackAstroController("ButtonRoot", button, createButton(button)).setDisabled(
+          button.hasAttribute("data-disabled"),
+        ),
     );
   };
 

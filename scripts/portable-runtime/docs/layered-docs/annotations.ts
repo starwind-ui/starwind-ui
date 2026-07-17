@@ -460,6 +460,38 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
 };
 
 export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = {
+  button: {
+    summary:
+      "Button uses native button semantics by default and adds Runtime behavior only for focusable-disabled state.",
+    behaviorNotes: [
+      "Render a native button with an explicit type. Ordinary enabled and disabled buttons rely on HTML without a Button controller.",
+      "Opt into Runtime with focusableWhenDisabled when a disabled button must retain focus, then synchronize later disabled changes through setDisabled.",
+      "Styled Buttons rendered as anchors remain links and do not use Button Runtime.",
+    ],
+    parts: {
+      root: {
+        description:
+          "The native button. It owns a Runtime instance only when focusableWhenDisabled opts into mutable focusable-disabled behavior.",
+        props: {
+          disabled:
+            "Disables the button natively unless focusableWhenDisabled keeps it focusable through Runtime.",
+          focusableWhenDisabled:
+            "Opts the native button into Runtime so disabled state can suppress activation without removing focusability.",
+          type: "Sets the native button type; adapters default an omitted value to button.",
+        },
+        dataAttributes: {
+          "data-sw-button": "Runtime discovery hook for an opted-in native button.",
+          "data-focusable-when-disabled":
+            "Opts the native button into focusable-disabled Runtime behavior.",
+          "data-disabled": "Present while an opted-in button is disabled through Runtime.",
+        },
+      },
+    },
+    setters: {
+      setDisabled:
+        "Updates the opted-in button between enabled and focusable-disabled state without replacing it.",
+    },
+  },
   "color-picker": {
     summary:
       "Color Picker coordinates color parsing, two-dimensional area input, channel controls, editable values, presets, and native form submission.",

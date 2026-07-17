@@ -1393,8 +1393,20 @@ describe("generateLayeredDocsMetadata", () => {
   it("generates source-backed raw HTML, Astro, and React examples for every primitive", () => {
     const metadata = buildLayeredDocsMetadata();
     const report = validateLayeredDocsMetadata(metadata);
+    const button = metadata.primitives.find((primitive) => primitive.id === "button");
+    const buttonRawHtml = button?.docsReference.examples.find(
+      (example) => example.framework === "raw-html",
+    );
 
     expect(report.requiredFailures).toEqual([]);
+    expect(button?.setters).toContainEqual(
+      expect.objectContaining({ method: "setDisabled", prop: "disabled" }),
+    );
+    expect(buttonRawHtml?.code).toContain(
+      '<button data-sw-button type="button" data-focusable-when-disabled="">Button</button>',
+    );
+    expect(buttonRawHtml?.code).toContain("instance.setDisabled(true)");
+    expect(buttonRawHtml?.code).not.toMatch(/nativeButton|data-native|role="button"/);
     expect(report.optionalGaps).not.toEqual(
       expect.arrayContaining([
         expect.stringContaining("Primitive docs example gaps: framework examples missing for"),

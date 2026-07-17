@@ -49,14 +49,19 @@ export function defineAstroScopedInitOutputTests(getTempRoot: GetTempRoot): void
     const outputRoot = path.join(tempRoot, "generated/primitives/astro");
     const tree = await readGeneratedTree(outputRoot);
     const buttonRoot = tree["button/ButtonRoot.astro"];
-    const outsideButton = new FakeElement("[data-sw-button]");
-    const scopedButton = new FakeElement("[data-sw-button]");
+    const optedButtonSelector = '[data-sw-button][data-focusable-when-disabled="true"]';
+    const ordinaryButton = new FakeElement("[data-sw-button]");
+    const outsideButton = new FakeElement(optedButtonSelector);
+    const scopedButton = new FakeElement(optedButtonSelector);
     const scopedContainer = new FakeElement(undefined, [scopedButton]);
-    const documentRoot = new FakeDocument([outsideButton, scopedContainer]);
+    const documentRoot = new FakeDocument([ordinaryButton, outsideButton, scopedContainer]);
     const initialized: FakeElement[] = [];
 
     executeGeneratedScript(buttonRoot, {
-      createButton: (root) => initialized.push(root),
+      createButton: (root) => {
+        initialized.push(root);
+        return { setDisabled: () => {} };
+      },
       document: documentRoot,
     });
 
@@ -84,7 +89,7 @@ export function defineAstroScopedInitOutputTests(getTempRoot: GetTempRoot): void
 }
 
 type ExecuteGeneratedScriptOptions = {
-  createButton: (root: FakeElement) => void;
+  createButton: (root: FakeElement) => { setDisabled(disabled: boolean): void };
   document: FakeDocument;
 };
 
@@ -97,13 +102,12 @@ function executeGeneratedScript(
     throw new Error("Expected generated ButtonRoot.astro to include a script block.");
   }
 
-  const executableScript = script.replace(
-    /^\s*import\s+\{\s*createButton\s*\}\s+from\s+"@starwind-ui\/runtime\/button";\s*$/m,
-    "",
-  ).replace(
-    /^\s*import\s+\{[\s\S]*?\}\s+from\s+"\.\.\/internal\/controller-lifecycle";\s*$/m,
-    "",
-  );
+  const executableScript = script
+    .replace(
+      /^\s*import\s+\{\s*createButton\s*\}\s+from\s+"@starwind-ui\/runtime\/button";\s*$/m,
+      "",
+    )
+    .replace(/^\s*import\s+\{[\s\S]*?\}\s+from\s+"\.\.\/internal\/controller-lifecycle";\s*$/m, "");
   const { outputText } = transpileModule(executableScript, {
     compilerOptions: {
       module: ModuleKind.None,
@@ -120,6 +124,7 @@ function executeGeneratedScript(
     "Element",
     "Document",
     "DocumentFragment",
+    "HTMLButtonElement",
     "registerAstroControllerLifecycle",
     "trackAstroController",
     outputText,
@@ -132,6 +137,7 @@ function executeGeneratedScript(
     FakeElement,
     FakeDocument,
     FakeDocumentFragment,
+    FakeElement,
     (_key: string, setup: (event?: FakeEvent) => void, destroy?: () => void) => {
       setup();
       document.addEventListener("astro:after-swap", () => setup());
@@ -149,6 +155,10 @@ class FakeNode {}
 class FakeElement extends FakeNode {
   readonly children: FakeElement[];
   readonly selector: string | undefined;
+
+  hasAttribute(attribute: string): boolean {
+    return attribute === "data-disabled" && this.selector?.includes("data-disabled") === true;
+  }
 
   constructor(selector?: string, children: FakeElement[] = []) {
     super();

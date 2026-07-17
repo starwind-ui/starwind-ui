@@ -141,7 +141,7 @@ describe("GenericAdapterPlan output model printers", () => {
       "focusableWhenDisabled",
       "type",
     ]);
-    expect(plan.runtime.optionProps).toEqual(["disabled", "focusableWhenDisabled"]);
+    expect(plan.runtime.optionProps).toEqual(["disabled"]);
 
     const astroRoot = astroFiles.find((file) => file.path === "button/ButtonRoot.astro")?.contents;
     const reactRoot = reactFiles.find((file) => file.path === "button/ButtonRoot.tsx")?.contents;
@@ -160,8 +160,12 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroRoot).toContain("disabled={disabled && !focusableWhenDisabled}");
     expect(astroRoot).toContain("type={type}");
     expect(astroRoot).toContain('import { createButton } from "@starwind-ui/runtime/button";');
-    expect(astroRoot).toContain('getInitCandidates(event, "[data-sw-button]")');
-    expect(astroRoot).toContain("createButton(button)");
+    expect(astroRoot).toContain(
+      `getInitCandidates(event, '[data-sw-button][data-focusable-when-disabled="true"]')`,
+    );
+    expect(astroRoot).toContain(
+      'createButton(button).setDisabled(button.hasAttribute("data-disabled"))',
+    );
 
     expect(reactRoot).toContain(
       "export type ButtonRootProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {",
@@ -169,9 +173,15 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactRoot).toContain("focusableWhenDisabled?: boolean;");
     expect(reactRoot).toContain('type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];');
     expect(reactRoot).toContain("React.forwardRef<HTMLButtonElement, ButtonRootProps>");
-    expect(reactRoot).toContain("const instance = createButton(root, {");
-    expect(reactRoot).toContain("disabled,");
-    expect(reactRoot).toContain("focusableWhenDisabled,");
+    expect(reactRoot).toContain(
+      "const instanceRef = React.useRef<ReturnType<typeof createButton> | null>(null);",
+    );
+    expect(reactRoot).toContain("if (!focusableWhenDisabled)");
+    expect(reactRoot).toContain("disabled: disabledRef.current,");
+    expect(reactRoot).not.toContain("focusableWhenDisabled,\n    });");
+    expect(reactRoot).toContain("instanceRef.current?.setDisabled(disabled);");
+    expect(reactRoot).toContain("}, [focusableWhenDisabled]);");
+    expect(reactRoot).toContain("}, [disabled]);");
     expect(reactRoot).toContain("data-sw-button");
     expect(reactRoot).toContain(
       'data-focusable-when-disabled={focusableWhenDisabled ? "true" : undefined}',

@@ -7,172 +7,112 @@ describe("createButton", () => {
     document.body.innerHTML = "";
   });
 
-  it("defaults native buttons to type button", () => {
-    const button = renderButton("<button data-sw-button>Save</button>");
+  it.each([
+    ["anchor element", '<a data-sw-button href="/docs">Docs</a>'],
+    ["non-button element", "<div data-sw-button>Open</div>"],
+  ])("rejects a non-button %s root", (_name, markup) => {
+    document.body.innerHTML = markup;
+    const root = document.querySelector<HTMLElement>("[data-sw-button]")!;
 
-    createButton(button);
-
-    expect(button.getAttribute("type")).toBe("button");
-    expect(button.hasAttribute("data-disabled")).toBe(false);
-  });
-
-  it("preserves explicit native button types", () => {
-    const button = renderButton('<button data-sw-button type="submit">Submit</button>');
-
-    createButton(button);
-
-    expect(button.getAttribute("type")).toBe("submit");
-  });
-
-  it("reflects disabled state with native disabled and data-disabled", () => {
-    const button = renderButton("<button data-sw-button disabled>Save</button>");
-
-    createButton(button);
-
-    expect(button.disabled).toBe(true);
-    expect(button.hasAttribute("data-disabled")).toBe(true);
-    expect(button.getAttribute("aria-disabled")).toBeNull();
-  });
-
-  it("keeps disabled buttons focusable when requested", () => {
-    const button = renderButton(
-      "<button data-sw-button disabled data-focusable-when-disabled>Save</button>",
+    expect(() => createButton(root as HTMLButtonElement)).toThrow(
+      new TypeError("createButton root must be an HTMLButtonElement."),
     );
-    const onClick = vi.fn();
-    button.addEventListener("click", onClick);
-
-    createButton(button);
-    button.click();
-
-    expect(button.disabled).toBe(false);
-    expect(button.hasAttribute("data-disabled")).toBe(true);
-    expect(button.getAttribute("aria-disabled")).toBe("true");
-    expect(onClick).not.toHaveBeenCalled();
   });
 
-  it("honors runtime disabled options when static markup starts enabled", () => {
-    const button = renderButton("<button data-sw-button>Save</button>");
-    const onClick = vi.fn();
-    button.addEventListener("click", onClick);
+  it("does not add or rewrite the native button type", () => {
+    const implicitType = renderButton("<button data-sw-button>Save</button>");
+    const submitType = renderButton('<button data-sw-button type="submit">Submit</button>', false);
 
-    createButton(button, { disabled: true, focusableWhenDisabled: true });
+    createButton(implicitType);
+    createButton(submitType);
 
-    expect(button.disabled).toBe(false);
-    expect(button.hasAttribute("data-disabled")).toBe(true);
-    expect(button.getAttribute("aria-disabled")).toBe("true");
-    expect(button.dispatchEvent(createMouseEvent("click"))).toBe(false);
-    expect(onClick).not.toHaveBeenCalled();
+    expect(implicitType.getAttribute("type")).toBeNull();
+    expect(submitType.getAttribute("type")).toBe("submit");
   });
 
   it.each([
-    ["native button", "<button data-sw-button disabled>Save</button>"],
-    [
-      "focusable native button",
-      "<button data-sw-button disabled data-focusable-when-disabled>Save</button>",
-    ],
-    ["non-native button", '<div data-sw-button data-native="false" data-disabled>Open</div>'],
-    [
-      "focusable non-native button",
-      '<div data-sw-button data-native="false" data-disabled data-focusable-when-disabled>Open</div>',
-    ],
-  ])("suppresses activation-ish events on disabled %s", (_name, markup) => {
-    const button = renderButton(markup);
-    const onClick = vi.fn();
-    const onMouseDown = vi.fn();
-    const onPointerDown = vi.fn();
-    const onKeyDown = vi.fn();
-    const onKeyUp = vi.fn();
-    button.addEventListener("click", onClick);
-    button.addEventListener("mousedown", onMouseDown);
-    button.addEventListener("pointerdown", onPointerDown);
-    button.addEventListener("keydown", onKeyDown);
-    button.addEventListener("keyup", onKeyUp);
+    ["enabled", false],
+    ["disabled", true],
+  ])("renders an initially %s focusable-disabled button", (_name, disabled) => {
+    const button = renderButton(
+      `<button data-sw-button${disabled ? " disabled" : ""}>Save</button>`,
+    );
 
     createButton(button);
 
-    expect(button.dispatchEvent(createMouseEvent("click"))).toBe(false);
-    expect(button.dispatchEvent(createMouseEvent("mousedown"))).toBe(false);
-    expect(button.dispatchEvent(createPointerEvent("pointerdown"))).toBe(false);
-    expect(button.dispatchEvent(createKeyboardEvent("keydown", "Enter"))).toBe(false);
-    expect(button.dispatchEvent(createKeyboardEvent("keydown", " "))).toBe(false);
-    expect(button.dispatchEvent(createKeyboardEvent("keyup", " "))).toBe(false);
-
-    expect(onClick).not.toHaveBeenCalled();
-    expect(onMouseDown).not.toHaveBeenCalled();
-    expect(onPointerDown).not.toHaveBeenCalled();
-    expect(onKeyDown).not.toHaveBeenCalled();
-    expect(onKeyUp).not.toHaveBeenCalled();
+    expect(button.disabled).toBe(false);
+    expect(button.hasAttribute("data-disabled")).toBe(disabled);
+    expect(button.getAttribute("aria-disabled")).toBe(disabled ? "true" : null);
   });
 
-  it("preserves non-activation pointer affordances on disabled buttons", () => {
-    const button = renderButton('<div data-sw-button data-native="false" data-disabled>Open</div>');
+  it("transitions the same focused button between enabled and focusable-disabled states", () => {
+    const button = renderButton("<button data-sw-button>Save</button>");
+    const instance = createButton(button);
+
+    button.focus();
+    instance.setDisabled(true);
+
+    expect(document.activeElement).toBe(button);
+    expect(button.disabled).toBe(false);
+    expect(button.hasAttribute("data-disabled")).toBe(true);
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+
+    instance.setDisabled(false);
+
+    expect(document.activeElement).toBe(button);
+    expect(button.disabled).toBe(false);
+    expect(button.hasAttribute("data-disabled")).toBe(false);
+    expect(button.getAttribute("aria-disabled")).toBeNull();
+  });
+
+  it("suppresses activation-ish handlers only while disabled", () => {
+    const button = renderButton("<button data-sw-button>Save</button>");
+    const instance = createButton(button);
+    const handlers = {
+      click: vi.fn(),
+      keydown: vi.fn(),
+      keyup: vi.fn(),
+      mousedown: vi.fn(),
+      pointerdown: vi.fn(),
+    };
+    Object.entries(handlers).forEach(([type, handler]) => button.addEventListener(type, handler));
+
+    instance.setDisabled(true);
+    dispatchActivationEvents(button);
+
+    Object.values(handlers).forEach((handler) => expect(handler).not.toHaveBeenCalled());
+
+    instance.setDisabled(false);
+    dispatchActivationEvents(button);
+
+    expect(handlers.click).toHaveBeenCalledTimes(1);
+    expect(handlers.mousedown).toHaveBeenCalledTimes(1);
+    expect(handlers.pointerdown).toHaveBeenCalledTimes(1);
+    expect(handlers.keydown).toHaveBeenCalledTimes(2);
+    expect(handlers.keyup).toHaveBeenCalledTimes(2);
+  });
+
+  it("preserves focus and non-activation pointer handlers while disabled", () => {
+    const button = renderButton("<button data-sw-button>Save</button>");
+    const instance = createButton(button, { disabled: true });
+    const onBlur = vi.fn();
+    const onFocus = vi.fn();
     const onMouseEnter = vi.fn();
     const onPointerMove = vi.fn();
+    button.addEventListener("blur", onBlur);
+    button.addEventListener("focus", onFocus);
     button.addEventListener("mouseenter", onMouseEnter);
     button.addEventListener("pointermove", onPointerMove);
 
-    createButton(button);
+    button.focus();
     button.dispatchEvent(createMouseEvent("mouseenter"));
     button.dispatchEvent(createPointerEvent("pointermove"));
+    button.blur();
 
+    expect(onFocus).toHaveBeenCalledTimes(1);
     expect(onMouseEnter).toHaveBeenCalledTimes(1);
     expect(onPointerMove).toHaveBeenCalledTimes(1);
-  });
-
-  it("preserves disabled href link semantics while suppressing activation", () => {
-    const button = renderButton('<a data-sw-button data-disabled href="/docs">Docs</a>');
-    const onClick = vi.fn();
-    button.addEventListener("click", onClick);
-
-    createButton(button);
-
-    expect(button.getAttribute("role")).toBeNull();
-    expect(button.getAttribute("href")).toBe("/docs");
-    expect(button.getAttribute("aria-disabled")).toBe("true");
-    expect(button.dispatchEvent(createMouseEvent("click"))).toBe(false);
-    expect(onClick).not.toHaveBeenCalled();
-  });
-
-  it("adds button semantics and keyboard activation to non-native buttons", () => {
-    const button = renderButton('<div data-sw-button data-native="false">Open</div>');
-    const onClick = vi.fn();
-    button.addEventListener("click", onClick);
-
-    createButton(button);
-    button.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
-    button.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: " " }));
-    button.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true, key: " " }));
-
-    expect(button.getAttribute("role")).toBe("button");
-    expect(button.tabIndex).toBe(0);
-    expect(onClick).toHaveBeenCalledTimes(2);
-  });
-
-  it("keeps href anchors as links instead of forcing button semantics", () => {
-    const button = renderButton('<a data-sw-button href="/docs">Docs</a>');
-    const onClick = vi.fn((event: MouseEvent) => event.preventDefault());
-    button.addEventListener("click", onClick);
-
-    createButton(button);
-    button.click();
-
-    expect(button.getAttribute("role")).toBeNull();
-    expect(button.getAttribute("href")).toBe("/docs");
-    expect(onClick).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps href anchors as links even when nativeButton false is present", () => {
-    const button = renderButton('<a data-sw-button data-native="false" href="/docs">Docs</a>');
-    const onClick = vi.fn();
-    button.addEventListener("click", onClick);
-
-    createButton(button);
-    button.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
-    button.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true, key: " " }));
-
-    expect(button.getAttribute("role")).toBeNull();
-    expect(button.getAttribute("href")).toBe("/docs");
-    expect(onClick).not.toHaveBeenCalled();
+    expect(onBlur).toHaveBeenCalledTimes(1);
   });
 
   it("returns the existing instance for duplicate initialization", () => {
@@ -181,24 +121,35 @@ describe("createButton", () => {
     expect(createButton(button)).toBe(createButton(button));
   });
 
-  it("destroy removes keyboard listeners", () => {
-    const button = renderButton('<div data-sw-button data-native="false">Open</div>');
+  it("destroy is idempotent and removes suppression listeners", () => {
+    const button = renderButton("<button data-sw-button>Save</button>");
+    const instance = createButton(button, { disabled: true });
     const onClick = vi.fn();
-    const instance = createButton(button);
     button.addEventListener("click", onClick);
 
     instance.destroy();
-    button.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
+    instance.destroy();
+    button.dispatchEvent(createMouseEvent("click"));
 
-    expect(onClick).not.toHaveBeenCalled();
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(createButton(button)).not.toBe(instance);
   });
 });
 
-function renderButton(markup: string): HTMLButtonElement & HTMLAnchorElement & HTMLElement {
-  document.body.innerHTML = markup;
-  return document.querySelector<HTMLElement>("[data-sw-button]") as HTMLButtonElement &
-    HTMLAnchorElement &
-    HTMLElement;
+function renderButton(markup: string, replaceBody = true): HTMLButtonElement {
+  if (replaceBody) document.body.innerHTML = markup;
+  else document.body.insertAdjacentHTML("beforeend", markup);
+  return document.querySelectorAll<HTMLButtonElement>("[data-sw-button]").item(replaceBody ? 0 : 1);
+}
+
+function dispatchActivationEvents(button: HTMLButtonElement): void {
+  button.dispatchEvent(createMouseEvent("click"));
+  button.dispatchEvent(createMouseEvent("mousedown"));
+  button.dispatchEvent(createPointerEvent("pointerdown"));
+  button.dispatchEvent(createKeyboardEvent("keydown", "Enter"));
+  button.dispatchEvent(createKeyboardEvent("keydown", " "));
+  button.dispatchEvent(createKeyboardEvent("keyup", "Enter"));
+  button.dispatchEvent(createKeyboardEvent("keyup", " "));
 }
 
 function createMouseEvent(type: string): MouseEvent {

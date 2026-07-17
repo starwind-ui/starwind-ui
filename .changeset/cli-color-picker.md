@@ -12,3 +12,5 @@ scrolls its own content instead of overlapping the trigger or escaping the viewp
 Polish the generator-canonical Astro and React composition with endpoint-safe framed areas and
 sliders, compact size-aware controls, an icon-only EyeDropper action, composite value swatches, and
 footer separators and Clear actions that reflect actual Runtime eligibility.
+Migrate legacy Color Picker installations to the Runtime-backed styled component and migrate their
+Select dependency normally instead of retaining the obsolete compatibility bridge.

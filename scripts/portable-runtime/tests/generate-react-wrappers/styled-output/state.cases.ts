@@ -154,6 +154,9 @@ export async function assertReactStyledStateOutput(outputRoot: string): Promise<
   expect(button).toContain('buttonAs === "a" || href !== undefined');
   expect(button).toContain('"data-slot": dataSlot = "button"');
   expect(button).toContain("<a");
+  expect(button.slice(button.indexOf("<a"), button.indexOf("</a>") + 4)).not.toContain(
+    "data-sw-button",
+  );
   expect(button).toContain("href={disabled ? undefined : href}");
   expect(button).toContain('aria-disabled={disabled ? "true" : undefined}');
   expect(button).toContain('data-disabled={disabled ? "" : undefined}');

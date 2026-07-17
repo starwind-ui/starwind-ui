@@ -627,15 +627,24 @@ function renderRawHtmlExample(contract: RuntimeAdapterContract) {
   const children = isVoidHtmlElement(rootPart.defaultElement) ? [] : getExampleLayout(contract);
   const markup = renderHtmlNode(contract, { part: rootPart.name, children }, 0);
 
+  const setup =
+    contract.component === "button"
+      ? `  const root = document.querySelector("[${rootPart.discoveryAttribute}]");
+  if (root instanceof HTMLButtonElement) {
+    const instance = ${contract.runtime.factory}(root);
+    root.addEventListener("click", () => instance.setDisabled(true), { once: true });
+  }`
+      : `  const root = document.querySelector("[${rootPart.discoveryAttribute}]");
+  if (root) {
+    ${contract.runtime.factory}(root);
+  }`;
+
   return `${markup}
 
 <script type="module">
   import { ${contract.runtime.factory} } from "${contract.runtime.importSource}";
 
-  const root = document.querySelector("[${rootPart.discoveryAttribute}]");
-  if (root) {
-    ${contract.runtime.factory}(root);
-  }
+${setup}
 </script>`;
 }
 
@@ -817,6 +826,11 @@ function getExamplePropsForPart(
 
   if (part.name === "root" && contract.component === "input") {
     props.set("placeholder", stringProp("Email"));
+  }
+
+  if (part.name === "root" && contract.component === "button") {
+    props.set("type", stringProp("button"));
+    props.set("focusableWhenDisabled", { kind: "boolean", value: true });
   }
 
   if (nodeProps) {

@@ -29,7 +29,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           factory: "createButton",
           primitiveId: "button",
           rootDiscoveryAttribute: "data-sw-button",
-          selector: "[data-sw-button]",
+          selector: "[data-sw-button][data-focusable-when-disabled]",
           once: false,
           notes: [],
         },
@@ -581,13 +581,22 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         rootPart: "root",
         optionProps: [
           "disabled",
-          "focusableWhenDisabled",
         ],
+        optionPropLifecycles: {
+          disabled: "setter-backed",
+        },
         destroys: true,
         docsPath: "/docs/runtime/#create-button",
         stateModels: [],
         events: [],
-        setters: [],
+        setters: [
+          {
+            method: "setDisabled",
+            description: "Updates the opted-in button between enabled and focusable-disabled state without replacing it.",
+            descriptionSource: "authored",
+            prop: "disabled",
+          },
+        ],
       },
       {
         primitiveId: "carousel",
@@ -35516,8 +35525,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         rootPart: "root",
         optionProps: [
           "disabled",
-          "focusableWhenDisabled",
         ],
+        optionPropLifecycles: {
+          disabled: "setter-backed",
+        },
         destroys: true,
       },
       parts: [
@@ -35571,7 +35582,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       ],
       stateModels: [],
       events: [],
-      setters: [],
+      setters: [
+        {
+          method: "setDisabled",
+          description: "Updates the opted-in button between enabled and focusable-disabled state without replacing it.",
+          descriptionSource: "authored",
+          prop: "disabled",
+        },
+      ],
       context: [],
       refs: [
         {
@@ -35585,23 +35603,24 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           part: "root",
           attributes: [
             "data-sw-button",
+            "data-focusable-when-disabled",
             "type",
             "data-disabled",
             "aria-disabled",
           ],
-          reason: "The semantic button must be usable before the runtime controller attaches.",
+          reason: "Native button markup owns ordinary behavior; the focusable-disabled attribute conditionally opts the root into Runtime.",
         },
       ],
       frameworkNotes: {
         astro: [
-          "Render static button markup and self-initialize the root script.",
+          "Initialize only focusable-disabled roots and bridge later scoped initialization through setDisabled.",
         ],
         react: [
-          "Create the controller in an effect and recreate when option props change.",
+          "Create and destroy with focusableWhenDisabled changes; bridge disabled changes through setDisabled.",
         ],
       },
       docsReference: {
-        summary: "Button is a Starwind Runtime primitive in the static-semantic contract family.",
+        summary: "Button uses native button semantics by default and adds Runtime behavior only for focusable-disabled state.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -35610,7 +35629,11 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "svelte",
           "vue",
         ],
-        behaviorNotes: [],
+        behaviorNotes: [
+          "Render a native button with an explicit type. Ordinary enabled and disabled buttons rely on HTML without a Button controller.",
+          "Opt into Runtime with focusableWhenDisabled when a disabled button must retain focus, then synchronize later disabled changes through setDisabled.",
+          "Styled Buttons rendered as anchors remain links and do not use Button Runtime.",
+        ],
         usageGuidelines: [],
         sections: [],
         examples: [
@@ -35620,7 +35643,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "Raw HTML",
             summary: "Render the Button data-sw-* contract yourself, then initialize createButton.",
             language: "html",
-            code: "<button data-sw-button>Button</button>\n\n<script type=\"module\">\n  import { createButton } from \"@starwind-ui/runtime/button\";\n\n  const root = document.querySelector(\"[data-sw-button]\");\n  if (root) {\n    createButton(root);\n  }\n</script>",
+            code: "<button data-sw-button type=\"button\" data-focusable-when-disabled=\"\">Button</button>\n\n<script type=\"module\">\n  import { createButton } from \"@starwind-ui/runtime/button\";\n\n  const root = document.querySelector(\"[data-sw-button]\");\n  if (root instanceof HTMLButtonElement) {\n    const instance = createButton(root);\n    root.addEventListener(\"click\", () => instance.setDisabled(true), { once: true });\n  }\n</script>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#button-basic-raw-html",
           },
           {
@@ -35629,7 +35652,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "Astro",
             summary: "Use the Astro primitive adapter to render Button anatomy with the Runtime wiring included.",
             language: "astro",
-            code: "---\nimport { Button } from \"@starwind-ui/astro/button\";\n---\n\n<Button.Root>Button</Button.Root>",
+            code: "---\nimport { Button } from \"@starwind-ui/astro/button\";\n---\n\n<Button.Root type=\"button\" focusableWhenDisabled={true}>Button</Button.Root>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#button-basic-astro",
           },
           {
@@ -35638,7 +35661,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "React",
             summary: "Use the React primitive adapter when Button state participates in React rendering.",
             language: "tsx",
-            code: "import { Button } from \"@starwind-ui/react/button\";\n\nexport function Example() {\n  return (\n    <Button.Root>Button</Button.Root>\n  );\n}",
+            code: "import { Button } from \"@starwind-ui/react/button\";\n\nexport function Example() {\n  return (\n    <Button.Root type=\"button\" focusableWhenDisabled={true}>Button</Button.Root>\n  );\n}",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#button-basic-react",
           },
         ],
@@ -35670,7 +35693,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           parts: [
             {
               part: "root",
-              description: "The main element that owns the Button Runtime instance.",
+              description: "The native button. It owns a Runtime instance only when focusableWhenDisabled opts into mutable focusable-disabled behavior.",
               descriptionSource: "authored",
               defaultElement: "button",
               discoveryAttribute: "data-sw-button",
@@ -35680,7 +35703,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "disabled",
                   kind: "option",
                   type: "boolean",
-                  description: "Disables the Root part.",
+                  description: "Disables the button natively unless focusableWhenDisabled keeps it focusable through Runtime.",
                   descriptionSource: "authored",
                 },
                 {
@@ -35688,7 +35711,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "focusableWhenDisabled",
                   kind: "option",
                   type: "boolean",
-                  description: "Keeps the Root part focusable even when it is disabled.",
+                  description: "Opts the native button into Runtime so disabled state can suppress activation without removing focusability.",
                   descriptionSource: "authored",
                 },
                 {
@@ -35698,7 +35721,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "button | submit | reset",
-                  description: "Sets the native type for the Root part.",
+                  description: "Sets the native button type; adapters default an omitted value to button.",
                   descriptionSource: "authored",
                 },
               ],
@@ -35706,25 +35729,32 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 {
                   name: "data-sw-button",
                   source: "runtime",
-                  description: "Marks the Root part so Starwind Runtime can find it.",
+                  description: "Runtime discovery hook for an opted-in native button.",
                   descriptionSource: "authored",
                 },
                 {
                   name: "data-focusable-when-disabled",
                   source: "prop",
-                  description: "Reflects the focusable when disabled prop on the Root part.",
+                  description: "Opts the native button into focusable-disabled Runtime behavior.",
                   descriptionSource: "authored",
                 },
                 {
                   name: "data-disabled",
                   source: "prop",
-                  description: "Reflects the disabled prop on the Root part.",
+                  description: "Present while an opted-in button is disabled through Runtime.",
                   descriptionSource: "authored",
                 },
               ],
               stateModels: [],
               events: [],
-              setters: [],
+              setters: [
+                {
+                  method: "setDisabled",
+                  description: "Updates the opted-in button between enabled and focusable-disabled state without replacing it.",
+                  descriptionSource: "authored",
+                  prop: "disabled",
+                },
+              ],
               context: [],
               refs: [
                 {
@@ -35738,11 +35768,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   part: "root",
                   attributes: [
                     "data-sw-button",
+                    "data-focusable-when-disabled",
                     "type",
                     "data-disabled",
                     "aria-disabled",
                   ],
-                  reason: "The semantic button must be usable before the runtime controller attaches.",
+                  reason: "Native button markup owns ordinary behavior; the focusable-disabled attribute conditionally opts the root into Runtime.",
                 },
               ],
             },

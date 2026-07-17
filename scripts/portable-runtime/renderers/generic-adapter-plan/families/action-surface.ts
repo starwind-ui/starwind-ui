@@ -11,6 +11,7 @@ import {
   getPartExportName,
   getPlanProp,
   getRuntimeOptionProps,
+  getSetterForProp,
   getStaticAttributeName,
   pluralizeDisplayName,
 } from "./toolkit.js";
@@ -118,8 +119,8 @@ export function isActionSurfaceOutputModelPlan(plan: GenericAdapterPlan): boolea
     propNames.has("disabled") &&
     propNames.has("focusableWhenDisabled") &&
     propNames.has("type") &&
+    optionProps.length === 1 &&
     optionProps.includes("disabled") &&
-    optionProps.includes("focusableWhenDisabled") &&
     hasInitialAttributes
   );
 }
@@ -138,20 +139,14 @@ export function getActionSurfaceFacts(plan: GenericAdapterPlan): AdapterActionSu
     );
   }
 
-  const runtimeOptionProps = getRuntimeOptionProps(plan, [
-    "disabled",
-    "focusableWhenDisabled",
-  ]);
+  const runtimeOptionProps = getRuntimeOptionProps(plan, ["disabled"]);
+  const disabledSetter = getSetterForProp(plan, "disabled");
 
   return {
     attrs: {
       ariaDisabled: getStaticAttributeName(plan, rootPart, "aria-disabled"),
       disabled: "disabled",
-      focusableWhenDisabled: getStaticAttributeName(
-        plan,
-        rootPart,
-        "data-focusable-when-disabled",
-      ),
+      focusableWhenDisabled: getStaticAttributeName(plan, rootPart, "data-focusable-when-disabled"),
       root: rootPart.discoveryAttribute,
       stateDisabled: getStaticAttributeName(plan, rootPart, "data-disabled"),
       type: getStaticAttributeName(plan, rootPart, "type"),
@@ -176,12 +171,19 @@ export function getActionSurfaceFacts(plan: GenericAdapterPlan): AdapterActionSu
     },
     props: {
       disabled: getAdapterFamilyProp(getPlanProp(plan, "disabled")),
-      focusableWhenDisabled: getAdapterFamilyProp(
-        getPlanProp(plan, "focusableWhenDisabled"),
-      ),
+      focusableWhenDisabled: getAdapterFamilyProp(getPlanProp(plan, "focusableWhenDisabled")),
       type: getAdapterFamilyProp(getPlanProp(plan, "type")),
     },
     runtime: {
+      conditionalInit: {
+        attribute: getStaticAttributeName(plan, rootPart, "data-focusable-when-disabled"),
+        prop: "focusableWhenDisabled",
+        truthyValue: "true",
+      },
+      disabledSetter: {
+        method: disabledSetter.method,
+        prop: "disabled",
+      },
       factory: plan.runtime.factory,
       importSource: plan.runtime.importSource,
       optionProps: runtimeOptionProps,
