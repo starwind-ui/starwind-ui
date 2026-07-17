@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import type { AddressInfo } from "node:net";
 import { promisify } from "node:util";
-import { readFile, symlink } from "node:fs/promises";
+import { cp, readFile, symlink } from "node:fs/promises";
 
 import { colorPickerRuntimeAdapterContract } from "../../contracts/primitive/color-picker.js";
 import { assertColorPickerFamilyProjected } from "../../renderers/primitive-output-model/index.js";
@@ -147,19 +147,25 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     const appRoot = path.join(tempRoot, "astro-styled-color-picker-ssr");
     const pageDir = path.join(appRoot, "src/pages");
     await mkdir(pageDir, { recursive: true });
-    await symlink(
-      path.resolve("packages/astro/node_modules"),
-      path.join(appRoot, "node_modules"),
-      "junction",
+    await linkAstroFixtureDependencies(appRoot);
+    await cp(
+      path.resolve("apps/demo/src/components/starwind-runtime"),
+      path.join(appRoot, "src/vendor/starwind-runtime"),
+      { recursive: true },
     );
-    const styledIndex = viteFilesystemImportSpecifier(
-      path.resolve("apps/demo/src/components/starwind-runtime/color-picker/index.ts"),
+    await cp(path.resolve("packages/astro/src"), path.join(appRoot, "src/vendor/starwind-astro"), {
+      recursive: true,
+    });
+    await cp(
+      path.resolve("packages/runtime/src"),
+      path.join(appRoot, "src/vendor/starwind-runtime-core"),
+      {
+        recursive: true,
+      },
     );
-    const primitiveIndex = viteFilesystemImportSpecifier(
-      path.resolve("packages/astro/src/color-picker/index.ts"),
-    );
-    expect(styledIndex).toMatch(/^\/@fs\//);
-    expect(primitiveIndex).toMatch(/^\/@fs\//);
+    await writeFile(path.join(appRoot, "astro.config.mjs"), renderAstroFixtureConfig());
+    const styledIndex = "../vendor/starwind-runtime/color-picker/index.ts";
+    const primitiveIndex = "../vendor/starwind-astro/color-picker/index.ts";
     await writeFile(
       path.join(pageDir, "index.astro"),
       renderStyledFixture(styledIndex, primitiveIndex),
@@ -169,7 +175,7 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     const astroPackage = require.resolve("astro/package.json");
     const astroBin = path.join(path.dirname(astroPackage), "bin/astro.mjs");
     await execFileAsync(process.execPath, [astroBin, "build", "--root", appRoot], {
-      cwd: process.cwd(),
+      cwd: appRoot,
       env: process.env,
       maxBuffer: 10 * 1024 * 1024,
     });
@@ -318,23 +324,27 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     const tempRoot = getTempRoot();
     const appRoot = path.join(tempRoot, "astro-color-picker-ssr");
     const pageDir = path.join(appRoot, "src/pages");
-    const primitiveIndex = viteFilesystemImportSpecifier(
-      path.resolve("packages/astro/src/color-picker/index.ts"),
-    );
     await mkdir(pageDir, { recursive: true });
-    await symlink(
-      path.resolve("packages/astro/node_modules"),
-      path.join(appRoot, "node_modules"),
-      "junction",
+    await linkAstroFixtureDependencies(appRoot);
+    await cp(path.resolve("packages/astro/src"), path.join(appRoot, "src/vendor/starwind-astro"), {
+      recursive: true,
+    });
+    await cp(
+      path.resolve("packages/runtime/src"),
+      path.join(appRoot, "src/vendor/starwind-runtime-core"),
+      {
+        recursive: true,
+      },
     );
-    expect(primitiveIndex).toMatch(/^\/@fs\//);
+    await writeFile(path.join(appRoot, "astro.config.mjs"), renderAstroFixtureConfig());
+    const primitiveIndex = "../vendor/starwind-astro/color-picker/index.ts";
     await writeFile(path.join(pageDir, "index.astro"), renderFixture(primitiveIndex));
 
     const require = createRequire(path.resolve("packages/astro/package.json"));
     const astroPackage = require.resolve("astro/package.json");
     const astroBin = path.join(path.dirname(astroPackage), "bin/astro.mjs");
     await execFileAsync(process.execPath, [astroBin, "build", "--root", appRoot], {
-      cwd: process.cwd(),
+      cwd: appRoot,
       env: process.env,
       maxBuffer: 10 * 1024 * 1024,
     });
@@ -565,6 +575,58 @@ import {
 `;
 }
 
-function viteFilesystemImportSpecifier(target: string): string {
-  return `/@fs/${target.replaceAll("\\", "/").replace(/^\/+/, "")}`;
+function renderAstroFixtureConfig(): string {
+  return `import { fileURLToPath } from "node:url";
+
+export default {
+  cacheDir: fileURLToPath(new URL("./.astro/", import.meta.url)),
+  vite: {
+    ssr: {
+      noExternal: ["tailwind-variants"],
+    },
+    resolve: {
+      alias: [
+        {
+          find: /^@starwind-ui\\/astro\\/(.+)$/,
+          replacement: fileURLToPath(
+            new URL("./src/vendor/starwind-astro/$1/index.ts", import.meta.url),
+          ),
+        },
+        {
+          find: "@starwind-ui/astro",
+          replacement: fileURLToPath(
+            new URL("./src/vendor/starwind-astro/index.ts", import.meta.url),
+          ),
+        },
+        {
+          find: /^@starwind-ui\\/runtime\\/(.+)$/,
+          replacement: fileURLToPath(
+            new URL("./src/vendor/starwind-runtime-core/components/$1/index.ts", import.meta.url),
+          ),
+        },
+        {
+          find: "@starwind-ui/runtime",
+          replacement: fileURLToPath(
+            new URL("./src/vendor/starwind-runtime-core/index.ts", import.meta.url),
+          ),
+        },
+      ],
+    },
+  },
+};
+`;
+}
+
+async function linkAstroFixtureDependencies(appRoot: string): Promise<void> {
+  const nodeModules = path.join(appRoot, "node_modules");
+  await mkdir(nodeModules, { recursive: true });
+  for (const [source, target] of [
+    ["apps/demo/node_modules/astro", "astro"],
+    ["apps/demo/node_modules/tailwind-variants", "tailwind-variants"],
+    ["apps/demo/node_modules/@tabler", "@tabler"],
+    ["packages/runtime/node_modules/@floating-ui", "@floating-ui"],
+    ["packages/runtime/node_modules/embla-carousel", "embla-carousel"],
+  ] as const) {
+    await symlink(path.resolve(source), path.join(nodeModules, target), "junction");
+  }
 }
