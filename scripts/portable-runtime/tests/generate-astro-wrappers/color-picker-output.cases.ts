@@ -152,16 +152,14 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
       path.join(appRoot, "node_modules"),
       "junction",
     );
-    const styledIndex = relativeImportSpecifier(
-      pageDir,
+    const styledIndex = viteFilesystemImportSpecifier(
       path.resolve("apps/demo/src/components/starwind-runtime/color-picker/index.ts"),
     );
-    const primitiveIndex = relativeImportSpecifier(
-      pageDir,
+    const primitiveIndex = viteFilesystemImportSpecifier(
       path.resolve("packages/astro/src/color-picker/index.ts"),
     );
-    expect(styledIndex).toMatch(/^\.\.\//);
-    expect(primitiveIndex).toMatch(/^\.\.\//);
+    expect(styledIndex).toMatch(/^\/@fs\//);
+    expect(primitiveIndex).toMatch(/^\/@fs\//);
     await writeFile(
       path.join(pageDir, "index.astro"),
       renderStyledFixture(styledIndex, primitiveIndex),
@@ -320,8 +318,7 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     const tempRoot = getTempRoot();
     const appRoot = path.join(tempRoot, "astro-color-picker-ssr");
     const pageDir = path.join(appRoot, "src/pages");
-    const primitiveIndex = relativeImportSpecifier(
-      pageDir,
+    const primitiveIndex = viteFilesystemImportSpecifier(
       path.resolve("packages/astro/src/color-picker/index.ts"),
     );
     await mkdir(pageDir, { recursive: true });
@@ -330,7 +327,7 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
       path.join(appRoot, "node_modules"),
       "junction",
     );
-    expect(primitiveIndex).toMatch(/^\.\.\//);
+    expect(primitiveIndex).toMatch(/^\/@fs\//);
     await writeFile(path.join(pageDir, "index.astro"), renderFixture(primitiveIndex));
 
     const require = createRequire(path.resolve("packages/astro/package.json"));
@@ -568,7 +565,6 @@ import {
 `;
 }
 
-function relativeImportSpecifier(importerDir: string, target: string): string {
-  const relativePath = path.relative(importerDir, target).replaceAll("\\", "/");
-  return relativePath.startsWith(".") ? relativePath : `./${relativePath}`;
+function viteFilesystemImportSpecifier(target: string): string {
+  return `/@fs/${target.replaceAll("\\", "/").replace(/^\/+/, "")}`;
 }
