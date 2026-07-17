@@ -26,6 +26,7 @@
   },
   "include": [
     "src",
+    "tests",
     "vite.config.ts",
     "../../packages/react/src/**/*.ts",
     "../../packages/react/src/**/*.tsx",

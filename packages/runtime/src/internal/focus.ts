@@ -14,7 +14,7 @@ export function getFocusableElements(container: HTMLElement): HTMLElement[] {
   );
 }
 
-export function focusFirstElement(container: HTMLElement): void {
+export function focusFirstElement(container: HTMLElement, options?: FocusOptions): void {
   const focusable = getFocusableElements(container);
   const target = focusable[0] ?? container;
 
@@ -22,7 +22,11 @@ export function focusFirstElement(container: HTMLElement): void {
     container.setAttribute("tabindex", "-1");
   }
 
-  target.focus();
+  if (options) {
+    target.focus(options);
+  } else {
+    target.focus();
+  }
 }
 
 export function trapTabKey(container: HTMLElement, event: KeyboardEvent): void {

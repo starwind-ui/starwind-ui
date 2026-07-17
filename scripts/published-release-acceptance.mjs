@@ -13,7 +13,8 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 const HOST = "127.0.0.1";
 
-const BETA_VERSION_PATTERN = /^\d+\.\d+\.\d+-beta\.\d+$/;
+const EXACT_VERSION_PATTERN =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 const ASTRO_FIXTURE = `---
 import "../styles/starwind.css";
@@ -38,11 +39,11 @@ import {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>Starwind published beta acceptance</title>
+    <title>Starwind published release acceptance</title>
   </head>
   <body>
     <main class="mx-auto flex min-h-screen max-w-xl flex-col gap-10 p-10">
-      <h1 class="text-2xl font-semibold">Starwind Astro published beta acceptance</h1>
+      <h1 class="text-2xl font-semibold">Starwind Astro published release acceptance</h1>
       <Dialog id="acceptance-dialog">
         <DialogTrigger asChild>
           <Button id="dialog-trigger" type="button">Open dialog</Button>
@@ -89,7 +90,7 @@ import {
 function App() {
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-10 p-10">
-      <h1 className="text-2xl font-semibold">Starwind React published beta acceptance</h1>
+      <h1 className="text-2xl font-semibold">Starwind React published release acceptance</h1>
       <Dialog id="acceptance-dialog">
         <DialogTrigger asChild>
           <Button id="dialog-trigger" type="button">Open dialog</Button>
@@ -151,8 +152,8 @@ export function parseArgs(argv) {
   }
 
   if (!version) throw new Error("Pass --version <version>.");
-  if (!BETA_VERSION_PATTERN.test(version)) {
-    throw new Error(`Expected an exact numbered beta version, received: ${version}`);
+  if (!EXACT_VERSION_PATTERN.test(version)) {
+    throw new Error(`Expected an exact SemVer version, received: ${version}`);
   }
   return { artifacts, keepTemp, version };
 }
@@ -319,13 +320,13 @@ async function validateInstalledAdapter(project) {
   );
   assert.match(
     adapterManifest.version,
-    BETA_VERSION_PATTERN,
-    `${packageName} must be a numbered beta`,
+    EXACT_VERSION_PATTERN,
+    `${packageName} must use an exact published version`,
   );
   assert.match(
     adapterManifest.dependencies?.["@starwind-ui/runtime"] ?? "",
-    BETA_VERSION_PATTERN,
-    `${packageName} must depend on an exact Runtime beta`,
+    EXACT_VERSION_PATTERN,
+    `${packageName} must depend on an exact Runtime version`,
   );
 
   return {
@@ -430,7 +431,7 @@ async function verifyBrowserProject({ artifacts, browser, project }) {
     await waitForPreview(url, preview);
     await page.goto(url, { waitUntil: "networkidle" });
     await page
-      .getByRole("heading", { name: new RegExp(`${project.framework} published beta`, "i") })
+      .getByRole("heading", { name: new RegExp(`${project.framework} published release`, "i") })
       .waitFor();
 
     const dialogTrigger = page.getByRole("button", { name: "Open dialog" });
@@ -470,11 +471,11 @@ async function verifyBrowserProject({ artifacts, browser, project }) {
   }
 }
 
-export async function runPublishedBetaAcceptance(options) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "starwind-published-beta-"));
+export async function runPublishedReleaseAcceptance(options) {
+  const root = await mkdtemp(path.join(os.tmpdir(), "starwind-published-release-"));
   const artifacts = options.artifacts
     ? path.resolve(options.artifacts)
-    : await mkdtemp(path.join(os.tmpdir(), "starwind-published-beta-artifacts-"));
+    : await mkdtemp(path.join(os.tmpdir(), "starwind-published-release-artifacts-"));
   const plan = createAcceptancePlan({ root, version: options.version });
   const packageVersions = [];
   let browser;
@@ -516,7 +517,7 @@ export async function runPublishedBetaAcceptance(options) {
       `${JSON.stringify({ cli: `starwind@${options.version}`, packages: packageVersions }, null, 2)}\n`,
       "utf8",
     );
-    console.log(`[acceptance] published beta ${options.version} passed in Astro and React`);
+    console.log(`[acceptance] published release ${options.version} passed in Astro and React`);
   } finally {
     await browser?.close();
     if (options.keepTemp) console.log(`[acceptance] preserved temporary projects: ${root}`);
@@ -528,7 +529,7 @@ export async function runPublishedBetaAcceptance(options) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  await runPublishedBetaAcceptance(options);
+  await runPublishedReleaseAcceptance(options);
 }
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {

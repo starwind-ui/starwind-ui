@@ -221,7 +221,7 @@ class PopoverController implements PopoverInstance {
         this.unregisterAsOpenChildOnParent();
       },
       onOpenFrame: () => {
-        focusFirstElement(this.elements.popup);
+        focusFirstElement(this.elements.popup, { preventScroll: true });
       },
       onOutsidePointerDown: (event) => {
         this.requestOpen(false, { event, reason: "outside-press" });
@@ -622,6 +622,7 @@ class PopoverController implements PopoverInstance {
         avoidCollisions:
           options.avoidCollisions ??
           readBooleanAttribute(placementElement, POPOVER_AVOID_COLLISIONS_ATTRIBUTE, true),
+        preserveAnchor: true,
         side: readSideAttribute(placementElement.getAttribute(POPOVER_SIDE_ATTRIBUTE)),
         sideOffset: readNumberAttribute(placementElement, POPOVER_SIDE_OFFSET_ATTRIBUTE, 4),
       }),

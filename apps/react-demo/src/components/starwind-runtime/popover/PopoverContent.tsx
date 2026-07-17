@@ -1,13 +1,15 @@
 import PopoverPrimitive from "@starwind-ui/react/popover";
 import type * as React from "react";
+import type { VariantProps } from "tailwind-variants";
 import { popoverContent } from "./variants";
 
-export type PopoverContentProps = React.ComponentPropsWithoutRef<"div"> & {
-  side?: "top" | "right" | "bottom" | "left";
-  align?: "start" | "center" | "end";
-  sideOffset?: number;
-  avoidCollisions?: boolean;
-};
+export type PopoverContentProps = React.ComponentPropsWithoutRef<"div"> &
+  VariantProps<typeof popoverContent> & {
+    side?: "top" | "right" | "bottom" | "left";
+    align?: "start" | "center" | "end";
+    sideOffset?: number;
+    avoidCollisions?: boolean;
+  };
 
 function PopoverContent(props: PopoverContentProps) {
   const {
@@ -16,6 +18,7 @@ function PopoverContent(props: PopoverContentProps) {
     align = "center",
     sideOffset = 4,
     avoidCollisions = true,
+    exitMotion = "popover",
     children,
     ...rest
   } = props;
@@ -23,7 +26,7 @@ function PopoverContent(props: PopoverContentProps) {
   return (
     <PopoverPrimitive.Portal data-slot="popover-portal">
       <PopoverPrimitive.Popup
-        className={popoverContent({ class: className })}
+        className={popoverContent({ exitMotion, class: className })}
         side={side}
         align={align}
         sideOffset={sideOffset}

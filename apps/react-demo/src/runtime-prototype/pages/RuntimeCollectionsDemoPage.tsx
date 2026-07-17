@@ -335,7 +335,6 @@ export function RuntimeCollectionsDemoPage() {
             </div>
             <Accordion
               id="react-runtime-dynamic-accordion"
-              collapsible
               defaultValue="shipping"
               onValueChange={refreshOutput}
             >

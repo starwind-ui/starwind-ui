@@ -1,0 +1,50 @@
+---
+import { ClientRouter } from "astro:transitions";
+
+import "@/styles/global.css";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/starwind-runtime/carousel";
+
+const slides = ["First slide", "Second slide", "Third slide"];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Carousel client router smoke destination</title>
+    <ClientRouter />
+  </head>
+  <body>
+    <main>
+      <h1>Carousel client router smoke destination</h1>
+      <div class="px-12">
+        <Carousel
+          id="carousel-client-router-smoke"
+          aria-label="Client router Carousel"
+          class="mx-auto w-full max-w-xs"
+        >
+          <CarouselContent>
+            {
+              slides.map((slide) => (
+                <CarouselItem>
+                  <div class="flex aspect-square items-center justify-center rounded-md border">
+                    {slide}
+                  </div>
+                </CarouselItem>
+              ))
+            }
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
+      </div>
+    </main>
+  </body>
+</html>

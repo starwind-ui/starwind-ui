@@ -3,6 +3,7 @@ type FrameworkScoped = {
 };
 
 export type StyledAdapterContract = {
+  annotations?: StyledAdapterContractAnnotations;
   component: string;
   constants?: Record<string, string>;
   defaultExport: Record<string, string>;
@@ -15,6 +16,12 @@ export type StyledAdapterContract = {
   variantCollectionName?: string;
   variants?: Record<string, ClassVariantDefinition>;
   components: StyledComponentContract[];
+};
+
+export type StyledAdapterContractAnnotations = {
+  behaviorOwnership?: string[];
+  composition?: string[];
+  portalGuidance?: string[];
 };
 
 export type StyledComponentDependenciesContract = {
@@ -47,12 +54,17 @@ export type StyledComponentContract = {
   client?: StyledComponentClientContract;
   exportName: string;
   fileName?: string;
+  forwardRef?: StyledComponentForwardRefContract;
   primitiveAliases?: Record<string, string>;
   props?: ComponentPropsContract;
   destructure?: DestructureContract;
   variables?: LocalVariableContract[];
   imports?: ImportContract[];
   render: RenderNode[];
+};
+
+export type StyledComponentForwardRefContract = {
+  targetType: string;
 };
 
 export type StyledComponentClientContract = {

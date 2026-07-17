@@ -14,6 +14,7 @@ import {
   CheckboxDemo,
   CheckboxGroupDemo,
   CollapsibleDemo,
+  ColorPickerDemo,
   ComboboxDemo,
   ContextMenuDemo,
   ControlledReactDemo,
@@ -127,6 +128,8 @@ function App() {
             <IntroDemo />
 
             <CollapsibleDemo />
+
+            <ColorPickerDemo />
 
             <ControlledReactDemo />
 

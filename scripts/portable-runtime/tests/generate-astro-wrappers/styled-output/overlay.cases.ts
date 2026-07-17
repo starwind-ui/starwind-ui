@@ -267,7 +267,8 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(popoverContent).toContain("<PopoverPrimitive.Popup");
   expect(popoverContent).toContain('side = "bottom"');
   expect(popoverContent).toContain('align = "center"');
-  expect(popoverContent).toContain("popoverContent({ class: className })");
+  expect(popoverContent).toContain('exitMotion = "popover"');
+  expect(popoverContent).toContain("popoverContent({ exitMotion, class: className })");
   expect(popoverContent).not.toContain("popoverContent({ side, align");
   expect(popoverContent).toContain("side={side}");
   expect(popoverContent).toContain("align={align}");
@@ -276,11 +277,12 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(popoverVariants).not.toContain("starwind-popover");
   expect(popoverVariants).toContain("data-[state=open]:animate-in fade-in zoom-in-95");
   expect(popoverVariants).toContain(
-    "data-[side=bottom]:slide-in-from-top-2 data-[side=bottom]:slide-out-to-top-2",
+    "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
   );
   expect(popoverVariants).toContain(
-    "data-[side=top]:slide-in-from-bottom-2 data-[side=top]:slide-out-to-bottom-2",
+    "data-[side=bottom]:slide-out-to-top-2 data-[side=top]:slide-out-to-bottom-2",
   );
+  expect(popoverVariants).toContain('exitMotion: "popover"');
   expect(popoverVariants).toContain("origin-(--transform-origin)");
   expect(popoverIndex).toContain("PopoverHeader");
   expect(popoverIndex).toContain("Root: Popover");

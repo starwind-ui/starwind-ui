@@ -9,6 +9,8 @@ import {
   connectFieldControl,
   getFieldControlAccessibleSurfaces,
   getFieldControlFocusTarget,
+  getFieldControlKind,
+  getFieldControlLabelSurfaces,
   getFieldControlNativeControls,
   getFieldControlStateSurfaces,
   readFieldControlCustomValidity,
@@ -127,6 +129,7 @@ const FORM_CONTROL_SELECTORS = [
   "[data-sw-checkbox-group]",
   "[data-sw-radio-group]",
   "[data-sw-combobox]",
+  "[data-sw-color-picker]",
   "[data-sw-dropzone]",
   "[data-sw-checkbox]",
   "[data-sw-radio]",
@@ -530,6 +533,18 @@ class FieldController implements FieldInstance {
       return;
     }
 
+    if (
+      mutations.some(
+        (mutation) =>
+          mutation.type === "attributes" &&
+          mutation.target === this.elements.control &&
+          this.elements.control?.hasAttribute("data-sw-color-picker") === true &&
+          mutation.attributeName === "data-value",
+      )
+    ) {
+      this.scheduleRender();
+    }
+
     const ownershipMutations = mutations.filter((mutation) =>
       this.isOwnershipAttributeMutation(mutation),
     );
@@ -575,7 +590,9 @@ class FieldController implements FieldInstance {
       attributeName === "name" ||
       attributeName === FIELD_NAME_ATTRIBUTE ||
       attributeName === "disabled" ||
-      attributeName === "data-disabled"
+      attributeName === "data-disabled" ||
+      attributeName === "data-readonly" ||
+      attributeName === "data-required"
     );
   }
 
@@ -657,9 +674,21 @@ class FieldController implements FieldInstance {
     fieldParts.forEach((element) => setFieldStateAttributes(element, state));
     if (this.elements.control && controlState) {
       getFieldControlStateSurfaces(this.root, this.elements.control).forEach((surface) => {
-        setFieldStateAttributes(surface, controlState);
+        const colorPickerOwnsDisabled =
+          getFieldControlKind(this.elements.control!) === "color-picker" &&
+          (surface.hasAttribute("data-sw-color-picker-trigger") ||
+            surface.hasAttribute("data-sw-color-picker-control"));
+        setFieldStateAttributes(surface, controlState, {
+          includeDisabled: !colorPickerOwnsDisabled,
+        });
         this.applyRuntimeControlAriaDisabled(surface, controlState);
       });
+      if (getFieldControlKind(this.elements.control) === "color-picker") {
+        this.createOwnedControl(this.elements.control, {
+          shouldSyncName:
+            this.name !== undefined || this.appliedControlNames.has(this.elements.control),
+        });
+      }
     }
     this.renderAccessibleAssociations(state);
     this.renderMatchedFeedback(state);
@@ -755,6 +784,11 @@ class FieldController implements FieldInstance {
     ]);
 
     setAriaInvalid(control, state);
+    if (labelIds.length > 0) {
+      getFieldControlLabelSurfaces(this.root, control).forEach((surface) => {
+        setIdReferenceAttribute(surface, "aria-labelledby", labelIds);
+      });
+    }
     getFieldControlAccessibleSurfaces(this.root, control).forEach((surface) => {
       setIdReferenceAttribute(surface, "aria-describedby", [
         ...descriptionIds,
@@ -1045,8 +1079,12 @@ function isNonSubmittingInput(control: HTMLInputElement): boolean {
   );
 }
 
-function setFieldStateAttributes(element: HTMLElement, state: FieldState): void {
-  setBooleanAttribute(element, "data-disabled", state.disabled);
+function setFieldStateAttributes(
+  element: HTMLElement,
+  state: FieldState,
+  { includeDisabled = true }: { includeDisabled?: boolean } = {},
+): void {
+  if (includeDisabled) setBooleanAttribute(element, "data-disabled", state.disabled);
   setBooleanAttribute(element, "data-error-visible", state.errorVisible);
   setBooleanAttribute(element, "data-valid", state.valid === true);
   setBooleanAttribute(element, "data-invalid", state.valid === false);

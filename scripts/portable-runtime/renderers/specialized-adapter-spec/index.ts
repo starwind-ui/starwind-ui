@@ -20,6 +20,12 @@ export {
   buildComboboxSpecializedAdapterSpec,
   validateComboboxSpecializedAdapterSpec,
 } from "./combobox-specialized-adapter-spec.js";
+export type { ColorPickerSpecializedAdapterSpec } from "./color-picker-specialized-adapter-spec.js";
+export {
+  buildColorPickerAdapterOutputModel,
+  buildColorPickerSpecializedAdapterSpec,
+  validateColorPickerSpecializedAdapterSpec,
+} from "./color-picker-specialized-adapter-spec.js";
 export type { ContextMenuSpecializedAdapterSpec } from "./context-menu-specialized-adapter-spec.js";
 export {
   buildContextMenuAdapterOutputModel,

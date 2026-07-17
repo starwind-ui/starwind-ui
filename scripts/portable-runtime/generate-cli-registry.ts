@@ -993,7 +993,7 @@ async function readPrimitiveRootRelativeFiles(options: {
     toPortablePath(path.posix.join(options.component, relativePath)),
   );
 
-  if (!options.includeLocalImportGraph) {
+  if (options.includeLocalImportGraph === false) {
     return componentFiles;
   }
 

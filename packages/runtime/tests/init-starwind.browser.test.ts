@@ -63,6 +63,64 @@ describe("initStarwind", () => {
     expect(document.querySelector<HTMLButtonElement>("[data-sw-button]")!.type).toBe("button");
   });
 
+  it("initializes color pickers only under the provided root", () => {
+    document.body.innerHTML = `
+      <section id="target">
+        <div data-sw-color-picker data-value="#336699">
+          <input data-sw-color-picker-value-input />
+        </div>
+      </section>
+      <div id="outside" data-sw-color-picker data-value="#ff0000">
+        <input data-sw-color-picker-value-input />
+      </div>
+    `;
+
+    initStarwindForTest(document.querySelector("#target")!);
+
+    expect(document.querySelector<HTMLInputElement>("#target input")!.value).toBe("#336699");
+    expect(document.querySelector<HTMLInputElement>("#outside input")!.value).toBe("");
+  });
+
+  it("keeps repeated color picker initialization deduplicated", () => {
+    document.body.innerHTML = `
+      <div data-sw-color-picker data-value="#336699">
+        <input data-sw-color-picker-value-input />
+      </div>
+    `;
+    const root = document.querySelector<HTMLElement>("[data-sw-color-picker]")!;
+    const onChange = vi.fn();
+    root.addEventListener("starwind:value-change", onChange);
+
+    initStarwindForTest();
+    initStarwindForTest();
+    const input = root.querySelector<HTMLInputElement>("input")!;
+    input.value = "#ff0000";
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it("cleanup destroys color pickers before navigation replacement", () => {
+    document.body.innerHTML = `
+      <div data-sw-color-picker data-value="#336699">
+        <input data-sw-color-picker-value-input />
+      </div>
+    `;
+    const root = document.querySelector<HTMLElement>("[data-sw-color-picker]")!;
+    const input = root.querySelector<HTMLInputElement>("input")!;
+    const onChange = vi.fn();
+    root.addEventListener("starwind:value-change", onChange);
+    const cleanup = initStarwindForTest();
+
+    cleanup.destroy();
+    input.value = "#ff0000";
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("scans the provided root once for initializer candidates", () => {
     document.body.innerHTML = `
       <section id="target">

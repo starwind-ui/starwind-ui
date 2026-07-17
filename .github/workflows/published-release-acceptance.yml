@@ -1,10 +1,10 @@
-name: Published Beta Acceptance
+name: Published Release Acceptance
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: Exact published Starwind CLI beta version (for example, 3.0.0-beta.1)
+        description: Exact published Starwind CLI version (for example, 3.0.0-beta.2 or 3.0.0)
         required: true
         type: string
 
@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: published-beta-${{ inputs.version }}
+  group: published-release-${{ inputs.version }}
   cancel-in-progress: false
 
 jobs:
@@ -44,15 +44,15 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm --filter=react-demo exec playwright install --with-deps chromium
 
-      - name: Test Published Beta
-        run: pnpm test:published-beta -- --version "${{ inputs.version }}" --artifacts .artifacts/published-beta
+      - name: Test Published Release
+        run: pnpm test:published-release -- --version "${{ inputs.version }}" --artifacts .artifacts/published-release
 
       - name: Upload Acceptance Diagnostics
         if: always()
         # upload-artifact@v6
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
-          name: published-beta-${{ inputs.version }}
-          path: .artifacts/published-beta
+          name: published-release-${{ inputs.version }}
+          path: .artifacts/published-release
           if-no-files-found: ignore
           retention-days: 7

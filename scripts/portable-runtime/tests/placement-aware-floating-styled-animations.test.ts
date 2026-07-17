@@ -148,14 +148,16 @@ describe("placement-aware floating styled animations", () => {
     const astroVariants = await readGeneratedFile(astroOutputRoot, "popover/variants.ts");
     const reactVariants = await readGeneratedFile(reactOutputRoot, "popover/variants.ts");
 
-    expect(astroContent).toContain("popoverContent({ class: className })");
+    expect(astroContent).toContain('exitMotion = "popover"');
+    expect(astroContent).toContain("popoverContent({ exitMotion, class: className })");
     expect(astroContent).not.toContain("popoverContent({ side, align");
     expect(astroContent).toContain("side={side}");
     expect(astroContent).toContain("align={align}");
     expect(astroContent).toContain("sideOffset={sideOffset}");
     expect(astroContent).toContain("avoidCollisions={avoidCollisions}");
 
-    expect(reactContent).toContain("popoverContent({ class: className })");
+    expect(reactContent).toContain('exitMotion = "popover"');
+    expect(reactContent).toContain("popoverContent({ exitMotion, class: className })");
     expect(reactContent).not.toContain("popoverContent({ side, align");
     expect(reactContent).toContain("side={side}");
     expect(reactContent).toContain("align={align}");
@@ -165,21 +167,25 @@ describe("placement-aware floating styled animations", () => {
     for (const variants of [astroVariants, reactVariants]) {
       const popoverContentVariant = getVariantExport(variants, "popoverContent");
       expect(popoverContentVariant).toContain(
-        "data-[side=bottom]:slide-in-from-top-2 data-[side=bottom]:slide-out-to-top-2",
+        "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
       );
       expect(popoverContentVariant).toContain(
-        "data-[side=top]:slide-in-from-bottom-2 data-[side=top]:slide-out-to-bottom-2",
+        "data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2",
       );
       expect(popoverContentVariant).toContain(
-        "data-[side=right]:slide-in-from-left-2 data-[side=right]:slide-out-to-left-2",
+        "data-[side=bottom]:slide-out-to-top-2 data-[side=top]:slide-out-to-bottom-2",
       );
       expect(popoverContentVariant).toContain(
-        "data-[side=left]:slide-in-from-right-2 data-[side=left]:slide-out-to-right-2",
+        "data-[side=right]:slide-out-to-left-2 data-[side=left]:slide-out-to-right-2",
       );
       expect(popoverContentVariant).toContain("origin-(--transform-origin)");
-      expect(popoverContentVariant).not.toContain("variants:");
+      expect(popoverContentVariant).toContain("variants:");
+      expect(popoverContentVariant).toContain("exitMotion:");
       expect(popoverContentVariant).not.toContain("compoundVariants:");
-      expect(popoverContentVariant).not.toContain("defaultVariants:");
+      expect(popoverContentVariant).toContain("defaultVariants:");
+      expect(popoverContentVariant).toContain('exitMotion: "popover"');
+      expect(popoverContentVariant).not.toContain("side: {");
+      expect(popoverContentVariant).not.toContain("align: {");
     }
   });
 

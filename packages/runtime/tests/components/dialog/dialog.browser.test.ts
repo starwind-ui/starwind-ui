@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createDialog } from "../../../src/components/dialog/dialog";
+import { createPopover } from "../../../src/components/popover/popover";
 
 describe("createDialog", () => {
   beforeEach(() => {
@@ -66,6 +67,244 @@ describe("createDialog", () => {
         detail: expect.objectContaining({ open: false, reason: "close-press" }),
       }),
     );
+  });
+
+  it("applies coherent open state before native presentation", () => {
+    const root = renderDialog();
+    const dialog = createDialog(root);
+
+    const trigger = getTrigger();
+    const content = getContent();
+    const overlay = getOverlay();
+    const presentationState = vi.fn(() => {
+      content.setAttribute("open", "");
+      return {
+        contentHidden: content.hidden,
+        contentState: content.getAttribute("data-state"),
+        overlayHidden: overlay.hidden,
+        overlayState: overlay.getAttribute("data-state"),
+        rootState: root.getAttribute("data-state"),
+        triggerExpanded: trigger.getAttribute("aria-expanded"),
+        triggerState: trigger.getAttribute("data-state"),
+      };
+    });
+    vi.spyOn(content, "showModal").mockImplementation(() => {
+      presentationState();
+    });
+
+    trigger.click();
+    const observedPresentationState = presentationState.mock.results[0]?.value;
+    dialog.destroy();
+
+    expect(observedPresentationState).toEqual({
+      contentHidden: false,
+      contentState: "open",
+      overlayHidden: false,
+      overlayState: "open",
+      rootState: "open",
+      triggerExpanded: "true",
+      triggerState: "open",
+    });
+  });
+
+  it("rolls back coherent visual state when native presentation fails", () => {
+    const root = renderDialog();
+    const outsideButton = document.createElement("button");
+    outsideButton.textContent = "Outside";
+    document.body.prepend(outsideButton);
+    outsideButton.focus();
+
+    const dialog = createDialog(root);
+    const content = getContent();
+    const showModal = vi.spyOn(content, "showModal").mockImplementation(() => {
+      expect(root.getAttribute("data-state")).toBe("open");
+      expect(content.getAttribute("data-state")).toBe("open");
+      expect(getOverlay().getAttribute("data-state")).toBe("open");
+      expect(getTrigger().getAttribute("data-state")).toBe("open");
+      throw new Error("Native presentation failed");
+    });
+
+    expect(() => dialog.setOpen(true)).toThrow("Native presentation failed");
+
+    expect(showModal).toHaveBeenCalledTimes(1);
+    expect(dialog.getOpen()).toBe(false);
+    expect(root.getAttribute("data-state")).toBe("closed");
+    expect(content.open).toBe(false);
+    expect(content.hidden).toBe(true);
+    expect(content.getAttribute("data-state")).toBe("closed");
+    expect(getOverlay().hidden).toBe(true);
+    expect(getOverlay().getAttribute("data-state")).toBe("closed");
+    expect(getTrigger().getAttribute("aria-expanded")).toBe("false");
+    expect(document.body.style.overflow).toBe("");
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
+    expect(document.activeElement).toBe(outsideButton);
+
+    showModal.mockRestore();
+    dialog.setOpen(true);
+    expect(content.open).toBe(true);
+    dialog.destroy();
+  });
+
+  it("initializes nested overlays after dialog portal movement without duplicate controllers", async () => {
+    const root = renderDialog();
+    const content = getContent();
+    content.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div data-sw-popover>
+          <button data-sw-popover-trigger>Open nested popover</button>
+          <div data-sw-popover-portal>
+            <div data-sw-popover-popup>Nested popover content</div>
+          </div>
+        </div>
+      `,
+    );
+
+    const controllers = new Set<ReturnType<typeof createPopover>>();
+    const setupNestedPopovers = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      const initRoot = event.detail?.root;
+      if (!(initRoot instanceof Element)) return;
+
+      initRoot.querySelectorAll<HTMLElement>("[data-sw-popover]").forEach((popoverRoot) => {
+        controllers.add(createPopover(popoverRoot));
+      });
+    };
+    document.addEventListener("starwind:init", setupNestedPopovers);
+
+    const dialog = createDialog(root);
+    const popoverRoot = content.querySelector<HTMLElement>("[data-sw-popover]")!;
+    const popoverTrigger = content.querySelector<HTMLButtonElement>("[data-sw-popover-trigger]")!;
+    const popoverPopup = content.querySelector<HTMLElement>("[data-sw-popover-popup]")!;
+    const openChange = vi.fn();
+    popoverRoot.addEventListener("starwind:open-change", openChange);
+
+    expect(controllers.size).toBe(0);
+
+    getTrigger().click();
+    await waitForMicrotasks();
+    expect(controllers.size).toBe(1);
+
+    document.dispatchEvent(new CustomEvent("starwind:init", { detail: { root: content } }));
+    getCloseButton().click();
+    getTrigger().click();
+    await waitForMicrotasks();
+    expect(controllers.size).toBe(1);
+
+    popoverTrigger.click();
+    expect(popoverPopup.hidden).toBe(false);
+    expect(openChange).toHaveBeenCalledTimes(1);
+
+    controllers.forEach((controller) => controller.destroy());
+    document.removeEventListener("starwind:init", setupNestedPopovers);
+    popoverTrigger.click();
+
+    expect(openChange).toHaveBeenCalledTimes(1);
+    dialog.destroy();
+  });
+
+  it("waits for moved nested overlay topology before scoped initialization", async () => {
+    const root = renderDialog();
+    const content = getContent();
+    content.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div data-sw-popover>
+          <button data-sw-popover-trigger>Open moved popover</button>
+          <div data-sw-popover-portal></div>
+        </div>
+      `,
+    );
+
+    const popoverRoot = content.querySelector<HTMLElement>("[data-sw-popover]")!;
+    const portal = content.querySelector<HTMLElement>("[data-sw-popover-portal]")!;
+    const popup = document.createElement("div");
+    popup.dataset.swPopoverPopup = "";
+    popup.textContent = "Moved popover content";
+    const transientPortalHost = document.createElement("div");
+    transientPortalHost.append(popup);
+    document.body.append(transientPortalHost);
+
+    const controllers = new Set<ReturnType<typeof createPopover>>();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const initPass = vi.fn();
+    const setupNestedPopovers = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      const initRoot = event.detail?.root;
+      if (!(initRoot instanceof Element)) return;
+      initPass(initRoot);
+
+      initRoot.querySelectorAll<HTMLElement>("[data-sw-popover]").forEach((candidate) => {
+        try {
+          controllers.add(createPopover(candidate));
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    };
+    document.addEventListener("starwind:init", setupNestedPopovers);
+
+    const dialog = createDialog(root);
+    getTrigger().click();
+    portal.append(popup);
+    await waitForMicrotasks();
+
+    expect(consoleError).not.toHaveBeenCalled();
+    expect(initPass).toHaveBeenCalledTimes(1);
+    expect(initPass).toHaveBeenCalledWith(content);
+    expect(controllers.size).toBe(1);
+
+    const openChange = vi.fn();
+    popoverRoot.addEventListener("starwind:open-change", openChange);
+    popoverRoot.querySelector<HTMLButtonElement>("[data-sw-popover-trigger]")!.click();
+
+    expect(popup.hidden).toBe(false);
+    expect(openChange).toHaveBeenCalledTimes(1);
+
+    controllers.forEach((controller) => controller.destroy());
+    document.removeEventListener("starwind:init", setupNestedPopovers);
+    consoleError.mockRestore();
+    dialog.destroy();
+  });
+
+  it("cancels scoped initialization when destroyed before the scheduled flush", async () => {
+    const root = renderDialog();
+    const content = getContent();
+    content.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div data-sw-popover>
+          <button data-sw-popover-trigger>Open stale popover</button>
+          <div data-sw-popover-portal>
+            <div data-sw-popover-popup>Stale popover content</div>
+          </div>
+        </div>
+      `,
+    );
+
+    const controllers = new Set<ReturnType<typeof createPopover>>();
+    const initPass = vi.fn((event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      const initRoot = event.detail?.root;
+      if (!(initRoot instanceof Element)) return;
+
+      initRoot.querySelectorAll<HTMLElement>("[data-sw-popover]").forEach((candidate) => {
+        controllers.add(createPopover(candidate));
+      });
+    });
+    document.addEventListener("starwind:init", initPass);
+
+    const dialog = createDialog(root);
+    getTrigger().click();
+    dialog.destroy();
+    await waitForMicrotasks();
+
+    expect(content.isConnected).toBe(true);
+    expect(content.hidden).toBe(true);
+    expect(initPass).not.toHaveBeenCalled();
+    expect(controllers.size).toBe(0);
+
+    document.removeEventListener("starwind:init", initPass);
   });
 
   it("opens initially from defaultOpen options without emitting open-change", () => {
@@ -165,7 +404,7 @@ describe("createDialog", () => {
           <button id="wrapped-trigger" class="trigger-child">Open wrapped dialog</button>
         </div>
         <div data-sw-dialog-overlay hidden></div>
-        <dialog data-sw-dialog-content>
+        <dialog data-sw-dialog-content data-slot="dialog-content">
           <h2 data-sw-dialog-title>Dialog title</h2>
           <p data-sw-dialog-description>Dialog description</p>
           <input aria-label="Dialog input" />
@@ -711,6 +950,720 @@ describe("createDialog", () => {
 
     childDialog.destroy();
     parentDialog.destroy();
+  });
+
+  it("initializes default-open nested dialogs after registering the parent controller", () => {
+    const nested = renderNestedDialogs();
+    nested.parentRoot.setAttribute("data-default-open", "");
+    nested.childRoot.setAttribute("data-default-open", "");
+
+    const parentDialog = createDialog(nested.parentRoot);
+
+    expect(nested.parentContent.open).toBe(true);
+    expect(nested.childContent.open).toBe(true);
+    expect(nested.parentContent.hasAttribute("data-nested-dialog-open")).toBe(true);
+    expect(nested.parentContent.style.getPropertyValue("--nested-dialogs")).toBe("1");
+    expect(nested.childOverlay.hidden).toBe(true);
+    expect(document.activeElement).toBe(nested.childClose);
+
+    nested.parentClose.click();
+
+    expect(nested.parentContent.open).toBe(true);
+    expect(nested.childContent.open).toBe(true);
+    expect(document.activeElement).toBe(nested.childClose);
+
+    const childDialog = createDialog(nested.childRoot);
+    childDialog.destroy();
+    expect(nested.parentContent.hasAttribute("data-nested-dialog-open")).toBe(false);
+    expect(nested.parentContent.style.getPropertyValue("--nested-dialogs")).toBe("");
+    parentDialog.destroy();
+  });
+
+  it("registers closed intermediate dialogs before default-open descendants", () => {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div data-sw-dialog data-default-open id="parent-dialog">
+        <button id="parent-trigger" data-sw-dialog-trigger>Open parent</button>
+        <dialog id="parent-content" data-sw-dialog-content>
+          <button id="parent-close" data-sw-dialog-close>Close parent</button>
+          <div data-sw-dialog id="middle-dialog">
+            <button data-sw-dialog-trigger>Open middle</button>
+            <dialog id="middle-content" data-sw-dialog-content>
+              <button data-sw-dialog-close>Close middle</button>
+              <div data-sw-dialog data-default-open id="grandchild-dialog">
+                <button data-sw-dialog-trigger>Open grandchild</button>
+                <dialog id="grandchild-content" data-sw-dialog-content>
+                  <button id="grandchild-close" data-sw-dialog-close>Close grandchild</button>
+                </dialog>
+              </div>
+            </dialog>
+          </div>
+        </dialog>
+      </div>
+    `;
+    const parentRoot = wrapper.firstElementChild as HTMLElement;
+    const outsideButton = document.createElement("button");
+    outsideButton.textContent = "Outside";
+    document.body.append(outsideButton);
+    document.body.append(parentRoot);
+    outsideButton.focus();
+    const middleRoot = document.querySelector<HTMLElement>("#middle-dialog")!;
+    const grandchildRoot = document.querySelector<HTMLElement>("#grandchild-dialog")!;
+    const parentContent = document.querySelector<HTMLDialogElement>("#parent-content")!;
+    const middleContent = document.querySelector<HTMLDialogElement>("#middle-content")!;
+    const grandchildContent = document.querySelector<HTMLDialogElement>("#grandchild-content")!;
+    const parentClose = document.querySelector<HTMLButtonElement>("#parent-close")!;
+    const grandchildClose = document.querySelector<HTMLButtonElement>("#grandchild-close")!;
+
+    const parentDialog = createDialog(parentRoot);
+
+    expect(parentContent.open).toBe(true);
+    expect(middleContent.open).toBe(false);
+    expect(middleContent.hidden).toBe(true);
+    expect(grandchildContent.open).toBe(true);
+    expect(parentContent.style.getPropertyValue("--nested-dialogs")).toBe("1");
+    expect(middleContent.style.getPropertyValue("--nested-dialogs")).toBe("1");
+    expect(document.activeElement).toBe(document.body);
+    expect(document.activeElement).not.toBe(parentClose);
+
+    parentClose.click();
+    expect(parentContent.open).toBe(true);
+
+    grandchildClose.click();
+    expect(grandchildContent.open).toBe(false);
+    expect(parentContent.hasAttribute("data-nested-dialog-open")).toBe(false);
+    expect(middleContent.hasAttribute("data-nested-dialog-open")).toBe(false);
+    expect(middleContent.hidden).toBe(true);
+
+    parentClose.click();
+    expect(parentContent.open).toBe(false);
+
+    createDialog(grandchildRoot).destroy();
+    createDialog(middleRoot).destroy();
+    parentDialog.destroy();
+  });
+
+  it("rolls back nested controllers when a later pre-pass root is incomplete", () => {
+    const unrelatedWrapper = document.createElement("div");
+    unrelatedWrapper.innerHTML = `
+      <div data-sw-dialog id="reentrant-unrelated-dialog">
+        <button data-sw-dialog-trigger>Open unrelated dialog</button>
+        <dialog data-sw-dialog-content>
+          <button data-sw-dialog-close>Close unrelated dialog</button>
+        </dialog>
+      </div>
+    `;
+    const unrelatedRoot = unrelatedWrapper.firstElementChild as HTMLElement;
+    document.body.append(unrelatedRoot);
+    const unrelatedContent = unrelatedRoot.querySelector<HTMLDialogElement>(
+      "[data-sw-dialog-content]",
+    )!;
+    const unrelatedTrigger = unrelatedRoot.querySelector<HTMLButtonElement>(
+      "[data-sw-dialog-trigger]",
+    )!;
+    const unrelatedClose =
+      unrelatedRoot.querySelector<HTMLButtonElement>("[data-sw-dialog-close]")!;
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div data-sw-dialog data-default-open id="transaction-parent">
+        <dialog data-sw-dialog-content>
+          <button data-sw-dialog-close>Close parent</button>
+          <div data-sw-dialog id="preexisting-child">
+            <button data-sw-dialog-trigger>Open preexisting child</button>
+            <dialog data-sw-dialog-content>
+              <button data-sw-dialog-close>Close preexisting child</button>
+            </dialog>
+          </div>
+          <div data-sw-dialog data-default-open id="valid-child">
+            <button data-sw-dialog-trigger>Open valid child</button>
+            <dialog data-sw-dialog-content>
+              <button data-sw-dialog-close>Close valid child</button>
+            </dialog>
+          </div>
+          <div data-sw-dialog id="incomplete-child"></div>
+        </dialog>
+      </div>
+    `;
+    const parentRoot = wrapper.firstElementChild as HTMLElement;
+    document.body.append(parentRoot);
+    const preexistingChildRoot = document.querySelector<HTMLElement>("#preexisting-child")!;
+    const preexistingChildContent = preexistingChildRoot.querySelector<HTMLDialogElement>(
+      "[data-sw-dialog-content]",
+    )!;
+    const preexistingChildTrigger = preexistingChildRoot.querySelector<HTMLButtonElement>(
+      "[data-sw-dialog-trigger]",
+    )!;
+    const preexistingChildClose =
+      preexistingChildRoot.querySelector<HTMLButtonElement>("[data-sw-dialog-close]")!;
+    const validChildRoot = document.querySelector<HTMLElement>("#valid-child")!;
+    const validChildContent = validChildRoot.querySelector<HTMLDialogElement>(
+      "[data-sw-dialog-content]",
+    )!;
+    const validChildTrigger = validChildRoot.querySelector<HTMLButtonElement>(
+      "[data-sw-dialog-trigger]",
+    )!;
+    const validChildClose =
+      validChildRoot.querySelector<HTMLButtonElement>("[data-sw-dialog-close]")!;
+    const incompleteChild = document.querySelector<HTMLElement>("#incomplete-child")!;
+    const openChange = vi.fn();
+    validChildRoot.addEventListener("starwind:open-change", openChange);
+    const preexistingChildDialog = createDialog(preexistingChildRoot);
+    validChildClose.addEventListener("focus", () => createDialog(unrelatedRoot), { once: true });
+
+    expect(() => createDialog(parentRoot)).toThrow(
+      "Dialog requires a [data-sw-dialog-content] element.",
+    );
+    expect(validChildContent.open).toBe(false);
+    expect(
+      parentRoot.querySelector("[data-sw-dialog-content]")?.hasAttribute("data-nested-dialog-open"),
+    ).toBe(false);
+
+    validChildTrigger.click();
+    expect(validChildContent.open).toBe(false);
+    expect(openChange).not.toHaveBeenCalled();
+
+    unrelatedTrigger.click();
+    expect(unrelatedContent.open).toBe(true);
+    unrelatedClose.click();
+    expect(unrelatedContent.open).toBe(false);
+
+    preexistingChildTrigger.click();
+    expect(preexistingChildContent.open).toBe(true);
+    preexistingChildClose.click();
+    expect(preexistingChildContent.open).toBe(false);
+
+    incompleteChild.innerHTML = `<dialog data-sw-dialog-content></dialog>`;
+    const parentDialog = createDialog(parentRoot);
+
+    expect(validChildContent.open).toBe(true);
+    expect(
+      parentRoot.querySelector("[data-sw-dialog-content]")?.hasAttribute("data-nested-dialog-open"),
+    ).toBe(true);
+
+    validChildClose.click();
+    validChildTrigger.click();
+
+    expect(openChange).toHaveBeenCalledTimes(2);
+    expect(validChildContent.open).toBe(true);
+    expect(
+      parentRoot.querySelector("[data-sw-dialog-content]")?.hasAttribute("data-nested-dialog-open"),
+    ).toBe(true);
+
+    createDialog(incompleteChild).destroy();
+    createDialog(validChildRoot).destroy();
+    preexistingChildDialog.destroy();
+    createDialog(unrelatedRoot).destroy();
+    parentDialog.destroy();
+  });
+
+  it("starts a fresh transaction when an existing closed child opens", () => {
+    const unrelatedWrapper = document.createElement("div");
+    unrelatedWrapper.innerHTML = `
+      <div data-sw-dialog id="later-open-unrelated">
+        <button data-sw-dialog-trigger>Open unrelated</button>
+        <dialog data-sw-dialog-content>
+          <button data-sw-dialog-close>Close unrelated</button>
+        </dialog>
+      </div>
+    `;
+    const unrelatedRoot = unrelatedWrapper.firstElementChild as HTMLElement;
+    document.body.append(unrelatedRoot);
+    const unrelatedContent = unrelatedRoot.querySelector<HTMLDialogElement>(
+      "[data-sw-dialog-content]",
+    )!;
+    const unrelatedClose =
+      unrelatedRoot.querySelector<HTMLButtonElement>("[data-sw-dialog-close]")!;
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div data-sw-dialog data-default-open id="later-open-parent">
+        <dialog data-sw-dialog-content>
+          <button data-sw-dialog-close>Close parent</button>
+          <div data-sw-dialog id="later-open-child">
+            <button data-sw-dialog-trigger>Open child</button>
+            <dialog data-sw-dialog-content>
+              <button data-sw-dialog-close>Close child</button>
+              <div data-sw-dialog id="stable-descendant">
+                <button data-sw-dialog-trigger>Open stable descendant</button>
+                <dialog data-sw-dialog-content>
+                  <button data-sw-dialog-close>Close stable descendant</button>
+                </dialog>
+              </div>
+            </dialog>
+          </div>
+        </dialog>
+      </div>
+    `;
+    const parentRoot = wrapper.firstElementChild as HTMLElement;
+    document.body.append(parentRoot);
+    const childRoot = document.querySelector<HTMLElement>("#later-open-child")!;
+    const childContent = childRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const stableRoot = document.querySelector<HTMLElement>("#stable-descendant")!;
+    const stableContent = stableRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const childOpenChange = vi.fn();
+    childRoot.addEventListener("starwind:open-change", (event) => {
+      if (event.target === childRoot) childOpenChange(event);
+    });
+
+    const parentDialog = createDialog(parentRoot);
+    const childDialog = createDialog(childRoot);
+    const stableDialog = createDialog(stableRoot);
+    const childSubscriber = vi.fn();
+    childDialog.subscribe("openChange", childSubscriber);
+
+    childContent.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div data-sw-dialog data-default-open id="new-valid-descendant">
+          <button data-sw-dialog-trigger>Open new valid descendant</button>
+          <dialog data-sw-dialog-content>
+            <button id="new-valid-close" data-sw-dialog-close>Close new valid descendant</button>
+          </dialog>
+        </div>
+        <div data-sw-dialog id="new-incomplete-descendant"></div>
+      `,
+    );
+    const validRoot = document.querySelector<HTMLElement>("#new-valid-descendant")!;
+    const validContent = validRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const validClose = document.querySelector<HTMLButtonElement>("#new-valid-close")!;
+    const incompleteRoot = document.querySelector<HTMLElement>("#new-incomplete-descendant")!;
+    validClose.addEventListener(
+      "focus",
+      () => {
+        createDialog(unrelatedRoot).open();
+      },
+      { once: true },
+    );
+    const validFocus = vi
+      .spyOn(validClose, "focus")
+      .mockImplementation(() => validClose.dispatchEvent(new FocusEvent("focus")));
+
+    expect(() => childDialog.open()).toThrow("Dialog requires a [data-sw-dialog-content] element.");
+
+    expect(childDialog.getOpen()).toBe(false);
+    expect(childContent.open).toBe(false);
+    expect(childContent.hidden).toBe(true);
+    expect(childOpenChange).not.toHaveBeenCalled();
+    expect(childSubscriber).not.toHaveBeenCalled();
+    expect(validContent.open).toBe(false);
+    expect(
+      parentRoot.querySelector("[data-sw-dialog-content]")?.hasAttribute("data-nested-dialog-open"),
+    ).toBe(false);
+    expect(unrelatedContent.open).toBe(true);
+    expect(document.activeElement).toBe(unrelatedClose);
+
+    stableDialog.open();
+    expect(stableContent.open).toBe(true);
+    stableDialog.close();
+    expect(stableContent.open).toBe(false);
+
+    expect(unrelatedContent.open).toBe(true);
+    expect(document.activeElement).toBe(unrelatedClose);
+    unrelatedClose.click();
+    expect(unrelatedContent.open).toBe(false);
+    validFocus.mockRestore();
+
+    incompleteRoot.innerHTML = `<dialog data-sw-dialog-content></dialog>`;
+    childDialog.open();
+
+    expect(childDialog.getOpen()).toBe(true);
+    expect(childContent.open).toBe(true);
+    expect(validContent.open).toBe(true);
+    expect(childOpenChange).toHaveBeenCalledTimes(1);
+    expect(childSubscriber).toHaveBeenCalledTimes(1);
+    expect(
+      parentRoot.querySelector("[data-sw-dialog-content]")?.hasAttribute("data-nested-dialog-open"),
+    ).toBe(true);
+
+    childContent.insertAdjacentHTML(
+      "beforeend",
+      `<div data-sw-dialog id="rescan-incomplete-descendant"></div>`,
+    );
+    const rescanIncomplete = document.querySelector<HTMLElement>("#rescan-incomplete-descendant")!;
+
+    expect(() => childDialog.setOpen(true)).toThrow(
+      "Dialog requires a [data-sw-dialog-content] element.",
+    );
+    expect(childDialog.getOpen()).toBe(true);
+    expect(childContent.open).toBe(true);
+    expect(childOpenChange).toHaveBeenCalledTimes(1);
+    expect(childSubscriber).toHaveBeenCalledTimes(1);
+
+    rescanIncomplete.innerHTML = `<dialog data-sw-dialog-content></dialog>`;
+    childDialog.setOpen(true);
+    expect(childDialog.getOpen()).toBe(true);
+    expect(childContent.open).toBe(true);
+    expect(childOpenChange).toHaveBeenCalledTimes(1);
+    expect(childSubscriber).toHaveBeenCalledTimes(1);
+
+    createDialog(rescanIncomplete).destroy();
+    createDialog(incompleteRoot).destroy();
+    createDialog(validRoot).destroy();
+    stableDialog.destroy();
+    childDialog.destroy();
+    parentDialog.destroy();
+    createDialog(unrelatedRoot).destroy();
+  });
+
+  it("rescans an open parent without promoting it above its open child", () => {
+    const nested = renderNestedDialogs();
+    const parentDialog = createDialog(nested.parentRoot);
+    const childDialog = createDialog(nested.childRoot);
+    const parentSubscriber = vi.fn();
+    const parentEscape = vi.fn();
+    const childEscape = vi.fn((event: Event) => event.preventDefault());
+    parentDialog.subscribe("openChange", parentSubscriber);
+    nested.parentRoot.addEventListener("starwind:escape-key-down", (event) => {
+      if (event.target === nested.parentRoot) parentEscape(event);
+    });
+    nested.childRoot.addEventListener("starwind:escape-key-down", childEscape);
+    nested.parentTrigger.click();
+    nested.childTrigger.click();
+    parentSubscriber.mockClear();
+
+    expect(document.activeElement).toBe(nested.childClose);
+
+    parentDialog.setOpen(true);
+
+    expect(parentSubscriber).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(nested.childClose);
+    nested.parentClose.click();
+    expect(nested.parentContent.open).toBe(true);
+    expect(nested.childContent.open).toBe(true);
+    document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+    expect(childEscape).toHaveBeenCalledTimes(1);
+    expect(parentEscape).not.toHaveBeenCalled();
+    expect(nested.childContent.open).toBe(true);
+
+    nested.parentContent.insertAdjacentHTML(
+      "beforeend",
+      `<div data-sw-dialog id="open-rescan-incomplete"></div>`,
+    );
+    const incomplete = document.querySelector<HTMLElement>("#open-rescan-incomplete")!;
+
+    expect(() => parentDialog.setOpen(true)).toThrow(
+      "Dialog requires a [data-sw-dialog-content] element.",
+    );
+    expect(parentSubscriber).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(nested.childClose);
+    nested.parentClose.click();
+    expect(nested.parentContent.open).toBe(true);
+    expect(nested.childContent.open).toBe(true);
+    document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+    expect(childEscape).toHaveBeenCalledTimes(2);
+    expect(parentEscape).not.toHaveBeenCalled();
+
+    incomplete.innerHTML = `<dialog data-sw-dialog-content></dialog>`;
+    parentDialog.setOpen(true);
+
+    expect(parentSubscriber).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(nested.childClose);
+    nested.parentClose.click();
+    expect(nested.parentContent.open).toBe(true);
+    expect(nested.childContent.open).toBe(true);
+
+    createDialog(incomplete).destroy();
+    childDialog.destroy();
+    parentDialog.destroy();
+  });
+
+  it("restores child focus when an open parent rescan rolls back a new default-open dialog", () => {
+    const nested = renderNestedDialogs();
+    const parentDialog = createDialog(nested.parentRoot);
+    const childDialog = createDialog(nested.childRoot);
+    const parentSubscriber = vi.fn();
+    parentDialog.subscribe("openChange", parentSubscriber);
+    nested.parentTrigger.click();
+    nested.childTrigger.click();
+    parentSubscriber.mockClear();
+
+    nested.parentContent.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div data-sw-dialog data-default-open id="focus-rollback-child">
+          <button data-sw-dialog-trigger>Open focus rollback child</button>
+          <dialog data-sw-dialog-content>
+            <button id="focus-rollback-close" data-sw-dialog-close>Close focus rollback child</button>
+          </dialog>
+        </div>
+        <div data-sw-dialog id="focus-rollback-incomplete"></div>
+      `,
+    );
+    const rollbackChild = document.querySelector<HTMLElement>("#focus-rollback-child")!;
+    const rollbackContent = rollbackChild.querySelector<HTMLDialogElement>(
+      "[data-sw-dialog-content]",
+    )!;
+    const rollbackClose = document.querySelector<HTMLButtonElement>("#focus-rollback-close")!;
+    const incomplete = document.querySelector<HTMLElement>("#focus-rollback-incomplete")!;
+
+    expect(document.activeElement).toBe(nested.childClose);
+    expect(() => parentDialog.setOpen(true)).toThrow(
+      "Dialog requires a [data-sw-dialog-content] element.",
+    );
+
+    expect(rollbackContent.open).toBe(false);
+    expect(rollbackContent.hidden).toBe(true);
+    expect(document.activeElement).toBe(nested.childClose);
+    expect(nested.parentContent.open).toBe(true);
+    expect(nested.childContent.open).toBe(true);
+    expect(parentSubscriber).not.toHaveBeenCalled();
+    nested.parentClose.click();
+    expect(nested.parentContent.open).toBe(true);
+    expect(nested.childContent.open).toBe(true);
+
+    incomplete.innerHTML = `<dialog data-sw-dialog-content></dialog>`;
+    parentDialog.setOpen(true);
+
+    expect(rollbackContent.open).toBe(true);
+    expect(document.activeElement).toBe(rollbackClose);
+    expect(parentSubscriber).not.toHaveBeenCalled();
+
+    createDialog(incomplete).destroy();
+    createDialog(rollbackChild).destroy();
+    childDialog.destroy();
+    parentDialog.destroy();
+  });
+
+  it("preserves focus in a surviving Popover when a Dialog transaction rolls back", () => {
+    const popoverRoot = document.createElement("div");
+    popoverRoot.dataset.swPopover = "";
+    popoverRoot.innerHTML = `
+      <button data-sw-popover-trigger>Open unrelated popover</button>
+      <div data-sw-popover-portal>
+        <div data-sw-popover-popup>
+          <button id="surviving-popover-focus">Keep popover focus</button>
+        </div>
+      </div>
+    `;
+    const popoverPopup = popoverRoot.querySelector<HTMLElement>("[data-sw-popover-popup]")!;
+    const popoverFocus = popoverRoot.querySelector<HTMLButtonElement>("#surviving-popover-focus")!;
+    let popoverController: ReturnType<typeof createPopover> | null = null;
+    let focusDuringHandler: Element | null = null;
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div data-sw-dialog data-default-open data-modal="false" id="popover-rollback-parent">
+        <dialog data-sw-dialog-content>
+          <button data-sw-dialog-close>Close parent</button>
+          <div data-sw-dialog data-modal="false" id="popover-rollback-child">
+            <button data-sw-dialog-trigger>Open child</button>
+            <dialog data-sw-dialog-content>
+              <button data-sw-dialog-close>Close child</button>
+            </dialog>
+          </div>
+        </dialog>
+      </div>
+    `;
+    const parentRoot = wrapper.firstElementChild as HTMLElement;
+    document.body.append(parentRoot);
+    const floatingRoot = document.createElement("div");
+    floatingRoot.setAttribute("data-floating-root", "");
+    parentRoot.querySelector("[data-sw-dialog-content]")?.append(popoverRoot, floatingRoot);
+    const childRoot = document.querySelector<HTMLElement>("#popover-rollback-child")!;
+    const childContent = childRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const parentDialog = createDialog(parentRoot);
+    const childDialog = createDialog(childRoot);
+
+    childContent.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div data-sw-dialog data-default-open data-modal="false" id="popover-rollback-valid">
+          <dialog data-sw-dialog-content>
+            <button id="popover-rollback-valid-focus" data-sw-dialog-close>Close valid child</button>
+          </dialog>
+        </div>
+        <div data-sw-dialog id="popover-rollback-incomplete"></div>
+      `,
+    );
+    const validRoot = document.querySelector<HTMLElement>("#popover-rollback-valid")!;
+    const validContent = validRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const validFocus = document.querySelector<HTMLButtonElement>("#popover-rollback-valid-focus")!;
+    const incomplete = document.querySelector<HTMLElement>("#popover-rollback-incomplete")!;
+    validFocus.addEventListener(
+      "focus",
+      () => {
+        popoverController = createPopover(popoverRoot);
+        popoverController.open();
+        popoverFocus.focus();
+        focusDuringHandler = document.activeElement;
+      },
+      { once: true },
+    );
+    const focusSpy = vi
+      .spyOn(validFocus, "focus")
+      .mockImplementation(() => validFocus.dispatchEvent(new FocusEvent("focus")));
+
+    expect(() => childDialog.open()).toThrow("Dialog requires a [data-sw-dialog-content] element.");
+
+    expect(childDialog.getOpen()).toBe(false);
+    expect(validContent.open).toBe(false);
+    expect(popoverPopup.hidden).toBe(false);
+    expect(focusDuringHandler).toBe(popoverFocus);
+    expect(document.activeElement).toBe(popoverFocus);
+
+    focusSpy.mockRestore();
+    (popoverController as ReturnType<typeof createPopover> | null)?.destroy();
+    validRoot.remove();
+    incomplete.remove();
+    childDialog.destroy();
+    parentDialog.destroy();
+  });
+
+  it("falls back to pre-transaction focus when the frozen external focus target is removed", () => {
+    const focusBefore = document.createElement("button");
+    focusBefore.textContent = "Focus before rollback";
+    const externalFocus = document.createElement("button");
+    externalFocus.textContent = "External focus that is removed";
+    document.body.append(focusBefore, externalFocus);
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div data-sw-dialog data-modal="false" id="removed-focus-parent">
+        <dialog data-sw-dialog-content>
+          <div data-sw-dialog data-modal="false" id="removed-focus-child">
+            <button data-sw-dialog-trigger>Open child</button>
+            <dialog data-sw-dialog-content>
+            </dialog>
+          </div>
+        </dialog>
+      </div>
+    `;
+    const parentRoot = wrapper.firstElementChild as HTMLElement;
+    document.body.append(parentRoot);
+    const childRoot = parentRoot.querySelector<HTMLElement>("#removed-focus-child")!;
+    const childContent = childRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const parentDialog = createDialog(parentRoot);
+    const childDialog = createDialog(childRoot);
+    childContent.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div data-sw-dialog data-default-open data-modal="false" id="removed-focus-valid">
+          <dialog data-sw-dialog-content>
+            <button id="removed-focus-valid-close" data-sw-dialog-close>Close valid child</button>
+          </dialog>
+        </div>
+        <div data-sw-dialog id="removed-focus-incomplete"></div>
+      `,
+    );
+    const validContent = parentRoot.querySelector<HTMLDialogElement>(
+      "#removed-focus-valid [data-sw-dialog-content]",
+    )!;
+    const validClose = parentRoot.querySelector<HTMLButtonElement>("#removed-focus-valid-close")!;
+    const incomplete = parentRoot.querySelector<HTMLElement>("#removed-focus-incomplete")!;
+    const closeValidContent = validContent.close.bind(validContent);
+    validContent.close = () => {
+      externalFocus.remove();
+      closeValidContent();
+    };
+
+    focusBefore.focus();
+    validClose.addEventListener("focus", () => externalFocus.focus(), { once: true });
+
+    expect(() => childDialog.open()).toThrow("Dialog requires a [data-sw-dialog-content] element.");
+
+    expect(externalFocus.isConnected).toBe(false);
+    expect(document.activeElement).toBe(focusBefore);
+
+    incomplete.remove();
+    childDialog.destroy();
+    parentDialog.destroy();
+    parentRoot.remove();
+    focusBefore.remove();
+  });
+
+  it("treats body focus as neutral and restores pre-transaction focus on rollback", () => {
+    const focusBefore = document.createElement("button");
+    focusBefore.textContent = "Focus before rollback";
+    document.body.append(focusBefore);
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div data-sw-dialog data-modal="false" id="neutral-focus-parent">
+        <dialog data-sw-dialog-content>
+          <div data-sw-dialog data-modal="false" id="neutral-focus-child">
+            <button data-sw-dialog-trigger>Open child</button>
+            <dialog data-sw-dialog-content>
+            </dialog>
+          </div>
+        </dialog>
+      </div>
+    `;
+    const parentRoot = wrapper.firstElementChild as HTMLElement;
+    document.body.append(parentRoot);
+    const childRoot = parentRoot.querySelector<HTMLElement>("#neutral-focus-child")!;
+    const childContent = childRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const parentDialog = createDialog(parentRoot);
+    const childDialog = createDialog(childRoot);
+    childContent.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div data-sw-dialog data-default-open data-modal="false" id="neutral-focus-valid">
+          <dialog data-sw-dialog-content>
+            <button id="neutral-focus-valid-close" data-sw-dialog-close>Close valid child</button>
+          </dialog>
+        </div>
+        <div data-sw-dialog id="neutral-focus-incomplete"></div>
+      `,
+    );
+    const validClose = parentRoot.querySelector<HTMLButtonElement>("#neutral-focus-valid-close")!;
+    const incomplete = parentRoot.querySelector<HTMLElement>("#neutral-focus-incomplete")!;
+    const previousTabIndex = document.body.getAttribute("tabindex");
+
+    focusBefore.focus();
+    validClose.addEventListener(
+      "focus",
+      () => {
+        document.body.tabIndex = -1;
+        document.body.focus();
+      },
+      { once: true },
+    );
+
+    expect(() => childDialog.open()).toThrow("Dialog requires a [data-sw-dialog-content] element.");
+
+    expect(document.activeElement).toBe(focusBefore);
+
+    if (previousTabIndex === null) {
+      document.body.removeAttribute("tabindex");
+    } else {
+      document.body.setAttribute("tabindex", previousTabIndex);
+    }
+    incomplete.remove();
+    childDialog.destroy();
+    parentDialog.destroy();
+    parentRoot.remove();
+    focusBefore.remove();
+  });
+
+  it("uses the Dialog owner document for rollback focus", () => {
+    const iframe = document.createElement("iframe");
+    document.body.append(iframe);
+    const ownerDocument = iframe.contentDocument!;
+    ownerDocument.body.innerHTML = `
+      <button id="focus-before">Focus before rollback</button>
+      <div data-sw-dialog data-default-open data-modal="false" id="owner-document-parent">
+        <dialog data-sw-dialog-content>
+          <div data-sw-dialog data-default-open data-modal="false" id="owner-document-valid">
+            <dialog data-sw-dialog-content>
+              <button data-sw-dialog-close>Close valid child</button>
+            </dialog>
+          </div>
+          <div data-sw-dialog id="owner-document-incomplete"></div>
+        </dialog>
+      </div>
+    `;
+    const focusBefore = ownerDocument.querySelector<HTMLButtonElement>("#focus-before")!;
+    const parentRoot = ownerDocument.querySelector<HTMLElement>("#owner-document-parent")!;
+
+    focusBefore.focus();
+
+    expect(() => createDialog(parentRoot)).toThrow(
+      "Dialog requires a [data-sw-dialog-content] element.",
+    );
+
+    expect(ownerDocument.activeElement).toBe(focusBefore);
+
+    iframe.remove();
   });
 
   it("ignores parent close, outside, and dialog form submissions while a child is topmost", () => {

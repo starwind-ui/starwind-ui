@@ -388,7 +388,6 @@ export function SheetDemo() {
               <Accordion
                 id="react-runtime-sheet-accordion-menu"
                 type="single"
-                collapsible
                 className="w-full space-y-2"
               >
                 <AccordionItem value="products" className="border-none">
@@ -505,7 +504,6 @@ export function SheetDemo() {
                 id="react-runtime-sheet-accordion-faq-menu"
                 type="single"
                 defaultValue="availability"
-                collapsible
                 className="w-full"
               >
                 <AccordionItem value="availability">

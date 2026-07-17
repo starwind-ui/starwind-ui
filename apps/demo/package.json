@@ -8,7 +8,7 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "smoke": "node ../../scripts/portable-runtime/tests/smoke/verify-astro-demo.mjs",
+    "smoke": "node ../../scripts/portable-runtime/tests/smoke/verify-astro-demo.mjs && node tests/color-picker-smoke.mjs",
     "astro": "astro"
   },
   "dependencies": {

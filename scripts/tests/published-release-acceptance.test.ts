@@ -2,10 +2,14 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { createAcceptancePlan, getFixtureFiles, parseArgs } from "../published-beta-acceptance.mjs";
+import {
+  createAcceptancePlan,
+  getFixtureFiles,
+  parseArgs,
+} from "../published-release-acceptance.mjs";
 
-describe("published beta acceptance", () => {
-  it("requires an exact numbered beta CLI version", () => {
+describe("published release acceptance", () => {
+  it("requires an exact prerelease or stable CLI version", () => {
     expect(parseArgs(["--version", "3.0.0-beta.1"])).toEqual({
       artifacts: undefined,
       keepTemp: false,
@@ -17,7 +21,9 @@ describe("published beta acceptance", () => {
       version: "3.0.0-beta.1",
     });
 
-    expect(() => parseArgs(["--version", "beta"])).toThrow(/exact numbered beta version/i);
+    expect(parseArgs(["--version", "3.0.0"])).toMatchObject({ version: "3.0.0" });
+    expect(parseArgs(["--version", "3.0.0-rc.2"])).toMatchObject({ version: "3.0.0-rc.2" });
+    expect(() => parseArgs(["--version", "beta"])).toThrow(/exact semver version/i);
     expect(() => parseArgs([])).toThrow(/--version/);
     expect(() => parseArgs(["--version", "3.0.0-beta.1", "--artifacts"])).toThrow(
       /path after --artifacts/i,
@@ -94,18 +100,20 @@ describe("published beta acceptance", () => {
 
   it("is exposed as an explicit root command and manual post-publish workflow", async () => {
     const rootPackage = JSON.parse(await readFile("package.json", "utf8"));
-    const workflow = await readFile(".github/workflows/published-beta-acceptance.yml", "utf8");
+    const workflow = await readFile(".github/workflows/published-release-acceptance.yml", "utf8");
     const releaseGuide = await readFile("docs/portable-runtime/beta-release.md", "utf8");
 
-    expect(rootPackage.scripts["test:published-beta"]).toBe(
-      "node scripts/published-beta-acceptance.mjs",
+    expect(rootPackage.scripts["test:published-release"]).toBe(
+      "node scripts/published-release-acceptance.mjs",
     );
+    expect(rootPackage.scripts["test:published-beta"]).toBe("pnpm test:published-release");
     expect(workflow).toContain("workflow_dispatch:");
     expect(workflow).toContain("version:");
-    expect(workflow).toContain("pnpm test:published-beta -- --version");
+    expect(workflow).toContain("pnpm test:published-release -- --version");
     expect(workflow).toContain("playwright install --with-deps chromium");
     expect(workflow).not.toContain("pull_request:");
     expect(workflow).not.toContain("push:");
-    expect(releaseGuide).toContain("pnpm test:published-beta -- --version 3.0.0-beta.1");
+    expect(releaseGuide).toContain("pnpm test:published-release -- --version <cli-version>");
+    expect(releaseGuide).not.toContain("pnpm test:published-release -- --version 3.0.0-beta.1");
   });
 });

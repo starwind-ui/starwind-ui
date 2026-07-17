@@ -1,12 +1,15 @@
 import {
-  assertHTMLElement,
   ensureId,
   readBooleanAttribute,
   resolveAsChildControl,
   uniqueElements,
 } from "../../internal/dom";
 import { createCancelableDetails } from "../../internal/cancelable-details";
-import { dispatchCustomEvent } from "../../internal/events";
+import {
+  dispatchCustomEvent,
+  type ScheduledStarwindInit,
+  scheduleStarwindInit,
+} from "../../internal/events";
 import { focusFirstElement, trapTabKey } from "../../internal/focus";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
@@ -95,16 +98,43 @@ const DIALOG_ROOT_SELECTOR = "[data-sw-dialog], [data-sw-alert-dialog], [data-sw
 const instances = new WeakMap<HTMLElement, DialogController>();
 const openDialogStack: DialogController[] = [];
 const handledEscapeEvents = new WeakSet<Event>();
+type DialogInitializationTransaction = {
+  createdControllers: DialogController[];
+  focusBefore: HTMLElement | null;
+  openedControllers: DialogController[];
+  ownerDocument: Document;
+  rollbackFocusPlan: DialogRollbackFocusPlan | null;
+};
+
+type DialogRollbackFocusPlan = {
+  desiredFocus: HTMLElement | null;
+  fallbackFocus: HTMLElement | null;
+};
 
 export function createDialog(root: HTMLElement, options: DialogOptions = {}): DialogInstance {
-  assertHTMLElement(root, "createDialog root");
+  return createDialogInternal(root, options, null);
+}
+
+function createDialogInternal(
+  root: HTMLElement,
+  options: DialogOptions,
+  initializationTransaction: DialogInitializationTransaction | null,
+): DialogInstance {
+  assertDialogRoot(root);
 
   const existing = instances.get(root);
   if (existing) return existing;
 
   const instance = new DialogController(root, options);
   instances.set(root, instance);
-  return instance;
+  initializationTransaction?.createdControllers.push(instance);
+  try {
+    instance.initialize(initializationTransaction);
+    return instance;
+  } catch (error) {
+    instance.destroy();
+    throw error;
+  }
 }
 
 class DialogController implements DialogInstance {
@@ -133,6 +163,7 @@ class DialogController implements DialogInstance {
   private parentController: DialogController | null = null;
   private nestedOpenCount = 0;
   private nestedParentNotified = false;
+  private scheduledInit: ScheduledStarwindInit | null = null;
 
   constructor(root: HTMLElement, options: DialogOptions) {
     this.root = root;
@@ -149,10 +180,20 @@ class DialogController implements DialogInstance {
     this.role = options.role ?? readDialogRole(this.elements.content.getAttribute("role"));
     this.openState =
       options.open ?? options.defaultOpen ?? readBooleanAttribute(root, "data-default-open");
+  }
 
+  initialize(initializationTransaction: DialogInitializationTransaction | null): void {
     this.setupAccessibility();
     this.bindEvents();
-    this.applyOpenState(this.openState);
+    if (!this.openState) {
+      this.applyOpenState(false);
+      if (initializationTransaction) {
+        this.initializeNestedDialogs(initializationTransaction);
+      }
+      return;
+    }
+
+    this.runOpenTransaction(undefined, false, initializationTransaction);
   }
 
   open(): void {
@@ -171,9 +212,13 @@ class DialogController implements DialogInstance {
     const previousOpen = this.openState;
     const request = this.resolveSetOpenRequest(open, options);
     this.openState = open;
-    this.applyOpenState(open, request);
+    if (open) {
+      this.runOpenTransaction(request, previousOpen);
+    } else {
+      this.applyOpenState(false, request);
+    }
     this.pendingControlledCloseRequest = null;
-    if (options.emit !== false) {
+    if (options.emit !== false && previousOpen !== open) {
       this.notifyOpenChange(
         createOpenChangeDetails({
           open,
@@ -227,6 +272,7 @@ class DialogController implements DialogInstance {
 
     this.abortController.abort();
     this.closeAbortController?.abort();
+    this.cancelScheduledInit();
     this.openChangeSubscribers.clear();
     this.closeCompleteSubscribers.clear();
     this.unregisterOpenLayer();
@@ -303,7 +349,7 @@ class DialogController implements DialogInstance {
         this.requestOpen(true, {
           reason: "imperative-action",
           event,
-          trigger: event.target instanceof Element ? event.target : undefined,
+          trigger: getDocumentElement(event.target, this.root.ownerDocument) ?? undefined,
         });
       },
       { signal },
@@ -315,7 +361,7 @@ class DialogController implements DialogInstance {
         this.requestOpen(false, {
           reason: "imperative-action",
           event,
-          trigger: event.target instanceof Element ? event.target : undefined,
+          trigger: getDocumentElement(event.target, this.root.ownerDocument) ?? undefined,
         });
       },
       { signal },
@@ -327,7 +373,7 @@ class DialogController implements DialogInstance {
         this.requestOpen(!this.openState, {
           reason: "imperative-action",
           event,
-          trigger: event.target instanceof Element ? event.target : undefined,
+          trigger: getDocumentElement(event.target, this.root.ownerDocument) ?? undefined,
         });
       },
       { signal },
@@ -337,9 +383,9 @@ class DialogController implements DialogInstance {
       "click",
       (event) => {
         if (!this.closeOnOutsideInteract) return;
-        if (!(event instanceof MouseEvent)) return;
+        if (!isMouseEventForDocument(event, this.root.ownerDocument)) return;
         if (
-          event.target instanceof Node &&
+          isNodeForDocument(event.target, this.root.ownerDocument) &&
           event.target !== content &&
           content.contains(event.target)
         ) {
@@ -367,7 +413,7 @@ class DialogController implements DialogInstance {
     content.addEventListener(
       "submit",
       (event) => {
-        if (!(event.target instanceof HTMLFormElement)) return;
+        if (!isFormElementForDocument(event.target, this.root.ownerDocument)) return;
         if (event.target.closest("dialog") !== content) return;
         if (event.target.method !== "dialog") return;
 
@@ -376,13 +422,13 @@ class DialogController implements DialogInstance {
         this.requestOpen(false, {
           reason: "close-press",
           event,
-          trigger: getSubmitter(event) ?? event.target,
+          trigger: getSubmitter(event, this.root.ownerDocument) ?? event.target,
         });
       },
       { signal },
     );
 
-    document.addEventListener(
+    this.root.ownerDocument.addEventListener(
       "keydown",
       (event) => {
         if (!this.openState) return;
@@ -407,30 +453,60 @@ class DialogController implements DialogInstance {
   private requestOpen(open: boolean, request: OpenRequest): void {
     if (open === this.openState && !this.controlled) return;
 
-    runOverlayOpenChangeShell({
-      root: this.root,
-      controlled: this.controlled,
-      createDetails: createOpenChangeDetails,
-      open,
-      previousOpen: this.openState,
-      request,
-      onApplyControlledOpenState: () => {
-        if (open) {
-          this.pendingControlledCloseRequest = null;
+    const previousOpen = this.openState;
+    const transaction =
+      open && !this.controlled ? createInitializationTransaction(this.root.ownerDocument) : null;
+
+    try {
+      if (transaction) this.initializeNestedDialogs(transaction);
+
+      const result = runOverlayOpenChangeShell({
+        root: this.root,
+        controlled: this.controlled,
+        createDetails: createOpenChangeDetails,
+        open,
+        previousOpen,
+        request,
+        onApplyControlledOpenState: () => {
+          if (open) {
+            this.pendingControlledCloseRequest = null;
+          } else {
+            this.pendingControlledCloseRequest = request;
+          }
+        },
+        onApplyUncontrolledOpenState: () => {
+          this.openState = open;
+          if (open && transaction) {
+            this.applyOpenState(true, request, transaction);
+          } else {
+            this.applyOpenState(false, request);
+          }
+        },
+        onBeforeOpenChange: () => this.dispatchOpenChangeIntent(open, request),
+        onNotifyOpenChangeSubscribers: (details) => this.notifyOpenChange(details),
+        onOpenChange: (nextOpen, details) => {
+          this.onOpenChange?.(nextOpen, details);
+        },
+      });
+
+      if (transaction) {
+        if (result.status === "applied") {
+          commitInitializationTransaction(transaction);
         } else {
-          this.pendingControlledCloseRequest = request;
+          rollbackInitializationTransaction(transaction);
+          applyRollbackFocusPlan(transaction);
         }
-      },
-      onApplyUncontrolledOpenState: () => {
-        this.openState = open;
-        this.applyOpenState(open, request);
-      },
-      onBeforeOpenChange: () => this.dispatchOpenChangeIntent(open, request),
-      onNotifyOpenChangeSubscribers: (details) => this.notifyOpenChange(details),
-      onOpenChange: (nextOpen, details) => {
-        this.onOpenChange?.(nextOpen, details);
-      },
-    });
+      }
+    } catch (error) {
+      if (transaction) {
+        rollbackInitializationTransaction(transaction);
+        this.restoreFailedOpen(previousOpen);
+        applyRollbackFocusPlan(transaction);
+      } else {
+        this.restoreFailedOpen(previousOpen);
+      }
+      throw error;
+    }
   }
 
   private dispatchOpenChangeIntent(open: boolean, request: OpenRequest): boolean {
@@ -465,7 +541,12 @@ class DialogController implements DialogInstance {
     return true;
   }
 
-  private applyOpenState(open: boolean, request?: OpenRequest): void {
+  private applyOpenState(
+    open: boolean,
+    request?: OpenRequest,
+    initializationTransaction?: DialogInitializationTransaction,
+    rescanOnly = false,
+  ): void {
     this.closeAbortController?.abort();
     this.closeAbortController = null;
     if (open) {
@@ -473,6 +554,7 @@ class DialogController implements DialogInstance {
     }
 
     if (!open && !this.stateApplied) {
+      this.cancelScheduledInit();
       this.renderState(false);
       this.elements.content.hidden = true;
       if (this.elements.overlay) this.elements.overlay.hidden = true;
@@ -481,13 +563,31 @@ class DialogController implements DialogInstance {
     }
 
     if (open) {
+      if (rescanOnly) {
+        if (!initializationTransaction) {
+          throw new Error("Dialog open initialization requires a transaction.");
+        }
+        this.initializeNestedDialogs(initializationTransaction);
+        initializationTransaction.openedControllers.push(this);
+        this.stateApplied = true;
+        return;
+      }
+
       this.registerOpenLayer();
       this.notifyParentNestedOpen();
-      this.openNativeDialog();
       this.renderState(true);
+      this.openNativeDialog();
+      if (!initializationTransaction) {
+        throw new Error("Dialog open initialization requires a transaction.");
+      }
+      this.initializeNestedDialogs(initializationTransaction);
       this.lockBodyScroll();
-      focusFirstElement(this.elements.content);
+      if (this.isTopmostOpenLayer()) {
+        focusFirstElement(this.elements.content);
+      }
+      initializationTransaction.openedControllers.push(this);
     } else {
+      this.cancelScheduledInit();
       const closeAbortController = new AbortController();
       this.closeAbortController = closeAbortController;
       this.notifyParentNestedClose();
@@ -497,25 +597,79 @@ class DialogController implements DialogInstance {
     this.stateApplied = true;
   }
 
+  private runOpenTransaction(
+    request: OpenRequest | undefined,
+    previousOpen: boolean,
+    parentTransaction: DialogInitializationTransaction | null = null,
+  ): void {
+    const transaction =
+      parentTransaction ?? createInitializationTransaction(this.root.ownerDocument);
+
+    try {
+      this.applyOpenState(true, request, transaction, previousOpen);
+      if (!parentTransaction) commitInitializationTransaction(transaction);
+    } catch (error) {
+      if (parentTransaction) {
+        freezeRollbackFocusPlan(transaction);
+      } else {
+        rollbackInitializationTransaction(transaction);
+        this.restoreFailedOpen(previousOpen);
+        applyRollbackFocusPlan(transaction);
+      }
+      throw error;
+    }
+  }
+
+  private restoreFailedOpen(previousOpen: boolean): void {
+    this.openState = previousOpen;
+    if (previousOpen) return;
+
+    this.cancelScheduledInit();
+    this.notifyParentNestedClose();
+    this.unregisterOpenLayer();
+    this.closeNativeDialog();
+    this.unlockBodyScroll();
+    this.renderState(false);
+    this.elements.content.hidden = true;
+    if (this.elements.overlay) this.elements.overlay.hidden = true;
+    this.restoreFocus();
+    this.stateApplied = true;
+  }
+
   private openNativeDialog(): void {
     const { content } = this.elements;
     showElement(content);
-    if (content.open) return;
+    if (!content.open) {
+      this.previousActiveElement = getActiveHTMLElement(this.root.ownerDocument);
 
-    this.previousActiveElement =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    if (this.modal && typeof content.showModal === "function") {
-      content.showModal();
-      return;
+      if (this.modal && typeof content.showModal === "function") {
+        content.showModal();
+      } else if (typeof content.show === "function") {
+        content.show();
+      } else {
+        content.setAttribute("open", "");
+      }
     }
+  }
 
-    if (typeof content.show === "function") {
-      content.show();
-      return;
-    }
+  private initializeNestedDialogs(transaction: DialogInitializationTransaction): void {
+    Array.from(
+      this.elements.content.querySelectorAll<HTMLElement>(
+        "[data-sw-dialog]:not([data-sw-alert-dialog]):not([data-sw-drawer])",
+      ),
+    )
+      .filter((root) => root.parentElement?.closest(DIALOG_ROOT_SELECTOR) === this.root)
+      .forEach((root) => createDialogInternal(root, {}, transaction));
+  }
 
-    content.setAttribute("open", "");
+  private cancelScheduledInit(): void {
+    this.scheduledInit?.cancel();
+    this.scheduledInit = null;
+  }
+
+  scheduleInitializationAfterCommit(): void {
+    this.cancelScheduledInit();
+    this.scheduledInit = scheduleStarwindInit(this.elements.content);
   }
 
   private closeNativeDialog(): void {
@@ -699,6 +853,64 @@ class DialogController implements DialogInstance {
   }
 }
 
+function createInitializationTransaction(ownerDocument: Document): DialogInitializationTransaction {
+  return {
+    createdControllers: [],
+    focusBefore: getActiveHTMLElement(ownerDocument),
+    openedControllers: [],
+    ownerDocument,
+    rollbackFocusPlan: null,
+  };
+}
+
+function commitInitializationTransaction(transaction: DialogInitializationTransaction): void {
+  [...new Set(transaction.openedControllers)].forEach((controller) =>
+    controller.scheduleInitializationAfterCommit(),
+  );
+  transaction.createdControllers.length = 0;
+  transaction.focusBefore = null;
+  transaction.openedControllers.length = 0;
+  transaction.rollbackFocusPlan = null;
+}
+
+function rollbackInitializationTransaction(transaction: DialogInitializationTransaction): void {
+  freezeRollbackFocusPlan(transaction);
+
+  [...transaction.createdControllers].reverse().forEach((controller) => controller.destroy());
+  transaction.createdControllers.length = 0;
+  transaction.openedControllers.length = 0;
+}
+
+function freezeRollbackFocusPlan(transaction: DialogInitializationTransaction): void {
+  if (transaction.rollbackFocusPlan) return;
+
+  const activeElement = getActiveHTMLElement(transaction.ownerDocument);
+  const focusBefore = transaction.focusBefore;
+  const activeElementIsNeutral = isNeutralFocusTarget(activeElement, transaction.ownerDocument);
+  const focusOwnedByTransaction =
+    activeElement !== null &&
+    transaction.createdControllers.some((controller) => controller.root.contains(activeElement));
+
+  transaction.rollbackFocusPlan = {
+    desiredFocus: focusOwnedByTransaction || activeElementIsNeutral ? focusBefore : activeElement,
+    fallbackFocus: !focusOwnedByTransaction && !activeElementIsNeutral ? focusBefore : null,
+  };
+}
+
+function applyRollbackFocusPlan(transaction: DialogInitializationTransaction): void {
+  const focusPlan = transaction.rollbackFocusPlan;
+  if (!focusPlan) return;
+
+  if (isConnectedFocusTarget(focusPlan.desiredFocus, transaction.ownerDocument)) {
+    focusPlan.desiredFocus.focus();
+  } else if (isConnectedFocusTarget(focusPlan.fallbackFocus, transaction.ownerDocument)) {
+    focusPlan.fallbackFocus.focus();
+  }
+
+  transaction.focusBefore = null;
+  transaction.rollbackFocusPlan = null;
+}
+
 function getTopmostOpenDialog(): DialogController | null {
   for (let index = openDialogStack.length - 1; index >= 0; index -= 1) {
     const controller = openDialogStack[index];
@@ -740,7 +952,7 @@ function getDialogTriggers(root: HTMLElement): HTMLElement[] {
   if (!rootId) return internalTriggers;
 
   const externalTriggers = Array.from(
-    document.querySelectorAll<HTMLElement>(
+    root.ownerDocument.querySelectorAll<HTMLElement>(
       `[${DIALOG_TRIGGER_ATTRIBUTE}][${DIALOG_TARGET_ID_ATTRIBUTE}]`,
     ),
   )
@@ -757,6 +969,94 @@ function getResolvedDialogControls(root: HTMLElement, attribute: string): HTMLEl
   return uniqueElements(
     Array.from(root.querySelectorAll<HTMLElement>(`[${attribute}]`)).map(resolveAsChildControl),
   );
+}
+
+function assertDialogRoot(value: unknown): asserts value is HTMLElement {
+  const ownerDocument = getOwnerDocument(value);
+  if (!ownerDocument || !isHTMLElementForDocument(value, ownerDocument)) {
+    throw new TypeError("createDialog root must be an HTMLElement.");
+  }
+}
+
+function getActiveHTMLElement(ownerDocument: Document): HTMLElement | null {
+  return getDocumentHTMLElement(ownerDocument.activeElement, ownerDocument);
+}
+
+function getDocumentHTMLElement(value: unknown, ownerDocument: Document): HTMLElement | null {
+  return isHTMLElementForDocument(value, ownerDocument) ? value : null;
+}
+
+function getDocumentElement(value: unknown, ownerDocument: Document): Element | null {
+  const ElementConstructor = ownerDocument.defaultView?.Element;
+  if (ElementConstructor) return value instanceof ElementConstructor ? value : null;
+
+  return getOwnerDocument(value) === ownerDocument && getNodeType(value) === 1
+    ? (value as Element)
+    : null;
+}
+
+function getOwnerDocument(value: unknown): Document | null {
+  if (typeof value !== "object" || value === null || !("ownerDocument" in value)) return null;
+
+  const ownerDocument = (value as { ownerDocument?: unknown }).ownerDocument;
+  return ownerDocument &&
+    typeof (ownerDocument as { createElement?: unknown }).createElement === "function"
+    ? (ownerDocument as Document)
+    : null;
+}
+
+function isHTMLElementForDocument(value: unknown, ownerDocument: Document): value is HTMLElement {
+  const HTMLElementConstructor = ownerDocument.defaultView?.HTMLElement;
+  if (HTMLElementConstructor) return value instanceof HTMLElementConstructor;
+
+  return (
+    getOwnerDocument(value) === ownerDocument &&
+    getNodeType(value) === 1 &&
+    typeof (value as { focus?: unknown }).focus === "function"
+  );
+}
+
+function isNodeForDocument(value: unknown, ownerDocument: Document): value is Node {
+  const NodeConstructor = ownerDocument.defaultView?.Node;
+  if (NodeConstructor) return value instanceof NodeConstructor;
+
+  return getOwnerDocument(value) === ownerDocument && typeof getNodeType(value) === "number";
+}
+
+function isMouseEventForDocument(value: unknown, ownerDocument: Document): value is MouseEvent {
+  const MouseEventConstructor = ownerDocument.defaultView?.MouseEvent;
+  if (MouseEventConstructor) return value instanceof MouseEventConstructor;
+
+  return typeof value === "object" && value !== null && "clientX" in value && "clientY" in value;
+}
+
+function isFormElementForDocument(
+  value: unknown,
+  ownerDocument: Document,
+): value is HTMLFormElement {
+  const HTMLFormElementConstructor = ownerDocument.defaultView?.HTMLFormElement;
+  if (HTMLFormElementConstructor) return value instanceof HTMLFormElementConstructor;
+
+  return getDocumentElement(value, ownerDocument)?.tagName === "FORM";
+}
+
+function getNodeType(value: unknown): number | null {
+  if (typeof value !== "object" || value === null || !("nodeType" in value)) return null;
+
+  return typeof value.nodeType === "number" ? value.nodeType : null;
+}
+
+function isNeutralFocusTarget(element: HTMLElement | null, ownerDocument: Document): boolean {
+  return (
+    element === null || element === ownerDocument.body || element === ownerDocument.documentElement
+  );
+}
+
+function isConnectedFocusTarget(
+  element: HTMLElement | null,
+  ownerDocument: Document,
+): element is HTMLElement {
+  return element !== null && element.ownerDocument === ownerDocument && element.isConnected;
 }
 
 function isPointInsideElement(element: HTMLElement, clientX: number, clientY: number): boolean {
@@ -786,6 +1086,6 @@ function readDialogRole(value: string | null): DialogRole {
   return value === "alertdialog" ? "alertdialog" : "dialog";
 }
 
-function getSubmitter(event: SubmitEvent): Element | null {
-  return event.submitter instanceof Element ? event.submitter : null;
+function getSubmitter(event: SubmitEvent, ownerDocument: Document): Element | null {
+  return getDocumentElement(event.submitter, ownerDocument);
 }

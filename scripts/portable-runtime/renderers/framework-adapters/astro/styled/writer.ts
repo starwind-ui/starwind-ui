@@ -20,6 +20,7 @@ import {
 } from "./props-client.js";
 import { renderNodes } from "./render-tree.js";
 import { renderVariants } from "./variants.js";
+import { projectAstroColorPickerComponent } from "./color-picker-projection.js";
 
 export type GenerateStarwindAstroWrappersOptions = {
   contracts: StyledAdapterContract[];
@@ -109,6 +110,9 @@ function renderComponent(
   primitiveImportBase: string | undefined,
   astroHeader: string,
 ): string {
+  if (group.component === "color-picker") {
+    component = projectAstroColorPickerComponent(component);
+  }
   const primitiveAliases = getAstroPrimitiveAliases(component);
   const runtimeImportContext = getRuntimeImportRewriteContext(component, primitiveImportBase);
   const imports = renderComponentImports(
@@ -124,7 +128,17 @@ function renderComponent(
   const destructure = renderDestructure(component.destructure);
   const variables = renderVariables(component.variables ?? [], ASTRO_FRAMEWORK);
   const script = [imports, props, destructure, variables].filter(Boolean).join("\n\n");
-  const renderedNodes = renderNodes(component.render, 0, primitiveAliases);
+  let renderedNodes = renderNodes(component.render, 0, primitiveAliases);
+  if (
+    group.component === "color-picker" &&
+    (component.exportName === "ColorPicker" || component.exportName === "ColorPickerRoot")
+  ) {
+    const slotIndent = component.exportName === "ColorPickerRoot" ? "  " : "    ";
+    renderedNodes = renderedNodes.replace(
+      `${slotIndent}<slot />`,
+      `${slotIndent}{async (initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection) => (\n${slotIndent}  <Fragment set:html={await Astro.slots.render("default", [initial])} />\n${slotIndent})}`,
+    );
+  }
   const clientScript = renderClientScript(component, runtimeImportContext);
 
   return `${astroHeader}${script}

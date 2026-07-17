@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -283,6 +283,7 @@ export function renderZagFeatureComparisonReport(data = getDefaultData()) {
 
 export async function writeZagFeatureComparisonReport({
   check = false,
+  outputPath = reportPath,
   requireFeatureRows = false,
 } = {}) {
   const data = getDefaultData();
@@ -294,16 +295,20 @@ export async function writeZagFeatureComparisonReport({
   const contents = renderZagFeatureComparisonReport(data);
 
   if (check) {
-    const current = await readFile(reportPath, "utf8").catch(() => "");
+    const current = await readFile(outputPath, "utf8").catch((error) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    });
+    if (current === null) return;
     if (current !== contents) {
-      throw new Error(
-        `${comparisonMetadata.generatedPath} is out of date. Run pnpm runtime:zag:compare.`,
-      );
+      const displayedPath = path.relative(repoRoot, outputPath).replaceAll("\\", "/");
+      throw new Error(`${displayedPath} is out of date. Run pnpm runtime:zag:compare.`);
     }
     return;
   }
 
-  await writeFile(reportPath, contents);
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, contents);
 }
 
 function getDefaultData() {

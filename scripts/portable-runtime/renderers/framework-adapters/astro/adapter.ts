@@ -30,6 +30,7 @@ import type {
   AdapterHiddenInputVisualSlotFacts,
   AdapterHiddenInputVisualSlotIndexProjection,
   AdapterImport,
+  AdapterIndexFile,
   AdapterMediaStatusComponentProjection,
   AdapterMediaStatusFacts,
   AdapterMediaStatusIndexProjection,
@@ -74,6 +75,12 @@ import {
   printAstroCompositeMenuOverlayComponent,
   printAstroCompositeMenuOverlayIndex,
 } from "./composite-menu-overlay.js";
+import {
+  printAstroColorPickerComponent,
+  printAstroColorPickerIndex,
+  type AstroColorPickerComponentProjection,
+  type AstroColorPickerIndexProjection,
+} from "./color-picker.js";
 import {
   printAstroEditableCollectionOverlayComponent,
   printAstroEditableCollectionOverlayIndex,
@@ -142,6 +149,15 @@ export const astroFrameworkAdapter = defineFrameworkAdapter({
     };
   },
   printIndexFile(file) {
+    if (isAstroColorPickerIndexProjection(file.family)) {
+      return {
+        contents: printAstroColorPickerIndex(
+          file.family as unknown as AstroColorPickerIndexProjection,
+        ),
+        path: file.path,
+      };
+    }
+
     if (file.family?.kind === "action-surface") {
       return {
         contents: printAstroActionSurfaceIndex(file.family),
@@ -371,6 +387,12 @@ export const astroFrameworkAdapter = defineFrameworkAdapter({
 function printAstroComponent(file: AdapterComponentFile): string {
   const component = file.component;
 
+  if (isAstroColorPickerComponentProjection(component.family)) {
+    return printAstroColorPickerComponent(
+      component.family as unknown as AstroColorPickerComponentProjection,
+    );
+  }
+
   if (component.family?.kind === "action-surface") {
     return printAstroActionSurfaceComponent(component.family);
   }
@@ -496,6 +518,18 @@ function printAstroComponent(file: AdapterComponentFile): string {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function isAstroColorPickerComponentProjection(
+  family: AdapterComponentModel["family"] | undefined,
+): boolean {
+  return (family as { kind?: string } | undefined)?.kind === "astro-color-picker";
+}
+
+function isAstroColorPickerIndexProjection(
+  family: AdapterIndexFile["family"] | undefined,
+): boolean {
+  return (family as { kind?: string } | undefined)?.kind === "astro-color-picker";
 }
 
 function printAstroBooleanFormControlComponent(
@@ -1331,7 +1365,7 @@ function printAstroRepeatedDisclosureRoot(facts: AdapterRepeatedDisclosureFacts)
   const defaultValueProp = facts.props.defaultValue.name;
   const collapsibleProp = facts.props.collapsible.name;
 
-  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = HTMLAttributes<"${part.defaultElement}"> & {\n  ${typeProp}?: ${facts.props.type.type};\n  ${defaultValueProp}?: ${facts.props.defaultValue.staticMarkupType};\n  ${collapsibleProp}?: ${facts.props.collapsible.type};\n};\n\nconst { ${typeProp} = ${facts.props.type.defaultValue}, ${defaultValueProp}, ${collapsibleProp} = ${facts.props.collapsible.defaultValue}, ...rest } = Astro.props;\n\nconst defaultValueAttribute = Array.isArray(${defaultValueProp})\n  ? JSON.stringify(${defaultValueProp})\n  : ${defaultValueProp};\n---\n\n<${part.defaultElement}\n  ${facts.attrs.root}\n  ${facts.attrs.type}={${typeProp}}\n  ${facts.attrs.defaultValue}={defaultValueAttribute}\n  ${facts.attrs.collapsible}={${collapsibleProp} ? "true" : undefined}\n  ${facts.attrs.rootState}="closed"\n  {...rest}\n>\n  <slot />\n</${part.defaultElement}>\n\n<script>\n  import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";\n\n  const getInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {\n    const initRoot =\n      event?.type === "starwind:init" && event instanceof CustomEvent\n        ? event.detail?.root\n        : undefined;\n    const scopedRoot: Document | DocumentFragment | Element = isQueryableRoot(initRoot)\n      ? initRoot\n      : document;\n    const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));\n\n    if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {\n      candidates.unshift(scopedRoot as HTMLElement);\n    }\n\n    return candidates;\n  };\n\n  const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>\n    value instanceof Document || value instanceof DocumentFragment || value instanceof Element;\n\n  const ${facts.runtime.setupFunction} = (event?: Event) => {\n    getInitCandidates(event, "[${facts.attrs.root}]").forEach((root) => ${facts.runtime.factory}(root));\n  };\n\n  ${facts.runtime.setupFunction}();\n  document.addEventListener("astro:after-swap", ${facts.runtime.setupFunction});\n  document.addEventListener("starwind:init", ${facts.runtime.setupFunction});\n</script>\n`;
+  return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = HTMLAttributes<"${part.defaultElement}"> & {\n  ${typeProp}?: ${facts.props.type.type};\n  ${defaultValueProp}?: ${facts.props.defaultValue.staticMarkupType};\n  ${collapsibleProp}?: ${facts.props.collapsible.type};\n};\n\nconst { ${typeProp} = ${facts.props.type.defaultValue}, ${defaultValueProp}, ${collapsibleProp} = ${facts.props.collapsible.defaultValue}, ...rest } = Astro.props;\n\nconst defaultValueAttribute = Array.isArray(${defaultValueProp})\n  ? JSON.stringify(${defaultValueProp})\n  : ${defaultValueProp};\n---\n\n<${part.defaultElement}\n  ${facts.attrs.root}\n  ${facts.attrs.type}={${typeProp}}\n  ${facts.attrs.defaultValue}={defaultValueAttribute}\n  ${facts.attrs.collapsible}={String(${collapsibleProp})}\n  ${facts.attrs.rootState}="closed"\n  {...rest}\n>\n  <slot />\n</${part.defaultElement}>\n\n<script>\n  import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";\n\n  const getInitCandidates = (event: Event | undefined, selector: string): HTMLElement[] => {\n    const initRoot =\n      event?.type === "starwind:init" && event instanceof CustomEvent\n        ? event.detail?.root\n        : undefined;\n    const scopedRoot: Document | DocumentFragment | Element = isQueryableRoot(initRoot)\n      ? initRoot\n      : document;\n    const candidates = Array.from(scopedRoot.querySelectorAll<HTMLElement>(selector));\n\n    if (scopedRoot instanceof Element && scopedRoot.matches(selector)) {\n      candidates.unshift(scopedRoot as HTMLElement);\n    }\n\n    return candidates;\n  };\n\n  const isQueryableRoot = (value: unknown): value is Document | DocumentFragment | Element =>\n    value instanceof Document || value instanceof DocumentFragment || value instanceof Element;\n\n  const ${facts.runtime.setupFunction} = (event?: Event) => {\n    getInitCandidates(event, "[${facts.attrs.root}]").forEach((root) => ${facts.runtime.factory}(root));\n  };\n\n  ${facts.runtime.setupFunction}();\n  document.addEventListener("astro:after-swap", ${facts.runtime.setupFunction});\n  document.addEventListener("starwind:init", ${facts.runtime.setupFunction});\n</script>\n`;
 }
 
 function printAstroRepeatedDisclosureItem(facts: AdapterRepeatedDisclosureFacts): string {

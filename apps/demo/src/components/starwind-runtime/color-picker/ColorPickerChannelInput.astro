@@ -1,0 +1,24 @@
+---
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { colorPickerChannelInput, colorPickerChannelInputLayout } from "./variants";
+
+type Props = HTMLAttributes<"input"> &
+  VariantProps<typeof colorPickerChannelInput> & {
+    channel: import("@starwind-ui/astro/color-picker").ColorPickerChannel;
+    initial?: import("@starwind-ui/astro/color-picker").ColorPickerInitialPartProjection;
+  };
+
+const { initial, channel, class: className, size = "md", ...rest } = Astro.props;
+---
+
+<ColorPickerPrimitive.ChannelInput
+  initial={initial}
+  class={[colorPickerChannelInput({ size }), colorPickerChannelInputLayout({ size }), className]
+    .filter(Boolean)
+    .join(" ")}
+  channel={channel}
+  {...rest}
+  data-slot="color-picker-channel-input"
+/>

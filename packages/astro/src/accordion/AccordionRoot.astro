@@ -11,7 +11,7 @@ type Props = HTMLAttributes<"div"> & {
   collapsible?: boolean;
 };
 
-const { type = "single", defaultValue, collapsible = false, ...rest } = Astro.props;
+const { type = "single", defaultValue, collapsible = true, ...rest } = Astro.props;
 
 const defaultValueAttribute = Array.isArray(defaultValue)
   ? JSON.stringify(defaultValue)
@@ -22,7 +22,7 @@ const defaultValueAttribute = Array.isArray(defaultValue)
   data-sw-accordion
   data-type={type}
   data-default-value={defaultValueAttribute}
-  data-collapsible={collapsible ? "true" : undefined}
+  data-collapsible={String(collapsible)}
   data-state="closed"
   {...rest}
 >

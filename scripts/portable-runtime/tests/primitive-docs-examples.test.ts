@@ -55,6 +55,7 @@ describe("primitive docs examples", () => {
   it("keeps Astro and React examples aligned with real adapter namespace exports", async () => {
     for (const contract of runtimeAdapterContracts) {
       for (const framework of adapterFrameworks) {
+        const namespace = toPascalCase(contract.component);
         const example = primitiveDocsExamples[contract.component]?.basic?.[framework];
         const adapterIndexSource = await readFile(
           path.join(repoRoot, `packages/${framework}/src`, contract.component, "index.ts"),
@@ -63,17 +64,15 @@ describe("primitive docs examples", () => {
         const usedNamespaceMembers = [
           ...new Set(
             [
-              ...(example?.code?.matchAll(
-                new RegExp(`<${contract.displayName}\\.([A-Za-z]\\w*)`, "g"),
-              ) ?? []),
+              ...(example?.code?.matchAll(new RegExp(`<${namespace}\\.([A-Za-z]\\w*)`, "g")) ?? []),
             ].map((match) => match[1]),
           ),
         ];
 
         expect(example?.code).toContain(
-          `import { ${contract.displayName} } from "@starwind-ui/${framework}/${contract.component}";`,
+          `import { ${namespace} } from "@starwind-ui/${framework}/${contract.component}";`,
         );
-        expect(adapterIndexSource).toContain(`const ${contract.displayName} = {`);
+        expect(adapterIndexSource).toContain(`const ${namespace} = {`);
         expect(usedNamespaceMembers).not.toEqual([]);
 
         for (const memberName of usedNamespaceMembers) {
@@ -184,4 +183,11 @@ function formatDiagnostics(diagnostics: readonly ts.Diagnostic[]) {
       return `${relativePath}:${position.line + 1}:${position.character + 1} ${message}`;
     })
     .join("\n");
+}
+
+function toPascalCase(value: string) {
+  return value
+    .split("-")
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join("");
 }

@@ -2,6 +2,7 @@ import { expectText } from "../shared/text.mjs";
 import { verifyTooltipPlacements, verifyTooltipPropExamples } from "../shared/tooltip.mjs";
 import { verifyHoverCardCases } from "../shared/hover-card.mjs";
 import { verifyVideoCases } from "../shared/video.mjs";
+import { verifyDialogEntryAnimationGestures } from "../shared/dialog-entry-animation.mjs";
 
 export async function verifyReactMediaOverlayCases({ page, messages }) {
   await verifyVideoCases({
@@ -565,6 +566,29 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
     );
   }
 
+  const returnsContent = page
+    .locator('[data-sw-accordion-item][data-value="returns"] [data-sw-accordion-content]')
+    .first();
+  await page.getByRole("button", { name: "Returns" }).click();
+  await page.waitForFunction(() => {
+    const content = document.querySelector(
+      '[data-sw-accordion-item][data-value="returns"] [data-sw-accordion-content]',
+    );
+    return content instanceof HTMLElement && content.hidden;
+  });
+  if ((await returnsContent.getAttribute("data-state")) !== "closed") {
+    throw new Error("Expected the default React accordion to close its last open item.");
+  }
+
+  const requiredOpenAccordion = page.locator("#react-runtime-required-open-accordion");
+  const requiredOpenTrigger = requiredOpenAccordion.getByRole("button", {
+    name: "Runtime behavior",
+  });
+  await requiredOpenTrigger.click();
+  if ((await requiredOpenTrigger.getAttribute("aria-expanded")) !== "true") {
+    throw new Error("Expected collapsible={false} to retain the open React accordion item.");
+  }
+
   await page.getByRole("button", { name: "Discard React draft" }).click();
   await page.getByRole("heading", { name: "Discard React draft?" }).waitFor();
 
@@ -638,6 +662,15 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
   await page.getByRole("button", { name: "Continue" }).click();
   await expectText(page.locator("#react-alert-dialog-count"), "2");
   await page.waitForFunction(() => document.querySelectorAll("dialog[open]").length === 0);
+
+  await verifyDialogEntryAnimationGestures({
+    backdrop: '#react-runtime-sheet-default [data-slot="sheet-backdrop"]',
+    content: page.locator('#react-runtime-sheet-default [data-slot="sheet-content"]'),
+    expectedDuration: 500,
+    label: "React Sheet",
+    page,
+    trigger: page.getByRole("button", { exact: true, name: "Open React sheet" }),
+  });
 
   await page.getByRole("button", { exact: true, name: "Open React sheet" }).click();
   await page.getByRole("heading", { name: "React runtime sheet" }).waitFor();

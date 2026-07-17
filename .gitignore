@@ -12,8 +12,7 @@ dist/
 .scratch/
 .out-of-scope/
 plans/
-.scratch/react-primitive-runtime-audit/generated-check/
-.scratch/archive/**/generated-check/
+docs/portable-runtime/diagnostics/
 
 # generated types
 .astro/

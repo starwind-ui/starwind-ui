@@ -18,7 +18,7 @@ export const comparisonGroups = {
 
 export const comparisonMetadata = {
   generatedLabel: "Zag Runtime Feature Comparison",
-  generatedPath: "docs/portable-runtime/zag-feature-comparison.md",
+  generatedPath: "docs/portable-runtime/diagnostics/zag-feature-comparison.md",
   packageSizeContext: [
     {
       baseUiMinGzip: "139.8 KiB",

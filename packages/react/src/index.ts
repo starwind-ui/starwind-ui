@@ -16,6 +16,36 @@ export type {
   CheckboxGroupValue,
   CheckboxGroupValueChangeDetails,
   CollapsibleOpenChangeDetails,
+  ColorPickerChannel,
+  ColorPickerColor,
+  ColorPickerDirection,
+  ColorPickerFormat,
+  ColorPickerFormatChangeDetails,
+  ColorPickerHsbChannels,
+  ColorPickerHsbChannelUpdates,
+  ColorPickerHslChannels,
+  ColorPickerHslChannelUpdates,
+  ColorPickerInitialAxis,
+  ColorPickerInitialChannel,
+  ColorPickerInitialDirection,
+  ColorPickerInitialOrientation,
+  ColorPickerInitialPartName,
+  ColorPickerInitialPartProjection,
+  ColorPickerInitialPartRequest,
+  ColorPickerInitialState,
+  ColorPickerInitialStateOptions,
+  ColorPickerInitialValue,
+  ColorPickerInstance,
+  ColorPickerOptions,
+  ColorPickerRgbChannels,
+  ColorPickerRgbChannelUpdates,
+  ColorPickerSetOptions,
+  ColorPickerSetValueOptions,
+  ColorPickerStringFormat,
+  ColorPickerValue,
+  ColorPickerValueChangeDetails,
+  ColorPickerValueChangeReason,
+  ColorPickerValueCommitDetails,
   ComboboxInputValueChangeDetails,
   ComboboxOpenChangeDetails,
   ComboboxValueChangeDetails,
@@ -73,6 +103,7 @@ export * from "./carousel";
 export * from "./checkbox";
 export * from "./checkbox-group";
 export * from "./collapsible";
+export * from "./color-picker";
 export * from "./combobox";
 export * from "./context-menu";
 export * from "./dialog";

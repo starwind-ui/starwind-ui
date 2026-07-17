@@ -1,0 +1,37 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import "./styles.css";
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import { colorPickerSwatch } from "./variants";
+
+type Props = HTMLAttributes<"button"> &
+  VariantProps<typeof colorPickerSwatch> & {
+    value: import("@starwind-ui/astro/color-picker").ColorPickerValue;
+    disabled?: boolean;
+    initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+  };
+
+const { initial, value, disabled = false, class: className, size = "md", ...rest } = Astro.props;
+---
+
+<ColorPickerPrimitive.Swatch
+  initial={initial?.swatch({ value, disabled }).initial}
+  swatchValue={value}
+  swatchDisabled={disabled}
+  class={colorPickerSwatch({ size, class: className })}
+  {...rest}
+  data-slot="color-picker-swatch"
+>
+  <ColorPickerPrimitive.TransparencyGrid
+    initial={initial?.transparencyGrid.initial}
+    class="pointer-events-none absolute inset-0 size-full"
+    data-slot="color-picker-transparency-grid"
+  />
+
+  <span class="pointer-events-none absolute inset-0 size-full" data-slot="color-picker-swatch-color"
+  ></span>
+
+  <slot />
+</ColorPickerPrimitive.Swatch>

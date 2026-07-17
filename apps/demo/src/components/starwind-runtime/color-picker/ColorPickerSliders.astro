@@ -1,0 +1,25 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import ColorPickerChannelSlider from "./ColorPickerChannelSlider.astro";
+import { colorPickerSliders } from "./variants";
+
+type Props = HTMLAttributes<"div"> &
+  VariantProps<typeof colorPickerSliders> & {
+    alpha?: boolean;
+    initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+  };
+
+const { initial, alpha = true, class: className, size = "md", ...rest } = Astro.props;
+---
+
+<div
+  class={colorPickerSliders({ size, class: className })}
+  {...rest}
+  data-slot="color-picker-sliders"
+>
+  <ColorPickerChannelSlider initial={initial} channel="hue" size={size} />
+
+  {alpha && <ColorPickerChannelSlider initial={initial} channel="alpha" size={size} />}
+</div>

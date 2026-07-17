@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { verifyReactCarouselCases } from "./react/carousel-cases.mjs";
+import { verifyReactColorPickerCases } from "../../../../apps/react-demo/tests/color-picker-cases.mjs";
 import { verifyReactFormControlCases } from "./react/form-control-cases.mjs";
 import { verifyReactFoundationCases } from "./react/foundation-cases.mjs";
 import { verifyReactMediaOverlayCases } from "./react/media-overlay-cases.mjs";
@@ -55,10 +56,15 @@ try {
   await installExternalVideoRequestGuard(page, messages);
 
   await page.goto(url, { waitUntil: "networkidle" });
-  await page.getByRole("heading", { name: "Starwind portable components" }).waitFor();
+  try {
+    await page.getByRole("heading", { name: "Starwind portable components" }).waitFor();
+  } catch (error) {
+    throw new Error(messages.length > 0 ? messages.join("\n") : error.message);
+  }
   await verifyReactAppNav({ page, activeLabel: "Runtime Prototype" });
 
   await verifyReactFoundationCases({ page });
+  await verifyReactColorPickerCases({ page });
   await verifyReactCarouselCases({ page });
   await page.goto(new URL("/pages/runtime-sidebar-demo", url).toString(), {
     waitUntil: "networkidle",

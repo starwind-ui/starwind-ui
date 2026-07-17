@@ -1,0 +1,71 @@
+---
+import type { ComponentProps } from "astro/types";
+
+import { Popover } from "../popover";
+import ColorPickerRoot from "./ColorPickerRoot.astro";
+
+type Props = ComponentProps<typeof ColorPickerRoot> & {
+  defaultOpen?: boolean;
+  closeOnEscape?: boolean;
+  closeOnOutsideInteract?: boolean;
+  modal?: boolean;
+  openOnHover?: boolean;
+  closeDelay?: number;
+};
+
+const {
+  defaultOpen = false,
+  closeOnEscape = true,
+  closeOnOutsideInteract = true,
+  modal = false,
+  openOnHover = false,
+  closeDelay = 200,
+  defaultValue = "#000000",
+  format = "hex",
+  alpha = true,
+  allowEmpty = false,
+  disabled = false,
+  readOnly = false,
+  name,
+  form,
+  required = false,
+  locale,
+  dir,
+  class: className,
+  size = "md",
+  ...rest
+} = Astro.props;
+---
+
+<Popover
+  defaultOpen={defaultOpen}
+  closeOnEscape={closeOnEscape}
+  closeOnOutsideInteract={closeOnOutsideInteract}
+  modal={modal}
+  openOnHover={openOnHover}
+  closeDelay={closeDelay}
+>
+  <ColorPickerRoot
+    defaultValue={defaultValue}
+    format={format}
+    alpha={alpha}
+    allowEmpty={allowEmpty}
+    disabled={disabled}
+    readOnly={readOnly}
+    name={name}
+    form={form}
+    required={required}
+    locale={locale}
+    dir={dir}
+    {...rest}
+    data-floating-root={true}
+    class={className}
+    size={size}
+  >
+    {
+      async (initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection) => (
+        <Fragment set:html={await Astro.slots.render("default", [initial])} />
+      )
+    }
+  </ColorPickerRoot>
+</Popover>

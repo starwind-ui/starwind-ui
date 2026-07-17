@@ -1,0 +1,67 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import "./styles.css";
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import { colorPickerChannelSlider, colorPickerChannelSliderThumb } from "./variants";
+
+type Props = HTMLAttributes<"div"> &
+  VariantProps<typeof colorPickerChannelSlider> & {
+    channel: import("@starwind-ui/astro/color-picker").ColorPickerChannel;
+    orientation?: "horizontal" | "vertical";
+    step?: number;
+    initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+  };
+
+const {
+  initial,
+  step,
+  channel,
+  orientation = "horizontal",
+  class: className,
+  size = "md",
+  ...rest
+} = Astro.props;
+---
+
+<ColorPickerPrimitive.ChannelSlider
+  initial={initial?.channelSlider({ channel, orientation, step }).root.initial}
+  channel={channel}
+  orientation={orientation}
+  class={colorPickerChannelSlider({ size, class: className })}
+  {...rest}
+  data-slot="color-picker-channel-slider"
+>
+  <ColorPickerPrimitive.TransparencyGrid
+    initial={initial?.transparencyGrid.initial}
+    class="pointer-events-none absolute inset-0 size-full rounded-[inherit]"
+    data-slot="color-picker-transparency-grid"
+  />
+
+  <ColorPickerPrimitive.ChannelSliderTrack
+    initial={initial?.channelSlider({ channel, orientation, step }).track.initial}
+    class="pointer-events-none absolute inset-0 size-full rounded-[inherit]"
+    data-slot="color-picker-channel-slider-track"
+  />
+
+  <ColorPickerPrimitive.ChannelSliderThumb
+    initial={initial?.channelSlider({ channel, orientation, step }).thumb.initial}
+    class={colorPickerChannelSliderThumb({ size })}
+    data-slot="color-picker-channel-slider-thumb"
+  >
+    <span
+      class="pointer-events-none absolute inset-0 size-full"
+      data-slot="color-picker-transparency-grid"></span>
+
+    <span
+      class="pointer-events-none absolute inset-0 size-full bg-[var(--sw-color-picker-channel-thumb-color)]"
+      data-slot="color-picker-channel-thumb-color-layer"></span>
+  </ColorPickerPrimitive.ChannelSliderThumb>
+
+  <ColorPickerPrimitive.ChannelSliderInput
+    initial={initial?.channelSlider({ channel, orientation, step }).input().initial}
+    class="absolute inset-0 size-full cursor-pointer opacity-0"
+    data-slot="color-picker-channel-slider-input"
+  />
+</ColorPickerPrimitive.ChannelSlider>

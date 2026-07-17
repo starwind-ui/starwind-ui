@@ -21,6 +21,8 @@ import {
   buildCarouselSpecializedAdapterSpec,
   buildComboboxAdapterOutputModel,
   buildComboboxSpecializedAdapterSpec,
+  buildColorPickerAdapterOutputModel,
+  buildColorPickerSpecializedAdapterSpec,
   buildContextMenuAdapterOutputModel,
   buildContextMenuSpecializedAdapterSpec,
   buildDropzoneAdapterOutputModel,
@@ -77,6 +79,15 @@ const specializedPrimitiveGeneratorFactories: Record<string, SpecializedPrimitiv
       createSpecializedAdapterSpecPrimitiveGeneratorEntry({
         buildOutputModel: buildComboboxAdapterOutputModel,
         buildSpec: buildComboboxSpecializedAdapterSpec,
+        component: entry.component,
+        contract: entry.contract,
+      }),
+  },
+  "color-picker": {
+    createEntry: (entry) =>
+      createSpecializedAdapterSpecPrimitiveGeneratorEntry({
+        buildOutputModel: buildColorPickerAdapterOutputModel,
+        buildSpec: buildColorPickerSpecializedAdapterSpec,
         component: entry.component,
         contract: entry.contract,
       }),
@@ -208,7 +219,6 @@ export const primitiveGeneratorRegistry: readonly PrimitiveGeneratorRegistryEntr
 export function getPrimitiveGeneratorEntries(): readonly PrimitiveGeneratorRegistryEntry[] {
   return primitiveGeneratorRegistry;
 }
-
 function createRuntimeAdapterPrimitiveGeneratorEntry(
   entry: PrimitiveRuntimeAdapterInventoryEntry,
 ): PrimitiveGeneratorRegistryEntry {

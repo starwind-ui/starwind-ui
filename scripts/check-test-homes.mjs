@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 export const approvedTestHomePrefixes = [
   "packages/cli/tests/",
+  "packages/react/tests/",
   "packages/runtime/tests/",
   "scripts/portable-runtime/tests/",
   "scripts/tests/",

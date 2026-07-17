@@ -675,11 +675,11 @@ export const buildPrimitiveCanonicalNames = (
   contract: RuntimeAdapterContract,
   publicAdapterParts: readonly RuntimeAdapterContract["parts"][number][],
 ) => [
-  { kind: "namespace" as const, name: contract.displayName },
+  { kind: "namespace" as const, name: getPrimitiveNamespace(contract) },
   { kind: "runtime-factory" as const, name: contract.runtime.factory },
   ...publicAdapterParts.map((part) => ({
     kind: "part" as const,
-    name: `${contract.displayName}.${toPascalCase(part.name)}`,
+    name: `${getPrimitiveNamespace(contract)}.${toPascalCase(part.name)}`,
   })),
 ];
 
@@ -690,30 +690,34 @@ export const renderPrimitiveAnatomyCode = (
   contract: RuntimeAdapterContract,
   publicAdapterParts: readonly RuntimeAdapterContract["parts"][number][],
 ) => {
+  const namespace = getPrimitiveNamespace(contract);
   const rootPart =
     publicAdapterParts.find((part) => part.name === contract.runtime.rootPart) ??
     publicAdapterParts[0];
 
   if (!rootPart) {
-    return `import { ${contract.displayName} } from "@starwind-ui/react/${contract.component}";`;
+    return `import { ${namespace} } from "@starwind-ui/react/${contract.component}";`;
   }
 
-  const rootName = `${contract.displayName}.${toPascalCase(rootPart.name)}`;
+  const rootName = `${namespace}.${toPascalCase(rootPart.name)}`;
   const childParts = publicAdapterParts.filter((part) => part.name !== rootPart.name);
 
   if (childParts.length === 0) {
     return [
-      `import { ${contract.displayName} } from "@starwind-ui/react/${contract.component}";`,
+      `import { ${namespace} } from "@starwind-ui/react/${contract.component}";`,
       "",
       `<${rootName} />`,
     ].join("\n");
   }
 
   return [
-    `import { ${contract.displayName} } from "@starwind-ui/react/${contract.component}";`,
+    `import { ${namespace} } from "@starwind-ui/react/${contract.component}";`,
     "",
     `<${rootName}>`,
-    ...childParts.map((part) => `  <${contract.displayName}.${toPascalCase(part.name)} />`),
+    ...childParts.map((part) => `  <${namespace}.${toPascalCase(part.name)} />`),
     `</${rootName}>`,
   ].join("\n");
 };
+
+export const getPrimitiveNamespace = (contract: RuntimeAdapterContract) =>
+  toPascalCase(contract.component);

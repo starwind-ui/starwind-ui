@@ -30,7 +30,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "node --max-old-space-size=8192 scripts/build.mjs",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{ts,tsx,md,json}\"",
@@ -47,6 +47,7 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "@types/node": "^24.12.4",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "react": "^19.2.0",

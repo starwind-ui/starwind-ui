@@ -1,0 +1,29 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import ColorPickerFormatSelect from "./ColorPickerFormatSelect.astro";
+import ColorPickerNativeFormatSelect from "./ColorPickerNativeFormatSelect.astro";
+import ColorPickerValueInput from "./ColorPickerValueInput.astro";
+import { colorPickerInput } from "./variants";
+
+type Props = HTMLAttributes<"div"> &
+  VariantProps<typeof colorPickerInput> & {
+    formatControl?: "select" | "native";
+    initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+  };
+
+const { initial, formatControl = "select", class: className, size = "md", ...rest } = Astro.props;
+---
+
+<div class={colorPickerInput({ size, class: className })} {...rest} data-slot="color-picker-input">
+  <ColorPickerValueInput initial={initial?.valueInput.initial} size={size} />
+
+  {
+    formatControl === "native" ? (
+      <ColorPickerNativeFormatSelect initial={initial?.formatSelect.initial} size={size} />
+    ) : (
+      <ColorPickerFormatSelect initial={initial?.formatControl.initial} size={size} />
+    )
+  }
+</div>

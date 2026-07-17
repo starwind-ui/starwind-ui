@@ -28,6 +28,7 @@ export type StyledOutputComponent = {
   client?: StyledOutputClientBehavior;
   destructure?: StyledOutputDestructure;
   exportName: string;
+  forwardRef?: StyledOutputForwardRef;
   imports: StyledOutputImport[];
   primitiveAliases: StyledOutputPrimitiveAlias[];
   props?: StyledOutputProps;
@@ -35,6 +36,10 @@ export type StyledOutputComponent = {
   sourceFileName?: string;
   targetScopes?: StyledOutputTargetScope[];
   variables: StyledOutputVariable[];
+};
+
+export type StyledOutputForwardRef = {
+  targetType: string;
 };
 
 export type StyledOutputDefaultExport = {

@@ -56,6 +56,10 @@
       "types": "./dist/combobox.d.ts",
       "import": "./dist/combobox.js"
     },
+    "./color-picker": {
+      "types": "./dist/color-picker.d.ts",
+      "import": "./dist/color-picker.js"
+    },
     "./context-menu": {
       "types": "./dist/context-menu.d.ts",
       "import": "./dist/context-menu.js"

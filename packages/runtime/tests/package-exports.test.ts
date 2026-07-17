@@ -5,10 +5,33 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import tsupConfig from "../tsup.config";
+import * as colorPickerSubpath from "../src/components/color-picker";
+import * as runtimeRoot from "../src/index";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 describe("runtime package exports", () => {
+  it("exposes the approved color picker values from root and subpath barrels", () => {
+    expect(Object.keys(colorPickerSubpath).sort()).toEqual(
+      [
+        "COLOR_PICKER_FORMATS",
+        "createColorPicker",
+        "createColorPickerInitialState",
+        "parseColor",
+        "projectColorPickerInitialPart",
+      ].sort(),
+    );
+    expect(runtimeRoot.COLOR_PICKER_FORMATS).toBe(colorPickerSubpath.COLOR_PICKER_FORMATS);
+    expect(runtimeRoot.createColorPicker).toBe(colorPickerSubpath.createColorPicker);
+    expect(runtimeRoot.createColorPickerInitialState).toBe(
+      colorPickerSubpath.createColorPickerInitialState,
+    );
+    expect(runtimeRoot.parseColor).toBe(colorPickerSubpath.parseColor);
+    expect(runtimeRoot.projectColorPickerInitialPart).toBe(
+      colorPickerSubpath.projectColorPickerInitialPart,
+    );
+  });
+
   it("exports every component runtime subpath", async () => {
     const packageJson = JSON.parse(
       await readFile(path.join(packageRoot, "package.json"), "utf8"),

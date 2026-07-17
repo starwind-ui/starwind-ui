@@ -1,0 +1,104 @@
+---
+import ColorPicker from "@tabler/icons/outline/color-picker.svg";
+import type { ComponentProps } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import "./styles.css";
+import { PopoverContent } from "../popover";
+import ColorPickerArea from "./ColorPickerArea.astro";
+import ColorPickerClear from "./ColorPickerClear.astro";
+import ColorPickerEyeDropper from "./ColorPickerEyeDropper.astro";
+import ColorPickerInput from "./ColorPickerInput.astro";
+import ColorPickerSliders from "./ColorPickerSliders.astro";
+import {
+  colorPickerContent,
+  colorPickerSeparator,
+  colorPickerSliderActionRow,
+  colorPickerValueFormatRow,
+} from "./variants";
+
+type Props = ComponentProps<typeof PopoverContent> &
+  VariantProps<typeof colorPickerContent> & {
+    alpha?: boolean;
+    showEyeDropper?: boolean;
+    showClear?: boolean;
+    initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+  };
+
+const {
+  initial,
+  class: className,
+  size = "md",
+  alpha = true,
+  showEyeDropper = true,
+  showClear = false,
+  side = "bottom",
+  align = "start",
+  exitMotion = "fade",
+  ...rest
+} = Astro.props;
+
+const inputSize = size === "lg" ? "md" : "sm";
+const hasSwatches = Astro.slots.has("swatches");
+const hasSwatchesAttribute = hasSwatches ? "true" : "false";
+---
+
+<PopoverContent
+  class={colorPickerContent({ size, class: className })}
+  side={side}
+  align={align}
+  exitMotion={exitMotion}
+  {...rest}
+  data-slot="color-picker-content"
+>
+  <slot>
+    <ColorPickerArea initial={initial?.area()} size={size} />
+
+    <div class={colorPickerSliderActionRow({ size })} data-slot="color-picker-slider-action-row">
+      <ColorPickerSliders initial={initial} alpha={alpha} size={size} class="min-w-0 flex-1" />
+
+      {
+        showEyeDropper && (
+          <ColorPickerEyeDropper
+            initial={initial?.eyeDropperTrigger.initial}
+            size={size}
+            aria-label="Pick a color from the screen"
+          >
+            <ColorPicker class="size-4" aria-hidden="true" />
+          </ColorPickerEyeDropper>
+        )
+      }
+    </div>
+
+    <div class={colorPickerValueFormatRow({ size })} data-slot="color-picker-value-format-row">
+      <ColorPickerInput initial={initial} size={inputSize} class="min-w-0 flex-1" />
+    </div>
+
+    <div class="contents" data-has-swatches={hasSwatchesAttribute} data-slot="color-picker-footer">
+      {
+        (hasSwatches || showClear) && (
+          <div
+            class={colorPickerSeparator({ size })}
+            role="separator"
+            aria-hidden="true"
+            data-slot="color-picker-separator"
+          />
+        )
+      }
+
+      <slot name="swatches" />
+
+      {
+        showClear && (
+          <ColorPickerClear
+            initial={initial?.clear.initial}
+            size={inputSize}
+            aria-label="Clear color"
+          >
+            Clear
+          </ColorPickerClear>
+        )
+      }
+    </div>
+  </slot>
+</PopoverContent>

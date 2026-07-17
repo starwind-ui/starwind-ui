@@ -2717,7 +2717,7 @@ describe("SpecializedAdapterSpec", () => {
     expect(spec.accordion.rootOptions).toEqual({
       collapsible: {
         attribute: "data-collapsible",
-        defaultValue: "false",
+        defaultValue: "true",
         lifecycle: "constructor-only",
         prop: "collapsible",
         type: "boolean",

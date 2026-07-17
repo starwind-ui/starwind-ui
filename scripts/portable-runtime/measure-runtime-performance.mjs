@@ -1,9 +1,12 @@
 import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import {
   createReadStream,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
+  renameSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -20,6 +23,10 @@ const MEASUREMENT_TMP_ROOT = process.env.STARWIND_MEASUREMENT_TMP_ROOT ?? os.tmp
 const SHARED_SIZE_TMP_ROOT = path.join(MEASUREMENT_TMP_ROOT, "starwind-package-size-comparison");
 const PERF_TMP_ROOT = path.join(MEASUREMENT_TMP_ROOT, "starwind-runtime-performance-comparison");
 const REPORT_PATH = path.join(REPO_ROOT, "docs/portable-runtime/runtime-performance-comparison.md");
+const DIAGNOSTICS_REPORT_PATH = path.join(
+  REPO_ROOT,
+  "docs/portable-runtime/diagnostics/runtime-performance-diagnostics.md",
+);
 const FOCUSED_REPORT_DIR = path.join(
   REPO_ROOT,
   ".scratch/runtime-performance-candidate-benchmarks/perf-runs",
@@ -280,7 +287,13 @@ if (isMainModule()) {
   }
 }
 
-async function main(argv = []) {
+async function main(
+  argv = [],
+  {
+    migrateReports = migrateExistingRuntimePerformanceReports,
+    runMeasurement = runRuntimePerformanceMeasurement,
+  } = {},
+) {
   const runConfig = buildRuntimePerformanceRunConfig(argv);
 
   if (runConfig.mode === "list") {
@@ -288,6 +301,16 @@ async function main(argv = []) {
     return;
   }
 
+  if (runConfig.mode === "migrate") {
+    const migratedPaths = migrateReports();
+    console.log(`Migrated ${migratedPaths.length} runtime performance reports.`);
+    return;
+  }
+
+  await runMeasurement(runConfig);
+}
+
+async function runRuntimePerformanceMeasurement(runConfig) {
   assertStarwindDist();
 
   const dependencyRoot = prepareDependencyRoot();
@@ -315,6 +338,7 @@ async function main(argv = []) {
       reportPath: runConfig.reportPath,
       results,
       scenarios: runConfig.scenarios,
+      snapshot: runConfig.mode === "snapshot",
     });
     console.log(`Wrote ${runConfig.reportPath}`);
   } finally {
@@ -331,24 +355,38 @@ function isMainModule() {
 function buildRuntimePerformanceRunConfig(argv = [], { generatedAt = new Date() } = {}) {
   const parsedArgs = parseRuntimePerformanceArgs(argv);
 
+  const focusedRun =
+    parsedArgs.categories.length > 0 ||
+    parsedArgs.libraries.length > 0 ||
+    parsedArgs.scenarios.length > 0;
+  const specialModes = [parsedArgs.list, parsedArgs.migrate, parsedArgs.snapshot].filter(Boolean);
+  if (specialModes.length > 1) {
+    throw new Error(
+      "Runtime performance list, migration, and snapshot modes are mutually exclusive.",
+    );
+  }
+  if ((parsedArgs.migrate || parsedArgs.snapshot) && focusedRun) {
+    throw new Error(
+      `${parsedArgs.snapshot ? "--snapshot" : "--migrate-existing-reports"} cannot be combined with filters.`,
+    );
+  }
+
   if (parsedArgs.list) {
     return {
       mode: "list",
     };
   }
 
+  if (parsedArgs.migrate) return { mode: "migrate" };
+
   const scenarios = selectScenarioRows({
     categories: parsedArgs.categories,
     scenarios: parsedArgs.scenarios,
   });
   const libraries = selectLibraryRows(parsedArgs.libraries);
-  const focusedRun =
-    parsedArgs.categories.length > 0 ||
-    parsedArgs.libraries.length > 0 ||
-    parsedArgs.scenarios.length > 0;
 
   return {
-    mode: "run",
+    mode: parsedArgs.snapshot ? "snapshot" : "run",
     filters: {
       categories: parsedArgs.categories,
       libraries: parsedArgs.libraries,
@@ -366,7 +404,9 @@ function parseRuntimePerformanceArgs(argv = []) {
     categories: [],
     libraries: [],
     list: false,
+    migrate: false,
     scenarios: [],
+    snapshot: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -375,6 +415,14 @@ function parseRuntimePerformanceArgs(argv = []) {
     if (arg === "--") continue;
     if (arg === "--list") {
       parsedArgs.list = true;
+      continue;
+    }
+    if (arg === "--migrate-existing-reports") {
+      parsedArgs.migrate = true;
+      continue;
+    }
+    if (arg === "--snapshot") {
+      parsedArgs.snapshot = true;
       continue;
     }
 
@@ -404,7 +452,9 @@ function parseRuntimePerformanceArgs(argv = []) {
     categories: uniqueValues(parsedArgs.categories),
     libraries: uniqueValues(parsedArgs.libraries),
     list: parsedArgs.list,
+    migrate: parsedArgs.migrate,
     scenarios: uniqueValues(parsedArgs.scenarios),
+    snapshot: parsedArgs.snapshot,
   };
 }
 
@@ -952,8 +1002,9 @@ function writeReport({
   reportPath = REPORT_PATH,
   results,
   scenarios = scenarioRows,
+  snapshot = false,
 }) {
-  const lines = formatRuntimePerformanceReport({
+  const input = {
     dependencyRoot,
     filters,
     focusedRun,
@@ -961,10 +1012,33 @@ function writeReport({
     libraries,
     results,
     scenarios,
-  });
+  };
 
-  mkdirSync(path.dirname(reportPath), { recursive: true });
-  writeFileSync(reportPath, `${lines.join("\n")}\n`);
+  if (focusedRun) {
+    writeStagedReports([
+      { content: `${formatRuntimePerformanceReport(input).join("\n")}\n`, path: reportPath },
+    ]);
+    return;
+  }
+
+  writeRuntimePerformanceReportSet({ input, snapshot });
+}
+
+function writeRuntimePerformanceReportSet({ input, repoRoot = REPO_ROOT, snapshot = false }) {
+  const publicContent = `${formatRuntimePerformancePublicReport(input).join("\n")}\n`;
+  const diagnosticContent = `${formatRuntimePerformanceDiagnosticReport(input).join("\n")}\n`;
+  const outputs = buildRuntimePerformanceReportPaths({
+    generatedAt: input.generatedAt,
+    repoRoot,
+    snapshot,
+  }).map((reportPath) => ({
+    content: reportPath.includes(`${path.sep}diagnostics${path.sep}`)
+      ? diagnosticContent
+      : publicContent,
+    path: reportPath,
+  }));
+  writeStagedReports(outputs);
+  return outputs.map((output) => output.path);
 }
 
 function formatRuntimePerformanceReport({
@@ -976,9 +1050,15 @@ function formatRuntimePerformanceReport({
   results,
   scenarios = scenarioRows,
   versions = getVersions(dependencyRoot),
+  reportKind = focusedRun ? "focused" : "public",
 }) {
+  const diagnostic = reportKind === "diagnostic";
   return [
-    focusedRun ? "# Focused Runtime Performance Comparison" : "# Runtime Performance Comparison",
+    focusedRun
+      ? "# Focused Runtime Performance Comparison"
+      : diagnostic
+        ? "# Runtime Performance Diagnostics"
+        : "# Runtime Performance Comparison",
     "",
     `Generated: ${generatedAt.toISOString().slice(0, 10)}`,
     "",
@@ -1010,12 +1090,16 @@ function formatRuntimePerformanceReport({
     "- All fixtures use primitive APIs, minimal CSS, no React StrictMode, and no styled Starwind wrapper code.",
     "- Starwind's `Portal` parts are runtime-owned DOM markers; Base UI and Zag use React portals. That difference is part of the implementation being measured.",
     "",
-    "## Candidate Evaluation Thresholds",
-    "",
-    "- For 1x CPU mount and hover rows, Starwind is a confirmed candidate when it is at least 2x slower than the best available comparator and at least 50 ms slower in the same run.",
-    "- For throttled open rows, Starwind is a confirmed candidate when it is at least 1.75x slower than the best available comparator and at least 100 ms slower in the same run.",
-    "- Rows with failed comparators, visibly different fixture semantics, or unstable samples should be treated as inconclusive rather than confirmed.",
-    "",
+    ...(focusedRun || diagnostic
+      ? [
+          "## Candidate Thresholds",
+          "",
+          "- For 1x CPU mount and hover rows, Starwind is a confirmed candidate when it is at least 2x slower than the best available comparator and at least 50 ms slower in the same run.",
+          "- For throttled open rows, Starwind is a confirmed candidate when it is at least 1.75x slower than the best available comparator and at least 100 ms slower in the same run.",
+          "- Rows with failed comparators, visibly different fixture semantics, or unstable samples should be treated as inconclusive rather than confirmed.",
+          "",
+        ]
+      : []),
     "Regenerate with:",
     "",
     "```bash",
@@ -1058,30 +1142,34 @@ function formatRuntimePerformanceReport({
         .replace(/$/, " |");
     }),
     "",
-    "## Raw Samples",
-    "",
-    "<!-- prettier-ignore-start -->",
-    "",
-    "| Category | Scenario | Library | Samples | Group averages | Event duration samples | Dispatch samples | Forced-layout samples |",
-    "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
-    ...results.map((row) =>
-      [
-        row.scenarioCategory,
-        row.scenarioLabel,
-        row.libraryLabel,
-        formatSampleList(row.samples),
-        formatSampleList(row.groupAverages),
-        formatSampleList(row.eventDurationSamples),
-        formatSampleList(row.dispatchDurationSamples),
-        formatSampleList(row.forcedLayoutDurationSamples),
-      ]
-        .join(" | ")
-        .replace(/^/, "| ")
-        .replace(/$/, " |"),
-    ),
-    "",
-    "<!-- prettier-ignore-end -->",
-    "",
+    ...(focusedRun || diagnostic
+      ? [
+          "## Raw Samples",
+          "",
+          "<!-- prettier-ignore-start -->",
+          "",
+          "| Category | Scenario | Library | Samples | Group averages | Event duration samples | Dispatch samples | Forced-layout samples |",
+          "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
+          ...results.map((row) =>
+            [
+              row.scenarioCategory,
+              row.scenarioLabel,
+              row.libraryLabel,
+              formatSampleList(row.samples),
+              formatSampleList(row.groupAverages),
+              formatSampleList(row.eventDurationSamples),
+              formatSampleList(row.dispatchDurationSamples),
+              formatSampleList(row.forcedLayoutDurationSamples),
+            ]
+              .join(" | ")
+              .replace(/^/, "| ")
+              .replace(/$/, " |"),
+          ),
+          "",
+          "<!-- prettier-ignore-end -->",
+          "",
+        ]
+      : []),
     "## Reading The Numbers",
     "",
     "- Treat this as a local comparator and regression tracker, not a universal benchmark claim.",
@@ -1090,6 +1178,175 @@ function formatRuntimePerformanceReport({
     "- The mount rows intentionally include render and forced layout, but not network or initial bundle parse.",
     "- The highlight row intentionally dispatches pointer events over mounted items. A separate manual UX trace could measure real cursor movement and scroll behavior.",
   ];
+}
+
+function formatRuntimePerformancePublicReport(input) {
+  return formatRuntimePerformanceReport({ ...input, focusedRun: false, reportKind: "public" });
+}
+
+function formatRuntimePerformanceDiagnosticReport(input) {
+  return formatRuntimePerformanceReport({ ...input, focusedRun: false, reportKind: "diagnostic" });
+}
+
+function buildRuntimePerformanceReportPaths({
+  generatedAt,
+  repoRoot = REPO_ROOT,
+  snapshot = false,
+}) {
+  const docsDir = path.join(repoRoot, "docs/portable-runtime");
+  const diagnosticsDir = path.join(docsDir, "diagnostics");
+  const paths = [
+    path.join(docsDir, "runtime-performance-comparison.md"),
+    path.join(diagnosticsDir, "runtime-performance-diagnostics.md"),
+  ];
+  if (!snapshot) return paths;
+
+  const utcDate = generatedAt.toISOString().slice(0, 10);
+  return [
+    ...paths,
+    path.join(docsDir, `runtime-performance-comparison-${utcDate}.md`),
+    path.join(diagnosticsDir, `runtime-performance-diagnostics-${utcDate}.md`),
+  ];
+}
+
+function writeStagedReports(outputs, fileSystem = {}) {
+  const operations = {
+    exists: existsSync,
+    mkdir: (directory) => mkdirSync(directory, { recursive: true }),
+    remove: (target) => rmSync(target, { force: true }),
+    rename: renameSync,
+    writeFile: writeFileSync,
+    ...fileSystem,
+  };
+  const transactionId = `${process.pid}-${randomUUID()}`;
+  const staged = outputs.map((output, index) => ({
+    ...output,
+    backupPath: `${output.path}.backup-${transactionId}-${index}`,
+    stagedPath: `${output.path}.staged-${transactionId}-${index}`,
+  }));
+
+  try {
+    for (const item of staged) {
+      operations.mkdir(path.dirname(item.path));
+      operations.writeFile(item.stagedPath, item.content);
+    }
+  } catch (error) {
+    for (const item of staged) operations.remove(item.stagedPath);
+    throw error;
+  }
+
+  const replaced = [];
+  try {
+    for (const item of staged) {
+      const hadOriginal = operations.exists(item.path);
+      if (hadOriginal) operations.rename(item.path, item.backupPath);
+      try {
+        operations.rename(item.stagedPath, item.path);
+      } catch (error) {
+        if (hadOriginal && operations.exists(item.backupPath)) {
+          operations.rename(item.backupPath, item.path);
+        }
+        throw error;
+      }
+      replaced.push({ ...item, hadOriginal });
+    }
+  } catch (error) {
+    for (const item of replaced.reverse()) {
+      operations.remove(item.path);
+      if (item.hadOriginal && operations.exists(item.backupPath)) {
+        operations.rename(item.backupPath, item.path);
+      }
+    }
+    for (const item of staged) operations.remove(item.stagedPath);
+    throw error;
+  }
+
+  for (const item of replaced) operations.remove(item.backupPath);
+}
+
+function migrateExistingRuntimePerformanceReports({ repoRoot = REPO_ROOT } = {}) {
+  const docsDir = path.join(repoRoot, "docs/portable-runtime");
+  const publicNames = readdirSync(docsDir)
+    .filter((name) => /^runtime-performance-comparison(?:-\d{4}-\d{2}-\d{2})?\.md$/.test(name))
+    .sort();
+  const outputs = [];
+
+  for (const publicName of publicNames) {
+    const suffix = publicName
+      .slice("runtime-performance-comparison".length, -".md".length)
+      .replace(/^-/, "");
+    const diagnosticName = `runtime-performance-diagnostics${suffix ? `-${suffix}` : ""}.md`;
+    const publicPath = path.join(docsDir, publicName);
+    const diagnosticPath = path.join(docsDir, "diagnostics", diagnosticName);
+    const sourcePath = existsSync(diagnosticPath) ? diagnosticPath : publicPath;
+    const model = parseLegacyRuntimePerformanceReport(readFileSync(sourcePath, "utf8"));
+    outputs.push(
+      { content: renderMigratedRuntimePerformanceReport(model, false), path: publicPath },
+      { content: renderMigratedRuntimePerformanceReport(model, true), path: diagnosticPath },
+    );
+  }
+
+  writeStagedReports(outputs);
+  return outputs.map((output) => output.path);
+}
+
+function parseLegacyRuntimePerformanceReport(markdown) {
+  const generated = markdown.match(/^Generated:\s*(.+?)\s*$/m)?.[1];
+  if (!generated) throw new Error("Runtime performance report is missing its generated date.");
+  const sections = new Map();
+  const headingPattern = /^##\s+(.+?)\s*$/gm;
+  const headings = [...markdown.matchAll(headingPattern)];
+  for (let index = 0; index < headings.length; index += 1) {
+    const heading = headings[index];
+    const start = heading.index + heading[0].length;
+    const end = headings[index + 1]?.index ?? markdown.length;
+    sections.set(heading[1].trim(), normalizeLegacySection(markdown.slice(start, end)));
+  }
+  const get = (...names) => names.map((name) => sections.get(name)).find((value) => value != null);
+  const model = {
+    generated,
+    method: get("Method"),
+    packageVersions: get("Package Versions"),
+    rawSamples: get("Raw Samples"),
+    reading: get("Reading The Numbers", "Reading"),
+    results: get("Results"),
+    thresholds: get("Candidate Thresholds", "Candidate Evaluation Thresholds"),
+  };
+  for (const key of ["method", "packageVersions", "results", "reading"]) {
+    if (!model[key]) throw new Error(`Runtime performance report is missing its ${key} section.`);
+  }
+  if (!model.thresholds || !model.rawSamples) {
+    throw new Error("Runtime performance migration requires thresholds and raw samples.");
+  }
+  return model;
+}
+
+function normalizeLegacySection(section) {
+  return section
+    .trim()
+    .split("\n")
+    .map((line) => line.replace(/\s+$/, ""))
+    .join("\n");
+}
+
+function renderMigratedRuntimePerformanceReport(model, diagnostic) {
+  const sections = [
+    ["Method", model.method],
+    ...(diagnostic ? [["Candidate Thresholds", model.thresholds]] : []),
+    ["Package Versions", model.packageVersions],
+    ["Results", model.results],
+    ...(diagnostic ? [["Raw Samples", model.rawSamples]] : []),
+    ["Reading The Numbers", model.reading],
+  ];
+  return `${[
+    diagnostic ? "# Runtime Performance Diagnostics" : "# Runtime Performance Comparison",
+    "",
+    `Generated: ${model.generated}`,
+    "",
+    ...sections.flatMap(([heading, content]) => [`## ${heading}`, "", content, ""]),
+  ]
+    .join("\n")
+    .trimEnd()}\n`;
 }
 
 function getVersions(dependencyRoot) {
@@ -3473,14 +3730,22 @@ function slash(value) {
 }
 
 export {
+  DIAGNOSTICS_REPORT_PATH,
   FOCUSED_REPORT_DIR,
   REPORT_PATH,
   buildRuntimePerformanceRunConfig,
+  buildRuntimePerformanceReportPaths,
+  formatRuntimePerformanceDiagnosticReport,
   formatRuntimePerformanceList,
+  formatRuntimePerformancePublicReport,
   formatRuntimePerformanceReport,
   libraryRows,
+  main,
+  migrateExistingRuntimePerformanceReports,
   parseRuntimePerformanceArgs,
   scenarioRows,
   selectLibraryRows,
   selectScenarioRows,
+  writeStagedReports,
+  writeRuntimePerformanceReportSet,
 };

@@ -1,0 +1,22 @@
+---
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+import { colorPickerLabel } from "./variants";
+
+type Props = HTMLAttributes<"label"> &
+  VariantProps<typeof colorPickerLabel> & {
+    initial?: import("@starwind-ui/astro/color-picker").ColorPickerInitialPartProjection;
+  };
+
+const { initial, class: className, size = "md", ...rest } = Astro.props;
+---
+
+<ColorPickerPrimitive.Label
+  initial={initial}
+  class={colorPickerLabel({ size, class: className })}
+  {...rest}
+  data-slot="color-picker-label"
+>
+  <slot />
+</ColorPickerPrimitive.Label>

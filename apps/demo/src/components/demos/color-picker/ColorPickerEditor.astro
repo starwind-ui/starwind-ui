@@ -1,0 +1,69 @@
+---
+import {
+  ColorPickerArea,
+  ColorPickerChannelInput,
+  ColorPickerChannelSlider,
+  ColorPickerClear,
+  ColorPickerEyeDropper,
+  ColorPickerInput,
+  ColorPickerSwatch,
+  ColorPickerSwatchGroup,
+} from "@/components/starwind-runtime/color-picker";
+
+interface Props {
+  initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+  id: string;
+  label: string;
+  alpha: boolean;
+  channels: boolean;
+  swatches: boolean;
+  clear: boolean;
+}
+
+const { initial, id, label, alpha, channels, swatches, clear } = Astro.props;
+---
+
+<ColorPickerArea initial={initial.area()} data-testid={`${id}-area`} />
+<ColorPickerChannelSlider
+  initial={initial}
+  channel="hue"
+  aria-label={`${label} hue`}
+  data-testid={`${id}-hue`}
+/>
+{
+  alpha && (
+    <ColorPickerChannelSlider initial={initial} channel="alpha" aria-label={`${label} alpha`} />
+  )
+}
+{
+  channels && (
+    <div class="grid grid-cols-4 gap-2">
+      {(["red", "green", "blue", "alpha"] as const).map((channel) => (
+        <ColorPickerChannelInput
+          initial={initial.channelInput({ channel }).initial}
+          channel={channel}
+          aria-label={`${label} ${channel}`}
+        />
+      ))}
+    </div>
+  )
+}
+<ColorPickerInput initial={initial} data-testid={`${id}-input`} />
+{
+  swatches && (
+    <ColorPickerSwatchGroup initial={initial.swatchGroup.initial} aria-label={`${label} swatches`}>
+      <ColorPickerSwatch initial={initial} value="#ef4444" aria-label="Red swatch" />
+      <ColorPickerSwatch initial={initial} value="#22c55e" aria-label="Green swatch" />
+      <ColorPickerSwatch initial={initial} value="#3b82f6" aria-label="Blue swatch" />
+      <ColorPickerSwatch
+        initial={initial}
+        value="#8b5cf680"
+        aria-label="Purple translucent swatch"
+      />
+    </ColorPickerSwatchGroup>
+  )
+}
+{clear && <ColorPickerClear initial={initial.clear.initial}>Clear color</ColorPickerClear>}
+<ColorPickerEyeDropper initial={initial.eyeDropperTrigger.initial}
+  >Pick from screen</ColorPickerEyeDropper
+>

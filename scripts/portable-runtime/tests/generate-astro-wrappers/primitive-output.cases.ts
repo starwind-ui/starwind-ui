@@ -390,6 +390,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       "checkbox",
       "checkbox-group",
       "collapsible",
+      "color-picker",
       "combobox",
       "context-menu",
       "dialog",
@@ -424,6 +425,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
 
     expect(rootIndex).toContain('export * from "./accordion";');
     expect(rootIndex).toContain('export * from "./carousel";');
+    expect(rootIndex).toContain('export * from "./color-picker";');
     expect(rootIndex).toContain('export * from "./select";');
     expect(rootIndex).toContain('export * from "./sidebar";');
     expect(rootIndex).toContain('export * from "./tooltip";');
@@ -478,6 +480,8 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(accordionRoot).toContain("data-type");
     expect(accordionRoot).toContain("data-default-value");
     expect(accordionRoot).toContain("data-collapsible");
+    expect(accordionRoot).toContain("collapsible = true");
+    expect(accordionRoot).toContain("data-collapsible={String(collapsible)}");
     expect(accordionRoot).not.toContain(removedAttr("data-sw-accordion", "type"));
     expect(accordionRoot).not.toContain(removedAttr("data-sw-accordion", "default-value"));
     expect(accordionRoot).not.toContain(removedAttr("data-sw-accordion", "collapsible"));
@@ -968,7 +972,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(navigationMenuRoot).toContain(
       "const navigationMenuInstances = new Set<ReturnType<typeof createNavigationMenu>>();",
     );
-    expect(navigationMenuRoot).toContain('registerAstroControllerLifecycle(');
+    expect(navigationMenuRoot).toContain("registerAstroControllerLifecycle(");
     expect(navigationMenuRoot).toContain('"NavigationMenuRoot"');
     expect(navigationMenuRoot).toContain("destroyNavigationMenus");
     expect(navigationMenuTrigger).toContain("asChild?: boolean;");

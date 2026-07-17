@@ -23,7 +23,7 @@ export function renderComponentImports(
   runtimeImportContext: RuntimeImportRewriteContext,
 ): string {
   const imports: string[] = [
-    component.client?.effects
+    component.client?.effects || component.forwardRef
       ? 'import * as React from "react";'
       : 'import type * as React from "react";',
   ];

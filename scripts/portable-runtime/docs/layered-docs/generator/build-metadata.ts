@@ -52,6 +52,7 @@ import {
   buildPrimitivePartApiReference,
   copyPrimitiveStateModel,
   getPublicPrimitiveAdapterParts,
+  getPrimitiveNamespace,
   renderPrimitiveAnatomyCode,
   toPrimitiveEventMetadata,
 } from "./descriptions/primitive-reference.js";
@@ -318,6 +319,16 @@ const buildPrimitiveMetadata = (
     attributes: [...initialMarkup.attributes],
     reason: initialMarkup.reason,
   })),
+  ...(contract.cssVariables
+    ? {
+        cssVariables: contract.cssVariables.map((variable) => ({
+          name: variable.name,
+          description: variable.description,
+          parts: [...variable.parts],
+          source: variable.source,
+        })),
+      }
+    : {}),
   ...(contract.form
     ? {
         form: {
@@ -431,7 +442,7 @@ const buildPrimitiveDocsReference = (
     exampleCoverage,
     anatomy: {
       importSource: `@starwind-ui/react/${contract.component}`,
-      namespace: contract.displayName,
+      namespace: getPrimitiveNamespace(contract),
       parts: contract.parts.map((part) => part.name),
       code: renderPrimitiveAnatomyCode(contract, publicAdapterParts),
     },

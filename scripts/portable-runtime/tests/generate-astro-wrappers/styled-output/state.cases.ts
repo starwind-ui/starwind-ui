@@ -153,6 +153,7 @@ export async function assertAstroStyledStateOutput(outputRoot: string): Promise<
   expect(accordion).toContain('AccordionPrimitive from "../primitives/astro/accordion"');
   expect(accordion).toContain("<AccordionPrimitive.Root");
   expect(accordion).not.toContain("@starwind-ui/runtime");
+  expect(accordion).toContain("collapsible = true");
   expect(accordion).toContain("defaultValue={defaultValue}");
   expect(accordionContent).toContain("<AccordionPrimitive.Panel");
   expect(accordionItem).toContain("<AccordionPrimitive.Item");

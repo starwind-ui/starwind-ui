@@ -11,7 +11,7 @@ import {
 <section class="mb-12 grid gap-8 md:grid-cols-2">
   <div>
     <h2 class="font-heading mb-4 text-2xl font-semibold">Single Accordion</h2>
-    <Accordion defaultValue="shipping" collapsible>
+    <Accordion defaultValue="shipping">
       <AccordionItem value="shipping">
         <AccordionTrigger>Shipping</AccordionTrigger>
         <AccordionContent>
@@ -56,8 +56,13 @@ import {
   </div>
 
   <div class="md:col-span-2">
-    <h2 class="font-heading mb-4 text-2xl font-semibold">Custom Accordion</h2>
-    <Accordion defaultValue="runtime" collapsible class="grid gap-3">
+    <h2 class="font-heading mb-4 text-2xl font-semibold">Required-open Accordion</h2>
+    <Accordion
+      id="runtime-required-open-accordion"
+      defaultValue="runtime"
+      collapsible={false}
+      class="grid gap-3"
+    >
       <AccordionItem class="bg-muted/30 rounded-md border px-4" value="runtime">
         <AccordionTrigger class="py-3">
           Runtime behavior

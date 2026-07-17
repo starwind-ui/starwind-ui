@@ -7,9 +7,9 @@ describe("createAccordion", () => {
     document.body.innerHTML = "";
   });
 
-  it("initializes closed by default", () => {
+  it("initializes closed and can return to closed by default", () => {
     const root = renderAccordion();
-    createAccordion(root);
+    const accordion = createAccordion(root);
 
     const trigger = getTrigger("shipping");
     const content = getContent("shipping");
@@ -19,6 +19,19 @@ describe("createAccordion", () => {
     expect(content.hidden).toBe(true);
     expect(content.getAttribute("role")).toBe("region");
     expect(content.getAttribute("data-state")).toBe("closed");
+    expect(root.getAttribute("data-collapsible")).toBe("true");
+
+    trigger.click();
+
+    expect(accordion.getValue()).toBe("shipping");
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(content.hidden).toBe(false);
+
+    trigger.click();
+
+    expect(accordion.getValue()).toBeNull();
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(content.hidden).toBe(true);
   });
 
   it("opens and closes an item on click when collapsible", () => {
@@ -111,7 +124,7 @@ describe("createAccordion", () => {
   });
 
   it("does not emit value-change events when a non-collapsible trigger leaves value unchanged", () => {
-    const root = renderAccordion({ defaultValue: "shipping" });
+    const root = renderAccordion({ defaultValue: "shipping", collapsible: false });
     const listener = vi.fn();
     root.addEventListener("starwind:value-change", listener);
     const accordion = createAccordion(root);
@@ -124,7 +137,7 @@ describe("createAccordion", () => {
   });
 
   it("does not emit value-change events when programmatic item actions leave value unchanged", () => {
-    const root = renderAccordion({ defaultValue: "shipping" });
+    const root = renderAccordion({ defaultValue: "shipping", collapsible: false });
     const listener = vi.fn();
     root.addEventListener("starwind:value-change", listener);
     const accordion = createAccordion(root);
@@ -136,6 +149,22 @@ describe("createAccordion", () => {
     expect(accordion.getValue()).toBe("shipping");
     expect(getContent("shipping").hidden).toBe(false);
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("preserves an explicit false data attribute across controller recreation", () => {
+    const root = renderAccordion({ defaultValue: "shipping", collapsible: false });
+    const firstAccordion = createAccordion(root);
+
+    expect(root.getAttribute("data-collapsible")).toBe("false");
+
+    firstAccordion.destroy();
+
+    const secondAccordion = createAccordion(root);
+    getTrigger("shipping").click();
+
+    expect(secondAccordion.getValue()).toBe("shipping");
+    expect(root.getAttribute("data-collapsible")).toBe("false");
+    expect(getContent("shipping").hidden).toBe(false);
   });
 
   it("supports controlled mode without mutating DOM until setValue is called", () => {
@@ -354,12 +383,15 @@ function renderAccordion(
     disabledBilling?: boolean;
   } = {},
 ): HTMLElement {
+  const collapsibleAttribute =
+    options.collapsible === undefined ? "" : `data-collapsible="${String(options.collapsible)}"`;
+
   document.body.innerHTML = `
     <div
       data-sw-accordion
       data-type="${options.type ?? "single"}"
       ${options.defaultValue ? `data-default-value='${options.defaultValue}'` : ""}
-      ${options.collapsible ? "data-collapsible" : ""}
+      ${collapsibleAttribute}
     >
       ${renderItem("shipping", "Shipping")}
       ${renderItem("billing", "Billing", options.disabledBilling)}

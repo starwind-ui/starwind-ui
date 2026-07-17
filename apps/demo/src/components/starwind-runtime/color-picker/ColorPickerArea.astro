@@ -1,0 +1,45 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
+
+import "./styles.css";
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import ColorPickerAreaThumb from "./ColorPickerAreaThumb.astro";
+import { colorPickerArea } from "./variants";
+
+type Props = HTMLAttributes<"div"> &
+  VariantProps<typeof colorPickerArea> & {
+    initial?: import("@starwind-ui/astro/color-picker").ColorPickerAreaProjection;
+  };
+
+const { initial, class: className, size = "md", ...rest } = Astro.props;
+---
+
+<ColorPickerPrimitive.Area
+  initial={initial?.root.initial}
+  class={colorPickerArea({ size, class: className })}
+  {...rest}
+  data-slot="color-picker-area"
+>
+  <ColorPickerPrimitive.AreaBackground
+    initial={initial?.background.initial}
+    class="pointer-events-none absolute inset-0 size-full"
+    data-slot="color-picker-area-background"
+  />
+
+  <ColorPickerAreaThumb initial={initial?.thumb.initial} size={size} />
+
+  <ColorPickerPrimitive.AreaInput
+    initial={initial?.input({ axis: "x" }).initial}
+    axis="x"
+    class="absolute inset-0 size-full cursor-crosshair opacity-0"
+    data-slot="color-picker-area-input-x"
+  />
+
+  <ColorPickerPrimitive.AreaInput
+    initial={initial?.input({ axis: "y" }).initial}
+    axis="y"
+    class="absolute inset-0 size-full cursor-crosshair opacity-0"
+    data-slot="color-picker-area-input-y"
+  />
+</ColorPickerPrimitive.Area>

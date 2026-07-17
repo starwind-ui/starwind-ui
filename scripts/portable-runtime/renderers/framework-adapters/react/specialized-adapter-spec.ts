@@ -12,7 +12,7 @@ import type {
 export function projectSpecializedAdapterOutputModel(
   model: AdapterOutputModel,
 ): AdapterOutputModel {
-  let projectedFiles = model.files;
+  let projectedFiles = projectColorPickerFamily(model.files);
   projectedFiles = addProjectedHelperFile(projectedFiles, {
     createHelper: createOptionCollectionOverlayContextHelperFile,
     findIndex: isOptionCollectionOverlayIndexFile,
@@ -40,6 +40,33 @@ export function projectSpecializedAdapterOutputModel(
   });
 
   return projectedFiles === model.files ? model : { files: projectedFiles };
+}
+
+function projectColorPickerFamily(files: AdapterOutputModel["files"]): AdapterOutputModel["files"] {
+  let changed = false;
+  const projected = files.map((file) => {
+    if (file.kind === "component" && file.component.family?.kind === "color-picker") {
+      changed = true;
+      return {
+        ...file,
+        component: {
+          ...file.component,
+          family: { ...file.component.family, kind: "react-color-picker" },
+        },
+        target: "react",
+      } as unknown as AdapterOutputModel["files"][number];
+    }
+    if (file.kind === "index" && file.family?.kind === "color-picker") {
+      changed = true;
+      return {
+        ...file,
+        family: { ...file.family, kind: "react-color-picker" },
+        target: "react",
+      } as unknown as AdapterOutputModel["files"][number];
+    }
+    return file;
+  });
+  return changed ? projected : files;
 }
 
 function isCompositeMenuOverlayIndexFile(

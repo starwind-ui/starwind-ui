@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { colorPickerRuntimeFacade } from "../contracts/primitive/color-picker.js";
 import { runtimeAdapterContracts } from "../contracts/primitive/representatives.js";
 import { loadPrimitiveVersionManifest } from "../generate-cli-registry.js";
 import { primitiveGeneratorRegistry } from "../renderers/primitive-generator-registry.js";
@@ -21,6 +22,31 @@ import {
 } from "../renderers/primitive-inventory.js";
 
 describe("primitive inventory", () => {
+  it("discovers the Color Picker contract, facades, package export, and vendoring facts", () => {
+    const entry = getPrimitiveInventoryEntry("color-picker");
+
+    expect(entry).toEqual(
+      expect.objectContaining({
+        cliVendoring: true,
+        component: "color-picker",
+        generation: {
+          source: "specialized-adapter-spec",
+          strategy: "specialized-adapter-spec",
+        },
+        kind: "runtime-adapter-contract",
+        packageExport: true,
+        runtimeFacades: {
+          types: colorPickerRuntimeFacade.types,
+          values: colorPickerRuntimeFacade.values,
+        },
+      }),
+    );
+    expect(getPrimitivePackageExportNames()).toContain("color-picker");
+    expect(getPrimitiveVendoringContracts().map((contract) => contract.component)).toContain(
+      "color-picker",
+    );
+  });
+
   it("drives primitive generation, package exports, helper facades, Runtime facades, and vendoring facts", async () => {
     const entries = getPrimitiveInventoryEntries();
     const runtimeEntries = getRuntimeAdapterPrimitiveInventoryEntries();
@@ -86,6 +112,12 @@ describe("primitive inventory", () => {
       "createFormSchemaValidator",
       "validateFormSchema",
     ]);
+    expect(getPrimitiveRuntimeFacadeTypeNames("color-picker")).toEqual(
+      colorPickerRuntimeFacade.types,
+    );
+    expect(getPrimitiveRuntimeFacadeValueNames("color-picker")).toEqual(
+      colorPickerRuntimeFacade.values,
+    );
 
     const versionManifest = await loadPrimitiveVersionManifest();
     expect(Object.keys(versionManifest.primitives).sort()).toEqual(sorted(runtimeComponentNames));

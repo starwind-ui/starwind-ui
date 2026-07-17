@@ -53,6 +53,7 @@ function validateContract(
   }
 
   validateFrameworkTargets(contract, contract.frameworks, "frameworks", issues);
+  validateAnnotations(contract, issues);
   validateDependencies(contract, contractsByComponent, issues);
 
   const componentExports = new Set<string>();
@@ -212,6 +213,25 @@ function validateContract(
 
   for (const component of contract.components) {
     validateComponent(contract, component, contractsByComponent, variants, issues);
+  }
+}
+
+function validateAnnotations(
+  contract: StyledAdapterContract,
+  issues: StyledAdapterContractIssue[],
+): void {
+  for (const [group, entries] of Object.entries(contract.annotations ?? {})) {
+    if (!entries?.length) {
+      issues.push(issue(contract, `annotations.${group}`, "Annotation groups must not be empty."));
+      continue;
+    }
+    entries.forEach((entry, index) => {
+      if (!entry.trim()) {
+        issues.push(
+          issue(contract, `annotations.${group}.${index}`, "Annotations must be non-empty."),
+        );
+      }
+    });
   }
 }
 
