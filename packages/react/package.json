@@ -1,6 +1,6 @@
 {
   "name": "@starwind-ui/react",
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "description": "React primitive adapters for Starwind UI Runtime components",
   "license": "MIT",
   "author": {
