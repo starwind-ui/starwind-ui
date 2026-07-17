@@ -152,12 +152,19 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
       path.join(appRoot, "node_modules"),
       "junction",
     );
+    const styledIndex = relativeImportSpecifier(
+      pageDir,
+      path.resolve("apps/demo/src/components/starwind-runtime/color-picker/index.ts"),
+    );
+    const primitiveIndex = relativeImportSpecifier(
+      pageDir,
+      path.resolve("packages/astro/src/color-picker/index.ts"),
+    );
+    expect(styledIndex).toMatch(/^\.\.\//);
+    expect(primitiveIndex).toMatch(/^\.\.\//);
     await writeFile(
       path.join(pageDir, "index.astro"),
-      renderStyledFixture(
-        path.resolve("apps/demo/src/components/starwind-runtime/color-picker/index.ts"),
-        path.resolve("packages/astro/src/color-picker/index.ts"),
-      ),
+      renderStyledFixture(styledIndex, primitiveIndex),
     );
 
     const require = createRequire(path.resolve("packages/astro/package.json"));
@@ -313,14 +320,18 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     const tempRoot = getTempRoot();
     const appRoot = path.join(tempRoot, "astro-color-picker-ssr");
     const pageDir = path.join(appRoot, "src/pages");
-    const packageRoot = path.resolve("packages/astro/src/color-picker").replaceAll("\\", "/");
+    const primitiveIndex = relativeImportSpecifier(
+      pageDir,
+      path.resolve("packages/astro/src/color-picker/index.ts"),
+    );
     await mkdir(pageDir, { recursive: true });
     await symlink(
       path.resolve("packages/astro/node_modules"),
       path.join(appRoot, "node_modules"),
       "junction",
     );
-    await writeFile(path.join(pageDir, "index.astro"), renderFixture(packageRoot));
+    expect(primitiveIndex).toMatch(/^\.\.\//);
+    await writeFile(path.join(pageDir, "index.astro"), renderFixture(primitiveIndex));
 
     const require = createRequire(path.resolve("packages/astro/package.json"));
     const astroPackage = require.resolve("astro/package.json");
@@ -461,7 +472,7 @@ const objectDefaultValue = parseColor("#33669980")!;
 `;
 }
 
-function renderFixture(packageRoot: string): string {
+function renderFixture(primitiveIndexPath: string): string {
   return `---
 import {
   ColorPickerArea,
@@ -487,7 +498,7 @@ import {
   ColorPickerValueInput,
   ColorPickerValueSwatch,
   ColorPickerValueText,
-} from "${packageRoot}/index.ts";
+} from "${primitiveIndexPath}";
 ---
 <form id="palette-form"></form>
 <ColorPickerRoot
@@ -555,4 +566,9 @@ import {
   </ColorPickerRoot>
 </div>
 `;
+}
+
+function relativeImportSpecifier(importerDir: string, target: string): string {
+  const relativePath = path.relative(importerDir, target).replaceAll("\\", "/");
+  return relativePath.startsWith(".") ? relativePath : `./${relativePath}`;
 }
