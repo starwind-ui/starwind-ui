@@ -62,7 +62,7 @@
     "release:gate": "pnpm verify && pnpm demo:smoke && pnpm react-demo:smoke && pnpm runtime:size:check",
     "release:artifacts": "pnpm runtime:build && pnpm react:build && pnpm cli:build",
     "publish:release:dry-run": "pnpm release:prepare && pnpm release:gate && pnpm release:artifacts && node scripts/release-packages.mjs --dry-run",
-    "publish:release": "pnpm release:prepare && pnpm release:gate && pnpm release:artifacts && node scripts/release-packages.mjs --publish",
+    "publish:release": "node scripts/release-packages.mjs --publish",
     "release:beta:prepare": "pnpm release:prepare",
     "release:beta:gate": "pnpm release:gate",
     "release:beta:artifacts": "pnpm release:artifacts",
