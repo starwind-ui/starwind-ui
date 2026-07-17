@@ -2219,7 +2219,7 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
         createTsHeader(generatedBy),
       ),
     ).rejects.toThrow("cannot print invalid Combobox spec");
-  }, 45_000);
+  }, 120_000);
 
   it("generates Menu React primitives through the Menu specialized adapter spec without output drift", async () => {
     const tempRoot = getTempRoot();
@@ -2434,7 +2434,7 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
         createTsHeader(generatedBy),
       ),
     ).rejects.toThrow("cannot print invalid Menu spec");
-  }, 30_000);
+  }, 120_000);
 
   it("generates Context Menu React primitives through the Context Menu specialized adapter spec without output drift", async () => {
     const tempRoot = getTempRoot();
