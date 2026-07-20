@@ -1,5 +1,13 @@
 # @starwind-ui/runtime
 
+## 0.1.0-beta.3
+
+### Patch Changes
+
+- Prevent Styled Progress indicators from animating across incompatible determinate and indeterminate
+  geometries while preserving normal determinate value transitions and reduced-motion behavior.
+- Keep Color Picker editing controls usable after clearing an optional value by retaining the last color as their editing baseline.
+
 ## 0.1.0-beta.2
 
 ### Minor Changes
