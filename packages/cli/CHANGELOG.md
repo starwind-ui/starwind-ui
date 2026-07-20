@@ -1,5 +1,25 @@
 # starwind
 
+## 3.0.0-beta.3
+
+### Minor Changes
+
+- Add a styled `DropdownLinkItem` for native anchor navigation while keeping `DropdownItem` focused
+  on menu actions.
+- Coordinate Card section gaps and insets through an overridable `--card-spacing` variable, with
+  default and small size presets that keep Astro and React styled output in sync.
+
+### Patch Changes
+
+- Apply divider borders only to non-last Accordion items in generated Astro and React components.
+- Render canonical and CLI-installed Avatar roots as inline flex containers so the existing small,
+  medium, and large size variants produce exact circular geometry while preserving image and fallback
+  visibility.
+- Prevent Styled Progress indicators from animating across incompatible determinate and indeterminate
+  geometries while preserving normal determinate value transitions and reduced-motion behavior.
+- Normalize installed Astro and React Progress components consistently with Runtime for reversed,
+  equal, invalid, and non-finite ranges and values.
+
 ## 3.0.0-beta.2
 
 ### Minor Changes

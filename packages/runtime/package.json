@@ -1,6 +1,6 @@
 {
   "name": "@starwind-ui/runtime",
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "description": "Framework-agnostic Runtime controllers for Starwind UI primitives",
   "license": "MIT",
   "author": {
