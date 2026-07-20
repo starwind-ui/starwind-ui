@@ -341,6 +341,9 @@ describe("styled component release intents", () => {
     const currentManifestPath = path.resolve(
       "packages/cli/registry/styled-component-versions.json",
     );
+    const currentManifest = JSON.parse(await readFile(currentManifestPath, "utf8")) as {
+      components: Record<string, string>;
+    };
     await mkdir(fragmentRoot, { recursive: true });
     await mkdir(path.dirname(manifestPath), { recursive: true });
     await writeFile(manifestPath, await readFile(currentManifestPath, "utf8"));
@@ -357,7 +360,9 @@ describe("styled component release intents", () => {
     });
     const accordion = registry.components.find((component) => component.name === "accordion")!;
 
-    expect(accordion.version).toBe("2.0.2");
+    expect(accordion.version).toBe(
+      applyStyledVersionIntents(currentManifest.components, { accordion: "patch" }).accordion,
+    );
     expect(Object.keys(accordion.targets ?? {}).sort()).toEqual(["astro", "react"]);
     expect(
       Object.values(accordion.targets ?? {}).flatMap((target) =>
