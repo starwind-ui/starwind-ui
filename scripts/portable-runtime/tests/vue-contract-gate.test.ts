@@ -781,8 +781,17 @@ describe("Vue non-shipping public-contract gate", () => {
     expect(changesetConfig.ignore).toEqual(approvedChangesetIgnore);
     expect(changesetConfig.fixed.flat().filter(containsBoundaryAwareVue)).toEqual([]);
     expect(findChangesetConfigVueViolations(changesetConfig)).toEqual([]);
+    const prereleaseState = JSON.parse(
+      readFileSync(join(process.cwd(), ".changeset/pre.json"), "utf8"),
+    ) as {
+      changesets: string[];
+      initialVersions: Record<string, string>;
+    };
+    expect(prereleaseState.initialVersions["vue-demo"]).toBe("0.0.0");
+    expect(prereleaseState.initialVersions["@starwind-ui/vue"]).toBe("0.0.0");
+    expect(prereleaseState.changesets.filter(containsBoundaryAwareVue)).toEqual([]);
     for (const file of listFiles(join(process.cwd(), ".changeset")).filter(
-      (candidate) => candidate !== "config.json",
+      (candidate) => candidate !== "config.json" && candidate !== "pre.json",
     )) {
       expect(
         containsBoundaryAwareVue(readFileSync(join(process.cwd(), ".changeset", file), "utf8")),
