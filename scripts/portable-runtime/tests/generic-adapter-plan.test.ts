@@ -1005,11 +1005,8 @@ describe("GenericAdapterPlan", () => {
     expect(
       genericAdapterFutureFrameworkTracerClassifications.map((entry) => entry.component),
     ).toEqual([
-      "button/vue",
       "toggle/vue",
       "collapsible/vue",
-      "checkbox/vue",
-      "select/vue",
       "menu/vue",
       "navigation-menu/vue",
       "combobox/vue",
@@ -1022,18 +1019,6 @@ describe("GenericAdapterPlan", () => {
       "combobox/solid",
     ]);
     expect(genericAdapterFutureFrameworkTracerClassifications).toContainEqual({
-      component: "checkbox/vue",
-      reason:
-        "Non-shipping Vue SFC tracer fixture for the Checkbox boolean form-control Adapter Family Plan; not included in package exports, CLI registry output, or demo dependencies.",
-      strategy: "future-framework-tracer",
-    });
-    expect(genericAdapterFutureFrameworkTracerClassifications).toContainEqual({
-      component: "select/vue",
-      reason:
-        "Non-shipping Vue SFC tracer fixture for the Select Specialized Adapter Spec; not included in package exports, CLI registry output, or demo dependencies.",
-      strategy: "future-framework-tracer",
-    });
-    expect(genericAdapterFutureFrameworkTracerClassifications).toContainEqual({
       component: "select/solid",
       reason:
         "Non-shipping Solid TSX tracer fixture for the Select Specialized Adapter Spec; not included in package exports, CLI registry output, or demo dependencies.",
@@ -1042,7 +1027,7 @@ describe("GenericAdapterPlan", () => {
     expect(genericAdapterFutureFrameworkTracerClassifications).toContainEqual({
       component: "menu/vue",
       reason:
-        "Non-shipping Vue SFC tracer fixture for the Menu Specialized Adapter Spec; not included in package exports, CLI registry output, or demo dependencies.",
+        "Unsupported, non-normative Vue SFC tracer evidence for the Menu Specialized Adapter Spec; not included in package exports, CLI registry output, or demo dependencies.",
       strategy: "future-framework-tracer",
     });
     expect(genericAdapterFutureFrameworkTracerClassifications).toContainEqual({
@@ -1054,7 +1039,7 @@ describe("GenericAdapterPlan", () => {
     expect(genericAdapterFutureFrameworkTracerClassifications).toContainEqual({
       component: "navigation-menu/vue",
       reason:
-        "Non-shipping Vue SFC tracer fixture for the Navigation Menu Specialized Adapter Spec; not included in package exports, CLI registry output, or demo dependencies.",
+        "Unsupported, non-normative Vue SFC tracer evidence for the Navigation Menu Specialized Adapter Spec; not included in package exports, CLI registry output, or demo dependencies.",
       strategy: "future-framework-tracer",
     });
     expect(genericAdapterFutureFrameworkTracerClassifications).toContainEqual({
@@ -1066,7 +1051,7 @@ describe("GenericAdapterPlan", () => {
     expect(genericAdapterFutureFrameworkTracerClassifications).toContainEqual({
       component: "combobox/vue",
       reason:
-        "Non-shipping Vue SFC tracer fixture for the Combobox Specialized Adapter Spec; not included in package exports, CLI registry output, or demo dependencies.",
+        "Unsupported, non-normative Vue SFC tracer evidence for the Combobox Specialized Adapter Spec; not included in package exports, CLI registry output, or demo dependencies.",
       strategy: "future-framework-tracer",
     });
     expect(genericAdapterFutureFrameworkTracerClassifications).toContainEqual({
@@ -1189,8 +1174,9 @@ describe("GenericAdapterPlan", () => {
     expect(readinessManualIslandList).not.toContain("- `carousel`");
     expect(readinessManualIslandList).not.toContain("- `toast`");
     expect(gate).toContain("Non-shipping future-framework tracers exist only for:");
-    expect(readinessFutureTracerList).toContain("- `select/vue`");
-    expect(readinessFutureTracerList).toContain("- `checkbox/vue`");
+    expect(readinessFutureTracerList).not.toContain("- `button/vue`");
+    expect(readinessFutureTracerList).not.toContain("- `checkbox/vue`");
+    expect(readinessFutureTracerList).not.toContain("- `select/vue`");
     expect(readinessFutureTracerList).toContain("- `select/solid`");
     expect(readinessFutureTracerList).toContain("- `menu/vue`");
     expect(readinessFutureTracerList).toContain("- `menu/solid`");
@@ -1208,7 +1194,9 @@ describe("GenericAdapterPlan", () => {
     expect(readinessFutureTracerList).not.toContain("- `accordion/solid`");
     expect(readinessFutureTracerList).not.toContain("- `sidebar/vue`");
     expect(readinessFutureTracerList).not.toContain("- `sidebar/solid`");
-    expect(gate).toContain("Vue is the only active Tier 0 future-framework vertical slice");
+    expect(gate).toContain(
+      "Vue has private, non-shipping generated output for Button, Checkbox, and Select",
+    );
     expect(gate).toMatch(/Existing Solid\s+tracers are frozen comparison artifacts/);
   });
 

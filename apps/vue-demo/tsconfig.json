@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "baseUrl": ".",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "types": ["vite/client", "vue"],
+    "paths": {
+      "@starwind-ui/runtime": ["../../packages/runtime/src/index.ts"],
+      "@starwind-ui/runtime/theme": ["../../packages/runtime/src/theme/theme.ts"],
+      "@starwind-ui/runtime/*": ["../../packages/runtime/src/components/*/index.ts"],
+      "@starwind-ui/vue": ["../../packages/vue/src/index.ts"],
+      "@starwind-ui/vue/*": ["../../packages/vue/src/*/index.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "vite.config.ts",
+    "../../packages/vue/src/**/*.ts",
+    "../../packages/vue/src/**/*.vue",
+    "../../packages/runtime/src/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "../../packages/runtime/src/**/*.test.ts",
+    "../../packages/runtime/src/**/*.browser.test.ts"
+  ]
+}

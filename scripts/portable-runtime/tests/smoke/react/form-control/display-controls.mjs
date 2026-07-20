@@ -129,12 +129,16 @@ export async function verifyReactDisplayControlCases({ page }) {
     .evaluate((element) => ({
       className: element.getAttribute("class"),
       dataSize: element.getAttribute("data-size"),
+      gap: getComputedStyle(element).gap,
+      paddingTop: getComputedStyle(element).paddingTop,
       text: element.textContent?.replace(/\s+/g, " ").trim(),
     }));
   const cardState = await card.evaluate((element) => ({
     className: element.getAttribute("class"),
     dataSize: element.getAttribute("data-size"),
+    gap: getComputedStyle(element).gap,
     hasDataSwCard: element.hasAttribute("data-sw-card"),
+    paddingTop: getComputedStyle(element).paddingTop,
     text: element.textContent?.replace(/\s+/g, " ").trim(),
   }));
   const cardPartStates = await card
@@ -151,6 +155,8 @@ export async function verifyReactDisplayControlCases({ page }) {
     .evaluateAll((items) =>
       items.map((item) => ({
         className: item.getAttribute("class"),
+        paddingInlineStart: getComputedStyle(item).paddingInlineStart,
+        paddingTop: getComputedStyle(item).paddingTop,
         slot: item.getAttribute("data-slot"),
         text: item.textContent?.replace(/\s+/g, " ").trim(),
       })),
@@ -170,10 +176,14 @@ export async function verifyReactDisplayControlCases({ page }) {
     cardState.className?.includes("runtime-card-custom") !== true ||
     cardState.className?.includes("bg-card") !== true ||
     cardState.className?.includes("group/card") !== true ||
-    cardState.className?.includes("gap-4") !== true ||
+    cardState.className?.includes("gap-(--card-spacing)") !== true ||
+    cardState.className?.includes("py-(--card-spacing)") !== true ||
+    cardState.className?.includes("[--card-spacing:--spacing(4)]") !== true ||
     cardState.className?.includes("text-sm") !== true ||
-    defaultCardState.className?.includes("gap-6") !== true ||
-    defaultCardState.className?.includes("py-6") !== true ||
+    defaultCardState.className?.includes("[--card-spacing:--spacing(5)]") !== true ||
+    cardState.gap !== cardState.paddingTop ||
+    defaultCardState.gap !== defaultCardState.paddingTop ||
+    cardState.gap === defaultCardState.gap ||
     defaultCardState.text !== "Default card shell" ||
     cardPartStates.length !== 6 ||
     cardHeader?.className?.includes("@container/card-header") !== true ||
@@ -184,8 +194,12 @@ export async function verifyReactDisplayControlCases({ page }) {
     cardDescription.className?.includes("text-muted-foreground") !== true ||
     cardAction?.text !== "Ready" ||
     cardAction.className?.includes("justify-self-end") !== true ||
-    cardContent?.className?.includes("group-data-[size=sm]/card:px-4") !== true ||
+    cardHeader.paddingInlineStart !== cardState.gap ||
+    cardContent?.className?.includes("px-(--card-spacing)") !== true ||
+    cardContent.paddingInlineStart !== cardState.gap ||
     cardFooter?.className?.includes("bg-muted/50") !== true ||
+    cardFooter.className?.includes("p-(--card-spacing)") !== true ||
+    cardFooter.paddingTop !== cardState.gap ||
     cardState.text?.includes("Footer content") !== true
   ) {
     throw new Error(

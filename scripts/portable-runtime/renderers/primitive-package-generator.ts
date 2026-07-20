@@ -1,7 +1,8 @@
 import {
   getPrimitiveFrameworkAdapterTarget,
+  resolvePrimitiveFrameworkAdapterTargetComponents,
   type PrimitiveFrameworkAdapterTarget,
-} from "./framework-adapters/index.js";
+} from "./framework-adapters/target-registry.js";
 import { getPrimitiveGeneratorEntries } from "./primitive-generator-registry.js";
 
 export type GeneratePrimitiveWrappersForTargetOptions = {
@@ -14,18 +15,23 @@ export async function generatePrimitiveWrappersForTarget(
   { generatedBy, outputRoot }: GeneratePrimitiveWrappersForTargetOptions,
 ): Promise<void> {
   const targetRegistration = getPrimitiveFrameworkAdapterTarget(target);
+  const resolvedComponents = resolvePrimitiveFrameworkAdapterTargetComponents(target);
+  const resolvedComponentSet = new Set(resolvedComponents);
 
   await targetRegistration.primitive.generatePackage({
+    components: resolvedComponents,
     generatePrimitiveEntries: async ({ componentHeader, moduleHeader, outputRoot }) => {
       await Promise.all(
-        getPrimitiveGeneratorEntries().map((entry) =>
-          entry.generateTarget({
-            componentHeader,
-            moduleHeader,
-            outputRoot,
-            target,
-          }),
-        ),
+        getPrimitiveGeneratorEntries()
+          .filter((entry) => resolvedComponentSet.has(entry.component))
+          .map((entry) =>
+            entry.generateTarget({
+              componentHeader,
+              moduleHeader,
+              outputRoot,
+              target,
+            }),
+          ),
       );
     },
     generatedBy,

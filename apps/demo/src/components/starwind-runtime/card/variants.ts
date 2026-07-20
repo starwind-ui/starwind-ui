@@ -2,14 +2,14 @@ import { tv } from "tailwind-variants";
 
 export const card = tv({
   base: [
-    "bg-card text-card-foreground group/card ring-border flex flex-col rounded-xl ring-1",
+    "bg-card text-card-foreground group/card ring-border flex flex-col gap-(--card-spacing) rounded-xl py-(--card-spacing) ring-1",
     "has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0",
     "*:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
   ],
   variants: {
     size: {
-      default: "gap-6 py-6",
-      sm: "gap-4 py-4 text-sm",
+      default: "[--card-spacing:--spacing(5)]",
+      sm: "text-sm [--card-spacing:--spacing(4)]",
     },
   },
   defaultVariants: {
@@ -22,7 +22,7 @@ export const cardAction = tv({
 });
 
 export const cardContent = tv({
-  base: "px-6 group-data-[size=sm]/card:px-4",
+  base: "px-(--card-spacing)",
 });
 
 export const cardDescription = tv({
@@ -30,12 +30,12 @@ export const cardDescription = tv({
 });
 
 export const cardFooter = tv({
-  base: "bg-muted/50 flex items-center rounded-b-xl border-t p-6 group-data-[size=sm]/card:p-4",
+  base: "bg-muted/50 flex items-center rounded-b-xl border-t p-(--card-spacing)",
 });
 
 export const cardHeader = tv({
   base: [
-    "@container/card-header grid auto-rows-min items-start gap-1 px-6 group-data-[size=sm]/card:px-4",
+    "@container/card-header grid auto-rows-min items-start gap-1 px-(--card-spacing)",
     "has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto]",
   ],
 });

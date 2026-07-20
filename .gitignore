@@ -19,6 +19,7 @@ docs/portable-runtime/diagnostics/
 
 # dependencies
 node_modules/
+.styled-component-intents/
 
 # logs
 npm-debug.log*

@@ -5,6 +5,7 @@ import DropdownContent from "./DropdownContent.astro";
 import DropdownGroup from "./DropdownGroup.astro";
 import DropdownItem from "./DropdownItem.astro";
 import DropdownLabel from "./DropdownLabel.astro";
+import DropdownLinkItem from "./DropdownLinkItem.astro";
 import DropdownRadioGroup from "./DropdownRadioGroup.astro";
 import DropdownRadioItem from "./DropdownRadioItem.astro";
 import DropdownRadioItemIndicator from "./DropdownRadioItemIndicator.astro";
@@ -52,6 +53,7 @@ export {
   DropdownGroup,
   DropdownItem,
   DropdownLabel,
+  DropdownLinkItem,
   DropdownRadioGroup,
   DropdownRadioItem,
   DropdownRadioItemIndicator,
@@ -74,6 +76,7 @@ export default {
   RadioItem: DropdownRadioItem,
   RadioItemIndicator: DropdownRadioItemIndicator,
   Item: DropdownItem,
+  LinkItem: DropdownLinkItem,
   Group: DropdownGroup,
   Label: DropdownLabel,
   Separator: DropdownSeparator,

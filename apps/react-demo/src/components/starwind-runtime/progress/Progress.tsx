@@ -24,19 +24,24 @@ function Progress(props: ProgressProps) {
   } = props;
 
   const ariaLabel = rest["aria-label"] ?? label;
-  const progressValue = value == null || Number.isNaN(Number(value)) ? null : Number(value);
-  const isIndeterminate = progressValue === null;
   const boundedMin = Number.isFinite(min) ? min : 0;
   const boundedMax = Number.isFinite(max) ? max : 100;
+  const normalizedMin = Math.min(boundedMin, boundedMax);
+  const normalizedMax = Math.max(boundedMin, boundedMax);
+  const progressValue =
+    value == null || !Number.isFinite(Number(value))
+      ? null
+      : Math.min(Math.max(Number(value), normalizedMin), normalizedMax);
+  const isIndeterminate = progressValue === null;
   const progressPercent = isIndeterminate
     ? 0
-    : boundedMax === boundedMin
-      ? progressValue >= boundedMax
+    : normalizedMax === normalizedMin
+      ? progressValue >= normalizedMax
         ? 100
         : 0
       : Math.round(
           Math.min(
-            Math.max(((progressValue - boundedMin) / (boundedMax - boundedMin)) * 100, 0),
+            Math.max(((progressValue - normalizedMin) / (normalizedMax - normalizedMin)) * 100, 0),
             100,
           ),
         );
@@ -50,8 +55,8 @@ function Progress(props: ProgressProps) {
         variant: isIndeterminate ? "indeterminate" : undefined,
         class: className,
       })}
-      max={boundedMax}
-      min={boundedMin}
+      max={normalizedMax}
+      min={normalizedMin}
       ref={ref}
       value={progressValue}
       {...rest}

@@ -161,6 +161,7 @@ export type ColorPickerInstance = {
 type Channel = ColorPickerChannel;
 type InteractionSession = {
   start: ColorPickerColor | null;
+  editingStart: ColorPickerColor;
   proposed: ColorPickerColor | null;
   pending: ColorPickerColor | null | undefined;
   changed: boolean;
@@ -210,6 +211,7 @@ class ColorPickerController implements ColorPickerInstance {
   private abort = new AbortController();
   private controlled: boolean;
   private value: ColorPickerColor | null;
+  private editingValue: ColorPickerColor;
   private format: ColorPickerFormat;
   private disabled: boolean;
   private readOnly: boolean;
@@ -282,6 +284,7 @@ class ColorPickerController implements ColorPickerInstance {
       parsedInitialValue === undefined
         ? this.normalizeForCapability(parseColor("#000000")!)
         : parsedInitialValue;
+    this.editingValue = this.value ?? this.normalizeForCapability(parseColor("#000000")!)!;
     this.initialValue = this.value;
     this.initialFormat = this.format;
     this.bind();
@@ -398,6 +401,7 @@ class ColorPickerController implements ColorPickerInstance {
       this.invalidateEyeDropper();
       this.alpha = options.alpha;
       this.clearDrafts();
+      this.editingValue = this.normalizeForCapability(this.editingValue)!;
       this.replaceAmbient(this.value);
     }
     if (options.allowEmpty !== undefined && options.allowEmpty !== this.allowEmpty) {
@@ -619,14 +623,14 @@ class ColorPickerController implements ColorPickerInstance {
   private parseDraft(input: HTMLInputElement): ColorPickerColor | undefined {
     if (input.hasAttribute("data-sw-color-picker-value-input"))
       return this.normalizeForCapability(parseColor(input.value)) ?? undefined;
-    if (!this.value) return undefined;
+    const editingValue = this.value ?? this.editingValue;
     const channel = readChannel(input);
     if (channel === "alpha" && !this.alpha) return undefined;
     const normalized = input.value.trim().replace(",", ".");
     if (normalized === "") return undefined;
     const value = Number(normalized);
     if (!Number.isFinite(value)) return undefined;
-    return updateChannel(this.value, channel, value);
+    return updateChannel(editingValue, channel, value);
   }
   private restoreDraft(input: HTMLInputElement) {
     this.clearDraft(input);
@@ -705,14 +709,16 @@ class ColorPickerController implements ColorPickerInstance {
     focusTarget?.focus({ preventScroll: true });
     this.render();
     event.preventDefault();
-    if (this.readOnly || !this.value) return;
+    if (this.readOnly) return;
     this.endPointer(false);
     this.cancelNativeSession();
+    const editingValue = this.value ?? this.editingValue;
     const pointerAbort = new AbortController();
     this.pointer = {
       pointerId: event.pointerId,
       start: this.value,
-      proposed: this.value,
+      editingStart: editingValue,
+      proposed: editingValue,
       pending: undefined,
       changed: false,
       generation: 0,
@@ -764,7 +770,8 @@ class ColorPickerController implements ColorPickerInstance {
     target: HTMLElement,
     reason: ColorPickerValueChangeReason,
   ) {
-    if (!this.value || !this.pointer) return;
+    if (!this.pointer) return;
+    const editingValue = this.value ?? this.editingValue;
     const rect = target.getBoundingClientRect();
     let x = clamp((event.clientX - rect.left) / Math.max(rect.width, 1), 0, 1);
     const y = clamp((event.clientY - rect.top) / Math.max(rect.height, 1), 0, 1);
@@ -780,11 +787,11 @@ class ColorPickerController implements ColorPickerInstance {
         '[data-sw-color-picker-area-input][data-axis="y"]',
         target,
       );
-      const { min: xMin, max: xMax } = projectChannel(this.value, xChannel, xInput);
-      const { min: yMin, max: yMax } = projectChannel(this.value, yChannel, yInput);
+      const { min: xMin, max: xMax } = projectChannel(editingValue, xChannel, xInput);
+      const { min: yMin, max: yMax } = projectChannel(editingValue, yChannel, yInput);
       next = updateChannel(
         updateChannel(
-          this.value,
+          editingValue,
           xChannel,
           snapColorPickerChannelValue(
             xMin + x * (xMax - xMin),
@@ -807,9 +814,9 @@ class ColorPickerController implements ColorPickerInstance {
         "[data-sw-color-picker-channel-input]",
         target,
       );
-      const { min, max } = projectChannel(this.value, channel, channelInput);
+      const { min, max } = projectChannel(editingValue, channel, channelInput);
       next = updateChannel(
-        this.value,
+        editingValue,
         channel,
         snapColorPickerChannelValue(
           min + ratio * (max - min),
@@ -838,6 +845,7 @@ class ColorPickerController implements ColorPickerInstance {
     const shouldCommit = completed && session.changed;
     if (!completed && !this.controlled) {
       this.replaceAmbient(session.start);
+      this.editingValue = session.editingStart;
     }
     this.render();
     if (shouldCommit)
@@ -859,6 +867,7 @@ class ColorPickerController implements ColorPickerInstance {
     this.nativeSession = undefined;
     if (!this.controlled) {
       this.replaceAmbient(session.start);
+      this.editingValue = session.editingStart;
       this.render();
     }
   }
@@ -893,10 +902,11 @@ class ColorPickerController implements ColorPickerInstance {
     session.changed = !equal(session.start, outcome.value);
   }
   private keydown(event: KeyboardEvent, input: HTMLInputElement) {
-    if (this.disabled || this.readOnly || !this.value) return;
+    if (this.disabled || this.readOnly) return;
+    const editingValue = this.value ?? this.editingValue;
     const channel = this.inputChannel(input);
     if (channel === "alpha" && !this.alpha) return;
-    const projection = projectChannel(this.value, channel, input);
+    const projection = projectChannel(editingValue, channel, input);
     const { min, max, step } = projection;
     let current = projection.displayed,
       next: number;
@@ -922,11 +932,11 @@ class ColorPickerController implements ColorPickerInstance {
           : snapColorPickerChannelValue(current + stepDelta * step, channel, step);
     }
     event.preventDefault();
-    const candidate = updateChannel(this.value, channel, next);
+    const candidate = updateChannel(editingValue, channel, next);
     this.propose(candidate, { reason: "keyboard", trigger: input, event, commit: true });
   }
   private nativeInput(event: Event, input: HTMLInputElement) {
-    if (this.disabled || this.readOnly || !this.value) {
+    if (this.disabled || this.readOnly) {
       this.render();
       return;
     }
@@ -935,19 +945,21 @@ class ColorPickerController implements ColorPickerInstance {
     if (this.nativeSession && this.nativeSession.input !== input) this.cancelNativeSession();
     const channel = this.inputChannel(input);
     if (channel === "alpha" && !this.alpha) return this.render();
+    const editingValue = this.value ?? this.editingValue;
     const session =
       this.nativeSession ??
       (this.nativeSession = {
         input,
         configuration: this.nativeConfiguration(input),
         start: this.value,
-        proposed: this.value,
+        editingStart: editingValue,
+        proposed: editingValue,
         pending: undefined,
         changed: false,
         generation: 0,
       });
     const proposed = updateChannel(
-      this.value,
+      editingValue,
       channel,
       snapColorPickerChannelValue(inputValue, channel, readStep(input, channel)),
     );
@@ -984,6 +996,7 @@ class ColorPickerController implements ColorPickerInstance {
     next = this.normalizeForCapability(next);
     const proposalId = ++this.proposalSequence;
     const previous = this.value;
+    const previousEditingValue = this.editingValue;
     if (equal(previous, next)) {
       this.render();
       return { status: "unchanged", value: next };
@@ -1024,8 +1037,10 @@ class ColorPickerController implements ColorPickerInstance {
       return { status: "superseded" };
     }
     if (canceled) {
-      if (this.ambientRevision !== proposalAmbientRevision && equal(this.value, next))
+      if (this.ambientRevision !== proposalAmbientRevision && equal(this.value, next)) {
         this.replaceAmbient(previous);
+        if (!previous) this.editingValue = previousEditingValue;
+      }
       this.render();
       return { status: "canceled" };
     }
@@ -1046,6 +1061,7 @@ class ColorPickerController implements ColorPickerInstance {
   private replaceAmbient(value: ColorPickerColor | null) {
     value = this.normalizeForCapability(value);
     this.value = value;
+    if (value) this.editingValue = value;
     this.ambientRevision += 1;
     this.reconcileActiveSession(value);
   }
@@ -1082,9 +1098,9 @@ class ColorPickerController implements ColorPickerInstance {
   private stringify(value: ColorPickerColor | null) {
     return serializeColorPickerValue(value, this.format, this.alpha);
   }
-  private projectionState(): ColorPickerInitialState {
+  private projectionState(value: ColorPickerColor | null = this.value): ColorPickerInitialState {
     return createColorPickerInitialState({
-      value: this.value,
+      value,
       format: this.format,
       alpha: this.alpha,
       allowEmpty: this.allowEmpty,
@@ -1102,6 +1118,7 @@ class ColorPickerController implements ColorPickerInstance {
   }
   private render() {
     const state = this.projectionState();
+    const editingState = this.projectionState(this.editingValue);
     const formProxyStateTarget = this.getFormProxyStateTarget();
     this.captureInitialValidityOwnership(this.root);
     if (formProxyStateTarget) this.captureInitialValidityOwnership(formProxyStateTarget);
@@ -1113,10 +1130,13 @@ class ColorPickerController implements ColorPickerInstance {
     });
     this.queryOwnedAll<HTMLInputElement>(
       "[data-sw-color-picker-area-input], [data-sw-color-picker-channel-input]",
-    ).forEach((input) => this.renderInput(input, state));
-    this.queryOwnedAll<HTMLInputElement>(
-      "[data-sw-color-picker-value-input], [data-sw-color-picker-channel-field]",
-    ).forEach((input) => this.renderDraftInput(input, state));
+    ).forEach((input) => this.renderInput(input, editingState));
+    this.queryOwnedAll<HTMLInputElement>("[data-sw-color-picker-value-input]").forEach((input) =>
+      this.renderDraftInput(input, state),
+    );
+    this.queryOwnedAll<HTMLInputElement>("[data-sw-color-picker-channel-field]").forEach((input) =>
+      this.renderDraftInput(input, editingState),
+    );
     this.queryOwnedAll<HTMLElement>("[data-sw-color-picker-value-swatch]").forEach((swatch) =>
       applyProjection(swatch, projectColorPickerInitialPart(state, { part: "valueSwatch" })),
     );
@@ -1213,7 +1233,7 @@ class ColorPickerController implements ColorPickerInstance {
       );
       applyProjection(
         area,
-        projectColorPickerInitialPart(state, {
+        projectColorPickerInitialPart(editingState, {
           part: "area",
           xChannel,
           yChannel,
@@ -1225,7 +1245,7 @@ class ColorPickerController implements ColorPickerInstance {
         (thumb) => {
           applyProjection(
             thumb,
-            projectColorPickerInitialPart(state, {
+            projectColorPickerInitialPart(editingState, {
               part: "areaThumb",
               xChannel,
               yChannel,
@@ -1244,7 +1264,7 @@ class ColorPickerController implements ColorPickerInstance {
           slider.getAttribute("data-orientation") === "vertical" ? "vertical" : "horizontal";
       applyProjection(
         slider,
-        projectColorPickerInitialPart(state, {
+        projectColorPickerInitialPart(editingState, {
           part: "channelSlider",
           channel,
           orientation,
@@ -1257,7 +1277,7 @@ class ColorPickerController implements ColorPickerInstance {
       ).forEach((thumb) =>
         applyProjection(
           thumb,
-          projectColorPickerInitialPart(state, {
+          projectColorPickerInitialPart(editingState, {
             part: "channelSliderThumb",
             channel,
             orientation,

@@ -47,11 +47,16 @@ export type FrameworkAdapterTargetGeneratePrimitiveEntriesArgs = {
   outputRoot: string;
 };
 
+export type FrameworkAdapterTargetPrimitiveSupport =
+  | { kind: "all" }
+  | { components: readonly string[]; kind: "subset" };
+
 export type FrameworkAdapterTargetGeneratePrimitiveEntries = (
   args: FrameworkAdapterTargetGeneratePrimitiveEntriesArgs,
 ) => Promise<void>;
 
 export type FrameworkAdapterTargetPrimitivePackageArgs = {
+  components: readonly string[];
   generatePrimitiveEntries: FrameworkAdapterTargetGeneratePrimitiveEntries;
   generatedBy: string;
   outputRoot: string;
@@ -111,6 +116,7 @@ export type FrameworkAdapterTargetPrimitiveCapability = {
   generatePackage: FrameworkAdapterTargetPrimitivePackageGenerator;
   manualPrimitives?: FrameworkAdapterTargetManualPrimitiveGenerators;
   outputModel: FrameworkAdapterTargetPrimitiveOutputModel;
+  support?: FrameworkAdapterTargetPrimitiveSupport;
 };
 
 export type FrameworkAdapterTargetRegistration<

@@ -46,6 +46,12 @@ export const themeToggleStyledContract: StyledAdapterContract = {
           source: "@starwind-ui/runtime/theme",
           frameworks: ["react"],
         },
+        {
+          type: "named",
+          importName: "initThemeController",
+          source: "@starwind-ui/vue/theme",
+          frameworks: ["vue"],
+        },
         { type: "default", importName: "Moon", source: "@tabler/icons/outline/moon.svg" },
         { type: "default", importName: "Sun", source: "@tabler/icons/outline/sun.svg" },
       ],

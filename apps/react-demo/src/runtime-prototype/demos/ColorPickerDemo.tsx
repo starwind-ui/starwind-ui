@@ -376,6 +376,8 @@ export function ColorPickerDemo() {
         >
           <ColorPickerLabel>Required color</ColorPickerLabel>
           <ColorPickerInput />
+          <ColorPickerArea aria-label="Required color saturation and brightness" />
+          <ColorPickerSliders />
           <ColorPickerSwatchGroup aria-label="Required color presets">
             <ColorPickerSwatch value="#16a34a" aria-label="Choose required green" />
           </ColorPickerSwatchGroup>

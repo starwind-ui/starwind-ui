@@ -1969,6 +1969,47 @@ describe.sequential("runtime component installs", () => {
     expect(mockUpdateConfig).not.toHaveBeenCalled();
   });
 
+  it("offers the deferred Accordion patch after the reconciled registry is generated", async () => {
+    mockLoadRegistry.mockResolvedValue({
+      ...registryFixture,
+      components: [
+        {
+          ...createRegistryComponent("accordion"),
+          version: "2.0.2",
+        },
+      ],
+    });
+    const currentConfig: StarwindConfig = {
+      ...runtimeConfig,
+      components: [
+        {
+          name: "accordion",
+          version: "2.0.1",
+          framework: "react",
+        },
+      ],
+    };
+    const targetPath = join(tempDir, "src", "components", "starwind", "accordion", "index.tsx");
+    await mkdir(dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, "export function Accordion() { return 'old'; }\n", "utf8");
+    mockFilterUninstalledDependencies.mockResolvedValue([]);
+
+    const plan = await planRuntimeComponentUpdates(["accordion"], {
+      config: currentConfig,
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+
+    expect(plan.failed).toEqual([]);
+    expect(plan.updates).toEqual([
+      expect.objectContaining({
+        oldVersion: "2.0.1",
+        newVersion: "2.0.2",
+        component: expect.objectContaining({ name: "accordion" }),
+      }),
+    ]);
+  });
+
   it("warns and skips a styled update when new package requirements are declined", async () => {
     const currentConfig: StarwindConfig = {
       ...runtimeConfig,

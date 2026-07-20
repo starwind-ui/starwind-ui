@@ -1,10 +1,11 @@
 import type { RuntimeAdapterContract } from "../contracts/primitive/types.js";
+import type { AdapterOutputModel } from "./framework-adapters/index.js";
 import {
-  type AdapterOutputModel,
   getPrimitiveFrameworkAdapterTarget,
-  getPrimitiveFrameworkAdapterTargetNames,
+  getPrimitiveFrameworkAdapterTargetsForComponent,
   primitiveFrameworkAdapterTargets,
-} from "./framework-adapters/index.js";
+  resolvePrimitiveFrameworkAdapterTargetComponents,
+} from "./framework-adapters/target-registry.js";
 import {
   buildGenericAdapterOutputModel,
   buildGenericAdapterPlan,
@@ -23,8 +24,10 @@ export function getRouteFreePrimitiveFrameworkAdapter(target: PrimitiveRouteFree
   return getPrimitiveFrameworkAdapterTarget(target).adapter;
 }
 
-export function getRouteFreePrimitiveTargets(): readonly PrimitiveRouteFreeTarget[] {
-  return getPrimitiveFrameworkAdapterTargetNames();
+export function getRouteFreePrimitiveTargets(
+  component: string,
+): readonly PrimitiveRouteFreeTarget[] {
+  return getPrimitiveFrameworkAdapterTargetsForComponent(component);
 }
 
 export function createGenericAdapterPlanPrimitiveGeneratorEntry({
@@ -79,15 +82,19 @@ export function createManualPrimitiveGeneratorEntry({
   component: string;
   reason: string;
 }): PrimitiveGeneratorRegistryEntry {
+  const supportingTargets = getPrimitiveFrameworkAdapterTargetsForComponent(component);
   const targets = primitiveFrameworkAdapterTargets
     .filter(
-      (registration) => typeof registration.primitive.manualPrimitives?.[component] === "function",
+      (registration) =>
+        supportingTargets.includes(registration.target) &&
+        typeof registration.primitive.manualPrimitives?.[component] === "function",
     )
     .map((registration) => registration.target);
 
   return {
     component,
     async generateTarget(args) {
+      resolvePrimitiveFrameworkAdapterTargetComponents(args.target, [component]);
       const targetRegistration = getPrimitiveFrameworkAdapterTarget(args.target);
       const generate = targetRegistration.primitive.manualPrimitives?.[component];
       if (!generate) {
@@ -122,19 +129,21 @@ function createAdapterOutputPrimitiveGeneratorEntry({
 }): PrimitiveGeneratorRegistryEntry {
   return {
     component,
-    generateTarget: (args) =>
-      writeRouteFreePrimitiveOutput({
+    generateTarget: (args) => {
+      resolvePrimitiveFrameworkAdapterTargetComponents(args.target, [component]);
+      return writeRouteFreePrimitiveOutput({
         buildOutputModel,
         componentHeader: args.componentHeader,
         componentName,
         moduleHeader: args.moduleHeader,
         outputRoot: args.outputRoot,
         target: args.target,
-      }),
+      });
+    },
     routeFree: {
       kind: "adapter-output-model",
       strategy,
-      targets: getRouteFreePrimitiveTargets(),
+      targets: getRouteFreePrimitiveTargets(component),
     },
     source,
   };

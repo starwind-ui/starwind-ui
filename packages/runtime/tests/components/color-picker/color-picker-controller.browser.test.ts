@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createColorPicker,
   parseColor,
+  type ColorPickerValueChangeDetails,
   type ColorPickerValueCommitDetails,
 } from "../../../src/components/color-picker";
 import { createPopover } from "../../../src/components/popover/popover";
@@ -12,6 +13,164 @@ afterEach(() => {
 });
 
 describe("Color Picker controller", () => {
+  it("restores a cleared required value from the retained editing color", () => {
+    const form = document.createElement("form");
+    document.body.append(form);
+    const root = render({ channels: ["hue"] });
+    root.insertAdjacentHTML(
+      "beforeend",
+      '<input data-sw-color-picker-value-input><span data-sw-color-picker-value-text></span><span data-sw-color-picker-value-swatch></span><button type="button" data-sw-color-picker-clear>Clear</button>',
+    );
+    form.append(root);
+    const changed = vi.fn();
+    const committed = vi.fn();
+    root.addEventListener("starwind:value-change", changed);
+    root.addEventListener("starwind:value-committed", committed);
+    const picker = createColorPicker(root, {
+      defaultValue: "#ff0000",
+      allowEmpty: true,
+      required: true,
+      name: "accent",
+    });
+
+    root.querySelector<HTMLButtonElement>("[data-sw-color-picker-clear]")!.click();
+
+    expect(picker.getValue()).toBeNull();
+    expect(hidden(root).value).toBe("");
+    expect(new FormData(form).get("accent")).toBe("");
+    expect(hidden(root).validity.valueMissing).toBe(true);
+    expect(root.querySelector<HTMLInputElement>("[data-sw-color-picker-value-input]")!.value).toBe(
+      "",
+    );
+    expect(root.querySelector<HTMLElement>("[data-sw-color-picker-value-text]")!.textContent).toBe(
+      "",
+    );
+    expect(channel(root, "hue")).toHaveAttribute("aria-valuenow", "0");
+
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+
+    expect(picker.getValue()!.hsb.hue).toBe(1);
+    expect(changed.mock.calls.at(-1)?.[0].detail).toMatchObject({
+      previousValue: null,
+      reason: "keyboard",
+    });
+    expect(committed).toHaveBeenCalledTimes(2);
+    expect(hidden(root).validity.valueMissing).toBe(false);
+    expect(new FormData(form).get("accent")).not.toBe("");
+  });
+
+  it.each([
+    {
+      name: "area pointer",
+      reason: "area-drag",
+      interact(root: HTMLElement) {
+        const area = getArea(root);
+        rect(area);
+        area.dispatchEvent(pointer("pointerdown", { clientX: 80, clientY: 20, buttons: 1 }));
+        document.dispatchEvent(pointer("pointerup", { clientX: 80, clientY: 20, buttons: 0 }));
+      },
+    },
+    {
+      name: "slider pointer",
+      reason: "channel-drag",
+      interact(root: HTMLElement) {
+        const slider = getSlider(root, "hue");
+        rect(slider);
+        slider.dispatchEvent(pointer("pointerdown", { clientX: 50, clientY: 50, buttons: 1 }));
+        document.dispatchEvent(pointer("pointerup", { clientX: 50, clientY: 50, buttons: 0 }));
+      },
+    },
+    {
+      name: "native range input",
+      reason: "channel-input",
+      interact(root: HTMLElement) {
+        const hue = channel(root, "hue");
+        hue.value = "120";
+        hue.dispatchEvent(new Event("input", { bubbles: true }));
+        hue.dispatchEvent(new Event("change", { bubbles: true }));
+      },
+    },
+  ])("restores a cleared value through $name", ({ reason, interact }) => {
+    const root = render({ channels: ["hue"] });
+    const changed = vi.fn();
+    const committed = vi.fn();
+    root.addEventListener("starwind:value-change", changed);
+    root.addEventListener("starwind:value-committed", committed);
+    const picker = createColorPicker(root, {
+      defaultValue: "hsb(210, 40%, 60%)",
+      allowEmpty: true,
+    });
+    const retainedAreaX = input(root, "x").value;
+    const retainedAreaY = input(root, "y").value;
+    const retainedHue = channel(root, "hue").value;
+
+    picker.setValue(null, { emit: false });
+
+    expect(input(root, "x").value).toBe(retainedAreaX);
+    expect(input(root, "y").value).toBe(retainedAreaY);
+    expect(channel(root, "hue").value).toBe(retainedHue);
+    interact(root);
+
+    expect(picker.getValue()).not.toBeNull();
+    expect(changed.mock.calls[0]?.[0].detail).toMatchObject({ previousValue: null, reason });
+    expect(committed).toHaveBeenCalledOnce();
+  });
+
+  it("restores the retained baseline after a canceled cleared drag", () => {
+    const root = render({ channels: ["hue"] });
+    const area = getArea(root);
+    rect(area);
+    const committed = vi.fn();
+    root.addEventListener("starwind:value-committed", committed);
+    const picker = createColorPicker(root, {
+      defaultValue: "hsb(210, 40%, 60%)",
+      allowEmpty: true,
+    });
+    picker.setValue(null, { emit: false });
+    const retainedX = input(root, "x").value;
+    const retainedY = input(root, "y").value;
+
+    area.dispatchEvent(pointer("pointerdown", { clientX: 80, clientY: 20, buttons: 1 }));
+    document.dispatchEvent(pointer("pointercancel", { clientX: 80, clientY: 20, buttons: 0 }));
+
+    expect(picker.getValue()).toBeNull();
+    expect(input(root, "x").value).toBe(retainedX);
+    expect(input(root, "y").value).toBe(retainedY);
+    expect(committed).not.toHaveBeenCalled();
+  });
+
+  it("normalizes a retained cleared alpha baseline when alpha is disabled", () => {
+    const root = render({ channels: ["hue"] });
+    const picker = createColorPicker(root, {
+      defaultValue: "rgba(255, 0, 0, 0.25)",
+      allowEmpty: true,
+    });
+    picker.setValue(null, { emit: false });
+
+    picker.setOptions({ alpha: false });
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+
+    expect(picker.getValue()!.alpha).toBe(1);
+    expect(picker.getValue()!.hsb.hue).toBe(1);
+  });
+
+  it("rejects cleared baseline edits while disabled or read-only", () => {
+    const root = render({ channels: ["hue"] });
+    const changed = vi.fn();
+    const picker = createColorPicker(root, { defaultValue: "#ff0000", allowEmpty: true });
+    picker.setValue(null, { emit: false });
+    root.addEventListener("starwind:value-change", changed);
+
+    picker.setDisabled(true);
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+    picker.setDisabled(false);
+    picker.setReadOnly(true);
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+
+    expect(picker.getValue()).toBeNull();
+    expect(changed).not.toHaveBeenCalled();
+  });
+
   it("hydrates alpha from initial projection ownership without changing raw DOM defaults", () => {
     const projectedWithoutAlpha = render();
     projectedWithoutAlpha.setAttribute("data-sw-color-picker-initial-owned", "a:data-alpha");
@@ -209,10 +368,12 @@ describe("Color Picker controller", () => {
     expect(channel(root, "alpha")).toHaveAttribute("aria-orientation", "vertical");
 
     picker.setValue(null, { emit: false });
-    expect(areaThumb(root).style.getPropertyValue("--sw-color-picker-area-thumb-color")).toBe("");
+    expect(areaThumb(root).style.getPropertyValue("--sw-color-picker-area-thumb-color")).toBe(
+      "#ff0000",
+    );
     expect(
       sliderThumb(root, "alpha").style.getPropertyValue("--sw-color-picker-channel-thumb-color"),
-    ).toBe("");
+    ).toBe("#ff000040");
   });
 
   it("uses caller-provided accessible text and color descriptions", () => {
@@ -917,32 +1078,96 @@ describe("Color Picker controller", () => {
     expect(input(root, "y")).not.toHaveAttribute("aria-roledescription");
   });
 
-  it("preserves explicit nullable initial state without crashing interaction paths", () => {
-    for (const options of [
-      { allowEmpty: true, value: null },
-      { allowEmpty: true, defaultValue: null },
-    ]) {
-      const root = render();
-      rect(getArea(root));
-      const picker = createColorPicker(root, options);
+  it("uses black to edit an initially empty uncontrolled value", () => {
+    const root = render();
+    const changed = vi.fn();
+    root.addEventListener("starwind:value-change", changed);
+    const picker = createColorPicker(root, { allowEmpty: true, defaultValue: null });
 
-      expect(picker.getValue()).toBeNull();
-      expect(picker.getValueAsString()).toBe("");
-      expect(root.getAttribute("data-value")).toBe("");
-      expect(root.style.getPropertyValue("--sw-color-picker-color")).toBe("transparent");
-      expect(() => channel(root, "hue").dispatchEvent(key("ArrowRight"))).not.toThrow();
-      expect(() =>
-        getArea(root).dispatchEvent(
-          pointer("pointerdown", { clientX: 50, clientY: 50, buttons: 1 }),
-        ),
-      ).not.toThrow();
-      channel(root, "hue").value = "10";
-      expect(() =>
-        channel(root, "hue").dispatchEvent(new Event("input", { bubbles: true })),
-      ).not.toThrow();
-      expect(picker.getValue()).toBeNull();
-      picker.destroy();
-    }
+    expect(picker.getValue()).toBeNull();
+    expect(root.getAttribute("data-value")).toBe("");
+    expect(root.style.getPropertyValue("--sw-color-picker-color")).toBe("transparent");
+    expect(channel(root, "hue")).toHaveAttribute("aria-valuenow", "0");
+
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+
+    expect(picker.getValue()!.hsb).toMatchObject({ hue: 1, saturation: 0, brightness: 0 });
+    expect(changed.mock.calls.at(-1)?.[0].detail.previousValue).toBeNull();
+  });
+
+  it("keeps an initially empty controlled value empty until synchronization", () => {
+    const root = render();
+    const changed = vi.fn();
+    const committed = vi.fn();
+    const picker = createColorPicker(root, {
+      allowEmpty: true,
+      value: null,
+      onValueChange: changed,
+      onValueCommitted: committed,
+    });
+
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+
+    expect(changed).toHaveBeenCalledOnce();
+    expect(changed.mock.calls[0]![1]).toMatchObject({ previousValue: null, reason: "keyboard" });
+    expect(committed).toHaveBeenCalledOnce();
+    expect(picker.getValue()).toBeNull();
+    expect(hidden(root).value).toBe("");
+    expect(channel(root, "hue")).toHaveAttribute("aria-valuenow", "0");
+  });
+
+  it("proposes from the last externally confirmed color after a controlled clear", () => {
+    const root = render({ channels: ["hue"] });
+    const changed = vi.fn();
+    const picker = createColorPicker(root, {
+      allowEmpty: true,
+      value: "#00ff00",
+      onValueChange: changed,
+    });
+    picker.setValue(null, { emit: false });
+
+    expect(channel(root, "hue")).toHaveAttribute("aria-valuenow", "120");
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+
+    expect(changed).toHaveBeenCalledOnce();
+    expect(changed.mock.calls[0]![0]!.hsb.hue).toBe(121);
+    expect(changed.mock.calls[0]![1]).toMatchObject({ previousValue: null, reason: "keyboard" });
+    expect(picker.getValue()).toBeNull();
+    expect(hidden(root).value).toBe("");
+  });
+
+  it("keeps a canceled cleared edit empty without committing or replacing its baseline", () => {
+    const root = render({ channels: ["hue"] });
+    const committed = vi.fn();
+    root.addEventListener("starwind:value-change", (event) => event.preventDefault());
+    root.addEventListener("starwind:value-committed", committed);
+    const picker = createColorPicker(root, { defaultValue: "#00ff00", allowEmpty: true });
+    picker.setValue(null, { emit: false });
+
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+
+    expect(picker.getValue()).toBeNull();
+    expect(channel(root, "hue")).toHaveAttribute("aria-valuenow", "120");
+    expect(committed).not.toHaveBeenCalled();
+  });
+
+  it("rolls back a canceled controlled confirmation to the cleared editing baseline", () => {
+    const root = render({ channels: ["hue"] });
+    const picker = createColorPicker(root, {
+      allowEmpty: true,
+      value: "#00ff00",
+    });
+    picker.setValue(null, { emit: false });
+    root.addEventListener("starwind:value-change", (event) => {
+      const detail = (event as CustomEvent<ColorPickerValueChangeDetails>).detail;
+      picker.setValue(detail.value, { emit: false });
+      event.preventDefault();
+    });
+
+    channel(root, "hue").dispatchEvent(key("ArrowRight"));
+
+    expect(picker.getValue()).toBeNull();
+    expect(channel(root, "hue")).toHaveAttribute("aria-valuenow", "120");
   });
 
   it("keeps controlled null accepted until non-emitting synchronization", () => {

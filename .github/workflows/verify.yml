@@ -15,6 +15,8 @@ jobs:
       - name: Checkout Repo
         # checkout@6.0.2
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
 
       - name: Install pnpm
         # pnpm/action-setup@v6.0.8
@@ -43,6 +45,10 @@ jobs:
 
       - name: Regenerate CLI Registries
         run: pnpm runtime:registry:generate
+
+      - name: Verify Styled Component Version Intent
+        if: github.event_name == 'pull_request'
+        run: pnpm styled:versions:check --base "${{ github.event.pull_request.base.sha }}"
 
       - name: Reject Generated Drift
         run: git diff --exit-code

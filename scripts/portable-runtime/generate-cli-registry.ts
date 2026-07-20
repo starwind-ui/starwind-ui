@@ -31,6 +31,36 @@ export const DEFAULT_CLI_REGISTRY_OUTPUT = "packages/cli/src/registry/bundled-re
 
 type RegistryImplementationTarget = FrameworkAdapterRegisteredTarget;
 type PrimitiveVendoringFramework = FrameworkAdapterRegisteredTarget;
+type PrimitiveTargetRegistration = (typeof primitiveFrameworkAdapterTargets)[number];
+type CliRegisteredPrimitiveTarget = PrimitiveTargetRegistration & {
+  target: FrameworkAdapterRegisteredTarget;
+};
+type PrimitiveVendoringTarget = CliRegisteredPrimitiveTarget & {
+  cliRegistry: PrimitiveTargetRegistration["cliRegistry"] & {
+    primitiveArtifact: NonNullable<PrimitiveTargetRegistration["cliRegistry"]["primitiveArtifact"]>;
+  };
+};
+
+type StyledCapabilityEntry = ReturnType<
+  typeof getFrameworkAdapterTargetsWithStyledCapability
+>[number];
+type CliRegisteredStyledCapabilityEntry = StyledCapabilityEntry & {
+  target: FrameworkAdapterRegisteredTarget;
+};
+
+function isCliRegisteredStyledCapabilityEntry(
+  entry: StyledCapabilityEntry,
+): entry is CliRegisteredStyledCapabilityEntry {
+  return getPrimitiveFrameworkAdapterTarget(entry.target).publicSupport.cliRegistry;
+}
+
+function isPrimitiveVendoringTarget(
+  registration: PrimitiveTargetRegistration,
+): registration is PrimitiveVendoringTarget {
+  return Boolean(
+    registration.publicSupport.cliRegistry && registration.cliRegistry.primitiveArtifact,
+  );
+}
 
 type RegistryFile = {
   content: string;
@@ -177,11 +207,11 @@ type PackageMetadata = {
 };
 
 const TARGETS: TargetDefinition[] = getFrameworkAdapterTargetsWithStyledCapability()
+  .filter(isCliRegisteredStyledCapabilityEntry)
   .map(({ capability, target }) => ({
     capability,
     registration: getPrimitiveFrameworkAdapterTarget(target),
   }))
-  .filter(({ registration }) => registration.publicSupport.cliRegistry)
   .map(({ capability, registration }) => {
     const adapterPackage = getCliRegistryAdapterPackage(registration.target);
 
@@ -200,26 +230,18 @@ const TARGETS: TargetDefinition[] = getFrameworkAdapterTargetsWithStyledCapabili
   });
 
 const PRIMITIVE_VENDORED_TARGETS: PrimitiveVendoringTargetDefinition[] =
-  primitiveFrameworkAdapterTargets
-    .filter((target) => target.publicSupport.cliRegistry && target.cliRegistry.primitiveArtifact)
-    .map((target) => {
-      const primitiveArtifact = target.cliRegistry.primitiveArtifact;
+  primitiveFrameworkAdapterTargets.filter(isPrimitiveVendoringTarget).map((target) => {
+    const primitiveArtifact = target.cliRegistry.primitiveArtifact;
 
-      if (!primitiveArtifact) {
-        throw new Error(
-          `Framework Adapter target "${target.target}" is missing primitive artifact metadata.`,
-        );
-      }
-
-      return {
-        extraPackageRequirements: primitiveArtifact.extraPackageRequirements,
-        framework: target.target,
-        generatedImportCandidateExtensions: target.cliRegistry.generatedImportCandidateExtensions,
-        includeLocalImportGraph: primitiveArtifact.includeLocalImportGraph,
-        outputDir: primitiveArtifact.outputDir,
-        sourceRoot: primitiveArtifact.sourceRoot,
-      };
-    });
+    return {
+      extraPackageRequirements: primitiveArtifact.extraPackageRequirements,
+      framework: target.target,
+      generatedImportCandidateExtensions: target.cliRegistry.generatedImportCandidateExtensions,
+      includeLocalImportGraph: primitiveArtifact.includeLocalImportGraph,
+      outputDir: primitiveArtifact.outputDir,
+      sourceRoot: primitiveArtifact.sourceRoot,
+    };
+  });
 
 export type StyledArtifactTargetPlanningFacts = {
   component: string;

@@ -5,11 +5,15 @@
 Starwind UI is a pnpm/Turbo monorepo for Astro and React components, framework-neutral Runtime
 controllers, generated Primitive adapters, and the `starwind` CLI.
 
-- `packages/core`: canonical styled component source and shared utilities.
+- `packages/core`: private, source-only canonical styled component source and shared utilities; it
+  is permanently retired from package publication.
 - `packages/runtime`: behavior-only DOM controllers and component subpath exports.
 - `packages/astro` and `packages/react`: generated first-party Primitive adapters.
+- `packages/vue`: private, non-shipping Vue adapter verification output; it is not an npm or CLI
+  support surface until a dedicated release transition removes the quarantine.
 - `packages/cli`: CLI commands, registries, migrations, and project integration.
 - `apps/demo` and `apps/react-demo`: complete Astro and React integration demos.
+- `apps/vue-demo`: private Vue integration verification for the quarantined adapter.
 - `scripts/portable-runtime`: adapter contracts, generators, smoke tests, and measurement tooling.
 
 Use pnpm for package work. Package metadata requires Node `>=22.12.0`; CI uses Node 24.
@@ -41,9 +45,11 @@ pnpm runtime:size:check
 - Keep TypeScript strict and ESM-only.
 - Put tests in the established `tests` homes rather than adding colocated `__tests__` directories.
 - Preserve `data-slot` for public part identity and use `data-sw-*` for Runtime discovery hooks.
-- Update CLI registry version manifests and regenerate registry artifacts rather than editing
-  generated registry JSON by hand.
-- Add a Changeset for package-facing changes.
+- Add deferred styled version intent under `.changeset/styled-components/` for changed existing
+  components; the generated Version Packages PR consolidates manifest bumps. Regenerate registry
+  artifacts rather than editing generated registry JSON by hand.
+- Add a Changeset for package-facing changes. Never add Changesets for retired `@starwind-ui/core`,
+  or for `@starwind-ui/vue` and `vue-demo` while they remain quarantined.
 - Use conventional commits such as `feat(runtime): ...`, `fix(cli): ...`, or `docs: ...`.
 
 Before handoff, run the narrowest relevant tests and report any checks that were not run.

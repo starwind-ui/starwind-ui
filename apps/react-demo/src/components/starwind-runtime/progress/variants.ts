@@ -14,7 +14,10 @@ export const progressTrack = tv({
 });
 
 export const progressIndicator = tv({
-  base: "h-full w-full flex-1 transition-transform",
+  base: [
+    "h-full w-full flex-1 transition-transform",
+    "data-instant:transition-none motion-reduce:transition-none",
+  ],
   variants: {
     variant: {
       indeterminate: "absolute inset-y-0 start-0 w-3/4",

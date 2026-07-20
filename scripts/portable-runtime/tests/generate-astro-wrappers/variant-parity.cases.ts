@@ -767,7 +767,7 @@ export function defineAstroVariantParityTests(getTempRoot: GetTempRoot): void {
     expect(imageContract.frameworks).toEqual(["astro"]);
   });
 
-  it("keeps the Card styled variant contract aligned with canonical Starwind classes", async () => {
+  it("keeps non-spacing Card styles aligned with the legacy canonical component", async () => {
     const cardContract = starwindStyledContracts.find((contract) => contract.component === "card")!;
     const canonicalCardVariants = await readFile(
       path.join(process.cwd(), "packages/core/src/components/card/variants.ts"),
@@ -775,13 +775,15 @@ export function defineAstroVariantParityTests(getTempRoot: GetTempRoot): void {
     );
 
     for (const variant of Object.values(cardContract.variants!)) {
-      for (const classGroup of [
+      for (const className of [
         ...toArray(variant.base),
         ...Object.values(variant.variants ?? {}).flatMap((values) =>
           Object.values(values).flatMap(toArray),
         ),
-      ]) {
-        expect(canonicalCardVariants).toContain(classGroup);
+      ].flatMap((classGroup) => classGroup.split(" "))) {
+        if (!className.includes("--card-spacing")) {
+          expect(canonicalCardVariants).toContain(className);
+        }
       }
     }
 

@@ -167,7 +167,8 @@ export const checkboxStyledContract: StyledAdapterContract = {
         props: [
           { name: "variant" },
           { name: "size" },
-          { name: "checked" },
+          { name: "checked", frameworks: ["astro", "react"] },
+          { name: "checked", defaultValue: "undefined", frameworks: ["vue"] },
           { name: "defaultChecked" },
           { name: "disabled", defaultValue: "false" },
           { name: "form" },
@@ -218,7 +219,11 @@ export const checkboxStyledContract: StyledAdapterContract = {
                     args: { variant: "variant", size: "size", class: "className" },
                   },
                 },
-                { name: "checked", value: { type: "variable", name: "checked" } },
+                {
+                  name: "checked",
+                  value: { type: "variable", name: "checked" },
+                  frameworks: ["astro", "react"],
+                },
                 {
                   name: "defaultChecked",
                   value: { type: "variable", name: "defaultChecked" },
@@ -245,8 +250,24 @@ export const checkboxStyledContract: StyledAdapterContract = {
                   value: { type: "variable", name: "uncheckedValue" },
                 },
                 { name: "value", value: { type: "variable", name: "value" } },
-                { name: "spread", value: { type: "variable", name: "rest" } },
-                { name: "aria-label", value: { type: "variable", name: "ariaLabel" } },
+                {
+                  name: "spread",
+                  value: { type: "variable", name: "rest" },
+                  frameworks: ["astro", "react"],
+                },
+                {
+                  name: "aria-label",
+                  value: { type: "variable", name: "ariaLabel" },
+                  frameworks: ["astro", "react"],
+                },
+                {
+                  name: "spread",
+                  value: {
+                    type: "raw",
+                    code: "{ ...(checked === undefined ? {} : { checked }), ...rest, 'aria-label': ariaLabel }",
+                  },
+                  frameworks: ["vue"],
+                },
                 { name: "data-slot", value: { type: "literal", value: "checkbox" } },
               ],
               children: [
@@ -290,7 +311,7 @@ export const checkboxStyledContract: StyledAdapterContract = {
                     {
                       name: "for",
                       value: { type: "variable", name: "id" },
-                      frameworks: ["astro"],
+                      frameworks: ["astro", "vue"],
                     },
                     {
                       name: "htmlFor",

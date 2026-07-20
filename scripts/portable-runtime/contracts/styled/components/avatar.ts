@@ -11,7 +11,7 @@ export const avatarStyledContract: StyledAdapterContract = {
   variantCollectionName: "AvatarVariants",
   variants: {
     avatar: {
-      base: "text-foreground bg-muted relative overflow-hidden rounded-full border-2",
+      base: "text-foreground bg-muted relative inline-flex overflow-hidden rounded-full border-2",
       variants: {
         variant: {
           default: "border-border",
@@ -100,6 +100,12 @@ export const avatarStyledContract: StyledAdapterContract = {
             frameworks: ["react"],
           },
           {
+            name: "onLoadingStatusChange",
+            optional: true,
+            type: '(status: import("@starwind-ui/vue/avatar").AvatarImageLoadingStatus, details: import("@starwind-ui/vue/avatar").AvatarLoadingStatusChangeDetails) => void',
+            frameworks: ["vue"],
+          },
+          {
             name: "ref",
             optional: true,
             type: "React.Ref<HTMLImageElement>",
@@ -109,7 +115,9 @@ export const avatarStyledContract: StyledAdapterContract = {
       },
       destructure: {
         props: [
+          { name: "alt", frameworks: ["vue"] },
           { name: "onLoadingStatusChange", frameworks: ["react"] },
+          { name: "onLoadingStatusChange", frameworks: ["vue"] },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
         ],
@@ -135,6 +143,12 @@ export const avatarStyledContract: StyledAdapterContract = {
               value: { type: "variable", name: "onLoadingStatusChange" },
               frameworks: ["react"],
             },
+            {
+              name: "onLoadingStatusChange",
+              value: { type: "variable", name: "onLoadingStatusChange" },
+              frameworks: ["vue"],
+            },
+            { name: "alt", value: { type: "variable", name: "alt" }, frameworks: ["vue"] },
             { name: "spread", value: { type: "variable", name: "rest" } },
             { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
             { name: "data-slot", value: { type: "literal", value: "avatar-image" } },

@@ -13,9 +13,6 @@ import {
 } from "../../specialized-adapter-spec/navigation-menu-specialized-adapter-spec.js";
 import {
   assertSelectSpecializedAdapterSpec,
-  createSelectAttributeMap,
-  getSelectFileExportName,
-  getSelectFixturePartExports,
   type SelectSpecializedAdapterSpec,
 } from "../../specialized-adapter-spec/select-specialized-adapter-spec.js";
 import type {
@@ -23,11 +20,10 @@ import type {
   SpecializedAdapterSpecPrintedFile,
 } from "../../specialized-adapter-spec/types.js";
 import { vueFrameworkAdapterReadiness } from "./adapter.js";
+import { projectVueDetailedEvent, projectVueModel } from "./public-contract.js";
 
-const FIXTURE_COMMENT =
-  "Non-shipping specialized adapter fixture. Do not publish, export, register, or copy into demo dependencies.";
 const COMBOBOX_FIXTURE_COMMENT =
-  "Non-shipping Combobox specialized adapter fixture. Do not publish, export, register, or copy into demo dependencies.";
+  "Non-shipping, unsupported, non-normative Vue Combobox specialized adapter tracer fixture. Do not publish, export, register, or copy into demo dependencies.";
 const COMBOBOX_FIXTURE_PARTS = [
   "root",
   "label",
@@ -50,7 +46,7 @@ const COMBOBOX_FIXTURE_PARTS = [
   "separator",
 ] as const;
 const MENU_FIXTURE_COMMENT =
-  "Non-shipping Menu specialized adapter fixture. Do not publish, export, register, or copy into demo dependencies.";
+  "Non-shipping, unsupported, non-normative Vue Menu specialized adapter tracer fixture. Do not publish, export, register, or copy into demo dependencies.";
 const MENU_FIXTURE_PARTS = [
   "root",
   "trigger",
@@ -72,7 +68,7 @@ const MENU_FIXTURE_PARTS = [
   "submenuTrigger",
 ] as const;
 const NAVIGATION_MENU_FIXTURE_COMMENT =
-  "Non-shipping Navigation Menu specialized adapter fixture. Do not publish, export, register, or copy into demo dependencies.";
+  "Non-shipping, unsupported, non-normative Vue Navigation Menu specialized adapter tracer fixture. Do not publish, export, register, or copy into demo dependencies.";
 const NAVIGATION_MENU_FIXTURE_PARTS = [
   "root",
   "list",
@@ -101,41 +97,12 @@ export function printSpecializedFutureFrameworkTracerSpec(
     return printVueNavigationMenuSpecializedAdapterSpecFixture(spec);
   }
 
-  assertScrollAreaFixtureScope(spec, "Vue");
-
-  const adapter = vueFrameworkAdapterReadiness;
-  const extension = adapter.fileExtension;
-
-  return [
-    {
-      contents: renderVueScrollAreaRoot(spec, getPart(spec, "root")),
-      path: `__future-fixtures/vue/${spec.component}/${getFileExportName(spec, "root")}${extension}`,
-    },
-    {
-      contents: renderVueScrollAreaViewport(getPart(spec, "viewport")),
-      path: `__future-fixtures/vue/${spec.component}/${getFileExportName(spec, "viewport")}${extension}`,
-    },
-    {
-      contents: renderVueScrollAreaSimplePart(getPart(spec, "content")),
-      path: `__future-fixtures/vue/${spec.component}/${getFileExportName(spec, "content")}${extension}`,
-    },
-    {
-      contents: renderVueScrollAreaScrollbar(spec, getPart(spec, "scrollbar")),
-      path: `__future-fixtures/vue/${spec.component}/${getFileExportName(spec, "scrollbar")}${extension}`,
-    },
-    {
-      contents: renderVueScrollAreaSimplePart(getPart(spec, "thumb")),
-      path: `__future-fixtures/vue/${spec.component}/${getFileExportName(spec, "thumb")}${extension}`,
-    },
-    {
-      contents: renderVueScrollAreaCorner(getPart(spec, "corner")),
-      path: `__future-fixtures/vue/${spec.component}/${getFileExportName(spec, "corner")}${extension}`,
-    },
-    {
-      contents: renderVueIndex(spec),
-      path: `__future-fixtures/vue/${spec.component}/index.ts`,
-    },
-  ];
+  if (spec.component === "scroll-area") {
+    throw new Error(
+      "ScrollArea is supported by real Vue output and is not a future-framework tracer fixture.",
+    );
+  }
+  throw new Error(`${spec.displayName} does not have a Vue specialized adapter fixture.`);
 }
 
 function printVueComboboxSpecializedAdapterSpecFixture(
@@ -144,7 +111,7 @@ function printVueComboboxSpecializedAdapterSpecFixture(
   assertComboboxFixtureTarget(spec, "Vue");
   const extension = vueFrameworkAdapterReadiness.fileExtension;
 
-  return [
+  return hardenComboboxFixtures([
     ...COMBOBOX_FIXTURE_PARTS.map((part) => ({
       contents: renderVueComboboxPart(spec, part),
       path: `__future-fixtures/vue/combobox/${getFileExportName(spec, part)}${extension}`,
@@ -153,7 +120,7 @@ function printVueComboboxSpecializedAdapterSpecFixture(
       contents: renderVueComboboxIndex(spec),
       path: "__future-fixtures/vue/combobox/index.ts",
     },
-  ];
+  ]);
 }
 
 function printVueMenuSpecializedAdapterSpecFixture(
@@ -162,7 +129,7 @@ function printVueMenuSpecializedAdapterSpecFixture(
   assertMenuFixtureTarget(spec, "Vue");
   const extension = vueFrameworkAdapterReadiness.fileExtension;
 
-  return [
+  return hardenMenuFixtures([
     ...MENU_FIXTURE_PARTS.map((part) => ({
       contents: renderVueMenuPart(spec, part),
       path: `__future-fixtures/vue/menu/${getFileExportName(spec, part)}${extension}`,
@@ -171,7 +138,7 @@ function printVueMenuSpecializedAdapterSpecFixture(
       contents: renderVueMenuIndex(spec, extension),
       path: "__future-fixtures/vue/menu/index.ts",
     },
-  ];
+  ]);
 }
 
 function printVueNavigationMenuSpecializedAdapterSpecFixture(
@@ -180,7 +147,7 @@ function printVueNavigationMenuSpecializedAdapterSpecFixture(
   assertNavigationMenuFixtureTarget(spec, "Vue");
   const extension = vueFrameworkAdapterReadiness.fileExtension;
 
-  return [
+  return hardenNavigationMenuFixtures([
     ...NAVIGATION_MENU_FIXTURE_PARTS.map((part) => ({
       contents: renderVueNavigationMenuPart(spec, part),
       path: `__future-fixtures/vue/navigation-menu/${getFileExportName(spec, part)}${extension}`,
@@ -189,7 +156,292 @@ function printVueNavigationMenuSpecializedAdapterSpecFixture(
       contents: renderVueNavigationMenuIndex(spec),
       path: "__future-fixtures/vue/navigation-menu/index.ts",
     },
+  ]);
+}
+
+function hardenComboboxFixtures(
+  files: SpecializedAdapterSpecPrintedFile[],
+): SpecializedAdapterSpecPrintedFile[] {
+  const inputValue = projectVueModel("inputValue");
+  const open = projectVueModel("open");
+  const value = projectVueModel("value");
+  const inputValueDetailed = projectVueDetailedEvent("onInputValueChange");
+  const openDetailed = projectVueDetailedEvent("onOpenChange");
+  const valueDetailed = projectVueDetailedEvent("onValueChange");
+  return [
+    ...files.map((file) => ({
+      ...file,
+      contents: hardenContexts(
+        file.path.endsWith("/ComboboxRoot.vue")
+          ? file.contents
+              .replace("    value?: string | null;", "    modelValue?: string | null;")
+              .replaceAll("props.value", "props.modelValue")
+              .replace(
+                "const renderedValue = computed(() => props.modelValue ?? uncontrolledValue.value);",
+                "const renderedValue = computed(() => props.modelValue !== undefined ? props.modelValue : uncontrolledValue.value);",
+              )
+          : file.contents,
+        "combobox",
+      )
+        .replace(
+          "  valueChange: [value: string | null, details: ComboboxValueChangeDetails];\n}>();",
+          `  valueChange: [value: string | null, details: ComboboxValueChangeDetails];\n  "${inputValue.updateEvent}": [inputValue: string];\n  "${open.updateEvent}": [open: boolean];\n  "${value.updateEvent}": [value: string | null];\n}>();`,
+        )
+        .replace(
+          "      if (!details.isCanceled && props.inputValue === undefined) {\n        uncontrolledInputValue.value = inputValue;\n      }",
+          `      if (details.isCanceled) return;\n      if (props.inputValue === undefined) {\n        uncontrolledInputValue.value = inputValue;\n      }\n      emit("${inputValue.updateEvent}", inputValue);`,
+        )
+        .replace(
+          "      if (!details.isCanceled && props.open === undefined) {\n        uncontrolledOpen.value = open;\n      }",
+          `      if (details.isCanceled) return;\n      if (props.open === undefined) {\n        uncontrolledOpen.value = open;\n      }\n      emit("${open.updateEvent}", open);`,
+        )
+        .replace(
+          "      if (!details.isCanceled && props.modelValue === undefined) {\n        uncontrolledValue.value = value;\n      }",
+          `      if (details.isCanceled) return;\n      if (props.modelValue === undefined) {\n        uncontrolledValue.value = value;\n      }\n      emit("${value.updateEvent}", value);`,
+        )
+        .replaceAll("  inputValueChange:", `  ${inputValueDetailed.emit}:`)
+        .replaceAll("  openChange:", `  ${openDetailed.emit}:`)
+        .replaceAll("  valueChange:", `  ${valueDetailed.emit}:`)
+        .replaceAll('"inputValueChange"', `"${inputValueDetailed.emit}"`)
+        .replaceAll('"openChange"', `"${openDetailed.emit}"`)
+        .replaceAll('"valueChange"', `"${valueDetailed.emit}"`),
+    })),
+    {
+      contents: renderComboboxContext(),
+      path: "__future-fixtures/vue/combobox/ComboboxContext.ts",
+    },
   ];
+}
+
+function hardenMenuFixtures(
+  files: SpecializedAdapterSpecPrintedFile[],
+): SpecializedAdapterSpecPrintedFile[] {
+  const open = projectVueModel("open");
+  const checked = projectVueModel("checked");
+  const value = projectVueModel("value");
+  const openDetailed = projectVueDetailedEvent("onOpenChange");
+  const checkedDetailed = projectVueDetailedEvent("onCheckedChange");
+  const valueDetailed = projectVueDetailedEvent("onValueChange");
+  return [
+    ...files.map((file) => ({
+      ...file,
+      contents: hardenContexts(
+        file.path.endsWith("/MenuRadioGroup.vue")
+          ? file.contents
+              .replace("    value?: string;", "    modelValue?: string;")
+              .replaceAll("props.value", "props.modelValue")
+          : file.contents,
+        "menu",
+      )
+        .replace(
+          "  closeComplete: [details: MenuCloseCompleteDetails];\n}>();",
+          `  closeComplete: [details: MenuCloseCompleteDetails];\n  "${open.updateEvent}": [open: boolean];\n}>();`,
+        )
+        .replace(
+          "      if (!details.isCanceled && props.open === undefined) {\n        uncontrolledOpen.value = open;\n      }",
+          `      if (details.isCanceled) return;\n      if (props.open === undefined) {\n        uncontrolledOpen.value = open;\n      }\n      emit("${open.updateEvent}", open);`,
+        )
+        .replace(
+          "  checkedChange: [checked: boolean, details: MenuCheckedChangeDetails];\n}>();",
+          `  checkedChange: [checked: boolean, details: MenuCheckedChangeDetails];\n  "${checked.updateEvent}": [checked: boolean];\n}>();`,
+        )
+        .replace(
+          "  if (!details.isCanceled && props.checked === undefined) {\n    uncontrolledChecked.value = details.checked;\n  }",
+          `  if (details.isCanceled) return;\n  if (props.checked === undefined) {\n    uncontrolledChecked.value = details.checked;\n  }\n  emit("${checked.updateEvent}", details.checked);`,
+        )
+        .replace(
+          "  valueChange: [value: string, details: MenuValueChangeDetails];\n}>();",
+          `  valueChange: [value: string, details: MenuValueChangeDetails];\n  "${value.updateEvent}": [value: string];\n}>();`,
+        )
+        .replace(
+          "  if (!details.isCanceled && props.modelValue === undefined) {\n    uncontrolledValue.value = details.value;\n  }",
+          `  if (details.isCanceled) return;\n  if (props.modelValue === undefined) {\n    uncontrolledValue.value = details.value;\n  }\n  emit("${value.updateEvent}", details.value);`,
+        )
+        .replaceAll("  openChange:", `  ${openDetailed.emit}:`)
+        .replaceAll("  checkedChange:", `  ${checkedDetailed.emit}:`)
+        .replaceAll("  valueChange:", `  ${valueDetailed.emit}:`)
+        .replaceAll('"openChange"', `"${openDetailed.emit}"`)
+        .replaceAll('"checkedChange"', `"${checkedDetailed.emit}"`)
+        .replaceAll('"valueChange"', `"${valueDetailed.emit}"`),
+    })),
+    { contents: renderMenuContext(), path: "__future-fixtures/vue/menu/MenuContext.ts" },
+  ];
+}
+
+function hardenNavigationMenuFixtures(
+  files: SpecializedAdapterSpecPrintedFile[],
+): SpecializedAdapterSpecPrintedFile[] {
+  const value = projectVueModel("value");
+  const valueDetailed = projectVueDetailedEvent("onValueChange");
+  return [
+    ...files.map((file) => ({
+      ...file,
+      contents: hardenContexts(
+        file.path.endsWith("/NavigationMenuRoot.vue")
+          ? file.contents
+              .replace("    value?: string | null;", "    modelValue?: string | null;")
+              .replaceAll("props.value", "props.modelValue")
+              .replace(
+                "const renderedValue = computed(() => props.modelValue ?? uncontrolledValue.value);",
+                "const renderedValue = computed(() => props.modelValue !== undefined ? props.modelValue : uncontrolledValue.value);",
+              )
+          : file.contents,
+        "navigation-menu",
+      )
+        .replace(
+          "  valueChange: [value: string | null, details: NavigationMenuValueChangeDetails];\n}>();",
+          `  valueChange: [value: string | null, details: NavigationMenuValueChangeDetails];\n  "${value.updateEvent}": [value: string | null];\n}>();`,
+        )
+        .replace(
+          "      if (!details.isCanceled && props.modelValue === undefined) {\n        uncontrolledValue.value = value;\n      }",
+          `      if (details.isCanceled) return;\n      if (props.modelValue === undefined) {\n        uncontrolledValue.value = value;\n      }\n      emit("${value.updateEvent}", value);`,
+        )
+        .replaceAll("  valueChange:", `  ${valueDetailed.emit}:`)
+        .replaceAll('"valueChange"', `"${valueDetailed.emit}"`),
+    })),
+    {
+      contents: renderNavigationMenuContext(),
+      path: "__future-fixtures/vue/navigation-menu/NavigationMenuContext.ts",
+    },
+  ];
+}
+
+function hardenContexts(source: string, family: "combobox" | "menu" | "navigation-menu"): string {
+  const definitions = CONTEXT_DEFINITIONS.filter((entry) => entry.family === family);
+  let hardened = source;
+  const used = definitions.filter((entry) => hardened.includes(`"${entry.legacyKey}"`));
+  if (used.length === 0) return hardened;
+
+  const moduleName =
+    family === "combobox"
+      ? "ComboboxContext"
+      : family === "menu"
+        ? "MenuContext"
+        : "NavigationMenuContext";
+  hardened = hardened.replace(
+    '<script setup lang="ts">',
+    `<script setup lang="ts">\nimport { ${used.flatMap((entry) => [entry.key, entry.use]).join(", ")} } from "./${moduleName}";`,
+  );
+  for (const entry of used) {
+    hardened = hardened.replaceAll(`provide("${entry.legacyKey}",`, `provide(${entry.key},`);
+    hardened = hardened.replace(
+      new RegExp(`inject\\("${entry.legacyKey}"(?:, undefined)?\\) as[\\s\\S]*?;`),
+      `${entry.use}("${entry.part}")`,
+    );
+  }
+  return hardened;
+}
+
+const CONTEXT_DEFINITIONS = [
+  {
+    family: "combobox",
+    legacyKey: "starwind-combobox-root",
+    key: "comboboxRootContextKey",
+    use: "useComboboxRootContext",
+    part: "Combobox child",
+  },
+  {
+    family: "combobox",
+    legacyKey: "starwind-combobox-item",
+    key: "comboboxItemContextKey",
+    use: "useComboboxItemContext",
+    part: "Combobox.ItemIndicator",
+  },
+  {
+    family: "menu",
+    legacyKey: "starwind-menu-root",
+    key: "menuRootContextKey",
+    use: "useMenuRootContext",
+    part: "Menu.Trigger",
+  },
+  {
+    family: "menu",
+    legacyKey: "starwind-menu-checkbox-item",
+    key: "menuCheckboxItemContextKey",
+    use: "useMenuCheckboxItemContext",
+    part: "Menu.CheckboxItemIndicator",
+  },
+  {
+    family: "menu",
+    legacyKey: "starwind-menu-radio-group",
+    key: "menuRadioGroupContextKey",
+    use: "useMenuRadioGroupContext",
+    part: "Menu.RadioItem",
+  },
+  {
+    family: "menu",
+    legacyKey: "starwind-menu-radio-item",
+    key: "menuRadioItemContextKey",
+    use: "useMenuRadioItemContext",
+    part: "Menu.RadioItemIndicator",
+  },
+  {
+    family: "menu",
+    legacyKey: "starwind-menu-submenu-root",
+    key: "menuSubmenuRootContextKey",
+    use: "useMenuSubmenuRootContext",
+    part: "Menu.SubmenuTrigger",
+  },
+  {
+    family: "navigation-menu",
+    legacyKey: "starwind-navigation-menu-root",
+    key: "navigationMenuRootContextKey",
+    use: "useNavigationMenuRootContext",
+    part: "NavigationMenu child",
+  },
+  {
+    family: "navigation-menu",
+    legacyKey: "starwind-navigation-menu-item",
+    key: "navigationMenuItemContextKey",
+    use: "useNavigationMenuItemContext",
+    part: "NavigationMenu item child",
+  },
+] as const;
+
+function renderComboboxContext(): string {
+  return `// Non-shipping, unsupported, non-normative Vue tracer context.
+import { inject, type ComputedRef, type InjectionKey, type Ref } from "vue";
+export type ComboboxRootContext = { input: Ref<HTMLInputElement | null>; inputValue: ComputedRef<string>; open: ComputedRef<boolean>; value: ComputedRef<string | null> };
+export type ComboboxItemContext = { selected: ComputedRef<boolean>; value: string };
+export const comboboxRootContextKey: InjectionKey<ComboboxRootContext> = Symbol("StarwindComboboxRoot");
+export const comboboxItemContextKey: InjectionKey<ComboboxItemContext> = Symbol("StarwindComboboxItem");
+export function useComboboxRootContext(part: string): ComboboxRootContext { const value = inject(comboboxRootContextKey); if (!value) throw new Error(\`${"${part}"} must be used within Combobox.Root.\`); return value; }
+export function useComboboxItemContext(part: string): ComboboxItemContext { const value = inject(comboboxItemContextKey); if (!value) throw new Error(\`${"${part}"} must be used within Combobox.Item.\`); return value; }
+`;
+}
+
+function renderMenuContext(): string {
+  return `// Non-shipping, unsupported, non-normative Vue tracer context.
+import { inject, type ComputedRef, type InjectionKey, type Ref } from "vue";
+export type MenuRootContext = { open: ComputedRef<boolean>; root: Ref<HTMLDivElement | null> };
+export type MenuCheckedContext = { checked: ComputedRef<boolean> };
+export type MenuValueContext = { value: ComputedRef<string | undefined> };
+export type MenuSubmenuContext = { open: ComputedRef<boolean>; root: Ref<HTMLDivElement | null> };
+export const menuRootContextKey: InjectionKey<MenuRootContext> = Symbol("StarwindMenuRoot");
+export const menuCheckboxItemContextKey: InjectionKey<MenuCheckedContext> = Symbol("StarwindMenuCheckboxItem");
+export const menuRadioGroupContextKey: InjectionKey<MenuValueContext> = Symbol("StarwindMenuRadioGroup");
+export const menuRadioItemContextKey: InjectionKey<MenuCheckedContext> = Symbol("StarwindMenuRadioItem");
+export const menuSubmenuRootContextKey: InjectionKey<MenuSubmenuContext> = Symbol("StarwindMenuSubmenuRoot");
+function required<T>(value: T | undefined, part: string, root: string): T { if (!value) throw new Error(\`${"${part}"} must be used within ${"${root}"}.\`); return value; }
+export const useMenuRootContext = (part: string) => required(inject(menuRootContextKey), part, "Menu.Root");
+export const useMenuCheckboxItemContext = (part: string) => required(inject(menuCheckboxItemContextKey), part, "Menu.CheckboxItem");
+export const useMenuRadioGroupContext = (part: string) => required(inject(menuRadioGroupContextKey), part, "Menu.RadioGroup");
+export const useMenuRadioItemContext = (part: string) => required(inject(menuRadioItemContextKey), part, "Menu.RadioItem");
+export const useMenuSubmenuRootContext = (part: string) => required(inject(menuSubmenuRootContextKey), part, "Menu.SubmenuRoot");
+`;
+}
+
+function renderNavigationMenuContext(): string {
+  return `// Non-shipping, unsupported, non-normative Vue tracer context.
+import { inject, type ComputedRef, type InjectionKey, type Ref } from "vue";
+export type NavigationMenuRootContext = { orientation: ComputedRef<"horizontal" | "vertical">; root: Ref<HTMLElement | null>; value: ComputedRef<string | null> };
+export type NavigationMenuItemContext = { open: ComputedRef<boolean>; value: string };
+export const navigationMenuRootContextKey: InjectionKey<NavigationMenuRootContext> = Symbol("StarwindNavigationMenuRoot");
+export const navigationMenuItemContextKey: InjectionKey<NavigationMenuItemContext> = Symbol("StarwindNavigationMenuItem");
+function required<T>(value: T | undefined, part: string, root: string): T { if (!value) throw new Error(\`${"${part}"} must be used within ${"${root}"}.\`); return value; }
+export const useNavigationMenuRootContext = (part: string) => required(inject(navigationMenuRootContextKey), part, "NavigationMenu.Root");
+export const useNavigationMenuItemContext = (part: string) => required(inject(navigationMenuItemContextKey), part, "NavigationMenu.Item");
+`;
 }
 
 function renderVueComboboxPart(
@@ -624,53 +876,6 @@ function renderVueNavigationMenuIndex(spec: NavigationMenuSpecializedAdapterSpec
     .join("\n")}\n`;
 }
 
-function renderVueScrollAreaRoot(
-  spec: SpecializedAdapterSpec,
-  part: GenericAdapterPlanPart,
-): string {
-  const overflowEdgeThreshold = getPropForPart(spec, "overflowEdgeThreshold", "root");
-  const thresholdValue = `props.${overflowEdgeThreshold.name}`;
-
-  return `<!-- ${FIXTURE_COMMENT} -->\n<script setup lang="ts">\nimport { ${spec.root.runtimeFactory} } from "${spec.root.runtimeImportSource}";\nimport { onBeforeUnmount, onMounted, provide, ref, watch } from "vue";\n\n${renderScrollAreaOverflowEdgeThresholdType("type")}\n\ntype ScrollAreaOverflowEdgeThresholdAttributes = {\n  shared?: number;\n  xEnd?: number;\n  xStart?: number;\n  yEnd?: number;\n  yStart?: number;\n};\n\nconst props = defineProps<{\n  ${overflowEdgeThreshold.name}?: ScrollAreaOverflowEdgeThreshold;\n}>();\n\nconst root = ref<HTMLDivElement | null>(null);\nlet instance: ReturnType<typeof ${spec.root.runtimeFactory}> | undefined;\n\nprovide("starwind-scroll-area-root", root);\n\nfunction setup() {\n  instance?.destroy();\n  if (!root.value) {\n    instance = undefined;\n    return;\n  }\n\n  instance = ${spec.root.runtimeFactory}(root.value);\n}\n\nonMounted(() => {\n  setup();\n});\n\nwatch(\n  () => ${thresholdValue},\n  () => {\n    instance?.refresh();\n  },\n  { deep: true },\n);\n\nonBeforeUnmount(() => {\n  instance?.destroy();\n  instance = undefined;\n});\n\nfunction getOverflowEdgeThresholdAttributes(\n  threshold: ScrollAreaOverflowEdgeThreshold | undefined,\n): ScrollAreaOverflowEdgeThresholdAttributes {\n  if (typeof threshold === "number") {\n    const shared = normalizeOverflowEdgeThresholdValue(threshold);\n    return shared === undefined ? {} : { shared };\n  }\n\n  if (!threshold) return {};\n\n  return {\n    xEnd: "xEnd" in threshold ? normalizeOverflowEdgeThresholdValue(threshold.xEnd) : undefined,\n    xStart: "xStart" in threshold ? normalizeOverflowEdgeThresholdValue(threshold.xStart) : undefined,\n    yEnd: "yEnd" in threshold ? normalizeOverflowEdgeThresholdValue(threshold.yEnd) : undefined,\n    yStart: "yStart" in threshold ? normalizeOverflowEdgeThresholdValue(threshold.yStart) : undefined,\n  };\n}\n\nfunction normalizeOverflowEdgeThresholdValue(value: number | undefined): number | undefined {\n  if (value === undefined || !Number.isFinite(value)) return undefined;\n\n  return Math.max(value, 0);\n}\n</script>\n\n<template>\n  <div\n    ${part.discoveryAttribute}\n    :data-overflow-edge-threshold="getOverflowEdgeThresholdAttributes(${thresholdValue}).shared"\n    :data-overflow-edge-threshold-x-end="getOverflowEdgeThresholdAttributes(${thresholdValue}).xEnd"\n    :data-overflow-edge-threshold-x-start="getOverflowEdgeThresholdAttributes(${thresholdValue}).xStart"\n    :data-overflow-edge-threshold-y-end="getOverflowEdgeThresholdAttributes(${thresholdValue}).yEnd"\n    :data-overflow-edge-threshold-y-start="getOverflowEdgeThresholdAttributes(${thresholdValue}).yStart"\n    ref="root"\n    role="${getRequiredRole(part)}"\n    v-bind="$attrs"\n  >\n    <slot />\n  </div>\n</template>\n`;
-}
-
-function renderVueScrollAreaViewport(part: GenericAdapterPlanPart): string {
-  return `<!-- ${FIXTURE_COMMENT} -->\n<script setup lang="ts">\nimport { inject } from "vue";\n\ninject("starwind-scroll-area-root", undefined);\n</script>\n\n<template>\n  <div\n    ${part.discoveryAttribute}\n    role="${getRequiredRole(part)}"\n    tabindex="-1"\n    style="overflow: scroll;"\n    v-bind="$attrs"\n  >\n    <slot />\n  </div>\n</template>\n`;
-}
-
-function renderVueScrollAreaSimplePart(part: GenericAdapterPlanPart): string {
-  return `<!-- ${FIXTURE_COMMENT} -->\n<script setup lang="ts">\nimport { inject } from "vue";\n\ninject("starwind-scroll-area-root", undefined);\n</script>\n\n<template>\n  <div\n    ${part.discoveryAttribute}${part.role ? `\n    role="${part.role}"` : ""}\n    v-bind="$attrs"\n  >\n    <slot />\n  </div>\n</template>\n`;
-}
-
-function renderVueScrollAreaScrollbar(
-  spec: SpecializedAdapterSpec,
-  part: GenericAdapterPlanPart,
-): string {
-  const keepMounted = getPropForPart(spec, "keepMounted", "scrollbar");
-  const orientation = getPropForPart(spec, "orientation", "scrollbar");
-  const keepMountedValue = `props.${keepMounted.name}`;
-  const orientationValue = `props.${orientation.name}`;
-
-  return `<!-- ${FIXTURE_COMMENT} -->\n<script setup lang="ts">\nimport { inject } from "vue";\n\ntype ScrollAreaOrientation = ${orientation.type};\n\nconst props = withDefaults(\n  defineProps<{\n    ${keepMounted.name}?: ${keepMounted.type};\n    ${orientation.name}?: ScrollAreaOrientation;\n  }>(),\n  {\n    ${keepMounted.name}: ${keepMounted.defaultValue},\n    ${orientation.name}: ${orientation.defaultValue},\n  },\n);\n\ninject("starwind-scroll-area-root", undefined);\n</script>\n\n<template>\n  <div\n    ${part.discoveryAttribute}\n    :data-keep-mounted="${keepMountedValue} ? '' : undefined"\n    :data-orientation="${orientationValue}"\n    aria-hidden="true"\n    v-bind="$attrs"\n  >\n    <slot />\n  </div>\n</template>\n`;
-}
-
-function renderVueScrollAreaCorner(part: GenericAdapterPlanPart): string {
-  return `<!-- ${FIXTURE_COMMENT} -->\n<script setup lang="ts">\nimport { inject } from "vue";\n\ninject("starwind-scroll-area-root", undefined);\n</script>\n\n<template>\n  <div\n    ${part.discoveryAttribute}\n    aria-hidden="true"\n    v-bind="$attrs"\n  >\n    <slot />\n  </div>\n</template>\n`;
-}
-
-function renderVueIndex(spec: SpecializedAdapterSpec): string {
-  const extension = vueFrameworkAdapterReadiness.fileExtension;
-
-  return `// ${FIXTURE_COMMENT}\n${spec.exports.members
-    .map(
-      (member) =>
-        `export { default as ${toPartAlias(member.part)} } from "./${toFileBasename(
-          member.file,
-        )}${extension}";`,
-    )
-    .join("\n")}\n`;
-}
-
 function isComboboxSpecializedAdapterSpec(
   spec: SpecializedAdapterSpec,
 ): spec is ComboboxSpecializedAdapterSpec {
@@ -851,18 +1056,6 @@ function getNavigationMenuFixturePartExports(spec: NavigationMenuSpecializedAdap
   });
 }
 
-function assertScrollAreaFixtureScope(spec: SpecializedAdapterSpec, target: string): void {
-  if (spec.component !== "scroll-area") {
-    throw new Error(`${spec.displayName} does not have a ${target} specialized adapter fixture.`);
-  }
-
-  if (spec.root.runtimeFactory !== "createScrollArea") {
-    throw new Error(
-      `${spec.displayName} ${target} specialized adapter fixture expects the Scroll Area runtime factory.`,
-    );
-  }
-}
-
 function getPart(spec: SpecializedAdapterSpec, name: string): GenericAdapterPlanPart {
   const part = spec.parts.find((candidate) => candidate.name === name);
   if (!part) {
@@ -881,23 +1074,6 @@ function getFileExportName(spec: SpecializedAdapterSpec, part: string): string {
   return file.exportName;
 }
 
-function getPropForPart(spec: SpecializedAdapterSpec, name: string, part: string) {
-  const prop = spec.props.find((candidate) => candidate.name === name);
-  if (!prop) {
-    throw new Error(
-      `${spec.displayName} specialized adapter fixture is missing ${part} ${name} prop.`,
-    );
-  }
-
-  if (!prop.targets?.includes(part)) {
-    throw new Error(
-      `${spec.displayName} specialized adapter fixture is missing ${part} ${name} prop.`,
-    );
-  }
-
-  return prop;
-}
-
 function getRequiredRole(part: GenericAdapterPlanPart): string {
   if (!part.role) {
     throw new Error(`${part.name} specialized adapter fixture part is missing a required role.`);
@@ -906,420 +1082,13 @@ function getRequiredRole(part: GenericAdapterPlanPart): string {
   return part.role;
 }
 
-function renderScrollAreaOverflowEdgeThresholdType(exportPrefix: "export type" | "type"): string {
-  return `${exportPrefix} ScrollAreaOverflowEdgeThreshold =\n  | number\n  | Partial<{\n      xStart: number;\n      xEnd: number;\n      yStart: number;\n      yEnd: number;\n    }>;`;
-}
-
-function toFileBasename(file: string): string {
-  return file.split("/").at(-1) ?? file;
-}
-
-function toPartAlias(partName: string): string {
-  return `${partName.charAt(0).toUpperCase()}${partName.slice(1)}`;
-}
-
-const SELECT_FIXTURE_COMMENT =
-  "Non-shipping Select specialized adapter fixture. Do not publish, export, register, or copy into demo dependencies.";
-
 export function printSelectFutureFrameworkTracerSpec(
   spec: SelectSpecializedAdapterSpec,
 ): SpecializedAdapterSpecPrintedFile[] {
   assertSelectFixtureTarget(spec, "Vue");
-  const extension = vueFrameworkAdapterReadiness.fileExtension;
-
-  return [
-    {
-      contents: renderVueSelectVerticalSliceRoot(spec),
-      path: `__future-fixtures/vue/select/${getSelectFileExportName(spec, "root")}${extension}`,
-    },
-    {
-      contents: renderVueSelectVerticalSliceTrigger(spec),
-      path: `__future-fixtures/vue/select/${getSelectFileExportName(spec, "trigger")}${extension}`,
-    },
-    {
-      contents: renderVueSelectVerticalSlicePortal(spec),
-      path: `__future-fixtures/vue/select/${getSelectFileExportName(spec, "portal")}${extension}`,
-    },
-    {
-      contents: renderVueSelectVerticalSlicePopup(spec),
-      path: `__future-fixtures/vue/select/${getSelectFileExportName(spec, "popup")}${extension}`,
-    },
-    {
-      contents: renderVueSelectVerticalSliceItem(spec),
-      path: `__future-fixtures/vue/select/${getSelectFileExportName(spec, "item")}${extension}`,
-    },
-    {
-      contents: renderVueSelectVerticalSliceItemIndicator(spec),
-      path: `__future-fixtures/vue/select/${getSelectFileExportName(spec, "itemIndicator")}${extension}`,
-    },
-    {
-      contents: renderVueSelectIndex(spec),
-      path: "__future-fixtures/vue/select/index.ts",
-    },
-  ];
-}
-
-function renderVueSelectIndex(spec: SelectSpecializedAdapterSpec): string {
-  const extension = vueFrameworkAdapterReadiness.fileExtension;
-
-  return `// ${SELECT_FIXTURE_COMMENT}\n${getSelectFixturePartExports(spec)
-    .map(
-      ({ alias, fileExportName }) =>
-        `export { default as ${alias} } from "./${fileExportName}${extension}";`,
-    )
-    .join("\n")}\n`;
-}
-
-function renderVueSelectVerticalSliceRoot(spec: SelectSpecializedAdapterSpec): string {
-  const attrs = createSelectAttributeMap(spec);
-
-  return `<!-- ${SELECT_FIXTURE_COMMENT} -->
-<script setup lang="ts">
-import { ${spec.root.runtimeFactory}, type SelectOpenChangeDetails, type SelectValueChangeDetails } from "${spec.root.runtimeImportSource}";
-import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";
-
-const props = withDefaults(
-  defineProps<{
-    autoComplete?: string;
-    defaultOpen?: boolean;
-    defaultValue?: string | null;
-    disabled?: boolean;
-    form?: string;
-    name?: string;
-    open?: boolean;
-    readOnly?: boolean;
-    required?: boolean;
-    value?: string | null;
-  }>(),
-  {
-    defaultOpen: false,
-    defaultValue: null,
-    disabled: false,
-    readOnly: false,
-    required: false,
-  },
-);
-
-const emit = defineEmits<{
-  openChange: [open: boolean, details: SelectOpenChangeDetails];
-  valueChange: [value: string | null, details: SelectValueChangeDetails];
-}>();
-
-const root = ref<HTMLDivElement | null>(null);
-const input = ref<HTMLInputElement | null>(null);
-const initialized = ref(false);
-const portalReference = ref<HTMLElement | null>(null);
-const uncontrolledOpen = ref(props.defaultOpen);
-const uncontrolledValue = ref<string | null>(props.defaultValue);
-const renderedOpen = computed(() => props.open ?? uncontrolledOpen.value);
-const renderedValue = computed(() => props.value ?? uncontrolledValue.value);
-let instance: ReturnType<typeof ${spec.root.runtimeFactory}> | undefined;
-
-const selectContext = {
-  initialized,
-  open: renderedOpen,
-  portalReference,
-  value: renderedValue,
-};
-
-provide("${spec.select.contextProjection.rootContext}", selectContext);
-
-function setup() {
-  initialized.value = false;
-  instance?.destroy();
-  if (!root.value) {
-    instance = undefined;
-    return;
-  }
-
-  instance = ${spec.root.runtimeFactory}(root.value, {
-    autoComplete: props.autoComplete,
-    defaultOpen: uncontrolledOpen.value,
-    defaultValue: uncontrolledValue.value,
-    disabled: props.disabled,
-    form: props.form,
-    name: props.name,
-    portalReference: portalReference.value ?? undefined,
-    readOnly: props.readOnly,
-    required: props.required,
-    ...(props.open !== undefined ? { open: props.open } : {}),
-    ...(props.value !== undefined ? { value: props.value } : {}),
-    onOpenChange(open, details) {
-      emit("openChange", open, details);
-      if (!details.isCanceled && props.open === undefined) {
-        uncontrolledOpen.value = open;
-      }
-    },
-    onValueChange(value, details) {
-      emit("valueChange", value, details);
-      if (!details.isCanceled && props.value === undefined) {
-        uncontrolledValue.value = value;
-      }
-    },
-  });
-  initialized.value = true;
-}
-
-onMounted(setup);
-
-watch(
-  () => props.open,
-  (open) => {
-    if (open === undefined || !instance || instance.getOpen() === open) return;
-    instance.setOpen(open, { emit: false });
-  },
-);
-
-watch(
-  () => props.value,
-  (value) => {
-    if (value === undefined || !instance || instance.getValue() === value) return;
-    instance.setValue(value, { emit: false });
-  },
-);
-
-watch(
-  () => props.disabled,
-  (disabled) => {
-    instance?.setDisabled(disabled);
-  },
-);
-
-watch(
-  () => [props.autoComplete, props.form, props.name, props.required] as const,
-  ([autoComplete, form, name, required]) => {
-    instance?.setFormOptions({ autoComplete, form, name, required });
-  },
-);
-
-watch(
-  () => props.readOnly,
-  (readOnly) => {
-    instance?.setReadOnly(readOnly);
-  },
-);
-
-onBeforeUnmount(() => {
-  initialized.value = false;
-  instance?.destroy();
-  instance = undefined;
-});
-</script>
-
-<template>
-  <div
-    ${attrs.root}
-    :${attrs.autoComplete}="props.autoComplete"
-    :${attrs.disabled}="props.disabled ? '' : undefined"
-    :${attrs.form}="props.form"
-    :${attrs.name}="props.name"
-    :${attrs.readOnly}="props.readOnly ? '' : undefined"
-    :${attrs.required}="props.required ? '' : undefined"
-    :data-state="renderedOpen ? 'open' : 'closed'"
-    ref="root"
-    v-bind="$attrs"
-  >
-    <input
-      ref="input"
-      ${attrs.input}
-      :autocomplete="props.autoComplete"
-      :disabled="props.disabled"
-      :form="props.form"
-      :name="props.name"
-      :required="props.required"
-      type="${spec.select.hiddenInput.type}"
-      :value="renderedValue ?? ''"
-      aria-hidden="true"
-      tabindex="-1"
-    />
-    <slot />
-  </div>
-</template>
-`;
-}
-
-function renderVueSelectVerticalSliceTrigger(spec: SelectSpecializedAdapterSpec): string {
-  const attrs = createSelectAttributeMap(spec);
-
-  return `<!-- ${SELECT_FIXTURE_COMMENT} -->
-<script setup lang="ts">
-import { inject, ref } from "vue";
-
-const trigger = ref<HTMLButtonElement | null>(null);
-const select = inject("${spec.select.contextProjection.rootContext}") as {
-  open: { value: boolean };
-  value: { value: string | null };
-};
-</script>
-
-<template>
-  <button
-    ref="trigger"
-    ${attrs.trigger}
-    aria-haspopup="listbox"
-    :aria-expanded="select.open.value ? 'true' : 'false'"
-    :data-state="select.open.value ? 'open' : 'closed'"
-    role="combobox"
-    type="button"
-    v-bind="$attrs"
-  >
-    <slot />
-  </button>
-</template>
-`;
-}
-
-function renderVueSelectVerticalSlicePortal(spec: SelectSpecializedAdapterSpec): string {
-  const attrs = createSelectAttributeMap(spec);
-
-  return `<!-- ${SELECT_FIXTURE_COMMENT} -->
-<script setup lang="ts">
-import { inject, onBeforeUnmount, onMounted, ref } from "vue";
-
-const props = withDefaults(
-  defineProps<{
-    container?: string | HTMLElement;
-    disabled?: boolean;
-  }>(),
-  {
-    disabled: false,
-  },
-);
-const portal = ref<HTMLDivElement | null>(null);
-const select = inject("${spec.select.contextProjection.rootContext}") as {
-  initialized: { value: boolean };
-  portalReference: { value: HTMLElement | null };
-};
-
-onMounted(() => {
-  select.portalReference.value = portal.value;
-});
-
-onBeforeUnmount(() => {
-  if (select.portalReference.value === portal.value) {
-    select.portalReference.value = null;
-  }
-});
-</script>
-
-<template>
-  <Teleport
-    :to="props.container ?? 'body'"
-    :disabled="props.disabled || !select.initialized.value"
-  >
-    <div ref="portal" data-floating-root ${attrs.portal} v-bind="$attrs">
-      <slot />
-    </div>
-  </Teleport>
-</template>
-`;
-}
-
-function renderVueSelectVerticalSlicePopup(spec: SelectSpecializedAdapterSpec): string {
-  const attrs = createSelectAttributeMap(spec);
-
-  return `<!-- ${SELECT_FIXTURE_COMMENT} -->
-<script setup lang="ts">
-import { inject, ref } from "vue";
-
-const popup = ref<HTMLDivElement | null>(null);
-const select = inject("${spec.select.contextProjection.rootContext}") as {
-  open: { value: boolean };
-};
-</script>
-
-<template>
-  <div
-    ref="popup"
-    ${attrs.popup}
-    role="listbox"
-    tabindex="-1"
-    :data-state="select.open.value ? 'open' : 'closed'"
-    hidden
-    v-bind="$attrs"
-  >
-    <slot />
-  </div>
-</template>
-`;
-}
-
-function renderVueSelectVerticalSliceItem(spec: SelectSpecializedAdapterSpec): string {
-  const attrs = createSelectAttributeMap(spec);
-
-  return `<!-- ${SELECT_FIXTURE_COMMENT} -->
-<script setup lang="ts">
-import { computed, inject, provide, ref } from "vue";
-
-const props = withDefaults(
-  defineProps<{
-    disabled?: boolean;
-    value: string;
-  }>(),
-  {
-    disabled: false,
-  },
-);
-const item = ref<HTMLDivElement | null>(null);
-const select = inject("${spec.select.contextProjection.rootContext}") as {
-  value: { value: string | null };
-};
-const selected = computed(() => select.value.value === props.value);
-
-provide("${spec.select.contextProjection.itemContext}", { value: props.value });
-</script>
-
-<template>
-  <div
-    ref="item"
-    ${attrs.item}
-    :${attrs.valueData}="props.value"
-    role="option"
-    :aria-selected="selected ? 'true' : 'false'"
-    :aria-disabled="props.disabled ? 'true' : undefined"
-    :data-disabled="props.disabled ? '' : undefined"
-    :data-selected="selected ? '' : undefined"
-    tabindex="-1"
-    v-bind="$attrs"
-  >
-    <slot />
-  </div>
-</template>
-`;
-}
-
-function renderVueSelectVerticalSliceItemIndicator(spec: SelectSpecializedAdapterSpec): string {
-  const attrs = createSelectAttributeMap(spec);
-
-  return `<!-- ${SELECT_FIXTURE_COMMENT} -->
-<script setup lang="ts">
-import { computed, inject, ref } from "vue";
-
-const indicator = ref<HTMLSpanElement | null>(null);
-const select = inject("${spec.select.contextProjection.rootContext}") as {
-  value: { value: string | null };
-};
-const item = inject("${spec.select.contextProjection.itemContext}") as {
-  value: string;
-};
-const selected = computed(() => select.value.value === item.value);
-</script>
-
-<template>
-  <span
-    ref="indicator"
-    ${attrs.itemIndicator}
-    aria-hidden="true"
-    :data-state="selected ? 'checked' : 'unchecked'"
-    :data-visible="selected ? '' : undefined"
-    :data-hidden="selected ? undefined : ''"
-    :hidden="!selected"
-    v-bind="$attrs"
-  >
-    <slot />
-  </span>
-</template>
-`;
+  throw new Error(
+    "Select is supported by real Vue output and is not a future-framework tracer fixture.",
+  );
 }
 
 function assertSelectFixtureTarget(spec: SelectSpecializedAdapterSpec, target: string): void {

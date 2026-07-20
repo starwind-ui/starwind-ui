@@ -2,6 +2,10 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node
 import { tmpdir } from "node:os";
 import { isAbsolute, join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
+import {
+  createVueContractFixtureFiles,
+  VUE_CONTRACT_FIXTURE_PATHS,
+} from "../check-vue-tracer-fixtures.js";
 import { checkboxGroupRuntimeAdapterContract } from "../contracts/primitive/representatives.js";
 import { buttonStyledContract } from "../contracts/styled/components/button.js";
 import { colorPickerStyledContract } from "../contracts/styled/components/color-picker.js";
@@ -9,6 +13,7 @@ import { inputOtpStyledContract } from "../contracts/styled/components/input-otp
 import { separatorStyledContract } from "../contracts/styled/components/separator.js";
 import { toggleStyledContract } from "../contracts/styled/components/toggle.js";
 import { starwindStyledContracts } from "../contracts/styled/starwind.js";
+import type { StyledAdapterContract } from "../contracts/styled/types.js";
 import { exportPrinter as astroExportPrinter } from "../renderers/framework-adapters/astro/exports.js";
 import { astroLifecycleProjection } from "../renderers/framework-adapters/astro/lifecycle-projection.js";
 import { renderIndex as renderAstroStyledIndex } from "../renderers/framework-adapters/astro/styled/index-output.js";
@@ -228,7 +233,7 @@ describe("Framework Adapter seam", () => {
     expect(Object.keys(reactExportPrinter).sort()).toEqual(expectedSurface);
   });
 
-  it("registers shipping styled target capabilities with a shared surface", () => {
+  it("registers styled target capabilities with a shared surface", () => {
     const styledTargets = getFrameworkAdapterTargetsWithStyledCapability();
 
     expect(
@@ -252,28 +257,54 @@ describe("Framework Adapter seam", () => {
         target: "react",
         write: "function",
       },
+      {
+        generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
+        project: "function",
+        target: "vue",
+        write: "function",
+      },
     ]);
 
-    for (const { capability } of styledTargets) {
+    for (const { capability, target } of styledTargets) {
+      const contract = target === "vue" ? buttonStyledContract : separatorStyledContract;
       expect(
         capability.project({
-          contracts: [separatorStyledContract],
+          contracts: [contract],
           outputRoot: "/tmp/styled",
           primitiveOutputRoot: "/tmp/primitives",
         }),
       ).toMatchObject({
         componentGroups: [
           {
-            component: "separator",
+            component: contract.component,
             components: [
               {
-                exportName: "Separator",
+                exportName: target === "vue" ? "Button" : "Separator",
               },
             ],
           },
         ],
       });
     }
+  });
+
+  it("projects unscoped and explicitly Vue Styled contracts only", () => {
+    const capability = getPrimitiveFrameworkAdapterTarget("vue").styled;
+    if (!capability) throw new Error("Vue Styled capability is required.");
+    const project = (frameworks: StyledAdapterContract["frameworks"]) =>
+      capability
+        .project({
+          contracts: [{ ...buttonStyledContract, frameworks }],
+          outputRoot: "/tmp/styled",
+          primitiveOutputRoot: "/tmp/primitives",
+        })
+        .componentGroups.map((group) => group.component);
+
+    expect(project(undefined)).toEqual(["button"]);
+    expect(project(["vue"])).toEqual(["button"]);
+    expect(project(["astro"])).toEqual([]);
+    expect(project(["react"])).toEqual([]);
+    expect(project([])).toEqual([]);
   });
 
   it("writes styled output through registered target capabilities", async () => {
@@ -283,15 +314,16 @@ describe("Framework Adapter seam", () => {
       for (const { capability, target } of getFrameworkAdapterTargetsWithStyledCapability()) {
         const outputRoot = join(tempRoot, target, "styled");
         const primitiveOutputRoot = join(tempRoot, target, "primitives");
+        const contract = target === "vue" ? buttonStyledContract : separatorStyledContract;
 
         await capability.write({
-          contracts: [separatorStyledContract],
+          contracts: [contract],
           generatedBy: "scripts/portable-runtime/tests/framework-adapters.test.ts",
           outputRoot,
           primitiveOutputRoot,
         });
 
-        expect(existsSync(join(outputRoot, "separator", "index.ts"))).toBe(true);
+        expect(existsSync(join(outputRoot, contract.component, "index.ts"))).toBe(true);
 
         if (target === "astro") {
           const separator = readFileSync(join(outputRoot, "separator", "Separator.astro"), "utf8");
@@ -303,6 +335,12 @@ describe("Framework Adapter seam", () => {
           const separator = readFileSync(join(outputRoot, "separator", "Separator.tsx"), "utf8");
           expect(separator).toContain("data-sw-separator");
           expect(separator).toContain("function Separator");
+        }
+
+        if (target === "vue") {
+          const button = readFileSync(join(outputRoot, "button", "Button.vue"), "utf8");
+          expect(button).toContain('import * as ButtonPrimitive from "../../primitives/button"');
+          expect(button).toContain(`:data-slot="dataSlot || 'button'"`);
         }
       }
     } finally {
@@ -658,7 +696,7 @@ describe("Framework Adapter seam", () => {
     );
   });
 
-  it("registers shipping primitive framework targets from target homes", () => {
+  it("registers shipping and internal primitive framework targets from target homes", () => {
     const legacyLowLevelRegistrationKeys = [
       "generatePrimitivePackage",
       "manualPrimitives",
@@ -778,6 +816,40 @@ describe("Framework Adapter seam", () => {
         },
         target: "react",
       },
+      {
+        adapterTarget: "vue",
+        cliRegistry: {
+          generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
+          styledArtifact: {
+            collectPackageImportSources: "undefined",
+            outputDir: "vue",
+            primitiveOutputDir: "vue-primitives",
+          },
+        },
+        fileExtension: ".vue",
+        home: "scripts/portable-runtime/renderers/framework-adapters/vue",
+        packageName: "@starwind-ui/vue",
+        primitive: {
+          generatePackage: "function",
+          manualPrimitives: "object",
+          outputModel: {
+            projectSpecialized: "function",
+            write: "function",
+          },
+        },
+        publicSupport: {
+          cliRegistry: false,
+          demoIntegration: false,
+          packageExports: false,
+          publicDocsClaim: false,
+          status: "non-shipping-tracer",
+        },
+        styled: {
+          project: "function",
+          write: "function",
+        },
+        target: "vue",
+      },
     ]);
     for (const registration of primitiveFrameworkAdapterTargets) {
       expect(Object.keys(registration).sort()).toEqual([
@@ -797,11 +869,11 @@ describe("Framework Adapter seam", () => {
           `${registration.target} registration should not expose ${key}`,
         ).not.toHaveProperty(key);
       }
-      expect(Object.keys(registration.primitive).sort()).toEqual([
-        "generatePackage",
-        "manualPrimitives",
-        "outputModel",
-      ]);
+      expect(Object.keys(registration.primitive).sort()).toEqual(
+        registration.target === "vue"
+          ? ["generatePackage", "manualPrimitives", "outputModel", "support"]
+          : ["generatePackage", "manualPrimitives", "outputModel"],
+      );
       expect(Object.keys(registration.primitive.outputModel).sort()).toEqual([
         "capabilities",
         "projectSpecialized",
@@ -811,6 +883,30 @@ describe("Framework Adapter seam", () => {
     }
     expect(getPrimitiveFrameworkAdapterTarget("astro").adapter).toBe(astroFrameworkAdapter);
     expect(getPrimitiveFrameworkAdapterTarget("react").adapter).toBe(reactFrameworkAdapter);
+    expect(getPrimitiveFrameworkAdapterTarget("vue")).toMatchObject({
+      packageName: "@starwind-ui/vue",
+      primitive: {
+        support: {
+          components: [
+            "avatar",
+            "button",
+            "checkbox",
+            "progress",
+            "scroll-area",
+            "select",
+            "theme",
+          ],
+          kind: "subset",
+        },
+      },
+      publicSupport: {
+        cliRegistry: false,
+        demoIntegration: false,
+        packageExports: false,
+        publicDocsClaim: false,
+        status: "non-shipping-tracer",
+      },
+    });
     expect(
       new Set(primitiveFrameworkAdapterTargets.map((registration) => registration.target)).size,
     ).toBe(primitiveFrameworkAdapterTargets.length);
@@ -1205,12 +1301,12 @@ describe("Framework Adapter seam", () => {
       extension: ".vue",
       readiness: vueFrameworkAdapterReadiness,
       requiredSnippets: [
-        "Non-shipping future framework tracer adapter",
+        "Internal non-shipping Vue adapter output",
         '<script setup lang="ts">',
         "defineProps",
         "onMounted",
         "provide",
-        '<Teleport to="body">',
+        `<Teleport :to="props.container ?? 'body'" :disabled="props.disabled || !mounted">`,
       ],
       target: "vue",
     },
@@ -1277,12 +1373,20 @@ describe("Framework Adapter seam", () => {
       adapter: vueFrameworkAdapter,
       expectedSnippets: [
         "selectedKey?: string;",
-        "selectionChange: [event: Event];",
-        'emit("selectionChange", event);',
+        "selectionChange: [value: string, detail: VueChangeDetail<string>];",
+        'emit("selectionChange", value, detail);',
+        'emit("update:selectedKey", value);',
         "props.selectedKey",
         "setSelectedKey",
       ],
-      forbiddenSnippets: ["valueChange: [event: Event];", 'emit("valueChange"'],
+      forbiddenSnippets: [
+        "valueChange: [event: Event];",
+        'emit("valueChange"',
+        'emit("selectionChange", event);',
+        "detail.value",
+        '<Teleport to="body">',
+        "onSelectionChange?:",
+      ],
       target: "vue",
     },
     {
@@ -1363,8 +1467,40 @@ describe("Framework Adapter seam", () => {
       ),
       "utf8",
     );
+    const rootPackageSource = readFileSync(join(process.cwd(), "package.json"), "utf8");
+    const rootPackage = JSON.parse(rootPackageSource) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+      private?: boolean;
+      scripts?: Record<string, string>;
+    };
+    const approvedPrivateVueScripts = {
+      "runtime:generate:vue": "tsx scripts/portable-runtime/generate-vue-wrappers.ts",
+      "runtime:generate:vue:check": "tsx scripts/portable-runtime/check-vue-tracer-fixtures.ts",
+      "runtime:generate:vue:test":
+        "vitest run scripts/portable-runtime/tests/generate-vue-wrappers --testTimeout=60000",
+      "vue:build": "pnpm --filter=@starwind-ui/vue build",
+      "vue:test": "pnpm --filter=@starwind-ui/vue test:all",
+      "vue:typecheck": "pnpm --filter=@starwind-ui/vue typecheck",
+      "vue-demo:build": "pnpm --filter=vue-demo build",
+      "vue-demo:dev": "pnpm --filter=vue-demo dev",
+      "vue-demo:smoke": "pnpm --filter=vue-demo smoke",
+    };
+    const boundaryAwareVuePattern = /(^|[^a-z0-9])vue(?=$|[^a-z0-9])/i;
+    const forbiddenRootSolidDependencyPatterns = [
+      /(^|[^a-z0-9])@starwind-ui\/solid(?=$|[^a-z0-9])/i,
+      /(^|[^a-z0-9])solid-js(?=$|[^a-z0-9])/i,
+      /(^|[^a-z0-9])@solidjs\//i,
+    ];
+    const hasForbiddenRootSolidDependency = (source: string) =>
+      forbiddenRootSolidDependencyPatterns.some((pattern) => pattern.test(source));
+    const rootVueScripts = Object.fromEntries(
+      Object.entries(rootPackage.scripts ?? {}).filter(
+        ([name, command]) =>
+          boundaryAwareVuePattern.test(name) || boundaryAwareVuePattern.test(command),
+      ),
+    );
     const publicSurfaces = [
-      "package.json",
       "README.md",
       "packages/cli/src/registry/bundled-registry.json",
       "packages/cli/registry/primitive-versions.json",
@@ -1388,10 +1524,29 @@ describe("Framework Adapter seam", () => {
     expect(futureFixturesSource).not.toMatch(/__future-fixtures\/(?:vue|solid)\//);
     expect(selectSpecSource).not.toContain("FrameworkAdapterReadiness");
     expect(selectSpecSource).not.toMatch(/__future-fixtures\/(?:vue|solid)\//);
-    expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(false);
+    expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
+    for (const unsupportedComponent of ["combobox", "menu", "navigation-menu"]) {
+      expect(existsSync(join(process.cwd(), "packages/vue/src", unsupportedComponent))).toBe(false);
+    }
+    expect(rootPackage.private).toBe(true);
+    expect(rootVueScripts).toEqual(approvedPrivateVueScripts);
+    expect(rootPackage.dependencies).not.toHaveProperty("@starwind-ui/vue");
+    expect(rootPackage.devDependencies).not.toHaveProperty("@starwind-ui/vue");
+    expect(hasForbiddenRootSolidDependency(rootPackageSource)).toBe(false);
+    for (const dependencyName of ["@starwind-ui/solid", "solid-js", "@solidjs/router"]) {
+      const mutatedRootPackageSource = JSON.stringify({
+        ...rootPackage,
+        devDependencies: {
+          ...rootPackage.devDependencies,
+          [dependencyName]: "0.0.0-solid-guard-mutation",
+        },
+      });
+
+      expect(hasForbiddenRootSolidDependency(mutatedRootPackageSource)).toBe(true);
+    }
     expect(existsSync(join(process.cwd(), "packages/solid"))).toBe(false);
     for (const surface of publicSurfaces) {
-      expect(surface).not.toContain("@starwind-ui/vue");
+      expect(surface).not.toMatch(boundaryAwareVuePattern);
       expect(surface).not.toContain("@starwind-ui/solid");
       expect(surface).not.toContain("__future-fixtures/vue");
       expect(surface).not.toContain("__future-fixtures/solid");
@@ -1408,6 +1563,7 @@ describe("Framework Adapter seam", () => {
       join(process.cwd(), "scripts/portable-runtime/check-vue-tracer-fixtures.ts"),
       "utf8",
     );
+    const fixtureFiles = createVueContractFixtureFiles();
 
     expect(rootPackage.scripts?.["runtime:generate:vue:check"]).toBe(
       "tsx scripts/portable-runtime/check-vue-tracer-fixtures.ts",
@@ -1419,10 +1575,21 @@ describe("Framework Adapter seam", () => {
     });
     expect(rootPackage.dependencies).not.toHaveProperty("vue");
     expect(rootPackage.dependencies).not.toHaveProperty("vue-tsc");
+    expect(fixtureFiles.map((file) => file.path)).toEqual(VUE_CONTRACT_FIXTURE_PATHS);
+    expect([...new Set(fixtureFiles.map((file) => file.path.split("/")[2]))].sort()).toEqual([
+      "collapsible",
+      "combobox",
+      "conformance",
+      "menu",
+      "navigation-menu",
+      "toggle",
+    ]);
     expect(compileScript).toContain("mkdtemp");
     expect(compileScript).toContain("__future-fixtures/vue");
+    expect(compileScript).toContain("printFrameworkAdapterConformanceFixture(");
     expect(compileScript).toContain("printFutureFrameworkTracerPlan(");
-    expect(compileScript).toContain("printFutureSelectSpecializedAdapterSpecFixture(");
+    expect(compileScript).toContain("printFutureSpecializedAdapterSpecFixture(");
+    expect(compileScript).not.toContain("selectRuntimeAdapterContract");
     expect(compileScript).toContain('"vue"');
     expect(compileScript).toContain("vue-tsc");
     expect(compileScript).toContain("rm(fixtureRoot, { force: true, recursive: true })");

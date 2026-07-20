@@ -6,6 +6,7 @@ export const contextMenuStyledContract = createContextMenuStyledContract();
 function createContextMenuStyledContract(): StyledAdapterContract {
   const contract = deepReplace(dropdownStyledContract) as StyledAdapterContract;
   contract.component = "context-menu";
+  removeLinkItem(contract);
 
   contract.components.forEach((component) => {
     component.primitiveAliases = { "context-menu": "ContextMenuPrimitive" };
@@ -19,6 +20,16 @@ function createContextMenuStyledContract(): StyledAdapterContract {
   replaceTrigger(contract);
 
   return contract;
+}
+
+function removeLinkItem(contract: StyledAdapterContract): void {
+  contract.publicExports = contract.publicExports.filter(
+    (exportName) => exportName !== "ContextMenuLinkItem",
+  );
+  contract.components = contract.components.filter(
+    (component) => component.exportName !== "ContextMenuLinkItem",
+  );
+  delete contract.defaultExport.LinkItem;
 }
 
 function deepReplace(value: unknown): unknown {

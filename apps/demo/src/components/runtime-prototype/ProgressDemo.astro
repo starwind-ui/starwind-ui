@@ -38,6 +38,15 @@ const progressVariants = [
       }
     </div>
     <Progress id="runtime-progress-indeterminate" variant="warning" label="Runtime sync progress" />
+    <div class="sr-only" aria-hidden="true">
+      <Progress id="runtime-progress-reversed" min={100} max={0} value={25} />
+      <Progress id="runtime-progress-equal-complete" min={10} max={10} value={10} />
+      <Progress id="runtime-progress-equal-progressing" min={10} max={10} value={9} />
+      <Progress id="runtime-progress-invalid-bounds" min={Number.NaN} max={Infinity} value={25} />
+      <Progress id="runtime-progress-nan" value={Number.NaN} />
+      <Progress id="runtime-progress-positive-infinity" value={Infinity} />
+      <Progress id="runtime-progress-negative-infinity" value={-Infinity} />
+    </div>
     <Progress
       id="runtime-progress-updating"
       value={25}

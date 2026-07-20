@@ -126,6 +126,66 @@ import {
 
 const astroPrimitiveTarget = getPrimitiveFrameworkAdapterTarget("astro");
 const reactPrimitiveTarget = getPrimitiveFrameworkAdapterTarget("react");
+const appManifestDependencySections = [
+  "dependencies",
+  "devDependencies",
+  "optionalDependencies",
+  "peerDependencies",
+] as const;
+
+type AppManifest = Partial<
+  Record<(typeof appManifestDependencySections)[number], Record<string, string>>
+>;
+
+type AppManifestSurface = {
+  manifest: AppManifest;
+  path: string;
+};
+
+function readAppManifestSurfaces(): AppManifestSurface[] {
+  return readdirSync(join(process.cwd(), "apps"), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => ({
+      manifestPath: join(process.cwd(), "apps", entry.name, "package.json"),
+      path: `apps/${entry.name}/package.json`,
+    }))
+    .filter(({ manifestPath }) => existsSync(manifestPath))
+    .map(({ manifestPath, path }) => ({
+      manifest: JSON.parse(readFileSync(manifestPath, "utf8")) as AppManifest,
+      path,
+    }));
+}
+
+function findFutureFrameworkAppDependencyLeaks(apps: AppManifestSurface[]): {
+  solid: string[];
+  vue: string[];
+} {
+  const dependenciesFor = (manifest: AppManifest) =>
+    appManifestDependencySections.flatMap((section) => Object.keys(manifest[section] ?? {}));
+  const hasVueDependency = (manifest: AppManifest) =>
+    dependenciesFor(manifest).some((dependency) =>
+      /(^|[^a-z0-9])vue(?=$|[^a-z0-9])/i.test(dependency),
+    );
+  const hasSolidDependency = (manifest: AppManifest) =>
+    dependenciesFor(manifest).some(
+      (dependency) =>
+        dependency === "solid-js" ||
+        dependency === "@starwind-ui/solid" ||
+        dependency.startsWith("@solidjs/"),
+    );
+
+  return {
+    solid: apps
+      .filter(({ manifest }) => hasSolidDependency(manifest))
+      .map(({ path }) => path)
+      .sort(),
+    vue: apps
+      .filter(({ path }) => path !== "apps/vue-demo/package.json")
+      .filter(({ manifest }) => hasVueDependency(manifest))
+      .map(({ path }) => path)
+      .sort(),
+  };
+}
 
 function projectAstroSpecializedOutputModel(model: AdapterOutputModel): AdapterOutputModel {
   return astroPrimitiveTarget.primitive.outputModel.projectSpecialized(model);
@@ -9199,142 +9259,13 @@ describe("SpecializedAdapterSpec", () => {
     }
   });
 
-  it("prints deterministic non-shipping Vue Select fixtures from the Select component spec", () => {
+  it("rejects real Select output from Vue future-tracer generation", () => {
     const spec = buildSelectSpecializedAdapterSpec(selectRuntimeAdapterContract);
-    const firstRun = printFutureSelectSpecializedAdapterSpecFixture("vue", spec);
-    const secondRun = printFutureSelectSpecializedAdapterSpecFixture("vue", spec);
 
-    expect(secondRun).toEqual(firstRun);
-    expect(firstRun.map((file) => file.path)).toEqual([
-      "__future-fixtures/vue/select/SelectRoot.vue",
-      "__future-fixtures/vue/select/SelectTrigger.vue",
-      "__future-fixtures/vue/select/SelectPortal.vue",
-      "__future-fixtures/vue/select/SelectPopup.vue",
-      "__future-fixtures/vue/select/SelectItem.vue",
-      "__future-fixtures/vue/select/SelectItemIndicator.vue",
-      "__future-fixtures/vue/select/index.ts",
-    ]);
-    expect(firstRun.every((file) => file.contents.includes("Non-shipping"))).toBe(true);
-
-    const root = firstRun.find((file) => file.path.endsWith("SelectRoot.vue"))?.contents;
-    const trigger = firstRun.find((file) => file.path.endsWith("SelectTrigger.vue"))?.contents;
-    const portal = firstRun.find((file) => file.path.endsWith("SelectPortal.vue"))?.contents;
-    const popup = firstRun.find((file) => file.path.endsWith("SelectPopup.vue"))?.contents;
-    const item = firstRun.find((file) => file.path.endsWith("SelectItem.vue"))?.contents;
-    const indicator = firstRun.find((file) =>
-      file.path.endsWith("SelectItemIndicator.vue"),
-    )?.contents;
-
-    expect(root).toContain('<script setup lang="ts">');
-    expect(root).toContain(
-      'import { createSelect, type SelectOpenChangeDetails, type SelectValueChangeDetails } from "@starwind-ui/runtime/select";',
+    expect(() => printFutureSelectSpecializedAdapterSpecFixture("vue", spec)).toThrow(
+      "Select is supported by real Vue output and is not a future-framework tracer fixture.",
     );
-    expect(root).toContain(
-      'import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
-    );
-    expect(root).toContain("const root = ref<HTMLDivElement | null>(null);");
-    expect(root).toContain('provide("SelectContext"');
-    expect(root).toContain("const initialized = ref(false);");
-    expect(root).toContain("const portalReference = ref<HTMLElement | null>(null);");
-    expect(root).toContain("initialized.value = true;");
-    expect(root).toContain("createSelect(root.value, {");
-    expect(root).toContain("portalReference: portalReference.value ?? undefined,");
-    expect(root).toContain("watch(\n  () => props.open");
-    expect(root).toContain("watch(\n  () => props.value");
-    expect(root).toContain("instance.setOpen(open, { emit: false });");
-    expect(root).toContain("instance.setValue(value, { emit: false });");
-    expect(root).toContain("instance?.setFormOptions({");
-    expect(root).toContain("instance?.setReadOnly(readOnly);");
-    expect(root).toContain("data-sw-select-input");
-    expect(root).toContain(':autocomplete="props.autoComplete"');
-    expect(root).toContain(':form="props.form"');
-    expect(root).toContain(':name="props.name"');
-    expect(root).toContain(':required="props.required"');
-    expect(root).toContain('ref="input"');
-    expect(root).toContain("<slot />");
-
-    expect(trigger).toContain('inject("SelectContext"');
-    expect(trigger).toContain(":aria-expanded=\"select.open.value ? 'true' : 'false'\"");
-    expect(trigger).toContain("<slot />");
-
-    expect(portal).toContain(":to=\"props.container ?? 'body'\"");
-    expect(portal).toContain(':disabled="props.disabled || !select.initialized.value"');
-    expect(portal).toContain("select.portalReference.value = portal.value;");
-    expect(portal).toContain("data-floating-root");
-    expect(portal).not.toContain("data-sw-floating-root");
-    expect(portal).toContain('ref="portal"');
-    expect(portal).toContain("<slot />");
-
-    expect(popup).toContain("\n    hidden\n");
-    expect(popup).not.toContain(':hidden="');
-
-    expect(item).toContain('provide("SelectItemContext"');
-    expect(item).toContain(":aria-selected=\"selected ? 'true' : 'false'\"");
-    expect(indicator).toContain('inject("SelectItemContext"');
-    expect(indicator).toContain(":data-state=\"selected ? 'checked' : 'unchecked'\"");
   });
-
-  it("prints deterministic non-shipping Solid Select fixtures from the Select component spec", () => {
-    const spec = buildSelectSpecializedAdapterSpec(selectRuntimeAdapterContract);
-    const firstRun = printFutureSelectSpecializedAdapterSpecFixture("solid", spec);
-    const secondRun = printFutureSelectSpecializedAdapterSpecFixture("solid", spec);
-
-    expect(secondRun).toEqual(firstRun);
-    expect(firstRun.map((file) => file.path)).toEqual([
-      "__future-fixtures/solid/select/SelectRoot.tsx",
-      "__future-fixtures/solid/select/SelectTrigger.tsx",
-      "__future-fixtures/solid/select/SelectPortal.tsx",
-      "__future-fixtures/solid/select/SelectPopup.tsx",
-      "__future-fixtures/solid/select/SelectItem.tsx",
-      "__future-fixtures/solid/select/SelectItemIndicator.tsx",
-      "__future-fixtures/solid/select/index.ts",
-    ]);
-    expect(firstRun.every((file) => file.contents.includes("Non-shipping"))).toBe(true);
-
-    const root = firstRun.find((file) => file.path.endsWith("SelectRoot.tsx"))?.contents;
-    const trigger = firstRun.find((file) => file.path.endsWith("SelectTrigger.tsx"))?.contents;
-    const portal = firstRun.find((file) => file.path.endsWith("SelectPortal.tsx"))?.contents;
-    const item = firstRun.find((file) => file.path.endsWith("SelectItem.tsx"))?.contents;
-    const indicator = firstRun.find((file) =>
-      file.path.endsWith("SelectItemIndicator.tsx"),
-    )?.contents;
-
-    expect(root).toContain(
-      'import { createSelect, type SelectOpenChangeDetails, type SelectValueChangeDetails } from "@starwind-ui/runtime/select";',
-    );
-    expect(root).toContain(
-      'import { createContext, createEffect, createMemo, createSignal, mergeProps, onCleanup, onMount, splitProps, useContext } from "solid-js";',
-    );
-    expect(root).toContain("export const SelectContext = createContext");
-    expect(root).toContain("open: () => boolean;");
-    expect(root).toContain("value: () => string | null;");
-    expect(root).toContain(
-      "export const SelectContext = createContext<SelectContextValue>({ open: () => false, value: () => null });",
-    );
-    expect(root).toContain("let root!: HTMLDivElement;");
-    expect(root).toContain("instance = createSelect(root, {");
-    expect(root).toContain("createEffect(() => {");
-    expect(root).toContain("instance.setOpen(open, { emit: false });");
-    expect(root).toContain("instance.setValue(value, { emit: false });");
-    expect(root).toContain("<SelectContext.Provider value={contextValue}");
-    expect(root).toContain('data-state={contextValue.open() ? "open" : "closed"}');
-    expect(root).toContain("{local.children}");
-
-    expect(trigger).toContain("useSelectContext();");
-    expect(trigger).toContain('aria-expanded={select.open() ? "true" : "false"}');
-
-    expect(portal).toContain('import { Portal } from "solid-js/web";');
-    expect(portal).toContain("<Portal>");
-
-    expect(item).toContain("const selected = createMemo(() => select.value() === local.value);");
-    expect(item).toContain("<SelectItemContext.Provider value={{ value: local.value }}>");
-    expect(indicator).toContain("useSelectItemContext();");
-    expect(indicator).toContain(
-      "const selected = createMemo(() => select.value() === item.value);",
-    );
-    expect(indicator).toContain('data-state={selected() ? "checked" : "unchecked"}');
-  });
-
   it("fails clearly when Select Vue or Solid fixture targets ask for unsupported adapter features", () => {
     const spec = buildSelectSpecializedAdapterSpec(selectRuntimeAdapterContract);
     const specWithoutTeleportPortal = {
@@ -9356,7 +9287,7 @@ describe("SpecializedAdapterSpec", () => {
     ).toThrow('Select Solid specialized adapter fixture only supports portalPart "portal".');
   });
 
-  it("derives Select Vue and Solid fixture file wiring from the Select component spec", () => {
+  it("keeps Select wiring in Solid tracer evidence only", () => {
     const spec = buildSelectSpecializedAdapterSpec(selectRuntimeAdapterContract);
     const specWithRenamedRoot = {
       ...spec,
@@ -9367,21 +9298,20 @@ describe("SpecializedAdapterSpec", () => {
       ),
     } as SelectSpecializedAdapterSpec;
 
-    const vueFiles = printFutureSelectSpecializedAdapterSpecFixture("vue", specWithRenamedRoot);
     const solidFiles = printFutureSelectSpecializedAdapterSpecFixture("solid", specWithRenamedRoot);
-    const vueIndex = vueFiles.find((file) => file.path.endsWith("index.ts"))?.contents;
     const solidIndex = solidFiles.find((file) => file.path.endsWith("index.ts"))?.contents;
     const solidTrigger = solidFiles.find((file) =>
       file.path.endsWith("SelectTrigger.tsx"),
     )?.contents;
 
-    expect(vueFiles.map((file) => file.path)).toContain(
-      "__future-fixtures/vue/select/SelectControl.vue",
+    expect(() =>
+      printFutureSelectSpecializedAdapterSpecFixture("vue", specWithRenamedRoot),
+    ).toThrow(
+      "Select is supported by real Vue output and is not a future-framework tracer fixture.",
     );
     expect(solidFiles.map((file) => file.path)).toContain(
       "__future-fixtures/solid/select/SelectControl.tsx",
     );
-    expect(vueIndex).toContain('export { default as Root } from "./SelectControl.vue";');
     expect(solidIndex).toContain('export { default as Root } from "./SelectControl";');
     expect(solidIndex).toContain(
       'export { SelectContext, SelectItemContext, useSelectContext, useSelectItemContext } from "./SelectControl";',
@@ -12286,94 +12216,13 @@ submenuTrigger:
     );
   });
 
-  it("prints deterministic non-shipping Vue Scroll Area fixtures from the component spec", () => {
+  it("rejects real Scroll Area output from Vue future-tracer generation", () => {
     const spec = buildBaseSpecializedAdapterSpec(scrollAreaRuntimeAdapterContract);
-    const firstRun = printFutureSpecializedAdapterSpecFixture("vue", spec);
-    const secondRun = printFutureSpecializedAdapterSpecFixture("vue", spec);
 
-    expect(secondRun).toEqual(firstRun);
-    expect(firstRun.map((file) => file.path)).toEqual([
-      "__future-fixtures/vue/scroll-area/ScrollAreaRoot.vue",
-      "__future-fixtures/vue/scroll-area/ScrollAreaViewport.vue",
-      "__future-fixtures/vue/scroll-area/ScrollAreaContent.vue",
-      "__future-fixtures/vue/scroll-area/ScrollAreaScrollbar.vue",
-      "__future-fixtures/vue/scroll-area/ScrollAreaThumb.vue",
-      "__future-fixtures/vue/scroll-area/ScrollAreaCorner.vue",
-      "__future-fixtures/vue/scroll-area/index.ts",
-    ]);
-    expect(firstRun.every((file) => file.contents.includes("Non-shipping"))).toBe(true);
-
-    const root = firstRun.find((file) => file.path.endsWith("ScrollAreaRoot.vue"))?.contents;
-    const scrollbar = firstRun.find((file) =>
-      file.path.endsWith("ScrollAreaScrollbar.vue"),
-    )?.contents;
-    const index = firstRun.find((file) => file.path.endsWith("index.ts"))?.contents;
-
-    expect(root).toContain('<script setup lang="ts">');
-    expect(root).toContain('import { createScrollArea } from "@starwind-ui/runtime/scroll-area";');
-    expect(root).toContain(
-      'import { onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
+    expect(() => printFutureSpecializedAdapterSpecFixture("vue", spec)).toThrow(
+      "ScrollArea is supported by real Vue output and is not a future-framework tracer fixture.",
     );
-    expect(root).toContain("const root = ref<HTMLDivElement | null>(null);");
-    expect(root).toContain('provide("starwind-scroll-area-root", root);');
-    expect(root).toContain("createScrollArea(root.value);");
-    expect(root).toContain("watch(\n  () => props.overflowEdgeThreshold");
-    expect(root).toContain("data-sw-scroll-area");
-    expect(root).toContain("<slot />");
-
-    expect(scrollbar).toContain("withDefaults(");
-    expect(scrollbar).toContain('orientation: "vertical"');
-    expect(scrollbar).toContain(":data-keep-mounted=\"props.keepMounted ? '' : undefined\"");
-    expect(scrollbar).toContain(':data-orientation="props.orientation"');
-
-    expect(index).toContain('export { default as Root } from "./ScrollAreaRoot.vue";');
   });
-
-  it("prints deterministic non-shipping Solid Scroll Area fixtures from the component spec", () => {
-    const spec = buildBaseSpecializedAdapterSpec(scrollAreaRuntimeAdapterContract);
-    const firstRun = printFutureSpecializedAdapterSpecFixture("solid", spec);
-    const secondRun = printFutureSpecializedAdapterSpecFixture("solid", spec);
-
-    expect(secondRun).toEqual(firstRun);
-    expect(firstRun.map((file) => file.path)).toEqual([
-      "__future-fixtures/solid/scroll-area/ScrollAreaRoot.tsx",
-      "__future-fixtures/solid/scroll-area/ScrollAreaViewport.tsx",
-      "__future-fixtures/solid/scroll-area/ScrollAreaContent.tsx",
-      "__future-fixtures/solid/scroll-area/ScrollAreaScrollbar.tsx",
-      "__future-fixtures/solid/scroll-area/ScrollAreaThumb.tsx",
-      "__future-fixtures/solid/scroll-area/ScrollAreaCorner.tsx",
-      "__future-fixtures/solid/scroll-area/index.ts",
-    ]);
-    expect(firstRun.every((file) => file.contents.includes("Non-shipping"))).toBe(true);
-
-    const root = firstRun.find((file) => file.path.endsWith("ScrollAreaRoot.tsx"))?.contents;
-    const scrollbar = firstRun.find((file) =>
-      file.path.endsWith("ScrollAreaScrollbar.tsx"),
-    )?.contents;
-    const index = firstRun.find((file) => file.path.endsWith("index.ts"))?.contents;
-
-    expect(root).toContain('import { createScrollArea } from "@starwind-ui/runtime/scroll-area";');
-    expect(root).toContain(
-      'import { createContext, createEffect, mergeProps, onCleanup, onMount, splitProps, useContext } from "solid-js";',
-    );
-    expect(root).toContain("export const ScrollAreaRootContext = createContext");
-    expect(root).toContain("let root!: HTMLDivElement;");
-    expect(root).toContain("instance = createScrollArea(root);");
-    expect(root).toContain("createEffect(() => {");
-    expect(root).toContain("<ScrollAreaRootContext.Provider value={root}");
-    expect(root).toContain("data-sw-scroll-area");
-    expect(root).toContain("{local.children}");
-
-    expect(scrollbar).toContain(
-      'mergeProps({ keepMounted: false, orientation: "vertical" as const }',
-    );
-    expect(scrollbar).toContain('data-keep-mounted={local.keepMounted ? "" : undefined}');
-    expect(scrollbar).toContain("data-orientation={local.orientation}");
-    expect(scrollbar).toContain("useContext(ScrollAreaRootContext);");
-
-    expect(index).toContain('export { default as Root } from "./ScrollAreaRoot";');
-  });
-
   it("prints deterministic non-shipping Vue Combobox fixtures from the component spec", () => {
     const spec = buildComboboxSpecializedAdapterSpec(comboboxRuntimeAdapterContract);
     const firstRun = printFutureSpecializedAdapterSpecFixture("vue", spec);
@@ -12401,6 +12250,7 @@ submenuTrigger:
       "__future-fixtures/vue/combobox/ComboboxItemIndicator.vue",
       "__future-fixtures/vue/combobox/ComboboxSeparator.vue",
       "__future-fixtures/vue/combobox/index.ts",
+      "__future-fixtures/vue/combobox/ComboboxContext.ts",
     ]);
     expect(firstRun.every((file) => file.contents.includes("Non-shipping"))).toBe(true);
 
@@ -12430,7 +12280,10 @@ submenuTrigger:
       'import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
     );
     expect(root).toContain("const input = ref<HTMLInputElement | null>(null);");
-    expect(root).toContain('provide("starwind-combobox-root", comboboxContext);');
+    expect(root).toContain("provide(comboboxRootContextKey, comboboxContext);");
+    expect(root).toContain('"update:modelValue": [value: string | null];');
+    expect(root).toContain('"update:open": [open: boolean];');
+    expect(root).toContain('"update:inputValue": [inputValue: string];');
     expect(root).toContain("instance = createCombobox(root.value, {");
     expect(root).toContain("watch(\n  () => props.inputValue");
     expect(root).toContain("instance.setInputValue(inputValue, { emit: false, filter: false });");
@@ -12447,18 +12300,18 @@ submenuTrigger:
     expect(root).toContain('tabindex="-1"');
     expect(root).not.toContain(':autocomplete="props.autoComplete"');
 
-    expect(input).toContain('inject("starwind-combobox-root")');
+    expect(input).toContain('useComboboxRootContext("Combobox child")');
     expect(input).toContain("combobox.input.value = input.value;");
     expect(input).toContain("onBeforeUnmount");
     expect(input).toContain('role="combobox"');
     expect(portal).toContain('<Teleport to="body">');
     expect(positioner).toContain(':data-side="props.side"');
     expect(popup).toContain('role="listbox"');
-    expect(item).toContain('provide("starwind-combobox-item", comboboxItemContext);');
+    expect(item).toContain("provide(comboboxItemContextKey, comboboxItemContext);");
     expect(item).toContain(':data-value="props.value"');
     expect(item).toContain(":aria-selected=\"selected ? 'true' : 'false'\"");
     expect(itemText).toContain("data-sw-combobox-item-text");
-    expect(indicator).toContain('inject("starwind-combobox-item")');
+    expect(indicator).toContain('useComboboxItemContext("Combobox.ItemIndicator")');
     expect(indicator).toContain(":data-state=\"selected ? 'checked' : 'unchecked'\"");
     expect(allContents).not.toMatch(/filterItems|keyboardNavigation|innerText|textContent/);
   });
@@ -12578,6 +12431,7 @@ submenuTrigger:
       "__future-fixtures/vue/menu/MenuSubmenuRoot.vue",
       "__future-fixtures/vue/menu/MenuSubmenuTrigger.vue",
       "__future-fixtures/vue/menu/index.ts",
+      "__future-fixtures/vue/menu/MenuContext.ts",
     ]);
     expect(firstRun.every((file) => file.contents.includes("Non-shipping"))).toBe(true);
 
@@ -12602,25 +12456,26 @@ submenuTrigger:
     expect(root).toContain(
       'import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
     );
-    expect(root).toContain('provide("starwind-menu-root", menuRootContext);');
+    expect(root).toContain("provide(menuRootContextKey, menuRootContext);");
+    expect(root).toContain('"update:open": [open: boolean];');
     expect(root).toContain("instance = createMenu(root.value");
     expect(root).toContain(":data-state=\"renderedOpen ? 'open' : 'closed'\"");
     expect(root).toContain("<slot />");
 
     expect(portal).toContain('<Teleport to="body">');
     expect(checkboxItem).toContain('addEventListener("starwind:checked-change"');
-    expect(checkboxItem).toContain('provide("starwind-menu-checkbox-item", checkboxItemContext);');
+    expect(checkboxItem).toContain("provide(menuCheckboxItemContextKey, checkboxItemContext);");
     expect(checkboxItem).toContain(":data-checked=\"renderedChecked ? '' : undefined\"");
-    expect(radioGroup).toContain('provide("starwind-menu-radio-group", radioGroupContext);');
+    expect(radioGroup).toContain("provide(menuRadioGroupContextKey, radioGroupContext);");
     expect(radioGroup).toContain('addEventListener("starwind:value-change"');
-    expect(radioItem).toContain('inject("starwind-menu-radio-group")');
-    expect(radioItem).toContain('provide("starwind-menu-radio-item", radioItemContext);');
+    expect(radioItem).toContain('useMenuRadioGroupContext("Menu.RadioItem")');
+    expect(radioItem).toContain("provide(menuRadioItemContextKey, radioItemContext);");
     expect(radioItem).toContain(
       "group.value.value === undefined ? props.defaultChecked : group.value.value === props.value",
     );
     expect(radioItem).not.toContain("group.value.value === props.value ?? props.defaultChecked");
     expect(radioIndicator).toContain(":data-state=\"checked ? 'checked' : 'unchecked'\"");
-    expect(submenuRoot).toContain('provide("starwind-menu-submenu-root", submenuRootContext);');
+    expect(submenuRoot).toContain("provide(menuSubmenuRootContextKey, submenuRootContext);");
     expect(index).toContain('export { default as Root } from "./MenuRoot.vue";');
     expect(index).toContain(
       'export { default as RadioItemIndicator } from "./MenuRadioItemIndicator.vue";',
@@ -12723,6 +12578,7 @@ submenuTrigger:
       "__future-fixtures/vue/navigation-menu/NavigationMenuViewport.vue",
       "__future-fixtures/vue/navigation-menu/NavigationMenuArrow.vue",
       "__future-fixtures/vue/navigation-menu/index.ts",
+      "__future-fixtures/vue/navigation-menu/NavigationMenuContext.ts",
     ]);
     expect(firstRun.every((file) => file.contents.includes("Non-shipping"))).toBe(true);
 
@@ -12767,18 +12623,19 @@ submenuTrigger:
       'import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";',
     );
     expect(root).toContain("const root = ref<HTMLElement | null>(null);");
-    expect(root).toContain('provide("starwind-navigation-menu-root", navigationMenuContext);');
+    expect(root).toContain("provide(navigationMenuRootContextKey, navigationMenuContext);");
+    expect(root).toContain('"update:modelValue": [value: string | null];');
     expect(root).toContain("instance = createNavigationMenu(root.value, {");
-    expect(root).toContain("watch(\n  () => props.value");
+    expect(root).toContain("watch(\n  () => props.modelValue");
     expect(root).toContain("instance.setValue(value, { emit: false });");
-    expect(root).toContain(":data-controlled-value=\"props.value === null ? '' : undefined\"");
+    expect(root).toContain(":data-controlled-value=\"props.modelValue === null ? '' : undefined\"");
     expect(root).toContain(':data-orientation="props.orientation"');
 
-    expect(list).toContain('inject("starwind-navigation-menu-root")');
+    expect(list).toContain('useNavigationMenuRootContext("NavigationMenu child")');
     expect(list).toContain(':data-orientation="navigationMenu.orientation.value"');
-    expect(item).toContain('provide("starwind-navigation-menu-item"');
+    expect(item).toContain("provide(navigationMenuItemContextKey");
     expect(item).toContain(':data-value="props.value"');
-    expect(trigger).toContain('inject("starwind-navigation-menu-item")');
+    expect(trigger).toContain('useNavigationMenuItemContext("NavigationMenu item child")');
     expect(trigger).toContain(":aria-expanded=\"open ? 'true' : 'false'\"");
     expect(portal).toContain('<Teleport to="body">');
     expect(positioner).toContain(':data-collision-padding="props.collisionPadding"');
@@ -12885,21 +12742,35 @@ submenuTrigger:
     ].map((file) => file.path);
 
     expect(fixturePaths.every((path) => path.startsWith("__future-fixtures/"))).toBe(true);
-    expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(false);
+    expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
+    expect(existsSync(join(process.cwd(), "packages/vue/src/navigation-menu"))).toBe(false);
+    expect(
+      existsSync(
+        join(process.cwd(), "apps/vue-demo/src/components/starwind-runtime/navigation-menu"),
+      ),
+    ).toBe(false);
     expect(existsSync(join(process.cwd(), "packages/solid"))).toBe(false);
     expect(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")).not.toContain(
       "packages/vue",
     );
-    const appPackageJsonPaths = readdirSync(join(process.cwd(), "apps"), {
-      withFileTypes: true,
-    })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => join(process.cwd(), "apps", entry.name, "package.json"))
-      .filter((path) => existsSync(path));
-    expect(appPackageJsonPaths.length).toBeGreaterThan(0);
-    for (const appPackageJsonPath of appPackageJsonPaths) {
-      expect(readFileSync(appPackageJsonPath, "utf8")).not.toMatch(/"vue"|"solid-js"/);
-    }
+    const appManifests = readAppManifestSurfaces();
+    expect(appManifests.length).toBeGreaterThan(0);
+    expect(findFutureFrameworkAppDependencyLeaks(appManifests)).toEqual({ solid: [], vue: [] });
+    expect(
+      findFutureFrameworkAppDependencyLeaks([
+        {
+          manifest: { dependencies: { "solid-js": "1.0.0", vue: "3.5.0" } },
+          path: "apps/vue-demo/package.json",
+        },
+        {
+          manifest: { dependencies: { vue: "3.5.0" } },
+          path: "apps/public-demo/package.json",
+        },
+      ]),
+    ).toEqual({
+      solid: ["apps/vue-demo/package.json"],
+      vue: ["apps/public-demo/package.json"],
+    });
     expect(
       readFileSync(join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"), "utf8"),
     ).not.toContain("__future-fixtures");
@@ -12921,14 +12792,18 @@ submenuTrigger:
     ].map((file) => file.path);
 
     expect(fixturePaths.every((path) => path.startsWith("__future-fixtures/"))).toBe(true);
-    expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(false);
+    expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
+    expect(existsSync(join(process.cwd(), "packages/vue/src/menu"))).toBe(false);
+    expect(
+      existsSync(join(process.cwd(), "apps/vue-demo/src/components/starwind-runtime/menu")),
+    ).toBe(false);
     expect(existsSync(join(process.cwd(), "packages/solid"))).toBe(false);
     expect(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")).not.toContain(
       "packages/vue",
     );
-    expect(readFileSync(join(process.cwd(), "apps/demo/package.json"), "utf8")).not.toMatch(
-      /"vue"|"solid-js"/,
-    );
+    const appManifests = readAppManifestSurfaces();
+    expect(appManifests.length).toBeGreaterThan(0);
+    expect(findFutureFrameworkAppDependencyLeaks(appManifests)).toEqual({ solid: [], vue: [] });
     expect(
       readFileSync(join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"), "utf8"),
     ).not.toContain("__future-fixtures");
@@ -12950,21 +12825,18 @@ submenuTrigger:
     ].map((file) => file.path);
 
     expect(fixturePaths.every((path) => path.startsWith("__future-fixtures/"))).toBe(true);
-    expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(false);
+    expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
+    expect(existsSync(join(process.cwd(), "packages/vue/src/combobox"))).toBe(false);
+    expect(
+      existsSync(join(process.cwd(), "apps/vue-demo/src/components/starwind-runtime/combobox")),
+    ).toBe(false);
     expect(existsSync(join(process.cwd(), "packages/solid"))).toBe(false);
     expect(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")).not.toContain(
       "packages/vue",
     );
-    const appPackageJsonPaths = readdirSync(join(process.cwd(), "apps"), {
-      withFileTypes: true,
-    })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => join(process.cwd(), "apps", entry.name, "package.json"))
-      .filter((path) => existsSync(path));
-    expect(appPackageJsonPaths.length).toBeGreaterThan(0);
-    for (const appPackageJsonPath of appPackageJsonPaths) {
-      expect(readFileSync(appPackageJsonPath, "utf8")).not.toMatch(/"vue"|"solid-js"/);
-    }
+    const appManifests = readAppManifestSurfaces();
+    expect(appManifests.length).toBeGreaterThan(0);
+    expect(findFutureFrameworkAppDependencyLeaks(appManifests)).toEqual({ solid: [], vue: [] });
     expect(
       readFileSync(join(process.cwd(), "packages/cli/src/registry/bundled-registry.json"), "utf8"),
     ).not.toContain("__future-fixtures");
@@ -13003,13 +12875,13 @@ submenuTrigger:
     };
 
     expect(() => printFutureSpecializedAdapterSpecFixture("vue", specWithoutRootOption)).toThrow(
-      "ScrollArea specialized adapter fixture is missing root overflowEdgeThreshold prop.",
+      "ScrollArea is supported by real Vue output and is not a future-framework tracer fixture.",
     );
     expect(() => printFutureSpecializedAdapterSpecFixture("solid", specWithoutRootOption)).toThrow(
       "ScrollArea specialized adapter fixture is missing root overflowEdgeThreshold prop.",
     );
     expect(() => printFutureSpecializedAdapterSpecFixture("vue", specWithWrongTarget)).toThrow(
-      "ScrollArea specialized adapter fixture is missing scrollbar orientation prop.",
+      "ScrollArea is supported by real Vue output and is not a future-framework tracer fixture.",
     );
     expect(() => printFutureSpecializedAdapterSpecFixture("solid", specWithWrongTarget)).toThrow(
       "ScrollArea specialized adapter fixture is missing scrollbar orientation prop.",

@@ -15,7 +15,8 @@ Stable package versions publish with `latest` only after prerelease state has be
 
 Runtime, Astro, and React are versioned in lockstep. Release the CLI alongside them so generated
 styled components and vendored Primitive sources request compatible package versions. Use
-`pnpm changeset version` to advance versions; do not hand-edit prerelease versions. Before a release,
+`pnpm release:version` to consolidate deferred styled component intent, regenerate registry
+artifacts, and advance package versions; do not hand-edit prerelease versions. Before a release,
 `pnpm changeset status --verbose` must describe the intended package set with no unexplained pending
 work.
 

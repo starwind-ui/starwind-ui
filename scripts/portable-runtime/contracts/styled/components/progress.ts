@@ -19,7 +19,10 @@ export const progressStyledContract: StyledAdapterContract = {
       base: "h-full w-full",
     },
     progressIndicator: {
-      base: "h-full w-full flex-1 transition-transform",
+      base: [
+        "h-full w-full flex-1 transition-transform",
+        "data-instant:transition-none motion-reduce:transition-none",
+      ],
       variants: {
         variant: {
           indeterminate: "absolute inset-y-0 start-0 w-3/4",
@@ -82,17 +85,6 @@ export const progressStyledContract: StyledAdapterContract = {
           value: { type: "raw", code: 'rest["aria-label"] ?? label' },
         },
         {
-          name: "progressValue",
-          value: {
-            type: "raw",
-            code: "value == null || Number.isNaN(Number(value)) ? null : Number(value)",
-          },
-        },
-        {
-          name: "isIndeterminate",
-          value: { type: "raw", code: "progressValue === null" },
-        },
-        {
           name: "boundedMin",
           value: { type: "raw", code: "Number.isFinite(min) ? min : 0" },
         },
@@ -101,10 +93,29 @@ export const progressStyledContract: StyledAdapterContract = {
           value: { type: "raw", code: "Number.isFinite(max) ? max : 100" },
         },
         {
+          name: "normalizedMin",
+          value: { type: "raw", code: "Math.min(boundedMin, boundedMax)" },
+        },
+        {
+          name: "normalizedMax",
+          value: { type: "raw", code: "Math.max(boundedMin, boundedMax)" },
+        },
+        {
+          name: "progressValue",
+          value: {
+            type: "raw",
+            code: "value == null || !Number.isFinite(Number(value)) ? null : Math.min(Math.max(Number(value), normalizedMin), normalizedMax)",
+          },
+        },
+        {
+          name: "isIndeterminate",
+          value: { type: "raw", code: "progressValue === null" },
+        },
+        {
           name: "progressPercent",
           value: {
             type: "raw",
-            code: "isIndeterminate ? 0 : boundedMax === boundedMin ? progressValue >= boundedMax ? 100 : 0 : Math.round(Math.min(Math.max(((progressValue - boundedMin) / (boundedMax - boundedMin)) * 100, 0), 100))",
+            code: "isIndeterminate ? 0 : normalizedMax === normalizedMin ? progressValue >= normalizedMax ? 100 : 0 : Math.round(Math.min(Math.max(((progressValue - normalizedMin) / (normalizedMax - normalizedMin)) * 100, 0), 100))",
           },
         },
         {
@@ -132,8 +143,8 @@ export const progressStyledContract: StyledAdapterContract = {
                 },
               },
             },
-            { name: "max", value: { type: "variable", name: "boundedMax" } },
-            { name: "min", value: { type: "variable", name: "boundedMin" } },
+            { name: "max", value: { type: "variable", name: "normalizedMax" } },
+            { name: "min", value: { type: "variable", name: "normalizedMin" } },
             { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
             { name: "value", value: { type: "variable", name: "progressValue" } },
             { name: "spread", value: { type: "variable", name: "rest" } },

@@ -191,6 +191,58 @@ describe("createProgress", () => {
     expect(root).toHaveAttribute("aria-valuetext", "indeterminate progress");
   });
 
+  it("marks only determinate and indeterminate mode changes as instant", async () => {
+    document.body.innerHTML = `
+      <div data-sw-progress data-value="25">
+        <div data-sw-progress-track>
+          <div data-sw-progress-indicator></div>
+        </div>
+      </div>
+    `;
+
+    const root = document.querySelector<HTMLElement>("[data-sw-progress]")!;
+    const indicator = document.querySelector<HTMLElement>("[data-sw-progress-indicator]")!;
+    const progress = createProgress(root);
+
+    progress.setValue(50);
+    expect(indicator).not.toHaveAttribute("data-instant");
+
+    progress.setValue(null);
+    expect(indicator).toHaveAttribute("data-instant", "");
+
+    await waitForAnimationFrames(2);
+    expect(indicator).not.toHaveAttribute("data-instant");
+
+    progress.setValue(60);
+    expect(indicator).toHaveAttribute("data-instant", "");
+
+    await waitForAnimationFrames(2);
+    expect(indicator).not.toHaveAttribute("data-instant");
+
+    progress.setValue(75);
+    expect(indicator).not.toHaveAttribute("data-instant");
+  });
+
+  it("clears a pending instant mode marker when destroyed", () => {
+    document.body.innerHTML = `
+      <div data-sw-progress data-value="25">
+        <div data-sw-progress-track>
+          <div data-sw-progress-indicator></div>
+        </div>
+      </div>
+    `;
+
+    const root = document.querySelector<HTMLElement>("[data-sw-progress]")!;
+    const indicator = document.querySelector<HTMLElement>("[data-sw-progress-indicator]")!;
+    const progress = createProgress(root);
+
+    progress.setValue(null);
+    expect(indicator).toHaveAttribute("data-instant", "");
+
+    progress.destroy();
+    expect(indicator).not.toHaveAttribute("data-instant");
+  });
+
   it("projects status to track, indicator, value, and label parts", () => {
     document.body.innerHTML = `
       <div data-sw-progress data-value="0">
@@ -334,4 +386,10 @@ describe("createProgress", () => {
 async function waitForMutationObserver(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+async function waitForAnimationFrames(count: number): Promise<void> {
+  for (let index = 0; index < count; index += 1) {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
 }

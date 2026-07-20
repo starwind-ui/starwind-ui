@@ -425,7 +425,21 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   expect(cardAction).toContain('data-slot="card-action"');
   expect(card).not.toContain('from "@starwind-ui/runtime"');
   expect(cardVariants).toContain("bg-card text-card-foreground group/card");
-  expect(cardVariants).toContain("group-data-[size=sm]/card:px-4");
+  expect(cardVariants).toContain("gap-(--card-spacing)");
+  expect(cardVariants).toContain("py-(--card-spacing)");
+  expect(cardVariants).toContain('default: "[--card-spacing:--spacing(5)]"');
+  expect(cardVariants).toMatch(
+    /sm: "(?:text-sm \[--card-spacing:--spacing\(4\)\]|\[--card-spacing:--spacing\(4\)\] text-sm)"/,
+  );
+  expect(cardVariants).toContain('base: "px-(--card-spacing)"');
+  expect(cardVariants).toContain(
+    'base: "bg-muted/50 flex items-center rounded-b-xl border-t p-(--card-spacing)"',
+  );
+  expect(cardVariants).toContain(
+    '"@container/card-header grid auto-rows-min items-start gap-1 px-(--card-spacing)"',
+  );
+  expect(cardVariants).not.toContain("group-data-[size=sm]/card:px-4");
+  expect(cardVariants).not.toContain("group-data-[size=sm]/card:p-4");
   expect(cardIndex).toContain("Root: Card");
   expect(cardIndex).toContain("Header: CardHeader");
   expect(cardIndex).toContain("Title: CardTitle");
@@ -519,7 +533,7 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   expect(avatarFallback).toContain("avatarFallback({ class: className })");
   expect(avatarFallback).toContain('data-slot="avatar-fallback"');
   expect(avatar).not.toContain('from "@starwind-ui/runtime"');
-  expect(avatarVariants).toContain("text-foreground bg-muted relative overflow-hidden");
+  expect(avatarVariants).toContain("text-foreground bg-muted relative inline-flex overflow-hidden");
   expect(avatarVariants).toContain("border-warning");
   expect(avatarIndex).toContain("Root: Avatar");
   expect(avatarIndex).toContain("Image: AvatarImage");

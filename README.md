@@ -69,6 +69,39 @@ flowchart TD
 
 See [Portable Runtime](docs/portable-runtime/README.md) for the current implementation details.
 
+## Built with Codex and GPT-5.6
+
+Starwind UI existed before OpenAI Build Week. During the submission period beginning July 13,
+2026, I used Codex with GPT-5.6 as my primary engineering collaborator to materially extend and
+harden the portable Runtime beta. GPT-5.6 is part of the development workflow through Codex; it is
+not a runtime dependency of the components that Starwind users install.
+
+Codex accelerated work across the project:
+
+- **Architecture and decisions** — Codex helped inspect the existing system, compare alternatives,
+  stress-test boundaries, and document decisions such as the DOM-first Runtime, separate Primitive
+  and styled adapter layers, framework target homes, and native-first form behavior.
+- **Implementation** — I used Codex to turn approved specs into dependency-aware tickets, implement
+  them in isolated Git worktrees, and independently review each slice. During Build Week this
+  included Color Picker productization, tighter Runtime boundaries, cross-framework lifecycle
+  fixes, public documentation work, and release hardening.
+- **Testing and debugging** — Codex built focused reproduction loops and regression coverage across
+  Runtime unit tests, Playwright browser tests, deterministic generator tests, CLI and registry
+  tests, Astro and React demos, and published-package acceptance fixtures.
+- **Performance and package discipline** — Codex helped create and interpret repeatable browser
+  benchmarks, minified-and-gzipped bundle comparisons, tree-shaking checks, and release-blocking
+  size budgets instead of relying on intuition about performance.
+- **Durable agent workflows** — Project-specific Codex skills, context documents, specs, ticket
+  queues, reviewer contracts, and completion evidence keep architectural knowledge available across
+  sessions and make future changes safer for both humans and agents.
+
+The key decisions and results are visible in the
+[portable Runtime documentation](docs/portable-runtime/README.md),
+[architecture decisions](docs/portable-runtime/decisions.md),
+[performance comparison](docs/portable-runtime/runtime-performance-comparison.md),
+[package-size comparison](docs/portable-runtime/package-size-comparison.md), and the repository's
+[commit history](https://github.com/starwind-ui/starwind-ui/commits/main/).
+
 ## AI integration
 
 Resources for AI:

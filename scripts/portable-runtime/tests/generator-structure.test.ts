@@ -7,6 +7,7 @@ import {
   getPrimitiveFrameworkAdapterTargetNames,
   primitiveFrameworkAdapterTargets,
 } from "../renderers/framework-adapters/index.js";
+import { getPrimitiveFrameworkAdapterTargetsForComponent } from "../renderers/framework-adapters/target-registry.js";
 import {
   type PrimitiveGeneratorSource,
   primitiveGeneratorRegistry,
@@ -383,6 +384,8 @@ describe("portable runtime generator structure", () => {
     expect(astroWrapperScript).not.toContain("renderers/astro-primitives");
     expect(reactWrapperScript).not.toContain("renderers/react-primitives");
     expect(primitivePackageGenerator).toContain("getPrimitiveGeneratorEntries");
+    expect(primitivePackageGenerator).toContain("resolvePrimitiveFrameworkAdapterTargetComponents");
+    expect(primitivePackageGenerator).toContain("components: resolvedComponents");
     expect(primitivePackageGenerator).not.toContain("framework-adapters/astro");
     expect(primitivePackageGenerator).not.toContain("framework-adapters/react");
     expect(primitivePackageGenerator).toContain("getPrimitiveGeneratorEntries");
@@ -393,6 +396,30 @@ describe("portable runtime generator structure", () => {
         (entry) => typeof entry.primitive.generatePackage === "function",
       ),
     ).toBe(true);
+    expect(
+      primitiveFrameworkAdapterTargets.map((entry) => ({
+        support: "support" in entry.primitive ? entry.primitive.support : { kind: "all" },
+        target: entry.target,
+      })),
+    ).toEqual([
+      { support: { kind: "all" }, target: "astro" },
+      { support: { kind: "all" }, target: "react" },
+      {
+        support: {
+          components: [
+            "avatar",
+            "button",
+            "checkbox",
+            "progress",
+            "scroll-area",
+            "select",
+            "theme",
+          ],
+          kind: "subset",
+        },
+        target: "vue",
+      },
+    ]);
     expect(
       lineCount(await readPortableFile("renderers/framework-adapters/astro/primitive-package.ts")),
     ).toBeLessThanOrEqual(PRIMITIVE_AGGREGATOR_LINE_BUDGET);
@@ -455,7 +482,10 @@ describe("portable runtime generator structure", () => {
     expect(routeFreeGenerator).not.toMatch(/\[\s*"astro"\s*,\s*"react"\s*\]/);
 
     const themeEntry = primitiveGeneratorRegistry.find((entry) => entry.component === "theme");
-    expect(themeEntry?.routeFree?.targets).toEqual(getPrimitiveFrameworkAdapterTargetNames());
+    expect(themeEntry?.routeFree?.targets).toEqual(
+      getPrimitiveFrameworkAdapterTargetsForComponent("theme"),
+    );
+    expect(routeFreeGenerator).toContain("getPrimitiveFrameworkAdapterTargetsForComponent");
     expect(new Set(primitiveGeneratorRegistry.map((entry) => entry.source))).toEqual(
       new Set(["adapter-family-plan", "manual", "specialized-adapter-spec"]),
     );
@@ -512,10 +542,11 @@ describe("portable runtime generator structure", () => {
       "renderers/framework-adapters/target-registry.ts",
     );
 
-    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(["astro", "react"]);
+    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(["astro", "react", "vue"]);
     expect(frameworkAdapterRegistry).toContain("primitiveFrameworkAdapterTargets");
     expect(frameworkAdapterRegistry).toContain("astroFrameworkAdapterTarget");
     expect(frameworkAdapterRegistry).toContain("reactFrameworkAdapterTarget");
+    expect(frameworkAdapterRegistry).toContain("vueFrameworkAdapterTarget");
     expect(routeFreeGenerator).not.toContain("const ROUTE_FREE_PRIMITIVE_TARGETS");
     expect(routeFreeGenerator).not.toContain("routeFreeFrameworkAdapters");
     expect(routeFreeGenerator).not.toContain("writeAstroAdapterOutput");
@@ -2542,7 +2573,7 @@ async function expectGenericRouteFreeComponent(
       routeFree: {
         kind: "adapter-output-model",
         strategy: "generic-adapter-plan",
-        targets: ["astro", "react"],
+        targets: getPrimitiveFrameworkAdapterTargetsForComponent(component),
       },
     }),
   );
@@ -2576,7 +2607,7 @@ async function expectSpecializedRouteFreeComponent(
       routeFree: {
         kind: "adapter-output-model",
         strategy: "specialized-adapter-spec",
-        targets: ["astro", "react"],
+        targets: getPrimitiveFrameworkAdapterTargetsForComponent(component),
       },
       source: "specialized-adapter-spec",
     }),
