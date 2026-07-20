@@ -56,6 +56,7 @@ const PROGRESS_INDETERMINATE_ATTRIBUTE = "data-indeterminate";
 const PROGRESS_COMPLETE_ATTRIBUTE = "data-complete";
 const PROGRESS_PROGRESSING_ATTRIBUTE = "data-progressing";
 const PROGRESS_STATUS_ATTRIBUTE = "data-status";
+const PROGRESS_INSTANT_ATTRIBUTE = "data-instant";
 const PROGRESS_GENERATED_VALUE_TEXT_ATTRIBUTE = "data-sw-progress-generated-value-text";
 
 const OBSERVED_ATTRIBUTES = new Set([
@@ -88,6 +89,7 @@ class ProgressController implements ProgressInstance {
   private getAriaValueText?: (formattedValue: string | null, value: ProgressValue) => string;
   private locale?: Intl.LocalesArgument;
   private readonly mutationObserver: MutationObserver;
+  private instantFrame: number | undefined;
   private destroyed = false;
   private max: number;
   private min: number;
@@ -127,6 +129,13 @@ class ProgressController implements ProgressInstance {
   destroy(): void {
     if (this.destroyed) return;
 
+    if (this.instantFrame !== undefined) {
+      cancelAnimationFrame(this.instantFrame);
+      this.instantFrame = undefined;
+    }
+    this.elements.indicators.forEach((indicator) => {
+      indicator.removeAttribute(PROGRESS_INSTANT_ATTRIBUTE);
+    });
     this.mutationObserver.disconnect();
     instances.delete(this.root);
     this.destroyed = true;
@@ -208,6 +217,7 @@ class ProgressController implements ProgressInstance {
   }
 
   private render(): void {
+    const previousStatus = this.root.getAttribute(PROGRESS_STATUS_ATTRIBUTE);
     const min = Math.min(this.min, this.max);
     const max = Math.max(this.min, this.max);
     const value = this.value === null ? null : clamp(this.value, min, max);
@@ -217,6 +227,9 @@ class ProgressController implements ProgressInstance {
     const isIndeterminate = status === "indeterminate";
     const isComplete = status === "complete";
     const isProgressing = status === "progressing";
+    const modeChanged =
+      previousStatus !== null &&
+      (previousStatus === "indeterminate") !== (status === "indeterminate");
     const stateElements = [
       this.root,
       ...this.elements.tracks,
@@ -265,6 +278,10 @@ class ProgressController implements ProgressInstance {
       setAttributeIfChanged(element, PROGRESS_STATUS_ATTRIBUTE, status);
     });
 
+    if (modeChanged) {
+      this.markModeChangeInstant();
+    }
+
     this.elements.indicators.forEach((indicator) => {
       if (percent === null) {
         indicator.style.removeProperty("transform");
@@ -283,6 +300,24 @@ class ProgressController implements ProgressInstance {
 
     this.elements.labels.forEach((label) => {
       setAttributeIfChanged(label, "role", "presentation");
+    });
+  }
+
+  private markModeChangeInstant(): void {
+    this.elements.indicators.forEach((indicator) => {
+      indicator.setAttribute(PROGRESS_INSTANT_ATTRIBUTE, "");
+    });
+
+    if (this.instantFrame !== undefined) {
+      cancelAnimationFrame(this.instantFrame);
+    }
+    this.instantFrame = requestAnimationFrame(() => {
+      this.instantFrame = requestAnimationFrame(() => {
+        this.instantFrame = undefined;
+        this.elements.indicators.forEach((indicator) => {
+          indicator.removeAttribute(PROGRESS_INSTANT_ATTRIBUTE);
+        });
+      });
     });
   }
 

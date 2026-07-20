@@ -1,6 +1,9 @@
-# @starwind-ui/core
+# Starwind Core Source
 
-A collection of accessible UI components built with [Astro](https://astro.build).
+This private workspace retains the canonical legacy Astro component source and registry used by
+repository tooling. `@starwind-ui/core` is permanently retired from versioning and package
+publication; current user-facing components ship through the `starwind` CLI and Runtime adapter
+packages.
 
 This package is utilized by the Starwind UI CLI in order to add components to your project.
 

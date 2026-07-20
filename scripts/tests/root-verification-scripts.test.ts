@@ -35,6 +35,7 @@ describe("root verification scripts", () => {
     expect(pkg.scripts?.verify).toBe(
       [
         "pnpm check",
+        "pnpm styled:versions:check",
         "pnpm test:all",
         "pnpm test:homes",
         "pnpm runtime:generate:test",
@@ -60,10 +61,16 @@ describe("root verification scripts", () => {
     expect(verifyWorkflow).toContain("pnpm verify");
     expect(verifyWorkflow).toContain("pnpm runtime:generate:all");
     expect(verifyWorkflow).toContain("pnpm runtime:registry:generate");
+    expect(verifyWorkflow).toContain("fetch-depth: 0");
+    expect(verifyWorkflow).toContain(
+      'pnpm styled:versions:check --base "${{ github.event.pull_request.base.sha }}"',
+    );
     expect(verifyWorkflow).toContain("git diff --exit-code");
 
     expect(releaseWorkflow).toContain("uses: ./.github/workflows/verify.yml");
     expect(releaseWorkflow).toMatch(/release:\s+name: Release\s+needs: verify/);
+    expect(releaseWorkflow).toContain("run: pnpm styled:versions:stage");
+    expect(releaseWorkflow).toContain("commitMode: github-api");
     expect(releaseWorkflow).toContain("version: pnpm release:version");
   });
 });

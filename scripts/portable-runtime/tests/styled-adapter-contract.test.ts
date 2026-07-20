@@ -12,6 +12,21 @@ describe("StyledAdapterContract inventory", () => {
     expect(validateStyledAdapterContracts(starwindStyledContracts)).toEqual([]);
   });
 
+  it("accepts Vue as a Styled framework target while rejecting an empty filter", () => {
+    const vueOnlyButton = cloneStyledContract(buttonStyledContract);
+    vueOnlyButton.frameworks = ["vue"];
+    const emptyButton = cloneStyledContract(buttonStyledContract);
+    emptyButton.frameworks = [];
+
+    expect(validateStyledAdapterContracts([vueOnlyButton])).toEqual([]);
+    expect(validateStyledAdapterContracts([emptyButton])).toEqual([
+      expect.objectContaining({
+        message: "Framework filter must include at least one target.",
+        path: "frameworks",
+      }),
+    ]);
+  });
+
   it("resolves variant omissions through the declared alias source and dependency", () => {
     const validCarousel = cloneStyledContract(carouselStyledContract);
     const controlProps = validCarousel.components

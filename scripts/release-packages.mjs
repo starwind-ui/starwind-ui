@@ -4,20 +4,18 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  CHANGESET_IGNORED_PACKAGES,
+  RUNTIME_RELEASE_PACKAGE_SET,
+} from "./runtime-release-policy.mjs";
+
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(SCRIPT_DIR, "..");
 const EXACT_VERSION_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 const SAFE_DIST_TAG_PATTERN = /^[a-z0-9][a-z0-9._-]*$/i;
 const PUBLIC_REPOSITORY = "starwind-ui/starwind-ui";
-const EXPECTED_IGNORED_PACKAGES = Object.freeze(["demo", "react-demo"]);
-
-export const RELEASE_PACKAGE_SET = Object.freeze([
-  Object.freeze({ directory: "packages/runtime", name: "@starwind-ui/runtime" }),
-  Object.freeze({ directory: "packages/astro", name: "@starwind-ui/astro" }),
-  Object.freeze({ directory: "packages/react", name: "@starwind-ui/react" }),
-  Object.freeze({ directory: "packages/cli", name: "starwind" }),
-]);
+export const RELEASE_PACKAGE_SET = RUNTIME_RELEASE_PACKAGE_SET;
 
 export const BETA_PACKAGE_SET = RELEASE_PACKAGE_SET;
 
@@ -167,7 +165,7 @@ export function validateReleasePackageManifests(packageManifests, preState) {
 
 export function validateReleaseChangesetConfig(config) {
   const ignoredPackages = [...(config?.ignore ?? [])].sort();
-  const expectedIgnoredPackages = [...EXPECTED_IGNORED_PACKAGES].sort();
+  const expectedIgnoredPackages = [...CHANGESET_IGNORED_PACKAGES].sort();
   const errors = [];
   if (JSON.stringify(ignoredPackages) !== JSON.stringify(expectedIgnoredPackages)) {
     errors.push(`Changesets must ignore exactly: ${expectedIgnoredPackages.join(", ")}.`);

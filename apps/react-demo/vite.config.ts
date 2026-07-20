@@ -1,8 +1,10 @@
 import { fileURLToPath } from "node:url";
-import { getThemeInitScript } from "@starwind-ui/react/theme";
+
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
+
+import { getThemeInitScript } from "../../packages/runtime/src/theme/theme";
 
 const runtimeSource = fileURLToPath(new URL("../../packages/runtime/src", import.meta.url));
 const reactPrimitiveSource = fileURLToPath(new URL("../../packages/react/src", import.meta.url));

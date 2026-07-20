@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["demo", "react-demo"]
+  "ignore": ["demo", "react-demo", "vue-demo", "@starwind-ui/core", "@starwind-ui/vue"]
 }

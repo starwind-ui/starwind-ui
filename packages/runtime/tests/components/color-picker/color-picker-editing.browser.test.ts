@@ -67,6 +67,57 @@ describe("Color Picker editing behaviors", () => {
     expect(changed.mock.calls.at(-1)?.[0].detail.reason).toBe("channel-input");
   });
 
+  it("restores a cleared value through a retained channel field and resets to its default", async () => {
+    const form = document.createElement("form");
+    document.body.append(form);
+    const root = render();
+    form.append(root);
+    const changed = vi.fn();
+    const committed = vi.fn();
+    root.addEventListener("starwind:value-change", changed);
+    root.addEventListener("starwind:value-committed", committed);
+    const picker = createColorPicker(root, {
+      defaultValue: "#336699",
+      allowEmpty: true,
+      required: true,
+      name: "accent",
+    });
+    const red = get<HTMLInputElement>(
+      root,
+      '[data-sw-color-picker-channel-field][data-channel="red"]',
+    );
+    const hidden = get<HTMLInputElement>(root, "[data-sw-color-picker-hidden-input]");
+
+    get<HTMLButtonElement>(root, "[data-sw-color-picker-clear]").click();
+    changed.mockClear();
+    committed.mockClear();
+
+    expect(picker.getValue()).toBeNull();
+    expect(red.value).toBe("51");
+    expect(hidden.value).toBe("");
+    expect(hidden.validity.valueMissing).toBe(true);
+
+    red.value = "128";
+    red.dispatchEvent(new Event("input", { bubbles: true }));
+    red.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(picker.getValue()!.rgb.red).toBe(128);
+    expect(changed.mock.calls.at(-1)?.[0].detail).toMatchObject({
+      previousValue: null,
+      reason: "channel-input",
+    });
+    expect(committed).toHaveBeenCalledOnce();
+    expect(hidden.validity.valueMissing).toBe(false);
+    expect(new FormData(form).get("accent")).not.toBe("");
+
+    picker.setValue(null, { emit: false });
+    form.reset();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(picker.getValueAsString()).toBe("#336699");
+    expect(red.value).toBe("51");
+  });
+
   it("switches formats, selects repeatable swatches, and clears only when allowed", () => {
     const root = render();
     const picker = createColorPicker(root, { defaultValue: "#ff0000", allowEmpty: true });

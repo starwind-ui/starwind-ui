@@ -3743,7 +3743,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "accordionItem",
             exportName: "AccordionVariants",
-            baseClassCount: 2,
+            baseClassCount: 1,
             options: [],
             compoundVariantCount: 0,
           },
@@ -4120,7 +4120,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "avatar",
             exportName: "AvatarVariants",
-            baseClassCount: 6,
+            baseClassCount: 7,
             options: [
               {
                 name: "variant",
@@ -4722,7 +4722,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "card",
             exportName: "CardVariants",
-            baseClassCount: 12,
+            baseClassCount: 14,
             options: [
               {
                 name: "size",
@@ -4745,7 +4745,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "cardContent",
             exportName: "CardVariants",
-            baseClassCount: 2,
+            baseClassCount: 1,
             options: [],
             compoundVariantCount: 0,
           },
@@ -4759,14 +4759,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "cardFooter",
             exportName: "CardVariants",
-            baseClassCount: 7,
+            baseClassCount: 6,
             options: [],
             compoundVariantCount: 0,
           },
           {
             name: "cardHeader",
             exportName: "CardVariants",
-            baseClassCount: 9,
+            baseClassCount: 8,
             options: [],
             compoundVariantCount: 0,
           },
@@ -4792,18 +4792,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-size",
             selector: "data-size",
             source: "render-attribute",
-          },
-          {
-            attribute: "data-size",
-            value: "sm",
-            selector: "group-data-[size=sm]/card:p-4",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "sm",
-            selector: "group-data-[size=sm]/card:px-4",
-            source: "variant-class",
           },
           {
             attribute: "data-size",
@@ -7089,6 +7077,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "DropdownGroup",
           "DropdownItem",
           "DropdownLabel",
+          "DropdownLinkItem",
           "DropdownRadioGroup",
           "DropdownRadioItem",
           "DropdownRadioItemIndicator",
@@ -7254,6 +7243,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "dropdown-group",
           "dropdown-item",
           "dropdown-label",
+          "dropdown-link-item",
           "dropdown-portal",
           "dropdown-radio-group",
           "dropdown-radio-item",
@@ -9218,7 +9208,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "progressIndicator",
             exportName: "ProgressVariants",
-            baseClassCount: 4,
+            baseClassCount: 6,
             options: [
               {
                 name: "variant",
@@ -9248,7 +9238,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "progress-indicator",
           "progress-track",
         ],
-        stateSelectors: [],
+        stateSelectors: [
+          {
+            attribute: "data-instant",
+            selector: "data-instant:transition-none",
+            source: "variant-class",
+          },
+        ],
       },
       {
         id: "prose",
@@ -20804,6 +20800,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         "DropdownGroup",
         "DropdownItem",
         "DropdownLabel",
+        "DropdownLinkItem",
         "DropdownRadioGroup",
         "DropdownRadioItem",
         "DropdownRadioItemIndicator",
@@ -20824,6 +20821,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         RadioItem: "DropdownRadioItem",
         RadioItemIndicator: "DropdownRadioItemIndicator",
         Item: "DropdownItem",
+        LinkItem: "DropdownLinkItem",
         Group: "DropdownGroup",
         Label: "DropdownLabel",
         Separator: "DropdownSeparator",
@@ -20855,6 +20853,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         "dropdown-group",
         "dropdown-item",
         "dropdown-label",
+        "dropdown-link-item",
         "dropdown-portal",
         "dropdown-radio-group",
         "dropdown-radio-item",
@@ -20876,6 +20875,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         "DropdownGroup",
         "DropdownItem",
         "DropdownLabel",
+        "DropdownLinkItem",
         "DropdownRadioGroup",
         "DropdownRadioItem",
         "DropdownRadioItemIndicator",
@@ -20894,6 +20894,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         "RadioItem",
         "RadioItemIndicator",
         "Item",
+        "LinkItem",
         "Group",
         "Label",
         "Separator",
@@ -20973,6 +20974,38 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "element-attributes",
                   displayName: "div attributes",
                   element: "div",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "DropdownLinkItem",
+              props: [
+                {
+                  name: "closeOnClick",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Closes the containing surface after the item is activated.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "inset",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Adds leading inset spacing for visual alignment.",
+                  descriptionSource: "catalog",
+                },
+              ],
+              inheritance: [
+                {
+                  key: "html:a",
+                  kind: "element-attributes",
+                  displayName: "a attributes",
+                  element: "a",
                   omittedProps: [],
                 },
               ],
@@ -21358,6 +21391,38 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "element-attributes",
                   displayName: "div attributes",
                   element: "div",
+                  omittedProps: [],
+                },
+              ],
+            },
+            {
+              exportName: "DropdownLinkItem",
+              props: [
+                {
+                  name: "closeOnClick",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Closes the containing surface after the item is activated.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "inset",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Adds leading inset spacing for visual alignment.",
+                  descriptionSource: "catalog",
+                },
+              ],
+              inheritance: [
+                {
+                  key: "html:a",
+                  kind: "element-attributes",
+                  displayName: "a attributes",
+                  element: "a",
                   omittedProps: [],
                 },
               ],

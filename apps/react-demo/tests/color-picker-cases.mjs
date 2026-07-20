@@ -616,8 +616,29 @@ async function assertRequiredAndInvalidRecovery(page) {
   assert.equal(await hidden.evaluate((input) => input.checkValidity()), true);
   await form.getByRole("button", { name: "Submit required color" }).click();
   await result.getByText(/#16a34a/i).waitFor();
+  const hue = form.locator('[data-slot="color-picker-channel-slider"][data-channel="hue"] input');
+  const areaThumb = form.locator('[data-slot="color-picker-area-thumb"]');
+  const retainedHue = await hue.inputValue();
+  const retainedAreaPosition = await areaThumb.evaluate((thumb) => ({
+    x: thumb.style.getPropertyValue("--sw-color-picker-area-x"),
+    y: thumb.style.getPropertyValue("--sw-color-picker-area-y"),
+  }));
   await form.getByRole("button", { name: "Clear required color" }).click();
   assert.equal(await hidden.evaluate((input) => input.checkValidity()), false);
+  assert.equal(await hue.inputValue(), retainedHue);
+  assert.deepEqual(
+    await areaThumb.evaluate((thumb) => ({
+      x: thumb.style.getPropertyValue("--sw-color-picker-area-x"),
+      y: thumb.style.getPropertyValue("--sw-color-picker-area-y"),
+    })),
+    retainedAreaPosition,
+  );
+  await hue.press("ArrowRight");
+  assert.equal(await hidden.evaluate((input) => input.checkValidity()), true);
+  const resumedValue = await hidden.inputValue();
+  assert.notEqual(resumedValue, "");
+  await form.getByRole("button", { name: "Submit required color" }).click();
+  await result.getByText(new RegExp(resumedValue, "i")).waitFor();
 }
 
 async function assertFormAndReset(page) {

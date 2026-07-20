@@ -329,6 +329,29 @@ try {
   await form.getByRole("button", { name: "Submit palette" }).click();
   await expectText(page.getByTestId("form-output"), /^accent: /);
   assert.notEqual(await requiredInput.inputValue(), "");
+  const requiredHue = form.locator(
+    '[data-slot="color-picker-channel-slider"][data-channel="hue"] input',
+  );
+  const requiredAreaThumb = form.locator('[data-slot="color-picker-area-thumb"]');
+  const retainedHue = await requiredHue.inputValue();
+  const retainedAreaPosition = await requiredAreaThumb.evaluate((thumb) => ({
+    x: thumb.style.getPropertyValue("--sw-color-picker-area-x"),
+    y: thumb.style.getPropertyValue("--sw-color-picker-area-y"),
+  }));
+  await form.getByRole("button", { name: "Clear color" }).click();
+  assert.equal(await requiredInput.inputValue(), "");
+  assert.equal(await requiredHue.inputValue(), retainedHue);
+  assert.deepEqual(
+    await requiredAreaThumb.evaluate((thumb) => ({
+      x: thumb.style.getPropertyValue("--sw-color-picker-area-x"),
+      y: thumb.style.getPropertyValue("--sw-color-picker-area-y"),
+    })),
+    retainedAreaPosition,
+  );
+  await requiredHue.press("ArrowRight");
+  assert.notEqual(await requiredInput.inputValue(), "");
+  await form.getByRole("button", { name: "Submit palette" }).click();
+  await expectText(page.getByTestId("form-output"), /^accent: /);
   await form.getByRole("button", { name: "Reset palette" }).click();
   await expectText(page.getByTestId("form-output"), "Reset complete");
   assert.equal(

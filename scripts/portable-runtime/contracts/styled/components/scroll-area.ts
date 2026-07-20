@@ -67,6 +67,7 @@ export const scrollAreaStyledContract: StyledAdapterContract = {
         fields: [
           { name: "overflowEdgeThreshold", optional: true, type: "number" },
           { name: "viewportClass", optional: true, type: "string", frameworks: ["astro"] },
+          { name: "viewportClass", optional: true, type: "string", frameworks: ["vue"] },
           { name: "viewportClassName", optional: true, type: "string", frameworks: ["react"] },
           {
             name: "ref",
@@ -80,6 +81,7 @@ export const scrollAreaStyledContract: StyledAdapterContract = {
         props: [
           { name: "overflowEdgeThreshold" },
           { name: "viewportClass", frameworks: ["astro"] },
+          { name: "viewportClass", frameworks: ["vue"] },
           { name: "viewportClassName", frameworks: ["react"] },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
@@ -122,6 +124,15 @@ export const scrollAreaStyledContract: StyledAdapterContract = {
                     args: { class: "viewportClass" },
                   },
                   frameworks: ["astro"],
+                },
+                {
+                  name: "class",
+                  value: {
+                    type: "classVariant",
+                    variant: "scrollAreaViewport",
+                    args: { class: "viewportClass" },
+                  },
+                  frameworks: ["vue"],
                 },
                 {
                   name: "class",

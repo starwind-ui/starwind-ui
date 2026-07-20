@@ -10,6 +10,7 @@ export const dropdownStyledContract: StyledAdapterContract = {
     "DropdownGroup",
     "DropdownItem",
     "DropdownLabel",
+    "DropdownLinkItem",
     "DropdownRadioGroup",
     "DropdownRadioItem",
     "DropdownRadioItemIndicator",
@@ -30,6 +31,7 @@ export const dropdownStyledContract: StyledAdapterContract = {
     RadioItem: "DropdownRadioItem",
     RadioItemIndicator: "DropdownRadioItemIndicator",
     Item: "DropdownItem",
+    LinkItem: "DropdownLinkItem",
     Group: "DropdownGroup",
     Label: "DropdownLabel",
     Separator: "DropdownSeparator",
@@ -347,6 +349,49 @@ export const dropdownStyledContract: StyledAdapterContract = {
             { name: "disabled", value: { type: "variable", name: "disabled" } },
             { name: "spread", value: { type: "variable", name: "rest" } },
             { name: "data-slot", value: { type: "literal", value: "dropdown-item" } },
+          ],
+          children: [{ type: "slot" }],
+        },
+      ],
+    },
+    {
+      exportName: "DropdownLinkItem",
+      primitiveAliases: { menu: "MenuPrimitive" },
+      props: {
+        extends: [{ type: "htmlAttributes", element: "a" }],
+        fields: [
+          { name: "closeOnClick", optional: true, type: "boolean" },
+          { name: "inset", optional: true, type: "boolean" },
+          { name: "disabled", optional: true, type: "boolean" },
+        ],
+      },
+      destructure: {
+        props: [
+          { name: "class", alias: "className" },
+          { name: "closeOnClick", defaultValue: "false" },
+          { name: "inset", defaultValue: "false" },
+          { name: "disabled", defaultValue: "false" },
+        ],
+        rest: "rest",
+      },
+      render: [
+        {
+          type: "primitive",
+          component: "menu",
+          part: "LinkItem",
+          attrs: [
+            {
+              name: "class",
+              value: {
+                type: "classVariant",
+                variant: "dropdownItem",
+                args: { inset: "inset", disabled: "disabled", class: "className" },
+              },
+            },
+            { name: "closeOnClick", value: { type: "variable", name: "closeOnClick" } },
+            { name: "disabled", value: { type: "variable", name: "disabled" } },
+            { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-slot", value: { type: "literal", value: "dropdown-link-item" } },
           ],
           children: [{ type: "slot" }],
         },

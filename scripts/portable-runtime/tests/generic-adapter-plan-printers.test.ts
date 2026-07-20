@@ -35,10 +35,10 @@ import type { RuntimeAdapterContract } from "../contracts/primitive/types.js";
 import { createAstroHeader } from "../renderers/framework-adapters/astro/headers.js";
 import {
   astroFrameworkAdapter,
-  getPrimitiveFrameworkAdapterTargetNames,
   getPrimitiveFrameworkAdapterTargetsWithOutputModelCapability,
   reactFrameworkAdapter,
 } from "../renderers/framework-adapters/index.js";
+import { getPrimitiveFrameworkAdapterTargetsForComponent } from "../renderers/framework-adapters/target-registry.js";
 import { booleanFormControlAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/boolean-form-control.js";
 import { disclosurePresenceAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/disclosure-presence.js";
 import { formFieldCoordinatorAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/form-field-coordinator.js";
@@ -3624,7 +3624,7 @@ describe("GenericAdapterPlan output model printers", () => {
         fileExtension: capability.fileExtension,
         target,
       })),
-      targetNames: getPrimitiveFrameworkAdapterTargetNames(),
+      targetNames: getPrimitiveFrameworkAdapterTargetsForComponent("checkbox-group"),
     });
     const checkboxGroupPlan = buildGenericAdapterPlan(checkboxGroupRuntimeAdapterContract);
     const radioGroupPlan = buildGenericAdapterPlan(radioGroupRuntimeAdapterContract);

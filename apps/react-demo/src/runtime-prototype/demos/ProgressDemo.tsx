@@ -42,6 +42,20 @@ export function ProgressDemo() {
           variant="warning"
           label="React sync progress"
         />
+        <div className="sr-only" aria-hidden="true">
+          <Progress id="react-runtime-progress-reversed" min={100} max={0} value={25} />
+          <Progress id="react-runtime-progress-equal-complete" min={10} max={10} value={10} />
+          <Progress id="react-runtime-progress-equal-progressing" min={10} max={10} value={9} />
+          <Progress
+            id="react-runtime-progress-invalid-bounds"
+            min={Number.NaN}
+            max={Infinity}
+            value={25}
+          />
+          <Progress id="react-runtime-progress-nan" value={Number.NaN} />
+          <Progress id="react-runtime-progress-positive-infinity" value={Infinity} />
+          <Progress id="react-runtime-progress-negative-infinity" value={-Infinity} />
+        </div>
         <Progress
           id="react-runtime-progress-updating"
           value={interactiveValue}

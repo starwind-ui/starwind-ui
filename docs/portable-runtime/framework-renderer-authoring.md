@@ -14,6 +14,10 @@ PRD. Vue and Solid currently remain non-shipping tracer homes. Svelte remains de
 setup model is chosen. This guide describes how future target work should be shaped when a separate
 issue accepts that work.
 
+Vue target work follows the repository's accepted idiomatic Vue adapter semantics. The typed Vue
+public contract lives in the Vue target home and owns model/event naming, composition, lifecycle,
+SSR/hydration, and delayed Teleport projection while Vue remains non-shipping.
+
 ## Target Home Ownership
 
 Start in one target home:

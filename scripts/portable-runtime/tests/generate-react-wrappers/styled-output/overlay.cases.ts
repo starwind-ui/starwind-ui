@@ -17,6 +17,7 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   const dropdown = await readGeneratedFile(outputRoot, "dropdown/Dropdown.tsx");
   const dropdownVariants = await readGeneratedFile(outputRoot, "dropdown/variants.ts");
   const dropdownTrigger = await readGeneratedFile(outputRoot, "dropdown/DropdownTrigger.tsx");
+  const dropdownLinkItem = await readGeneratedFile(outputRoot, "dropdown/DropdownLinkItem.tsx");
   const dropdownCheckboxItem = await readGeneratedFile(
     outputRoot,
     "dropdown/DropdownCheckboxItem.tsx",
@@ -223,6 +224,13 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   );
   expect(dropdownTrigger).toContain("className={triggerClassName}");
   expect(dropdownTrigger).not.toContain("data-as-child");
+  expect(dropdownLinkItem).toContain('React.ComponentPropsWithoutRef<"a">');
+  expect(dropdownLinkItem).toContain("closeOnClick = false");
+  expect(dropdownLinkItem).toContain("<MenuPrimitive.LinkItem");
+  expect(dropdownLinkItem).toContain("dropdownItem({ inset, disabled, class: className })");
+  expect(dropdownLinkItem).toContain("closeOnClick={closeOnClick}");
+  expect(dropdownLinkItem).toContain("disabled={disabled}");
+  expect(dropdownLinkItem).toContain('data-slot="dropdown-link-item"');
   expect(dropdownVariants).toContain("hover:bg-accent hover:text-accent-foreground");
   expect(dropdownVariants).toContain("group-data-highlighted/dropdown-item:text-accent-foreground");
   expect(dropdownCheckboxItem).toContain("indicator,");
@@ -247,6 +255,8 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(dropdownRadioItemIndicator).toContain("<MenuPrimitive.RadioItemIndicator");
   expect(dropdownRadioItemIndicator).toContain('data-slot="dropdown-radio-item-indicator"');
   expect(dropdownIndex).toContain("DropdownCheckboxItemIndicator");
+  expect(dropdownIndex).toContain("DropdownLinkItem");
+  expect(dropdownIndex).toContain("LinkItem: DropdownLinkItem");
   expect(dropdownIndex).toContain("DropdownRadioGroup");
   expect(dropdownIndex).toContain("RadioItemIndicator: DropdownRadioItemIndicator");
   expect(contextMenuVariants).toContain(
@@ -274,6 +284,7 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(contextMenuRadioItemIndicator).toContain("<ContextMenuPrimitive.RadioItemIndicator");
   expect(contextMenuIndex).toContain("ContextMenuCheckboxItemIndicator");
   expect(contextMenuIndex).toContain("ContextMenuRadioGroup");
+  expect(contextMenuIndex).not.toContain("ContextMenuLinkItem");
   expect(contextMenuIndex).toContain("RadioItemIndicator: ContextMenuRadioItemIndicator");
   expect(popover).toContain('PopoverPrimitive from "../primitives/react/popover"');
   expect(popover).toContain("<PopoverPrimitive.Root");

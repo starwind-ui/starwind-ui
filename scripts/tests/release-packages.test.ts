@@ -16,9 +16,16 @@ import {
   validateReleaseChangesetConfig,
   validateReleasePackageManifests,
 } from "../release-packages.mjs";
+import {
+  CHANGESET_IGNORED_PACKAGES,
+  RUNTIME_FIXED_GROUP,
+  RUNTIME_RELEASE_PACKAGE_SET,
+} from "../runtime-release-policy.mjs";
 
 type PackageJson = {
   description?: string;
+  name?: string;
+  private?: boolean;
   scripts?: Record<string, string>;
   version?: string;
 };
@@ -54,13 +61,62 @@ describe("release package tooling", () => {
       "@starwind-ui/react",
       "starwind",
     ]);
+    expect(RELEASE_PACKAGE_SET).toBe(RUNTIME_RELEASE_PACKAGE_SET);
+    expect(RELEASE_PACKAGE_SET.map((entry) => entry.name)).not.toContain("@starwind-ui/vue");
+  });
+
+  it("keeps Vue quarantined outside Changesets and publication", async () => {
+    expect(CHANGESET_IGNORED_PACKAGES).toEqual([
+      "demo",
+      "react-demo",
+      "vue-demo",
+      "@starwind-ui/core",
+      "@starwind-ui/vue",
+    ]);
+    expect(RUNTIME_FIXED_GROUP).toEqual([
+      "@starwind-ui/runtime",
+      "@starwind-ui/astro",
+      "@starwind-ui/react",
+    ]);
+    expect(
+      createPublishCommands({ dryRun: true }).map((command) => command.packageName),
+    ).not.toContain("@starwind-ui/vue");
+
+    const vuePackage = await readJson<PackageJson>("packages/vue/package.json");
+    expect(vuePackage).toMatchObject({
+      name: "@starwind-ui/vue",
+      private: true,
+      version: "0.0.0",
+    });
+  });
+
+  it("keeps the retired Core package permanently source-only", async () => {
+    expect(CHANGESET_IGNORED_PACKAGES).toContain("@starwind-ui/core");
+    expect(RELEASE_PACKAGE_SET.map((entry) => entry.name)).not.toContain("@starwind-ui/core");
+
+    const [root, corePackage] = await Promise.all([
+      readJson<PackageJson>("package.json"),
+      readJson<PackageJson>("packages/core/package.json"),
+    ]);
+    expect(corePackage).toMatchObject({ name: "@starwind-ui/core", private: true });
+    expect(
+      Object.keys(root.scripts ?? {}).filter((name) => name.startsWith("core:publish")),
+    ).toEqual([]);
+    expect(
+      Object.keys(corePackage.scripts ?? {}).filter((name) => name.startsWith("publish:")),
+    ).toEqual([]);
   });
 
   it("exposes generic release commands and beta compatibility aliases", async () => {
     const root = await readJson<PackageJson>("package.json");
     expect(root.scripts?.["release:version"]).toBe(
-      "changeset version && pnpm runtime:registry:generate",
+      "tsx scripts/portable-runtime/styled-component-release.ts version && changeset version && pnpm runtime:registry:generate",
     );
+    expect(root.scripts?.version).toBe("pnpm release:version");
+    expect(root.scripts?.["styled:versions:stage"]).toBe(
+      "tsx scripts/portable-runtime/styled-component-release.ts stage",
+    );
+    expect(root.scripts?.["local:release"]).toContain("pnpm release:version");
     expect(root.scripts?.["publish:release:dry-run"]).toContain(
       "node scripts/release-packages.mjs --dry-run",
     );
@@ -100,7 +156,9 @@ describe("release package tooling", () => {
         tag: "beta",
       }).ok,
     ).toBe(false);
-    expect(validateReleaseChangesetConfig({ ignore: ["demo", "react-demo"] }).ok).toBe(true);
+    expect(validateReleaseChangesetConfig({ ignore: [...CHANGESET_IGNORED_PACKAGES] }).ok).toBe(
+      true,
+    );
     expect(validateReleaseChangesetConfig({ ignore: ["demo"] }).ok).toBe(false);
   });
 

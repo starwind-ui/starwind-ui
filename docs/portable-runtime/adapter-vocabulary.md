@@ -228,10 +228,8 @@ Custom islands:
 
 Future framework tracer-only fixtures:
 
-- `button/vue`
 - `toggle/vue`
 - `collapsible/vue`
-- `select/vue`
 - `menu/vue`
 - `navigation-menu/vue`
 - `combobox/vue`

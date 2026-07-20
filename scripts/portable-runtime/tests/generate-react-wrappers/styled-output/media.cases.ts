@@ -4,9 +4,21 @@ export async function assertReactStyledMediaOutput(outputRoot: string): Promise<
   await expect(readGeneratedFile(outputRoot, "image/Image.tsx")).rejects.toThrow();
   await expect(readdir(path.join(outputRoot, "image"))).rejects.toThrow();
 
+  const avatarVariants = await readGeneratedFile(outputRoot, "avatar/variants.ts");
   const video = await readGeneratedFile(outputRoot, "video/Video.tsx");
   const videoVariants = await readGeneratedFile(outputRoot, "video/variants.ts");
   const videoIndex = await readGeneratedFile(outputRoot, "video/index.ts");
+
+  expect(avatarVariants).toContain(
+    'base: "text-foreground bg-muted relative inline-flex overflow-hidden rounded-full border-2"',
+  );
+  expect(avatarVariants).toContain('sm: "h-8 w-8 text-xs"');
+  expect(avatarVariants).toContain('md: "h-10 w-10 text-sm"');
+  expect(avatarVariants).toContain('lg: "h-12 w-12 text-base"');
+  expect(avatarVariants).toContain(
+    'base: "absolute inset-0.5 flex items-center justify-center rounded-full font-medium"',
+  );
+  expect(avatarVariants).toContain('base: "relative z-1 h-full w-full object-cover"');
 
   expect(video).not.toContain("../primitives");
   expect(video).toContain('React.ComponentPropsWithoutRef<"video">');

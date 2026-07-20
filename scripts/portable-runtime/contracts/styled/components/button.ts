@@ -86,7 +86,7 @@ export const buttonStyledContract: StyledAdapterContract = {
           { name: "focusableWhenDisabled" },
           { name: "data-slot", alias: "dataSlot", defaultValue: '"button"' },
           { name: "ref", frameworks: ["react"] },
-          { name: "tabindex", frameworks: ["astro"] },
+          { name: "tabindex", frameworks: ["astro", "vue"] },
           { name: "tabIndex", frameworks: ["react"] },
           { name: "class", alias: "className" },
         ],
@@ -122,7 +122,7 @@ export const buttonStyledContract: StyledAdapterContract = {
                 {
                   name: "tabindex",
                   value: { type: "raw", code: "disabled ? -1 : tabindex" },
-                  frameworks: ["astro"],
+                  frameworks: ["astro", "vue"],
                 },
                 {
                   name: "tabIndex",

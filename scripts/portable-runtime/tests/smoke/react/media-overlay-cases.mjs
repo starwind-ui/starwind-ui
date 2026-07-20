@@ -96,23 +96,67 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
     loadedImage?.dispatchEvent(new Event("load"));
     errorImage?.dispatchEvent(new Event("error"));
 
+    const readRootGeometry = (root) => {
+      if (!(root instanceof HTMLElement)) return null;
+      const rect = root.getBoundingClientRect();
+      return {
+        display: getComputedStyle(root).display,
+        height: rect.height,
+        width: rect.width,
+      };
+    };
+    const readVisuals = () => {
+      if (!(errorRoot instanceof HTMLElement) || !(errorFallback instanceof HTMLElement)) {
+        return null;
+      }
+      const rootRect = errorRoot.getBoundingClientRect();
+      const fallbackRect = errorFallback.getBoundingClientRect();
+      const rootStyle = getComputedStyle(errorRoot);
+      const fallbackStyle = getComputedStyle(errorFallback);
+      return {
+        centerDelta: Math.hypot(
+          rootRect.left + rootRect.width / 2 - (fallbackRect.left + fallbackRect.width / 2),
+          rootRect.top + rootRect.height / 2 - (fallbackRect.top + fallbackRect.height / 2),
+        ),
+        fallbackAlignItems: fallbackStyle.alignItems,
+        fallbackColor: fallbackStyle.color,
+        fallbackDisplay: fallbackStyle.display,
+        fallbackJustifyContent: fallbackStyle.justifyContent,
+        rootBackground: rootStyle.backgroundColor,
+        rootColor: rootStyle.color,
+      };
+    };
+    const hadDarkClass = document.documentElement.classList.contains("dark");
+    document.documentElement.classList.remove("dark");
+    const lightVisuals = readVisuals();
+    document.documentElement.classList.add("dark");
+    const darkVisuals = readVisuals();
+    document.documentElement.classList.toggle("dark", hadDarkClass);
+
     return {
+      darkVisuals,
       delayedFallbackDelay: delayedFallback?.getAttribute("data-delay"),
       delayedFallbackHidden:
         delayedFallback instanceof HTMLElement ? delayedFallback.hidden : undefined,
+      delayedGeometry: readRootGeometry(delayedRoot),
+      delayedRootClassName: delayedRoot?.getAttribute("class"),
       errorFallbackClassName: errorFallback?.getAttribute("class"),
       errorFallbackHidden: errorFallback instanceof HTMLElement ? errorFallback.hidden : undefined,
+      errorGeometry: readRootGeometry(errorRoot),
       errorImageHidden: errorImage instanceof HTMLImageElement ? errorImage.hidden : undefined,
       errorRootClassName: errorRoot?.getAttribute("class"),
       errorStatus: errorRoot?.getAttribute("data-image-loading-status"),
+      lightVisuals,
       loadedFallbackClassName: loadedFallback?.getAttribute("class"),
       loadedFallbackHidden:
         loadedFallback instanceof HTMLElement ? loadedFallback.hidden : undefined,
+      loadedGeometry: readRootGeometry(loadedRoot),
       loadedImageAlt: loadedImage?.getAttribute("alt"),
       loadedImageClassName: loadedImage?.getAttribute("class"),
       loadedImageHidden: loadedImage instanceof HTMLImageElement ? loadedImage.hidden : undefined,
       loadedImageVisibleState: readVisibleImageState(loadedImage),
       loadedRootClassName: loadedRoot?.getAttribute("class"),
+      loadedRootDataSlot: loadedRoot?.getAttribute("data-slot"),
       loadedRootHasDataSw: loadedRoot?.hasAttribute("data-sw-avatar"),
       loadedRootTagName: loadedRoot?.tagName,
       loadedStatus: loadedRoot?.getAttribute("data-image-loading-status"),
@@ -138,11 +182,16 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
   if (
     avatarState.rootCount !== 3 ||
     avatarState.loadedRootTagName !== "SPAN" ||
+    avatarState.loadedRootDataSlot !== "avatar" ||
     avatarState.loadedRootHasDataSw !== true ||
     avatarState.loadedStatus !== "loaded" ||
     avatarState.loadedRootClassName?.includes("runtime-avatar-custom") !== true ||
     avatarState.loadedRootClassName?.includes("border-primary") !== true ||
     avatarState.loadedRootClassName?.includes("h-12") !== true ||
+    avatarState.loadedRootClassName?.includes("inline-flex") !== true ||
+    !["flex", "inline-flex"].includes(avatarState.loadedGeometry?.display) ||
+    avatarState.loadedGeometry?.height !== 48 ||
+    avatarState.loadedGeometry?.width !== 48 ||
     avatarState.loadedImageHidden !== false ||
     avatarState.loadedImageVisibleState.hasVisiblePixel !== true ||
     avatarState.loadedImageVisibleState.naturalHeight < 2 ||
@@ -153,11 +202,29 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
     avatarState.loadedFallbackClassName?.includes("absolute") !== true ||
     avatarState.errorStatus !== "error" ||
     avatarState.errorRootClassName?.includes("border-error") !== true ||
+    avatarState.errorRootClassName?.includes("bg-muted") !== true ||
+    avatarState.errorRootClassName?.includes("text-foreground") !== true ||
+    avatarState.errorRootClassName?.includes("inline-flex") !== true ||
+    !["flex", "inline-flex"].includes(avatarState.errorGeometry?.display) ||
+    avatarState.errorGeometry?.height !== 40 ||
+    avatarState.errorGeometry?.width !== 40 ||
     avatarState.errorImageHidden !== true ||
     avatarState.errorFallbackHidden !== false ||
     avatarState.errorFallbackClassName?.includes("font-medium") !== true ||
+    avatarState.delayedRootClassName?.includes("inline-flex") !== true ||
+    !["flex", "inline-flex"].includes(avatarState.delayedGeometry?.display) ||
+    avatarState.delayedGeometry?.height !== 32 ||
+    avatarState.delayedGeometry?.width !== 32 ||
     avatarState.delayedFallbackDelay !== "1000" ||
-    avatarState.delayedFallbackHidden !== true
+    avatarState.delayedFallbackHidden !== true ||
+    avatarState.lightVisuals?.fallbackDisplay !== "flex" ||
+    avatarState.lightVisuals?.fallbackAlignItems !== "center" ||
+    avatarState.lightVisuals?.fallbackJustifyContent !== "center" ||
+    avatarState.lightVisuals?.fallbackColor !== avatarState.lightVisuals?.rootColor ||
+    avatarState.lightVisuals?.centerDelta > 0.5 ||
+    avatarState.darkVisuals?.fallbackColor !== avatarState.darkVisuals?.rootColor ||
+    avatarState.darkVisuals?.rootBackground === avatarState.lightVisuals?.rootBackground ||
+    avatarState.darkVisuals?.rootColor === avatarState.lightVisuals?.rootColor
   ) {
     throw new Error(
       `Expected React Avatar runtime transitions and Starwind classes, got ${JSON.stringify(
@@ -338,6 +405,17 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
     };
 
     const initial = {
+      adversarial: Object.fromEntries(
+        [
+          "reversed",
+          "equal-complete",
+          "equal-progressing",
+          "invalid-bounds",
+          "nan",
+          "positive-infinity",
+          "negative-infinity",
+        ].map((name) => [name, readProgress(`react-runtime-progress-${name}`)]),
+      ),
       default: readProgress("react-runtime-progress-default"),
       indeterminate: readProgress("react-runtime-progress-indeterminate"),
       rootCount: document.querySelectorAll('[data-slot="progress"][data-sw-progress]').length,
@@ -354,7 +432,7 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
     };
   });
   if (
-    progressState.initial.rootCount !== 10 ||
+    progressState.initial.rootCount !== 17 ||
     progressState.initial.default.role !== "progressbar" ||
     progressState.initial.default.ariaMin !== "0" ||
     progressState.initial.default.ariaMax !== "100" ||
@@ -384,6 +462,39 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
         progressState,
       )}.`,
     );
+  }
+  const expectedAdversarialProgress = {
+    "equal-complete": ["10", "10", "10", "complete", "translateX(0%)"],
+    "equal-progressing": ["10", "10", "10", "complete", "translateX(0%)"],
+    "invalid-bounds": ["0", "100", "25", "progressing", "translateX(-75%)"],
+    reversed: ["0", "100", "25", "progressing", "translateX(-75%)"],
+  };
+  for (const [name, expected] of Object.entries(expectedAdversarialProgress)) {
+    const actual = progressState.initial.adversarial[name];
+    const received = [
+      actual.ariaMin,
+      actual.ariaMax,
+      actual.ariaNow,
+      actual.dataStatus,
+      actual.indicatorTransform,
+    ];
+    if (JSON.stringify(received) !== JSON.stringify(expected)) {
+      throw new Error(`Expected normalized React Progress ${name}, got ${JSON.stringify(actual)}.`);
+    }
+  }
+  for (const name of ["nan", "positive-infinity", "negative-infinity"]) {
+    const actual = progressState.initial.adversarial[name];
+    if (
+      actual.dataIndeterminate !== true ||
+      actual.ariaNow !== null ||
+      actual.dataValue !== null ||
+      actual.dataStatus !== "indeterminate" ||
+      actual.indicatorTransform !== ""
+    ) {
+      throw new Error(
+        `Expected indeterminate React Progress ${name}, got ${JSON.stringify(actual)}.`,
+      );
+    }
   }
 
   const collapsibleContent = page.locator('[data-slot="collapsible-content"]').first();

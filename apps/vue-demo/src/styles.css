@@ -1,0 +1,351 @@
+@import "../../demo/src/styles/starwind.css";
+
+@source "./**/*.{ts,vue}";
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background:
+    radial-gradient(
+      circle at top left,
+      color-mix(in oklch, var(--primary) 16%, transparent),
+      transparent 34rem
+    ),
+    var(--background);
+  color: var(--foreground);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.demo-header {
+  position: sticky;
+  z-index: 100;
+  top: 0;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklch, var(--background) 88%, transparent);
+  backdrop-filter: blur(1rem);
+}
+
+.demo-header__inner {
+  display: flex;
+  width: min(100% - 2rem, 76rem);
+  min-height: 4rem;
+  align-items: center;
+  gap: 1rem;
+  margin-inline: auto;
+}
+
+.demo-header__brand {
+  color: var(--foreground);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.demo-header nav {
+  display: flex;
+  gap: 0.9rem;
+  margin-left: auto;
+}
+
+.demo-header nav a {
+  color: var(--muted-foreground);
+  font-weight: 650;
+  text-underline-offset: 0.25rem;
+}
+
+.demo-header [data-slot="theme-toggle"] {
+  color: var(--foreground);
+}
+
+.review-shell {
+  width: min(100% - 2rem, 76rem);
+  margin-inline: auto;
+  padding-block: 3rem 6rem;
+}
+
+.review-hero,
+.review-card {
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: color-mix(in oklch, var(--background) 94%, transparent);
+  box-shadow: 0 1rem 4rem color-mix(in oklch, var(--foreground) 8%, transparent);
+}
+
+.review-hero {
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+}
+
+.review-hero h1,
+.review-card h2 {
+  margin: 0;
+  letter-spacing: -0.035em;
+}
+
+.review-hero h1 {
+  font-size: clamp(2.25rem, 7vw, 4.75rem);
+  line-height: 0.95;
+}
+
+.review-hero nav,
+.demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.review-hero nav {
+  margin-top: 2rem;
+}
+
+.review-hero nav a,
+.review-link {
+  color: var(--foreground);
+  font-weight: 650;
+  text-underline-offset: 0.25rem;
+}
+
+.review-card {
+  margin-top: 1.5rem;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-heading h2 {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 1rem;
+}
+
+.avatar-review-grid .scenario {
+  min-height: 10rem;
+}
+
+.progress-review-grid .scenario {
+  min-height: 11rem;
+}
+
+.progress-label {
+  margin-bottom: 0.55rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.review-progress {
+  margin-block: 0.5rem 1rem;
+}
+
+.progress-actions {
+  align-items: baseline;
+}
+
+.progress-variants-scenario {
+  grid-column: 1 / -1;
+}
+
+.progress-variant-row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, auto) minmax(10rem, 1fr);
+  align-items: center;
+  gap: 1rem;
+}
+
+.progress-variant-row + .progress-variant-row {
+  margin-top: 0.75rem;
+}
+
+.scroll-area-review-grid {
+  align-items: start;
+}
+
+.review-scroll-area {
+  width: min(100%, 20rem);
+  height: 10rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+}
+
+.review-scroll-area--small {
+  width: 14rem;
+}
+
+.review-scroll-viewport {
+  padding: 0.25rem;
+}
+
+.review-scroll-area > [data-sw-scroll-area-viewport] {
+  width: 100%;
+  height: 100%;
+}
+
+.scroll-area-stack,
+.scroll-area-dual-content {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.scroll-area-dual-content {
+  width: 42rem;
+  min-height: 30rem;
+}
+
+.scroll-area-item,
+.scroll-area-tile {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--card);
+  color: var(--card-foreground);
+}
+
+.scroll-area-strip {
+  display: grid;
+  width: 54rem;
+  height: 100%;
+  grid-template-columns: repeat(10, 5rem);
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.scroll-area-tile {
+  justify-content: center;
+}
+
+.scroll-area-action {
+  margin-top: 0.75rem;
+}
+
+.scroll-area-multiple-scenario {
+  grid-column: 1 / -1;
+}
+
+.scroll-area-multiple {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.scenario {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--card);
+}
+
+.scenario h3 {
+  margin-top: 0;
+}
+
+.scenario output,
+.section-heading output {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--muted-foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+}
+
+.primitive-control,
+.review-action,
+.primitive-checkbox,
+[data-sw-select-trigger] {
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.primitive-control,
+.review-action,
+[data-sw-select-trigger] {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+}
+
+.review-action:hover,
+.primitive-control:hover,
+[data-sw-select-trigger]:hover {
+  background: var(--muted);
+}
+
+.primitive-checkbox {
+  display: inline-grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+  cursor: pointer;
+}
+
+.select-scenario [data-sw-select-popup] {
+  z-index: 80;
+  min-width: 12rem;
+  padding: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 1rem 2.5rem color-mix(in oklch, var(--foreground) 16%, transparent);
+}
+
+.select-scenario [data-sw-select-item] {
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+}
+
+.select-scenario [data-sw-select-item][data-highlighted] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+#vue-review-overlays {
+  position: relative;
+}

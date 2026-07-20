@@ -17,25 +17,33 @@ pnpm exec vitest run scripts/portable-runtime/tests/generate-cli-registry.test.t
 
 Use semver for all registry and component versions.
 
-## Starwind v3 beta policy
+## Deferred styled component versions
 
-While Starwind v3 and the Runtime are in beta:
+Styled component versions advance once per package release rather than once per implementation PR.
+For every existing component whose installable generated source changes:
 
-- Keep existing styled component entries in `styled-component-versions.json` frozen. Changes to a
-  styled contract, generated styled output, or bundled registry content do not trigger a styled
-  component version bump during the beta.
-- Give every new styled component an explicit initial manifest entry. The freeze applies to bumps
-  of existing entries, not to registering a new component.
-- Primitive versions may receive patch or minor bumps within `0.x`. Do not advance a primitive to
-  `1.0.0` until Starwind v3 and the Runtime leave beta.
-- Continue to bump `registryVersion` when the registry schema or artifact distribution changes;
-  the styled component freeze does not apply to the registry snapshot version.
-- Changesets and documentation changelog entries may still record changes that apply specifically
-  to the beta. Package release intent and changelog history do not imply a styled or primitive
-  registry version bump.
+- Add a strict intent file at `.changeset/styled-components/<slug>.json` with a `patch`, `minor`, or
+  `major` bump and add the normal `starwind` package Changeset.
+- Do not edit the existing entry in `styled-component-versions.json` in the implementation PR.
+- Regenerate the bundled registry so its source remains current. The component version stays at the
+  last release value until the generated Version Packages PR is built.
+- `pnpm release:version` groups all pending intents by component, applies the highest requested bump
+  exactly once, consumes the intents, and regenerates the bundled registry inside the existing
+  Changesets Version Packages PR.
+- The release workflow temporarily stages the intent directory outside `.changeset` before the
+  Changesets action runs because Changesets interprets nested directories as legacy v1 changesets.
+  The staging directory is ignored and must never be committed.
 
-When styled component version bumps resume after the beta, bump only the component whose shipped
-source changed.
+Every new styled component still receives an explicit initial manifest entry in its implementation
+PR; it has no previous release version to bump. `defaultComponentVersion` remains only a scaffolding
+hint.
+
+Primitive versions continue to follow their separate vendoring policy and may receive patch or
+minor bumps within `0.x` during beta. Do not advance a primitive to `1.0.0` until Starwind v3 and the
+Runtime leave beta.
+
+Continue to bump `registryVersion` only when the registry schema or artifact distribution changes.
+Package Changesets and changelog history do not substitute for styled or primitive version intent.
 
 When replacing a component that was already published through the legacy core registry, continue
 from that component's published version history. A Runtime-backed rewrite is a breaking change and

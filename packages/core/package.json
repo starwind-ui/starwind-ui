@@ -1,7 +1,8 @@
 {
   "name": "@starwind-ui/core",
   "version": "2.0.1",
-  "description": "Starwind UI core components and registry",
+  "private": true,
+  "description": "Internal canonical Starwind UI component source and registry",
   "license": "MIT",
   "author": {
     "name": "boston343",
@@ -30,10 +31,7 @@
   "scripts": {
     "build": "pnpm clean && tsup",
     "clean": "node -e \"require('fs-extra').remove('dist')\"",
-    "dev": "tsup --watch",
-    "publish:beta": "pnpm publish --tag beta --access public",
-    "publish:next": "pnpm publish --tag next --access public",
-    "publish:release": "pnpm publish --access public"
+    "dev": "tsup --watch"
   },
   "devDependencies": {
     "@types/node": "^24.12.4",

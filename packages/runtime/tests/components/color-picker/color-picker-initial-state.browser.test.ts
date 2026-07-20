@@ -31,7 +31,7 @@ describe("Color Picker initial projection/controller parity", () => {
         form: "theme-form",
       },
     ],
-  ])("matches pure projection for %s state", (_name, options) => {
+  ])("matches pure projection for %s state", (name, options) => {
     document.body.innerHTML = `${"form" in options && options.form ? '<form id="theme-form"></form>' : ""}${markup()}`;
     const root = document.querySelector<HTMLElement>("[data-sw-color-picker]")!;
     const state = createColorPickerInitialState(options as ColorPickerInitialStateOptions);
@@ -42,13 +42,20 @@ describe("Color Picker initial projection/controller parity", () => {
       ...(options as ColorPickerInitialStateOptions),
       dir: "dir" in options ? options.dir : "ltr",
     });
+    const editingState =
+      name === "empty"
+        ? createColorPickerInitialState({
+            ...(options as ColorPickerInitialStateOptions),
+            value: "#000000",
+          })
+        : state;
     expectElementProjection(root, projectColorPickerInitialPart(enhancedState, { part: "root" }));
     const areaInput = root.querySelector<HTMLInputElement>(
       '[data-sw-color-picker-area-input][data-axis="x"]',
     )!;
     expectElementProjection(
       areaInput,
-      projectColorPickerInitialPart(state, {
+      projectColorPickerInitialPart(editingState, {
         part: "areaInput",
         axis: "x",
         xChannel: "hue",
@@ -60,7 +67,7 @@ describe("Color Picker initial projection/controller parity", () => {
     );
     expectElementProjection(
       root.querySelector<HTMLInputElement>("[data-sw-color-picker-channel-input]")!,
-      projectColorPickerInitialPart(state, {
+      projectColorPickerInitialPart(editingState, {
         part: "channelSliderInput",
         channel: "hue",
         orientation: "vertical",

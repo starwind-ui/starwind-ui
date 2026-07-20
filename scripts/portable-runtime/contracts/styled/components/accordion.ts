@@ -19,7 +19,7 @@ export const accordionStyledContract: StyledAdapterContract = {
         "data-[state=open]:animate-accordion-down",
       ],
     },
-    accordionItem: { base: "border-b last:border-b-0" },
+    accordionItem: { base: "not-last:border-b" },
     accordionTrigger: {
       base: [
         "flex w-full items-center justify-between gap-4 rounded-md py-4",

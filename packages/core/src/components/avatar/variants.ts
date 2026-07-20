@@ -1,7 +1,7 @@
 import { tv } from "tailwind-variants";
 
 export const avatar = tv({
-  base: "text-foreground bg-muted relative overflow-hidden rounded-full border-2",
+  base: "text-foreground bg-muted relative inline-flex overflow-hidden rounded-full border-2",
   variants: {
     variant: {
       default: "border-border",

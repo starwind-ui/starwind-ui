@@ -11,6 +11,9 @@ composition.
   owns its presentation while shared interaction behavior comes from versioned packages.
 - Adapter contracts and generators live in `scripts/portable-runtime`; generated package and demo
   output is committed and checked for drift in CI.
+- `packages/vue` and `apps/vue-demo` are committed verification surfaces, but remain private,
+  unversioned, and excluded from npm publication and CLI support claims until the Vue release gate
+  is completed.
 
 ## Primitive Creation Flow
 
@@ -36,13 +39,17 @@ policy; shared generators model framework-neutral facts.
 ## Current Exceptions And Follow-Ups
 
 Astro and React currently expose the same 36 Runtime-backed Primitive families, including Color
-Picker. Vue and Solid targets are non-shipping architecture fixtures, and Svelte remains deferred.
+Picker. Vue has a private non-shipping verification package and demo, Solid remains an architecture
+fixture, and Svelte remains deferred.
 
 ## Beta Packages
 
 The Runtime, Astro adapter, and React adapter packages are versioned in lockstep. The CLI is released
 alongside them so generated styled components and vendored Primitive sources request compatible
 package versions.
+
+The legacy Core workspace is retained only as canonical source. It is private, ignored by
+Changesets, and permanently excluded from package publication.
 
 The beta supports Astro and React across the current 36-family Primitive surface. Future-framework
 fixtures in generator tests are non-shipping architecture checks and are not public framework

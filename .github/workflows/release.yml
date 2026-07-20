@@ -40,10 +40,16 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      # Changesets treats nested directories as legacy v1 changesets. The
+      # custom version command consumes this temporary staging directory.
+      - name: Stage Styled Component Intents
+        run: pnpm styled:versions:stage
+
       - name: Create Release Pull Request
         # changesets/action@v1.8.0
         uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b
         with:
+          commitMode: github-api
           version: pnpm release:version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

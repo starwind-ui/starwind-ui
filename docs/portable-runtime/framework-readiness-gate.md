@@ -136,18 +136,15 @@ and does not use component target route files.
 
 Non-shipping future-framework tracers exist only for:
 
-- `button/vue`
 - `button/solid`
 - `toggle/vue`
 - `toggle/solid`
 - `collapsible/vue`
 - `collapsible/solid`
-- `checkbox/vue`
 - `menu/vue`
 - `menu/solid`
 - `navigation-menu/vue`
 - `navigation-menu/solid`
-- `select/vue`
 - `select/solid`
 - `combobox/vue`
 - `combobox/solid`
@@ -155,11 +152,9 @@ Non-shipping future-framework tracers exist only for:
 These tracers do not imply package exports, CLI registry entries, demo dependencies, or a shipping
 target.
 
-Vue is the only active Tier 0 future-framework vertical slice. Button, Checkbox, and Select form
-its compile/typecheck tracer: Button proves the baseline lifecycle, Checkbox proves boolean form
-participation, and Select proves controlled overlay plus form participation. Existing Solid
-tracers are frozen comparison artifacts, and Svelte remains deferred. None of these targets is a
-preview or shipping adapter.
+Vue has private, non-shipping generated output for Button, Checkbox, and Select; they are no longer
+future-framework tracer fixtures. Existing Solid tracers are frozen comparison artifacts, and
+Svelte remains deferred. None of these targets is a preview or shipping adapter.
 
 ## Gate Tiers
 

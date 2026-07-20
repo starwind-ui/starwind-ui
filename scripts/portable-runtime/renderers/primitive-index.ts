@@ -13,65 +13,82 @@ import { writeGeneratedFile } from "./shared.js";
 export const PRIMITIVE_COMPONENTS = getPrimitiveRuntimeComponentNames();
 export const PRIMITIVE_HELPER_EXPORTS = getPrimitiveHelperExportNames();
 
-export function renderPrimitiveIndex(tsHeader: string): string {
-  const runtimeTypesExport = renderRuntimeTypesExport(getRootRuntimeTypeNames());
-  const exports = getPrimitivePackageExportNames().map(
-    (component) => `export * from "./${component}";`,
-  );
+export function renderPrimitiveIndex(
+  tsHeader: string,
+  components: readonly string[] = getPrimitivePackageExportNames(),
+): string {
+  const componentSet = new Set(components);
+  const runtimeTypesExport = renderRuntimeTypesExport(getRootRuntimeTypeNames(componentSet));
+  const exports = getPrimitivePackageExportNames()
+    .filter((component) => componentSet.has(component))
+    .map((component) => `export * from "./${component}";`);
 
   return `${tsHeader}${runtimeTypesExport}
 ${exports.join("\n")}
 `;
 }
 
-export async function appendRuntimeTypeFacades(outputRoot: string): Promise<void> {
+export async function appendRuntimeTypeFacades(
+  outputRoot: string,
+  components: readonly string[] = PRIMITIVE_COMPONENTS,
+): Promise<void> {
+  const componentSet = new Set(components);
   await Promise.all(
-    PRIMITIVE_COMPONENTS.map(async (component) => {
-      const runtimeTypeNames = getPrimitiveRuntimeFacadeTypeNames(component);
-      const runtimeValueNames = getPrimitiveRuntimeFacadeValueNames(component);
-      if (runtimeTypeNames.length === 0 && runtimeValueNames.length === 0) return;
+    PRIMITIVE_COMPONENTS.filter((component) => componentSet.has(component)).map(
+      async (component) => {
+        const runtimeTypeNames = getPrimitiveRuntimeFacadeTypeNames(component);
+        const runtimeValueNames = getPrimitiveRuntimeFacadeValueNames(component);
+        if (runtimeTypeNames.length === 0 && runtimeValueNames.length === 0) return;
 
-      const dir = path.join(outputRoot, component);
-      const indexPath = path.join(dir, "index.ts");
-      const contents = await readFile(indexPath, "utf8");
-      const missingRuntimeValueNames = runtimeValueNames.filter(
-        (name) => !containsExportedName(contents, name),
-      );
-      const missingRuntimeTypeNames = runtimeTypeNames.filter(
-        (name) => !containsExportedName(contents, name),
-      );
+        const dir = path.join(outputRoot, component);
+        const indexPath = path.join(dir, "index.ts");
+        const contents = await readFile(indexPath, "utf8");
+        const missingRuntimeValueNames = runtimeValueNames.filter(
+          (name) => !containsExportedName(contents, name),
+        );
+        const missingRuntimeTypeNames = runtimeTypeNames.filter(
+          (name) => !containsExportedName(contents, name),
+        );
 
-      if (missingRuntimeValueNames.length === 0 && missingRuntimeTypeNames.length === 0) {
-        return;
-      }
+        if (missingRuntimeValueNames.length === 0 && missingRuntimeTypeNames.length === 0) {
+          return;
+        }
 
-      const runtimeFacadeExports = [
-        missingRuntimeValueNames.length > 0
-          ? renderRuntimeValueExport(component, missingRuntimeValueNames)
-          : undefined,
-        missingRuntimeTypeNames.length > 0
-          ? renderRuntimeTypesExport(missingRuntimeTypeNames)
-          : undefined,
-      ].filter((line): line is string => Boolean(line));
-      const runtimeFacadeBlock = runtimeFacadeExports.join("\n");
+        const runtimeFacadeExports = [
+          missingRuntimeValueNames.length > 0
+            ? renderRuntimeValueExport(component, missingRuntimeValueNames)
+            : undefined,
+          missingRuntimeTypeNames.length > 0
+            ? renderRuntimeTypesExport(missingRuntimeTypeNames)
+            : undefined,
+        ].filter((line): line is string => Boolean(line));
+        const runtimeFacadeBlock = runtimeFacadeExports.join("\n");
 
-      await writeGeneratedFile(
-        dir,
-        "index.ts",
-        `${contents.trimEnd()}
+        await writeGeneratedFile(
+          dir,
+          "index.ts",
+          `${contents.trimEnd()}
 
 ${runtimeFacadeBlock}
 `,
-      );
-    }),
+        );
+      },
+    ),
   );
 }
 
-function getRootRuntimeTypeNames(): string[] {
-  return [...new Set(PRIMITIVE_COMPONENTS.flatMap(getPrimitiveRuntimeFacadeTypeNames))].sort();
+function getRootRuntimeTypeNames(components: ReadonlySet<string>): string[] {
+  return [
+    ...new Set(
+      PRIMITIVE_COMPONENTS.filter((component) => components.has(component)).flatMap(
+        getPrimitiveRuntimeFacadeTypeNames,
+      ),
+    ),
+  ].sort();
 }
 
 function renderRuntimeTypesExport(typeNames: string[]): string {
+  if (typeNames.length === 0) return "";
   return `export type { ${typeNames.join(", ")} } from "@starwind-ui/runtime";`;
 }
 

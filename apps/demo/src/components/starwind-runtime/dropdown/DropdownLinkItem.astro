@@ -1,0 +1,29 @@
+---
+import MenuPrimitive from "@starwind-ui/astro/menu";
+import type { HTMLAttributes } from "astro/types";
+import { dropdownItem } from "./variants";
+
+type Props = HTMLAttributes<"a"> & {
+  closeOnClick?: boolean;
+  inset?: boolean;
+  disabled?: boolean;
+};
+
+const {
+  class: className,
+  closeOnClick = false,
+  inset = false,
+  disabled = false,
+  ...rest
+} = Astro.props;
+---
+
+<MenuPrimitive.LinkItem
+  class={dropdownItem({ inset, disabled, class: className })}
+  closeOnClick={closeOnClick}
+  disabled={disabled}
+  {...rest}
+  data-slot="dropdown-link-item"
+>
+  <slot />
+</MenuPrimitive.LinkItem>

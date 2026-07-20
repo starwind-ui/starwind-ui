@@ -1,0 +1,76 @@
+{
+  "name": "@starwind-ui/vue",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Internal non-shipping Vue primitive adapter verification package",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./avatar": {
+      "types": "./dist/avatar/index.d.ts",
+      "import": "./dist/avatar/index.js"
+    },
+    "./button": {
+      "types": "./dist/button/index.d.ts",
+      "import": "./dist/button/index.js"
+    },
+    "./checkbox": {
+      "types": "./dist/checkbox/index.d.ts",
+      "import": "./dist/checkbox/index.js"
+    },
+    "./progress": {
+      "types": "./dist/progress/index.d.ts",
+      "import": "./dist/progress/index.js"
+    },
+    "./scroll-area": {
+      "types": "./dist/scroll-area/index.d.ts",
+      "import": "./dist/scroll-area/index.js"
+    },
+    "./select": {
+      "types": "./dist/select/index.d.ts",
+      "import": "./dist/select/index.js"
+    },
+    "./theme": {
+      "types": "./dist/theme/index.d.ts",
+      "import": "./dist/theme/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node --experimental-strip-types scripts/build.mjs",
+    "test:run": "vitest run --config tests/vitest.config.ts --project=source-ssr",
+    "test:browser": "tsx tests/run-browser-tests.mjs",
+    "test:hydration": "pnpm --filter=@starwind-ui/runtime build && pnpm build && node tests/integration/run-hydration-playwright.mjs && node tests/integration/run-styled-hydration-playwright.mjs",
+    "test:release": "pnpm --filter=@starwind-ui/runtime build && pnpm build && vitest run --config tests/vitest.config.ts --project=release-package",
+    "test:all": "pnpm test:run && pnpm test:browser && pnpm test:hydration && pnpm test:release",
+    "test:select:built": "pnpm build && node tests/select/run-select-playwright.mjs",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{ts,vue,md,json}\"",
+    "format:write": "prettier --ignore-path ../../.prettierignore --write \"**/*.{ts,vue,md,json}\" --cache"
+  },
+  "dependencies": {
+    "@starwind-ui/runtime": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": ">=3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.4",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vue": "3.5.39",
+    "vue-tsc": "3.3.6",
+    "vitest": "^4.1.8"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
