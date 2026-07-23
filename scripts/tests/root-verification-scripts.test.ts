@@ -63,6 +63,23 @@ describe("root verification scripts", () => {
     );
   });
 
+  it("regenerates release-managed docs metadata during versioning and preparation", async () => {
+    const pkg = await readRootPackage();
+
+    expect(commandPhases(pkg.scripts?.["release:version"])).toEqual([
+      "tsx scripts/portable-runtime/styled-component-release.ts version",
+      "tsx scripts/portable-runtime/primitive-component-release.ts version",
+      "changeset version",
+      "pnpm runtime:registry:generate",
+      "pnpm runtime:docs:metadata",
+    ]);
+    expect(commandPhases(pkg.scripts?.["release:prepare"])).toEqual([
+      "pnpm runtime:generate:all",
+      "pnpm runtime:registry:generate",
+      "pnpm runtime:docs:metadata",
+    ]);
+  });
+
   it("runs every canonical verification phase without rerunning generator tests", async () => {
     const pkg = await readRootPackage();
     const phases = commandPhases(pkg.scripts?.verify);
