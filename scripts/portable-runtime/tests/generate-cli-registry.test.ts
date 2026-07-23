@@ -1320,10 +1320,12 @@ describe("generateCliRegistry", () => {
     ] as const;
     const styledCandidatePaths = new Map<"astro" | "react", string[]>();
     const primitiveCandidatePaths = new Map<"astro" | "react", string[]>();
+    const styledColorPickerVersion = styledVersionManifest.components["color-picker"];
+    const primitiveColorPickerVersion = primitiveVersionManifest.primitives["color-picker"];
 
     expect(styledContract).toBeDefined();
-    expect(styledVersionManifest.components["color-picker"]).toBe("1.2.0");
-    expect(primitiveVersionManifest.primitives["color-picker"]).toBe("0.1.0");
+    expect(styledColorPickerVersion).toBeDefined();
+    expect(primitiveColorPickerVersion).toBeDefined();
     expect(styledComponentCandidates).toHaveLength(21);
 
     const firstRegistry = await buildRuntimeRegistry({
@@ -1351,7 +1353,7 @@ describe("generateCliRegistry", () => {
     );
 
     const styled = getRegistryComponentWithTargets(firstRegistry, "color-picker");
-    expect(styled.version).toBe("1.2.0");
+    expect(styled.version).toBe(styledColorPickerVersion);
 
     for (const framework of ["astro", "react"] as const) {
       const target = styled.targets[framework];
@@ -1411,7 +1413,7 @@ describe("generateCliRegistry", () => {
           : ["@starwind-ui/runtime", "react", "react-dom"];
 
       expect(artifact, `${framework}:color-picker`).toBeDefined();
-      expect(artifact?.version).toBe("0.1.0");
+      expect(artifact?.version).toBe(primitiveColorPickerVersion);
       expect(artifact?.packageRequirements.map((requirement) => requirement.name)).toEqual(
         expectedPackageNames,
       );

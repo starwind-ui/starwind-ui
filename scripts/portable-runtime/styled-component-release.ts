@@ -65,6 +65,9 @@ export const STYLED_VERSION_FRAGMENT_DIR = ".changeset/styled-components";
 export const STAGED_STYLED_VERSION_FRAGMENT_DIR = ".styled-component-intents";
 export const STYLED_VERSION_MANIFEST = "packages/cli/registry/styled-component-versions.json";
 export const STYLED_REGISTRY_ARTIFACT = "packages/cli/src/registry/bundled-registry.json";
+export const LEGACY_STYLED_COMPONENT_BASELINES: Readonly<Record<string, string>> = {
+  "color-picker": "1.2.0",
+};
 
 export function parseStyledVersionIntent(
   value: unknown,
@@ -148,6 +151,9 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
       options.head.fragments[file] &&
       JSON.stringify(options.head.fragments[file]) !== JSON.stringify(options.base.fragments[file]),
   );
+  const invalidModifiedFragments = modifiedFragments.filter(
+    (file) => !isLegacyBaselineIntentCorrection(options, file),
+  );
   const existingVersionChanges = Object.keys(options.base.manifest.components).filter(
     (component) =>
       options.head.manifest.components[component] !== options.base.manifest.components[component],
@@ -180,7 +186,7 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
     return { mode: "version", versionedComponents: Object.keys(aggregated).sort() };
   }
 
-  if (removedFragments.length > 0 || modifiedFragments.length > 0) {
+  if (removedFragments.length > 0 || invalidModifiedFragments.length > 0) {
     throw new Error(
       "Feature PRs may add styled version intents but must not modify or remove merged intents.",
     );
@@ -501,6 +507,32 @@ function assertManifestMetadataEqual(
       "Styled registry metadata versions must not change during component reconciliation.",
     );
   }
+}
+
+function isLegacyBaselineIntentCorrection(
+  options: ValidatePullRequestOptions,
+  file: string,
+): boolean {
+  const baseComponents = options.base.fragments[file]?.components;
+  const headComponents = options.head.fragments[file]?.components;
+  if (!baseComponents || !headComponents) return false;
+
+  const removedComponents = Object.keys(baseComponents).filter(
+    (component) => !(component in headComponents),
+  );
+  const addedOrChangedComponents = Object.entries(headComponents).filter(
+    ([component, bump]) => baseComponents[component] !== bump,
+  );
+  if (removedComponents.length === 0 || addedOrChangedComponents.length > 0) return false;
+
+  return removedComponents.every((component) => {
+    const baseline = LEGACY_STYLED_COMPONENT_BASELINES[component];
+    return (
+      baseline !== undefined &&
+      options.base.manifest.components[component] === baseline &&
+      options.head.manifest.components[component] === baseline
+    );
+  });
 }
 
 function assertFeatureManifestMigration(options: {
