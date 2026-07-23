@@ -873,8 +873,9 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(avatarImage).toContain("}, [hasLoadingStatusChangeCallback]);");
     expect(avatarImage).not.toContain("}, [onLoadingStatusChange]);");
     expect(avatarImage).toContain("data-sw-avatar-image");
-    expect(avatarImage).toContain("node.hidden = hidden ?? true");
-    expect(avatarImage).not.toContain("hidden={hidden ?? true}");
+    expect(avatarImage).toContain('style={{ ...style, visibility: "hidden" }}');
+    expect(avatarImage).toContain("hidden={false}");
+    expect(avatarImage).not.toContain("node.hidden");
     expect(avatarFallback).toContain("delay?: number");
     expect(avatarFallback).toContain("data-sw-avatar-fallback");
     expect(avatarFallback).toContain("data-delay");

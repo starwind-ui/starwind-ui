@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -7,6 +7,16 @@ import { fileURLToPath } from "node:url";
 import semver from "semver";
 
 import type { RegistryVersionManifest, RuntimeRegistry } from "./generate-cli-registry.js";
+import {
+  aggregateVersionIntents,
+  applyVersionIntents,
+  assertSafeIntentFile,
+  isNodeError,
+  isPlainObject,
+  resolveVersionIntentDirectory,
+  sortRecord,
+  stageVersionIntents,
+} from "./release-intent-utils.js";
 
 export type StyledVersionBump = "major" | "minor" | "patch";
 
@@ -45,8 +55,6 @@ type VersionStyledComponentsOptions = {
 };
 
 const execFileAsync = promisify(execFile);
-const BUMP_PRIORITY: Record<StyledVersionBump, number> = { patch: 0, minor: 1, major: 2 };
-const FRAGMENT_FILE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*\.json$/;
 const RELEASE_MANAGED_PACKAGES = new Set([
   "@starwind-ui/runtime",
   "@starwind-ui/astro",
@@ -91,33 +99,22 @@ export function parseStyledVersionIntent(
 export function aggregateStyledVersionIntents(
   fragments: Record<string, StyledVersionIntent>,
 ): Record<string, StyledVersionBump> {
-  const aggregated: Record<string, StyledVersionBump> = {};
-  for (const file of Object.keys(fragments).sort()) {
-    for (const [component, bump] of Object.entries(fragments[file].components)) {
-      const current = aggregated[component];
-      if (!current || BUMP_PRIORITY[bump] > BUMP_PRIORITY[current]) {
-        aggregated[component] = bump;
-      }
-    }
-  }
-  return sortRecord(aggregated);
+  return aggregateVersionIntents(
+    Object.fromEntries(
+      Object.entries(fragments).map(([file, intent]) => [file, intent.components]),
+    ),
+  );
 }
 
 export function applyStyledVersionIntents(
   currentVersions: Record<string, string>,
   intents: Record<string, StyledVersionBump>,
 ): Record<string, string> {
-  const nextVersions = { ...currentVersions };
-  for (const [component, bump] of Object.entries(intents)) {
-    const current = currentVersions[component];
-    if (!current || !semver.valid(current)) {
-      throw new Error(`Styled component "${component}" has invalid semver version "${current}".`);
-    }
-    const next = semver.inc(current, bump);
-    if (!next) throw new Error(`Unable to apply ${bump} bump to ${component}@${current}.`);
-    nextVersions[component] = next;
-  }
-  return nextVersions;
+  return applyVersionIntents({
+    currentVersions,
+    intents,
+    label: "Styled component",
+  });
 }
 
 export function createStyledRegistryFingerprint(component: StyledRegistryComponent): string {
@@ -155,7 +152,7 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
     (component) =>
       options.head.manifest.components[component] !== options.base.manifest.components[component],
   );
-  const versionMode = removedFragments.length > 0 || existingVersionChanges.length > 0;
+  const versionMode = removedFragments.length > 0;
 
   if (versionMode) {
     if (headFragmentNames.length > 0 || addedFragments.length > 0 || modifiedFragments.length > 0) {
@@ -188,8 +185,6 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
       "Feature PRs may add styled version intents but must not modify or remove merged intents.",
     );
   }
-  assertManifestMetadataEqual(options.base.manifest, options.head.manifest);
-
   const baseComponents = componentMap(options.base.registry);
   const headComponents = componentMap(options.head.registry);
   const removedComponents = [...baseComponents.keys()].filter((name) => !headComponents.has(name));
@@ -210,15 +205,6 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
     )
     .sort();
 
-  for (const component of baseComponents.keys()) {
-    const before = options.base.manifest.components[component];
-    const after = options.head.manifest.components[component];
-    if (before !== after) {
-      throw new Error(
-        `Feature PR must defer ${component} version changes to the Version Packages PR.`,
-      );
-    }
-  }
   for (const component of addedComponents) {
     if (!options.head.manifest.components[component]) {
       throw new Error(`New styled component "${component}" requires an explicit initial version.`);
@@ -232,6 +218,12 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
     }
   }
   const changedSet = new Set(changedComponents);
+  assertFeatureManifestMigration({
+    base: options.base.manifest,
+    changedComponents: changedSet,
+    existingVersionChanges,
+    head: options.head.manifest,
+  });
   const missingIntents = changedComponents.filter(
     (component) => !addedIntentComponents.has(component),
   );
@@ -299,17 +291,12 @@ export async function versionStyledComponents(
 export async function stageStyledVersionIntents(
   options: VersionStyledComponentsOptions = {},
 ): Promise<{ staged: boolean }> {
-  const repoRoot = options.repoRoot ?? process.cwd();
-  const source = path.join(repoRoot, STYLED_VERSION_FRAGMENT_DIR);
-  const destination = path.join(repoRoot, STAGED_STYLED_VERSION_FRAGMENT_DIR);
-  if (await pathExists(destination)) {
-    throw new Error(
-      `Styled version staging directory already exists: ${STAGED_STYLED_VERSION_FRAGMENT_DIR}.`,
-    );
-  }
-  if (!(await pathExists(source))) return { staged: false };
-  await rename(source, destination);
-  return { staged: true };
+  return stageVersionIntents({
+    repoRoot: options.repoRoot ?? process.cwd(),
+    pending: STYLED_VERSION_FRAGMENT_DIR,
+    staged: STAGED_STYLED_VERSION_FRAGMENT_DIR,
+    label: "styled",
+  });
 }
 
 export async function checkStyledComponents(
@@ -409,22 +396,12 @@ async function readFragments(
 }
 
 async function resolveVersionFragmentDirectory(repoRoot: string): Promise<string> {
-  const pending = await pathExists(path.join(repoRoot, STYLED_VERSION_FRAGMENT_DIR));
-  const staged = await pathExists(path.join(repoRoot, STAGED_STYLED_VERSION_FRAGMENT_DIR));
-  if (pending && staged) {
-    throw new Error("Both pending and staged styled version intent directories exist.");
-  }
-  return staged ? STAGED_STYLED_VERSION_FRAGMENT_DIR : STYLED_VERSION_FRAGMENT_DIR;
-}
-
-async function pathExists(target: string): Promise<boolean> {
-  try {
-    await stat(target);
-    return true;
-  } catch (error) {
-    if (isNodeError(error) && error.code === "ENOENT") return false;
-    throw error;
-  }
+  return resolveVersionIntentDirectory({
+    repoRoot,
+    pending: STYLED_VERSION_FRAGMENT_DIR,
+    staged: STAGED_STYLED_VERSION_FRAGMENT_DIR,
+    label: "styled",
+  });
 }
 
 async function readWorkingStarwindChangesets(repoRoot: string): Promise<string[]> {
@@ -453,6 +430,11 @@ function changesetReleasesStarwind(content: string): boolean {
 
 function validateSnapshot(snapshot: StyledReleaseSnapshot, label: string): void {
   validateManifest(snapshot.manifest, `${label} styled version manifest`);
+  if (snapshot.registry.version !== snapshot.manifest.registryVersion) {
+    throw new Error(
+      `${label} registry version ${snapshot.registry.version} does not match manifest registry version ${snapshot.manifest.registryVersion}.`,
+    );
+  }
   const registryComponents = componentMap(snapshot.registry);
   assertSameKeys(
     snapshot.manifest.components,
@@ -521,6 +503,46 @@ function assertManifestMetadataEqual(
   }
 }
 
+function assertFeatureManifestMigration(options: {
+  base: RegistryVersionManifest;
+  changedComponents: ReadonlySet<string>;
+  existingVersionChanges: string[];
+  head: RegistryVersionManifest;
+}): void {
+  if (options.base.defaultComponentVersion !== options.head.defaultComponentVersion) {
+    throw new Error("Feature PRs must not change the default styled component version.");
+  }
+
+  const registryVersionChanged = options.base.registryVersion !== options.head.registryVersion;
+  if (
+    registryVersionChanged &&
+    !semver.gt(options.head.registryVersion, options.base.registryVersion)
+  ) {
+    throw new Error("Styled registry metadata migrations must advance the registry version.");
+  }
+
+  if (!registryVersionChanged && options.existingVersionChanges.length > 0) {
+    throw new Error(
+      `Feature PR must defer ${options.existingVersionChanges[0]} version changes to the Version Packages PR.`,
+    );
+  }
+
+  for (const component of options.existingVersionChanges) {
+    const before = options.base.components[component];
+    const after = options.head.components[component];
+    if (!options.changedComponents.has(component)) {
+      throw new Error(
+        `Styled baseline migration for ${component} requires an installable source change.`,
+      );
+    }
+    if (!before || !after || !semver.gt(after, before)) {
+      throw new Error(
+        `Styled baseline migration for ${component} must advance from ${before ?? "missing"} to a later version.`,
+      );
+    }
+  }
+}
+
 function componentMap(registry: RuntimeRegistry): Map<string, StyledRegistryComponent> {
   return new Map(registry.components.map((component) => [component.name, component]));
 }
@@ -538,9 +560,7 @@ function assertSameKeys(
 }
 
 function assertSafeFragmentFile(file: string): void {
-  if (!FRAGMENT_FILE_PATTERN.test(file)) {
-    throw new Error(`Unsafe styled version intent filename "${file}".`);
-  }
+  assertSafeIntentFile(file, "styled");
 }
 
 async function readJson<T = unknown>(file: string): Promise<T> {
@@ -569,20 +589,6 @@ async function listGitFiles(repoRoot: string, ref: string, directory: string): P
     { cwd: repoRoot, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 },
   );
   return stdout.split(/\r?\n/).filter(Boolean).sort();
-}
-
-function sortRecord<T>(record: Record<string, T>): Record<string, T> {
-  return Object.fromEntries(
-    Object.entries(record).sort(([left], [right]) => left.localeCompare(right)),
-  );
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error;
 }
 
 async function runCli(): Promise<void> {

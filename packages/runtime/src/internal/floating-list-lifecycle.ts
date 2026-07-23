@@ -1,4 +1,5 @@
 import { type FloatingPositioner } from "./floating";
+import { createFloatingPortalSession } from "./floating-portal";
 import { type OverlayDismissalHandle, registerOverlayDismissal } from "./overlay-dismissal";
 import {
   type OverlayOpenChangeDetails,
@@ -32,7 +33,9 @@ export type FloatingListLifecycleOptions<TRequest> = {
 };
 
 export type FloatingListStateOptions = {
+  forceUncontrolledOwnerClose?: () => void;
   getOpen: () => boolean;
+  isOpenControlled?: () => boolean;
   isDestroyed: () => boolean;
   render: (open: boolean, closeSignal?: AbortSignal) => void;
 };
@@ -42,6 +45,7 @@ export type FloatingListPortalOptions = {
   containsTarget: (target: Node) => boolean;
   getElement?: () => HTMLElement;
   getTarget: () => HTMLElement;
+  onOwnerCloseRequest?: () => void;
 };
 
 export type FloatingListDismissalOptions = {
@@ -128,9 +132,20 @@ export function createFloatingListLifecycle<TRequest>(
   let floatingPositioner: FloatingPositioner | null = null;
   let floatingReference: HTMLElement | null = null;
   let openedOnce = false;
-  let placeholder: Comment | null = null;
 
   const getPortalElement = () => options.portal.getElement?.() ?? options.popup;
+  const portalSession = createFloatingPortalSession({
+    canPromote: options.state.getOpen,
+    getPortalElement,
+    getPortalTarget: options.portal.getTarget,
+    onOwnerCloseRequest: () => {
+      options.portal.onOwnerCloseRequest?.();
+      if (options.state.isOpenControlled?.() === false && options.state.getOpen()) {
+        options.state.forceUncontrolledOwnerClose?.();
+      }
+    },
+    root: options.root,
+  });
 
   const unregisterDismissal = () => {
     dismissalHandle?.destroy();
@@ -147,27 +162,9 @@ export function createFloatingListLifecycle<TRequest>(
     closeAbortController = null;
   };
 
-  const unportal = () => {
-    if (!placeholder) return;
-
-    placeholder.parentNode?.insertBefore(getPortalElement(), placeholder);
-    placeholder.remove();
-    placeholder = null;
+  const restorePortal = () => {
+    portalSession.restore();
     options.portal.clearFloatingStyles?.();
-  };
-
-  const portal = () => {
-    const portalElement = getPortalElement();
-    const portalTarget = options.portal.getTarget();
-
-    if (portalElement.parentElement === portalTarget) return;
-
-    if (!placeholder) {
-      placeholder = options.root.ownerDocument.createComment("floating-list-placeholder");
-      portalElement.parentNode?.insertBefore(placeholder, portalElement);
-    }
-
-    portalTarget.append(portalElement);
   };
 
   const getFloatingPositioner = (): FloatingPositioner | null => {
@@ -255,7 +252,7 @@ export function createFloatingListLifecycle<TRequest>(
         acquireBodyScrollLock(request);
         options.hooks?.onBeforeOpen?.({ request });
         options.state.render(true);
-        portal();
+        portalSession.mount();
         registerDismissal();
         options.hooks?.onAfterOpen?.({ request });
         updatePosition();
@@ -290,7 +287,7 @@ export function createFloatingListLifecycle<TRequest>(
         onHidden: () => {
           if (nextCloseAbortController.signal.aborted) return;
 
-          unportal();
+          restorePortal();
           if (closeAbortController === nextCloseAbortController) {
             closeAbortController = null;
           }
@@ -307,7 +304,8 @@ export function createFloatingListLifecycle<TRequest>(
       floatingPositioner?.destroy();
       floatingPositioner = null;
       floatingReference = null;
-      unportal();
+      portalSession.destroy();
+      options.portal.clearFloatingStyles?.();
       openedOnce = false;
     },
     startAutoUpdate() {

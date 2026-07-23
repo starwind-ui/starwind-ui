@@ -6,20 +6,35 @@ type HideElementOptions = {
   onHidden?: () => void;
 };
 
+type ShowElementOptions = {
+  startingStyleRelease?: "next-frame" | "after-paint";
+};
+
 const presenceTokens = new WeakMap<HTMLElement, object>();
 
-export function showElement(element: HTMLElement): void {
+export function showElement(element: HTMLElement, options: ShowElementOptions = {}): void {
   const wasHidden = element.hidden;
+  const token = {};
 
-  presenceTokens.set(element, {});
+  presenceTokens.set(element, token);
   element.hidden = false;
   element.classList.remove("hidden");
   element.removeAttribute(PRESENCE_ENDING_ATTRIBUTE);
 
   if (wasHidden) {
     element.setAttribute(PRESENCE_STARTING_ATTRIBUTE, "");
-    requestAnimationFrame(() => {
+    const releaseStartingStyle = () => {
+      if (presenceTokens.get(element) !== token) return;
+
       element.removeAttribute(PRESENCE_STARTING_ATTRIBUTE);
+    };
+    requestAnimationFrame(() => {
+      if (options.startingStyleRelease === "after-paint") {
+        requestAnimationFrame(releaseStartingStyle);
+        return;
+      }
+
+      releaseStartingStyle();
     });
   }
 }

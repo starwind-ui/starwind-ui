@@ -17,10 +17,10 @@ describe("private Vue vertical-slice workspace contract", () => {
 
     expect(rootPackage.scripts).toMatchObject({
       "runtime:generate:vue": "tsx scripts/portable-runtime/generate-vue-wrappers.ts",
-      "runtime:generate:vue:test":
-        "vitest run scripts/portable-runtime/tests/generate-vue-wrappers --testTimeout=60000",
+      "runtime:generate:vue:test": "vitest run --project=portable-vue",
       "vue:build": "pnpm --filter=@starwind-ui/vue build",
       "vue:typecheck": "pnpm --filter=@starwind-ui/vue typecheck",
+      "vue:verify": "pnpm runtime:generate:vue:test && pnpm vue:typecheck && pnpm vue:test",
       "vue-demo:build": "pnpm --filter=vue-demo build",
       "vue-demo:dev": "pnpm --filter=vue-demo dev",
       "vue-demo:smoke": "pnpm --filter=vue-demo smoke",

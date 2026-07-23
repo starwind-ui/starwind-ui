@@ -84,6 +84,7 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(tree["ColorPickerRoot.astro"]).not.toContain("Popover");
     expect(tree["ColorPickerRoot.astro"]).not.toContain("data-floating-root");
     expect(tree["ColorPickerContent.astro"]).toContain("<PopoverContent");
+    expect(tree["ColorPickerContent.astro"]).toContain('collisionStrategy="best-fit"');
     expect(tree["ColorPickerContent.astro"]).toContain("initial={initial?.area()}");
     expect(tree["ColorPickerContent.astro"]).toContain("initial={initial}");
     expect(tree["ColorPickerContent.astro"]).toContain(
@@ -113,6 +114,8 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(tree["ColorPickerInput.astro"]).toContain("initial={initial?.formatSelect.initial}");
     expect(tree["ColorPickerInput.astro"]).toContain("initial={initial?.formatControl.initial}");
     expect(tree["ColorPickerValueInput.astro"]).toContain('Omit<HTMLAttributes<"input">, "size">');
+    expect(tree["variants.ts"]).toContain("min-h-32 w-full shrink-0");
+    expect(tree["variants.ts"]).toContain("max-h-[var(--sw-floating-available-height)]");
     expect(tree["ColorPickerNativeFormatSelect.astro"]).toContain(
       "initial?.properties.value ?? rest.value",
     );

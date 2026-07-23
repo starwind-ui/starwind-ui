@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createInput } from "../../../src/components/input/input";
+import { getFormValueRevision } from "../../../src/internal/form-value-revision";
 
 describe("createInput", () => {
   beforeEach(() => {
@@ -46,6 +47,37 @@ describe("createInput", () => {
       reason: "none",
       value: "Ada Lovelace",
     });
+  });
+
+  it("correlates a native input with its semantic value notification", () => {
+    const input = renderInput({ value: "Ada" });
+    createInput(input);
+    const semanticEvents: Event[] = [];
+    input.addEventListener("starwind:value-change", (event) => semanticEvents.push(event));
+    const nativeEvent = new InputEvent("input", { bubbles: true });
+
+    input.value = "Grace";
+    input.dispatchEvent(nativeEvent);
+
+    expect(semanticEvents).toHaveLength(1);
+    expect(getFormValueRevision(nativeEvent)).toBeDefined();
+    expect(getFormValueRevision(semanticEvents[0])).toBe(getFormValueRevision(nativeEvent));
+  });
+
+  it("assigns distinct revisions to later imperative actions with a repeated value", () => {
+    const input = renderInput();
+    const instance = createInput(input);
+    const revisions: unknown[] = [];
+    input.addEventListener("starwind:value-change", (event) => {
+      revisions.push(getFormValueRevision(event));
+    });
+
+    instance.setValue("Ada");
+    instance.setValue("Grace");
+    instance.setValue("Ada");
+
+    expect(revisions).toHaveLength(3);
+    expect(new Set(revisions).size).toBe(3);
   });
 
   it("tracks focus and touched state", () => {

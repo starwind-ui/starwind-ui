@@ -1,4 +1,5 @@
 import { assertHTMLElement, readBooleanAttribute, setBooleanAttribute } from "../../internal/dom";
+import { getFormValueRevision } from "../../internal/form-value-revision";
 import {
   createField,
   type FieldFormRegistration,
@@ -13,7 +14,7 @@ export type FormState = {
 };
 
 export type FormFieldRegistration = FieldFormRegistration;
-export type FormValidationTiming = "blur" | "change" | "input" | "manual" | "submit";
+export type FormValidationTiming = "blur" | "change" | "manual" | "submit";
 export type FormValues = Record<string, FormDataEntryValue | FormDataEntryValue[]>;
 export type FormValidationErrorInput =
   | string
@@ -71,7 +72,7 @@ export type FormFieldValidator = (
   context: FormFieldValidatorContext,
 ) => FormValidationResult;
 export type FormFieldValidators = Record<string, FormFieldValidator | undefined>;
-export type FormValidationCause = Exclude<FormValidationTiming, "manual">;
+export type FormValidationCause = FormValidationTiming;
 export type FormAsyncFieldValidatorContext = FormFieldValidatorContext & {
   readonly cause: FormValidationCause;
   readonly signal: AbortSignal;
@@ -114,6 +115,7 @@ export type FormOptions = {
   readonly asyncFieldValidators?: FormAsyncFieldValidators;
   readonly asyncFormValidators?: FormAsyncValidator | readonly FormAsyncValidator[];
   readonly asyncValidationDebounceMs?: number;
+  readonly externalErrorsOnReset?: "clear" | "preserve";
   readonly fieldValidators?: FormFieldValidators;
   readonly formValidators?: FormValidator | readonly FormValidator[];
   readonly onSubmit?: FormSubmitHandler;
@@ -134,13 +136,34 @@ export type FormExternalErrors = Record<
   FormExternalErrorInput | readonly FormExternalErrorInput[]
 >;
 export type FormExternalErrorOptions = {
-  clearOnChange?: boolean;
+  readonly clearOnChange?: boolean;
+  readonly visibility?: "immediate" | "policy";
 };
 export type FormValidationError = FieldValidationError & {
   readonly control?: HTMLElement;
   readonly field: HTMLElement;
   readonly name?: string;
 };
+export type FormValidateOptions = {
+  readonly focus?: boolean;
+  readonly names?: readonly string[];
+  readonly reveal?: boolean;
+};
+export type FormResetValidationOptions = {
+  readonly externalErrors?: "clear" | "preserve";
+  readonly names?: readonly string[];
+};
+export type FormValidationOutcome =
+  | {
+      readonly errors: readonly FormValidationError[];
+      readonly status: "complete";
+      readonly valid: boolean;
+    }
+  | {
+      readonly errors: readonly [];
+      readonly status: "aborted";
+      readonly valid: null;
+    };
 
 export type FormInstance = {
   readonly root: HTMLFormElement;
@@ -150,8 +173,11 @@ export type FormInstance = {
   getFields(): FormFieldRegistration[];
   getState(): FormState;
   refresh(): void;
+  resetValidation(options?: FormResetValidationOptions): void;
+  setErrorsVisible(visible: boolean, names?: readonly string[]): void;
   setExternalErrors(errors: FormExternalErrors, options?: FormExternalErrorOptions): void;
   setOptions(options: FormOptions): void;
+  validate(options?: FormValidateOptions): Promise<FormValidationOutcome>;
 };
 
 const FORM_ROOT_ATTRIBUTE = "data-sw-form";
@@ -193,7 +219,6 @@ const FORM_POLICY_ATTRIBUTES = new Set([
 const FORM_VALIDATION_TIMINGS: readonly FormValidationTiming[] = [
   "blur",
   "change",
-  "input",
   "manual",
   "submit",
 ];
@@ -202,6 +227,33 @@ type FormFieldPolicy = {
   errorVisibility: FormValidationTiming;
   revalidationTiming: FormValidationTiming;
   validationTiming: FormValidationTiming;
+};
+
+type SynchronousValidationOperation = {
+  readonly bookkeeping: "mark-validated" | "preserve";
+  readonly focus: "first-invalid" | "none";
+  readonly reveal: "all-invalid" | "preserve" | "submit-policy";
+  readonly submission: "enter-post-submit" | "preserve";
+  readonly targets: readonly HTMLElement[];
+};
+
+type AsyncValidationBatch = {
+  abortReason?: "field-removal";
+  readonly controller: AbortController;
+  readonly generation: number;
+  readonly onAbort?: () => void;
+  readonly writeFieldRoots: readonly HTMLElement[];
+};
+
+type CollectedAsyncValidationErrors = {
+  readonly field: Map<HTMLElement, FormValidationError[]>;
+  readonly form: Map<HTMLElement, FormValidationError[]>;
+};
+
+type CollectedSynchronousValidationErrors = {
+  readonly customField: Map<HTMLElement, FormValidationError[]>;
+  readonly customForm: Map<HTMLElement, FormValidationError[]>;
+  readonly native: Map<HTMLElement, FormValidationError[]>;
 };
 
 type StoredExternalValidationError = FieldValidationError & {
@@ -213,6 +265,18 @@ type FormErrorSummaryEntry = {
   readonly fieldIndex: number;
   readonly label: string;
   readonly message: string;
+};
+
+type NativeInputRevision = {
+  readonly revision: object;
+  readonly value: string;
+};
+
+type PendingChangeRevision = {
+  nativeNotificationSeen: boolean;
+  readonly policy: FormFieldPolicy;
+  readonly postSubmit: boolean;
+  readonly semanticNotifications: Event[];
 };
 
 const instances = new WeakMap<HTMLFormElement, FormController>();
@@ -263,9 +327,11 @@ class FormController implements FormInstance {
 
   private readonly abortController = new AbortController();
   private readonly adoptedInitialErrorFieldRoots = new WeakSet<HTMLElement>();
-  private readonly asyncErrors = new Map<HTMLElement, FormValidationError[]>();
+  private readonly asyncFieldErrors = new Map<HTMLElement, FormValidationError[]>();
+  private readonly asyncFormErrors = new Map<HTMLElement, FormValidationError[]>();
   private readonly asyncFieldValidators = new Map<string, FormAsyncFieldValidator>();
-  private readonly customErrors = new Map<HTMLElement, FormValidationError[]>();
+  private readonly customFieldErrors = new Map<HTMLElement, FormValidationError[]>();
+  private readonly customFormErrors = new Map<HTMLElement, FormValidationError[]>();
   private readonly externalClearOnChangeNames = new Set<string>();
   private readonly externalErrorsByName = new Map<string, StoredExternalValidationError[]>();
   private readonly fieldErrors = new Map<HTMLElement, FormValidationError[]>();
@@ -273,7 +339,17 @@ class FormController implements FormInstance {
   private readonly fieldValidators = new Map<string, FormFieldValidator>();
   private readonly validatingFieldRoots = new Set<HTMLElement>();
   private readonly validatedFieldRoots = new Set<HTMLElement>();
-  private readonly visibleFieldRoots = new Set<HTMLElement>();
+  private readonly revealedFieldRoots = new Set<HTMLElement>();
+  private readonly activePendingChangeRevisions = new WeakMap<HTMLElement, WeakSet<object>>();
+  private readonly nativeInputRevisions = new WeakMap<
+    HTMLElement,
+    WeakMap<HTMLElement, NativeInputRevision>
+  >();
+  private readonly pendingChangeRevisions = new WeakMap<
+    object,
+    WeakMap<HTMLElement, PendingChangeRevision>
+  >();
+  private readonly processedChangeRevisions = new WeakMap<HTMLElement, WeakSet<object>>();
   private readonly mutationObserver: MutationObserver;
   private readonly originalCheckValidity: HTMLFormElement["checkValidity"];
   private readonly originalReportValidity: HTMLFormElement["reportValidity"];
@@ -285,11 +361,12 @@ class FormController implements FormInstance {
   private invalidEventValidationScheduled = false;
   private nativeValidityCheckDepth = 0;
   private pendingFocus: FormFieldRegistration | undefined;
+  private validationGeneration = 0;
   private asyncFormValidators: FormAsyncValidator[] = [];
-  private asyncValidationController: AbortController | undefined;
+  private currentAsyncValidationBatch: AsyncValidationBatch | undefined;
   private asyncValidationDebounceMs = 0;
-  private asyncValidationSequence = 0;
   private asyncValidationTimer: number | undefined;
+  private externalErrorsOnReset: "clear" | "preserve" = "clear";
   private formValidators: FormValidator[] = [];
   private submitAttempted = false;
   private submitHandler: FormSubmitHandler | undefined;
@@ -341,6 +418,296 @@ class FormController implements FormInstance {
     return { fieldCount: this.fieldInstances.size };
   }
 
+  validate(options: FormValidateOptions = {}): Promise<FormValidationOutcome> {
+    if (this.destroyed) {
+      return Promise.resolve({ errors: [], status: "aborted", valid: null });
+    }
+    if (options.names?.length === 0) {
+      return Promise.resolve({ errors: [], status: "complete", valid: true });
+    }
+
+    const targetFieldRoots = this.resolveValidationTargets(options.names);
+    this.cancelAsyncValidation();
+    if (targetFieldRoots.length === 0) {
+      return Promise.resolve({ errors: [], status: "complete", valid: true });
+    }
+
+    let synchronousErrors: CollectedSynchronousValidationErrors;
+    try {
+      synchronousErrors = this.collectSynchronousValidationErrors(
+        targetFieldRoots,
+        options.names === undefined,
+      );
+    } catch (error) {
+      return Promise.reject(error);
+    }
+
+    const fullValidation = options.names === undefined;
+    const asyncFieldRoots = targetFieldRoots.filter(
+      (fieldRoot) =>
+        this.isSynchronousFieldValid(fieldRoot, synchronousErrors) &&
+        this.hasAsyncFieldValidator(fieldRoot),
+    );
+    const runAsyncFormValidators =
+      fullValidation &&
+      this.isFullSynchronousValidationValid(targetFieldRoots, synchronousErrors) &&
+      this.asyncFormValidators.length > 0;
+    const validatingFieldRoots = runAsyncFormValidators ? targetFieldRoots : asyncFieldRoots;
+
+    if (validatingFieldRoots.length === 0) {
+      return Promise.resolve(
+        this.commitImperativeValidation(
+          targetFieldRoots,
+          synchronousErrors,
+          { field: new Map(), form: new Map() },
+          fullValidation,
+          options,
+        ),
+      );
+    }
+
+    return new Promise<FormValidationOutcome>((resolve, reject) => {
+      let settled = false;
+      const settle = (outcome: FormValidationOutcome) => {
+        if (settled) return;
+        settled = true;
+        resolve(outcome);
+      };
+      const batch = this.beginAsyncValidationBatch(validatingFieldRoots, {
+        onAbort: () => settle({ errors: [], status: "aborted", valid: null }),
+        writeFieldRoots: targetFieldRoots,
+      });
+
+      void this.collectAsyncValidationErrors(
+        asyncFieldRoots,
+        "manual",
+        batch.controller.signal,
+        runAsyncFormValidators,
+        true,
+      ).then(
+        (asyncErrors) => {
+          if (!this.isCurrentAsyncValidationBatch(batch)) {
+            settle({ errors: [], status: "aborted", valid: null });
+            return;
+          }
+
+          const outcome = this.commitImperativeValidation(
+            targetFieldRoots,
+            synchronousErrors,
+            asyncErrors,
+            fullValidation,
+            options,
+          );
+          this.finishAsyncValidationBatch(batch);
+          settle(outcome);
+        },
+        (error: unknown) => {
+          this.finishAsyncValidationBatch(batch);
+          if (!settled) {
+            settled = true;
+            reject(error);
+          }
+        },
+      );
+    });
+  }
+
+  resetValidation(options: FormResetValidationOptions = {}): void {
+    if (this.destroyed || options.names?.length === 0) return;
+
+    const targetFieldRoots = this.resolveValidationTargets(options.names);
+    const fullReset = options.names === undefined;
+    if (!fullReset && targetFieldRoots.length === 0) return;
+
+    this.invalidatePendingValidationOwnership();
+    this.resetValidationState(
+      targetFieldRoots,
+      fullReset,
+      options.externalErrors ?? this.externalErrorsOnReset,
+    );
+  }
+
+  setErrorsVisible(visible: boolean, names?: readonly string[]): void {
+    if (this.destroyed || names?.length === 0) return;
+
+    const targetFieldRoots = this.resolveValidationTargets(names);
+    if (targetFieldRoots.length === 0) return;
+
+    targetFieldRoots.forEach((fieldRoot) => {
+      if (visible) {
+        this.revealedFieldRoots.add(fieldRoot);
+      } else {
+        this.revealedFieldRoots.delete(fieldRoot);
+      }
+      this.syncFieldValidationState(fieldRoot);
+    });
+  }
+
+  private resolveValidationTargets(names?: readonly string[]): HTMLElement[] {
+    const fieldRoots = this.getRegisteredFieldRootsInDomOrder();
+    if (names === undefined) return fieldRoots;
+
+    const requestedNames = new Set(names);
+    return fieldRoots.filter((fieldRoot) => {
+      const name = this.fieldInstances.get(fieldRoot)?.getFormRegistration().name;
+      return name !== undefined && requestedNames.has(name);
+    });
+  }
+
+  private resetValidationState(
+    targetFieldRoots: readonly HTMLElement[],
+    fullReset: boolean,
+    externalErrors: "clear" | "preserve",
+  ): void {
+    const targetSet = new Set(targetFieldRoots);
+    const previouslyRevealed = new Set(
+      targetFieldRoots.filter((fieldRoot) => this.revealedFieldRoots.has(fieldRoot)),
+    );
+
+    this.cancelAsyncValidationIfTargetsIntersect(targetSet);
+
+    if (fullReset) {
+      this.submitAttempted = false;
+    }
+    if (fullReset || (this.pendingFocus && targetSet.has(this.pendingFocus.root))) {
+      this.pendingFocus = undefined;
+      this.clearFocusTimer();
+    }
+
+    targetFieldRoots.forEach((fieldRoot) => {
+      this.asyncFieldErrors.delete(fieldRoot);
+      this.asyncFormErrors.delete(fieldRoot);
+      this.customFieldErrors.delete(fieldRoot);
+      this.customFormErrors.delete(fieldRoot);
+      this.fieldErrors.delete(fieldRoot);
+      this.validatingFieldRoots.delete(fieldRoot);
+      this.validatedFieldRoots.delete(fieldRoot);
+      this.revealedFieldRoots.delete(fieldRoot);
+      this.clearChangeRevisionBookkeeping(fieldRoot);
+    });
+
+    if (externalErrors === "clear") {
+      if (fullReset) {
+        this.externalErrorsByName.clear();
+        this.externalClearOnChangeNames.clear();
+      } else {
+        targetFieldRoots.forEach((fieldRoot) => {
+          const name = this.fieldInstances.get(fieldRoot)?.getFormRegistration().name;
+          if (!name) return;
+          this.externalErrorsByName.delete(name);
+          this.externalClearOnChangeNames.delete(name);
+        });
+      }
+    } else {
+      targetFieldRoots.forEach((fieldRoot) => {
+        if (this.getExternalFieldErrors(fieldRoot).length === 0) return;
+
+        this.validatedFieldRoots.add(fieldRoot);
+        if (previouslyRevealed.has(fieldRoot)) {
+          this.revealedFieldRoots.add(fieldRoot);
+        }
+      });
+    }
+
+    this.renderValidatingState();
+    targetFieldRoots.forEach((fieldRoot) => this.syncFieldValidationState(fieldRoot));
+    this.renderErrorSummaries();
+  }
+
+  private collectSynchronousValidationErrors(
+    targetFieldRoots: readonly HTMLElement[],
+    includeFormValidators: boolean,
+  ): CollectedSynchronousValidationErrors {
+    const values = readFormValues(this.root);
+    const fields = this.getFields();
+    const native = new Map<HTMLElement, FormValidationError[]>();
+    targetFieldRoots.forEach((fieldRoot) => {
+      const errors = this.collectNativeFieldErrors(fieldRoot);
+      if (errors.length > 0) native.set(fieldRoot, errors);
+    });
+
+    return {
+      customField: this.collectFieldCustomValidationErrors(targetFieldRoots, values, fields),
+      customForm: includeFormValidators
+        ? this.collectFormCustomValidationErrors(values, fields)
+        : new Map(),
+      native,
+    };
+  }
+
+  private isSynchronousFieldValid(
+    fieldRoot: HTMLElement,
+    errors: CollectedSynchronousValidationErrors,
+  ): boolean {
+    return (
+      (errors.native.get(fieldRoot)?.length ?? 0) === 0 &&
+      (errors.customField.get(fieldRoot)?.length ?? 0) === 0
+    );
+  }
+
+  private isFullSynchronousValidationValid(
+    targetFieldRoots: readonly HTMLElement[],
+    errors: CollectedSynchronousValidationErrors,
+  ): boolean {
+    return targetFieldRoots.every(
+      (fieldRoot) =>
+        this.isSynchronousFieldValid(fieldRoot, errors) &&
+        (errors.customForm.get(fieldRoot)?.length ?? 0) === 0,
+    );
+  }
+
+  private hasAsyncFieldValidator(fieldRoot: HTMLElement): boolean {
+    const name = this.fieldInstances.get(fieldRoot)?.getFormRegistration().name;
+    return name !== undefined && this.asyncFieldValidators.has(name);
+  }
+
+  private commitImperativeValidation(
+    targetFieldRoots: readonly HTMLElement[],
+    synchronousErrors: CollectedSynchronousValidationErrors,
+    asyncErrors: CollectedAsyncValidationErrors,
+    fullValidation: boolean,
+    options: FormValidateOptions,
+  ): FormValidationOutcome {
+    targetFieldRoots.forEach((fieldRoot) => {
+      replaceValidationErrors(this.fieldErrors, fieldRoot, synchronousErrors.native.get(fieldRoot));
+      replaceValidationErrors(
+        this.customFieldErrors,
+        fieldRoot,
+        synchronousErrors.customField.get(fieldRoot),
+      );
+      replaceValidationErrors(this.asyncFieldErrors, fieldRoot, asyncErrors.field.get(fieldRoot));
+      this.validatedFieldRoots.add(fieldRoot);
+    });
+
+    if (fullValidation) {
+      targetFieldRoots.forEach((fieldRoot) => {
+        replaceValidationErrors(
+          this.customFormErrors,
+          fieldRoot,
+          synchronousErrors.customForm.get(fieldRoot),
+        );
+        replaceValidationErrors(this.asyncFormErrors, fieldRoot, asyncErrors.form.get(fieldRoot));
+      });
+    }
+
+    targetFieldRoots.forEach((fieldRoot) => {
+      if (this.getCombinedFieldErrors(fieldRoot).length === 0) return;
+      if (options.reveal === true) {
+        this.revealedFieldRoots.add(fieldRoot);
+      } else if (options.reveal === undefined) {
+        this.updateErrorVisibility(fieldRoot, "manual");
+      }
+    });
+    targetFieldRoots.forEach((fieldRoot) => this.syncFieldValidationState(fieldRoot));
+
+    const errors = targetFieldRoots.flatMap((fieldRoot) => this.getCombinedFieldErrors(fieldRoot));
+    if (options.focus === true && errors.length > 0) {
+      this.findFirstInvalidFieldRegistration([...targetFieldRoots])?.focus();
+    }
+
+    return { errors, status: "complete", valid: errors.length === 0 };
+  }
+
   setOptions(options: FormOptions): void {
     if (this.destroyed) return;
 
@@ -385,14 +752,20 @@ class FormController implements FormInstance {
       this.submitHandler = options.onSubmit;
     }
 
+    if (Object.hasOwn(options, "externalErrorsOnReset")) {
+      this.externalErrorsOnReset = options.externalErrorsOnReset ?? "clear";
+    }
+
     if (shouldClearCustomErrors) {
-      this.customErrors.clear();
+      this.customFieldErrors.clear();
+      this.customFormErrors.clear();
       this.fieldInstances.forEach((_field, fieldRoot) => this.syncFieldValidationState(fieldRoot));
     }
 
     if (shouldClearAsyncErrors) {
       this.cancelAsyncValidation();
-      this.asyncErrors.clear();
+      this.asyncFieldErrors.clear();
+      this.asyncFormErrors.clear();
       this.fieldInstances.forEach((_field, fieldRoot) => this.syncFieldValidationState(fieldRoot));
     }
   }
@@ -417,7 +790,9 @@ class FormController implements FormInstance {
       const name = field.getFormRegistration().name;
       if (name && this.externalErrorsByName.has(name)) {
         this.validatedFieldRoots.add(fieldRoot);
-        this.visibleFieldRoots.add(fieldRoot);
+        if ((options.visibility ?? "immediate") === "immediate") {
+          this.revealedFieldRoots.add(fieldRoot);
+        }
       }
       this.syncFieldValidationState(fieldRoot);
     });
@@ -446,16 +821,22 @@ class FormController implements FormInstance {
 
     const fieldRoots = getOwnFieldRoots(this.root);
     const nextFieldRoots = new Set(fieldRoots);
+    const removedFieldRoots = new Set(
+      Array.from(this.fieldInstances.keys()).filter((fieldRoot) => !nextFieldRoots.has(fieldRoot)),
+    );
 
-    Array.from(this.fieldInstances.keys()).forEach((fieldRoot) => {
-      if (nextFieldRoots.has(fieldRoot)) return;
+    this.cancelAsyncValidationIfTargetsIntersect(removedFieldRoots, "field-removal");
+
+    removedFieldRoots.forEach((fieldRoot) => {
       this.fieldInstances.get(fieldRoot)?.destroy();
       this.fieldInstances.delete(fieldRoot);
-      this.asyncErrors.delete(fieldRoot);
+      this.asyncFieldErrors.delete(fieldRoot);
+      this.asyncFormErrors.delete(fieldRoot);
       this.fieldErrors.delete(fieldRoot);
       this.validatingFieldRoots.delete(fieldRoot);
       this.validatedFieldRoots.delete(fieldRoot);
-      this.visibleFieldRoots.delete(fieldRoot);
+      this.revealedFieldRoots.delete(fieldRoot);
+      this.clearChangeRevisionBookkeeping(fieldRoot);
       clearManagedFieldStateAttributes(fieldRoot);
     });
 
@@ -492,14 +873,19 @@ class FormController implements FormInstance {
   }
 
   private destroyRegisteredFields(): void {
-    this.fieldInstances.forEach((field) => field.destroy());
+    this.fieldInstances.forEach((field, fieldRoot) => {
+      field.destroy();
+      this.clearChangeRevisionBookkeeping(fieldRoot);
+    });
     this.fieldInstances.clear();
-    this.customErrors.clear();
-    this.asyncErrors.clear();
+    this.customFieldErrors.clear();
+    this.customFormErrors.clear();
+    this.asyncFieldErrors.clear();
+    this.asyncFormErrors.clear();
     this.fieldErrors.clear();
     this.validatingFieldRoots.clear();
     this.validatedFieldRoots.clear();
-    this.visibleFieldRoots.clear();
+    this.revealedFieldRoots.clear();
     this.renderValidatingState();
     this.renderErrorSummaries();
   }
@@ -521,14 +907,19 @@ class FormController implements FormInstance {
     if (!fieldRoot) return;
 
     event.preventDefault();
-    this.submitAttempted = true;
-
     if (this.nativeValidityCheckDepth > 0) return;
+
     if (this.invalidEventValidationScheduled) return;
 
     this.invalidEventValidationScheduled = true;
-    this.validateFieldsForSubmit();
-    this.scheduleFirstInvalidFocus();
+    this.cancelAsyncValidation();
+    this.runSynchronousValidation({
+      bookkeeping: "mark-validated",
+      focus: "first-invalid",
+      reveal: "submit-policy",
+      submission: "enter-post-submit",
+      targets: this.getRegisteredFieldRootsInDomOrder(),
+    });
     this.scheduleInvalidEventValidationReset();
   };
 
@@ -538,17 +929,110 @@ class FormController implements FormInstance {
     const fieldRoot = this.findFieldRootForControl(event.target);
     if (!fieldRoot) return;
 
-    const cause = event.type === "input" ? "input" : "change";
-    if (event.type.startsWith("starwind:")) {
-      window.setTimeout(() => {
-        if (this.destroyed || !this.fieldInstances.has(fieldRoot)) return;
-        this.handlePolicyEvent(fieldRoot, cause);
-      }, 0);
-      return;
+    const semantic = event.type.startsWith("starwind:");
+    const revision = semantic
+      ? (getFormValueRevision(event) ?? {})
+      : this.resolveNativeChangeRevision(fieldRoot, event.target, event);
+    this.queueChangeRevision(fieldRoot, revision, event, semantic);
+  };
+
+  private resolveNativeChangeRevision(
+    fieldRoot: HTMLElement,
+    control: HTMLElement,
+    event: Event,
+  ): object {
+    const attachedRevision = getFormValueRevision(event);
+    const value = readNativeRevisionValue(control);
+    let revisionsByControl = this.nativeInputRevisions.get(fieldRoot);
+
+    if (!revisionsByControl) {
+      revisionsByControl = new WeakMap();
+      this.nativeInputRevisions.set(fieldRoot, revisionsByControl);
     }
 
-    this.handlePolicyEvent(fieldRoot, cause);
-  };
+    if (event.type === "input") {
+      const revision = attachedRevision ?? {};
+      revisionsByControl.set(control, { revision, value });
+      return revision;
+    }
+
+    const inputRevision = revisionsByControl.get(control);
+    revisionsByControl.delete(control);
+    if (attachedRevision) return attachedRevision;
+    if (inputRevision?.value === value) return inputRevision.revision;
+    return {};
+  }
+
+  private queueChangeRevision(
+    fieldRoot: HTMLElement,
+    revision: object,
+    event: Event,
+    semantic: boolean,
+  ): void {
+    if (this.processedChangeRevisions.get(fieldRoot)?.has(revision)) return;
+
+    let fieldsForRevision = this.pendingChangeRevisions.get(revision);
+    if (!fieldsForRevision) {
+      fieldsForRevision = new WeakMap();
+      this.pendingChangeRevisions.set(revision, fieldsForRevision);
+    }
+
+    let activeRevisions = this.activePendingChangeRevisions.get(fieldRoot);
+    let pending = fieldsForRevision.get(fieldRoot);
+    if (!pending || !activeRevisions?.has(revision)) {
+      pending = {
+        nativeNotificationSeen: false,
+        policy: this.getFieldPolicy(fieldRoot),
+        postSubmit: this.submitAttempted,
+        semanticNotifications: [],
+      };
+      fieldsForRevision.set(fieldRoot, pending);
+      if (!activeRevisions) {
+        activeRevisions = new WeakSet();
+        this.activePendingChangeRevisions.set(fieldRoot, activeRevisions);
+      }
+      activeRevisions.add(revision);
+      window.setTimeout(() => this.flushChangeRevision(fieldRoot, revision, pending!), 0);
+    }
+
+    if (semantic) {
+      pending.semanticNotifications.push(event);
+    } else {
+      pending.nativeNotificationSeen = true;
+    }
+  }
+
+  private flushChangeRevision(
+    fieldRoot: HTMLElement,
+    revision: object,
+    pending: PendingChangeRevision,
+  ): void {
+    const activeRevisions = this.activePendingChangeRevisions.get(fieldRoot);
+    if (!activeRevisions?.has(revision)) return;
+    activeRevisions.delete(revision);
+    if (this.destroyed || !this.fieldInstances.has(fieldRoot)) return;
+    if (this.processedChangeRevisions.get(fieldRoot)?.has(revision)) return;
+
+    const accepted =
+      pending.semanticNotifications.length > 0
+        ? pending.semanticNotifications.some((event) => !isSemanticNotificationCanceled(event))
+        : pending.nativeNotificationSeen;
+    if (!accepted) return;
+
+    let processed = this.processedChangeRevisions.get(fieldRoot);
+    if (!processed) {
+      processed = new WeakSet();
+      this.processedChangeRevisions.set(fieldRoot, processed);
+    }
+    processed.add(revision);
+    this.handlePolicyEvent(fieldRoot, "change", pending.policy, pending.postSubmit);
+  }
+
+  private clearChangeRevisionBookkeeping(fieldRoot: HTMLElement): void {
+    this.activePendingChangeRevisions.delete(fieldRoot);
+    this.nativeInputRevisions.delete(fieldRoot);
+    this.processedChangeRevisions.delete(fieldRoot);
+  }
 
   private readonly handleFieldBlur = (event: FocusEvent): void => {
     if (this.destroyed || !(event.target instanceof HTMLElement)) return;
@@ -578,54 +1062,35 @@ class FormController implements FormInstance {
   };
 
   private readonly handleReset = (): void => {
+    this.invalidatePendingValidationOwnership();
+    this.pendingFocus = undefined;
+    this.clearFocusTimer();
+    this.cancelAsyncValidationIfTargetsIntersect(new Set(this.getRegisteredFieldRootsInDomOrder()));
     window.setTimeout(() => {
       if (this.destroyed) return;
 
-      this.submitAttempted = false;
-      this.pendingFocus = undefined;
-      this.cancelAsyncValidation();
-      this.asyncErrors.clear();
-      this.clearFocusTimer();
-      this.customErrors.clear();
-      this.fieldErrors.clear();
-      this.validatingFieldRoots.clear();
-      this.validatedFieldRoots.clear();
-      this.visibleFieldRoots.clear();
-      this.renderValidatingState();
-      this.fieldInstances.forEach((_field, fieldRoot) => this.syncFieldValidationState(fieldRoot));
-      this.renderErrorSummaries();
+      this.resetValidationState(
+        this.getRegisteredFieldRootsInDomOrder(),
+        true,
+        this.externalErrorsOnReset,
+      );
     }, 0);
   };
 
   private readonly handleSubmit = (event: SubmitEvent): void => {
     if (this.destroyed) return;
 
-    this.submitAttempted = true;
-    this.pendingFocus = undefined;
-    this.clearFocusTimer();
-
-    if (this.hasAsyncValidators()) {
-      this.cancelAsyncValidation();
-      this.asyncErrors.clear();
-    }
-
-    if (!this.validateFieldsForSubmit()) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      this.scheduleFirstInvalidFocus();
-      return;
-    }
-
     if (this.submitHandler) {
       event.preventDefault();
       event.stopImmediatePropagation();
       const submitter = event.submitter instanceof HTMLElement ? event.submitter : null;
-      if (this.hasAsyncValidators()) {
-        void this.runAsyncValidationForManagedSubmit(event, submitter);
-        return;
-      }
+      void this.runValidationForManagedSubmit(event, submitter);
+      return;
+    }
 
-      this.callSubmitHandler(event, submitter);
+    if (!this.runSynchronousSubmitValidation()) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
     }
   };
 
@@ -665,17 +1130,18 @@ class FormController implements FormInstance {
       return this.originalCheckValidity.call(this.root);
     }
 
-    this.submitAttempted = true;
-    this.pendingFocus = undefined;
-    this.clearFocusTimer();
+    this.validationGeneration += 1;
 
     const nativeValid = this.runNativeValidityCheck(() =>
       this.originalCheckValidity.call(this.root),
     );
-    const managedValid = this.validateFieldsForSubmit();
-    if (!managedValid) {
-      this.scheduleFirstInvalidFocus();
-    }
+    const managedValid = this.runSynchronousValidation({
+      bookkeeping: "mark-validated",
+      focus: "none",
+      reveal: "preserve",
+      submission: "preserve",
+      targets: this.getRegisteredFieldRootsInDomOrder(),
+    });
 
     return nativeValid && managedValid;
   }
@@ -685,17 +1151,18 @@ class FormController implements FormInstance {
       return this.originalReportValidity.call(this.root);
     }
 
-    this.submitAttempted = true;
-    this.pendingFocus = undefined;
-    this.clearFocusTimer();
+    this.validationGeneration += 1;
 
     const nativeValid = this.runNativeValidityCheck(() =>
       this.originalReportValidity.call(this.root),
     );
-    const managedValid = this.validateFieldsForSubmit();
-    if (!managedValid) {
-      this.scheduleFirstInvalidFocus();
-    }
+    const managedValid = this.runSynchronousValidation({
+      bookkeeping: "mark-validated",
+      focus: "first-invalid",
+      reveal: "all-invalid",
+      submission: "preserve",
+      targets: this.getRegisteredFieldRootsInDomOrder(),
+    });
 
     return nativeValid && managedValid;
   }
@@ -713,77 +1180,146 @@ class FormController implements FormInstance {
     }
   }
 
-  private validateFieldsForSubmit(): boolean {
+  private runSynchronousValidation(operation: SynchronousValidationOperation): boolean {
     let valid = true;
+
+    if (operation.submission === "enter-post-submit") {
+      this.submitAttempted = true;
+    }
+    if (operation.focus === "first-invalid") {
+      this.pendingFocus = undefined;
+      this.clearFocusTimer();
+    }
 
     this.validateCustomFields();
 
-    this.fieldInstances.forEach((_field, fieldRoot) => {
-      this.validatedFieldRoots.add(fieldRoot);
-      this.updateErrorVisibility(fieldRoot, "submit");
-      const fieldValid = this.validateField(fieldRoot, {
-        syncAllFields: false,
-        validateCustomFields: false,
-      });
+    operation.targets.forEach((fieldRoot) => {
+      if (!this.fieldInstances.has(fieldRoot)) return;
+      if (operation.bookkeeping === "mark-validated") {
+        this.validatedFieldRoots.add(fieldRoot);
+      }
+
+      this.computeNativeFieldErrors(fieldRoot);
+      const fieldValid = this.getCombinedFieldErrors(fieldRoot).length === 0;
+      if (!fieldValid && operation.reveal === "all-invalid") {
+        this.revealedFieldRoots.add(fieldRoot);
+      } else if (operation.reveal === "submit-policy") {
+        this.updateErrorVisibility(fieldRoot, "submit");
+      }
+
       if (!fieldValid) {
         valid = false;
-        this.pendingFocus ??= this.fieldInstances.get(fieldRoot)?.getFormRegistration();
+        if (operation.focus === "first-invalid") {
+          this.pendingFocus ??= this.fieldInstances.get(fieldRoot)?.getFormRegistration();
+        }
       }
     });
 
     this.fieldInstances.forEach((_field, fieldRoot) => this.syncFieldValidationState(fieldRoot));
+    if (!valid && operation.focus === "first-invalid") {
+      this.scheduleFirstInvalidFocus();
+    }
     return valid;
   }
 
   private validateNativeField(fieldRoot: HTMLElement): boolean {
-    return this.validateField(fieldRoot);
+    return this.runSynchronousValidation({
+      bookkeeping: "preserve",
+      focus: "none",
+      reveal: "preserve",
+      submission: "preserve",
+      targets: [fieldRoot],
+    });
   }
 
-  private validateField(
-    fieldRoot: HTMLElement,
-    options: {
-      readonly syncAllFields?: boolean;
-      readonly validateCustomFields?: boolean;
-    } = {},
-  ): boolean {
+  private computeNativeFieldErrors(fieldRoot: HTMLElement): void {
+    const errors = this.collectNativeFieldErrors(fieldRoot);
+    if (errors.length > 0) {
+      this.fieldErrors.set(fieldRoot, errors);
+    } else {
+      this.fieldErrors.delete(fieldRoot);
+    }
+  }
+
+  private collectNativeFieldErrors(fieldRoot: HTMLElement): FormValidationError[] {
     const field = this.fieldInstances.get(fieldRoot);
-    if (!field) return true;
+    if (!field) return [];
 
     const registration = field.getFormRegistration();
     const errors = [
       ...getOwnNativeControls(fieldRoot).flatMap((control) => readNativeValidationErrors(control)),
       ...readRuntimeValidationErrors(registration),
     ];
-    const formErrors = errors.map((error) => ({
+    return errors.map((error) => ({
       ...error,
       control: registration.control,
       field: fieldRoot,
       name: registration.name,
     }));
-
-    if (formErrors.length > 0) {
-      this.fieldErrors.set(fieldRoot, formErrors);
-    } else {
-      this.fieldErrors.delete(fieldRoot);
-    }
-
-    if (options.validateCustomFields ?? true) {
-      this.validateCustomFields();
-    }
-
-    if (options.syncAllFields ?? true) {
-      this.fieldInstances.forEach((_field, syncedFieldRoot) =>
-        this.syncFieldValidationState(syncedFieldRoot),
-      );
-    } else {
-      this.syncFieldValidationState(fieldRoot);
-    }
-    return this.getCombinedFieldErrors(fieldRoot).length === 0;
   }
 
   private validateCustomFields(): void {
     const values = readFormValues(this.root);
     const fields = this.getFields();
+    this.customFieldErrors.clear();
+    this.collectFieldCustomValidationErrors(
+      this.getRegisteredFieldRootsInDomOrder(),
+      values,
+      fields,
+    ).forEach((errors, fieldRoot) => this.customFieldErrors.set(fieldRoot, errors));
+    this.customFormErrors.clear();
+    this.collectFormCustomValidationErrors(values, fields).forEach((errors, fieldRoot) =>
+      this.customFormErrors.set(fieldRoot, errors),
+    );
+  }
+
+  private collectFieldCustomValidationErrors(
+    targetFieldRoots: readonly HTMLElement[],
+    values = readFormValues(this.root),
+    fields = this.getFields(),
+  ): Map<HTMLElement, FormValidationError[]> {
+    const errorsByFieldRoot = new Map<HTMLElement, FormValidationError[]>();
+
+    targetFieldRoots.forEach((fieldRoot) => {
+      const field = this.fieldInstances.get(fieldRoot);
+      if (!field) return;
+
+      const registration = field.getFormRegistration();
+      const name = registration.name;
+      if (!name || registration.disabled) return;
+
+      const validator = this.fieldValidators.get(name);
+      if (!validator) return;
+
+      const errors = normalizeCustomValidationResult(
+        validator(registration.value, {
+          field: registration,
+          fields,
+          form: this.root,
+          name,
+          values,
+        }),
+      );
+      if (errors.length === 0) return;
+
+      errorsByFieldRoot.set(
+        fieldRoot,
+        errors.map((error) => ({
+          ...error,
+          control: registration.control,
+          field: fieldRoot,
+          name,
+        })),
+      );
+    });
+
+    return errorsByFieldRoot;
+  }
+
+  private collectFormCustomValidationErrors(
+    values = readFormValues(this.root),
+    fields = this.getFields(),
+  ): Map<HTMLElement, FormValidationError[]> {
     const formErrorsByName = new Map<string, FieldValidationError[]>();
 
     this.formValidators.forEach((validator) => {
@@ -800,34 +1336,17 @@ class FormController implements FormInstance {
       });
     });
 
-    this.customErrors.clear();
+    const errorsByFieldRoot = new Map<HTMLElement, FormValidationError[]>();
 
     this.fieldInstances.forEach((field, fieldRoot) => {
       const registration = field.getFormRegistration();
       const name = registration.name;
       if (!name || registration.disabled) return;
 
-      const errors: FieldValidationError[] = [];
-      const fieldValidator = this.fieldValidators.get(name);
-
-      if (fieldValidator) {
-        errors.push(
-          ...normalizeCustomValidationResult(
-            fieldValidator(registration.value, {
-              field: registration,
-              fields,
-              form: this.root,
-              name,
-              values,
-            }),
-          ),
-        );
-      }
-
-      errors.push(...(formErrorsByName.get(name) ?? []));
+      const errors = formErrorsByName.get(name) ?? [];
       if (errors.length === 0) return;
 
-      this.customErrors.set(
+      errorsByFieldRoot.set(
         fieldRoot,
         errors.map((error) => ({
           ...error,
@@ -837,6 +1356,8 @@ class FormController implements FormInstance {
         })),
       );
     });
+
+    return errorsByFieldRoot;
   }
 
   private syncFieldValidationState(fieldRoot: HTMLElement): void {
@@ -853,7 +1374,7 @@ class FormController implements FormInstance {
       submitted: this.submitAttempted,
       validated: this.validatedFieldRoots.has(fieldRoot),
       validating: this.validatingFieldRoots.has(fieldRoot),
-      visible: this.visibleFieldRoots.has(fieldRoot),
+      visible: this.revealedFieldRoots.has(fieldRoot),
     };
 
     field.setFormValidationState(state);
@@ -870,7 +1391,7 @@ class FormController implements FormInstance {
 
   private getVisibleErrorSummaryEntries(): FormErrorSummaryEntry[] {
     return this.getRegisteredFieldRootsInDomOrder().flatMap((fieldRoot, fieldIndex) => {
-      if (!this.visibleFieldRoots.has(fieldRoot)) return [];
+      if (!this.revealedFieldRoots.has(fieldRoot)) return [];
 
       return this.getCombinedFieldErrors(fieldRoot).map((error) => ({
         error,
@@ -948,28 +1469,47 @@ class FormController implements FormInstance {
     this.pendingFocus = undefined;
     this.clearFocusTimer();
     this.cancelAsyncValidation();
-    this.asyncErrors.clear();
-    this.customErrors.clear();
+    this.asyncFieldErrors.clear();
+    this.asyncFormErrors.clear();
+    this.customFieldErrors.clear();
+    this.customFormErrors.clear();
     this.fieldErrors.clear();
     this.validatingFieldRoots.clear();
     this.validatedFieldRoots.clear();
-    this.visibleFieldRoots.clear();
+    this.revealedFieldRoots.clear();
+    this.fieldInstances.forEach((_field, fieldRoot) =>
+      this.clearChangeRevisionBookkeeping(fieldRoot),
+    );
     this.renderValidatingState();
     this.fieldInstances.forEach((_field, fieldRoot) => this.syncFieldValidationState(fieldRoot));
   }
 
   private clearRemovedFieldBookkeeping(mutations: MutationRecord[]): void {
+    const removedFieldRoots = new Set<HTMLElement>();
+    mutations.forEach((mutation) => {
+      if (mutation.type !== "childList") return;
+
+      mutation.removedNodes.forEach((node) => {
+        getFieldRootsFromNode(node).forEach((fieldRoot) => removedFieldRoots.add(fieldRoot));
+      });
+    });
+
+    this.cancelAsyncValidationIfTargetsIntersect(removedFieldRoots, "field-removal");
+
     mutations.forEach((mutation) => {
       if (mutation.type !== "childList") return;
 
       mutation.removedNodes.forEach((node) => {
         getFieldRootsFromNode(node).forEach((fieldRoot) => {
-          this.asyncErrors.delete(fieldRoot);
+          this.asyncFieldErrors.delete(fieldRoot);
+          this.asyncFormErrors.delete(fieldRoot);
           this.fieldErrors.delete(fieldRoot);
-          this.customErrors.delete(fieldRoot);
+          this.customFieldErrors.delete(fieldRoot);
+          this.customFormErrors.delete(fieldRoot);
           this.validatingFieldRoots.delete(fieldRoot);
           this.validatedFieldRoots.delete(fieldRoot);
-          this.visibleFieldRoots.delete(fieldRoot);
+          this.revealedFieldRoots.delete(fieldRoot);
+          this.clearChangeRevisionBookkeeping(fieldRoot);
           clearManagedFieldStateAttributes(fieldRoot);
         });
       });
@@ -979,7 +1519,9 @@ class FormController implements FormInstance {
   }
 
   private clearAsyncErrorsForField(fieldRoot: HTMLElement): void {
-    if (!this.asyncErrors.delete(fieldRoot)) return;
+    const fieldErrorsChanged = this.asyncFieldErrors.delete(fieldRoot);
+    const formErrorsChanged = this.asyncFormErrors.delete(fieldRoot);
+    if (!fieldErrorsChanged && !formErrorsChanged) return;
 
     this.syncFieldValidationState(fieldRoot);
   }
@@ -987,16 +1529,14 @@ class FormController implements FormInstance {
   private scheduleAsyncValidation(fieldRoots: HTMLElement[], cause: FormValidationCause): void {
     if (!this.hasAsyncValidators()) return;
 
-    const targetFieldRoots = this.getAsyncTargetFieldRoots(fieldRoots);
+    const targetFieldRoots = this.getAsyncTargetFieldRoots(fieldRoots, true);
     if (targetFieldRoots.length === 0) return;
 
-    this.cancelAsyncValidation();
-    const sequence = ++this.asyncValidationSequence;
-    this.setValidatingFieldRoots(targetFieldRoots);
+    const batch = this.beginAsyncValidationBatch(targetFieldRoots);
 
     const run = () => {
       this.asyncValidationTimer = undefined;
-      void this.runAsyncValidation(sequence, targetFieldRoots, cause);
+      void this.runAsyncValidationBatch(batch, fieldRoots, cause, true, false);
     };
 
     if (this.asyncValidationDebounceMs > 0) {
@@ -1007,62 +1547,99 @@ class FormController implements FormInstance {
     run();
   }
 
-  private async runAsyncValidation(
-    sequence: number,
-    targetFieldRoots: HTMLElement[],
+  private async runAsyncValidationBatch(
+    batch: AsyncValidationBatch,
+    fieldValidatorRoots: readonly HTMLElement[],
     cause: FormValidationCause,
-  ): Promise<boolean> {
-    const controller = new AbortController();
-    this.asyncValidationController = controller;
-
+    includeFormValidators: boolean,
+    throwValidatorErrors: boolean,
+  ): Promise<boolean | "aborted"> {
     try {
       const errorsByFieldRoot = await this.collectAsyncValidationErrors(
-        targetFieldRoots,
+        fieldValidatorRoots,
         cause,
-        controller.signal,
+        batch.controller.signal,
+        includeFormValidators,
+        throwValidatorErrors,
       );
 
-      if (
-        this.destroyed ||
-        controller.signal.aborted ||
-        sequence !== this.asyncValidationSequence
-      ) {
-        return false;
+      if (!this.isCurrentAsyncValidationBatch(batch)) {
+        return "aborted";
       }
 
-      targetFieldRoots.forEach((fieldRoot) => this.asyncErrors.delete(fieldRoot));
-      errorsByFieldRoot.forEach((errors, fieldRoot) => {
+      fieldValidatorRoots.forEach((fieldRoot) => this.asyncFieldErrors.delete(fieldRoot));
+      errorsByFieldRoot.field.forEach((errors, fieldRoot) => {
         if (errors.length > 0) {
-          this.asyncErrors.set(fieldRoot, errors);
+          this.asyncFieldErrors.set(fieldRoot, errors);
         }
       });
-      return targetFieldRoots.every(
+      if (includeFormValidators) {
+        this.getRegisteredFieldRootsInDomOrder().forEach((fieldRoot) =>
+          this.asyncFormErrors.delete(fieldRoot),
+        );
+        errorsByFieldRoot.form.forEach((errors, fieldRoot) => {
+          if (errors.length > 0) {
+            this.asyncFormErrors.set(fieldRoot, errors);
+          }
+        });
+      }
+      return batch.writeFieldRoots.every(
         (fieldRoot) => this.getCombinedFieldErrors(fieldRoot).length === 0,
       );
     } finally {
-      if (sequence === this.asyncValidationSequence) {
-        this.asyncValidationController = undefined;
-        this.setValidatingFieldRoots([]);
-      }
+      this.finishAsyncValidationBatch(batch);
     }
   }
 
-  private async runAsyncValidationForManagedSubmit(
+  private runSynchronousSubmitValidation(): boolean {
+    if (this.hasAsyncValidators()) {
+      this.cancelAsyncValidation();
+      this.asyncFieldErrors.clear();
+      this.asyncFormErrors.clear();
+    } else {
+      this.validationGeneration += 1;
+    }
+
+    return this.runSynchronousValidation({
+      bookkeeping: "mark-validated",
+      focus: "first-invalid",
+      reveal: "submit-policy",
+      submission: "enter-post-submit",
+      targets: this.getRegisteredFieldRootsInDomOrder(),
+    });
+  }
+
+  private async runValidationForManagedSubmit(
     event: SubmitEvent,
     submitter: HTMLElement | null,
   ): Promise<void> {
-    const targetFieldRoots = this.getAsyncTargetFieldRoots(Array.from(this.fieldInstances.keys()));
+    if (!this.runSynchronousSubmitValidation()) return;
+    if (!this.hasAsyncValidators()) {
+      this.callSubmitHandler(event, submitter);
+      return;
+    }
+
+    const fieldRoots = this.getRegisteredFieldRootsInDomOrder();
+    const targetFieldRoots = this.getAsyncTargetFieldRoots(fieldRoots, true);
     if (targetFieldRoots.length === 0) {
       this.callSubmitHandler(event, submitter);
       return;
     }
 
-    this.cancelAsyncValidation();
-    const sequence = ++this.asyncValidationSequence;
-    this.setValidatingFieldRoots(targetFieldRoots);
-
-    const valid = await this.runAsyncValidation(sequence, targetFieldRoots, "submit");
-    if (!valid || this.destroyed || sequence !== this.asyncValidationSequence) {
+    const batch = this.beginAsyncValidationBatch(targetFieldRoots);
+    const valid = await this.runAsyncValidationBatch(batch, fieldRoots, "submit", true, false);
+    if (valid === "aborted") {
+      if (
+        batch.abortReason === "field-removal" &&
+        batch.generation === this.validationGeneration &&
+        !this.destroyed
+      ) {
+        await this.runValidationForManagedSubmit(event, submitter);
+      }
+      return;
+    }
+    if (this.destroyed) return;
+    if (!valid) {
       this.pendingFocus = this.findFirstInvalidFieldRegistration(targetFieldRoots);
       if (this.pendingFocus) {
         this.scheduleFirstInvalidFocus();
@@ -1074,13 +1651,16 @@ class FormController implements FormInstance {
   }
 
   private async collectAsyncValidationErrors(
-    targetFieldRoots: HTMLElement[],
+    targetFieldRoots: readonly HTMLElement[],
     cause: FormValidationCause,
     signal: AbortSignal,
-  ): Promise<Map<HTMLElement, FormValidationError[]>> {
+    includeFormValidators: boolean,
+    throwValidatorErrors: boolean,
+  ): Promise<CollectedAsyncValidationErrors> {
     const values = readFormValues(this.root);
     const fields = this.getFields();
-    const errorsByFieldRoot = new Map<HTMLElement, FormValidationError[]>();
+    const fieldErrorsByRoot = new Map<HTMLElement, FormValidationError[]>();
+    const formErrorsByRoot = new Map<HTMLElement, FormValidationError[]>();
     const fieldValidationTasks: Array<{
       fieldRoot: HTMLElement;
       name: string;
@@ -1102,31 +1682,38 @@ class FormController implements FormInstance {
       fieldValidationTasks.push({
         fieldRoot,
         name,
-        promise: runAsyncFieldValidatorSafely(() =>
-          validator(registration.value, {
-            cause,
-            field: registration,
-            fields,
-            form: this.root,
-            name,
-            signal,
-            values,
-          }),
+        promise: runAsyncFieldValidatorSafely(
+          () =>
+            validator(registration.value, {
+              cause,
+              field: registration,
+              fields,
+              form: this.root,
+              name,
+              signal,
+              values,
+            }),
+          throwValidatorErrors,
+          signal,
         ),
         registration,
       });
     }
 
-    const formValidationTasks = this.asyncFormValidators.map((validator) =>
-      runAsyncFormValidatorSafely(() =>
-        validator(values, {
-          cause,
-          fields,
-          form: this.root,
+    const formValidationTasks = (includeFormValidators ? this.asyncFormValidators : []).map(
+      (validator) =>
+        runAsyncFormValidatorSafely(
+          () =>
+            validator(values, {
+              cause,
+              fields,
+              form: this.root,
+              signal,
+              values,
+            }),
+          throwValidatorErrors,
           signal,
-          values,
-        }),
-      ),
+        ),
     );
 
     const [fieldResults, formResults] = await Promise.all([
@@ -1134,7 +1721,7 @@ class FormController implements FormInstance {
       Promise.all(formValidationTasks),
     ]);
 
-    if (signal.aborted) return errorsByFieldRoot;
+    if (signal.aborted) return { field: fieldErrorsByRoot, form: formErrorsByRoot };
 
     for (const [index, task] of fieldValidationTasks.entries()) {
       if (!this.fieldInstances.has(task.fieldRoot)) continue;
@@ -1143,7 +1730,7 @@ class FormController implements FormInstance {
       if (errors.length === 0) continue;
 
       appendAsyncValidationErrors(
-        errorsByFieldRoot,
+        fieldErrorsByRoot,
         task.fieldRoot,
         errors,
         task.registration,
@@ -1151,7 +1738,7 @@ class FormController implements FormInstance {
       );
     }
 
-    if (signal.aborted) return errorsByFieldRoot;
+    if (signal.aborted) return { field: fieldErrorsByRoot, form: formErrorsByRoot };
 
     for (const result of formResults) {
       if (!result) continue;
@@ -1166,12 +1753,12 @@ class FormController implements FormInstance {
           const registration = field.getFormRegistration();
           if (registration.name !== name || registration.disabled) return;
 
-          appendAsyncValidationErrors(errorsByFieldRoot, fieldRoot, errors, registration, name);
+          appendAsyncValidationErrors(formErrorsByRoot, fieldRoot, errors, registration, name);
         });
       });
     }
 
-    return errorsByFieldRoot;
+    return { field: fieldErrorsByRoot, form: formErrorsByRoot };
   }
 
   private findFirstInvalidFieldRegistration(
@@ -1196,7 +1783,10 @@ class FormController implements FormInstance {
     });
   }
 
-  private getAsyncTargetFieldRoots(fieldRoots: HTMLElement[]): HTMLElement[] {
+  private getAsyncTargetFieldRoots(
+    fieldRoots: readonly HTMLElement[],
+    includeFormValidators: boolean,
+  ): HTMLElement[] {
     const targetFieldRoots = new Set<HTMLElement>();
 
     fieldRoots.forEach((fieldRoot) => {
@@ -1208,7 +1798,7 @@ class FormController implements FormInstance {
       }
     });
 
-    if (this.asyncFormValidators.length > 0) {
+    if (includeFormValidators && this.asyncFormValidators.length > 0) {
       this.fieldInstances.forEach((field, fieldRoot) => {
         const registration = field.getFormRegistration();
         if (registration.name && !registration.disabled) {
@@ -1224,11 +1814,65 @@ class FormController implements FormInstance {
     return this.asyncFieldValidators.size > 0 || this.asyncFormValidators.length > 0;
   }
 
-  private cancelAsyncValidation(): void {
+  private cancelAsyncValidation(reason?: AsyncValidationBatch["abortReason"]): void {
+    if (reason !== "field-removal") {
+      this.validationGeneration += 1;
+    }
     this.clearAsyncValidationTimer();
-    this.asyncValidationController?.abort();
-    this.asyncValidationController = undefined;
-    this.asyncValidationSequence += 1;
+    const batch = this.currentAsyncValidationBatch;
+    this.currentAsyncValidationBatch = undefined;
+    if (batch && reason) batch.abortReason = reason;
+    batch?.controller.abort();
+    batch?.onAbort?.();
+    this.setValidatingFieldRoots([]);
+  }
+
+  private invalidatePendingValidationOwnership(): void {
+    this.validationGeneration += 1;
+  }
+
+  private cancelAsyncValidationIfTargetsIntersect(
+    targetFieldRoots: ReadonlySet<HTMLElement>,
+    reason?: AsyncValidationBatch["abortReason"],
+  ): void {
+    const batch = this.currentAsyncValidationBatch;
+    if (!batch) return;
+    if (!batch.writeFieldRoots.some((fieldRoot) => targetFieldRoots.has(fieldRoot))) return;
+
+    this.cancelAsyncValidation(reason);
+  }
+
+  private beginAsyncValidationBatch(
+    validatingFieldRoots: readonly HTMLElement[],
+    options: {
+      readonly onAbort?: () => void;
+      readonly writeFieldRoots?: readonly HTMLElement[];
+    } = {},
+  ): AsyncValidationBatch {
+    this.cancelAsyncValidation();
+    const batch: AsyncValidationBatch = {
+      controller: new AbortController(),
+      generation: this.validationGeneration,
+      onAbort: options.onAbort,
+      writeFieldRoots: [...(options.writeFieldRoots ?? validatingFieldRoots)],
+    };
+    this.currentAsyncValidationBatch = batch;
+    this.setValidatingFieldRoots([...validatingFieldRoots]);
+    return batch;
+  }
+
+  private isCurrentAsyncValidationBatch(batch: AsyncValidationBatch): boolean {
+    return (
+      !this.destroyed &&
+      !batch.controller.signal.aborted &&
+      this.currentAsyncValidationBatch === batch
+    );
+  }
+
+  private finishAsyncValidationBatch(batch: AsyncValidationBatch): void {
+    if (this.currentAsyncValidationBatch !== batch) return;
+
+    this.currentAsyncValidationBatch = undefined;
     this.setValidatingFieldRoots([]);
   }
 
@@ -1257,12 +1901,18 @@ class FormController implements FormInstance {
     setBooleanAttribute(this.root, "data-validating", this.validatingFieldRoots.size > 0);
   }
 
-  private handlePolicyEvent(fieldRoot: HTMLElement, cause: FormValidationCause): void {
+  private handlePolicyEvent(
+    fieldRoot: HTMLElement,
+    cause: FormValidationCause,
+    policy = this.getFieldPolicy(fieldRoot),
+    postSubmit = this.submitAttempted,
+  ): void {
     const externalErrorsChanged = this.clearExternalErrorsOnChange(fieldRoot, cause);
-    const shouldValidate = this.shouldValidateField(fieldRoot, cause);
-    const visibilityChanged = this.updateErrorVisibility(fieldRoot, cause);
+    const shouldValidate = this.shouldValidateField(policy, cause, postSubmit);
+    const visibilityChanged = this.updateErrorVisibility(fieldRoot, cause, policy);
 
     if (shouldValidate) {
+      this.cancelAsyncValidation();
       this.validatedFieldRoots.add(fieldRoot);
       this.clearAsyncErrorsForField(fieldRoot);
       const fieldValid = this.validateNativeField(fieldRoot);
@@ -1278,7 +1928,7 @@ class FormController implements FormInstance {
   }
 
   private clearExternalErrorsOnChange(fieldRoot: HTMLElement, cause: FormValidationCause): boolean {
-    if (cause !== "input" && cause !== "change") return false;
+    if (cause !== "change") return false;
 
     const name = this.fieldInstances.get(fieldRoot)?.getFormRegistration().name;
     const clearedNames = new Set<string>();
@@ -1323,28 +1973,36 @@ class FormController implements FormInstance {
       ...errors,
     ]);
     this.validatedFieldRoots.add(fieldRoot);
-    this.visibleFieldRoots.add(fieldRoot);
+    this.revealedFieldRoots.add(fieldRoot);
   }
 
   private getCombinedFieldErrors(fieldRoot: HTMLElement): FormValidationError[] {
     const nativeErrors = this.fieldErrors.get(fieldRoot) ?? [];
-    const customErrors = this.customErrors.get(fieldRoot) ?? [];
-    const asyncErrors = this.asyncErrors.get(fieldRoot) ?? [];
-    const field = this.fieldInstances.get(fieldRoot);
-    if (!field) return [...nativeErrors, ...customErrors, ...asyncErrors];
+    const customFieldErrors = this.customFieldErrors.get(fieldRoot) ?? [];
+    const customFormErrors = this.customFormErrors.get(fieldRoot) ?? [];
+    const asyncFieldErrors = this.asyncFieldErrors.get(fieldRoot) ?? [];
+    const asyncFormErrors = this.asyncFormErrors.get(fieldRoot) ?? [];
+    const validationErrors = [
+      ...nativeErrors,
+      ...customFieldErrors,
+      ...customFormErrors,
+      ...asyncFieldErrors,
+      ...asyncFormErrors,
+    ];
+    return [...validationErrors, ...this.getExternalFieldErrors(fieldRoot)];
+  }
 
-    const registration = field.getFormRegistration();
-    const name = registration.name;
-    if (!name) return [...nativeErrors, ...customErrors, ...asyncErrors];
+  private getExternalFieldErrors(fieldRoot: HTMLElement): FormValidationError[] {
+    const registration = this.fieldInstances.get(fieldRoot)?.getFormRegistration();
+    const name = registration?.name;
+    if (!registration || !name) return [];
 
-    const externalErrors = (this.externalErrorsByName.get(name) ?? []).map((error) => ({
+    return (this.externalErrorsByName.get(name) ?? []).map((error) => ({
       ...error,
       control: registration.control,
       field: fieldRoot,
       name,
     }));
-
-    return [...nativeErrors, ...customErrors, ...asyncErrors, ...externalErrors];
   }
 
   private clearExternalErrorOnChangeName(name: string, clearedNames: Set<string>): void {
@@ -1372,23 +2030,24 @@ class FormController implements FormInstance {
     return !foundMatchingField || !foundMatchingControl;
   }
 
-  private shouldValidateField(fieldRoot: HTMLElement, cause: FormValidationCause): boolean {
-    const policy = this.getFieldPolicy(fieldRoot);
-
-    if (doesTimingMatch(policy.validationTiming, cause)) return true;
-    if (this.submitAttempted && doesTimingMatch(policy.revalidationTiming, cause, true)) {
-      return true;
-    }
-
-    return false;
+  private shouldValidateField(
+    policy: FormFieldPolicy,
+    cause: FormValidationCause,
+    postSubmit = this.submitAttempted,
+  ): boolean {
+    const activeTiming = postSubmit ? policy.revalidationTiming : policy.validationTiming;
+    return doesTimingMatch(activeTiming, cause);
   }
 
-  private updateErrorVisibility(fieldRoot: HTMLElement, cause: FormValidationCause): boolean {
-    const policy = this.getFieldPolicy(fieldRoot);
+  private updateErrorVisibility(
+    fieldRoot: HTMLElement,
+    cause: FormValidationCause,
+    policy = this.getFieldPolicy(fieldRoot),
+  ): boolean {
     if (!doesTimingMatch(policy.errorVisibility, cause)) return false;
-    if (this.visibleFieldRoots.has(fieldRoot)) return false;
+    if (this.revealedFieldRoots.has(fieldRoot)) return false;
 
-    this.visibleFieldRoots.add(fieldRoot);
+    this.revealedFieldRoots.add(fieldRoot);
     return true;
   }
 
@@ -1718,11 +2377,14 @@ function readFormSchemaIssueName(issue: FormSchemaIssue, formErrorName: string):
 
 async function runAsyncFieldValidatorSafely(
   validate: () => FormValidationResult | Promise<FormValidationResult>,
+  throwValidatorErrors = false,
+  signal?: AbortSignal,
 ): Promise<FormValidationResult> {
   try {
     return await validate();
   } catch (error) {
-    if (isAbortError(error)) return null;
+    if (isAbortError(error) && (!throwValidatorErrors || signal?.aborted)) return null;
+    if (throwValidatorErrors) throw error;
     return error instanceof Error ? error.message : "Validation failed.";
   }
 }
@@ -1733,11 +2395,14 @@ async function runAsyncFormValidatorSafely(
     | null
     | undefined
     | Promise<Record<string, FormValidationResult> | null | undefined>,
+  throwValidatorErrors = false,
+  signal?: AbortSignal,
 ): Promise<Record<string, FormValidationResult> | null | undefined> {
   try {
     return await validate();
   } catch (error) {
-    if (isAbortError(error)) return null;
+    if (isAbortError(error) && (!throwValidatorErrors || signal?.aborted)) return null;
+    if (throwValidatorErrors) throw error;
     return null;
   }
 }
@@ -1758,6 +2423,18 @@ function appendAsyncValidationErrors(
       name,
     })),
   ]);
+}
+
+function replaceValidationErrors(
+  target: Map<HTMLElement, FormValidationError[]>,
+  fieldRoot: HTMLElement,
+  errors: FormValidationError[] | undefined,
+): void {
+  if (errors && errors.length > 0) {
+    target.set(fieldRoot, errors);
+  } else {
+    target.delete(fieldRoot);
+  }
 }
 
 function isAbortError(error: unknown): boolean {
@@ -1915,6 +2592,33 @@ function getOwnNativeControls(
   return controls;
 }
 
+function readNativeRevisionValue(control: HTMLElement): string {
+  if (control instanceof HTMLInputElement) {
+    if (control.type === "checkbox" || control.type === "radio") {
+      return `${control.checked ? "checked" : "unchecked"}:${control.value}`;
+    }
+    return control.value;
+  }
+
+  if (control instanceof HTMLSelectElement) {
+    if (control.multiple) {
+      return JSON.stringify(Array.from(control.selectedOptions, (option) => option.value));
+    }
+    return control.value;
+  }
+
+  if (control instanceof HTMLTextAreaElement) return control.value;
+  return control.getAttribute("data-value") ?? "";
+}
+
+function isSemanticNotificationCanceled(event: Event): boolean {
+  if (event.defaultPrevented) return true;
+  if (!(event instanceof CustomEvent)) return false;
+
+  const detail = event.detail as { readonly isCanceled?: unknown } | null;
+  return detail?.isCanceled === true;
+}
+
 function readNativeValidationErrors(
   control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement,
 ): FieldValidationError[] {
@@ -1969,14 +2673,8 @@ function readTimingAttribute(
   return fallback;
 }
 
-function doesTimingMatch(
-  timing: FormValidationTiming,
-  cause: FormValidationCause,
-  changeIncludesInput = false,
-): boolean {
-  if (timing === "manual") return false;
-  if (timing === cause) return true;
-  return changeIncludesInput && timing === "change" && cause === "input";
+function doesTimingMatch(timing: FormValidationTiming, cause: FormValidationCause): boolean {
+  return timing === cause;
 }
 
 function isNativeFormControl(

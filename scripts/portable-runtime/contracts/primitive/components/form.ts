@@ -57,9 +57,27 @@ export const formRuntimeAdapterContract = {
       targets: ["root"],
       type: "FormValidationTiming",
     },
-    { name: "errorVisibility", kind: "option", targets: ["root"], type: "FormValidationTiming" },
-    { name: "revalidationTiming", kind: "option", targets: ["root"], type: "FormValidationTiming" },
-    { name: "validationTiming", kind: "option", targets: ["root"], type: "FormValidationTiming" },
+    {
+      defaultValue: "submit",
+      name: "errorVisibility",
+      kind: "option",
+      targets: ["root"],
+      type: "FormValidationTiming",
+    },
+    {
+      defaultValue: "change",
+      name: "revalidationTiming",
+      kind: "option",
+      targets: ["root"],
+      type: "FormValidationTiming",
+    },
+    {
+      defaultValue: "submit",
+      name: "validationTiming",
+      kind: "option",
+      targets: ["root"],
+      type: "FormValidationTiming",
+    },
   ],
   refs: [
     { part: "root", public: true },
@@ -95,7 +113,11 @@ export const formRuntimeAdapterContract = {
   frameworkNotes: {
     astro: [
       "Render a real form element and let the runtime register nested Fields without preventing valid native submission.",
+      "Retrieve the idempotent imperative controller with createForm(element); the component does not expose a controller ref.",
     ],
-    react: ["Create the Form runtime once for the real form element and clean it up on unmount."],
+    react: [
+      "Create the Form runtime once for the real form element and clean it up on unmount.",
+      "Keep the public ref on the HTMLFormElement; retrieve the idempotent imperative controller with createForm(element).",
+    ],
   },
 } as const satisfies RuntimeAdapterContract;

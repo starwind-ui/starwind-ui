@@ -5,6 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
@@ -459,6 +460,7 @@ class RadioController implements RadioInstance {
   };
 
   private notify(details: RadioCheckedChangeDetails): void {
+    attachFormValueRevision(details, details.event);
     dispatchCustomEvent(this.root, "starwind:checked-change", details);
     this.onCheckedChange?.(details.checked, details);
     this.subscribers.forEach((subscriber) => subscriber(details));

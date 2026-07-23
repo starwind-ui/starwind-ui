@@ -208,7 +208,7 @@ export async function installPrimitiveComponents(
   );
 
   if (packagesToInstall.length > 0) {
-    await installDependencies(packagesToInstall, options.packageManager ?? "npm");
+    await installDependencies(packagesToInstall, options.packageManager);
   }
 
   for (const artifact of writableArtifacts) {
@@ -393,7 +393,7 @@ export async function updatePrimitiveComponents(
     }
 
     if (!skipPackageDependentUpdates) {
-      await installDependencies(plan.packagesToInstall, options.packageManager ?? "npm");
+      await installDependencies(plan.packagesToInstall, options.packageManager);
     }
   }
 

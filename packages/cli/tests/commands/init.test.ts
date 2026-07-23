@@ -61,8 +61,29 @@ import { migrate } from "../../src/commands/migrate.js";
 const runtimePackage = JSON.parse(
   readFileSync(new URL("../../../runtime/package.json", import.meta.url), "utf8"),
 ) as { version: string };
+const registryVersionManifest = JSON.parse(
+  readFileSync(new URL("../../registry/styled-component-versions.json", import.meta.url), "utf8"),
+) as { registryVersion: string };
 const CURRENT_ASTRO_SPEC = `@starwind-ui/astro@${runtimePackage.version}`;
 const CURRENT_REACT_SPEC = `@starwind-ui/react@${runtimePackage.version}`;
+const ASTRO_SETUP_REQUIREMENTS = [
+  "@tabler/icons@^3",
+  "@tailwindcss/forms@^0.5",
+  "@tailwindcss/vite@^4",
+  "tailwind-merge@^3",
+  "tailwind-variants@^3",
+  "tailwindcss@^4",
+  "tw-animate-css@^1",
+];
+const REACT_SETUP_REQUIREMENTS = [
+  "@tabler/icons-react@^3",
+  "@tailwindcss/forms@^0.5",
+  "@tailwindcss/vite@^4",
+  "tailwind-merge@^3",
+  "tailwind-variants@^3",
+  "tailwindcss@^4",
+  "tw-animate-css@^1",
+];
 
 const mockTasks = vi.mocked(clackPrompts.tasks);
 const mockGroup = vi.mocked(clackPrompts.group);
@@ -160,7 +181,7 @@ describe("init command", () => {
         framework: "react",
         registry: {
           source: "bundled",
-          version: "2.0.0",
+          version: registryVersionManifest.registryVersion,
         },
         componentDir: `${PATHS.LOCAL_COMPONENTS_DIR}/starwind`,
         utilsDir: PATHS.LOCAL_UTILS_DIR,
@@ -172,7 +193,11 @@ describe("init command", () => {
     expect(mockSetupReactViteConfig).toHaveBeenCalled();
     expect(mockSetupReactCssImport).toHaveBeenCalledWith(PATHS.LOCAL_CSS_FILE);
     expect(mockSetupTsConfig).toHaveBeenCalledWith("react");
-    expect(mockInstallDependencies).toHaveBeenCalledWith([CURRENT_REACT_SPEC], "pnpm");
+    expect(mockInstallDependencies.mock.calls).toEqual([
+      [[CURRENT_REACT_SPEC], "pnpm"],
+      [REACT_SETUP_REQUIREMENTS, "pnpm", false, false],
+    ]);
+    expect(JSON.stringify(mockInstallDependencies.mock.calls)).not.toContain('"@tabler/icons@^3"');
   });
 
   it("configures Pro authorization during fresh init without shadcn components config", async () => {
@@ -240,7 +265,10 @@ describe("init command", () => {
       }),
       { appendComponents: false },
     );
-    expect(mockInstallDependencies).toHaveBeenCalledWith([CURRENT_REACT_SPEC], "pnpm");
+    expect(mockInstallDependencies.mock.calls).toEqual([
+      [[CURRENT_REACT_SPEC], "pnpm"],
+      [REACT_SETUP_REQUIREMENTS, "pnpm", false, false],
+    ]);
 
     vi.clearAllMocks();
     mockDefaultProject();
@@ -253,7 +281,10 @@ describe("init command", () => {
       }),
       { appendComponents: false },
     );
-    expect(mockInstallDependencies).toHaveBeenCalledWith([CURRENT_ASTRO_SPEC], "pnpm");
+    expect(mockInstallDependencies.mock.calls).toEqual([
+      [[CURRENT_ASTRO_SPEC], "pnpm"],
+      [ASTRO_SETUP_REQUIREMENTS, "pnpm", false, false],
+    ]);
   });
 
   it("recommends migrate for legacy configs before writing runtime setup", async () => {

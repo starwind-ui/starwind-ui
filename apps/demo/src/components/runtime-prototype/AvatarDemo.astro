@@ -1,4 +1,5 @@
 ---
+import importedAvatar from "@/assets/images/pricing-9.jpg";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind-runtime/avatar";
 
 const avatarImageSrc = "https://avatars.githubusercontent.com/u/96832297?v=4";
@@ -10,6 +11,10 @@ const avatarImageSrc = "https://avatars.githubusercontent.com/u/96832297?v=4";
     <Avatar id="runtime-avatar-loaded" variant="primary" size="lg" class="runtime-avatar-custom">
       <AvatarImage src={avatarImageSrc} alt="Jane Doe" />
       <AvatarFallback>JD</AvatarFallback>
+    </Avatar>
+    <Avatar id="runtime-avatar-imported" variant="secondary" size="lg">
+      <AvatarImage image={importedAvatar} alt="Imported Astro asset" />
+      <AvatarFallback>IA</AvatarFallback>
     </Avatar>
     <Avatar id="runtime-avatar-error" variant="error">
       <AvatarImage src={avatarImageSrc} alt="Error state" />

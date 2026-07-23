@@ -20,8 +20,8 @@ export async function verifyAstroCoreControlCases({ page }) {
     };
   });
   if (
-    inputGroupState.groupCount !== 19 ||
-    inputGroupState.comboboxGroupCount !== 5 ||
+    inputGroupState.groupCount !== 20 ||
+    inputGroupState.comboboxGroupCount !== 6 ||
     inputGroupState.controlCount !== 14 ||
     inputGroupState.textareaControlCount !== 1 ||
     inputGroupState.firstControlSlot !== "input-group-control" ||

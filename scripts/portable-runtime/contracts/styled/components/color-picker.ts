@@ -263,7 +263,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       defaultVariants: { size: "md" },
     },
     colorPickerContent: {
-      base: "flex max-h-[max(10rem,var(--sw-floating-available-height))] w-72 flex-col gap-3 p-3",
+      base: "flex max-h-[var(--sw-floating-available-height)] w-72 flex-col gap-3 p-3",
       variants: { size: { sm: "w-64 gap-2 p-2", md: "w-72 gap-3 p-3", lg: "w-80 gap-4 p-4" } },
       defaultVariants: { size: "md" },
     },
@@ -278,7 +278,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       defaultVariants: { size: "md" },
     },
     colorPickerArea: {
-      base: "group/color-picker-area border-outline relative w-full touch-none rounded-md border [&>[data-slot=color-picker-area-background]]:inset-0 [&>[data-slot=color-picker-area-background]]:size-full [&>[data-slot=color-picker-area-background]]:rounded-[7px]",
+      base: "group/color-picker-area border-outline relative min-h-32 w-full shrink-0 touch-none rounded-md border [&>[data-slot=color-picker-area-background]]:inset-0 [&>[data-slot=color-picker-area-background]]:size-full [&>[data-slot=color-picker-area-background]]:rounded-[7px]",
       variants: { size: { sm: "h-[150px]", md: "h-[175px]", lg: "h-[200px]" } },
       defaultVariants: { size: "md" },
     },
@@ -848,6 +848,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
             },
             { name: "side", value: variable("side") },
             { name: "align", value: variable("align") },
+            { name: "collisionStrategy", value: literal("best-fit") },
             { name: "exitMotion", value: variable("exitMotion") },
             { name: "spread", value: variable("rest") },
             dataSlot("color-picker-content"),

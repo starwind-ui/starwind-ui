@@ -5,6 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
 export type InputOtpValueChangeReason =
@@ -734,6 +735,8 @@ class InputOtpController implements InputOtpInstance {
       value,
     });
 
+    attachFormValueRevision(details, event);
+
     const valueChangeEvent = dispatchCustomEvent(this.root, "starwind:value-change", details, {
       cancelable: true,
     });
@@ -745,10 +748,12 @@ class InputOtpController implements InputOtpInstance {
 
     if (details.isCanceled) return false;
 
-    dispatchCustomEvent(this.root, "starwind-input-otp:change", {
+    const legacyDetails = {
       inputOtpId: this.root.id,
       value,
-    });
+    };
+    attachFormValueRevision(legacyDetails, details);
+    dispatchCustomEvent(this.root, "starwind-input-otp:change", legacyDetails);
 
     return true;
   }

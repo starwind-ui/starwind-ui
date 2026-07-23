@@ -5,6 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
@@ -579,6 +580,7 @@ class CheckboxController implements CheckboxInstance {
   }
 
   private notify(details: CheckboxCheckedChangeDetails): void {
+    attachFormValueRevision(details, details.event);
     const event = dispatchCustomEvent(this.root, "starwind:checked-change", details, {
       cancelable: true,
     });

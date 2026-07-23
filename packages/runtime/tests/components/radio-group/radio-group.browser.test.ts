@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRadio } from "../../../src/components/radio";
 import { createRadioGroup } from "../../../src/components/radio-group/radio-group";
+import { getFormValueRevision } from "../../../src/internal/form-value-revision";
 
 describe("createRadioGroup", () => {
   beforeEach(() => {
@@ -50,6 +51,21 @@ describe("createRadioGroup", () => {
     expect(group.getValue()).toBe("ssd");
     expect(hdd?.getAttribute("aria-disabled")).toBe("true");
     expect(hdd?.getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("forwards one revision from a child checked notification to the group value notification", () => {
+    const root = renderRadioGroup({ defaultValue: "ssd" });
+    createRadioGroup(root);
+    const checkedEvents: Event[] = [];
+    const valueEvents: Event[] = [];
+    root.addEventListener("starwind:checked-change", (event) => checkedEvents.push(event));
+    root.addEventListener("starwind:value-change", (event) => valueEvents.push(event));
+
+    getRadios(root)[1]?.click();
+
+    expect(checkedEvents).toHaveLength(1);
+    expect(valueEvents).toHaveLength(1);
+    expect(getFormValueRevision(valueEvents[0])).toBe(getFormValueRevision(checkedEvents[0]));
   });
 
   it("reflects group ARIA state and updates form, orientation, and required options live", () => {

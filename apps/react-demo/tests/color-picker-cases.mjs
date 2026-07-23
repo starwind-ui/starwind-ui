@@ -7,6 +7,7 @@ export async function verifyReactColorPickerCases({ page }) {
   await canonicalRoot.scrollIntoViewIfNeeded();
   await assertCanonicalComposition(page, canonicalRoot);
   await assertNestedCompositeFormatSelect(page, canonicalRoot);
+  await assertConstrainedColorPickerPlacement(page);
 
   const defaultRoot = page.locator("#react-color-picker-default");
   await defaultRoot.scrollIntoViewIfNeeded();
@@ -83,6 +84,10 @@ async function assertCanonicalDocsComposition(page) {
 
   await root.getByRole("button", { name: "Open brand color picker" }).click();
   await content.waitFor({ state: "hidden" });
+  const trigger = root.getByRole("button", { name: "Open brand color picker" });
+  await trigger.click();
+  await content.waitFor();
+  await assertBlankControlSpaceDismisses({ page, popup: content, root, trigger });
 }
 
 async function assertCanonicalComposition(page, root) {
@@ -265,6 +270,123 @@ async function assertNestedCompositeFormatSelect(page, root) {
 
   await page.getByRole("heading", { name: "Focused QA fixtures" }).click();
   await popover.waitFor({ state: "hidden" });
+}
+
+async function assertConstrainedColorPickerPlacement(page) {
+  const trigger = page.getByTestId("canonical-color-picker-trigger");
+  const popup = page.getByTestId("canonical-color-picker-content");
+  const originalStyle = await trigger.getAttribute("style");
+
+  try {
+    await page.setViewportSize({ width: 500, height: 800 });
+    await trigger.evaluate((element) => {
+      element.style.position = "fixed";
+      element.style.inset = "auto auto 20px 24px";
+      element.style.zIndex = "100";
+    });
+    await trigger.click();
+    await page.waitForFunction(
+      (element) => element?.getAttribute("data-side") === "top",
+      await popup.elementHandle(),
+    );
+
+    const flippedGeometry = await popup.evaluate((element) => {
+      const area = element.querySelector('[data-slot="color-picker-area"]');
+      const popupRect = element.getBoundingClientRect();
+      return {
+        areaHeight: area?.getBoundingClientRect().height ?? 0,
+        bottom: popupRect.bottom,
+        top: popupRect.top,
+      };
+    });
+    assert.ok(
+      flippedGeometry.areaHeight >= 128,
+      "Color Picker area keeps its 128px minimum height",
+    );
+    assert.ok(flippedGeometry.top >= 8, "flipped Color Picker remains within viewport padding");
+    assert.ok(flippedGeometry.bottom <= 792, "flipped Color Picker remains on screen");
+    await page.keyboard.press("Escape");
+    await popup.waitFor({ state: "hidden" });
+
+    await page.setViewportSize({ width: 500, height: 260 });
+    await trigger.evaluate((element) => {
+      element.style.inset = "170px auto auto 24px";
+    });
+    await trigger.click();
+    await popup.waitFor();
+
+    const constrainedGeometry = await popup.evaluate((element) => {
+      const area = element.querySelector('[data-slot="color-picker-area"]');
+      const popupRect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        areaHeight: area?.getBoundingClientRect().height ?? 0,
+        bottom: popupRect.bottom,
+        clientHeight: element.clientHeight,
+        overflowY: style.overflowY,
+        scrollHeight: element.scrollHeight,
+        top: popupRect.top,
+      };
+    });
+    assert.ok(constrainedGeometry.areaHeight >= 128, "short viewports do not collapse the area");
+    assert.ok(
+      constrainedGeometry.top >= 8,
+      "constrained Color Picker remains above viewport padding",
+    );
+    assert.ok(
+      constrainedGeometry.bottom <= 252,
+      "constrained Color Picker remains below viewport padding",
+    );
+    assert.equal(constrainedGeometry.overflowY, "auto");
+    assert.ok(
+      constrainedGeometry.scrollHeight > constrainedGeometry.clientHeight,
+      "the complete Color Picker scrolls when neither side can fit it",
+    );
+    await page.keyboard.press("Escape");
+    await popup.waitFor({ state: "hidden" });
+  } finally {
+    await trigger.evaluate((element, style) => {
+      if (style === null) element.removeAttribute("style");
+      else element.setAttribute("style", style);
+    }, originalStyle);
+    await page.setViewportSize({ width: 1280, height: 900 });
+  }
+}
+
+async function assertBlankControlSpaceDismisses({ page, popup, root, trigger }) {
+  const rootBox = await root.boundingBox();
+  const triggerBox = await trigger.boundingBox();
+  assert.ok(rootBox && triggerBox);
+
+  const point = {
+    x: Math.min(triggerBox.x + triggerBox.width + 24, rootBox.x + rootBox.width - 4),
+    y: triggerBox.y + triggerBox.height / 2,
+  };
+  assert.ok(
+    point.x > triggerBox.x + triggerBox.width + 1,
+    "fixture exposes blank space right of trigger",
+  );
+  assert.equal(
+    await root.evaluate(
+      (element, coordinates) =>
+        element.contains(document.elementFromPoint(coordinates.x, coordinates.y)),
+      point,
+    ),
+    true,
+    "the click point remains inside the Color Picker root",
+  );
+  assert.equal(
+    await trigger.evaluate(
+      (element, coordinates) =>
+        element.contains(document.elementFromPoint(coordinates.x, coordinates.y)),
+      point,
+    ),
+    false,
+    "the click point is outside the visible trigger",
+  );
+
+  await page.mouse.click(point.x, point.y);
+  await popup.waitFor({ state: "hidden", timeout: 1000 });
 }
 
 async function assertControllednessInvariance(page) {

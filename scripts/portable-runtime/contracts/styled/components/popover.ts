@@ -186,6 +186,11 @@ export const popoverStyledContract: StyledAdapterContract = {
           { name: "align", optional: true, type: '"start" | "center" | "end"' },
           { name: "sideOffset", optional: true, type: "number" },
           { name: "avoidCollisions", optional: true, type: "boolean" },
+          {
+            name: "collisionStrategy",
+            optional: true,
+            type: '"initial-placement" | "best-fit"',
+          },
         ],
       },
       destructure: {
@@ -195,6 +200,7 @@ export const popoverStyledContract: StyledAdapterContract = {
           { name: "align", defaultValue: '"center"' },
           { name: "sideOffset", defaultValue: "4" },
           { name: "avoidCollisions", defaultValue: "true" },
+          { name: "collisionStrategy", defaultValue: '"initial-placement"' },
           { name: "exitMotion", defaultValue: '"popover"' },
         ],
         rest: "rest",
@@ -223,6 +229,10 @@ export const popoverStyledContract: StyledAdapterContract = {
                 { name: "align", value: { type: "variable", name: "align" } },
                 { name: "sideOffset", value: { type: "variable", name: "sideOffset" } },
                 { name: "avoidCollisions", value: { type: "variable", name: "avoidCollisions" } },
+                {
+                  name: "collisionStrategy",
+                  value: { type: "variable", name: "collisionStrategy" },
+                },
                 { name: "spread", value: { type: "variable", name: "rest" } },
                 { name: "data-slot", value: { type: "literal", value: "popover-content" } },
               ],

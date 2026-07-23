@@ -26,3 +26,13 @@ minimumReleaseAgeExclude:
   # below packages are missing the "time" field
   - "@tailwindcss/oxide"
   - "@astrojs/markdown-remark"
+  - js-yaml@4.3.0
+  - svgo@4.0.2
+  - fast-uri@3.1.4
+  - sharp@0.35.0
+
+overrides:
+  fast-uri@>=3.0.0 <=3.1.3: ^3.1.4
+  js-yaml@>=4.0.0 <4.3.0: ^4.3.0
+  sharp@<0.35.0: ^0.35.0
+  svgo@>=4.0.0 <4.0.2: ^4.0.2

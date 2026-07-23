@@ -3880,14 +3880,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "alertDialogBackdrop",
             exportName: "AlertDialogVariants",
-            baseClassCount: 11,
+            baseClassCount: 13,
             options: [],
             compoundVariantCount: 0,
           },
           {
             name: "alertDialogContent",
             exportName: "AlertDialogVariants",
-            baseClassCount: 24,
+            baseClassCount: 26,
             options: [],
             compoundVariantCount: 0,
           },
@@ -4030,6 +4030,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-disabled",
             selector: "data-disabled:pointer-events-none",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-starting-style",
+            selector: "data-starting-style:!animate-none",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-starting-style",
+            selector: "data-starting-style:opacity-0",
             source: "variant-class",
           },
           {
@@ -5543,7 +5553,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "colorPickerArea",
             exportName: "ColorPickerVariants",
-            baseClassCount: 10,
+            baseClassCount: 12,
             options: [
               {
                 name: "size",
@@ -6928,14 +6938,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "dialogBackdrop",
             exportName: "DialogVariants",
-            baseClassCount: 14,
+            baseClassCount: 16,
             options: [],
             compoundVariantCount: 0,
           },
           {
             name: "dialogContent",
             exportName: "DialogVariants",
-            baseClassCount: 28,
+            baseClassCount: 30,
             options: [],
             compoundVariantCount: 0,
           },
@@ -7005,6 +7015,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-nested-dialog-open",
             selector: "max-sm:data-[state=open]:data-nested-dialog-open:translate-y-[calc(var(--nested-offset)*var(--nested-dialogs,1))]",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-starting-style",
+            selector: "data-starting-style:!animate-none",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-starting-style",
+            selector: "data-starting-style:opacity-0",
             source: "variant-class",
           },
           {
@@ -10050,14 +10070,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "sheetBackdrop",
             exportName: "SheetVariants",
-            baseClassCount: 16,
+            baseClassCount: 18,
             options: [],
             compoundVariantCount: 0,
           },
           {
             name: "sheetContent",
             exportName: "SheetVariants",
-            baseClassCount: 14,
+            baseClassCount: 16,
             options: [
               {
                 name: "side",
@@ -10130,6 +10150,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             attribute: "data-floating-root",
             selector: "data-floating-root",
             source: "render-attribute",
+          },
+          {
+            attribute: "data-starting-style",
+            selector: "data-starting-style:!animate-none",
+            source: "variant-class",
+          },
+          {
+            attribute: "data-starting-style",
+            selector: "data-starting-style:opacity-0",
+            source: "variant-class",
           },
           {
             attribute: "data-state",
@@ -22095,10 +22125,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               props: [
                 {
                   name: "errorVisibility",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
-                  classification: "wrapper",
-                  description: "Overrides when errors become visible for controls coordinated by this Field.",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Root",
+                    propName: "errorVisibility",
+                  },
+                  description: "Selects whether semantic change, blur, submit, or manual validation reveals errors; inherits the owning Form policy when omitted.",
                   descriptionSource: "annotation",
                 },
                 {
@@ -22117,19 +22152,29 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 },
                 {
                   name: "revalidationTiming",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
-                  classification: "wrapper",
-                  description: "Selects when a previously validated field is validated again.",
-                  descriptionSource: "catalog",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Root",
+                    propName: "revalidationTiming",
+                  },
+                  description: "After an owning Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; inherits the owning Form policy when omitted.",
+                  descriptionSource: "annotation",
                 },
                 {
                   name: "validationTiming",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
-                  classification: "wrapper",
-                  description: "Selects when validation first runs.",
-                  descriptionSource: "catalog",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Root",
+                    propName: "validationTiming",
+                  },
+                  description: "Selects semantic change, blur, submit, or manual validation before an owning Form submission attempt; inherits the owning Form policy when omitted.",
+                  descriptionSource: "annotation",
                 },
               ],
               inheritance: [
@@ -22410,10 +22455,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               props: [
                 {
                   name: "errorVisibility",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
-                  classification: "wrapper",
-                  description: "Overrides when errors become visible for controls coordinated by this Field.",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Root",
+                    propName: "errorVisibility",
+                  },
+                  description: "Selects whether semantic change, blur, submit, or manual validation reveals errors; inherits the owning Form policy when omitted.",
                   descriptionSource: "annotation",
                 },
                 {
@@ -22432,19 +22482,29 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 },
                 {
                   name: "revalidationTiming",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
-                  classification: "wrapper",
-                  description: "Selects when a previously validated field is validated again.",
-                  descriptionSource: "catalog",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Root",
+                    propName: "revalidationTiming",
+                  },
+                  description: "After an owning Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; inherits the owning Form policy when omitted.",
+                  descriptionSource: "annotation",
                 },
                 {
                   name: "validationTiming",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
-                  classification: "wrapper",
-                  description: "Selects when validation first runs.",
-                  descriptionSource: "catalog",
+                  classification: "primitive-override",
+                  primitive: {
+                    primitiveId: "field",
+                    part: "Root",
+                    propName: "validationTiming",
+                  },
+                  description: "Selects semantic change, blur, submit, or manual validation before an owning Form submission attempt; inherits the owning Form policy when omitted.",
+                  descriptionSource: "annotation",
                 },
               ],
               inheritance: [
@@ -22798,7 +22858,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               props: [
                 {
                   name: "errorVisibility",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
                   classification: "primitive-override",
                   primitive: {
@@ -22806,12 +22866,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     part: "Root",
                     propName: "errorVisibility",
                   },
-                  description: "Selects when validation errors become visible.",
-                  descriptionSource: "catalog",
+                  defaultValue: "\"submit\"",
+                  description: "Selects whether semantic change, blur, submit, or manual validation reveals errors; defaults to submit.",
+                  descriptionSource: "annotation",
                 },
                 {
                   name: "revalidationTiming",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
                   classification: "primitive-override",
                   primitive: {
@@ -22819,12 +22880,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     part: "Root",
                     propName: "revalidationTiming",
                   },
-                  description: "Selects when a previously validated field is validated again.",
-                  descriptionSource: "catalog",
+                  defaultValue: "\"change\"",
+                  description: "After a Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; defaults to change.",
+                  descriptionSource: "annotation",
                 },
                 {
                   name: "validationTiming",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
                   classification: "primitive-override",
                   primitive: {
@@ -22832,8 +22894,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     part: "Root",
                     propName: "validationTiming",
                   },
-                  description: "Selects when validation first runs.",
-                  descriptionSource: "catalog",
+                  defaultValue: "\"submit\"",
+                  description: "Selects semantic change, blur, submit, or manual validation before a Form submission attempt; defaults to submit.",
+                  descriptionSource: "annotation",
                 },
               ],
               inheritance: [
@@ -22869,7 +22932,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               props: [
                 {
                   name: "errorVisibility",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
                   classification: "primitive-override",
                   primitive: {
@@ -22877,12 +22940,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     part: "Root",
                     propName: "errorVisibility",
                   },
-                  description: "Selects when validation errors become visible.",
-                  descriptionSource: "catalog",
+                  defaultValue: "\"submit\"",
+                  description: "Selects whether semantic change, blur, submit, or manual validation reveals errors; defaults to submit.",
+                  descriptionSource: "annotation",
                 },
                 {
                   name: "revalidationTiming",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
                   classification: "primitive-override",
                   primitive: {
@@ -22890,12 +22954,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     part: "Root",
                     propName: "revalidationTiming",
                   },
-                  description: "Selects when a previously validated field is validated again.",
-                  descriptionSource: "catalog",
+                  defaultValue: "\"change\"",
+                  description: "After a Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; defaults to change.",
+                  descriptionSource: "annotation",
                 },
                 {
                   name: "validationTiming",
-                  type: "import(\"@starwind-ui/runtime/form\").FormValidationTiming",
+                  type: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
                   required: false,
                   classification: "primitive-override",
                   primitive: {
@@ -22903,8 +22968,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     part: "Root",
                     propName: "validationTiming",
                   },
-                  description: "Selects when validation first runs.",
-                  descriptionSource: "catalog",
+                  defaultValue: "\"submit\"",
+                  description: "Selects semantic change, blur, submit, or manual validation before a Form submission attempt; defaults to submit.",
+                  descriptionSource: "annotation",
                 },
               ],
               inheritance: [
@@ -33134,6 +33200,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "accordion",
       displayName: "Accordion",
       category: "controlled-value-group",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "accordion",
         factory: "createAccordion",
@@ -33914,6 +33981,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "alert-dialog",
       displayName: "AlertDialog",
       category: "dialog-native-overlay",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "alert-dialog",
         factory: "createAlertDialog",
@@ -34964,6 +35032,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "avatar",
       displayName: "Avatar",
       category: "static-semantic",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "avatar",
         factory: "createAvatar",
@@ -34994,10 +35063,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           initialAttributes: [
             {
               name: "data-image-loading-status",
-              source: "state",
-            },
-            {
-              name: "hidden",
               source: "state",
             },
           ],
@@ -35125,7 +35190,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "data-sw-avatar-image",
             "data-image-loading-status",
           ],
-          reason: "Images start hidden until the runtime confirms the native image has loaded.",
+          reason: "Images start visibility-hidden so they retain a layout box and remain eligible for native lazy loading until the Runtime confirms they loaded.",
         },
         {
           part: "fallback",
@@ -35145,17 +35210,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             delivery: "markup",
             hidden: true,
+            mechanism: "css-visibility",
             part: "image",
             targets: [
               "astro",
-            ],
-          },
-          {
-            delivery: "ref-initializer",
-            hidden: true,
-            part: "image",
-            targets: [
               "react",
+              "vue",
             ],
           },
           {
@@ -35184,7 +35244,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "Render static image/fallback markup and let the runtime own loading-status and visibility after hydration.",
         ],
         react: [
-          "Create the controller in an effect, subscribe image callbacks from the nearest root event, and let the runtime own hidden state after ref initialization.",
+          "Create the controller in an effect, subscribe image callbacks from the nearest root event, and let the Runtime own CSS visibility after initial markup.",
         ],
       },
       docsReference: {
@@ -35207,7 +35267,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "Raw HTML",
             summary: "Render the Avatar data-sw-* contract yourself, then initialize createAvatar.",
             language: "html",
-            code: "<span data-sw-avatar>\n  <img data-sw-avatar-image hidden alt=\"Starwind UI\" src=\"/avatar.png\" />\n  <span data-sw-avatar-fallback hidden>SW</span>\n</span>\n\n<script type=\"module\">\n  import { createAvatar } from \"@starwind-ui/runtime/avatar\";\n\n  const root = document.querySelector(\"[data-sw-avatar]\");\n  if (root) {\n    createAvatar(root);\n  }\n</script>",
+            code: "<span data-sw-avatar>\n  <img data-sw-avatar-image style=\"visibility: hidden\" alt=\"Starwind UI\" src=\"/avatar.png\" />\n  <span data-sw-avatar-fallback hidden>SW</span>\n</span>\n\n<script type=\"module\">\n  import { createAvatar } from \"@starwind-ui/runtime/avatar\";\n\n  const root = document.querySelector(\"[data-sw-avatar]\");\n  if (root) {\n    createAvatar(root);\n  }\n</script>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#avatar-basic-raw-html",
           },
           {
@@ -35422,7 +35482,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "data-sw-avatar-image",
                     "data-image-loading-status",
                   ],
-                  reason: "Images start hidden until the runtime confirms the native image has loaded.",
+                  reason: "Images start visibility-hidden so they retain a layout box and remain eligible for native lazy loading until the Runtime confirms they loaded.",
                 },
               ],
               presence: {
@@ -35583,6 +35643,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "button",
       displayName: "Button",
       category: "static-semantic",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "button",
         factory: "createButton",
@@ -35907,6 +35968,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "carousel",
       displayName: "Carousel",
       category: "viewport-measurement",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "carousel",
         factory: "createCarousel",
@@ -36676,6 +36738,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "checkbox",
       displayName: "Checkbox",
       category: "single-boolean-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "checkbox",
         factory: "createCheckbox",
@@ -37628,6 +37691,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "checkbox-group",
       displayName: "CheckboxGroup",
       category: "controlled-value-group",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "checkbox-group",
         factory: "createCheckboxGroup",
@@ -38049,6 +38113,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "collapsible",
       displayName: "Collapsible",
       category: "presence-disclosure-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "collapsible",
         factory: "createCollapsible",
@@ -38685,6 +38750,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "color-picker",
       displayName: "Color Picker",
       category: "form-value-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "color-picker",
         factory: "createColorPicker",
@@ -41568,6 +41634,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "combobox",
       displayName: "Combobox",
       category: "floating-value-control",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "combobox",
         factory: "createCombobox",
@@ -43803,6 +43870,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "context-menu",
       displayName: "ContextMenu",
       category: "composite-menu-overlay",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "context-menu",
         factory: "createContextMenu",
@@ -46492,6 +46560,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "dialog",
       displayName: "Dialog",
       category: "dialog-native-overlay",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "dialog",
         factory: "createDialog",
@@ -47444,6 +47513,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "drawer",
       displayName: "Drawer",
       category: "dialog-native-overlay",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "drawer",
         factory: "createDrawer",
@@ -48519,6 +48589,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "dropzone",
       displayName: "Dropzone",
       category: "form-value-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "dropzone",
         factory: "createDropzone",
@@ -49431,6 +49502,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "field",
       displayName: "Field",
       category: "field-control-coordinator",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "field",
         factory: "createField",
@@ -49462,6 +49534,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               source: "prop",
             },
             {
+              name: "data-error-visibility",
+              source: "prop",
+            },
+            {
               name: "data-invalid",
               source: "state",
             },
@@ -49470,8 +49546,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               source: "prop",
             },
             {
+              name: "data-revalidation-timing",
+              source: "prop",
+            },
+            {
               name: "data-touched",
               source: "state",
+            },
+            {
+              name: "data-validation-timing",
+              source: "prop",
             },
           ],
         },
@@ -49555,6 +49639,39 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           type: "boolean",
         },
         {
+          name: "data-error-visibility",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormValidationTiming",
+        },
+        {
+          name: "data-revalidation-timing",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormValidationTiming",
+        },
+        {
+          name: "data-validation-timing",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormValidationTiming",
+        },
+        {
+          defaultValue: "submit",
+          name: "errorVisibility",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormValidationTiming",
+        },
+        {
           name: "invalid",
           kind: "control",
           type: "boolean",
@@ -49565,9 +49682,27 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           type: "string",
         },
         {
+          defaultValue: "change",
+          name: "revalidationTiming",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormValidationTiming",
+        },
+        {
           name: "touched",
           kind: "control",
           type: "boolean",
+        },
+        {
+          defaultValue: "submit",
+          name: "validationTiming",
+          kind: "option",
+          targets: [
+            "root",
+          ],
+          type: "FormValidationTiming",
         },
         {
           defaultValue: "false",
@@ -49688,9 +49823,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "data-sw-field",
             "data-dirty",
             "data-disabled",
+            "data-error-visibility",
             "data-invalid",
             "data-name",
+            "data-revalidation-timing",
             "data-touched",
+            "data-validation-timing",
           ],
           reason: "Field-owned control state must be available for styling and ownership before the controller attaches.",
         },
@@ -49740,9 +49878,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "svelte",
           "vue",
         ],
-        behaviorNotes: [],
+        behaviorNotes: [
+          "Field timing props override the owning Form for one field. Omit them when the Form-wide policy should apply.",
+        ],
         usageGuidelines: [],
-        sections: [],
+        sections: [
+          {
+            title: "Validation policy values",
+            content: "The timing props accept semantic `change`, `blur`, `submit`, or `manual` causes. Field values override the owning Form; otherwise they inherit its submit/change/submit defaults and post-submit replacement policy.",
+          },
+        ],
         examples: [
           {
             id: "basic",
@@ -49827,6 +49972,51 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "authored",
                 },
                 {
+                  name: "data-error-visibility",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormValidationTiming",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "Low-level errorVisibility form for semantic change, blur, submit, or manual validation; overrides the owning Form for this Field.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-revalidation-timing",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormValidationTiming",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "Low-level revalidationTiming form that replaces validationTiming after a submission attempt; overrides the owning Form for this Field.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-validation-timing",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormValidationTiming",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "Low-level validationTiming form for semantic change, blur, submit, or manual validation before submission; overrides the owning Form for this Field.",
+                  descriptionSource: "authored",
+                },
+                {
+                  defaultValue: "submit",
+                  name: "errorVisibility",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormValidationTiming",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "Selects whether semantic change, blur, submit, or manual validation reveals this Field's errors; inherits the owning Form policy when omitted.",
+                  descriptionSource: "authored",
+                },
+                {
                   name: "invalid",
                   kind: "control",
                   type: "boolean",
@@ -49841,10 +50031,34 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "authored",
                 },
                 {
+                  defaultValue: "change",
+                  name: "revalidationTiming",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormValidationTiming",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "After an owning Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; inherits the owning Form policy when omitted.",
+                  descriptionSource: "authored",
+                },
+                {
                   name: "touched",
                   kind: "control",
                   type: "boolean",
                   description: "Marks whether the field has been visited.",
+                  descriptionSource: "authored",
+                },
+                {
+                  defaultValue: "submit",
+                  name: "validationTiming",
+                  kind: "option",
+                  targets: [
+                    "root",
+                  ],
+                  type: "FormValidationTiming",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "Selects semantic change, blur, submit, or manual validation before an owning Form submission attempt; inherits the owning Form policy when omitted.",
                   descriptionSource: "authored",
                 },
               ],
@@ -49868,6 +50082,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "authored",
                 },
                 {
+                  name: "data-error-visibility",
+                  source: "prop",
+                  description: "Reflects the error visibility prop on the Root part.",
+                  descriptionSource: "authored",
+                },
+                {
                   name: "data-invalid",
                   source: "state",
                   description: "Reflects the invalid state on the Root part.",
@@ -49880,9 +50100,21 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "authored",
                 },
                 {
+                  name: "data-revalidation-timing",
+                  source: "prop",
+                  description: "Reflects the revalidation timing prop on the Root part.",
+                  descriptionSource: "authored",
+                },
+                {
                   name: "data-touched",
                   source: "state",
                   description: "Reflects the touched state on the Root part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-validation-timing",
+                  source: "prop",
+                  description: "Reflects the validation timing prop on the Root part.",
                   descriptionSource: "authored",
                 },
               ],
@@ -49954,9 +50186,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "data-sw-field",
                     "data-dirty",
                     "data-disabled",
+                    "data-error-visibility",
                     "data-invalid",
                     "data-name",
+                    "data-revalidation-timing",
                     "data-touched",
+                    "data-validation-timing",
                   ],
                   reason: "Field-owned control state must be available for styling and ownership before the controller attaches.",
                 },
@@ -50319,6 +50554,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "fieldset",
       displayName: "Fieldset",
       category: "field-control-coordinator",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "fieldset",
         factory: "createFieldset",
@@ -50643,6 +50879,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "form",
       displayName: "Form",
       category: "field-control-coordinator",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "form",
         factory: "createForm",
@@ -50737,6 +50974,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           type: "FormValidationTiming",
         },
         {
+          defaultValue: "submit",
           name: "errorVisibility",
           kind: "option",
           targets: [
@@ -50745,6 +50983,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           type: "FormValidationTiming",
         },
         {
+          defaultValue: "change",
           name: "revalidationTiming",
           kind: "option",
           targets: [
@@ -50753,6 +50992,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           type: "FormValidationTiming",
         },
         {
+          defaultValue: "submit",
           name: "validationTiming",
           kind: "option",
           targets: [
@@ -50804,13 +51044,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       frameworkNotes: {
         astro: [
           "Render a real form element and let the runtime register nested Fields without preventing valid native submission.",
+          "Retrieve the idempotent imperative controller with createForm(element); the component does not expose a controller ref.",
         ],
         react: [
           "Create the Form runtime once for the real form element and clean it up on unmount.",
+          "Keep the public ref on the HTMLFormElement; retrieve the idempotent imperative controller with createForm(element).",
         ],
       },
       docsReference: {
-        summary: "Form is a Starwind Runtime primitive in the field-control-coordinator contract family.",
+        summary: "Form coordinates native constraints, custom and asynchronous validators, schema results, error visibility, and submission across its Fields.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -50819,9 +51061,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "svelte",
           "vue",
         ],
-        behaviorNotes: [],
+        behaviorNotes: [
+          "Validation timing and error visibility are separate policies: a field can be validated before its errors are revealed.",
+          "Policies set on Form apply to every nested Field unless that Field supplies its own timing attributes.",
+          "After a submission attempt, revalidationTiming replaces validationTiming for every Field; the policies are not additive.",
+          "Submitting the form always validates every registered Field, regardless of validationTiming.",
+        ],
         usageGuidelines: [],
-        sections: [],
+        sections: [
+          {
+            title: "Validation policy values",
+            content: "`validationTiming`, `revalidationTiming`, and `errorVisibility` accept semantic `change`, `blur`, `submit`, or `manual` causes. `change` means each accepted value revision for native and Runtime controls. Before submission, only `validationTiming` is active; after a submission attempt, `revalidationTiming` replaces it. The defaults are `validationTiming=\"submit\"`, `revalidationTiming=\"change\"`, and `errorVisibility=\"submit\"`.",
+          },
+        ],
         examples: [
           {
             id: "basic",
@@ -50892,7 +51144,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "FormValidationTiming",
-                  description: "Configures the data error visibility option for the Root part.",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "Low-level errorVisibility form for semantic change, blur, submit, or manual validation; defaults to submit.",
                   descriptionSource: "authored",
                 },
                 {
@@ -50902,7 +51155,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "FormValidationTiming",
-                  description: "Configures the data revalidation timing option for the Root part.",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "Low-level revalidationTiming form that replaces validationTiming after a submission attempt; defaults to change.",
                   descriptionSource: "authored",
                 },
                 {
@@ -50912,37 +51166,44 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "FormValidationTiming",
-                  description: "Configures the data validation timing option for the Root part.",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "Low-level validationTiming form for semantic change, blur, submit, or manual validation before submission; defaults to submit.",
                   descriptionSource: "authored",
                 },
                 {
+                  defaultValue: "submit",
                   name: "errorVisibility",
                   kind: "option",
                   targets: [
                     "root",
                   ],
                   type: "FormValidationTiming",
-                  description: "Configures the error visibility option for the Root part.",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "Selects whether semantic change, blur, submit, or manual validation reveals errors; defaults to submit.",
                   descriptionSource: "authored",
                 },
                 {
+                  defaultValue: "change",
                   name: "revalidationTiming",
                   kind: "option",
                   targets: [
                     "root",
                   ],
                   type: "FormValidationTiming",
-                  description: "Configures the revalidation timing option for the Root part.",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "After a Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; defaults to change.",
                   descriptionSource: "authored",
                 },
                 {
+                  defaultValue: "submit",
                   name: "validationTiming",
                   kind: "option",
                   targets: [
                     "root",
                   ],
                   type: "FormValidationTiming",
-                  description: "Configures the validation timing option for the Root part.",
+                  displayType: "\"blur\" | \"change\" | \"manual\" | \"submit\"",
+                  description: "Selects semantic change, blur, submit, or manual validation before a Form submission attempt; defaults to submit.",
                   descriptionSource: "authored",
                 },
               ],
@@ -51123,6 +51384,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "input",
       displayName: "Input",
       category: "form-value-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "input",
         factory: "createInput",
@@ -51555,6 +51817,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "input-otp",
       displayName: "InputOtp",
       category: "form-value-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "input-otp",
         factory: "createInputOtp",
@@ -52697,6 +52960,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "menu",
       displayName: "Menu",
       category: "composite-menu-overlay",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "menu",
         factory: "createMenu",
@@ -55521,6 +55785,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "navigation-menu",
       displayName: "NavigationMenu",
       category: "floating-value-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "navigation-menu",
         factory: "createNavigationMenu",
@@ -57354,6 +57619,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "popover",
       displayName: "Popover",
       category: "presence-floating-overlay",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "popover",
         factory: "createPopover",
@@ -57481,6 +57747,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               name: "data-avoid-collisions",
               source: "prop",
             },
+            {
+              name: "data-collision-strategy",
+              source: "prop",
+            },
           ],
         },
         {
@@ -57523,6 +57793,10 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               name: "data-avoid-collisions",
+              source: "prop",
+            },
+            {
+              name: "data-collision-strategy",
               source: "prop",
             },
             {
@@ -57694,6 +57968,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           ],
           type: "boolean",
         },
+        {
+          defaultValue: "\"initial-placement\"",
+          name: "collisionStrategy",
+          kind: "option",
+          targets: [
+            "positioner",
+            "popup",
+          ],
+          type: "\"initial-placement\" | \"best-fit\"",
+        },
       ],
       stateModels: [
         {
@@ -57842,6 +58126,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "data-align",
             "data-side-offset",
             "data-avoid-collisions",
+            "data-collision-strategy",
           ],
           reason: "The positioner carries initial placement hints used by the shared floating runtime.",
         },
@@ -57856,6 +58141,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             "data-align",
             "data-side-offset",
             "data-avoid-collisions",
+            "data-collision-strategy",
             "hidden",
           ],
           reason: "The popup starts hidden with dialog semantics, focus targetability, and initial placement hints before hydration.",
@@ -57895,6 +58181,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "align",
           "sideOffset",
           "avoidCollisions",
+          "collisionStrategy",
         ],
       },
       frameworkNotes: {
@@ -58360,6 +58647,18 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Allows Popover content to shift or flip to stay visible.",
                   descriptionSource: "authored",
                 },
+                {
+                  defaultValue: "\"initial-placement\"",
+                  name: "collisionStrategy",
+                  kind: "option",
+                  targets: [
+                    "positioner",
+                    "popup",
+                  ],
+                  type: "\"initial-placement\" | \"best-fit\"",
+                  description: "Configures the collision strategy option for the Positioner part.",
+                  descriptionSource: "authored",
+                },
               ],
               dataAttributes: [
                 {
@@ -58398,6 +58697,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Reflects the avoid collisions prop on the Positioner part.",
                   descriptionSource: "authored",
                 },
+                {
+                  name: "data-collision-strategy",
+                  source: "prop",
+                  description: "Reflects the collision strategy prop on the Positioner part.",
+                  descriptionSource: "authored",
+                },
               ],
               stateModels: [],
               events: [],
@@ -58420,6 +58725,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "data-align",
                     "data-side-offset",
                     "data-avoid-collisions",
+                    "data-collision-strategy",
                   ],
                   reason: "The positioner carries initial placement hints used by the shared floating runtime.",
                 },
@@ -58481,6 +58787,18 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Allows Popover content to shift or flip to stay visible.",
                   descriptionSource: "authored",
                 },
+                {
+                  defaultValue: "\"initial-placement\"",
+                  name: "collisionStrategy",
+                  kind: "option",
+                  targets: [
+                    "positioner",
+                    "popup",
+                  ],
+                  type: "\"initial-placement\" | \"best-fit\"",
+                  description: "Configures the collision strategy option for the Popup part.",
+                  descriptionSource: "authored",
+                },
               ],
               dataAttributes: [
                 {
@@ -58519,6 +58837,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Reflects the avoid collisions prop on the Popup part.",
                   descriptionSource: "authored",
                 },
+                {
+                  name: "data-collision-strategy",
+                  source: "prop",
+                  description: "Reflects the collision strategy prop on the Popup part.",
+                  descriptionSource: "authored",
+                },
               ],
               stateModels: [],
               events: [],
@@ -58543,6 +58867,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "data-align",
                     "data-side-offset",
                     "data-avoid-collisions",
+                    "data-collision-strategy",
                     "hidden",
                   ],
                   reason: "The popup starts hidden with dialog semantics, focus targetability, and initial placement hints before hydration.",
@@ -58875,6 +59200,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "preview-card",
       displayName: "PreviewCard",
       category: "presence-floating-overlay",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "preview-card",
         factory: "createPreviewCard",
@@ -60302,6 +60628,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "progress",
       displayName: "Progress",
       category: "static-semantic",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "progress",
         factory: "createProgress",
@@ -61022,6 +61349,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "radio",
       displayName: "Radio",
       category: "single-boolean-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "radio",
         factory: "createRadio",
@@ -61865,6 +62193,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "radio-group",
       displayName: "RadioGroup",
       category: "controlled-value-group",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "radio-group",
         factory: "createRadioGroup",
@@ -62530,6 +62859,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "scroll-area",
       displayName: "ScrollArea",
       category: "viewport-measurement",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "scroll-area",
         factory: "createScrollArea",
@@ -63211,6 +63541,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "select",
       displayName: "Select",
       category: "floating-value-control",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "select",
         factory: "createSelect",
@@ -65148,6 +65479,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "sidebar",
       displayName: "Sidebar",
       category: "presence-disclosure-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "sidebar",
         factory: "createSidebarController",
@@ -66421,6 +66753,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "slider",
       displayName: "Slider",
       category: "form-value-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "slider",
         factory: "createSlider",
@@ -67488,6 +67821,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "switch",
       displayName: "Switch",
       category: "single-boolean-control",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "switch",
         factory: "createSwitch",
@@ -68327,6 +68661,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "tabs",
       displayName: "Tabs",
       category: "controlled-value-group",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "tabs",
         factory: "createTabs",
@@ -69330,6 +69665,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "toast",
       displayName: "Toast",
       category: "notification-system",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "toast",
         factory: "createToastManager",
@@ -70145,6 +70481,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "toggle",
       displayName: "Toggle",
       category: "single-boolean-control",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "toggle",
         factory: "createToggle",
@@ -70654,6 +70991,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "toggle-group",
       displayName: "ToggleGroup",
       category: "controlled-value-group",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "toggle-group",
         factory: "createToggleGroup",
@@ -71194,6 +71532,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "tooltip",
       displayName: "Tooltip",
       category: "presence-floating-overlay",
+      registryVersion: "0.1.0",
       runtime: {
         primitiveId: "tooltip",
         factory: "createTooltip",

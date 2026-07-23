@@ -5,6 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import {
   COLOR_PICKER_FORMATS,
   parseColor,
@@ -166,6 +167,7 @@ type InteractionSession = {
   pending: ColorPickerColor | null | undefined;
   changed: boolean;
   generation: number;
+  revisionSource?: object;
 };
 type PointerSession = InteractionSession & {
   pointerId: number;
@@ -187,6 +189,7 @@ type ProposalOutcome =
       status: "accepted";
       value: ColorPickerColor | null;
       previous: ColorPickerColor | null;
+      revisionSource: object;
     };
 type ValidityAttributeSnapshot = Readonly<{
   ariaInvalid: string | null;
@@ -855,6 +858,7 @@ class ColorPickerController implements ColorPickerInstance {
         session.reason,
         session.trigger,
         event ?? session.event,
+        session.revisionSource,
       );
   }
   private cancelInteractions() {
@@ -900,6 +904,7 @@ class ColorPickerController implements ColorPickerInstance {
     }
     session.proposed = outcome.value;
     session.changed = !equal(session.start, outcome.value);
+    session.revisionSource = outcome.revisionSource;
   }
   private keydown(event: KeyboardEvent, input: HTMLInputElement) {
     if (this.disabled || this.readOnly) return;
@@ -982,7 +987,14 @@ class ColorPickerController implements ColorPickerInstance {
     }
     this.nativeSession = undefined;
     if (session.changed)
-      this.commit(session.proposed, session.start, "channel-input", input, event);
+      this.commit(
+        session.proposed,
+        session.start,
+        "channel-input",
+        input,
+        event,
+        session.revisionSource,
+      );
   }
   private propose(
     next: ColorPickerColor | null,
@@ -1026,6 +1038,7 @@ class ColorPickerController implements ColorPickerInstance {
         propagate = true;
       },
     };
+    attachFormValueRevision(details, request.event);
     const domEvent = dispatchCustomEvent(this.root, "starwind:value-change", details, {
       cancelable: true,
     });
@@ -1053,9 +1066,21 @@ class ColorPickerController implements ColorPickerInstance {
       this.replaceAmbient(next);
     }
     this.render();
-    const outcome: ProposalOutcome = { status: "accepted", value: next, previous };
+    const outcome: ProposalOutcome = {
+      status: "accepted",
+      value: next,
+      previous,
+      revisionSource: details,
+    };
     if (request.commit)
-      this.commit(outcome.value, outcome.previous, request.reason, request.trigger, request.event);
+      this.commit(
+        outcome.value,
+        outcome.previous,
+        request.reason,
+        request.trigger,
+        request.event,
+        details,
+      );
     return outcome;
   }
   private replaceAmbient(value: ColorPickerColor | null) {
@@ -1071,6 +1096,7 @@ class ColorPickerController implements ColorPickerInstance {
     reason: ColorPickerValueChangeReason,
     trigger?: Element,
     event?: Event,
+    revisionSource?: object,
   ) {
     const details: ColorPickerValueCommitDetails = {
       value,
@@ -1082,6 +1108,7 @@ class ColorPickerController implements ColorPickerInstance {
       trigger,
       event,
     };
+    attachFormValueRevision(details, revisionSource ?? event);
     dispatchCustomEvent(this.root, "starwind:value-committed", details);
     this.options.onValueCommitted?.(value, details);
     this.subscribers.valueCommitted.forEach((fn) => fn(details));

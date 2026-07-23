@@ -189,7 +189,11 @@ class AvatarController implements AvatarInstance {
 
     this.elements.images.forEach((image) => {
       image.setAttribute(AVATAR_LOADING_STATUS_ATTRIBUTE, status);
-      image.hidden = status !== "loaded";
+      // `hidden` removes the image from layout, which can prevent a natively lazy-loaded image
+      // from ever becoming eligible to load. Avatar owns visibility without removing the image's
+      // layout box so framework image components can keep their native loading policy.
+      image.hidden = false;
+      image.style.visibility = status === "loaded" ? "visible" : "hidden";
     });
 
     this.elements.fallbacks.forEach((fallback) => {

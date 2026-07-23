@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { findTestHomeViolations, isTestFilePath } from "../check-test-homes.mjs";
+import {
+  findTestHomeViolations,
+  findTestOwnershipViolations,
+  findTestSuiteOwners,
+  isTestFilePath,
+} from "../check-test-homes.mjs";
 
 describe("test file home guardrail", () => {
   it("allows approved tests homes", () => {
@@ -81,5 +86,31 @@ describe("test file home guardrail", () => {
         "./packages/runtime/src/components/button/button.test.ts",
       ]),
     ).toEqual(["packages/runtime/src/components/button/button.test.ts"]);
+  });
+
+  it("assigns every approved test home to one explicit suite", () => {
+    expect(findTestSuiteOwners("scripts/tests/check-test-homes.test.ts")).toEqual(["repo-scripts"]);
+    expect(
+      findTestSuiteOwners(
+        "scripts/portable-runtime/tests/generate-vue-wrappers/styled-public-contract.test.ts",
+      ),
+    ).toEqual(["portable-vue"]);
+    expect(
+      findTestSuiteOwners("scripts/portable-runtime/tests/generate-astro-wrappers.test.ts"),
+    ).toEqual(["portable-runtime"]);
+    expect(findTestSuiteOwners("packages/runtime/tests/package-exports.test.ts")).toEqual([
+      "runtime",
+    ]);
+  });
+
+  it("rejects tests without exactly one suite owner", () => {
+    expect(
+      findTestOwnershipViolations([
+        "scripts/tests/check-test-homes.test.ts",
+        "scripts/portable-runtime/tests/runtime-adapter-contract.test.ts",
+        "packages/react/tests/color-picker.browser.test.tsx",
+        "apps/demo/tests/example.test.ts",
+      ]),
+    ).toEqual(["apps/demo/tests/example.test.ts"]);
   });
 });

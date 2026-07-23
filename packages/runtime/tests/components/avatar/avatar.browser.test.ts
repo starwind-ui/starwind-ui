@@ -18,7 +18,8 @@ describe("createAvatar", () => {
     createAvatar(root);
 
     expect(root.getAttribute("data-image-loading-status")).toBe("loading");
-    expect(getImage().hidden).toBe(true);
+    expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("hidden");
     expect(getFallback().hidden).toBe(false);
   });
 
@@ -32,6 +33,7 @@ describe("createAvatar", () => {
 
     expect(root.getAttribute("data-image-loading-status")).toBe("loaded");
     expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("visible");
     expect(getFallback().hidden).toBe(true);
     expect(listener).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -50,7 +52,8 @@ describe("createAvatar", () => {
     getImage().dispatchEvent(new Event("error"));
 
     expect(root.getAttribute("data-image-loading-status")).toBe("error");
-    expect(getImage().hidden).toBe(true);
+    expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("hidden");
     expect(getFallback().hidden).toBe(false);
   });
 
@@ -60,7 +63,8 @@ describe("createAvatar", () => {
     createAvatar(root);
 
     expect(root.getAttribute("data-image-loading-status")).toBe("error");
-    expect(getImage().hidden).toBe(true);
+    expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("hidden");
     expect(getFallback().hidden).toBe(false);
   });
 
@@ -70,7 +74,8 @@ describe("createAvatar", () => {
     createAvatar(root);
 
     expect(root.getAttribute("data-image-loading-status")).toBe("loading");
-    expect(getImage().hidden).toBe(true);
+    expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("hidden");
     expect(getFallback().hidden).toBe(false);
   });
 
@@ -80,7 +85,8 @@ describe("createAvatar", () => {
     createAvatar(root);
 
     expect(root.getAttribute("data-image-loading-status")).toBe("error");
-    expect(getImage().hidden).toBe(true);
+    expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("hidden");
     expect(getFallback().hidden).toBe(false);
   });
 
@@ -208,7 +214,8 @@ describe("createAvatar", () => {
     getImage().dispatchEvent(new Event("load"));
 
     expect(root.getAttribute("data-image-loading-status")).toBe("loading");
-    expect(getImage().hidden).toBe(true);
+    expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("hidden");
     expect(getFallback().hidden).toBe(false);
   });
 
@@ -233,6 +240,7 @@ describe("createAvatar", () => {
     });
     expect(avatar.getImageLoadingStatus()).toBe("loaded");
     expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("visible");
     expect(getFallback().hidden).toBe(true);
     expect(onLoadingStatusChange).toHaveBeenCalledWith("loaded", expectedDetails);
     expect(listener).toHaveBeenCalledWith(expect.objectContaining({ detail: expectedDetails }));
@@ -241,7 +249,8 @@ describe("createAvatar", () => {
     avatar.setImageLoadingStatus("error", { emit: false });
 
     expect(avatar.getImageLoadingStatus()).toBe("error");
-    expect(getImage().hidden).toBe(true);
+    expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("hidden");
     expect(getFallback().hidden).toBe(false);
     expect(onLoadingStatusChange).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledTimes(1);
@@ -265,10 +274,46 @@ describe("createAvatar", () => {
 
     expect(getFallback().hidden).toBe(true);
   });
+
+  it("removes legacy hidden markup so lazy-loaded images retain their layout box", () => {
+    const root = renderAvatar({ hidden: true, loading: "lazy" });
+
+    createAvatar(root);
+
+    expect(getImage().loading).toBe("lazy");
+    expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("hidden");
+
+    getImage().dispatchEvent(new Event("load"));
+
+    expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("visible");
+  });
+
+  it("reapplies layout-preserving concealment when an image source changes", async () => {
+    const root = renderAvatar();
+
+    createAvatar(root);
+    getImage().dispatchEvent(new Event("load"));
+    expect(getImage().style.visibility).toBe("visible");
+
+    getImage().setAttribute("src", "/avatar-next.png");
+    await Promise.resolve();
+
+    expect(root.getAttribute("data-image-loading-status")).toBe("loading");
+    expect(getImage().hidden).toBe(false);
+    expect(getImage().style.visibility).toBe("hidden");
+  });
 });
 
 function renderAvatar(
-  options: { fallbackDelay?: number; src?: string; srcSet?: string } = {},
+  options: {
+    fallbackDelay?: number;
+    hidden?: boolean;
+    loading?: "eager" | "lazy";
+    src?: string;
+    srcSet?: string;
+  } = {},
 ): HTMLElement {
   const src = options.src ?? "/avatar.png";
   const srcSet = options.srcSet;
@@ -278,6 +323,8 @@ function renderAvatar(
         data-sw-avatar-image
         ${src ? `src="${src}"` : ""}
         ${srcSet === undefined ? "" : `srcset="${srcSet}"`}
+        ${options.hidden ? "hidden" : ""}
+        ${options.loading ? `loading="${options.loading}"` : ""}
         alt="Jane Doe"
       />
       <span

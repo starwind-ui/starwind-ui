@@ -101,6 +101,79 @@ describe.sequential("runtime registry loading", () => {
     });
   });
 
+  it("loads optional framework setup metadata from a v2 registry source", async () => {
+    const registryPath = join(tempDir, "registry-with-setup.json");
+    const registryWithSetup: StarwindRegistry = {
+      ...validRegistry,
+      setup: {
+        astro: {
+          adapterPackage: { name: "@starwind-ui/astro", range: "^0.1.0" },
+          packageRequirements: [{ name: "@tabler/icons", range: "^3" }],
+        },
+        react: {
+          adapterPackage: { name: "@starwind-ui/react", range: "^0.1.0" },
+          packageRequirements: [{ name: "@tabler/icons-react", range: "^3" }],
+        },
+      },
+    };
+    await writeFile(registryPath, JSON.stringify(registryWithSetup, null, 2), "utf-8");
+
+    await expect(loadRegistry({ type: "local", path: registryPath })).resolves.toMatchObject({
+      setup: registryWithSetup.setup,
+    });
+  });
+
+  it.each([
+    {
+      name: "unsupported targets",
+      setup: {
+        vue: {
+          adapterPackage: { name: "@starwind-ui/vue", range: "^0.1.0" },
+          packageRequirements: [],
+        },
+      },
+      error: /Unsupported registry setup target/,
+    },
+    {
+      name: "malformed ranges",
+      setup: {
+        react: {
+          adapterPackage: { name: "@starwind-ui/react", range: "not-semver" },
+          packageRequirements: [],
+        },
+      },
+      error: /Expected a semver range/,
+    },
+    {
+      name: "duplicate package requirements",
+      setup: {
+        react: {
+          adapterPackage: { name: "@starwind-ui/react", range: "^0.1.0" },
+          packageRequirements: [
+            { name: "@tabler/icons-react", range: "^3" },
+            { name: "@tabler/icons-react", range: "^3" },
+          ],
+        },
+      },
+      error: /Duplicate setup package requirement/,
+    },
+    {
+      name: "adapter package repetition",
+      setup: {
+        react: {
+          adapterPackage: { name: "@starwind-ui/react", range: "^0.1.0" },
+          packageRequirements: [{ name: "@starwind-ui/react", range: "^0.1.0" }],
+        },
+      },
+      error: /must not repeat adapter package/,
+    },
+  ])("rejects setup metadata with $name", async ({ setup, error }) => {
+    const registryPath = join(tempDir, "invalid-setup-registry.json");
+    await writeFile(registryPath, JSON.stringify({ ...validRegistry, setup }, null, 2), "utf-8");
+
+    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(error);
+  });
+
   it("loads optional public rename metadata from a v2 registry source", async () => {
     const registryPath = join(tempDir, "rename-registry.json");
     await writeFile(

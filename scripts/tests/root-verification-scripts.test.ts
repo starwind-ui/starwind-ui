@@ -1,76 +1,166 @@
 import { readFile } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
+import { parse } from "yaml";
 
 type PackageJson = {
   scripts?: Record<string, string>;
+};
+
+type Workflow = {
+  jobs: Record<
+    string,
+    {
+      if?: string;
+      name?: string;
+      needs?: string | string[];
+      steps?: Array<{ if?: string; name?: string; run?: string }>;
+      uses?: string;
+    }
+  >;
+  on?: Record<string, unknown>;
+  permissions?: Record<string, string>;
 };
 
 async function readRootPackage(): Promise<PackageJson> {
   return JSON.parse(await readFile("package.json", "utf8")) as PackageJson;
 }
 
+function commandPhases(command: string | undefined): string[] {
+  return command?.split(/\s*&&\s*/).filter(Boolean) ?? [];
+}
+
 describe("root verification scripts", () => {
-  it("runs the real lint, typecheck, and format commands in order", async () => {
+  it("runs the real lint, typecheck, and format commands", async () => {
     const pkg = await readRootPackage();
 
-    expect(pkg.scripts?.check).toBe("pnpm lint:check && pnpm typecheck && pnpm format:check");
+    expect(commandPhases(pkg.scripts?.check)).toEqual([
+      "pnpm lint:check",
+      "pnpm typecheck",
+      "pnpm format:check",
+    ]);
   });
 
-  it("aggregates root and Runtime tests and coverage", async () => {
+  it("keeps targeted suites and aggregates every public adapter test once", async () => {
     const pkg = await readRootPackage();
 
-    expect(pkg.scripts?.["test:all"]).toBe("pnpm test:run && pnpm runtime:test");
-    expect(pkg.scripts?.["runtime:test:coverage"]).toBe(
-      "pnpm --filter=@starwind-ui/runtime exec vitest run --coverage",
-    );
-    expect(pkg.scripts?.["test:coverage:all"]).toBe(
-      "pnpm test:coverage && pnpm runtime:test:coverage",
+    expect(pkg.scripts?.["test:repo"]).toContain("--project=repo-scripts");
+    expect(pkg.scripts?.["test:cli"]).toContain("--project=cli");
+    expect(pkg.scripts?.["runtime:generate:test"]).toContain("--project=portable-runtime");
+    expect(pkg.scripts?.["runtime:generate:vue:test"]).toContain("--project=portable-vue");
+    expect(commandPhases(pkg.scripts?.["test:all"])).toEqual([
+      "pnpm test:run",
+      "pnpm runtime:test",
+      "pnpm react:test",
+    ]);
+  });
+
+  it("exposes an intent-aware Changesets status command", async () => {
+    const pkg = await readRootPackage();
+
+    expect(pkg.scripts?.["release:status"]).toBe(
+      "tsx scripts/portable-runtime/changeset-status.ts",
     );
   });
 
-  it("runs every canonical verification phase in order", async () => {
+  it("runs every canonical verification phase without rerunning generator tests", async () => {
     const pkg = await readRootPackage();
+    const phases = commandPhases(pkg.scripts?.verify);
 
-    expect(pkg.scripts?.verify).toBe(
-      [
+    expect(phases).toEqual(
+      expect.arrayContaining([
         "pnpm check",
         "pnpm styled:versions:check",
-        "pnpm test:all",
+        "pnpm primitive:versions:check",
         "pnpm test:homes",
-        "pnpm runtime:generate:test",
+        "pnpm test:all",
         "pnpm runtime:generate:typecheck",
         "pnpm runtime:docs:metadata:check",
         "pnpm build",
         "pnpm audit --prod --audit-level high",
-      ].join(" && "),
+      ]),
     );
+    expect(phases).not.toContain("pnpm runtime:generate:test");
+    expect(new Set(phases).size).toBe(phases.length);
   });
 
-  it("gates release automation on the read-only reusable verification workflow", async () => {
-    const [verifyWorkflow, releaseWorkflow] = await Promise.all([
+  it("gates release automation on parallel read-only verification jobs", async () => {
+    const [verifyWorkflowSource, releaseWorkflowSource] = await Promise.all([
       readFile(".github/workflows/verify.yml", "utf8"),
       readFile(".github/workflows/release.yml", "utf8"),
     ]);
+    const verifyWorkflow = parse(verifyWorkflowSource) as Workflow;
+    const releaseWorkflow = parse(releaseWorkflowSource) as Workflow;
+    const verifyRuns = Object.values(verifyWorkflow.jobs).flatMap(
+      ({ steps = [] }) => steps.map(({ run }) => run).filter(Boolean) as string[],
+    );
 
-    expect(verifyWorkflow).toContain("pull_request:");
-    expect(verifyWorkflow).toContain("workflow_call:");
-    expect(verifyWorkflow).toContain("contents: read");
-    expect(verifyWorkflow).not.toMatch(/permissions:[\s\S]*?\bwrite\b/);
-    expect(verifyWorkflow).toContain("pnpm install --frozen-lockfile");
-    expect(verifyWorkflow).toContain("pnpm verify");
-    expect(verifyWorkflow).toContain("pnpm runtime:generate:all");
-    expect(verifyWorkflow).toContain("pnpm runtime:registry:generate");
-    expect(verifyWorkflow).toContain("fetch-depth: 0");
-    expect(verifyWorkflow).toContain(
+    expect(verifyWorkflow.on).toMatchObject({ pull_request: null, workflow_call: null });
+    expect(verifyWorkflow.permissions).toEqual({ contents: "read" });
+    expect(Object.keys(verifyWorkflow.jobs)).toEqual(
+      expect.arrayContaining([
+        "scope",
+        "static",
+        "node-tests",
+        "generator-tests",
+        "browser-adapter-tests",
+        "vue-tests",
+        "build-drift",
+        "verify",
+      ]),
+    );
+    expect(verifyWorkflow.jobs["vue-tests"]).toMatchObject({
+      if: "needs.scope.outputs.vue == 'true'",
+      needs: "scope",
+    });
+    expect(verifyWorkflow.jobs["generator-tests"].steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Install Playwright Chromium",
+          run: "pnpm --filter=react-demo exec playwright install --with-deps chromium",
+        }),
+      ]),
+    );
+    expect(verifyWorkflow.jobs.verify).toMatchObject({
+      name: "Verify",
+      needs: expect.arrayContaining([
+        "static",
+        "node-tests",
+        "generator-tests",
+        "browser-adapter-tests",
+        "vue-tests",
+        "build-drift",
+      ]),
+    });
+    expect(verifyRuns).toEqual(
+      expect.arrayContaining([
+        "pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr",
+        "pnpm runtime:generate:test && pnpm runtime:generate:typecheck",
+        "pnpm runtime:test:browser && pnpm react:test:browser",
+        "pnpm runtime:generate:all && pnpm runtime:registry:generate",
+        "git diff --exit-code",
+      ]),
+    );
+    expect(verifyRuns).toContain(
       'pnpm styled:versions:check --base "${{ github.event.pull_request.base.sha }}"',
     );
-    expect(verifyWorkflow).toContain("git diff --exit-code");
+    expect(verifyRuns).toContain(
+      'pnpm primitive:versions:check --base "${{ github.event.pull_request.base.sha }}"',
+    );
+    expect(
+      verifyRuns.filter((command) => command.includes("pnpm runtime:generate:test")),
+    ).toHaveLength(1);
 
-    expect(releaseWorkflow).toContain("uses: ./.github/workflows/verify.yml");
-    expect(releaseWorkflow).toMatch(/release:\s+name: Release\s+needs: verify/);
-    expect(releaseWorkflow).toContain("run: pnpm styled:versions:stage");
-    expect(releaseWorkflow).toContain("commitMode: github-api");
-    expect(releaseWorkflow).toContain("version: pnpm release:version");
+    expect(releaseWorkflow.jobs.verify.uses).toBe("./.github/workflows/verify.yml");
+    expect(releaseWorkflow.jobs.release).toMatchObject({ name: "Release", needs: "verify" });
+    expect(releaseWorkflow.jobs.release.steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          run: "pnpm styled:versions:stage && pnpm primitive:versions:stage",
+        }),
+      ]),
+    );
+    expect(releaseWorkflowSource).toContain("commitMode: github-api");
+    expect(releaseWorkflowSource).toContain("version: pnpm release:version");
   });
 });

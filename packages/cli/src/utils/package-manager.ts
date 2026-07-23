@@ -238,11 +238,20 @@ export async function getShadcnCommand(): Promise<[string, string[]]> {
  */
 export async function installDependencies(
   packages: string[],
-  pm: PackageManager,
+  pm?: PackageManager,
   dev = false,
   force = false,
 ): Promise<void> {
-  await execa(pm, buildInstallDependencyArgs(packages, pm, dev, force));
+  const packageManager = pm ?? detectPackageManager().name;
+  const spinner = p.spinner();
+  spinner.start(`Installing dependencies with ${packageManager}...`);
+  try {
+    await execa(packageManager, buildInstallDependencyArgs(packages, packageManager, dev, force));
+    spinner.stop(`Dependencies installed with ${packageManager}.`);
+  } catch (error) {
+    spinner.stop(`Failed to install dependencies with ${packageManager}.`, 1);
+    throw error;
+  }
 }
 
 export function buildInstallDependencyArgs(

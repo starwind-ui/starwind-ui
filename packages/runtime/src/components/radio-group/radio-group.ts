@@ -4,6 +4,7 @@ import {
 } from "../../internal/collection";
 import { assertHTMLElement, readBooleanAttribute, setBooleanAttribute } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 import { createRadio, type RadioCheckedChangeDetails, type RadioInstance } from "../radio";
 
@@ -416,6 +417,7 @@ class RadioGroupController implements RadioGroupInstance {
     this.handleValueChange(item.value, {
       event: details.event,
       reason: "radio-change",
+      revisionSource: details,
       trigger: details.trigger ?? radioRoot,
     });
   };
@@ -458,6 +460,7 @@ class RadioGroupController implements RadioGroupInstance {
     request: {
       event?: Event;
       reason: RadioGroupValueChangeReason;
+      revisionSource?: object;
       trigger?: Element;
     },
   ): void {
@@ -484,14 +487,17 @@ class RadioGroupController implements RadioGroupInstance {
       this.render();
     }
 
-    this.notify({
-      event: request.event,
-      previousValue,
-      radioValue,
-      reason: request.reason,
-      trigger: request.trigger,
-      value: nextValue,
-    });
+    this.notify(
+      {
+        event: request.event,
+        previousValue,
+        radioValue,
+        reason: request.reason,
+        trigger: request.trigger,
+        value: nextValue,
+      },
+      request.revisionSource,
+    );
   }
 
   private render(): void {
@@ -537,7 +543,8 @@ class RadioGroupController implements RadioGroupInstance {
     return undefined;
   }
 
-  private notify(details: RadioGroupValueChangeDetails): void {
+  private notify(details: RadioGroupValueChangeDetails, source?: object): void {
+    attachFormValueRevision(details, source ?? details.event);
     dispatchCustomEvent(this.root, "starwind:value-change", details);
     this.onValueChange?.(details.value, details);
     this.subscribers.forEach((subscriber) => subscriber(details));

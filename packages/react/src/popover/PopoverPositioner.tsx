@@ -10,11 +10,19 @@ export type PopoverPositionerProps = React.HTMLAttributes<HTMLDivElement> & {
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  collisionStrategy?: "initial-placement" | "best-fit";
 };
 
 const PopoverPositioner = React.forwardRef<HTMLDivElement, PopoverPositionerProps>(
   function PopoverPositioner(
-    { side = "bottom", align = "center", sideOffset = 4, avoidCollisions = true, ...props },
+    {
+      side = "bottom",
+      align = "center",
+      sideOffset = 4,
+      avoidCollisions = true,
+      collisionStrategy = "initial-placement",
+      ...props
+    },
     forwardedRef,
   ) {
     return (
@@ -25,6 +33,7 @@ const PopoverPositioner = React.forwardRef<HTMLDivElement, PopoverPositionerProp
         data-align={align}
         data-side-offset={sideOffset}
         data-avoid-collisions={avoidCollisions ? "true" : "false"}
+        data-collision-strategy={collisionStrategy}
         ref={forwardedRef}
         {...props}
       />

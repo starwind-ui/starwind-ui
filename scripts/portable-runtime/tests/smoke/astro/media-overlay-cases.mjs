@@ -142,6 +142,8 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
       errorFallbackHidden: errorFallback instanceof HTMLElement ? errorFallback.hidden : undefined,
       errorGeometry: readRootGeometry(errorRoot),
       errorImageHidden: errorImage instanceof HTMLImageElement ? errorImage.hidden : undefined,
+      errorImageVisibility:
+        errorImage instanceof HTMLElement ? errorImage.style.visibility : undefined,
       errorRootClassName: errorRoot?.getAttribute("class"),
       errorStatus: errorRoot?.getAttribute("data-image-loading-status"),
       lightVisuals,
@@ -162,7 +164,7 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     };
   });
   if (
-    avatarState.rootCount !== 3 ||
+    avatarState.rootCount !== 4 ||
     avatarState.loadedRootTagName !== "SPAN" ||
     avatarState.loadedRootDataSlot !== "avatar" ||
     avatarState.loadedRootHasDataSw !== true ||
@@ -190,7 +192,8 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     !["flex", "inline-flex"].includes(avatarState.errorGeometry?.display) ||
     avatarState.errorGeometry?.height !== 40 ||
     avatarState.errorGeometry?.width !== 40 ||
-    avatarState.errorImageHidden !== true ||
+    avatarState.errorImageHidden !== false ||
+    avatarState.errorImageVisibility !== "hidden" ||
     avatarState.errorFallbackHidden !== false ||
     avatarState.errorFallbackClassName?.includes("font-medium") !== true ||
     avatarState.delayedRootClassName?.includes("inline-flex") !== true ||
@@ -615,6 +618,15 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
   if ((await requiredOpenTrigger.getAttribute("aria-expanded")) !== "true") {
     throw new Error("Expected collapsible={false} to retain the open Astro accordion item.");
   }
+
+  await verifyDialogEntryAnimationGestures({
+    backdrop: '#runtime-alert-dialog-default [data-slot="alert-dialog-backdrop"]',
+    content: page.locator('#runtime-alert-dialog-default [data-slot="alert-dialog-content"]'),
+    expectedDuration: 200,
+    label: "Astro Alert Dialog",
+    page,
+    trigger: page.getByRole("button", { name: "Discard draft", exact: true }),
+  });
 
   await page.getByRole("button", { name: "Discard draft" }).click();
   await page.getByRole("heading", { name: "Discard draft?" }).waitFor();

@@ -8,6 +8,7 @@ import {
 } from "../../internal/dom";
 import { createCancelableDetails } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import {
   createFloatingPositioner,
   type FloatingPositioner,
@@ -853,6 +854,7 @@ class ComboboxController implements ComboboxInstance {
       reason: request.reason,
       value: request.value,
     });
+    attachFormValueRevision(details, request.event);
 
     this.onValueChange?.(request.value, details);
     const event = dispatchCustomEvent(this.root, "starwind:value-change", details, {
@@ -885,6 +887,7 @@ class ComboboxController implements ComboboxInstance {
       previousInputValue: this.inputValueState,
       reason: request.reason,
     });
+    attachFormValueRevision(details, request.event);
 
     this.onInputValueChange?.(request.inputValue, details);
     const event = dispatchCustomEvent(this.root, "starwind:input-value-change", details, {
@@ -988,6 +991,9 @@ class ComboboxController implements ComboboxInstance {
         containsTarget: (target) => this.containsTarget(target),
         getElement: () => this.getPortalElement(),
         getTarget: () => resolveFloatingPortalTarget(this.portalReference ?? this.getReference()),
+        onOwnerCloseRequest: () => {
+          this.requestOpen(false, { reason: "imperative-action" });
+        },
       },
       root: this.root,
       scrollLock: {
@@ -995,7 +1001,12 @@ class ComboboxController implements ComboboxInstance {
         shouldLock: () => this.modal,
       },
       state: {
+        forceUncontrolledOwnerClose: () => {
+          this.openState = false;
+          this.applyOpenState(false, { reason: "imperative-action" });
+        },
         getOpen: () => this.openState,
+        isOpenControlled: () => this.controlledOpen,
         isDestroyed: () => this.destroyed,
         render: (open) => {
           this.renderOpenState(open);
@@ -1146,7 +1157,10 @@ class ComboboxController implements ComboboxInstance {
     const portalElement = this.getPortalElement();
 
     return (
-      this.root.contains(target) ||
+      Boolean(this.elements.inputGroup?.contains(target)) ||
+      this.elements.input.contains(target) ||
+      Boolean(this.elements.clear?.contains(target)) ||
+      Boolean(this.elements.trigger?.contains(target)) ||
       portalElement.contains(target) ||
       Boolean(this.elements.portal?.contains(target))
     );

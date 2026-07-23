@@ -232,6 +232,22 @@ describe("createPreviewCard", () => {
     expect(getPopup().hidden).toBe(true);
   });
 
+  it("treats non-trigger siblings inside the Preview Card root as outside interactions", () => {
+    const root = renderPreviewCard();
+    const rootRemainder = document.createElement("button");
+    rootRemainder.type = "button";
+    rootRemainder.textContent = "Root remainder";
+    root.append(rootRemainder);
+
+    const previewCard = createPreviewCard(root);
+    previewCard.setOpen(true, { emit: false });
+
+    dispatchPointer(rootRemainder, "pointerdown");
+
+    expect(previewCard.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+  });
+
   it("registers global dismissal listeners only while preview card instances are open", () => {
     const addListener = vi.spyOn(document, "addEventListener");
     const removeListener = vi.spyOn(document, "removeEventListener");

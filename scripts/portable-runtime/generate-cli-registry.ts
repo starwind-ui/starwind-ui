@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { format as formatWithPrettier, resolveConfig as resolvePrettierConfig } from "prettier";
+import semver from "semver";
 import type { RuntimeAdapterContract } from "./contracts/primitive/types.js";
 import { starwindStyledContracts } from "./contracts/styled/starwind.js";
 import type { FrameworkTarget, StyledAdapterContract } from "./contracts/styled/types.js";
@@ -78,6 +79,11 @@ type RegistryTarget = {
   packageRequirements: RegistryPackageRequirement[];
 };
 
+type RegistrySetupTarget = {
+  adapterPackage: RegistryPackageRequirement;
+  packageRequirements: RegistryPackageRequirement[];
+};
+
 type RegistryComponent = {
   dependencies: string[];
   name: string;
@@ -96,6 +102,7 @@ type RegistryComponentIndex = Omit<RegistryComponent, "targets"> & {
 export type RuntimeRegistry = {
   $schema: string;
   components: RegistryComponentIndex[];
+  setup: Partial<Record<RegistryImplementationTarget, RegistrySetupTarget>>;
   version: string;
 };
 
@@ -187,6 +194,7 @@ type TargetDefinition = {
     primitiveImportBase?: string;
     primitiveOutputRoot: string;
   }): { componentGroups: StyledOutputComponentGroup[] };
+  setupPackageRequirements: readonly RegistryPackageRequirement[];
   target: RegistryImplementationTarget;
 };
 
@@ -225,6 +233,7 @@ const TARGETS: TargetDefinition[] = getFrameworkAdapterTargetsWithStyledCapabili
       primitiveImportBase: adapterPackage,
       primitiveOutputDir: registration.cliRegistry.styledArtifact.primitiveOutputDir,
       project: capability.project,
+      setupPackageRequirements: registration.cliRegistry.setupPackageRequirements,
       target: registration.target,
     };
   });
@@ -337,6 +346,7 @@ export async function buildRuntimeRegistry(
     return {
       $schema: "https://starwind.dev/registry-schema.v2.json",
       version: options.registryVersion ?? versionManifest.registryVersion,
+      setup: buildRegistrySetup(packageRanges),
       components: await Promise.all(
         contracts.map(async (contract) => ({
           name: contract.component,
@@ -361,6 +371,81 @@ export async function buildRuntimeRegistry(
       await rm(tempRoot, { force: true, recursive: true });
     }
   }
+}
+
+function buildRegistrySetup(packageRanges: Map<string, string>): RuntimeRegistry["setup"] {
+  const setup: RuntimeRegistry["setup"] = {};
+
+  for (const target of TARGETS) {
+    if (setup[target.target]) {
+      throw new Error(`Duplicate CLI registry setup target "${target.target}".`);
+    }
+
+    const seenPackageNames = new Set<string>();
+    const packageRequirements = target.setupPackageRequirements
+      .map((requirement) => {
+        if (!isValidRegistryPackageName(requirement.name)) {
+          throw new Error(
+            `Invalid setup package name "${requirement.name}" for target "${target.target}".`,
+          );
+        }
+        if (!semver.validRange(requirement.range)) {
+          throw new Error(
+            `Invalid setup package range "${requirement.range}" for ${requirement.name} on target "${target.target}".`,
+          );
+        }
+        if (requirement.name === target.adapterPackage) {
+          throw new Error(
+            `Setup package requirements for target "${target.target}" must not repeat adapter package ${target.adapterPackage}.`,
+          );
+        }
+        if (seenPackageNames.has(requirement.name)) {
+          throw new Error(
+            `Duplicate setup package requirement ${requirement.name} for target "${target.target}".`,
+          );
+        }
+
+        seenPackageNames.add(requirement.name);
+        return { ...requirement };
+      })
+      .sort((left, right) => left.name.localeCompare(right.name));
+
+    setup[target.target] = {
+      adapterPackage: {
+        name: target.adapterPackage,
+        range: getPackageRange(target.adapterPackage, packageRanges),
+      },
+      packageRequirements,
+    };
+  }
+
+  return setup;
+}
+
+const MAX_REGISTRY_PACKAGE_NAME_LENGTH = 214;
+const REGISTRY_PACKAGE_NAME_SEGMENT = /^[a-z0-9](?:[a-z0-9._~-]*[a-z0-9])?$/;
+const REGISTRY_PACKAGE_NAME_WHITESPACE_OR_CONTROL = /[\s\u0000-\u001f\u007f]/;
+
+export function isValidRegistryPackageName(value: string): boolean {
+  if (
+    value.length === 0 ||
+    value.length > MAX_REGISTRY_PACKAGE_NAME_LENGTH ||
+    REGISTRY_PACKAGE_NAME_WHITESPACE_OR_CONTROL.test(value) ||
+    value.startsWith("-")
+  ) {
+    return false;
+  }
+
+  if (!value.startsWith("@")) {
+    return REGISTRY_PACKAGE_NAME_SEGMENT.test(value);
+  }
+
+  const scopedMatch = /^@([^/]+)\/([^/]+)$/.exec(value);
+  return Boolean(
+    scopedMatch &&
+    REGISTRY_PACKAGE_NAME_SEGMENT.test(scopedMatch[1]!) &&
+    REGISTRY_PACKAGE_NAME_SEGMENT.test(scopedMatch[2]!),
+  );
 }
 
 export async function buildSplitRuntimeRegistry(

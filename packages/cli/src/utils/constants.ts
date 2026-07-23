@@ -25,26 +25,6 @@ export const ASTRO_PACKAGES = {
 } as const;
 
 /**
- * Tailwind CSS and other dependencies
- */
-export const OTHER_PACKAGES = {
-  tailwindCore: "tailwindcss@^4",
-  tailwindVite: "@tailwindcss/vite@^4",
-  tailwindForms: "@tailwindcss/forms@^0.5",
-  tailwindAnimate: "tw-animate-css@^1",
-  tailwindVariants: "tailwind-variants@^3",
-  tailwindMerge: "tailwind-merge@^3",
-  tablerIcons: "@tabler/icons@^3",
-} as const;
-
-/**
- * Get all Tailwind CSS related packages as an array
- */
-export function getOtherPackages(): string[] {
-  return Object.values(OTHER_PACKAGES);
-}
-
-/**
  * Get all Astro related packages as an array
  */
 export function getAstroPackages(): string[] {

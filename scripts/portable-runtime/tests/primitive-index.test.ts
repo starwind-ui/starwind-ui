@@ -46,7 +46,7 @@ export const Form = {};
       'export { createForm, createFormSchemaValidator, validateFormSchema } from "@starwind-ui/runtime/form";',
     );
     expect(contents).toContain(
-      "export type { FormExternalErrors, FormSchemaResult, FormValidationTiming, FormValues } from",
+      "export type { FormExternalErrorOptions, FormExternalErrors, FormInstance, FormOptions, FormResetValidationOptions, FormSchemaResult, FormValidateOptions, FormValidationCause, FormValidationOutcome, FormValidationTiming, FormValues } from",
     );
   });
 });

@@ -199,6 +199,16 @@ export function getMediaStatusFacts(plan: GenericAdapterPlan): AdapterMediaStatu
   const loadingStatusEvent = getEvent(plan, "loadingStatusChange");
   const assetProp = getAdapterFamilyProp(getPlanPropForTarget(plan, "image", "image"));
   const srcProp = getAdapterFamilyProp(getPlanPropForTarget(plan, "src", "image"));
+  const imageVisibility = plan.presence?.initialVisibility?.find(
+    (visibility) =>
+      visibility.part === "image" && visibility.hidden && visibility.mechanism === "css-visibility",
+  );
+
+  if (!imageVisibility) {
+    throw new Error(
+      `${plan.displayName} media-status image must declare layout-preserving CSS visibility concealment.`,
+    );
+  }
 
   return {
     attrs: {
@@ -253,6 +263,12 @@ export function getMediaStatusFacts(plan: GenericAdapterPlan): AdapterMediaStatu
         discoveryAttribute: rootPart.discoveryAttribute,
         name: rootPart.name,
         namespaceKey: "Root",
+      },
+    },
+    presence: {
+      imageConcealment: {
+        property: "visibility",
+        value: "hidden",
       },
     },
     props: {

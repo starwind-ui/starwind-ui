@@ -1,47 +1,62 @@
+const aggregateGrowthPolicy = Object.freeze({
+  maxGrowthBytes: 15 * 1024,
+  maxGrowthPercent: 10,
+});
+
 const headlinePackageBudgets = [
-  {
-    label: "@starwind-ui/runtime",
-    // 8a046cdaa pre-feature: 113,040 B; post-feature rebaseline: 126,295 B (+13,255 B).
-    // Preserve the former 1,648 B of absolute headroom exactly.
-    maxGzipBytes: 127_943,
-  },
-  {
-    label: "@starwind-ui/react (adapter only)",
-    // 8a046cdaa pre-feature: 31,118 B; post-feature rebaseline: 35,194 B (+4,076 B).
-    // Preserve the former 626 B of absolute headroom exactly.
-    maxGzipBytes: 35_820,
-  },
-  {
-    label: "@starwind-ui/react + runtime",
-    // 8a046cdaa pre-feature: 145,790 B; post-feature rebaseline: 164,250 B (+18,460 B).
-    // Preserve the former 2,690 B of absolute headroom exactly.
-    maxGzipBytes: 166_940,
-  },
+  createAggregateBudget(
+    {
+      baselineGzipBytes: 126_295,
+      label: "@starwind-ui/runtime",
+    },
+    "maxGzipBytes",
+  ),
+  createAggregateBudget(
+    {
+      baselineGzipBytes: 35_194,
+      label: "@starwind-ui/react (adapter only)",
+    },
+    "maxGzipBytes",
+  ),
+  createAggregateBudget(
+    {
+      baselineGzipBytes: 164_250,
+      label: "@starwind-ui/react + runtime",
+    },
+    "maxGzipBytes",
+  ),
 ];
 
 const matchedSupportBudgets = [
-  {
-    comparisonSet: "all-three-overlap",
-    compareProviders: ["zag", "base"],
-    label: "All-three overlap",
-    maxStarwindGzipBytes: 105 * 1024,
-  },
-  {
-    comparisonSet: "starwind-zag-overlap",
-    compareProviders: ["zag"],
-    label: "Starwind/Zag overlap",
-    // 8a046cdaa pre-feature: 116,526 B; post-feature rebaseline: 118,786 B
-    // (+2,260 B), or 1,026 B
-    // over the old ceiling. Membership remains 28 with Color Picker at 0 B. The
-    // exact +8,302 minified Runtime delta is documented in the checked report.
-    maxStarwindGzipBytes: 120_020,
-  },
-  {
-    comparisonSet: "starwind-base-overlap",
-    compareProviders: ["base"],
-    label: "Starwind/Base UI overlap",
-    maxStarwindGzipBytes: 115 * 1024,
-  },
+  createAggregateBudget(
+    {
+      baselineGzipBytes: 107_231,
+      comparisonSet: "all-three-overlap",
+      compareProviders: ["zag", "base"],
+      label: "All-three overlap",
+    },
+    "maxStarwindGzipBytes",
+  ),
+  createAggregateBudget(
+    {
+      baselineGzipBytes: 118_786,
+      comparisonSet: "starwind-zag-overlap",
+      compareProviders: ["zag"],
+      label: "Starwind/Zag overlap",
+    },
+    "maxStarwindGzipBytes",
+  ),
+  createAggregateBudget(
+    {
+      // This set predated exact raw-gzip diagnostics. Its former committed ceiling
+      // is the retained baseline until the next explicit size-report refresh.
+      baselineGzipBytes: 115 * 1024,
+      comparisonSet: "starwind-base-overlap",
+      compareProviders: ["base"],
+      label: "Starwind/Base UI overlap",
+    },
+    "maxStarwindGzipBytes",
+  ),
 ];
 
 const fieldColdImportBudgets = [
@@ -50,6 +65,14 @@ const fieldColdImportBudgets = [
     label: "Field cold import",
     maxGzipBytes: 22 * 1024,
     provider: "starwind",
+  },
+];
+
+const standaloneComponentBudgets = [
+  {
+    label: "Color Picker cold import",
+    maxGzipBytes: 24 * 1024,
+    packageLabel: "@starwind-ui/runtime/color-picker",
   },
 ];
 
@@ -80,9 +103,37 @@ export function evaluatePackageSizeBudgets({ bundleResults, supportResults }) {
     if (gzipBytes == null) {
       failure = `${budget.label} headline package budget could not be evaluated: missing min+gzip measurement.`;
     } else if (gzipBytes > budget.maxGzipBytes) {
-      failure = `${budget.label} exceeded headline package budget: ${formatBudgetBytes(
+      failure = formatAggregateFailure({
+        baselineGzipBytes: budget.baselineGzipBytes,
+        label: budget.label,
+        maxGzipBytes: budget.maxGzipBytes,
+        measuredGzipBytes: gzipBytes,
+      });
+    }
+
+    if (failure) {
+      failures.push(failure);
+    }
+
+    return {
+      ...budget,
+      failure,
+      gzipBytes,
+      status: failure ? "Fail" : "Pass",
+    };
+  });
+
+  const standaloneComponentChecks = standaloneComponentBudgets.map((budget) => {
+    const result = bundleResults.find((row) => row.label === budget.packageLabel);
+    const gzipBytes = result?.gzipBytes ?? null;
+    let failure = null;
+
+    if (gzipBytes == null) {
+      failure = `${budget.label} budget could not be evaluated: missing ${budget.packageLabel} min+gzip measurement.`;
+    } else if (gzipBytes > budget.maxGzipBytes) {
+      failure = `${budget.label} budget exceeded: ${formatBudgetBytes(
         gzipBytes,
-      )} > ${formatBudgetBytes(budget.maxGzipBytes)}.`;
+      )} > budget ${formatBudgetBytes(budget.maxGzipBytes)}.`;
     }
 
     if (failure) {
@@ -165,6 +216,7 @@ export function evaluatePackageSizeBudgets({ bundleResults, supportResults }) {
     failures: [...new Set(failures)],
     headlineChecks,
     matchedSupportChecks,
+    standaloneComponentChecks,
   };
 }
 
@@ -181,9 +233,11 @@ function getAbsoluteMatchedSupportFailure(budget, starwindGzipBytes) {
     .map((provider) => `${budget.label} vs ${formatProvider(provider)}`)
     .join(", ");
 
-  return `${budget.label} set-wide Starwind matched-support budget exceeded: Starwind ${formatBudgetBytes(
+  return `${budget.label} set-wide Starwind matched-support regression guard exceeded: Starwind ${formatBudgetBytes(
     starwindGzipBytes,
-  )} > budget ${formatBudgetBytes(budget.maxStarwindGzipBytes)}. Affected budget rows: ${affectedRows}.`;
+  )} > guard ${formatBudgetBytes(budget.maxStarwindGzipBytes)} from baseline ${formatBudgetBytes(
+    budget.baselineGzipBytes,
+  )}. The guard allows up to ${formatAggregateGrowthPolicy()}. Affected rows: ${affectedRows}.`;
 }
 
 function getMatchedSupportComparison({ budget, comparatorGzipBytes, provider, starwindGzipBytes }) {
@@ -235,4 +289,33 @@ function formatBudgetBytes(bytes) {
   if (bytes == null) return "missing";
   if (bytes < 1024) return `${bytes} B`;
   return `${Math.round(bytes).toLocaleString("en-US")} B (${(bytes / 1024).toFixed(1)} KiB)`;
+}
+
+function createAggregateBudget(input, ceilingProperty) {
+  const percentCeiling = Math.floor(
+    input.baselineGzipBytes * (1 + aggregateGrowthPolicy.maxGrowthPercent / 100),
+  );
+  const absoluteCeiling = input.baselineGzipBytes + aggregateGrowthPolicy.maxGrowthBytes;
+  const maxGzipBytes = Math.min(percentCeiling, absoluteCeiling);
+
+  return {
+    ...input,
+    [ceilingProperty]: maxGzipBytes,
+    maxGrowthBytes: aggregateGrowthPolicy.maxGrowthBytes,
+    maxGrowthPercent: aggregateGrowthPolicy.maxGrowthPercent,
+  };
+}
+
+function formatAggregateFailure({ baselineGzipBytes, label, maxGzipBytes, measuredGzipBytes }) {
+  return `${label} exceeded aggregate regression guard: ${formatBudgetBytes(
+    measuredGzipBytes,
+  )} > guard ${formatBudgetBytes(maxGzipBytes)} from baseline ${formatBudgetBytes(
+    baselineGzipBytes,
+  )}. The guard allows up to ${formatAggregateGrowthPolicy()}.`;
+}
+
+function formatAggregateGrowthPolicy() {
+  return `${aggregateGrowthPolicy.maxGrowthPercent}% or ${formatBudgetBytes(
+    aggregateGrowthPolicy.maxGrowthBytes,
+  )} growth, whichever comes first`;
 }

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createCheckbox } from "../../../src/components/checkbox";
 import { createCheckboxGroup } from "../../../src/components/checkbox-group/checkbox-group";
+import { getFormValueRevision } from "../../../src/internal/form-value-revision";
 
 describe("createCheckboxGroup", () => {
   beforeEach(() => {
@@ -57,6 +58,21 @@ describe("createCheckboxGroup", () => {
     expect(group.getValue()).toEqual([]);
     expect(green?.getAttribute("aria-checked")).toBe("false");
     expect(valueListener).not.toHaveBeenCalled();
+  });
+
+  it("forwards one revision from a child checked notification to the group value notification", () => {
+    const root = renderCheckboxGroup();
+    createCheckboxGroup(root);
+    const checkedEvents: Event[] = [];
+    const valueEvents: Event[] = [];
+    root.addEventListener("starwind:checked-change", (event) => checkedEvents.push(event));
+    root.addEventListener("starwind:value-change", (event) => valueEvents.push(event));
+
+    getCheckboxes(root)[1]?.click();
+
+    expect(checkedEvents).toHaveLength(1);
+    expect(valueEvents).toHaveLength(1);
+    expect(getFormValueRevision(valueEvents[0])).toBe(getFormValueRevision(checkedEvents[0]));
   });
 
   it("does not commit group value when a child checked change event is prevented", () => {

@@ -17,9 +17,13 @@ pnpm exec vitest run scripts/portable-runtime/tests/generate-cli-registry.test.t
 
 Use semver for all registry and component versions.
 
-## Deferred styled component versions
+## Deferred registry component versions
 
-Styled component versions advance once per package release rather than once per implementation PR.
+Styled and primitive component versions advance once per package release rather than once per
+implementation PR.
+
+### Styled components
+
 For every existing component whose installable generated source changes:
 
 - Add a strict intent file at `.changeset/styled-components/<slug>.json` with a `patch`, `minor`, or
@@ -38,9 +42,21 @@ Every new styled component still receives an explicit initial manifest entry in 
 PR; it has no previous release version to bump. `defaultComponentVersion` remains only a scaffolding
 hint.
 
-Primitive versions continue to follow their separate vendoring policy and may receive patch or
-minor bumps within `0.x` during beta. Do not advance a primitive to `1.0.0` until Starwind v3 and the
-Runtime leave beta.
+### Primitive components
+
+For every existing primitive whose installable Astro or React vendoring artifact changes:
+
+- Add a strict intent file at `.changeset/primitive-components/<slug>.json` containing a
+  `primitives` object and add the normal `starwind` package Changeset.
+- Use `patch` for compatible changes and `minor` for breaking API or behavior changes. Primitive
+  intents reject `major`; do not advance a primitive to `1.0.0` until Starwind v3 and Runtime leave
+  beta.
+- Do not edit the existing entry in `primitive-versions.json`. Regenerate registry artifacts so the
+  new source is current while its version remains at the last released value.
+- `pnpm release:version` groups pending intents, applies the highest requested bump once, consumes
+  the intents, and regenerates the primitive artifacts in the Version Packages PR.
+
+New primitives receive an explicit initial manifest entry and no deferred intent.
 
 Continue to bump `registryVersion` only when the registry schema or artifact distribution changes.
 Package Changesets and changelog history do not substitute for styled or primitive version intent.

@@ -6,6 +6,7 @@ import {
   verifyAstroCarouselCases,
   verifyAstroCarouselClientRouterCase,
 } from "./astro/carousel-cases.mjs";
+import { verifyAstroAvatarLazyImageCase } from "./astro/avatar-cases.mjs";
 import { verifyAstroFormControlCases } from "./astro/form-control-cases.mjs";
 import { verifyAstroFoundationCases } from "./astro/foundation-cases.mjs";
 import { verifyAstroMediaOverlayCases } from "./astro/media-overlay-cases.mjs";
@@ -179,6 +180,7 @@ try {
   await verifyAstroFormControlCases({ page });
   await verifyAstroMediaOverlayCases({ page, serverMode: SERVER_MODE });
   await verifyAstroSheetMenuCases({ page });
+  await verifyAstroAvatarLazyImageCase({ page, baseUrl, serverMode: SERVER_MODE });
 
   if (messages.length > 0) {
     throw new Error(messages.join("\n"));

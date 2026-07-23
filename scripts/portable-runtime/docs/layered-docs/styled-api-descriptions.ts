@@ -37,7 +37,8 @@ export const commonStyledPropDescriptions: Readonly<Record<string, string>> = {
   disableHoverableContent: "Prevents pointer movement into floating content from keeping it open.",
   disabled: "Disables interaction with the component.",
   duration: "Sets the display or transition duration in milliseconds.",
-  errorVisibility: "Selects when validation errors become visible.",
+  errorVisibility:
+    "Selects whether semantic change, blur, submit, or manual validation reveals errors in the owning Form; defaults to submit.",
   exitMotion: "Selects the motion treatment used while floating content closes.",
   eyebrow: "Uses the compact uppercase eyebrow text treatment.",
   filterMode: "Selects how typed text is matched against available options.",
@@ -110,7 +111,8 @@ export const commonStyledPropDescriptions: Readonly<Record<string, string>> = {
   ratio: "Sets the rendered width-to-height ratio.",
   readOnly: "Prevents value changes while preserving focus and submission behavior.",
   required: "Marks the control as required for form validation.",
-  revalidationTiming: "Selects when a previously validated field is validated again.",
+  revalidationTiming:
+    "Replaces validationTiming after an owning Form submission attempt with semantic change, blur, submit, or manual validation; defaults to change.",
   setApi: "Receives the initialized carousel API.",
   showClear: "Shows the generated clear-value control.",
   showIcon: "Shows the component's generated icon.",
@@ -132,7 +134,8 @@ export const commonStyledPropDescriptions: Readonly<Record<string, string>> = {
   touched: "Marks the field as having received user interaction.",
   type: "Selects the component's interaction or selection mode.",
   uncheckedValue: "Sets the form value submitted for an unchecked control.",
-  validationTiming: "Selects when validation first runs.",
+  validationTiming:
+    "Selects semantic change, blur, submit, or manual validation before an owning Form submission attempt; defaults to submit.",
   value: "Controls or identifies the component value.",
   valueClass: "Adds classes to the generated value element.",
   variant: "Selects the component's visual variant.",

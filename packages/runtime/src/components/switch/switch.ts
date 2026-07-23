@@ -5,6 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
 export type SwitchCheckedChangeReason = "none";
@@ -507,6 +508,7 @@ class SwitchController implements SwitchInstance {
   }
 
   private notify(details: SwitchCheckedChangeDetails): void {
+    attachFormValueRevision(details, details.event);
     const event = dispatchCustomEvent(this.root, "starwind:checked-change", details, {
       cancelable: true,
     });

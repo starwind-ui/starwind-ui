@@ -144,6 +144,8 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
       errorFallbackHidden: errorFallback instanceof HTMLElement ? errorFallback.hidden : undefined,
       errorGeometry: readRootGeometry(errorRoot),
       errorImageHidden: errorImage instanceof HTMLImageElement ? errorImage.hidden : undefined,
+      errorImageVisibility:
+        errorImage instanceof HTMLElement ? errorImage.style.visibility : undefined,
       errorRootClassName: errorRoot?.getAttribute("class"),
       errorStatus: errorRoot?.getAttribute("data-image-loading-status"),
       lightVisuals,
@@ -208,7 +210,8 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
     !["flex", "inline-flex"].includes(avatarState.errorGeometry?.display) ||
     avatarState.errorGeometry?.height !== 40 ||
     avatarState.errorGeometry?.width !== 40 ||
-    avatarState.errorImageHidden !== true ||
+    avatarState.errorImageHidden !== false ||
+    avatarState.errorImageVisibility !== "hidden" ||
     avatarState.errorFallbackHidden !== false ||
     avatarState.errorFallbackClassName?.includes("font-medium") !== true ||
     avatarState.delayedRootClassName?.includes("inline-flex") !== true ||
@@ -699,6 +702,15 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
   if ((await requiredOpenTrigger.getAttribute("aria-expanded")) !== "true") {
     throw new Error("Expected collapsible={false} to retain the open React accordion item.");
   }
+
+  await verifyDialogEntryAnimationGestures({
+    backdrop: '#react-runtime-alert-dialog-default [data-slot="alert-dialog-backdrop"]',
+    content: page.locator('#react-runtime-alert-dialog-default [data-slot="alert-dialog-content"]'),
+    expectedDuration: 200,
+    label: "React Alert Dialog",
+    page,
+    trigger: page.getByRole("button", { name: "Discard React draft", exact: true }),
+  });
 
   await page.getByRole("button", { name: "Discard React draft" }).click();
   await page.getByRole("heading", { name: "Discard React draft?" }).waitFor();

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { initStarwind } from "../../../src/init-starwind";
+import { createDialog } from "../../../src/components/dialog/dialog";
 import {
   createNavigationMenu,
   type NavigationMenuValueChangeDetails,
@@ -34,6 +35,280 @@ describe("createNavigationMenu", () => {
     expect(getContent("products").hidden).toBe(false);
     expect(getContent("company").hidden).toBe(true);
     expect(getViewport()).toContainElement(getContent("products"));
+  });
+
+  it("promotes dialog-owned content and closes it through the owner lifecycle", () => {
+    const fixture = renderNavigationMenuInDialog();
+    const floatingAction = document.createElement("button");
+    floatingAction.textContent = "Floating navigation action";
+    getContent("products").append(floatingAction);
+    const dialog = createDialog(fixture.dialogRoot);
+    const menu = createNavigationMenu(fixture.menuRoot);
+    const valueChanges: Array<{ reason: string; value: string | null }> = [];
+    menu.subscribe("valueChange", (details) => {
+      valueChanges.push({ reason: details.reason, value: details.value });
+    });
+
+    fixture.dialogTrigger.focus();
+    dialog.open();
+    getTrigger("products").click();
+    floatingAction.focus();
+
+    expect(menu.getValue()).toBe("products");
+    expect(
+      fixture.dialogContent
+        .querySelector<HTMLElement>("[data-sw-floating-portal]")
+        ?.matches(":popover-open"),
+    ).toBe(true);
+    expect(document.activeElement).toBe(floatingAction);
+
+    dialog.close();
+
+    expect(menu.getValue()).toBe(null);
+    expect(getPopup().hidden).toBe(true);
+    expect(fixture.dialogContent.open).toBe(false);
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(document.activeElement).toBe(fixture.dialogTrigger);
+    expect(valueChanges).toEqual([
+      { reason: "trigger-press", value: "products" },
+      { reason: "imperative-action", value: null },
+    ]);
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
+  it("does not repromote an uncontrolled owner-closed menu during its exit animation", async () => {
+    const fixture = renderNavigationMenuInDialog();
+    const dialog = createDialog(fixture.dialogRoot);
+    const menu = createNavigationMenu(fixture.menuRoot);
+    const closeAnimation = createDeferred();
+    Object.defineProperty(getPopup(), "getAnimations", {
+      configurable: true,
+      value: () => [{ finished: closeAnimation.promise }] as unknown as Animation[],
+    });
+    dialog.open();
+    getTrigger("products").click();
+
+    dialog.close();
+    dialog.open();
+
+    expect(menu.getValue()).toBe(null);
+    expect(fixture.dialogContent.open).toBe(true);
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    closeAnimation.resolve();
+    await closeAnimation.promise;
+    await waitForMicrotasks();
+
+    expect(getPopup().hidden).toBe(true);
+    expect(
+      fixture.menuRoot.querySelector("[data-sw-nav-menu-portal]")?.contains(getPositioner()),
+    ).toBe(true);
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
+  it("suppresses controlled dialog content and restores only a still-open value", () => {
+    const fixture = renderNavigationMenuInDialog();
+    const dialog = createDialog(fixture.dialogRoot);
+    dialog.open();
+    const menu = createNavigationMenu(fixture.menuRoot, { value: "products" });
+    const valueChanges: Array<string | null> = [];
+    menu.subscribe("valueChange", (details) => valueChanges.push(details.value));
+
+    expect(
+      fixture.dialogContent
+        .querySelector<HTMLElement>("[data-sw-floating-portal]")
+        ?.matches(":popover-open"),
+    ).toBe(true);
+
+    dialog.close();
+
+    expect(menu.getValue()).toBe("products");
+    expect(valueChanges).toEqual([null]);
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    dialog.open();
+    expect(
+      fixture.dialogContent
+        .querySelector<HTMLElement>("[data-sw-floating-portal]")
+        ?.matches(":popover-open"),
+    ).toBe(true);
+
+    dialog.close();
+    menu.setValue(null, { emit: false });
+    dialog.open();
+
+    expect(menu.getValue()).toBe(null);
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
+  it("does not promote a controlled value closed during a deferred exit", async () => {
+    const fixture = renderNavigationMenuInDialog();
+    const dialog = createDialog(fixture.dialogRoot);
+    dialog.open();
+    const menu = createNavigationMenu(fixture.menuRoot, { value: "products" });
+    const closeAnimation = createDeferred();
+    Object.defineProperty(getPopup(), "getAnimations", {
+      configurable: true,
+      value: () => [{ finished: closeAnimation.promise }] as unknown as Animation[],
+    });
+
+    dialog.close();
+    menu.setValue(null, { emit: false });
+    dialog.open();
+
+    expect(menu.getValue()).toBe(null);
+    expect(getPopup().getAttribute("data-state")).toBe("closed");
+    expect(getPopup().hidden).toBe(false);
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    closeAnimation.resolve();
+    await closeAnimation.promise;
+    await waitForMicrotasks();
+
+    expect(getPopup().hidden).toBe(true);
+    expect(
+      fixture.menuRoot.querySelector("[data-sw-nav-menu-portal]")?.contains(getPositioner()),
+    ).toBe(true);
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
+  it("force-resets an uncontrolled menu when its owner-close intent is canceled", () => {
+    const fixture = renderNavigationMenuInDialog();
+    const dialog = createDialog(fixture.dialogRoot);
+    const canceledDetails: NavigationMenuValueChangeDetails[] = [];
+    fixture.menuRoot.addEventListener("starwind:value-change", (event) => {
+      const details = (event as CustomEvent<NavigationMenuValueChangeDetails>).detail;
+      if (details.value !== null) return;
+
+      event.preventDefault();
+      canceledDetails.push(details);
+    });
+    dialog.open();
+    const menu = createNavigationMenu(fixture.menuRoot);
+    getTrigger("products").click();
+
+    dialog.close();
+
+    expect(canceledDetails).toHaveLength(1);
+    expect(canceledDetails[0]?.isCanceled).toBe(true);
+    expect(menu.getValue()).toBe(null);
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    dialog.open();
+
+    expect(menu.getValue()).toBe(null);
+    expect(getPopup().hidden).toBe(true);
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
+  it("closes the dialog-owned menu before its dialog on successive Escape keys", () => {
+    const fixture = renderNavigationMenuInDialog();
+    const dialog = createDialog(fixture.dialogRoot);
+    fixture.dialogTrigger.focus();
+    dialog.open();
+    const menu = createNavigationMenu(fixture.menuRoot);
+    getTrigger("products").click();
+    getContent("products").querySelector<HTMLAnchorElement>("a")!.focus();
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(menu.getValue()).toBe(null);
+    expect(fixture.dialogContent.open).toBe(true);
+    expect(document.activeElement).toBe(getTrigger("products"));
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(fixture.dialogContent.open).toBe(false);
+    expect(document.activeElement).toBe(fixture.dialogTrigger);
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
+  it("moves the shared session when the active trigger crosses dialog owners", () => {
+    const fixture = renderNavigationMenuAcrossDialogOwners();
+    const menu = createNavigationMenu(fixture.menuRoot);
+
+    getTrigger("products").click();
+
+    expect(
+      fixture.productsOwner
+        .querySelector<HTMLElement>("[data-sw-floating-portal]")
+        ?.matches(":popover-open"),
+    ).toBe(true);
+    expect(fixture.companyOwner.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    getTrigger("company").click();
+
+    expect(menu.getValue()).toBe("company");
+    expect(fixture.productsOwner.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(
+      fixture.companyOwner
+        .querySelector<HTMLElement>("[data-sw-floating-portal]")
+        ?.matches(":popover-open"),
+    ).toBe(true);
+    expect(getTrigger("products").getAttribute("aria-expanded")).toBe("false");
+    expect(getTrigger("company").getAttribute("aria-expanded")).toBe("true");
+
+    menu.close();
+
+    expect(fixture.productsOwner.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(fixture.companyOwner.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(fixture.authoredPortal.contains(getPositioner())).toBe(true);
+
+    menu.destroy();
+    fixture.productsOwner.close();
+    fixture.companyOwner.close();
+    fixture.menuRoot.remove();
+  });
+
+  it("destroys a promoted menu without stale owner registration or portal state", () => {
+    const fixture = renderNavigationMenuInDialog();
+    const dialog = createDialog(fixture.dialogRoot);
+    dialog.open();
+    const menu = createNavigationMenu(fixture.menuRoot);
+    getTrigger("products").click();
+
+    expect(
+      fixture.dialogContent
+        .querySelector<HTMLElement>("[data-sw-floating-portal]")
+        ?.matches(":popover-open"),
+    ).toBe(true);
+
+    menu.destroy();
+
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(getPopup().hidden).toBe(true);
+    expect(getViewport().hidden).toBe(true);
+    expect(
+      fixture.menuRoot.querySelector("[data-sw-nav-menu-portal]")?.contains(getPositioner()),
+    ).toBe(true);
+
+    dialog.close();
+    dialog.open();
+
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    dialog.destroy();
   });
 
   it("requires popup and viewport anatomy", () => {
@@ -725,6 +1000,27 @@ describe("createNavigationMenu", () => {
     expect(menu.getValue()).toBe(null);
     expect(getPopup().hidden).toBe(true);
     expect(getTrigger("products").getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("treats plain root wrappers as outside while preserving the Navigation Menu list", () => {
+    const root = renderNavigationMenu();
+    const rootRemainder = document.createElement("button");
+    rootRemainder.type = "button";
+    rootRemainder.textContent = "Root remainder";
+    root.append(rootRemainder);
+
+    const menu = createNavigationMenu(root);
+    getTrigger("products").click();
+
+    root
+      .querySelector<HTMLElement>("[data-sw-nav-menu-list]")!
+      .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    expect(menu.getValue()).toBe("products");
+
+    rootRemainder.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(menu.getValue()).toBe(null);
+    expect(getPopup().hidden).toBe(true);
   });
 
   it("lets value changes be canceled before state updates", () => {
@@ -1797,6 +2093,81 @@ describe("createNavigationMenu", () => {
   });
 });
 
+function renderNavigationMenuAcrossDialogOwners(): {
+  authoredPortal: HTMLElement;
+  companyOwner: HTMLDialogElement;
+  menuRoot: HTMLElement;
+  productsOwner: HTMLDialogElement;
+} {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `
+    <nav data-sw-nav-menu aria-label="Cross-owner navigation">
+      <dialog data-slot="dialog-content" data-testid="owner-products">
+        <ul data-sw-nav-menu-list>
+          <li data-sw-nav-menu-item data-value="products">
+            <button type="button" data-sw-nav-menu-trigger data-testid="trigger-products">
+              Products
+            </button>
+            <div data-sw-nav-menu-content data-testid="content-products">Products content</div>
+          </li>
+        </ul>
+      </dialog>
+      <dialog data-slot="dialog-content" data-testid="owner-company">
+        <ul data-sw-nav-menu-list>
+          <li data-sw-nav-menu-item data-value="company">
+            <button type="button" data-sw-nav-menu-trigger data-testid="trigger-company">
+              Company
+            </button>
+            <div data-sw-nav-menu-content data-testid="content-company">Company content</div>
+          </li>
+        </ul>
+      </dialog>
+      <div data-sw-nav-menu-portal>
+        <div data-sw-nav-menu-positioner data-side="bottom" data-align="start">
+          <div data-sw-nav-menu-popup>
+            <div data-sw-nav-menu-viewport></div>
+            <div data-sw-nav-menu-arrow></div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  `;
+  const menuRoot = wrapper.firstElementChild as HTMLElement;
+  const productsOwner = menuRoot.querySelector<HTMLDialogElement>(
+    '[data-testid="owner-products"]',
+  )!;
+  const companyOwner = menuRoot.querySelector<HTMLDialogElement>('[data-testid="owner-company"]')!;
+  const authoredPortal = menuRoot.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!;
+  document.body.append(menuRoot);
+  productsOwner.show();
+  companyOwner.show();
+
+  return { authoredPortal, companyOwner, menuRoot, productsOwner };
+}
+
+function renderNavigationMenuInDialog(): {
+  dialogContent: HTMLDialogElement;
+  dialogRoot: HTMLElement;
+  dialogTrigger: HTMLButtonElement;
+  menuRoot: HTMLElement;
+} {
+  const menuRoot = renderNavigationMenu();
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `
+    <div data-sw-dialog>
+      <button data-sw-dialog-trigger>Open dialog</button>
+      <dialog data-sw-dialog-content data-slot="dialog-content"></dialog>
+    </div>
+  `;
+  const dialogRoot = wrapper.firstElementChild as HTMLElement;
+  const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("dialog")!;
+  const dialogTrigger = dialogRoot.querySelector<HTMLButtonElement>("button")!;
+  dialogContent.append(menuRoot);
+  document.body.append(dialogRoot);
+
+  return { dialogContent, dialogRoot, dialogTrigger, menuRoot };
+}
+
 function renderNavigationMenu(): HTMLElement {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = `
@@ -2474,6 +2845,15 @@ function appendNavigationMenuTransitionStyles(): void {
 
 function getLink(name: string): HTMLAnchorElement {
   return document.querySelector<HTMLAnchorElement>(`[data-testid="link-${name}"]`)!;
+}
+
+function createDeferred(): { promise: Promise<void>; resolve: () => void } {
+  let resolve!: () => void;
+  const promise = new Promise<void>((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+
+  return { promise, resolve };
 }
 
 function wait(milliseconds: number): Promise<void> {

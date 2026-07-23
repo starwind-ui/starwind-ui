@@ -102,8 +102,15 @@ describe("primitive inventory", () => {
     }
 
     expect(getPrimitiveRuntimeFacadeTypeNames("form")).toEqual([
+      "FormExternalErrorOptions",
       "FormExternalErrors",
+      "FormInstance",
+      "FormOptions",
+      "FormResetValidationOptions",
       "FormSchemaResult",
+      "FormValidateOptions",
+      "FormValidationCause",
+      "FormValidationOutcome",
       "FormValidationTiming",
       "FormValues",
     ]);

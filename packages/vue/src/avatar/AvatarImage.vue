@@ -58,6 +58,7 @@ onBeforeUnmount(unbindLoadingStatusChange);
     :src="props.src"
     data-sw-avatar-image
     data-image-loading-status="idle"
-    :hidden="true"
+    :style="[attrs.style, { visibility: 'hidden' }]"
+    :hidden="false"
   />
 </template>

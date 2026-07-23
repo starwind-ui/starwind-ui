@@ -347,6 +347,25 @@ describe("generateLayeredDocsMetadata", () => {
     );
     expect(checkbox?.inheritance.some((entry) => entry.kind === "primitive-props")).toBe(false);
 
+    for (const framework of ["astro", "react"] as const) {
+      const field = byId
+        .get("field")
+        ?.styledApi[framework].exports.find((entry) => entry.exportName === "Field");
+      const timingProps = field?.props.filter((prop) =>
+        ["errorVisibility", "revalidationTiming", "validationTiming"].includes(prop.name),
+      );
+
+      expect(timingProps, framework).toHaveLength(3);
+      expect(
+        timingProps?.every((prop) => prop.type === '"blur" | "change" | "manual" | "submit"'),
+        framework,
+      ).toBe(true);
+      expect(
+        timingProps?.every((prop) => prop.description?.includes("owning Form") === true),
+        framework,
+      ).toBe(true);
+    }
+
     const sidebar = byId.get("sidebar")?.styledApi.astro;
     expect(sidebar?.exports.length).toBeGreaterThan(20);
     expect(
@@ -370,6 +389,28 @@ describe("generateLayeredDocsMetadata", () => {
         }
       }
     }
+  });
+
+  it("loads and validates the released Primitive version inventory", () => {
+    const metadata = buildLayeredDocsMetadata();
+    const versions = Object.fromEntries(
+      metadata.primitives.map((primitive) => [primitive.id, primitive.registryVersion]),
+    );
+
+    expect(versions.accordion).toBe("0.1.1");
+    expect(versions.select).toBe("0.1.2");
+    expect(Object.keys(versions)).toHaveLength(runtimeAdapterContracts.length);
+
+    const { accordion: _missing, ...missingAccordion } = versions;
+    expect(() => buildLayeredDocsMetadata({ primitiveVersions: missingAccordion })).toThrow(
+      "Missing released Primitive version for accordion.",
+    );
+    expect(() =>
+      buildLayeredDocsMetadata({ primitiveVersions: { ...versions, imaginary: "0.1.0" } }),
+    ).toThrow("Primitive version manifest references unknown contract imaginary.");
+    expect(() =>
+      buildLayeredDocsMetadata({ primitiveVersions: { ...versions, accordion: "next" } }),
+    ).toThrow('Released Primitive version for accordion must be valid SemVer; received "next".');
   });
 
   it("automatically adds new consumed wrapper and variant props to the styled API", () => {
@@ -566,7 +607,7 @@ describe("generateLayeredDocsMetadata", () => {
     });
   });
 
-  it("reproduces every canonical generated path and byte from a temporary root", async () => {
+  it("writes the canonical metadata path without mutating the checked-in generated tree", async () => {
     const tempRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-layered-docs-bytes-"));
     const canonicalRelativePath =
       "scripts/portable-runtime/docs/layered-docs/generated/layered-docs-metadata.ts";
@@ -577,12 +618,14 @@ describe("generateLayeredDocsMetadata", () => {
         outputRoot: tempRoot,
       });
 
-      expect(await readFilesRecursively(tempRoot)).toEqual([
-        {
-          relativePath: canonicalRelativePath,
-          source: await readFile(path.join(process.cwd(), canonicalRelativePath), "utf8"),
-        },
-      ]);
+      const files = await readFilesRecursively(tempRoot);
+
+      expect(files.map((file) => file.relativePath)).toEqual([canonicalRelativePath]);
+      expect(files[0]?.source).toContain(
+        'displayType: "\\\"blur\\\" | \\\"change\\\" | \\\"manual\\\" | \\\"submit\\\""',
+      );
+      expect(files[0]?.source).toContain("After a Form submission attempt");
+      expect(files[0]?.source).not.toContain('\\\"input\\\" | \\\"manual\\\"');
     } finally {
       await rm(tempRoot, { force: true, recursive: true });
     }
@@ -1352,6 +1395,55 @@ describe("generateLayeredDocsMetadata", () => {
     expect(descriptions.join("\n")).not.toMatch(/\b(state|value|prop|option|attribute)\s+\1\b/i);
     expect(descriptions.join("\n")).not.toMatch(/renders the `[^`]+` element for the .+ primitive/);
     expect(descriptions.join("\n")).not.toMatch(/\bthe primitive\b/i);
+  });
+
+  it("expands Form validation timing aliases in Form and Field primitive references", () => {
+    const metadata = buildLayeredDocsMetadata();
+    const expectedDescriptionsByPrimitive = {
+      form: {
+        "data-error-visibility":
+          "Low-level errorVisibility form for semantic change, blur, submit, or manual validation; defaults to submit.",
+        "data-revalidation-timing":
+          "Low-level revalidationTiming form that replaces validationTiming after a submission attempt; defaults to change.",
+        "data-validation-timing":
+          "Low-level validationTiming form for semantic change, blur, submit, or manual validation before submission; defaults to submit.",
+        errorVisibility:
+          "Selects whether semantic change, blur, submit, or manual validation reveals errors; defaults to submit.",
+        revalidationTiming:
+          "After a Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; defaults to change.",
+        validationTiming:
+          "Selects semantic change, blur, submit, or manual validation before a Form submission attempt; defaults to submit.",
+      },
+      field: {
+        "data-error-visibility":
+          "Low-level errorVisibility form for semantic change, blur, submit, or manual validation; overrides the owning Form for this Field.",
+        "data-revalidation-timing":
+          "Low-level revalidationTiming form that replaces validationTiming after a submission attempt; overrides the owning Form for this Field.",
+        "data-validation-timing":
+          "Low-level validationTiming form for semantic change, blur, submit, or manual validation before submission; overrides the owning Form for this Field.",
+        errorVisibility:
+          "Selects whether semantic change, blur, submit, or manual validation reveals this Field's errors; inherits the owning Form policy when omitted.",
+        revalidationTiming:
+          "After an owning Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; inherits the owning Form policy when omitted.",
+        validationTiming:
+          "Selects semantic change, blur, submit, or manual validation before an owning Form submission attempt; inherits the owning Form policy when omitted.",
+      },
+    };
+
+    for (const primitiveId of ["form", "field"]) {
+      const primitive = metadata.primitives.find((entry) => entry.id === primitiveId);
+      const root = primitive?.docsReference.apiReference.parts.find((part) => part.part === "root");
+      const timingProps = root?.props.filter((prop) => prop.type === "FormValidationTiming") ?? [];
+
+      expect(timingProps, primitiveId).toHaveLength(6);
+      expect(
+        timingProps.every((prop) => prop.displayType === '"blur" | "change" | "manual" | "submit"'),
+        primitiveId,
+      ).toBe(true);
+      expect(Object.fromEntries(timingProps.map((prop) => [prop.name, prop.description]))).toEqual(
+        expectedDescriptionsByPrimitive[primitiveId as "field" | "form"],
+      );
+    }
   });
 
   it("builds primitive examples from a structured framework example registry", () => {
@@ -2799,6 +2891,10 @@ describe("generateLayeredDocsMetadata", () => {
         expect(primitiveSource).not.toContain("| Factory |");
         expect(primitiveSource).not.toContain("## Exports");
         expect(primitiveSource).not.toContain("## Canonical Names");
+        expect(primitiveSource).toContain("## Changelog");
+        expect(primitiveSource).toContain(
+          `<PrimitiveChangelog docId="primitives/${primitive.id}" />`,
+        );
 
         for (const part of primitive.docsReference.apiReference.parts) {
           expect(primitiveSource).toContain(`### ${toTestDisplayTitle(part.part)}`);
@@ -2866,6 +2962,8 @@ describe("generateLayeredDocsMetadata", () => {
         "## API Reference",
         "## Runtime API",
         "## Related Styled Components",
+        "## Changelog",
+        '<PrimitiveChangelog docId="primitives/menu" />',
       ]);
       expectSubstringsInOrder(selectPrimitiveSource, [
         "## Anatomy",

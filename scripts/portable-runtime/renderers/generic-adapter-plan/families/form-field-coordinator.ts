@@ -3,6 +3,10 @@ import type {
   AdapterFormFieldCoordinatorFacts,
   AdapterOutputModel,
 } from "../../framework-adapters/types.js";
+import {
+  getPrimitiveRuntimeFacadeTypeNames,
+  getPrimitiveRuntimeFacadeValueNames,
+} from "../../primitive-inventory.js";
 import type { AdapterOutputFamilyPlan } from "../adapter-family-plans.js";
 import type { GenericAdapterPlan } from "../types.js";
 import {
@@ -213,11 +217,11 @@ function getFormFieldCoordinatorFacts(plan: GenericAdapterPlan): AdapterFormFiel
     },
     runtime: {
       factory: plan.runtime.factory,
-      helperExports: [plan.runtime.factory, "createFormSchemaValidator", "validateFormSchema"],
+      helperExports: getPrimitiveRuntimeFacadeValueNames(plan.component),
       importSource: plan.runtime.importSource,
       rootVariable: rootPart.defaultElement,
       setupFunction: `setup${pluralizeDisplayName(plan.displayName)}`,
-      typeExports: ["FormExternalErrors", "FormSchemaResult", "FormValidationTiming", "FormValues"],
+      typeExports: getPrimitiveRuntimeFacadeTypeNames(plan.component),
       typeImportSource: getRuntimeTypeImportSource(plan),
       validationTimingType: validationTimingProp.type,
     },

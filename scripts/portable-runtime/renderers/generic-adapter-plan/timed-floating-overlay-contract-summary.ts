@@ -92,6 +92,21 @@ function summarizeTimedOverlayContract(
       part.initialAttributes?.map((attribute) => attribute.name) ?? [],
     ]),
   );
+  const expectedFloatingOptions = [
+    "side",
+    "align",
+    "sideOffset",
+    "avoidCollisions",
+    ...(contract.component === "popover" ? ["collisionStrategy"] : []),
+  ];
+  const expectedFloatingAttributes = [
+    "data-state",
+    "data-side",
+    "data-align",
+    "data-side-offset",
+    "data-avoid-collisions",
+    ...(contract.component === "popover" ? ["data-collision-strategy"] : []),
+  ];
 
   return {
     adapterBoundary: options.adapterBoundary,
@@ -117,12 +132,7 @@ function summarizeTimedOverlayContract(
         floating.positionerPart === "positioner" &&
         floating.popupPart === "popup",
       ),
-      "floating options": hasExactValues(floating?.optionProps ?? [], [
-        "side",
-        "align",
-        "sideOffset",
-        "avoidCollisions",
-      ]),
+      "floating options": hasExactValues(floating?.optionProps ?? [], expectedFloatingOptions),
       "open state bridge": Boolean(
         openState?.controlledProp === "open" &&
         openState.defaultProp === "defaultOpen" &&
@@ -135,13 +145,9 @@ function summarizeTimedOverlayContract(
         presence.initialHiddenParts.includes("popup"),
       ),
       "static floating attrs": ["positioner", "popup"].every((part) =>
-        [
-          "data-state",
-          "data-side",
-          "data-align",
-          "data-side-offset",
-          "data-avoid-collisions",
-        ].every((attribute) => staticAttributesByPart[part]?.includes(attribute)),
+        expectedFloatingAttributes.every((attribute) =>
+          staticAttributesByPart[part]?.includes(attribute),
+        ),
       ),
       "trigger asChild ref": asChildMerges.includes("ref"),
     },

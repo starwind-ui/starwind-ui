@@ -181,6 +181,7 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:unit": "vitest run --project unit",
     "test:browser": "vitest run --project browser",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{ts,md,json}\"",

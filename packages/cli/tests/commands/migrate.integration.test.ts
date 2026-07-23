@@ -167,7 +167,7 @@ const registryFixture: registry.StarwindRegistry = {
     },
     {
       name: "color-picker",
-      version: "0.1.0",
+      version: "1.2.0",
       type: "component",
       dependencies: [],
       targets: {
@@ -425,7 +425,7 @@ describe.sequential("migrate command", () => {
     const config = JSON.parse(await readFile("starwind.config.json", "utf8"));
     expect(config.components).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ name: "color-picker", framework: "astro", version: "0.1.0" }),
+        expect.objectContaining({ name: "color-picker", framework: "astro", version: "1.2.0" }),
         expect.objectContaining({ name: "select", framework: "astro", version: "2.0.0" }),
       ]),
     );

@@ -110,11 +110,14 @@ describe("release package tooling", () => {
   it("exposes generic release commands and beta compatibility aliases", async () => {
     const root = await readJson<PackageJson>("package.json");
     expect(root.scripts?.["release:version"]).toBe(
-      "tsx scripts/portable-runtime/styled-component-release.ts version && changeset version && pnpm runtime:registry:generate",
+      "tsx scripts/portable-runtime/styled-component-release.ts version && tsx scripts/portable-runtime/primitive-component-release.ts version && changeset version && pnpm runtime:registry:generate",
     );
     expect(root.scripts?.version).toBe("pnpm release:version");
     expect(root.scripts?.["styled:versions:stage"]).toBe(
       "tsx scripts/portable-runtime/styled-component-release.ts stage",
+    );
+    expect(root.scripts?.["primitive:versions:stage"]).toBe(
+      "tsx scripts/portable-runtime/primitive-component-release.ts stage",
     );
     expect(root.scripts?.["local:release"]).toContain("pnpm release:version");
     expect(root.scripts?.["publish:release:dry-run"]).toContain(
@@ -125,6 +128,8 @@ describe("release package tooling", () => {
     expect(root.scripts?.["publish:beta"]).toBe("pnpm publish:release");
     expect(root.scripts?.["release:gate"]).toContain("pnpm verify");
     expect(root.scripts?.["release:gate"]).toContain("pnpm runtime:size:check");
+    expect(root.scripts?.["release:prepare"]).not.toContain("build");
+    expect(root.scripts?.["release:artifacts"]).toBe("node scripts/check-release-artifacts.mjs");
   });
 
   it("derives prerelease and stable channels from package and Changesets state", () => {

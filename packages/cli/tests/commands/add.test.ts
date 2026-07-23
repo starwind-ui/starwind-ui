@@ -154,10 +154,32 @@ describe("add command", () => {
 
     expect(mockInit).toHaveBeenCalledWith(true, {
       defaults: true,
+      framework: undefined,
       packageManager: "npm",
     });
     expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("starwind init"));
     expect(mockInstallRuntimeComponents).not.toHaveBeenCalled();
+  });
+
+  it("forwards an explicit React target through missing-config init and component install", async () => {
+    mockFileExists.mockResolvedValue(false);
+
+    await add(["button"], { framework: "react", packageManager: "pnpm", yes: true });
+
+    expect(mockInit).toHaveBeenCalledWith(true, {
+      defaults: true,
+      framework: "react",
+      packageManager: "pnpm",
+    });
+    expect(mockInstallRuntimeComponents).toHaveBeenCalledWith(
+      ["button"],
+      expect.objectContaining({
+        config: expect.objectContaining({ framework: "react" }),
+        framework: "react",
+        packageManager: "pnpm",
+        skipPrompts: true,
+      }),
+    );
   });
 
   it("installs v2 components through the Runtime registry installer", async () => {

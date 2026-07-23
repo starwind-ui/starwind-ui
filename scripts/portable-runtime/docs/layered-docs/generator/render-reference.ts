@@ -115,6 +115,10 @@ const renderBaseUiStylePrimitiveReferenceMarkdown = (primitive: PrimitiveDocsMet
     renderPrimitiveCssVariablesReference(primitive),
     "",
     renderPrimitiveRelatedStyledComponentsReference(primitive),
+    "",
+    "## Changelog",
+    "",
+    `<PrimitiveChangelog docId="primitives/${primitive.id}" />`,
   ]);
 
 const renderPrimitiveDocsExamplesTabs = (primitive: PrimitiveDocsMetadata) => {

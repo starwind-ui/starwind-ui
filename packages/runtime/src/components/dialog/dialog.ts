@@ -12,6 +12,11 @@ import {
 } from "../../internal/events";
 import { focusFirstElement, trapTabKey } from "../../internal/focus";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
+import {
+  demoteDialogOwnedFloatingPortals,
+  promoteDialogOwnedFloatingPortals,
+  requestDialogOwnedFloatingPortalClose,
+} from "../../internal/floating-portal";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { type DocumentScrollLock, lockDocumentScroll } from "../../internal/scroll-lock";
 
@@ -270,6 +275,8 @@ class DialogController implements DialogInstance {
   destroy(): void {
     if (this.destroyed) return;
 
+    requestDialogOwnedFloatingPortalClose(this.elements.content);
+    demoteDialogOwnedFloatingPortals(this.elements.content);
     this.abortController.abort();
     this.closeAbortController?.abort();
     this.cancelScheduledInit();
@@ -435,11 +442,14 @@ class DialogController implements DialogInstance {
         if (handledEscapeEvents.has(event)) return;
         if (!this.isTopmostOpenLayer()) return;
 
-        if (event.key === "Escape" && this.closeOnEscape) {
-          event.preventDefault();
-          handledEscapeEvents.add(event);
-          this.requestOpen(false, { reason: "escape-key", event });
-          return;
+        if (event.key === "Escape") {
+          if (event.defaultPrevented) return;
+          if (this.closeOnEscape) {
+            event.preventDefault();
+            handledEscapeEvents.add(event);
+            this.requestOpen(false, { reason: "escape-key", event });
+            return;
+          }
         }
 
         if (this.modal) {
@@ -588,6 +598,7 @@ class DialogController implements DialogInstance {
       initializationTransaction.openedControllers.push(this);
     } else {
       this.cancelScheduledInit();
+      requestDialogOwnedFloatingPortalClose(this.elements.content);
       const closeAbortController = new AbortController();
       this.closeAbortController = closeAbortController;
       this.notifyParentNestedClose();
@@ -627,6 +638,7 @@ class DialogController implements DialogInstance {
     this.cancelScheduledInit();
     this.notifyParentNestedClose();
     this.unregisterOpenLayer();
+    demoteDialogOwnedFloatingPortals(this.elements.content);
     this.closeNativeDialog();
     this.unlockBodyScroll();
     this.renderState(false);
@@ -638,7 +650,7 @@ class DialogController implements DialogInstance {
 
   private openNativeDialog(): void {
     const { content } = this.elements;
-    showElement(content);
+    showElement(content, { startingStyleRelease: "after-paint" });
     if (!content.open) {
       this.previousActiveElement = getActiveHTMLElement(this.root.ownerDocument);
 
@@ -650,6 +662,7 @@ class DialogController implements DialogInstance {
         content.setAttribute("open", "");
       }
     }
+    promoteDialogOwnedFloatingPortals(content);
   }
 
   private initializeNestedDialogs(transaction: DialogInitializationTransaction): void {
@@ -694,7 +707,7 @@ class DialogController implements DialogInstance {
       if (this.isNestedDialog()) {
         overlay.hidden = true;
       } else {
-        showElement(overlay);
+        showElement(overlay, { startingStyleRelease: "after-paint" });
       }
     } else if (overlay) {
       hideElementAfterAnimations(overlay, { signal: closeSignal });
@@ -715,6 +728,7 @@ class DialogController implements DialogInstance {
       onHidden: () => {
         if (closeAbortController.signal.aborted) return;
 
+        demoteDialogOwnedFloatingPortals(this.elements.content);
         this.closeNativeDialog();
         this.unregisterOpenLayer();
         this.notifyParentNestedClose();

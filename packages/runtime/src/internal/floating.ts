@@ -11,12 +11,14 @@ import {
 } from "@floating-ui/dom";
 
 export type FloatingAlign = "center" | "end" | "start";
+export type FloatingCollisionStrategy = "best-fit" | "initial-placement";
 export type FloatingSide = "bottom" | "left" | "right" | "top";
 
 export type FloatingOptions = {
   align: FloatingAlign;
   alignOffset?: number;
   avoidCollisions?: boolean;
+  collisionStrategy?: FloatingCollisionStrategy;
   preserveAnchor?: boolean;
   side: FloatingSide;
   sideOffset?: number;
@@ -134,14 +136,59 @@ export function resolveFloatingPortalTarget(
     floatingRootSelector = DEFAULT_FLOATING_ROOT_SELECTOR,
   } = options;
 
+  const dialogOwner = resolveFloatingPortalOwner(reference, { dialogFloatingHostSelector });
+  if (dialogOwner) {
+    const dialogFloatingRoots = Array.from(dialogOwner.children).filter(
+      (child): child is HTMLElement =>
+        child instanceof HTMLElement && child.matches(floatingRootSelector),
+    );
+    const dialogFloatingRoot =
+      dialogFloatingRoots.find((root) => !root.hasAttribute("data-sw-floating-root")) ??
+      dialogFloatingRoots[0];
+    if (dialogFloatingRoot) return dialogFloatingRoot;
+
+    const internalFloatingRoot = dialogOwner.ownerDocument.createElement("div");
+    internalFloatingRoot.setAttribute("data-floating-root", "");
+    internalFloatingRoot.setAttribute("data-sw-floating-root", "dialog");
+    dialogOwner.append(internalFloatingRoot);
+    return internalFloatingRoot;
+  }
+
   const currentFloatingRoot = reference?.closest(floatingRootSelector);
   if (currentFloatingRoot instanceof HTMLElement) return currentFloatingRoot;
 
-  const dialogHost = reference?.closest(dialogFloatingHostSelector);
-  const dialogFloatingRoot = dialogHost?.querySelector(`:scope > ${floatingRootSelector}`);
-  if (dialogFloatingRoot instanceof HTMLElement) return dialogFloatingRoot;
+  return reference?.ownerDocument.body ?? document.body;
+}
 
-  return document.body;
+export function resolveFloatingPortalOwner(
+  reference: Element | null,
+  options: Pick<ResolveFloatingPortalTargetOptions, "dialogFloatingHostSelector"> = {},
+): HTMLDialogElement | null {
+  const { dialogFloatingHostSelector = DEFAULT_DIALOG_FLOATING_HOST_SELECTOR } = options;
+  const dialogOwner = reference?.closest(dialogFloatingHostSelector);
+
+  return dialogOwner instanceof HTMLDialogElement ? dialogOwner : null;
+}
+
+export function resolveFloatingPortalTargetOwner(
+  portalTarget: HTMLElement,
+  options: ResolveFloatingPortalTargetOptions = {},
+): HTMLDialogElement | null {
+  const {
+    dialogFloatingHostSelector = DEFAULT_DIALOG_FLOATING_HOST_SELECTOR,
+    floatingRootSelector = DEFAULT_FLOATING_ROOT_SELECTOR,
+  } = options;
+  const parent = portalTarget.parentElement;
+
+  if (
+    parent instanceof HTMLDialogElement &&
+    parent.matches(dialogFloatingHostSelector) &&
+    portalTarget.matches(floatingRootSelector)
+  ) {
+    return parent;
+  }
+
+  return null;
 }
 
 export function getTransformOrigin(side: FloatingSide, align: FloatingAlign): string {
@@ -188,30 +235,43 @@ async function updateFloatingPosition({
     align,
     alignOffset = 0,
     avoidCollisions = true,
+    collisionStrategy = "initial-placement",
     preserveAnchor = false,
     side,
     sideOffset = 0,
     strategy = "fixed",
     viewportPadding = 8,
   } = getOptions();
+  if (collisionStrategy === "best-fit") {
+    floating.style.removeProperty(FLOATING_AVAILABLE_HEIGHT_PROPERTY);
+    floating.style.removeProperty(FLOATING_AVAILABLE_WIDTH_PROPERTY);
+  }
+  const sizeMiddleware = size({
+    apply({ availableHeight, availableWidth, elements }) {
+      elements.floating.style.setProperty(
+        FLOATING_AVAILABLE_HEIGHT_PROPERTY,
+        `${Math.max(0, availableHeight)}px`,
+      );
+      elements.floating.style.setProperty(
+        FLOATING_AVAILABLE_WIDTH_PROPERTY,
+        `${Math.max(0, availableWidth)}px`,
+      );
+    },
+    padding: viewportPadding,
+  });
+  const flipMiddleware = avoidCollisions
+    ? flip({
+        fallbackStrategy: collisionStrategy === "best-fit" ? "bestFit" : "initialPlacement",
+        padding: viewportPadding,
+      })
+    : null;
+  const collisionMiddleware =
+    collisionStrategy === "best-fit"
+      ? [flipMiddleware, sizeMiddleware]
+      : [sizeMiddleware, flipMiddleware];
   const middleware = [
     offset({ alignmentAxis: alignOffset, mainAxis: sideOffset }),
-    size({
-      apply({ availableHeight, availableWidth, elements }) {
-        elements.floating.style.setProperty(
-          FLOATING_AVAILABLE_HEIGHT_PROPERTY,
-          `${Math.max(0, availableHeight)}px`,
-        );
-        elements.floating.style.setProperty(
-          FLOATING_AVAILABLE_WIDTH_PROPERTY,
-          `${Math.max(0, availableWidth)}px`,
-        );
-      },
-      padding: viewportPadding,
-    }),
-    avoidCollisions
-      ? flip({ fallbackStrategy: "initialPlacement", padding: viewportPadding })
-      : null,
+    ...collisionMiddleware,
     avoidCollisions && !preserveAnchor
       ? shift({ crossAxis: true, padding: viewportPadding })
       : null,

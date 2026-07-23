@@ -395,7 +395,7 @@ describe("GenericAdapterPlan", () => {
     ]);
     expect(plan.floating).toEqual({
       anchorPart: "trigger",
-      optionProps: ["side", "align", "sideOffset", "avoidCollisions"],
+      optionProps: ["side", "align", "sideOffset", "avoidCollisions", "collisionStrategy"],
       portalPart: "portal",
       positionerPart: "positioner",
       popupPart: "popup",
@@ -550,7 +550,10 @@ describe("GenericAdapterPlan", () => {
       });
       expect(component.floating).toEqual({
         anchorPart: "trigger",
-        optionProps: ["side", "align", "sideOffset", "avoidCollisions"],
+        optionProps:
+          component.component === "popover"
+            ? ["side", "align", "sideOffset", "avoidCollisions", "collisionStrategy"]
+            : ["side", "align", "sideOffset", "avoidCollisions"],
         popupPart: "popup",
         portalPart: "portal",
         positionerPart: "positioner",
@@ -564,6 +567,7 @@ describe("GenericAdapterPlan", () => {
         "data-align",
         "data-side-offset",
         "data-avoid-collisions",
+        ...(component.component === "popover" ? ["data-collision-strategy"] : []),
       ]);
       expect(component.staticAttributesByPart.popup).toEqual(
         expect.arrayContaining([
@@ -573,6 +577,7 @@ describe("GenericAdapterPlan", () => {
           "data-align",
           "data-side-offset",
           "data-avoid-collisions",
+          ...(component.component === "popover" ? ["data-collision-strategy"] : []),
           "hidden",
         ]),
       );

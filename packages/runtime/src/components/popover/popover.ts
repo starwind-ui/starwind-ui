@@ -10,6 +10,7 @@ import { dispatchCustomEvent } from "../../internal/events";
 import {
   createFloatingPositioner,
   type FloatingAlign,
+  type FloatingCollisionStrategy,
   type FloatingPositioner,
   type FloatingSide,
   resolveFloatingPortalTarget,
@@ -118,6 +119,7 @@ const POPOVER_SIDE_ATTRIBUTE = "data-side";
 const POPOVER_ALIGN_ATTRIBUTE = "data-align";
 const POPOVER_SIDE_OFFSET_ATTRIBUTE = "data-side-offset";
 const POPOVER_AVOID_COLLISIONS_ATTRIBUTE = "data-avoid-collisions";
+const POPOVER_COLLISION_STRATEGY_ATTRIBUTE = "data-collision-strategy";
 const instances = new WeakMap<HTMLElement, PopoverController>();
 const popupOwners = new WeakMap<HTMLElement, PopoverController>();
 
@@ -190,10 +192,15 @@ class PopoverController implements PopoverInstance {
       containsTarget: (target) => this.containsTarget(target),
       createFloatingPositioner: (reference, positionOptions) =>
         this.createPopoverPositioner(reference, positionOptions),
+      forceUncontrolledOwnerClose: () => {
+        this.openState = false;
+        this.applyOpenState(false, { reason: "imperative-action" });
+      },
       getFloatingReference: () => this.getConnectedActiveTrigger(),
       getOpen: () => this.openState,
       getPortalElement: () => this.getPortalElement(),
       getPortalTarget: () => this.resolvePortalTarget(),
+      isOpenControlled: () => this.controlled,
       isDestroyed: () => this.destroyed,
       lockDocumentScroll,
       onBeforeClose: () => {
@@ -222,6 +229,9 @@ class PopoverController implements PopoverInstance {
       },
       onOpenFrame: () => {
         focusFirstElement(this.elements.popup, { preventScroll: true });
+      },
+      onOwnerCloseRequest: () => {
+        this.requestOpen(false, { reason: "imperative-action" });
       },
       onOutsidePointerDown: (event) => {
         this.requestOpen(false, { event, reason: "outside-press" });
@@ -579,7 +589,7 @@ class PopoverController implements PopoverInstance {
     const portalElement = this.getPortalElement();
 
     return (
-      this.root.contains(target) ||
+      this.elements.triggers.some((trigger) => trigger.contains(target)) ||
       portalElement.contains(target) ||
       Boolean(this.elements.portal?.contains(target)) ||
       this.isTargetInPopoverTree(target)
@@ -622,6 +632,9 @@ class PopoverController implements PopoverInstance {
         avoidCollisions:
           options.avoidCollisions ??
           readBooleanAttribute(placementElement, POPOVER_AVOID_COLLISIONS_ATTRIBUTE, true),
+        collisionStrategy: readCollisionStrategyAttribute(
+          placementElement.getAttribute(POPOVER_COLLISION_STRATEGY_ATTRIBUTE),
+        ),
         preserveAnchor: true,
         side: readSideAttribute(placementElement.getAttribute(POPOVER_SIDE_ATTRIBUTE)),
         sideOffset: readNumberAttribute(placementElement, POPOVER_SIDE_OFFSET_ATTRIBUTE, 4),
@@ -860,6 +873,10 @@ function isDisabledTrigger(trigger: HTMLElement): boolean {
 function readAlignAttribute(value: string | null): FloatingAlign {
   if (value === "end" || value === "start") return value;
   return "center";
+}
+
+function readCollisionStrategyAttribute(value: string | null): FloatingCollisionStrategy {
+  return value === "best-fit" ? "best-fit" : "initial-placement";
 }
 
 function readSideAttribute(value: string | null): FloatingSide {

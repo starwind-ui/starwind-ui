@@ -1,0 +1,30 @@
+---
+import avatarImage from "@/assets/images/pricing-9.jpg";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/starwind-runtime/avatar";
+---
+
+<main>
+  <h1>Avatar lazy image smoke fixture</h1>
+
+  <Avatar id="avatar-eager-url">
+    <AvatarImage src={avatarImage.src} alt="Eager URL avatar" loading="eager" />
+    <AvatarFallback>EU</AvatarFallback>
+  </Avatar>
+
+  <Avatar id="avatar-error">
+    <AvatarImage src="data:image/png;base64,invalid" alt="Broken avatar" />
+    <AvatarFallback>ER</AvatarFallback>
+  </Avatar>
+
+  <div aria-hidden="true" style="height: 10000px"></div>
+
+  <Avatar id="avatar-lazy-imported">
+    <AvatarImage
+      image={avatarImage}
+      alt="Imported lazy avatar"
+      loading="lazy"
+      style="object-position: 25% 75%; outline: 0 solid transparent"
+    />
+    <AvatarFallback>IL</AvatarFallback>
+  </Avatar>
+</main>

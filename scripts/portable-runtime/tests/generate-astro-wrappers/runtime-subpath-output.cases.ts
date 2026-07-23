@@ -48,17 +48,26 @@ export function defineAstroRuntimeSubpathOutputTests(getTempRoot: GetTempRoot): 
     );
     expect(tree["form/index.ts"]).toContain('from "@starwind-ui/runtime/form";');
     expect(tree["form/index.ts"]).toContain('from "@starwind-ui/runtime";');
-    for (const identifier of [
+    const formFacadeIdentifiers = [
       "createForm",
       "createFormSchemaValidator",
       "validateFormSchema",
+      "FormExternalErrorOptions",
       "FormExternalErrors",
+      "FormInstance",
+      "FormOptions",
+      "FormResetValidationOptions",
       "FormSchemaResult",
+      "FormValidateOptions",
+      "FormValidationCause",
+      "FormValidationOutcome",
       "FormValidationTiming",
       "FormValues",
-    ]) {
+    ];
+    for (const identifier of formFacadeIdentifiers) {
       expect(countIdentifierOccurrences(tree["form/index.ts"], identifier)).toBe(1);
     }
+    expect(tree["index.ts"]).toContain('export * from "./form";');
     expect(tree["toast/index.ts"]).toContain('export { toast } from "@starwind-ui/runtime/toast";');
     expect(tree["toast/index.ts"]).toContain("ToastApi, ToastOptions, ToastPromiseOptions");
     expect(tree["theme/index.ts"]).toContain(

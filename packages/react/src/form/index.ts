@@ -16,8 +16,15 @@ export { Form, FormErrorSummary, FormRoot };
 export default Form;
 
 export type {
+  FormExternalErrorOptions,
   FormExternalErrors,
+  FormInstance,
+  FormOptions,
+  FormResetValidationOptions,
   FormSchemaResult,
+  FormValidateOptions,
+  FormValidationCause,
+  FormValidationOutcome,
   FormValidationTiming,
   FormValues,
 } from "@starwind-ui/runtime";

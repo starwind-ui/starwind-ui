@@ -15,15 +15,17 @@ import { Form } from "@/components/starwind-runtime/form";
   <div class="mb-5 space-y-2">
     <h2 class="font-heading text-2xl font-semibold tracking-tight">Async availability</h2>
     <p class="text-muted-foreground text-sm">
-      Debounced validators can check remote-style rules and still block managed submit.
+      Submit once to check availability; accepted changes then run the debounced validator while you
+      correct the handle.
     </p>
   </div>
 
   <Form
     id="runtime-async-validation-form"
     class="grid gap-4"
-    data-validation-timing="input"
-    data-error-visibility="input"
+    data-validation-timing="submit"
+    data-revalidation-timing="change"
+    data-error-visibility="submit"
   >
     <Field name="runtimeAsyncHandle">
       <FieldLabel>Team handle</FieldLabel>
@@ -44,7 +46,7 @@ import { Form } from "@/components/starwind-runtime/form";
     id="runtime-async-validation-output"
     class="text-muted-foreground mt-3 block text-sm whitespace-pre-wrap"
   >
-    Type to run a debounced availability check.
+    Submit to check availability; later accepted changes recheck it.
   </output>
 </section>
 
@@ -102,6 +104,9 @@ import { Form } from "@/components/starwind-runtime/form";
   }
 
   asyncForm?.addEventListener("reset", () => {
-    window.setTimeout(() => renderAsyncOutput("Type to run a debounced availability check."), 0);
+    window.setTimeout(
+      () => renderAsyncOutput("Submit to check availability; later accepted changes recheck it."),
+      0,
+    );
   });
 </script>

@@ -61,11 +61,21 @@ class OverlayDismissalRegistry {
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
     if (event.key !== "Escape") return;
+    if (event.defaultPrevented) return;
 
     this.pruneDisconnectedEntries();
+    const activeModalRealm = resolveActiveModalRealm(event, this.ownerDocument);
 
     for (const entry of this.getEntriesFromTopmost()) {
-      if (entry.onEscapeKeyDown?.(event)) return;
+      if (
+        activeModalRealm.hasModal &&
+        (!activeModalRealm.owner ||
+          (!activeModalRealm.owner.contains(entry.root) &&
+            !activeModalRealm.owner.contains(entry.floating)))
+      ) {
+        continue;
+      }
+      if (entry.onEscapeKeyDown?.(event) || event.defaultPrevented) return;
     }
   };
 
@@ -74,8 +84,11 @@ class OverlayDismissalRegistry {
 
     this.pruneDisconnectedEntries();
 
-    for (const entry of this.getEntriesFromTopmost()) {
-      if (this.entryContainsTarget(entry, event.target)) continue;
+    const entries = this.getEntriesFromTopmost();
+    const containingEntries = this.getEntriesContainingTarget(entries, event.target);
+
+    for (const entry of entries) {
+      if (containingEntries.has(entry)) continue;
       if (!entry.onOutsidePointerDown) continue;
 
       entry.onOutsidePointerDown(event);
@@ -85,7 +98,7 @@ class OverlayDismissalRegistry {
   private startListening(): void {
     if (this.listening) return;
 
-    this.ownerDocument.addEventListener("keydown", this.handleKeyDown);
+    this.ownerDocument.addEventListener("keydown", this.handleKeyDown, { capture: true });
     this.ownerDocument.addEventListener("pointerdown", this.handlePointerDown);
     this.listening = true;
   }
@@ -93,7 +106,7 @@ class OverlayDismissalRegistry {
   private stopListeningIfIdle(): void {
     if (!this.listening || this.entries.length > 0) return;
 
-    this.ownerDocument.removeEventListener("keydown", this.handleKeyDown);
+    this.ownerDocument.removeEventListener("keydown", this.handleKeyDown, { capture: true });
     this.ownerDocument.removeEventListener("pointerdown", this.handlePointerDown);
     this.listening = false;
   }
@@ -113,6 +126,34 @@ class OverlayDismissalRegistry {
     return [...this.entries].reverse();
   }
 
+  private getEntriesContainingTarget(
+    entries: OverlayDismissalEntry[],
+    target: Node,
+  ): Set<OverlayDismissalEntry> {
+    const containingEntries = new Set(
+      entries.filter((entry) => this.entryContainsTarget(entry, target)),
+    );
+
+    let addedOwner = true;
+    while (addedOwner) {
+      addedOwner = false;
+
+      for (const entry of entries) {
+        if (containingEntries.has(entry)) continue;
+
+        const ownsContainingOverlay = Array.from(containingEntries).some((containedEntry) =>
+          this.entryContainsTarget(entry, containedEntry.root),
+        );
+        if (!ownsContainingOverlay) continue;
+
+        containingEntries.add(entry);
+        addedOwner = true;
+      }
+    }
+
+    return containingEntries;
+  }
+
   private entryContainsTarget(entry: OverlayDismissalEntry, target: Node): boolean {
     return entry.contains
       ? entry.contains(target)
@@ -123,4 +164,27 @@ class OverlayDismissalRegistry {
 function isDocumentNode(value: EventTarget | null, ownerDocument: Document): value is Node {
   const NodeConstructor = ownerDocument.defaultView?.Node ?? Node;
   return value instanceof NodeConstructor;
+}
+
+function resolveActiveModalRealm(
+  event: KeyboardEvent,
+  ownerDocument: Document,
+): { hasModal: boolean; owner: HTMLDialogElement | null } {
+  const ElementConstructor = ownerDocument.defaultView?.Element;
+  const eventTarget =
+    ElementConstructor && event.target instanceof ElementConstructor ? event.target : null;
+  const eventOwner = eventTarget?.closest<HTMLDialogElement>("dialog:modal") ?? null;
+  if (eventOwner) return { hasModal: true, owner: eventOwner };
+
+  const activeElement =
+    ElementConstructor && ownerDocument.activeElement instanceof ElementConstructor
+      ? ownerDocument.activeElement
+      : null;
+  const focusOwner = activeElement?.closest<HTMLDialogElement>("dialog:modal") ?? null;
+  if (focusOwner) return { hasModal: true, owner: focusOwner };
+
+  return {
+    hasModal: ownerDocument.querySelector("dialog:modal") !== null,
+    owner: null,
+  };
 }

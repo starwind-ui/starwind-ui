@@ -72,6 +72,9 @@ onBeforeUnmount(destroyOwnedInstance);
 }
 
 function printImage(facts: AdapterMediaStatusFacts): string {
+  const visibilityProperty = facts.presence.imageConcealment.property;
+  const visibilityValue = facts.presence.imageConcealment.value;
+
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
 import type { ${facts.state.type}, ${facts.event.detailsType} } from "${facts.runtime.importSource}";
@@ -128,7 +131,8 @@ onBeforeUnmount(unbindLoadingStatusChange);
     :src="props.${facts.props.src.name}"
     ${facts.parts.image.discoveryAttribute}
     ${facts.attrs.imageStatus}="idle"
-    :hidden="true"
+    :style="[attrs.style, { ${visibilityProperty}: '${visibilityValue}' }]"
+    :hidden="false"
   />
 </template>
 `;

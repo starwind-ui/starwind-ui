@@ -12,9 +12,42 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 const HOST = "127.0.0.1";
+const ACCEPTANCE_WORKSPACE_FILE = "pnpm-workspace.yaml";
+const ASTRO_SCAFFOLD_VERSION = "5.2.2";
+const VITE_SCAFFOLD_VERSION = "9.1.1";
 
 const EXACT_VERSION_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+
+export function getAcceptanceWorkspacePolicy() {
+  return `packages:
+  - astro
+  - react
+minimumReleaseAge: 0
+minimumReleaseAgeStrict: false
+allowBuilds:
+  esbuild: true
+`;
+}
+
+export function getAcceptancePnpmEnvironment() {
+  return {
+    PNPM_CONFIG_MINIMUM_RELEASE_AGE: "0",
+    PNPM_CONFIG_MINIMUM_RELEASE_AGE_STRICT: "false",
+  };
+}
+
+export function getAcceptanceRootPackage(version) {
+  return `${JSON.stringify(
+    {
+      devDependencies: { starwind: version },
+      name: "starwind-published-release-acceptance",
+      private: true,
+    },
+    null,
+    2,
+  )}\n`;
+}
 
 const ASTRO_FIXTURE = `---
 import "../styles/starwind.css";
@@ -160,46 +193,56 @@ export function parseArgs(argv) {
 
 export function createAcceptancePlan({ root, version }) {
   const cliSpecifier = `starwind@${version}`;
+  const cliEntrypoint = path.join(root, "node_modules", "starwind", "dist", "index.js");
   const components = ["button", "dialog", "context-menu"];
-  const createProject = (framework, scaffoldArgs, { install = false } = {}) => {
+  const createProject = (framework, scaffoldArgs) => {
     const directory = path.join(root, framework);
 
     return {
       add: {
-        args: ["dlx", cliSpecifier, "add", ...components, "--yes"],
+        args: [cliEntrypoint, "add", ...components, "--yes"],
+        command: process.execPath,
         cwd: directory,
       },
       build: { args: ["build"], cwd: directory },
       directory,
       framework,
       init: {
-        args: ["dlx", cliSpecifier, "init", "--defaults", `--${framework}`],
+        args: [cliEntrypoint, "init", "--defaults", `--${framework}`],
+        command: process.execPath,
         cwd: directory,
       },
-      ...(install ? { install: { args: ["install"], cwd: directory } } : {}),
       scaffold: { args: scaffoldArgs, cwd: root },
-      version: { args: ["dlx", cliSpecifier, "--version"], cwd: directory },
+      version: {
+        args: [cliEntrypoint, "--version"],
+        command: process.execPath,
+        cwd: directory,
+      },
     };
   };
 
   return {
     cliSpecifier,
+    install: { args: ["install"], cwd: root },
     projects: [
       createProject("astro", [
         "create",
-        "astro@latest",
+        `astro@${ASTRO_SCAFFOLD_VERSION}`,
         "astro",
         "--template",
         "minimal",
-        "--install",
+        "--no-install",
         "--no-git",
         "--yes",
       ]),
-      createProject(
+      createProject("react", [
+        "create",
+        `vite@${VITE_SCAFFOLD_VERSION}`,
         "react",
-        ["create", "vite@latest", "react", "--template", "react-ts", "--no-interactive"],
-        { install: true },
-      ),
+        "--template",
+        "react-ts",
+        "--no-interactive",
+      ]),
     ],
     root,
     version,
@@ -240,8 +283,7 @@ function createSpawn(command, args) {
   return { args, command };
 }
 
-async function runCommand({ args, cwd }, { capture = false } = {}) {
-  const command = getPnpmCommand();
+async function runCommand({ args, command = getPnpmCommand(), cwd }, { capture = false } = {}) {
   const spawned = createSpawn(command, args);
   console.log(`[acceptance] ${path.basename(cwd)}: ${command} ${args.join(" ")}`);
 
@@ -478,16 +520,34 @@ export async function runPublishedReleaseAcceptance(options) {
     : await mkdtemp(path.join(os.tmpdir(), "starwind-published-release-artifacts-"));
   const plan = createAcceptancePlan({ root, version: options.version });
   const packageVersions = [];
+  const acceptancePnpmEnvironment = getAcceptancePnpmEnvironment();
+  const previousPnpmEnvironment = Object.fromEntries(
+    Object.keys(acceptancePnpmEnvironment).map((key) => [key, process.env[key]]),
+  );
   let browser;
 
+  await writeFile(
+    path.join(root, ACCEPTANCE_WORKSPACE_FILE),
+    getAcceptanceWorkspacePolicy(),
+    "utf8",
+  );
+  await writeFile(
+    path.join(root, "package.json"),
+    getAcceptanceRootPackage(options.version),
+    "utf8",
+  );
   await mkdir(artifacts, { recursive: true });
   console.log(`[acceptance] temporary projects: ${root}`);
   console.log(`[acceptance] diagnostic artifacts: ${artifacts}`);
 
+  Object.assign(process.env, acceptancePnpmEnvironment);
   try {
     for (const project of plan.projects) {
       await runCommand(project.scaffold);
-      if (project.install) await runCommand(project.install);
+    }
+    await runCommand(plan.install);
+
+    for (const project of plan.projects) {
       const versionResult = await runCommand(project.version, { capture: true });
       assert.equal(
         versionResult.stdout.trim(),
@@ -519,6 +579,10 @@ export async function runPublishedReleaseAcceptance(options) {
     );
     console.log(`[acceptance] published release ${options.version} passed in Astro and React`);
   } finally {
+    for (const [key, value] of Object.entries(previousPnpmEnvironment)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
     await browser?.close();
     if (options.keepTemp) console.log(`[acceptance] preserved temporary projects: ${root}`);
     else await rm(root, { force: true, recursive: true });

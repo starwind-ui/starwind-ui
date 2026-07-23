@@ -77,7 +77,11 @@ export async function add(components?: string[], options?: AddOptions) {
       }
 
       if (shouldInit) {
-        await init(true, { defaults: options?.yes, packageManager });
+        await init(true, {
+          defaults: options?.yes,
+          framework: options?.framework,
+          packageManager,
+        });
       } else {
         p.log.error(
           `Please initialize starwind with ${highlighter.info("starwind init")} before adding components`,

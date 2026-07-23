@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { initStarwind } from "../../../src/init-starwind";
+import { createDialog } from "../../../src/components/dialog/dialog";
 import { createPopover } from "../../../src/components/popover/popover";
+import { createSelect } from "../../../src/components/select/select";
 
 describe("createPopover", () => {
   beforeEach(() => {
@@ -251,6 +253,99 @@ describe("createPopover", () => {
     expect(popupRect.bottom).toBeLessThanOrEqual(window.innerHeight - 8);
   });
 
+  it("chooses the best fitting side before constraining popup height", async () => {
+    const root = renderPopover({ collisionStrategy: "best-fit" });
+    const trigger = getTrigger();
+    const popup = getPopup();
+    trigger.style.position = "fixed";
+    trigger.style.left = "100px";
+    trigger.style.top = `${window.innerHeight - 200}px`;
+    trigger.style.width = "120px";
+    trigger.style.height = "32px";
+    popup.style.width = "240px";
+    popup.style.height = "400px";
+    popup.style.maxHeight = "var(--sw-floating-available-height)";
+    popup.style.overflowY = "auto";
+
+    createPopover(root);
+    trigger.click();
+    await waitForFloatingPosition();
+
+    const popupRect = popup.getBoundingClientRect();
+    expect(popup.getAttribute("data-side")).toBe("top");
+    expect(popupRect.top).toBeGreaterThanOrEqual(8);
+    expect(popupRect.bottom).toBeLessThanOrEqual(window.innerHeight - 8);
+  });
+
+  it("preserves initial placement sizing by default", async () => {
+    const root = renderPopover();
+    const trigger = getTrigger();
+    const popup = getPopup();
+    trigger.style.position = "fixed";
+    trigger.style.left = "100px";
+    trigger.style.top = `${window.innerHeight - 200}px`;
+    trigger.style.width = "120px";
+    trigger.style.height = "32px";
+    popup.style.width = "240px";
+    popup.style.height = "400px";
+    popup.style.maxHeight = "var(--sw-floating-available-height)";
+
+    createPopover(root);
+    trigger.click();
+    await waitForFloatingPosition();
+
+    expect(popup.getAttribute("data-side")).toBe("bottom");
+  });
+
+  it("constrains oversized best-fit content on the roomier side", async () => {
+    const root = renderPopover({ collisionStrategy: "best-fit" });
+    const trigger = getTrigger();
+    const popup = getPopup();
+    trigger.style.position = "fixed";
+    trigger.style.left = "100px";
+    trigger.style.top = "160px";
+    trigger.style.width = "120px";
+    trigger.style.height = "32px";
+    popup.style.width = "240px";
+    popup.style.maxHeight = "var(--sw-floating-available-height)";
+    popup.style.overflowY = "auto";
+    const oversizedContent = document.createElement("div");
+    oversizedContent.style.height = "1000px";
+    oversizedContent.style.flexShrink = "0";
+    popup.append(oversizedContent);
+
+    createPopover(root);
+    trigger.click();
+    await waitForFloatingPosition();
+
+    const popupRect = popup.getBoundingClientRect();
+    expect(popup.getAttribute("data-side")).toBe("bottom");
+    expect(popupRect.top).toBeGreaterThanOrEqual(8);
+    expect(popupRect.bottom).toBeLessThanOrEqual(window.innerHeight - 8);
+    expect(popup.scrollHeight).toBeGreaterThan(popup.clientHeight);
+  });
+
+  it("remeasures best-fit content without a stale available height", async () => {
+    const root = renderPopover({ collisionStrategy: "best-fit" });
+    const trigger = getTrigger();
+    const popup = getPopup();
+    trigger.style.position = "fixed";
+    trigger.style.left = "100px";
+    trigger.style.top = `${window.innerHeight - 200}px`;
+    trigger.style.width = "120px";
+    trigger.style.height = "32px";
+    popup.style.width = "240px";
+    popup.style.height = "400px";
+    popup.style.maxHeight = "var(--sw-floating-available-height)";
+    popup.style.setProperty("--sw-floating-available-height", "100px");
+
+    createPopover(root);
+    trigger.click();
+    await waitForFloatingPosition();
+
+    expect(popup.getAttribute("data-side")).toBe("top");
+  });
+
   it("preserves document scroll while moving focus into the opened popup", async () => {
     const root = renderPopover();
     const firstControl = document.createElement("input");
@@ -462,6 +557,140 @@ describe("createPopover", () => {
         detail: expect.objectContaining({ open: false, reason: "escape-key" }),
       }),
     );
+  });
+
+  it("suppresses a controlled Dialog-owned Popover and restores it with the owner", () => {
+    const dialogRoot = renderDialogOwner();
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const popoverRoot = renderPopover();
+    dialogContent.append(popoverRoot);
+    const openIntents: boolean[] = [];
+    const dialog = createDialog(dialogRoot);
+    dialog.open();
+    const popover = createPopover(popoverRoot, {
+      onOpenChange: (open) => openIntents.push(open),
+      open: true,
+    });
+
+    expect(getPopup().closest("[data-sw-floating-portal]:popover-open")).not.toBeNull();
+
+    dialog.close();
+
+    expect(openIntents).toEqual([false]);
+    expect(popover.getOpen()).toBe(true);
+    expect(dialogContent.open).toBe(false);
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    dialog.open();
+
+    expect(getPopup().closest("[data-sw-floating-portal]:popover-open")).not.toBeNull();
+
+    popover.setOpen(false, { emit: false });
+    expect(getPopup().getAttribute("data-state")).toBe("closed");
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    popover.destroy();
+    dialog.destroy();
+  });
+
+  it("does not repeat controlled close intent while a Dialog-owned Popover exits", async () => {
+    const dialogRoot = renderDialogOwner();
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const popoverRoot = renderPopover();
+    dialogContent.append(popoverRoot);
+    const closeAnimation = createDeferred();
+    const openIntents: boolean[] = [];
+    const dialog = createDialog(dialogRoot);
+    dialog.open();
+    const popover = createPopover(popoverRoot, {
+      onOpenChange: (open) => openIntents.push(open),
+      open: true,
+    });
+    vi.spyOn(getPopup(), "getAnimations").mockReturnValue([
+      { finished: closeAnimation.promise } as unknown as Animation,
+    ]);
+
+    popover.setOpen(false, { emit: false });
+    expect(getPopup().getAttribute("data-state")).toBe("closed");
+    expect(dialogContent.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(1);
+
+    dialog.close();
+
+    expect(openIntents).toEqual([]);
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    closeAnimation.resolve();
+    await closeAnimation.promise;
+    await Promise.resolve();
+
+    expect(getPopup().parentElement).toBe(popoverRoot);
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    popover.destroy();
+    dialog.destroy();
+  });
+
+  it("force-resets an uncontrolled Popover when its Dialog owner close intent is canceled", () => {
+    const dialogRoot = renderDialogOwner();
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const popoverRoot = renderPopover();
+    dialogContent.append(popoverRoot);
+    popoverRoot.addEventListener("starwind:open-change", (event) => {
+      if (!(event instanceof CustomEvent) || event.detail.open !== false) return;
+      event.preventDefault();
+    });
+    const dialog = createDialog(dialogRoot);
+    dialog.open();
+    const popover = createPopover(popoverRoot);
+    popover.open();
+
+    dialog.close();
+
+    expect(popover.getOpen()).toBe(false);
+    expect(getPopup().getAttribute("data-state")).toBe("closed");
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    dialog.open();
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    popover.destroy();
+    dialog.destroy();
+  });
+
+  it("treats non-trigger siblings inside the Popover root as outside interactions", () => {
+    const root = renderPopover();
+    const controlRemainder = document.createElement("button");
+    controlRemainder.type = "button";
+    controlRemainder.textContent = "Control remainder";
+    root.append(controlRemainder);
+
+    const popover = createPopover(root);
+    getTrigger().click();
+    controlRemainder.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(popover.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+  });
+
+  it("keeps a Popover open while interacting with a nested portaled overlay", () => {
+    const root = renderPopoverWithNestedSelect();
+    const popover = createPopover(root);
+    const selectRoot = root.querySelector<HTMLElement>("[data-sw-select]")!;
+    const selectTrigger = selectRoot.querySelector<HTMLButtonElement>("[data-sw-select-trigger]")!;
+    const selectItem = selectRoot.querySelector<HTMLElement>("[data-sw-select-item]")!;
+    const popoverPopup = getPopup();
+    createSelect(selectRoot);
+
+    getTrigger().click();
+    selectTrigger.click();
+
+    expect(root.contains(selectItem)).toBe(true);
+    expect(popoverPopup.contains(selectItem)).toBe(false);
+
+    selectItem.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(popover.getOpen()).toBe(true);
+    expect(popoverPopup.hidden).toBe(false);
   });
 
   it("allows open changes and close intents to be canceled before DOM state changes", () => {
@@ -882,12 +1111,14 @@ describe("createPopover", () => {
 
 function renderPopover({
   closeDelay,
+  collisionStrategy,
   defaultOpen,
   modal,
   openOnHover,
   withBackdrop,
 }: {
   closeDelay?: number;
+  collisionStrategy?: "best-fit" | "initial-placement";
   defaultOpen?: boolean;
   modal?: boolean;
   openOnHover?: boolean;
@@ -904,7 +1135,12 @@ function renderPopover({
     >
       <button data-sw-popover-trigger>Open popover</button>
       ${withBackdrop ? "<div data-sw-popover-backdrop hidden></div>" : ""}
-      <div data-sw-popover-popup data-side="bottom" data-align="start">
+      <div
+        data-sw-popover-popup
+        data-side="bottom"
+        data-align="start"
+        ${collisionStrategy === undefined ? "" : `data-collision-strategy="${collisionStrategy}"`}
+      >
         <h2 data-sw-popover-title>Popover title</h2>
         <p data-sw-popover-description>Popover description</p>
         <button data-sw-popover-close>Close</button>
@@ -912,6 +1148,23 @@ function renderPopover({
     </div>
   `;
 
+  const root = wrapper.firstElementChild as HTMLElement;
+  document.body.append(root);
+  return root;
+}
+
+function renderDialogOwner(): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `
+    <div data-sw-dialog>
+      <button data-sw-dialog-trigger>Open dialog</button>
+      <div data-sw-dialog-overlay hidden></div>
+      <dialog data-sw-dialog-content data-slot="dialog-content">
+        <h2 data-sw-dialog-title>Dialog title</h2>
+        <button data-sw-dialog-close>Close dialog</button>
+      </dialog>
+    </div>
+  `;
   const root = wrapper.firstElementChild as HTMLElement;
   document.body.append(root);
   return root;
@@ -1049,6 +1302,31 @@ function renderNestedPopover(): {
     parentRoot,
     parentTrigger: document.querySelector<HTMLButtonElement>("#parent-trigger")!,
   };
+}
+
+function renderPopoverWithNestedSelect(): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `
+    <div data-sw-popover data-floating-root>
+      <button data-sw-popover-trigger>Open popover</button>
+      <div data-sw-popover-popup data-side="bottom" data-align="start">
+        <div data-sw-select data-modal="false">
+          <button data-sw-select-trigger>Choose theme</button>
+          <div data-sw-select-popup data-side="bottom" data-align="start">
+            <div data-sw-select-list>
+              <div data-sw-select-item data-value="system">
+                <span data-sw-select-item-text>System</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const root = wrapper.firstElementChild as HTMLElement;
+  document.body.append(root);
+  return root;
 }
 
 function renderPopoverWithPositioner(): HTMLElement {

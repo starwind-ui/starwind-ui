@@ -78,16 +78,17 @@ describe("generated Vue Avatar Primitive", () => {
       'root.addEventListener("starwind:loading-status-change"',
     );
     expect(first.sources["AvatarImage.vue"]).toContain('previousStatus: "idle"');
-    expect(first.sources["AvatarImage.vue"]).toContain(':hidden="true"');
+    expect(first.sources["AvatarImage.vue"]).toContain(
+      `:style="[attrs.style, { visibility: 'hidden' }]"`,
+    );
+    expect(first.sources["AvatarImage.vue"]).toContain(':hidden="false"');
 
     expect(first.sources["AvatarFallback.vue"]).toContain("delay?: number;");
     expect(first.sources["AvatarFallback.vue"]).toContain(':data-delay="props.delay"');
     expect(first.sources["AvatarFallback.vue"]).toContain(
       `:hidden="props.delay !== undefined || includesBooleanAttribute(attrs.hidden)"`,
     );
-    expect(first.sources["AvatarFallback.vue"]).toContain(
-      `return value === "" || Boolean(value);`,
-    );
+    expect(first.sources["AvatarFallback.vue"]).toContain(`return value === "" || Boolean(value);`);
     expect(first.index).toContain('export { default as AvatarRoot } from "./AvatarRoot.vue";');
     expect(first.index).toContain('export { default as AvatarImage } from "./AvatarImage.vue";');
     expect(first.index).toContain(

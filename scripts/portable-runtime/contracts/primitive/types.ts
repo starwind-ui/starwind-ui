@@ -174,6 +174,7 @@ export type PrimitiveInitialVisibilityContract = {
   condition?: string;
   delivery: "markup" | "ref-initializer" | "runtime-measurement";
   hidden: boolean;
+  mechanism?: "css-visibility" | "hidden-attribute";
   part: string;
   targets: FrameworkTarget[];
 };

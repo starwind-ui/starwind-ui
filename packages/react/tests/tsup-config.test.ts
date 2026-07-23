@@ -1,4 +1,6 @@
 import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
@@ -48,6 +50,7 @@ const expectedEntries = Object.fromEntries([
   ["index", "src/index.ts"],
   ...componentDirectories.map((component) => [`${component}/index`, `src/${component}/index.ts`]),
 ]);
+const reactPackageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 describe("React tsup entry points", () => {
   it("pins stable sorted public output names and source mappings", () => {
@@ -57,8 +60,10 @@ describe("React tsup entry points", () => {
   });
 
   it("scopes the enlarged heap to the production build wrapper", async () => {
-    const packageJson = JSON.parse(await readFile("packages/react/package.json", "utf8"));
-    const buildWrapper = await readFile("packages/react/scripts/build.mjs", "utf8");
+    const packageJson = JSON.parse(
+      await readFile(path.join(reactPackageRoot, "package.json"), "utf8"),
+    );
+    const buildWrapper = await readFile(path.join(reactPackageRoot, "scripts/build.mjs"), "utf8");
 
     expect(packageJson.scripts.build).toBe("node --max-old-space-size=8192 scripts/build.mjs");
     expect(buildWrapper).toContain('import { rm } from "node:fs/promises"');

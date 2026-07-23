@@ -43,6 +43,11 @@ export interface RegistryTarget {
   packageRequirements: RegistryPackageRequirement[];
 }
 
+export interface RegistrySetupTarget {
+  adapterPackage: RegistryPackageRequirement;
+  packageRequirements: RegistryPackageRequirement[];
+}
+
 export interface Component {
   name: string;
   version: string;
@@ -63,6 +68,9 @@ export interface RegistryComponentArtifact {
 export interface StarwindRegistry {
   $schema?: string;
   version: string;
+  setup?: Partial<
+    Record<Extract<RegistryImplementationTarget, "astro" | "react">, RegistrySetupTarget>
+  >;
   components: Component[];
 }
 
@@ -118,6 +126,7 @@ export function getStyledRegistrySource(
 }
 
 const VALID_TARGETS = new Set<RegistryImplementationTarget>(["legacy-astro", "astro", "react"]);
+const VALID_SETUP_TARGETS = new Set<RegistryImplementationTarget>(["astro", "react"]);
 const REQUIRED_TARGET_PACKAGES: Record<RegistryImplementationTarget, string[]> = {
   "legacy-astro": [],
   astro: ["@starwind-ui/astro"],
@@ -169,6 +178,48 @@ const packageRequirementSchema = z
     range: semverRangeSchema,
   })
   .strict();
+
+const registrySetupTargetSchema = z
+  .object({
+    adapterPackage: packageRequirementSchema,
+    packageRequirements: z.array(packageRequirementSchema).default([]),
+  })
+  .strict()
+  .superRefine((setupTarget, ctx) => {
+    const seenPackageNames = new Set<string>();
+
+    for (const [index, requirement] of setupTarget.packageRequirements.entries()) {
+      if (requirement.name === setupTarget.adapterPackage.name) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["packageRequirements", index, "name"],
+          message: `Setup package requirements must not repeat adapter package ${requirement.name}`,
+        });
+      }
+
+      if (seenPackageNames.has(requirement.name)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["packageRequirements", index, "name"],
+          message: `Duplicate setup package requirement ${requirement.name}`,
+        });
+      }
+
+      seenPackageNames.add(requirement.name);
+    }
+  });
+
+const registrySetupSchema = z.record(registrySetupTargetSchema).superRefine((setup, ctx) => {
+  for (const target of Object.keys(setup)) {
+    if (!VALID_SETUP_TARGETS.has(target as RegistryImplementationTarget)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [target],
+        message: `Unsupported registry setup target "${target}"`,
+      });
+    }
+  }
+});
 
 const publicRenameSchema = z
   .object({
@@ -302,6 +353,7 @@ const registryRootSchema = z
   .object({
     $schema: z.string().optional(),
     version: semverVersionSchema,
+    setup: registrySetupSchema.optional(),
     components: z.array(componentSchema),
   })
   .strict();

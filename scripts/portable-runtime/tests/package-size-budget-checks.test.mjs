@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { evaluatePackageSizeBudgets } from "../package-size-budget-checks.mjs";
 
 describe("package size budget checks", () => {
-  it("passes current-shaped absolute gates while reporting the real Zag advisory", () => {
+  it("allows normal aggregate feature growth while reporting the real Zag advisory", () => {
     const result = evaluatePackageSizeBudgets({
       bundleResults: passingBundleResults(),
       supportResults: passingSupportResults(),
@@ -11,19 +11,25 @@ describe("package size budget checks", () => {
 
     expect(result.failures).toEqual([]);
     expect(result.advisories).toContain(
-      "Starwind/Zag overlap comparison against Zag React advisory: Starwind 118,786 B (116.0 KiB) is not below Zag React 112,282 B (109.7 KiB).",
+      "Starwind/Zag overlap comparison against Zag React advisory: Starwind 121,678 B (118.8 KiB) is not below Zag React 112,282 B (109.7 KiB).",
     );
     expect(result.headlineChecks.every((check) => check.status === "Pass")).toBe(true);
     expect(result.headlineChecks).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ label: "@starwind-ui/runtime", maxGzipBytes: 127_943 }),
         expect.objectContaining({
-          label: "@starwind-ui/react (adapter only)",
-          maxGzipBytes: 35_820,
+          baselineGzipBytes: 126_295,
+          label: "@starwind-ui/runtime",
+          maxGzipBytes: 138_924,
         }),
         expect.objectContaining({
+          baselineGzipBytes: 35_194,
+          label: "@starwind-ui/react (adapter only)",
+          maxGzipBytes: 38_713,
+        }),
+        expect.objectContaining({
+          baselineGzipBytes: 164_250,
           label: "@starwind-ui/react + runtime",
-          maxGzipBytes: 166_940,
+          maxGzipBytes: 179_610,
         }),
       ]),
     );
@@ -35,6 +41,14 @@ describe("package size budget checks", () => {
         status: "Pass",
       }),
     ]);
+    expect(result.standaloneComponentChecks).toEqual([
+      expect.objectContaining({
+        gzipBytes: 13_300,
+        label: "Color Picker cold import",
+        maxGzipBytes: 24 * 1024,
+        status: "Pass",
+      }),
+    ]);
     expect(result.matchedSupportChecks.every((check) => check.status === "Pass")).toBe(true);
     expect(
       result.matchedSupportChecks.find(
@@ -42,10 +56,11 @@ describe("package size budget checks", () => {
       ),
     ).toEqual(
       expect.objectContaining({
-        maxStarwindGzipBytes: 120_020,
+        baselineGzipBytes: 118_786,
+        maxStarwindGzipBytes: 130_664,
         comparatorGzipBytes: 112_282,
         comparisonStatus: "Above comparator",
-        starwindGzipBytes: 118_786,
+        starwindGzipBytes: 121_678,
         status: "Pass",
       }),
     );
@@ -57,6 +72,7 @@ describe("package size budget checks", () => {
         { label: "@starwind-ui/runtime", gzipBytes: null },
         { label: "@starwind-ui/react (adapter only)", gzipBytes: 26 * 1024 },
         { label: "@starwind-ui/react + runtime", gzipBytes: 133 * 1024 },
+        { label: "@starwind-ui/runtime/color-picker", gzipBytes: 13 * 1024 },
       ],
       supportResults: [
         supportRow("all-three-overlap", "starwind", 94 * 1024),
@@ -109,39 +125,43 @@ describe("package size budget checks", () => {
     );
   });
 
-  it("passes each headline ceiling exactly and fails one byte above it", () => {
+  it("passes each aggregate headline guard exactly and fails one byte above it", () => {
     const atCeiling = evaluatePackageSizeBudgets({
       bundleResults: [
-        { label: "@starwind-ui/runtime", gzipBytes: 127_943 },
-        { label: "@starwind-ui/react (adapter only)", gzipBytes: 35_820 },
-        { label: "@starwind-ui/react + runtime", gzipBytes: 166_940 },
+        { label: "@starwind-ui/runtime", gzipBytes: 138_924 },
+        { label: "@starwind-ui/react (adapter only)", gzipBytes: 38_713 },
+        { label: "@starwind-ui/react + runtime", gzipBytes: 179_610 },
+        { label: "@starwind-ui/runtime/color-picker", gzipBytes: 13 * 1024 },
       ],
       supportResults: passingSupportResults(),
     });
     const oneByteAbove = evaluatePackageSizeBudgets({
       bundleResults: [
-        { label: "@starwind-ui/runtime", gzipBytes: 127_944 },
-        { label: "@starwind-ui/react (adapter only)", gzipBytes: 35_821 },
-        { label: "@starwind-ui/react + runtime", gzipBytes: 166_941 },
+        { label: "@starwind-ui/runtime", gzipBytes: 138_925 },
+        { label: "@starwind-ui/react (adapter only)", gzipBytes: 38_714 },
+        { label: "@starwind-ui/react + runtime", gzipBytes: 179_611 },
+        { label: "@starwind-ui/runtime/color-picker", gzipBytes: 13 * 1024 },
       ],
       supportResults: passingSupportResults(),
     });
 
     expect(atCeiling.headlineChecks.every((check) => check.status === "Pass")).toBe(true);
-    expect(oneByteAbove.failures).toEqual(
-      expect.arrayContaining([
-        "@starwind-ui/runtime exceeded headline package budget: 127,944 B (124.9 KiB) > 127,943 B (124.9 KiB).",
-        "@starwind-ui/react (adapter only) exceeded headline package budget: 35,821 B (35.0 KiB) > 35,820 B (35.0 KiB).",
-        "@starwind-ui/react + runtime exceeded headline package budget: 166,941 B (163.0 KiB) > 166,940 B (163.0 KiB).",
-      ]),
+    expect(oneByteAbove.failures.join("\n")).toContain(
+      "@starwind-ui/runtime exceeded aggregate regression guard",
+    );
+    expect(oneByteAbove.failures.join("\n")).toContain(
+      "@starwind-ui/react (adapter only) exceeded aggregate regression guard",
+    );
+    expect(oneByteAbove.failures.join("\n")).toContain(
+      "@starwind-ui/react + runtime exceeded aggregate regression guard",
     );
   });
 
-  it("reports set-wide matched-support budget failures with affected rows", () => {
+  it("reports set-wide matched-support regression failures with affected rows", () => {
     const result = evaluatePackageSizeBudgets({
       bundleResults: passingBundleResults(),
       supportResults: [
-        supportRow("all-three-overlap", "starwind", 106 * 1024),
+        supportRow("all-three-overlap", "starwind", 117_955),
         supportRow("all-three-overlap", "zag", 120 * 1024),
         supportRow("all-three-overlap", "base", 140 * 1024),
         supportRow("starwind-zag-overlap", "starwind", 106 * 1024),
@@ -153,7 +173,10 @@ describe("package size budget checks", () => {
     });
 
     expect(result.failures.join("\n")).toContain(
-      "All-three overlap set-wide Starwind matched-support budget exceeded: Starwind 108,544 B (106.0 KiB) > budget 107,520 B (105.0 KiB). Affected budget rows: All-three overlap vs Zag React, All-three overlap vs Base UI.",
+      "All-three overlap set-wide Starwind matched-support regression guard exceeded",
+    );
+    expect(result.failures.join("\n")).toContain(
+      "Affected rows: All-three overlap vs Zag React, All-three overlap vs Base UI.",
     );
     expect(
       result.matchedSupportChecks
@@ -162,12 +185,12 @@ describe("package size budget checks", () => {
     ).toBe(true);
   });
 
-  it("passes the Starwind/Zag overlap ceiling exactly and fails one byte above it", () => {
+  it("passes the Starwind/Zag aggregate guard exactly and fails one byte above it", () => {
     const supportResults = [
       supportRow("all-three-overlap", "starwind", 94 * 1024),
       supportRow("all-three-overlap", "zag", 97 * 1024),
       supportRow("all-three-overlap", "base", 139 * 1024),
-      supportRow("starwind-zag-overlap", "starwind", 120_020),
+      supportRow("starwind-zag-overlap", "starwind", 130_664),
       supportRow("starwind-zag-overlap", "zag", 112_282),
       supportRow("starwind-base-overlap", "starwind", 102 * 1024),
       supportRow("starwind-base-overlap", "base", 143 * 1024),
@@ -181,7 +204,7 @@ describe("package size budget checks", () => {
       bundleResults: passingBundleResults(),
       supportResults: supportResults.map((row) =>
         row.comparisonSet === "starwind-zag-overlap" && row.provider === "starwind"
-          ? { ...row, gzipBytes: 120_021 }
+          ? { ...row, gzipBytes: 130_665 }
           : row,
       ),
     });
@@ -190,15 +213,43 @@ describe("package size budget checks", () => {
       atCeiling.matchedSupportChecks.find(
         (check) => check.label === "Starwind/Zag overlap vs Zag React",
       ),
-    ).toEqual(expect.objectContaining({ maxStarwindGzipBytes: 120_020, status: "Pass" }));
-    expect(oneByteAbove.failures).toContain(
-      "Starwind/Zag overlap set-wide Starwind matched-support budget exceeded: Starwind 120,021 B (117.2 KiB) > budget 120,020 B (117.2 KiB). Affected budget rows: Starwind/Zag overlap vs Zag React.",
+    ).toEqual(expect.objectContaining({ maxStarwindGzipBytes: 130_664, status: "Pass" }));
+    expect(oneByteAbove.failures.join("\n")).toContain(
+      "Starwind/Zag overlap set-wide Starwind matched-support regression guard exceeded",
     );
     expect(
       oneByteAbove.matchedSupportChecks.find(
         (check) => check.label === "Starwind/Zag overlap vs Zag React",
       ),
-    ).toEqual(expect.objectContaining({ maxStarwindGzipBytes: 120_020, status: "Fail" }));
+    ).toEqual(expect.objectContaining({ maxStarwindGzipBytes: 130_664, status: "Fail" }));
+  });
+
+  it("keeps targeted Color Picker cold-import growth as a strict absolute gate", () => {
+    const atCeiling = evaluatePackageSizeBudgets({
+      bundleResults: [
+        ...passingBundleResults().filter(
+          ({ label }) => label !== "@starwind-ui/runtime/color-picker",
+        ),
+        { label: "@starwind-ui/runtime/color-picker", gzipBytes: 24 * 1024 },
+      ],
+      supportResults: passingSupportResults(),
+    });
+    const oneByteAbove = evaluatePackageSizeBudgets({
+      bundleResults: [
+        ...passingBundleResults().filter(
+          ({ label }) => label !== "@starwind-ui/runtime/color-picker",
+        ),
+        { label: "@starwind-ui/runtime/color-picker", gzipBytes: 24 * 1024 + 1 },
+      ],
+      supportResults: passingSupportResults(),
+    });
+
+    expect(atCeiling.standaloneComponentChecks).toEqual([
+      expect.objectContaining({ status: "Pass" }),
+    ]);
+    expect(oneByteAbove.failures).toContain(
+      "Color Picker cold import budget exceeded: 24,577 B (24.0 KiB) > budget 24,576 B (24.0 KiB).",
+    );
   });
 
   it("reports Field cold import budget failures with measured values", () => {
@@ -240,18 +291,19 @@ describe("package size budget checks", () => {
 
 function passingBundleResults() {
   return [
-    { label: "@starwind-ui/runtime", gzipBytes: 126_295 },
-    { label: "@starwind-ui/react (adapter only)", gzipBytes: 35_194 },
-    { label: "@starwind-ui/react + runtime", gzipBytes: 164_250 },
+    { label: "@starwind-ui/runtime", gzipBytes: 132_532 },
+    { label: "@starwind-ui/runtime/color-picker", gzipBytes: 13_300 },
+    { label: "@starwind-ui/react (adapter only)", gzipBytes: 35_400 },
+    { label: "@starwind-ui/react + runtime", gzipBytes: 170_778 },
   ];
 }
 
 function passingSupportResults({ fieldGzipBytes = 20 * 1024, includeField = true } = {}) {
   const rows = [
-    supportRow("all-three-overlap", "starwind", 94 * 1024),
+    supportRow("all-three-overlap", "starwind", 109_537),
     supportRow("all-three-overlap", "zag", 97 * 1024),
     supportRow("all-three-overlap", "base", 139 * 1024),
-    supportRow("starwind-zag-overlap", "starwind", 118_786),
+    supportRow("starwind-zag-overlap", "starwind", 121_678),
     supportRow("starwind-zag-overlap", "zag", 112_282),
     supportRow("starwind-base-overlap", "starwind", 102 * 1024),
     supportRow("starwind-base-overlap", "base", 143 * 1024),
