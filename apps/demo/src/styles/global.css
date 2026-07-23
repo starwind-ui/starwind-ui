@@ -72,6 +72,12 @@
   --color-input: var(--input);
   --color-outline: var(--outline);
 
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
   --radius-xs: calc(var(--radius) - 0.375rem);
   --radius-sm: calc(var(--radius) - 0.25rem);
   --radius-md: calc(var(--radius) - 0.125rem);
@@ -118,6 +124,11 @@
   --border: var(--color-neutral-200);
   --input: var(--color-neutral-200);
   --outline: var(--color-neutral-400);
+  --chart-1: var(--color-blue-600);
+  --chart-2: var(--color-sky-500);
+  --chart-3: var(--color-green-500);
+  --chart-4: var(--color-amber-500);
+  --chart-5: var(--color-rose-500);
   --radius: 0.625rem;
 
   /* sidebar variables */
@@ -159,6 +170,11 @@
   --border: --alpha(var(--color-neutral-50) / 10%);
   --input: --alpha(var(--color-neutral-50) / 15%);
   --outline: var(--color-neutral-500);
+  --chart-1: var(--color-blue-400);
+  --chart-2: var(--color-sky-400);
+  --chart-3: var(--color-green-400);
+  --chart-4: var(--color-amber-400);
+  --chart-5: var(--color-rose-400);
 
   /* sidebars variables */
   --sidebar-background: var(--color-neutral-900);

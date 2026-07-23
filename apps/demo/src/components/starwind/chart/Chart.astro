@@ -1,0 +1,159 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+import type { ChartConfig } from "./variants";
+import { chart } from "./variants";
+
+type Props = HTMLAttributes<"div"> & {
+  config: ChartConfig;
+  id?: string;
+};
+
+// ponytail: module-level counter for stable SSR IDs; no Date/random = deterministic across renders
+let chartCounter = 0;
+
+const { config, id, class: className, ...rest } = Astro.props;
+const chartId = id ?? `starwind-chart-${chartCounter++}`;
+
+// Inject per-series color vars via inline style so SVG bars inherit them through CSS custom property cascade.
+// ponytail: inline style > [data-chart] <style is:inline set:html> — add the latter when light/dark theme
+// split per-series is needed (shadcn's themeObject config shape).
+const combinedStyle =
+  Object.entries(config)
+    .filter(([, cfg]) => cfg.color)
+    .map(([key, cfg]) => `--color-${key}: ${cfg.color}`)
+    .join("; ") || undefined;
+---
+
+<div
+  class={chart({ class: className })}
+  data-slot="chart"
+  data-chart={chartId}
+  style={combinedStyle}
+  {...rest}
+>
+  <slot />
+  {
+    /* Pre-paint counter-scale: runs synchronously during HTML parse (forcing a
+      layout read) so axis/value labels render at their final pixel size on the
+      FIRST paint instead of rendering tiny then jumping when the deferred module
+      script below runs. Uniform scale is exact for every chart except the two
+      anisotropic "interactive" area cards (factor≈1 there), which the module
+      scaler refines a frame later. ponytail: is:inline duplicates ~1KB/chart but
+      avoids a shared-global load-order dance; fine for a demo gallery. */
+  }
+  <script is:inline>
+    (function () {
+      var root = document.currentScript.parentElement;
+      var svgs = root.querySelectorAll("svg");
+      for (var i = 0; i < svgs.length; i++) {
+        var svg = svgs[i];
+        var vb = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width;
+        if (!vb) continue;
+        // Prefer the container div's width — it resolves earlier than the SVG's
+        // own box mid-parse, so the pre-paint pass lands more often on the busy
+        // live page. Falls back to the SVG box; 0 → skip (module scaler + the
+        // hide-until-scaled CSS cover it a frame later).
+        var w = root.clientWidth || svg.clientWidth || svg.getBoundingClientRect().width;
+        if (!w) continue;
+        var f = vb / w;
+        svg.querySelectorAll("[data-fs]").forEach(function (t) {
+          t.setAttribute("font-size", ((Number(t.getAttribute("data-fs")) || 12) * f).toFixed(2));
+          var dy = t.getAttribute("data-dy-px");
+          if (dy !== null) t.setAttribute("dy", (Number(dy) * f).toFixed(2));
+        });
+        svg.querySelectorAll("[data-sw]").forEach(function (el) {
+          el.setAttribute(
+            "stroke-width",
+            ((Number(el.getAttribute("data-sw")) || 1) * f).toFixed(2),
+          );
+        });
+        svg.querySelectorAll("[data-r]").forEach(function (el) {
+          el.setAttribute("r", ((Number(el.getAttribute("data-r")) || 4) * f).toFixed(2));
+        });
+        svg.querySelectorAll("[data-rxy]").forEach(function (el) {
+          var v = ((Number(el.getAttribute("data-rxy")) || 0) * f).toFixed(2);
+          el.setAttribute("rx", v);
+          el.setAttribute("ry", v);
+        });
+        svg.setAttribute("data-scaled", ""); // reveal labels (hidden until now by CSS)
+      }
+    })();
+  </script>
+</div>
+
+<script>
+  // Keep axis/value labels a constant pixel size regardless of the chart's
+  // rendered width. Our SVGs use a fixed viewBox that scales to fit, so raw
+  // <text> would shrink/grow with the container (Recharts keeps it fixed).
+  // Counter-scale: font-size(userUnits) = targetPx * viewBoxWidth / clientWidth.
+  // Only glyph size changes; x/y positions stay anchored to data points.
+  const scaleSvgMetrics = (svg: SVGSVGElement) => {
+    const vb = svg.viewBox?.baseVal?.width;
+    if (!vb) return;
+    const w = svg.clientWidth || svg.getBoundingClientRect().width;
+    if (!w) return; // hidden panel (display:none) → skip until visible
+    const factor = vb / w;
+    svg.querySelectorAll<SVGTextElement>("[data-fs]").forEach((t) => {
+      const px = Number(t.getAttribute("data-fs")) || 12;
+      t.setAttribute("font-size", (px * factor).toFixed(2));
+      // Screen-constant vertical offset (px → viewBox units), e.g. negative-bar
+      // month labels that must keep a fixed gap below the bar at any width.
+      const dyPx = t.getAttribute("data-dy-px");
+      if (dyPx !== null) t.setAttribute("dy", (Number(dyPx) * factor).toFixed(2));
+    });
+    svg.querySelectorAll<SVGElement>("[data-sw]").forEach((el) => {
+      const px = Number(el.getAttribute("data-sw")) || 1;
+      el.setAttribute("stroke-width", (px * factor).toFixed(2));
+    });
+    svg.querySelectorAll<SVGCircleElement>("[data-r]").forEach((el) => {
+      const px = Number(el.getAttribute("data-r")) || 4;
+      el.setAttribute("r", (px * factor).toFixed(2));
+    });
+    svg.querySelectorAll<SVGRectElement>("[data-rxy]").forEach((el) => {
+      const px = Number(el.getAttribute("data-rxy")) || 0;
+      const value = (px * factor).toFixed(2);
+      el.setAttribute("rx", value);
+      el.setAttribute("ry", value);
+    });
+    svg.setAttribute("data-scaled", ""); // reveal labels (hidden until scaled by CSS)
+  };
+
+  const observed = new WeakSet<SVGSVGElement>();
+  const ro = new ResizeObserver((entries) => {
+    for (const e of entries) scaleSvgMetrics(e.target as SVGSVGElement);
+  });
+
+  const setupAxisScaling = () => {
+    document
+      .querySelectorAll<SVGSVGElement>('[data-slot="chart"] svg:not([data-area-chart])')
+      .forEach((svg) => {
+        scaleSvgMetrics(svg);
+        if (!observed.has(svg)) {
+          observed.add(svg);
+          ro.observe(svg);
+        }
+      });
+  };
+
+  setupAxisScaling();
+  document.addEventListener("astro:after-swap", setupAxisScaling);
+  document.addEventListener("starwind:init", setupAxisScaling);
+
+  // Safety net: never leave labels hidden. If any svg reached full load without
+  // a scaler running (e.g. an unforeseen path), reveal it — a flash beats
+  // permanently-invisible labels. Area/dense scalers set data-scaled themselves.
+  window.addEventListener("load", () => {
+    document
+      .querySelectorAll<SVGSVGElement>('[data-slot="chart"] svg:not([data-scaled])')
+      .forEach((svg) => {
+        // Only reveal svgs that are actually on-screen. A hidden-tab svg
+        // (width 0) can't be scaled yet; marking it data-scaled here would flash
+        // unscaled labels the moment its tab is opened. The ResizeObserver
+        // scales and reveals it when the panel becomes visible.
+        if (!(svg.clientWidth || svg.getBoundingClientRect().width)) return;
+        scaleSvgMetrics(svg);
+        svg.setAttribute("data-scaled", "");
+      });
+  });
+</script>
