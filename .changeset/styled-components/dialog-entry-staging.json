@@ -1,7 +1,0 @@
-{
-  "components": {
-    "alert-dialog": "patch",
-    "dialog": "patch",
-    "sheet": "patch"
-  }
-}
