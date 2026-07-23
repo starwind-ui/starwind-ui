@@ -197,6 +197,7 @@ function getPresenceFloatingOverlayPartProps(
       facts.props.align,
       facts.props.sideOffset,
       facts.props.avoidCollisions,
+      facts.props.collisionStrategy,
     ].map((prop) => ({ kind: "unknown" as const, name: prop.name, type: prop.type }));
   }
 
@@ -280,6 +281,7 @@ function isPresenceFloatingOverlayPlan(
       "align",
       "sideOffset",
       "avoidCollisions",
+      "collisionStrategy",
     ]) &&
     rootPart?.defaultElement === "div" &&
     rootPart.ownsRuntime === true &&
@@ -316,7 +318,13 @@ function isPresenceFloatingOverlayPlan(
     plan.floating.portalPart === "portal" &&
     plan.floating.positionerPart === "positioner" &&
     plan.floating.popupPart === "popup" &&
-    matchNames(plan.floating.optionProps, ["side", "align", "sideOffset", "avoidCollisions"]) &&
+    matchNames(plan.floating.optionProps, [
+      "side",
+      "align",
+      "sideOffset",
+      "avoidCollisions",
+      "collisionStrategy",
+    ]) &&
     plan.asChild?.length === 1 &&
     asChild?.part === "trigger" &&
     matchNames(asChild.merges, ["aria", "className", "data", "ref"]) &&
@@ -343,6 +351,7 @@ function hasPresenceFloatingOverlayRequiredStaticAttributes(plan: GenericAdapter
     hasStaticAttribute(plan, "positioner", "data-align", "prop") &&
     hasStaticAttribute(plan, "positioner", "data-side-offset", "prop") &&
     hasStaticAttribute(plan, "positioner", "data-avoid-collisions", "prop") &&
+    hasStaticAttribute(plan, "positioner", "data-collision-strategy", "prop") &&
     hasStaticAttribute(plan, "popup", "role", "constant", "dialog") &&
     hasStaticAttribute(plan, "popup", "tabindex", "constant", "-1") &&
     hasStaticAttribute(plan, "popup", "tabIndex", "constant", "-1") &&
@@ -351,6 +360,7 @@ function hasPresenceFloatingOverlayRequiredStaticAttributes(plan: GenericAdapter
     hasStaticAttribute(plan, "popup", "data-align", "prop") &&
     hasStaticAttribute(plan, "popup", "data-side-offset", "prop") &&
     hasStaticAttribute(plan, "popup", "data-avoid-collisions", "prop") &&
+    hasStaticAttribute(plan, "popup", "data-collision-strategy", "prop") &&
     hasStaticAttribute(plan, "popup", "hidden", "state") &&
     hasStaticAttribute(plan, "backdrop", "data-state", "state") &&
     hasStaticAttribute(plan, "backdrop", "hidden", "state") &&
@@ -417,6 +427,7 @@ function getPresenceFloatingOverlayFacts(
   const alignProp = getPlanPropForTarget(plan, "align", "popup");
   const sideOffsetProp = getPlanPropForTarget(plan, "sideOffset", "popup");
   const avoidCollisionsProp = getPlanPropForTarget(plan, "avoidCollisions", "popup");
+  const collisionStrategyProp = getPlanPropForTarget(plan, "collisionStrategy", "popup");
   const openEvent = getEvent(plan, "openChange");
   const closeCompleteEvent = getEvent(plan, "closeComplete");
   const openSetter = getSetterForState(plan, "open");
@@ -435,6 +446,7 @@ function getPresenceFloatingOverlayFacts(
       description: descriptionPart.discoveryAttribute,
       floatingAlign: getStaticAttributeName(plan, popupPart, "data-align"),
       floatingAvoidCollisions: getStaticAttributeName(plan, popupPart, "data-avoid-collisions"),
+      floatingCollisionStrategy: getStaticAttributeName(plan, popupPart, "data-collision-strategy"),
       floatingSide: getStaticAttributeName(plan, popupPart, "data-side"),
       floatingSideOffset: getStaticAttributeName(plan, popupPart, "data-side-offset"),
       popup: popupPart.discoveryAttribute,
@@ -584,6 +596,7 @@ function getPresenceFloatingOverlayFacts(
       align: getAdapterFamilyProp(alignProp),
       asChild: getAdapterFamilyProp(asChildProp),
       avoidCollisions: getAdapterFamilyProp(avoidCollisionsProp),
+      collisionStrategy: getAdapterFamilyProp(collisionStrategyProp),
       closeDelay: getAdapterFamilyProp(closeDelayProp),
       closeOnEscape: getAdapterFamilyProp(getPlanProp(plan, closeOnEscapeProp!)),
       closeOnOutsideInteract: getAdapterFamilyProp(getPlanProp(plan, closeOnOutsideInteractProp!)),

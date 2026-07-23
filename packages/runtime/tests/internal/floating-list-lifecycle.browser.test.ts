@@ -5,10 +5,15 @@ import {
   createFloatingListLifecycle,
   runFloatingListOpenChangeShell,
 } from "../../src/internal/floating-list-lifecycle";
+import {
+  demoteDialogOwnedFloatingPortals,
+  promoteDialogOwnedFloatingPortals,
+  requestDialogOwnedFloatingPortalClose,
+} from "../../src/internal/floating-portal";
 
 type TestRequest = {
   event?: Event;
-  reason: "escape-key" | "outside-press" | "trigger-press";
+  reason: "escape-key" | "imperative-action" | "outside-press" | "trigger-press";
   trigger?: Element;
 };
 
@@ -227,15 +232,61 @@ describe("floating list lifecycle", () => {
     expect(harness.renderedStates).toEqual([true]);
     expect(harness.popup.parentElement).toBe(harness.portalTarget);
   });
+
+  it("keeps a dialog-owned wrapper promoted until owner-requested close animation completes", async () => {
+    const dialog = document.createElement("dialog");
+    const harness = createHarness({ owner: dialog });
+    const animationFinished = createDeferred<void>();
+    vi.spyOn(harness.popup, "getAnimations").mockReturnValue([
+      { finished: animationFinished.promise } as unknown as Animation,
+    ]);
+    dialog.showModal();
+
+    harness.open = true;
+    harness.lifecycle.applyOpenState(true, {
+      reason: "trigger-press",
+      trigger: harness.trigger,
+    });
+    expect(
+      harness.popup.closest<HTMLElement>("[data-sw-floating-portal]")?.matches(":popover-open"),
+    ).toBe(true);
+
+    requestDialogOwnedFloatingPortalClose(dialog);
+
+    expect(harness.ownerCloseRequests).toEqual([{ reason: "imperative-action" }]);
+    expect(harness.popup.getAttribute("data-state")).toBe("closed");
+    expect(
+      harness.popup.closest<HTMLElement>("[data-sw-floating-portal]")?.matches(":popover-open"),
+    ).toBe(true);
+
+    demoteDialogOwnedFloatingPortals(dialog);
+    promoteDialogOwnedFloatingPortals(dialog);
+
+    expect(harness.popup.closest("[data-sw-floating-portal]")).toBeNull();
+    expect(harness.popup.parentElement).toBe(harness.portalTarget);
+
+    animationFinished.resolve();
+    await animationFinished.promise;
+    await waitForMicrotasks();
+
+    expect(harness.popup.parentElement).toBe(harness.originalParent);
+    expect(dialog.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    harness.lifecycle.destroy();
+    dialog.close();
+    dialog.remove();
+  });
 });
 
 function createHarness({
   createFloatingPositioner,
   onOpenFrame,
+  owner,
   shouldUseFloating,
 }: {
   createFloatingPositioner?: () => FloatingPositioner;
   onOpenFrame?: () => void;
+  owner?: HTMLDialogElement;
   shouldUseFloating?: () => boolean;
 } = {}) {
   const root = document.createElement("div");
@@ -245,6 +296,7 @@ function createHarness({
   const originalParent = document.createElement("section");
   const closeCompleteRequests: TestRequest[] = [];
   const closeRequests: TestRequest[] = [];
+  const ownerCloseRequests: TestRequest[] = [];
   const renderedStates: boolean[] = [];
   const positionerFactory = createFloatingPositioner ?? (() => createPositioner());
   let currentPositioner: FloatingPositioner | null = null;
@@ -252,7 +304,14 @@ function createHarness({
 
   root.append(trigger, originalParent);
   originalParent.append(popup);
-  document.body.append(root, portalTarget);
+  if (owner) {
+    owner.setAttribute("data-slot", "dialog-content");
+    portalTarget.setAttribute("data-floating-root", "");
+    owner.append(root, portalTarget);
+    document.body.append(owner);
+  } else {
+    document.body.append(root, portalTarget);
+  }
 
   const lifecycle = createFloatingListLifecycle<TestRequest>({
     dismissal: {
@@ -284,6 +343,12 @@ function createHarness({
     portal: {
       containsTarget: (target) => root.contains(target) || popup.contains(target),
       getTarget: () => portalTarget,
+      onOwnerCloseRequest: () => {
+        const request = { reason: "imperative-action" as const };
+        ownerCloseRequests.push(request);
+        open = false;
+        lifecycle.applyOpenState(false, request);
+      },
     },
     root,
     scrollLock: {
@@ -295,6 +360,7 @@ function createHarness({
       isDestroyed: () => false,
       render: (nextOpen) => {
         renderedStates.push(nextOpen);
+        popup.setAttribute("data-state", nextOpen ? "open" : "closed");
         if (nextOpen) popup.hidden = false;
       },
     },
@@ -311,6 +377,7 @@ function createHarness({
     },
     lifecycle,
     originalParent,
+    ownerCloseRequests,
     popup,
     portalTarget,
     get positioner() {

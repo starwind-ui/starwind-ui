@@ -744,10 +744,12 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(avatarImage).toContain("image?: ImageMetadata;");
     expect(avatarImage).toContain("src?: string;");
     expect(avatarImage).toContain(
-      "const { src, image, alt, width, height, ...rest } = Astro.props;",
+      "const { src, image, alt, width, height, style, ...rest } = Astro.props;",
     );
     expect(avatarImage).toContain("data-sw-avatar-image");
-    expect(avatarImage).toContain("hidden");
+    expect(avatarImage).toContain('visibility: "hidden"');
+    expect(avatarImage).toContain("style={initialStyle}");
+    expect(avatarImage).not.toMatch(/^\s+hidden(?:=|\s*$)/m);
     expect(avatarFallback).toContain("delay?: number");
     expect(avatarFallback).toContain("data-sw-avatar-fallback");
     expect(avatarFallback).toContain("data-delay");

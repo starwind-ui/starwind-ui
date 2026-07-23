@@ -10,6 +10,7 @@ type Props = HTMLAttributes<"div"> & {
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  collisionStrategy?: "initial-placement" | "best-fit";
 };
 
 const {
@@ -17,6 +18,7 @@ const {
   align = "center",
   sideOffset = 4,
   avoidCollisions = true,
+  collisionStrategy = "initial-placement",
   ...rest
 } = Astro.props;
 ---
@@ -30,6 +32,7 @@ const {
   data-align={align}
   data-side-offset={sideOffset}
   data-avoid-collisions={avoidCollisions ? "true" : "false"}
+  data-collision-strategy={collisionStrategy}
   hidden
   {...rest}
 >

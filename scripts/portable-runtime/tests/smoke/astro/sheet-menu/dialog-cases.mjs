@@ -1,4 +1,5 @@
 import { verifyDialogEntryAnimationGestures } from "../../shared/dialog-entry-animation.mjs";
+import { verifyDialogFloatingOverlays } from "../../shared/dialog-floating-overlays.mjs";
 
 export async function verifyAstroDialogCases({ page }) {
   await verifyDialogEntryAnimationGestures({
@@ -308,4 +309,34 @@ export async function verifyAstroDialogCases({ page }) {
   await page.waitForFunction(() => document.querySelectorAll("dialog[open]").length === 1);
   await page.locator("#runtime-nested-dialog-parent-close").click();
   await page.waitForFunction(() => document.querySelectorAll("dialog[open]").length === 0);
+
+  await verifyDialogFloatingOverlays({
+    page,
+    label: "Astro",
+    ids: {
+      comboboxContent: "runtime-dialog-combobox-content",
+      comboboxInput: "runtime-dialog-combobox-input",
+      comboboxOption: "runtime-dialog-combobox-apricot",
+      dropdownContent: "runtime-dialog-dropdown-content",
+      dropdownItem: "runtime-dialog-dropdown-duplicate",
+      dropdownTrigger: "runtime-dialog-dropdown-trigger",
+      lab: "runtime-dialog-overlay-lab",
+      labClose: "runtime-dialog-overlay-lab-close",
+      labContent: "runtime-dialog-overlay-lab-content",
+      labTrigger: "runtime-dialog-overlay-lab-trigger",
+      nestedClose: "runtime-dialog-overlay-nested-close",
+      nestedContent: "runtime-dialog-overlay-nested-content",
+      nestedPopoverAction: "runtime-dialog-overlay-nested-popover-action",
+      nestedPopoverContent: "runtime-dialog-overlay-nested-popover-content",
+      nestedPopoverTrigger: "runtime-dialog-overlay-nested-popover-trigger",
+      nestedTrigger: "runtime-dialog-overlay-nested-trigger",
+      popoverContent: "runtime-dialog-popover-content",
+      popoverAction: "runtime-dialog-popover-action",
+      popoverTrigger: "runtime-dialog-popover-trigger",
+      select: "runtime-dialog-select",
+      selectContent: "runtime-dialog-select-content",
+      selectOption: "runtime-dialog-select-light",
+      selectTrigger: "runtime-dialog-select-trigger",
+    },
+  });
 }

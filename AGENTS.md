@@ -48,6 +48,9 @@ pnpm runtime:size:check
 - Add deferred styled version intent under `.changeset/styled-components/` for changed existing
   components; the generated Version Packages PR consolidates manifest bumps. Regenerate registry
   artifacts rather than editing generated registry JSON by hand.
+- Add deferred primitive version intent under `.changeset/primitive-components/` for changed
+  existing vendored primitives. Use `patch` for compatible changes and `minor` for breaking changes
+  while primitive versions remain below `1.0.0`.
 - Add a Changeset for package-facing changes. Never add Changesets for retired `@starwind-ui/core`,
   or for `@starwind-ui/vue` and `vue-demo` while they remain quarantined.
 - Use conventional commits such as `feat(runtime): ...`, `fix(cli): ...`, or `docs: ...`.

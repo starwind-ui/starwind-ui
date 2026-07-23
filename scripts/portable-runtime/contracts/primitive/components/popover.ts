@@ -77,6 +77,7 @@ export const popoverRuntimeAdapterContract = {
         { name: "data-align", source: "prop" },
         { name: "data-side-offset", source: "prop" },
         { name: "data-avoid-collisions", source: "prop" },
+        { name: "data-collision-strategy", source: "prop" },
       ],
     },
     {
@@ -94,6 +95,7 @@ export const popoverRuntimeAdapterContract = {
         { name: "data-align", source: "prop" },
         { name: "data-side-offset", source: "prop" },
         { name: "data-avoid-collisions", source: "prop" },
+        { name: "data-collision-strategy", source: "prop" },
         { name: "hidden", source: "state" },
       ],
     },
@@ -189,6 +191,13 @@ export const popoverRuntimeAdapterContract = {
       targets: ["positioner", "popup"],
       type: "boolean",
     },
+    {
+      defaultValue: '"initial-placement"',
+      name: "collisionStrategy",
+      kind: "option",
+      targets: ["positioner", "popup"],
+      type: '"initial-placement" | "best-fit"',
+    },
   ],
   stateModels: [
     {
@@ -238,7 +247,7 @@ export const popoverRuntimeAdapterContract = {
     portalPart: "portal",
     positionerPart: "positioner",
     popupPart: "popup",
-    optionProps: ["side", "align", "sideOffset", "avoidCollisions"],
+    optionProps: ["side", "align", "sideOffset", "avoidCollisions", "collisionStrategy"],
   },
   refs: [
     { part: "root", public: true },
@@ -291,6 +300,7 @@ export const popoverRuntimeAdapterContract = {
         "data-align",
         "data-side-offset",
         "data-avoid-collisions",
+        "data-collision-strategy",
       ],
       reason: "The positioner carries initial placement hints used by the shared floating runtime.",
     },
@@ -305,6 +315,7 @@ export const popoverRuntimeAdapterContract = {
         "data-align",
         "data-side-offset",
         "data-avoid-collisions",
+        "data-collision-strategy",
         "hidden",
       ],
       reason:

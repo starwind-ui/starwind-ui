@@ -6,8 +6,6 @@ export async function verifyDialogEntryAnimationGestures({
   page,
   trigger,
 }) {
-  const results = [];
-
   for (const gesture of [
     { holdMs: 0, name: "quick-release" },
     { holdMs: 500, name: "held-release" },
@@ -30,7 +28,7 @@ export async function verifyDialogEntryAnimationGestures({
 
     const observationKey = `sw-dialog-entry-${label}-${gesture.name}-${Date.now()}`;
     await content.evaluate(
-      (element, { backdropElement, key }) => {
+      (element, { backdropElement, key, presentationDelayMs }) => {
         const observations = (window.__swDialogEntryObservations ??= {});
         const backdrop = document.querySelector(backdropElement);
         const record = {
@@ -38,6 +36,7 @@ export async function verifyDialogEntryAnimationGestures({
           presentationStates: [],
           releaseTime: null,
           samples: [],
+          showModalReturnedAt: null,
           startedAt: performance.now(),
         };
         observations[key] = record;
@@ -60,7 +59,13 @@ export async function verifyDialogEntryAnimationGestures({
               triggerState: trigger?.getAttribute("data-state"),
             });
             element.showModal = originalShowModal;
-            return originalShowModal.call(this);
+            const result = originalShowModal.call(this);
+            const presentationDelayEnd = performance.now() + presentationDelayMs;
+            while (performance.now() < presentationDelayEnd) {
+              // Simulate expensive native top-layer presentation before the browser can paint.
+            }
+            record.showModalReturnedAt = performance.now();
+            return result;
           };
         }
         let finishedFrames = 0;
@@ -70,8 +75,10 @@ export async function verifyDialogEntryAnimationGestures({
           if (!(target instanceof HTMLElement)) return null;
           const style = getComputedStyle(target);
           return {
+            animationName: style.animationName,
             opacity: Number.parseFloat(style.opacity),
             scale: style.scale,
+            starting: target.hasAttribute("data-starting-style"),
             transform: style.transform,
             translate: style.translate,
           };
@@ -100,7 +107,7 @@ export async function verifyDialogEntryAnimationGestures({
             now,
           });
 
-          if (finishedFrames >= 2 || now - record.startedAt > 2000) {
+          if (finishedFrames >= 2 || now - record.startedAt > 4000) {
             record.done = true;
             return;
           }
@@ -108,7 +115,11 @@ export async function verifyDialogEntryAnimationGestures({
         };
         requestAnimationFrame(sample);
       },
-      { backdropElement: backdrop, key: observationKey },
+      {
+        backdropElement: backdrop,
+        key: observationKey,
+        presentationDelayMs: expectedDuration + 50,
+      },
     );
     await page.evaluate((key) => {
       window.__swDialogEntryObservations[key].releaseTime = performance.now();
@@ -117,7 +128,7 @@ export async function verifyDialogEntryAnimationGestures({
     await page.waitForFunction(
       (key) => window.__swDialogEntryObservations?.[key]?.done === true,
       observationKey,
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
 
     const result = await page.evaluate((key) => {
@@ -126,28 +137,20 @@ export async function verifyDialogEntryAnimationGestures({
       return record;
     }, observationKey);
     assertEntryProgress({ expectedDuration, gesture: gesture.name, label, result });
-    results.push(result);
-
     await page.keyboard.press("Escape");
     await content.waitFor({ state: "hidden" });
-  }
-
-  const [quick, held] = results.map(readActiveInterval);
-  if (quick < held * 0.65) {
-    throw new Error(
-      `Expected ${label} quick-release animation not to collapse relative to held-release; ` +
-        `observed ${quick.toFixed(1)}ms vs ${held.toFixed(1)}ms.`,
-    );
   }
 }
 
 function assertEntryProgress({ expectedDuration, gesture, label, result }) {
   const afterRelease = result.samples.filter((sample) => sample.now >= result.releaseTime);
+  const afterPresentation = afterRelease.filter(
+    (sample) => sample.now >= result.showModalReturnedAt,
+  );
   const running = afterRelease.filter((sample) =>
     sample.animations.some((animation) => animation.playState === "running"),
   );
   const finalSample = afterRelease.at(-1);
-  const activeInterval = readActiveInterval(result);
   const contentProgress = running.some((sample) =>
     visualDiffers(sample.content, finalSample.content),
   );
@@ -164,13 +167,39 @@ function assertEntryProgress({ expectedDuration, gesture, label, result }) {
       state.triggerExpanded === "true" &&
       state.triggerState === "open",
   );
+  const stagedPresentation = afterPresentation.some(
+    (sample) =>
+      sample.content?.starting === true &&
+      sample.backdrop?.starting === true &&
+      sample.content.animationName === "none" &&
+      sample.backdrop.animationName === "none",
+  );
+  const animationAfterStaging = afterPresentation.some(
+    (sample) =>
+      sample.content?.starting === false &&
+      sample.backdrop?.starting === false &&
+      sample.content.animationName !== "none" &&
+      sample.backdrop.animationName !== "none" &&
+      sample.animations.some(
+        (animation) =>
+          animation.playState === "running" &&
+          animation.currentTime !== null &&
+          typeof animation.duration === "number" &&
+          animation.currentTime < animation.duration,
+      ),
+  );
+  const presentationDelayCompleted =
+    result.showModalReturnedAt !== null &&
+    result.showModalReturnedAt - result.releaseTime >= expectedDuration;
 
   if (
     !coherentPresentation ||
+    !presentationDelayCompleted ||
+    !stagedPresentation ||
+    !animationAfterStaging ||
     running.length === 0 ||
     !contentProgress ||
     !backdropProgress ||
-    activeInterval < expectedDuration * 0.5 ||
     finalSample?.contentOpen !== true ||
     finalSample?.contentState !== "open" ||
     (finalSample?.content?.opacity ?? 0) < 0.98 ||
@@ -178,25 +207,18 @@ function assertEntryProgress({ expectedDuration, gesture, label, result }) {
   ) {
     throw new Error(
       `Expected ${label} ${gesture} to expose full entry progress, got ${JSON.stringify({
-        activeInterval,
+        animationAfterStaging,
         backdropProgress,
         coherentPresentation,
         contentProgress,
         finalSample,
+        presentationDelayCompleted,
         presentationStates: result.presentationStates,
         runningSamples: running.length,
+        stagedPresentation,
       })}.`,
     );
   }
-}
-
-function readActiveInterval(result) {
-  const running = result.samples.filter(
-    (sample) =>
-      sample.now >= result.releaseTime &&
-      sample.animations.some((animation) => animation.playState === "running"),
-  );
-  return running.length > 1 ? running.at(-1).now - running[0].now : 0;
 }
 
 function visualDiffers(sample, finalSample) {

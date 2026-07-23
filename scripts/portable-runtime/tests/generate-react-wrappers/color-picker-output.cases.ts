@@ -38,11 +38,14 @@ export function defineReactColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(content).toMatch(/<ColorPicker\s+className="size-4"\s+aria-hidden="true"/);
     expect(content).not.toContain(">Pick<");
     expect(content).toContain("size={inputSize}");
+    expect(content).toContain('collisionStrategy="best-fit"');
     expect(content).toContain("(hasSwatches || showClear) &&");
     expect(content.indexOf("{swatches}")).toBeLessThan(content.indexOf("<ColorPickerClear"));
     expect(tree["styles.css"]).toContain('data-has-swatches="false"');
     expect(tree["variants.ts"]).toContain('sm: "size-6"');
     expect(tree["variants.ts"]).toContain('sm: "h-2.5');
+    expect(tree["variants.ts"]).toContain("min-h-32 w-full shrink-0");
+    expect(tree["variants.ts"]).toContain("max-h-[var(--sw-floating-available-height)]");
 
     const first = tree;
     await generateStarwindReactWrappers({ outputDir, primitiveOutputDir, repoRoot: tempRoot });

@@ -82,6 +82,11 @@ export type FrameworkAdapterTargetStyledCapability = {
   write(args: FrameworkAdapterTargetStyledWriteArgs): Promise<void>;
 };
 
+export type FrameworkAdapterTargetPackageRequirement = {
+  name: string;
+  range: string;
+};
+
 export type FrameworkAdapterTargetCliRegistryMetadata = {
   generatedImportCandidateExtensions: readonly string[];
   primitiveArtifact?: {
@@ -98,6 +103,7 @@ export type FrameworkAdapterTargetCliRegistryMetadata = {
     outputDir: string;
     primitiveOutputDir: string;
   };
+  setupPackageRequirements: readonly FrameworkAdapterTargetPackageRequirement[];
 };
 
 export type FrameworkAdapterTargetPrimitiveOutputModelCapabilities = {
@@ -2695,6 +2701,7 @@ export type AdapterPresenceFloatingOverlayFacts = {
     description: string;
     floatingAlign: string;
     floatingAvoidCollisions: string;
+    floatingCollisionStrategy: string;
     floatingSide: string;
     floatingSideOffset: string;
     popup: string;
@@ -2783,6 +2790,7 @@ export type AdapterPresenceFloatingOverlayFacts = {
     align: AdapterFamilyProp;
     asChild: AdapterFamilyProp;
     avoidCollisions: AdapterFamilyProp;
+    collisionStrategy: AdapterFamilyProp;
     closeDelay: AdapterFamilyProp;
     closeOnEscape: AdapterFamilyProp;
     closeOnOutsideInteract: AdapterFamilyProp;
@@ -3264,6 +3272,12 @@ export type AdapterMediaStatusFacts = {
     fallback: AdapterFamilyPart & { namespaceKey: string };
     image: AdapterFamilyPart & { namespaceKey: string };
     root: AdapterFamilyPart & { namespaceKey: string };
+  };
+  presence: {
+    imageConcealment: {
+      property: "visibility";
+      value: "hidden";
+    };
   };
   props: {
     alt: AdapterFamilyProp;

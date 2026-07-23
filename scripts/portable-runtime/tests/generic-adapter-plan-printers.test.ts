@@ -786,14 +786,17 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroPositioner).toContain('align = "center"');
     expect(astroPositioner).toContain("sideOffset = 4");
     expect(astroPositioner).toContain("avoidCollisions = true");
+    expect(astroPositioner).toContain('collisionStrategy = "initial-placement"');
     expect(astroPositioner).toContain("data-sw-popover-positioner");
     expect(astroPositioner).toContain("data-side={side}");
     expect(astroPositioner).toContain("data-align={align}");
     expect(astroPositioner).toContain("data-side-offset={sideOffset}");
     expect(astroPositioner).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
+    expect(astroPositioner).toContain("data-collision-strategy={collisionStrategy}");
     expect(astroPopup).toContain('side = "bottom"');
     expect(astroPopup).toContain('align = "center"');
     expect(astroPopup).toContain("sideOffset = 4");
+    expect(astroPopup).toContain('collisionStrategy = "initial-placement"');
     expect(astroPopup).toContain('role="dialog"');
     expect(astroPopup).toContain('tabindex="-1"');
     expect(astroPopup).toContain('data-state="closed"');
@@ -801,6 +804,7 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroPopup).toContain("data-align={align}");
     expect(astroPopup).toContain("data-side-offset={sideOffset}");
     expect(astroPopup).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
+    expect(astroPopup).toContain("data-collision-strategy={collisionStrategy}");
     expect(astroPopup).toContain("hidden");
     expect(astroArrow).toContain("data-sw-popover-arrow");
     expect(astroBackdrop).toContain("data-sw-popover-backdrop");
@@ -845,16 +849,17 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactPortal).toContain("data-sw-popover-portal");
     expect(reactPositioner).toContain("PopoverPositionerProps");
     expect(reactPositioner).toContain(
-      '{ side = "bottom", align = "center", sideOffset = 4, avoidCollisions = true, ...props }',
+      '{ side = "bottom", align = "center", sideOffset = 4, avoidCollisions = true, collisionStrategy = "initial-placement", ...props }',
     );
     expect(reactPositioner).toContain("data-sw-popover-positioner");
     expect(reactPositioner).toContain("data-side={side}");
     expect(reactPositioner).toContain("data-align={align}");
     expect(reactPositioner).toContain("data-side-offset={sideOffset}");
     expect(reactPositioner).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
+    expect(reactPositioner).toContain("data-collision-strategy={collisionStrategy}");
     expect(reactPopup).toContain("PopoverPopupProps");
     expect(reactPopup).toContain(
-      '{ side = "bottom", align = "center", sideOffset = 4, avoidCollisions = true, ...props }',
+      '{ side = "bottom", align = "center", sideOffset = 4, avoidCollisions = true, collisionStrategy = "initial-placement", ...props }',
     );
     expect(reactPopup).toContain("data-sw-popover-popup");
     expect(reactPopup).toContain('role="dialog"');
@@ -864,6 +869,7 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactPopup).toContain("data-align={align}");
     expect(reactPopup).toContain("data-side-offset={sideOffset}");
     expect(reactPopup).toContain('data-avoid-collisions={avoidCollisions ? "true" : "false"}');
+    expect(reactPopup).toContain("data-collision-strategy={collisionStrategy}");
     expect(reactPopup).toContain("hidden");
     expect(reactArrow).toContain("data-sw-popover-arrow");
     expect(reactBackdrop).toContain("data-sw-popover-backdrop");
@@ -948,13 +954,14 @@ describe("GenericAdapterPlan output model printers", () => {
             displayName: "Popover",
             floating: {
               anchorPart: "trigger",
-              optionProps: ["side", "align", "sideOffset", "avoidCollisions"],
+              optionProps: ["side", "align", "sideOffset", "avoidCollisions", "collisionStrategy"],
               popupPart: "popup",
               portalPart: "portal",
               positionerPart: "positioner",
             },
             props: expect.objectContaining({
               closeDelay: expect.objectContaining({ name: "closeDelay" }),
+              collisionStrategy: expect.objectContaining({ name: "collisionStrategy" }),
               openOnHover: expect.objectContaining({ name: "openOnHover" }),
               side: expect.objectContaining({ name: "side" }),
             }),
@@ -1295,7 +1302,9 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroImage).toContain("Either 'src' or 'image' is required for an avatar image.");
     expect(astroImage).toContain("data-sw-avatar-image");
     expect(astroImage).toContain('data-image-loading-status="idle"');
-    expect(astroImage).toContain("hidden");
+    expect(astroImage).toContain('visibility: "hidden"');
+    expect(astroImage).toContain("style={initialStyle}");
+    expect(astroImage).not.toMatch(/^\s+hidden(?:=|\s*$)/m);
     expect(astroImage).toContain("width={64}");
     expect(astroFallback).toContain("delay?: number;");
     expect(astroFallback).toContain("data-delay={delay}");
@@ -1314,7 +1323,9 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactRoot).toContain("const instance = createAvatar(root);");
     expect(reactImage).toContain("AvatarImageLoadingStatus,");
     expect(reactImage).toContain("AvatarLoadingStatusChangeDetails,");
-    expect(reactImage).toContain("node.hidden = hidden ?? true;");
+    expect(reactImage).toContain('style={{ ...style, visibility: "hidden" }}');
+    expect(reactImage).toContain("hidden={false}");
+    expect(reactImage).not.toContain("node.hidden");
     expect(reactImage).toContain(
       'root.addEventListener("starwind:loading-status-change", handleLoadingStatusChange);',
     );
@@ -3274,8 +3285,15 @@ describe("GenericAdapterPlan output model printers", () => {
       expect.objectContaining({
         family: expect.objectContaining({ kind: "form-field-coordinator" }),
         typeFacades: [
+          expect.objectContaining({ exports: ["FormExternalErrorOptions"] }),
           expect.objectContaining({ exports: ["FormExternalErrors"] }),
+          expect.objectContaining({ exports: ["FormInstance"] }),
+          expect.objectContaining({ exports: ["FormOptions"] }),
+          expect.objectContaining({ exports: ["FormResetValidationOptions"] }),
           expect.objectContaining({ exports: ["FormSchemaResult"] }),
+          expect.objectContaining({ exports: ["FormValidateOptions"] }),
+          expect.objectContaining({ exports: ["FormValidationCause"] }),
+          expect.objectContaining({ exports: ["FormValidationOutcome"] }),
           expect.objectContaining({ exports: ["FormValidationTiming"] }),
           expect.objectContaining({ exports: ["FormValues"] }),
         ],
@@ -3336,6 +3354,7 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(astroRoot).toContain("data-error-visibility={dataErrorVisibility ?? errorVisibility}");
     expect(astroRoot).toContain('getInitCandidates(event, "[data-sw-form]")');
     expect(astroRoot).toContain("createForm(form)");
+    expect(astroRoot).not.toContain("FormInstance");
 
     expect(astroErrorSummary).toContain("data-sw-form-error-summary");
     expect(astroErrorSummary).toContain('data-slot="form-error-summary"');
@@ -3347,6 +3366,7 @@ describe("GenericAdapterPlan output model printers", () => {
       'import { createForm, type FormValidationTiming } from "@starwind-ui/runtime/form";',
     );
     expect(reactRoot).toContain("React.forwardRef<HTMLFormElement, FormRootProps>");
+    expect(reactRoot).not.toContain("useImperativeHandle");
     expect(reactRoot).toContain("validationTiming?: FormValidationTiming;");
     expect(reactRoot).toContain('"data-validation-timing": dataValidationTiming');
     expect(reactRoot).toContain(
@@ -3370,7 +3390,7 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactIndex).toContain("Root: FormRoot");
   });
 
-  it("keeps generated Form files equal to the checked-in packages", async () => {
+  it("keeps generated Form component files equal while facade regeneration is deferred", async () => {
     const outputRoot = mkdtempSync(join(tmpdir(), "starwind-form-plan-"));
     const astroOutputRoot = join(outputRoot, "astro");
     const reactOutputRoot = join(outputRoot, "react");
@@ -3391,10 +3411,8 @@ describe("GenericAdapterPlan output model printers", () => {
       const files = [
         ["astro", "FormRoot.astro"],
         ["astro", "FormErrorSummary.astro"],
-        ["astro", "index.ts"],
         ["react", "FormRoot.tsx"],
         ["react", "FormErrorSummary.tsx"],
-        ["react", "index.ts"],
       ] as const;
 
       for (const [framework, fileName] of files) {
@@ -3775,8 +3793,15 @@ describe("GenericAdapterPlan output model printers", () => {
       expect.objectContaining({
         family: expect.objectContaining({ kind: "form-field-coordinator" }),
         typeFacades: [
+          expect.objectContaining({ exports: ["FormExternalErrorOptions"] }),
           expect.objectContaining({ exports: ["FormExternalErrors"] }),
+          expect.objectContaining({ exports: ["FormInstance"] }),
+          expect.objectContaining({ exports: ["FormOptions"] }),
+          expect.objectContaining({ exports: ["FormResetValidationOptions"] }),
           expect.objectContaining({ exports: ["FormSchemaResult"] }),
+          expect.objectContaining({ exports: ["FormValidateOptions"] }),
+          expect.objectContaining({ exports: ["FormValidationCause"] }),
+          expect.objectContaining({ exports: ["FormValidationOutcome"] }),
           expect.objectContaining({ exports: ["FormValidationTiming"] }),
           expect.objectContaining({ exports: ["FormValues"] }),
         ],

@@ -52,7 +52,8 @@ describe("Vue Avatar public behavior", () => {
     expect(rootRef.value).not.toHaveProperty("instance");
 
     expect(root.dataset.imageLoadingStatus).toBe("error");
-    expect(image.hidden).toBe(true);
+    expect(image.hidden).toBe(false);
+    expect(image.style.visibility).toBe("hidden");
     expect(fallback.hidden).toBe(false);
     expect(statuses).toEqual([
       { detail: { previousStatus: "idle", status: "error" }, status: "error" },
@@ -62,6 +63,7 @@ describe("Vue Avatar public behavior", () => {
     expect(onLoad).toHaveBeenCalledTimes(1);
     expect(root.dataset.imageLoadingStatus).toBe("loaded");
     expect(image.hidden).toBe(false);
+    expect(image.style.visibility).toBe("visible");
     expect(fallback.hidden).toBe(true);
     expect(statuses.at(-1)).toMatchObject({
       detail: { event: expect.any(Event), previousStatus: "error", status: "loaded" },
@@ -70,7 +72,8 @@ describe("Vue Avatar public behavior", () => {
 
     image.dispatchEvent(new Event("error"));
     expect(root.dataset.imageLoadingStatus).toBe("error");
-    expect(image.hidden).toBe(true);
+    expect(image.hidden).toBe(false);
+    expect(image.style.visibility).toBe("hidden");
     expect(fallback.hidden).toBe(false);
     expect(statuses.at(-1)).toMatchObject({
       detail: { event: expect.any(Event), previousStatus: "loaded", status: "error" },

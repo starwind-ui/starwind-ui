@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import semver from "semver";
 import { runtimeAdapterContracts } from "../../../contracts/primitive/representatives.js";
 import { type RuntimeAdapterContract } from "../../../contracts/primitive/types.js";
 import { starwindStyledContracts } from "../../../contracts/styled/components/index.js";
@@ -58,7 +60,7 @@ import {
 } from "./descriptions/primitive-reference.js";
 import { toPrimitiveSetterMetadata } from "./descriptions/setters.js";
 import type { BuildLayeredDocsMetadataOptions } from "./options.js";
-import { PRIMITIVE_AUTHORED_USAGE_ROOT, repoRoot } from "./paths.js";
+import { PRIMITIVE_AUTHORED_USAGE_ROOT, primitiveVersionsPath, repoRoot } from "./paths.js";
 import { dedupe, toKebabCase, toTitle } from "./shared.js";
 import { isBehaviorFoundationType, validateFoundation } from "./validate-metadata.js";
 import {
@@ -78,8 +80,9 @@ export const buildLayeredDocsMetadata = (
   const primitiveById = new Map(
     runtimeAdapterContracts.map((contract) => [contract.component, contract]),
   );
-  const styledIds = new Set(styledContracts.map((contract) => contract.component));
   const validationIssues: string[] = [];
+  const primitiveVersions = options.primitiveVersions ?? loadPrimitiveVersions(validationIssues);
+  const styledIds = new Set(styledContracts.map((contract) => contract.component));
   const primitiveAuthoredUsage = loadPrimitiveAuthoredUsage(
     primitiveById,
     options.primitiveDocsUsageRoot ?? PRIMITIVE_AUTHORED_USAGE_ROOT,
@@ -108,6 +111,7 @@ export const buildLayeredDocsMetadata = (
   );
   validatePrimitiveDocsEnrichment(primitiveById, primitiveEnrichment, validationIssues);
   validatePrimitiveDocsExampleRegistry(primitiveById, exampleRegistry, validationIssues);
+  validatePrimitiveVersions(primitiveById, primitiveVersions, validationIssues);
 
   const styledComponents = styledContracts
     .map((contract) =>
@@ -126,6 +130,7 @@ export const buildLayeredDocsMetadata = (
     .map((contract) =>
       buildPrimitiveMetadata(
         contract,
+        primitiveVersions[contract.component] ?? "0.0.0",
         primitiveEnrichment[contract.component],
         styledComponents,
         exampleRegistry,
@@ -248,6 +253,7 @@ const buildStyledComponentMetadata = (
 
 const buildPrimitiveMetadata = (
   contract: RuntimeAdapterContract,
+  registryVersion: string,
   enrichment: PrimitiveDocsEnrichment | undefined,
   styledComponents: readonly StyledComponentDocsMetadata[],
   exampleRegistry: PrimitiveDocsExampleRegistry,
@@ -256,6 +262,7 @@ const buildPrimitiveMetadata = (
   id: contract.component,
   displayName: contract.displayName,
   category: contract.category,
+  registryVersion,
   runtime: {
     ...toRuntimeFactory(contract),
     rootPart: contract.runtime.rootPart,
@@ -353,6 +360,7 @@ const buildPrimitiveMetadata = (
                   ...(visibility.condition ? { condition: visibility.condition } : {}),
                   delivery: visibility.delivery,
                   hidden: visibility.hidden,
+                  ...(visibility.mechanism ? { mechanism: visibility.mechanism } : {}),
                   part: visibility.part,
                   targets: [...visibility.targets],
                 })),
@@ -393,6 +401,63 @@ const buildPrimitiveMetadata = (
     contract.category,
   ]),
 });
+
+const loadPrimitiveVersions = (validationIssues: string[]): Readonly<Record<string, string>> => {
+  try {
+    const value: unknown = JSON.parse(readFileSync(primitiveVersionsPath, "utf8"));
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      validationIssues.push(
+        `${primitiveVersionsPath} must contain an object mapping Primitive IDs to versions.`,
+      );
+      return {};
+    }
+
+    const manifest = value as Record<string, unknown>;
+    const versions = manifest.primitives;
+    if (!versions || typeof versions !== "object" || Array.isArray(versions)) {
+      validationIssues.push(`${primitiveVersionsPath} must contain a primitives version map.`);
+      return {};
+    }
+
+    return Object.fromEntries(
+      Object.entries(versions).filter((entry): entry is [string, string] => {
+        if (typeof entry[1] === "string") return true;
+        validationIssues.push(`${primitiveVersionsPath} has a non-string version for ${entry[0]}.`);
+        return false;
+      }),
+    );
+  } catch (error) {
+    validationIssues.push(
+      `Unable to load Primitive versions from ${primitiveVersionsPath}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return {};
+  }
+};
+
+const validatePrimitiveVersions = (
+  primitiveById: ReadonlyMap<string, RuntimeAdapterContract>,
+  primitiveVersions: Readonly<Record<string, string>>,
+  validationIssues: string[],
+) => {
+  for (const primitiveId of primitiveById.keys()) {
+    const version = primitiveVersions[primitiveId];
+    if (!version) {
+      validationIssues.push(`Missing released Primitive version for ${primitiveId}.`);
+    } else if (semver.valid(version) === null) {
+      validationIssues.push(
+        `Released Primitive version for ${primitiveId} must be valid SemVer; received "${version}".`,
+      );
+    }
+  }
+
+  for (const primitiveId of Object.keys(primitiveVersions)) {
+    if (!primitiveById.has(primitiveId)) {
+      validationIssues.push(
+        `Primitive version manifest references unknown contract ${primitiveId}.`,
+      );
+    }
+  }
+};
 
 const toPrimitiveFrameworkNotesMetadata = (
   contractNotes: RuntimeAdapterContract["frameworkNotes"] | undefined,

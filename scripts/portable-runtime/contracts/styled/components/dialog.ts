@@ -27,6 +27,7 @@ export const dialogStyledContract: StyledAdapterContract = {
     dialogBackdrop: {
       base: [
         "fixed inset-0 top-0 left-0 z-50 h-screen w-screen bg-black/80 duration-200",
+        "data-starting-style:!animate-none data-starting-style:opacity-0",
         "data-[state=open]:animate-in fade-in",
         "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out",
       ],
@@ -35,6 +36,7 @@ export const dialogStyledContract: StyledAdapterContract = {
       base: [
         "fixed top-16 left-[50%] z-50 translate-x-[-50%] sm:top-[50%] sm:translate-y-[-50%]",
         "bg-background w-full max-w-md rounded-lg border p-8 shadow-lg",
+        "data-starting-style:!animate-none data-starting-style:opacity-0",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards transition-[translate,scale,opacity] duration-200",
         "fade-in zoom-in-95 slide-in-from-bottom-2",
         "fade-out zoom-out-95 slide-out-to-bottom-2",

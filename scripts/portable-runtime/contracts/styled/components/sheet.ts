@@ -27,6 +27,7 @@ export const sheetStyledContract: StyledAdapterContract = {
     sheetBackdrop: {
       base: [
         "fixed inset-0 top-0 left-0 z-50 hidden h-screen w-screen bg-black/80",
+        "data-starting-style:!animate-none data-starting-style:opacity-0",
         "data-[state=open]:animate-in fade-in",
         "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out",
         "data-[state=closed]:duration-300 data-[state=open]:duration-500",
@@ -35,6 +36,7 @@ export const sheetStyledContract: StyledAdapterContract = {
     sheetContent: {
       base: [
         "bg-background fixed z-50 flex-col gap-4 shadow-lg transition ease-in-out open:flex",
+        "data-starting-style:!animate-none data-starting-style:opacity-0",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards",
         "data-[state=closed]:duration-300 data-[state=open]:duration-500",
       ],

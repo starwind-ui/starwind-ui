@@ -9,6 +9,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import {
   type CheckboxCheckedChangeDetails,
   type CheckboxInstance,
@@ -332,7 +333,7 @@ class CheckboxGroupController implements CheckboxGroupInstance {
       value: nextValue,
     });
 
-    this.notify(details);
+    this.notify(details, checkedDetails);
 
     if (details.isCanceled || this.controlled) {
       checkedDetails.cancel();
@@ -369,7 +370,8 @@ class CheckboxGroupController implements CheckboxGroupInstance {
     this.value = this.value.filter((value) => itemValues.has(value));
   }
 
-  private notify(details: CheckboxGroupValueChangeDetails): void {
+  private notify(details: CheckboxGroupValueChangeDetails, source?: object): void {
+    attachFormValueRevision(details, source ?? details.event);
     const event = dispatchCustomEvent(this.root, "starwind:value-change", details, {
       cancelable: true,
     });

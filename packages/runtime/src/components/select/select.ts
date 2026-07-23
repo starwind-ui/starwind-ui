@@ -10,6 +10,7 @@ import {
 } from "../../internal/dom";
 import { createCancelableDetails } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import {
   createFloatingPositioner,
   type FloatingPositioner,
@@ -796,6 +797,7 @@ class SelectController implements SelectInstance {
       reason: request.reason,
       value: request.value,
     });
+    attachFormValueRevision(details, request.event);
 
     this.onValueChange?.(request.value, details);
 
@@ -1021,6 +1023,9 @@ class SelectController implements SelectInstance {
           resolveFloatingPortalTarget(
             this.portalReference ?? this.elements.trigger ?? this.reference,
           ),
+        onOwnerCloseRequest: () => {
+          this.requestOpen(false, { reason: "imperative-action" });
+        },
       },
       root: this.root,
       scrollLock: {
@@ -1028,7 +1033,12 @@ class SelectController implements SelectInstance {
         shouldLock: () => this.modal,
       },
       state: {
+        forceUncontrolledOwnerClose: () => {
+          this.openState = false;
+          this.applyOpenState(false, { reason: "imperative-action" });
+        },
         getOpen: () => this.openState,
+        isOpenControlled: () => this.controlledOpen,
         isDestroyed: () => this.destroyed,
         render: (open) => {
           this.renderOpenState(open);
@@ -1048,7 +1058,7 @@ class SelectController implements SelectInstance {
     const portalElement = this.getPortalElement();
 
     return (
-      this.root.contains(target) ||
+      this.elements.trigger.contains(target) ||
       portalElement.contains(target) ||
       Boolean(this.elements.portal?.contains(target))
     );

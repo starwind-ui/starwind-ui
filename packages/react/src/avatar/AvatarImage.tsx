@@ -19,7 +19,7 @@ export type AvatarImageProps = React.ImgHTMLAttributes<HTMLImageElement> & {
 };
 
 const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(function AvatarImage(
-  { hidden, onLoadingStatusChange, ...props },
+  { onLoadingStatusChange, style, ...props },
   forwardedRef,
 ) {
   const imageRef = React.useRef<HTMLImageElement>(null);
@@ -30,14 +30,9 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(functio
   const composedRef = React.useCallback(
     (node: HTMLImageElement | null) => {
       imageRef.current = node;
-
-      if (node) {
-        node.hidden = hidden ?? true;
-      }
-
       return setRef(forwardedRef, node);
     },
-    [forwardedRef, hidden],
+    [forwardedRef],
   );
 
   React.useEffect(() => {
@@ -68,7 +63,16 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(functio
     };
   }, [hasLoadingStatusChangeCallback]);
 
-  return <img data-sw-avatar-image data-image-loading-status="idle" ref={composedRef} {...props} />;
+  return (
+    <img
+      data-sw-avatar-image
+      data-image-loading-status="idle"
+      ref={composedRef}
+      style={{ ...style, visibility: "hidden" }}
+      {...props}
+      hidden={false}
+    />
+  );
 });
 
 AvatarImage.displayName = "Avatar.Image";

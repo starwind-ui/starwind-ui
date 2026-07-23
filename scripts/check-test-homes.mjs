@@ -12,6 +12,38 @@ export const approvedTestHomePrefixes = [
   "scripts/tests/",
 ];
 
+export const testSuiteOwners = [
+  {
+    name: "portable-vue",
+    prefixes: ["scripts/portable-runtime/tests/generate-vue-wrappers/"],
+  },
+  {
+    name: "portable-runtime",
+    prefixes: ["scripts/portable-runtime/tests/"],
+    excludePrefixes: ["scripts/portable-runtime/tests/generate-vue-wrappers/"],
+  },
+  {
+    name: "repo-scripts",
+    prefixes: ["scripts/tests/"],
+  },
+  {
+    name: "cli",
+    prefixes: ["packages/cli/tests/"],
+  },
+  {
+    name: "react",
+    prefixes: ["packages/react/tests/"],
+  },
+  {
+    name: "runtime",
+    prefixes: ["packages/runtime/tests/"],
+  },
+  {
+    name: "vue",
+    prefixes: ["packages/vue/tests/"],
+  },
+];
+
 const ignoredPathPrefixes = [
   ".agents/",
   ".cache/",
@@ -65,6 +97,25 @@ export function findTestHomeViolations(filePaths) {
     .sort();
 }
 
+export function findTestSuiteOwners(filePath) {
+  const normalizedPath = normalizeRepositoryPath(filePath);
+  return testSuiteOwners
+    .filter(
+      ({ excludePrefixes = [], prefixes }) =>
+        prefixes.some((prefix) => normalizedPath.startsWith(prefix)) &&
+        !excludePrefixes.some((prefix) => normalizedPath.startsWith(prefix)),
+    )
+    .map(({ name }) => name);
+}
+
+export function findTestOwnershipViolations(filePaths) {
+  return [...new Set(filePaths.map(normalizeRepositoryPath))]
+    .filter((filePath) => isTestFilePath(filePath))
+    .filter((filePath) => !isIgnoredPath(filePath))
+    .filter((filePath) => findTestSuiteOwners(filePath).length !== 1)
+    .sort();
+}
+
 export function listRepositoryFiles(cwd = process.cwd()) {
   const output = execFileSync(
     "git",
@@ -87,20 +138,30 @@ function isMainModule(metaUrl) {
 }
 
 if (isMainModule(import.meta.url)) {
-  const violations = findTestHomeViolations(listRepositoryFiles());
+  const repositoryFiles = listRepositoryFiles();
+  const violations = findTestHomeViolations(repositoryFiles);
+  const ownershipViolations = findTestOwnershipViolations(repositoryFiles);
 
-  if (violations.length > 0) {
-    console.error("Test files must live in approved tests homes:");
-    for (const violation of violations) {
-      console.error(`- ${violation}`);
+  if (violations.length > 0 || ownershipViolations.length > 0) {
+    if (violations.length > 0) {
+      console.error("Test files must live in approved tests homes:");
+      for (const violation of violations) {
+        console.error(`- ${violation}`);
+      }
+      console.error("");
+      console.error("Approved homes:");
+      for (const home of approvedTestHomePrefixes) {
+        console.error(`- ${home}`);
+      }
     }
-    console.error("");
-    console.error("Approved homes:");
-    for (const home of approvedTestHomePrefixes) {
-      console.error(`- ${home}`);
+    if (ownershipViolations.length > 0) {
+      console.error("Test files must belong to exactly one test suite:");
+      for (const violation of ownershipViolations) {
+        console.error(`- ${violation}`);
+      }
     }
     process.exit(1);
   }
 
-  console.log("Test file home check passed.");
+  console.log("Test file home and suite ownership checks passed.");
 }

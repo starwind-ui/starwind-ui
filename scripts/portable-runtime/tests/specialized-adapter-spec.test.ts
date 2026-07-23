@@ -6479,9 +6479,12 @@ describe("SpecializedAdapterSpec", () => {
         initialAttributes: [
           "data-dirty",
           "data-disabled",
+          "data-error-visibility",
           "data-invalid",
           "data-name",
+          "data-revalidation-timing",
           "data-touched",
+          "data-validation-timing",
         ],
         part: "root",
         publicRef: true,

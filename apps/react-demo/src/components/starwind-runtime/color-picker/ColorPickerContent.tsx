@@ -47,6 +47,7 @@ function ColorPickerContent(props: ColorPickerContentProps) {
       className={colorPickerContent({ size, class: className })}
       side={side}
       align={align}
+      collisionStrategy="best-fit"
       exitMotion={exitMotion}
       {...rest}
       data-slot="color-picker-content"

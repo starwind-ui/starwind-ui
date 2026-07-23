@@ -181,4 +181,66 @@ describe("floating internals", () => {
 
     expect(resolveFloatingPortalTarget(reference)).toBe(document.body);
   });
+
+  it("creates and reuses one direct floating root for the nearest dialog", () => {
+    const parentDialog = document.createElement("dialog");
+    const childDialog = document.createElement("dialog");
+    const nestedComponent = document.createElement("div");
+    const unrelatedRoot = document.createElement("div");
+    const reference = document.createElement("button");
+    parentDialog.setAttribute("data-slot", "dialog-content");
+    childDialog.setAttribute("data-slot", "dialog-content");
+    unrelatedRoot.setAttribute("data-floating-root", "");
+    unrelatedRoot.append(reference);
+    nestedComponent.append(unrelatedRoot);
+    childDialog.append(nestedComponent);
+    parentDialog.append(childDialog);
+    document.body.append(parentDialog);
+
+    const firstTarget = resolveFloatingPortalTarget(reference);
+    const secondTarget = resolveFloatingPortalTarget(reference);
+
+    expect(firstTarget).toBe(secondTarget);
+    expect(firstTarget.parentElement).toBe(childDialog);
+    expect(firstTarget).not.toBe(unrelatedRoot);
+    expect(firstTarget.getAttribute("data-floating-root")).toBe("");
+    expect(firstTarget.getAttribute("data-sw-floating-root")).toBe("dialog");
+    expect(childDialog.querySelectorAll(":scope > [data-floating-root]")).toHaveLength(1);
+    expect(parentDialog.querySelector(":scope > [data-floating-root]")).toBeNull();
+
+    parentDialog.remove();
+  });
+
+  it("prefers an author-provided direct dialog floating root", () => {
+    const dialog = document.createElement("dialog");
+    const floatingRoot = document.createElement("div");
+    const reference = document.createElement("button");
+    dialog.setAttribute("data-slot", "sheet-content");
+    floatingRoot.setAttribute("data-floating-root", "");
+    dialog.append(floatingRoot, reference);
+    document.body.append(dialog);
+
+    expect(resolveFloatingPortalTarget(reference)).toBe(floatingRoot);
+    expect(floatingRoot.hasAttribute("data-sw-floating-root")).toBe(false);
+
+    dialog.remove();
+  });
+
+  it("prefers a direct author root added after an internal root", () => {
+    const dialog = document.createElement("dialog");
+    const reference = document.createElement("button");
+    const authorRoot = document.createElement("div");
+    dialog.setAttribute("data-slot", "drawer-content");
+    authorRoot.setAttribute("data-floating-root", "");
+    dialog.append(reference);
+    document.body.append(dialog);
+
+    const internalRoot = resolveFloatingPortalTarget(reference);
+    dialog.append(authorRoot);
+
+    expect(internalRoot.getAttribute("data-sw-floating-root")).toBe("dialog");
+    expect(resolveFloatingPortalTarget(reference)).toBe(authorRoot);
+
+    dialog.remove();
+  });
 });

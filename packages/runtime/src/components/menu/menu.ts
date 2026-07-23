@@ -700,6 +700,9 @@ class MenuController implements MenuInstance {
           resolveFloatingPortalTarget(
             this.portalReference ?? this.elements.triggers[0] ?? this.reference,
           ),
+        onOwnerCloseRequest: () => {
+          this.requestOpen(false, { reason: "imperative-action" });
+        },
       },
       root: this.root,
       scrollLock: {
@@ -707,7 +710,12 @@ class MenuController implements MenuInstance {
         shouldLock: (request) => this.modal && request?.reason !== "trigger-hover",
       },
       state: {
+        forceUncontrolledOwnerClose: () => {
+          this.openState = false;
+          this.applyOpenState(false, { reason: "imperative-action" });
+        },
         getOpen: () => this.openState,
+        isOpenControlled: () => this.controlled,
         isDestroyed: () => this.destroyed,
         render: (open) => this.renderState(open),
       },
@@ -744,7 +752,7 @@ class MenuController implements MenuInstance {
     const portalElement = this.getPortalElement();
 
     return (
-      this.root.contains(target) ||
+      this.elements.triggers.some((trigger) => trigger.contains(target)) ||
       portalElement.contains(target) ||
       this.submenus.some((submenu) => submenu.containsTarget(target)) ||
       Boolean(this.elements.portal?.contains(target))
@@ -973,6 +981,10 @@ class MenuController implements MenuInstance {
     });
   }
 
+  cancelPendingHoverClose(): void {
+    this.clearHoverCloseTimer();
+  }
+
   closeFromSubmenuItem(item: HTMLElement, event: Event): void {
     this.requestOpen(false, { event, reason: "item-press", trigger: item });
   }
@@ -1052,7 +1064,7 @@ class MenuSubmenuController {
   open(options: { event?: Event; focusFirstItem?: boolean } = {}): void {
     if (this.destroyed) return;
 
-    this.clearHoverCloseTimer();
+    this.cancelPendingHoverClose();
     this.parent.closeSiblingSubmenus(this);
     if (!this.openState) {
       this.openState = true;
@@ -1102,7 +1114,7 @@ class MenuSubmenuController {
     const portalElement = this.getPortalElement();
 
     return (
-      this.root.contains(target) ||
+      this.elements.trigger.contains(target) ||
       portalElement.contains(target) ||
       this.submenus.some((submenu) => submenu.containsTarget(target)) ||
       Boolean(this.elements.portal?.contains(target))
@@ -1113,6 +1125,11 @@ class MenuSubmenuController {
     this.submenus.forEach((submenu) => {
       if (submenu !== activeSubmenu) submenu.close();
     });
+  }
+
+  cancelPendingHoverClose(): void {
+    this.clearHoverCloseTimer();
+    this.parent.cancelPendingHoverClose();
   }
 
   private setupAccessibility(): void {
@@ -1284,7 +1301,7 @@ class MenuSubmenuController {
       "pointerenter",
       (event) => {
         if (event.pointerType !== "mouse") return;
-        this.clearHoverCloseTimer();
+        this.cancelPendingHoverClose();
       },
       { signal },
     );
@@ -1305,6 +1322,13 @@ class MenuSubmenuController {
 
   private createLifecycle(): FloatingListLifecycle<undefined> {
     return createFloatingListLifecycle<undefined>({
+      dismissal: {
+        closeOnEscape: () => true,
+        onEscapeKeyDown: (event) => {
+          event.preventDefault();
+          this.close({ focusTrigger: true });
+        },
+      },
       floating: {
         createPositioner: () => this.getFloatingPositionerForLifecycle(),
         getReference: () => this.elements.trigger,
@@ -1315,6 +1339,9 @@ class MenuSubmenuController {
         containsTarget: (target) => this.containsTarget(target),
         getElement: () => this.getPortalElement(),
         getTarget: () => resolveFloatingPortalTarget(this.elements.trigger),
+        onOwnerCloseRequest: () => {
+          this.close();
+        },
       },
       root: this.root,
       state: {

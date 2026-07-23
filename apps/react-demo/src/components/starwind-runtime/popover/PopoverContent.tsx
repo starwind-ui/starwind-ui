@@ -9,6 +9,7 @@ export type PopoverContentProps = React.ComponentPropsWithoutRef<"div"> &
     align?: "start" | "center" | "end";
     sideOffset?: number;
     avoidCollisions?: boolean;
+    collisionStrategy?: "initial-placement" | "best-fit";
   };
 
 function PopoverContent(props: PopoverContentProps) {
@@ -18,6 +19,7 @@ function PopoverContent(props: PopoverContentProps) {
     align = "center",
     sideOffset = 4,
     avoidCollisions = true,
+    collisionStrategy = "initial-placement",
     exitMotion = "popover",
     children,
     ...rest
@@ -31,6 +33,7 @@ function PopoverContent(props: PopoverContentProps) {
         align={align}
         sideOffset={sideOffset}
         avoidCollisions={avoidCollisions}
+        collisionStrategy={collisionStrategy}
         {...rest}
         data-slot="popover-content"
       >

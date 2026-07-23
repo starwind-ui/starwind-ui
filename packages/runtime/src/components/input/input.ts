@@ -1,4 +1,5 @@
 import { assertHTMLElement, setBooleanAttribute } from "../../internal/dom";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 
 export type InputValue = string | number | string[];
 
@@ -237,6 +238,8 @@ class InputController implements InputInstance {
       trigger,
       value,
     });
+
+    attachFormValueRevision(details, event);
 
     this.root.dispatchEvent(
       new CustomEvent("starwind:value-change", {

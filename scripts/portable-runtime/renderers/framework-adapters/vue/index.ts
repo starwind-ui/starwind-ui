@@ -47,6 +47,7 @@ const vueFrameworkAdapterTargetDefinition = {
       outputDir: "vue",
       primitiveOutputDir: "vue-primitives",
     },
+    setupPackageRequirements: [],
   },
   displayName: "Vue",
   home: "scripts/portable-runtime/renderers/framework-adapters/vue",

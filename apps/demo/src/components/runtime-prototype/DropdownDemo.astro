@@ -77,6 +77,17 @@ import {
             <DropdownSubTrigger id="runtime-dropdown-sub-trigger"> More tools </DropdownSubTrigger>
             <DropdownSubContent id="runtime-dropdown-sub-content">
               <DropdownItem id="runtime-dropdown-invite"> Invite team </DropdownItem>
+              <DropdownSub>
+                <DropdownSubTrigger id="runtime-dropdown-nested-sub-trigger">
+                  More options
+                </DropdownSubTrigger>
+                <DropdownSubContent id="runtime-dropdown-nested-sub-content">
+                  <DropdownItem>Calendly</DropdownItem>
+                  <DropdownItem>Slack</DropdownItem>
+                  <DropdownSeparator />
+                  <DropdownItem>Webhook</DropdownItem>
+                </DropdownSubContent>
+              </DropdownSub>
             </DropdownSubContent>
           </DropdownSub>
         </DropdownGroup>

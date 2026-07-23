@@ -1,4 +1,5 @@
 import { type FloatingPositioner } from "./floating";
+import { createFloatingPortalSession } from "./floating-portal";
 import { type OverlayDismissalHandle, registerOverlayDismissal } from "./overlay-dismissal";
 import { hideElementAfterAnimations } from "./presence";
 import { type DocumentScrollLock } from "./scroll-lock";
@@ -34,6 +35,7 @@ export type FloatingDisclosureLifecycleOptions<TRequest> = {
   getOpen: () => boolean;
   getPortalElement?: () => HTMLElement;
   getPortalTarget: () => HTMLElement;
+  isOpenControlled?: () => boolean;
   isDestroyed: () => boolean;
   lockDocumentScroll?: (ownerDocument: Document) => DocumentScrollLock;
   onBeforeClose?: (context: FloatingDisclosureLifecycleContext<TRequest>) => void;
@@ -44,11 +46,13 @@ export type FloatingDisclosureLifecycleOptions<TRequest> = {
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
   onImmediateClose?: (context: FloatingDisclosureLifecycleContext<TRequest>) => void;
   onOpenFrame?: (context: FloatingDisclosureLifecycleContext<TRequest>) => void;
+  onOwnerCloseRequest?: () => void;
   onOutsidePointerDown?: (event: PointerEvent) => void;
   popup: HTMLElement;
   renderState: (open: boolean, closeSignal?: AbortSignal) => void;
   root: HTMLElement;
   shouldLockDocumentScroll?: (request: TRequest | undefined) => boolean;
+  forceUncontrolledOwnerClose?: () => void;
 };
 
 export type FloatingDisclosureLifecycleContext<TRequest> = {
@@ -63,10 +67,21 @@ export function createFloatingDisclosureLifecycle<TRequest>(
   let dismissalHandle: OverlayDismissalHandle | null = null;
   let floatingPositioner: FloatingPositioner | null = null;
   let floatingReference: HTMLElement | null = null;
-  let placeholder: Comment | null = null;
   let rendered = false;
 
   const getPortalElement = () => options.getPortalElement?.() ?? options.popup;
+  const portalSession = createFloatingPortalSession({
+    canPromote: options.getOpen,
+    getPortalElement,
+    getPortalTarget: options.getPortalTarget,
+    onOwnerCloseRequest: () => {
+      options.onOwnerCloseRequest?.();
+      if (options.isOpenControlled?.() === false && options.getOpen()) {
+        options.forceUncontrolledOwnerClose?.();
+      }
+    },
+    root: options.root,
+  });
 
   const unregisterDismissal = () => {
     dismissalHandle?.destroy();
@@ -82,12 +97,8 @@ export function createFloatingDisclosureLifecycle<TRequest>(
     options.clearFloatingStyles?.();
   };
 
-  const unportal = () => {
-    if (!placeholder) return;
-
-    placeholder.parentNode?.insertBefore(getPortalElement(), placeholder);
-    placeholder.remove();
-    placeholder = null;
+  const restorePortal = () => {
+    portalSession.restore();
     clearFloatingStyles();
   };
 
@@ -116,20 +127,6 @@ export function createFloatingDisclosureLifecycle<TRequest>(
 
   const setupAutoUpdate = () => {
     getFloatingPositioner()?.startAutoUpdate();
-  };
-
-  const portal = () => {
-    const portalTarget = options.getPortalTarget();
-    const portalElement = getPortalElement();
-
-    if (portalElement.parentElement === portalTarget) return;
-
-    if (!placeholder) {
-      placeholder = options.root.ownerDocument.createComment("floating-disclosure-placeholder");
-      portalElement.parentNode?.insertBefore(placeholder, portalElement);
-    }
-
-    portalTarget.append(portalElement);
   };
 
   const registerDismissal = () => {
@@ -178,7 +175,7 @@ export function createFloatingDisclosureLifecycle<TRequest>(
         acquireBodyScrollLock(request);
         options.onBeforeOpen?.({ request, ...applyOptions });
         options.renderState(true);
-        portal();
+        portalSession.mount();
         registerDismissal();
         position();
         setupAutoUpdate();
@@ -207,7 +204,7 @@ export function createFloatingDisclosureLifecycle<TRequest>(
           onHidden: () => {
             if (nextCloseAbortController.signal.aborted) return;
             floatingPositioner?.stopAutoUpdate();
-            unportal();
+            restorePortal();
             if (closeAbortController === nextCloseAbortController) {
               closeAbortController = null;
             }
@@ -225,7 +222,8 @@ export function createFloatingDisclosureLifecycle<TRequest>(
       floatingPositioner?.destroy();
       floatingPositioner = null;
       floatingReference = null;
-      unportal();
+      portalSession.destroy();
+      clearFloatingStyles();
       rendered = false;
     },
   };

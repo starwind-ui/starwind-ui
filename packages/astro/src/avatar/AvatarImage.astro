@@ -12,7 +12,9 @@ type Props = HTMLAttributes<"img"> & {
   src?: string;
 };
 
-const { src, image, alt, width, height, ...rest } = Astro.props;
+const { src, image, alt, width, height, style, ...rest } = Astro.props;
+const initialStyle =
+  typeof style === "string" ? `${style};visibility: hidden` : { ...style, visibility: "hidden" };
 
 if (!src && !image) {
   throw new Error("Either 'src' or 'image' is required for an avatar image.");
@@ -24,11 +26,11 @@ if (!src && !image) {
     <img
       data-sw-avatar-image
       data-image-loading-status="idle"
-      hidden
       src={src}
       alt={alt}
       width={64}
       height={64}
+      style={initialStyle}
       {...rest}
     />
   )
@@ -38,10 +40,10 @@ if (!src && !image) {
     <Image
       data-sw-avatar-image
       data-image-loading-status="idle"
-      hidden
       src={image}
       alt={alt}
       width={64}
+      style={initialStyle}
       {...rest}
     />
   )

@@ -2,6 +2,14 @@
 import { Button } from "@/components/starwind-runtime/button";
 import { button } from "@/components/starwind-runtime/button/variants";
 import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+} from "@/components/starwind-runtime/combobox";
+import {
   Dialog,
   DialogClose,
   DialogContent,
@@ -11,8 +19,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/starwind-runtime/dialog";
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+  DropdownTrigger,
+} from "@/components/starwind-runtime/dropdown";
 import { Input } from "@/components/starwind-runtime/input";
 import { Label } from "@/components/starwind-runtime/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/starwind-runtime/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/starwind-runtime/select";
 ---
 
 <section class="mb-12">
@@ -155,6 +184,178 @@ import { Label } from "@/components/starwind-runtime/label";
           <DialogClose asChild>
             <Button id="runtime-nested-dialog-parent-close" variant="outline" size="sm">
               Close parent
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog id="runtime-dialog-overlay-lab">
+      <DialogTrigger asChild>
+        <Button id="runtime-dialog-overlay-lab-trigger" variant="outline">
+          Open overlay lab
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        id="runtime-dialog-overlay-lab-content"
+        class="max-h-[calc(100vh-4rem)] max-w-2xl overflow-y-auto"
+      >
+        <DialogHeader>
+          <DialogTitle>Overlays inside a dialog</DialogTitle>
+          <DialogDescription>
+            Open each control to verify that its floating content remains interactive without
+            closing the parent dialog.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="grid gap-4 py-4 sm:grid-cols-2">
+          <div class="min-w-0 space-y-3 rounded-lg border p-4">
+            <h3 class="font-heading text-sm font-semibold">Popover</h3>
+            <Popover id="runtime-dialog-popover">
+              <PopoverTrigger
+                id="runtime-dialog-popover-trigger"
+                class={button({ variant: "outline", size: "sm" })}
+              >
+                Open popover
+              </PopoverTrigger>
+              <PopoverContent id="runtime-dialog-popover-content" side="bottom" align="start">
+                <PopoverHeader>
+                  <PopoverTitle>Dialog popover</PopoverTitle>
+                  <PopoverDescription>
+                    This popup should stay above and inside the modal dialog.
+                  </PopoverDescription>
+                </PopoverHeader>
+                <Dialog id="runtime-dialog-overlay-nested">
+                  <DialogTrigger asChild>
+                    <Button
+                      id="runtime-dialog-overlay-nested-trigger"
+                      variant="secondary"
+                      size="sm"
+                    >
+                      Open nested overlay dialog
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent
+                    id="runtime-dialog-overlay-nested-content"
+                    class="max-h-64 max-w-sm overflow-hidden"
+                  >
+                    <DialogHeader>
+                      <DialogTitle>Nested overlay dialog</DialogTitle>
+                      <DialogDescription>
+                        Its popover should escape this deliberately clipped dialog surface.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div
+                      data-runtime-dialog-overlay-clip
+                      class="h-16 overflow-hidden rounded border p-2"
+                    >
+                      <Popover id="runtime-dialog-overlay-nested-popover">
+                        <PopoverTrigger
+                          id="runtime-dialog-overlay-nested-popover-trigger"
+                          class={button({ variant: "outline", size: "sm" })}
+                        >
+                          Open nested popover
+                        </PopoverTrigger>
+                        <PopoverContent
+                          id="runtime-dialog-overlay-nested-popover-content"
+                          class="w-80"
+                          side="bottom"
+                          align="start"
+                        >
+                          <PopoverTitle>Nested dialog popover</PopoverTitle>
+                          <PopoverDescription>
+                            This content remains interactive outside the clipped region.
+                          </PopoverDescription>
+                          <Button id="runtime-dialog-overlay-nested-popover-action" size="sm">
+                            Confirm nested action
+                          </Button>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button
+                          id="runtime-dialog-overlay-nested-close"
+                          variant="outline"
+                          size="sm"
+                        >
+                          Close nested dialog
+                        </Button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <Button id="runtime-dialog-popover-action" variant="ghost" size="sm">
+                  Confirm parent action
+                </Button>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div class="min-w-0 space-y-3 rounded-lg border p-4">
+            <h3 class="font-heading text-sm font-semibold">Select</h3>
+            <Select
+              id="runtime-dialog-select"
+              defaultValue="system"
+              name="runtimeDialogTheme"
+              class="w-full"
+            >
+              <SelectTrigger
+                id="runtime-dialog-select-trigger"
+                class="w-full"
+                placeholder="Choose a theme"
+              />
+              <SelectContent id="runtime-dialog-select-content" alignItemWithTrigger={false}>
+                <SelectItem id="runtime-dialog-select-light" value="light"> Light </SelectItem>
+                <SelectItem id="runtime-dialog-select-system" value="system"> System </SelectItem>
+                <SelectItem id="runtime-dialog-select-dark" value="dark"> Dark </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div class="min-w-0 space-y-3 rounded-lg border p-4">
+            <h3 class="font-heading text-sm font-semibold">Combobox</h3>
+            <Combobox id="runtime-dialog-combobox" name="runtimeDialogFruit">
+              <ComboboxLabel>Fruit</ComboboxLabel>
+              <ComboboxInput id="runtime-dialog-combobox-input" placeholder="Search fruit" />
+              <ComboboxContent id="runtime-dialog-combobox-content">
+                <ComboboxEmpty>No fruit found.</ComboboxEmpty>
+                <ComboboxItem id="runtime-dialog-combobox-apple" value="apple">
+                  Apple
+                </ComboboxItem>
+                <ComboboxItem id="runtime-dialog-combobox-apricot" value="apricot">
+                  Apricot
+                </ComboboxItem>
+                <ComboboxItem id="runtime-dialog-combobox-banana" value="banana">
+                  Banana
+                </ComboboxItem>
+              </ComboboxContent>
+            </Combobox>
+          </div>
+
+          <div class="min-w-0 space-y-3 rounded-lg border p-4">
+            <h3 class="font-heading text-sm font-semibold">Dropdown</h3>
+            <Dropdown id="runtime-dialog-dropdown">
+              <DropdownTrigger
+                id="runtime-dialog-dropdown-trigger"
+                class={button({ variant: "outline", size: "sm" })}
+              >
+                Open menu
+              </DropdownTrigger>
+              <DropdownContent id="runtime-dialog-dropdown-content" side="bottom" align="start">
+                <DropdownLabel>Project actions</DropdownLabel>
+                <DropdownItem id="runtime-dialog-dropdown-duplicate"> Duplicate </DropdownItem>
+                <DropdownItem id="runtime-dialog-dropdown-rename"> Rename </DropdownItem>
+                <DropdownItem id="runtime-dialog-dropdown-archive"> Archive </DropdownItem>
+              </DropdownContent>
+            </Dropdown>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button id="runtime-dialog-overlay-lab-close" variant="outline" size="sm">
+              Close lab
             </Button>
           </DialogClose>
         </DialogFooter>

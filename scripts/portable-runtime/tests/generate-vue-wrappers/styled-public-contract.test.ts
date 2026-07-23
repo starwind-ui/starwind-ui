@@ -89,28 +89,38 @@ describe("generated Vue Styled public contracts", () => {
   });
 
   it("accepts valid native/model/event/slot/ref usage", async () => {
-    const valid = await runVueTypecheck(root, outputRoot, "valid.vue");
+    const valid = await runVueTypecheck(root, outputRoot, ["valid.vue"], "valid");
     expect(valid.status, valid.diagnostics).toBe(0);
   });
 
-  it.each(INVALID_CONTRACT_CASES)("rejects invalid %s", async (_, fixtureName, diagnostic) => {
-    const invalid = await runVueTypecheck(root, outputRoot, fixtureName);
+  it("rejects every invalid native/model/event/slot/ref contract in one compile", async () => {
+    const fixtureNames = INVALID_CONTRACT_CASES.map(([, fixtureName]) => fixtureName);
+    const invalid = await runVueTypecheck(root, outputRoot, fixtureNames, "invalid");
+
     expect(invalid.status, invalid.diagnostics).not.toBe(0);
-    expect(invalid.diagnostics).toContain(fixtureName);
-    expect(invalid.diagnostics).toMatch(diagnostic);
+    for (const [caseName, fixtureName, diagnostic] of INVALID_CONTRACT_CASES) {
+      expect(invalid.diagnostics, caseName).toContain(fixtureName);
+      expect(invalid.diagnostics, caseName).toMatch(diagnostic);
+    }
   });
 });
 
 async function runVueTypecheck(
   root: string,
   outputRoot: string,
-  fixtureName: string,
+  fixtureNames: readonly string[],
+  configName: string,
 ): Promise<{ diagnostics: string; status: number | null }> {
-  const fixturePath = path.join(root, fixtureName);
-  await writeFile(
-    fixturePath,
-    await readFile(path.join(FIXTURE_ROOT, fixtureName), "utf8"),
-    "utf8",
+  const fixturePaths = await Promise.all(
+    fixtureNames.map(async (fixtureName) => {
+      const fixturePath = path.join(root, fixtureName);
+      await writeFile(
+        fixturePath,
+        await readFile(path.join(FIXTURE_ROOT, fixtureName), "utf8"),
+        "utf8",
+      );
+      return fixturePath;
+    }),
   );
   const workspaceRoot = process.cwd().split(path.sep).join("/");
   const workspaceRequire = createRequire(path.join(process.cwd(), "apps/react-demo/package.json"));
@@ -121,7 +131,7 @@ async function runVueTypecheck(
     )
     .split(path.sep)
     .join("/");
-  const configPath = path.join(root, `${fixtureName}.tsconfig.json`);
+  const configPath = path.join(root, `${configName}.tsconfig.json`);
   await writeFile(
     configPath,
     `${JSON.stringify(
@@ -147,7 +157,7 @@ async function runVueTypecheck(
           target: "ES2022",
         },
         include: [
-          fixturePath.split(path.sep).join("/"),
+          ...fixturePaths.map((fixturePath) => fixturePath.split(path.sep).join("/")),
           `${outputRoot.split(path.sep).join("/")}/**/*`,
         ],
         vueCompilerOptions: { dataAttributes: ["data-*"], strictTemplates: true },

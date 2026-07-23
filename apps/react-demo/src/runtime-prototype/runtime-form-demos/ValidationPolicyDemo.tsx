@@ -10,17 +10,26 @@ import {
   Form,
 } from "../kit";
 
-type PolicyTiming = "blur" | "change" | "input" | "submit";
+type PolicyTiming = "blur" | "change" | "submit";
 
-const policyTimings: PolicyTiming[] = ["submit", "blur", "change", "input"];
+const policyTimings: PolicyTiming[] = ["submit", "blur", "change"];
 
 export function ValidationPolicyDemo() {
   const [policyValidation, setPolicyValidation] = useState<PolicyTiming>("submit");
+  const [policyRevalidation, setPolicyRevalidation] = useState<PolicyTiming>("change");
   const [policyVisibility, setPolicyVisibility] = useState<PolicyTiming>("submit");
-  const [policyOutput, setPolicyOutput] = useState("Validation: submit. Errors: submit.");
+  const [policyOutput, setPolicyOutput] = useState(
+    "Before submit: submit. After submit: change. Errors: submit.",
+  );
 
-  const renderPolicyState = (validation = policyValidation, visibility = policyVisibility) => {
-    setPolicyOutput(`Validation: ${validation}. Errors: ${visibility}.`);
+  const renderPolicyState = (
+    validation = policyValidation,
+    revalidation = policyRevalidation,
+    visibility = policyVisibility,
+  ) => {
+    setPolicyOutput(
+      `Before submit: ${validation}. After submit: ${revalidation}. Errors: ${visibility}.`,
+    );
   };
 
   return (
@@ -30,14 +39,14 @@ export function ValidationPolicyDemo() {
           Validation policy sandbox
         </h2>
         <p className="text-muted-foreground text-sm">
-          Toggle when validation runs and when errors become visible. The handle field overrides the
-          form and validates on input.
+          Choose separate validation triggers before and after the first submit attempt. The default
+          starts on submit, then revalidates accepted changes.
         </p>
       </div>
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2">
+      <div className="mb-5 grid gap-3 sm:grid-cols-3">
         <div className="space-y-2">
-          <p className="text-muted-foreground text-sm font-medium">Validate</p>
+          <p className="text-muted-foreground text-sm font-medium">Before submit</p>
           <div className="flex flex-wrap gap-2">
             {policyTimings.map((timing) => (
               <Button
@@ -48,7 +57,27 @@ export function ValidationPolicyDemo() {
                 aria-pressed={policyValidation === timing}
                 onClick={() => {
                   setPolicyValidation(timing);
-                  renderPolicyState(timing, policyVisibility);
+                  renderPolicyState(timing, policyRevalidation, policyVisibility);
+                }}
+              >
+                {toPolicyLabel(timing)}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p className="text-muted-foreground text-sm font-medium">After submit</p>
+          <div className="flex flex-wrap gap-2">
+            {policyTimings.map((timing) => (
+              <Button
+                key={timing}
+                type="button"
+                size="sm"
+                variant={policyRevalidation === timing ? "default" : "outline"}
+                aria-pressed={policyRevalidation === timing}
+                onClick={() => {
+                  setPolicyRevalidation(timing);
+                  renderPolicyState(policyValidation, timing, policyVisibility);
                 }}
               >
                 {toPolicyLabel(timing)}
@@ -68,7 +97,7 @@ export function ValidationPolicyDemo() {
                 aria-pressed={policyVisibility === timing}
                 onClick={() => {
                   setPolicyVisibility(timing);
-                  renderPolicyState(policyValidation, timing);
+                  renderPolicyState(policyValidation, policyRevalidation, timing);
                 }}
               >
                 {toPolicyLabel(timing)}
@@ -81,7 +110,7 @@ export function ValidationPolicyDemo() {
       <Form
         className="grid gap-4"
         data-validation-timing={policyValidation}
-        data-revalidation-timing="change"
+        data-revalidation-timing={policyRevalidation}
         data-error-visibility={policyVisibility}
         onReset={() => {
           window.setTimeout(() => renderPolicyState(), 0);
@@ -101,11 +130,16 @@ export function ValidationPolicyDemo() {
           <FieldError match="typeMismatch">Use a valid email address.</FieldError>
         </Field>
 
-        <Field name="reactRuntimePolicyHandle" validationTiming="input" errorVisibility="input">
-          <FieldLabel>Override handle</FieldLabel>
+        <Field
+          name="reactRuntimePolicyHandle"
+          validationTiming="change"
+          revalidationTiming="blur"
+          errorVisibility="change"
+        >
+          <FieldLabel>Reverse-policy handle</FieldLabel>
           <FieldControl id="react-runtime-policy-handle" required minLength={3} placeholder="sw" />
           <FieldDescription>
-            This field uses friendly policy props for its input override.
+            This Field validates on change before submit, then only on blur afterward.
           </FieldDescription>
           <FieldError match="valueMissing">Choose a handle.</FieldError>
           <FieldError match="tooShort">Use at least three characters.</FieldError>

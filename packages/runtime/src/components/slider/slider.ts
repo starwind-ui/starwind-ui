@@ -5,6 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
 export type SliderValue = number | number[];
@@ -187,6 +188,7 @@ class SliderController implements SliderInstance {
   private interactionPreviousValue: SliderValue | undefined;
   private lastInteractionEvent: Event | undefined;
   private lastInteractionReason: SliderValueChangeReason = "none";
+  private lastInteractionRevisionSource: object | undefined;
   private lastInteractionTrigger: Element | undefined;
   private form?: string;
   private largeStep: number;
@@ -732,6 +734,7 @@ class SliderController implements SliderInstance {
     this.interactionPreviousValue = this.getValue();
     this.lastInteractionEvent = event;
     this.lastInteractionReason = targetThumb ? "drag" : "track-press";
+    this.lastInteractionRevisionSource = undefined;
     this.lastInteractionTrigger = activeThumb.element;
     activeThumb.element.focus();
 
@@ -775,6 +778,7 @@ class SliderController implements SliderInstance {
     const activeThumbIndex = this.activeThumbIndex;
     const previousValue = this.interactionPreviousValue ?? this.getValue();
     const reason = this.lastInteractionReason;
+    const revisionSource = this.lastInteractionRevisionSource;
     const trigger = this.lastInteractionTrigger;
     const interactionChanged = this.interactionChanged;
     const committedValue = this.interactionValue ?? this.getValue();
@@ -783,14 +787,17 @@ class SliderController implements SliderInstance {
     releasePointerCapture(this.elements.control, event.pointerId);
 
     if (interactionChanged) {
-      this.notifyCommitted({
-        activeThumbIndex,
-        event,
-        previousValue,
-        reason,
-        trigger,
-        value: committedValue,
-      });
+      this.notifyCommitted(
+        {
+          activeThumbIndex,
+          event,
+          previousValue,
+          reason,
+          trigger,
+          value: committedValue,
+        },
+        revisionSource,
+      );
     }
   };
 
@@ -859,20 +866,24 @@ class SliderController implements SliderInstance {
     this.interactionValue = nextValue;
     this.lastInteractionEvent = request.event;
     this.lastInteractionReason = request.reason;
+    this.lastInteractionRevisionSource = details;
     this.lastInteractionTrigger = request.trigger;
 
     if (this.controlled) {
       this.render();
 
       if (request.commit) {
-        this.notifyCommitted({
-          activeThumbIndex: request.activeThumbIndex,
-          event: request.event,
-          previousValue,
-          reason: request.reason,
-          trigger: request.trigger,
-          value: nextValue,
-        });
+        this.notifyCommitted(
+          {
+            activeThumbIndex: request.activeThumbIndex,
+            event: request.event,
+            previousValue,
+            reason: request.reason,
+            trigger: request.trigger,
+            value: nextValue,
+          },
+          details,
+        );
       }
 
       return false;
@@ -882,14 +893,17 @@ class SliderController implements SliderInstance {
     this.render();
 
     if (request.commit) {
-      this.notifyCommitted({
-        activeThumbIndex: request.activeThumbIndex,
-        event: request.event,
-        previousValue,
-        reason: request.reason,
-        trigger: request.trigger,
-        value: nextValue,
-      });
+      this.notifyCommitted(
+        {
+          activeThumbIndex: request.activeThumbIndex,
+          event: request.event,
+          previousValue,
+          reason: request.reason,
+          trigger: request.trigger,
+          value: nextValue,
+        },
+        details,
+      );
     }
 
     return true;
@@ -1059,11 +1073,13 @@ class SliderController implements SliderInstance {
     this.interactionValue = undefined;
     this.lastInteractionEvent = undefined;
     this.lastInteractionReason = "none";
+    this.lastInteractionRevisionSource = undefined;
     this.lastInteractionTrigger = undefined;
     this.render();
   }
 
   private notifyChange(details: SliderValueChangeDetails): void {
+    attachFormValueRevision(details, details.event);
     const event = dispatchCustomEvent(this.root, "starwind:value-change", details, {
       cancelable: true,
     });
@@ -1072,7 +1088,8 @@ class SliderController implements SliderInstance {
     this.subscribers.valueChange.forEach((subscriber) => subscriber(details));
   }
 
-  private notifyCommitted(details: SliderValueCommitDetails): void {
+  private notifyCommitted(details: SliderValueCommitDetails, source?: object): void {
+    attachFormValueRevision(details, source ?? details.event);
     dispatchCustomEvent(this.root, "starwind:value-committed", details);
     this.onValueCommitted?.(details.value, details);
     this.subscribers.valueCommitted.forEach((subscriber) => subscriber(details));

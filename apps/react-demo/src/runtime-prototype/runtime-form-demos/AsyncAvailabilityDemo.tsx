@@ -16,7 +16,9 @@ const unavailableHandles = new Set(["admin", "starwind", "taken"]);
 
 export function AsyncAvailabilityDemo() {
   const asyncFormRef = useRef<HTMLFormElement>(null);
-  const [asyncOutput, setAsyncOutput] = useState("Type to run a debounced availability check.");
+  const [asyncOutput, setAsyncOutput] = useState(
+    "Submit to check availability; later accepted changes recheck it.",
+  );
 
   useEffect(() => {
     const form = asyncFormRef.current;
@@ -52,17 +54,23 @@ export function AsyncAvailabilityDemo() {
       <div className="mb-5 space-y-2">
         <h2 className="font-heading text-2xl font-semibold tracking-tight">Async availability</h2>
         <p className="text-muted-foreground text-sm">
-          Debounced validators can check remote-style rules and still block managed submit.
+          Submit once to check availability; accepted changes then run the debounced validator while
+          you correct the handle.
         </p>
       </div>
 
       <Form
         ref={asyncFormRef}
         className="grid gap-4"
-        data-validation-timing="input"
-        data-error-visibility="input"
+        data-validation-timing="submit"
+        data-revalidation-timing="change"
+        data-error-visibility="submit"
         onReset={() => {
-          window.setTimeout(() => setAsyncOutput("Type to run a debounced availability check."), 0);
+          window.setTimeout(
+            () =>
+              setAsyncOutput("Submit to check availability; later accepted changes recheck it."),
+            0,
+          );
         }}
       >
         <Field name="reactRuntimeAsyncHandle">

@@ -41,9 +41,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Changesets treats nested directories as legacy v1 changesets. The
-      # custom version command consumes this temporary staging directory.
-      - name: Stage Styled Component Intents
-        run: pnpm styled:versions:stage
+      # custom version command consumes these temporary staging directories.
+      - name: Stage Registry Component Intents
+        run: pnpm styled:versions:stage && pnpm primitive:versions:stage
 
       - name: Create Release Pull Request
         # changesets/action@v1.8.0

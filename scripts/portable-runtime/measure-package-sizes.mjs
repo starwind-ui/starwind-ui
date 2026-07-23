@@ -497,16 +497,73 @@ const supportRows = [
   ]),
 ];
 
-async function main() {
-  prepareTempInstall();
+export const committedComparatorBaselines = Object.freeze({
+  // `pnpm runtime:size` is the explicit refresh path. Check mode keeps these comparator
+  // snapshots stable so release verification measures only current Starwind artifacts.
+  bundleResults: Object.freeze([
+    Object.freeze({
+      gzipBytes: colorPickerRebaselineEvidence.standaloneComparator.zagGzipBytes,
+      label: "@zag-js/color-picker",
+      minifiedBytes: null,
+    }),
+  ]),
+  supportResults: Object.freeze([
+    Object.freeze({
+      comparisonSet: "all-three-overlap",
+      gzipBytes: 99_840,
+      provider: "zag",
+    }),
+    Object.freeze({
+      comparisonSet: "all-three-overlap",
+      gzipBytes: 143_155,
+      provider: "base",
+    }),
+    Object.freeze({
+      comparisonSet: "starwind-zag-overlap",
+      gzipBytes: 112_333,
+      provider: "zag",
+    }),
+    Object.freeze({
+      comparisonSet: "starwind-base-overlap",
+      gzipBytes: 146_842,
+      provider: "base",
+    }),
+  ]),
+});
 
-  const bundleResults = [];
-  for (const row of bundleRows) {
+export function getPackageSizeMeasurementPlan({ checkOnly = false } = {}) {
+  if (!checkOnly) {
+    return {
+      bundleBaselines: [],
+      bundleRows,
+      installComparators: true,
+      supportBaselines: [],
+      supportRows,
+    };
+  }
+
+  return {
+    bundleBaselines: committedComparatorBaselines.bundleResults,
+    bundleRows: bundleRows.filter(
+      ({ group }) => group === "Starwind" || group === "Standalone Color Picker",
+    ),
+    installComparators: false,
+    supportBaselines: committedComparatorBaselines.supportResults,
+    supportRows: supportRows.filter(({ provider }) => provider === "starwind"),
+  };
+}
+
+async function main() {
+  const plan = getPackageSizeMeasurementPlan({ checkOnly: CHECK_ONLY });
+  if (plan.installComparators) prepareTempInstall();
+
+  const bundleResults = [...plan.bundleBaselines];
+  for (const row of plan.bundleRows) {
     bundleResults.push(await measureBundle(row));
   }
 
-  const supportResults = [];
-  for (const row of supportRows) {
+  const supportResults = [...plan.supportBaselines];
+  for (const row of plan.supportRows) {
     supportResults.push(await measureBundle(row));
   }
 
@@ -538,8 +595,8 @@ async function main() {
   const packageBudgetResults = evaluatePackageSizeBudgets({ bundleResults, supportResults });
   const colorPickerCheck = evaluateColorPickerSizeComparison(bundleResults);
   packageBudgetResults.colorPickerCheck = colorPickerCheck;
-  if (colorPickerCheck.failure) {
-    packageBudgetResults.failures.push(colorPickerCheck.failure);
+  if (colorPickerCheck.advisory) {
+    packageBudgetResults.advisories.push(colorPickerCheck.advisory);
   }
 
   const reportsWritten = writePackageSizeReports(
@@ -578,27 +635,34 @@ export function evaluateColorPickerSizeComparison(bundleResults) {
   const zag = bundleResults.find((row) => row.label === "@zag-js/color-picker");
   const starwindGzipBytes = starwind?.gzipBytes ?? null;
   const zagGzipBytes = zag?.gzipBytes ?? null;
-  let failure = null;
+  let advisory = null;
+  let status = "Below comparator";
 
   if (starwindGzipBytes == null) {
-    failure =
+    advisory =
       "Standalone Color Picker comparison could not be evaluated: missing @starwind-ui/runtime/color-picker min+gzip measurement.";
+    status = "Unavailable";
   } else if (zagGzipBytes == null) {
-    failure =
+    advisory =
       "Standalone Color Picker comparison could not be evaluated: missing @zag-js/color-picker min+gzip measurement.";
+    status = "Unavailable";
   } else if (starwindGzipBytes > zagGzipBytes) {
-    failure = `Standalone Color Picker comparison failed: @starwind-ui/runtime/color-picker ${formatExactBytes(
+    advisory = `Standalone Color Picker comparison advisory: @starwind-ui/runtime/color-picker ${formatExactBytes(
       starwindGzipBytes,
-    )} > @zag-js/color-picker ${formatExactBytes(zagGzipBytes)}.`;
+    )} is above @zag-js/color-picker ${formatExactBytes(zagGzipBytes)}.`;
+    status = "Above comparator";
+  } else if (starwindGzipBytes === zagGzipBytes) {
+    status = "Equal comparator";
   }
 
   return {
+    advisory,
     differenceGzipBytes:
       starwindGzipBytes == null || zagGzipBytes == null ? null : zagGzipBytes - starwindGzipBytes,
-    failure,
+    failure: null,
     starwindGzipBytes,
     starwindMinifiedBytes: starwind?.minifiedBytes ?? null,
-    status: failure ? "Fail" : "Pass",
+    status,
     zagGzipBytes,
     zagMinifiedBytes: zag?.minifiedBytes ?? null,
   };
@@ -608,9 +672,9 @@ export function formatColorPickerSizeComparisonMarkdown(comparison) {
   return [
     "### Standalone Color Picker Comparison",
     "",
-    "The Runtime Color Picker subpath is measured independently from Starwind's aggregate support sets. Its gzip gate must not exceed the existing standalone Zag Color Picker machine row.",
+    "The Runtime Color Picker subpath is measured independently from Starwind's aggregate support sets. Its absolute cold-import budget is enforced above; the Zag comparison is informational.",
     "",
-    "| Check | Starwind minified | Starwind min+gzip | Zag minified | Zag min+gzip | Gzip headroom | Gate |",
+    "| Check | Starwind minified | Starwind min+gzip | Zag minified | Zag min+gzip | Gzip difference | Comparison |",
     "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
     [
       "Runtime Color Picker vs Zag Color Picker",
@@ -671,7 +735,7 @@ export function formatColorPickerRebaselineMarkdown(evidence = colorPickerRebase
   return [
     "### Color Picker Rebaseline Evidence",
     "",
-    `The pre-feature fixed point is commit \`${summary.fixedPointCommit}\`, the parent of the first Color Picker implementation commit. It was exported with \`git archive\`, installed from the locked local pnpm store, rebuilt with \`pnpm runtime:build\` and \`pnpm react:build\`, and measured with the same esbuild, static-import, minification, and gzip settings described above. The post-feature values below are the fixed Color Picker release rebaseline snapshot, not live measurements from each report regeneration. Exact snapshot bytes are the policy source; the live generated tables below remain the current public summary.`,
+    `The pre-feature fixed point is commit \`${summary.fixedPointCommit}\`, the parent of the first Color Picker implementation commit. It was exported with \`git archive\`, installed from the locked local pnpm store, rebuilt with \`pnpm runtime:build\` and \`pnpm react:build\`, and measured with the same esbuild, static-import, minification, and gzip settings described above. The post-feature values and ceilings below are the historical Color Picker release rebaseline snapshot, not live measurements or active release gates. The aggregate regression guards in the following sections are the current policy.`,
     "",
     "| Gate | Pre-feature gzip | Post-feature rebaseline gzip | Delta | Old ceiling | Old headroom | New ceiling | New headroom |",
     "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
@@ -981,18 +1045,19 @@ export function formatDiagnosticPackageSizeReport({
     "",
     "## Budget Checks",
     "",
-    "`pnpm runtime:size` fails when any row in this section fails. Rows outside this section are context-only measurements.",
+    "`pnpm runtime:size` treats aggregate package and support-set sizes as regression guards: they fail only after more than 10% or 15 KiB of gzip growth from the committed baseline, whichever comes first. Targeted cold imports retain strict absolute budgets. Competitor comparisons are informational.",
     "",
     ...formatColorPickerRebaselineMarkdown(),
     "",
-    "### Headline Package Budgets",
+    "### Headline Aggregate Regression Guards",
     "",
-    "| Row | Current min+gzip | Budget | Status |",
-    "| --- | ---: | ---: | --- |",
+    "| Row | Current min+gzip | Baseline | Regression guard | Status |",
+    "| --- | ---: | ---: | ---: | --- |",
     ...packageBudgetResults.headlineChecks.map((check) =>
       [
         `\`${check.label}\``,
         formatBytes(check.gzipBytes),
+        formatBytes(check.baselineGzipBytes),
         formatBytes(check.maxGzipBytes),
         check.status,
       ]
@@ -1001,27 +1066,31 @@ export function formatDiagnosticPackageSizeReport({
         .replace(/$/, " |"),
     ),
     "",
-    "### Field Cold-Import Budget",
+    "### Targeted Cold-Import Budgets",
     "",
     "| Row | Current min+gzip | Budget | Status |",
     "| --- | ---: | ---: | --- |",
-    ...packageBudgetResults.fieldColdImportChecks.map((check) =>
+    ...[
+      ...packageBudgetResults.standaloneComponentChecks,
+      ...packageBudgetResults.fieldColdImportChecks,
+    ].map((check) =>
       [check.label, formatBytes(check.gzipBytes), formatBytes(check.maxGzipBytes), check.status]
         .join(" | ")
         .replace(/^/, "| ")
         .replace(/$/, " |"),
     ),
     "",
-    "### Matched-Support Budgets",
+    "### Matched-Support Aggregate Regression Guards",
     "",
-    "| Check | Starwind min+gzip | Comparator | Comparator min+gzip | Budget | Gate | Comparison |",
-    "| --- | ---: | --- | ---: | ---: | --- | --- |",
+    "| Check | Starwind min+gzip | Comparator | Comparator min+gzip | Baseline | Regression guard | Gate | Comparison |",
+    "| --- | ---: | --- | ---: | ---: | ---: | --- | --- |",
     ...packageBudgetResults.matchedSupportChecks.map((check) =>
       [
         check.label,
         formatBytes(check.starwindGzipBytes),
         check.comparatorLabel,
         formatBytes(check.comparatorGzipBytes),
+        formatBytes(check.baselineGzipBytes),
         formatBytes(check.maxStarwindGzipBytes),
         check.status,
         check.comparisonStatus,

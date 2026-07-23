@@ -336,38 +336,23 @@ describe("createTooltip", () => {
     );
   });
 
-  it("registers global dismissal listeners only while tooltip instances are open", () => {
-    const addListener = vi.spyOn(document, "addEventListener");
-    const removeListener = vi.spyOn(document, "removeEventListener");
-    const first = createTooltip(renderTooltip());
-    const second = createTooltip(renderTooltip());
+  it("treats non-trigger siblings inside the Tooltip root as outside interactions", () => {
+    const root = renderTooltip();
+    const rootRemainder = document.createElement("button");
+    rootRemainder.type = "button";
+    rootRemainder.textContent = "Root remainder";
+    root.append(rootRemainder);
 
-    expect(getDismissalListenerCalls(addListener)).toHaveLength(0);
+    const tooltip = createTooltip(root);
+    tooltip.setOpen(true, { emit: false });
 
-    first.setOpen(true, { emit: false });
+    rootRemainder.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
 
-    expect(getDismissalListenerCalls(addListener).map(([type]) => type)).toEqual([
-      "keydown",
-      "pointerdown",
-    ]);
-
-    second.setOpen(true, { emit: false });
-
-    expect(getDismissalListenerCalls(addListener)).toHaveLength(2);
-
-    first.setOpen(false, { emit: false });
-
-    expect(getDismissalListenerCalls(removeListener)).toHaveLength(0);
-
-    second.setOpen(false, { emit: false });
-
-    expect(getDismissalListenerCalls(removeListener).map(([type]) => type)).toEqual([
-      "keydown",
-      "pointerdown",
-    ]);
+    expect(tooltip.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
   });
 
-  it("preserves per-instance dismissal semantics for multiple open tooltips", () => {
+  it("preserves multi-instance dismissal containment, topmost Escape, and reopen behavior", () => {
     const firstRoot = renderTooltip();
     const first = createTooltip(firstRoot);
     const firstPopup = firstRoot.querySelector<HTMLElement>("[data-sw-tooltip-popup]")!;
@@ -388,14 +373,42 @@ describe("createTooltip", () => {
     first.setOpen(true, { emit: false });
     second.setOpen(true, { emit: false });
 
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(first.getOpen()).toBe(true);
+    expect(second.getOpen()).toBe(false);
+    expect(firstPopup.hidden).toBe(false);
+    expect(secondPopup.hidden).toBe(true);
+
+    second.setOpen(true, { emit: false });
+
     secondPopup.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
 
     expect(first.getOpen()).toBe(false);
     expect(second.getOpen()).toBe(true);
+    expect(firstPopup.hidden).toBe(true);
+    expect(secondPopup.hidden).toBe(false);
 
-    document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
 
+    expect(first.getOpen()).toBe(false);
     expect(second.getOpen()).toBe(false);
+    expect(firstPopup.hidden).toBe(true);
+    expect(secondPopup.hidden).toBe(true);
+
+    first.setOpen(true, { emit: false });
+
+    expect(first.getOpen()).toBe(true);
+    expect(firstPopup.hidden).toBe(false);
+
+    document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(first.getOpen()).toBe(false);
+    expect(firstPopup.hidden).toBe(true);
   });
 
   it("keeps hoverable content open until the popup itself is left", async () => {
@@ -877,13 +890,6 @@ function getPositioner(): HTMLElement {
   return document.querySelector<HTMLElement>("[data-sw-tooltip-positioner]")!;
 }
 
-function getDismissalListenerCalls(spy: { mock: { calls: unknown[][] } }) {
-  return spy.mock.calls.filter(
-    (call): call is [string, ...unknown[]] =>
-      (call[0] === "keydown" || call[0] === "pointerdown") && !isCaptureListenerOptions(call[2]),
-  );
-}
-
 function dispatchScrollUpdate(): void {
   window.dispatchEvent(new Event("scroll"));
   window.visualViewport?.dispatchEvent(new Event("scroll"));
@@ -902,13 +908,6 @@ function mockRect(
       y: rect.y,
     });
   });
-}
-
-function isCaptureListenerOptions(value: unknown): boolean {
-  return (
-    value === true ||
-    (typeof value === "object" && value !== null && "capture" in value && value.capture === true)
-  );
 }
 
 async function waitForMicrotasks(): Promise<void> {

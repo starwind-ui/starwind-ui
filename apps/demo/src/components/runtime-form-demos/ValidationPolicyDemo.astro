@@ -14,14 +14,14 @@ import { Form } from "@/components/starwind-runtime/form";
   <div class="mb-5 space-y-2">
     <h2 class="font-heading text-2xl font-semibold tracking-tight">Validation policy sandbox</h2>
     <p class="text-muted-foreground text-sm">
-      Toggle when validation runs and when errors become visible. The handle field overrides the
-      form and validates on input.
+      Choose separate validation triggers before and after the first submit attempt. The default
+      starts on submit, then revalidates accepted changes.
     </p>
   </div>
 
-  <div class="mb-5 grid gap-3 sm:grid-cols-2">
+  <div class="mb-5 grid gap-3 sm:grid-cols-3">
     <div class="space-y-2">
-      <p class="text-muted-foreground text-sm font-medium">Validate</p>
+      <p class="text-muted-foreground text-sm font-medium">Before submit</p>
       <div class="flex flex-wrap gap-2" data-runtime-policy-validation>
         <Button type="button" size="sm" variant="default" data-policy-value="submit">
           Submit
@@ -30,7 +30,18 @@ import { Form } from "@/components/starwind-runtime/form";
         <Button type="button" size="sm" variant="outline" data-policy-value="change">
           Change
         </Button>
-        <Button type="button" size="sm" variant="outline" data-policy-value="input">Input</Button>
+      </div>
+    </div>
+    <div class="space-y-2">
+      <p class="text-muted-foreground text-sm font-medium">After submit</p>
+      <div class="flex flex-wrap gap-2" data-runtime-policy-revalidation>
+        <Button type="button" size="sm" variant="outline" data-policy-value="submit">
+          Submit
+        </Button>
+        <Button type="button" size="sm" variant="outline" data-policy-value="blur">Blur</Button>
+        <Button type="button" size="sm" variant="default" data-policy-value="change">
+          Change
+        </Button>
       </div>
     </div>
     <div class="space-y-2">
@@ -43,7 +54,6 @@ import { Form } from "@/components/starwind-runtime/form";
         <Button type="button" size="sm" variant="outline" data-policy-value="change">
           Change
         </Button>
-        <Button type="button" size="sm" variant="outline" data-policy-value="input">Input</Button>
       </div>
     </div>
   </div>
@@ -63,11 +73,16 @@ import { Form } from "@/components/starwind-runtime/form";
       <FieldError match="typeMismatch">Use a valid email address.</FieldError>
     </Field>
 
-    <Field name="runtimePolicyHandle" validationTiming="input" errorVisibility="input">
-      <FieldLabel>Override handle</FieldLabel>
+    <Field
+      name="runtimePolicyHandle"
+      validationTiming="change"
+      revalidationTiming="blur"
+      errorVisibility="change"
+    >
+      <FieldLabel>Reverse-policy handle</FieldLabel>
       <FieldControl id="runtime-policy-handle" required minlength="3" placeholder="sw" />
       <FieldDescription
-        >This field uses friendly policy props for its input override.</FieldDescription
+        >This Field validates on change before submit, then only on blur afterward.</FieldDescription
       >
       <FieldError match="valueMissing">Choose a handle.</FieldError>
       <FieldError match="tooShort">Use at least three characters.</FieldError>
@@ -83,7 +98,7 @@ import { Form } from "@/components/starwind-runtime/form";
     id="runtime-policy-output"
     class="text-muted-foreground mt-3 block text-sm whitespace-pre-wrap"
   >
-    Validation: submit. Errors: submit.
+    Before submit: submit. After submit: change. Errors: submit.
   </output>
 </section>
 
@@ -94,8 +109,10 @@ import { Form } from "@/components/starwind-runtime/form";
   const renderPolicyOutput = (text?: string) => {
     if (!policyForm || !policyOutput) return;
     const validation = policyForm.getAttribute("data-validation-timing") ?? "submit";
+    const revalidation = policyForm.getAttribute("data-revalidation-timing") ?? "change";
     const visibility = policyForm.getAttribute("data-error-visibility") ?? "submit";
-    const nextText = text ?? `Validation: ${validation}. Errors: ${visibility}.`;
+    const nextText =
+      text ?? `Before submit: ${validation}. After submit: ${revalidation}. Errors: ${visibility}.`;
     policyOutput.value = nextText;
     policyOutput.textContent = nextText;
   };
@@ -108,7 +125,7 @@ import { Form } from "@/components/starwind-runtime/form";
 
   const setupPolicyGroup = (
     selector: string,
-    attributeName: "data-error-visibility" | "data-validation-timing",
+    attributeName: "data-error-visibility" | "data-revalidation-timing" | "data-validation-timing",
   ) => {
     const group = document.querySelector(selector);
     group?.querySelectorAll<HTMLButtonElement>("[data-policy-value]").forEach((button) => {
@@ -120,7 +137,8 @@ import { Form } from "@/components/starwind-runtime/form";
       });
     });
     if (policyForm) {
-      syncPolicyButtons(group, policyForm.getAttribute(attributeName) ?? "submit");
+      const defaultValue = attributeName === "data-revalidation-timing" ? "change" : "submit";
+      syncPolicyButtons(group, policyForm.getAttribute(attributeName) ?? defaultValue);
     }
   };
 
@@ -136,6 +154,7 @@ import { Form } from "@/components/starwind-runtime/form";
   });
 
   setupPolicyGroup("[data-runtime-policy-validation]", "data-validation-timing");
+  setupPolicyGroup("[data-runtime-policy-revalidation]", "data-revalidation-timing");
   setupPolicyGroup("[data-runtime-policy-visibility]", "data-error-visibility");
   renderPolicyOutput();
 </script>

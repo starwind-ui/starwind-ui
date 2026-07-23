@@ -13,7 +13,7 @@ import {
   type StarwindFramework,
   updateConfig,
 } from "@/utils/config.js";
-import { ASTRO_PACKAGES, getOtherPackages, MIN_ASTRO_VERSION, PATHS } from "@/utils/constants.js";
+import { ASTRO_PACKAGES, MIN_ASTRO_VERSION, PATHS } from "@/utils/constants.js";
 import { checkStarwindProEnv, setupStarwindProEnv } from "@/utils/env.js";
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -23,7 +23,8 @@ import {
   installDependencies,
   type PackageManager,
 } from "@/utils/package-manager.js";
-import { loadRegistry, type StarwindRegistry } from "@/utils/registry.js";
+import { loadRegistry } from "@/utils/registry.js";
+import { getRuntimeSetupPlan } from "@/utils/runtime-setup.js";
 import { sleep } from "@/utils/sleep.js";
 import { setupSnippets } from "@/utils/snippets.js";
 import { setupTsConfig } from "@/utils/tsconfig.js";
@@ -52,36 +53,6 @@ function resolveFrameworkOption(options?: InitOptions): StarwindFramework | unde
   }
 
   return selected[0];
-}
-
-function getRuntimeSetupPackages(
-  framework: StarwindFramework,
-  registry: StarwindRegistry,
-): string[] {
-  const adapterPackage = framework === "astro" ? "@starwind-ui/astro" : "@starwind-ui/react";
-  const adapterRanges = new Set(
-    registry.components.flatMap((component) =>
-      (component.targets?.[framework]?.packageRequirements ?? [])
-        .filter((requirement) => requirement.name === adapterPackage)
-        .map((requirement) => requirement.range),
-    ),
-  );
-
-  if (adapterRanges.size !== 1) {
-    throw new Error(
-      `Bundled registry must declare one consistent ${adapterPackage} package requirement.`,
-    );
-  }
-
-  const adapterRange = [...adapterRanges][0]!;
-  const adapterVersion = semver.minVersion(adapterRange)?.version;
-  if (!adapterVersion) {
-    throw new Error(
-      `Bundled registry declares an invalid ${adapterPackage} range: ${adapterRange}`,
-    );
-  }
-
-  return [`${adapterPackage}@${adapterVersion}`];
 }
 
 function getProNextStepsMessage(): string {
@@ -553,20 +524,18 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     // ================================================================
     // Determine package manager: use provided option or auto-detect
     const pm: PackageManager = options?.packageManager ?? detectPackageManager().name;
-    const runtimeSetupPackages = getRuntimeSetupPackages(
+    const runtimeSetupPlan = getRuntimeSetupPlan(
       configChoices.framework as StarwindFramework,
       bundledRegistry,
     );
 
-    if (runtimeSetupPackages.length > 0) {
-      installTasks.push({
-        title: "Installing Starwind Runtime packages",
-        task: async () => {
-          await installDependencies(runtimeSetupPackages, pm);
-          return "Installed Starwind Runtime packages successfully";
-        },
-      });
-    }
+    installTasks.push({
+      title: "Installing Starwind Runtime packages",
+      task: async () => {
+        await installDependencies([runtimeSetupPlan.adapterPackage], pm);
+        return "Installed Starwind Runtime packages successfully";
+      },
+    });
 
     if (configChoices.framework === "astro") {
       if (pkg.dependencies?.astro) {
@@ -628,7 +597,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     // ================================================================
     //         Prepare tailwind and other package installation
     // ================================================================
-    const otherPackages = getOtherPackages();
+    const otherPackages = runtimeSetupPlan.packageRequirements;
 
     const shouldInstall = options?.defaults
       ? true
@@ -645,7 +614,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       installTasks.push({
         title: `Installing packages`,
         task: async () => {
-          await installDependencies(getOtherPackages(), pm, false, false);
+          await installDependencies(otherPackages, pm, false, false);
           return `${highlighter.info("Packages installed successfully")}`;
         },
       });

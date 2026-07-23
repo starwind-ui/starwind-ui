@@ -350,6 +350,12 @@ const getCommonPrimitivePropDescription = (
 };
 
 const commonPrimitivePropDescriptions: Record<string, PrimitivePropDescriptionFactory> = {
+  "data-error-visibility": () =>
+    "Selects whether semantic change, blur, submit, or manual validation reveals errors; defaults to submit.",
+  "data-revalidation-timing": () =>
+    "Replaces validationTiming after a Form submission attempt with semantic change, blur, submit, or manual validation; defaults to change.",
+  "data-validation-timing": () =>
+    "Selects semantic change, blur, submit, or manual validation before a Form submission attempt; defaults to submit.",
   disabled: ({ partLabel }) => `Disables the ${partLabel} part.`,
   focusableWhenDisabled: ({ partLabel }) =>
     `Keeps the ${partLabel} part focusable even when it is disabled.`,
@@ -372,7 +378,13 @@ const commonPrimitivePropDescriptions: Record<string, PrimitivePropDescriptionFa
   invalid: () => "Marks the field as invalid for validation styling and state.",
   touched: () => "Marks whether the field has been visited.",
   dirty: () => "Marks whether the field value has changed.",
+  errorVisibility: () =>
+    "Selects whether semantic change, blur, submit, or manual validation reveals errors; defaults to submit.",
+  revalidationTiming: () =>
+    "Replaces validationTiming after a Form submission attempt with semantic change, blur, submit, or manual validation; defaults to change.",
   type: ({ partLabel }) => `Sets the native type for the ${partLabel} part.`,
+  validationTiming: () =>
+    "Selects semantic change, blur, submit, or manual validation before a Form submission attempt; defaults to submit.",
   asChild: ({ partLabel }) =>
     `Merges behavior onto your child element instead of rendering the default ${partLabel} element.`,
   nativeButton: () => "Renders the control as a native button element.",
@@ -460,10 +472,19 @@ const toPrimitivePropReference = (
   };
 };
 
+const primitivePropDisplayTypes: Readonly<Record<string, string>> = {
+  FormValidationTiming: '"blur" | "change" | "manual" | "submit"',
+};
+
 const getPrimitivePropDisplayType = (
   contract: RuntimeAdapterContract,
   prop: RuntimeAdapterContract["props"][number],
 ) => {
+  const expandedType = primitivePropDisplayTypes[prop.type];
+  if (expandedType) {
+    return expandedType;
+  }
+
   if (prop.kind !== "callback") {
     return undefined;
   }

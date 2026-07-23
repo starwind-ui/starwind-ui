@@ -4,11 +4,33 @@ import { describe, expect, it } from "vitest";
 
 import {
   createAcceptancePlan,
+  getAcceptancePnpmEnvironment,
+  getAcceptanceRootPackage,
+  getAcceptanceWorkspacePolicy,
   getFixtureFiles,
   parseArgs,
 } from "../published-release-acceptance.mjs";
 
 describe("published release acceptance", () => {
+  it("isolates disposable projects from local minimum-release-age policy", () => {
+    expect(getAcceptancePnpmEnvironment()).toEqual({
+      PNPM_CONFIG_MINIMUM_RELEASE_AGE: "0",
+      PNPM_CONFIG_MINIMUM_RELEASE_AGE_STRICT: "false",
+    });
+    expect(getAcceptanceWorkspacePolicy()).toBe(`packages:
+  - astro
+  - react
+minimumReleaseAge: 0
+minimumReleaseAgeStrict: false
+allowBuilds:
+  esbuild: true
+`);
+    expect(JSON.parse(getAcceptanceRootPackage("3.0.0-beta.1"))).toMatchObject({
+      devDependencies: { starwind: "3.0.0-beta.1" },
+      private: true,
+    });
+  });
+
   it("requires an exact prerelease or stable CLI version", () => {
     expect(parseArgs(["--version", "3.0.0-beta.1"])).toEqual({
       artifacts: undefined,
@@ -41,37 +63,38 @@ describe("published release acceptance", () => {
     ]);
     expect(plan.projects[0].scaffold.args).toEqual([
       "create",
-      "astro@latest",
+      "astro@5.2.2",
       "astro",
       "--template",
       "minimal",
-      "--install",
+      "--no-install",
       "--no-git",
       "--yes",
     ]);
     expect(plan.projects[1].scaffold.args).toEqual([
       "create",
-      "vite@latest",
+      "vite@9.1.1",
       "react",
       "--template",
       "react-ts",
       "--no-interactive",
     ]);
-    expect(plan.projects[0].install).toBeUndefined();
-    expect(plan.projects[1].install).toEqual({ args: ["install"], cwd: path.join(root, "react") });
+    expect(plan.install).toEqual({ args: ["install"], cwd: root });
 
     for (const project of plan.projects) {
-      expect(project.version.args).toEqual(["dlx", "starwind@3.0.0-beta.1", "--version"]);
+      const cliEntrypoint = path.join(root, "node_modules", "starwind", "dist", "index.js");
+      expect(project.version).toMatchObject({
+        args: [cliEntrypoint, "--version"],
+        command: process.execPath,
+      });
       expect(project.init.args).toEqual([
-        "dlx",
-        "starwind@3.0.0-beta.1",
+        cliEntrypoint,
         "init",
         "--defaults",
         `--${project.framework}`,
       ]);
       expect(project.add.args).toEqual([
-        "dlx",
-        "starwind@3.0.0-beta.1",
+        cliEntrypoint,
         "add",
         "button",
         "dialog",

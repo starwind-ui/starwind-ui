@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { initStarwind } from "../../../src/init-starwind";
 import { createDialog } from "../../../src/components/dialog";
 import { createDrawer } from "../../../src/components/drawer/drawer";
+import { createFloatingPortalSession } from "../../../src/internal/floating-portal";
 
 describe("createDrawer", () => {
   beforeEach(() => {
@@ -167,6 +168,43 @@ describe("createDrawer", () => {
       expect.objectContaining({ detail: expectedDetails }),
     );
     expect(closeCompleteSubscriber).toHaveBeenCalledWith(expectedDetails);
+  });
+
+  it("inherits dialog-owned floating layer closure and native cleanup", () => {
+    const root = renderDrawer();
+    const drawer = createDrawer(root);
+    drawer.open();
+    const popup = getPopup();
+    popup.setAttribute("data-slot", "drawer-content");
+    const portalTarget = document.createElement("div");
+    portalTarget.setAttribute("data-floating-root", "");
+    const layer = document.createElement("div");
+    layer.setAttribute("data-state", "open");
+    popup.append(portalTarget, layer);
+    const closeEvents: string[] = [];
+    let session = createFloatingPortalSession({
+      root: layer,
+      getPortalElement: () => layer,
+      getPortalTarget: () => portalTarget,
+      onOwnerCloseRequest: () => {
+        closeEvents.push("requested");
+        layer.setAttribute("data-state", "closed");
+        session.restore();
+      },
+    });
+    session.mount();
+
+    expect(document.querySelector("[data-sw-floating-portal]:popover-open")).not.toBeNull();
+
+    drawer.close();
+
+    expect(closeEvents).toEqual(["requested"]);
+    expect(layer.getAttribute("data-state")).toBe("closed");
+    expect(popup.open).toBe(false);
+    expect(document.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    session.destroy();
+    drawer.destroy();
   });
 
   it("can disable outside interaction closing", () => {

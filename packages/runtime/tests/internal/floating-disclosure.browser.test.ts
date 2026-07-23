@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type FloatingPositioner } from "../../src/internal/floating";
 import { createFloatingDisclosureLifecycle } from "../../src/internal/floating-disclosure";
+import { requestDialogOwnedFloatingPortalClose } from "../../src/internal/floating-portal";
 
 type TestRequest = {
   event?: Event;
-  reason: "outside-press" | "trigger-press";
+  reason: "imperative-action" | "outside-press" | "trigger-press";
   trigger?: Element;
 };
 
@@ -206,6 +207,63 @@ describe("floating disclosure lifecycle", () => {
 
     expect(firstPositioner.destroy).toHaveBeenCalledTimes(1);
     expect(secondPositioner.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("promotes inside a dialog and applies owner close through the disclosure lifecycle", () => {
+    const dialog = document.createElement("dialog");
+    const root = document.createElement("div");
+    const trigger = document.createElement("button");
+    const popup = document.createElement("div");
+    const portalTarget = document.createElement("div");
+    const originalParent = document.createElement("section");
+    const closeIntents: TestRequest[] = [];
+    let open = false;
+    let lifecycle!: ReturnType<typeof createFloatingDisclosureLifecycle<TestRequest>>;
+    dialog.setAttribute("data-slot", "dialog-content");
+    portalTarget.setAttribute("data-floating-root", "");
+    root.append(trigger, originalParent);
+    originalParent.append(popup);
+    dialog.append(root, portalTarget);
+    document.body.append(dialog);
+    dialog.showModal();
+
+    lifecycle = createFloatingDisclosureLifecycle<TestRequest>({
+      containsTarget: (target) => root.contains(target) || popup.contains(target),
+      createFloatingPositioner: () => createPositioner(),
+      getFloatingReference: () => trigger,
+      getOpen: () => open,
+      getPortalTarget: () => portalTarget,
+      isDestroyed: () => false,
+      onOwnerCloseRequest: () => {
+        const request = { reason: "imperative-action" as const };
+        closeIntents.push(request);
+        open = false;
+        lifecycle.applyOpenState(false, request);
+      },
+      popup,
+      renderState: (nextOpen) => {
+        popup.setAttribute("data-state", nextOpen ? "open" : "closed");
+        if (nextOpen) popup.hidden = false;
+      },
+      root,
+    });
+
+    open = true;
+    lifecycle.applyOpenState(true, { reason: "trigger-press", trigger });
+    expect(popup.closest<HTMLElement>("[data-sw-floating-portal]")?.matches(":popover-open")).toBe(
+      true,
+    );
+
+    requestDialogOwnedFloatingPortalClose(dialog);
+
+    expect(closeIntents).toEqual([{ reason: "imperative-action" }]);
+    expect(popup.getAttribute("data-state")).toBe("closed");
+    expect(popup.parentElement).toBe(originalParent);
+    expect(dialog.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    lifecycle.destroy();
+    dialog.close();
+    dialog.remove();
   });
 });
 

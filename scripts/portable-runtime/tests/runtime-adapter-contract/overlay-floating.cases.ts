@@ -217,7 +217,7 @@ export function defineRuntimeOverlayFloatingTests(): void {
       portalPart: "portal",
       positionerPart: "positioner",
       popupPart: "popup",
-      optionProps: ["side", "align", "sideOffset", "avoidCollisions"],
+      optionProps: ["side", "align", "sideOffset", "avoidCollisions", "collisionStrategy"],
     });
     expect(popover.asChild).toContainEqual({
       part: "trigger",
@@ -235,6 +235,7 @@ export function defineRuntimeOverlayFloatingTests(): void {
           "data-align",
           "data-side-offset",
           "data-avoid-collisions",
+          "data-collision-strategy",
           "hidden",
         ],
       }),

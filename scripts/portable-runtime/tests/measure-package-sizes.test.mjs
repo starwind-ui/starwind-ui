@@ -5,13 +5,37 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  committedComparatorBaselines,
   evaluateColorPickerSizeComparison,
   formatColorPickerSizeComparisonMarkdown,
   formatPackageSizeReports,
+  getPackageSizeMeasurementPlan,
   writePackageSizeReports,
 } from "../measure-package-sizes.mjs";
 
 describe("package-size public and diagnostic reports", () => {
+  it("keeps release checks local and reserves comparator installs for explicit refreshes", () => {
+    const check = getPackageSizeMeasurementPlan({ checkOnly: true });
+    const refresh = getPackageSizeMeasurementPlan();
+
+    expect(check.installComparators).toBe(false);
+    expect(check.bundleRows.map(({ label }) => label)).toEqual([
+      "@starwind-ui/runtime",
+      "@starwind-ui/runtime/color-picker",
+      "@starwind-ui/react (adapter only)",
+      "@starwind-ui/react + runtime",
+    ]);
+    expect(check.supportRows.every(({ provider }) => provider === "starwind")).toBe(true);
+    expect(check.bundleBaselines).toBe(committedComparatorBaselines.bundleResults);
+    expect(check.supportBaselines).toBe(committedComparatorBaselines.supportResults);
+
+    expect(refresh.installComparators).toBe(true);
+    expect(refresh.bundleRows.length).toBeGreaterThan(check.bundleRows.length);
+    expect(refresh.supportRows.length).toBeGreaterThan(check.supportRows.length);
+    expect(refresh.bundleBaselines).toEqual([]);
+    expect(refresh.supportBaselines).toEqual([]);
+  });
+
   it("renders one fixture result into matching reports with private sections only in diagnostics", () => {
     const reports = formatPackageSizeReports(reportFixture());
     const publicHeadings = [...reports.publicReport.matchAll(/^## (.+)$/gm)].map(
@@ -85,31 +109,37 @@ describe("package-size public and diagnostic reports", () => {
 });
 
 describe("standalone Color Picker package-size comparison", () => {
-  it("passes when the Runtime subpath gzip size does not exceed Zag", () => {
+  it("reports when the Runtime subpath gzip size is below Zag", () => {
     const result = evaluateColorPickerSizeComparison([
       measurement("@starwind-ui/runtime/color-picker", 64_000, 18_000),
       measurement("@zag-js/color-picker", 90_000, 29_000),
     ]);
 
     expect(result).toEqual({
+      advisory: null,
       differenceGzipBytes: 11_000,
       failure: null,
       starwindGzipBytes: 18_000,
       starwindMinifiedBytes: 64_000,
-      status: "Pass",
+      status: "Below comparator",
       zagGzipBytes: 29_000,
       zagMinifiedBytes: 90_000,
     });
   });
 
-  it("passes at the equality boundary with zero gzip headroom", () => {
+  it("reports equality without turning the comparator into a release gate", () => {
     const result = evaluateColorPickerSizeComparison([
       measurement("@starwind-ui/runtime/color-picker", 80_000, 29_000),
       measurement("@zag-js/color-picker", 90_000, 29_000),
     ]);
 
     expect(result).toEqual(
-      expect.objectContaining({ differenceGzipBytes: 0, failure: null, status: "Pass" }),
+      expect.objectContaining({
+        advisory: null,
+        differenceGzipBytes: 0,
+        failure: null,
+        status: "Equal comparator",
+      }),
     );
   });
 
@@ -122,24 +152,25 @@ describe("standalone Color Picker package-size comparison", () => {
     expect(formatColorPickerSizeComparisonMarkdown(comparison)).toEqual([
       "### Standalone Color Picker Comparison",
       "",
-      "The Runtime Color Picker subpath is measured independently from Starwind's aggregate support sets. Its gzip gate must not exceed the existing standalone Zag Color Picker machine row.",
+      "The Runtime Color Picker subpath is measured independently from Starwind's aggregate support sets. Its absolute cold-import budget is enforced above; the Zag comparison is informational.",
       "",
-      "| Check | Starwind minified | Starwind min+gzip | Zag minified | Zag min+gzip | Gzip headroom | Gate |",
+      "| Check | Starwind minified | Starwind min+gzip | Zag minified | Zag min+gzip | Gzip difference | Comparison |",
       "| --- | ---: | ---: | ---: | ---: | ---: | --- |",
-      "| Runtime Color Picker vs Zag Color Picker | 47,702 B (46.6 KiB) | 12,474 B (12.2 KiB) | 91,988 B (89.8 KiB) | 29,519 B (28.8 KiB) | 17,045 B (16.6 KiB) | Pass |",
+      "| Runtime Color Picker vs Zag Color Picker | 47,702 B (46.6 KiB) | 12,474 B (12.2 KiB) | 91,988 B (89.8 KiB) | 29,519 B (28.8 KiB) | 17,045 B (16.6 KiB) | Below comparator |",
     ]);
   });
 
-  it("fails when the Runtime subpath gzip size exceeds Zag", () => {
+  it("makes a larger Runtime subpath informational instead of failing the release", () => {
     const result = evaluateColorPickerSizeComparison([
       measurement("@starwind-ui/runtime/color-picker", 92_000, 30_001),
       measurement("@zag-js/color-picker", 90_000, 29_000),
     ]);
 
-    expect(result.status).toBe("Fail");
+    expect(result.status).toBe("Above comparator");
     expect(result.differenceGzipBytes).toBe(-1_001);
-    expect(result.failure).toBe(
-      "Standalone Color Picker comparison failed: @starwind-ui/runtime/color-picker 30,001 B (29.3 KiB) > @zag-js/color-picker 29,000 B (28.3 KiB).",
+    expect(result.failure).toBeNull();
+    expect(result.advisory).toBe(
+      "Standalone Color Picker comparison advisory: @starwind-ui/runtime/color-picker 30,001 B (29.3 KiB) is above @zag-js/color-picker 29,000 B (28.3 KiB).",
     );
   });
 
@@ -154,9 +185,13 @@ describe("standalone Color Picker package-size comparison", () => {
         "Standalone Color Picker comparison could not be evaluated: missing @zag-js/color-picker min+gzip measurement.",
       rows: [measurement("@starwind-ui/runtime/color-picker", 64_000, 18_000)],
     },
-  ])("fails clearly when a required measurement is missing", ({ expected, rows }) => {
+  ])("reports unavailable comparator measurements without failing", ({ expected, rows }) => {
     expect(evaluateColorPickerSizeComparison(rows)).toEqual(
-      expect.objectContaining({ failure: expected, status: "Fail" }),
+      expect.objectContaining({
+        advisory: expected,
+        failure: null,
+        status: "Unavailable",
+      }),
     );
   });
 });
@@ -197,6 +232,7 @@ function reportFixture() {
       fieldColdImportChecks: [],
       headlineChecks: [],
       matchedSupportChecks: [],
+      standaloneComponentChecks: [],
     },
     sourceContributionAnalyses: [],
     sourcePayloadResults: [

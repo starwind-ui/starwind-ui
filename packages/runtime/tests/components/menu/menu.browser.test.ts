@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createDialog } from "../../../src/components/dialog/dialog";
 import { createMenu } from "../../../src/components/menu/menu";
 
 describe("createMenu", () => {
@@ -505,7 +506,9 @@ describe("createMenu", () => {
 
     getTrigger().click();
     await waitForFloatingPosition();
-    document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
 
     expect(getPopup().hidden).toBe(true);
     expect(listener).toHaveBeenCalledWith(
@@ -513,6 +516,167 @@ describe("createMenu", () => {
         detail: expect.objectContaining({ open: false, reason: "escape-key" }),
       }),
     );
+  });
+
+  it("owns the first Dialog Escape and keeps the owner open through item selection", () => {
+    const dialogRoot = renderDialogOwner();
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const menuRoot = renderMenu();
+    const menuPopup = menuRoot.querySelector<HTMLElement>("[data-sw-menu-popup]")!;
+    const menuItem = menuRoot.querySelector<HTMLElement>("[data-sw-menu-item]")!;
+    dialogContent.append(menuRoot);
+    const dialog = createDialog(dialogRoot);
+    const menu = createMenu(menuRoot);
+    dialog.open();
+    menu.open();
+
+    expect(dialogContent.open).toBe(true);
+    expect(menu.getOpen()).toBe(true);
+    expect(menuPopup.closest("[data-sw-floating-portal]:popover-open")).not.toBeNull();
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(menu.getOpen()).toBe(false);
+    expect(dialogContent.open).toBe(true);
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(dialogContent.open).toBe(false);
+
+    dialog.open();
+    menu.open();
+    menuItem.click();
+
+    expect(menu.getOpen()).toBe(false);
+    expect(dialogContent.open).toBe(true);
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
+  it("orders Dialog, root Menu, and submenu Escape ownership without duplicate callbacks", () => {
+    const dialogRoot = renderDialogOwner();
+    const dialogTrigger = dialogRoot.querySelector<HTMLElement>("[data-sw-dialog-trigger]")!;
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const menuRoot = renderMenuWithSubmenu();
+    const menuTrigger = menuRoot.querySelector<HTMLElement>("[data-sw-menu-trigger]")!;
+    const submenuTrigger = menuRoot.querySelector<HTMLElement>("[data-sw-menu-submenu-trigger]")!;
+    const submenuRoot = menuRoot.querySelector<HTMLElement>("[data-sw-menu-submenu-root]")!;
+    const rootOpenChanges = vi.fn();
+    dialogContent.append(menuRoot);
+    const dialog = createDialog(dialogRoot);
+    const menu = createMenu(menuRoot, { onOpenChange: rootOpenChanges });
+    dialogTrigger.focus();
+    dialogTrigger.click();
+    menu.open();
+    submenuTrigger.click();
+    rootOpenChanges.mockClear();
+
+    expect(dialogContent.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(2);
+    expect(submenuTrigger.getAttribute("aria-expanded")).toBe("true");
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(submenuRoot.getAttribute("data-state")).toBe("closed");
+    expect(submenuTrigger.getAttribute("aria-expanded")).toBe("false");
+    expect(menu.getOpen()).toBe(true);
+    expect(dialogContent.open).toBe(true);
+    expect(document.activeElement).toBe(submenuTrigger);
+    expect(rootOpenChanges).not.toHaveBeenCalled();
+    expect(dialogContent.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(1);
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(menu.getOpen()).toBe(false);
+    expect(dialogContent.open).toBe(true);
+    expect(document.activeElement).toBe(menuTrigger);
+    expect(rootOpenChanges).toHaveBeenCalledTimes(1);
+    expect(rootOpenChanges).toHaveBeenLastCalledWith(
+      false,
+      expect.objectContaining({ reason: "escape-key" }),
+    );
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(dialogContent.open).toBe(false);
+    expect(document.activeElement).toBe(dialogTrigger);
+
+    dialogTrigger.focus();
+    dialogTrigger.click();
+    menu.open();
+    submenuTrigger.click();
+    rootOpenChanges.mockClear();
+
+    dialog.close();
+
+    expect(menu.getOpen()).toBe(false);
+    expect(submenuRoot.getAttribute("data-state")).toBe("closed");
+    expect(submenuTrigger.getAttribute("aria-expanded")).toBe("false");
+    expect(rootOpenChanges).toHaveBeenCalledTimes(1);
+    expect(rootOpenChanges).toHaveBeenLastCalledWith(
+      false,
+      expect.objectContaining({ reason: "imperative-action" }),
+    );
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(document.activeElement).toBe(dialogTrigger);
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
+  it("force-resets an uncontrolled Menu when its Dialog owner close intent is canceled", () => {
+    const dialogRoot = renderDialogOwner();
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const menuRoot = renderMenu();
+    const menuPopup = menuRoot.querySelector<HTMLElement>("[data-sw-menu-popup]")!;
+    dialogContent.append(menuRoot);
+    menuRoot.addEventListener("starwind:open-change", (event) => {
+      if (!(event instanceof CustomEvent) || event.detail.open !== false) return;
+      event.preventDefault();
+    });
+    const dialog = createDialog(dialogRoot);
+    const menu = createMenu(menuRoot);
+    dialog.open();
+    menu.open();
+
+    dialog.close();
+
+    expect(menu.getOpen()).toBe(false);
+    expect(menuPopup.getAttribute("data-state")).toBe("closed");
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    dialog.open();
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
+  it("treats non-trigger siblings inside the Menu root as outside interactions", () => {
+    const root = renderMenu();
+    const rootRemainder = document.createElement("button");
+    rootRemainder.type = "button";
+    rootRemainder.textContent = "Root remainder";
+    root.append(rootRemainder);
+
+    const menu = createMenu(root);
+    menu.setOpen(true, { emit: false });
+
+    rootRemainder.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(menu.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
   });
 
   it("keeps the menu open when a regular item disables close on click", async () => {
@@ -1722,6 +1886,39 @@ describe("createMenu", () => {
     expect(submenuPopups[1]!.hidden).toBe(false);
   });
 
+  it("keeps ancestor submenus open when the pointer enters a nested submenu portal", async () => {
+    vi.useFakeTimers();
+    const root = renderMenuWithNestedSubmenus();
+    const submenuRoots = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-root]"),
+    );
+    submenuRoots.forEach((submenuRoot) => submenuRoot.setAttribute("data-close-delay", "50"));
+    const submenuTriggers = submenuRoots.map(
+      (submenuRoot) => submenuRoot.querySelector<HTMLElement>("[data-sw-menu-submenu-trigger]")!,
+    );
+    const submenuPopups = submenuRoots.map(
+      (submenuRoot) => submenuRoot.querySelector<HTMLElement>("[data-sw-menu-popup]")!,
+    );
+
+    createMenu(root);
+    getTrigger().click();
+    dispatchMousePointer(submenuTriggers[0]!, "pointerenter");
+    dispatchMousePointer(submenuTriggers[1]!, "pointerenter");
+
+    dispatchMousePointer(submenuPopups[0]!, "pointerleave");
+    dispatchMousePointer(submenuTriggers[1]!, "pointerleave");
+    dispatchMousePointer(submenuPopups[1]!, "pointerenter");
+    await vi.advanceTimersByTimeAsync(50);
+
+    expect(getPopup().getAttribute("data-state")).toBe("open");
+    expect(submenuRoots[0]!.getAttribute("data-state")).toBe("open");
+    expect(submenuTriggers[0]!.getAttribute("aria-expanded")).toBe("true");
+    expect(submenuPopups[0]!.hidden).toBe(false);
+    expect(submenuRoots[1]!.getAttribute("data-state")).toBe("open");
+    expect(submenuTriggers[1]!.getAttribute("aria-expanded")).toBe("true");
+    expect(submenuPopups[1]!.hidden).toBe(false);
+  });
+
   it("cleans up nested submenu portals when the root menu is destroyed", () => {
     const root = renderMenuWithNestedSubmenus();
     const rootPopup = getMenuPopup(root);
@@ -1886,6 +2083,23 @@ type RenderMenuOptions = {
   modal?: boolean;
   openOnHover?: boolean;
 };
+
+function renderDialogOwner(): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `
+    <div data-sw-dialog>
+      <button data-sw-dialog-trigger>Open dialog</button>
+      <div data-sw-dialog-overlay hidden></div>
+      <dialog data-sw-dialog-content data-slot="dialog-content">
+        <h2 data-sw-dialog-title>Dialog title</h2>
+        <button data-sw-dialog-close>Close dialog</button>
+      </dialog>
+    </div>
+  `;
+  const root = wrapper.firstElementChild as HTMLElement;
+  document.body.append(root);
+  return root;
+}
 
 function renderMenu(options: RenderMenuOptions = {}): HTMLElement {
   const wrapper = document.createElement("div");

@@ -18,6 +18,14 @@ export const runtimePackageJsonPath = path.join(repoRoot, "packages", "runtime",
 
 export const runtimeIndexPath = path.join(repoRoot, "packages", "runtime", "src", "index.ts");
 
+export const primitiveVersionsPath = path.join(
+  repoRoot,
+  "packages",
+  "cli",
+  "registry",
+  "primitive-versions.json",
+);
+
 export const runtimeInitStarwindPath = path.join(
   repoRoot,
   "packages",

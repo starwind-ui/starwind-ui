@@ -24,10 +24,7 @@ export const avatarRuntimeAdapterContract = {
       defaultElement: "img",
       discoveryAttribute: "data-sw-avatar-image",
       forwardsRef: true,
-      initialAttributes: [
-        { name: "data-image-loading-status", source: "state" },
-        { name: "hidden", source: "state" },
-      ],
+      initialAttributes: [{ name: "data-image-loading-status", source: "state" }],
     },
     {
       name: "fallback",
@@ -82,14 +79,9 @@ export const avatarRuntimeAdapterContract = {
       {
         delivery: "markup",
         hidden: true,
+        mechanism: "css-visibility",
         part: "image",
-        targets: ["astro"],
-      },
-      {
-        delivery: "ref-initializer",
-        hidden: true,
-        part: "image",
-        targets: ["react"],
+        targets: ["astro", "react", "vue"],
       },
       {
         condition: "delay !== undefined",
@@ -123,7 +115,8 @@ export const avatarRuntimeAdapterContract = {
     {
       part: "image",
       attributes: ["data-sw-avatar-image", "data-image-loading-status"],
-      reason: "Images start hidden until the runtime confirms the native image has loaded.",
+      reason:
+        "Images start visibility-hidden so they retain a layout box and remain eligible for native lazy loading until the Runtime confirms they loaded.",
     },
     {
       part: "fallback",
@@ -136,7 +129,7 @@ export const avatarRuntimeAdapterContract = {
       "Render static image/fallback markup and let the runtime own loading-status and visibility after hydration.",
     ],
     react: [
-      "Create the controller in an effect, subscribe image callbacks from the nearest root event, and let the runtime own hidden state after ref initialization.",
+      "Create the controller in an effect, subscribe image callbacks from the nearest root event, and let the Runtime own CSS visibility after initial markup.",
     ],
   },
 } as const satisfies RuntimeAdapterContract;

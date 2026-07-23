@@ -1,4 +1,5 @@
 import { verifyDialogEntryAnimationGestures } from "../../shared/dialog-entry-animation.mjs";
+import { verifyDialogFloatingOverlays } from "../../shared/dialog-floating-overlays.mjs";
 
 export async function verifyReactDialogCases({ page }) {
   await verifyDialogEntryAnimationGestures({
@@ -323,4 +324,34 @@ export async function verifyReactDialogCases({ page }) {
   await page.waitForFunction(() => document.querySelectorAll("dialog[open]").length === 1);
   await page.locator("#react-runtime-nested-dialog-parent-close").click();
   await page.waitForFunction(() => document.querySelectorAll("dialog[open]").length === 0);
+
+  await verifyDialogFloatingOverlays({
+    page,
+    label: "React",
+    ids: {
+      comboboxContent: "react-runtime-dialog-combobox-content",
+      comboboxInput: "react-runtime-dialog-combobox-input",
+      comboboxOption: "react-runtime-dialog-combobox-apricot",
+      dropdownContent: "react-runtime-dialog-dropdown-content",
+      dropdownItem: "react-runtime-dialog-dropdown-duplicate",
+      dropdownTrigger: "react-runtime-dialog-dropdown-trigger",
+      lab: "react-runtime-dialog-overlay-lab",
+      labClose: "react-runtime-dialog-overlay-lab-close",
+      labContent: "react-runtime-dialog-overlay-lab-content",
+      labTrigger: "react-runtime-dialog-overlay-lab-trigger",
+      nestedClose: "react-runtime-dialog-overlay-nested-close",
+      nestedContent: "react-runtime-dialog-overlay-nested-content",
+      nestedPopoverAction: "react-runtime-dialog-overlay-nested-popover-action",
+      nestedPopoverContent: "react-runtime-dialog-overlay-nested-popover-content",
+      nestedPopoverTrigger: "react-runtime-dialog-overlay-nested-popover-trigger",
+      nestedTrigger: "react-runtime-dialog-overlay-nested-trigger",
+      popoverContent: "react-runtime-dialog-popover-content",
+      popoverAction: "react-runtime-dialog-popover-action",
+      popoverTrigger: "react-runtime-dialog-popover-trigger",
+      select: "react-runtime-dialog-select",
+      selectContent: "react-runtime-dialog-select-content",
+      selectOption: "react-runtime-dialog-select-light",
+      selectTrigger: "react-runtime-dialog-select-trigger",
+    },
+  });
 }

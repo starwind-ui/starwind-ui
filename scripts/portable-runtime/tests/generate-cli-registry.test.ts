@@ -22,6 +22,7 @@ import {
   DEFAULT_PRIMITIVE_VERSION_MANIFEST,
   DEFAULT_REGISTRY_VERSION_MANIFEST,
   getLocalGeneratedImportCandidates,
+  isValidRegistryPackageName,
   loadPrimitiveVersionManifest,
   loadRegistryVersionManifest,
   type RuntimeRegistry,
@@ -45,6 +46,14 @@ describe("generateCliRegistry", () => {
     await rm(tempRoot, { force: true, recursive: true });
   });
 
+  it("rejects malformed setup package names", () => {
+    expect(isValidRegistryPackageName("@tabler/icons-react")).toBe(true);
+    expect(isValidRegistryPackageName("tailwindcss")).toBe(true);
+    expect(isValidRegistryPackageName("bad package")).toBe(false);
+    expect(isValidRegistryPackageName("foo@1")).toBe(false);
+    expect(isValidRegistryPackageName("@scope/BadName")).toBe(false);
+  });
+
   it("generates target-specific styled artifacts and separated dependency metadata", async () => {
     const contracts = starwindStyledContracts.filter((contract) =>
       ["button", "button-group", "carousel", "separator", "dropdown"].includes(contract.component),
@@ -58,6 +67,38 @@ describe("generateCliRegistry", () => {
     });
 
     expect(registry.version).toBe("2.0.0");
+    expect(registry.setup).toEqual({
+      astro: {
+        adapterPackage: { name: "@starwind-ui/astro", range: CURRENT_BETA_PACKAGE_RANGE },
+        packageRequirements: [
+          { name: "@tabler/icons", range: "^3" },
+          { name: "@tailwindcss/forms", range: "^0.5" },
+          { name: "@tailwindcss/vite", range: "^4" },
+          { name: "tailwind-merge", range: "^3" },
+          { name: "tailwind-variants", range: "^3" },
+          { name: "tailwindcss", range: "^4" },
+          { name: "tw-animate-css", range: "^1" },
+        ],
+      },
+      react: {
+        adapterPackage: { name: "@starwind-ui/react", range: CURRENT_BETA_PACKAGE_RANGE },
+        packageRequirements: [
+          { name: "@tabler/icons-react", range: "^3" },
+          { name: "@tailwindcss/forms", range: "^0.5" },
+          { name: "@tailwindcss/vite", range: "^4" },
+          { name: "tailwind-merge", range: "^3" },
+          { name: "tailwind-variants", range: "^3" },
+          { name: "tailwindcss", range: "^4" },
+          { name: "tw-animate-css", range: "^1" },
+        ],
+      },
+    });
+    expect(registry.setup.astro?.packageRequirements.map(({ name }) => name)).not.toContain(
+      "@tabler/icons-react",
+    );
+    expect(registry.setup.react?.packageRequirements.map(({ name }) => name)).not.toContain(
+      "@tabler/icons",
+    );
     expect(JSON.stringify(registry)).not.toContain("dropdown-menu");
 
     const button = getRegistryComponentWithTargets(registry, "button");
@@ -633,13 +674,20 @@ describe("generateCliRegistry", () => {
   });
 
   it("can build a split registry index with per-component artifact documents", async () => {
+    const fullRegistry = await buildRuntimeRegistry({
+      componentVersion: "2.0.0",
+      contracts: starwindStyledContracts.filter((contract) => contract.component === "button"),
+      registryVersion: "2.0.0",
+      tempRoot: path.join(tempRoot, "full"),
+    });
     const splitRegistry = await buildSplitRuntimeRegistry({
       componentVersion: "2.0.0",
       contracts: starwindStyledContracts.filter((contract) => contract.component === "button"),
       registryVersion: "2.0.0",
-      tempRoot,
+      tempRoot: path.join(tempRoot, "split"),
     });
 
+    expect(splitRegistry.registry.setup).toEqual(fullRegistry.setup);
     expect(splitRegistry.registry.components).toEqual([
       expect.objectContaining({
         name: "button",
@@ -1274,7 +1322,7 @@ describe("generateCliRegistry", () => {
     const primitiveCandidatePaths = new Map<"astro" | "react", string[]>();
 
     expect(styledContract).toBeDefined();
-    expect(styledVersionManifest.components["color-picker"]).toBe("0.1.0");
+    expect(styledVersionManifest.components["color-picker"]).toBe("1.2.0");
     expect(primitiveVersionManifest.primitives["color-picker"]).toBe("0.1.0");
     expect(styledComponentCandidates).toHaveLength(21);
 
@@ -1303,7 +1351,7 @@ describe("generateCliRegistry", () => {
     );
 
     const styled = getRegistryComponentWithTargets(firstRegistry, "color-picker");
-    expect(styled.version).toBe("0.1.0");
+    expect(styled.version).toBe("1.2.0");
 
     for (const framework of ["astro", "react"] as const) {
       const target = styled.targets[framework];

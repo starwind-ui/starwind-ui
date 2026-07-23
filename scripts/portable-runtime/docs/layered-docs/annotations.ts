@@ -228,7 +228,18 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
         props: {
           errorVisibility: {
             description:
-              "Overrides when errors become visible for controls coordinated by this Field.",
+              "Selects whether semantic change, blur, submit, or manual validation reveals errors; inherits the owning Form policy when omitted.",
+            type: '"blur" | "change" | "manual" | "submit"',
+          },
+          revalidationTiming: {
+            description:
+              "After an owning Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; inherits the owning Form policy when omitted.",
+            type: '"blur" | "change" | "manual" | "submit"',
+          },
+          validationTiming: {
+            description:
+              "Selects semantic change, blur, submit, or manual validation before an owning Form submission attempt; inherits the owning Form policy when omitted.",
+            type: '"blur" | "change" | "manual" | "submit"',
           },
         },
       },
@@ -238,6 +249,30 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     groupId: "form-input",
     docsPage: componentPage("form"),
     foundation: { type: "direct-primitive" },
+    styledApi: {
+      Form: {
+        props: {
+          errorVisibility: {
+            defaultValue: '"submit"',
+            description:
+              "Selects whether semantic change, blur, submit, or manual validation reveals errors; defaults to submit.",
+            type: '"blur" | "change" | "manual" | "submit"',
+          },
+          revalidationTiming: {
+            defaultValue: '"change"',
+            description:
+              "After a Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; defaults to change.",
+            type: '"blur" | "change" | "manual" | "submit"',
+          },
+          validationTiming: {
+            defaultValue: '"submit"',
+            description:
+              "Selects semantic change, blur, submit, or manual validation before a Form submission attempt; defaults to submit.",
+            type: '"blur" | "change" | "manual" | "submit"',
+          },
+        },
+      },
+    },
   },
   "hover-card": {
     groupId: "overlay-disclosure",
@@ -490,6 +525,71 @@ export const primitiveDocsEnrichment: Record<string, PrimitiveDocsEnrichment> = 
     setters: {
       setDisabled:
         "Updates the opted-in button between enabled and focusable-disabled state without replacing it.",
+    },
+  },
+  form: {
+    summary:
+      "Form coordinates native constraints, custom and asynchronous validators, schema results, error visibility, and submission across its Fields.",
+    behaviorNotes: [
+      "Validation timing and error visibility are separate policies: a field can be validated before its errors are revealed.",
+      "Policies set on Form apply to every nested Field unless that Field supplies its own timing attributes.",
+      "After a submission attempt, revalidationTiming replaces validationTiming for every Field; the policies are not additive.",
+      "Submitting the form always validates every registered Field, regardless of validationTiming.",
+    ],
+    sections: [
+      {
+        title: "Validation policy values",
+        content:
+          '`validationTiming`, `revalidationTiming`, and `errorVisibility` accept semantic `change`, `blur`, `submit`, or `manual` causes. `change` means each accepted value revision for native and Runtime controls. Before submission, only `validationTiming` is active; after a submission attempt, `revalidationTiming` replaces it. The defaults are `validationTiming="submit"`, `revalidationTiming="change"`, and `errorVisibility="submit"`.',
+      },
+    ],
+    parts: {
+      root: {
+        props: {
+          "data-error-visibility":
+            "Low-level errorVisibility form for semantic change, blur, submit, or manual validation; defaults to submit.",
+          "data-revalidation-timing":
+            "Low-level revalidationTiming form that replaces validationTiming after a submission attempt; defaults to change.",
+          "data-validation-timing":
+            "Low-level validationTiming form for semantic change, blur, submit, or manual validation before submission; defaults to submit.",
+          errorVisibility:
+            "Selects whether semantic change, blur, submit, or manual validation reveals errors; defaults to submit.",
+          revalidationTiming:
+            "After a Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; defaults to change.",
+          validationTiming:
+            "Selects semantic change, blur, submit, or manual validation before a Form submission attempt; defaults to submit.",
+        },
+      },
+    },
+  },
+  field: {
+    behaviorNotes: [
+      "Field timing props override the owning Form for one field. Omit them when the Form-wide policy should apply.",
+    ],
+    sections: [
+      {
+        title: "Validation policy values",
+        content:
+          "The timing props accept semantic `change`, `blur`, `submit`, or `manual` causes. Field values override the owning Form; otherwise they inherit its submit/change/submit defaults and post-submit replacement policy.",
+      },
+    ],
+    parts: {
+      root: {
+        props: {
+          "data-error-visibility":
+            "Low-level errorVisibility form for semantic change, blur, submit, or manual validation; overrides the owning Form for this Field.",
+          "data-revalidation-timing":
+            "Low-level revalidationTiming form that replaces validationTiming after a submission attempt; overrides the owning Form for this Field.",
+          "data-validation-timing":
+            "Low-level validationTiming form for semantic change, blur, submit, or manual validation before submission; overrides the owning Form for this Field.",
+          errorVisibility:
+            "Selects whether semantic change, blur, submit, or manual validation reveals this Field's errors; inherits the owning Form policy when omitted.",
+          revalidationTiming:
+            "After an owning Form submission attempt, replaces validationTiming with semantic change, blur, submit, or manual validation; inherits the owning Form policy when omitted.",
+          validationTiming:
+            "Selects semantic change, blur, submit, or manual validation before an owning Form submission attempt; inherits the owning Form policy when omitted.",
+        },
+      },
     },
   },
   "color-picker": {

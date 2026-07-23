@@ -172,6 +172,15 @@ describe("styled Color Picker contract", () => {
       },
       defaultVariants: { size: "md" },
     });
+    const area = String(colorPickerStyledContract.variants?.colorPickerArea?.base);
+    expect(area).toContain("min-h-32");
+    expect(area).toContain("shrink-0");
+    expect(String(colorPickerStyledContract.variants?.colorPickerContent?.base)).toContain(
+      "max-h-[var(--sw-floating-available-height)]",
+    );
+    expect(fallback).toContain(
+      '"name":"collisionStrategy","value":{"type":"literal","value":"best-fit"}',
+    );
     expect(JSON.stringify(colorPickerStyledContract.variants)).not.toContain("starwind-");
   });
 
@@ -346,7 +355,7 @@ describe("styled Color Picker contract", () => {
     expect(css).toContain('[data-slot="color-picker-value-swatch"] { background-color: #fff;');
     expect(css).toContain('data-has-swatches="false"');
     expect(colorPickerStyledContract.variants?.colorPickerContent?.base).toContain(
-      "max-h-[max(10rem,var(--sw-floating-available-height))]",
+      "max-h-[var(--sw-floating-available-height)]",
     );
     expect(colorPickerStyledContract.annotations?.composition?.join(" ")).toContain(
       "No fixed swatch palette",

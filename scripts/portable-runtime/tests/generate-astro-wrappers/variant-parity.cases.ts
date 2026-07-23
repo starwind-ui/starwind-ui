@@ -658,6 +658,7 @@ export function defineAstroVariantParityTests(getTempRoot: GetTempRoot): void {
         ),
       ]) {
         if (classGroup.startsWith("starwind-sheet-")) continue;
+        if (classGroup.startsWith("data-starting-style:")) continue;
 
         expect(canonicalSheetVariants).toContain(classGroup);
       }
@@ -869,7 +870,11 @@ export function defineAstroVariantParityTests(getTempRoot: GetTempRoot): void {
 }
 
 function stripRuntimeOnlyClassAdditions(classGroup: string): string {
-  return classGroup.replace(/\sduration-(?:\d+|\[[^\]]+\])/g, "");
+  return classGroup
+    .replace(/\sduration-(?:\d+|\[[^\]]+\])/g, "")
+    .replace(/data-starting-style:\S+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function expectCanonicalVariantsToContainRuntimeClassGroup(

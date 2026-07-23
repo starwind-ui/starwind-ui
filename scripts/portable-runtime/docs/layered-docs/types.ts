@@ -341,6 +341,7 @@ export type PrimitiveInitialVisibilityMetadata = {
   readonly condition?: string;
   readonly delivery: "markup" | "ref-initializer" | "runtime-measurement";
   readonly hidden: boolean;
+  readonly mechanism?: "css-visibility" | "hidden-attribute";
   readonly part: string;
   readonly targets: readonly string[];
 };
@@ -567,6 +568,7 @@ export type PrimitiveDocsMetadata = {
   readonly id: string;
   readonly displayName: string;
   readonly category: string;
+  readonly registryVersion: string;
   readonly runtime: PrimitiveRuntimeMetadata;
   readonly parts: readonly PrimitivePartMetadata[];
   readonly props: readonly PrimitivePropMetadata[];

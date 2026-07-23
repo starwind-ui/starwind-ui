@@ -6,6 +6,7 @@ import type {
 type FloatingPlacementProps = {
   align: { defaultValue?: string; name: string; type: string };
   avoidCollisions: { defaultValue?: string; name: string; type: string };
+  collisionStrategy?: { defaultValue?: string; name: string; type: string };
   side: { defaultValue?: string; name: string; type: string };
   sideOffset: { defaultValue?: string; name: string; type: string };
 };
@@ -13,6 +14,7 @@ type FloatingPlacementProps = {
 type FloatingPlacementAttributes = {
   align: string;
   avoidCollisions: string;
+  collisionStrategy?: string;
   discovery: string;
   hidden?: string;
   role?: string;
@@ -53,6 +55,7 @@ export function printReactPresenceFloatingOverlayPositioner(
     attrs: {
       align: facts.attrs.floatingAlign,
       avoidCollisions: facts.attrs.floatingAvoidCollisions,
+      collisionStrategy: facts.attrs.floatingCollisionStrategy,
       discovery: facts.attrs.positioner,
       side: facts.attrs.floatingSide,
       sideOffset: facts.attrs.floatingSideOffset,
@@ -74,6 +77,7 @@ export function printReactPresenceFloatingOverlayPopup(
     attrs: {
       align: facts.attrs.floatingAlign,
       avoidCollisions: facts.attrs.floatingAvoidCollisions,
+      collisionStrategy: facts.attrs.floatingCollisionStrategy,
       discovery: facts.attrs.popup,
       hidden: facts.attrs.popupHidden,
       role: facts.attrs.popupRole,
@@ -203,11 +207,17 @@ function renderReactFloatingPlacementPropsType(
   propsBaseType: string,
   props: FloatingPlacementProps,
 ): string {
-  return `export type ${exportName}Props = ${propsBaseType} & {\n  ${props.side.name}?: ${props.side.type};\n  ${props.align.name}?: ${props.align.type};\n  ${props.sideOffset.name}?: ${props.sideOffset.type};\n  ${props.avoidCollisions.name}?: ${props.avoidCollisions.type};\n};`;
+  const collisionStrategyProp = props.collisionStrategy
+    ? `  ${props.collisionStrategy.name}?: ${props.collisionStrategy.type};\n`
+    : "";
+  return `export type ${exportName}Props = ${propsBaseType} & {\n  ${props.side.name}?: ${props.side.type};\n  ${props.align.name}?: ${props.align.type};\n  ${props.sideOffset.name}?: ${props.sideOffset.type};\n  ${props.avoidCollisions.name}?: ${props.avoidCollisions.type};\n${collisionStrategyProp}};`;
 }
 
 function renderReactFloatingPlacementDestructure(props: FloatingPlacementProps): string {
-  return `{ ${props.side.name} = ${props.side.defaultValue}, ${props.align.name} = ${props.align.defaultValue}, ${props.sideOffset.name} = ${props.sideOffset.defaultValue}, ${props.avoidCollisions.name} = ${props.avoidCollisions.defaultValue}, ...props }`;
+  const collisionStrategy = props.collisionStrategy
+    ? `, ${props.collisionStrategy.name} = ${props.collisionStrategy.defaultValue}`
+    : "";
+  return `{ ${props.side.name} = ${props.side.defaultValue}, ${props.align.name} = ${props.align.defaultValue}, ${props.sideOffset.name} = ${props.sideOffset.defaultValue}, ${props.avoidCollisions.name} = ${props.avoidCollisions.defaultValue}${collisionStrategy}, ...props }`;
 }
 
 function renderReactFloatingPlacementElement({
@@ -238,6 +248,7 @@ function renderReactFloatingPlacementAttributes(
     `${attrs.align}={align}`,
     `${attrs.sideOffset}={sideOffset}`,
     `${attrs.avoidCollisions}={avoidCollisions ? "true" : "false"}`,
+    attrs.collisionStrategy ? `${attrs.collisionStrategy}={collisionStrategy}` : undefined,
     attrs.hidden,
     "ref={forwardedRef}",
     "{...props}",

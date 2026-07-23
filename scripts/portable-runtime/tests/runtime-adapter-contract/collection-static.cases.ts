@@ -694,14 +694,9 @@ export function defineRuntimeCollectionStaticTests(): void {
         {
           delivery: "markup",
           hidden: true,
+          mechanism: "css-visibility",
           part: "image",
-          targets: ["astro"],
-        },
-        {
-          delivery: "ref-initializer",
-          hidden: true,
-          part: "image",
-          targets: ["react"],
+          targets: ["astro", "react", "vue"],
         },
         {
           condition: "delay !== undefined",

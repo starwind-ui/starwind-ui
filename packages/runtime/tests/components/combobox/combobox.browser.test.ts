@@ -166,6 +166,25 @@ describe("createCombobox", () => {
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
   });
 
+  it("treats plain root wrappers as outside while preserving the Combobox input group", () => {
+    const root = renderCombobox();
+    const rootRemainder = document.createElement("button");
+    rootRemainder.type = "button";
+    rootRemainder.textContent = "Root remainder";
+    root.append(rootRemainder);
+
+    const combobox = createCombobox(root);
+    combobox.setOpen(true, { emit: false });
+
+    getInputGroup().dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    expect(combobox.getOpen()).toBe(true);
+
+    rootRemainder.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(combobox.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+  });
+
   it("allows onOpenChange details cancellation before Combobox state changes", () => {
     const root = renderCombobox({ defaultValue: "banana" });
     const canceledSnapshots: boolean[] = [];

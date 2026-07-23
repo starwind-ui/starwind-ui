@@ -303,7 +303,11 @@ try {
     avatarComponent.value?.element === root &&
     imageComponent.value?.element === image &&
     fallbackComponent.value?.element === fallback;
-  const visibilityStable = image.hidden && !fallback.hidden && fallback.textContent === "BP";
+  const visibilityStable =
+    !image.hidden &&
+    image.style.visibility === "hidden" &&
+    !fallback.hidden &&
+    fallback.textContent === "BP";
 
   app.unmount();
   await nextTick();

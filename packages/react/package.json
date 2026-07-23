@@ -32,6 +32,9 @@
   "scripts": {
     "build": "node --max-old-space-size=8192 scripts/build.mjs",
     "dev": "tsup --watch",
+    "test:run": "vitest run --config tests/vitest.config.ts",
+    "test:ssr": "vitest run --config tests/vitest.config.ts --project=ssr",
+    "test:browser": "vitest run --config tests/vitest.config.ts --project=browser",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --ignore-path ../../.prettierignore --check \"**/*.{ts,tsx,md,json}\"",
     "format:write": "prettier --ignore-path ../../.prettierignore --write \"**/*.{ts,tsx,md,json}\" --cache",

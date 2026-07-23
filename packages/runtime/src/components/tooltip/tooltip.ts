@@ -198,10 +198,15 @@ class TooltipController implements TooltipInstance {
       containsTarget: (target) => this.containsTarget(target),
       createFloatingPositioner: (reference, positionOptions) =>
         this.createTooltipPositioner(reference, positionOptions),
+      forceUncontrolledOwnerClose: () => {
+        this.openState = false;
+        this.applyOpenState(false);
+      },
       getFloatingReference: () => this.getFloatingReference(),
       getOpen: () => this.openState,
       getPortalElement: () => this.getPortalElement(),
       getPortalTarget: () => this.resolvePortalTarget(),
+      isOpenControlled: () => this.controlled,
       isDestroyed: () => this.destroyed,
       onEscapeKeyDown: (event) => {
         event.preventDefault();
@@ -209,6 +214,9 @@ class TooltipController implements TooltipInstance {
       },
       onImmediateClose: () => {
         this.elements.popup.classList.add("hidden");
+      },
+      onOwnerCloseRequest: () => {
+        this.requestOpen(false, { reason: "imperative-action" });
       },
       onOutsidePointerDown: (event) => {
         this.requestOpen(false, { event, reason: "outside-press" });
@@ -532,7 +540,7 @@ class TooltipController implements TooltipInstance {
     const portalElement = this.getPortalElement();
 
     return (
-      this.root.contains(target) ||
+      this.elements.triggers.some((trigger) => trigger.target.contains(target)) ||
       portalElement.contains(target) ||
       Boolean(this.elements.portal?.contains(target))
     );

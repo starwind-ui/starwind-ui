@@ -1,6 +1,12 @@
 import {
   Button,
   button,
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
   Dialog,
   DialogClose,
   DialogContent,
@@ -11,6 +17,21 @@ import {
   DialogTrigger,
   Input,
   Label,
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownLabel,
+  DropdownTrigger,
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
 } from "../kit";
 
 export function DialogDemo() {
@@ -161,6 +182,203 @@ export function DialogDemo() {
               <DialogClose asChild>
                 <Button id="react-runtime-nested-dialog-parent-close" variant="outline" size="sm">
                   Close parent
+                </Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog id="react-runtime-dialog-overlay-lab">
+          <DialogTrigger asChild>
+            <Button id="react-runtime-dialog-overlay-lab-trigger" variant="outline">
+              Open overlay lab
+            </Button>
+          </DialogTrigger>
+          <DialogContent
+            id="react-runtime-dialog-overlay-lab-content"
+            className="max-h-[calc(100vh-4rem)] max-w-2xl overflow-y-auto"
+          >
+            <DialogHeader>
+              <DialogTitle>Overlays inside a dialog</DialogTitle>
+              <DialogDescription>
+                Open each control to verify that its floating content remains interactive without
+                closing the parent dialog.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4 sm:grid-cols-2">
+              <div className="min-w-0 space-y-3 rounded-lg border p-4">
+                <h3 className="font-heading text-sm font-semibold">Popover</h3>
+                <Popover id="react-runtime-dialog-popover">
+                  <PopoverTrigger
+                    id="react-runtime-dialog-popover-trigger"
+                    className={button({ variant: "outline", size: "sm" })}
+                  >
+                    Open popover
+                  </PopoverTrigger>
+                  <PopoverContent
+                    id="react-runtime-dialog-popover-content"
+                    side="bottom"
+                    align="start"
+                  >
+                    <PopoverHeader>
+                      <PopoverTitle>Dialog popover</PopoverTitle>
+                      <PopoverDescription>
+                        This popup should stay above and inside the modal dialog.
+                      </PopoverDescription>
+                    </PopoverHeader>
+                    <Dialog id="react-runtime-dialog-overlay-nested">
+                      <DialogTrigger asChild>
+                        <Button
+                          id="react-runtime-dialog-overlay-nested-trigger"
+                          variant="secondary"
+                          size="sm"
+                        >
+                          Open nested overlay dialog
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent
+                        id="react-runtime-dialog-overlay-nested-content"
+                        className="max-h-64 max-w-sm overflow-hidden"
+                      >
+                        <DialogHeader>
+                          <DialogTitle>Nested overlay dialog</DialogTitle>
+                          <DialogDescription>
+                            Its popover should escape this deliberately clipped dialog surface.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div
+                          data-runtime-dialog-overlay-clip
+                          className="h-16 overflow-hidden rounded border p-2"
+                        >
+                          <Popover id="react-runtime-dialog-overlay-nested-popover">
+                            <PopoverTrigger
+                              id="react-runtime-dialog-overlay-nested-popover-trigger"
+                              className={button({ variant: "outline", size: "sm" })}
+                            >
+                              Open nested popover
+                            </PopoverTrigger>
+                            <PopoverContent
+                              id="react-runtime-dialog-overlay-nested-popover-content"
+                              className="w-80"
+                              side="bottom"
+                              align="start"
+                            >
+                              <PopoverTitle>Nested dialog popover</PopoverTitle>
+                              <PopoverDescription>
+                                This content remains interactive outside the clipped region.
+                              </PopoverDescription>
+                              <Button
+                                id="react-runtime-dialog-overlay-nested-popover-action"
+                                size="sm"
+                              >
+                                Confirm nested action
+                              </Button>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button
+                              id="react-runtime-dialog-overlay-nested-close"
+                              variant="outline"
+                              size="sm"
+                            >
+                              Close nested dialog
+                            </Button>
+                          </DialogClose>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                    <Button id="react-runtime-dialog-popover-action" variant="ghost" size="sm">
+                      Confirm parent action
+                    </Button>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="min-w-0 space-y-3 rounded-lg border p-4">
+                <h3 className="font-heading text-sm font-semibold">Select</h3>
+                <Select
+                  id="react-runtime-dialog-select"
+                  defaultValue="system"
+                  name="reactRuntimeDialogTheme"
+                  className="w-full"
+                >
+                  <SelectTrigger
+                    id="react-runtime-dialog-select-trigger"
+                    className="w-full"
+                    placeholder="Choose a theme"
+                  />
+                  <SelectContent
+                    id="react-runtime-dialog-select-content"
+                    alignItemWithTrigger={false}
+                  >
+                    <SelectItem id="react-runtime-dialog-select-light" value="light">
+                      Light
+                    </SelectItem>
+                    <SelectItem id="react-runtime-dialog-select-system" value="system">
+                      System
+                    </SelectItem>
+                    <SelectItem id="react-runtime-dialog-select-dark" value="dark">
+                      Dark
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="min-w-0 space-y-3 rounded-lg border p-4">
+                <h3 className="font-heading text-sm font-semibold">Combobox</h3>
+                <Combobox id="react-runtime-dialog-combobox" name="reactRuntimeDialogFruit">
+                  <ComboboxLabel>Fruit</ComboboxLabel>
+                  <ComboboxInput
+                    id="react-runtime-dialog-combobox-input"
+                    placeholder="Search fruit"
+                  />
+                  <ComboboxContent id="react-runtime-dialog-combobox-content">
+                    <ComboboxEmpty>No fruit found.</ComboboxEmpty>
+                    <ComboboxItem id="react-runtime-dialog-combobox-apple" value="apple">
+                      Apple
+                    </ComboboxItem>
+                    <ComboboxItem id="react-runtime-dialog-combobox-apricot" value="apricot">
+                      Apricot
+                    </ComboboxItem>
+                    <ComboboxItem id="react-runtime-dialog-combobox-banana" value="banana">
+                      Banana
+                    </ComboboxItem>
+                  </ComboboxContent>
+                </Combobox>
+              </div>
+
+              <div className="min-w-0 space-y-3 rounded-lg border p-4">
+                <h3 className="font-heading text-sm font-semibold">Dropdown</h3>
+                <Dropdown id="react-runtime-dialog-dropdown">
+                  <DropdownTrigger
+                    id="react-runtime-dialog-dropdown-trigger"
+                    className={button({ variant: "outline", size: "sm" })}
+                  >
+                    Open menu
+                  </DropdownTrigger>
+                  <DropdownContent
+                    id="react-runtime-dialog-dropdown-content"
+                    side="bottom"
+                    align="start"
+                  >
+                    <DropdownLabel>Project actions</DropdownLabel>
+                    <DropdownItem id="react-runtime-dialog-dropdown-duplicate">
+                      Duplicate
+                    </DropdownItem>
+                    <DropdownItem id="react-runtime-dialog-dropdown-rename">Rename</DropdownItem>
+                    <DropdownItem id="react-runtime-dialog-dropdown-archive">Archive</DropdownItem>
+                  </DropdownContent>
+                </Dropdown>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button id="react-runtime-dialog-overlay-lab-close" variant="outline" size="sm">
+                  Close lab
                 </Button>
               </DialogClose>
             </DialogFooter>

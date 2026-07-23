@@ -141,6 +141,9 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(dialogStyles).toContain("--nested-scale: 0.05;");
   expect(dialogVariants).toContain("duration-200");
   expect(dialogVariants).toContain(
+    "data-starting-style:!animate-none data-starting-style:opacity-0",
+  );
+  expect(dialogVariants).toContain(
     "data-[state=open]:data-nested-dialog-open:scale-[calc(1-var(--nested-scale)*var(--nested-dialogs,1))]",
   );
   expect(dialogVariants).toContain(
@@ -200,6 +203,9 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(sheetVariants).not.toContain("starwind-sheet");
   expect(sheetVariants).not.toContain("starwind-dialog");
   expect(sheetVariants).toContain("slide-out-to-right slide-in-from-right");
+  expect(sheetVariants).toContain(
+    "data-starting-style:!animate-none data-starting-style:opacity-0",
+  );
   expect(sheetVariants).toContain("inset-y-0 right-0 left-auto");
   expect(sheetIndex).toContain("SheetHeader");
   expect(sheetIndex).toContain("SheetFooter");
@@ -309,12 +315,14 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(popoverContent).toContain("<PopoverPrimitive.Popup");
   expect(popoverContent).toContain('side = "bottom"');
   expect(popoverContent).toContain('align = "center"');
+  expect(popoverContent).toContain('collisionStrategy = "initial-placement"');
   expect(popoverContent).toContain('exitMotion = "popover"');
   expect(popoverContent).toContain("popoverContent({ exitMotion, class: className })");
   expect(popoverContent).not.toContain("popoverContent({ side, align");
   expect(popoverContent).toContain("side={side}");
   expect(popoverContent).toContain("align={align}");
   expect(popoverContent).toContain("sideOffset={sideOffset}");
+  expect(popoverContent).toContain("collisionStrategy={collisionStrategy}");
   expect(popoverContent).toContain('data-slot="popover-content"');
   expect(popoverVariants).not.toContain("starwind-popover");
   expect(popoverVariants).toContain("data-[state=open]:animate-in fade-in zoom-in-95");
@@ -521,6 +529,9 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(alertDialogContent).toContain('role="alertdialog"');
   expect(alertDialogContent).toContain('data-slot="alert-dialog-backdrop"');
   expect(alertDialogContent).toContain('data-slot="alert-dialog-content"');
+  expect(alertDialogVariants).toContain(
+    "data-starting-style:!animate-none data-starting-style:opacity-0",
+  );
   expect(alertDialogContent).not.toContain("animationDuration");
   expect(alertDialogAction).toContain('import { Button } from "../button"');
   expect(alertDialogAction).toContain(

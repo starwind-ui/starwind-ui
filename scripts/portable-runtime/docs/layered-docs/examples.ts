@@ -771,6 +771,17 @@ function renderHtmlAttributes(
     }
   }
 
+  const initialVisibility = contract.presence?.initialVisibility?.find(
+    (visibility) =>
+      visibility.part === part.name &&
+      visibility.delivery === "markup" &&
+      visibility.hidden &&
+      visibility.mechanism === "css-visibility",
+  );
+  if (initialVisibility) {
+    attributes.set("style", "visibility: hidden");
+  }
+
   for (const prop of getExamplePropsForPart(contract, part, nodeProps)) {
     const attributeName = getHtmlAttributeForProp(part, prop.name);
 

@@ -74,6 +74,63 @@ describe("presence", () => {
     expect(element.hidden).toBe(false);
   });
 
+  it("keeps the starting style through one committed frame when requested", async () => {
+    const element = renderElementWithAnimationDuration("200ms");
+    element.hidden = true;
+
+    showElement(element, { startingStyleRelease: "after-paint" });
+
+    expect(element.hasAttribute("data-starting-style")).toBe(true);
+
+    await nextAnimationFrame();
+    expect(element.hasAttribute("data-starting-style")).toBe(true);
+
+    await nextAnimationFrame();
+    expect(element.hasAttribute("data-starting-style")).toBe(false);
+  });
+
+  it("keeps the default starting style release on the next frame", async () => {
+    const element = renderElementWithAnimationDuration("200ms");
+    element.hidden = true;
+
+    showElement(element);
+
+    expect(element.hasAttribute("data-starting-style")).toBe(true);
+
+    await nextAnimationFrame();
+    expect(element.hasAttribute("data-starting-style")).toBe(false);
+  });
+
+  it("does not let a stale release clear a newer starting style", async () => {
+    const element = renderElementWithAnimationDuration("0ms");
+    element.hidden = true;
+
+    showElement(element, { startingStyleRelease: "after-paint" });
+    await nextAnimationFrame();
+
+    hideElementAfterAnimations(element);
+    showElement(element, { startingStyleRelease: "after-paint" });
+
+    await nextAnimationFrame();
+    expect(element.hasAttribute("data-starting-style")).toBe(true);
+
+    await nextAnimationFrame();
+    expect(element.hasAttribute("data-starting-style")).toBe(false);
+  });
+
+  it("does not restore a starting style after the element closes", async () => {
+    const element = renderElementWithAnimationDuration("0ms");
+    element.hidden = true;
+
+    showElement(element, { startingStyleRelease: "after-paint" });
+    hideElementAfterAnimations(element);
+
+    expect(element.hasAttribute("data-starting-style")).toBe(false);
+    await nextAnimationFrame();
+    await nextAnimationFrame();
+    expect(element.hasAttribute("data-starting-style")).toBe(false);
+  });
+
   it("toggles the Tailwind hidden utility with the hidden property", async () => {
     vi.useFakeTimers();
     renderHiddenUtilityStyle();
@@ -122,4 +179,8 @@ function renderHiddenUtilityStyle(): void {
   const style = document.createElement("style");
   style.textContent = ".hidden { display: none !important; }";
   document.head.append(style);
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }

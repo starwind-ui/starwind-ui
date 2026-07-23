@@ -85,6 +85,21 @@ export function defineRuntimeFormControlTests(): void {
     expect(field.props).toContainEqual(
       expect.objectContaining({ kind: "control", name: "invalid" }),
     );
+    expect(
+      field.props
+        .filter((prop) =>
+          ["errorVisibility", "revalidationTiming", "validationTiming"].includes(prop.name),
+        )
+        .map((prop) => [
+          prop.name,
+          "defaultValue" in prop ? prop.defaultValue : undefined,
+          prop.type,
+        ]),
+    ).toEqual([
+      ["errorVisibility", "submit", "FormValidationTiming"],
+      ["revalidationTiming", "change", "FormValidationTiming"],
+      ["validationTiming", "submit", "FormValidationTiming"],
+    ]);
     expect(field.refs?.map((ref) => ref.part)).toEqual([
       "root",
       "label",
@@ -107,9 +122,12 @@ export function defineRuntimeFormControlTests(): void {
           "data-sw-field",
           "data-dirty",
           "data-disabled",
+          "data-error-visibility",
           "data-invalid",
           "data-name",
+          "data-revalidation-timing",
           "data-touched",
+          "data-validation-timing",
         ],
       }),
     );
@@ -224,18 +242,21 @@ export function defineRuntimeFormControlTests(): void {
         type: "FormValidationTiming",
       },
       {
+        defaultValue: "submit",
         name: "errorVisibility",
         kind: "option",
         targets: ["root"],
         type: "FormValidationTiming",
       },
       {
+        defaultValue: "change",
         name: "revalidationTiming",
         kind: "option",
         targets: ["root"],
         type: "FormValidationTiming",
       },
       {
+        defaultValue: "submit",
         name: "validationTiming",
         kind: "option",
         targets: ["root"],
@@ -268,6 +289,12 @@ export function defineRuntimeFormControlTests(): void {
       }),
     );
     expect((form as { escapeHatches?: unknown }).escapeHatches).toBeUndefined();
+    expect(form.frameworkNotes?.astro).toContain(
+      "Retrieve the idempotent imperative controller with createForm(element); the component does not expose a controller ref.",
+    );
+    expect(form.frameworkNotes?.react).toContain(
+      "Keep the public ref on the HTMLFormElement; retrieve the idempotent imperative controller with createForm(element).",
+    );
   });
 
   it("describes Input value control, event details, form behavior, and escape hatch", () => {

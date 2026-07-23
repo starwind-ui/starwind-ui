@@ -17,6 +17,10 @@ import {
   resolveFloatingPortalTarget,
 } from "../../internal/floating";
 import {
+  createFloatingPortalSession,
+  type FloatingPortalSession,
+} from "../../internal/floating-portal";
+import {
   type OverlayDismissalHandle,
   registerOverlayDismissal,
 } from "../../internal/overlay-dismissal";
@@ -228,7 +232,7 @@ class NavigationMenuController implements NavigationMenuInstance {
   private openTimer: number | null = null;
   private pendingKeyboardOpenFocus: PendingKeyboardOpenFocus | null = null;
   private pendingKeyboardOpenFocusTimer: number | null = null;
-  private placeholder: Comment | null = null;
+  private readonly portalSession: FloatingPortalSession;
   private rendered = false;
   private restoreFocusTrigger: HTMLElement | null = null;
   private boundaryTransformFrame: number | null = null;
@@ -242,6 +246,23 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.root = root;
     this.root.setAttribute(NAV_MENU_ROOT_ATTRIBUTE, "");
     this.elements = getNavigationMenuElements(root);
+    this.portalSession = createFloatingPortalSession({
+      canPromote: () => this.valueState !== null,
+      root,
+      getPortalElement: () => this.getPortalElement(),
+      getPortalTarget: () => resolveFloatingPortalTarget(this.activeTrigger),
+      onOwnerCloseRequest: () => {
+        const request: ValueRequest = {
+          reason: "imperative-action",
+          trigger: this.activeTrigger ?? undefined,
+        };
+        this.requestValue(null, request);
+        if (!this.controlled && this.valueState !== null) {
+          this.valueState = null;
+          this.applyValueState(null, request);
+        }
+      },
+    });
     const floatingOptionsElement = this.getFloatingOptionsElement();
     this.requestedFloatingAlign = readFloatingAlignAttribute(
       floatingOptionsElement.getAttribute(NAV_MENU_ALIGN_ATTRIBUTE),
@@ -293,7 +314,9 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.valueChangeSubscribers.clear();
     this.valueState = null;
     this.renderState(null);
-    this.unportalPopup();
+    this.portalSession.destroy();
+    this.clearFloatingStyles();
+    this.clearSurfaceSizeStyles();
     this.elements.popup.hidden = true;
     this.elements.viewport.hidden = true;
     instances.delete(this.root);
@@ -1276,7 +1299,7 @@ class NavigationMenuController implements NavigationMenuInstance {
     const portalElement = this.getPortalElement();
 
     return (
-      this.root.contains(target) ||
+      this.elements.lists.some((list) => list.contains(target)) ||
       portalElement.contains(target) ||
       Boolean(this.elements.portal?.contains(target))
     );
@@ -1311,22 +1334,11 @@ class NavigationMenuController implements NavigationMenuInstance {
   }
 
   private portalPopup(): void {
-    const portalTarget = resolveFloatingPortalTarget(this.activeTrigger);
-    const portalElement = this.getPortalElement();
-
-    if (this.placeholder || portalElement.parentElement === portalTarget) return;
-
-    this.placeholder = document.createComment("navigation-menu-popup-placeholder");
-    portalElement.parentNode?.insertBefore(this.placeholder, portalElement);
-    portalTarget.append(portalElement);
+    this.portalSession.mount();
   }
 
   private unportalPopup(): void {
-    if (!this.placeholder) return;
-
-    this.placeholder.parentNode?.insertBefore(this.getPortalElement(), this.placeholder);
-    this.placeholder.remove();
-    this.placeholder = null;
+    this.portalSession.restore();
     this.clearFloatingStyles();
     this.clearSurfaceSizeStyles();
   }

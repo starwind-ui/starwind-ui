@@ -38,6 +38,10 @@ export async function verifyReactSheetPortalCases({ page }) {
         content instanceof HTMLElement
           ? content.closest("[data-floating-root]")?.getAttribute("data-slot")
           : null,
+      portalPromoted:
+        content instanceof HTMLElement
+          ? content.closest("[data-sw-floating-portal]")?.matches(":popover-open")
+          : null,
       position: content instanceof HTMLElement ? getComputedStyle(content).position : null,
       role: content?.getAttribute("role"),
       rootContains:
@@ -64,6 +68,7 @@ export async function verifyReactSheetPortalCases({ page }) {
     sheetDropdownState.sheetTriggerHasAttribute !== true ||
     sheetDropdownState.floatingRootContainsContent !== true ||
     sheetDropdownState.nearestFloatingRootSlot !== "floating-root" ||
+    sheetDropdownState.portalPromoted !== true ||
     sheetDropdownState.rootContains !== false ||
     sheetDropdownState.position !== "fixed" ||
     sheetDropdownState.styleLeft === "" ||
@@ -110,6 +115,10 @@ export async function verifyReactSheetPortalCases({ page }) {
         submenuContent instanceof HTMLElement
           ? submenuContent.closest("[data-floating-root]")?.getAttribute("data-slot")
           : null,
+      portalPromoted:
+        submenuContent instanceof HTMLElement
+          ? submenuContent.closest("[data-sw-floating-portal]")?.matches(":popover-open")
+          : null,
       triggerExpanded: trigger?.getAttribute("aria-expanded"),
       usesSheetFloatingRoot:
         floatingRoot instanceof HTMLElement && submenuContent instanceof HTMLElement
@@ -123,6 +132,7 @@ export async function verifyReactSheetPortalCases({ page }) {
     sheetDropdownSubmenuState.submenuHidden !== false ||
     sheetDropdownSubmenuState.submenuState !== "open" ||
     sheetDropdownSubmenuState.nearestFloatingRootSlot !== "floating-root" ||
+    sheetDropdownSubmenuState.portalPromoted !== true ||
     sheetDropdownSubmenuState.submenuPosition !== "fixed" ||
     sheetDropdownSubmenuState.activeElementId !== "react-runtime-sheet-dropdown-email" ||
     sheetDropdownSubmenuState.triggerExpanded !== "true" ||
@@ -194,6 +204,10 @@ export async function verifyReactSheetPortalCases({ page }) {
         content instanceof HTMLElement
           ? content.closest("[data-floating-root]")?.getAttribute("data-slot")
           : null,
+      portalPromoted:
+        content instanceof HTMLElement
+          ? content.closest("[data-sw-floating-portal]")?.matches(":popover-open")
+          : null,
       position: content instanceof HTMLElement ? getComputedStyle(content).position : null,
       role: content?.getAttribute("role"),
       rootContains:
@@ -222,6 +236,7 @@ export async function verifyReactSheetPortalCases({ page }) {
     sheetPopoverState.sheetTriggerHasAttribute !== true ||
     sheetPopoverState.floatingRootContainsContent !== true ||
     sheetPopoverState.nearestFloatingRootSlot !== "floating-root" ||
+    sheetPopoverState.portalPromoted !== true ||
     sheetPopoverState.rootContains !== false ||
     sheetPopoverState.position !== "fixed" ||
     sheetPopoverState.styleLeft === "" ||
@@ -271,6 +286,13 @@ export async function verifyReactSheetPortalCases({ page }) {
         nestedContent instanceof HTMLElement
           ? nestedContent.closest("[data-floating-root]")?.getAttribute("data-slot")
           : null,
+      portalsPromoted:
+        parentContent instanceof HTMLElement && nestedContent instanceof HTMLElement
+          ? [parentContent, nestedContent].every(
+              (item) =>
+                item.closest("[data-sw-floating-portal]")?.matches(":popover-open") === true,
+            )
+          : null,
       parentHidden: parentContent instanceof HTMLElement ? parentContent.hidden : null,
       parentState: parentContent?.getAttribute("data-state"),
       triggerExpanded: trigger?.getAttribute("aria-expanded"),
@@ -293,6 +315,7 @@ export async function verifyReactSheetPortalCases({ page }) {
     !sheetNestedPopoverState.describedBy ||
     !["left", "right"].includes(sheetNestedPopoverState.nestedSide ?? "") ||
     sheetNestedPopoverState.nearestFloatingRootSlot !== "floating-root" ||
+    sheetNestedPopoverState.portalsPromoted !== true ||
     sheetNestedPopoverState.nestedRootContains !== false ||
     sheetNestedPopoverState.nestedPosition !== "fixed" ||
     sheetNestedPopoverState.triggerExpanded !== "true" ||

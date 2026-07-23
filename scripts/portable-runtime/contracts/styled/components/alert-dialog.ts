@@ -47,6 +47,7 @@ export const alertDialogStyledContract: StyledAdapterContract = {
     alertDialogBackdrop: {
       base: [
         "fixed inset-0 z-50 hidden bg-black/50 duration-200",
+        "data-starting-style:!animate-none data-starting-style:opacity-0",
         "data-[state=open]:animate-in fade-in",
         "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out",
       ],
@@ -55,6 +56,7 @@ export const alertDialogStyledContract: StyledAdapterContract = {
       base: [
         "bg-background space-y-4 rounded-lg border p-6 shadow-lg sm:max-w-lg",
         "fixed top-[50%] left-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]",
+        "data-starting-style:!animate-none data-starting-style:opacity-0",
         "data-[state=open]:animate-in fade-in zoom-in-95 will-change-transform duration-200",
         "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
       ],

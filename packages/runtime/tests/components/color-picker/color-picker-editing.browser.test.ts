@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createColorPicker, parseColor } from "../../../src/components/color-picker";
 import { createSelect } from "../../../src/components/select/select";
 import { initStarwind } from "../../../src/init-starwind";
+import { getFormValueRevision } from "../../../src/internal/form-value-revision";
 
 describe("Color Picker editing behaviors", () => {
   afterEach(() => {
@@ -55,6 +56,9 @@ describe("Color Picker editing behaviors", () => {
     expect(picker.getValueAsString()).toBe("#00ff00");
     expect(changed.mock.calls.at(-1)?.[0].detail.reason).toBe("value-input");
     expect(committed).toHaveBeenCalledOnce();
+    expect(getFormValueRevision(committed.mock.calls[0]?.[0])).toBe(
+      getFormValueRevision(changed.mock.calls[0]?.[0]),
+    );
 
     const blue = get<HTMLInputElement>(
       root,

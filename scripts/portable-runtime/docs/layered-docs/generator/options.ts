@@ -51,6 +51,7 @@ export type BuildLayeredDocsMetadataOptions = {
   readonly primitiveDocsExamples?: PrimitiveDocsExampleRegistry;
   readonly primitiveDocsEnrichment?: Readonly<Record<string, PrimitiveDocsEnrichment>>;
   readonly primitiveDocsUsageRoot?: string | false;
+  readonly primitiveVersions?: Readonly<Record<string, string>>;
   readonly runtimeExports?: ReadonlySet<string>;
   readonly runtimeIndexSource?: string;
   readonly styledAnnotations?: Readonly<Record<string, StyledDocsAnnotation>>;

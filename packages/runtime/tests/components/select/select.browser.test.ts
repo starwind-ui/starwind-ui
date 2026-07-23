@@ -393,6 +393,22 @@ describe("createSelect", () => {
     expect(document.activeElement).not.toBe(getTrigger());
   });
 
+  it("treats non-trigger siblings inside the Select root as outside interactions", () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const rootRemainder = document.createElement("button");
+    rootRemainder.type = "button";
+    rootRemainder.textContent = "Root remainder";
+    root.append(rootRemainder);
+
+    const select = createSelect(root);
+    select.setOpen(true, { emit: false });
+
+    rootRemainder.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(select.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+  });
+
   it("supports Home and End keyboard focus while open", async () => {
     const root = renderSelect({ defaultValue: "system" });
     createSelect(root);

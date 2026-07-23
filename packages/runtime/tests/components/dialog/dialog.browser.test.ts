@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createDialog } from "../../../src/components/dialog/dialog";
 import { createPopover } from "../../../src/components/popover/popover";
+import { registerOverlayDismissal } from "../../../src/internal/overlay-dismissal";
+import {
+  createFloatingPortalSession,
+  type FloatingPortalSession,
+} from "../../../src/internal/floating-portal";
 
 describe("createDialog", () => {
   beforeEach(() => {
@@ -107,7 +112,30 @@ describe("createDialog", () => {
     });
   });
 
-  it("rolls back coherent visual state when native presentation fails", () => {
+  it("keeps popup and backdrop starting styles through the first presented frame", async () => {
+    const root = renderDialog();
+    const dialog = createDialog(root);
+    const content = getContent();
+    const overlay = getOverlay();
+
+    getTrigger().click();
+
+    expect(content.open).toBe(true);
+    expect(content.hasAttribute("data-starting-style")).toBe(true);
+    expect(overlay.hasAttribute("data-starting-style")).toBe(true);
+
+    await nextAnimationFrame();
+    expect(content.hasAttribute("data-starting-style")).toBe(true);
+    expect(overlay.hasAttribute("data-starting-style")).toBe(true);
+
+    await nextAnimationFrame();
+    expect(content.hasAttribute("data-starting-style")).toBe(false);
+    expect(overlay.hasAttribute("data-starting-style")).toBe(false);
+
+    dialog.destroy();
+  });
+
+  it("rolls back coherent visual state when native presentation fails", async () => {
     const root = renderDialog();
     const outsideButton = document.createElement("button");
     outsideButton.textContent = "Outside";
@@ -142,7 +170,33 @@ describe("createDialog", () => {
     showModal.mockRestore();
     dialog.setOpen(true);
     expect(content.open).toBe(true);
+    expect(content.hasAttribute("data-starting-style")).toBe(true);
+    await nextAnimationFrame();
+    expect(content.hasAttribute("data-starting-style")).toBe(true);
+    await nextAnimationFrame();
+    expect(content.hasAttribute("data-starting-style")).toBe(false);
     dialog.destroy();
+  });
+
+  it("does not let a destroyed controller release a replacement entry marker", async () => {
+    const root = renderDialog();
+    const firstDialog = createDialog(root);
+    const content = getContent();
+
+    firstDialog.setOpen(true);
+    await nextAnimationFrame();
+    firstDialog.destroy();
+
+    const replacementDialog = createDialog(root);
+    replacementDialog.setOpen(true);
+
+    await nextAnimationFrame();
+    expect(content.hasAttribute("data-starting-style")).toBe(true);
+
+    await nextAnimationFrame();
+    expect(content.hasAttribute("data-starting-style")).toBe(false);
+
+    replacementDialog.destroy();
   });
 
   it("initializes nested overlays after dialog portal movement without duplicate controllers", async () => {
@@ -528,6 +582,242 @@ describe("createDialog", () => {
     expect(getOverlay().hidden).toBe(true);
   });
 
+  it("closes owned floating layers before native dialog teardown and restores focus", async () => {
+    const root = renderDialog();
+    const outsideButton = document.createElement("button");
+    outsideButton.textContent = "Outside focus target";
+    document.body.prepend(outsideButton);
+    outsideButton.focus();
+    const dialog = createDialog(root);
+    getTrigger().click();
+
+    const layer = mountDialogOwnedLayer(getContent());
+    const closeAnimation = createDeferred();
+    Object.defineProperty(getContent(), "getAnimations", {
+      configurable: true,
+      value: () => [{ finished: closeAnimation.promise }] as unknown as Animation[],
+    });
+    layer.focusTarget.focus();
+
+    dialog.close();
+
+    expect(layer.element.getAttribute("data-state")).toBe("closed");
+    expect(layer.closeRequests).toEqual(["owner-close"]);
+    expect(getContent().open).toBe(true);
+
+    closeAnimation.resolve();
+    await closeAnimation.promise;
+    await waitForMicrotasks();
+
+    expect(getContent().open).toBe(false);
+    expect(document.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(document.activeElement).toBe(outsideButton);
+
+    dialog.open();
+    expect(layer.element.getAttribute("data-state")).toBe("closed");
+    expect(document.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    layer.destroy();
+    dialog.destroy();
+  });
+
+  it("suppresses controlled owned layers while closed and restores only current open state", () => {
+    const root = renderDialog();
+    const dialog = createDialog(root);
+    dialog.open();
+    const layer = mountDialogOwnedLayer(getContent(), { controlled: true });
+    const closeEvents: string[] = [];
+    layer.element.addEventListener("layer-close-request", () => closeEvents.push("requested"));
+
+    expect(getPromotedFloatingPortal()?.matches(":popover-open")).toBe(true);
+
+    dialog.close();
+
+    expect(layer.element.getAttribute("data-state")).toBe("open");
+    expect(closeEvents).toEqual(["requested"]);
+    expect(getContent().open).toBe(false);
+    expect(getPromotedFloatingPortal()).toBeNull();
+
+    dialog.open();
+
+    expect(getPromotedFloatingPortal()?.matches(":popover-open")).toBe(true);
+    expect(layer.element.getAttribute("data-state")).toBe("open");
+
+    dialog.close();
+    expect(closeEvents).toEqual(["requested", "requested"]);
+    layer.element.setAttribute("data-state", "closed");
+    layer.session.restore();
+    dialog.open();
+
+    expect(layer.element.getAttribute("data-state")).toBe("closed");
+    expect(getPromotedFloatingPortal()).toBeNull();
+
+    layer.destroy();
+    dialog.destroy();
+  });
+
+  it("closes only the nearest nested dialog layers and preserves parent layer focus", () => {
+    const nested = renderNestedDialogs();
+    const parentDialog = createDialog(nested.parentRoot);
+    const childDialog = createDialog(nested.childRoot);
+    parentDialog.open();
+    const parentLayer = mountDialogOwnedLayer(nested.parentContent);
+    parentLayer.focusTarget.focus();
+    childDialog.open();
+    const childLayer = mountDialogOwnedLayer(nested.childContent);
+    childLayer.focusTarget.focus();
+
+    childDialog.close();
+
+    expect(childLayer.element.getAttribute("data-state")).toBe("closed");
+    expect(childLayer.closeRequests).toEqual(["owner-close"]);
+    expect(parentLayer.element.getAttribute("data-state")).toBe("open");
+    expect(parentLayer.closeRequests).toEqual([]);
+    expect(parentLayer.element.closest("[data-sw-floating-portal]")?.matches(":popover-open")).toBe(
+      true,
+    );
+    expect(nested.parentContent.open).toBe(true);
+    expect(nested.childContent.open).toBe(false);
+    expect(document.activeElement).toBe(parentLayer.focusTarget);
+
+    parentDialog.close();
+    expect(parentLayer.closeRequests).toEqual(["owner-close"]);
+    expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
+
+    childLayer.destroy();
+    parentLayer.destroy();
+    childDialog.destroy();
+    parentDialog.destroy();
+  });
+
+  it("destroys an open owner without stale controlled wrappers or focus", () => {
+    const root = renderDialog();
+    const outsideButton = document.createElement("button");
+    outsideButton.textContent = "Return focus after destroy";
+    document.body.prepend(outsideButton);
+    outsideButton.focus();
+    const dialog = createDialog(root);
+    dialog.open();
+    const layer = mountDialogOwnedLayer(getContent(), { controlled: true });
+    layer.focusTarget.focus();
+
+    dialog.destroy();
+
+    expect(layer.closeRequests).toEqual(["owner-close"]);
+    expect(getContent().open).toBe(false);
+    expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
+    expect(document.activeElement).toBe(outsideButton);
+
+    layer.destroy();
+  });
+
+  it("does not duplicate controlled layer close intent when destroyed during close", () => {
+    const root = renderDialog();
+    const dialog = createDialog(root);
+    dialog.open();
+    const layer = mountDialogOwnedLayer(getContent(), { controlled: true });
+    const closeAnimation = createDeferred();
+    Object.defineProperty(getContent(), "getAnimations", {
+      configurable: true,
+      value: () => [{ finished: closeAnimation.promise }] as unknown as Animation[],
+    });
+
+    dialog.close();
+    dialog.destroy();
+
+    expect(layer.closeRequests).toEqual(["owner-close"]);
+    expect(getContent().open).toBe(false);
+    expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
+
+    closeAnimation.resolve();
+    layer.destroy();
+  });
+
+  it("closes an uncontrolled layer mounted during exit before reopening", async () => {
+    const root = renderDialog();
+    const dialog = createDialog(root);
+    dialog.open();
+    const closeAnimation = createDeferred();
+    Object.defineProperty(getContent(), "getAnimations", {
+      configurable: true,
+      value: () => [{ finished: closeAnimation.promise }] as unknown as Animation[],
+    });
+
+    dialog.close();
+    const lateLayer = mountDialogOwnedLayer(getContent());
+
+    expect(lateLayer.closeRequests).toEqual(["owner-close"]);
+    expect(lateLayer.element.getAttribute("data-state")).toBe("closed");
+    expect(document.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    closeAnimation.resolve();
+    await closeAnimation.promise;
+    await waitForMicrotasks();
+    dialog.open();
+
+    expect(lateLayer.element.getAttribute("data-state")).toBe("closed");
+    expect(document.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    lateLayer.destroy();
+    dialog.destroy();
+  });
+
+  it("requests and cleans a controlled layer mounted before closing-owner destruction", () => {
+    const root = renderDialog();
+    const dialog = createDialog(root);
+    dialog.open();
+    const closeAnimation = createDeferred();
+    Object.defineProperty(getContent(), "getAnimations", {
+      configurable: true,
+      value: () => [{ finished: closeAnimation.promise }] as unknown as Animation[],
+    });
+
+    dialog.close();
+    const lateLayer = mountDialogOwnedLayer(getContent(), { controlled: true });
+
+    expect(lateLayer.closeRequests).toEqual(["owner-close"]);
+    expect(document.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    dialog.destroy();
+
+    expect(lateLayer.closeRequests).toEqual(["owner-close"]);
+    expect(getContent().open).toBe(false);
+    expect(document.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    closeAnimation.resolve();
+    lateLayer.destroy();
+  });
+
+  it("keeps a controlled layer promoted when close animation is aborted by reopen", async () => {
+    const root = renderDialog();
+    const dialog = createDialog(root);
+    dialog.open();
+    const layer = mountDialogOwnedLayer(getContent(), { controlled: true });
+    const closeAnimation = createDeferred();
+    Object.defineProperty(getContent(), "getAnimations", {
+      configurable: true,
+      value: () => [{ finished: closeAnimation.promise }] as unknown as Animation[],
+    });
+
+    dialog.close();
+    dialog.open();
+
+    expect(layer.closeRequests).toEqual(["owner-close"]);
+    expect(getContent().open).toBe(true);
+    expect(getPromotedFloatingPortal()?.matches(":popover-open")).toBe(true);
+
+    closeAnimation.resolve();
+    await closeAnimation.promise;
+    await waitForMicrotasks();
+
+    expect(layer.closeRequests).toEqual(["owner-close"]);
+    expect(getContent().open).toBe(true);
+    expect(getPromotedFloatingPortal()?.matches(":popover-open")).toBe(true);
+
+    layer.destroy();
+    dialog.destroy();
+  });
+
   it("emits close completion after exit animation and cleanup finish", async () => {
     const root = renderDialog();
     const outsideButton = document.createElement("button");
@@ -753,6 +1043,149 @@ describe("createDialog", () => {
     expect(getContent().open).toBe(false);
   });
 
+  it("leaves the Dialog open when a later floating overlay claims Escape", () => {
+    const root = renderDialog();
+    const dialog = createDialog(root);
+    getTrigger().click();
+    const floatingRoot = document.createElement("div");
+    const floating = document.createElement("button");
+    floating.setAttribute("data-state", "open");
+    floatingRoot.append(floating);
+    getContent().append(floatingRoot);
+    let dismissal!: ReturnType<typeof registerOverlayDismissal>;
+    dismissal = registerOverlayDismissal({
+      floating,
+      onEscapeKeyDown: (event) => {
+        event.preventDefault();
+        floating.setAttribute("data-state", "closed");
+        dismissal.destroy();
+        return true;
+      },
+      root: floatingRoot,
+    });
+
+    floating.focus();
+    floating.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(floating.getAttribute("data-state")).toBe("closed");
+    expect(getContent().open).toBe(true);
+
+    getContent().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(dialog.getOpen()).toBe(false);
+    expect(getContent().getAttribute("data-state")).toBe("closed");
+
+    dismissal.destroy();
+    dialog.destroy();
+  });
+
+  it("lets a cross-owner floating portal inside the modal claim Escape", () => {
+    const root = renderDialog();
+    const dialog = createDialog(root);
+    getTrigger().click();
+    const floatingRoot = document.createElement("div");
+    const floating = document.createElement("button");
+    floating.setAttribute("data-state", "open");
+    floatingRoot.append(document.createElement("span"));
+    document.body.append(floatingRoot);
+    getContent().append(floating);
+    let dismissal!: ReturnType<typeof registerOverlayDismissal>;
+    dismissal = registerOverlayDismissal({
+      floating,
+      onEscapeKeyDown: (event) => {
+        event.preventDefault();
+        floating.setAttribute("data-state", "closed");
+        dismissal.destroy();
+        return true;
+      },
+      root: floatingRoot,
+    });
+    floating.focus();
+
+    try {
+      floating.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+      );
+
+      expect(floating.getAttribute("data-state")).toBe("closed");
+      expect(dialog.getOpen()).toBe(true);
+      expect(getContent().open).toBe(true);
+    } finally {
+      dismissal.destroy();
+      dialog.destroy();
+    }
+  });
+
+  it("closes while a prior controlled-open floating layer remains outside its modal boundary", () => {
+    const root = renderDialog();
+    const floatingRoot = document.createElement("div");
+    const floating = document.createElement("div");
+    floating.setAttribute("data-state", "open");
+    floatingRoot.append(floating);
+    document.body.append(floatingRoot);
+    const dismissal = registerOverlayDismissal({
+      floating,
+      onEscapeKeyDown: (event) => {
+        event.preventDefault();
+        floating.setAttribute("data-state", "closed");
+        return true;
+      },
+      root: floatingRoot,
+    });
+    const dialog = createDialog(root);
+    getTrigger().click();
+
+    try {
+      getContent().dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+      );
+
+      expect(floating.getAttribute("data-state")).toBe("open");
+      expect(dialog.getOpen()).toBe(false);
+      expect(getContent().getAttribute("data-state")).toBe("closed");
+    } finally {
+      dismissal.destroy();
+      dialog.destroy();
+    }
+  });
+
+  it("leaves overlays and the Dialog open when an earlier capture listener prevents Escape", () => {
+    const root = renderDialog();
+    const dialog = createDialog(root);
+    getTrigger().click();
+    const floatingRoot = document.createElement("div");
+    const floating = document.createElement("div");
+    const onEscapeKeyDown = vi.fn();
+    floating.setAttribute("data-state", "open");
+    floatingRoot.append(floating);
+    getContent().append(floatingRoot);
+    const preventEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") event.preventDefault();
+    };
+    document.addEventListener("keydown", preventEscape, { capture: true });
+    const dismissal = registerOverlayDismissal({
+      floating,
+      onEscapeKeyDown,
+      root: floatingRoot,
+    });
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+
+    expect(onEscapeKeyDown).not.toHaveBeenCalled();
+    expect(floating.getAttribute("data-state")).toBe("open");
+    expect(getContent().open).toBe(true);
+
+    dismissal.destroy();
+    document.removeEventListener("keydown", preventEscape, { capture: true });
+    dialog.destroy();
+  });
+
   it("handles native cancel events and respects closeOnEscape", () => {
     const root = renderDialog();
     const dialog = createDialog(root);
@@ -950,6 +1383,117 @@ describe("createDialog", () => {
 
     childDialog.destroy();
     parentDialog.destroy();
+  });
+
+  it("lets a nested child Dialog ignore floating layers owned by its parent", () => {
+    const nested = renderNestedDialogs();
+    const parentFloatingRoot = document.createElement("div");
+    const parentFloating = document.createElement("div");
+    parentFloating.setAttribute("data-state", "open");
+    parentFloatingRoot.append(parentFloating);
+    nested.parentContent.append(parentFloatingRoot);
+    const parentDismissal = registerOverlayDismissal({
+      floating: parentFloating,
+      onEscapeKeyDown: (event) => {
+        event.preventDefault();
+        parentFloating.setAttribute("data-state", "closed");
+        return true;
+      },
+      root: parentFloatingRoot,
+    });
+    const childFloatingRoot = document.createElement("div");
+    const childFloating = document.createElement("button");
+    childFloating.setAttribute("data-state", "open");
+    childFloatingRoot.append(childFloating);
+    nested.childContent.append(childFloatingRoot);
+    let childDismissal!: ReturnType<typeof registerOverlayDismissal>;
+    childDismissal = registerOverlayDismissal({
+      floating: childFloating,
+      onEscapeKeyDown: (event) => {
+        event.preventDefault();
+        childFloating.setAttribute("data-state", "closed");
+        childDismissal.destroy();
+        return true;
+      },
+      root: childFloatingRoot,
+    });
+    const parentDialog = createDialog(nested.parentRoot);
+    const childDialog = createDialog(nested.childRoot);
+    nested.parentTrigger.click();
+    nested.childTrigger.click();
+    childFloating.focus();
+
+    try {
+      childFloating.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+      );
+
+      expect(childFloating.getAttribute("data-state")).toBe("closed");
+      expect(parentFloating.getAttribute("data-state")).toBe("open");
+      expect(childDialog.getOpen()).toBe(true);
+      expect(parentDialog.getOpen()).toBe(true);
+
+      nested.childClose.focus();
+      nested.childClose.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+      );
+
+      expect(parentFloating.getAttribute("data-state")).toBe("open");
+      expect(childDialog.getOpen()).toBe(false);
+      expect(nested.childContent.getAttribute("data-state")).toBe("closed");
+      expect(parentDialog.getOpen()).toBe(true);
+      expect(nested.parentContent.open).toBe(true);
+    } finally {
+      childDismissal.destroy();
+      parentDismissal.destroy();
+      childDialog.destroy();
+      parentDialog.destroy();
+    }
+  });
+
+  it("uses Dialog open order when modal focus cannot identify an Escape realm", () => {
+    const firstRoot = renderDialog();
+    const firstContent = firstRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const secondRoot = renderDialog();
+    const secondContent = secondRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    const backgroundFloatingRoot = document.createElement("div");
+    const backgroundFloating = document.createElement("div");
+    backgroundFloating.setAttribute("data-state", "open");
+    backgroundFloatingRoot.append(backgroundFloating);
+    secondContent.append(backgroundFloatingRoot);
+    const dismissal = registerOverlayDismissal({
+      floating: backgroundFloating,
+      onEscapeKeyDown: (event) => {
+        event.preventDefault();
+        backgroundFloating.setAttribute("data-state", "closed");
+        return true;
+      },
+      root: backgroundFloatingRoot,
+    });
+    const firstDialog = createDialog(firstRoot);
+    const secondDialog = createDialog(secondRoot);
+    secondDialog.open();
+    firstDialog.open();
+    const focusedElement = document.activeElement;
+    if (focusedElement instanceof HTMLElement) focusedElement.remove();
+
+    try {
+      expect(document.activeElement).toBe(document.body);
+
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+      );
+
+      expect(backgroundFloating.getAttribute("data-state")).toBe("open");
+      expect(firstDialog.getOpen()).toBe(false);
+      expect(firstContent.getAttribute("data-state")).toBe("closed");
+      expect(secondDialog.getOpen()).toBe(true);
+      expect(secondContent.open).toBe(true);
+    } finally {
+      dismissal.destroy();
+      firstDialog.destroy();
+      secondDialog.destroy();
+    }
   });
 
   it("initializes default-open nested dialogs after registering the parent controller", () => {
@@ -2026,6 +2570,10 @@ function getCloseButton(): HTMLButtonElement {
   return document.querySelector<HTMLButtonElement>("[data-sw-dialog-close]")!;
 }
 
+function getPromotedFloatingPortal(): HTMLElement | null {
+  return document.querySelector<HTMLElement>("[data-sw-floating-portal]");
+}
+
 function createDeferred(): { promise: Promise<void>; resolve: () => void } {
   let resolve!: () => void;
   const promise = new Promise<void>((promiseResolve) => {
@@ -2038,4 +2586,58 @@ function createDeferred(): { promise: Promise<void>; resolve: () => void } {
 async function waitForMicrotasks(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+function mountDialogOwnedLayer(
+  owner: HTMLDialogElement,
+  options: { controlled?: boolean } = {},
+): {
+  closeRequests: string[];
+  destroy(): void;
+  element: HTMLElement;
+  focusTarget: HTMLButtonElement;
+  session: FloatingPortalSession;
+} {
+  owner.setAttribute("data-slot", "dialog-content");
+  const portalTarget = owner.ownerDocument.createElement("div");
+  portalTarget.setAttribute("data-floating-root", "");
+  const element = owner.ownerDocument.createElement("div");
+  element.setAttribute("data-state", "open");
+  const focusTarget = owner.ownerDocument.createElement("button");
+  focusTarget.textContent = "Floating layer action";
+  element.append(focusTarget);
+  owner.append(portalTarget, element);
+
+  const closeRequests: string[] = [];
+  let session!: FloatingPortalSession;
+  session = createFloatingPortalSession({
+    root: element,
+    getPortalElement: () => element,
+    getPortalTarget: () => portalTarget,
+    onOwnerCloseRequest: () => {
+      closeRequests.push("owner-close");
+      element.dispatchEvent(new CustomEvent("layer-close-request"));
+      if (!options.controlled) {
+        element.setAttribute("data-state", "closed");
+        session.restore();
+      }
+    },
+  });
+  session.mount();
+
+  return {
+    closeRequests,
+    destroy() {
+      session.destroy();
+      portalTarget.remove();
+      element.remove();
+    },
+    element,
+    focusTarget,
+    session,
+  };
 }

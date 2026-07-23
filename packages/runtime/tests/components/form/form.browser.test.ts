@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createCheckboxGroup } from "../../../src/components/checkbox-group";
 import { createDropzone } from "../../../src/components/dropzone";
 import { createField } from "../../../src/components/field";
 import {
@@ -8,6 +9,7 @@ import {
   type FormFieldRegistration,
   validateFormSchema,
 } from "../../../src/components/form/form";
+import { attachFormValueRevision } from "../../../src/internal/form-value-revision";
 
 describe("createForm", () => {
   beforeEach(() => {
@@ -237,7 +239,7 @@ describe("createForm", () => {
     const instance = createForm(form);
     form.addEventListener("submit", submit);
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
 
     expect(instance.getErrors().map((error) => error.name)).toEqual(["theme", "country"]);
@@ -408,7 +410,7 @@ describe("createForm", () => {
 
   it("resets native field values and clears dirty touched submitted and visible error state", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="email">
           <input data-sw-field-control data-sw-input type="email" required value="ada@example.com" />
           <div data-sw-field-error data-match="valueMissing">Enter an email address.</div>
@@ -421,7 +423,8 @@ describe("createForm", () => {
     const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
     const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
     const error = document.querySelector<HTMLElement>("[data-sw-field-error]")!;
-    createForm(form);
+    const instance = createForm(form);
+    instance.setExternalErrors({ email: "Stored server error." }, { visibility: "policy" });
 
     input.focus();
     input.blur();
@@ -430,6 +433,7 @@ describe("createForm", () => {
     await waitForMacrotask();
     expect(form.checkValidity()).toBe(false);
     await waitForMacrotask();
+    form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
 
     expect(field).toHaveAttribute("data-dirty");
     expect(field).toHaveAttribute("data-touched");
@@ -437,6 +441,7 @@ describe("createForm", () => {
     expect(field).toHaveAttribute("data-error-visible");
     expect(error.hidden).toBe(false);
 
+    instance.setErrorsVisible(false);
     form.reset();
     await waitForMacrotask();
 
@@ -446,11 +451,51 @@ describe("createForm", () => {
     expect(field).not.toHaveAttribute("data-submitted");
     expect(field).not.toHaveAttribute("data-error-visible");
     expect(error.hidden).toBe(true);
+    expect(instance.getErrors()).toEqual([]);
+  });
+
+  it("can preserve external errors and their reveal eligibility across native reset", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form>
+        <div data-sw-field data-name="email">
+          <input data-sw-field-control value="ada@example.com" />
+          <div data-sw-field-error data-match="customError">Email is unavailable.</div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const error = document.querySelector<HTMLElement>("[data-sw-field-error]")!;
+    const instance = createForm(form, { externalErrorsOnReset: "preserve" });
+    instance.setExternalErrors({ email: "Email is unavailable." });
+
+    input.focus();
+    input.blur();
+    input.value = "grace@example.com";
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await waitForAcceptedChange();
+    form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+
+    form.reset();
+    await waitForMacrotask();
+
+    expect(input.value).toBe("ada@example.com");
+    expect(field).not.toHaveAttribute("data-dirty");
+    expect(field).not.toHaveAttribute("data-touched");
+    expect(field).not.toHaveAttribute("data-submitted");
+    expect(field).toHaveAttribute("data-invalid");
+    expect(field).toHaveAttribute("data-error-visible");
+    expect(error.hidden).toBe(false);
+    expect(instance.getErrors()).toEqual([
+      expect.objectContaining({ message: "Email is unavailable.", name: "email" }),
+    ]);
   });
 
   it("registers fields added after initialization and validates them", async () => {
     document.body.innerHTML = `
-      <form data-sw-form>
+      <form data-sw-form data-validation-timing="change">
         <div data-sw-field data-name="email">
           <input data-sw-field-control data-sw-input value="ada@example.com" />
         </div>
@@ -486,7 +531,7 @@ describe("createForm", () => {
 
   it("resets dynamically inserted fields while keeping them registered", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="title">
           <input data-sw-field-control data-sw-input value="Runtime forms" />
         </div>
@@ -681,7 +726,7 @@ describe("createForm", () => {
 
   it("excludes fields disabled after initialization from values and validation", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="email">
           <input data-sw-field-control data-sw-input required />
           <div data-sw-field-error data-match="valueMissing">Enter an email address.</div>
@@ -848,6 +893,51 @@ describe("createForm", () => {
     expect(field).not.toHaveAttribute("data-error-visible");
     expect(error.hidden).toBe(true);
     expect(input).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("can defer external-error presentation to policy without changing Form phase", () => {
+    document.body.innerHTML = `
+      <form data-sw-form data-error-visibility="blur">
+        <div data-sw-form-error-summary></div>
+        <div data-sw-field data-name="email">
+          <label data-sw-field-label>Email</label>
+          <input data-sw-field-control value="ada@example.com" />
+          <div data-sw-field-error data-match="customError">Email is unavailable.</div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const error = document.querySelector<HTMLElement>("[data-sw-field-error]")!;
+    const summary = document.querySelector<HTMLElement>("[data-sw-form-error-summary]")!;
+    const instance = createForm(form);
+
+    instance.setExternalErrors({ email: "Email is unavailable." }, { visibility: "policy" });
+
+    expect(field).toHaveAttribute("data-invalid");
+    expect(field).not.toHaveAttribute("data-error-visible");
+    expect(field).not.toHaveAttribute("data-submitted");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input.getAttribute("aria-describedby")?.split(/\s+/) ?? []).not.toContain(error.id);
+    expect(error.hidden).toBe(true);
+    expect(summary.hidden).toBe(true);
+
+    input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+
+    expect(field).toHaveAttribute("data-error-visible");
+    expect(field).not.toHaveAttribute("data-submitted");
+    expect(error.hidden).toBe(false);
+    expect(readSummaryItemTexts(summary)).toEqual(["Email: Email is unavailable."]);
+
+    instance.setErrorsVisible(false);
+    instance.setExternalErrors(
+      { email: "Email is still unavailable." },
+      { visibility: "immediate" },
+    );
+    expect(field).toHaveAttribute("data-error-visible");
+    expect(error).toHaveAttribute("data-validation-message", "Email is still unavailable.");
   });
 
   it("blocks submit when a field only has an external error", () => {
@@ -1115,6 +1205,67 @@ describe("createForm", () => {
     expect(input.getAttribute("aria-describedby")?.split(/\s+/)).toContain(error.id);
   });
 
+  it.each(["client", "server-rendered"] as const)(
+    "applies reset preservation and clearing uniformly to %s external errors",
+    (origin) => {
+      const validationAttributes =
+        origin === "server-rendered"
+          ? `data-validation-source="server" data-validation-message="Email is unavailable."`
+          : "";
+      document.body.innerHTML = `
+        <form data-sw-form>
+          <div data-sw-field data-name="email">
+            <input data-sw-field-control value="ada@example.com" />
+            <div data-sw-field-error data-match="customError" ${validationAttributes}>
+              Email is unavailable.
+            </div>
+          </div>
+        </form>
+      `;
+
+      const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+      const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+      const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+      const error = document.querySelector<HTMLElement>("[data-sw-field-error]")!;
+      const instance = createForm(form);
+      if (origin === "client") {
+        instance.setExternalErrors({ email: "Email is unavailable." });
+      }
+
+      instance.resetValidation({ externalErrors: "preserve" });
+
+      expect(instance.getErrors()).toEqual([
+        expect.objectContaining({ message: "Email is unavailable.", name: "email" }),
+      ]);
+      expect(field).toHaveAttribute("data-invalid");
+      expect(field).toHaveAttribute("data-error-visible");
+      expect(error.hidden).toBe(false);
+
+      instance.setErrorsVisible(false);
+      instance.resetValidation({ externalErrors: "preserve" });
+
+      expect(instance.getErrors()).toHaveLength(1);
+      expect(field).toHaveAttribute("data-invalid");
+      expect(field).not.toHaveAttribute("data-error-visible");
+      expect(input).toHaveAttribute("aria-invalid", "true");
+      expect(input.getAttribute("aria-describedby")?.split(/\s+/) ?? []).not.toContain(error.id);
+      expect(error.hidden).toBe(true);
+
+      instance.setErrorsVisible(true);
+      instance.setOptions({ externalErrorsOnReset: "preserve" });
+      instance.resetValidation();
+      expect(instance.getErrors()).toHaveLength(1);
+      expect(field).toHaveAttribute("data-error-visible");
+
+      instance.setOptions({ externalErrorsOnReset: "clear" });
+      instance.resetValidation();
+      expect(instance.getErrors()).toEqual([]);
+      expect(field).not.toHaveAttribute("data-invalid");
+      expect(field).not.toHaveAttribute("data-error-visible");
+      expect(error.hidden).toBe(true);
+    },
+  );
+
   it("keeps native validation details ahead of external errors for generic feedback", async () => {
     document.body.innerHTML = `
       <form data-sw-form>
@@ -1164,7 +1315,7 @@ describe("createForm", () => {
 
   it("runs field-level sync validators through FieldError and focuses the first invalid field", async () => {
     document.body.innerHTML = `
-      <form data-sw-form>
+      <form data-sw-form data-validation-timing="change">
         <div data-sw-field data-name="handle">
           <input data-sw-field-control data-sw-input value="admin" />
           <div data-sw-field-error data-match="customError">Handle is reserved.</div>
@@ -1182,7 +1333,7 @@ describe("createForm", () => {
       },
     });
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
 
     expect(instance.getErrors()).toEqual([
@@ -1299,7 +1450,7 @@ describe("createForm", () => {
 
   it("runs field-level async validators through FieldError and validating state", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="handle">
           <input data-sw-field-control data-sw-input />
           <div data-sw-field-error data-match="customError">Handle is unavailable.</div>
@@ -1362,7 +1513,7 @@ describe("createForm", () => {
 
   it("starts independent async field validators before either result resolves", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="handle">
           <input data-sw-field-control data-sw-input value="ada" />
           <div data-sw-field-error data-match="customError">Handle error.</div>
@@ -1420,7 +1571,7 @@ describe("createForm", () => {
 
   it("starts independent async form validators before either result resolves", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="handle">
           <input data-sw-field-control data-sw-input value="ada" />
           <div data-sw-field-error data-match="customError">Handle error.</div>
@@ -1472,10 +1623,752 @@ describe("createForm", () => {
     ]);
   });
 
+  it("returns a complete manual validation outcome without advancing submission state", async () => {
+    document.body.innerHTML = `
+      <button data-focus-sentinel>Keep focus</button>
+      <form
+        data-sw-form
+        data-error-visibility="manual"
+        data-validation-timing="blur"
+        data-revalidation-timing="change"
+      >
+        <div data-sw-form-error-summary></div>
+        <div data-sw-field data-name="handle">
+          <label data-sw-field-label>Handle</label>
+          <input data-sw-field-control value="taken" />
+          <div data-sw-field-error data-match="customError">Handle failed validation.</div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const error = document.querySelector<HTMLElement>("[data-sw-field-error]")!;
+    const summary = document.querySelector<HTMLElement>("[data-sw-form-error-summary]")!;
+    const sentinel = document.querySelector<HTMLButtonElement>("[data-focus-sentinel]")!;
+    const asyncFieldValidator = vi.fn(
+      (
+        _value: FormFieldRegistration["value"],
+        _context: { cause: "blur" | "change" | "manual" | "submit" },
+      ) => Promise.resolve("Handle is unavailable."),
+    );
+    const asyncFormValidator = vi.fn(() =>
+      Promise.resolve({ handle: "Handle is blocked by policy." }),
+    );
+    const instance = createForm(form, {
+      asyncFieldValidators: { handle: asyncFieldValidator },
+      asyncFormValidators: asyncFormValidator,
+    });
+    sentinel.focus();
+
+    const outcome = await instance.validate();
+
+    expect(outcome).toEqual({
+      errors: [
+        expect.objectContaining({
+          field,
+          message: "Handle is unavailable.",
+          name: "handle",
+          source: "async",
+        }),
+        expect.objectContaining({
+          field,
+          message: "Handle is blocked by policy.",
+          name: "handle",
+          source: "async",
+        }),
+      ],
+      status: "complete",
+      valid: false,
+    });
+    expect(asyncFieldValidator).toHaveBeenCalledTimes(1);
+    expect(asyncFormValidator).toHaveBeenCalledTimes(1);
+    expect(asyncFieldValidator.mock.calls[0]?.[1].cause).toBe("manual");
+    expect(field).toHaveAttribute("data-invalid");
+    expect(field).toHaveAttribute("data-error-visible");
+    expect(field).not.toHaveAttribute("data-submitted");
+    expect(error.hidden).toBe(false);
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(readSummaryItemTexts(summary)).toEqual([
+      "Handle: Handle is unavailable.",
+      "Handle: Handle is blocked by policy.",
+    ]);
+    expect(document.activeElement).toBe(sentinel);
+
+    input.value = "available";
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await waitForAcceptedChange();
+    expect(asyncFieldValidator).toHaveBeenCalledTimes(1);
+
+    input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    await waitForMicrotasks();
+    expect(asyncFieldValidator).toHaveBeenCalledTimes(2);
+  });
+
+  it("runs async Form validation when retained external errors are the only invalid result", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form>
+        <div data-sw-field data-name="email">
+          <input data-sw-field-control value="ada@example.com" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const deferred = createDeferred<Record<string, string> | null>();
+    const asyncFormValidator = vi.fn(() => deferred.promise);
+    const instance = createForm(form, { asyncFormValidators: asyncFormValidator });
+    instance.setExternalErrors({
+      email: { message: "Email is already registered.", source: "server" },
+    });
+
+    const validation = instance.validate({ reveal: false });
+
+    expect(asyncFormValidator).toHaveBeenCalledTimes(1);
+    expect(asyncFormValidator).toHaveBeenCalledWith(
+      { email: "ada@example.com" },
+      {
+        cause: "manual",
+        fields: [expect.objectContaining({ name: "email", value: "ada@example.com" })],
+        form,
+        signal: expect.any(AbortSignal),
+        values: { email: "ada@example.com" },
+      },
+    );
+
+    deferred.resolve(null);
+
+    await expect(validation).resolves.toEqual({
+      errors: [
+        expect.objectContaining({
+          field,
+          key: "customError",
+          message: "Email is already registered.",
+          name: "email",
+          source: "server",
+        }),
+      ],
+      status: "complete",
+      valid: false,
+    });
+  });
+
+  it("targets duplicate names in DOM order while preserving Form-level results", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form>
+        <div data-sw-field data-name="tag">
+          <input data-sw-field-control value="first" />
+        </div>
+        <div data-sw-field data-name="other">
+          <input data-sw-field-control value="retained" />
+        </div>
+        <div data-sw-field data-name="tag">
+          <input data-sw-field-control value="second" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const fieldValidator = vi.fn(() => null);
+    const formValidator = vi.fn(() => ({
+      other: "Retained Form-level error.",
+      tag: "Retained duplicate-name Form error.",
+    }));
+    const asyncFieldValidator = vi.fn((value: FormFieldRegistration["value"]) =>
+      Promise.resolve(`${String(value)} is unavailable.`),
+    );
+    const asyncFormValidator = vi.fn(() => Promise.resolve({ tag: "Skipped async Form error." }));
+    const instance = createForm(form, {
+      asyncFieldValidators: { tag: asyncFieldValidator },
+      asyncFormValidators: asyncFormValidator,
+      fieldValidators: { tag: fieldValidator },
+      formValidators: formValidator,
+    });
+
+    expect(form.checkValidity()).toBe(false);
+    vi.clearAllMocks();
+
+    const outcome = await instance.validate({ names: ["missing", "tag"], reveal: false });
+
+    expect(outcome).toEqual({
+      errors: [
+        expect.objectContaining({
+          message: "Retained duplicate-name Form error.",
+          name: "tag",
+          source: "custom",
+        }),
+        expect.objectContaining({ message: "first is unavailable.", name: "tag" }),
+        expect.objectContaining({
+          message: "Retained duplicate-name Form error.",
+          name: "tag",
+          source: "custom",
+        }),
+        expect.objectContaining({ message: "second is unavailable.", name: "tag" }),
+      ],
+      status: "complete",
+      valid: false,
+    });
+    expect(fieldValidator).toHaveBeenCalledTimes(2);
+    expect(asyncFieldValidator).toHaveBeenCalledTimes(2);
+    expect(formValidator).not.toHaveBeenCalled();
+    expect(asyncFormValidator).not.toHaveBeenCalled();
+    expect(instance.getErrors()).toEqual([
+      expect.objectContaining({ message: "Retained duplicate-name Form error.", name: "tag" }),
+      expect.objectContaining({ message: "first is unavailable.", name: "tag" }),
+      expect.objectContaining({ message: "Retained Form-level error.", name: "other" }),
+      expect.objectContaining({ message: "Retained duplicate-name Form error.", name: "tag" }),
+      expect.objectContaining({ message: "second is unavailable.", name: "tag" }),
+    ]);
+
+    vi.clearAllMocks();
+    const errorsBeforeEmptyValidation = instance.getErrors();
+    await expect(instance.validate({ names: [] })).resolves.toEqual({
+      errors: [],
+      status: "complete",
+      valid: true,
+    });
+    expect(fieldValidator).not.toHaveBeenCalled();
+    expect(asyncFieldValidator).not.toHaveBeenCalled();
+    expect(instance.getErrors()).toEqual(errorsBeforeEmptyValidation);
+  });
+
+  it("applies reveal and focus options independently while keeping reveal sticky", async () => {
+    document.body.innerHTML = `
+      <button data-focus-sentinel>Keep focus</button>
+      <form data-sw-form data-error-visibility="submit">
+        <div data-sw-field data-name="handle">
+          <input data-sw-field-control value="taken" />
+          <div data-sw-field-error data-match="customError">Handle is unavailable.</div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const error = document.querySelector<HTMLElement>("[data-sw-field-error]")!;
+    const sentinel = document.querySelector<HTMLButtonElement>("[data-focus-sentinel]")!;
+    const instance = createForm(form, {
+      fieldValidators: {
+        handle: (value) => (value === "taken" ? "Handle is unavailable." : null),
+      },
+    });
+    sentinel.focus();
+
+    await instance.validate({ focus: true, reveal: false });
+    expect(field).not.toHaveAttribute("data-error-visible");
+    expect(error.hidden).toBe(true);
+    expect(document.activeElement).toBe(input);
+
+    await instance.validate({ reveal: true });
+    expect(field).toHaveAttribute("data-error-visible");
+    expect(error.hidden).toBe(false);
+
+    input.value = "available";
+    await instance.validate({ reveal: false });
+    expect(error.hidden).toBe(true);
+
+    input.value = "taken";
+    await instance.validate({ reveal: false });
+    expect(field).toHaveAttribute("data-error-visible");
+    expect(error.hidden).toBe(false);
+  });
+
+  it("can hide and restore retained validation errors through the public visibility API", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form data-error-visibility="manual">
+        <div data-sw-form-error-summary></div>
+        <div data-sw-field data-name="handle">
+          <label data-sw-field-label>Handle</label>
+          <input data-sw-field-control required />
+          <div data-sw-field-error data-match="valueMissing">Choose a handle.</div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const error = document.querySelector<HTMLElement>("[data-sw-field-error]")!;
+    const summary = document.querySelector<HTMLElement>("[data-sw-form-error-summary]")!;
+    const instance = createForm(form);
+
+    await instance.validate({ reveal: true });
+    instance.setErrorsVisible(false);
+
+    expect(instance.getErrors()).toHaveLength(1);
+    expect(field).toHaveAttribute("data-invalid");
+    expect(field).not.toHaveAttribute("data-error-visible");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input.getAttribute("aria-describedby")?.split(/\s+/) ?? []).not.toContain(error.id);
+    expect(error.hidden).toBe(true);
+    expect(summary.hidden).toBe(true);
+
+    instance.setErrorsVisible(true);
+
+    expect(field).toHaveAttribute("data-error-visible");
+    expect(error.hidden).toBe(false);
+    expect(readSummaryItemTexts(summary)).toEqual(["Handle: Choose a handle."]);
+  });
+
+  it("targets duplicate names for visibility and reset while preserving values and interaction state", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form data-validation-timing="manual" data-error-visibility="manual">
+        <div data-sw-field data-name="tag">
+          <input data-sw-field-control required value="first" />
+        </div>
+        <div data-sw-field data-name="other">
+          <input data-sw-field-control required value="other" />
+        </div>
+        <div data-sw-field data-name="tag">
+          <input data-sw-field-control required value="second" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const fields = Array.from(document.querySelectorAll<HTMLElement>("[data-sw-field]"));
+    const inputs = Array.from(
+      document.querySelectorAll<HTMLInputElement>("[data-sw-field-control]"),
+    );
+    const instance = createForm(form);
+
+    inputs.forEach((input) => {
+      input.focus();
+      input.blur();
+      input.value = "";
+      input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+    await waitForAcceptedChange();
+    await instance.validate({ reveal: true });
+    form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+
+    instance.setErrorsVisible(false, ["missing", "tag"]);
+    expect(fields.map((field) => field.hasAttribute("data-error-visible"))).toEqual([
+      false,
+      true,
+      false,
+    ]);
+    expect(fields.every((field) => field.hasAttribute("data-invalid"))).toBe(true);
+
+    instance.setErrorsVisible(false, []);
+    instance.setErrorsVisible(false, ["missing"]);
+    expect(fields[1]).toHaveAttribute("data-error-visible");
+
+    instance.setErrorsVisible(true, ["tag"]);
+    expect(fields.every((field) => field.hasAttribute("data-error-visible"))).toBe(true);
+
+    instance.resetValidation({ names: ["missing", "tag"] });
+
+    expect(instance.getErrors().map((error) => error.name)).toEqual(["other"]);
+    expect(fields.map((field) => field.hasAttribute("data-invalid"))).toEqual([false, true, false]);
+    expect(fields.every((field) => field.hasAttribute("data-submitted"))).toBe(true);
+    expect(inputs.map((input) => input.value)).toEqual(["", "", ""]);
+    expect(fields.every((field) => field.hasAttribute("data-dirty"))).toBe(true);
+    expect(fields.every((field) => field.hasAttribute("data-touched"))).toBe(true);
+
+    const errorsBeforeNoOpReset = instance.getErrors();
+    instance.resetValidation({ names: [] });
+    instance.resetValidation({ names: ["missing"] });
+    expect(instance.getErrors()).toEqual(errorsBeforeNoOpReset);
+
+    instance.resetValidation();
+
+    expect(instance.getErrors()).toEqual([]);
+    expect(fields.every((field) => !field.hasAttribute("data-invalid"))).toBe(true);
+    expect(fields.every((field) => !field.hasAttribute("data-error-visible"))).toBe(true);
+    expect(fields.every((field) => !field.hasAttribute("data-submitted"))).toBe(true);
+    expect(inputs.map((input) => input.value)).toEqual(["", "", ""]);
+    expect(fields.every((field) => field.hasAttribute("data-dirty"))).toBe(true);
+    expect(fields.every((field) => field.hasAttribute("data-touched"))).toBe(true);
+  });
+
+  it("runs async Field validation only for synchronously valid Fields and skips async Form validation", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form>
+        <div data-sw-field data-name="blocked">
+          <input data-sw-field-control required />
+        </div>
+        <div data-sw-field data-name="available">
+          <input data-sw-field-control value="taken" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const blockedAsync = vi.fn(() => Promise.resolve("Should not run."));
+    const availableAsync = vi.fn(() => Promise.resolve("Available Field async error."));
+    const asyncFormValidator = vi.fn(() => Promise.resolve({ available: "Should not run." }));
+    const instance = createForm(form, {
+      asyncFieldValidators: { available: availableAsync, blocked: blockedAsync },
+      asyncFormValidators: asyncFormValidator,
+    });
+
+    const outcome = await instance.validate({ reveal: false });
+
+    expect(blockedAsync).not.toHaveBeenCalled();
+    expect(availableAsync).toHaveBeenCalledTimes(1);
+    expect(asyncFormValidator).not.toHaveBeenCalled();
+    expect(outcome).toEqual({
+      errors: [
+        expect.objectContaining({ key: "valueMissing", name: "blocked", source: "native" }),
+        expect.objectContaining({
+          message: "Available Field async error.",
+          name: "available",
+          source: "async",
+        }),
+      ],
+      status: "complete",
+      valid: false,
+    });
+  });
+
+  it("aborts an overlapping imperative run without stale errors, reveal, focus, or validating state", async () => {
+    document.body.innerHTML = `
+      <button data-focus-sentinel>Keep focus</button>
+      <form data-sw-form>
+        <div data-sw-field data-name="handle">
+          <input data-sw-field-control value="first" />
+          <div data-sw-field-error data-match="customError">Handle failed validation.</div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const error = document.querySelector<HTMLElement>("[data-sw-field-error]")!;
+    const sentinel = document.querySelector<HTMLButtonElement>("[data-focus-sentinel]")!;
+    const calls: Array<{
+      deferred: ReturnType<typeof createDeferred<string | null>>;
+      signal: AbortSignal;
+      value: FormFieldRegistration["value"];
+    }> = [];
+    const instance = createForm(form, {
+      asyncFieldValidators: {
+        handle: (value, { signal }) => {
+          const deferred = createDeferred<string | null>();
+          calls.push({ deferred, signal, value });
+          return deferred.promise;
+        },
+      },
+    });
+    sentinel.focus();
+
+    const firstValidation = instance.validate({ focus: true, reveal: true });
+    await expect(instance.validate({ names: [] })).resolves.toEqual({
+      errors: [],
+      status: "complete",
+      valid: true,
+    });
+    expect(calls[0]?.signal.aborted).toBe(false);
+    expect(field).toHaveAttribute("data-validating");
+
+    input.value = "second";
+    const secondValidation = instance.validate({ reveal: false });
+
+    await expect(firstValidation).resolves.toEqual({
+      errors: [],
+      status: "aborted",
+      valid: null,
+    });
+    expect(calls[0]?.signal.aborted).toBe(true);
+    expect(field).toHaveAttribute("data-validating");
+
+    calls[0]?.deferred.resolve("Stale error.");
+    await waitForMicrotasks();
+    expect(field).toHaveAttribute("data-validating");
+    expect(error.hidden).toBe(true);
+    expect(document.activeElement).toBe(sentinel);
+
+    calls[1]?.deferred.resolve("Current error.");
+    await expect(secondValidation).resolves.toEqual({
+      errors: [expect.objectContaining({ message: "Current error.", name: "handle" })],
+      status: "complete",
+      valid: false,
+    });
+    expect(calls.map((call) => call.value)).toEqual(["first", "second"]);
+    expect(form).not.toHaveAttribute("data-validating");
+    expect(field).not.toHaveAttribute("data-validating");
+    expect(error.hidden).toBe(true);
+    expect(document.activeElement).toBe(sentinel);
+  });
+
+  it.each(["reset", "destroy"] as const)(
+    "resolves validation as aborted when the Form is %s",
+    async (action) => {
+      document.body.innerHTML = `
+        <form data-sw-form>
+          <div data-sw-field data-name="handle">
+            <input data-sw-field-control value="taken" />
+          </div>
+        </form>
+      `;
+
+      const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+      const deferred = createDeferred<string | null>();
+      let signal!: AbortSignal;
+      const instance = createForm(form, {
+        asyncFieldValidators: {
+          handle: (_value, context) => {
+            signal = context.signal;
+            return deferred.promise;
+          },
+        },
+      });
+      const validation = instance.validate({ reveal: true });
+
+      if (action === "reset") {
+        form.reset();
+      } else {
+        instance.destroy();
+      }
+
+      await expect(validation).resolves.toEqual({
+        errors: [],
+        status: "aborted",
+        valid: null,
+      });
+      expect(signal.aborted).toBe(true);
+      deferred.resolve("Stale error.");
+      await waitForMicrotasks();
+      expect(instance.getErrors()).toEqual([]);
+    },
+  );
+
+  it.each(["refresh", "observer"] as const)(
+    "isolates pending validation from a same-element Field registration after %s cleanup",
+    async (cleanup) => {
+      document.body.innerHTML = `
+        <button data-focus-sentinel>Keep focus</button>
+        <form data-sw-form>
+          <div data-sw-field data-name="handle">
+            <input data-sw-field-control value="taken" />
+            <div data-sw-field-error data-match="customError">Handle failed validation.</div>
+          </div>
+        </form>
+      `;
+
+      const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+      const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+      const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+      const error = document.querySelector<HTMLElement>("[data-sw-field-error]")!;
+      const sentinel = document.querySelector<HTMLButtonElement>("[data-focus-sentinel]")!;
+      const calls: Array<{
+        deferred: ReturnType<typeof createDeferred<string | null>>;
+        signal: AbortSignal;
+      }> = [];
+      const validator = vi.fn((_value, { signal }: { signal: AbortSignal }) => {
+        const deferred = createDeferred<string | null>();
+        calls.push({ deferred, signal });
+        return deferred.promise;
+      });
+      const instance = createForm(form, { asyncFieldValidators: { handle: validator } });
+      sentinel.focus();
+
+      const oldValidation = instance.validate({ focus: true, reveal: true });
+      expect(validator).toHaveBeenCalledTimes(1);
+      expect(field).toHaveAttribute("data-validating");
+
+      field.remove();
+      if (cleanup === "refresh") {
+        instance.refresh();
+      } else {
+        await waitForMacrotask();
+      }
+
+      form.append(field);
+      if (cleanup === "refresh") {
+        instance.refresh();
+      } else {
+        await waitForMacrotask();
+      }
+
+      calls[0]?.deferred.resolve("Stale error.");
+
+      await expect(oldValidation).resolves.toEqual({
+        errors: [],
+        status: "aborted",
+        valid: null,
+      });
+      await waitForMacrotask();
+      expect(calls[0]?.signal.aborted).toBe(true);
+      expect(instance.getErrors()).toEqual([]);
+      expect(form).not.toHaveAttribute("data-validating");
+      expect(field).not.toHaveAttribute("data-validating");
+      expect(field).not.toHaveAttribute("data-invalid");
+      expect(field).not.toHaveAttribute("data-error-visible");
+      expect(input).not.toHaveAttribute("aria-invalid");
+      expect(error.hidden).toBe(true);
+      expect(document.activeElement).toBe(sentinel);
+
+      const currentValidation = instance.validate({ reveal: true });
+      expect(validator).toHaveBeenCalledTimes(2);
+      calls[1]?.deferred.resolve("Current error.");
+
+      await expect(currentValidation).resolves.toEqual({
+        errors: [expect.objectContaining({ field, message: "Current error.", name: "handle" })],
+        status: "complete",
+        valid: false,
+      });
+      expect(field).not.toHaveAttribute("data-validating");
+      expect(field).toHaveAttribute("data-invalid");
+      expect(field).toHaveAttribute("data-error-visible");
+      expect(input).toHaveAttribute("aria-invalid", "true");
+      expect(error.hidden).toBe(false);
+    },
+  );
+
+  it("cancels current async validation only when reset targets can receive its writes", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form>
+        <div data-sw-field data-name="handle">
+          <input data-sw-field-control value="taken" />
+        </div>
+        <div data-sw-field data-name="notes">
+          <input data-sw-field-control value="draft" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const handleField = document.querySelector<HTMLElement>('[data-sw-field][data-name="handle"]')!;
+    const deferred = createDeferred<string | null>();
+    let signal!: AbortSignal;
+    const instance = createForm(form, {
+      asyncFieldValidators: {
+        handle: (_value, context) => {
+          signal = context.signal;
+          return deferred.promise;
+        },
+      },
+    });
+    const validation = instance.validate({ names: ["handle"], reveal: true });
+
+    instance.resetValidation({ names: ["notes"] });
+
+    expect(signal.aborted).toBe(false);
+    expect(form).toHaveAttribute("data-validating");
+    expect(handleField).toHaveAttribute("data-validating");
+
+    instance.resetValidation({ names: ["handle"] });
+
+    await expect(validation).resolves.toEqual({
+      errors: [],
+      status: "aborted",
+      valid: null,
+    });
+    expect(signal.aborted).toBe(true);
+    expect(form).not.toHaveAttribute("data-validating");
+    expect(handleField).not.toHaveAttribute("data-validating");
+
+    deferred.resolve("Stale error.");
+    await waitForMicrotasks();
+    expect(instance.getErrors()).toEqual([]);
+  });
+
+  it("aborts a broad imperative commit when reset targets a synchronous write root", async () => {
+    document.body.innerHTML = `
+      <button data-focus-sentinel>Keep focus</button>
+      <form data-sw-form>
+        <div data-sw-field data-name="blocked">
+          <input data-sw-field-control required />
+          <div data-sw-field-error data-match="valueMissing">Blocked is required.</div>
+        </div>
+        <div data-sw-field data-name="pending">
+          <input data-sw-field-control value="pending" />
+          <div data-sw-field-error data-match="customError">Pending failed validation.</div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const blockedField = document.querySelector<HTMLElement>(
+      '[data-sw-field][data-name="blocked"]',
+    )!;
+    const pendingField = document.querySelector<HTMLElement>(
+      '[data-sw-field][data-name="pending"]',
+    )!;
+    const blockedInput = blockedField.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const blockedError = blockedField.querySelector<HTMLElement>("[data-sw-field-error]")!;
+    const sentinel = document.querySelector<HTMLButtonElement>("[data-focus-sentinel]")!;
+    const deferred = createDeferred<string | null>();
+    let signal!: AbortSignal;
+    const instance = createForm(form, {
+      asyncFieldValidators: {
+        pending: (_value, context) => {
+          signal = context.signal;
+          return deferred.promise;
+        },
+      },
+    });
+    sentinel.focus();
+
+    const validation = instance.validate({ focus: true, reveal: true });
+
+    expect(form).toHaveAttribute("data-validating");
+    expect(blockedField).not.toHaveAttribute("data-validating");
+    expect(pendingField).toHaveAttribute("data-validating");
+
+    instance.resetValidation({ names: ["blocked"] });
+    deferred.resolve("Stale pending error.");
+
+    await expect(validation).resolves.toEqual({
+      errors: [],
+      status: "aborted",
+      valid: null,
+    });
+    expect(signal.aborted).toBe(true);
+    expect(form).not.toHaveAttribute("data-validating");
+    expect(blockedField).not.toHaveAttribute("data-validating");
+    expect(pendingField).not.toHaveAttribute("data-validating");
+    expect(instance.getErrors()).toEqual([]);
+    expect(blockedField).not.toHaveAttribute("data-invalid");
+    expect(blockedField).not.toHaveAttribute("data-error-visible");
+    expect(blockedInput).not.toHaveAttribute("aria-invalid");
+    expect(blockedError.hidden).toBe(true);
+    expect(document.activeElement).toBe(sentinel);
+  });
+
+  it.each([
+    {
+      label: "synchronous",
+      options: {
+        fieldValidators: {
+          handle: () => {
+            throw new Error("Sync exploded.");
+          },
+        },
+      },
+      message: "Sync exploded.",
+    },
+    {
+      label: "asynchronous",
+      options: { asyncFormValidators: () => Promise.reject(new Error("Async exploded.")) },
+      message: "Async exploded.",
+    },
+  ])("rejects $label validator exceptions", async ({ message, options }) => {
+    document.body.innerHTML = `
+      <form data-sw-form>
+        <div data-sw-field data-name="handle">
+          <input data-sw-field-control value="taken" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const instance = createForm(form, options);
+
+    await expect(instance.validate()).rejects.toThrow(message);
+    expect(form).not.toHaveAttribute("data-validating");
+  });
+
   it("debounces async validators and ignores stale async results", async () => {
     vi.useFakeTimers();
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="handle">
           <input data-sw-field-control data-sw-input />
           <div data-sw-field-error data-match="customError">Handle is unavailable.</div>
@@ -1507,6 +2400,7 @@ describe("createForm", () => {
 
     input.value = "taken";
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(field).toHaveAttribute("data-validating");
     expect(validator).not.toHaveBeenCalled();
@@ -1521,7 +2415,7 @@ describe("createForm", () => {
 
     input.value = "available";
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
-    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(calls[0]?.signal.aborted).toBe(true);
     expect(field).toHaveAttribute("data-validating");
@@ -1550,7 +2444,7 @@ describe("createForm", () => {
   it("ignores abort rejections from stale async validators", async () => {
     vi.useFakeTimers();
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="handle">
           <input data-sw-field-control data-sw-input />
           <div data-sw-field-error data-match="customError">Handle is unavailable.</div>
@@ -1581,6 +2475,7 @@ describe("createForm", () => {
 
     input.value = "taken";
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(0);
     await waitForMicrotasks();
 
     input.value = "available";
@@ -1632,7 +2527,7 @@ describe("createForm", () => {
     expect(field).not.toHaveAttribute("data-error-visible");
     expect(error.hidden).toBe(true);
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
 
     expect(field).toHaveAttribute("data-error-visible");
@@ -1667,7 +2562,7 @@ describe("createForm", () => {
       ],
     });
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
 
     expect(instance.getErrors()).toEqual([
@@ -1691,7 +2586,7 @@ describe("createForm", () => {
 
   it("runs form-level async validators through field-specific async errors", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="workspace">
           <input data-sw-field-control data-sw-input value="starwind" />
         </div>
@@ -1728,7 +2623,7 @@ describe("createForm", () => {
         workspace: "starwind",
       }),
       expect.objectContaining({
-        cause: "input",
+        cause: "change",
         form,
         signal: expect.any(AbortSignal),
       }),
@@ -1753,7 +2648,7 @@ describe("createForm", () => {
 
   it("accumulates field-level and form-level async errors for the same field", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="handle">
           <input data-sw-field-control data-sw-input value="taken" />
           <div data-sw-field-error data-match="customError">Handle has async errors.</div>
@@ -1774,7 +2669,7 @@ describe("createForm", () => {
     });
 
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
-    await waitForMicrotasks();
+    await waitForAcceptedChange();
 
     expect(instance.getErrors()).toEqual([
       expect.objectContaining({
@@ -1797,7 +2692,7 @@ describe("createForm", () => {
 
   it("keeps same-batch field async errors before form async errors when form resolves first", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="handle">
           <input data-sw-field-control data-sw-input value="taken" />
           <div data-sw-field-error data-match="customError">Handle has async errors.</div>
@@ -1860,7 +2755,7 @@ describe("createForm", () => {
 
   it("ignores stale parallel async validation batch results", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="handle">
           <input data-sw-field-control data-sw-input />
           <div data-sw-field-error data-match="customError">Handle is unavailable.</div>
@@ -2031,7 +2926,7 @@ describe("createForm", () => {
     );
     let resolveValidation!: (result: string) => void;
     const managedSubmit = vi.fn();
-    createForm(form, {
+    const instance = createForm(form, {
       asyncFieldValidators: {
         handle: () =>
           new Promise<string>((resolve) => {
@@ -2052,6 +2947,8 @@ describe("createForm", () => {
     expect(field).not.toHaveAttribute("data-validating");
     fieldParts.forEach((part) => expect(part).not.toHaveAttribute("data-validating"));
 
+    instance.resetValidation({ names: [] });
+    instance.resetValidation({ names: ["missing"] });
     resolveValidation("Handle is unavailable.");
     await waitForMicrotasks();
 
@@ -2061,6 +2958,211 @@ describe("createForm", () => {
         values: {},
       }),
     );
+  });
+
+  it("does not let a removed-field submit retry supersede newer imperative validation", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form>
+        <div data-sw-field data-name="handle">
+          <input data-sw-field-control value="taken" />
+        </div>
+        <div data-sw-field data-name="email">
+          <input data-sw-field-control value="ada@example.com" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const handleField = document.querySelector<HTMLElement>('[data-sw-field][data-name="handle"]')!;
+    const emailField = document.querySelector<HTMLElement>('[data-sw-field][data-name="email"]')!;
+    const submitValidation = createDeferred<string | null>();
+    const currentValidation = createDeferred<string | null>();
+    const managedSubmit = vi.fn();
+    const handleValidator = vi.fn(() => submitValidation.promise);
+    const emailValidator = vi
+      .fn<() => Promise<string | null>>()
+      .mockResolvedValueOnce(null)
+      .mockImplementationOnce(() => currentValidation.promise)
+      .mockResolvedValue(null);
+    const instance = createForm(form, {
+      asyncFieldValidators: {
+        email: emailValidator,
+        handle: handleValidator,
+      },
+      onSubmit: managedSubmit,
+    });
+
+    form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+    expect(handleValidator).toHaveBeenCalledTimes(1);
+    expect(emailValidator).toHaveBeenCalledTimes(1);
+
+    handleField.remove();
+    await waitForMacrotask();
+
+    const validation = instance.validate({ names: ["email"] });
+    expect(emailValidator).toHaveBeenCalledTimes(2);
+    expect(emailField).toHaveAttribute("data-validating");
+
+    submitValidation.resolve(null);
+    await waitForMicrotasks();
+
+    expect(emailValidator).toHaveBeenCalledTimes(2);
+    expect(managedSubmit).not.toHaveBeenCalled();
+    expect(emailField).toHaveAttribute("data-validating");
+
+    currentValidation.resolve(null);
+    await expect(validation).resolves.toEqual({ errors: [], status: "complete", valid: true });
+    expect(managedSubmit).not.toHaveBeenCalled();
+    expect(emailField).not.toHaveAttribute("data-validating");
+  });
+
+  it.each([
+    {
+      label: "a full imperative validation reset",
+      reset: (_form: HTMLFormElement, instance: ReturnType<typeof createForm>) => {
+        instance.resetValidation();
+      },
+    },
+    {
+      label: "a native form reset",
+      reset: (form: HTMLFormElement, _instance: ReturnType<typeof createForm>) => {
+        form.reset();
+      },
+    },
+  ])("invalidates a removed-field managed-submit retry after $label", async ({ reset }) => {
+    document.body.innerHTML = `
+        <form
+          data-sw-form
+          data-validation-timing="blur"
+          data-revalidation-timing="change"
+          data-error-visibility="change"
+        >
+          <div data-sw-field data-name="handle">
+            <input data-sw-field-control value="taken" />
+          </div>
+          <div data-sw-field data-name="email">
+            <input data-sw-field-control value="ada@example.com" />
+            <div data-sw-field-error data-match="customError">Email is unavailable.</div>
+          </div>
+        </form>
+      `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const handleField = document.querySelector<HTMLElement>('[data-sw-field][data-name="handle"]')!;
+    const emailField = document.querySelector<HTMLElement>('[data-sw-field][data-name="email"]')!;
+    const emailInput = emailField.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const emailError = emailField.querySelector<HTMLElement>("[data-sw-field-error]")!;
+    const submitValidation = createDeferred<string | null>();
+    const managedSubmit = vi.fn();
+    const handleValidator = vi.fn(() => submitValidation.promise);
+    const emailCauses: string[] = [];
+    const emailValidator = vi.fn(
+      (
+        _value: FormFieldRegistration["value"],
+        { cause }: { cause: "blur" | "change" | "manual" | "submit" },
+      ) => {
+        emailCauses.push(cause);
+        return Promise.resolve(null);
+      },
+    );
+    const instance = createForm(form, {
+      asyncFieldValidators: {
+        email: emailValidator,
+        handle: handleValidator,
+      },
+      onSubmit: managedSubmit,
+    });
+
+    form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+    expect(handleValidator).toHaveBeenCalledTimes(1);
+    expect(emailValidator).toHaveBeenCalledTimes(1);
+
+    handleField.remove();
+    await waitForMacrotask();
+
+    reset(form, instance);
+    submitValidation.resolve(null);
+    await waitForMicrotasks();
+    await waitForMacrotask();
+
+    expect(handleValidator).toHaveBeenCalledTimes(1);
+    expect(emailValidator).toHaveBeenCalledTimes(1);
+    expect(emailCauses).toEqual(["submit"]);
+    expect(managedSubmit).not.toHaveBeenCalled();
+    expect(form).not.toHaveAttribute("data-submitted");
+    expect(form).not.toHaveAttribute("data-validating");
+    expect(emailField).not.toHaveAttribute("data-submitted");
+    expect(emailField).not.toHaveAttribute("data-validating");
+    expect(emailField).not.toHaveAttribute("data-invalid");
+    expect(emailField).not.toHaveAttribute("data-error-visible");
+    expect(emailError.hidden).toBe(true);
+    expect(document.activeElement).not.toBe(emailInput);
+
+    dispatchValidationCause(emailInput, "change");
+    await waitForAcceptedChange();
+    expect(emailValidator).toHaveBeenCalledTimes(1);
+
+    dispatchValidationCause(emailInput, "blur");
+    await waitForMicrotasks();
+    expect(emailValidator).toHaveBeenCalledTimes(2);
+    expect(emailCauses).toEqual(["submit", "blur"]);
+    expect(managedSubmit).not.toHaveBeenCalled();
+    expect(emailField).not.toHaveAttribute("data-validating");
+  });
+
+  it("reruns complete submit validation after a pending async Field is replaced", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form>
+        <div data-sw-field data-name="handle">
+          <input data-sw-field-control value="taken" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const oldField = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const submitValidation = createDeferred<string | null>();
+    const managedSubmit = vi.fn();
+    const validator = vi
+      .fn<() => Promise<string | null>>()
+      .mockImplementationOnce(() => submitValidation.promise)
+      .mockResolvedValue(null);
+    const instance = createForm(form, {
+      asyncFieldValidators: { handle: validator },
+      onSubmit: managedSubmit,
+    });
+
+    form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+    expect(validator).toHaveBeenCalledTimes(1);
+
+    oldField.remove();
+    form.insertAdjacentHTML(
+      "afterbegin",
+      `
+        <div data-sw-field data-name="handle">
+          <input data-sw-field-control required value="" />
+          <div data-sw-field-error data-match="valueMissing">Handle is required.</div>
+        </div>
+      `,
+    );
+    instance.refresh();
+
+    const replacementField = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const replacementInput =
+      replacementField.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const replacementError = replacementField.querySelector<HTMLElement>("[data-sw-field-error]")!;
+
+    submitValidation.resolve(null);
+    await waitForMicrotasks();
+    await waitForMacrotask();
+
+    expect(validator).toHaveBeenCalledTimes(1);
+    expect(managedSubmit).not.toHaveBeenCalled();
+    expect(replacementField).toHaveAttribute("data-invalid");
+    expect(replacementField).toHaveAttribute("data-error-visible");
+    expect(replacementInput).toHaveAttribute("aria-invalid", "true");
+    expect(replacementError.hidden).toBe(false);
+    expect(document.activeElement).toBe(replacementInput);
   });
 
   it("adapts successful schema-style validation into the form validator path", () => {
@@ -2116,7 +3218,7 @@ describe("createForm", () => {
       })),
     });
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
 
     expect(instance.getErrors()).toEqual([
@@ -2269,22 +3371,33 @@ describe("createForm", () => {
   it("runs custom validators once when native invalid controls block a submit attempt", async () => {
     document.body.innerHTML = `
       <form data-sw-form>
-        <div data-sw-field data-name="first">
+        <div data-sw-form-error-summary></div>
+        <div data-sw-field data-name="first" data-error-visibility="blur">
+          <label data-sw-field-label>First</label>
           <input data-sw-field-control data-sw-input required />
+          <div data-sw-field-error data-match="valueMissing">Enter the first value.</div>
         </div>
         <div data-sw-field data-name="second">
+          <label data-sw-field-label>Second</label>
           <input data-sw-field-control data-sw-input required />
+          <div data-sw-field-error data-match="valueMissing">Enter the second value.</div>
         </div>
         <button type="submit">Submit</button>
       </form>
     `;
 
     const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const fields = Array.from(form.querySelectorAll<HTMLElement>("[data-sw-field]"));
+    const inputs = Array.from(form.querySelectorAll<HTMLInputElement>("[data-sw-field-control]"));
+    const errors = Array.from(form.querySelectorAll<HTMLElement>("[data-sw-field-error]"));
+    const summary = form.querySelector<HTMLElement>("[data-sw-form-error-summary]")!;
     const firstValidator = vi.fn(() => null);
     const secondValidator = vi.fn(() => null);
     const formValidator = vi.fn(() => null);
+    const asyncValidator = vi.fn(() => Promise.resolve(null));
     const submit = vi.fn();
     createForm(form, {
+      asyncFieldValidators: { first: asyncValidator },
       fieldValidators: {
         first: firstValidator,
         second: secondValidator,
@@ -2300,11 +3413,17 @@ describe("createForm", () => {
     expect(firstValidator).toHaveBeenCalledTimes(1);
     expect(secondValidator).toHaveBeenCalledTimes(1);
     expect(formValidator).toHaveBeenCalledTimes(1);
+    expect(asyncValidator).not.toHaveBeenCalled();
+    expect(fields.every((field) => field.hasAttribute("data-submitted"))).toBe(true);
+    expect(errors[0]!.hidden).toBe(true);
+    expect(errors[1]!.hidden).toBe(false);
+    expect(readSummaryItemTexts(summary)).toEqual(["Second: Enter the second value."]);
+    expect(document.activeElement).toBe(inputs[0]);
   });
 
   it("revalidates form-level custom errors for other fields when a related field changes", async () => {
     document.body.innerHTML = `
-      <form data-sw-form>
+      <form data-sw-form data-validation-timing="change">
         <div data-sw-field data-name="password">
           <input data-sw-field-control data-sw-input type="password" value="secret" />
         </div>
@@ -2328,7 +3447,7 @@ describe("createForm", () => {
         values.password !== values.confirm ? { confirm: "Passwords must match." } : null,
     });
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
     expect(confirmField).toHaveAttribute("data-invalid");
     expect(error.hidden).toBe(false);
@@ -2368,7 +3487,7 @@ describe("createForm", () => {
       },
     });
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
 
     expect(error.hidden).toBe(false);
@@ -2409,7 +3528,7 @@ describe("createForm", () => {
           : null,
     });
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
 
     expect(error.hidden).toBe(false);
@@ -2441,7 +3560,7 @@ describe("createForm", () => {
       },
     });
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
 
     expect(error.hidden).toBe(false);
@@ -2451,7 +3570,7 @@ describe("createForm", () => {
 
   it("updates dynamic FieldError messages and restores fallback text when validation clears", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="project">
           <input data-sw-field-control data-sw-input value="admin" />
           <div data-sw-field-error data-match="customError" data-message-source="validation">
@@ -2499,7 +3618,7 @@ describe("createForm", () => {
 
   it("refreshes dynamic FieldError fallback when authored children change before validation", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="project">
           <input data-sw-field-control data-sw-input value="launch" />
           <div data-sw-field-error data-match="customError" data-message-source="validation">
@@ -2558,7 +3677,7 @@ describe("createForm", () => {
       },
     });
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
 
     expect(error.hidden).toBe(false);
@@ -2577,7 +3696,7 @@ describe("createForm", () => {
 
   it("revalidates custom validators when a runtime select value changes", async () => {
     document.body.innerHTML = `
-      <form data-sw-form>
+      <form data-sw-form data-validation-timing="change">
         ${renderRuntimeSelectField({ name: "theme", defaultValue: "light" })}
       </form>
     `;
@@ -2595,7 +3714,7 @@ describe("createForm", () => {
       },
     });
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
     expect(field).toHaveAttribute("data-invalid");
     expect(customError.hidden).toBe(false);
@@ -2653,7 +3772,7 @@ describe("createForm", () => {
     );
   });
 
-  it("captures required native invalid events without novalidate and reveals matching FieldError", async () => {
+  it("checks synchronous validity without revealing, focusing, submitting, or running async validation", async () => {
     document.body.innerHTML = `
       <form data-sw-form>
         <div data-sw-field data-name="email">
@@ -2663,7 +3782,8 @@ describe("createForm", () => {
           <div data-sw-field-error data-match="valueMissing">Enter an email address.</div>
           <div data-sw-field-error data-match="typeMismatch">Use a valid email address.</div>
         </div>
-        <button type="submit">Submit</button>
+        <div data-sw-form-error-summary></div>
+        <button type="button">Keep focus</button>
       </form>
     `;
 
@@ -2676,18 +3796,24 @@ describe("createForm", () => {
     const typeMismatch = document.querySelector<HTMLElement>(
       '[data-sw-field-error][data-match="typeMismatch"]',
     )!;
-    const submit = vi.fn();
+    const summary = document.querySelector<HTMLElement>("[data-sw-form-error-summary]")!;
+    const focusSentinel = document.querySelector<HTMLButtonElement>('button[type="button"]')!;
+    const syncValidator = vi.fn(() => null);
+    const asyncValidator = vi.fn(() => Promise.resolve(null));
 
-    form.addEventListener("submit", submit);
-    const instance = createForm(form);
-    let invalidDefaultPrevented: boolean | undefined;
+    const instance = createForm(form, {
+      asyncFieldValidators: { email: asyncValidator },
+      fieldValidators: { email: syncValidator },
+    });
+    const invalidEvents: Event[] = [];
     form.addEventListener(
       "invalid",
       (event) => {
-        invalidDefaultPrevented = event.defaultPrevented;
+        invalidEvents.push(event);
       },
       { capture: true },
     );
+    focusSentinel.focus();
 
     expect(form.noValidate).toBe(false);
     expect(form).not.toHaveAttribute("novalidate");
@@ -2701,15 +3827,19 @@ describe("createForm", () => {
     await waitForMacrotask();
 
     expect(valid).toBe(false);
-    expect(submit).not.toHaveBeenCalled();
-    expect(invalidDefaultPrevented).toBe(true);
+    expect(invalidEvents).toHaveLength(1);
+    expect(syncValidator).toHaveBeenCalledTimes(1);
+    expect(asyncValidator).not.toHaveBeenCalled();
     expect(field).toHaveAttribute("data-invalid");
-    expect(field).toHaveAttribute("data-submitted");
-    expect(valueMissing.hidden).toBe(false);
+    expect(field).not.toHaveAttribute("data-submitted");
+    expect(valueMissing.hidden).toBe(true);
     expect(typeMismatch.hidden).toBe(true);
     expect(input).toHaveAttribute("aria-invalid", "true");
-    expect(input.getAttribute("aria-describedby")?.split(/\s+/)).toContain(valueMissing.id);
-    expect(document.activeElement).toBe(input);
+    expect(input.getAttribute("aria-describedby")?.split(/\s+/) ?? []).not.toContain(
+      valueMissing.id,
+    );
+    expect(summary.hidden).toBe(true);
+    expect(document.activeElement).toBe(focusSentinel);
     expect(instance.getErrors()).toEqual([
       expect.objectContaining({
         key: "valueMissing",
@@ -2755,8 +3885,10 @@ describe("createForm", () => {
       }),
     ]);
     expect(valueMissing.hidden).toBe(true);
-    expect(typeMismatch.hidden).toBe(false);
+    expect(typeMismatch.hidden).toBe(true);
     expect(input).toHaveAttribute("aria-invalid", "true");
+
+    form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
 
     input.value = "ada@example.com";
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
@@ -2768,7 +3900,7 @@ describe("createForm", () => {
     expect(input).not.toHaveAttribute("aria-invalid");
   });
 
-  it("reveals every invalid field while focusing the first invalid field", async () => {
+  it("reports every invalid field while focusing the first without entering post-submit", async () => {
     document.body.innerHTML = `
       <form data-sw-form>
         <div data-sw-field data-name="email">
@@ -2779,7 +3911,7 @@ describe("createForm", () => {
           <input data-sw-field-control data-sw-input required minlength="3" />
           <div data-sw-field-error data-match="valueMissing">Choose a handle.</div>
         </div>
-        <button type="submit">Submit</button>
+        <div data-sw-form-error-summary></div>
       </form>
     `;
 
@@ -2793,15 +3925,23 @@ describe("createForm", () => {
     const handleError = document.querySelector<HTMLElement>(
       '[data-sw-field][data-name="handle"] [data-sw-field-error]',
     )!;
-    const instance = createForm(form);
+    const summary = document.querySelector<HTMLElement>("[data-sw-form-error-summary]")!;
+    const asyncValidator = vi.fn(() => Promise.resolve(null));
+    const instance = createForm(form, { asyncFieldValidators: { email: asyncValidator } });
 
-    const valid = form.checkValidity();
+    const valid = form.reportValidity();
     await waitForMacrotask();
 
     expect(valid).toBe(false);
     expect(instance.getErrors().map((error) => error.name)).toEqual(["email", "handle"]);
     expect(emailError.hidden).toBe(false);
     expect(handleError.hidden).toBe(false);
+    expect(readSummaryItemTexts(summary)).toEqual([
+      "email: Enter an email address.",
+      "handle: Choose a handle.",
+    ]);
+    expect(form.querySelectorAll("[data-submitted]")).toHaveLength(0);
+    expect(asyncValidator).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(email);
   });
 
@@ -2826,7 +3966,7 @@ describe("createForm", () => {
     expect(form.checkValidity()).toBe(false);
     await waitForMacrotask();
     expect(instance.getErrors()).toHaveLength(1);
-    expect(error.hidden).toBe(false);
+    expect(error.hidden).toBe(true);
 
     input.value = "ada@example.com";
     expect(form.checkValidity()).toBe(true);
@@ -2842,7 +3982,7 @@ describe("createForm", () => {
 
   it("can validate on input while hiding errors until submit visibility", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="submit">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="submit">
         <div data-sw-field data-name="email">
           <input data-sw-field-control data-sw-input type="email" required />
           <div data-sw-field-error data-match="valueMissing">Enter an email address.</div>
@@ -2869,21 +4009,21 @@ describe("createForm", () => {
     expect(form.checkValidity()).toBe(false);
     await waitForMacrotask();
 
-    expect(field).toHaveAttribute("data-error-visible");
-    expect(error.hidden).toBe(false);
-    expect(input.getAttribute("aria-describedby")?.split(/\s+/)).toContain(error.id);
+    expect(field).not.toHaveAttribute("data-error-visible");
+    expect(error.hidden).toBe(true);
+    expect(input.getAttribute("aria-describedby")?.split(/\s+/) ?? []).not.toContain(error.id);
   });
 
   it("renders visible errors in field order into an optional form error summary", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="submit">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="submit">
         <div data-sw-form-error-summary></div>
         <div data-sw-field data-name="email">
           <label data-sw-field-label>Email</label>
           <input data-sw-field-control data-sw-input type="email" required />
           <div data-sw-field-error data-match="valueMissing">Enter an email address.</div>
         </div>
-        <div data-sw-field data-name="handle" data-validation-timing="input" data-error-visibility="input">
+        <div data-sw-field data-name="handle" data-validation-timing="change" data-error-visibility="change">
           <label data-sw-field-label>Handle</label>
           <input data-sw-field-control data-sw-input required minlength="3" />
           <div data-sw-field-error data-match="valueMissing">Choose a handle.</div>
@@ -2910,15 +4050,12 @@ describe("createForm", () => {
     expect(form.checkValidity()).toBe(false);
     await waitForMacrotask();
 
-    expect(readSummaryItemTexts(summary)).toEqual([
-      "Email: Enter an email address.",
-      "Handle: Choose a handle.",
-    ]);
+    expect(readSummaryItemTexts(summary)).toEqual(["Handle: Choose a handle."]);
   });
 
   it("preserves authored form error summary live-region attributes", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div
           data-sw-form-error-summary
           role="alert"
@@ -2972,7 +4109,7 @@ describe("createForm", () => {
     )!;
     createForm(form);
 
-    expect(form.checkValidity()).toBe(false);
+    expect(form.reportValidity()).toBe(false);
     await waitForMacrotask();
 
     const items = Array.from(
@@ -3052,7 +4189,7 @@ describe("createForm", () => {
 
   it("updates summary items when async validation errors resolve and clear", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-form-error-summary></div>
         <div data-sw-field data-name="handle">
           <label data-sw-field-label>Handle</label>
@@ -3076,7 +4213,7 @@ describe("createForm", () => {
 
     input.value = "taken";
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
-    await waitForMicrotasks();
+    await waitForAcceptedChange();
 
     expect(readSummaryItemTexts(summary)).toEqual(["Handle: Handle is unavailable."]);
     expect(summary.querySelector("[data-sw-form-error-summary-item]")).toHaveAttribute(
@@ -3086,7 +4223,7 @@ describe("createForm", () => {
 
     input.value = "available";
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
-    await waitForMicrotasks();
+    await waitForAcceptedChange();
 
     expect(summary.hidden).toBe(true);
     expect(readSummaryItemTexts(summary)).toEqual([]);
@@ -3156,6 +4293,373 @@ describe("createForm", () => {
     expect(error.hidden).toBe(false);
   });
 
+  it.each([
+    {
+      initialCause: "blur" as const,
+      revalidationCause: "change" as const,
+      validationTiming: "blur",
+      revalidationTiming: "change",
+    },
+    {
+      initialCause: "change" as const,
+      revalidationCause: "blur" as const,
+      validationTiming: "change",
+      revalidationTiming: "blur",
+    },
+  ])(
+    "replaces $validationTiming validation with $revalidationTiming revalidation after submit",
+    async ({ initialCause, revalidationCause, validationTiming, revalidationTiming }) => {
+      document.body.innerHTML = `
+        <form
+          data-sw-form
+          data-validation-timing="${validationTiming}"
+          data-revalidation-timing="${revalidationTiming}"
+        >
+          <div data-sw-field data-name="handle">
+            <input data-sw-field-control data-sw-input value="valid" />
+          </div>
+        </form>
+      `;
+
+      const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+      const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+      const validator = vi.fn(
+        (
+          _value: FormFieldRegistration["value"],
+          context: { cause: "blur" | "change" | "manual" | "submit" },
+        ) => {
+          void context;
+          return Promise.resolve(null);
+        },
+      );
+      createForm(form, {
+        asyncFieldValidators: { handle: validator },
+        onSubmit: vi.fn(),
+      });
+
+      dispatchValidationCause(input, initialCause);
+      await waitForAcceptedChange();
+      expect(validator).toHaveBeenCalledTimes(1);
+      expect(validator.mock.calls[0]?.[1].cause).toBe(initialCause);
+
+      dispatchValidationCause(input, revalidationCause);
+      await waitForAcceptedChange();
+      expect(validator).toHaveBeenCalledTimes(1);
+
+      form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+      await waitForMicrotasks();
+      expect(validator).toHaveBeenCalledTimes(2);
+      expect(validator.mock.calls[1]?.[1].cause).toBe("submit");
+
+      dispatchValidationCause(input, initialCause);
+      await waitForAcceptedChange();
+      expect(validator).toHaveBeenCalledTimes(2);
+
+      dispatchValidationCause(input, revalidationCause);
+      await waitForAcceptedChange();
+      expect(validator).toHaveBeenCalledTimes(3);
+      expect(validator.mock.calls[2]?.[1].cause).toBe(revalidationCause);
+    },
+  );
+
+  it.each([
+    {
+      expectedChangeValidation: false,
+      validationTiming: "blur",
+      revalidationTiming: "change",
+    },
+    {
+      expectedChangeValidation: true,
+      validationTiming: "change",
+      revalidationTiming: "blur",
+    },
+  ])(
+    "keeps a same-turn change in the $validationTiming pre-submit phase before submit",
+    async ({ expectedChangeValidation, validationTiming, revalidationTiming }) => {
+      document.body.innerHTML = `
+        <form
+          data-sw-form
+          data-validation-timing="${validationTiming}"
+          data-revalidation-timing="${revalidationTiming}"
+        >
+          <div data-sw-field data-name="handle">
+            <input data-sw-field-control value="valid" />
+          </div>
+        </form>
+      `;
+
+      const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+      const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+      const causes: string[] = [];
+      const validator = vi.fn(
+        (
+          _value: FormFieldRegistration["value"],
+          context: { cause: "blur" | "change" | "manual" | "submit" },
+        ) => {
+          causes.push(context.cause);
+          return Promise.resolve(null);
+        },
+      );
+      createForm(form, {
+        asyncFieldValidators: { handle: validator },
+        onSubmit: vi.fn(),
+      });
+
+      input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+      form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+      await waitForAcceptedChange();
+
+      const expectedCauses = expectedChangeValidation ? ["submit", "change"] : ["submit"];
+      expect(validator).toHaveBeenCalledTimes(expectedCauses.length);
+      expect(causes).toEqual(expect.arrayContaining(expectedCauses));
+    },
+  );
+
+  it("uses the post-submit policy for a field registered after submission", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form data-validation-timing="change" data-revalidation-timing="blur">
+        <div data-sw-field data-name="existing">
+          <input data-sw-field-control value="valid" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const validator = vi.fn(() => null);
+    const instance = createForm(form, { fieldValidators: { late: validator } });
+    form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+
+    form.insertAdjacentHTML(
+      "beforeend",
+      `<div data-sw-field data-name="late" data-validation-timing="blur" data-revalidation-timing="change">
+        <input data-sw-field-control value="valid" />
+      </div>`,
+    );
+    instance.refresh();
+    const lateInput = form.querySelector<HTMLInputElement>('[data-name="late"] input')!;
+    lateInput.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await waitForMacrotask();
+
+    expect(validator).toHaveBeenCalledTimes(1);
+  });
+
+  it("deduplicates native input/change and preserves later equal-value revisions", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form data-validation-timing="change">
+        <div data-sw-field data-name="handle">
+          <input data-sw-field-control value="start" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const validator = vi.fn(() => null);
+    createForm(form, { fieldValidators: { handle: validator } });
+
+    for (const value of ["same", "different", "same"]) {
+      input.value = value;
+      input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      await waitForMacrotask();
+    }
+
+    input.value = "standalone";
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    await waitForMacrotask();
+
+    expect(validator).toHaveBeenCalledTimes(4);
+  });
+
+  it.each([
+    { control: "Input", notifications: ["input", "starwind:value-change"] },
+    { control: "Input OTP", notifications: ["starwind:value-change"] },
+    { control: "Select", notifications: ["starwind:value-change"] },
+    { control: "Combobox", notifications: ["starwind:value-change"] },
+    { control: "Checkbox", notifications: ["starwind:checked-change"] },
+    {
+      control: "Checkbox Group",
+      notifications: ["starwind:checked-change", "starwind:value-change"],
+    },
+    { control: "Radio", notifications: ["starwind:checked-change"] },
+    {
+      control: "Radio Group",
+      notifications: ["starwind:checked-change", "starwind:value-change"],
+    },
+    { control: "Switch", notifications: ["starwind:checked-change"] },
+    {
+      control: "Slider",
+      notifications: ["starwind:value-change", "starwind:value-committed"],
+    },
+    {
+      control: "Color Picker",
+      notifications: ["starwind:value-change", "starwind:value-committed"],
+    },
+  ])("processes one accepted $control revision at most once", async ({ notifications }) => {
+    document.body.innerHTML = `
+      <form data-sw-form data-validation-timing="change">
+        <div data-sw-field data-name="value">
+          <div data-sw-field-control><span data-notification-target></span></div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const target = document.querySelector<HTMLElement>("[data-notification-target]")!;
+    const validator = vi.fn(() => null);
+    const revisionOrigin = {};
+    createForm(form, { fieldValidators: { value: validator } });
+
+    notifications.forEach((type) => {
+      if (type === "input") {
+        const event = new InputEvent(type, { bubbles: true });
+        attachFormValueRevision(event, revisionOrigin);
+        target.dispatchEvent(event);
+        return;
+      }
+
+      const detail = {};
+      attachFormValueRevision(detail, revisionOrigin);
+      target.dispatchEvent(new CustomEvent(type, { bubbles: true, cancelable: true, detail }));
+    });
+    await waitForMacrotask();
+
+    expect(validator).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["input", "edit", "commit"])(
+    "falls back from removed %s timing values",
+    async (removedTiming) => {
+      document.body.innerHTML = `
+        <form
+          data-sw-form
+          data-validation-timing="${removedTiming}"
+          data-revalidation-timing="${removedTiming}"
+          data-error-visibility="${removedTiming}"
+        >
+          <div data-sw-field data-name="handle">
+            <input data-sw-field-control value="valid" />
+            <div data-sw-field-error data-match="customError">Invalid handle.</div>
+          </div>
+        </form>
+      `;
+
+      const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+      const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+      const error = document.querySelector<HTMLElement>("[data-sw-field-error]")!;
+      const validator = vi.fn(() => "Invalid handle.");
+      createForm(form, { fieldValidators: { handle: validator } });
+
+      input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+      await waitForMacrotask();
+      expect(validator).not.toHaveBeenCalled();
+      expect(error.hidden).toBe(true);
+
+      form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
+      expect(validator).toHaveBeenCalledTimes(1);
+      expect(error.hidden).toBe(false);
+
+      input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+      await waitForMacrotask();
+      expect(validator).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it("uses revalidation timing after an actual native-invalid submission attempt", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form data-validation-timing="blur" data-revalidation-timing="change">
+        <div data-sw-field data-name="email">
+          <input data-sw-field-control type="email" required />
+        </div>
+        <button type="submit">Submit</button>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const submit = document.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    const validator = vi.fn(
+      (
+        _value: FormFieldRegistration["value"],
+        context: { cause: "blur" | "change" | "manual" | "submit" },
+      ) => {
+        void context;
+        return Promise.resolve(null);
+      },
+    );
+    createForm(form, { asyncFieldValidators: { email: validator } });
+
+    submit.click();
+    await waitForMacrotask();
+    expect(validator).not.toHaveBeenCalled();
+
+    input.value = "ada@example.com";
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await waitForAcceptedChange();
+
+    expect(validator).toHaveBeenCalledTimes(1);
+    expect(validator.mock.calls[0]?.[1].cause).toBe("change");
+  });
+
+  it("keeps the initial policy active across static validation and external errors", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form data-validation-timing="blur" data-revalidation-timing="change">
+        <div data-sw-field data-name="handle">
+          <input data-sw-field-control value="valid" />
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const input = document.querySelector<HTMLInputElement>("[data-sw-field-control]")!;
+    const validator = vi.fn(() => null);
+    const instance = createForm(form, { fieldValidators: { handle: validator } });
+
+    expect(form.checkValidity()).toBe(true);
+    expect(form.reportValidity()).toBe(true);
+    instance.setExternalErrors({ handle: "Server rejected the handle." });
+    input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await waitForMacrotask();
+
+    expect(validator).toHaveBeenCalledTimes(2);
+
+    input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    expect(validator).toHaveBeenCalledTimes(3);
+  });
+
+  it("waits for cancellation and deduplicates nested Runtime notifications", async () => {
+    document.body.innerHTML = `
+      <form data-sw-form data-validation-timing="change">
+        <div data-sw-field data-name="colors">
+          <div data-sw-checkbox-group>
+            <span data-sw-checkbox data-name="colors" data-value="red">
+              <span data-sw-checkbox-indicator data-keep-mounted></span>
+              <input data-sw-checkbox-input />
+            </span>
+          </div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("[data-sw-form]")!;
+    const groupRoot = document.querySelector<HTMLElement>("[data-sw-checkbox-group]")!;
+    const checkbox = document.querySelector<HTMLElement>("[data-sw-checkbox]")!;
+    const validator = vi.fn(() => null);
+    const cancel = (event: Event) => event.preventDefault();
+    groupRoot.addEventListener("starwind:value-change", cancel);
+    createCheckboxGroup(groupRoot);
+    createForm(form, { fieldValidators: { colors: validator } });
+
+    checkbox.click();
+    await waitForMacrotask();
+    expect(validator).not.toHaveBeenCalled();
+
+    groupRoot.removeEventListener("starwind:value-change", cancel);
+    checkbox.click();
+    await waitForMacrotask();
+    expect(validator).toHaveBeenCalledTimes(1);
+  });
+
   it("does not blur-validate while focus moves inside the same field", async () => {
     document.body.innerHTML = `
       <form data-sw-form data-validation-timing="blur" data-error-visibility="blur">
@@ -3207,14 +4711,14 @@ describe("createForm", () => {
 
     input.dispatchEvent(new InputEvent("input", { bubbles: true }));
     await waitForMacrotask();
-    expect(field).not.toHaveAttribute("data-invalid");
-    expect(error.hidden).toBe(true);
+    expect(field).toHaveAttribute("data-invalid");
+    expect(field).toHaveAttribute("data-error-visible");
+    expect(error.hidden).toBe(false);
 
     input.dispatchEvent(new Event("change", { bubbles: true }));
     await waitForMacrotask();
 
     expect(field).toHaveAttribute("data-invalid");
-    expect(field).toHaveAttribute("data-error-visible");
     expect(error.hidden).toBe(false);
   });
 
@@ -3225,7 +4729,7 @@ describe("createForm", () => {
           <input data-sw-field-control data-sw-input type="email" required />
           <div data-sw-field-error data-match="valueMissing">Enter an email address.</div>
         </div>
-        <div data-sw-field data-name="handle" data-validation-timing="input" data-error-visibility="input">
+        <div data-sw-field data-name="handle" data-validation-timing="change" data-error-visibility="change">
           <input data-sw-field-control data-sw-input required minlength="3" />
           <div data-sw-field-error data-match="valueMissing">Choose a handle.</div>
         </div>
@@ -3281,7 +4785,7 @@ describe("createForm", () => {
 
   it("clears validation bookkeeping when a field is removed", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="email">
           <input data-sw-field-control data-sw-input type="email" required />
           <div data-sw-field-error data-match="valueMissing">Enter an email address.</div>
@@ -3311,7 +4815,7 @@ describe("createForm", () => {
 
   it("clears validation bookkeeping on manual refresh after a field is removed", async () => {
     document.body.innerHTML = `
-      <form data-sw-form data-validation-timing="input" data-error-visibility="input">
+      <form data-sw-form data-validation-timing="change" data-error-visibility="change">
         <div data-sw-field data-name="email">
           <input data-sw-field-control data-sw-input type="email" required />
           <div data-sw-field-error data-match="valueMissing">Enter an email address.</div>
@@ -3377,6 +4881,31 @@ describe("createForm", () => {
 
 async function waitForMacrotask(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function createDeferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+} {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+  return { promise, resolve };
+}
+
+async function waitForAcceptedChange(): Promise<void> {
+  await waitForMacrotask();
+  await waitForMicrotasks();
+}
+
+function dispatchValidationCause(input: HTMLInputElement, cause: "blur" | "change"): void {
+  if (cause === "blur") {
+    input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    return;
+  }
+
+  input.dispatchEvent(new InputEvent("input", { bubbles: true }));
 }
 
 async function waitForMicrotasks(): Promise<void> {

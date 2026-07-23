@@ -12,6 +12,16 @@ import {
 } from "../../src/utils/package-manager.js";
 import { parsePackageSpec } from "../../src/utils/package-spec.js";
 
+const mockSpinner = vi.hoisted(() => ({
+  message: vi.fn(),
+  start: vi.fn(),
+  stop: vi.fn(),
+}));
+
+vi.mock("@clack/prompts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@clack/prompts")>()),
+  spinner: vi.fn(() => mockSpinner),
+}));
 vi.mock("execa", () => ({
   execa: vi.fn(),
 }));
@@ -87,6 +97,54 @@ describe("package manager dependency arguments", () => {
     await installDependencies(["react@^18.0.0"], "pnpm", true, true);
 
     expect(mockExeca).toHaveBeenCalledWith("pnpm", ["add", "-D", "--force", "--", "react@^18.0.0"]);
+  });
+
+  it("shows installation progress for the selected package manager", async () => {
+    await installDependencies(["react@^18.0.0"], "pnpm");
+
+    expect(mockSpinner.start).toHaveBeenCalledWith("Installing dependencies with pnpm...");
+    expect(mockSpinner.stop).toHaveBeenCalledWith("Dependencies installed with pnpm.");
+  });
+
+  it("reports failed installation progress and preserves the subprocess error", async () => {
+    const installError = new Error("pnpm failed with detailed output");
+    mockExeca.mockRejectedValueOnce(installError);
+
+    await expect(installDependencies(["react@^18.0.0"], "pnpm")).rejects.toBe(installError);
+
+    expect(mockSpinner.stop).toHaveBeenCalledWith("Failed to install dependencies with pnpm.", 1);
+  });
+
+  it("uses the project lockfile when no package manager is provided", async () => {
+    const cwd = mkdtempSync(join(tmpdir(), "starwind-install-dependencies-pnpm-"));
+    writeFileSync(join(cwd, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+    const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(cwd);
+    vi.stubEnv("npm_config_user_agent", "npm/11.0.0 node/v24.0.0");
+
+    try {
+      await installDependencies(["react@^18.0.0"], undefined);
+
+      expect(mockExeca).toHaveBeenCalledWith("pnpm", ["add", "--", "react@^18.0.0"]);
+    } finally {
+      cwdSpy.mockRestore();
+      vi.unstubAllEnvs();
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  it("uses an explicit package manager instead of the project lockfile", async () => {
+    const cwd = mkdtempSync(join(tmpdir(), "starwind-install-dependencies-override-"));
+    writeFileSync(join(cwd, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+    const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(cwd);
+
+    try {
+      await installDependencies(["react@^18.0.0"], "npm");
+
+      expect(mockExeca).toHaveBeenCalledWith("npm", ["install", "--", "react@^18.0.0"]);
+    } finally {
+      cwdSpy.mockRestore();
+      rmSync(cwd, { recursive: true, force: true });
+    }
   });
 
   it.each(["--global", "-D", "file:../react", "react@npm:preact"])(

@@ -59,21 +59,24 @@ function snapshot(
   options: {
     fragments?: Record<string, { components: Record<string, "major" | "minor" | "patch"> }>;
     manifest?: Record<string, string>;
+    registryVersion?: string;
     registry?: RuntimeRegistry["components"];
     starwindChangesets?: string[];
   } = {},
 ): StyledReleaseSnapshot {
   const manifest = options.manifest ?? { accordion: "2.0.1", progress: "2.0.0" };
+  const registryVersion = options.registryVersion ?? "2.0.0";
   return {
     fragments: options.fragments ?? {},
     manifest: {
-      registryVersion: "2.0.0",
+      registryVersion,
       defaultComponentVersion: "1.0.0",
       components: manifest,
     },
     registry: {
       $schema: "https://starwind.dev/registry-schema.v2.json",
-      version: "2.0.0",
+      version: registryVersion,
+      setup: {},
       components:
         options.registry ??
         Object.entries(manifest).map(([name, version]) => registryComponent(name, version)),
@@ -214,7 +217,7 @@ describe("styled component release intents", () => {
           ],
         }),
       }),
-    ).toThrow(/expected accordion@2\.0\.1/i);
+    ).toThrow(/defer accordion version changes/i);
   });
 
   it("rejects edits to merged fragments and requires intents for every generated source change", () => {
@@ -257,6 +260,61 @@ describe("styled component release intents", () => {
       addedComponents: ["new-component"],
       mode: "intent",
     });
+  });
+
+  it("allows a forward baseline correction only during a guarded registry migration", () => {
+    const base = snapshot({
+      manifest: { "color-picker": "0.1.0", progress: "2.0.0" },
+    });
+    const migrated = snapshot({
+      fragments: {
+        "color-picker-area.json": { components: { "color-picker": "patch" } },
+      },
+      manifest: { "color-picker": "1.2.0", progress: "2.0.0" },
+      registryVersion: "2.1.0",
+      registry: [
+        registryComponent("color-picker", "1.2.0", "changed color picker"),
+        registryComponent("progress", "2.0.0"),
+      ],
+      starwindChangesets: ["color-picker-area.md"],
+    });
+
+    expect(validateStyledVersionPullRequest({ base, head: migrated })).toMatchObject({
+      changedComponents: ["color-picker"],
+      mode: "intent",
+    });
+
+    expect(() =>
+      validateStyledVersionPullRequest({
+        base,
+        head: snapshot({
+          fragments: migrated.fragments,
+          manifest: migrated.manifest.components,
+          registryVersion: "2.1.0",
+          registry: [
+            registryComponent("color-picker", "1.2.0"),
+            registryComponent("progress", "2.0.0"),
+          ],
+          starwindChangesets: migrated.starwindChangesets,
+        }),
+      }),
+    ).toThrow(/requires an installable source change/i);
+
+    expect(() =>
+      validateStyledVersionPullRequest({
+        base,
+        head: snapshot({
+          fragments: migrated.fragments,
+          manifest: { "color-picker": "0.0.9", progress: "2.0.0" },
+          registryVersion: "2.1.0",
+          registry: [
+            registryComponent("color-picker", "0.0.9", "changed color picker"),
+            registryComponent("progress", "2.0.0"),
+          ],
+          starwindChangesets: migrated.starwindChangesets,
+        }),
+      }),
+    ).toThrow(/must advance/i);
   });
 
   it("validates an exact generated Version Packages PR and rejects double bumps", () => {

@@ -292,7 +292,7 @@ export async function installRuntimeComponents(
   );
 
   if (packagesToInstall.length > 0) {
-    await installDependencies(packagesToInstall, options.packageManager ?? "npm");
+    await installDependencies(packagesToInstall, options.packageManager);
   }
 
   const installedComponents: PlannedComponent[] = [];
@@ -598,7 +598,7 @@ export async function updateRuntimeComponents(
     }
 
     if (!skipPackageDependentUpdates) {
-      await installDependencies(plan.packagesToInstall, options.packageManager ?? "npm");
+      await installDependencies(plan.packagesToInstall, options.packageManager);
     }
   }
 

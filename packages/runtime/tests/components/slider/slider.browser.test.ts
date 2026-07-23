@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createSlider } from "../../../src/components/slider/slider";
+import { getFormValueRevision } from "../../../src/internal/form-value-revision";
 
 describe("createSlider", () => {
   beforeEach(() => {
@@ -74,6 +75,26 @@ describe("createSlider", () => {
     expect(secondInput.value).toBe("80");
     expect(getIndicator(root).style.left).toBe("80%");
     expect(getIndicator(root).style.width).toBe("0%");
+  });
+
+  it("reuses one revision for an accepted value change and its commit", () => {
+    const root = renderSlider({ defaultValue: 25 });
+    const revisions: unknown[] = [];
+    root.addEventListener("starwind:value-change", (event) => {
+      revisions.push(getFormValueRevision(event));
+    });
+    root.addEventListener("starwind:value-committed", (event) => {
+      revisions.push(getFormValueRevision(event));
+    });
+    createSlider(root);
+
+    getThumb(root, 0).dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }),
+    );
+
+    expect(revisions).toHaveLength(2);
+    expect(revisions[0]).toBeDefined();
+    expect(revisions[1]).toBe(revisions[0]);
   });
 
   it("enforces minStepsBetweenValues within the no-crossing range clamp", () => {

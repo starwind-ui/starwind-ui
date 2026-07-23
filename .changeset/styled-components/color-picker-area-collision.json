@@ -1,0 +1,6 @@
+{
+  "components": {
+    "color-picker": "patch",
+    "popover": "patch"
+  }
+}

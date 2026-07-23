@@ -10,10 +10,18 @@ export type PopoverPopupProps = React.HTMLAttributes<HTMLDivElement> & {
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  collisionStrategy?: "initial-placement" | "best-fit";
 };
 
 const PopoverPopup = React.forwardRef<HTMLDivElement, PopoverPopupProps>(function PopoverPopup(
-  { side = "bottom", align = "center", sideOffset = 4, avoidCollisions = true, ...props },
+  {
+    side = "bottom",
+    align = "center",
+    sideOffset = 4,
+    avoidCollisions = true,
+    collisionStrategy = "initial-placement",
+    ...props
+  },
   forwardedRef,
 ) {
   return (
@@ -26,6 +34,7 @@ const PopoverPopup = React.forwardRef<HTMLDivElement, PopoverPopupProps>(functio
       data-align={align}
       data-side-offset={sideOffset}
       data-avoid-collisions={avoidCollisions ? "true" : "false"}
+      data-collision-strategy={collisionStrategy}
       hidden
       ref={forwardedRef}
       {...props}
