@@ -110,7 +110,7 @@ describe("release package tooling", () => {
   it("exposes generic release commands and beta compatibility aliases", async () => {
     const root = await readJson<PackageJson>("package.json");
     expect(root.scripts?.["release:version"]).toBe(
-      "tsx scripts/portable-runtime/styled-component-release.ts version && tsx scripts/portable-runtime/primitive-component-release.ts version && changeset version && pnpm runtime:registry:generate",
+      "tsx scripts/portable-runtime/styled-component-release.ts version && tsx scripts/portable-runtime/primitive-component-release.ts version && changeset version && pnpm runtime:registry:generate && pnpm runtime:docs:metadata",
     );
     expect(root.scripts?.version).toBe("pnpm release:version");
     expect(root.scripts?.["styled:versions:stage"]).toBe(

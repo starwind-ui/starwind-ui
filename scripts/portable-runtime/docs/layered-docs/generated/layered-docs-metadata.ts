@@ -35032,7 +35032,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "avatar",
       displayName: "Avatar",
       category: "static-semantic",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "avatar",
         factory: "createAvatar",
@@ -50879,7 +50879,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "form",
       displayName: "Form",
       category: "field-control-coordinator",
-      registryVersion: "0.1.0",
+      registryVersion: "0.2.0",
       runtime: {
         primitiveId: "form",
         factory: "createForm",
@@ -57619,7 +57619,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "popover",
       displayName: "Popover",
       category: "presence-floating-overlay",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "popover",
         factory: "createPopover",
