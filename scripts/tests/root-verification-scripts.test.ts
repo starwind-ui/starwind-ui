@@ -14,7 +14,7 @@ type Workflow = {
       if?: string;
       name?: string;
       needs?: string | string[];
-      steps?: Array<{ if?: string; run?: string }>;
+      steps?: Array<{ if?: string; name?: string; run?: string }>;
       uses?: string;
     }
   >;
@@ -113,6 +113,14 @@ describe("root verification scripts", () => {
       if: "needs.scope.outputs.vue == 'true'",
       needs: "scope",
     });
+    expect(verifyWorkflow.jobs["generator-tests"].steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Install Playwright Chromium",
+          run: "pnpm --filter=react-demo exec playwright install --with-deps chromium",
+        }),
+      ]),
+    );
     expect(verifyWorkflow.jobs.verify).toMatchObject({
       name: "Verify",
       needs: expect.arrayContaining([

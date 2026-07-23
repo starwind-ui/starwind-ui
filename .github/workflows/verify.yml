@@ -107,6 +107,8 @@ jobs:
           cache: pnpm
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm --filter=react-demo exec playwright install --with-deps chromium
       - name: Run portable Runtime generator tests
         run: pnpm runtime:generate:test && pnpm runtime:generate:typecheck
 
