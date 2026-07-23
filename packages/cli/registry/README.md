@@ -34,6 +34,10 @@ For every existing component whose installable generated source changes:
 - `pnpm release:version` groups all pending intents by component, applies the highest requested bump
   exactly once, consumes the intents, and regenerates the bundled registry inside the existing
   Changesets Version Packages PR.
+- A guarded forward correction to a component's published legacy baseline fulfills that
+  implementation batch's version intent. Release maintenance may remove the redundant bump only
+  when the manifest remains at the exact recorded legacy baseline; subsequent source changes resume
+  normal deferred bumps.
 - The release workflow temporarily stages the intent directory outside `.changeset` before the
   Changesets action runs because Changesets interprets nested directories as legacy v1 changesets.
   The staging directory is ignored and must never be committed.

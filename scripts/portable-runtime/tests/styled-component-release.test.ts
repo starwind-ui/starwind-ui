@@ -317,6 +317,39 @@ describe("styled component release intents", () => {
     ).toThrow(/must advance/i);
   });
 
+  it("treats the exact legacy baseline correction as fulfilling its deferred bump", () => {
+    const base = snapshot({
+      fragments: {
+        "color-picker-area.json": {
+          components: { "color-picker": "patch", popover: "patch" },
+        },
+      },
+      manifest: { "color-picker": "1.2.0", popover: "2.0.0" },
+    });
+    const corrected = snapshot({
+      fragments: {
+        "color-picker-area.json": { components: { popover: "patch" } },
+      },
+      manifest: base.manifest.components,
+      registry: base.registry.components,
+    });
+
+    expect(validateStyledVersionPullRequest({ base, head: corrected })).toMatchObject({
+      changedComponents: [],
+      mode: "intent",
+    });
+
+    expect(() =>
+      validateStyledVersionPullRequest({
+        base,
+        head: snapshot({
+          fragments: corrected.fragments,
+          manifest: { "color-picker": "1.2.1", popover: "2.0.0" },
+        }),
+      }),
+    ).toThrow(/must not modify or remove merged intents/i);
+  });
+
   it("validates an exact generated Version Packages PR and rejects double bumps", () => {
     const base = snapshot({
       fragments: {
