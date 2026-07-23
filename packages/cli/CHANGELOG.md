@@ -1,5 +1,35 @@
 # starwind
 
+## 3.0.0-beta.4
+
+### Patch Changes
+
+- Keep Avatar images eligible for native lazy loading while the Runtime conceals their loading and
+  error states, including Astro images rendered from imported assets.
+- Keep dialog-owned floating layers visible and interactive above native modal dialogs across Runtime, Astro, React, and CLI-installed consumers.
+- Detect the project package manager for dependency installs when no override is provided, and show
+  progress while package updates are running.
+- Keep the styled Color Picker area usable in constrained viewports by preserving a minimum height,
+  choosing the best fitting Popover side before sizing, and scrolling content when neither side fits.
+  Expose the compatible Popover collision strategy through generated Astro and React Primitive
+  adapters, and continue the styled Color Picker registry version from its legacy release history.
+- Stage Dialog, Alert Dialog, and Sheet entry styles through native top-layer presentation so their opening animations remain complete under main-thread load.
+- Dismiss floating overlays when pointer interactions occur in unrelated composition-root space while
+  preserving interactions with nested portaled overlays. This corrects Color Picker Popover dismissal
+  in both Astro and React and applies the same explicit boundary behavior to other floating controls.
+- Keep ancestor submenus open while the pointer moves into a nested submenu portal.
+- Replace additive Form validation timing with before- and after-submit policies, add the imperative
+  validation, visibility, reset, and external-error APIs, and refresh generated adapters and vendored
+  Primitive artifacts.
+
+  For the beta migration, both the previous `input` timing and the previous committed-only meaning of
+  `change` map to semantic `change`, which runs for every accepted value revision. Committed-only
+  validation timing is no longer available. Defaults remain validation on `submit`, revalidation on
+  `change`, and error visibility on `submit`; after the first submission attempt,
+  `revalidationTiming` replaces `validationTiming` instead of being additive.
+
+- Install framework-specific setup dependencies from bundled registry metadata during initialization.
+
 ## 3.0.0-beta.3
 
 ### Minor Changes

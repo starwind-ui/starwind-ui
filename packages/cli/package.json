@@ -1,6 +1,6 @@
 {
   "name": "starwind",
-  "version": "3.0.0-beta.3",
+  "version": "3.0.0-beta.4",
   "description": "Install and manage Starwind UI components in Astro and React applications",
   "license": "MIT",
   "homepage": "https://starwind.dev/",
