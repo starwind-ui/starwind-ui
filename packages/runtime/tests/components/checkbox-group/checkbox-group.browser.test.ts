@@ -261,6 +261,138 @@ describe("createCheckboxGroup", () => {
     expect(data.getAll("colors")).toEqual(["red", "blue"]);
   });
 
+  it("restores the initial uncontrolled group value on form reset", async () => {
+    const form = document.createElement("form");
+    const root = renderCheckboxGroup({ defaultValue: ["red"] });
+    form.append(root);
+    document.body.append(form);
+    const group = createCheckboxGroup(root);
+    const [, green] = getCheckboxes(root);
+
+    green?.click();
+    expect(group.getValue()).toEqual(["red", "green"]);
+
+    form.reset();
+    await new Promise((resolve) => window.setTimeout(resolve, 10));
+
+    expect(group.getValue()).toEqual(["red"]);
+    expect(green?.getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("binds reset through native-button sibling inputs", async () => {
+    const form = document.createElement("form");
+    form.id = "native-group-form";
+    const root = renderNativeCheckboxGroup(["red"]);
+    form.append(root);
+    document.body.append(form);
+    const checkboxes = getCheckboxes(root);
+    checkboxes.forEach((checkbox) => createCheckbox(checkbox, { form: form.id }));
+    const group = createCheckboxGroup(root);
+
+    checkboxes[1]?.click();
+    expect(group.getValue()).toEqual(["red", "green"]);
+    expect(checkboxes[0]?.nextElementSibling).toBeInstanceOf(HTMLInputElement);
+
+    form.reset();
+    await waitForReset();
+
+    expect(group.getValue()).toEqual(["red"]);
+    expect(checkboxes[1]?.getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("resets only items associated with each relevant form", async () => {
+    const firstForm = document.createElement("form");
+    firstForm.id = "first-group-form";
+    const secondForm = document.createElement("form");
+    secondForm.id = "second-group-form";
+    const root = renderCheckboxGroupWithForms({
+      defaultValue: ["red", "green"],
+      forms: [firstForm.id, secondForm.id, secondForm.id],
+    });
+    document.body.append(firstForm, secondForm, root);
+    const group = createCheckboxGroup(root);
+    const [red, , blue] = getCheckboxes(root);
+
+    red?.click();
+    blue?.click();
+    expect(group.getValue()).toEqual(["green", "blue"]);
+
+    firstForm.reset();
+    await waitForReset();
+    expect(group.getValue()).toEqual(["green", "blue", "red"]);
+
+    secondForm.reset();
+    await waitForReset();
+    expect(group.getValue()).toEqual(["red", "green"]);
+  });
+
+  it("rebinds reset when a pre-initialized item's external form changes", async () => {
+    const firstForm = document.createElement("form");
+    firstForm.id = "original-group-form";
+    const secondForm = document.createElement("form");
+    secondForm.id = "rebound-group-form";
+    const root = renderCheckboxGroupWithForms({
+      defaultValue: ["red"],
+      forms: [firstForm.id, firstForm.id, firstForm.id],
+    });
+    document.body.append(firstForm, secondForm, root);
+    const [red] = getCheckboxes(root);
+    const redCheckbox = createCheckbox(red!, { form: firstForm.id });
+    const group = createCheckboxGroup(root);
+
+    red?.click();
+    expect(group.getValue()).toEqual([]);
+    redCheckbox.setFormOptions({ form: secondForm.id });
+    await waitForMutationObserver();
+
+    firstForm.reset();
+    await waitForReset();
+    expect(group.getValue()).toEqual([]);
+
+    secondForm.reset();
+    await waitForReset();
+    expect(group.getValue()).toEqual(["red"]);
+  });
+
+  it("keeps controlled pre-initialized state and emits nothing during reset", async () => {
+    const form = document.createElement("form");
+    form.id = "controlled-group-form";
+    const root = renderNativeCheckboxGroup();
+    form.append(root);
+    document.body.append(form);
+    const [, green] = getCheckboxes(root);
+    createCheckbox(green!, { form: form.id });
+    const group = createCheckboxGroup(root, { value: ["green"] });
+    const listener = vi.fn();
+    group.subscribe("valueChange", listener);
+
+    form.reset();
+    await waitForReset();
+
+    expect(group.getValue()).toEqual(["green"]);
+    expect(green?.getAttribute("aria-checked")).toBe("true");
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("cancels pending reset work and removes form listeners on destroy", async () => {
+    const form = document.createElement("form");
+    const root = renderCheckboxGroup({ defaultValue: ["red"] });
+    form.append(root);
+    document.body.append(form);
+    const group = createCheckboxGroup(root);
+    const [, green] = getCheckboxes(root);
+    green?.click();
+
+    form.reset();
+    group.destroy();
+    await waitForReset();
+    expect(group.getValue()).toEqual(["red", "green"]);
+
+    form.reset();
+    await waitForReset();
+    expect(group.getValue()).toEqual(["red", "green"]);
+  });
+
   it("uses a group-level name for submitted selected values", () => {
     const form = document.createElement("form");
     const root = renderCheckboxGroup({ defaultValue: ["red", "blue"] });
@@ -358,7 +490,47 @@ function createCheckboxItem(value: string): HTMLElement {
   return wrapper.firstElementChild as HTMLElement;
 }
 
+function renderNativeCheckboxGroup(defaultValue: string[] = []): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `
+    <div
+      data-sw-checkbox-group
+      data-default-value='${JSON.stringify(defaultValue)}'
+    >
+      ${["red", "green", "blue"]
+        .map(
+          (value) => `
+            <button type="button" data-sw-checkbox data-name="colors" data-value="${value}"></button>
+            <input data-sw-checkbox-input />
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+  return wrapper.firstElementChild as HTMLElement;
+}
+
+function renderCheckboxGroupWithForms({
+  defaultValue,
+  forms,
+}: {
+  defaultValue: string[];
+  forms: readonly [string, string, string];
+}): HTMLElement {
+  const root = renderCheckboxGroup({ defaultValue });
+  getCheckboxes(root).forEach((checkbox, index) => {
+    const form = forms[index];
+    checkbox.setAttribute("data-form", form);
+    checkbox.querySelector("[data-sw-checkbox-input]")?.setAttribute("form", form);
+  });
+  return root;
+}
+
 async function waitForMutationObserver(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+async function waitForReset(): Promise<void> {
+  await new Promise((resolve) => window.setTimeout(resolve, 10));
 }

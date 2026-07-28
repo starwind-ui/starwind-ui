@@ -6,7 +6,6 @@ import { pathToFileURL } from "node:url";
 import { compileScript, compileTemplate, parse } from "@vue/compiler-sfc";
 
 import {
-  collapsibleRuntimeAdapterContract,
   comboboxRuntimeAdapterContract,
   menuRuntimeAdapterContract,
   navigationMenuRuntimeAdapterContract,
@@ -31,9 +30,6 @@ export const VUE_CONTRACT_FIXTURE_PATHS = [
   "__future-fixtures/vue/conformance/ConformanceRoot.vue",
   "__future-fixtures/vue/conformance/normalizeConformanceValue.ts",
   "__future-fixtures/vue/toggle/ToggleRoot.vue",
-  "__future-fixtures/vue/collapsible/CollapsibleRoot.vue",
-  "__future-fixtures/vue/collapsible/CollapsibleTrigger.vue",
-  "__future-fixtures/vue/collapsible/CollapsiblePanel.vue",
   "__future-fixtures/vue/combobox/ComboboxRoot.vue",
   "__future-fixtures/vue/combobox/ComboboxLabel.vue",
   "__future-fixtures/vue/combobox/ComboboxInputGroup.vue",
@@ -190,10 +186,6 @@ function createVueContractFixtureFilesUnchecked(): VueContractFixtureFile[] {
         path: `__future-fixtures/vue/${file.path}`,
       })),
     ...printFutureFrameworkTracerPlan("vue", buildGenericAdapterPlan(toggleRuntimeAdapterContract)),
-    ...printFutureFrameworkTracerPlan(
-      "vue",
-      buildGenericAdapterPlan(collapsibleRuntimeAdapterContract),
-    ),
     ...printFutureSpecializedAdapterSpecFixture(
       "vue",
       buildComboboxSpecializedAdapterSpec(comboboxRuntimeAdapterContract),
@@ -254,7 +246,6 @@ export async function runVueContractGate(options: VueContractGateOptions = {}): 
             target: "ES2022",
           },
           include: [
-            "__future-fixtures/vue/collapsible/**/*.vue",
             "__future-fixtures/vue/combobox/**/*.{ts,vue}",
             "__future-fixtures/vue/conformance/**/*.{ts,vue}",
             "__future-fixtures/vue/menu/**/*.{ts,vue}",

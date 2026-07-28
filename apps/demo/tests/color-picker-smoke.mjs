@@ -567,6 +567,7 @@ try {
     popup: canonicalPopup,
     trigger: canonicalTrigger,
   });
+  await assertMobileAreaDrag({ browser, url });
 
   assert.deepEqual(errors, []);
   console.log(`Astro Color Picker smoke passed at ${url}`);
@@ -593,6 +594,73 @@ async function waitForPage(page, url, serverProcess) {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   throw lastError ?? new Error(`Timed out waiting for ${url}`);
+}
+
+async function assertMobileAreaDrag({ browser, url }) {
+  const context = await browser.newContext({
+    hasTouch: true,
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+
+  try {
+    const page = await context.newPage();
+    await page.goto(url, { waitUntil: "networkidle" });
+    const root = page.locator("#inline-picker");
+    const area = root.locator('[data-slot="color-picker-area"]');
+    const xInput = area.locator('[data-slot="color-picker-area-input-x"]');
+    const yInput = area.locator('[data-slot="color-picker-area-input-y"]');
+    await area.scrollIntoViewIfNeeded();
+
+    const areaBox = await area.boundingBox();
+    const thumbBox = await area.locator('[data-slot="color-picker-area-thumb"]').boundingBox();
+    assert.ok(areaBox && thumbBox);
+
+    const start = {
+      x: thumbBox.x + thumbBox.width / 2,
+      y: thumbBox.y + thumbBox.height / 2,
+    };
+    const end = {
+      x: areaBox.x + areaBox.width * 0.2,
+      y: areaBox.y + areaBox.height * 0.8,
+    };
+    const hitSlot = await page.evaluate(
+      ({ x, y }) => document.elementFromPoint(x, y)?.getAttribute("data-slot"),
+      start,
+    );
+    const session = await context.newCDPSession(page);
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ ...start, force: 1, id: 1, radiusX: 1, radiusY: 1 }],
+    });
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ ...end, force: 1, id: 1, radiusX: 1, radiusY: 1 }],
+    });
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+
+    await page.waitForTimeout(50);
+    assert.deepEqual(
+      {
+        cursor: await area.evaluate((element) => getComputedStyle(element).cursor),
+        hitSlot,
+        x: await xInput.inputValue(),
+        y: await yInput.inputValue(),
+      },
+      {
+        cursor: "crosshair",
+        hitSlot: "color-picker-area",
+        x: "20",
+        y: "20",
+      },
+      "mobile dragging must target the 2D area and update both color axes",
+    );
+  } finally {
+    await context.close();
+  }
 }
 
 async function assertConstrainedColorPickerPlacement({ page, popup, trigger }) {

@@ -695,25 +695,45 @@ describe("createDialog", () => {
     const outsideButton = document.createElement("button");
     outsideButton.textContent = "Return focus after destroy";
     document.body.prepend(outsideButton);
+    const focusOutside = vi.spyOn(outsideButton, "focus");
     outsideButton.focus();
     const dialog = createDialog(root);
+    const openChange = vi.fn();
+    const closeComplete = vi.fn();
+    dialog.subscribe("openChange", openChange);
+    dialog.subscribe("closeComplete", closeComplete);
     dialog.open();
     const layer = mountDialogOwnedLayer(getContent(), { controlled: true });
     layer.focusTarget.focus();
+    focusOutside.mockClear();
+    openChange.mockClear();
 
+    dialog.destroy();
     dialog.destroy();
 
     expect(layer.closeRequests).toEqual(["owner-close"]);
     expect(getContent().open).toBe(false);
+    expect(getContent().hidden).toBe(true);
     expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
     expect(document.activeElement).toBe(outsideButton);
+    expect(focusOutside).toHaveBeenCalledTimes(1);
+    expect(openChange).not.toHaveBeenCalled();
+    expect(closeComplete).not.toHaveBeenCalled();
+    expect(document.body.style.overflow).toBe("");
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
 
     layer.destroy();
   });
 
-  it("does not duplicate controlled layer close intent when destroyed during close", () => {
+  it("does not duplicate controlled layer close intent when destroyed during close", async () => {
     const root = renderDialog();
+    const outsideButton = document.createElement("button");
+    document.body.prepend(outsideButton);
+    const focusOutside = vi.spyOn(outsideButton, "focus");
+    outsideButton.focus();
     const dialog = createDialog(root);
+    const closeComplete = vi.fn();
+    dialog.subscribe("closeComplete", closeComplete);
     dialog.open();
     const layer = mountDialogOwnedLayer(getContent(), { controlled: true });
     const closeAnimation = createDeferred();
@@ -723,14 +743,73 @@ describe("createDialog", () => {
     });
 
     dialog.close();
+    focusOutside.mockClear();
     dialog.destroy();
 
     expect(layer.closeRequests).toEqual(["owner-close"]);
     expect(getContent().open).toBe(false);
     expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
+    expect(document.activeElement).toBe(outsideButton);
+    expect(focusOutside).toHaveBeenCalledTimes(1);
+    expect(closeComplete).not.toHaveBeenCalled();
+    expect(document.body.style.overflow).toBe("");
 
     closeAnimation.resolve();
+    await closeAnimation.promise;
+    await waitForMicrotasks();
+    expect(focusOutside).toHaveBeenCalledTimes(1);
+    expect(closeComplete).not.toHaveBeenCalled();
     layer.destroy();
+  });
+
+  it("does not focus a disconnected return target when destroyed open", () => {
+    const root = renderDialog();
+    const outsideButton = document.createElement("button");
+    document.body.prepend(outsideButton);
+    const focusOutside = vi.spyOn(outsideButton, "focus");
+    outsideButton.focus();
+    const dialog = createDialog(root);
+    dialog.open();
+    focusOutside.mockClear();
+    outsideButton.remove();
+
+    dialog.destroy();
+
+    expect(focusOutside).not.toHaveBeenCalled();
+    expect(getContent().open).toBe(false);
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  it("restores each nested destroy owner without releasing the parent layer or lock", () => {
+    const outsideButton = document.createElement("button");
+    document.body.prepend(outsideButton);
+    const focusOutside = vi.spyOn(outsideButton, "focus");
+    outsideButton.focus();
+    const nested = renderNestedDialogs();
+    const parentDialog = createDialog(nested.parentRoot);
+    const childDialog = createDialog(nested.childRoot);
+    parentDialog.open();
+    const focusChildTrigger = vi.spyOn(nested.childTrigger, "focus");
+    nested.childTrigger.focus();
+    childDialog.open();
+    focusChildTrigger.mockClear();
+    focusOutside.mockClear();
+
+    childDialog.destroy();
+
+    expect(document.activeElement).toBe(nested.childTrigger);
+    expect(focusChildTrigger).toHaveBeenCalledTimes(1);
+    expect(nested.parentContent.open).toBe(true);
+    expect(nested.parentContent.hasAttribute("data-nested-dialog-open")).toBe(false);
+    expect(document.body.style.overflow).toBe("hidden");
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
+
+    parentDialog.destroy();
+
+    expect(document.activeElement).toBe(outsideButton);
+    expect(focusOutside).toHaveBeenCalledTimes(1);
+    expect(document.body.style.overflow).toBe("");
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
   });
 
   it("closes an uncontrolled layer mounted during exit before reopening", async () => {

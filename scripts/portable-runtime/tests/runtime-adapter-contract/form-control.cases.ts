@@ -496,6 +496,7 @@ export function defineRuntimeFormControlTests(): void {
     expect(checkbox.context).toContainEqual({
       name: "checkbox-group",
       direction: "consumes",
+      requirement: "optional",
       values: ["disabled", "value"],
     });
     expect(checkbox.presence).toEqual({
@@ -608,6 +609,7 @@ export function defineRuntimeFormControlTests(): void {
     expect(radio.context).toContainEqual({
       name: "radio-group",
       direction: "consumes",
+      requirement: "optional",
       values: ["disabled", "form", "name", "readOnly", "required", "value"],
     });
     expect(radio.presence).toEqual({
@@ -626,7 +628,9 @@ export function defineRuntimeFormControlTests(): void {
     );
     expect(radio.events).toContainEqual(
       expect.objectContaining({
+        callbackTiming: "before-state-commit",
         callbackProp: "onCheckedChange",
+        cancelable: true,
         detailsType: "RadioCheckedChangeDetails",
         domEvent: "starwind:checked-change",
         valueProperty: "checked",
@@ -776,6 +780,8 @@ export function defineRuntimeFormControlTests(): void {
     expect(slider.events).toEqual([
       expect.objectContaining({
         callbackProp: "onValueChange",
+        callbackTiming: "before-state-commit",
+        cancelable: true,
         detailsType: "SliderValueChangeDetails",
         domEvent: "starwind:value-change",
         valueProperty: "value",
@@ -900,7 +906,9 @@ export function defineRuntimeFormControlTests(): void {
     );
     expect(inputOtp.events).toContainEqual(
       expect.objectContaining({
+        callbackTiming: "before-state-commit",
         callbackProp: "onValueChange",
+        cancelable: true,
         detailsType: "InputOtpValueChangeDetails",
         domEvent: "starwind:value-change",
         valueProperty: "value",

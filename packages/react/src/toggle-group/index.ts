@@ -3,13 +3,24 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+import {
+  ToggleGroupContext,
+  type ToggleGroupContextValue,
+  useToggleGroupContext,
+} from "./ToggleGroupContext";
 import ToggleGroupRoot from "./ToggleGroupRoot";
 
 const ToggleGroup = {
   Root: ToggleGroupRoot,
 };
 
-export { ToggleGroup, ToggleGroupRoot };
+export {
+  ToggleGroup,
+  ToggleGroupContext,
+  type ToggleGroupContextValue,
+  ToggleGroupRoot,
+  useToggleGroupContext,
+};
 
 export default ToggleGroup;
 

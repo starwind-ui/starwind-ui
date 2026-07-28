@@ -14,13 +14,61 @@ import {
   printVueBooleanFormControlComponent,
   printVueBooleanFormControlIndex,
 } from "./boolean-form-control.js";
+import {
+  printVueControlledValuePresenceComponent,
+  printVueControlledValuePresenceIndex,
+} from "./controlled-value-presence.js";
+import {
+  printVueDisclosurePresenceComponent,
+  printVueDisclosurePresenceIndex,
+} from "./disclosure-presence.js";
+import {
+  printVueFormFieldCoordinatorComponent,
+  printVueFormFieldCoordinatorIndex,
+} from "./form-field-coordinator.js";
+import {
+  printVueFieldCompositionComponent,
+  printVueFieldCompositionIndex,
+} from "./field-composition.js";
+import {
+  printVueFileDropControlComponent,
+  printVueFileDropControlIndex,
+} from "./file-drop-control.js";
+import {
+  printVueGroupedValueControlComponent,
+  printVueGroupedValueControlHelper,
+  printVueGroupedValueControlIndex,
+} from "./grouped-value-control.js";
+import {
+  printVueHiddenInputVisualSlotComponent,
+  printVueHiddenInputVisualSlotIndex,
+} from "./hidden-input-visual-slot.js";
 import { printVueMediaStatusComponent, printVueMediaStatusIndex } from "./media-status.js";
+import { printVueNativeDisabledComponent, printVueNativeDisabledIndex } from "./native-disabled.js";
+import {
+  printVueNativeInputValueComponent,
+  printVueNativeInputValueIndex,
+} from "./native-input-value.js";
 import {
   isVueOptionCollectionOverlayOutput,
   printVueOptionCollectionOverlayIndex,
   printVueOptionCollectionOverlayOutput,
 } from "./option-collection-overlay.js";
+import { printVueNativeOverlayComponent, printVueNativeOverlayIndex } from "./native-overlay.js";
+import {
+  printVuePresenceFloatingOverlayComponent,
+  printVuePresenceFloatingOverlayIndex,
+} from "./presence-floating-overlay.js";
 import { printVueRangeStatusComponent, printVueRangeStatusIndex } from "./range-status.js";
+import { printVueRangeControlComponent, printVueRangeControlIndex } from "./range-control.js";
+import {
+  printVueRepeatedDisclosureComponent,
+  printVueRepeatedDisclosureIndex,
+} from "./repeated-disclosure.js";
+import {
+  printVueSingleBooleanControlComponent,
+  printVueSingleBooleanControlIndex,
+} from "./single-boolean-control.js";
 import {
   printVueViewportMeasurementComponent,
   printVueViewportMeasurementIndex,
@@ -62,8 +110,44 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
       });
   },
   printComponentFile(file) {
+    if (file.component.family?.kind === "controlled-value-presence") {
+      return {
+        contents: printVueControlledValuePresenceComponent(file.component.family),
+        path: `${file.path}${this.fileExtension}`,
+      };
+    }
+    if (file.component.family?.kind === "field-composition") {
+      return {
+        contents: printVueFieldCompositionComponent(file.component.family),
+        path: `${file.path}${this.fileExtension}`,
+      };
+    }
+    if (file.component.family?.kind === "repeated-disclosure") {
+      return {
+        contents: printVueRepeatedDisclosureComponent(file.component.family),
+        path: `${file.path}${this.fileExtension}`,
+      };
+    }
     if (file.component.family?.kind === "range-status") {
       return printVueRangeStatusComponent(file);
+    }
+    if (file.component.family?.kind === "range-control") {
+      return {
+        contents: printVueRangeControlComponent(file.component.family),
+        path: `${file.path}${this.fileExtension}`,
+      };
+    }
+    if (file.component.family?.kind === "hidden-input-visual-slot") {
+      return {
+        contents: printVueHiddenInputVisualSlotComponent(file.component.family),
+        path: `${file.path}${this.fileExtension}`,
+      };
+    }
+    if (file.component.family?.kind === "file-drop-control") {
+      return {
+        contents: printVueFileDropControlComponent(file.component.family),
+        path: `${file.path}${this.fileExtension}`,
+      };
     }
     if (file.component.family?.kind === "viewport-measurement") {
       return printVueViewportMeasurementComponent(file);
@@ -77,6 +161,30 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
     if (file.component.family?.kind === "boolean-form-control") {
       return printVueBooleanFormControlComponent(file);
     }
+    if (file.component.family?.kind === "disclosure-presence") {
+      return printVueDisclosurePresenceComponent(file);
+    }
+    if (file.component.family?.kind === "form-field-coordinator") {
+      return printVueFormFieldCoordinatorComponent(file);
+    }
+    if (file.component.family?.kind === "grouped-value-control") {
+      return printVueGroupedValueControlComponent(file);
+    }
+    if (file.component.family?.kind === "native-disabled") {
+      return printVueNativeDisabledComponent(file);
+    }
+    if (file.component.family?.kind === "single-boolean-control") {
+      return printVueSingleBooleanControlComponent(file);
+    }
+    if (file.component.family?.kind === "native-input-value") {
+      return printVueNativeInputValueComponent(file);
+    }
+    if (file.component.family?.kind === "native-overlay") {
+      return printVueNativeOverlayComponent(file);
+    }
+    if (file.component.family?.kind === "presence-floating-overlay") {
+      return printVuePresenceFloatingOverlayComponent(file);
+    }
     if (file.component.family?.kind === "option-collection-overlay") {
       throw new TypeError(
         "Vue option-collection-overlay components must be printed through the family output projection.",
@@ -88,18 +196,78 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
     };
   },
   printHelperFile(file) {
+    if (file.family?.kind === "controlled-value-presence") {
+      return { contents: file.body.code, path: file.path };
+    }
+    if (file.path.endsWith("ItemContext.ts")) {
+      return { contents: file.body.code, path: file.path };
+    }
+    if (file.family?.kind === "grouped-value-control") {
+      return printVueGroupedValueControlHelper(file);
+    }
     return {
       contents: `// ${NON_SHIPPING_COMMENT}\nexport function ${file.name}(value?: string) {\n  ${file.body.code}\n}\n`,
       path: file.path,
     };
   },
   printIndexFile(file) {
+    if (file.family?.kind === "controlled-value-presence") {
+      return printVueControlledValuePresenceIndex(file.family);
+    }
+    if (file.family?.kind === "field-composition") {
+      return printVueFieldCompositionIndex(file.family);
+    }
+    if (file.family?.kind === "repeated-disclosure") {
+      return printVueRepeatedDisclosureIndex(file.family);
+    }
     if (file.family?.kind === "action-surface") return printVueActionSurfaceIndex(file);
     if (file.family?.kind === "boolean-form-control") {
       return printVueBooleanFormControlIndex(file);
     }
+    if (file.family?.kind === "disclosure-presence") {
+      return printVueDisclosurePresenceIndex(file);
+    }
+    if (file.family?.kind === "form-field-coordinator") {
+      return printVueFormFieldCoordinatorIndex(file);
+    }
+    if (file.family?.kind === "grouped-value-control") {
+      return printVueGroupedValueControlIndex(file);
+    }
+    if (file.family?.kind === "native-disabled") {
+      return printVueNativeDisabledIndex(file);
+    }
+    if (file.family?.kind === "single-boolean-control") {
+      return printVueSingleBooleanControlIndex(file);
+    }
     if (file.family?.kind === "media-status") return printVueMediaStatusIndex(file);
+    if (file.family?.kind === "native-input-value") {
+      return printVueNativeInputValueIndex(file);
+    }
+    if (file.family?.kind === "native-overlay") {
+      return printVueNativeOverlayIndex(file);
+    }
+    if (file.family?.kind === "presence-floating-overlay") {
+      return printVuePresenceFloatingOverlayIndex(file);
+    }
     if (file.family?.kind === "range-status") return printVueRangeStatusIndex(file);
+    if (file.family?.kind === "range-control") {
+      return {
+        contents: printVueRangeControlIndex(file.family),
+        path: file.path,
+      };
+    }
+    if (file.family?.kind === "hidden-input-visual-slot") {
+      return {
+        contents: printVueHiddenInputVisualSlotIndex(file.family),
+        path: file.path,
+      };
+    }
+    if (file.family?.kind === "file-drop-control") {
+      return {
+        contents: printVueFileDropControlIndex(file.family),
+        path: file.path,
+      };
+    }
     if (file.family?.kind === "viewport-measurement") {
       return printVueViewportMeasurementIndex(file);
     }

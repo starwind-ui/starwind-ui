@@ -565,10 +565,12 @@ function expectSpecializedPrimitiveRegistrySource({
   buildOutputModel,
   buildSpec,
   component,
+  targets = ["astro", "react"],
 }: {
   buildOutputModel: string;
   buildSpec: string;
   component: string;
+  targets?: Array<"astro" | "react" | "vue">;
 }): void {
   const entry = getPrimitiveGeneratorEntry(component);
   const registrySource = readFileSync(
@@ -580,7 +582,7 @@ function expectSpecializedPrimitiveRegistrySource({
   expect(entry.routeFree).toMatchObject({
     kind: "adapter-output-model",
     strategy: "specialized-adapter-spec",
-    targets: ["astro", "react"],
+    targets,
   });
   expect(registrySource).toContain(component.includes("-") ? `"${component}":` : `${component}:`);
   expect(registrySource).toContain("component: entry.component");
@@ -2799,6 +2801,8 @@ describe("SpecializedAdapterSpec", () => {
     expect(spec.accordion.valueControl).toEqual({
       event: {
         callbackProp: "onValueChange",
+        callbackTiming: "before-state-commit",
+        cancelable: true,
         detailsType: "AccordionValueChangeDetails",
         domEvent: "starwind:value-change",
         emitsFrom: "root",
@@ -2808,6 +2812,7 @@ describe("SpecializedAdapterSpec", () => {
       },
       runtimeBoundary: [
         "Runtime owns single/multiple value normalization and item toggle rules.",
+        "Runtime owns synchronous value proposal cancellation before uncontrolled state commits.",
         "Adapters only project value state, event forwarding, and setValue controlled resync.",
       ],
       initialRuntimeOption: {
@@ -3142,6 +3147,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildAccordionAdapterOutputModel",
       buildSpec: "buildAccordionSpecializedAdapterSpec",
       component: "accordion",
+      targets: ["astro", "react", "vue"],
     });
     const spec = buildAccordionSpecializedAdapterSpec(accordionRuntimeAdapterContract);
     const outputRoot = join(
@@ -3186,6 +3192,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildAccordionAdapterOutputModel",
       buildSpec: "buildAccordionSpecializedAdapterSpec",
       component: "accordion",
+      targets: ["astro", "react", "vue"],
     });
     const spec = buildAccordionSpecializedAdapterSpec(accordionRuntimeAdapterContract);
     const outputRoot = join(
@@ -4384,6 +4391,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildTabsAdapterOutputModel",
       buildSpec: "buildTabsSpecializedAdapterSpec",
       component: "tabs",
+      targets: ["astro", "react", "vue"],
     });
   });
 
@@ -4410,6 +4418,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildTabsAdapterOutputModel",
       buildSpec: "buildTabsSpecializedAdapterSpec",
       component: "tabs",
+      targets: ["astro", "react", "vue"],
     });
   });
 
@@ -4525,6 +4534,8 @@ describe("SpecializedAdapterSpec", () => {
       events: {
         valueChange: {
           callbackProp: "onValueChange",
+          callbackTiming: "before-state-commit",
+          cancelable: true,
           detailsType: "SliderValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
@@ -4960,6 +4971,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildSliderAdapterOutputModel",
       buildSpec: "buildSliderSpecializedAdapterSpec",
       component: "slider",
+      targets: ["astro", "react", "vue"],
     });
     const spec = buildSliderSpecializedAdapterSpec(sliderRuntimeAdapterContract);
     const outputRoot = join(
@@ -5004,6 +5016,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildSliderAdapterOutputModel",
       buildSpec: "buildSliderSpecializedAdapterSpec",
       component: "slider",
+      targets: ["astro", "react", "vue"],
     });
     const spec = buildSliderSpecializedAdapterSpec(sliderRuntimeAdapterContract);
     const outputRoot = join(
@@ -5151,7 +5164,9 @@ describe("SpecializedAdapterSpec", () => {
     ]);
     expect(spec.inputOtp.valueControl).toEqual({
       callbackLifecycle: {
+        callbackTiming: "before-state-commit",
         callbackProp: "onValueChange",
+        cancelable: true,
         detailsType: "InputOtpValueChangeDetails",
         domEvent: "starwind:value-change",
         emitsFrom: "root",
@@ -5655,6 +5670,10 @@ describe("SpecializedAdapterSpec", () => {
           nativeInput: expect.objectContaining({
             nesting: "input-inside-root-before-visual-slots",
           }),
+          event: expect.objectContaining({
+            callbackTiming: "before-state-commit",
+            cancelable: true,
+          }),
           pattern: expect.objectContaining({
             defaultPattern: "\\d",
             numericPatternExamples: ["\\d", "[0-9]", "\\d+", "[0-9]+"],
@@ -5726,6 +5745,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildInputOtpAdapterOutputModel",
       buildSpec: "buildInputOtpSpecializedAdapterSpec",
       component: "input-otp",
+      targets: ["astro", "react", "vue"],
     });
     const spec = buildInputOtpSpecializedAdapterSpec(inputOtpRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-input-otp-astro-production-spec-writer");
@@ -5767,6 +5787,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildInputOtpAdapterOutputModel",
       buildSpec: "buildInputOtpSpecializedAdapterSpec",
       component: "input-otp",
+      targets: ["astro", "react", "vue"],
     });
     const spec = buildInputOtpSpecializedAdapterSpec(inputOtpRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-input-otp-react-production-spec-writer");
@@ -6907,6 +6928,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildFieldAdapterOutputModel",
       buildSpec: "buildFieldSpecializedAdapterSpec",
       component: "field",
+      targets: ["astro", "react", "vue"],
     });
     const spec = buildFieldSpecializedAdapterSpec(fieldRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-field-astro-production-spec-writer");
@@ -6956,6 +6978,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildFieldAdapterOutputModel",
       buildSpec: "buildFieldSpecializedAdapterSpec",
       component: "field",
+      targets: ["astro", "react", "vue"],
     });
     const spec = buildFieldSpecializedAdapterSpec(fieldRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-field-react-production-spec-writer");
@@ -8115,6 +8138,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildDropzoneAdapterOutputModel",
       buildSpec: "buildDropzoneSpecializedAdapterSpec",
       component: "dropzone",
+      targets: ["astro", "react", "vue"],
     });
     const spec = buildDropzoneSpecializedAdapterSpec(dropzoneRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-dropzone-astro-production-spec-writer");
@@ -8156,6 +8180,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildDropzoneAdapterOutputModel",
       buildSpec: "buildDropzoneSpecializedAdapterSpec",
       component: "dropzone",
+      targets: ["astro", "react", "vue"],
     });
     const spec = buildDropzoneSpecializedAdapterSpec(dropzoneRuntimeAdapterContract);
     const outputRoot = join("C:/tmp", "starwind-dropzone-react-production-spec-writer");

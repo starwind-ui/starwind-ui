@@ -18,9 +18,17 @@ export function printVueOwnedInstanceDestroy(): string {
 export type CurrentVuePrimitiveFamilyKind =
   | "action-surface"
   | "boolean-form-control"
+  | "disclosure-presence"
+  | "form-field-coordinator"
+  | "grouped-value-control"
   | "media-status"
+  | "native-disabled"
+  | "native-input-value"
+  | "native-overlay"
   | "option-collection-overlay"
+  | "presence-floating-overlay"
   | "range-status"
+  | "single-boolean-control"
   | "viewport-measurement";
 
 /** Preserves the common namespace/index bytes while requiring a typed family projection. */

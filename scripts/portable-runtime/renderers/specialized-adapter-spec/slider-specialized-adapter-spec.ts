@@ -40,6 +40,8 @@ type SliderAnatomyRecipe = {
 
 type SliderEventRecipe = {
   callbackProp: string;
+  callbackTiming?: "before-state-commit";
+  cancelable?: true;
   detailsType: string;
   domEvent: string;
   emitsFrom: string;
@@ -136,7 +138,10 @@ type SliderThumbInputRecipe = {
 
 type SliderValueControlRecipe = {
   events: {
-    valueChange: SliderEventRecipe;
+    valueChange: SliderEventRecipe & {
+      callbackTiming: "before-state-commit";
+      cancelable: true;
+    };
     valueCommitted: SliderEventRecipe;
   };
   renderedAttribute: string;
@@ -316,7 +321,6 @@ export function validateSliderSpecializedAdapterSpec(spec: SliderSpecializedAdap
   errors.push(...validateFormBridge(spec, slider.formBridge));
   errors.push(...validateNamespace(spec, slider.namespace));
   errors.push(...validateShippingFiles(spec));
-
 
   if (!arraysEqual(asArray(slider.runtimeBoundary), SLIDER_RUNTIME_BOUNDARY)) {
     errors.push(
@@ -839,10 +843,30 @@ function buildValueControlRecipe(spec: SpecializedAdapterSpec): SliderValueContr
 
 function buildValueEventRecipe(
   event: SliderRequiredEvent,
+  name: "valueChange",
+): SliderEventRecipe & {
+  callbackTiming: "before-state-commit";
+  cancelable: true;
+};
+function buildValueEventRecipe(
+  event: SliderRequiredEvent,
+  name: "valueCommitted",
+): SliderEventRecipe;
+function buildValueEventRecipe(
+  event: SliderRequiredEvent,
   name: "valueChange" | "valueCommitted",
 ): SliderEventRecipe {
   return {
     callbackProp: event.callbackProp,
+    ...(name === "valueChange"
+      ? {
+          callbackTiming: getRequiredValue(
+            event.callbackTiming,
+            "valueChange callback timing",
+          ) as "before-state-commit",
+          cancelable: getRequiredValue(event.cancelable, "valueChange cancelability") as true,
+        }
+      : {}),
     detailsType: event.detailsType,
     domEvent: event.domEvent,
     emitsFrom: event.emitsFrom,
@@ -1120,9 +1144,7 @@ function getSliderAnatomyPart(spec: SliderSpecializedAdapterSpec, partName: stri
 function getSliderOption(spec: SliderSpecializedAdapterSpec, propName: string) {
   const option = spec.slider.options.find((candidate) => candidate.prop === propName);
   if (!option) {
-    throw new Error(
-      `Slider specialized adapter spec output model requires ${propName} option.`,
-    );
+    throw new Error(`Slider specialized adapter spec output model requires ${propName} option.`);
   }
 
   return option;
@@ -1169,10 +1191,7 @@ function getSliderSetOptionsMethod(spec: SliderSpecializedAdapterSpec): string {
   return getRequiredValue([...setOptionsMethods][0], "setOptions method");
 }
 
-function getSliderSpecFileBasename(
-  spec: SliderSpecializedAdapterSpec,
-  partName: string,
-): string {
+function getSliderSpecFileBasename(spec: SliderSpecializedAdapterSpec, partName: string): string {
   const file = spec.files.find(
     (candidate) => candidate.kind === "part" && candidate.part === partName,
   );

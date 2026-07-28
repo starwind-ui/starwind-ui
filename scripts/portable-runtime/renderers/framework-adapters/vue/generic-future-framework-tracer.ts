@@ -29,23 +29,35 @@ export function printGenericFutureFrameworkTracerPlan(
       },
     ];
   }
-  if (plan.component === "collapsible") {
-    return [
-      {
-        contents: renderCollapsibleRoot(plan, getPart(plan, "root")),
-        path: "__future-fixtures/vue/collapsible/CollapsibleRoot.vue",
-      },
-      {
-        contents: renderCollapsibleTrigger(getPart(plan, "trigger")),
-        path: "__future-fixtures/vue/collapsible/CollapsibleTrigger.vue",
-      },
-      {
-        contents: renderCollapsiblePanel(getPart(plan, "panel")),
-        path: "__future-fixtures/vue/collapsible/CollapsiblePanel.vue",
-      },
-    ];
-  }
   throw new Error(`${plan.displayName} does not have a Vue future-framework tracer fixture.`);
+}
+
+/**
+ * Preserves the former Collapsible tracer as isolated printer-unit evidence.
+ *
+ * Collapsible is a registered real Vue disclosure-presence family, so this helper must not be
+ * called through the active future-tracer classification or contract-gate inventories.
+ */
+export function printLegacyVueCollapsibleTracerFixture(
+  plan: GenericAdapterPlan,
+): GenericAdapterPlanPrintedFile[] {
+  if (plan.component !== "collapsible") {
+    throw new TypeError("The legacy Vue Collapsible fixture requires a Collapsible plan.");
+  }
+  return [
+    {
+      contents: renderCollapsibleRoot(plan, getPart(plan, "root")),
+      path: "__future-fixtures/vue/collapsible/CollapsibleRoot.vue",
+    },
+    {
+      contents: renderCollapsibleTrigger(getPart(plan, "trigger")),
+      path: "__future-fixtures/vue/collapsible/CollapsibleTrigger.vue",
+    },
+    {
+      contents: renderCollapsiblePanel(getPart(plan, "panel")),
+      path: "__future-fixtures/vue/collapsible/CollapsiblePanel.vue",
+    },
+  ];
 }
 
 function renderToggle(plan: GenericAdapterPlan, part: GenericAdapterPlanPart): string {

@@ -22,7 +22,21 @@ const messages = [];
 const visualEvidence = {
   dark: path.join(os.tmpdir(), "starwind-vue-display-layout-dark.png"),
   light: path.join(os.tmpdir(), "starwind-vue-display-layout-light.png"),
+  styledAlertDialogDark: path.join(os.tmpdir(), "starwind-vue-styled-alert-dialog-open-dark.png"),
+  styledAlertDialogLight: path.join(os.tmpdir(), "starwind-vue-styled-alert-dialog-open-light.png"),
+  styledPopoverDark: path.join(os.tmpdir(), "starwind-vue-styled-popover-open-dark.png"),
+  styledPopoverLight: path.join(os.tmpdir(), "starwind-vue-styled-popover-open-light.png"),
 };
+const visualEvidenceDimensions = {};
+const styledSheetGeometries = [];
+for (const theme of ["light", "dark"]) {
+  for (const side of ["top", "right", "bottom", "left"]) {
+    visualEvidence[`styledSheet${capitalize(side)}${capitalize(theme)}`] = path.join(
+      os.tmpdir(),
+      `starwind-vue-styled-sheet-${side}-${theme}.png`,
+    );
+  }
+}
 
 try {
   const baseUrl = server.resolvedUrls?.local[0] ?? `http://${host}:5190/`;
@@ -51,10 +65,36 @@ try {
   await page.getByRole("heading", { name: "Starwind Vue adapter review" }).waitFor();
   await assertNoErrors(messages);
 
+  await verifyAccordion(page);
+  await verifyTabs(page);
+  await verifyField(page);
+  await verifySlider(page);
+  await verifyInputOtp(page);
+  await verifyDropzone(page);
   await verifyButton(page);
   await verifyCheckbox(page);
+  await verifyCheckboxGroup(page);
+  await verifyCollapsible(page);
+  await verifyDialog(page);
+  await verifyAlertDialog(page);
+  await verifyDrawer(page);
+  await verifyPopover(page);
+  await verifyRadioGroup(page);
+  await verifySwitch(page);
+  await verifyToggle(page);
+  await verifyToggleGroup(page);
+  await verifyInput(page);
+  await verifyForm(page);
   await verifySelect(page);
-  await verifyStyled(page);
+  const styledProof = await verifyStyled(page);
+  await verifyStyledPopover(page, visualEvidence.styledPopoverLight, "light");
+  visualEvidenceDimensions.styledAlertDialogLight = await verifyStyledAlertDialog(
+    page,
+    "cancel",
+    visualEvidence.styledAlertDialogLight,
+    "light",
+  );
+  await verifyStyledSheetEvidence(page, "light", visualEvidence);
   const avatarProof = await verifyAvatar(page);
   const progressProof = await verifyProgress(page);
   const scrollAreaProof = await verifyScrollArea(page);
@@ -63,6 +103,15 @@ try {
   await verifyAvatarDark(page, avatarProof);
   await verifyProgressDark(page, progressProof);
   await verifyScrollAreaDark(page, scrollAreaProof);
+  await verifyStyledFormsDark(page, styledProof);
+  await verifyStyledPopover(page, visualEvidence.styledPopoverDark, "dark");
+  visualEvidenceDimensions.styledAlertDialogDark = await verifyStyledAlertDialog(
+    page,
+    "action",
+    visualEvidence.styledAlertDialogDark,
+    "dark",
+  );
+  await verifyStyledSheetEvidence(page, "dark", visualEvidence);
   await captureReviewEvidence(page, visualEvidence.dark);
   await assertNoErrors(messages);
 
@@ -73,7 +122,7 @@ try {
   await assertNoErrors(messages);
 
   console.log(
-    `Vue production demo smoke passed at ${new URL("/review", baseUrl)}. Visual evidence: ${visualEvidence.light}, ${visualEvidence.dark}`,
+    `Vue production demo smoke passed at ${new URL("/review", baseUrl)}. Visual evidence: ${visualEvidence.light}, ${visualEvidence.dark}. Styled Popover evidence: ${visualEvidence.styledPopoverLight}, ${visualEvidence.styledPopoverDark}. Styled Alert Dialog evidence: ${visualEvidence.styledAlertDialogLight} (${formatDimensions(visualEvidenceDimensions.styledAlertDialogLight)}), ${visualEvidence.styledAlertDialogDark} (${formatDimensions(visualEvidenceDimensions.styledAlertDialogDark)}). Styled Sheet geometries: ${JSON.stringify(styledSheetGeometries)}. Styled Sheet side evidence: ${["light", "dark"].flatMap((theme) => ["top", "right", "bottom", "left"].map((side) => visualEvidence[`styledSheet${capitalize(side)}${capitalize(theme)}`])).join(", ")}`,
   );
 } catch (error) {
   throw new Error(
@@ -85,6 +134,429 @@ try {
 } finally {
   await browser?.close();
   await server.close();
+}
+
+async function verifyAccordion(page) {
+  const section = page.getByTestId("accordion-review");
+  const dynamicAlpha = page.getByTestId("accordion-dynamic-alpha");
+  const dynamicBeta = page.getByTestId("accordion-dynamic-beta");
+  await assertEqual(
+    await section.locator("[data-sw-accordion]").count(),
+    3,
+    "Accordion multiple-owner inventory",
+  );
+  await assertEqual(
+    await page.getByTestId("accordion-dynamic-panel-alpha").isVisible(),
+    true,
+    "Accordion default multiple item",
+  );
+  await dynamicAlpha.focus();
+  await page.keyboard.press("Tab");
+  await assertEqual(
+    await dynamicBeta.evaluate((element) => element === document.activeElement),
+    true,
+    "Accordion native sequential focus",
+  );
+  await dynamicBeta.click();
+  await assertEqual(
+    await page.getByTestId("accordion-dynamic-panel-beta").isVisible(),
+    true,
+    "Accordion multiple item activation",
+  );
+
+  const controlled = page.getByTestId("accordion-controlled");
+  await assertEqual(
+    await controlled.getAttribute("data-state"),
+    "open",
+    "Accordion controlled default state",
+  );
+  await page.getByTestId("accordion-controlled-beta").click();
+  await assertText(
+    page.getByTestId("accordion-controlled-state"),
+    "value=alpha, proposals=beta:canceled",
+    "Accordion canceled proposal",
+  );
+  await page.getByTestId("accordion-cancel-toggle").click();
+  await page.getByTestId("accordion-controlled-beta").click();
+  await assertText(
+    page.getByTestId("accordion-controlled-state"),
+    "value=beta, proposals=beta:canceled,beta:accepted",
+    "Accordion accepted proposal",
+  );
+  await page.getByTestId("accordion-add-item").click();
+  await page.getByTestId("accordion-dynamic-item-3").waitFor();
+  await page.getByTestId("accordion-dynamic-item-3").click();
+  await assertEqual(
+    await page.getByTestId("accordion-dynamic-panel-item-3").isVisible(),
+    true,
+    "Accordion dynamic item activation",
+  );
+  await page.getByTestId("accordion-remount").click();
+  await assertEqual(
+    await page.getByTestId("styled-accordion-trigger").count(),
+    0,
+    "Styled Accordion unmount",
+  );
+  await page.getByTestId("accordion-remount").click();
+  await page.getByTestId("styled-accordion-trigger").waitFor();
+  await page.getByTestId("styled-accordion-trigger").click();
+  await assertEqual(
+    await page.getByTestId("styled-accordion-content").isVisible(),
+    true,
+    "Styled Accordion content after remount",
+  );
+}
+
+async function verifyTabs(page) {
+  const section = page.getByTestId("tabs-review");
+  const dynamicAccount = page.getByTestId("tabs-dynamic-account");
+  const dynamicPassword = page.getByTestId("tabs-dynamic-password");
+  await assertEqual(
+    await section.locator("[data-sw-tabs]").count(),
+    3,
+    "Tabs multiple-owner inventory",
+  );
+  await dynamicAccount.focus();
+  await page.keyboard.press("ArrowDown");
+  await assertEqual(
+    await dynamicPassword.evaluate((element) => element === document.activeElement),
+    true,
+    "Tabs horizontal keyboard focus",
+  );
+  await assertEqual(
+    await dynamicPassword.getAttribute("aria-selected"),
+    "true",
+    "Tabs automatic keyboard activation",
+  );
+  const indicatorBounds = await page.getByTestId("tabs-indicator").boundingBox();
+  const activeTabHeight = await page
+    .getByTestId("tabs-indicator")
+    .evaluate((element) => element.style.getPropertyValue("--active-tab-height"));
+  if (!indicatorBounds || indicatorBounds.height <= 0 || !activeTabHeight) {
+    throw new Error(`Tabs indicator geometry was unresolved: ${JSON.stringify(indicatorBounds)}`);
+  }
+
+  const controlled = page.getByTestId("tabs-controlled");
+  await assertEqual(
+    await controlled.getAttribute("data-value"),
+    "account",
+    "Tabs controlled default state",
+  );
+  await page.getByTestId("tabs-controlled-password").click();
+  await assertTextIncludes(
+    page.getByTestId("tabs-controlled-state"),
+    "value=account",
+    "Tabs canceled proposal",
+  );
+  await page.getByTestId("tabs-cancel-toggle").click();
+  await page.getByTestId("tabs-controlled-password").click();
+  await assertTextIncludes(
+    page.getByTestId("tabs-controlled-state"),
+    "value=password",
+    "Tabs accepted proposal",
+  );
+  await page.getByTestId("tabs-add-item").click();
+  await page.getByTestId("tabs-dynamic-tab-3").waitFor();
+  await page.getByTestId("tabs-dynamic-tab-3").click();
+  await assertEqual(
+    await page.getByTestId("tabs-dynamic-tab-3").getAttribute("aria-selected"),
+    "true",
+    "Tabs dynamic item activation",
+  );
+  await page.getByTestId("tabs-remount").click();
+  await assertEqual(
+    await page.getByTestId("styled-tabs-trigger").count(),
+    0,
+    "Styled Tabs unmount",
+  );
+  await page.getByTestId("tabs-remount").click();
+  await page.getByTestId("styled-tabs-trigger").waitFor();
+  await assertEqual(
+    await page.getByTestId("styled-tabs-content").isVisible(),
+    true,
+    "Styled Tabs content after remount",
+  );
+}
+
+async function verifyField(page) {
+  const section = page.getByTestId("field-review");
+  const email = page.getByTestId("field-email-control");
+  const terms = page.getByTestId("field-terms-control");
+
+  await page.getByTestId("field-submit").click();
+  await page
+    .getByTestId("field-email")
+    .locator('[data-sw-field-error][data-match="valueMissing"]')
+    .waitFor({ state: "visible" });
+  await assertText(page.getByTestId("field-submit-count"), "submits: 0", "Field invalid submit");
+  const requiredEmailError = page
+    .getByTestId("field-email")
+    .locator('[data-sw-field-error][data-match="valueMissing"]');
+  await assertEqual(await requiredEmailError.isVisible(), true, "Field valueMissing message");
+  if (!(await requiredEmailError.textContent())?.trim()) {
+    throw new Error("Field valueMissing validation message was empty");
+  }
+  await assertEqual(
+    await section.getByText("Accept the terms.").isVisible(),
+    true,
+    "Field checkbox valueMissing message",
+  );
+
+  await page.getByTestId("field-dynamic-message").click();
+  await email.fill("invalid");
+  await page.getByTestId("field-submit").click();
+  await page
+    .getByTestId("field-email")
+    .locator('[data-sw-field-error][data-match="typeMismatch"]')
+    .waitFor({ state: "visible" });
+  await assertEqual(
+    await section.getByText("Use a valid email address.").isVisible(),
+    true,
+    "Field dynamic typeMismatch message",
+  );
+
+  await email.fill("reader@example.com");
+  await terms.evaluate((element) => element.click());
+  await page.getByTestId("field-submit").click();
+  await assertText(page.getByTestId("field-submit-count"), "submits: 1", "Field valid submit");
+  const submittedValues = await section.locator("form").evaluate((form) => {
+    const entries = new FormData(form);
+    return {
+      reviewEmail: entries.get("reviewEmail"),
+      terms: entries.get("terms"),
+    };
+  });
+  await assertEqual(
+    JSON.stringify(submittedValues),
+    JSON.stringify({ reviewEmail: "reader@example.com", terms: "accepted" }),
+    "Field FormData bridge",
+  );
+
+  await page.getByTestId("field-reset").click();
+  await page.waitForFunction(() => {
+    const terms = document.querySelector('[data-testid="field-terms-control"]');
+    const visibleErrors = document.querySelectorAll(
+      '[data-testid="field-review"] [data-sw-field-error]:not([hidden])',
+    );
+    return terms?.getAttribute("aria-checked") === "false" && visibleErrors.length === 0;
+  });
+  await assertEqual(
+    await email.inputValue(),
+    "reader@example.com",
+    "Field controlled value after native reset",
+  );
+  await assertEqual(
+    await terms.getAttribute("aria-checked"),
+    "false",
+    "Field native reset checkbox",
+  );
+}
+
+async function verifySlider(page) {
+  const section = page.getByTestId("slider-review");
+  const primitiveRoot = section.locator("[data-sw-slider]").first();
+  const primitiveThumb = primitiveRoot.locator("[data-sw-slider-thumb]");
+  await primitiveThumb.focus();
+  await page.keyboard.press("ArrowRight");
+  await assertText(page.getByTestId("slider-value"), "36", "Slider keyboard change");
+  await section.getByRole("button", { name: "Cancel next change" }).click();
+  await primitiveThumb.focus();
+  await page.keyboard.press("ArrowRight");
+  await assertText(page.getByTestId("slider-value"), "36", "Slider canceled keyboard change");
+
+  const styled = page.getByTestId("styled-slider");
+  const styledControl = styled.locator("[data-sw-slider-control]");
+  const controlBounds = await styledControl.boundingBox();
+  if (!controlBounds || controlBounds.width <= 0 || controlBounds.height <= 0) {
+    throw new Error(
+      `Styled Slider control geometry was unresolved: ${JSON.stringify(controlBounds)}`,
+    );
+  }
+  await page.mouse.click(
+    controlBounds.x + controlBounds.width * 0.5,
+    controlBounds.y + controlBounds.height / 2,
+  );
+  const pointerValue = (await page.getByTestId("slider-range-value").textContent())?.trim();
+  if (pointerValue === "[20,80]") {
+    throw new Error(`Styled Slider pointer geometry did not update the value: ${pointerValue}`);
+  }
+
+  await assertEqual(
+    await styled.locator("[data-sw-slider-thumb]").count(),
+    2,
+    "Styled Slider initial thumb inventory",
+  );
+  await assertEqual(
+    await styled.locator("[data-sw-slider-input]").count(),
+    2,
+    "Styled Slider initial native-input inventory",
+  );
+  await section.getByRole("button", { name: "Toggle thumb count" }).click();
+  await assertEqual(
+    await styled.locator("[data-sw-slider-thumb]").count(),
+    3,
+    "Styled Slider dynamic thumb inventory",
+  );
+  const nativeInputs = await styled.locator("[data-sw-slider-input]").evaluateAll((inputs) =>
+    inputs.map((input) => ({
+      name: input.getAttribute("name"),
+      value: input.value,
+    })),
+  );
+  await assertEqual(
+    JSON.stringify(nativeInputs),
+    JSON.stringify([
+      { name: "price[0]", value: "20" },
+      { name: "price[1]", value: "50" },
+      { name: "price[2]", value: "80" },
+    ]),
+    "Styled Slider dynamic native inputs",
+  );
+  for (const thumb of await styled.locator("[data-sw-slider-thumb]").all()) {
+    const bounds = await thumb.boundingBox();
+    if (!bounds || bounds.width <= 0 || bounds.height <= 0) {
+      throw new Error(`Styled Slider thumb geometry was unresolved: ${JSON.stringify(bounds)}`);
+    }
+  }
+
+  await section.getByRole("button", { name: "Unmount Slider" }).click();
+  await assertEqual(await page.getByTestId("styled-slider").count(), 0, "Styled Slider unmount");
+  await section.getByRole("button", { name: "Remount Slider" }).click();
+  await page.getByTestId("styled-slider").waitFor();
+  const vertical = section.locator('[data-sw-slider][data-orientation="vertical"]');
+  const verticalBounds = await vertical.locator("[data-sw-slider-control]").boundingBox();
+  if (!verticalBounds || verticalBounds.height <= verticalBounds.width) {
+    throw new Error(`Vertical Slider geometry was unresolved: ${JSON.stringify(verticalBounds)}`);
+  }
+}
+
+async function verifyInputOtp(page) {
+  const section = page.getByTestId("input-otp-review");
+  const primitive = section.locator(
+    '[data-sw-input-otp][aria-label="Primitive verification code"]',
+  );
+  const primitiveInput = primitive.locator("input");
+  await primitiveInput.focus();
+  await page.keyboard.press("3");
+  await assertText(page.getByTestId("input-otp-value"), "123", "Input OTP keyboard edit");
+  await section.getByRole("button", { name: "Cancel next edit" }).click();
+  await primitiveInput.focus();
+  await page.keyboard.press("4");
+  await assertText(page.getByTestId("input-otp-value"), "123", "Input OTP canceled edit");
+  await primitiveInput.evaluate((input) => {
+    const paste = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(paste, "clipboardData", {
+      value: { getData: () => "a23456z" },
+    });
+    input.dispatchEvent(paste);
+  });
+  await assertText(page.getByTestId("input-otp-value"), "123234", "Input OTP normalized paste");
+
+  const styledForm = section.locator("#otp-review-form");
+  const styled = styledForm.locator("[data-sw-input-otp]");
+  await assertEqual(await styled.count(), 1, "Styled Input OTP inventory");
+  await assertEqual(await styled.locator("input").count(), 1, "Styled Input OTP native input");
+  await assertEqual(
+    await styled.locator('[data-slot="input-otp-slot"]').count(),
+    6,
+    "Styled Input OTP visual slots",
+  );
+  const styledInput = styled.locator("input");
+  await assertEqual(await styledInput.inputValue(), "123", "Styled Input OTP default value");
+  await styledInput.fill("654321");
+  await styledForm.getByRole("button", { name: "Reset code" }).click();
+  await assertEqual(await styledInput.inputValue(), "123", "Styled Input OTP native reset");
+
+  await section.getByRole("button", { name: "Unmount Input OTP" }).click();
+  await assertEqual(await styled.count(), 0, "Styled Input OTP unmount");
+  await section.getByRole("button", { name: "Remount Input OTP" }).click();
+  await styled.waitFor();
+}
+
+async function verifyDropzone(page) {
+  const section = page.getByTestId("dropzone-review");
+  const primitive = section.locator('[data-sw-dropzone][aria-label="Primitive image dropzone"]');
+  const primitiveInput = primitive.locator('input[type="file"]');
+  await primitiveInput.setInputFiles({
+    buffer: Buffer.from("image"),
+    mimeType: "image/png",
+    name: "selected.png",
+  });
+  await assertText(
+    page.getByTestId("primitive-dropzone-files"),
+    "selected.png",
+    "Dropzone native selection",
+  );
+  await dispatchDrop(primitive, [
+    { name: "photo.png", type: "image/png" },
+    { name: "notes.zip", type: "application/zip" },
+  ]);
+  await assertText(
+    page.getByTestId("primitive-dropzone-files"),
+    "photo.png",
+    "Dropzone drag filtering",
+  );
+
+  const styled = section.locator("[data-sw-dropzone]").nth(1);
+  await dispatchDrop(styled, [
+    { name: "cover.jpg", type: "image/jpeg" },
+    { name: "diagram.png", type: "image/png" },
+    { name: "notes.zip", type: "application/zip" },
+  ]);
+  await assertText(
+    page.getByTestId("styled-dropzone-files"),
+    "cover.jpg, diagram.png",
+    "Styled Dropzone drag filtering",
+  );
+  await section.getByRole("button", { name: "Show uploading" }).click();
+  await assertEqual(
+    await styled.getAttribute("data-is-uploading"),
+    "true",
+    "Styled Dropzone upload state",
+  );
+  await assertEqual(
+    await styled.locator("[data-sw-dropzone-loading-indicator]").isVisible(),
+    true,
+    "Styled Dropzone loading presentation",
+  );
+  await section.getByRole("button", { name: "Finish upload" }).click();
+  await assertEqual(
+    await styled.getAttribute("data-is-uploading"),
+    "false",
+    "Styled Dropzone completed state",
+  );
+
+  await section.getByRole("button", { name: "Unmount Dropzone" }).click();
+  await assertEqual(
+    await section.locator("[data-sw-dropzone]").count(),
+    1,
+    "Styled Dropzone unmount",
+  );
+  await section.getByRole("button", { name: "Remount Dropzone" }).click();
+  await assertEqual(
+    await section.locator("[data-sw-dropzone]").count(),
+    2,
+    "Styled Dropzone remount",
+  );
+}
+
+async function dispatchDrop(locator, files) {
+  await locator.evaluate((element, fileSpecs) => {
+    const dataTransfer = new DataTransfer();
+    for (const file of fileSpecs) {
+      dataTransfer.items.add(new File(["content"], file.name, { type: file.type }));
+    }
+    element.dispatchEvent(
+      new DragEvent("dragenter", { bubbles: true, cancelable: true, dataTransfer }),
+    );
+    if (element.getAttribute("data-drag-active") !== "true") {
+      throw new Error("Dropzone did not publish active drag state");
+    }
+    element.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer }));
+    if (element.getAttribute("data-drag-active") !== "false") {
+      throw new Error("Dropzone did not clear active drag state after drop");
+    }
+  }, files);
 }
 
 async function verifyAvatar(page) {
@@ -1138,6 +1610,734 @@ async function verifyCheckbox(page) {
   await assertEqual(await cleanupIndicator.isHidden(), false, "cleanup indicator checked presence");
 }
 
+async function verifyCollapsible(page) {
+  const defaultRoot = page.getByTestId("collapsible-default-root");
+  const defaultTrigger = page.getByTestId("collapsible-default-trigger");
+  const defaultPanel = page.getByTestId("collapsible-default-panel");
+  await assertEqual(
+    await defaultRoot.getAttribute("data-state"),
+    "open",
+    "Collapsible default open",
+  );
+  await assertEqual(await defaultPanel.isVisible(), true, "Collapsible default panel presence");
+  await defaultTrigger.click();
+  await assertEqual(await defaultRoot.getAttribute("data-state"), "closed", "Collapsible close");
+  await assertEqual(await defaultPanel.isVisible(), false, "Collapsible closed panel visibility");
+  await assertEqual(await defaultPanel.count(), 1, "Collapsible closed panel mounted");
+
+  const controlledRoot = page.getByTestId("collapsible-controlled-root");
+  const controlledTrigger = page.getByTestId("collapsible-controlled-trigger");
+  await controlledTrigger.click();
+  await assertEqual(
+    await controlledRoot.getAttribute("data-state"),
+    "closed",
+    "Collapsible canceled proposal",
+  );
+  await page.getByTestId("collapsible-cancel-toggle").click();
+  await controlledTrigger.click();
+  await assertEqual(
+    await controlledRoot.getAttribute("data-state"),
+    "open",
+    "Collapsible controlled proposal",
+  );
+
+  const asChild = page.getByTestId("collapsible-as-child");
+  await assertEqual(await asChild.evaluate((element) => element.tagName), "BUTTON", "asChild tag");
+  await assertEqual(await asChild.getAttribute("type"), "button", "asChild type");
+  await asChild.click();
+  await assertText(
+    page.getByTestId("collapsible-listener-state"),
+    "child-clicks=1, wrapper-clicks=1",
+    "Collapsible merged listeners",
+  );
+
+  await page.getByTestId("collapsible-remount-toggle").click();
+  await assertText(
+    page.getByTestId("collapsible-remount-state"),
+    "unmounted",
+    "Collapsible unmount",
+  );
+  await page.getByTestId("collapsible-remount-toggle").click();
+  await assertEqual(
+    await page.getByTestId("collapsible-remount-root").count(),
+    1,
+    "Collapsible remount",
+  );
+}
+
+async function verifyDialog(page) {
+  const trigger = page.getByTestId("dialog-trigger");
+  const popup = page.getByTestId("dialog-popup");
+  await trigger.click();
+  await assertEqual(await popup.isVisible(), false, "Dialog canceled open");
+  await trigger.click();
+  await assertEqual(await popup.isVisible(), true, "Dialog accepted open");
+  await assertEqual(
+    await page.locator("body").getAttribute("data-sw-scroll-locked"),
+    "",
+    "Dialog modal scroll lock",
+  );
+  await page.getByTestId("nested-dialog-trigger").click();
+  await page.keyboard.press("Escape");
+  await assertEqual(await popup.isVisible(), true, "Dialog nested Escape ownership");
+  await page.keyboard.press("Escape");
+  await assertEqual(await popup.isVisible(), false, "Dialog Escape dismissal");
+  await page.waitForFunction(
+    () => !document.querySelector('[data-testid="dialog-popup"]')?.hasAttribute("open"),
+  );
+  await page.getByTestId("dialog-remount").click();
+  await assertEqual(await page.getByTestId("primitive-dialog").count(), 0, "Dialog unmount");
+  await page.getByTestId("dialog-remount").click();
+  await assertEqual(await page.getByTestId("primitive-dialog").count(), 1, "Dialog remount");
+}
+
+async function verifyAlertDialog(page) {
+  const trigger = page.getByTestId("alert-dialog-trigger");
+  const popup = page.getByTestId("alert-dialog-popup");
+  const portalTarget = page.getByTestId("alert-dialog-portal-target");
+
+  await trigger.click();
+  await assertEqual(await popup.isVisible(), false, "Alert Dialog canceled controlled open");
+  await assertText(
+    page.getByTestId("alert-dialog-state"),
+    "open: false",
+    "Alert Dialog canceled model",
+  );
+
+  await trigger.click();
+  await assertEqual(await popup.isVisible(), true, "Alert Dialog accepted controlled open");
+  await assertText(
+    page.getByTestId("alert-dialog-state"),
+    "open: true",
+    "Alert Dialog accepted model",
+  );
+  await assertEqual(
+    await portalTarget.locator('[data-testid="alert-dialog-portal"]').count(),
+    1,
+    "Alert Dialog custom portal ownership",
+  );
+  await assertEqual(
+    await portalTarget.locator('[data-testid="alert-dialog-popup"]').count(),
+    1,
+    "Alert Dialog custom portal popup ownership",
+  );
+  await page.getByTestId("alert-dialog-confirm").click();
+  await waitForDialogClosed(page, "alert-dialog-popup");
+
+  await page.getByTestId("alert-dialog-remount").click();
+  await assertEqual(
+    await page.getByTestId("primitive-alert-dialog").count(),
+    0,
+    "Alert Dialog unmount",
+  );
+  await assertEqual(
+    await page.getByTestId("alert-dialog-portal").count(),
+    0,
+    "Alert Dialog portal cleanup",
+  );
+
+  await page.getByTestId("alert-dialog-default-toggle").click();
+  await assertText(
+    page.getByTestId("alert-dialog-default-state"),
+    "mounted",
+    "default-open Alert Dialog mount",
+  );
+  await assertEqual(
+    await page.getByTestId("alert-dialog-default-popup").isVisible(),
+    true,
+    "default-open Alert Dialog opens on demand",
+  );
+  await assertEqual(
+    await portalTarget.locator('[data-testid="alert-dialog-default-portal"]').count(),
+    1,
+    "default-open Alert Dialog custom portal ownership",
+  );
+  await page.getByTestId("alert-dialog-default-close").click();
+  await waitForDialogClosed(page, "alert-dialog-default-popup");
+  await page.getByTestId("alert-dialog-default-toggle").click();
+  await assertText(
+    page.getByTestId("alert-dialog-default-state"),
+    "unmounted",
+    "default-open Alert Dialog unmount",
+  );
+
+  await assertAlertDialogCleanup(page, "Primitive Alert Dialog cleanup");
+}
+
+async function verifyDrawer(page) {
+  const trigger = page.getByTestId("drawer-trigger");
+  const popup = page.getByTestId("drawer-popup");
+  for (const side of ["top", "right", "bottom", "left"]) {
+    await page.getByTestId("drawer-side").selectOption(side);
+    await trigger.click();
+    await assertEqual(await popup.getAttribute("data-side"), side, `Drawer ${side} side`);
+    await assertEqual(await popup.isVisible(), true, `Drawer ${side} open`);
+    await assertEqual(
+      await page.locator("body").getAttribute("data-sw-scroll-locked"),
+      "",
+      `Drawer ${side} scroll lock`,
+    );
+    await page.getByTestId("drawer-close").click();
+    await page.waitForFunction(
+      () => !document.querySelector('[data-testid="drawer-popup"]')?.hasAttribute("open"),
+    );
+  }
+
+  await page.getByTestId("drawer-portal-mode").selectOption("custom");
+  await trigger.click();
+  const customTarget = page.getByTestId("drawer-custom-target");
+  await assertEqual(
+    await customTarget.locator("[data-sw-drawer-viewport]").count(),
+    1,
+    "Drawer custom portal ownership",
+  );
+  await page.getByTestId("drawer-close").click();
+  await page.waitForFunction(
+    () => !document.querySelector('[data-testid="drawer-popup"]')?.hasAttribute("open"),
+  );
+  await assertEqual(
+    await customTarget.locator("[data-sw-drawer-viewport]").count(),
+    1,
+    "Drawer custom portal owner retained while closed",
+  );
+  await page.getByTestId("drawer-portal-mode").selectOption("body");
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="drawer-custom-target"]')
+        ?.querySelector("[data-sw-drawer-viewport]") === null,
+  );
+  await assertEqual(
+    await customTarget.locator("[data-sw-drawer-viewport]").count(),
+    0,
+    "Drawer custom portal cleanup after reparent",
+  );
+  await trigger.click();
+  await assertEqual(
+    await popup.evaluate(
+      (element) => element.closest("[data-sw-drawer-portal]")?.parentElement === document.body,
+    ),
+    true,
+    "Drawer body portal ownership",
+  );
+  await page.getByTestId("drawer-close").click();
+  await page.waitForFunction(
+    () => !document.querySelector('[data-testid="drawer-popup"]')?.hasAttribute("open"),
+  );
+  await page.getByTestId("drawer-portal-mode").selectOption("inline");
+  await trigger.click();
+  await assertEqual(
+    await page.getByTestId("drawer-review").locator("[data-sw-drawer-viewport]").count(),
+    1,
+    "Drawer inline portal ownership",
+  );
+  await page.getByTestId("drawer-close").click();
+  await page.waitForFunction(
+    () => !document.querySelector('[data-testid="drawer-popup"]')?.hasAttribute("open"),
+  );
+  await page.getByTestId("drawer-portal-mode").selectOption("body");
+
+  const nestedParentTrigger = page.getByTestId("drawer-nested-parent-trigger");
+  await nestedParentTrigger.focus();
+  await nestedParentTrigger.click();
+  await page.getByTestId("drawer-nested-child-trigger").click();
+  await assertEqual(
+    await page.getByTestId("drawer-nested-parent-popup").isVisible(),
+    true,
+    "Nested Drawer parent open",
+  );
+  await assertEqual(
+    await page.getByTestId("drawer-nested-child-popup").isVisible(),
+    true,
+    "Nested Drawer child open",
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(
+    () =>
+      !document.querySelector('[data-testid="drawer-nested-child-popup"]')?.hasAttribute("open"),
+  );
+  await assertEqual(
+    await page.getByTestId("drawer-nested-parent-popup").getAttribute("open"),
+    "",
+    "Nested Drawer Escape keeps parent open",
+  );
+  await assertEqual(
+    await page.locator("body").getAttribute("data-sw-scroll-locked"),
+    "",
+    "Nested Drawer lock retained for parent",
+  );
+  await assertEqual(
+    await page.evaluate(() => document.activeElement?.getAttribute("data-testid")),
+    "drawer-nested-child-trigger",
+    "Nested Drawer child focus return",
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(
+    () =>
+      !document.querySelector('[data-testid="drawer-nested-parent-popup"]')?.hasAttribute("open"),
+  );
+  await assertEqual(
+    await page.evaluate(() => document.activeElement?.getAttribute("data-testid")),
+    "drawer-nested-parent-trigger",
+    "Nested Drawer parent focus return",
+  );
+  await assertEqual(
+    await page.locator("body").getAttribute("data-sw-scroll-locked"),
+    null,
+    "Nested Drawer scroll lock cleanup",
+  );
+
+  await page.getByTestId("drawer-remount").click();
+  await assertEqual(await page.getByTestId("drawer-trigger").count(), 0, "Drawer unmount");
+  await page.getByTestId("drawer-remount").click();
+  await assertEqual(await page.getByTestId("drawer-trigger").count(), 1, "Drawer remount");
+}
+
+async function verifyStyledSheetEvidence(page, theme, evidence) {
+  for (const side of ["top", "right", "bottom", "left"]) {
+    await page.getByTestId(`styled-sheet-side-${side}`).click();
+    await page.getByTestId("styled-sheet-trigger").click();
+    const content = page.getByTestId("styled-sheet-content");
+    await page.waitForFunction(() =>
+      document.querySelector('[data-testid="styled-sheet-content"]')?.hasAttribute("open"),
+    );
+    await page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    );
+    await assertEqual(await content.getAttribute("data-side"), side, `Styled Sheet ${side} side`);
+    await assertEqual(await content.isVisible(), true, `Styled Sheet ${side} ${theme} open`);
+    await content.evaluate(async (element) => {
+      const animations = element.getAnimations({ subtree: true });
+      await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+    });
+    const geometry = await content.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        bottom: rect.bottom,
+        height: rect.height,
+        left: rect.left,
+        right: rect.right,
+        rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize),
+        top: rect.top,
+        viewportHeight: document.documentElement.clientHeight,
+        viewportWidth: document.body.clientWidth,
+        width: rect.width,
+      };
+    });
+    const anchored =
+      side === "right"
+        ? Math.abs(geometry.right - geometry.viewportWidth) <= 1
+        : side === "left"
+          ? Math.abs(geometry.left) <= 1
+          : side === "top"
+            ? Math.abs(geometry.top) <= 1
+            : Math.abs(geometry.bottom - geometry.viewportHeight) <= 1;
+    const lateral = side === "right" || side === "left";
+    const expectedLateralWidth = Math.min(
+      geometry.viewportWidth * 0.75,
+      geometry.rootFontSize * 24,
+    );
+    const contractSized = lateral
+      ? Math.abs(geometry.width - expectedLateralWidth) <= 1 &&
+        Math.abs(geometry.height - geometry.viewportHeight) <= 1
+      : Math.abs(geometry.width - geometry.viewportWidth) <= 1;
+    styledSheetGeometries.push({ ...geometry, side, theme });
+    if (
+      !anchored ||
+      !contractSized ||
+      geometry.width < 150 ||
+      geometry.height < 50 ||
+      geometry.left < -1 ||
+      geometry.top < -1 ||
+      geometry.right > geometry.viewportWidth + 1 ||
+      geometry.bottom > geometry.viewportHeight + 1
+    ) {
+      throw new Error(
+        `Styled Sheet ${side} ${theme} final geometry is invalid: ${JSON.stringify(geometry)}`,
+      );
+    }
+    await assertEqual(
+      await page.getByTestId("styled-sheet-backdrop").isVisible(),
+      true,
+      `Styled Sheet ${side} ${theme} custom backdrop`,
+    );
+    await assertEqual(
+      await content.locator('path[d="M18 6l-12 12"]').count(),
+      1,
+      `Styled Sheet ${side} ${theme} default X first stroke`,
+    );
+    await assertEqual(
+      await content.locator('path[d="M6 6l12 12"]').count(),
+      1,
+      `Styled Sheet ${side} ${theme} default X second stroke`,
+    );
+    const evidencePath = evidence[`styledSheet${capitalize(side)}${capitalize(theme)}`];
+    await page.screenshot({ fullPage: true, path: evidencePath });
+    await content.locator('[data-slot="sheet-close"]').click();
+    await page.waitForFunction(
+      () => !document.querySelector('[data-testid="styled-sheet-content"]')?.hasAttribute("open"),
+    );
+  }
+  await page.getByTestId("styled-custom-sheet-trigger").click();
+  await assertEqual(
+    await page.getByTestId("styled-custom-sheet-icon").isVisible(),
+    true,
+    `Styled Sheet ${theme} explicit custom icon`,
+  );
+  await page
+    .getByTestId("styled-custom-sheet-content")
+    .locator('[data-slot="sheet-close"]')
+    .click();
+}
+
+async function verifyCheckboxGroup(page) {
+  const group = page.getByTestId("checkbox-group-controlled");
+  const alpha = group.locator('[data-value="alpha"]');
+  const beta = group.locator('[data-value="beta"]');
+
+  await assertEqual(await group.getAttribute("data-value"), '["alpha"]', "Checkbox Group default");
+  await assertEqual(await alpha.getAttribute("aria-checked"), "true", "Checkbox Group alpha");
+  await assertEqual(await beta.getAttribute("aria-checked"), "false", "Checkbox Group beta");
+  await beta.dispatchEvent("click");
+  await assertEqual(
+    await group.getAttribute("data-value"),
+    '["alpha","beta"]',
+    "Checkbox Group multi-selection",
+  );
+  await assertText(
+    page.getByTestId("checkbox-group-state"),
+    '["alpha","beta"]',
+    "Checkbox Group controlled model",
+  );
+  await alpha.click();
+  await assertEqual(
+    await group.getAttribute("data-value"),
+    '["beta"]',
+    "Checkbox Group independent deselection",
+  );
+}
+
+async function verifyRadioGroup(page) {
+  const review = page.getByTestId("radio-group-review");
+  const group = page.getByTestId("primitive-radio-group");
+  const alpha = page.getByTestId("primitive-radio-alpha");
+  const beta = page.getByTestId("primitive-radio-beta");
+
+  await assertEqual(await group.getAttribute("data-value"), "alpha", "Radio Group default");
+  await beta.click();
+  await assertEqual(await group.getAttribute("data-value"), "beta", "Radio Group selection");
+  await assertText(
+    page.getByTestId("radio-group-state"),
+    "value: beta, changes: 1",
+    "Radio Group controlled model",
+  );
+  await assertEqual(
+    await page
+      .locator("#radio-review-form")
+      .evaluate((form) => JSON.stringify(Object.fromEntries(new FormData(form)))),
+    '{"primitive-choice":"beta"}',
+    "Radio Group form serialization",
+  );
+
+  await review.getByRole("button", { name: "Cancel next selection" }).click();
+  await alpha.click();
+  await assertEqual(
+    await group.getAttribute("data-value"),
+    "beta",
+    "Radio Group canceled selection",
+  );
+  await assertText(
+    page.getByTestId("radio-group-state"),
+    "value: beta, changes: 2",
+    "Radio Group canceled detail publication",
+  );
+
+  await review.getByRole("button", { name: "Add gamma" }).click();
+  const gamma = page.getByTestId("primitive-radio-gamma");
+  await assertEqual(await gamma.count(), 1, "Radio Group dynamic membership");
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  await beta.focus();
+  await beta.press("ArrowRight");
+  await assertEqual(
+    await page.evaluate(() => document.activeElement?.getAttribute("data-testid")),
+    "primitive-radio-gamma",
+    "Radio Group keyboard navigation",
+  );
+  await assertEqual(await group.getAttribute("data-value"), "gamma", "Radio Group keyboard model");
+
+  await review.getByRole("button", { name: "Reset" }).click();
+  await assertEqual(
+    await group.getAttribute("data-value"),
+    "gamma",
+    "Radio Group controlled native reset preservation",
+  );
+  await assertEqual(
+    await page.locator("[data-sw-radio-group]").count(),
+    2,
+    "Radio Group instance isolation",
+  );
+  await assertEqual(
+    await page.locator("[data-sw-checkbox-group]").count(),
+    2,
+    "Checkbox Group instance isolation",
+  );
+}
+
+async function verifyForm(page) {
+  const input = page.getByTestId("primitive-form-email");
+  const summary = page.getByTestId("primitive-form-summary");
+  const fieldset = page.getByTestId("primitive-fieldset");
+
+  await page.getByTestId("primitive-form-submit").click();
+  await assertEqual(await summary.isVisible(), true, "Form invalid summary");
+  await page.waitForFunction(
+    () => document.activeElement?.getAttribute("data-testid") === "primitive-form-email",
+    undefined,
+    { timeout: 1_000 },
+  );
+  await assertEqual(
+    await input.evaluate((element) => element === document.activeElement),
+    true,
+    "Form invalid focus",
+  );
+
+  await input.fill("reader@example.com");
+  await page.getByTestId("primitive-form-submit").click();
+  await assertEqual(
+    await page.getByTestId("form-submit-count").textContent(),
+    "submits: 1",
+    "Form valid submit",
+  );
+
+  await page.getByTestId("primitive-fieldset-toggle").click();
+  await assertEqual(await fieldset.getAttribute("disabled"), "", "Fieldset native disabled");
+  await page.getByTestId("primitive-form-company-toggle").click();
+  await assertEqual(
+    await fieldset.locator('[data-name="company"]').getAttribute("data-disabled"),
+    "",
+    "Fieldset dynamic disabled propagation",
+  );
+  await page.getByTestId("primitive-fieldset-toggle").click();
+  await page.getByTestId("primitive-form-reset").click();
+  await assertEqual(await input.inputValue(), "", "Form native reset");
+}
+
+async function verifyInput(page) {
+  const controlled = page.getByTestId("input-controlled");
+  await controlled.fill("Portable Vue");
+  await assertText(
+    page.getByTestId("input-controlled-state"),
+    "value: Portable Vue",
+    "Input default model",
+  );
+
+  const formControl = page.getByTestId("input-form-control");
+  await formControl.fill("edited query");
+  await page.getByTestId("input-form-submit").click();
+  await assertText(
+    page.getByTestId("input-form-result"),
+    '{"query":"edited query"}',
+    "Input form serialization",
+  );
+  await page.getByTestId("input-form-reset").click();
+  await assertEqual(await formControl.inputValue(), "initial query", "Input form reset");
+
+  await page.getByTestId("input-cleanup-toggle").click();
+  await assertEqual(
+    await page.getByTestId("input-cleanup-instance").count(),
+    0,
+    "Input cleanup DOM",
+  );
+  await page.getByTestId("input-cleanup-toggle").click();
+  await assertEqual(await page.getByTestId("input-cleanup-instance").count(), 1, "Input remount");
+}
+
+async function verifySwitch(page) {
+  const uncontrolled = page.getByTestId("switch-uncontrolled");
+  await assertEqual(await uncontrolled.getAttribute("aria-checked"), "true", "Switch default");
+  await uncontrolled.dispatchEvent("click");
+  await assertEqual(await uncontrolled.getAttribute("aria-checked"), "false", "Switch click");
+
+  const controlled = page.getByTestId("switch-controlled");
+  await controlled.dispatchEvent("keydown", { key: " " });
+  await assertEqual(await controlled.getAttribute("aria-checked"), "true", "Switch keyboard");
+  await assertText(
+    page.getByTestId("switch-controlled-state"),
+    "checked: true",
+    "Switch controlled model",
+  );
+
+  const canceled = page.getByTestId("switch-canceled");
+  await canceled.dispatchEvent("click");
+  await assertEqual(await canceled.getAttribute("aria-checked"), "false", "canceled Switch");
+  await assertText(
+    page.getByTestId("switch-cancel-state"),
+    "attempts: 1, updates: 0",
+    "canceled Switch events",
+  );
+
+  await page.getByTestId("switch-form-submit").click();
+  await assertText(
+    page.getByTestId("switch-form-result"),
+    '{"notifications":"yes"}',
+    "checked Switch form data",
+  );
+  await page.getByTestId("switch-form-control").dispatchEvent("click");
+  await page.getByTestId("switch-form-submit").click();
+  await assertText(
+    page.getByTestId("switch-form-result"),
+    '{"notifications":"no"}',
+    "unchecked Switch form data",
+  );
+
+  await page.getByTestId("switch-cleanup-toggle").click();
+  await assertEqual(
+    await page.getByTestId("switch-cleanup-instance").count(),
+    0,
+    "Switch cleanup DOM",
+  );
+  await page.getByTestId("switch-cleanup-toggle").click();
+  await assertEqual(await page.getByTestId("switch-cleanup-instance").count(), 1, "Switch remount");
+}
+
+async function verifyToggle(page) {
+  const uncontrolled = page.getByTestId("toggle-uncontrolled");
+  await assertEqual(await uncontrolled.getAttribute("aria-pressed"), "false", "Toggle default");
+  await uncontrolled.click();
+  await assertEqual(await uncontrolled.getAttribute("aria-pressed"), "true", "Toggle click");
+
+  const controlled = page.getByTestId("toggle-controlled");
+  await controlled.click();
+  await assertEqual(await controlled.getAttribute("aria-pressed"), "true", "Toggle controlled");
+  await assertText(
+    page.getByTestId("toggle-controlled-state"),
+    "pressed: true",
+    "Toggle controlled model",
+  );
+
+  const canceled = page.getByTestId("toggle-canceled");
+  await canceled.click();
+  await assertEqual(await canceled.getAttribute("aria-pressed"), "false", "canceled Toggle");
+  await assertText(page.getByTestId("toggle-cancel-state"), "canceled: 1", "Toggle cancel detail");
+
+  const alpha = page.getByTestId("toggle-sync-alpha");
+  const beta = page.getByTestId("toggle-sync-beta");
+  await alpha.click();
+  await assertEqual(await alpha.getAttribute("aria-pressed"), "true", "Toggle sync source");
+  await assertEqual(await beta.getAttribute("aria-pressed"), "true", "Toggle sync peer");
+  await beta.press(" ");
+  await assertEqual(
+    await alpha.getAttribute("aria-pressed"),
+    "false",
+    "Toggle keyboard sync source",
+  );
+  await assertEqual(await beta.getAttribute("aria-pressed"), "false", "Toggle keyboard sync peer");
+
+  await page.getByTestId("toggle-cleanup-toggle").click();
+  await assertEqual(
+    await page.getByTestId("toggle-cleanup-instance").count(),
+    0,
+    "Toggle cleanup DOM",
+  );
+  await page.getByTestId("toggle-cleanup-toggle").click();
+  await assertEqual(await page.getByTestId("toggle-cleanup-instance").count(), 1, "Toggle remount");
+}
+
+async function verifyToggleGroup(page) {
+  const review = page.getByTestId("toggle-group-review");
+  const group = page.getByTestId("toggle-group-single");
+  const left = page.getByTestId("toggle-group-single-left");
+  const center = page.getByTestId("toggle-group-single-center");
+  const right = page.getByTestId("toggle-group-single-right");
+
+  await assertEqual(await group.getAttribute("data-consumer"), "forwarded", "Toggle Group attr");
+  await assertEqual(
+    await group.getAttribute("title"),
+    "Primitive Toggle Group",
+    "Toggle Group title",
+  );
+  await assertText(center, "center", "Toggle Group slot");
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="toggle-group-public-state"]')
+        ?.textContent?.replace(/\s+/g, " ")
+        .includes("refs=DIV/BUTTON") === true,
+  );
+
+  await left.focus();
+  await left.press("ArrowLeft");
+  await assertEqual(
+    await page.evaluate(() => document.activeElement?.getAttribute("data-testid")),
+    "toggle-group-single-left",
+    "Toggle Group non-looping start boundary",
+  );
+  await page.getByTestId("toggle-group-loop").click();
+  await left.focus();
+  await left.press("ArrowLeft");
+  await assertEqual(
+    await page.evaluate(() => document.activeElement?.getAttribute("data-testid")),
+    "toggle-group-single-right",
+    "Toggle Group looping start boundary",
+  );
+
+  await center.click();
+  await assertEqual(await group.getAttribute("data-value"), '["center"]', "Toggle Group model");
+  await assertText(
+    page.getByTestId("toggle-group-detail-state"),
+    'previous=["left"], current=["center"]',
+    "Toggle Group detail publication",
+  );
+  await assertText(
+    page.getByTestId("toggle-group-public-state"),
+    "clicks=1, refs=DIV/BUTTON",
+    "Toggle Group listener and refs",
+  );
+
+  await review.getByRole("button", { name: "Cancel next selection" }).click();
+  await right.click();
+  await assertEqual(
+    await group.getAttribute("data-value"),
+    '["center"]',
+    "canceled Toggle Group selection",
+  );
+  await assertText(
+    page.getByTestId("toggle-group-detail-state"),
+    'previous=["center"], current=["right"]',
+    "canceled Toggle Group detail publication",
+  );
+
+  await page.getByTestId("toggle-group-reorder").click();
+  const reordered = await group
+    .locator("[data-sw-toggle]")
+    .evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")));
+  await assertEqual(
+    JSON.stringify(reordered),
+    JSON.stringify([
+      "toggle-group-single-right",
+      "toggle-group-single-center",
+      "toggle-group-single-left",
+    ]),
+    "Toggle Group actual reorder",
+  );
+
+  const multiple = page.getByTestId("toggle-group-multiple");
+  await review.getByRole("button", { name: "Add underline" }).click();
+  await assertEqual(
+    await multiple.locator('[data-value="underline"]').count(),
+    1,
+    "Toggle Group dynamic membership",
+  );
+  await multiple.locator('[data-value="underline"]').click();
+  await assertText(
+    page.getByTestId("toggle-group-multiple-state"),
+    'multiple: ["bold","underline"]',
+    "Toggle Group multiple model",
+  );
+}
+
 async function verifySelect(page) {
   const portalTarget = page.getByTestId("select-portal-target");
   const uncontrolled = page.getByTestId("select-uncontrolled-root");
@@ -1238,6 +2438,97 @@ async function verifySelect(page) {
   await assertEqual(await page.getByTestId("select-cleanup-root").count(), 1, "Select remount");
 }
 
+async function verifyPopover(page) {
+  const trigger = page.getByTestId("popover-trigger");
+  const popup = page.getByTestId("popover-popup");
+
+  await page.getByTestId("popover-side").selectOption("right");
+  await page.getByTestId("popover-align").selectOption("end");
+  await trigger.click();
+  await assertEqual(await popup.isVisible(), true, "Popover open");
+  await assertEqual(await popup.getAttribute("data-side"), "right", "Popover side");
+  await assertEqual(await popup.getAttribute("data-align"), "end", "Popover align");
+  await assertEqual(
+    await popup
+      .locator("xpath=ancestor::*[@data-sw-popover-positioner]")
+      .evaluate((element) => getComputedStyle(element).position),
+    "fixed",
+    "Popover fixed positioning",
+  );
+  await assertEqual(
+    await page.locator("body").getAttribute("data-sw-scroll-locked"),
+    null,
+    "non-modal Popover does not lock scrolling",
+  );
+  await page.getByTestId("popover-close").click();
+  await page.waitForFunction(() =>
+    document.querySelector('[data-testid="popover-popup"]')?.hasAttribute("hidden"),
+  );
+
+  await page.getByTestId("popover-modal").check();
+  await trigger.click();
+  await assertEqual(
+    await page.locator("body").getAttribute("data-sw-scroll-locked"),
+    "",
+    "modal Popover scroll lock",
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() =>
+    document.querySelector('[data-testid="popover-popup"]')?.hasAttribute("hidden"),
+  );
+
+  await page.getByTestId("popover-portal-mode").selectOption("custom");
+  await trigger.click();
+  await assertEqual(
+    await page.getByTestId("popover-custom-target").locator("[data-sw-popover-portal]").count(),
+    1,
+    "Popover custom portal ownership",
+  );
+  await page.getByTestId("popover-close").click();
+  await page.getByTestId("popover-portal-mode").selectOption("inline");
+  await trigger.click();
+  await assertEqual(
+    await page.getByTestId("popover-review").locator("[data-sw-popover-portal]").count(),
+    1,
+    "Popover inline portal ownership",
+  );
+  await page.getByTestId("popover-close").click();
+
+  await page.getByTestId("popover-remount").click();
+  await assertEqual(
+    await page.getByTestId("popover-popup").count(),
+    0,
+    "Popover popup cleanup after unmount",
+  );
+  await page.getByTestId("popover-remount").click();
+
+  await page.getByTestId("popover-dialog-trigger").click();
+  await page.getByTestId("popover-nested-trigger").click();
+  await assertEqual(
+    await page.getByTestId("popover-dialog-popup").isVisible(),
+    true,
+    "parent Dialog",
+  );
+  await assertEqual(
+    await page.getByTestId("popover-nested-popup").isVisible(),
+    true,
+    "nested Popover",
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() =>
+    document.querySelector('[data-testid="popover-nested-popup"]')?.hasAttribute("hidden"),
+  );
+  await assertEqual(
+    await page.getByTestId("popover-dialog-popup").getAttribute("open"),
+    "",
+    "nested Popover Escape keeps Dialog open",
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(
+    () => !document.querySelector('[data-testid="popover-dialog-popup"]')?.hasAttribute("open"),
+  );
+}
+
 async function verifyStyled(page) {
   const variantButtons = page.getByTestId("styled-button-variants").locator('[data-slot="button"]');
   await assertEqual(await variantButtons.count(), 5, "Styled Button variants");
@@ -1250,6 +2541,168 @@ async function verifyStyled(page) {
     "checked: false",
     "Styled Checkbox parent state",
   );
+
+  const checkboxGroup = page
+    .getByTestId("styled-checkbox-group")
+    .locator("[data-sw-checkbox-group]");
+  await checkboxGroup.locator('[data-value="styled-beta"]').click();
+  await assertText(
+    page.getByTestId("styled-checkbox-group-state"),
+    '["styled-alpha","styled-beta"]',
+    "Styled Checkbox Group model",
+  );
+
+  const styledCollapsible = page.getByTestId("styled-collapsible");
+  const styledCollapsibleTrigger = page.getByTestId("styled-collapsible-trigger");
+  await assertEqual(
+    await styledCollapsible.getAttribute("data-slot"),
+    "collapsible",
+    "Styled Collapsible slot",
+  );
+  await styledCollapsibleTrigger.click();
+  await assertText(
+    page.getByTestId("styled-collapsible-state"),
+    "open: true, changes: 1",
+    "Styled Collapsible model",
+  );
+  await assertEqual(
+    await page.getByTestId("styled-collapsible-content").isVisible(),
+    true,
+    "Styled Collapsible content",
+  );
+
+  const styledDialogTrigger = page.getByTestId("styled-dialog-trigger");
+  await styledDialogTrigger.click();
+  await assertText(page.getByTestId("styled-dialog-state"), "open: true", "Styled Dialog model");
+  await assertEqual(
+    await page.getByTestId("styled-dialog-custom-backdrop").isVisible(),
+    true,
+    "Styled Dialog custom backdrop",
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(
+    () => !document.querySelector('[data-testid="styled-dialog-content"]')?.hasAttribute("open"),
+  );
+
+  const input = page.getByTestId("styled-input-small");
+  await input.fill("Styled accepted input");
+  await assertText(
+    page.getByTestId("styled-input-state"),
+    "value: Styled accepted input",
+    "Styled Input model",
+  );
+
+  const radioGroup = page.getByTestId("styled-radio-group").locator("[data-sw-radio-group]");
+  await radioGroup.locator('[data-value="styled-beta"]').click();
+  await assertText(
+    page.getByTestId("styled-radio-group-state"),
+    "value: styled-beta",
+    "Styled Radio Group model",
+  );
+
+  const styledForm = page.getByTestId("styled-form");
+  await styledForm.getByRole("button", { name: "Validate styled form" }).click();
+  await assertEqual(
+    await page.getByTestId("styled-form-summary").isVisible(),
+    true,
+    "Styled Form validation",
+  );
+
+  const toggle = page.getByTestId("styled-toggle");
+  await assertEqual(await toggle.getAttribute("data-slot"), "toggle", "Styled Toggle slot");
+  await toggle.click();
+  await assertEqual(await toggle.getAttribute("aria-pressed"), "true", "Styled Toggle model");
+  await assertText(
+    page.getByTestId("styled-toggle-state"),
+    "pressed: true, changes: 1",
+    "Styled Toggle parent state",
+  );
+
+  const styledToggleGroup = page.getByTestId("styled-toggle-group-control");
+  const toggleGroupGeometryBefore = await readStyledToggleGroupGeometry(styledToggleGroup);
+  if (
+    toggleGroupGeometryBefore.gap <= 0 ||
+    toggleGroupGeometryBefore.itemHeight <= 0 ||
+    toggleGroupGeometryBefore.itemWidth <= 0 ||
+    toggleGroupGeometryBefore.spacingToken !== "1"
+  ) {
+    throw new Error(
+      `Styled Toggle Group unresolved light geometry: ${JSON.stringify(toggleGroupGeometryBefore)}`,
+    );
+  }
+  await assertEqual(
+    toggleGroupGeometryBefore.outlineColor,
+    "rgb(14, 165, 233)",
+    "Styled Toggle Group consumer style",
+  );
+  await page.getByTestId("styled-toggle-group-spacing").click();
+  await page.waitForFunction((initialGap) => {
+    const root = document.querySelector('[data-testid="styled-toggle-group-control"]');
+    return (
+      root instanceof HTMLElement &&
+      Number.parseFloat(getComputedStyle(root).gap) > Number(initialGap)
+    );
+  }, toggleGroupGeometryBefore.gap);
+  const toggleGroupGeometryAfter = await readStyledToggleGroupGeometry(styledToggleGroup);
+  if (
+    toggleGroupGeometryAfter.gap <= toggleGroupGeometryBefore.gap ||
+    toggleGroupGeometryAfter.spacingToken !== "4" ||
+    toggleGroupGeometryAfter.rootWidth <= toggleGroupGeometryBefore.rootWidth
+  ) {
+    throw new Error(
+      `Styled Toggle Group spacing did not change geometry: before=${JSON.stringify(toggleGroupGeometryBefore)}, after=${JSON.stringify(toggleGroupGeometryAfter)}`,
+    );
+  }
+  await assertText(
+    page.getByTestId("styled-toggle-group-state"),
+    'value: ["styled-left"], spacing: 4',
+    "Styled Toggle Group spacing state",
+  );
+
+  const switchControl = page.getByTestId("styled-switch");
+  const switchGeometryBefore = await readStyledSwitchGeometry(switchControl);
+  if (
+    switchGeometryBefore.rootWidth <= 0 ||
+    switchGeometryBefore.rootHeight <= 0 ||
+    switchGeometryBefore.thumbWidth <= 0 ||
+    !switchGeometryBefore.heightToken ||
+    !switchGeometryBefore.widthToken ||
+    !switchGeometryBefore.paddingToken ||
+    !switchGeometryBefore.translationToken
+  ) {
+    throw new Error(
+      `Styled Switch unresolved geometry before activation: ${JSON.stringify(switchGeometryBefore)}`,
+    );
+  }
+  await page.getByTestId("styled-switch-variants").locator('[data-slot="switch-label"]').click();
+  await assertEqual(
+    await switchControl.getAttribute("aria-checked"),
+    "true",
+    "Styled Switch label activation",
+  );
+  await assertText(
+    page.getByTestId("styled-switch-state"),
+    "checked: true, changes: 1",
+    "Styled Switch single accepted activation",
+  );
+  await page.waitForFunction(
+    (initialThumbLeft) => {
+      const root = document.querySelector('[data-testid="styled-switch"]');
+      const thumb = root?.querySelector('[data-slot="switch-toggle"]');
+      return (
+        thumb instanceof HTMLElement &&
+        thumb.getBoundingClientRect().left > Number(initialThumbLeft) + 1
+      );
+    },
+    switchGeometryBefore.thumbLeft,
+    { timeout: 2_000 },
+  );
+  const switchGeometryAfter = await readStyledSwitchGeometry(switchControl);
+  if (switchGeometryAfter.thumbLeft <= switchGeometryBefore.thumbLeft + 1) {
+    throw new Error(
+      `Styled Switch thumb did not translate after label activation: before=${switchGeometryBefore.thumbLeft}, after=${switchGeometryAfter.thumbLeft}`,
+    );
+  }
 
   const selectScenario = page.getByTestId("styled-select-scenario");
   const trigger = selectScenario.locator("[data-sw-select-trigger]");
@@ -1328,11 +2781,370 @@ async function verifyStyled(page) {
     );
   }
   await standardTrigger.click();
+  return {
+    forms: await readStyledFormsVisuals(page, "light"),
+    specialized: await readSpecializedCohortVisuals(page, "light"),
+    toggleGroup: toggleGroupGeometryAfter,
+  };
+}
+
+async function verifyStyledPopover(page, evidencePath, theme) {
+  const trigger = page.getByTestId("styled-popover-trigger");
+  await trigger.scrollIntoViewIfNeeded();
+  await trigger.click();
+  const content = page.getByTestId("styled-popover-content");
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="styled-popover-content"]')
+        ?.getAttribute("data-state") === "open",
+  );
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  await assertEqual(await content.isVisible(), true, `Styled Popover open in ${theme} mode`);
+  await content.evaluate(async (element) => {
+    const animations = element.getAnimations({ subtree: true });
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+  });
+  await assertText(
+    page.getByTestId("styled-popover-state"),
+    "open: true",
+    `Styled Popover model in ${theme} mode`,
+  );
+  await assertEqual(await content.getAttribute("data-side"), "right", "Styled Popover side");
+  await assertEqual(await content.getAttribute("data-align"), "start", "Styled Popover align");
+  const visual = await content.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) throw new Error("Canvas was unavailable for Popover contrast verification.");
+
+    const readColor = (color, background) => {
+      context.clearRect(0, 0, 1, 1);
+      context.fillStyle = background;
+      context.fillRect(0, 0, 1, 1);
+      context.fillStyle = color;
+      context.fillRect(0, 0, 1, 1);
+      return [...context.getImageData(0, 0, 1, 1).data];
+    };
+    const luminance = ([red, green, blue]) => {
+      const channels = [red, green, blue].map((channel) => {
+        const value = channel / 255;
+        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+      });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+    const foregroundLuminance = luminance(readColor(style.color, style.backgroundColor));
+    const backgroundLuminance = luminance(readColor(style.backgroundColor, style.backgroundColor));
+    return {
+      backgroundColor: style.backgroundColor,
+      color: style.color,
+      contrast:
+        (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) /
+        (Math.min(foregroundLuminance, backgroundLuminance) + 0.05),
+      height: rect.height,
+      opacity: Number.parseFloat(style.opacity),
+      width: rect.width,
+    };
+  });
+  if (
+    visual.height <= 0 ||
+    visual.width <= 0 ||
+    visual.opacity < 0.99 ||
+    visual.backgroundColor === "rgba(0, 0, 0, 0)" ||
+    visual.contrast < 3
+  ) {
+    throw new Error(`Styled Popover visual failed in ${theme} mode: ${JSON.stringify(visual)}`);
+  }
+  await page.screenshot({ path: evidencePath });
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() =>
+    document.querySelector('[data-testid="styled-popover-content"]')?.hasAttribute("hidden"),
+  );
+}
+
+async function verifyStyledAlertDialog(page, closeWith, evidencePath, mode) {
+  const trigger = page.getByTestId("styled-alert-dialog-trigger");
+  const popup = page.getByTestId("styled-alert-dialog-content");
+  await trigger.click();
+  await assertText(
+    page.getByTestId("styled-alert-dialog-state"),
+    "open: true",
+    `${mode} Styled Alert Dialog model`,
+  );
+  await assertEqual(await popup.isVisible(), true, `${mode} Styled Alert Dialog popup`);
+  await assertEqual(
+    await page.getByTestId("styled-alert-dialog-backdrop").isVisible(),
+    true,
+    `${mode} Styled Alert Dialog custom backdrop`,
+  );
+  const dimensions = await captureStyledAlertDialogEvidence(page, evidencePath);
+
+  await page
+    .getByTestId(
+      closeWith === "cancel" ? "styled-alert-dialog-cancel" : "styled-alert-dialog-action",
+    )
+    .click();
+  await waitForDialogClosed(page, "styled-alert-dialog-content");
+  await assertText(
+    page.getByTestId("styled-alert-dialog-state"),
+    "open: false",
+    `${mode} Styled Alert Dialog ${closeWith} model`,
+  );
+  await assertAlertDialogCleanup(page, `${mode} Styled Alert Dialog ${closeWith} cleanup`);
+  return dimensions;
+}
+
+async function waitForDialogClosed(page, testId) {
+  await page.waitForFunction(
+    (id) => !document.querySelector(`[data-testid="${id}"]`)?.hasAttribute("open"),
+    testId,
+  );
+}
+
+async function assertAlertDialogCleanup(page, label) {
+  const cleanup = await page.evaluate(() => ({
+    bodyLocked: document.body.hasAttribute("data-sw-scroll-locked"),
+    inertCount: document.querySelectorAll("[inert]").length,
+    openPopupCount: document.querySelectorAll("[data-sw-alert-dialog-popup][open]").length,
+    visiblePopupCount: Array.from(document.querySelectorAll("[data-sw-alert-dialog-popup]")).filter(
+      (element) =>
+        element instanceof HTMLElement &&
+        getComputedStyle(element).display !== "none" &&
+        element.getClientRects().length > 0,
+    ).length,
+  }));
+  await assertEqual(cleanup.bodyLocked, false, `${label} body lock`);
+  await assertEqual(cleanup.inertCount, 0, `${label} inert state`);
+  await assertEqual(cleanup.openPopupCount, 0, `${label} native popup`);
+  await assertEqual(cleanup.visiblePopupCount, 0, `${label} visible popup`);
+  await assertEqual(
+    await page.locator("[data-sw-alert-dialog-portal]").count(),
+    0,
+    `${label} portal`,
+  );
+}
+
+async function verifyStyledFormsDark(page, lightProof) {
+  await assertEqual(
+    await page.evaluate(() => document.documentElement.classList.contains("dark")),
+    true,
+    "Styled forms dark document",
+  );
+  const darkForms = await readStyledFormsVisuals(page, "dark");
+  for (const [name, lightVisual] of Object.entries(lightProof.forms)) {
+    const darkVisual = darkForms[name];
+    if (
+      Math.abs(darkVisual.width - lightVisual.width) > 1 ||
+      Math.abs(darkVisual.height - lightVisual.height) > 1
+    ) {
+      throw new Error(
+        `Styled ${name} geometry drifted between themes: light=${JSON.stringify(lightVisual)}, dark=${JSON.stringify(darkVisual)}`,
+      );
+    }
+  }
+  const darkSpecialized = await readSpecializedCohortVisuals(page, "dark");
+  for (const [name, lightVisual] of Object.entries(lightProof.specialized)) {
+    const darkVisual = darkSpecialized[name];
+    if (
+      Math.abs(darkVisual.width - lightVisual.width) > 1 ||
+      Math.abs(darkVisual.height - lightVisual.height) > 1
+    ) {
+      throw new Error(
+        `Styled ${name} geometry drifted between themes: light=${JSON.stringify(lightVisual)}, dark=${JSON.stringify(darkVisual)}`,
+      );
+    }
+    if (
+      darkVisual.backgroundColor === lightVisual.backgroundColor &&
+      darkVisual.borderColor === lightVisual.borderColor &&
+      darkVisual.color === lightVisual.color
+    ) {
+      throw new Error(
+        `Styled ${name} dark theme did not change visible styling: light=${JSON.stringify(lightVisual)}, dark=${JSON.stringify(darkVisual)}`,
+      );
+    }
+  }
+
+  const lightGeometry = lightProof.toggleGroup;
+  const darkGeometry = await readStyledToggleGroupGeometry(
+    page.getByTestId("styled-toggle-group-control"),
+  );
+  await assertEqual(
+    darkGeometry.spacingToken,
+    lightGeometry.spacingToken,
+    "Styled Toggle Group dark spacing token",
+  );
+  await assertEqual(
+    darkGeometry.outlineColor,
+    "rgb(14, 165, 233)",
+    "Styled Toggle Group dark consumer style",
+  );
+  if (
+    Math.abs(darkGeometry.gap - lightGeometry.gap) > 0.5 ||
+    Math.abs(darkGeometry.itemWidth - lightGeometry.itemWidth) > 0.5 ||
+    Math.abs(darkGeometry.itemHeight - lightGeometry.itemHeight) > 0.5
+  ) {
+    throw new Error(
+      `Styled Toggle Group dark geometry drifted: light=${JSON.stringify(lightGeometry)}, dark=${JSON.stringify(darkGeometry)}`,
+    );
+  }
+  if (
+    darkGeometry.itemColor === lightGeometry.itemColor &&
+    darkGeometry.itemBorderColor === lightGeometry.itemBorderColor
+  ) {
+    throw new Error(
+      `Styled Toggle Group dark theme did not change item styling: light=${JSON.stringify(lightGeometry)}, dark=${JSON.stringify(darkGeometry)}`,
+    );
+  }
+}
+
+async function readStyledFormsVisuals(page, mode) {
+  const controls = {
+    "Checkbox Group": page.getByTestId("styled-checkbox-group").locator("[data-sw-checkbox-group]"),
+    Collapsible: page.getByTestId("styled-collapsible"),
+    Form: page.getByTestId("styled-form"),
+    Input: page.getByTestId("styled-input-small"),
+    "Radio Group": page.getByTestId("styled-radio-group").locator("[data-sw-radio-group]"),
+    Switch: page.getByTestId("styled-switch"),
+    Toggle: page.getByTestId("styled-toggle"),
+    "Toggle Group": page.getByTestId("styled-toggle-group-control"),
+  };
+  const visuals = {};
+  for (const [name, control] of Object.entries(controls)) {
+    await assertEqual(await control.count(), 1, `${mode} Styled ${name} inventory`);
+    await assertEqual(await control.isVisible(), true, `${mode} Styled ${name} visibility`);
+    const visual = await control.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        backgroundColor: style.backgroundColor,
+        borderColor: style.borderColor,
+        color: style.color,
+        display: style.display,
+        height: rect.height,
+        width: rect.width,
+      };
+    });
+    if (
+      visual.display === "none" ||
+      !Number.isFinite(visual.height) ||
+      !Number.isFinite(visual.width) ||
+      visual.height <= 0 ||
+      visual.width <= 0
+    ) {
+      throw new Error(`Styled ${name} unresolved in ${mode} mode: ${JSON.stringify(visual)}`);
+    }
+    visuals[name] = visual;
+  }
+  return visuals;
+}
+
+async function readSpecializedCohortVisuals(page, mode) {
+  const controls = {
+    Accordion: page.getByTestId("accordion-review").getByTestId("styled-accordion-trigger"),
+    Dropzone: page.getByTestId("dropzone-review").locator("[data-sw-dropzone]").nth(1),
+    Field: page.getByTestId("field-review").getByTestId("field-email-control"),
+    "Input OTP": page
+      .getByTestId("input-otp-review")
+      .locator('[data-slot="input-otp-slot"]')
+      .first(),
+    Slider: page.getByTestId("slider-review").getByTestId("styled-slider"),
+    Tabs: page.getByTestId("tabs-review").getByTestId("styled-tabs-trigger"),
+  };
+  const visuals = {};
+  for (const [name, control] of Object.entries(controls)) {
+    await assertEqual(await control.count(), 1, `${mode} Styled ${name} cohort inventory`);
+    await assertEqual(await control.isVisible(), true, `${mode} Styled ${name} cohort visibility`);
+    const visual = await control.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        backgroundColor: style.backgroundColor,
+        borderColor: style.borderColor,
+        color: style.color,
+        display: style.display,
+        height: rect.height,
+        width: rect.width,
+      };
+    });
+    if (
+      visual.display === "none" ||
+      !Number.isFinite(visual.height) ||
+      !Number.isFinite(visual.width) ||
+      visual.height <= 0 ||
+      visual.width <= 0
+    ) {
+      throw new Error(
+        `Styled ${name} cohort unresolved in ${mode} mode: ${JSON.stringify(visual)}`,
+      );
+    }
+    visuals[name] = visual;
+  }
+  return visuals;
 }
 
 async function assertText(locator, expected, label) {
   const actual = (await locator.textContent())?.trim().replace(/\s+/g, " ") ?? "";
   await assertEqual(actual, expected, label);
+}
+
+async function readStyledSwitchGeometry(root) {
+  return root.evaluate((element) => {
+    const thumb = element.querySelector('[data-slot="switch-toggle"]');
+    if (!(element instanceof HTMLElement) || !(thumb instanceof HTMLElement)) {
+      throw new Error("Styled Switch geometry requires root and thumb elements.");
+    }
+    const rootRect = element.getBoundingClientRect();
+    const thumbRect = thumb.getBoundingClientRect();
+    const rootStyle = getComputedStyle(element);
+    const thumbStyle = getComputedStyle(thumb);
+    return {
+      heightToken: rootStyle.getPropertyValue("--height").trim(),
+      paddingToken: rootStyle.getPropertyValue("--padding").trim(),
+      rootHeight: rootRect.height,
+      rootWidth: rootRect.width,
+      thumbLeft: thumbRect.left,
+      thumbWidth: thumbRect.width,
+      translationToken: thumbStyle.getPropertyValue("--translation").trim(),
+      widthToken: rootStyle.getPropertyValue("--width").trim(),
+    };
+  });
+}
+
+async function readStyledToggleGroupGeometry(root) {
+  return root.evaluate((element) => {
+    const items = element.querySelectorAll('[data-slot="toggle-group-item"]');
+    const first = items[0];
+    const second = items[1];
+    if (
+      !(element instanceof HTMLElement) ||
+      !(first instanceof HTMLElement) ||
+      !(second instanceof HTMLElement)
+    ) {
+      throw new Error("Styled Toggle Group geometry requires a root and at least two items.");
+    }
+
+    const rootRect = element.getBoundingClientRect();
+    const firstRect = first.getBoundingClientRect();
+    const secondRect = second.getBoundingClientRect();
+    const rootStyle = getComputedStyle(element);
+    const itemStyle = getComputedStyle(first);
+    return {
+      gap: Number.parseFloat(rootStyle.gap),
+      itemBorderColor: itemStyle.borderColor,
+      itemColor: itemStyle.color,
+      itemHeight: firstRect.height,
+      itemWidth: firstRect.width,
+      measuredGap: secondRect.left - firstRect.right,
+      outlineColor: rootStyle.outlineColor,
+      rootWidth: rootRect.width,
+      spacingToken: rootStyle.getPropertyValue("--gap").trim(),
+    };
+  });
 }
 
 async function assertTextIncludes(locator, expected, label) {
@@ -1376,6 +3188,26 @@ async function captureReviewEvidence(page, evidencePath) {
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
   );
   await page.screenshot({ fullPage: true, path: evidencePath });
+}
+
+async function captureStyledAlertDialogEvidence(page, evidencePath) {
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  const dimensions = await page.evaluate(() => ({
+    height: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
+    width: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+  }));
+  await page.screenshot({ fullPage: true, path: evidencePath });
+  return dimensions;
+}
+
+function formatDimensions(dimensions) {
+  return `${dimensions.width}x${dimensions.height}`;
+}
+
+function capitalize(value) {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }
 
 async function describeFailure(page, messages) {

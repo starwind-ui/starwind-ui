@@ -11,6 +11,7 @@ import {
   genericAdapterFutureFrameworkTracerClassifications,
   printFutureFrameworkTracerPlan,
 } from "../renderers/generic-adapter-plan/index.js";
+import { printLegacyVueCollapsibleTracerFixture } from "../renderers/framework-adapters/vue/generic-future-framework-tracer.js";
 
 describe("GenericAdapterPlan future framework tracer printers", () => {
   it("prints deterministic unsupported-only Vue Toggle contract evidence", () => {
@@ -88,11 +89,14 @@ describe("GenericAdapterPlan future framework tracer printers", () => {
     expect(toggleRoot).toContain("<Dynamic");
   });
 
-  it("prints deterministic unsupported-only Vue Collapsible contract evidence", () => {
+  it("preserves deterministic legacy Vue Collapsible printer-unit evidence", () => {
     const plan = buildGenericAdapterPlan(collapsibleRuntimeAdapterContract);
-    const firstRun = printFutureFrameworkTracerPlan("vue", plan);
-    const secondRun = printFutureFrameworkTracerPlan("vue", plan);
+    const firstRun = printLegacyVueCollapsibleTracerFixture(plan);
+    const secondRun = printLegacyVueCollapsibleTracerFixture(plan);
 
+    expect(() => printFutureFrameworkTracerPlan("vue", plan)).toThrow(
+      "Collapsible does not have a Vue future-framework tracer fixture.",
+    );
     expect(secondRun).toEqual(firstRun);
     expect(firstRun.map((file) => file.path)).toEqual([
       "__future-fixtures/vue/collapsible/CollapsibleRoot.vue",
@@ -173,12 +177,6 @@ describe("GenericAdapterPlan future framework tracer printers", () => {
         component: "toggle/vue",
         reason:
           "Unsupported, non-normative Vue SFC tracer evidence for the Toggle boolean-control generic adapter plan; not included in package exports, CLI registry output, or demo dependencies.",
-        strategy: "future-framework-tracer",
-      },
-      {
-        component: "collapsible/vue",
-        reason:
-          "Unsupported, non-normative Vue SFC tracer evidence for the Collapsible disclosure/presence generic adapter plan; not included in package exports, CLI registry output, or demo dependencies.",
         strategy: "future-framework-tracer",
       },
       {

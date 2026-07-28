@@ -9,7 +9,11 @@ import {
   readStringOrStringArrayAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { dispatchCustomEvent } from "../../internal/events";
+import {
+  type CancelableDetails,
+  createCancelableDetails,
+  dispatchCancelableDetailsEvent,
+} from "../../internal/cancelable-details";
 import { renderCollapsiblePanel } from "../collapsible/collapsible-panel";
 import {
   type AccordionType,
@@ -21,7 +25,7 @@ import {
   toggleAccordionItem,
 } from "./accordion-state";
 
-export type AccordionValueChangeDetails = {
+export type AccordionValueChangeDetails = CancelableDetails & {
   value: AccordionValue;
   previousValue: AccordionValue;
   itemValue: string | null;
@@ -63,6 +67,11 @@ type AccordionItem = {
   value: string;
   disabled: boolean;
 };
+
+type AccordionValueChangeMetadata = Pick<
+  AccordionValueChangeDetails,
+  "event" | "itemValue" | "reason"
+>;
 
 const ACCORDION_CONTENT_HEIGHT_PROPERTY = "--starwind-accordion-content-height";
 
@@ -130,21 +139,21 @@ class AccordionController implements AccordionInstance {
   }
 
   openItem(itemValue: string): void {
-    this.commitValue(openAccordionItem(this.value, itemValue, this.stateOptions), {
+    this.requestValue(openAccordionItem(this.value, itemValue, this.stateOptions), {
       itemValue,
       reason: "programmatic",
     });
   }
 
   closeItem(itemValue: string): void {
-    this.commitValue(closeAccordionItem(this.value, itemValue, this.stateOptions), {
+    this.requestValue(closeAccordionItem(this.value, itemValue, this.stateOptions), {
       itemValue,
       reason: "programmatic",
     });
   }
 
   toggleItem(itemValue: string): void {
-    this.commitValue(toggleAccordionItem(this.value, itemValue, this.stateOptions), {
+    this.requestValue(toggleAccordionItem(this.value, itemValue, this.stateOptions), {
       itemValue,
       reason: "programmatic",
     });
@@ -152,19 +161,16 @@ class AccordionController implements AccordionInstance {
 
   setValue(value: AccordionValue, options: AccordionSetValueOptions = {}): void {
     const nextValue = normalizeAccordionValue(this.type, value);
-    const previousValue = this.value;
-
-    this.value = nextValue;
-    this.render();
-
-    if (options.emit !== false) {
-      this.notify({
-        value: nextValue,
-        previousValue,
-        itemValue: null,
-        reason: "programmatic",
-      });
+    if (options.emit === false) {
+      this.value = nextValue;
+      this.render();
+      return;
     }
+
+    this.requestValue(nextValue, {
+      itemValue: null,
+      reason: "programmatic",
+    });
   }
 
   getValue(): AccordionValue {
@@ -241,31 +247,29 @@ class AccordionController implements AccordionInstance {
     if (!item || item.disabled) return;
 
     const nextValue = toggleAccordionItem(this.value, item.value, this.stateOptions);
-    this.commitValue(nextValue, {
+    this.requestValue(nextValue, {
       itemValue: item.value,
       reason: "trigger",
       event,
     });
   };
 
-  private commitValue(
-    nextValue: AccordionValue,
-    metadata: Omit<AccordionValueChangeDetails, "value" | "previousValue">,
-  ): void {
+  private requestValue(nextValue: AccordionValue, metadata: AccordionValueChangeMetadata): void {
     const normalizedValue = normalizeAccordionValue(this.type, nextValue);
     const previousValue = this.value;
     if (accordionValuesEqual(normalizedValue, previousValue)) return;
 
-    if (!this.controlled) {
-      this.value = normalizedValue;
-      this.render();
-    }
-
-    this.notify({
+    const details = createCancelableDetails({
       ...metadata,
       value: normalizedValue,
       previousValue,
     });
+    this.notify(details);
+
+    if (details.isCanceled || this.controlled) return;
+
+    this.value = normalizedValue;
+    this.render();
   }
 
   private render(): void {
@@ -280,8 +284,10 @@ class AccordionController implements AccordionInstance {
       const triggerId = ensureId(item.trigger, `sw-accordion-trigger-${index}`);
       const contentId = ensureId(item.content, `sw-accordion-content-${index}`);
       const previousOpen = this.itemOpenStates.get(item.element);
+      const panelStateDrifted =
+        item.content.getAttribute("data-state") !== state || (open && item.content.hidden);
 
-      if (!this.rendered || previousOpen !== open) {
+      if (!this.rendered || previousOpen !== open || panelStateDrifted) {
         renderCollapsiblePanel(item.content, {
           heightProperty: ACCORDION_CONTENT_HEIGHT_PROPERTY,
           open,
@@ -341,7 +347,7 @@ class AccordionController implements AccordionInstance {
   }
 
   private notify(details: AccordionValueChangeDetails): void {
-    dispatchCustomEvent(this.root, "starwind:value-change", details);
+    dispatchCancelableDetailsEvent(this.root, "starwind:value-change", details);
     this.onValueChange?.(details);
     this.subscribers.forEach((subscriber) => subscriber(details));
   }

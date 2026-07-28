@@ -583,7 +583,7 @@ class InputOtpController implements InputOtpInstance {
       slot.setAttribute(INPUT_OTP_SLOT_ATTRIBUTE, "");
       slot.setAttribute("data-active", active ? "true" : "false");
 
-      if (charElement) {
+      if (charElement && charElement.textContent !== char) {
         charElement.textContent = char;
       }
 

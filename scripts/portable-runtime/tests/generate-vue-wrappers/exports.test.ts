@@ -16,6 +16,7 @@ const PRIMITIVE_EXPORTS = {
     namespace: "Checkbox",
     parts: ["CheckboxIndicator", "CheckboxRoot"],
   },
+  input: { namespace: "Input", parts: ["InputRoot"] },
   progress: {
     namespace: "Progress",
     parts: ["ProgressIndicator", "ProgressLabel", "ProgressRoot", "ProgressTrack", "ProgressValue"],

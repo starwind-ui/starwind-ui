@@ -101,6 +101,8 @@ export const accordionRuntimeAdapterContract = {
     {
       name: "valueChange",
       callbackProp: "onValueChange",
+      callbackTiming: "before-state-commit",
+      cancelable: true,
       detailsType: "AccordionValueChangeDetails",
       domEvent: "starwind:value-change",
       emitsFrom: "root",
@@ -175,6 +177,7 @@ export const accordionRuntimeAdapterContract = {
         "public prop names and defaults",
         "value state model",
         "value-change event/callback/details value",
+        "value-change cancelability and before-commit callback timing",
         "value setter name and suppression options",
         "presence panel part and initial hidden state",
         "initial root/item/trigger/panel attributes",

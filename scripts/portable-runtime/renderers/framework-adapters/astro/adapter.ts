@@ -1671,8 +1671,9 @@ function printAstroBooleanFormControlRequiredValueRoot(
   facts: AdapterBooleanFormControlFacts,
 ): string {
   assertBooleanFormControlBehavior(facts, {
-    canCancelChange: false,
-    formResetSync: false,
+    acceptedChangeNotification: "detail-on-accepted",
+    canCancelChange: true,
+    formResetSync: true,
     groupStrategy: "value-equals",
     hasIndeterminate: false,
     inputIdStrategy: "omit-when-native",

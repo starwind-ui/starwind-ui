@@ -48,18 +48,22 @@ describe("registered Vue Framework Adapter target", () => {
     expect(Object.keys(vueFrameworkAdapterTarget.primitive.manualPrimitives ?? {})).toEqual([
       "theme",
     ]);
-    expect(getPrimitiveFrameworkAdapterTargetsForComponent("dialog")).toEqual(["astro", "react"]);
+    expect(getPrimitiveFrameworkAdapterTargetsForComponent("dialog")).toEqual([
+      "astro",
+      "react",
+      "vue",
+    ]);
 
     const dialog = primitiveGeneratorRegistry.find((entry) => entry.component === "dialog");
     const outputRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-unsupported-"));
     temporaryRoots.push(outputRoot);
 
-    expect(() =>
+    await expect(
       dialog?.generateTarget({
         moduleHeader: "",
         outputRoot,
         target: "vue",
       }),
-    ).toThrowError('Primitive Framework Adapter target "vue" does not support component "dialog".');
+    ).resolves.toBeUndefined();
   });
 });

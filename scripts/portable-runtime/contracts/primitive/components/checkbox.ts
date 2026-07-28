@@ -151,6 +151,7 @@ export const checkboxRuntimeAdapterContract = {
     {
       name: "checkbox-group",
       direction: "consumes",
+      requirement: "optional",
       values: ["disabled", "value"],
     },
   ],

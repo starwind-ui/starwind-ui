@@ -42,6 +42,10 @@ async function readJson<T>(file: string): Promise<T> {
   return JSON.parse(await readFile(file, "utf8")) as T;
 }
 
+function commandPhases(command: string | undefined): string[] {
+  return command?.split(/\s*&&\s*/).filter(Boolean) ?? [];
+}
+
 function manifests(versions: { cli: string; runtime: string }) {
   return RELEASE_PACKAGE_SET.map((entry) => ({
     entry,
@@ -126,8 +130,13 @@ describe("release package tooling", () => {
     expect(root.scripts?.["publish:release"]).toBe("node scripts/release-packages.mjs --publish");
     expect(root.scripts?.["publish:beta:dry-run"]).toBe("pnpm publish:release:dry-run");
     expect(root.scripts?.["publish:beta"]).toBe("pnpm publish:release");
-    expect(root.scripts?.["release:gate"]).toContain("pnpm verify");
-    expect(root.scripts?.["release:gate"]).toContain("pnpm runtime:size:check");
+    expect(commandPhases(root.scripts?.["release:gate"])).toEqual([
+      "pnpm verify",
+      "pnpm audit:prod",
+      "pnpm demo:smoke",
+      "pnpm react-demo:smoke",
+      "pnpm runtime:size:check",
+    ]);
     expect(root.scripts?.["release:prepare"]).not.toContain("build");
     expect(root.scripts?.["release:artifacts"]).toBe("node scripts/check-release-artifacts.mjs");
   });

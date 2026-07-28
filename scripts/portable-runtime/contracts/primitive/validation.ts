@@ -105,6 +105,33 @@ function validateContract(
     }
   }
 
+  for (const context of contract.context ?? []) {
+    if (context.direction === "provides" && "requirement" in context) {
+      issues.push(
+        issue(
+          contract,
+          `context.${context.name}.requirement`,
+          `Provided context "${context.name}" cannot declare a consumption requirement.`,
+        ),
+      );
+    }
+
+    if (
+      context.direction === "consumes" &&
+      context.requirement !== undefined &&
+      context.requirement !== "optional" &&
+      context.requirement !== "required"
+    ) {
+      issues.push(
+        issue(
+          contract,
+          `context.${context.name}.requirement`,
+          `Consumed context "${context.name}" requirement must be "required" or "optional".`,
+        ),
+      );
+    }
+  }
+
   for (const prop of contract.props) {
     for (const target of prop.targets ?? []) {
       requirePart(contract, parts, target, `props.${prop.name}.targets`, issues);

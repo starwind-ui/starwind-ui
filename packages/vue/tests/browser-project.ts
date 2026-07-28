@@ -18,6 +18,16 @@ export type VueBrowserProjectOwnership = {
 
 export const vueBrowserProjectOwnership = [
   {
+    component: "accordion",
+    config: "packages/vue/tests/accordion/vitest.config.ts",
+    tests: ["packages/vue/tests/accordion/accordion.browser.test.ts"],
+  },
+  {
+    component: "alert-dialog",
+    config: "packages/vue/tests/alert-dialog/vitest.config.ts",
+    tests: ["packages/vue/tests/alert-dialog/alert-dialog.browser.test.ts"],
+  },
+  {
     component: "avatar",
     config: "packages/vue/tests/avatar/vitest.config.ts",
     tests: ["packages/vue/tests/avatar/avatar.browser.test.ts"],
@@ -33,12 +43,72 @@ export const vueBrowserProjectOwnership = [
     tests: ["packages/vue/tests/checkbox/checkbox.browser.test.ts"],
   },
   {
+    component: "checkbox-group",
+    config: "packages/vue/tests/checkbox-group/vitest.config.ts",
+    tests: ["packages/vue/tests/checkbox-group/checkbox-group.browser.test.ts"],
+  },
+  {
+    component: "collapsible",
+    config: "packages/vue/tests/collapsible/vitest.config.ts",
+    tests: ["packages/vue/tests/collapsible/collapsible.browser.test.ts"],
+  },
+  {
+    component: "dialog",
+    config: "packages/vue/tests/dialog/vitest.config.ts",
+    tests: ["packages/vue/tests/dialog/dialog.browser.test.ts"],
+  },
+  {
+    component: "drawer",
+    config: "packages/vue/tests/drawer/vitest.config.ts",
+    tests: ["packages/vue/tests/drawer/drawer.browser.test.ts"],
+  },
+  {
+    component: "dropzone",
+    config: "packages/vue/tests/dropzone/vitest.config.ts",
+    tests: ["packages/vue/tests/dropzone/dropzone.browser.test.ts"],
+  },
+  {
+    component: "fieldset",
+    config: "packages/vue/tests/fieldset/vitest.config.ts",
+    tests: ["packages/vue/tests/fieldset/fieldset.browser.test.ts"],
+  },
+  {
+    component: "field",
+    config: "packages/vue/tests/field/vitest.config.ts",
+    tests: ["packages/vue/tests/field/field.browser.test.ts"],
+  },
+  {
+    component: "form",
+    config: "packages/vue/tests/form/vitest.config.ts",
+    tests: ["packages/vue/tests/form/form.browser.test.ts"],
+  },
+  {
+    component: "input",
+    config: "packages/vue/tests/input/vitest.config.ts",
+    tests: ["packages/vue/tests/input/input.browser.test.ts"],
+  },
+  {
+    component: "popover",
+    config: "packages/vue/tests/popover/vitest.config.ts",
+    tests: ["packages/vue/tests/popover/popover.browser.test.ts"],
+  },
+  {
     component: "progress",
     config: "packages/vue/tests/progress/vitest.config.ts",
     tests: [
       "packages/vue/tests/progress/progress.browser.test.ts",
       "packages/vue/tests/progress/progress.styled.browser.test.ts",
     ],
+  },
+  {
+    component: "radio",
+    config: "packages/vue/tests/radio/vitest.config.ts",
+    tests: ["packages/vue/tests/radio/radio.browser.test.ts"],
+  },
+  {
+    component: "radio-group",
+    config: "packages/vue/tests/radio-group/vitest.config.ts",
+    tests: ["packages/vue/tests/radio-group/radio-group.browser.test.ts"],
   },
   {
     component: "scroll-area",
@@ -49,6 +119,36 @@ export const vueBrowserProjectOwnership = [
     component: "select",
     config: "packages/vue/tests/select/vitest.config.ts",
     tests: ["packages/vue/tests/select/select.browser.test.ts"],
+  },
+  {
+    component: "input-otp",
+    config: "packages/vue/tests/input-otp/vitest.config.ts",
+    tests: ["packages/vue/tests/input-otp/input-otp.browser.test.ts"],
+  },
+  {
+    component: "slider",
+    config: "packages/vue/tests/slider/vitest.config.ts",
+    tests: ["packages/vue/tests/slider/slider.browser.test.ts"],
+  },
+  {
+    component: "switch",
+    config: "packages/vue/tests/switch/vitest.config.ts",
+    tests: ["packages/vue/tests/switch/switch.browser.test.ts"],
+  },
+  {
+    component: "tabs",
+    config: "packages/vue/tests/tabs/vitest.config.ts",
+    tests: ["packages/vue/tests/tabs/tabs.browser.test.ts"],
+  },
+  {
+    component: "toggle",
+    config: "packages/vue/tests/toggle/vitest.config.ts",
+    tests: ["packages/vue/tests/toggle/toggle.browser.test.ts"],
+  },
+  {
+    component: "toggle-group",
+    config: "packages/vue/tests/toggle-group/vitest.config.ts",
+    tests: ["packages/vue/tests/toggle-group/toggle-group.browser.test.ts"],
   },
 ] as const satisfies readonly VueBrowserProjectOwnership[];
 
@@ -160,14 +260,16 @@ export function createVueBrowserProjectConfig(component: string) {
         find: /^vitest\/internal\/browser$/,
         replacement: path.join(repoRoot, "packages/runtime/node_modules/vitest/dist/browser.js"),
       },
-      {
-        find: `@starwind-ui/runtime/${component}`,
-        replacement: path.join(repoRoot, `packages/runtime/src/components/${component}/index.ts`),
-      },
-      {
-        find: `@starwind-ui/vue/${component}`,
-        replacement: path.join(repoRoot, `packages/vue/src/${component}/index.ts`),
-      },
+      ...vueRuntimePrimitiveComponents.flatMap((primitive) => [
+        {
+          find: `@starwind-ui/runtime/${primitive}`,
+          replacement: path.join(repoRoot, `packages/runtime/src/components/${primitive}/index.ts`),
+        },
+        {
+          find: `@starwind-ui/vue/${primitive}`,
+          replacement: path.join(repoRoot, `packages/vue/src/${primitive}/index.ts`),
+        },
+      ]),
     ],
   };
   const vueSfcPlugin = {
@@ -207,6 +309,7 @@ export function createVueBrowserProjectConfig(component: string) {
           },
         },
         {
+          cacheDir: path.join(repoRoot, "node_modules/.vite/vue-browser", component),
           plugins: [vueSfcPlugin],
           resolve,
           test: {

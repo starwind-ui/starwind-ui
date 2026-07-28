@@ -151,7 +151,7 @@ export const toggleGroupStyledContract: StyledAdapterContract = {
             {
               name: "style",
               value: { type: "variable", name: "toggleGroupStyle" },
-              frameworks: ["astro"],
+              frameworks: ["astro", "vue"],
             },
             {
               name: "style",

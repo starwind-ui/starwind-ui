@@ -282,12 +282,13 @@ class DialogController implements DialogInstance {
     this.cancelScheduledInit();
     this.openChangeSubscribers.clear();
     this.closeCompleteSubscribers.clear();
-    this.unregisterOpenLayer();
-    this.notifyParentNestedClose();
     if (this.openState || this.elements.content.open) {
       this.closeNativeDialog();
-      this.unlockBodyScroll();
     }
+    this.unregisterOpenLayer();
+    this.notifyParentNestedClose();
+    this.unlockBodyScroll();
+    this.restoreFocus();
     this.elements.content.hidden = true;
     if (this.elements.overlay) this.elements.overlay.hidden = true;
     instances.delete(this.root);

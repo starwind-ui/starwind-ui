@@ -53,6 +53,30 @@ describe("createAlertDialog", () => {
     );
   });
 
+  it("inherits deterministic destroy focus restoration from Dialog normalization", () => {
+    const outsideButton = document.createElement("button");
+    document.body.append(outsideButton);
+    const focusOutside = vi.spyOn(outsideButton, "focus");
+    outsideButton.focus();
+    const alertDialog = createAlertDialog(renderAlertDialog());
+    const openChange = vi.fn();
+    const closeComplete = vi.fn();
+    alertDialog.subscribe("openChange", openChange);
+    alertDialog.subscribe("closeComplete", closeComplete);
+    alertDialog.open();
+    focusOutside.mockClear();
+    openChange.mockClear();
+
+    alertDialog.destroy();
+
+    expect(document.activeElement).toBe(outsideButton);
+    expect(focusOutside).toHaveBeenCalledTimes(1);
+    expect(openChange).not.toHaveBeenCalled();
+    expect(closeComplete).not.toHaveBeenCalled();
+    expect(getPopup().open).toBe(false);
+    expect(document.body.style.overflow).toBe("");
+  });
+
   it("allows outside interaction closing when explicitly enabled", () => {
     const root = renderAlertDialog();
 

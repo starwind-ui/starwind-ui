@@ -16,6 +16,7 @@ const { default: vue } = await import(
   pathToFileURL(vueDemoRequire.resolve("@vitejs/plugin-vue")).href
 );
 const vueDist = path.join(repoRoot, "packages/vue/dist");
+const runtimeDist = path.join(repoRoot, "packages/runtime/dist");
 const fixturePath = "/apps/vue-demo/tests/styled-hydration.fixture.ts";
 
 const vite = await createViteServer({
@@ -26,6 +27,8 @@ const vite = await createViteServer({
     alias: [
       { find: /^@starwind-ui\/vue\/(.+)$/, replacement: `${vueDist}/$1/index.js` },
       { find: "@starwind-ui/vue", replacement: `${vueDist}/index.js` },
+      { find: /^@starwind-ui\/runtime\/(.+)$/, replacement: `${runtimeDist}/$1.js` },
+      { find: "@starwind-ui/runtime", replacement: `${runtimeDist}/index.js` },
     ],
     dedupe: ["vue"],
   },

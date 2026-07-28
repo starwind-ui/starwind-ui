@@ -396,7 +396,7 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
     };
   });
 
-  const radioGroupState = await page.evaluate(() => {
+  const radioGroupState = await page.evaluate(async () => {
     const readRadio = (id) => {
       const root = document.querySelector(`[data-sw-radio][data-id="${id}"]`);
       const input = root?.querySelector("[data-sw-radio-input]");
@@ -457,9 +457,19 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
     const expressRoot = document.querySelector(
       '[data-sw-radio][data-id="runtime-radio-group-express"]',
     );
+    const standardRoot = document.querySelector(
+      '[data-sw-radio][data-id="runtime-radio-group-standard"]',
+    );
     const disabledProductionRoot = document.querySelector(
       '[data-sw-radio][data-id="runtime-radio-group-disabled-production"]',
     );
+    const form = document.querySelector("[data-runtime-radio-group-form]");
+    let acceptedCount = 0;
+    defaultGroup?.addEventListener("starwind:value-change", (event) => {
+      event.detail.onAccepted(() => {
+        acceptedCount += 1;
+      });
+    });
 
     const initial = {
       defaultGroupAriaLabelledby: defaultGroup?.getAttribute("aria-labelledby"),
@@ -478,15 +488,47 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
     disabledProductionRoot?.dispatchEvent(
       new MouseEvent("click", { bubbles: true, cancelable: true }),
     );
+    const afterToggle = {
+      acceptedCount,
+      defaultGroupValue: defaultGroup?.getAttribute("data-value"),
+      disabledGroupValue: disabledGroup?.getAttribute("data-value"),
+      disabledProduction: readRadio("runtime-radio-group-disabled-production"),
+      express: readRadio("runtime-radio-group-express"),
+      standard: readRadio("runtime-radio-group-standard"),
+    };
+    if (form instanceof HTMLFormElement) {
+      form.reset();
+      await new Promise((resolve) => window.setTimeout(resolve, 0));
+    }
+
+    const afterReset = {
+      defaultGroupValue: defaultGroup?.getAttribute("data-value"),
+      express: readRadio("runtime-radio-group-express"),
+      standard: readRadio("runtime-radio-group-standard"),
+    };
+    if (standardRoot instanceof HTMLElement) {
+      standardRoot.focus();
+      standardRoot.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          key: "ArrowDown",
+        }),
+      );
+    }
 
     return {
-      afterToggle: {
+      afterKeyboard: {
+        acceptedCount,
+        activeId:
+          document.activeElement instanceof HTMLElement
+            ? document.activeElement.getAttribute("data-id")
+            : null,
         defaultGroupValue: defaultGroup?.getAttribute("data-value"),
-        disabledGroupValue: disabledGroup?.getAttribute("data-value"),
-        disabledProduction: readRadio("runtime-radio-group-disabled-production"),
         express: readRadio("runtime-radio-group-express"),
-        standard: readRadio("runtime-radio-group-standard"),
       },
+      afterReset,
+      afterToggle,
       initial,
     };
   });
@@ -661,12 +703,23 @@ export async function verifyAstroFeedbackChoiceControlCases({ page }) {
     radioGroupState.initial.disabledProduction.ariaDisabled !== "true" ||
     radioGroupState.initial.disabledProduction.hasDisabled !== true ||
     radioGroupState.afterToggle.defaultGroupValue !== "express" ||
+    radioGroupState.afterToggle.acceptedCount !== 1 ||
     radioGroupState.afterToggle.standard.ariaChecked !== "false" ||
     radioGroupState.afterToggle.express.ariaChecked !== "true" ||
     radioGroupState.afterToggle.express.inputChecked !== true ||
     radioGroupState.afterToggle.disabledGroupValue !== "sandbox" ||
     radioGroupState.afterToggle.disabledProduction.hasChecked !== false ||
-    radioGroupState.afterToggle.disabledProduction.inputChecked !== false
+    radioGroupState.afterToggle.disabledProduction.inputChecked !== false ||
+    radioGroupState.afterReset.defaultGroupValue !== "standard" ||
+    radioGroupState.afterReset.standard.ariaChecked !== "true" ||
+    radioGroupState.afterReset.standard.inputChecked !== true ||
+    radioGroupState.afterReset.express.ariaChecked !== "false" ||
+    radioGroupState.afterReset.express.inputChecked !== false ||
+    radioGroupState.afterKeyboard.acceptedCount !== 2 ||
+    radioGroupState.afterKeyboard.activeId !== "runtime-radio-group-express" ||
+    radioGroupState.afterKeyboard.defaultGroupValue !== "express" ||
+    radioGroupState.afterKeyboard.express.ariaChecked !== "true" ||
+    radioGroupState.afterKeyboard.express.inputChecked !== true
   ) {
     throw new Error(
       `Expected Astro RadioGroup default and disabled behavior, got ${JSON.stringify(

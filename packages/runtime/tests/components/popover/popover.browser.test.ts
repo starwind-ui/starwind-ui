@@ -1061,6 +1061,112 @@ describe("createPopover", () => {
     expect(childPopup.hidden).toBe(false);
   });
 
+  it("keeps a hover-open parent active when its child controller is created first", () => {
+    vi.useFakeTimers();
+    const { childRoot, childTrigger, parentPopup, parentRoot, parentTrigger } =
+      renderNestedPopover();
+    parentRoot.setAttribute("data-open-on-hover", "");
+    parentRoot.setAttribute("data-close-delay", "100");
+
+    const child = createPopover(childRoot);
+    const parent = createPopover(parentRoot);
+
+    parentTrigger.dispatchEvent(
+      new PointerEvent("pointerenter", { bubbles: false, pointerType: "mouse" }),
+    );
+    childTrigger.click();
+
+    parentPopup.dispatchEvent(
+      new PointerEvent("pointerleave", { bubbles: false, pointerType: "mouse" }),
+    );
+    vi.advanceTimersByTime(100);
+
+    expect(parent.getOpen()).toBe(true);
+    expect(parentPopup.hidden).toBe(false);
+    expect(child.getOpen()).toBe(true);
+  });
+
+  it("preserves topmost dismissal and portaled containment when the child is created first", async () => {
+    const { childPopup, childRoot, childTrigger, parentPopup, parentRoot, parentTrigger } =
+      renderNestedPopover();
+
+    const child = createPopover(childRoot);
+    const parent = createPopover(parentRoot);
+
+    parentTrigger.click();
+    await waitForFloatingPosition();
+    childTrigger.focus();
+    childTrigger.click();
+    await waitForFloatingPosition();
+
+    expect(childPopup.parentElement).toBe(document.body);
+    childPopup.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    expect(parent.getOpen()).toBe(true);
+    expect(child.getOpen()).toBe(true);
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+    expect(parent.getOpen()).toBe(true);
+    expect(parentPopup.hidden).toBe(false);
+    expect(child.getOpen()).toBe(false);
+    expect(document.activeElement).toBe(childTrigger);
+
+    document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    expect(parent.getOpen()).toBe(false);
+  });
+
+  it("closes a child-first nested popover when its parent closes", () => {
+    const { childRoot, childTrigger, parentRoot, parentTrigger } = renderNestedPopover();
+
+    const child = createPopover(childRoot);
+    const parent = createPopover(parentRoot);
+
+    parentTrigger.click();
+    childTrigger.click();
+    parent.close();
+
+    expect(parent.getOpen()).toBe(false);
+    expect(child.getOpen()).toBe(false);
+  });
+
+  it("reconciles a default-open child across parent destroy and recreation", () => {
+    vi.useFakeTimers();
+    const { childRoot, parentPopup, parentRoot } = renderNestedPopover();
+    childRoot.setAttribute("data-modal", "true");
+    parentRoot.setAttribute("data-modal", "true");
+    parentRoot.setAttribute("data-open-on-hover", "");
+    parentRoot.setAttribute("data-close-delay", "100");
+
+    const child = createPopover(childRoot, { defaultOpen: true });
+    const firstParent = createPopover(parentRoot, { defaultOpen: true });
+
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
+    parentPopup.dispatchEvent(
+      new PointerEvent("pointerleave", { bubbles: false, pointerType: "mouse" }),
+    );
+    vi.advanceTimersByTime(100);
+    expect(firstParent.getOpen()).toBe(true);
+
+    firstParent.destroy();
+    expect(child.getOpen()).toBe(true);
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
+
+    const secondParent = createPopover(parentRoot, { defaultOpen: true });
+    parentPopup.dispatchEvent(
+      new PointerEvent("pointerleave", { bubbles: false, pointerType: "mouse" }),
+    );
+    vi.advanceTimersByTime(100);
+    expect(secondParent.getOpen()).toBe(true);
+
+    child.destroy();
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
+    vi.advanceTimersByTime(100);
+
+    expect(secondParent.getOpen()).toBe(false);
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
+  });
+
   it("closes open nested popovers when the parent popover closes", async () => {
     const { childPopup, childRoot, childTrigger, parentPopup, parentRoot, parentTrigger } =
       renderNestedPopover();

@@ -209,6 +209,20 @@ export function getSingleBooleanControlFacts(
   const stateEvent = getEvent(plan, "pressedChange");
   const stateSetter = getSetterForState(plan, "pressed");
   const disabledSetter = getSetterForProp(plan, disabledProp);
+  const groupContext = plan.context?.find(
+    (context) => context.name === "toggle-group" && context.direction === "consumes",
+  );
+
+  if (
+    !groupContext ||
+    groupContext.requirement !== "optional" ||
+    !groupContext.values.includes("disabled") ||
+    !groupContext.values.includes("value")
+  ) {
+    throw new Error(
+      `${plan.displayName} generic adapter plan requires optional toggle-group context exposing disabled and value.`,
+    );
+  }
 
   return {
     attrs: {
@@ -240,6 +254,13 @@ export function getSingleBooleanControlFacts(
     exports: {
       namespace: plan.exports.namespace,
       root: getPartExportName(plan, "root"),
+    },
+    group: {
+      hookName: `use${toPascalCase(groupContext.name)}Context`,
+      importPath: `../${groupContext.name}/${toPascalCase(groupContext.name)}Context`,
+      requirement: groupContext.requirement,
+      valueFields: [...groupContext.values],
+      variableName: toCamelCase(groupContext.name),
     },
     initExclusionAttributes: rootPart.initExclusionAttributes ?? [],
     part: rootPart,

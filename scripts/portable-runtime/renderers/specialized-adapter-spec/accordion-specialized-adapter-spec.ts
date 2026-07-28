@@ -39,6 +39,8 @@ type AccordionAnatomyRecipe = {
 
 type AccordionEventRecipe = {
   callbackProp: string;
+  callbackTiming: "before-state-commit";
+  cancelable: true;
   detailsType: string;
   domEvent: string;
   emitsFrom: string;
@@ -111,6 +113,8 @@ type AccordionRepetitionRecipe = {
 
 type AccordionRequiredEvent = SpecializedAdapterSpec["events"][number] & {
   callbackProp: string;
+  callbackTiming: "before-state-commit";
+  cancelable: true;
   detailsType: string;
   domEvent: string;
   emitsFrom: string;
@@ -186,6 +190,7 @@ const ACCORDION_NAMESPACE_NAMED_EXPORT_PART_ORDER = [
 const ACCORDION_REQUIRED_PARTS = ACCORDION_ANATOMY_PARTS;
 const ACCORDION_VALUE_CONTROL_RUNTIME_BOUNDARY = [
   "Runtime owns single/multiple value normalization and item toggle rules.",
+  "Runtime owns synchronous value proposal cancellation before uncontrolled state commits.",
   "Adapters only project value state, event forwarding, and setValue controlled resync.",
 ] as const;
 const ACCORDION_PANEL_VISIBILITY_RUNTIME_BOUNDARY =
@@ -307,7 +312,6 @@ export function validateAccordionSpecializedAdapterSpec(
   errors.push(...validatePanelVisibility(spec, accordion.panelVisibility));
   errors.push(...validatePresence(spec, accordion.presence));
   errors.push(...validateNamespace(spec, accordion.namespace));
-
 
   if (!arraysEqual(asArray(accordion.runtimeBoundary), ACCORDION_RUNTIME_BOUNDARY)) {
     errors.push(
@@ -803,6 +807,8 @@ function buildValueControlRecipe(spec: SpecializedAdapterSpec): AccordionValueCo
   return {
     event: {
       callbackProp: valueEvent.callbackProp,
+      callbackTiming: valueEvent.callbackTiming,
+      cancelable: valueEvent.cancelable,
       detailsType: valueEvent.detailsType,
       domEvent: valueEvent.domEvent,
       emitsFrom: valueEvent.emitsFrom,
@@ -1136,7 +1142,14 @@ function getProp(spec: SpecializedAdapterSpec, propName: string) {
 
 function getRequiredEvent(spec: SpecializedAdapterSpec, eventName: string): AccordionRequiredEvent {
   const event = spec.events.find((candidate) => candidate.name === eventName);
-  if (!event?.detailsType || !event.domEvent || !event.valueProperty || !event.valueType) {
+  if (
+    !event?.detailsType ||
+    !event.domEvent ||
+    !event.valueProperty ||
+    !event.valueType ||
+    event.callbackTiming !== "before-state-commit" ||
+    event.cancelable !== true
+  ) {
     throw new Error(`Accordion specialized adapter spec requires ${eventName} event metadata.`);
   }
 

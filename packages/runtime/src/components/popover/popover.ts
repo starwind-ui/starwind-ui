@@ -146,7 +146,6 @@ class PopoverController implements PopoverInstance {
   private readonly onCloseComplete?: (details: PopoverCloseCompleteDetails) => void;
   private readonly onOpenChange?: (open: boolean, details: PopoverOpenChangeDetails) => void;
   private readonly openOnHover: boolean;
-  private readonly parentController: PopoverController | null;
   private readonly lifecycle: FloatingDisclosureLifecycle<OpenRequest>;
   private readonly openChangeSubscribers = new Set<(details: PopoverOpenChangeDetails) => void>();
   private readonly closeCompleteSubscribers = new Set<
@@ -155,18 +154,17 @@ class PopoverController implements PopoverInstance {
   private activeTrigger: HTMLElement | null = null;
   private destroyed = false;
   private hoverCloseTimer: number | null = null;
-  private openChildCount = 0;
+  private readonly registeredOpenChildren = new Set<PopoverController>();
   private openState: boolean;
   private pendingControlledCloseRequest: OpenRequest | null = null;
   private pendingControlledOpenRequest: OpenRequest | null = null;
   private previousActiveElement: HTMLElement | null = null;
-  private registeredWithParentAsOpenChild = false;
+  private registeredOpenParent: PopoverController | null = null;
 
   constructor(root: HTMLElement, options: PopoverOptions) {
     this.root = root;
     this.elements = getPopoverElements(root);
     popupOwners.set(this.elements.popup, this);
-    this.parentController = this.resolveParentController();
     this.controlled = Object.hasOwn(options, "open");
     this.closeOnEscape =
       options.closeOnEscape ?? readBooleanAttribute(root, POPOVER_CLOSE_ON_ESCAPE_ATTRIBUTE, true);
@@ -244,6 +242,7 @@ class PopoverController implements PopoverInstance {
     this.setupAccessibility();
     this.bindEvents();
     this.applyOpenState(this.openState, undefined, { captureFocusFallback: this.openState });
+    this.reconcileOpenChildRegistrations();
   }
 
   open(): void {
@@ -323,13 +322,14 @@ class PopoverController implements PopoverInstance {
     this.closeCompleteSubscribers.clear();
     this.unregisterAsOpenChildOnParent();
     popupOwners.delete(this.elements.popup);
+    this.destroyed = true;
+    this.reconcileOpenChildRegistrations();
     this.openState = false;
     this.previousActiveElement = null;
     this.renderState(false);
     this.elements.popup.hidden = true;
     this.elements.backdrop?.setAttribute("hidden", "");
     instances.delete(this.root);
-    this.destroyed = true;
   }
 
   private setupAccessibility(): void {
@@ -700,7 +700,7 @@ class PopoverController implements PopoverInstance {
     const delay = readNumberAttribute(this.root, POPOVER_CLOSE_DELAY_ATTRIBUTE, 200);
     this.hoverCloseTimer = window.setTimeout(() => {
       this.hoverCloseTimer = null;
-      if (!this.destroyed && this.openState && this.openChildCount === 0) {
+      if (!this.destroyed && this.openState && this.registeredOpenChildren.size === 0) {
         this.requestOpen(false, { reason: "trigger-hover" });
       }
     }, delay);
@@ -744,12 +744,31 @@ class PopoverController implements PopoverInstance {
   }
 
   private resolveParentController(): PopoverController | null {
+    const parentController = this.resolveDirectParentController();
+    if (!parentController) return null;
+
+    const visited = new Set<PopoverController>([this]);
+    let currentController: PopoverController | null = parentController;
+    while (currentController) {
+      if (visited.has(currentController)) return null;
+
+      visited.add(currentController);
+      currentController = currentController.resolveDirectParentController();
+    }
+
+    return parentController;
+  }
+
+  private resolveDirectParentController(): PopoverController | null {
     const parentPopup = this.root.parentElement?.closest<HTMLElement>(
       `[${POPOVER_POPUP_ATTRIBUTE}]`,
     );
     if (!parentPopup || parentPopup === this.elements.popup) return null;
 
-    return popupOwners.get(parentPopup) ?? null;
+    const parentController = popupOwners.get(parentPopup) ?? null;
+    return parentController && !parentController.destroyed && parentController !== this
+      ? parentController
+      : null;
   }
 
   private closeNestedPopovers(): void {
@@ -769,31 +788,68 @@ class PopoverController implements PopoverInstance {
   private clearHoverCloseTimersInTree(): void {
     this.clearHoverCloseTimer();
 
-    let currentController = this.parentController;
-    while (currentController) {
+    const visited = new Set<PopoverController>([this]);
+    let currentController = this.resolveParentController();
+    while (currentController && !visited.has(currentController)) {
+      visited.add(currentController);
       currentController.clearHoverCloseTimer();
-      currentController = currentController.parentController;
+      currentController = currentController.resolveParentController();
     }
   }
 
   private registerAsOpenChildOnParent(): void {
-    if (!this.parentController || this.registeredWithParentAsOpenChild) return;
+    this.reconcileOpenParentRegistration();
+  }
 
-    this.parentController.openChildCount += 1;
-    this.registeredWithParentAsOpenChild = true;
+  private reconcileOpenParentRegistration(): void {
+    const nextParent = this.openState && !this.destroyed ? this.resolveParentController() : null;
+    if (nextParent === this.registeredOpenParent) return;
+
+    const previousParent = this.registeredOpenParent;
+    this.registeredOpenParent = null;
+    if (previousParent) {
+      previousParent.registeredOpenChildren.delete(this);
+      previousParent.handleChildPopoverClosed();
+    }
+
+    this.registeredOpenParent = nextParent;
+    if (nextParent) {
+      nextParent.registeredOpenChildren.add(this);
+    }
   }
 
   private unregisterAsOpenChildOnParent(): void {
-    if (!this.parentController || !this.registeredWithParentAsOpenChild) return;
+    const registeredParent = this.registeredOpenParent;
+    if (!registeredParent) return;
 
-    this.parentController.openChildCount = Math.max(0, this.parentController.openChildCount - 1);
-    this.registeredWithParentAsOpenChild = false;
-    this.parentController.handleChildPopoverClosed();
+    this.registeredOpenParent = null;
+    registeredParent.registeredOpenChildren.delete(this);
+    registeredParent.handleChildPopoverClosed();
+  }
+
+  private reconcileOpenChildRegistrations(): void {
+    const childControllers = new Set(this.registeredOpenChildren);
+    const nestedRoots = this.elements.popup.querySelectorAll<HTMLElement>(
+      `[${POPOVER_ROOT_ATTRIBUTE}]`,
+    );
+
+    nestedRoots.forEach((nestedRoot) => {
+      const childController = instances.get(nestedRoot);
+      if (childController && childController !== this) {
+        childControllers.add(childController);
+      }
+    });
+
+    childControllers.forEach((childController) => {
+      if (childController.resolveParentController() !== this && !this.destroyed) return;
+
+      childController.reconcileOpenParentRegistration();
+    });
   }
 
   private handleChildPopoverClosed(): void {
-    if (!this.openOnHover || !this.openState) return;
-    if (this.openChildCount > 0) return;
+    if (this.destroyed || !this.openOnHover || !this.openState) return;
+    if (this.registeredOpenChildren.size > 0) return;
 
     this.closeAfterHoverDelay();
   }
@@ -805,11 +861,13 @@ class PopoverController implements PopoverInstance {
     const popup = element.closest<HTMLElement>(`[${POPOVER_POPUP_ATTRIBUTE}]`);
     if (!popup) return false;
 
+    const visited = new Set<PopoverController>();
     let currentController = popupOwners.get(popup) ?? null;
-    while (currentController) {
+    while (currentController && !currentController.destroyed && !visited.has(currentController)) {
       if (currentController === this) return true;
 
-      currentController = currentController.parentController;
+      visited.add(currentController);
+      currentController = currentController.resolveParentController();
     }
 
     return false;

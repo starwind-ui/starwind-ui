@@ -75,7 +75,10 @@ function printReactGenericAdapterOutputModel(plan: GenericAdapterPlan) {
   );
 }
 
-function buildTargetGenericAdapterOutputModel(plan: GenericAdapterPlan, target: "astro" | "react") {
+function buildTargetGenericAdapterOutputModel(
+  plan: GenericAdapterPlan,
+  target: "astro" | "react" | "vue",
+) {
   const model = buildGenericAdapterOutputModel(plan);
 
   return {
@@ -2376,13 +2379,34 @@ describe("GenericAdapterPlan output model printers", () => {
     const plan = buildGenericAdapterPlan(toggleGroupRuntimeAdapterContract);
     const astroOutputModel = buildTargetGenericAdapterOutputModel(plan, "astro");
     const reactOutputModel = buildTargetGenericAdapterOutputModel(plan, "react");
+    const vueOutputModel = buildTargetGenericAdapterOutputModel(plan, "vue");
     const astroFiles = printAstroGenericAdapterOutputModel(plan);
     const reactFiles = printReactGenericAdapterOutputModel(plan);
 
     expect(plan.category).toBe("controlled-value-group");
     expect(GENERIC_ADAPTER_OUTPUT_MODEL_COMPONENTS).toContain("toggle-group");
-    expect(astroOutputModel).toEqual(reactOutputModel);
-    expect(astroOutputModel.files.map((file) => file.kind)).toEqual(["component", "index"]);
+    expect(
+      astroOutputModel.files.map(({ kind, path, target }) => ({ kind, path, target })),
+    ).toEqual([
+      { kind: "component", path: "toggle-group/ToggleGroupRoot", target: undefined },
+      { kind: "index", path: "toggle-group/index.ts", target: "astro" },
+    ]);
+    expect(
+      reactOutputModel.files.map(({ kind, path, target }) => ({ kind, path, target })),
+    ).toEqual([
+      { kind: "component", path: "toggle-group/ToggleGroupRoot", target: undefined },
+      {
+        kind: "helper",
+        path: "toggle-group/ToggleGroupContext.tsx",
+        target: "react",
+      },
+      { kind: "index", path: "toggle-group/index.ts", target: "react" },
+    ]);
+    expect(vueOutputModel.files.map(({ kind, path, target }) => ({ kind, path, target }))).toEqual([
+      { kind: "component", path: "toggle-group/ToggleGroupRoot", target: undefined },
+      { kind: "helper", path: "toggle-group/ToggleGroupContext.ts", target: "vue" },
+      { kind: "index", path: "toggle-group/index.ts", target: "vue" },
+    ]);
     expect(hasPrebuiltFile(astroOutputModel.files)).toBe(false);
     expect(
       astroOutputModel.files
@@ -2437,6 +2461,9 @@ describe("GenericAdapterPlan output model printers", () => {
     const reactRoot = reactFiles.find(
       (file) => file.path === "toggle-group/ToggleGroupRoot.tsx",
     )?.contents;
+    const reactContext = reactFiles.find(
+      (file) => file.path === "toggle-group/ToggleGroupContext.tsx",
+    )?.contents;
     const astroIndex = astroFiles.find((file) => file.path === "toggle-group/index.ts")?.contents;
     const reactIndex = reactFiles.find((file) => file.path === "toggle-group/index.ts")?.contents;
 
@@ -2472,13 +2499,27 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactRoot).toContain("instance.setOrientation(orientation);");
     expect(reactRoot).toContain("instance.setValue(value, { emit: false });");
     expect(reactRoot).toContain(
-      "const renderedValue = normalizeRenderedValue(value ?? uncontrolledValue, multiple);",
+      "const renderedValue = React.useMemo(\n      () => normalizeRenderedValue(value ?? uncontrolledValue, multiple),\n      [multiple, uncontrolledValue, value],\n    );",
     );
+    expect(reactRoot).toContain('import { ToggleGroupContext } from "./ToggleGroupContext";');
+    expect(reactRoot).toContain(
+      "const contextValue = React.useMemo(\n      () => ({ disabled, loopFocus, multiple, orientation, value: renderedValue }),",
+    );
+    expect(reactRoot).toContain("<ToggleGroupContext.Provider value={contextValue}>");
+    expect(reactRoot).toContain("</ToggleGroupContext.Provider>");
     expect(reactRoot).toContain("data-value={JSON.stringify(renderedValue)}");
     expect(reactRoot).toContain(
       "function normalizeRenderedValue(value: ToggleGroupValue, multiple: boolean): ToggleGroupValue",
     );
-    expect(reactRoot).not.toContain(".Provider");
+    expect(reactContext).toContain(
+      "export type ToggleGroupContextValue = {\n  disabled: boolean;\n  loopFocus: boolean;\n  multiple: boolean;\n  orientation:",
+    );
+    expect(reactContext).toContain(
+      "const ToggleGroupContext = React.createContext<ToggleGroupContextValue | undefined>(undefined);",
+    );
+    expect(reactContext).toContain(
+      "function useToggleGroupContext(): ToggleGroupContextValue | undefined",
+    );
 
     expect(astroIndex).toContain('import ToggleGroupRoot from "./ToggleGroupRoot.astro";');
     expect(astroIndex).toContain("Root: ToggleGroupRoot");
@@ -2486,7 +2527,10 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactIndex).toContain('import ToggleGroupRoot from "./ToggleGroupRoot";');
     expect(reactIndex).toContain("Root: ToggleGroupRoot");
     expect(reactIndex).toContain("ToggleGroup,");
+    expect(reactIndex).toContain("ToggleGroupContext,");
+    expect(reactIndex).toContain("type ToggleGroupContextValue,");
     expect(reactIndex).toContain("ToggleGroupRoot,");
+    expect(reactIndex).toContain("useToggleGroupContext,");
   });
 
   it("keeps generated Toggle Group root files equal to the checked-in packages", async () => {
@@ -3663,14 +3707,18 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(checkboxGroupOutputModel.files.map((file) => file.kind)).toEqual([
       "component",
       "helper",
+      "helper",
+      "index",
       "index",
       "index",
     ]);
     expect(checkboxGroupOutputModel.files.map((file) => file.target ?? "all")).toEqual([
       "all",
       "react",
+      "vue",
       "astro",
       "react",
+      "vue",
     ]);
     expect(checkboxGroupOutputModel.files.find((file) => file.kind === "component")).toEqual(
       expect.objectContaining({
@@ -3712,16 +3760,40 @@ describe("GenericAdapterPlan output model printers", () => {
         ],
         target: "react",
       },
+      {
+        family: "grouped-value-control",
+        members: [
+          { from: "./CheckboxGroupContext", name: "CheckboxGroupContext" },
+          { from: "./CheckboxGroupContext", kind: "type", name: "CheckboxGroupContextValue" },
+          { from: "./CheckboxGroupRoot", name: "CheckboxGroupRoot" },
+          { from: "./CheckboxGroupContext", name: "useCheckboxGroupContext" },
+        ],
+        target: "vue",
+      },
     ]);
 
     const toggleGroupOutputModel =
       groupedValueControlAdapterFamilyPlan.buildOutputModel(toggleGroupPlan);
 
-    expect(toggleGroupOutputModel.files.map((file) => file.kind)).toEqual(["component", "index"]);
-    expect(toggleGroupOutputModel.files.find((file) => file.kind === "index")).toEqual(
-      expect.objectContaining({
-        family: expect.objectContaining({ kind: "grouped-value-control" }),
-      }),
+    expect(
+      toggleGroupOutputModel.files.map((file) => ({
+        kind: file.kind,
+        target: file.target ?? "all",
+      })),
+    ).toEqual([
+      { kind: "component", target: "all" },
+      { kind: "helper", target: "react" },
+      { kind: "helper", target: "vue" },
+      { kind: "index", target: "astro" },
+      { kind: "index", target: "react" },
+      { kind: "index", target: "vue" },
+    ]);
+    expect(toggleGroupOutputModel.files.filter((file) => file.kind === "index")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          family: expect.objectContaining({ kind: "grouped-value-control" }),
+        }),
+      ]),
     );
     expect(() =>
       groupedValueControlAdapterFamilyPlan.buildOutputModel(checkboxGroupNearMiss),
@@ -3890,6 +3962,7 @@ describe("GenericAdapterPlan output model printers", () => {
       {
         direction: "consumes",
         name: "checkbox-group",
+        requirement: "optional",
         values: ["disabled", "value"],
       },
     ]);
@@ -4058,6 +4131,7 @@ describe("GenericAdapterPlan output model printers", () => {
       {
         direction: "consumes",
         name: "radio-group",
+        requirement: "optional",
         values: ["disabled", "form", "name", "readOnly", "required", "value"],
       },
     ]);

@@ -117,14 +117,21 @@ const RadioRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, RadioRoo
       });
       instanceRef.current = instance;
       const unsubscribe = instance.subscribe("checkedChange", (details) => {
-        if (checkedRef.current === undefined) {
-          setUncontrolledChecked(details.checked);
-        }
-
         onCheckedChangeRef.current?.(details.checked, details);
+        details.onAccepted(() => {
+          if (checkedRef.current === undefined && radioGroup === undefined) {
+            setUncontrolledChecked(details.checked);
+          }
+        });
+      });
+      const unsubscribeStateSync = instance.subscribe("stateSync", () => {
+        if (checkedRef.current === undefined && radioGroup === undefined) {
+          setUncontrolledChecked(instance.getChecked());
+        }
       });
 
       return () => {
+        unsubscribeStateSync();
         unsubscribe();
         instance.destroy();
         if (instanceRef.current === instance) {

@@ -13,16 +13,108 @@ import { afterEach, describe, expect, it } from "vitest";
 import { generateStarwindVueWrappers } from "../../generate-vue-wrappers.js";
 import { formatGeneratedOutput } from "../../format-generated-output.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
-import { renderVueComponent } from "../../renderers/framework-adapters/vue/styled/render.js";
+import {
+  renderIcon,
+  renderVueComponent,
+} from "../../renderers/framework-adapters/vue/styled/render.js";
 import { vuePrimitiveComponents } from "../../renderers/framework-adapters/vue/inventory.js";
 import { generateFrameworkStyledWrappers } from "../../renderers/framework-wrapper-generator.js";
 import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const EXPECTED_INVENTORY = {
+  accordion: [
+    "Accordion.vue",
+    "AccordionContent.vue",
+    "AccordionItem.vue",
+    "AccordionTrigger.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  "alert-dialog": [
+    "AlertDialog.vue",
+    "AlertDialogAction.vue",
+    "AlertDialogCancel.vue",
+    "AlertDialogContent.vue",
+    "AlertDialogDescription.vue",
+    "AlertDialogFooter.vue",
+    "AlertDialogHeader.vue",
+    "AlertDialogTitle.vue",
+    "AlertDialogTrigger.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   avatar: ["Avatar.vue", "AvatarFallback.vue", "AvatarImage.vue", "index.ts", "variants.ts"],
   button: ["Button.vue", "index.ts", "variants.ts"],
   checkbox: ["Checkbox.vue", "index.ts", "styles.css", "variants.ts"],
+  "checkbox-group": ["CheckboxGroup.vue", "index.ts", "variants.ts"],
+  collapsible: [
+    "Collapsible.vue",
+    "CollapsibleContent.vue",
+    "CollapsibleTrigger.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  dialog: [
+    "Dialog.vue",
+    "DialogClose.vue",
+    "DialogContent.vue",
+    "DialogDescription.vue",
+    "DialogFooter.vue",
+    "DialogHeader.vue",
+    "DialogTitle.vue",
+    "DialogTrigger.vue",
+    "index.ts",
+    "styles.css",
+    "variants.ts",
+  ],
+  dropzone: [
+    "Dropzone.vue",
+    "DropzoneFilesList.vue",
+    "DropzoneLoadingIndicator.vue",
+    "DropzoneUploadIndicator.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  field: [
+    "Field.vue",
+    "FieldContent.vue",
+    "FieldControl.vue",
+    "FieldDescription.vue",
+    "FieldError.vue",
+    "FieldGroup.vue",
+    "FieldItem.vue",
+    "FieldLabel.vue",
+    "FieldLegend.vue",
+    "FieldSeparator.vue",
+    "FieldSet.vue",
+    "FieldTitle.vue",
+    "FieldValidity.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  form: ["Form.vue", "FormErrorSummary.vue", "index.ts", "variants.ts"],
+  input: ["Input.vue", "index.ts", "variants.ts"],
+  "input-otp": [
+    "InputOtp.vue",
+    "InputOtpGroup.vue",
+    "InputOtpSeparator.vue",
+    "InputOtpSlot.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  popover: [
+    "Popover.vue",
+    "PopoverContent.vue",
+    "PopoverDescription.vue",
+    "PopoverHeader.vue",
+    "PopoverTitle.vue",
+    "PopoverTrigger.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   progress: ["Progress.vue", "index.ts", "variants.ts"],
+  "radio-group": ["RadioGroup.vue", "RadioGroupItem.vue", "index.ts", "variants.ts"],
   "scroll-area": [
     "ScrollArea.vue",
     "ScrollAreaContent.vue",
@@ -50,7 +142,32 @@ const EXPECTED_INVENTORY = {
     "index.ts",
     "variants.ts",
   ],
+  separator: ["Separator.vue", "index.ts", "variants.ts"],
+  sheet: [
+    "Sheet.vue",
+    "SheetClose.vue",
+    "SheetContent.vue",
+    "SheetDescription.vue",
+    "SheetFooter.vue",
+    "SheetHeader.vue",
+    "SheetTitle.vue",
+    "SheetTrigger.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  slider: ["Slider.vue", "index.ts", "variants.ts"],
+  switch: ["Switch.vue", "index.ts", "variants.ts"],
+  tabs: [
+    "Tabs.vue",
+    "TabsContent.vue",
+    "TabsList.vue",
+    "TabsTrigger.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   "theme-toggle": ["ThemeToggle.vue", "index.ts", "variants.ts"],
+  toggle: ["Toggle.vue", "index.ts", "variants.ts"],
+  "toggle-group": ["ToggleGroup.vue", "ToggleGroupItem.vue", "index.ts", "variants.ts"],
 } as const;
 
 const vuePrimitiveSubpathPattern = vuePrimitiveComponents.join("|");
@@ -785,6 +902,16 @@ describe("generated Vue Styled wrappers", () => {
     );
   });
 
+  it("defines Vue bundler feature flags for the private Vite harness", () => {
+    const options = createVueViteOptions(process.cwd(), async () => ({ code: "", map: null }));
+
+    expect(options.define).toEqual({
+      __VUE_OPTIONS_API__: true,
+      __VUE_PROD_DEVTOOLS__: false,
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: true,
+    });
+  });
+
   it("emits the exact deterministic styled checkpoint inventory", async () => {
     const firstRoot = await createProductionContextOutputRoot();
     const secondRoot = await createOutputRoot();
@@ -940,6 +1067,12 @@ describe("generated Vue Styled wrappers", () => {
     expect(source).toContain('const consumerId = computed(() => attrs["id"]);');
   });
 
+  it("fails generation for an unsupported Styled icon instead of substituting another glyph", () => {
+    expect(() => renderIcon("UnsupportedIcon", [], 0)).toThrowError(
+      "Unsupported Vue Styled icon import: UnsupportedIcon.",
+    );
+  });
+
   it("fails clearly when a registered target has no Styled capability", async () => {
     const root = await createOutputRoot();
 
@@ -959,7 +1092,11 @@ describe("generated Vue Styled wrappers", () => {
   it("server-renders the generated visual contracts through real Vue primitives", async () => {
     const root = await createOutputRoot();
     const outputRoot = path.join(root, "styled");
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    await generateSelectedVueStyledGroups({
+      groups: ["button", "checkbox", "select", "theme-toggle"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
     const server = await createVueSsrLoader();
     servers.push(server);
 
@@ -1180,7 +1317,11 @@ describe("generated Vue Styled wrappers", () => {
   it("mounts generated Select models and its asChild trigger through the real Runtime controller", async () => {
     const root = await createProductionContextOutputRoot();
     const outputRoot = path.join(root, "styled");
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    await generateSelectedVueStyledGroups({
+      groups: ["select"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
     const ssrServer = await createVueSsrLoader();
     servers.push(ssrServer);
     const Select = await loadGeneratedComponent(ssrServer, outputRoot, "select/Select.vue");
@@ -1303,7 +1444,11 @@ describe("generated Vue Styled wrappers", () => {
   it("hydrates Styled Avatar without warnings or fallback visibility drift", async () => {
     const root = await createProductionContextOutputRoot();
     const outputRoot = path.join(root, "styled");
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    await generateSelectedVueStyledGroups({
+      groups: ["avatar"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
     const ssrServer = await createVueSsrLoader();
     servers.push(ssrServer);
     const Avatar = await loadGeneratedComponent(ssrServer, outputRoot, "avatar/Avatar.vue");
@@ -1385,7 +1530,11 @@ describe("generated Vue Styled wrappers", () => {
   it("hydrates Styled Progress once and keeps reactive presentation aligned with Runtime", async () => {
     const root = await createProductionContextOutputRoot();
     const outputRoot = path.join(root, "styled");
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    await generateSelectedVueStyledGroups({
+      groups: ["progress"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
     const ssrServer = await createVueSsrLoader();
     servers.push(ssrServer);
     const Progress = await loadGeneratedComponent(ssrServer, outputRoot, "progress/Progress.vue");
@@ -1455,7 +1604,11 @@ describe("generated Vue Styled wrappers", () => {
   it("hydrates default and custom Styled Scroll Areas once without geometry drift", async () => {
     const root = await createProductionContextOutputRoot();
     const outputRoot = path.join(root, "styled");
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    await generateSelectedVueStyledGroups({
+      groups: ["scroll-area"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
     const ssrServer = await createVueSsrLoader();
     servers.push(ssrServer);
     const ScrollArea = await loadGeneratedComponent(
@@ -1574,7 +1727,11 @@ describe("generated Vue Styled wrappers", () => {
   it("hydrates Theme Toggles once and preserves the app-owned controller on unmount", async () => {
     const root = await createProductionContextOutputRoot();
     const outputRoot = path.join(root, "styled");
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    await generateSelectedVueStyledGroups({
+      groups: ["theme-toggle"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
     const ssrServer = await createVueSsrLoader();
     servers.push(ssrServer);
     const ThemeToggle = await loadGeneratedComponent(
@@ -1648,7 +1805,11 @@ describe("generated Vue Styled wrappers", () => {
   it("hydrates uncontrolled and controlled Styled Checkboxes without losing model ownership", async () => {
     const root = await createProductionContextOutputRoot();
     const outputRoot = path.join(root, "styled");
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    await generateSelectedVueStyledGroups({
+      groups: ["button", "checkbox"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
 
     const ssrServer = await createVueSsrLoader();
     servers.push(ssrServer);
@@ -1819,6 +1980,11 @@ function createVueViteOptions(
 
   return {
     configFile: false,
+    define: {
+      __VUE_OPTIONS_API__: true,
+      __VUE_PROD_DEVTOOLS__: false,
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: true,
+    },
     logLevel: "silent",
     plugins: [
       {

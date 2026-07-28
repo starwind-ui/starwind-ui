@@ -97,6 +97,7 @@ export const radioRuntimeAdapterContract = {
       defaultProp: "defaultChecked",
       initialAttribute: "data-default-checked",
       runtimeGetter: "getChecked",
+      runtimeSyncEvent: "stateSync",
       runtimeSetter: "setChecked",
       valueType: "boolean",
       controlledStateSync: "unsupported",
@@ -105,6 +106,9 @@ export const radioRuntimeAdapterContract = {
   events: [
     {
       name: "checkedChange",
+      acceptanceNotification: "detail-on-accepted",
+      callbackTiming: "before-state-commit",
+      cancelable: true,
       callbackProp: "onCheckedChange",
       detailsType: "RadioCheckedChangeDetails",
       domEvent: "starwind:checked-change",
@@ -123,6 +127,7 @@ export const radioRuntimeAdapterContract = {
     {
       name: "radio-group",
       direction: "consumes",
+      requirement: "optional",
       values: ["disabled", "form", "name", "readOnly", "required", "value"],
     },
   ],

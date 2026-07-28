@@ -7,6 +7,7 @@ import {
   alertDialogRuntimeAdapterContract,
   avatarRuntimeAdapterContract,
   buttonRuntimeAdapterContract,
+  checkboxRuntimeAdapterContract,
   collapsibleRuntimeAdapterContract,
   dialogRuntimeAdapterContract,
   drawerRuntimeAdapterContract,
@@ -16,6 +17,7 @@ import {
   popoverRuntimeAdapterContract,
   previewCardRuntimeAdapterContract,
   progressRuntimeAdapterContract,
+  radioRuntimeAdapterContract,
   runtimeAdapterContracts,
   scrollAreaRuntimeAdapterContract,
   toggleGroupRuntimeAdapterContract,
@@ -42,6 +44,7 @@ import {
   validateGenericAdapterPlan,
   validateGenericAdapterPlanCoverageManifest,
 } from "../renderers/generic-adapter-plan/index.js";
+import { getBooleanFormControlFacts } from "../renderers/generic-adapter-plan/families/boolean-form-control.js";
 import { timedFloatingOverlayContractSummary } from "../renderers/generic-adapter-plan/timed-floating-overlay-contract-summary.js";
 
 function printAstroGenericAdapterOutputModel(plan: GenericAdapterPlan) {
@@ -116,6 +119,35 @@ describe("GenericAdapterPlan", () => {
       "synthetic-boolean-form/index",
     ]);
     expect(plan.exports.members.map((member) => member.part)).toEqual(["root", "debugInput"]);
+  });
+
+  it("preserves consumed context requirements in plans and boolean form-control facts", () => {
+    const checkboxPlan = buildGenericAdapterPlan(checkboxRuntimeAdapterContract);
+    const radioPlan = buildGenericAdapterPlan(radioRuntimeAdapterContract);
+    const requiredConsumerPlan = buildGenericAdapterPlan(
+      runtimeAdapterContracts.find((contract) => contract.component === "menu")!,
+    );
+
+    expect(checkboxPlan.context).toContainEqual(
+      expect.objectContaining({
+        direction: "consumes",
+        name: "checkbox-group",
+        requirement: "optional",
+      }),
+    );
+    expect(radioPlan.context).toContainEqual(
+      expect.objectContaining({
+        direction: "consumes",
+        name: "radio-group",
+        requirement: "optional",
+      }),
+    );
+    expect(
+      requiredConsumerPlan.context?.find((context) => context.direction === "consumes")
+        ?.requirement ?? "required",
+    ).toBe("required");
+    expect(getBooleanFormControlFacts(checkboxPlan).group?.requirement).toBe("optional");
+    expect(getBooleanFormControlFacts(radioPlan).group?.requirement).toBe("optional");
   });
 
   it("builds the Scroll Area viewport-measurement plan without encoding measurement behavior", () => {
@@ -678,6 +710,14 @@ describe("GenericAdapterPlan", () => {
     const invalidPlan: GenericAdapterPlan = {
       ...buildGenericAdapterPlan(syntheticStaticContract),
       component: "",
+      context: [
+        {
+          direction: "provides",
+          name: "synthetic-context",
+          requirement: "optional",
+          values: ["value"],
+        } as never,
+      ],
       escapeDeclarations: [
         {
           boundary: "",
@@ -758,6 +798,10 @@ describe("GenericAdapterPlan", () => {
         expect.objectContaining({
           message: 'Missing part "missingRef".',
           path: "refs.missingRef.part",
+        }),
+        expect.objectContaining({
+          message: 'Provided context "synthetic-context" cannot declare a consumption requirement.',
+          path: "context.synthetic-context.requirement",
         }),
         expect.objectContaining({
           message: "Missing export namespace.",
@@ -1011,7 +1055,6 @@ describe("GenericAdapterPlan", () => {
       genericAdapterFutureFrameworkTracerClassifications.map((entry) => entry.component),
     ).toEqual([
       "toggle/vue",
-      "collapsible/vue",
       "menu/vue",
       "navigation-menu/vue",
       "combobox/vue",

@@ -80,25 +80,32 @@ describe("root verification scripts", () => {
     ]);
   });
 
-  it("runs every canonical verification phase without rerunning generator tests", async () => {
+  it("keeps development verification local and delegates production audit only to release", async () => {
     const pkg = await readRootPackage();
     const phases = commandPhases(pkg.scripts?.verify);
 
-    expect(phases).toEqual(
-      expect.arrayContaining([
-        "pnpm check",
-        "pnpm styled:versions:check",
-        "pnpm primitive:versions:check",
-        "pnpm test:homes",
-        "pnpm test:all",
-        "pnpm runtime:generate:typecheck",
-        "pnpm runtime:docs:metadata:check",
-        "pnpm build",
-        "pnpm audit --prod --audit-level high",
-      ]),
-    );
+    expect(phases).toEqual([
+      "pnpm check",
+      "pnpm styled:versions:check",
+      "pnpm primitive:versions:check",
+      "pnpm test:homes",
+      "pnpm test:all",
+      "pnpm runtime:generate:typecheck",
+      "pnpm runtime:docs:metadata:check",
+      "pnpm build",
+    ]);
+    expect(phases.some((phase) => /audit/i.test(phase))).toBe(false);
     expect(phases).not.toContain("pnpm runtime:generate:test");
     expect(new Set(phases).size).toBe(phases.length);
+    expect(pkg.scripts?.["audit:prod"]).toBe("pnpm audit --prod --audit-level high");
+    expect(
+      Object.entries(pkg.scripts ?? {})
+        .filter(
+          ([name, command]) =>
+            name !== "audit:prod" && commandPhases(command).includes("pnpm audit:prod"),
+        )
+        .map(([name]) => name),
+    ).toEqual(["release:gate"]);
   });
 
   it("gates release automation on parallel read-only verification jobs", async () => {
@@ -167,6 +174,9 @@ describe("root verification scripts", () => {
     expect(
       verifyRuns.filter((command) => command.includes("pnpm runtime:generate:test")),
     ).toHaveLength(1);
+    expect(
+      verifyRuns.filter((command) => /(?:^|[\s;&])pnpm\s+audit(?::prod)?(?:\s|$)/u.test(command)),
+    ).toEqual([]);
 
     expect(releaseWorkflow.jobs.verify.uses).toBe("./.github/workflows/verify.yml");
     expect(releaseWorkflow.jobs.release).toMatchObject({ name: "Release", needs: "verify" });

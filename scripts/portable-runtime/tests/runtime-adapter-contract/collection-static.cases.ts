@@ -280,7 +280,9 @@ export function defineRuntimeCollectionStaticTests(): void {
     );
     expect(radioGroup.events).toContainEqual(
       expect.objectContaining({
+        callbackTiming: "before-state-commit",
         callbackProp: "onValueChange",
+        cancelable: true,
         detailsType: "RadioGroupValueChangeDetails",
         domEvent: "starwind:value-change",
         valueProperty: "value",
@@ -588,6 +590,8 @@ export function defineRuntimeCollectionStaticTests(): void {
     expect(accordion.events).toContainEqual(
       expect.objectContaining({
         callbackProp: "onValueChange",
+        callbackTiming: "before-state-commit",
+        cancelable: true,
         detailsType: "AccordionValueChangeDetails",
         domEvent: "starwind:value-change",
         valueProperty: "value",
@@ -631,6 +635,7 @@ export function defineRuntimeCollectionStaticTests(): void {
           "root/item/header/trigger/panel parts and discovery attributes",
           "value state model",
           "value-change event/callback/details value",
+          "value-change cancelability and before-commit callback timing",
           "value setter name and suppression options",
           "presence panel part and initial hidden state",
         ]),

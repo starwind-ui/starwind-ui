@@ -42,7 +42,9 @@ type InputOtpAnatomyRecipe = {
 };
 
 type InputOtpCallbackLifecycleRecipe = {
+  callbackTiming: "before-state-commit";
   callbackProp: string;
+  cancelable: true;
   detailsType: string;
   domEvent: string;
   emitsFrom: string;
@@ -377,7 +379,6 @@ export function validateInputOtpSpecializedAdapterSpec(
   errors.push(...validateNamespace(spec, inputOtp.namespace));
   errors.push(...validateShippingFiles(spec));
 
-
   if (!arraysEqual(asArray(inputOtp.runtimeBoundary), INPUT_OTP_RUNTIME_BOUNDARY)) {
     errors.push(
       "Input OTP specialized adapter spec runtimeBoundary must match Runtime-owned OTP behavior.",
@@ -595,7 +596,9 @@ function getInputOtpHiddenInputVisualSlotFacts(
     },
     displayName: spec.displayName,
     event: {
+      callbackTiming: valueControl.callbackLifecycle.callbackTiming,
       callbackProp: valueControl.callbackLifecycle.callbackProp,
+      cancelable: valueControl.callbackLifecycle.cancelable,
       detailsType: valueControl.callbackLifecycle.detailsType,
       name: valueControl.callbackLifecycle.domEvent,
       valueProperty: valueControl.callbackLifecycle.valueProperty,
@@ -662,11 +665,7 @@ function getInputOtpHiddenInputVisualSlotFacts(
     },
     props: {
       caret: getAdapterFamilyProp(
-        getTargetProp(
-          spec,
-          visualSlots.caretRendering.outletName,
-          visualSlots.slotPart,
-        ),
+        getTargetProp(spec, visualSlots.caretRendering.outletName, visualSlots.slotPart),
       ),
       defaultValue: getAdapterFamilyProp(getProp(spec, valueControl.state.defaultProp)),
       disabled: getAdapterFamilyProp(getInputOtpOptionProp(spec, "disabled")),
@@ -900,7 +899,15 @@ function buildValueControlRecipe(spec: SpecializedAdapterSpec): InputOtpValueCon
 
   return {
     callbackLifecycle: {
+      callbackTiming: getRequiredValue(
+        valueChangeEvent.callbackTiming,
+        "valueChange callback timing",
+      ) as "before-state-commit",
       callbackProp: valueChangeEvent.callbackProp,
+      cancelable: getRequiredValue(
+        valueChangeEvent.cancelable,
+        "valueChange cancelability",
+      ) as true,
       detailsType: valueChangeEvent.detailsType,
       domEvent: valueChangeEvent.domEvent,
       emitsFrom: valueChangeEvent.emitsFrom,
@@ -1247,15 +1254,10 @@ function findTargetProp(spec: SpecializedAdapterSpec, propName: string, targetPa
   );
 }
 
-function getInputOtpAnatomyPart(
-  spec: InputOtpSpecializedAdapterSpec,
-  partName: string,
-) {
+function getInputOtpAnatomyPart(spec: InputOtpSpecializedAdapterSpec, partName: string) {
   const part = spec.inputOtp.anatomy.find((candidate) => candidate.part === partName);
   if (!part) {
-    throw new Error(
-      `Input OTP specialized adapter spec output model requires ${partName} part.`,
-    );
+    throw new Error(`Input OTP specialized adapter spec output model requires ${partName} part.`);
   }
 
   return part;
@@ -1310,18 +1312,13 @@ function getInputOtpHiddenInputVisualSlotPart(
 function getInputOtpOption(spec: InputOtpSpecializedAdapterSpec, propName: string) {
   const option = spec.inputOtp.options.find((candidate) => candidate.prop === propName);
   if (!option) {
-    throw new Error(
-      `Input OTP specialized adapter spec output model requires ${propName} option.`,
-    );
+    throw new Error(`Input OTP specialized adapter spec output model requires ${propName} option.`);
   }
 
   return option;
 }
 
-function getInputOtpOptionProp(
-  spec: InputOtpSpecializedAdapterSpec,
-  propName: string,
-) {
+function getInputOtpOptionProp(spec: InputOtpSpecializedAdapterSpec, propName: string) {
   const option = getInputOtpOption(spec, propName);
   const prop = getProp(spec, option.prop);
   if (prop.targets && !prop.targets.includes(option.targetPart)) {
@@ -1356,9 +1353,7 @@ function getInputOtpSpecFileBasename(
     (candidate) => candidate.kind === "part" && candidate.part === partName,
   );
   if (!file || file.kind !== "part") {
-    throw new Error(
-      `Input OTP specialized adapter spec output model requires ${partName} file.`,
-    );
+    throw new Error(`Input OTP specialized adapter spec output model requires ${partName} file.`);
   }
 
   const expectedPath = `${spec.component}/${file.exportName}`;
@@ -1631,9 +1626,7 @@ function recordsEqual(actual: unknown, expected: unknown): boolean {
   return JSON.stringify(actual) === JSON.stringify(expected);
 }
 
-function assertValidInputOtpAdapterOutputModelSpec(
-  spec: InputOtpSpecializedAdapterSpec,
-): void {
+function assertValidInputOtpAdapterOutputModelSpec(spec: InputOtpSpecializedAdapterSpec): void {
   const errors = validateInputOtpSpecializedAdapterSpec(spec);
   if (errors.length > 0) {
     throw new Error(

@@ -63,6 +63,8 @@ const AccordionRoot = React.forwardRef<HTMLDivElement, AccordionRootProps>(funct
     instanceRef.current = instance;
     const unsubscribe = instance.subscribe("valueChange", (details) => {
       onValueChangeRef.current?.(details);
+      if (details.isCanceled) return;
+
       if (valueRef.current === undefined) {
         uncontrolledValueRef.current = details.value;
       }

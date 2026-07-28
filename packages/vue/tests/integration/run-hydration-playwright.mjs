@@ -8,8 +8,62 @@ import { createSSRApp, Fragment, h } from "vue";
 import { renderToString } from "vue/server-renderer";
 
 import { AvatarFallback, AvatarImage, AvatarRoot } from "@starwind-ui/vue/avatar";
+import {
+  AccordionHeader,
+  AccordionItem,
+  AccordionPanel,
+  AccordionRoot,
+  AccordionTrigger,
+} from "@starwind-ui/vue/accordion";
+import {
+  AlertDialogBackdrop,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogPopup,
+  AlertDialogPortal,
+  AlertDialogRoot,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  AlertDialogViewport,
+} from "@starwind-ui/vue/alert-dialog";
 import { ButtonRoot } from "@starwind-ui/vue/button";
 import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
+import { CheckboxGroupRoot } from "@starwind-ui/vue/checkbox-group";
+import {
+  DialogBackdrop,
+  DialogClose,
+  DialogDescription,
+  DialogPopup,
+  DialogRoot,
+  DialogTitle,
+  DialogTrigger,
+} from "@starwind-ui/vue/dialog";
+import {
+  DrawerBackdrop,
+  DrawerClose,
+  DrawerDescription,
+  DrawerPopup,
+  DrawerPortal,
+  DrawerRoot,
+  DrawerTitle,
+  DrawerTrigger,
+  DrawerViewport,
+} from "@starwind-ui/vue/drawer";
+import { InputRoot } from "@starwind-ui/vue/input";
+import {
+  FieldControl,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  FieldRoot,
+  FieldValidity,
+} from "@starwind-ui/vue/field";
+import {
+  InputOtpGroup,
+  InputOtpRoot,
+  InputOtpSeparator,
+  InputOtpSlot,
+} from "@starwind-ui/vue/input-otp";
 import {
   ProgressIndicator,
   ProgressLabel,
@@ -17,6 +71,21 @@ import {
   ProgressTrack,
   ProgressValue,
 } from "@starwind-ui/vue/progress";
+import {
+  PopoverClose,
+  PopoverDescription,
+  PopoverPopup,
+  PopoverPortal,
+  PopoverPositioner,
+  PopoverRoot,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@starwind-ui/vue/popover";
+import { RadioGroupRoot } from "@starwind-ui/vue/radio-group";
+import { RadioRoot } from "@starwind-ui/vue/radio";
+import { SwitchRoot, SwitchThumb } from "@starwind-ui/vue/switch";
+import { ToggleGroupRoot } from "@starwind-ui/vue/toggle-group";
+import { ToggleRoot } from "@starwind-ui/vue/toggle";
 import {
   ScrollAreaContent,
   ScrollAreaCorner,
@@ -37,6 +106,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@starwind-ui/vue/select";
+import {
+  SliderControl,
+  SliderIndicator,
+  SliderRoot,
+  SliderThumb,
+  SliderTrack,
+} from "@starwind-ui/vue/slider";
+import { TabsIndicator, TabsList, TabsPanel, TabsRoot, TabsTab } from "@starwind-ui/vue/tabs";
+import {
+  DropzoneFilesList,
+  DropzoneInput,
+  DropzoneLoadingIndicator,
+  DropzoneRoot,
+  DropzoneUploadIndicator,
+} from "@starwind-ui/vue/dropzone";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const repoRoot = path.resolve(packageRoot, "../..");
@@ -73,7 +157,7 @@ const server = createServer(async (request, response) => {
     <div id="hydration-host">${serverMarkup}</div>
     <div id="hydration-overlays"></div>
     <script type="importmap">
-      {"imports":{"vue":"/vendor/vue.js","@starwind-ui/runtime/avatar":"/runtime/avatar.js","@starwind-ui/runtime/button":"/runtime/button.js","@starwind-ui/runtime/checkbox":"/runtime/checkbox.js","@starwind-ui/runtime/progress":"/runtime/progress.js","@starwind-ui/runtime/scroll-area":"/runtime/scroll-area.js","@starwind-ui/runtime/select":"/runtime/select.js","@floating-ui/dom":"/vendor/floating-ui-dom.mjs","@floating-ui/core":"/vendor/floating-ui-core.mjs","@floating-ui/utils":"/vendor/floating-ui-utils.mjs"}}
+      {"imports":{"vue":"/vendor/vue.js","@starwind-ui/runtime/accordion":"/runtime/accordion.js","@starwind-ui/runtime/alert-dialog":"/runtime/alert-dialog.js","@starwind-ui/runtime/avatar":"/runtime/avatar.js","@starwind-ui/runtime/button":"/runtime/button.js","@starwind-ui/runtime/checkbox":"/runtime/checkbox.js","@starwind-ui/runtime/checkbox-group":"/runtime/checkbox-group.js","@starwind-ui/runtime/dialog":"/runtime/dialog.js","@starwind-ui/runtime/drawer":"/runtime/drawer.js","@starwind-ui/runtime/dropzone":"/runtime/dropzone.js","@starwind-ui/runtime/field":"/runtime/field.js","@starwind-ui/runtime/input":"/runtime/input.js","@starwind-ui/runtime/input-otp":"/runtime/input-otp.js","@starwind-ui/runtime/popover":"/runtime/popover.js","@starwind-ui/runtime/progress":"/runtime/progress.js","@starwind-ui/runtime/radio":"/runtime/radio.js","@starwind-ui/runtime/radio-group":"/runtime/radio-group.js","@starwind-ui/runtime/scroll-area":"/runtime/scroll-area.js","@starwind-ui/runtime/select":"/runtime/select.js","@starwind-ui/runtime/slider":"/runtime/slider.js","@starwind-ui/runtime/switch":"/runtime/switch.js","@starwind-ui/runtime/tabs":"/runtime/tabs.js","@starwind-ui/runtime/toggle":"/runtime/toggle.js","@starwind-ui/runtime/toggle-group":"/runtime/toggle-group.js","@floating-ui/dom":"/vendor/floating-ui-dom.mjs","@floating-ui/core":"/vendor/floating-ui-core.mjs","@floating-ui/utils":"/vendor/floating-ui-utils.mjs"}}
     </script>
     <script type="module">
       try {
@@ -163,7 +247,149 @@ function renderFixture() {
       { defaultChecked: false, id: "hydrated-checkbox", label: "Accept terms" },
       { default: () => h(CheckboxIndicator, null, { default: () => "Selected" }) },
     ),
+    h(
+      CheckboxGroupRoot,
+      { defaultValue: ["alpha"], id: "hydrated-checkbox-group" },
+      {
+        default: () => [h(CheckboxRoot, { value: "alpha" }), h(CheckboxRoot, { value: "beta" })],
+      },
+    ),
+    h(
+      RadioGroupRoot,
+      { defaultValue: "alpha", id: "hydrated-radio-group" },
+      {
+        default: () => [h(RadioRoot, { value: "alpha" }), h(RadioRoot, { value: "beta" })],
+      },
+    ),
     h(Fragment, null, [
+      h(InputRoot, { id: "hydrated-input", modelValue: "server input" }),
+      h("output", { id: "hydrated-input-state" }, "server input"),
+      h(
+        SwitchRoot,
+        { defaultChecked: false, id: "hydrated-switch" },
+        { default: () => h(SwitchThumb) },
+      ),
+      h(
+        "button",
+        { id: "cancel-hydrated-switch", type: "button" },
+        "Cancel next Switch activation",
+      ),
+      h("output", { id: "hydrated-switch-state" }, "checked:false, updates:0"),
+    ]),
+    h(
+      DialogRoot,
+      { id: "hydrated-dialog" },
+      {
+        default: () => [
+          h(DialogTrigger, { id: "hydrated-dialog-trigger" }, { default: () => "Open Dialog" }),
+          h(DialogBackdrop),
+          h(
+            DialogPopup,
+            { id: "hydrated-dialog-popup" },
+            {
+              default: () => [
+                h(DialogTitle, null, { default: () => "Hydrated Dialog" }),
+                h(DialogDescription, null, { default: () => "Hydration-safe overlay" }),
+                h(DialogClose, null, { default: () => "Close" }),
+              ],
+            },
+          ),
+        ],
+      },
+    ),
+    renderAlertDialog(),
+    renderDrawer(),
+    renderPopover(),
+    h(
+      ToggleGroupRoot,
+      { defaultValue: ["bold"], id: "hydrated-toggle-group" },
+      {
+        default: () => [
+          h(ToggleRoot, { value: "bold" }, { default: () => "Bold" }),
+          h(ToggleRoot, { value: "italic" }, { default: () => "Italic" }),
+        ],
+      },
+    ),
+    h(Fragment, null, [
+      h(AccordionRoot, { id: "hydrated-accordion", modelValue: "alpha" }, () =>
+        ["alpha", "beta"].map((value) =>
+          h(AccordionItem, { key: value, value }, () => [
+            h(AccordionHeader, null, () =>
+              h(AccordionTrigger, { id: `hydrated-accordion-${value}` }, () => value.toUpperCase()),
+            ),
+            h(AccordionPanel, null, () => `${value} content`),
+          ]),
+        ),
+      ),
+      h("output", { id: "hydrated-accordion-state" }, "alpha"),
+      h(TabsRoot, { id: "hydrated-tabs", modelValue: "account" }, () => [
+        h(TabsList, null, () => [
+          h(TabsTab, { id: "hydrated-tabs-account", value: "account" }, () => "Account"),
+          h(TabsTab, { id: "hydrated-tabs-password", value: "password" }, () => "Password"),
+          h(TabsIndicator),
+        ]),
+        h(TabsPanel, { value: "account" }, () => "Account content"),
+        h(TabsPanel, { value: "password" }, () => "Password content"),
+      ]),
+      h("output", { id: "hydrated-tabs-state" }, "account"),
+      h("form", { id: "hydrated-field-form" }, [
+        h(FieldRoot, { name: "email" }, () => [
+          h(FieldLabel, null, () => "Email"),
+          h(FieldControl, {
+            defaultValue: "",
+            id: "hydrated-field-control",
+            required: true,
+            type: "email",
+          }),
+          h(FieldDescription, null, () => "Used for hydration checks"),
+          h(FieldError, { match: "valueMissing" }, () => "Email is required"),
+          h(FieldValidity, { match: "valid" }, () => "Email is valid"),
+        ]),
+        h("button", { id: "hydrated-field-submit", type: "submit" }, "Submit field"),
+        h("button", { id: "hydrated-field-reset", type: "reset" }, "Reset field"),
+      ]),
+      h("output", { id: "hydrated-field-state" }, ""),
+      h(SliderRoot, { id: "hydrated-slider", modelValue: [20, 80], name: "range" }, () =>
+        h(SliderControl, { style: "position:relative;width:240px;height:32px" }, () => [
+          h(SliderTrack, { style: "display:block;position:relative;width:240px;height:8px" }, () =>
+            h(SliderIndicator),
+          ),
+          ...[20, 80].map((_value, index) =>
+            h(SliderThumb, {
+              index,
+              key: index,
+              style: "display:block;position:absolute;width:16px;height:16px",
+            }),
+          ),
+        ]),
+      ),
+      h("button", { id: "hydrated-slider-add-thumb", type: "button" }, "Add slider thumb"),
+      h("output", { id: "hydrated-slider-state" }, "[20,80]"),
+      h(
+        InputOtpRoot,
+        {
+          id: "hydrated-input-otp",
+          maxLength: 6,
+          modelValue: "12",
+          name: "code",
+        },
+        () =>
+          h(InputOtpGroup, null, () => [
+            ...Array.from({ length: 3 }, (_, index) => h(InputOtpSlot, { index, key: index })),
+            h(InputOtpSeparator),
+            ...Array.from({ length: 3 }, (_, offset) =>
+              h(InputOtpSlot, { index: offset + 3, key: offset + 3 }),
+            ),
+          ]),
+      ),
+      h("output", { id: "hydrated-input-otp-state" }, "12"),
+      h(DropzoneRoot, { id: "hydrated-dropzone" }, () => [
+        h(DropzoneUploadIndicator),
+        h(DropzoneLoadingIndicator),
+        h(DropzoneFilesList),
+        h(DropzoneInput, { accept: "image/*,.txt", multiple: true, name: "assets" }),
+      ]),
+      h("output", { id: "hydrated-dropzone-state" }, ""),
       h(
         AvatarRoot,
         { id: "hydrated-avatar" },
@@ -256,6 +482,117 @@ function renderFixture() {
       },
     ),
   ]);
+}
+
+function renderAlertDialog() {
+  return h(
+    AlertDialogRoot,
+    { id: "hydrated-alert-dialog" },
+    {
+      default: () => [
+        h(AlertDialogTrigger, { id: "hydrated-alert-dialog-trigger" }, { default: () => "Delete" }),
+        h(
+          AlertDialogPortal,
+          { container: "#hydration-overlays" },
+          {
+            default: () =>
+              h(AlertDialogViewport, null, {
+                default: () => [
+                  h(AlertDialogBackdrop),
+                  h(
+                    AlertDialogPopup,
+                    { id: "hydrated-alert-dialog-popup" },
+                    {
+                      default: () => [
+                        h(AlertDialogTitle, null, { default: () => "Confirm delete" }),
+                        h(AlertDialogDescription, null, { default: () => "Cannot undo" }),
+                        h(AlertDialogClose, null, { default: () => "Cancel" }),
+                      ],
+                    },
+                  ),
+                ],
+              }),
+          },
+        ),
+      ],
+    },
+  );
+}
+
+function renderDrawer() {
+  return h(
+    DrawerRoot,
+    { id: "hydrated-drawer" },
+    {
+      default: () => [
+        h(DrawerTrigger, { id: "hydrated-drawer-trigger" }, { default: () => "Open Drawer" }),
+        h(
+          DrawerPortal,
+          { container: "#hydration-overlays" },
+          {
+            default: () =>
+              h(DrawerViewport, null, {
+                default: () => [
+                  h(DrawerBackdrop),
+                  h(
+                    DrawerPopup,
+                    { id: "hydrated-drawer-popup", side: "left" },
+                    {
+                      default: () => [
+                        h(DrawerTitle, null, { default: () => "Hydrated Drawer" }),
+                        h(DrawerDescription, null, {
+                          default: () => "Hydration-safe side overlay",
+                        }),
+                        h(DrawerClose, null, { default: () => "Close" }),
+                      ],
+                    },
+                  ),
+                ],
+              }),
+          },
+        ),
+      ],
+    },
+  );
+}
+
+function renderPopover() {
+  return h(
+    PopoverRoot,
+    { id: "hydrated-popover" },
+    {
+      default: () => [
+        h(PopoverTrigger, { id: "hydrated-popover-trigger" }, { default: () => "Open Popover" }),
+        h(
+          PopoverPortal,
+          { container: "#hydration-overlays" },
+          {
+            default: () =>
+              h(
+                PopoverPositioner,
+                { align: "end", side: "right" },
+                {
+                  default: () =>
+                    h(
+                      PopoverPopup,
+                      { id: "hydrated-popover-popup" },
+                      {
+                        default: () => [
+                          h(PopoverTitle, null, { default: () => "Hydrated Popover" }),
+                          h(PopoverDescription, null, {
+                            default: () => "Hydration-safe floating overlay",
+                          }),
+                          h(PopoverClose, null, { default: () => "Close" }),
+                        ],
+                      },
+                    ),
+                },
+              ),
+          },
+        ),
+      ],
+    },
+  );
 }
 
 function renderItem(value, label) {

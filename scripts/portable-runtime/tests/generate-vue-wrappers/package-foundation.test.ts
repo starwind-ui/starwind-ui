@@ -22,40 +22,119 @@ import {
 describe("internal Vue package foundation", () => {
   it("derives every executable Vue projection from one typed inventory", () => {
     expect(vueAdapterInventory.runtimePrimitives.map(({ component }) => component)).toEqual([
+      "accordion",
+      "alert-dialog",
       "avatar",
       "button",
       "checkbox",
+      "checkbox-group",
+      "collapsible",
+      "dialog",
+      "drawer",
+      "dropzone",
+      "field",
+      "fieldset",
+      "form",
+      "input",
+      "input-otp",
+      "popover",
       "progress",
+      "radio",
+      "radio-group",
       "scroll-area",
       "select",
+      "slider",
+      "switch",
+      "tabs",
+      "toggle",
+      "toggle-group",
     ]);
     expect(vueAdapterInventory.manualFacades.map(({ component }) => component)).toEqual(["theme"]);
     expect(vuePrimitiveComponents).toEqual([
+      "accordion",
+      "alert-dialog",
       "avatar",
       "button",
       "checkbox",
+      "checkbox-group",
+      "collapsible",
+      "dialog",
+      "drawer",
+      "dropzone",
+      "field",
+      "fieldset",
+      "form",
+      "input",
+      "input-otp",
+      "popover",
       "progress",
+      "radio",
+      "radio-group",
       "scroll-area",
       "select",
+      "slider",
+      "switch",
+      "tabs",
+      "toggle",
+      "toggle-group",
       "theme",
     ]);
     expect(vueStyledComponents).toEqual([
+      "accordion",
+      "alert-dialog",
       "avatar",
       "button",
       "checkbox",
+      "checkbox-group",
+      "collapsible",
+      "dialog",
+      "dropzone",
+      "field",
+      "sheet",
+      "form",
+      "input",
+      "input-otp",
+      "popover",
       "progress",
+      "radio-group",
       "scroll-area",
       "select",
+      "separator",
+      "slider",
+      "switch",
+      "tabs",
       "theme-toggle",
+      "toggle",
+      "toggle-group",
     ]);
     expect(vuePackageSubpaths.map(({ subpath }) => subpath)).toEqual([
       ".",
+      "./accordion",
+      "./alert-dialog",
       "./avatar",
       "./button",
       "./checkbox",
+      "./checkbox-group",
+      "./collapsible",
+      "./dialog",
+      "./drawer",
+      "./dropzone",
+      "./field",
+      "./fieldset",
+      "./form",
+      "./input",
+      "./input-otp",
+      "./popover",
       "./progress",
+      "./radio",
+      "./radio-group",
       "./scroll-area",
       "./select",
+      "./slider",
+      "./switch",
+      "./tabs",
+      "./toggle",
+      "./toggle-group",
       "./theme",
     ]);
     expect(vuePackageExports).toEqual(
@@ -63,7 +142,21 @@ describe("internal Vue package foundation", () => {
         vuePackageSubpaths.map(({ exportTarget, subpath }) => [subpath, exportTarget]),
       ),
     );
+    expect(vueGeneratedSourceFiles).toContain("alert-dialog/AlertDialogRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("accordion/AccordionRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("tabs/TabsRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("select/SelectRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("slider/SliderRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("checkbox-group/CheckboxGroupRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("collapsible/CollapsibleRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("dialog/DialogRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("drawer/DrawerRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("fieldset/FieldsetRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("form/FormRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("input/InputRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("popover/PopoverRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("toggle/ToggleRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("toggle-group/ToggleGroupRoot.vue");
   });
 
   it("reports actionable subpath, condition-key, path, and source inventory drift", () => {

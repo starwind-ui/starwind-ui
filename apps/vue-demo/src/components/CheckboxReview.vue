@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CheckboxCheckedChangeDetails } from "@starwind-ui/vue/checkbox";
 import { CheckboxIndicator, CheckboxRoot } from "@starwind-ui/vue/checkbox";
+import { CheckboxGroupRoot } from "@starwind-ui/vue/checkbox-group";
 import { ref } from "vue";
 
 const controlledChecked = ref(false);
@@ -8,6 +9,7 @@ const canceledAttempts = ref(0);
 const canceledUpdates = ref(0);
 const formResult = ref("not submitted");
 const cleanupMounted = ref(true);
+const groupValue = ref(["alpha"]);
 
 function cancelChange(_checked: boolean, detail: CheckboxCheckedChangeDetails): void {
   canceledAttempts.value += 1;
@@ -31,6 +33,19 @@ function submitCheckboxForm(event: Event): void {
     </div>
 
     <div class="review-grid">
+      <article class="scenario">
+        <h3>Controlled Checkbox Group</h3>
+        <CheckboxGroupRoot v-model="groupValue" data-testid="checkbox-group-controlled">
+          <CheckboxRoot value="alpha" aria-label="Group alpha">
+            <CheckboxIndicator>âœ“</CheckboxIndicator>
+          </CheckboxRoot>
+          <CheckboxRoot value="beta" aria-label="Group beta">
+            <CheckboxIndicator>âœ“</CheckboxIndicator>
+          </CheckboxRoot>
+        </CheckboxGroupRoot>
+        <output data-testid="checkbox-group-state">{{ JSON.stringify(groupValue) }}</output>
+      </article>
+
       <article class="scenario">
         <h3>Uncontrolled and indicator presence</h3>
         <CheckboxRoot

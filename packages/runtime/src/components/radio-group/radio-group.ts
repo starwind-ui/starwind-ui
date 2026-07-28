@@ -6,19 +6,27 @@ import { assertHTMLElement, readBooleanAttribute, setBooleanAttribute } from "..
 import { dispatchCustomEvent } from "../../internal/events";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
-import { createRadio, type RadioCheckedChangeDetails, type RadioInstance } from "../radio";
+import {
+  createRadio,
+  type RadioCheckedChangeDetails,
+  type RadioInstance,
+  type RadioSelectionOwnerCompletion,
+} from "../radio";
 
 export type RadioGroupValue = string | undefined;
 
 export type RadioGroupValueChangeReason = "imperative-action" | "keyboard-action" | "radio-change";
 
 export type RadioGroupValueChangeDetails = {
-  event?: Event;
-  previousValue: RadioGroupValue;
-  radioValue: string;
-  reason: RadioGroupValueChangeReason;
-  trigger?: Element;
-  value: string;
+  readonly event?: Event;
+  readonly isCanceled: boolean;
+  readonly previousValue: RadioGroupValue;
+  readonly radioValue: string;
+  readonly reason: RadioGroupValueChangeReason;
+  readonly trigger?: Element;
+  readonly value: string;
+  cancel(): void;
+  onAccepted(callback: () => void): void;
 };
 
 export type RadioGroupOrientation = "horizontal" | "vertical";
@@ -51,6 +59,7 @@ export type RadioGroupInstance = {
   setReadOnly(readOnly: boolean): void;
   setRequired(required: boolean): void;
   setValue(value: RadioGroupValue, options?: RadioGroupSetValueOptions): void;
+  subscribe(event: "stateSync", callback: () => void): () => void;
   subscribe(
     event: "valueChange",
     callback: (details: RadioGroupValueChangeDetails) => void,
@@ -58,6 +67,8 @@ export type RadioGroupInstance = {
 };
 
 type RadioGroupItem = {
+  input: HTMLInputElement;
+  ownForm?: string;
   ownName?: string;
   ownDisabled: boolean;
   ownReadOnly: boolean;
@@ -69,7 +80,7 @@ type RadioGroupItem = {
 
 type RadioGroupItemOwnState = Pick<
   RadioGroupItem,
-  "ownDisabled" | "ownName" | "ownReadOnly" | "ownRequired"
+  "ownDisabled" | "ownForm" | "ownName" | "ownReadOnly" | "ownRequired"
 >;
 
 const RADIO_GROUP_ROOT_ATTRIBUTE = "data-sw-radio-group";
@@ -125,6 +136,9 @@ class RadioGroupController implements RadioGroupInstance {
   private destroyed = false;
   private disabled: boolean;
   private form?: string;
+  private initialValue: RadioGroupValue;
+  private initialValueInitialized = false;
+  private readonly inputAssociationObservers = new Map<HTMLInputElement, MutationObserver>();
   private items: RadioGroupItem[] = [];
   private itemByRoot = new WeakMap<HTMLElement, RadioGroupItem>();
   private readonly itemOwnStates = new WeakMap<HTMLElement, RadioGroupItemOwnState>();
@@ -133,7 +147,12 @@ class RadioGroupController implements RadioGroupInstance {
   private orientation: RadioGroupOrientation;
   private readOnly: boolean;
   private readonly subscribers = new Set<(details: RadioGroupValueChangeDetails) => void>();
+  private readonly syncSubscribers = new Set<() => void>();
+  private transitionToken = 0;
   private required: boolean;
+  private resetForms = new Set<HTMLFormElement>();
+  private readonly pendingResetForms = new Set<HTMLFormElement>();
+  private resetTimer: number | undefined;
   private value: RadioGroupValue;
   private valueItems = new Map<string, RadioGroupItem[]>();
 
@@ -156,12 +175,14 @@ class RadioGroupController implements RadioGroupInstance {
             readOptionalAttribute(root, RADIO_GROUP_DEFAULT_VALUE_ATTRIBUTE) ??
             readOptionalAttribute(root, RADIO_GROUP_VALUE_ATTRIBUTE)),
     );
+    this.initialValue = this.value;
 
     this.bindEvents();
     this.collectionObserver = observeDynamicCollection({
       attributeFilter: [
         RADIO_ROOT_ATTRIBUTE,
         RADIO_DISABLED_ATTRIBUTE,
+        RADIO_GROUP_FORM_ATTRIBUTE,
         RADIO_NAME_ATTRIBUTE,
         RADIO_READONLY_ATTRIBUTE,
         RADIO_REQUIRED_ATTRIBUTE,
@@ -169,6 +190,7 @@ class RadioGroupController implements RadioGroupInstance {
         "data-default-checked",
         "checked",
         "disabled",
+        "form",
         "name",
         "readonly",
         "required",
@@ -188,13 +210,17 @@ class RadioGroupController implements RadioGroupInstance {
 
     this.abortController.abort();
     this.collectionObserver.disconnect();
+    this.unbindFormReset();
+    this.disconnectInputAssociationObservers();
     this.items.forEach((item) => {
+      item.radio.setSelectionOwnerWithCompletion(undefined);
       this.itemOwnStates.delete(item.root);
     });
     this.items = [];
     this.itemByRoot = new WeakMap();
     this.valueItems.clear();
     this.subscribers.clear();
+    this.syncSubscribers.clear();
     instances.delete(this.root);
     this.destroyed = true;
   }
@@ -207,6 +233,11 @@ class RadioGroupController implements RadioGroupInstance {
     if (this.destroyed) return;
 
     this.refreshItems();
+    if (!this.initialValueInitialized) {
+      this.initialValue = this.value;
+      this.initialValueInitialized = true;
+    }
+    this.bindFormReset();
     this.reconcileValue();
     this.render();
   }
@@ -223,6 +254,7 @@ class RadioGroupController implements RadioGroupInstance {
     this.name = options.name;
     this.required = options.required ?? this.required;
     this.render();
+    this.bindFormReset();
   }
 
   setName(name?: string): void {
@@ -259,47 +291,73 @@ class RadioGroupController implements RadioGroupInstance {
   setValue(value: RadioGroupValue, options: RadioGroupSetValueOptions = {}): void {
     const nextValue = normalizeRadioGroupValue(value);
     const previousValue = this.value;
+    if (previousValue === nextValue) return;
+
+    if (options.emit === false || nextValue === undefined) {
+      const previousFocusableItem = this.getFocusableItem();
+      this.transitionToken += 1;
+      this.value = nextValue;
+      if (!this.renderValueChange({ previousFocusableItem, previousValue })) {
+        this.render();
+      }
+      return;
+    }
+
+    const details = new RadioGroupValueChangeDetailsImpl({
+      previousValue,
+      radioValue: nextValue,
+      reason: "imperative-action",
+      value: nextValue,
+    });
+    const proposalToken = this.transitionToken;
+    const proposalErrors = this.notifySafely(details);
+    if (details.isCanceled || proposalErrors.length > 0) {
+      details.cancel();
+      this.render();
+      if (proposalErrors.length > 0) throw proposalErrors[0];
+      return;
+    }
+    if (this.wasValueProposalSuperseded(proposalToken, nextValue)) {
+      details.cancel();
+      this.render();
+      return;
+    }
+
     const previousFocusableItem = this.getFocusableItem();
-
     this.value = nextValue;
-
-    if (
-      previousValue === nextValue ||
-      !this.renderValueChange({ previousFocusableItem, previousValue })
-    ) {
+    if (!this.renderValueChange({ previousFocusableItem, previousValue })) {
       this.render();
     }
-
-    if (options.emit !== false && nextValue !== undefined) {
-      this.notify({
-        previousValue,
-        radioValue: nextValue,
-        reason: "imperative-action",
-        value: nextValue,
-      });
-    }
+    this.transitionToken += 1;
+    const errors = this.completeAcceptance(details);
+    if (errors.length > 0) throw errors[0];
   }
 
   subscribe(
-    event: "valueChange",
-    callback: (details: RadioGroupValueChangeDetails) => void,
+    event: "stateSync" | "valueChange",
+    callback: ((details: RadioGroupValueChangeDetails) => void) | (() => void),
   ): () => void {
+    if (event === "stateSync") {
+      const syncCallback = callback as () => void;
+      this.syncSubscribers.add(syncCallback);
+      return () => {
+        this.syncSubscribers.delete(syncCallback);
+      };
+    }
     if (event !== "valueChange") {
       throw new Error(`Unsupported RadioGroup event: ${event}`);
     }
 
-    this.subscribers.add(callback);
+    const valueCallback = callback as (details: RadioGroupValueChangeDetails) => void;
+    this.subscribers.add(valueCallback);
     return () => {
-      this.subscribers.delete(callback);
+      this.subscribers.delete(valueCallback);
     };
   }
 
   private bindEvents(): void {
     const { signal } = this.abortController;
 
-    this.root.addEventListener("starwind:checked-change", this.handleRadioCheckedChange, {
-      signal,
-    });
     this.root.addEventListener("keydown", this.handleKeyDown, { signal });
     this.root.addEventListener("focusin", this.handleFocusIn, { signal });
     this.root.addEventListener("focusout", this.handleFocusOut, { signal });
@@ -314,6 +372,7 @@ class RadioGroupController implements RadioGroupInstance {
     this.items.forEach((item) => {
       if (radioRootSet.has(item.root)) return;
 
+      item.radio.setSelectionOwnerWithCompletion(undefined);
       item.radio.destroy();
       this.itemByRoot.delete(item.root);
       this.itemOwnStates.delete(item.root);
@@ -336,15 +395,34 @@ class RadioGroupController implements RadioGroupInstance {
       const radio = createRadio(radioRoot, {
         checked: this.value === value,
         disabled: this.disabled || ownState.ownDisabled,
-        form: this.form,
+        form: this.form ?? ownState.ownForm,
         name: this.name ?? ownState.ownName,
         readOnly: this.readOnly || ownState.ownReadOnly,
         required: this.required || ownState.ownRequired,
         value,
       });
+      const input = readRadioInput(radioRoot);
+      if (!input) {
+        throw new Error("RadioGroup item is missing its owned radio input.");
+      }
+      radio.setSelectionOwnerWithCompletion((details): RadioSelectionOwnerCompletion => {
+        if (!details.checked) {
+          details.cancel();
+          this.render();
+          return { accepted: false, committed: false, current: false, errors: [] };
+        }
+
+        return this.handleValueChange(value, {
+          event: details.event,
+          reason: "radio-change",
+          revisionSource: details,
+          trigger: details.trigger ?? radioRoot,
+        });
+      });
 
       return {
         ...ownState,
+        input,
         radio,
         root: radioRoot,
         value,
@@ -381,8 +459,10 @@ class RadioGroupController implements RadioGroupInstance {
         mutation.attributeName !== RADIO_NAME_ATTRIBUTE &&
         mutation.attributeName !== RADIO_READONLY_ATTRIBUTE &&
         mutation.attributeName !== RADIO_REQUIRED_ATTRIBUTE &&
+        mutation.attributeName !== RADIO_GROUP_FORM_ATTRIBUTE &&
         mutation.attributeName !== "checked" &&
         mutation.attributeName !== "disabled" &&
+        mutation.attributeName !== "form" &&
         mutation.attributeName !== "name" &&
         mutation.attributeName !== "readonly" &&
         mutation.attributeName !== "required" &&
@@ -396,31 +476,14 @@ class RadioGroupController implements RadioGroupInstance {
         continue;
       }
 
+      if (mutation.attributeName === "form") {
+        const currentState = this.getItemOwnState(radioRoot);
+        const nextOwnForm = readRadioOwnForm(radioRoot);
+        if (nextOwnForm === (this.form ?? currentState.ownForm)) continue;
+      }
       this.itemOwnStates.set(radioRoot, readRadioOwnState(radioRoot));
     }
   }
-
-  private readonly handleRadioCheckedChange = (event: Event): void => {
-    if (!(event instanceof CustomEvent)) return;
-    if (!(event.target instanceof HTMLElement)) return;
-
-    const radioRoot = event.target.closest<HTMLElement>(`[${RADIO_ROOT_ATTRIBUTE}]`);
-    if (!radioRoot) return;
-    if (radioRoot.closest(`[${RADIO_GROUP_ROOT_ATTRIBUTE}]`) !== this.root) return;
-
-    const item = this.itemByRoot.get(radioRoot);
-    if (!item) return;
-
-    const details = event.detail as RadioCheckedChangeDetails;
-    if (!details.checked) return;
-
-    this.handleValueChange(item.value, {
-      event: details.event,
-      reason: "radio-change",
-      revisionSource: details,
-      trigger: details.trigger ?? radioRoot,
-    });
-  };
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
     if (!isRadioNavigationKey(event.key)) return;
@@ -437,12 +500,15 @@ class RadioGroupController implements RadioGroupInstance {
     const item = this.getItemForNavigation(radioRoot, event.key);
     if (!item) return;
 
-    item.root.focus();
-    this.handleValueChange(item.value, {
+    const completion = this.handleValueChange(item.value, {
       event,
       reason: "keyboard-action",
       trigger: item.root,
     });
+    if (completion.accepted && completion.current) {
+      item.root.focus();
+    }
+    if (completion.errors.length > 0) throw completion.errors[0];
   };
 
   private readonly handleFocusIn = (): void => {
@@ -460,19 +526,54 @@ class RadioGroupController implements RadioGroupInstance {
     request: {
       event?: Event;
       reason: RadioGroupValueChangeReason;
-      revisionSource?: object;
+      revisionSource?: RadioCheckedChangeDetails;
       trigger?: Element;
     },
-  ): void {
+  ): RadioSelectionOwnerCompletion {
     if (this.disabled || this.readOnly) {
       this.render();
-      return;
+      return { accepted: false, committed: false, current: false, errors: [] };
     }
-    if (radioValue === this.value) return;
+    if (radioValue === this.value) {
+      return { accepted: false, committed: false, current: false, errors: [] };
+    }
 
     const previousValue = this.value;
     const previousFocusableItem = this.getFocusableItem();
     const nextValue = radioValue;
+    const details = new RadioGroupValueChangeDetailsImpl({
+      event: request.event,
+      previousValue,
+      radioValue,
+      reason: request.reason,
+      trigger: request.trigger,
+      value: nextValue,
+    });
+
+    const proposalToken = this.transitionToken;
+    const proposalErrors = this.notifySafely(details, request.revisionSource);
+    if (details.isCanceled || proposalErrors.length > 0) {
+      details.cancel();
+      request.revisionSource?.cancel();
+      this.render();
+      return {
+        accepted: false,
+        committed: false,
+        current: false,
+        errors: proposalErrors,
+      };
+    }
+    if (this.wasValueProposalSuperseded(proposalToken, nextValue)) {
+      details.cancel();
+      request.revisionSource?.cancel();
+      this.render();
+      return {
+        accepted: false,
+        committed: false,
+        current: false,
+        errors: [],
+      };
+    }
 
     if (!this.controlled) {
       this.value = nextValue;
@@ -487,17 +588,109 @@ class RadioGroupController implements RadioGroupInstance {
       this.render();
     }
 
-    this.notify(
-      {
-        event: request.event,
-        previousValue,
-        radioValue,
-        reason: request.reason,
-        trigger: request.trigger,
-        value: nextValue,
-      },
-      request.revisionSource,
-    );
+    const transitionToken = ++this.transitionToken;
+    const errors = this.completeAcceptance(details);
+    const committed = this.value === nextValue;
+    return {
+      accepted: true,
+      committed,
+      current: this.transitionToken === transitionToken || committed,
+      errors,
+    };
+  }
+
+  private completeAcceptance(details: RadioGroupValueChangeDetailsImpl): unknown[] {
+    const errors = details.accept();
+    for (const subscriber of [...this.syncSubscribers]) {
+      try {
+        subscriber();
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    return errors;
+  }
+
+  private wasValueProposalSuperseded(proposalToken: number, proposedValue: string): boolean {
+    return this.transitionToken !== proposalToken && this.value !== proposedValue;
+  }
+
+  private bindFormReset(): void {
+    this.syncInputAssociationObservers();
+    const nextForms = new Set(this.items.flatMap(({ input }) => (input.form ? [input.form] : [])));
+    for (const form of this.resetForms) {
+      if (!nextForms.has(form)) form.removeEventListener("reset", this.handleFormReset);
+    }
+    for (const form of nextForms) {
+      if (!this.resetForms.has(form)) form.addEventListener("reset", this.handleFormReset);
+    }
+    this.resetForms = nextForms;
+  }
+
+  private unbindFormReset(): void {
+    if (this.resetTimer !== undefined) {
+      window.clearTimeout(this.resetTimer);
+      this.resetTimer = undefined;
+    }
+    this.pendingResetForms.clear();
+    for (const form of this.resetForms) {
+      form.removeEventListener("reset", this.handleFormReset);
+    }
+    this.resetForms.clear();
+  }
+
+  private readonly handleFormReset = (event: Event): void => {
+    if (!(event.currentTarget instanceof HTMLFormElement)) return;
+    this.pendingResetForms.add(event.currentTarget);
+    if (this.resetTimer !== undefined) window.clearTimeout(this.resetTimer);
+    this.resetTimer = window.setTimeout(() => {
+      const resetForms = new Set(this.pendingResetForms);
+      this.pendingResetForms.clear();
+      if (!this.controlled) {
+        const currentItem =
+          this.value === undefined ? undefined : this.getUniqueItemByValue(this.value);
+        const initialItem =
+          this.initialValue === undefined
+            ? undefined
+            : this.getUniqueItemByValue(this.initialValue);
+        const currentIsReset = Boolean(
+          currentItem?.input.form && resetForms.has(currentItem.input.form),
+        );
+        const initialIsReset = Boolean(
+          initialItem?.input.form && resetForms.has(initialItem.input.form),
+        );
+        if (currentIsReset) {
+          this.value = initialIsReset ? this.initialValue : undefined;
+        } else if (this.value === undefined && initialIsReset) {
+          this.value = this.initialValue;
+        }
+        this.reconcileValue();
+      }
+      this.render();
+      for (const subscriber of [...this.syncSubscribers]) subscriber();
+      this.resetTimer = undefined;
+    }, 0);
+  };
+
+  private syncInputAssociationObservers(): void {
+    if (typeof MutationObserver === "undefined") return;
+    const currentInputs = new Set(this.items.map(({ input }) => input));
+    for (const [input, observer] of this.inputAssociationObservers) {
+      if (currentInputs.has(input)) continue;
+      observer.disconnect();
+      this.inputAssociationObservers.delete(input);
+    }
+    for (const input of currentInputs) {
+      if (this.inputAssociationObservers.has(input)) continue;
+      const observer = new MutationObserver(() => this.bindFormReset());
+      observer.observe(input, { attributeFilter: ["form"], attributes: true });
+      this.inputAssociationObservers.set(input, observer);
+    }
+  }
+
+  private disconnectInputAssociationObservers(): void {
+    for (const observer of this.inputAssociationObservers.values()) observer.disconnect();
+    this.inputAssociationObservers.clear();
   }
 
   private render(): void {
@@ -505,7 +698,9 @@ class RadioGroupController implements RadioGroupInstance {
 
     const focusableItem = this.getFocusableItem();
 
-    this.items.forEach((item) => {
+    const selectedItems = this.items.filter((item) => item.value === this.value);
+    const unselectedItems = this.items.filter((item) => item.value !== this.value);
+    [...unselectedItems, ...selectedItems].forEach((item) => {
       this.renderItem(item, focusableItem);
     });
 
@@ -528,6 +723,17 @@ class RadioGroupController implements RadioGroupInstance {
   }
 
   private getItemForNavigation(currentRoot: HTMLElement, key: string): RadioGroupItem | undefined {
+    if (key === "Home") {
+      return this.items.find((item) => !item.ownDisabled && !item.ownReadOnly);
+    }
+    if (key === "End") {
+      for (let index = this.items.length - 1; index >= 0; index -= 1) {
+        const item = this.items[index];
+        if (item && !item.ownDisabled && !item.ownReadOnly) return item;
+      }
+      return undefined;
+    }
+
     const delta = getNavigationDelta(key, this.orientation, this.root);
     if (delta === null || this.items.length === 0) return undefined;
 
@@ -545,9 +751,21 @@ class RadioGroupController implements RadioGroupInstance {
 
   private notify(details: RadioGroupValueChangeDetails, source?: object): void {
     attachFormValueRevision(details, source ?? details.event);
-    dispatchCustomEvent(this.root, "starwind:value-change", details);
+    const event = dispatchCustomEvent(this.root, "starwind:value-change", details, {
+      cancelable: true,
+    });
+    if (event.defaultPrevented) details.cancel();
     this.onValueChange?.(details.value, details);
     this.subscribers.forEach((subscriber) => subscriber(details));
+  }
+
+  private notifySafely(details: RadioGroupValueChangeDetails, source?: object): unknown[] {
+    try {
+      this.notify(details, source);
+      return [];
+    } catch (error) {
+      return [error];
+    }
   }
 
   private renderRootState(): void {
@@ -578,7 +796,7 @@ class RadioGroupController implements RadioGroupInstance {
     const name = this.name ?? item.ownName;
 
     item.radio.setFormOptions({
-      form: this.form,
+      form: this.form ?? item.ownForm,
       name,
       required,
       value: item.value,
@@ -677,6 +895,77 @@ class RadioGroupController implements RadioGroupInstance {
   }
 }
 
+class RadioGroupValueChangeDetailsImpl implements RadioGroupValueChangeDetails {
+  readonly event?: Event;
+  readonly previousValue: RadioGroupValue;
+  readonly radioValue: string;
+  readonly reason: RadioGroupValueChangeReason;
+  readonly trigger?: Element;
+  readonly value: string;
+
+  private canceled = false;
+  private accepted = false;
+  private readonly acceptedCallbacks = new Set<() => void>();
+
+  constructor({
+    event,
+    previousValue,
+    radioValue,
+    reason,
+    trigger,
+    value,
+  }: {
+    event?: Event;
+    previousValue: RadioGroupValue;
+    radioValue: string;
+    reason: RadioGroupValueChangeReason;
+    trigger?: Element;
+    value: string;
+  }) {
+    this.event = event;
+    this.previousValue = previousValue;
+    this.radioValue = radioValue;
+    this.reason = reason;
+    this.trigger = trigger;
+    this.value = value;
+  }
+
+  get isCanceled(): boolean {
+    return this.canceled;
+  }
+
+  cancel(): void {
+    if (this.accepted) return;
+    this.canceled = true;
+    this.acceptedCallbacks.clear();
+  }
+
+  onAccepted(callback: () => void): void {
+    if (this.canceled) return;
+    if (this.accepted) {
+      callback();
+      return;
+    }
+    this.acceptedCallbacks.add(callback);
+  }
+
+  accept(): unknown[] {
+    if (this.canceled || this.accepted) return [];
+    this.accepted = true;
+    const callbacks = [...this.acceptedCallbacks];
+    this.acceptedCallbacks.clear();
+    const errors: unknown[] = [];
+    callbacks.forEach((callback) => {
+      try {
+        callback();
+      } catch (error) {
+        errors.push(error);
+      }
+    });
+    return errors;
+  }
+}
+
 function uniqueRadioGroupItems(items: Array<RadioGroupItem | undefined>): RadioGroupItem[] {
   return Array.from(new Set(items.filter((item): item is RadioGroupItem => Boolean(item))));
 }
@@ -706,10 +995,19 @@ function readRadioOwnState(root: HTMLElement): RadioGroupItemOwnState {
 
   return {
     ownDisabled: readBooleanAttribute(root, RADIO_DISABLED_ATTRIBUTE) || (input?.disabled ?? false),
+    ownForm: readRadioOwnForm(root),
     ownName: readRadioName(root),
     ownReadOnly: readBooleanAttribute(root, RADIO_READONLY_ATTRIBUTE),
     ownRequired: readBooleanAttribute(root, RADIO_REQUIRED_ATTRIBUTE) || (input?.required ?? false),
   };
+}
+
+function readRadioOwnForm(root: HTMLElement): string | undefined {
+  return (
+    root.getAttribute(RADIO_GROUP_FORM_ATTRIBUTE) ??
+    readRadioInput(root)?.getAttribute("form") ??
+    undefined
+  );
 }
 
 function readRadioValue(root: HTMLElement, index: number): string {
@@ -721,7 +1019,9 @@ function readRadioValue(root: HTMLElement, index: number): string {
 }
 
 function readRadioInput(root: HTMLElement): HTMLInputElement | undefined {
-  const nestedInput = root.querySelector<HTMLInputElement>(`[${RADIO_INPUT_ATTRIBUTE}]`);
+  const nestedInput = Array.from(
+    root.querySelectorAll<HTMLInputElement>(`[${RADIO_INPUT_ATTRIBUTE}]`),
+  ).find((input) => input.closest(`[${RADIO_ROOT_ATTRIBUTE}]`) === root);
   if (nestedInput) return nestedInput;
 
   const sibling = root.nextElementSibling;
@@ -753,7 +1053,14 @@ function getRadioRootForMutationTarget(
 }
 
 function isRadioNavigationKey(key: string): boolean {
-  return key === "ArrowDown" || key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowUp";
+  return (
+    key === "ArrowDown" ||
+    key === "ArrowLeft" ||
+    key === "ArrowRight" ||
+    key === "ArrowUp" ||
+    key === "End" ||
+    key === "Home"
+  );
 }
 
 function getNavigationDelta(
