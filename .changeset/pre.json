@@ -13,14 +13,17 @@
     "@starwind-ui/vue": "0.0.0"
   },
   "changesets": [
+    "accordion-cancelable-value-change",
     "accordion-collapsible-default",
     "accordion-item-border",
     "add-dropdown-link-item",
     "avatar-lazy-image",
     "button-runtime-boundary",
     "card-spacing-variable",
+    "checkbox-group-form-reset",
     "cli-color-picker",
     "cli-runtime-release",
+    "controlled-radio-group-focus",
     "correct-avatar-inline-sizing",
     "correct-progress-mode-transition",
     "correct-progress-normalization",
@@ -28,15 +31,23 @@
     "dialog-sheet-entry-animation-timing",
     "fix-cli-package-manager-install-feedback",
     "fix-color-picker-area-collision",
+    "fix-color-picker-mobile-drag",
     "fix-dialog-entry-staging",
     "fix-floating-overlay-boundaries",
     "fix-nested-menu-hover",
     "form-validation-policy-semantics",
+    "radio-cancelable-reset",
     "registry-driven-setup-dependencies",
     "restore-color-picker-editing",
+    "restore-dialog-destroy-focus",
     "runtime-adapter-platform",
     "runtime-beta-release-preparation",
     "runtime-color-picker",
-    "secondary-button-token-hover"
+    "runtime-field-input-otp-handshake",
+    "runtime-popover-parent-order",
+    "secondary-button-token-hover",
+    "synchronize-radio-vendoring",
+    "synchronize-toggle-group-vendoring",
+    "toggle-group-context-provider"
   ]
 }

@@ -33210,7 +33210,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "accordion",
       displayName: "Accordion",
       category: "controlled-value-group",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "accordion",
         factory: "createAccordion",
@@ -61367,7 +61367,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "radio",
       displayName: "Radio",
       category: "single-boolean-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "radio",
         factory: "createRadio",
@@ -62215,7 +62215,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "radio-group",
       displayName: "RadioGroup",
       category: "controlled-value-group",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "radio-group",
         factory: "createRadioGroup",
@@ -71039,7 +71039,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "toggle-group",
       displayName: "ToggleGroup",
       category: "controlled-value-group",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "toggle-group",
         factory: "createToggleGroup",

@@ -1,5 +1,20 @@
 # @starwind-ui/react
 
+## 0.1.0-beta.5
+
+### Patch Changes
+
+- Make Accordion root value-change proposals synchronously cancelable before uncontrolled state commits.
+- Synchronize Checkbox Group state with native form resets across controlled, uncontrolled, external,
+  and dynamically reassociated form ownership while cleaning up reset listeners and observers.
+- Distinguish accepted Radio ownership transitions from immediate commits, and keep controlled Radio
+  Group keyboard focus aligned when framework prop reconciliation completes or supersedes a proposal.
+- Make Radio and Radio Group changes cancelable before state commitment, synchronize accepted state
+  with adapters, and preserve controlled and uncontrolled values through native form resets.
+- Expose the generated React Toggle Group context and provide normalized group state to descendants.
+- Updated dependencies
+  - @starwind-ui/runtime@0.1.0-beta.5
+
 ## 0.1.0-beta.4
 
 ### Minor Changes

@@ -1,7 +1,7 @@
 {
   "defaultPrimitiveVersion": "0.1.0",
   "primitives": {
-    "accordion": "0.1.1",
+    "accordion": "0.1.2",
     "alert-dialog": "0.1.0",
     "avatar": "0.1.1",
     "button": "0.1.1",
@@ -25,8 +25,8 @@
     "popover": "0.1.2",
     "preview-card": "0.1.0",
     "progress": "0.1.0",
-    "radio": "0.1.0",
-    "radio-group": "0.1.0",
+    "radio": "0.1.1",
+    "radio-group": "0.1.1",
     "scroll-area": "0.1.0",
     "select": "0.1.2",
     "sidebar": "0.1.0",
@@ -35,7 +35,7 @@
     "tabs": "0.1.0",
     "toast": "0.1.0",
     "toggle": "0.1.1",
-    "toggle-group": "0.1.0",
+    "toggle-group": "0.1.1",
     "tooltip": "0.1.0"
   }
 }
