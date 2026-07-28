@@ -55,6 +55,33 @@ export type VueInventoryDiagnostics = {
 
 const vueRuntimePrimitives = [
   {
+    component: "accordion",
+    sourceFiles: [
+      "accordion/AccordionHeader.vue",
+      "accordion/AccordionItem.vue",
+      "accordion/AccordionItemContext.ts",
+      "accordion/AccordionPanel.vue",
+      "accordion/AccordionRoot.vue",
+      "accordion/AccordionTrigger.vue",
+      "accordion/index.ts",
+    ],
+  },
+  {
+    component: "alert-dialog",
+    sourceFiles: [
+      "alert-dialog/AlertDialogBackdrop.vue",
+      "alert-dialog/AlertDialogClose.vue",
+      "alert-dialog/AlertDialogDescription.vue",
+      "alert-dialog/AlertDialogPopup.vue",
+      "alert-dialog/AlertDialogPortal.vue",
+      "alert-dialog/AlertDialogRoot.vue",
+      "alert-dialog/AlertDialogTitle.vue",
+      "alert-dialog/AlertDialogTrigger.vue",
+      "alert-dialog/AlertDialogViewport.vue",
+      "alert-dialog/index.ts",
+    ],
+  },
+  {
     component: "avatar",
     sourceFiles: [
       "avatar/AvatarFallback.vue",
@@ -76,6 +103,114 @@ const vueRuntimePrimitives = [
     ],
   },
   {
+    component: "checkbox-group",
+    sourceFiles: [
+      "checkbox-group/CheckboxGroupContext.ts",
+      "checkbox-group/CheckboxGroupRoot.vue",
+      "checkbox-group/index.ts",
+    ],
+  },
+  {
+    component: "collapsible",
+    sourceFiles: [
+      "collapsible/CollapsiblePanel.vue",
+      "collapsible/CollapsibleRoot.vue",
+      "collapsible/CollapsibleTrigger.vue",
+      "collapsible/index.ts",
+    ],
+  },
+  {
+    component: "dialog",
+    sourceFiles: [
+      "dialog/DialogBackdrop.vue",
+      "dialog/DialogClose.vue",
+      "dialog/DialogDescription.vue",
+      "dialog/DialogPopup.vue",
+      "dialog/DialogRoot.vue",
+      "dialog/DialogTitle.vue",
+      "dialog/DialogTrigger.vue",
+      "dialog/index.ts",
+    ],
+  },
+  {
+    component: "drawer",
+    sourceFiles: [
+      "drawer/DrawerBackdrop.vue",
+      "drawer/DrawerClose.vue",
+      "drawer/DrawerDescription.vue",
+      "drawer/DrawerPopup.vue",
+      "drawer/DrawerPortal.vue",
+      "drawer/DrawerRoot.vue",
+      "drawer/DrawerTitle.vue",
+      "drawer/DrawerTrigger.vue",
+      "drawer/DrawerViewport.vue",
+      "drawer/index.ts",
+    ],
+  },
+  {
+    component: "dropzone",
+    sourceFiles: [
+      "dropzone/DropzoneFilesList.vue",
+      "dropzone/DropzoneInput.vue",
+      "dropzone/DropzoneLoadingIndicator.vue",
+      "dropzone/DropzoneRoot.vue",
+      "dropzone/DropzoneUploadIndicator.vue",
+      "dropzone/index.ts",
+    ],
+  },
+  {
+    component: "field",
+    sourceFiles: [
+      "field/FieldControl.vue",
+      "field/FieldDescription.vue",
+      "field/FieldError.vue",
+      "field/FieldItem.vue",
+      "field/FieldLabel.vue",
+      "field/FieldRoot.vue",
+      "field/FieldValidity.vue",
+      "field/index.ts",
+    ],
+  },
+  {
+    component: "fieldset",
+    sourceFiles: ["fieldset/FieldsetLegend.vue", "fieldset/FieldsetRoot.vue", "fieldset/index.ts"],
+  },
+  {
+    component: "form",
+    sourceFiles: ["form/FormErrorSummary.vue", "form/FormRoot.vue", "form/index.ts"],
+  },
+  {
+    component: "input",
+    sourceFiles: ["input/InputRoot.vue", "input/index.ts"],
+  },
+  {
+    component: "input-otp",
+    sourceFiles: [
+      "input-otp/InputOtpGroup.vue",
+      "input-otp/InputOtpRoot.vue",
+      "input-otp/InputOtpSeparator.vue",
+      "input-otp/InputOtpSlot.vue",
+      "input-otp/index.ts",
+    ],
+  },
+  {
+    component: "popover",
+    sourceFiles: [
+      "popover/PopoverArrow.vue",
+      "popover/PopoverBackdrop.vue",
+      "popover/PopoverClose.vue",
+      "popover/PopoverDescription.vue",
+      "popover/PopoverPopup.vue",
+      "popover/PopoverPortal.vue",
+      "popover/PopoverPositioner.vue",
+      "popover/PopoverRoot.vue",
+      "popover/PopoverTitle.vue",
+      "popover/PopoverTrigger.vue",
+      "popover/PopoverViewport.vue",
+      "popover/index.ts",
+    ],
+  },
+  {
     component: "progress",
     sourceFiles: [
       "progress/ProgressIndicator.vue",
@@ -84,6 +219,18 @@ const vueRuntimePrimitives = [
       "progress/ProgressTrack.vue",
       "progress/ProgressValue.vue",
       "progress/index.ts",
+    ],
+  },
+  {
+    component: "radio",
+    sourceFiles: ["radio/RadioIndicator.vue", "radio/RadioRoot.vue", "radio/index.ts"],
+  },
+  {
+    component: "radio-group",
+    sourceFiles: [
+      "radio-group/RadioGroupContext.ts",
+      "radio-group/RadioGroupRoot.vue",
+      "radio-group/index.ts",
     ],
   },
   {
@@ -121,6 +268,46 @@ const vueRuntimePrimitives = [
       "select/index.ts",
     ],
   },
+  {
+    component: "slider",
+    sourceFiles: [
+      "slider/SliderControl.vue",
+      "slider/SliderIndicator.vue",
+      "slider/SliderLabel.vue",
+      "slider/SliderRoot.vue",
+      "slider/SliderThumb.vue",
+      "slider/SliderTrack.vue",
+      "slider/index.ts",
+    ],
+  },
+  {
+    component: "switch",
+    sourceFiles: ["switch/SwitchRoot.vue", "switch/SwitchThumb.vue", "switch/index.ts"],
+  },
+  {
+    component: "tabs",
+    sourceFiles: [
+      "tabs/TabsContext.ts",
+      "tabs/TabsIndicator.vue",
+      "tabs/TabsList.vue",
+      "tabs/TabsPanel.vue",
+      "tabs/TabsRoot.vue",
+      "tabs/TabsTab.vue",
+      "tabs/index.ts",
+    ],
+  },
+  {
+    component: "toggle",
+    sourceFiles: ["toggle/ToggleRoot.vue", "toggle/index.ts"],
+  },
+  {
+    component: "toggle-group",
+    sourceFiles: [
+      "toggle-group/ToggleGroupContext.ts",
+      "toggle-group/ToggleGroupRoot.vue",
+      "toggle-group/index.ts",
+    ],
+  },
 ] as const satisfies readonly VueRuntimePrimitiveInventoryEntry[];
 
 const vueManualFacades = [
@@ -128,13 +315,32 @@ const vueManualFacades = [
 ] as const satisfies readonly VueManualFacadeInventoryEntry[];
 
 const vuePortableStyledComponents = [
+  "accordion",
+  "alert-dialog",
   "avatar",
   "button",
   "checkbox",
+  "checkbox-group",
+  "collapsible",
+  "dialog",
+  "dropzone",
+  "field",
+  "sheet",
+  "form",
+  "input",
+  "input-otp",
+  "popover",
   "progress",
+  "radio-group",
   "scroll-area",
   "select",
+  "separator",
+  "slider",
+  "switch",
+  "tabs",
   "theme-toggle",
+  "toggle",
+  "toggle-group",
 ] as const;
 
 export const vueAdapterInventory = {

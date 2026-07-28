@@ -14,17 +14,109 @@ export type VueComputedExpression =
 export function projectVueComputedExpression(
   value: StyledOutputValueExpression,
 ): VueComputedExpression {
+  if (value.type === "object") {
+    const keys = Object.keys(value.entries);
+    if (keys.join(",") === '"--padding","--height","--width","--border-offset"') {
+      return parts(
+        '({ "--padding": `${',
+        ref("resolvedPadding"),
+        '}px`, "--height": `calc((var(--spacing) * ${',
+        ref("sizeMultiplier"),
+        '}) + (var(--padding) * 2))`, "--width": `calc((var(--spacing) * ${',
+        ref("sizeMultiplier"),
+        '} * 2) + (var(--padding) * 3))`, "--border-offset": "1px" })',
+      );
+    }
+    if (keys.join(",") === '"--translation"') {
+      return parts(
+        '({ "--translation": `calc((var(--spacing) * ${',
+        ref("sizeMultiplier"),
+        "}) + (var(--padding) * 2) - var(--border-offset))` })",
+      );
+    }
+  }
   if (value.type !== "raw") return { type: "shared", value };
 
   switch (value.code) {
     case 'rest["aria-label"] ?? label':
       return parts({ name: "attrs", unwrap: false }, '["aria-label"] ?? label');
+    case 'rest["aria-label"] ?? label ?? "switch"':
+      return parts({ name: "attrs", unwrap: false }, '["aria-label"] ?? label ?? "switch"');
     case 'rest["id"]':
       return parts({ name: "attrs", unwrap: false }, '["id"]');
     case "Number.isFinite(min) ? min : 0":
     case "Number.isFinite(max) ? max : 100":
+    case "className":
     case "pressed ?? defaultPressed ?? false":
+    case 'padding ?? (size === "sm" ? 2.5 : size === "lg" ? 4 : 3)':
+    case 'size === "sm" ? 4 : size === "lg" ? 6 : 5':
       return { type: "source", code: value.code };
+    case "value ?? defaultValue":
+      return parts({ name: "modelValue", unwrap: false }, " ?? defaultValue");
+    case "Array.isArray(resolvedValue) ? resolvedValue : [resolvedValue]":
+      return parts(
+        "Array.isArray(",
+        ref("resolvedValue"),
+        ") ? ",
+        ref("resolvedValue"),
+        " : [",
+        ref("resolvedValue"),
+        "]",
+      );
+    case "(item: number) => (max === min ? 0 : ((item - min) / (max - min)) * 100)":
+      return parts("(item: number) => (max === min ? 0 : ((item - min) / (max - min)) * 100)");
+    case "values.length > 1 ? getPercentage(Math.min(...values)) : 0":
+      return parts(
+        ref("values"),
+        ".length > 1 ? ",
+        ref("getPercentage"),
+        "(Math.min(...",
+        ref("values"),
+        ")) : 0",
+      );
+    case "values.length > 1 ? getPercentage(Math.max(...values)) : getPercentage(values[0] ?? min)":
+      return parts(
+        ref("values"),
+        ".length > 1 ? ",
+        ref("getPercentage"),
+        "(Math.max(...",
+        ref("values"),
+        ")) : ",
+        ref("getPercentage"),
+        "(",
+        ref("values"),
+        "[0] ?? min)",
+      );
+    case 'orientation === "horizontal" ? { left: `${rangeStart}%`, width: `${rangeEnd - rangeStart}%` } : { bottom: `${rangeStart}%`, height: `${rangeEnd - rangeStart}%` }':
+      return parts(
+        'orientation === "horizontal" ? { left: `${',
+        ref("rangeStart"),
+        "}%`, width: `${",
+        ref("rangeEnd"),
+        " - ",
+        ref("rangeStart"),
+        "}%` } : { bottom: `${",
+        ref("rangeStart"),
+        "}%`, height: `${",
+        ref("rangeEnd"),
+        " - ",
+        ref("rangeStart"),
+        "}%` }",
+      );
+    case 'typeof style === "string" ? `--gap: ${spacing}; ${style}` : { "--gap": spacing, ...(style ?? {}) }':
+      return parts(
+        "typeof ",
+        { name: "style", unwrap: false },
+        ' === "string" ? `--gap: ${',
+        { name: "spacing", unwrap: false },
+        "}; ${",
+        { name: "style", unwrap: false },
+        '}` : { "--gap": ',
+        { name: "spacing", unwrap: false },
+        ", ...(",
+        { name: "style", unwrap: false },
+        " ?? {}) }",
+      );
     case "Math.min(boundedMin, boundedMax)":
       return parts("Math.min(", ref("boundedMin"), ", ", ref("boundedMax"), ")");
     case "Math.max(boundedMin, boundedMax)":

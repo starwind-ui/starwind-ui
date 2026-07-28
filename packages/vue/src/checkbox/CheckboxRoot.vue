@@ -3,6 +3,7 @@
 <script setup lang="ts">
 import { type CheckboxCheckedChangeDetails, createCheckbox } from "@starwind-ui/runtime/checkbox";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { useCheckboxGroupContext } from "../checkbox-group/CheckboxGroupContext";
 
 defineOptions({ inheritAttrs: false });
 
@@ -40,10 +41,21 @@ defineSlots<{
 const attrs = useAttrs();
 const rootRef = ref<HTMLElement | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
+const checkboxGroup = useCheckboxGroupContext();
+const groupItemValue = computed(() => props.value ?? props.name);
+const groupChecked = computed(() => {
+  const itemValue = groupItemValue.value;
+  return checkboxGroup && itemValue !== undefined
+    ? checkboxGroup.value.value.includes(itemValue)
+    : undefined;
+});
+const effectiveDisabled = computed(() => props.disabled || checkboxGroup?.disabled.value === true);
 const initialDefaultChecked = props.defaultChecked ?? false;
-const initialChecked = props.checked ?? initialDefaultChecked;
-const uncontrolledChecked = ref(initialDefaultChecked);
-const renderedChecked = computed(() => props.checked ?? uncontrolledChecked.value);
+const initialChecked = props.checked ?? groupChecked.value ?? initialDefaultChecked;
+const uncontrolledChecked = ref(groupChecked.value ?? initialDefaultChecked);
+const renderedChecked = computed(
+  () => props.checked ?? groupChecked.value ?? uncontrolledChecked.value,
+);
 const renderedIndeterminate = ref(props.indeterminate);
 let instance: ReturnType<typeof createCheckbox> | undefined;
 let resetForm: HTMLFormElement | null = null;
@@ -125,7 +137,7 @@ function setupRuntime(): void {
 
   const options = {
     defaultChecked: renderedChecked.value,
-    disabled: props.disabled,
+    disabled: effectiveDisabled.value,
     form: props.form,
     id: props.id,
     indeterminate: props.indeterminate,
@@ -135,7 +147,11 @@ function setupRuntime(): void {
     uncheckedValue: props.uncheckedValue,
     value: props.value,
     onCheckedChange: handleCheckedChange,
-    ...(props.checked === undefined ? {} : { checked: props.checked }),
+    ...(props.checked !== undefined
+      ? { checked: props.checked }
+      : groupChecked.value !== undefined
+        ? { checked: groupChecked.value }
+        : {}),
   };
   instance = createCheckbox(element, options);
   bindFormReset();
@@ -162,10 +178,12 @@ watch(
   },
   { flush: "post" },
 );
-watch(
-  () => props.disabled,
-  (value) => instance?.setDisabled(value),
-);
+watch(groupChecked, (checked) => {
+  if (checked === undefined || props.checked !== undefined || !instance) return;
+  if (Object.is(instance.getChecked(), checked)) return;
+  instance.setChecked(checked, { emit: false });
+});
+watch(effectiveDisabled, (value) => instance?.setDisabled(value));
 watch(
   () => props.indeterminate,
   (value) => {
@@ -201,13 +219,13 @@ onBeforeUnmount(destroyOwnedInstance);
     :type="props.nativeButton ? 'button' : undefined"
     role="checkbox"
     :aria-checked="renderedIndeterminate ? 'mixed' : String(renderedChecked)"
-    :aria-disabled="props.disabled ? 'true' : undefined"
+    :aria-disabled="effectiveDisabled ? 'true' : undefined"
     :aria-readonly="String(props.readOnly)"
     :aria-required="String(props.required)"
     :data-default-checked="initialDefaultChecked ? 'true' : undefined"
     :data-checked="renderedChecked ? '' : undefined"
     :data-unchecked="renderedChecked ? undefined : ''"
-    :data-disabled="props.disabled ? '' : undefined"
+    :data-disabled="effectiveDisabled ? '' : undefined"
     :data-form="props.form"
     :data-id="props.id"
     :data-indeterminate="renderedIndeterminate ? '' : undefined"
@@ -216,8 +234,8 @@ onBeforeUnmount(destroyOwnedInstance);
     :data-required="props.required ? '' : undefined"
     :data-unchecked-value="props.uncheckedValue"
     :data-value="props.value"
-    :tabindex="props.disabled ? -1 : 0"
-    :disabled="props.nativeButton ? props.disabled : undefined"
+    :tabindex="effectiveDisabled ? -1 : 0"
+    :disabled="props.nativeButton ? effectiveDisabled : undefined"
   >
     <slot />
     <input
@@ -228,7 +246,7 @@ onBeforeUnmount(destroyOwnedInstance);
       tabindex="-1"
       type="checkbox"
       :checked="initialChecked"
-      :disabled="props.disabled"
+      :disabled="effectiveDisabled"
       :form="props.form"
       :id="props.id"
       :name="props.name"
@@ -254,7 +272,7 @@ onBeforeUnmount(destroyOwnedInstance);
     tabindex="-1"
     type="checkbox"
     :checked="initialChecked"
-    :disabled="props.disabled"
+    :disabled="effectiveDisabled"
     :form="props.form"
     :id="props.id"
     :name="props.name"

@@ -21,6 +21,51 @@ describe("createInputOtp", () => {
     expect(getSlotText()).toEqual(["1", "2", "", ""]);
   });
 
+  it("avoids same-value character mutations while rendering real updates and clearing", async () => {
+    const root = renderInputOtp({ defaultValue: "1", maxLength: 4 });
+    const instance = createInputOtp(root);
+    const characters = getSlots().map(
+      (slot) => slot.querySelector<HTMLElement>("[data-sw-input-otp-char]")!,
+    );
+    let characterMutations = 0;
+    const observer = new MutationObserver((records) => {
+      characterMutations += records.filter(
+        (record) =>
+          record.type === "childList" && characters.includes(record.target as HTMLElement),
+      ).length;
+    });
+    characters.forEach((character) => observer.observe(character, { childList: true }));
+
+    instance.setDisabled(false);
+    instance.setFormOptions({ name: "code" });
+    instance.setValue("1", { emit: false });
+    await waitForMacrotask();
+
+    expect(characterMutations).toBe(0);
+
+    instance.setValue("12", { emit: false });
+    await waitForMacrotask();
+
+    expect(characterMutations).toBe(1);
+    expect(getSlotText()).toEqual(["1", "2", "", ""]);
+
+    instance.setValue("", { emit: false });
+    await waitForMacrotask();
+    observer.disconnect();
+
+    expect(characterMutations).toBe(3);
+    expect(getSlotText()).toEqual(["", "", "", ""]);
+
+    const replacementSlot = document.createElement("div");
+    replacementSlot.setAttribute("data-sw-input-otp-slot", "");
+    replacementSlot.innerHTML = "<span data-sw-input-otp-char></span>";
+    getSlots()[0]!.replaceWith(replacementSlot);
+    instance.refresh();
+    instance.setValue("3", { emit: false });
+
+    expect(replacementSlot.querySelector("[data-sw-input-otp-char]")?.textContent).toBe("3");
+  });
+
   it("focuses the hidden input and marks the next empty slot active on click", () => {
     const root = renderInputOtp({ defaultValue: "12", maxLength: 4 });
 

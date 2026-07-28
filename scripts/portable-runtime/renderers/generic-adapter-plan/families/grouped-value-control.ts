@@ -353,6 +353,8 @@ function isRadioGroupGroupedValueOutputModelPlan(plan: GenericAdapterPlan): bool
     valueStateModel.runtimeSetter === "setValue" &&
     valueStateModel.valueType === "RadioGroupValue" &&
     event?.callbackProp === "onValueChange" &&
+    event.callbackTiming === "before-state-commit" &&
+    event.cancelable === true &&
     event.valueProperty === "value" &&
     event.valueType === "string" &&
     groupContext?.values.includes("disabled") === true &&
@@ -442,15 +444,16 @@ function getGroupedValueControlFacts(plan: GenericAdapterPlan): AdapterGroupedVa
       value: getStaticAttributeName(plan, rootPart, "data-value"),
     },
     behavior: {
-      contextProvider: isCheckboxLike || isRadioLike,
+      acceptedChangeNotification: valueEvent.acceptanceNotification,
+      canCancelChange: valueEvent.cancelable === true,
+      contextProvider: isCheckboxLike || isRadioLike || isToggleLike,
       multipleValueNormalization: isToggleLike,
-      parseValueAttributeFunction: isCheckboxLike
-        ? `parse${plan.displayName}ValueAttribute`
-        : undefined,
-      syncUncontrolledValueFromAttribute: isCheckboxLike,
+      parseValueAttributeFunction:
+        isCheckboxLike || isToggleLike ? `parse${plan.displayName}ValueAttribute` : undefined,
+      syncUncontrolledValueFromAttribute: isCheckboxLike || isToggleLike,
     },
     context:
-      isCheckboxLike || isRadioLike
+      isCheckboxLike || isRadioLike || isToggleLike
         ? {
             componentName: `${plan.displayName}Context`,
             hookName: `use${plan.displayName}Context`,
@@ -515,6 +518,7 @@ function getGroupedValueControlFacts(plan: GenericAdapterPlan): AdapterGroupedVa
         `${plan.displayName} value state is missing runtimeGetter.`,
       ),
       name: valueStateModel.name,
+      syncEvent: valueStateModel.runtimeSyncEvent,
       type: getPlanProp(plan, valueProp).type,
     },
     setters: {

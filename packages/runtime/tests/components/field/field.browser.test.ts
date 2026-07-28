@@ -429,6 +429,102 @@ describe("createField", () => {
     );
   });
 
+  it("adopts a rendered input OTP character without starving the next macrotask", async () => {
+    document.body.innerHTML = `
+      <form>
+        <div data-sw-field data-name="code">
+          <div data-sw-input-otp data-default-value="1" data-max-length="2" data-required>
+            <input data-sw-input-otp-input value="1" />
+            <span data-sw-input-otp-slot>
+              <span data-sw-input-otp-char></span>
+            </span>
+            <span data-sw-input-otp-slot>
+              <span data-sw-input-otp-char></span>
+            </span>
+          </div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("form")!;
+    const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const inputOtp = document.querySelector<HTMLElement>("[data-sw-input-otp]")!;
+    const char = document.querySelector<HTMLElement>("[data-sw-input-otp-char]")!;
+    let fieldInstance: ReturnType<typeof createField> | undefined;
+    let boundedMutationBailout = false;
+    let characterMutationDeliveries = 0;
+    const mutationObserver = new MutationObserver((records) => {
+      characterMutationDeliveries += records.filter(
+        (record) => record.type === "childList" && record.target === char,
+      ).length;
+      if (characterMutationDeliveries <= 25) return;
+
+      boundedMutationBailout = true;
+      fieldInstance?.destroy();
+      mutationObserver.disconnect();
+    });
+    mutationObserver.observe(field, { childList: true, subtree: true });
+
+    const inputOtpInstance = createInputOtp(inputOtp);
+    inputOtpInstance.subscribe("valueChange", () => undefined);
+    fieldInstance = createField(field);
+    await waitForMacrotask();
+    mutationObserver.disconnect();
+
+    expect(boundedMutationBailout).toBe(false);
+    expect(characterMutationDeliveries).toBeLessThan(10);
+    expect(char.textContent).toBe("1");
+    expect(inputOtp.querySelectorAll("[data-sw-input-otp-input]")).toHaveLength(1);
+    expect(inputOtp.querySelector<HTMLInputElement>("[data-sw-input-otp-input]")).toMatchObject({
+      disabled: false,
+      name: "code",
+      required: true,
+      value: "1",
+    });
+    expect(new FormData(form).get("code")).toBe("1");
+
+    inputOtp.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "2" }));
+    expect(new FormData(form).get("code")).toBe("12");
+
+    fieldInstance.setName("verification");
+    fieldInstance.setDisabled(true);
+    await waitForMacrotask();
+    expect(inputOtp.querySelector<HTMLInputElement>("[data-sw-input-otp-input]")).toMatchObject({
+      disabled: true,
+      name: "verification",
+      required: true,
+    });
+    expect(new FormData(form).get("verification")).toBeNull();
+
+    fieldInstance.setDisabled(false);
+    fieldInstance.setName(undefined);
+    await waitForMacrotask();
+    expect(inputOtp.querySelector<HTMLInputElement>("[data-sw-input-otp-input]")!.name).toBe("");
+
+    fieldInstance.setName("code");
+    await waitForMacrotask();
+    expect(new FormData(form).get("code")).toBe("12");
+
+    const replacement = document.createElement("div");
+    replacement.setAttribute("data-sw-input-otp", "");
+    replacement.setAttribute("data-default-value", "3");
+    replacement.setAttribute("data-max-length", "1");
+    replacement.innerHTML = `
+      <input data-sw-input-otp-input value="3" />
+      <span data-sw-input-otp-slot><span data-sw-input-otp-char></span></span>
+    `;
+    inputOtp.replaceWith(replacement);
+    await waitForMacrotask();
+
+    expect(replacement.querySelectorAll("[data-sw-input-otp-input]")).toHaveLength(1);
+    expect(replacement.querySelector<HTMLInputElement>("[data-sw-input-otp-input]")).toMatchObject({
+      disabled: false,
+      name: "code",
+      value: "3",
+    });
+    expect(new FormData(form).get("code")).toBe("3");
+  });
+
   it("applies field names and disabled state to preinitialized select and combobox controls", () => {
     document.body.innerHTML = `
       <div data-sw-field data-name="theme">

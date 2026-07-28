@@ -67,6 +67,7 @@ export const radioGroupRuntimeAdapterContract = {
       defaultProp: "defaultValue",
       initialAttribute: "data-default-value",
       runtimeGetter: "getValue",
+      runtimeSyncEvent: "stateSync",
       runtimeSetter: "setValue",
       valueType: "RadioGroupValue",
       controlledStateSync: "unsupported",
@@ -75,6 +76,9 @@ export const radioGroupRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      acceptanceNotification: "detail-on-accepted",
+      callbackTiming: "before-state-commit",
+      cancelable: true,
       callbackProp: "onValueChange",
       detailsType: "RadioGroupValueChangeDetails",
       domEvent: "starwind:value-change",

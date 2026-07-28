@@ -56,7 +56,11 @@ const vueFrameworkAdapterTargetDefinition = {
     generatePackage: generateValidatedVuePrimitivePackage,
     manualPrimitives: vueManualPrimitiveGenerators,
     outputModel: {
-      capabilities: {},
+      capabilities: {
+        groupedValueControlContextHelper: {
+          fileExtension: ".ts",
+        },
+      },
       projectSpecialized: projectVueSpecializedAdapterOutputModel,
       write(args) {
         return writeVueAdapterOutput({
@@ -94,6 +98,23 @@ export const vueFrameworkAdapterTarget = defineFrameworkAdapterTarget(
 export { vueFrameworkAdapter, vueFrameworkAdapterReadiness };
 export { vueFutureFrameworkTracer } from "./future-framework-tracer.js";
 export {
+  printVueControlledValuePresenceComponent,
+  printVueControlledValuePresenceIndex,
+} from "./controlled-value-presence.js";
+export { printVueRangeControlComponent, printVueRangeControlIndex } from "./range-control.js";
+export {
+  printVueHiddenInputVisualSlotComponent,
+  printVueHiddenInputVisualSlotIndex,
+} from "./hidden-input-visual-slot.js";
+export {
+  printVueFileDropControlComponent,
+  printVueFileDropControlIndex,
+} from "./file-drop-control.js";
+export {
+  printVueFieldCompositionComponent,
+  printVueFieldCompositionIndex,
+} from "./field-composition.js";
+export {
   projectVueDetailedEvent,
   projectVueModel,
   vueAdapterPublicContract,
@@ -103,3 +124,12 @@ export type {
   VueDetailedEventProjection,
   VueModelProjection,
 } from "./public-contract.js";
+export {
+  printVueNativeInputValueComponent,
+  printVueNativeInputValueIndex,
+} from "./native-input-value.js";
+export { printVueNativeOverlayComponent, printVueNativeOverlayIndex } from "./native-overlay.js";
+export {
+  printVuePresenceFloatingOverlayComponent,
+  printVuePresenceFloatingOverlayIndex,
+} from "./presence-floating-overlay.js";

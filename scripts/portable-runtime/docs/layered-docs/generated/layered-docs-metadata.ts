@@ -433,6 +433,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
         events: [
           {
+            callbackTiming: "before-state-commit",
+            cancelable: true,
             name: "valueChange",
             callbackProp: "onValueChange",
             detailsType: "AccordionValueChangeDetails",
@@ -1699,6 +1701,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
         events: [
           {
+            callbackTiming: "before-state-commit",
+            cancelable: true,
             name: "valueChange",
             callbackProp: "onValueChange",
             detailsType: "InputOtpValueChangeDetails",
@@ -2181,6 +2185,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
         events: [
           {
+            callbackTiming: "before-state-commit",
+            cancelable: true,
             name: "checkedChange",
             callbackProp: "onCheckedChange",
             detailsType: "RadioCheckedChangeDetails",
@@ -2261,6 +2267,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
         events: [
           {
+            callbackTiming: "before-state-commit",
+            cancelable: true,
             name: "valueChange",
             callbackProp: "onValueChange",
             detailsType: "RadioGroupValueChangeDetails",
@@ -2594,6 +2602,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
         events: [
           {
+            callbackTiming: "before-state-commit",
+            cancelable: true,
             name: "valueChange",
             callbackProp: "onValueChange",
             detailsType: "SliderValueChangeDetails",
@@ -5553,7 +5563,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "colorPickerArea",
             exportName: "ColorPickerVariants",
-            baseClassCount: 12,
+            baseClassCount: 13,
             options: [
               {
                 name: "size",
@@ -33370,6 +33380,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       ],
       events: [
         {
+          callbackTiming: "before-state-commit",
+          cancelable: true,
           name: "valueChange",
           callbackProp: "onValueChange",
           detailsType: "AccordionValueChangeDetails",
@@ -33642,6 +33654,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               ],
               events: [
                 {
+                  callbackTiming: "before-state-commit",
+                  cancelable: true,
                   name: "valueChange",
                   callbackProp: "onValueChange",
                   detailsType: "AccordionValueChangeDetails",
@@ -52153,6 +52167,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       ],
       events: [
         {
+          callbackTiming: "before-state-commit",
+          cancelable: true,
           name: "valueChange",
           callbackProp: "onValueChange",
           detailsType: "InputOtpValueChangeDetails",
@@ -52548,6 +52564,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               ],
               events: [
                 {
+                  callbackTiming: "before-state-commit",
+                  cancelable: true,
                   name: "valueChange",
                   callbackProp: "onValueChange",
                   detailsType: "InputOtpValueChangeDetails",
@@ -61553,6 +61571,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       ],
       events: [
         {
+          callbackTiming: "before-state-commit",
+          cancelable: true,
           name: "checkedChange",
           callbackProp: "onCheckedChange",
           detailsType: "RadioCheckedChangeDetails",
@@ -61925,6 +61945,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               ],
               events: [
                 {
+                  callbackTiming: "before-state-commit",
+                  cancelable: true,
                   name: "checkedChange",
                   callbackProp: "onCheckedChange",
                   detailsType: "RadioCheckedChangeDetails",
@@ -62338,6 +62360,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       ],
       events: [
         {
+          callbackTiming: "before-state-commit",
+          cancelable: true,
           name: "valueChange",
           callbackProp: "onValueChange",
           detailsType: "RadioGroupValueChangeDetails",
@@ -62678,6 +62702,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               ],
               events: [
                 {
+                  callbackTiming: "before-state-commit",
+                  cancelable: true,
                   name: "valueChange",
                   callbackProp: "onValueChange",
                   detailsType: "RadioGroupValueChangeDetails",
@@ -66999,6 +67025,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       ],
       events: [
         {
+          callbackTiming: "before-state-commit",
+          cancelable: true,
           name: "valueChange",
           callbackProp: "onValueChange",
           detailsType: "SliderValueChangeDetails",
@@ -67418,6 +67446,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               ],
               events: [
                 {
+                  callbackTiming: "before-state-commit",
+                  cancelable: true,
                   name: "valueChange",
                   callbackProp: "onValueChange",
                   detailsType: "SliderValueChangeDetails",
@@ -70636,7 +70666,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           prop: "disabled",
         },
       ],
-      context: [],
+      context: [
+        {
+          name: "toggle-group",
+          direction: "consumes",
+          values: [
+            "disabled",
+            "value",
+          ],
+        },
+      ],
       refs: [
         {
           part: "root",
@@ -70898,7 +70937,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   prop: "disabled",
                 },
               ],
-              context: [],
+              context: [
+                {
+                  name: "toggle-group",
+                  direction: "consumes",
+                  values: [
+                    "disabled",
+                    "value",
+                  ],
+                },
+              ],
               refs: [
                 {
                   part: "root",

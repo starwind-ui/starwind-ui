@@ -19,8 +19,10 @@ const FAMILY_MODULES = [
   "action-surface",
   "boolean-form-control",
   "media-status",
+  "native-input-value",
   "option-collection-overlay",
   "range-status",
+  "single-boolean-control",
   "viewport-measurement",
 ] as const;
 

@@ -244,6 +244,8 @@ export function isBooleanFormControlOutputModelPlan(plan: GenericAdapterPlan): b
     stateModel.valueType === "boolean" &&
     event?.callbackProp === "onCheckedChange" &&
     event.valueProperty === "checked" &&
+    (plan.component !== "radio" ||
+      (event.callbackTiming === "before-state-commit" && event.cancelable === true)) &&
     nativeButtonProp?.defaultValue === "false"
   );
 }
@@ -339,8 +341,9 @@ export function getBooleanFormControlFacts(
       value: getOptionalStaticAttributeName(plan, rootPart, "data-value"),
     },
     behavior: {
-      canCancelChange: plan.component !== "radio",
-      formResetSync: plan.component !== "radio",
+      acceptedChangeNotification: stateEvent.acceptanceNotification,
+      canCancelChange: plan.component !== "radio" || stateEvent.cancelable === true,
+      formResetSync: true,
       groupStrategy:
         plan.component === "checkbox"
           ? "array-includes"
@@ -383,6 +386,7 @@ export function getBooleanFormControlFacts(
       ? {
           hookName: `use${toPascalCase(groupContext.name)}Context`,
           importPath: `../${groupContext.name}/${toPascalCase(groupContext.name)}Context`,
+          requirement: groupContext.requirement ?? "required",
           valueFields: [...groupContext.values],
           variableName: toCamelCase(groupContext.name),
         }
@@ -448,6 +452,7 @@ export function getBooleanFormControlFacts(
       ),
       name: stateModel.name,
       pascalName: toPascalCase(stateModel.name),
+      syncEvent: stateModel.runtimeSyncEvent,
     },
     setters: {
       disabled: {

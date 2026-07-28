@@ -84,6 +84,14 @@ export const toggleRuntimeAdapterContract = {
     },
     { method: "setDisabled", prop: "disabled" },
   ],
+  context: [
+    {
+      name: "toggle-group",
+      direction: "consumes",
+      requirement: "optional",
+      values: ["disabled", "value"],
+    },
+  ],
   refs: [{ part: "root", public: true }],
   initialMarkup: [
     {

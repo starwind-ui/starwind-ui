@@ -326,6 +326,10 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const tabsIndex = await readGeneratedFile(outputRoot, "tabs/index.ts");
     const toggleRoot = await readGeneratedFile(outputRoot, "toggle/ToggleRoot.tsx");
     const toggleIndex = await readGeneratedFile(outputRoot, "toggle/index.ts");
+    const toggleGroupContext = await readGeneratedFile(
+      outputRoot,
+      "toggle-group/ToggleGroupContext.tsx",
+    );
     const toggleGroupRoot = await readGeneratedFile(outputRoot, "toggle-group/ToggleGroupRoot.tsx");
     const toggleGroupIndex = await readGeneratedFile(outputRoot, "toggle-group/index.ts");
     const reactAsChildParts = [
@@ -486,6 +490,7 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     );
     expect(accordionRoot).toContain('instance.subscribe("valueChange"');
     expect(accordionRoot).toContain("onValueChangeRef.current?.(details)");
+    expect(accordionRoot).toContain("if (details.isCanceled) return");
     expect(accordionRoot).toContain("unsubscribe()");
     expect(accordionRoot).toContain("instance.destroy()");
     expect(accordionRoot).toContain("instance.setValue(value, { emit: false })");
@@ -1055,6 +1060,13 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(radioRoot).toContain("const radioGroup = useRadioGroupContext()");
     expect(radioRoot).toContain("const groupChecked =");
     expect(radioRoot).toContain("const effectiveDisabled =");
+    expect(radioRoot).toContain(
+      `onCheckedChangeRef.current?.(details.checked, details);
+        details.onAccepted(() => {
+          if (checkedRef.current === undefined && radioGroup === undefined) {`,
+    );
+    expect(radioRoot).toContain('instance.subscribe("stateSync", () => {');
+    expect(radioRoot).toContain("setUncontrolledChecked(instance.getChecked())");
     expect(radioRoot).not.toContain("indeterminateRef");
     expect(radioRoot).not.toContain("setIndeterminate");
     expect(radioRoot).not.toContain("renderedIndeterminate");
@@ -1092,6 +1104,14 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(radioGroupRoot).toContain("instance.setFormOptions({");
     expect(radioGroupRoot).toContain("instance.setOrientation(orientation)");
     expect(radioGroupRoot).toContain("instance.setReadOnly(readOnly)");
+    expect(radioGroupRoot).toContain(
+      `onValueChangeRef.current?.(details.value, details);
+        details.onAccepted(() => {
+          if (valueRef.current === undefined) {`,
+    );
+    expect(radioGroupRoot).toContain("setUncontrolledValue(details.value)");
+    expect(radioGroupRoot).toContain('instance.subscribe("stateSync", () => {');
+    expect(radioGroupRoot).toContain("setUncontrolledValue(instance.getValue())");
     expect(radioGroupRoot).not.toContain("}, [form, orientation, required]);");
     expect(radioGroupRoot).toContain("data-sw-radio-group");
     expect(radioGroupRoot).toContain("data-orientation={orientation}");
@@ -1990,6 +2010,15 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(toggleGroupRoot).toContain("setUncontrolledValue(instance.getValue())");
     expect(toggleGroupRoot).toContain("instance.setOrientation(orientation)");
     expect(toggleGroupRoot).toContain("instance.setValue(value, { emit: false })");
+    expect(toggleGroupRoot).toContain('import { ToggleGroupContext } from "./ToggleGroupContext";');
+    expect(toggleGroupRoot).toContain(
+      "const renderedValue = React.useMemo(\n      () => normalizeRenderedValue(value ?? uncontrolledValue, multiple),\n      [multiple, uncontrolledValue, value],\n    );",
+    );
+    expect(toggleGroupRoot).toContain(
+      "const contextValue = React.useMemo(\n      () => ({ disabled, loopFocus, multiple, orientation, value: renderedValue }),",
+    );
+    expect(toggleGroupRoot).toContain("<ToggleGroupContext.Provider value={contextValue}>");
+    expect(toggleGroupRoot).toContain("</ToggleGroupContext.Provider>");
     expect(toggleGroupRoot).toContain("unsubscribe()");
     expect(toggleGroupRoot).toContain("instance.destroy()");
     expect(toggleGroupRoot).toContain("function normalizeRenderedValue");
@@ -2004,8 +2033,18 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "multiple"));
     expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "orientation"));
     expect(toggleGroupRoot).not.toContain(removedAttr("data-sw-toggle-group", "value"));
+    expect(toggleGroupContext).toContain("export type ToggleGroupContextValue = {");
+    expect(toggleGroupContext).toContain(
+      "const ToggleGroupContext = React.createContext<ToggleGroupContextValue | undefined>(undefined);",
+    );
+    expect(toggleGroupContext).toContain(
+      "function useToggleGroupContext(): ToggleGroupContextValue | undefined",
+    );
     expect(toggleGroupIndex).toContain("const ToggleGroup =");
     expect(toggleGroupIndex).toContain("Root: ToggleGroupRoot");
+    expect(toggleGroupIndex).toContain("ToggleGroupContext,");
+    expect(toggleGroupIndex).toContain("type ToggleGroupContextValue,");
+    expect(toggleGroupIndex).toContain("useToggleGroupContext,");
   });
 
   it("generates Combobox React primitives through the Combobox specialized adapter spec without output drift", async () => {

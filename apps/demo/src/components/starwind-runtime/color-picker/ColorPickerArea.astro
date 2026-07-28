@@ -32,14 +32,14 @@ const { initial, class: className, size = "md", ...rest } = Astro.props;
   <ColorPickerPrimitive.AreaInput
     initial={initial?.input({ axis: "x" }).initial}
     axis="x"
-    class="absolute inset-0 size-full cursor-crosshair opacity-0"
+    class="pointer-events-none absolute inset-0 size-full opacity-0"
     data-slot="color-picker-area-input-x"
   />
 
   <ColorPickerPrimitive.AreaInput
     initial={initial?.input({ axis: "y" }).initial}
     axis="y"
-    class="absolute inset-0 size-full cursor-crosshair opacity-0"
+    class="pointer-events-none absolute inset-0 size-full opacity-0"
     data-slot="color-picker-area-input-y"
   />
 </ColorPickerPrimitive.Area>

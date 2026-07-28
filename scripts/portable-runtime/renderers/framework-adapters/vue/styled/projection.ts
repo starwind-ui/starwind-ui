@@ -122,9 +122,15 @@ function projectProps(
   const publicFields = (component.props?.fields ?? []).filter(
     (field) => isForVue(field) && !omittedPropFields.has(field.name),
   );
+  const targetFields = publicContract.fields ?? [];
   const destructure = (component.destructure?.props ?? []).filter(
     (prop) => isForVue(prop) && !omittedPropFields.has(prop.name),
   );
+  const declaredPropNames = publicContract.declaredPropNames ?? {};
+  const declaredDestructure = destructure.map((prop) => {
+    const name = declaredPropNames[prop.name] ?? prop.name;
+    return name === prop.name ? prop : { ...prop, name };
+  });
   const models = publicContract.models ?? [];
   const inheritedPublicFields = destructure.flatMap((prop) => {
     if (publicFields.some((field) => field.name === prop.name)) return [];
@@ -135,29 +141,46 @@ function projectProps(
   });
   const knownFields = new Map([
     ...publicFields.map((field) => [field.name, field] as const),
+    ...targetFields.map((field) => [field.name, field] as const),
     ...inheritedPublicFields.map((field) => [field.name, field] as const),
     ...models.map(
       (model) => [model.name, { name: model.name, optional: true, type: model.type }] as const,
     ),
   ]);
-  const declaredNames = new Set([
+  const declaredSourceNames = new Set([
     ...knownFields.keys(),
     ...destructure.map((prop) => prop.name).filter((name) => !omittedPropFields.has(name)),
   ]);
+  const declaredFields = new Map(
+    [...declaredSourceNames].map((sourceName) => {
+      const name = declaredPropNames[sourceName] ?? sourceName;
+      return [
+        name,
+        {
+          name,
+          optional: knownFields.get(sourceName)?.optional !== false,
+          type:
+            publicContract.declaredFieldTypes?.[sourceName] ??
+            knownFields.get(sourceName)?.type ??
+            getInheritedPropType(component, sourceName),
+        },
+      ] as const;
+    }),
+  );
   return {
     declared: {
-      fields: [...declaredNames].map((name) => ({
-        name,
-        optional: knownFields.get(name)?.optional !== false,
-        type: knownFields.get(name)?.type ?? getInheritedPropType(component, name),
-      })),
+      extendsPublic: publicContract.declaredExtendsPublic ?? true,
+      fields: [...declaredFields.values()],
       name: `${component.exportName}DeclaredProps`,
     },
-    destructure,
+    destructure: declaredDestructure,
     public: {
       extends: publicExtends,
       fields: [
         ...publicFields,
+        ...targetFields.filter(
+          (field) => !publicFields.some((candidate) => candidate.name === field.name),
+        ),
         ...inheritedPublicFields,
         ...models
           .filter((model) => !publicFields.some((field) => field.name === model.name))

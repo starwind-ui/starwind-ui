@@ -9,6 +9,7 @@ import {
   colorPickerRuntimeAdapterContract,
   popoverRuntimeAdapterContract,
   runtimeAdapterContracts,
+  toggleGroupRuntimeAdapterContract,
 } from "../contracts/primitive/representatives.js";
 import { starwindStyledContracts } from "../contracts/styled/starwind.js";
 import type { StyledAdapterContract } from "../contracts/styled/types.js";
@@ -1067,6 +1068,46 @@ describe("generateCliRegistry", () => {
     ).toContain("../internal/use-isomorphic-layout-effect");
     expect(button?.files[0]?.content).toContain("Vendored by the Starwind CLI");
     expect(button?.files[0]?.content).not.toContain("Do not edit by hand");
+  });
+
+  it("vendors the generated React Toggle Group provider and context helper together", async () => {
+    const manifestPath = path.join(tempRoot, "primitive-versions.json");
+    await writePrimitiveVersionManifest(manifestPath, {
+      primitives: {
+        "toggle-group": "0.1.0",
+      },
+    });
+
+    const artifactSet = await buildPrimitiveVendoringArtifacts({
+      contracts: [toggleGroupRuntimeAdapterContract],
+      primitiveVersionManifestPath: manifestPath,
+      tempRoot,
+    });
+    const toggleGroup = artifactSet.primitives.find(
+      (primitive) => primitive.component === "toggle-group" && primitive.framework === "react",
+    );
+
+    expect(toggleGroup?.files).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          content: expect.stringContaining(
+            "React.createContext<ToggleGroupContextValue | undefined>",
+          ),
+          path: `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/toggle-group/ToggleGroupContext.tsx`,
+          sourcePath: "packages/react/src/toggle-group/ToggleGroupContext.tsx",
+        }),
+        expect.objectContaining({
+          content: expect.stringContaining("<ToggleGroupContext.Provider value={contextValue}>"),
+          path: `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/toggle-group/ToggleGroupRoot.tsx`,
+          sourcePath: "packages/react/src/toggle-group/ToggleGroupRoot.tsx",
+        }),
+        expect.objectContaining({
+          content: expect.stringContaining("useToggleGroupContext"),
+          path: `${DEFAULT_PRIMITIVE_INSTALL_ROOT}/toggle-group/index.ts`,
+          sourcePath: "packages/react/src/toggle-group/index.ts",
+        }),
+      ]),
+    );
   });
 
   it("keeps representative primitive vendoring content aligned with formatted package source", async () => {

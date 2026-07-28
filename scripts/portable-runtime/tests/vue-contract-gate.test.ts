@@ -12,15 +12,6 @@ import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 
 import { describe, expect, it } from "vitest";
-import {
-  cloneVNode,
-  createRenderer,
-  defineComponent,
-  h,
-  isVNode,
-  mergeProps,
-  type VNode,
-} from "vue";
 
 import {
   createVueContractFixtureFiles,
@@ -47,18 +38,6 @@ function getFixture(path: (typeof VUE_CONTRACT_FIXTURE_PATHS)[number]): string {
 }
 
 type ReadDirectoryEntries = (directory: string) => Dirent[];
-
-type VueTestHostNode = {
-  children: VueTestHostNode[];
-  parent: VueTestHostNode | null;
-  props: Record<string, unknown>;
-  text: string;
-  type: string;
-};
-
-function createVueTestHostNode(type: string, text = ""): VueTestHostNode {
-  return { children: [], parent: null, props: {}, text, type };
-}
 
 // primitive-docs-examples.test.ts creates and removes these repo-local homes while the
 // portable Runtime suite is running. They are test fixtures, never public app surfaces.
@@ -299,7 +278,7 @@ describe("Vue non-shipping public-contract gate", () => {
             .map((file) => file.path.split("/")[2]),
         ),
       ].sort(),
-    ).toEqual(["collapsible", "combobox", "conformance", "menu", "navigation-menu", "toggle"]);
+    ).toEqual(["combobox", "conformance", "menu", "navigation-menu", "toggle"]);
     expect(firstRun.map((file) => file.path).join("\n")).not.toMatch(
       /\/vue\/(?:avatar|button|checkbox|progress|scroll-area|select|theme)\//,
     );
@@ -405,12 +384,6 @@ describe("Vue non-shipping public-contract gate", () => {
         'emit("update:pressed", details.pressed);',
       ],
       [
-        "__future-fixtures/vue/collapsible/CollapsibleRoot.vue",
-        "open",
-        "uncontrolledOpen.value = details.open;",
-        'emit("update:open", details.open);',
-      ],
-      [
         "__future-fixtures/vue/combobox/ComboboxRoot.vue",
         "inputValue",
         "uncontrolledInputValue.value = inputValue;",
@@ -467,129 +440,6 @@ describe("Vue non-shipping public-contract gate", () => {
     }
   });
 
-  it("preserves Collapsible composition props and public element refs", () => {
-    const trigger = getFixture("__future-fixtures/vue/collapsible/CollapsibleTrigger.vue");
-    const panel = getFixture("__future-fixtures/vue/collapsible/CollapsiblePanel.vue");
-
-    expect(trigger).toContain("asChild?: boolean");
-    expect(trigger).toContain("const AsChildTrigger = defineComponent({");
-    expect(trigger).toContain("return cloneVNode(child, mergeProps(");
-    expect(trigger).toContain('<AsChildTrigger v-if="props.asChild">');
-    expect(trigger).toContain("ref<HTMLElement | null>(null)");
-    expect(trigger).toContain("defineExpose({ element });");
-    expect(panel).toContain("hiddenUntilFound?: boolean");
-    expect(panel).toContain(":hidden=\"props.hiddenUntilFound ? 'until-found' : true\"");
-    expect(panel).toContain("ref<HTMLDivElement | null>(null)");
-    expect(panel).toContain("defineExpose({ element });");
-  });
-
-  it("renders Collapsible asChild with consumer type and composed protected refs", () => {
-    const trigger = getFixture("__future-fixtures/vue/collapsible/CollapsibleTrigger.vue");
-    expect(trigger).toContain('Object.prototype.hasOwnProperty.call(child.props, "type")');
-    expect(trigger).toContain(
-      'child.type === "button" && !childHasType && !attrsHaveType ? { type: "button" } : {}',
-    );
-
-    const consumerRefValues: unknown[] = [];
-    const protectedRefValues: unknown[] = [];
-    const renderer = createRenderer<VueTestHostNode, VueTestHostNode>({
-      createComment: (text) => createVueTestHostNode("#comment", text),
-      createElement: (type) => createVueTestHostNode(type),
-      createText: (text) => createVueTestHostNode("#text", text),
-      insert(child, parent, anchor) {
-        child.parent = parent;
-        const anchorIndex = anchor ? parent.children.indexOf(anchor) : -1;
-        if (anchorIndex === -1) parent.children.push(child);
-        else parent.children.splice(anchorIndex, 0, child);
-      },
-      insertStaticContent(content, parent, anchor) {
-        const node = createVueTestHostNode("#static", content);
-        node.parent = parent;
-        const anchorIndex = anchor ? parent.children.indexOf(anchor) : -1;
-        if (anchorIndex === -1) parent.children.push(node);
-        else parent.children.splice(anchorIndex, 0, node);
-        return [node, node];
-      },
-      nextSibling(node) {
-        if (!node.parent) return null;
-        const index = node.parent.children.indexOf(node);
-        return node.parent.children[index + 1] ?? null;
-      },
-      parentNode: (node) => node.parent,
-      patchProp(element, key, _previous, next) {
-        element.props[key] = next;
-      },
-      querySelector: () => null,
-      remove(node) {
-        if (!node.parent) return;
-        const index = node.parent.children.indexOf(node);
-        if (index !== -1) node.parent.children.splice(index, 1);
-        node.parent = null;
-      },
-      setElementText(element, text) {
-        element.text = text;
-        element.children = [];
-      },
-      setScopeId(element, id) {
-        element.props[id] = "";
-      },
-      setText(node, text) {
-        node.text = text;
-      },
-    });
-    const AsChildHarness = defineComponent({
-      inheritAttrs: false,
-      setup(_props, { attrs, slots }) {
-        return () => {
-          const children = slots.default?.() ?? [];
-          const child = children[0];
-          if (children.length !== 1 || !isVNode(child) || typeof child.type !== "string") {
-            throw new TypeError("Expected exactly one native child.");
-          }
-          const childHasType =
-            child.props !== null && Object.prototype.hasOwnProperty.call(child.props, "type");
-          const attrsHaveType = Object.prototype.hasOwnProperty.call(attrs, "type");
-          const defaultedProps =
-            child.type === "button" && !childHasType && !attrsHaveType ? { type: "button" } : {};
-          const protectedProps = {
-            "data-sw-collapsible-trigger": "",
-            ref: (value: unknown) => protectedRefValues.push(value),
-          };
-          return cloneVNode(
-            child as VNode,
-            mergeProps(defaultedProps, attrs, protectedProps),
-            true,
-          );
-        };
-      },
-    });
-    const app = renderer.createApp(
-      defineComponent({
-        setup() {
-          return () =>
-            h(AsChildHarness, null, {
-              default: () =>
-                h("button", {
-                  "data-sw-collapsible-trigger": "consumer",
-                  ref: (value: unknown) => consumerRefValues.push(value),
-                  type: "submit",
-                }),
-            });
-        },
-      }),
-    );
-    const container = createVueTestHostNode("#root");
-
-    app.mount(container);
-
-    const renderedButton = container.children[0];
-    expect(renderedButton?.props.type).toBe("submit");
-    expect(renderedButton?.props["data-sw-collapsible-trigger"]).toBe("");
-    expect(consumerRefValues).toEqual([renderedButton]);
-    expect(protectedRefValues).toEqual([renderedButton]);
-    app.unmount();
-  });
-
   it("writes and cleans identical temporary gates on repeat runs", async () => {
     const fixtureParent = mkdtempSync(join(tmpdir(), "starwind-vue-contract-gate-"));
     const snapshots: Record<string, string>[] = [];
@@ -625,7 +475,6 @@ describe("Vue non-shipping public-contract gate", () => {
             strict: true,
           },
           include: [
-            "__future-fixtures/vue/collapsible/**/*.vue",
             "__future-fixtures/vue/combobox/**/*.{ts,vue}",
             "__future-fixtures/vue/conformance/**/*.{ts,vue}",
             "__future-fixtures/vue/menu/**/*.{ts,vue}",
@@ -724,12 +573,32 @@ describe("Vue non-shipping public-contract gate", () => {
     });
     expect(Object.keys(vueManifest.exports ?? {})).toEqual([
       ".",
+      "./accordion",
+      "./alert-dialog",
       "./avatar",
       "./button",
       "./checkbox",
+      "./checkbox-group",
+      "./collapsible",
+      "./dialog",
+      "./drawer",
+      "./dropzone",
+      "./fieldset",
+      "./field",
+      "./form",
+      "./input",
+      "./input-otp",
+      "./popover",
       "./progress",
+      "./radio",
+      "./radio-group",
       "./scroll-area",
       "./select",
+      "./slider",
+      "./switch",
+      "./tabs",
+      "./toggle",
+      "./toggle-group",
       "./theme",
     ]);
     const vueDemoManifest = JSON.parse(

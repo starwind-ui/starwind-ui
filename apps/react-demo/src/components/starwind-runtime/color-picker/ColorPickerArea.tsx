@@ -26,13 +26,13 @@ function ColorPickerArea(props: ColorPickerAreaProps) {
 
       <ColorPickerPrimitive.AreaInput
         axis="x"
-        className="absolute inset-0 size-full cursor-crosshair opacity-0"
+        className="pointer-events-none absolute inset-0 size-full opacity-0"
         data-slot="color-picker-area-input-x"
       />
 
       <ColorPickerPrimitive.AreaInput
         axis="y"
-        className="absolute inset-0 size-full cursor-crosshair opacity-0"
+        className="pointer-events-none absolute inset-0 size-full opacity-0"
         data-slot="color-picker-area-input-y"
       />
     </ColorPickerPrimitive.Area>

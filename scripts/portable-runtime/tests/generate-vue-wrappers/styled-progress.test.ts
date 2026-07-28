@@ -5,8 +5,8 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { progressStyledContract } from "../../contracts/styled/components/progress.js";
-import { generateStarwindVueWrappers } from "../../generate-vue-wrappers.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
+import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 describe("generated Vue Styled Progress", () => {
   const roots: string[] = [];
@@ -18,7 +18,11 @@ describe("generated Vue Styled Progress", () => {
   it("projects reactive presentation through the Progress Primitive without owning Runtime", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-styled-progress-"));
     roots.push(root);
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    await generateSelectedVueStyledGroups({
+      groups: ["progress"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
 
     const source = await readFile(path.join(root, "styled/progress/Progress.vue"), "utf8");
     const index = await readFile(path.join(root, "styled/progress/index.ts"), "utf8");
@@ -72,8 +76,16 @@ describe("generated Vue Styled Progress", () => {
     const secondRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-progress-second-"));
     roots.push(firstRoot, secondRoot);
 
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: firstRoot });
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: secondRoot });
+    await generateSelectedVueStyledGroups({
+      groups: ["progress"],
+      outputDir: "styled",
+      repoRoot: firstRoot,
+    });
+    await generateSelectedVueStyledGroups({
+      groups: ["progress"],
+      outputDir: "styled",
+      repoRoot: secondRoot,
+    });
 
     for (const file of ["Progress.vue", "index.ts", "variants.ts"]) {
       await expect(readFile(path.join(firstRoot, "styled/progress", file), "utf8")).resolves.toBe(

@@ -115,7 +115,7 @@ export const colorPickerValueInputLayout = tv({
 });
 
 export const colorPickerArea = tv({
-  base: "group/color-picker-area border-outline relative min-h-32 w-full shrink-0 touch-none rounded-md border [&>[data-slot=color-picker-area-background]]:inset-0 [&>[data-slot=color-picker-area-background]]:size-full [&>[data-slot=color-picker-area-background]]:rounded-[7px]",
+  base: "group/color-picker-area border-outline relative min-h-32 w-full shrink-0 cursor-crosshair touch-none rounded-md border [&>[data-slot=color-picker-area-background]]:inset-0 [&>[data-slot=color-picker-area-background]]:size-full [&>[data-slot=color-picker-area-background]]:rounded-[7px]",
   variants: {
     size: {
       sm: "h-[150px]",

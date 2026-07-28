@@ -121,6 +121,33 @@ export function defineRuntimeInventoryValidationTests(): void {
     expect(validateRuntimeAdapterContracts(runtimeAdapterContracts)).toEqual([]);
   });
 
+  it("defaults consumed contexts to required and rejects provider consumption requirements", () => {
+    const requiredConsumer = runtimeAdapterContractExports.menuRuntimeAdapterContract.context?.find(
+      (context) => context.direction === "consumes",
+    );
+    const invalidProvider = cloneContract(
+      runtimeAdapterContractExports.checkboxGroupRuntimeAdapterContract,
+    );
+    invalidProvider.component = "invalid-provider-requirement";
+    invalidProvider.context = [
+      {
+        ...invalidProvider.context![0],
+        requirement: "optional",
+      } as never,
+    ];
+
+    expect(
+      requiredConsumer && "requirement" in requiredConsumer
+        ? requiredConsumer.requirement
+        : "required",
+    ).toBe("required");
+    expect(validateRuntimeAdapterContracts([invalidProvider])).toContainEqual({
+      component: "invalid-provider-requirement",
+      message: 'Provided context "checkbox-group" cannot declare a consumption requirement.',
+      path: "context.checkbox-group.requirement",
+    });
+  });
+
   it("reports missing runtime bridge facts", () => {
     const missingRuntimeFacts = cloneContract(
       runtimeAdapterContractExports.buttonRuntimeAdapterContract,

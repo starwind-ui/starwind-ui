@@ -123,6 +123,108 @@ describe("createAccordion", () => {
     });
   });
 
+  it("notifies cancelable value proposals before committing accepted state exactly once", () => {
+    const root = renderAccordion();
+    const observations: string[] = [];
+    const onValueChange = vi.fn((details) => {
+      observations.push(
+        `callback:${String(details.isCanceled)}:${String(getContent("shipping").hidden)}`,
+      );
+    });
+    root.addEventListener("starwind:value-change", (event) => {
+      const details = (event as CustomEvent).detail;
+      observations.push(
+        `dom:${String(event.cancelable)}:${String(details.isCanceled)}:${String(
+          getContent("shipping").hidden,
+        )}`,
+      );
+    });
+    const accordion = createAccordion(root, { onValueChange });
+    const subscriber = vi.fn((details) => {
+      observations.push(
+        `subscriber:${String(details.isCanceled)}:${String(getContent("shipping").hidden)}`,
+      );
+    });
+    accordion.subscribe("valueChange", subscriber);
+
+    getTrigger("shipping").click();
+
+    expect(observations).toEqual([
+      "dom:true:false:true",
+      "callback:false:true",
+      "subscriber:false:true",
+    ]);
+    expect(onValueChange).toHaveBeenCalledTimes(1);
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(accordion.getValue()).toBe("shipping");
+    expect(getContent("shipping").hidden).toBe(false);
+    const details = onValueChange.mock.calls[0][0];
+    expect(details.cancel).toEqual(expect.any(Function));
+    expect(details.isCanceled).toBe(false);
+  });
+
+  it("lets the callback cancel single-value opening without changing DOM or presence state", () => {
+    const root = renderAccordion();
+    const content = getContent("shipping");
+    const getAnimations = vi.fn(() => [] as Animation[]);
+    Object.defineProperty(content, "getAnimations", {
+      configurable: true,
+      value: getAnimations,
+    });
+    const accordion = createAccordion(root, {
+      onValueChange(details) {
+        details.cancel();
+      },
+    });
+    getAnimations.mockClear();
+
+    getTrigger("shipping").click();
+
+    expect(accordion.getValue()).toBeNull();
+    expect(getTrigger("shipping").getAttribute("aria-expanded")).toBe("false");
+    expect(content.getAttribute("data-state")).toBe("closed");
+    expect(content.hidden).toBe(true);
+    expect(content.hasAttribute("data-starting-style")).toBe(false);
+    expect(content.hasAttribute("data-ending-style")).toBe(false);
+    expect(getAnimations).not.toHaveBeenCalled();
+  });
+
+  it("lets subscribers cancel multiple-value opening and closing", () => {
+    const root = renderAccordion({
+      type: "multiple",
+      defaultValue: JSON.stringify(["shipping"]),
+    });
+    const accordion = createAccordion(root);
+    accordion.subscribe("valueChange", (details) => details.cancel());
+
+    getTrigger("billing").click();
+
+    expect(accordion.getValue()).toEqual(["shipping"]);
+    expect(getContent("shipping").hidden).toBe(false);
+    expect(getContent("billing").hidden).toBe(true);
+
+    getTrigger("shipping").click();
+
+    expect(accordion.getValue()).toEqual(["shipping"]);
+    expect(getContent("shipping").getAttribute("data-state")).toBe("open");
+    expect(getContent("shipping").hidden).toBe(false);
+  });
+
+  it("maps DOM preventDefault to detail cancellation", () => {
+    const root = renderAccordion();
+    const onValueChange = vi.fn();
+    root.addEventListener("starwind:value-change", (event) => event.preventDefault());
+    const accordion = createAccordion(root, { onValueChange });
+
+    getTrigger("shipping").click();
+
+    expect(accordion.getValue()).toBeNull();
+    expect(getContent("shipping").hidden).toBe(true);
+    expect(onValueChange).toHaveBeenCalledWith(
+      expect.objectContaining({ isCanceled: true, value: "shipping" }),
+    );
+  });
+
   it("does not emit value-change events when a non-collapsible trigger leaves value unchanged", () => {
     const root = renderAccordion({ defaultValue: "shipping", collapsible: false });
     const listener = vi.fn();
@@ -185,20 +287,96 @@ describe("createAccordion", () => {
 
     accordion.setValue("billing");
 
-    expect(getContent("shipping").hidden).toBe(true);
-    expect(getContent("billing").hidden).toBe(false);
-  });
+    expect(onValueChange).toHaveBeenCalledTimes(2);
+    expect(getContent("shipping").hidden).toBe(false);
+    expect(getContent("billing").hidden).toBe(true);
 
-  it("can sync controlled value without emitting value-change events", () => {
-    const root = renderAccordion();
-    const listener = vi.fn();
-    root.addEventListener("starwind:value-change", listener);
-
-    const accordion = createAccordion(root);
     accordion.setValue("billing", { emit: false });
 
     expect(getContent("shipping").hidden).toBe(true);
     expect(getContent("billing").hidden).toBe(false);
+  });
+
+  it("keeps controlled interactions proposal-only even when canceled", () => {
+    const root = renderAccordion();
+    const onValueChange = vi.fn((details) => details.cancel());
+    const accordion = createAccordion(root, {
+      value: "shipping",
+      onValueChange,
+    });
+
+    getTrigger("billing").click();
+
+    expect(onValueChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isCanceled: true,
+        previousValue: "shipping",
+        value: "billing",
+      }),
+    );
+    expect(accordion.getValue()).toBe("shipping");
+    expect(getContent("shipping").hidden).toBe(false);
+    expect(getContent("billing").hidden).toBe(true);
+  });
+
+  it("treats emitting imperative methods as cancelable proposals", () => {
+    const root = renderAccordion({ defaultValue: "shipping" });
+    const onValueChange = vi.fn((details) => details.cancel());
+    const accordion = createAccordion(root, { onValueChange });
+
+    accordion.openItem("billing");
+    accordion.closeItem("shipping");
+    accordion.toggleItem("shipping");
+    accordion.setValue("billing");
+
+    expect(onValueChange).toHaveBeenCalledTimes(4);
+    expect(onValueChange.mock.calls.map(([details]) => details.reason)).toEqual([
+      "programmatic",
+      "programmatic",
+      "programmatic",
+      "programmatic",
+    ]);
+    expect(accordion.getValue()).toBe("shipping");
+    expect(getContent("shipping").hidden).toBe(false);
+    expect(getContent("billing").hidden).toBe(true);
+  });
+
+  it("keeps non-emitting setValue authoritative, unconditional, and silent", () => {
+    const root = renderAccordion({ defaultValue: "billing" });
+    const listener = vi.fn();
+    root.addEventListener("starwind:value-change", (event) => {
+      listener(event);
+      event.preventDefault();
+    });
+
+    const accordion = createAccordion(root);
+    const billingItem = getTrigger("billing").closest<HTMLElement>("[data-sw-accordion-item]")!;
+    getTrigger("billing").setAttribute("aria-expanded", "false");
+    getTrigger("billing").setAttribute("data-state", "closed");
+    billingItem.setAttribute("data-state", "closed");
+    getContent("billing").setAttribute("data-state", "closed");
+    getContent("billing").hidden = true;
+
+    accordion.setValue("billing", { emit: false });
+
+    expect(getContent("shipping").hidden).toBe(true);
+    expect(getContent("billing").hidden).toBe(false);
+    expect(getContent("billing").getAttribute("data-state")).toBe("open");
+    expect(getTrigger("billing").getAttribute("aria-expanded")).toBe("true");
+    expect(getTrigger("billing").getAttribute("data-state")).toBe("open");
+    expect(billingItem.getAttribute("data-state")).toBe("open");
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("does not emit no-op setValue proposals", () => {
+    const root = renderAccordion({ defaultValue: "shipping" });
+    const listener = vi.fn();
+    root.addEventListener("starwind:value-change", listener);
+    const accordion = createAccordion(root);
+
+    accordion.setValue("shipping");
+
+    expect(accordion.getValue()).toBe("shipping");
     expect(listener).not.toHaveBeenCalled();
   });
 

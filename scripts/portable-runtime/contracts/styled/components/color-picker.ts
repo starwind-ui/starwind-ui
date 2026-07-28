@@ -278,7 +278,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       defaultVariants: { size: "md" },
     },
     colorPickerArea: {
-      base: "group/color-picker-area border-outline relative min-h-32 w-full shrink-0 touch-none rounded-md border [&>[data-slot=color-picker-area-background]]:inset-0 [&>[data-slot=color-picker-area-background]]:size-full [&>[data-slot=color-picker-area-background]]:rounded-[7px]",
+      base: "group/color-picker-area border-outline relative min-h-32 w-full shrink-0 cursor-crosshair touch-none rounded-md border [&>[data-slot=color-picker-area-background]]:inset-0 [&>[data-slot=color-picker-area-background]]:size-full [&>[data-slot=color-picker-area-background]]:rounded-[7px]",
       variants: { size: { sm: "h-[150px]", md: "h-[175px]", lg: "h-[200px]" } },
       defaultVariants: { size: "md" },
     },
@@ -1052,7 +1052,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
               "AreaInput",
               [
                 { name: "axis", value: literal("x") },
-                className("absolute inset-0 size-full cursor-crosshair opacity-0"),
+                className("pointer-events-none absolute inset-0 size-full opacity-0"),
                 dataSlot("color-picker-area-input-x"),
               ],
               [],
@@ -1061,7 +1061,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
               "AreaInput",
               [
                 { name: "axis", value: literal("y") },
-                className("absolute inset-0 size-full cursor-crosshair opacity-0"),
+                className("pointer-events-none absolute inset-0 size-full opacity-0"),
                 dataSlot("color-picker-area-input-y"),
               ],
               [],

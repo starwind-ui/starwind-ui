@@ -907,12 +907,32 @@ describe("Framework Adapter seam", () => {
       primitive: {
         support: {
           components: [
+            "accordion",
+            "alert-dialog",
             "avatar",
             "button",
             "checkbox",
+            "checkbox-group",
+            "collapsible",
+            "dialog",
+            "drawer",
+            "dropzone",
+            "field",
+            "fieldset",
+            "form",
+            "input",
+            "input-otp",
+            "popover",
             "progress",
+            "radio",
+            "radio-group",
             "scroll-area",
             "select",
+            "slider",
+            "switch",
+            "tabs",
+            "toggle",
+            "toggle-group",
             "theme",
           ],
           kind: "subset",
@@ -968,7 +988,7 @@ describe("Framework Adapter seam", () => {
         registration.primitive.outputModel.capabilities?.groupedValueControlContextHelper,
     );
 
-    expect(capabilityTargets.map((registration) => registration.target)).toEqual(["react"]);
+    expect(capabilityTargets.map((registration) => registration.target)).toEqual(["react", "vue"]);
 
     for (const registration of capabilityTargets) {
       const extension =
@@ -985,7 +1005,9 @@ describe("Framework Adapter seam", () => {
       const index = printedFiles.find((file) => file.path === "checkbox-group/index.ts");
 
       expect(contextHelper?.contents).toContain(
-        "React.createContext<CheckboxGroupContextValue | undefined>",
+        registration.target === "react"
+          ? "React.createContext<CheckboxGroupContextValue | undefined>"
+          : "InjectionKey<CheckboxGroupContextValue>",
       );
       expect(contextHelper?.contents).toContain("useCheckboxGroupContext");
       expect(index?.contents).toContain("CheckboxGroupContext");
@@ -1597,7 +1619,6 @@ describe("Framework Adapter seam", () => {
     expect(rootPackage.dependencies).not.toHaveProperty("vue-tsc");
     expect(fixtureFiles.map((file) => file.path)).toEqual(VUE_CONTRACT_FIXTURE_PATHS);
     expect([...new Set(fixtureFiles.map((file) => file.path.split("/")[2]))].sort()).toEqual([
-      "collapsible",
       "combobox",
       "conformance",
       "menu",

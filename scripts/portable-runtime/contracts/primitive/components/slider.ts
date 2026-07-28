@@ -136,6 +136,8 @@ export const sliderRuntimeAdapterContract = {
     {
       name: "valueChange",
       callbackProp: "onValueChange",
+      callbackTiming: "before-state-commit",
+      cancelable: true,
       detailsType: "SliderValueChangeDetails",
       domEvent: "starwind:value-change",
       emitsFrom: "root",

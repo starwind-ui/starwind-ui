@@ -37,6 +37,7 @@ export type VueComputedProjection = {
 
 export type VuePropsProjection = {
   declared: {
+    extendsPublic: boolean;
     fields: Array<{ name: string; optional: boolean; type: string }>;
     name: string;
   };
@@ -75,6 +76,17 @@ export type VueRootBinding = {
 
 export type VueStyledSpecialization =
   | { kind: "generic" }
+  | {
+      kind: "alert-dialog-as-child";
+      part: "Action" | "Cancel" | "Trigger";
+      slots: Array<{ name: string; signature: string }>;
+    }
+  | {
+      kind: "dialog-as-child";
+      family: "Dialog" | "Sheet";
+      part: "Close" | "Trigger";
+      slots: Array<{ name: string; signature: string }>;
+    }
   | {
       contextName: string;
       kind: "select-trigger";

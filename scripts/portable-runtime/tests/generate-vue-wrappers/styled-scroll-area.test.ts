@@ -5,8 +5,8 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { scrollAreaStyledContract } from "../../contracts/styled/components/scroll-area.js";
-import { generateStarwindVueWrappers } from "../../generate-vue-wrappers.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
+import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const COMPONENT_FILES = [
   "ScrollArea.vue",
@@ -26,7 +26,11 @@ describe("generated Vue Styled Scroll Area", () => {
 
   it("projects all six wrappers, anatomy, props, variants, CSS, and public refs through Primitive", async () => {
     const root = await createRoot("starwind-vue-styled-scroll-area-");
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    await generateSelectedVueStyledGroups({
+      groups: ["scroll-area"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
     const directory = path.join(root, "styled/scroll-area");
     const sources = Object.fromEntries(
       await Promise.all(
@@ -103,8 +107,16 @@ describe("generated Vue Styled Scroll Area", () => {
   it("is byte-deterministic across fresh output roots", async () => {
     const firstRoot = await createRoot("starwind-vue-scroll-area-first-");
     const secondRoot = await createRoot("starwind-vue-scroll-area-second-");
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: firstRoot });
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: secondRoot });
+    await generateSelectedVueStyledGroups({
+      groups: ["scroll-area"],
+      outputDir: "styled",
+      repoRoot: firstRoot,
+    });
+    await generateSelectedVueStyledGroups({
+      groups: ["scroll-area"],
+      outputDir: "styled",
+      repoRoot: secondRoot,
+    });
 
     for (const file of [...COMPONENT_FILES, "index.ts", "styles.css", "variants.ts"]) {
       await expect(

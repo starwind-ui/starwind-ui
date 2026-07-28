@@ -7,32 +7,34 @@ import { RadioGroup, RadioGroupItem } from "@/components/starwind-runtime/radio-
     Radio Group
   </h2>
   <div class="grid gap-6 sm:grid-cols-2">
-    <RadioGroup
-      data-runtime-radio-group-default
-      defaultValue="standard"
-      name="runtime-delivery"
-      aria-labelledby="runtime-radio-group-heading"
-      class="runtime-radio-group-custom"
-    >
-      <div class="flex items-center gap-2 text-sm font-medium">
-        <RadioGroupItem
-          id="runtime-radio-group-standard"
-          value="standard"
-          variant="primary"
-          aria-label="Standard delivery"
-        />
-        Standard delivery
-      </div>
-      <div class="flex items-center gap-2 text-sm font-medium">
-        <RadioGroupItem
-          id="runtime-radio-group-express"
-          value="express"
-          variant="secondary"
-          aria-label="Express delivery"
-        />
-        Express delivery
-      </div>
-    </RadioGroup>
+    <form data-runtime-radio-group-form>
+      <RadioGroup
+        data-runtime-radio-group-default
+        defaultValue="standard"
+        name="runtime-delivery"
+        aria-labelledby="runtime-radio-group-heading"
+        class="runtime-radio-group-custom"
+      >
+        <div class="flex items-center gap-2 text-sm font-medium">
+          <RadioGroupItem
+            id="runtime-radio-group-standard"
+            value="standard"
+            variant="primary"
+            aria-label="Standard delivery"
+          />
+          Standard delivery
+        </div>
+        <div class="flex items-center gap-2 text-sm font-medium">
+          <RadioGroupItem
+            id="runtime-radio-group-express"
+            value="express"
+            variant="secondary"
+            aria-label="Express delivery"
+          />
+          Express delivery
+        </div>
+      </RadioGroup>
+    </form>
 
     <RadioGroup
       data-runtime-radio-group-disabled

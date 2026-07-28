@@ -122,14 +122,21 @@ const RadioGroupRoot = React.forwardRef<HTMLDivElement, RadioGroupRootProps>(
       });
       instanceRef.current = instance;
       const unsubscribe = instance.subscribe("valueChange", (details) => {
-        if (valueRef.current === undefined) {
-          setUncontrolledValue(details.value);
-        }
-
         onValueChangeRef.current?.(details.value, details);
+        details.onAccepted(() => {
+          if (valueRef.current === undefined) {
+            setUncontrolledValue(details.value);
+          }
+        });
+      });
+      const unsubscribeStateSync = instance.subscribe("stateSync", () => {
+        if (valueRef.current === undefined) {
+          setUncontrolledValue(instance.getValue());
+        }
       });
 
       return () => {
+        unsubscribeStateSync();
         unsubscribe();
         instance.destroy();
         if (instanceRef.current === instance) {

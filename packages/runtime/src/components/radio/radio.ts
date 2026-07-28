@@ -12,11 +12,14 @@ import { registerFieldControlBridge } from "../field/field-control-bridge";
 export type RadioCheckedChangeReason = "root-press" | "input-change" | "imperative-action";
 
 export type RadioCheckedChangeDetails = {
-  checked: boolean;
-  event?: Event;
-  previousChecked: boolean;
-  reason: RadioCheckedChangeReason;
-  trigger?: Element;
+  readonly checked: boolean;
+  readonly event?: Event;
+  readonly isCanceled: boolean;
+  readonly previousChecked: boolean;
+  readonly reason: RadioCheckedChangeReason;
+  readonly trigger?: Element;
+  cancel(): void;
+  onAccepted(callback: () => void): void;
 };
 
 export type RadioOptions = {
@@ -36,6 +39,17 @@ export type RadioSetCheckedOptions = {
   emit?: boolean;
 };
 
+export type RadioSelectionOwnerCompletion = {
+  /**
+   * Whether the owner accepted the transition before external value reconciliation.
+   * Legacy owners may omit this, in which case `committed` also represents acceptance.
+   */
+  readonly accepted?: boolean;
+  readonly committed: boolean;
+  readonly current: boolean;
+  readonly errors: readonly unknown[];
+};
+
 export type RadioInstance = {
   readonly root: HTMLElement;
   destroy(): void;
@@ -46,6 +60,11 @@ export type RadioInstance = {
   setFormOptions(options: Pick<RadioOptions, "form" | "name" | "required" | "value">): void;
   setReadOnly(readOnly: boolean): void;
   setRequired(required: boolean): void;
+  setSelectionOwner(owner?: (details: RadioCheckedChangeDetails) => void): void;
+  setSelectionOwnerWithCompletion(
+    owner?: (details: RadioCheckedChangeDetails) => RadioSelectionOwnerCompletion,
+  ): void;
+  subscribe(event: "stateSync", callback: () => void): () => void;
   subscribe(
     event: "checkedChange",
     callback: (details: RadioCheckedChangeDetails) => void,
@@ -118,13 +137,19 @@ class RadioController implements RadioInstance {
   private readonly elements: RadioElements;
   private form?: string;
   private id?: string;
+  private readonly initialChecked: boolean;
+  private inputAssociationObserver?: MutationObserver;
   private indicatorRendered = false;
   private readonly managesTabIndex: boolean;
   private name?: string;
   private readonly onCheckedChange?: (checked: boolean, details: RadioCheckedChangeDetails) => void;
   private readOnly: boolean;
   private required: boolean;
+  private resetForm: HTMLFormElement | null = null;
+  private resetTimer: number | undefined;
+  private selectionOwner?: (details: RadioCheckedChangeDetails) => RadioSelectionOwnerCompletion;
   private readonly subscribers = new Set<(details: RadioCheckedChangeDetails) => void>();
+  private readonly syncSubscribers = new Set<() => void>();
   private readonly nativeButton: boolean;
   private value?: string;
 
@@ -159,20 +184,28 @@ class RadioController implements RadioInstance {
       options.checked ??
       options.defaultChecked ??
       (this.elements.input.checked || readBooleanAttribute(root, RADIO_DEFAULT_CHECKED_ATTRIBUTE));
+    this.initialChecked = this.checkedState;
 
     this.setupFormInput();
     this.bindEvents();
     this.render();
+    this.bindFormReset();
+    this.observeInputAssociation();
   }
 
   destroy(): void {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.unbindFormReset();
+    this.clearResetTimer();
+    this.inputAssociationObserver?.disconnect();
     if (this.nativeButton && this.elements.inputRuntimeOwned) {
       this.elements.input.remove();
     }
+    this.selectionOwner = undefined;
     this.subscribers.clear();
+    this.syncSubscribers.clear();
     instances.delete(this.root);
     this.destroyed = true;
   }
@@ -188,17 +221,59 @@ class RadioController implements RadioInstance {
   }
 
   setChecked(checked: boolean, options: RadioSetCheckedOptions = {}): void {
+    if (checked === this.checkedState) return;
+
     const previousChecked = this.checkedState;
+    if (options.emit === false) {
+      this.checkedState = checked;
+      this.render();
+      return;
+    }
+
+    const details = new RadioCheckedChangeDetailsImpl({
+      checked,
+      previousChecked,
+      reason: "imperative-action",
+    });
+    this.notify(details);
+    if (details.isCanceled) {
+      this.render();
+      return;
+    }
+
+    if (this.selectionOwner) {
+      let completion: RadioSelectionOwnerCompletion;
+      try {
+        completion = this.selectionOwner(details);
+      } catch (error) {
+        details.cancel();
+        this.elements.input.checked = this.checkedState;
+        throw error;
+      }
+      this.completeOwnedSelection(details, completion);
+      return;
+    }
+
     this.checkedState = checked;
     this.render();
+    this.completeAcceptance(details);
+  }
 
-    if (options.emit !== false) {
-      this.notify({
-        checked,
-        previousChecked,
-        reason: "imperative-action",
-      });
-    }
+  setSelectionOwner(owner?: (details: RadioCheckedChangeDetails) => void): void {
+    if (owner) this.clearResetTimer();
+    this.selectionOwner = owner
+      ? (details) => {
+          owner(details);
+          return { committed: true, current: true, errors: [] };
+        }
+      : undefined;
+  }
+
+  setSelectionOwnerWithCompletion(
+    owner?: (details: RadioCheckedChangeDetails) => RadioSelectionOwnerCompletion,
+  ): void {
+    if (owner) this.clearResetTimer();
+    this.selectionOwner = owner;
   }
 
   setDisabled(disabled: boolean): void {
@@ -214,6 +289,7 @@ class RadioController implements RadioInstance {
     this.required = options.required ?? this.required;
     this.value = options.value;
     this.render();
+    this.bindFormReset();
   }
 
   setReadOnly(readOnly: boolean): void {
@@ -231,16 +307,24 @@ class RadioController implements RadioInstance {
   }
 
   subscribe(
-    event: "checkedChange",
-    callback: (details: RadioCheckedChangeDetails) => void,
+    event: "checkedChange" | "stateSync",
+    callback: ((details: RadioCheckedChangeDetails) => void) | (() => void),
   ): () => void {
+    if (event === "stateSync") {
+      const syncCallback = callback as () => void;
+      this.syncSubscribers.add(syncCallback);
+      return () => {
+        this.syncSubscribers.delete(syncCallback);
+      };
+    }
     if (event !== "checkedChange") {
       throw new Error(`Unsupported Radio event: ${event}`);
     }
 
-    this.subscribers.add(callback);
+    const checkedCallback = callback as (details: RadioCheckedChangeDetails) => void;
+    this.subscribers.add(checkedCallback);
     return () => {
-      this.subscribers.delete(callback);
+      this.subscribers.delete(checkedCallback);
     };
   }
 
@@ -260,6 +344,7 @@ class RadioController implements RadioInstance {
 
     input.type = "radio";
     input.checked = this.checkedState;
+    input.defaultChecked = this.initialChecked;
     input.disabled = this.disabled;
     input.required = this.required;
     input.tabIndex = -1;
@@ -381,24 +466,52 @@ class RadioController implements RadioInstance {
     if (checked === this.checkedState) return;
 
     const previousChecked = this.checkedState;
-    const details: RadioCheckedChangeDetails = {
+    const details = new RadioCheckedChangeDetailsImpl({
       checked,
       event: request.event,
       previousChecked,
       reason: request.reason,
       trigger: request.trigger,
-    };
-
-    if (!this.controlled) {
-      this.checkedState = checked;
-      this.render();
-    }
+    });
 
     this.notify(details);
+    if (details.isCanceled) {
+      this.render();
+      return;
+    }
+
+    if (this.selectionOwner) {
+      let completion: RadioSelectionOwnerCompletion;
+      try {
+        completion = this.selectionOwner(details);
+      } catch (error) {
+        details.cancel();
+        this.elements.input.checked = this.checkedState;
+        throw error;
+      }
+      this.completeOwnedSelection(details, completion);
+      return;
+    }
+
+    if (this.controlled) {
+      this.render();
+      this.completeAcceptance(details);
+      return;
+    }
+
+    this.checkedState = checked;
+    this.render();
+    this.completeAcceptance(details);
   }
 
   private readonly handleRootClick = (event: MouseEvent): void => {
     if (event.target === this.elements.input) return;
+    if (
+      event.target instanceof Element &&
+      event.target.closest(`[${RADIO_ROOT_ATTRIBUTE}]`) !== this.root
+    ) {
+      return;
+    }
 
     if (this.disabled || this.readOnly) {
       event.preventDefault();
@@ -461,9 +574,152 @@ class RadioController implements RadioInstance {
 
   private notify(details: RadioCheckedChangeDetails): void {
     attachFormValueRevision(details, details.event);
-    dispatchCustomEvent(this.root, "starwind:checked-change", details);
+    const event = dispatchCustomEvent(this.root, "starwind:checked-change", details, {
+      cancelable: true,
+    });
+    if (event.defaultPrevented) details.cancel();
     this.onCheckedChange?.(details.checked, details);
     this.subscribers.forEach((subscriber) => subscriber(details));
+  }
+
+  private completeAcceptance(
+    details: RadioCheckedChangeDetailsImpl,
+    precedingErrors: unknown[] = [],
+  ): void {
+    const errors: unknown[] = [...precedingErrors];
+    errors.push(...details.accept());
+    for (const subscriber of [...this.syncSubscribers]) {
+      try {
+        subscriber();
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    if (errors.length > 0) throw errors[0];
+  }
+
+  private completeOwnedSelection(
+    details: RadioCheckedChangeDetailsImpl,
+    completion: RadioSelectionOwnerCompletion,
+  ): void {
+    const accepted = completion.accepted ?? completion.committed;
+    if (!details.isCanceled && accepted && completion.current) {
+      this.completeAcceptance(details, [...completion.errors]);
+      return;
+    }
+
+    details.cancel();
+    if (completion.errors.length > 0) throw completion.errors[0];
+  }
+
+  private bindFormReset(): void {
+    const nextForm = this.elements.input.form;
+    if (this.resetForm === nextForm) return;
+
+    this.unbindFormReset();
+    this.resetForm = nextForm;
+    this.resetForm?.addEventListener("reset", this.handleFormReset);
+  }
+
+  private unbindFormReset(): void {
+    this.resetForm?.removeEventListener("reset", this.handleFormReset);
+    this.resetForm = null;
+  }
+
+  private clearResetTimer(): void {
+    if (this.resetTimer === undefined) return;
+    window.clearTimeout(this.resetTimer);
+    this.resetTimer = undefined;
+  }
+
+  private readonly handleFormReset = (): void => {
+    if (this.selectionOwner) return;
+    this.clearResetTimer();
+    this.resetTimer = window.setTimeout(() => {
+      if (!this.controlled) {
+        this.checkedState = this.initialChecked;
+      }
+      this.render();
+      for (const subscriber of [...this.syncSubscribers]) subscriber();
+      this.resetTimer = undefined;
+    }, 0);
+  };
+
+  private observeInputAssociation(): void {
+    if (typeof MutationObserver === "undefined") return;
+
+    this.inputAssociationObserver = new MutationObserver(() => this.bindFormReset());
+    this.inputAssociationObserver.observe(this.elements.input, {
+      attributeFilter: ["form"],
+      attributes: true,
+    });
+  }
+}
+
+class RadioCheckedChangeDetailsImpl implements RadioCheckedChangeDetails {
+  readonly checked: boolean;
+  readonly event?: Event;
+  readonly previousChecked: boolean;
+  readonly reason: RadioCheckedChangeReason;
+  readonly trigger?: Element;
+
+  private canceled = false;
+  private accepted = false;
+  private readonly acceptedCallbacks = new Set<() => void>();
+
+  constructor({
+    checked,
+    event,
+    previousChecked,
+    reason,
+    trigger,
+  }: {
+    checked: boolean;
+    event?: Event;
+    previousChecked: boolean;
+    reason: RadioCheckedChangeReason;
+    trigger?: Element;
+  }) {
+    this.checked = checked;
+    this.event = event;
+    this.previousChecked = previousChecked;
+    this.reason = reason;
+    this.trigger = trigger;
+  }
+
+  get isCanceled(): boolean {
+    return this.canceled;
+  }
+
+  cancel(): void {
+    if (this.accepted) return;
+    this.canceled = true;
+    this.acceptedCallbacks.clear();
+  }
+
+  onAccepted(callback: () => void): void {
+    if (this.canceled) return;
+    if (this.accepted) {
+      callback();
+      return;
+    }
+    this.acceptedCallbacks.add(callback);
+  }
+
+  accept(): unknown[] {
+    if (this.canceled || this.accepted) return [];
+    this.accepted = true;
+    const callbacks = [...this.acceptedCallbacks];
+    this.acceptedCallbacks.clear();
+    const errors: unknown[] = [];
+    callbacks.forEach((callback) => {
+      try {
+        callback();
+      } catch (error) {
+        errors.push(error);
+      }
+    });
+    return errors;
   }
 }
 
@@ -499,8 +755,10 @@ function getOrCreateInput(root: HTMLElement): {
 }
 
 function getExistingInput(root: HTMLElement): HTMLInputElement | null {
-  const existingInput = root.querySelector<HTMLInputElement>(RADIO_INPUT_SELECTOR);
-  if (existingInput && isOwnedByRoot(existingInput, root)) return existingInput;
+  const existingInput = Array.from(
+    root.querySelectorAll<HTMLInputElement>(RADIO_INPUT_SELECTOR),
+  ).find((input) => isOwnedByRoot(input, root));
+  if (existingInput) return existingInput;
 
   const sibling = root.nextElementSibling;
   if (sibling instanceof HTMLInputElement && sibling.matches(RADIO_INPUT_SELECTOR)) return sibling;

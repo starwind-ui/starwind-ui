@@ -47,6 +47,33 @@ export function validateGenericAdapterPlan(plan: GenericAdapterPlan): GenericAda
     requirePart(component, parts, ref.part, `refs.${ref.part}.part`, issues);
   }
 
+  for (const context of plan.context ?? []) {
+    if (context.direction === "provides" && "requirement" in context) {
+      issues.push(
+        issue(
+          component,
+          `context.${context.name}.requirement`,
+          `Provided context "${context.name}" cannot declare a consumption requirement.`,
+        ),
+      );
+    }
+
+    if (
+      context.direction === "consumes" &&
+      context.requirement !== undefined &&
+      context.requirement !== "optional" &&
+      context.requirement !== "required"
+    ) {
+      issues.push(
+        issue(
+          component,
+          `context.${context.name}.requirement`,
+          `Consumed context "${context.name}" requirement must be "required" or "optional".`,
+        ),
+      );
+    }
+  }
+
   if (!plan.exports.namespace) {
     issues.push(issue(component, "exports.namespace", "Missing export namespace."));
   }

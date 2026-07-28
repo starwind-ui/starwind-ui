@@ -58,6 +58,7 @@ export type CheckboxGroupInstance = {
 
 type CheckboxGroupItem = {
   checkbox: CheckboxInstance;
+  input: HTMLInputElement;
   ownName?: string;
   ownDisabled: boolean;
   root: HTMLElement;
@@ -72,6 +73,7 @@ const CHECKBOX_GROUP_DISABLED_ATTRIBUTE = "data-disabled";
 const CHECKBOX_GROUP_VALUE_ATTRIBUTE = "data-value";
 const CHECKBOX_ROOT_ATTRIBUTE = "data-sw-checkbox";
 const CHECKBOX_DISABLED_ATTRIBUTE = "data-disabled";
+const CHECKBOX_INPUT_ATTRIBUTE = "data-sw-checkbox-input";
 const CHECKBOX_NAME_ATTRIBUTE = "data-name";
 const CHECKBOX_VALUE_ATTRIBUTE = "data-value";
 
@@ -109,12 +111,17 @@ class CheckboxGroupController implements CheckboxGroupInstance {
   private readonly controlled: boolean;
   private readonly collectionObserver: DynamicCollectionObserver;
   private readonly itemOwnStates = new WeakMap<HTMLElement, CheckboxGroupItemOwnState>();
+  private readonly inputAssociationObservers = new Map<HTMLInputElement, MutationObserver>();
   private readonly onValueChange?: (details: CheckboxGroupValueChangeDetails) => void;
   private readonly subscribers = new Set<(details: CheckboxGroupValueChangeDetails) => void>();
   private destroyed = false;
   private disabled: boolean;
+  private readonly initialValue: CheckboxGroupValue;
   private items: CheckboxGroupItem[] = [];
   private name?: string;
+  private resetForms = new Set<HTMLFormElement>();
+  private readonly pendingResetForms = new Set<HTMLFormElement>();
+  private resetTimer: number | undefined;
   private value: CheckboxGroupValue;
 
   constructor(root: HTMLElement, options: CheckboxGroupOptions) {
@@ -130,6 +137,7 @@ class CheckboxGroupController implements CheckboxGroupInstance {
         : (options.defaultValue ??
             readStringOrStringArrayAttribute(root, CHECKBOX_GROUP_DEFAULT_VALUE_ATTRIBUTE)),
     );
+    this.initialValue = [...this.value];
 
     this.bindEvents();
     this.collectionObserver = observeDynamicCollection({
@@ -154,6 +162,8 @@ class CheckboxGroupController implements CheckboxGroupInstance {
 
     this.abortController.abort();
     this.collectionObserver.disconnect();
+    this.unbindFormReset();
+    this.disconnectInputAssociationObservers();
     this.subscribers.clear();
     instances.delete(this.root);
     this.destroyed = true;
@@ -167,6 +177,7 @@ class CheckboxGroupController implements CheckboxGroupInstance {
     if (this.destroyed) return;
 
     this.refreshItems();
+    this.bindFormReset();
     this.reconcileValue();
     this.render();
   }
@@ -236,6 +247,75 @@ class CheckboxGroupController implements CheckboxGroupInstance {
     });
   }
 
+  private bindFormReset(): void {
+    this.syncInputAssociationObservers();
+    const nextForms = new Set(this.items.flatMap(({ input }) => (input.form ? [input.form] : [])));
+    for (const form of this.resetForms) {
+      if (!nextForms.has(form)) form.removeEventListener("reset", this.handleFormReset);
+    }
+    for (const form of nextForms) {
+      if (!this.resetForms.has(form)) form.addEventListener("reset", this.handleFormReset);
+    }
+    this.resetForms = nextForms;
+  }
+
+  private unbindFormReset(): void {
+    if (this.resetTimer !== undefined) {
+      window.clearTimeout(this.resetTimer);
+      this.resetTimer = undefined;
+    }
+    this.pendingResetForms.clear();
+    for (const form of this.resetForms) {
+      form.removeEventListener("reset", this.handleFormReset);
+    }
+    this.resetForms.clear();
+  }
+
+  private readonly handleFormReset = (event: Event): void => {
+    if (!(event.currentTarget instanceof HTMLFormElement)) return;
+    this.pendingResetForms.add(event.currentTarget);
+    if (this.resetTimer !== undefined) window.clearTimeout(this.resetTimer);
+    this.resetTimer = window.setTimeout(() => {
+      const resetForms = new Set(this.pendingResetForms);
+      this.pendingResetForms.clear();
+      if (!this.controlled) {
+        const resetValues = new Set(
+          this.items
+            .filter(({ input }) => input.form && resetForms.has(input.form))
+            .map(({ value }) => value),
+        );
+        this.value = [
+          ...this.value.filter((value) => !resetValues.has(value)),
+          ...this.initialValue.filter((value) => resetValues.has(value)),
+        ];
+        this.reconcileValue();
+      }
+      this.render();
+      this.resetTimer = undefined;
+    }, 0);
+  };
+
+  private syncInputAssociationObservers(): void {
+    if (typeof MutationObserver === "undefined") return;
+    const currentInputs = new Set(this.items.map(({ input }) => input));
+    for (const [input, observer] of this.inputAssociationObservers) {
+      if (currentInputs.has(input)) continue;
+      observer.disconnect();
+      this.inputAssociationObservers.delete(input);
+    }
+    for (const input of currentInputs) {
+      if (this.inputAssociationObservers.has(input)) continue;
+      const observer = new MutationObserver(() => this.bindFormReset());
+      observer.observe(input, { attributeFilter: ["form"], attributes: true });
+      this.inputAssociationObservers.set(input, observer);
+    }
+  }
+
+  private disconnectInputAssociationObservers(): void {
+    for (const observer of this.inputAssociationObservers.values()) observer.disconnect();
+    this.inputAssociationObservers.clear();
+  }
+
   private refreshItems(): void {
     this.items = Array.from(this.root.querySelectorAll<HTMLElement>(`[${CHECKBOX_ROOT_ATTRIBUTE}]`))
       .filter(
@@ -251,9 +331,11 @@ class CheckboxGroupController implements CheckboxGroupInstance {
           name,
           value,
         });
+        const input = getCheckboxInput(checkboxRoot);
 
         return {
           checkbox,
+          input,
           ...ownState,
           root: checkboxRoot,
           value,
@@ -452,6 +534,18 @@ function readCheckboxOwnState(root: HTMLElement): CheckboxGroupItemOwnState {
     ownDisabled: readBooleanAttribute(root, CHECKBOX_DISABLED_ATTRIBUTE),
     ownName: readCheckboxName(root),
   };
+}
+
+function getCheckboxInput(root: HTMLElement): HTMLInputElement {
+  const nested = root.querySelector<HTMLInputElement>(`[${CHECKBOX_INPUT_ATTRIBUTE}]`);
+  if (nested?.closest(`[${CHECKBOX_ROOT_ATTRIBUTE}]`) === root) return nested;
+
+  const sibling = root.nextElementSibling;
+  if (sibling instanceof HTMLInputElement && sibling.hasAttribute(CHECKBOX_INPUT_ATTRIBUTE)) {
+    return sibling;
+  }
+
+  throw new Error("Checkbox Group item is missing its owned form input.");
 }
 
 function addValue(value: CheckboxGroupValue, itemValue: string): CheckboxGroupValue {

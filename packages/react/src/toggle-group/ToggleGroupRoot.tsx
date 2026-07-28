@@ -12,6 +12,8 @@ import * as React from "react";
 import { setRef } from "../internal/compose-refs";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
+import { ToggleGroupContext } from "./ToggleGroupContext";
+
 export type ToggleGroupRootProps = Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "defaultValue" | "onChange"
@@ -155,25 +157,34 @@ const ToggleGroupRoot = React.forwardRef<HTMLDivElement, ToggleGroupRootProps>(
       instance.setValue(value, { emit: false });
     }, [multiple, value]);
 
-    const renderedValue = normalizeRenderedValue(value ?? uncontrolledValue, multiple);
+    const renderedValue = React.useMemo(
+      () => normalizeRenderedValue(value ?? uncontrolledValue, multiple),
+      [multiple, uncontrolledValue, value],
+    );
+    const contextValue = React.useMemo(
+      () => ({ disabled, loopFocus, multiple, orientation, value: renderedValue }),
+      [disabled, loopFocus, multiple, orientation, renderedValue],
+    );
 
     return (
-      <div
-        data-sw-toggle-group
-        data-default-value={
-          defaultValueRef.current
-            ? JSON.stringify(normalizeRenderedValue(defaultValueRef.current, multipleRef.current))
-            : undefined
-        }
-        data-disabled={disabled ? "" : undefined}
-        data-loop-focus={!loopFocus ? "false" : undefined}
-        data-multiple={multiple ? "" : undefined}
-        data-orientation={orientation}
-        data-value={JSON.stringify(renderedValue)}
-        ref={composedRef}
-        role="group"
-        {...props}
-      />
+      <ToggleGroupContext.Provider value={contextValue}>
+        <div
+          data-sw-toggle-group
+          data-default-value={
+            defaultValueRef.current
+              ? JSON.stringify(normalizeRenderedValue(defaultValueRef.current, multipleRef.current))
+              : undefined
+          }
+          data-disabled={disabled ? "" : undefined}
+          data-loop-focus={!loopFocus ? "false" : undefined}
+          data-multiple={multiple ? "" : undefined}
+          data-orientation={orientation}
+          data-value={JSON.stringify(renderedValue)}
+          ref={composedRef}
+          role="group"
+          {...props}
+        />
+      </ToggleGroupContext.Provider>
     );
   },
 );

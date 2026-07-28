@@ -1648,6 +1648,7 @@ export type AdapterBooleanFormControlFacts = {
     value?: string;
   };
   behavior: {
+    acceptedChangeNotification?: "detail-on-accepted";
     canCancelChange: boolean;
     formResetSync: boolean;
     groupStrategy?: "array-includes" | "value-equals";
@@ -1672,6 +1673,7 @@ export type AdapterBooleanFormControlFacts = {
   group?: {
     hookName: string;
     importPath: string;
+    requirement: "optional" | "required";
     valueFields: string[];
     variableName: string;
   };
@@ -1718,6 +1720,7 @@ export type AdapterBooleanFormControlFacts = {
     getter: string;
     name: string;
     pascalName: string;
+    syncEvent?: string;
   };
   setters: {
     disabled: {
@@ -2116,6 +2119,8 @@ export type AdapterRangeControlFacts = {
   events: {
     valueChange: {
       callbackProp: string;
+      callbackTiming: "before-state-commit";
+      cancelable: true;
       detailsType: string;
       name: string;
       valueProperty: string;
@@ -2246,7 +2251,9 @@ export type AdapterHiddenInputVisualSlotFacts = {
   };
   displayName: string;
   event: {
+    callbackTiming: "before-state-commit";
     callbackProp: string;
+    cancelable: true;
     detailsType: string;
     name: string;
     valueProperty: string;
@@ -3316,6 +3323,8 @@ export type AdapterGroupedValueControlFacts = {
     value: string;
   };
   behavior: {
+    acceptedChangeNotification?: "detail-on-accepted";
+    canCancelChange: boolean;
     contextProvider: boolean;
     multipleValueNormalization: boolean;
     parseValueAttributeFunction?: string;
@@ -3363,6 +3372,7 @@ export type AdapterGroupedValueControlFacts = {
   state: {
     getter: string;
     name: string;
+    syncEvent?: string;
     type: string;
   };
   setters: {
@@ -3421,6 +3431,13 @@ export type AdapterSingleBooleanControlFacts = {
   exports: {
     namespace: string;
     root: string;
+  };
+  group?: {
+    hookName: string;
+    importPath: string;
+    requirement: "optional" | "required";
+    valueFields: string[];
+    variableName: string;
   };
   initExclusionAttributes: string[];
   part: AdapterFamilyPart;

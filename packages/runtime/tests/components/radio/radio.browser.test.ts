@@ -77,6 +77,43 @@ describe("createRadio", () => {
     );
   });
 
+  it("lets checked change handlers cancel before state commits", () => {
+    const root = renderRadio({ name: "storage", value: "ssd" });
+    const observations: Array<{ checked: boolean; inputChecked: boolean }> = [];
+    const radio = createRadio(root, {
+      onCheckedChange: (_checked, details) => {
+        observations.push({
+          checked: radio.getChecked(),
+          inputChecked: getInput(root).checked,
+        });
+        details.cancel();
+      },
+    });
+
+    root.click();
+
+    expect(observations).toEqual([{ checked: false, inputChecked: false }]);
+    expect(radio.getChecked()).toBe(false);
+    expect(root.getAttribute("aria-checked")).toBe("false");
+    expect(getInput(root).checked).toBe(false);
+    expect(getIndicator().hidden).toBe(true);
+  });
+
+  it("maps preventDefault on the checked change event to cancellation", () => {
+    const root = renderRadio();
+    const listener = vi.fn((event: Event) => event.preventDefault());
+    root.addEventListener("starwind:checked-change", listener);
+
+    const radio = createRadio(root);
+    radio.setChecked(true);
+
+    expect(listener).toHaveBeenCalledOnce();
+    expect((listener.mock.calls[0]?.[0] as CustomEvent).detail.isCanceled).toBe(true);
+    expect(radio.getChecked()).toBe(false);
+    expect(root.getAttribute("aria-checked")).toBe("false");
+    expect(getInput(root).checked).toBe(false);
+  });
+
   it("selects with Space and ignores Enter", () => {
     const root = renderRadio();
     const listener = vi.fn();
@@ -217,6 +254,235 @@ describe("createRadio", () => {
     expect(radio.getChecked()).toBe(true);
     expect(getInput().checked).toBe(true);
     expect(root.hasAttribute("data-checked")).toBe(true);
+  });
+
+  it("publishes acceptance only after the Runtime transition commits", () => {
+    const root = renderRadio();
+    const observations: Array<[string, boolean]> = [];
+    const radio = createRadio(root);
+    radio.subscribe("checkedChange", (details) => {
+      observations.push(["proposed", radio.getChecked()]);
+      details.onAccepted(() => observations.push(["accepted", radio.getChecked()]));
+    });
+
+    root.click();
+
+    expect(observations).toEqual([
+      ["proposed", false],
+      ["accepted", true],
+    ]);
+  });
+
+  it("keeps legacy void selection owners acceptance-compatible", () => {
+    const root = renderRadio();
+    const radio = createRadio(root);
+    const accepted = vi.fn();
+    radio.setSelectionOwner((_details): void => {});
+    radio.subscribe("checkedChange", (details) => details.onAccepted(accepted));
+
+    radio.setChecked(true);
+
+    expect(accepted).toHaveBeenCalledOnce();
+  });
+
+  it("lets legacy void selection owners cancel without publishing acceptance", () => {
+    const root = renderRadio();
+    const radio = createRadio(root);
+    const accepted = vi.fn();
+    radio.setSelectionOwner((details): void => {
+      details.cancel();
+    });
+    radio.subscribe("checkedChange", (details) => details.onAccepted(accepted));
+
+    radio.setChecked(true);
+
+    expect(accepted).not.toHaveBeenCalled();
+    expect(radio.getChecked()).toBe(false);
+  });
+
+  it("ignores boolean, number, and null values returned by legacy selection owners", () => {
+    const root = renderRadio();
+    const radio = createRadio(root);
+    const accepted = vi.fn();
+    radio.subscribe("checkedChange", (details) => details.onAccepted(accepted));
+    const owners = [
+      (_details: unknown) => true,
+      (_details: unknown) => 42,
+      (_details: unknown) => null,
+    ];
+
+    owners.forEach((owner) => {
+      radio.setSelectionOwner(owner);
+      radio.setChecked(true);
+    });
+
+    expect(accepted).toHaveBeenCalledTimes(3);
+  });
+
+  it("cancels, restores, and rethrows legacy selection owner exceptions", () => {
+    const root = renderRadio();
+    const radio = createRadio(root);
+    const accepted = vi.fn();
+    const error = new Error("legacy owner failed");
+    radio.subscribe("checkedChange", (details) => details.onAccepted(accepted));
+    radio.setSelectionOwner(() => {
+      throw error;
+    });
+
+    expect(() => radio.setChecked(true)).toThrow(error);
+
+    expect(accepted).not.toHaveBeenCalled();
+    expect(radio.getChecked()).toBe(false);
+    expect(getInput(root).checked).toBe(false);
+    expect(root).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("runs every accepted callback and state sync before surfacing an exception", () => {
+    const root = renderRadio();
+    const radio = createRadio(root);
+    const error = new Error("accepted callback failed");
+    const secondAccepted = vi.fn();
+    const synced = vi.fn();
+    radio.subscribe("checkedChange", (details) => {
+      details.onAccepted(() => {
+        throw error;
+      });
+      details.onAccepted(secondAccepted);
+    });
+    radio.subscribe("stateSync", synced);
+
+    expect(() => radio.setChecked(true)).toThrow(error);
+
+    expect(radio.getChecked()).toBe(true);
+    expect(secondAccepted).toHaveBeenCalledOnce();
+    expect(synced).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the newest reentrant transition authoritative for model publication", () => {
+    const root = renderRadio();
+    const radio = createRadio(root);
+    let published = radio.getChecked();
+    radio.subscribe("checkedChange", (details) => {
+      if (details.checked) {
+        details.onAccepted(() => radio.setChecked(false));
+      }
+      details.onAccepted(() => {
+        published = details.checked;
+      });
+    });
+    radio.subscribe("stateSync", () => {
+      published = radio.getChecked();
+    });
+
+    radio.setChecked(true);
+
+    expect(radio.getChecked()).toBe(false);
+    expect(published).toBe(false);
+  });
+
+  it("ignores cancellation requested after acceptance", () => {
+    const root = renderRadio();
+    const radio = createRadio(root);
+    let acceptedDetails: { readonly isCanceled: boolean } | undefined;
+    radio.subscribe("checkedChange", (details) => {
+      acceptedDetails = details;
+      details.onAccepted(() => details.cancel());
+    });
+
+    radio.setChecked(true);
+
+    expect(acceptedDetails?.isCanceled).toBe(false);
+    expect(radio.getChecked()).toBe(true);
+  });
+
+  it("restores uncontrolled nested inputs on native form reset without emitting", () => {
+    vi.useFakeTimers();
+    const form = document.createElement("form");
+    const root = renderRadio({ name: "storage", value: "ssd" });
+    form.append(root);
+    document.body.append(form);
+    const radio = createRadio(root);
+    const listener = vi.fn();
+    const syncListener = vi.fn();
+    radio.subscribe("checkedChange", listener);
+    radio.subscribe("stateSync", syncListener);
+    radio.setChecked(true, { emit: false });
+
+    form.reset();
+    vi.runAllTimers();
+
+    expect(radio.getChecked()).toBe(false);
+    expect(root.getAttribute("aria-checked")).toBe("false");
+    expect(getInput(root).checked).toBe(false);
+    expect(listener).not.toHaveBeenCalled();
+    expect(syncListener).toHaveBeenCalledOnce();
+  });
+
+  it("restores runtime-owned native-button sibling inputs on reset", () => {
+    vi.useFakeTimers();
+    const form = document.createElement("form");
+    const root = renderNativeButtonRadio({ name: "storage", value: "ssd" });
+    form.append(root);
+    document.body.append(form);
+    const radio = createRadio(root);
+    radio.setChecked(true, { emit: false });
+
+    form.reset();
+    vi.runAllTimers();
+
+    expect(radio.getChecked()).toBe(false);
+    expect(root.getAttribute("aria-checked")).toBe("false");
+    expect(getInput().checked).toBe(false);
+  });
+
+  it("reconciles controlled state and follows exact external form rebinding", () => {
+    vi.useFakeTimers();
+    const firstForm = document.createElement("form");
+    firstForm.id = "first-radio-form";
+    const secondForm = document.createElement("form");
+    secondForm.id = "second-radio-form";
+    document.body.append(firstForm, secondForm);
+    const root = renderRadio({ name: "storage", value: "ssd" });
+    const radio = createRadio(root, { checked: true, form: firstForm.id });
+
+    getInput(root).defaultChecked = false;
+    firstForm.reset();
+    vi.runAllTimers();
+    expect(radio.getChecked()).toBe(true);
+    expect(getInput(root).checked).toBe(true);
+
+    radio.setFormOptions({
+      form: secondForm.id,
+      name: "storage",
+      required: false,
+      value: "ssd",
+    });
+    radio.setChecked(false, { emit: false });
+    firstForm.reset();
+    vi.runAllTimers();
+    expect(radio.getChecked()).toBe(false);
+
+    radio.setChecked(true, { emit: false });
+    secondForm.reset();
+    vi.runAllTimers();
+    expect(radio.getChecked()).toBe(true);
+    expect(getInput(root).checked).toBe(true);
+  });
+
+  it("cancels pending reset reconciliation when destroyed", () => {
+    vi.useFakeTimers();
+    const form = document.createElement("form");
+    const root = renderRadio({ name: "storage", value: "ssd" });
+    form.append(root);
+    document.body.append(form);
+    const radio = createRadio(root);
+    radio.setChecked(true, { emit: false });
+
+    form.reset();
+    radio.destroy();
+    vi.runAllTimers();
+
+    expect(radio.getChecked()).toBe(true);
   });
 
   it("returns existing instances and destroy removes listeners", () => {

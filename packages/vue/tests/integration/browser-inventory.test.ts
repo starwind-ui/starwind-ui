@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
+  createVueBrowserProjectConfig,
   formatVueBrowserInventoryDiagnostics,
   validateVueBrowserInventory,
   vueBrowserProjectOwnership,
@@ -31,6 +32,25 @@ describe("Vue browser verification inventory", () => {
         staleOwnership: [],
       },
     });
+  });
+
+  it("isolates each component project in a deterministic Vite cache directory", () => {
+    const cacheDirectories = vueBrowserProjectOwnership.map(({ component }) => {
+      const config = createVueBrowserProjectConfig(component);
+      const expected = path.join(repoRoot, "node_modules/.vite/vue-browser", component);
+      const browserProject = config.test?.projects?.[1];
+
+      expect(browserProject).toMatchObject({
+        cacheDir: expected,
+        test: { name: "browser" },
+      });
+      if (!browserProject || typeof browserProject === "string") {
+        throw new Error(`Missing executable browser project for ${component}`);
+      }
+      return browserProject.cacheDir;
+    });
+
+    expect(new Set(cacheDirectories)).toHaveLength(vueBrowserProjectOwnership.length);
   });
 
   it("reports missing, duplicate, and stale ownership with actionable paths", () => {

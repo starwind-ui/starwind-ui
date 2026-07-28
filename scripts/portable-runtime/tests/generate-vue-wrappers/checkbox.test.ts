@@ -82,7 +82,12 @@ describe("generated Vue Checkbox Primitive", () => {
     expect(root).toMatch(
       /emit\("checkedChange", checked, detail\);[\s\S]*if \(detail\.isCanceled\) return;[\s\S]*emit\("update:checked", checked\);/,
     );
-    expect(root).toContain("...(props.checked === undefined ? {} : { checked: props.checked })");
+    expect(root).toContain("groupChecked.value !== undefined");
+    expect(root).toContain("? { checked: props.checked }");
+    expect(root).toMatch(
+      /:\s+groupChecked\.value !== undefined[\s\S]*\? \{ checked: groupChecked\.value \}/,
+    );
+    expect(root).toContain("useCheckboxGroupContext()");
     expect(root).toContain("Object.is(instance.getChecked(), checked)");
     expect(root).toContain("instance.setChecked(checked, { emit: false });");
     expect(root).toContain("instance?.setIndeterminate(value, { emit: false });");

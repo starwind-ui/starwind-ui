@@ -5,8 +5,8 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { avatarStyledContract } from "../../contracts/styled/components/avatar.js";
-import { generateStarwindVueWrappers } from "../../generate-vue-wrappers.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
+import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 describe("generated Vue Styled Avatar", () => {
   const roots: string[] = [];
@@ -18,7 +18,11 @@ describe("generated Vue Styled Avatar", () => {
   it("projects all semantic Primitive parts with attrs, listeners, slots, and exposed elements", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-styled-avatar-"));
     roots.push(root);
-    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    await generateSelectedVueStyledGroups({
+      groups: ["avatar"],
+      outputDir: "styled",
+      repoRoot: root,
+    });
 
     const sources = Object.fromEntries(
       await Promise.all(

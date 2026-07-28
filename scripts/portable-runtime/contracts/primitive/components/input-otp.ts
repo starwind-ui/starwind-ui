@@ -165,7 +165,9 @@ export const inputOtpRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      callbackTiming: "before-state-commit",
       callbackProp: "onValueChange",
+      cancelable: true,
       detailsType: "InputOtpValueChangeDetails",
       domEvent: "starwind:value-change",
       emitsFrom: "root",

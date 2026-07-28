@@ -10,11 +10,23 @@ const FIXTURE_ROOT = path.join(
   process.cwd(),
   "scripts/portable-runtime/tests/generate-vue-wrappers/fixtures/styled-public-contract",
 );
+const VUE_TSC_TIMEOUT_MS = 30_000;
 
 const INVALID_CONTRACT_CASES = [
   ["button native attributes", "invalid-button-native.vue", /email/],
   ["image native attributes", "invalid-image-native.vue", /href/],
+  ["Dropzone id attribute", "invalid-dropzone-id.vue", /number.*string/s],
+  [
+    "Dropzone aria-invalid attribute",
+    "invalid-dropzone-aria-invalid.vue",
+    /invalid.*Booleanish|boolean.*Booleanish/s,
+  ],
   ["Checkbox model payload", "invalid-checkbox-model.vue", /string.*boolean/s],
+  [
+    "Checkbox Group model payload",
+    "invalid-checkbox-group-model.vue",
+    /string.*CheckboxGroupValue/s,
+  ],
   ["Select value model payload", "invalid-select-value-model.vue", /number.*string/s],
   ["Select open model payload", "invalid-select-open-model.vue", /string.*boolean/s],
   ["Checkbox detailed event payload", "invalid-checkbox-event.vue", /CheckboxCheckedChangeDetails/],
@@ -23,6 +35,33 @@ const INVALID_CONTRACT_CASES = [
   ["Select slot payload", "invalid-select-slot.vue", /missing/],
   ["Checkbox semantic ref element", "invalid-checkbox-ref.vue", /HTMLInputElement/],
 ] as const;
+
+describe("Vue Styled public-contract diagnostic attribution", () => {
+  const fixtureRoot = path.join(process.cwd(), "synthetic-vue-diagnostics");
+  const cases = [
+    ["first contract", "invalid-first.vue", /first mismatch/],
+    ["second contract", "invalid-second.vue", /second mismatch/],
+  ] as const;
+
+  it("rejects diagnostics from an unexpected path", () => {
+    const diagnostics = `${path.join(fixtureRoot, "unexpected.vue")}(1,1): error TS2322: unexpected`;
+
+    expect(() => assertExpectedInvalidVueDiagnostics(diagnostics, fixtureRoot, cases)).toThrow(
+      "Unexpected Vue diagnostic path",
+    );
+  });
+
+  it("does not let one fixture borrow another fixture's expected diagnostic", () => {
+    const diagnostics = [
+      `${path.join(fixtureRoot, "invalid-first.vue")}(1,1): error TS2322: second mismatch`,
+      `${path.join(fixtureRoot, "invalid-second.vue")}(1,1): error TS2322: first mismatch`,
+    ].join("\n");
+
+    expect(() => assertExpectedInvalidVueDiagnostics(diagnostics, fixtureRoot, cases)).toThrow(
+      'Vue diagnostic for "first contract" did not match',
+    );
+  });
+});
 
 describe("generated Vue Styled public contracts", () => {
   const outputRoot = path.join(process.cwd(), "apps/vue-demo/src/components/starwind-runtime");
@@ -42,12 +81,16 @@ describe("generated Vue Styled public contracts", () => {
         "avatar/AvatarImage.vue",
         "button/Button.vue",
         "checkbox/Checkbox.vue",
+        "checkbox-group/CheckboxGroup.vue",
         "progress/Progress.vue",
+        "radio-group/RadioGroup.vue",
         "scroll-area/ScrollArea.vue",
         "select/Select.vue",
         "select/SelectTrigger.vue",
         "select/SelectValue.vue",
         "theme-toggle/ThemeToggle.vue",
+        "toggle/Toggle.vue",
+        "toggle-group/ToggleGroup.vue",
       ].map(
         async (relativePath) =>
           [relativePath, await readFile(path.join(outputRoot, relativePath), "utf8")] as const,
@@ -65,12 +108,18 @@ describe("generated Vue Styled public contracts", () => {
     expect(sourceByPath["checkbox/Checkbox.vue"]).toContain('"update:checked"');
     expect(sourceByPath["checkbox/Checkbox.vue"]).toContain("checkedChange:");
     expect(sourceByPath["checkbox/Checkbox.vue"]).toContain(':checked="checked"');
+    expect(sourceByPath["checkbox-group/CheckboxGroup.vue"]).toContain('"update:modelValue"');
+    expect(sourceByPath["checkbox-group/CheckboxGroup.vue"]).toContain(':model-value="modelValue"');
+    expect(sourceByPath["checkbox-group/CheckboxGroup.vue"]).not.toContain("update:value");
     expect(sourceByPath["select/Select.vue"]).toContain('"update:modelValue"');
     expect(sourceByPath["select/Select.vue"]).toContain('"update:open"');
     expect(sourceByPath["select/Select.vue"]).toContain("openChange:");
     expect(sourceByPath["select/Select.vue"]).toContain("valueChange:");
     expect(sourceByPath["avatar/AvatarImage.vue"]).toContain("loadingStatusChange:");
     expect(sourceByPath["avatar/AvatarImage.vue"]).not.toContain("onLoadingStatusChange");
+    expect(sourceByPath["toggle/Toggle.vue"]).toContain('"update:pressed"');
+    expect(sourceByPath["toggle/Toggle.vue"]).toContain("pressedChange:");
+    expect(sourceByPath["toggle/Toggle.vue"]).toContain(':pressed="pressed"');
     expect(sourceByPath["select/SelectValue.vue"]).toContain(
       "default?: (props: { label: string | null; value: string | null }) => unknown;",
     );
@@ -83,27 +132,86 @@ describe("generated Vue Styled public contracts", () => {
       "select/Select.vue",
       "select/SelectTrigger.vue",
       "theme-toggle/ThemeToggle.vue",
+      "toggle/Toggle.vue",
     ]) {
       expect(sourceByPath[relativePath], relativePath).toContain("defineExpose({ element });");
     }
   });
 
-  it("accepts valid native/model/event/slot/ref usage", async () => {
-    const valid = await runVueTypecheck(root, outputRoot, ["valid.vue"], "valid");
-    expect(valid.status, valid.diagnostics).toBe(0);
-  });
+  it("checks valid and invalid native/model/event/slot/ref usage in one compile", async () => {
+    const invalidFixtureNames = INVALID_CONTRACT_CASES.map(([, fixtureName]) => fixtureName);
+    const result = await runVueTypecheck(
+      root,
+      outputRoot,
+      ["valid.vue", ...invalidFixtureNames],
+      "public-contract",
+    );
 
-  it("rejects every invalid native/model/event/slot/ref contract in one compile", async () => {
-    const fixtureNames = INVALID_CONTRACT_CASES.map(([, fixtureName]) => fixtureName);
-    const invalid = await runVueTypecheck(root, outputRoot, fixtureNames, "invalid");
-
-    expect(invalid.status, invalid.diagnostics).not.toBe(0);
-    for (const [caseName, fixtureName, diagnostic] of INVALID_CONTRACT_CASES) {
-      expect(invalid.diagnostics, caseName).toContain(fixtureName);
-      expect(invalid.diagnostics, caseName).toMatch(diagnostic);
-    }
+    expect(result.status, result.diagnostics).not.toBe(0);
+    assertExpectedInvalidVueDiagnostics(result.diagnostics, root, INVALID_CONTRACT_CASES);
   });
 });
+
+type ExpectedInvalidVueDiagnostic = readonly [
+  caseName: string,
+  fixtureName: string,
+  diagnostic: RegExp,
+];
+
+function assertExpectedInvalidVueDiagnostics(
+  diagnostics: string,
+  fixtureRoot: string,
+  expectedCases: readonly ExpectedInvalidVueDiagnostic[],
+): void {
+  const expectedByPath = new Map(
+    expectedCases.map(([caseName, fixtureName, diagnostic]) => [
+      normalizeDiagnosticPath(path.join(fixtureRoot, fixtureName)),
+      { caseName, diagnostic, fixtureName, lines: [] as string[] },
+    ]),
+  );
+  let current:
+    | { caseName: string; diagnostic: RegExp; fixtureName: string; lines: string[] }
+    | undefined;
+
+  for (const line of diagnostics.split(/\r?\n/)) {
+    if (line.trim() === "") continue;
+    const header = /^(.*\.vue)\(\d+,\d+\): error TS\d+: .+$/.exec(line);
+    if (header) {
+      current = expectedByPath.get(normalizeDiagnosticPath(header[1]));
+      if (!current) {
+        throw new Error(`Unexpected Vue diagnostic path "${header[1]}".`);
+      }
+      current.lines.push(line);
+      continue;
+    }
+    if (current && /^\s+/.test(line)) {
+      current.lines.push(line);
+      continue;
+    }
+    throw new Error(`Unattributed Vue diagnostic line: ${line}`);
+  }
+
+  for (const { caseName, diagnostic, fixtureName, lines } of expectedByPath.values()) {
+    if (lines.length === 0) {
+      throw new Error(`Missing Vue diagnostic for "${caseName}" (${fixtureName}).`);
+    }
+    const fixtureDiagnostics = lines.join("\n");
+    diagnostic.lastIndex = 0;
+    if (!diagnostic.test(fixtureDiagnostics)) {
+      throw new Error(
+        `Vue diagnostic for "${caseName}" did not match ${diagnostic}: ${fixtureDiagnostics}`,
+      );
+    }
+  }
+}
+
+function normalizeDiagnosticPath(diagnosticPath: string): string {
+  const absolutePath = path.isAbsolute(diagnosticPath)
+    ? diagnosticPath
+    : path.resolve(process.cwd(), diagnosticPath);
+  const normalizedPath = path.normalize(absolutePath);
+  return process.platform === "win32" ? normalizedPath.toLowerCase() : normalizedPath;
+}
 
 async function runVueTypecheck(
   root: string,
@@ -156,10 +264,7 @@ async function runVueTypecheck(
           strict: true,
           target: "ES2022",
         },
-        include: [
-          ...fixturePaths.map((fixturePath) => fixturePath.split(path.sep).join("/")),
-          `${outputRoot.split(path.sep).join("/")}/**/*`,
-        ],
+        include: fixturePaths.map((fixturePath) => fixturePath.split(path.sep).join("/")),
         vueCompilerOptions: { dataAttributes: ["data-*"], strictTemplates: true },
       },
       null,
@@ -172,8 +277,16 @@ async function runVueTypecheck(
   const result = spawnSync(process.execPath, [vueTsc, "--noEmit", "-p", configPath], {
     cwd: process.cwd(),
     encoding: "utf8",
-    timeout: 30_000,
+    timeout: VUE_TSC_TIMEOUT_MS,
   });
+  if (result.error) {
+    const reason = result.error.message.includes("ETIMEDOUT")
+      ? `timed out after ${VUE_TSC_TIMEOUT_MS}ms`
+      : "failed to execute";
+    throw new Error(`Vue Styled ${configName} typecheck ${reason}: ${result.error.message}`, {
+      cause: result.error,
+    });
+  }
   return {
     diagnostics: `${result.stdout ?? ""}${result.stderr ?? ""}`,
     status: result.status,

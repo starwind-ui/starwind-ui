@@ -29,6 +29,12 @@ export function renderVueComponent(
   options: RenderVueComponentOptions,
 ): string {
   const projection = projectVueStyledComponent(group, component, options);
+  if (projection.specialization.kind === "alert-dialog-as-child") {
+    return serializeVueSfc(projectAlertDialogAsChildSfc(projection));
+  }
+  if (projection.specialization.kind === "dialog-as-child") {
+    return serializeVueSfc(projectDialogAsChildSfc(projection));
+  }
   if (projection.specialization.kind === "select-trigger") {
     return serializeVueSfc(projectSelectTriggerSfc(projection));
   }
@@ -50,6 +56,267 @@ export function renderVueComponent(
   return serializeVueSfc({ imports, options: optionsDeclaration, props, setup, template });
 }
 
+function projectAlertDialogAsChildSfc(projection: VueStyledComponentProjection): VueSfcSections {
+  if (projection.specialization.kind !== "alert-dialog-as-child") {
+    throw new TypeError("Alert Dialog asChild serialization requires its typed specialization.");
+  }
+  const { part } = projection.specialization;
+  const exposedRef = projection.exposedRefs[0];
+  if (exposedRef?.bridge !== "specialized" || !exposedRef.elementTypes[0]) {
+    throw new TypeError(`Alert Dialog ${part} requires its projected exposed element ref.`);
+  }
+  if (!projection.rootBindings.some(({ attribute }) => attribute === "ref")) {
+    throw new TypeError(`Alert Dialog ${part} requires its projected root ref binding.`);
+  }
+
+  const isTrigger = part === "Trigger";
+  const primitiveSource = projection.imports.primitiveSources["alert-dialog"];
+  if (isTrigger && !primitiveSource) {
+    throw new TypeError("Alert Dialog Trigger requires its Primitive import.");
+  }
+  const baseImports = renderVueImports(projection.imports, { includeFramework: false });
+  const componentName = `AlertDialog${part}`;
+  const props = isTrigger
+    ? `const {
+  asChild = false,
+  targetId,
+  class: className,
+} = defineProps<${projection.props.declared.name}>();`
+    : `const {
+  asChild = false,
+  variant = ${part === "Action" ? '"default"' : '"outline"'},
+  size = "md",
+  class: className,
+} = defineProps<${projection.props.declared.name}>();`;
+  const imports = `import {
+  type ButtonHTMLAttributes,
+  type ComponentPublicInstance,
+  cloneVNode,
+  computed,
+  defineComponent,
+  isVNode,
+  mergeProps,
+  nextTick,
+  ref,
+  useAttrs,
+  type VNode,
+} from "vue";
+${baseImports}`;
+  const classExpression = isTrigger
+    ? "className"
+    : `alertDialog${part}AsChild({ variant: variant as never, size: size as never, class: className })`;
+  const protectedProps = isTrigger
+    ? `        "data-slot": "alert-dialog-trigger",
+        "data-sw-alert-dialog-target-id": targetId,
+        "data-sw-alert-dialog-trigger": "",
+        "data-sw-part": "trigger",`
+    : `        "data-slot": "alert-dialog-${part.toLowerCase()}",
+        "data-sw-alert-dialog-close": "",
+        "data-sw-part": "close",`;
+  const normalTemplate = isTrigger
+    ? `<AlertDialogPrimitive.AlertDialogTrigger
+    v-else
+    :ref="setElement"
+    :class="mergedClass as import('vue').ClassValue"
+    :target-id="targetId"
+    v-bind="forwardedAttrs"
+    data-slot="alert-dialog-trigger"
+  >
+    <slot />
+  </AlertDialogPrimitive.AlertDialogTrigger>`
+    : `<Button
+    v-else
+    :ref="setElement"
+    :variant="variant"
+    :size="size"
+    :class="alertDialog${part}({ class: className }) as never"
+    v-bind="forwardedAttrs"
+    data-slot="alert-dialog-${part.toLowerCase()}"
+    data-sw-alert-dialog-close
+  >
+    <slot />
+  </Button>`;
+  const setup = `${props}
+const slots = defineSlots<{ default?: () => VNode[] }>();
+const attrs = useAttrs();
+const forwardedAttrs = computed(() => ({ ...attrs, class: undefined }));
+const element = ref<HTMLElement | null>(null);
+const mergedClass = computed(() => ${classExpression});
+let pendingComponentRef: ({ element?: HTMLElement | null } & ComponentPublicInstance) | null = null;
+
+${projection.setup.join("\n")}
+
+function setElement(value: Element | ComponentPublicInstance | null): void {
+  if (value instanceof HTMLElement) {
+    pendingComponentRef = null;
+    element.value = value;
+    return;
+  }
+  const exposed = value as ({ element?: HTMLElement | null } & ComponentPublicInstance) | null;
+  pendingComponentRef = exposed;
+  element.value = exposed?.element instanceof HTMLElement ? exposed.element : null;
+  if (!exposed || element.value) return;
+
+  void nextTick(() => {
+    if (pendingComponentRef !== exposed) return;
+    element.value = exposed.element instanceof HTMLElement ? exposed.element : null;
+  });
+}
+
+const AsChild${part} = defineComponent({
+  inheritAttrs: false,
+  setup() {
+    return () => {
+      const children = slots.default?.() ?? [];
+      const child = children[0];
+      if (children.length !== 1 || !isVNode(child) || typeof child.type !== "string") {
+        throw new TypeError(
+          "${componentName} asChild requires exactly one native element VNode.",
+        );
+      }
+
+      const defaultedProps =
+        child.type === "button" && child.props?.type === undefined ? { type: "button" } : {};
+      const consumerProps = mergeProps(attrs, { class: mergedClass.value });
+      const protectedProps = {
+${protectedProps}
+        ref: setElement,
+      };
+      return cloneVNode(child, mergeProps(defaultedProps, consumerProps, protectedProps), true);
+    };
+  },
+});`;
+
+  return {
+    imports,
+    options: "defineOptions({ inheritAttrs: false });\n\n",
+    props: renderProps(projection.props),
+    setup,
+    template: `  <AsChild${part} v-if="asChild" />
+  ${normalTemplate}`,
+  };
+}
+
+function projectDialogAsChildSfc(projection: VueStyledComponentProjection): VueSfcSections {
+  if (projection.specialization.kind !== "dialog-as-child") {
+    throw new TypeError("Dialog asChild serialization requires its typed specialization.");
+  }
+  const { family, part } = projection.specialization;
+  const primitiveComponent = family === "Dialog" ? "dialog" : "drawer";
+  const dataPrefix = family === "Dialog" ? "dialog" : "drawer";
+  const slotPrefix = family.toLowerCase();
+  const exposedRef = projection.exposedRefs[0];
+  if (exposedRef?.bridge !== "specialized" || !exposedRef.elementTypes[0]) {
+    throw new TypeError(`${family} ${part} requires its projected exposed element ref.`);
+  }
+  if (!projection.rootBindings.some(({ attribute }) => attribute === "ref")) {
+    throw new TypeError(`${family} ${part} requires its projected root ref binding.`);
+  }
+  const primitiveSource = projection.imports.primitiveSources[primitiveComponent];
+  if (!primitiveSource) throw new TypeError(`${family} ${part} requires its Primitive import.`);
+
+  const baseImports = renderVueImports(projection.imports, { includeFramework: false });
+  const componentName = `${family}${part}`;
+  const primitivePartName = `${family === "Dialog" ? "Dialog" : "Drawer"}${part}`;
+  const props =
+    part === "Trigger"
+      ? `const {
+  asChild = false,
+  targetId,
+  class: className,
+} = defineProps<${projection.props.declared.name}>();`
+      : `const { asChild = false, class: className } =
+  defineProps<${projection.props.declared.name}>();`;
+  const targetProp =
+    part === "Trigger" ? `\n        "data-sw-${dataPrefix}-target-id": targetId,` : "";
+  const primitiveTarget = part === "Trigger" ? `\n    :target-id="targetId"` : "";
+  const fallback = part === "Close" ? " Close " : "";
+
+  const imports = `import {
+  type ButtonHTMLAttributes,
+  type ComponentPublicInstance,
+  cloneVNode,
+  computed,
+  defineComponent,
+  isVNode,
+  mergeProps,
+  nextTick,
+  ref,
+  useAttrs,
+  type VNode,
+} from "vue";
+${baseImports}`;
+  const setup = `${props}
+const slots = defineSlots<{ default?: () => VNode[] }>();
+const attrs = useAttrs();
+const element = ref<HTMLElement | null>(null);
+const mergedClass = computed(() => className);
+let pendingPrimitiveRef: ({ element?: HTMLElement | null } & ComponentPublicInstance) | null = null;
+
+${projection.setup.join("\n")}
+
+function setElement(value: Element | ComponentPublicInstance | null): void {
+  if (value instanceof HTMLElement) {
+    pendingPrimitiveRef = null;
+    element.value = value;
+    return;
+  }
+  const exposed = value as ({ element?: HTMLElement | null } & ComponentPublicInstance) | null;
+  pendingPrimitiveRef = exposed;
+  element.value = exposed?.element instanceof HTMLElement ? exposed.element : null;
+  if (!exposed || element.value) return;
+
+  void nextTick(() => {
+    if (pendingPrimitiveRef !== exposed) return;
+    element.value = exposed.element instanceof HTMLElement ? exposed.element : null;
+  });
+}
+
+const AsChild${part} = defineComponent({
+  inheritAttrs: false,
+  setup() {
+    return () => {
+      const children = slots.default?.() ?? [];
+      const child = children[0];
+      if (children.length !== 1 || !isVNode(child) || typeof child.type !== "string") {
+        throw new TypeError(
+          "${componentName} asChild requires exactly one native element VNode.",
+        );
+      }
+
+      const defaultedProps =
+        child.type === "button" && child.props?.type === undefined ? { type: "button" } : {};
+      const consumerProps = mergeProps(attrs, { class: mergedClass.value });
+      const protectedProps = {
+        "data-slot": "${slotPrefix}-${part.toLowerCase()}",
+        "data-sw-${dataPrefix}-${part.toLowerCase()}": "",${targetProp}
+        "data-sw-part": "${part.toLowerCase()}",
+        ref: setElement,
+      };
+      return cloneVNode(child, mergeProps(defaultedProps, consumerProps, protectedProps), true);
+    };
+  },
+});`;
+  const template = `  <AsChild${part} v-if="asChild" />
+  <${family}Primitive.${primitivePartName}
+    v-else
+    :ref="setElement"
+    :class="mergedClass as import('vue').ClassValue"${primitiveTarget}
+    v-bind="attrs"
+    data-slot="${slotPrefix}-${part.toLowerCase()}"
+  >
+    <slot>${fallback}</slot>
+  </${family}Primitive.${primitivePartName}>`;
+
+  return {
+    imports,
+    options: "defineOptions({ inheritAttrs: false });\n\n",
+    props: renderProps(projection.props),
+    setup,
+    template,
+  };
+}
+
 function renderProps(props: VuePropsProjection): string {
   const ownedKeys = [...new Set(props.public.fields.map((field) => field.name))].sort();
   const extendsParts = props.public.extends.map((propExtend) =>
@@ -64,7 +331,10 @@ function renderProps(props: VuePropsProjection): string {
     .map((field) => `  ${JSON.stringify(field.name)}${field.optional ? "?" : ""}: ${field.type};`)
     .join("\n");
 
-  return `export type ${props.public.name} = ${type};\ntype ${props.declared.name} = {\n${declaredFields}\n} & /* @vue-ignore */ ${props.public.name};`;
+  const publicExtension = props.declared.extendsPublic
+    ? ` & /* @vue-ignore */ ${props.public.name}`
+    : "";
+  return `export type ${props.public.name} = ${type};\ntype ${props.declared.name} = {\n${declaredFields}\n}${publicExtension};`;
 }
 
 function renderPropExtend(
@@ -111,7 +381,12 @@ function renderSetup(projection: VueStyledComponentProjection): string {
   const slots = `defineSlots<{\n${slotLines.join("\n")}\n}>();`;
   const destructuredNames = new Set(props.destructure.map((prop) => prop.name));
   const destructureProps = [
-    ...props.destructure,
+    ...props.destructure.map((prop) => {
+      const model = projection.models.find((candidate) => candidate.name === prop.name);
+      return model?.type === "boolean" && prop.defaultValue === undefined
+        ? { ...prop, defaultValue: "undefined" }
+        : prop;
+    }),
     ...projection.models
       .filter((model) => !destructuredNames.has(model.name))
       .map((model) => ({
@@ -224,8 +499,22 @@ function renderNode(
       }`;
     case "repeat": {
       const binding = node.index ? `(${node.item}, ${node.index})` : node.item;
-      return `${pad}<template v-for="${binding} in ${node.each}">\n${renderNodes(
-        node.children,
+      const keyAttribute =
+        node.children.length === 1 && "attrs" in node.children[0]!
+          ? node.children[0]!.attrs.find(
+              (attribute) => attribute.name === "key" && isForVue(attribute),
+            )
+          : undefined;
+      const children = keyAttribute
+        ? node.children.map((child) =>
+            "attrs" in child
+              ? { ...child, attrs: child.attrs.filter((attribute) => attribute !== keyAttribute) }
+              : child,
+          )
+        : node.children;
+      const key = keyAttribute ? ` ${renderAttribute(keyAttribute)}` : "";
+      return `${pad}<template v-for="${binding} in ${node.each}"${key}>\n${renderNodes(
+        children,
         level + 1,
         primitiveAliases,
       )}\n${pad}</template>`;
@@ -286,7 +575,7 @@ function renderValue(value: StyledOutputValueExpression): string {
   return renderVueExpression(value);
 }
 
-function renderIcon(
+export function renderIcon(
   importName: string,
   attrs: readonly StyledOutputAttribute[],
   level: number,
@@ -294,9 +583,35 @@ function renderIcon(
   if (importName === "Sun" || importName === "Moon") {
     return renderThemeIcon(importName, attrs, level);
   }
-  const pathData = importName === "ChevronDown" ? "M6 9l6 6l6 -6" : "M5 12l5 5l10 -10";
+  if (importName === "CircleFilled") {
+    return renderFilledCircleIcon(attrs, level);
+  }
+  const paths =
+    importName === "Check"
+      ? ['<path d="M5 12l5 5l10 -10" />']
+      : importName === "Minus"
+        ? ['<path d="M5 12h14" />']
+        : importName === "ChevronDown"
+          ? ['<path d="M6 9l6 6l6 -6" />']
+          : importName === "X"
+            ? ['<path d="M18 6l-12 12" />', '<path d="M6 6l12 12" />']
+            : importName === "CloudUpload"
+              ? [
+                  '<path d="M7 18a4.6 4.4 0 0 1 0 -9c.26 -3.008 2.42 -4.508 5 -4.508c2.58 0 4.74 1.5 5 4.508h.5a3.5 3.5 0 0 1 0 7h-.5" />',
+                  '<path d="M9 15l3 -3l3 3" />',
+                  '<path d="M12 12l0 9" />',
+                ]
+              : importName === "Loader2"
+                ? ['<path d="M12 3a9 9 0 1 0 9 9" />', '<path d="M12 7v5l3 3" />']
+                : undefined;
+  if (!paths) {
+    throw new TypeError(`Unsupported Vue Styled icon import: ${importName}.`);
+  }
   const pad = "  ".repeat(level);
-  const renderedAttrs = attrs.filter(isForVue).map(renderAttribute);
+  const renderedAttrs = attrs
+    .filter((attribute) => attribute.name !== "aria-hidden")
+    .filter(isForVue)
+    .map(renderAttribute);
   return `${pad}<svg\n${[
     'xmlns="http://www.w3.org/2000/svg"',
     'viewBox="0 0 24 24"',
@@ -309,9 +624,25 @@ function renderIcon(
     ...renderedAttrs,
   ]
     .map((attr) => `${pad}  ${attr}`)
+    .join("\n")}\n${pad}>\n${pad}  <path stroke="none" d="M0 0h24v24H0z" fill="none" />\n${paths
+    .map((path) => `${pad}  ${path}`)
+    .join("\n")}\n${pad}</svg>`;
+}
+
+function renderFilledCircleIcon(attrs: readonly StyledOutputAttribute[], level: number): string {
+  const pad = "  ".repeat(level);
+  const renderedAttrs = attrs.filter(isForVue).map(renderAttribute);
+  return `${pad}<svg\n${[
+    'xmlns="http://www.w3.org/2000/svg"',
+    'viewBox="0 0 24 24"',
+    'fill="currentColor"',
+    'aria-hidden="true"',
+    ...renderedAttrs,
+  ]
+    .map((attr) => `${pad}  ${attr}`)
     .join(
       "\n",
-    )}\n${pad}>\n${pad}  <path stroke="none" d="M0 0h24v24H0z" fill="none" />\n${pad}  <path d="${pathData}" />\n${pad}</svg>`;
+    )}\n${pad}>\n${pad}  <path d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20z" stroke="none" />\n${pad}</svg>`;
 }
 
 function renderThemeIcon(

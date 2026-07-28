@@ -4,28 +4,25 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 import { playwright } from "../../runtime/node_modules/@vitest/browser-playwright/dist/index.js";
 
+import { createSourceBackedRuntimeAliases } from "./source-backed-runtime-aliases";
+
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const resolve = {
-  alias: {
-    "@starwind-ui/react/color-picker": path.join(
-      repoRoot,
-      "packages/react/src/color-picker/index.ts",
-    ),
-    "@starwind-ui/react/popover": path.join(repoRoot, "packages/react/src/popover/index.ts"),
-    "@starwind-ui/react/select": path.join(repoRoot, "packages/react/src/select/index.ts"),
-    "@starwind-ui/runtime/color-picker": path.join(
-      repoRoot,
-      "packages/runtime/src/components/color-picker/index.ts",
-    ),
-    "@starwind-ui/runtime/popover": path.join(
-      repoRoot,
-      "packages/runtime/src/components/popover/index.ts",
-    ),
-    "@starwind-ui/runtime/select": path.join(
-      repoRoot,
-      "packages/runtime/src/components/select/index.ts",
-    ),
-  },
+  alias: [
+    ...createSourceBackedRuntimeAliases(repoRoot),
+    {
+      find: "@starwind-ui/react/color-picker",
+      replacement: path.join(repoRoot, "packages/react/src/color-picker/index.ts"),
+    },
+    {
+      find: "@starwind-ui/react/popover",
+      replacement: path.join(repoRoot, "packages/react/src/popover/index.ts"),
+    },
+    {
+      find: "@starwind-ui/react/select",
+      replacement: path.join(repoRoot, "packages/react/src/select/index.ts"),
+    },
+  ],
 };
 
 export default defineConfig({

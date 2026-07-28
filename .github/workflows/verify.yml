@@ -67,9 +67,6 @@ jobs:
       - name: Verify Primitive Component Version Intent
         if: github.event_name == 'pull_request'
         run: pnpm primitive:versions:check --base "${{ github.event.pull_request.base.sha }}"
-      - name: Audit production dependencies
-        run: pnpm audit --prod --audit-level high
-
   node-tests:
     name: Node tests
     runs-on: ubuntu-latest

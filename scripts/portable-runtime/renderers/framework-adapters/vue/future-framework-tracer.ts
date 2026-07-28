@@ -14,12 +14,6 @@ const vueFutureFrameworkTracerClassifications = [
     strategy: "future-framework-tracer",
   },
   {
-    component: "collapsible/vue",
-    reason:
-      "Unsupported, non-normative Vue SFC tracer evidence for the Collapsible disclosure/presence generic adapter plan; not included in package exports, CLI registry output, or demo dependencies.",
-    strategy: "future-framework-tracer",
-  },
-  {
     component: "menu/vue",
     reason:
       "Unsupported, non-normative Vue SFC tracer evidence for the Menu Specialized Adapter Spec; not included in package exports, CLI registry output, or demo dependencies.",

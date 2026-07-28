@@ -39,7 +39,7 @@ export type ButtonProps = Omit<
   };
 type ButtonDeclaredProps = {
   as?: "button" | "a";
-  "data-slot"?: string;
+  dataSlot?: string;
   focusableWhenDisabled?: boolean;
   href?: string;
   disabled?: boolean;
@@ -55,7 +55,7 @@ const {
   href,
   disabled = false,
   focusableWhenDisabled,
-  "data-slot": dataSlot = "button",
+  dataSlot = "button",
   tabindex,
   class: className,
 } = defineProps<ButtonDeclaredProps>();

@@ -51,6 +51,30 @@ describe("createDrawer", () => {
     drawer.destroy();
   });
 
+  it("inherits deterministic destroy focus restoration from Dialog normalization", () => {
+    const outsideButton = document.createElement("button");
+    document.body.append(outsideButton);
+    const focusOutside = vi.spyOn(outsideButton, "focus");
+    outsideButton.focus();
+    const drawer = createDrawer(renderDrawer());
+    const openChange = vi.fn();
+    const closeComplete = vi.fn();
+    drawer.subscribe("openChange", openChange);
+    drawer.subscribe("closeComplete", closeComplete);
+    drawer.open();
+    focusOutside.mockClear();
+    openChange.mockClear();
+
+    drawer.destroy();
+
+    expect(document.activeElement).toBe(outsideButton);
+    expect(focusOutside).toHaveBeenCalledTimes(1);
+    expect(openChange).not.toHaveBeenCalled();
+    expect(closeComplete).not.toHaveBeenCalled();
+    expect(getPopup().open).toBe(false);
+    expect(document.body.style.overflow).toBe("");
+  });
+
   it("reports close button, escape, and programmatic open-change reasons", () => {
     const root = renderDrawer();
     const drawer = createDrawer(root);

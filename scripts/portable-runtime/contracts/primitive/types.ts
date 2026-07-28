@@ -106,11 +106,13 @@ export type PrimitiveStateModelContract = {
   initialAttribute?: string;
   valueType: string;
   runtimeGetter?: string;
+  runtimeSyncEvent?: string;
   runtimeSetter?: string;
   controlledStateSync?: "unsupported" | "custom-event" | "imperative";
 };
 
 export type PrimitiveEventContract = {
+  acceptanceNotification?: "detail-on-accepted";
   callbackTiming?: "after-state-commit" | "before-state-commit";
   cancelable?: boolean;
   name: string;
@@ -150,9 +152,17 @@ export type PrimitiveSetterContract =
 
 export type PrimitiveContextContract = {
   name: string;
-  direction: "provides" | "consumes";
   values: string[];
-};
+} & (
+  | {
+      direction: "provides";
+      requirement?: never;
+    }
+  | {
+      direction: "consumes";
+      requirement?: "optional" | "required";
+    }
+);
 
 export type PrimitiveFormContract = {
   hiddenInput?: {
