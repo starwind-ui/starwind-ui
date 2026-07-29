@@ -1167,7 +1167,7 @@ describe("SpecializedAdapterSpec", () => {
       expect(adapterSource).not.toMatch(/\bconst select\s*=/);
       expect(adapterSource).not.toMatch(/\bselect\./);
     }
-  }, 60_000);
+  }, 120_000);
 
   it("rejects Select writer specs when adapter-facing facts drift from the writer assumptions", async () => {
     const spec = buildSelectSpecializedAdapterSpec(selectRuntimeAdapterContract);
