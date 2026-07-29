@@ -1,5 +1,14 @@
 # starwind
 
+## 3.0.0-beta.5
+
+### Patch Changes
+
+- Keep Color Picker area dragging two-dimensional on touch devices by routing pointer hit-testing through the area while preserving keyboard controls.
+- Synchronize the vendored React Radio and Radio Group primitives with accepted Runtime transitions
+  and external state synchronization.
+- Synchronize vendored React Toggle Group primitives with the generated context provider output.
+
 ## 3.0.0-beta.4
 
 ### Patch Changes
