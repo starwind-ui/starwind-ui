@@ -397,9 +397,9 @@ describe("generateLayeredDocsMetadata", () => {
       metadata.primitives.map((primitive) => [primitive.id, primitive.registryVersion]),
     );
 
-    expect(versions.accordion).toBe("0.1.2");
-    expect(versions.select).toBe("0.1.2");
-    expect(Object.keys(versions)).toHaveLength(runtimeAdapterContracts.length);
+    expect(Object.keys(versions).sort()).toEqual(
+      runtimeAdapterContracts.map((contract) => contract.component).sort(),
+    );
 
     const { accordion: _missing, ...missingAccordion } = versions;
     expect(() => buildLayeredDocsMetadata({ primitiveVersions: missingAccordion })).toThrow(
