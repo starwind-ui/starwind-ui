@@ -397,7 +397,7 @@ describe("generateLayeredDocsMetadata", () => {
       metadata.primitives.map((primitive) => [primitive.id, primitive.registryVersion]),
     );
 
-    expect(versions.accordion).toBe("0.1.1");
+    expect(versions.accordion).toBe("0.1.2");
     expect(versions.select).toBe("0.1.2");
     expect(Object.keys(versions)).toHaveLength(runtimeAdapterContracts.length);
 
