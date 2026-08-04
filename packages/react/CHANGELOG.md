@@ -1,5 +1,22 @@
 # @starwind-ui/react
 
+## 0.1.0-beta.6
+
+### Patch Changes
+
+- Correct the vendored React Checkbox indicator presence behavior for active, kept, and explicitly
+  hidden indicators.
+- Keep nested Accordion roots independent by limiting Runtime item discovery, part rendering, and
+  delegated trigger interactions to the controller that owns their nearest Accordion root.
+- Preserve intentionally empty Select item labels and their lazy hidden form values in the vendored
+  React adapter.
+- Restore uncontrolled Slider values after native form reset while preserving accepted controlled
+  values and keeping Runtime state, rendered parts, and submitted form data synchronized.
+- Publish payloadless Slider state synchronization after silent Runtime settlement so generated
+  adapters can read back normalized uncontrolled values without duplicating form-reset behavior.
+- Updated dependencies
+  - @starwind-ui/runtime@0.1.0-beta.6
+
 ## 0.1.0-beta.5
 
 ### Patch Changes
