@@ -606,11 +606,12 @@ async function createSliderTypingRoot(): Promise<string> {
 }
 
 function runSvelteCheck(root: string): { output: string; status: number | null } {
-  const command = `${path.join(process.cwd(), "node_modules/.bin/svelte-check.CMD")} --tsconfig tsconfig.json`;
-  const result = spawnSync("cmd.exe", ["/d", "/s", "/c", command], {
+  const cliPath = path.join(process.cwd(), "node_modules/svelte-check/bin/svelte-check");
+  const result = spawnSync(process.execPath, [cliPath, "--tsconfig", "tsconfig.json"], {
     cwd: root,
     encoding: "utf8",
   });
 
-  return { output: `${result.stdout}\n${result.stderr}`, status: result.status };
+  const output = [result.stdout, result.stderr, result.error?.message].filter(Boolean).join("\n");
+  return { output, status: result.status };
 }

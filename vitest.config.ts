@@ -64,6 +64,9 @@ export default defineConfig({
         extends: true,
         test: {
           name: "portable-svelte",
+          // These files launch compilers, Vite servers, and browsers. Running all of them at once
+          // makes lifecycle timeouts depend on runner capacity instead of product behavior.
+          maxWorkers: 2,
           include: [
             "scripts/portable-runtime/tests/generate-svelte-proof/**/*.test.ts",
             "scripts/portable-runtime/tests/generate-svelte-proof/**/*.spec.ts",
