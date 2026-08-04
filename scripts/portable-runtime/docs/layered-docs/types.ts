@@ -609,6 +609,8 @@ export type StyledComponentDocsMetadata = {
 
 export type StyledApiPropClassification = "primitive-override" | "variant" | "wrapper";
 
+export type StyledApiVisualOwnership = "delegates-appearance" | "preserves-styled-identity";
+
 export type StyledApiPrimitiveReference = {
   readonly primitiveId: string;
   readonly part: string;
@@ -620,11 +622,19 @@ export type StyledApiDeprecationMetadata = {
   readonly replacement?: string;
 };
 
+export type StyledApiTypeDefinitionMetadata = {
+  readonly name: string;
+  readonly definition: string;
+};
+
 export type StyledApiPropMetadata = {
   readonly name: string;
   readonly type: string;
+  readonly displayType?: string;
+  readonly typeDefinitions?: readonly StyledApiTypeDefinitionMetadata[];
   readonly required: boolean;
   readonly classification: StyledApiPropClassification;
+  readonly visualOwnership?: StyledApiVisualOwnership;
   readonly defaultValue?: string;
   readonly values?: readonly string[];
   readonly description?: string;
@@ -697,6 +707,7 @@ export type StyledApiInheritanceAnnotation = {
 
 export type StyledApiPropAnnotation = {
   readonly classification?: StyledApiPropClassification;
+  readonly visualOwnership?: StyledApiVisualOwnership;
   readonly defaultValue?: string;
   readonly deprecated?: StyledApiDeprecationMetadata;
   readonly description?: string;

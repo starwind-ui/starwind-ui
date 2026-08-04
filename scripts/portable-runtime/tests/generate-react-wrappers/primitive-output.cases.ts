@@ -940,6 +940,9 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(checkboxRoot).toContain("instance.setDisabled(effectiveDisabled)");
     expect(checkboxRoot).toContain("data-sw-checkbox");
     expect(checkboxRoot).toContain("data-sw-checkbox-input");
+    expect(checkboxRoot).toContain("export const CheckboxIndicatorContext = React.createContext");
+    expect(checkboxRoot).toContain("<CheckboxIndicatorContext.Provider value={indicatorState}>");
+    expect(checkboxRoot).toContain("explicitlyHiddenIndicatorsRef.current.forEach");
     expect(checkboxRoot).toContain('"data-default-checked"');
     expect(checkboxRoot).toContain('"data-form"');
     expect(checkboxRoot).toContain('"data-id"');
@@ -986,8 +989,14 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
         {...commonProps}`);
     expect(checkboxIndicator).toContain("keepMounted?: boolean");
     expect(checkboxIndicator).toContain("data-sw-checkbox-indicator");
-    expect(checkboxIndicator).toContain("node.hidden = hidden ?? !keepMounted");
-    expect(checkboxIndicator).not.toContain("hidden={hidden ?? !keepMounted}");
+    expect(checkboxIndicator).toContain("React.useContext(CheckboxIndicatorContext)");
+    expect(checkboxIndicator).toContain("if (!keepMounted && !active) return null");
+    expect(checkboxIndicator).toContain("node.hidden = hidden ?? false");
+    expect(checkboxIndicator).toContain("hidden={hidden ?? false}");
+    expect(checkboxIndicator).toContain("data-disabled={indicatorState.disabled");
+    expect(checkboxIndicator).toContain("data-readonly={indicatorState.readOnly");
+    expect(checkboxIndicator).toContain("data-required={indicatorState.required");
+    expect(checkboxIndicator).not.toContain("React.useEffect");
     expect(checkboxIndex).toContain("Root: CheckboxRoot");
     expect(checkboxIndex).toContain("Indicator: CheckboxIndicator");
 
@@ -1520,7 +1529,11 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(selectRoot).toContain("function getSelectedOptionTextFromProps");
     expect(selectRoot).toContain("function getSelectItemTextFromReactNode");
     expect(selectRoot).toContain("function getStringPropText");
+    expect(selectRoot).toContain("const itemText = getSelectItemTextFromReactNode(props.children)");
+    expect(selectRoot).toContain("if (itemText !== null) return itemText");
+    expect(selectRoot).toContain("selectedText = getTextFromReactNode(childProps.children).trim()");
     expect(selectRoot).toContain("return childText.length > 0 ? childText : null");
+    expect(selectRoot).toContain('if (textElement) return textElement.textContent?.trim() ?? ""');
     expect(selectRoot).toContain("function getTextFromReactNode");
     expect(selectRoot).toContain(
       "instanceRef.current?.setFormOptions({ autoComplete, form, name, required })",

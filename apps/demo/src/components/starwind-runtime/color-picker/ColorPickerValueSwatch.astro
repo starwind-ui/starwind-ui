@@ -1,22 +1,20 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import type { VariantProps } from "tailwind-variants";
 
 import "./styles.css";
 import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
 import { colorPickerValueSwatch } from "./variants";
 
-type Props = HTMLAttributes<"span"> &
-  VariantProps<typeof colorPickerValueSwatch> & {
-    initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
-  };
+type Props = HTMLAttributes<"span"> & {
+  initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+};
 
-const { initial, class: className, size = "md", ...rest } = Astro.props;
+const { initial, class: className, ...rest } = Astro.props;
 ---
 
 <ColorPickerPrimitive.ValueSwatch
   initial={initial?.valueSwatch.initial}
-  class={colorPickerValueSwatch({ size, class: className })}
+  class={colorPickerValueSwatch({ class: className })}
   {...rest}
   data-slot="color-picker-value-swatch"
 >

@@ -1,46 +1,39 @@
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";
 import "./styles.css";
-import { IconColorPicker as ColorPicker } from "@tabler/icons-react";
 import { PopoverContent } from "../popover";
-import ColorPickerArea from "./ColorPickerArea";
-import ColorPickerClear from "./ColorPickerClear";
-import ColorPickerEyeDropper from "./ColorPickerEyeDropper";
-import ColorPickerInput from "./ColorPickerInput";
-import ColorPickerSliders from "./ColorPickerSliders";
-import {
-  colorPickerContent,
-  colorPickerSeparator,
-  colorPickerSliderActionRow,
-  colorPickerValueFormatRow,
-} from "./variants";
+import ColorPickerDefaultEditor from "./ColorPickerDefaultEditor";
+import { colorPickerContent } from "./variants";
 
 export type ColorPickerContentProps = React.ComponentProps<typeof PopoverContent> &
   VariantProps<typeof colorPickerContent> & {
-    alpha?: boolean;
     showEyeDropper?: boolean;
-    showClear?: boolean;
-    swatches?: React.ReactNode;
+    formatControl?: "select" | "native" | "none";
+    formats?: readonly import("@starwind-ui/react/color-picker").ColorPickerFormat[];
+    swatches?: readonly (
+      | import("@starwind-ui/react/color-picker").ColorPickerValue
+      | {
+          value: import("@starwind-ui/react/color-picker").ColorPickerValue;
+          label: string;
+          disabled?: boolean;
+        }
+    )[];
   };
 
 function ColorPickerContent(props: ColorPickerContentProps) {
   const {
     className,
     size = "md",
-    alpha = true,
     showEyeDropper = true,
-    showClear = false,
+    formatControl = "select",
+    formats = ["hex", "rgb", "hsl", "hsb"],
+    swatches = [],
     side = "bottom",
     align = "start",
     exitMotion = "fade",
     children,
-    swatches,
     ...rest
   } = props;
-
-  const inputSize = size === "lg" ? "md" : "sm";
-  const hasSwatches = swatches != null;
-  const hasSwatchesAttribute = hasSwatches ? "true" : "false";
 
   return (
     <PopoverContent
@@ -50,55 +43,18 @@ function ColorPickerContent(props: ColorPickerContentProps) {
       collisionStrategy="best-fit"
       exitMotion={exitMotion}
       {...rest}
+      data-sw-color-picker-content=""
+      data-size={size}
       data-slot="color-picker-content"
     >
       {children ?? (
-        <>
-          <ColorPickerArea size={size} />
-
-          <div
-            className={colorPickerSliderActionRow({ size })}
-            data-slot="color-picker-slider-action-row"
-          >
-            <ColorPickerSliders alpha={alpha} size={size} className="min-w-0 flex-1" />
-
-            {showEyeDropper && (
-              <ColorPickerEyeDropper size={size} aria-label="Pick a color from the screen">
-                <ColorPicker className="size-4" aria-hidden="true" />
-              </ColorPickerEyeDropper>
-            )}
-          </div>
-
-          <div
-            className={colorPickerValueFormatRow({ size })}
-            data-slot="color-picker-value-format-row"
-          >
-            <ColorPickerInput size={inputSize} className="min-w-0 flex-1" />
-          </div>
-
-          <div
-            className="contents"
-            data-has-swatches={hasSwatchesAttribute}
-            data-slot="color-picker-footer"
-          >
-            {(hasSwatches || showClear) && (
-              <div
-                className={colorPickerSeparator({ size })}
-                role="separator"
-                aria-hidden="true"
-                data-slot="color-picker-separator"
-              />
-            )}
-
-            {swatches}
-
-            {showClear && (
-              <ColorPickerClear size={inputSize} aria-label="Clear color">
-                Clear
-              </ColorPickerClear>
-            )}
-          </div>
-        </>
+        <ColorPickerDefaultEditor
+          size={size}
+          showEyeDropper={showEyeDropper}
+          formatControl={formatControl}
+          formats={formats}
+          swatches={swatches}
+        />
       )}
     </PopoverContent>
   );

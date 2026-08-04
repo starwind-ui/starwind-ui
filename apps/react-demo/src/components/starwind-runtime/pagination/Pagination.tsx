@@ -2,11 +2,12 @@ import type * as React from "react";
 import { pagination } from "./variants";
 
 export type PaginationProps = React.ComponentPropsWithoutRef<"nav"> & {
+  size?: "sm" | "md" | "lg";
   ref?: React.Ref<HTMLElement>;
 };
 
 function Pagination(props: PaginationProps) {
-  const { ref, className, children, ...rest } = props;
+  const { size = "md", ref, className, children, ...rest } = props;
 
   return (
     <nav
@@ -15,6 +16,7 @@ function Pagination(props: PaginationProps) {
       className={pagination({ class: className })}
       {...rest}
       ref={ref}
+      data-size={size}
       data-slot="pagination"
     >
       {children}

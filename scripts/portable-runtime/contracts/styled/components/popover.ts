@@ -151,20 +151,30 @@ export const popoverStyledContract: StyledAdapterContract = {
         ],
         rest: "rest",
       },
+      variables: [
+        {
+          name: "triggerBaseClassName",
+          value: {
+            type: "classVariant",
+            variant: "popoverTrigger",
+            args: { class: "className" },
+          },
+        },
+        {
+          name: "triggerClassName",
+          value: {
+            type: "raw",
+            code: "asChild ? className : triggerBaseClassName",
+          },
+        },
+      ],
       render: [
         {
           type: "primitive",
           component: "popover",
           part: "Trigger",
           attrs: [
-            {
-              name: "class",
-              value: {
-                type: "classVariant",
-                variant: "popoverTrigger",
-                args: { class: "className" },
-              },
-            },
+            { name: "class", value: { type: "variable", name: "triggerClassName" } },
             { name: "asChild", value: { type: "variable", name: "asChild" } },
             { name: "spread", value: { type: "variable", name: "rest" } },
             { name: "data-slot", value: { type: "literal", value: "popover-trigger" } },

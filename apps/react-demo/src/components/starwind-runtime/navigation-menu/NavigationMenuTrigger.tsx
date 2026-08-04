@@ -27,10 +27,13 @@ function NavigationMenuTrigger(props: NavigationMenuTriggerProps) {
     ...rest
   } = props;
 
+  const triggerBaseClassName = navigationMenuTrigger({ class: className });
+  const triggerClassName = asChild ? className : triggerBaseClassName;
+
   if (asChild) {
     return (
       <NavigationMenuPrimitive.Trigger
-        className={navigationMenuTrigger({ class: className })}
+        className={triggerClassName}
         asChild={asChild}
         disabled={disabled}
         openDelay={openDelay}
@@ -45,7 +48,7 @@ function NavigationMenuTrigger(props: NavigationMenuTriggerProps) {
 
   return (
     <NavigationMenuPrimitive.Trigger
-      className={navigationMenuTrigger({ class: className })}
+      className={triggerClassName}
       asChild={asChild}
       disabled={disabled}
       openDelay={openDelay}

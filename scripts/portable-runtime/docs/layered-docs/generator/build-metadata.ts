@@ -65,6 +65,7 @@ import { dedupe, toKebabCase, toTitle } from "./shared.js";
 import { isBehaviorFoundationType, validateFoundation } from "./validate-metadata.js";
 import {
   buildStyledApiMetadata,
+  validateAuditedAsChildVisualOwnership,
   validateStyledApiExportAnnotationKeys,
 } from "./build-styled-api.js";
 
@@ -125,6 +126,13 @@ export const buildLayeredDocsMetadata = (
       ),
     )
     .sort((left, right) => left.id.localeCompare(right.id));
+
+  validateAuditedAsChildVisualOwnership(
+    styledContracts,
+    annotations,
+    styledComponents,
+    validationIssues,
+  );
 
   const primitives = runtimeAdapterContracts
     .map((contract) =>

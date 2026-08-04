@@ -21,12 +21,14 @@ export function printVueActionSurfaceComponent(file: AdapterComponentFile): Adap
   const disabled = facts.props.disabled.name;
   const focusableWhenDisabled = facts.props.focusableWhenDisabled.name;
   const type = facts.props.type.name;
+  const rootElement = facts.parts.root.defaultElement;
+  const rootElementType = getVueElementType(rootElement);
 
   return {
     contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
-import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { onBeforeUnmount, onMounted, useAttrs, useTemplateRef, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -46,7 +48,7 @@ defineSlots<{
   default?: () => unknown;
 }>();
 const attrs = useAttrs();
-const rootRef = ref<HTMLButtonElement | null>(null);
+const rootRef = useTemplateRef<${rootElementType}>("rootRef");
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
 
 defineExpose({
@@ -79,7 +81,7 @@ onBeforeUnmount(destroyOwnedInstance);
 </script>
 
 <template>
-  <button
+  <${rootElement}
     ref="rootRef"
     v-bind="attrs"
     :${facts.attrs.type}="props.${type}"
@@ -91,11 +93,21 @@ onBeforeUnmount(destroyOwnedInstance);
     :${facts.attrs.disabled}="props.${disabled} && !props.${focusableWhenDisabled}"
   >
     <slot />
-  </button>
+  </${rootElement}>
 </template>
 `,
     path: `${file.path}.vue`,
   };
+}
+
+function getVueElementType(tagName: string): string {
+  const elementTypes: Record<string, string> = {
+    button: "HTMLButtonElement",
+    div: "HTMLDivElement",
+    span: "HTMLSpanElement",
+  };
+
+  return elementTypes[tagName] ?? "HTMLElement";
 }
 
 function printVueType(type: string): string {

@@ -306,6 +306,7 @@ export const comboboxStyledContract: StyledAdapterContract = {
               },
             },
             { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "data-sw-combobox-input-group", value: { type: "literal", value: "" } },
             { name: "data-slot", value: { type: "literal", value: "combobox-input-group" } },
           ],
@@ -795,6 +796,7 @@ export const comboboxStyledContract: StyledAdapterContract = {
                     { name: "side", value: { type: "variable", name: "side" } },
                     { name: "sideOffset", value: { type: "variable", name: "sideOffset" } },
                     { name: "spread", value: { type: "variable", name: "rest" } },
+                    { name: "data-size", value: { type: "variable", name: "size" } },
                     { name: "data-slot", value: { type: "literal", value: "combobox-content" } },
                   ],
                   children: [

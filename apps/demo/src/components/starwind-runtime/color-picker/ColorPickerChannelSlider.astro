@@ -1,18 +1,16 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import type { VariantProps } from "tailwind-variants";
 
 import "./styles.css";
 import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
 import { colorPickerChannelSlider, colorPickerChannelSliderThumb } from "./variants";
 
-type Props = HTMLAttributes<"div"> &
-  VariantProps<typeof colorPickerChannelSlider> & {
-    channel: import("@starwind-ui/astro/color-picker").ColorPickerChannel;
-    orientation?: "horizontal" | "vertical";
-    step?: number;
-    initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
-  };
+type Props = HTMLAttributes<"div"> & {
+  channel: import("@starwind-ui/astro/color-picker").ColorPickerChannel;
+  orientation?: "horizontal" | "vertical";
+  step?: number;
+  initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+};
 
 const {
   initial,
@@ -20,7 +18,6 @@ const {
   channel,
   orientation = "horizontal",
   class: className,
-  size = "md",
   ...rest
 } = Astro.props;
 ---
@@ -29,7 +26,7 @@ const {
   initial={initial?.channelSlider({ channel, orientation, step }).root.initial}
   channel={channel}
   orientation={orientation}
-  class={colorPickerChannelSlider({ size, class: className })}
+  class={colorPickerChannelSlider({ class: className })}
   {...rest}
   data-slot="color-picker-channel-slider"
 >
@@ -47,7 +44,7 @@ const {
 
   <ColorPickerPrimitive.ChannelSliderThumb
     initial={initial?.channelSlider({ channel, orientation, step }).thumb.initial}
-    class={colorPickerChannelSliderThumb({ size })}
+    class={colorPickerChannelSliderThumb()}
     data-slot="color-picker-channel-slider-thumb"
   >
     <span
@@ -55,7 +52,7 @@ const {
       data-slot="color-picker-transparency-grid"></span>
 
     <span
-      class="pointer-events-none absolute inset-0 size-full bg-[var(--sw-color-picker-channel-thumb-color)]"
+      class="pointer-events-none absolute inset-0 size-full bg-(--sw-color-picker-channel-thumb-color)"
       data-slot="color-picker-channel-thumb-color-layer"></span>
   </ColorPickerPrimitive.ChannelSliderThumb>
 

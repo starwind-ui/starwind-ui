@@ -6,7 +6,7 @@ import { card } from "./variants";
 
 type Props = HTMLAttributes<"div"> & VariantProps<typeof card>;
 
-const { size = "default", class: className, ...rest } = Astro.props;
+const { size = "md", class: className, ...rest } = Astro.props;
 ---
 
 <div

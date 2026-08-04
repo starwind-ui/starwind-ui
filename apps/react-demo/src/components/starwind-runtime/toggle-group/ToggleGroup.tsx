@@ -50,7 +50,6 @@ function ToggleGroup(props: ToggleGroupProps) {
     <ToggleGroupPrimitive.Root
       className={toggleGroup({ class: className })}
       data-variant={variant}
-      data-size={size}
       data-spacing={spacing}
       data-horizontal={orientation === "horizontal" ? "" : undefined}
       data-vertical={orientation === "vertical" ? "" : undefined}
@@ -64,6 +63,7 @@ function ToggleGroup(props: ToggleGroupProps) {
       style={toggleGroupStyle as React.CSSProperties}
       value={value}
       {...rest}
+      data-size={size}
       data-slot="toggle-group"
     >
       {children}

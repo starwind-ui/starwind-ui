@@ -47,6 +47,7 @@ describe("root verification scripts", () => {
     expect(pkg.scripts?.["test:repo"]).toContain("--project=repo-scripts");
     expect(pkg.scripts?.["test:cli"]).toContain("--project=cli");
     expect(pkg.scripts?.["runtime:generate:test"]).toContain("--project=portable-runtime");
+    expect(pkg.scripts?.["runtime:generate:svelte:test"]).toContain("--project=portable-svelte");
     expect(pkg.scripts?.["runtime:generate:vue:test"]).toContain("--project=portable-vue");
     expect(commandPhases(pkg.scripts?.["test:all"])).toEqual([
       "pnpm test:run",
@@ -128,6 +129,7 @@ describe("root verification scripts", () => {
         "node-tests",
         "generator-tests",
         "browser-adapter-tests",
+        "svelte-tests",
         "vue-tests",
         "build-drift",
         "verify",
@@ -135,6 +137,10 @@ describe("root verification scripts", () => {
     );
     expect(verifyWorkflow.jobs["vue-tests"]).toMatchObject({
       if: "needs.scope.outputs.vue == 'true'",
+      needs: "scope",
+    });
+    expect(verifyWorkflow.jobs["svelte-tests"]).toMatchObject({
+      if: "needs.scope.outputs.svelte == 'true'",
       needs: "scope",
     });
     expect(verifyWorkflow.jobs["generator-tests"].steps).toEqual(
@@ -152,6 +158,7 @@ describe("root verification scripts", () => {
         "node-tests",
         "generator-tests",
         "browser-adapter-tests",
+        "svelte-tests",
         "vue-tests",
         "build-drift",
       ]),
@@ -161,6 +168,7 @@ describe("root verification scripts", () => {
         "pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr",
         "pnpm runtime:generate:test && pnpm runtime:generate:typecheck",
         "pnpm runtime:test:browser && pnpm react:test:browser",
+        "pnpm svelte:verify",
         "pnpm runtime:generate:all && pnpm runtime:registry:generate",
         "git diff --exit-code",
       ]),

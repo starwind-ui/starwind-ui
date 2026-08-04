@@ -7,7 +7,11 @@ import type {
 
 const variable = (name: string) => ({ name, type: "variable" as const });
 const literal = (value: string | boolean | number) => ({ type: "literal" as const, value });
-const slot = (name?: string): RenderNode => ({ type: "slot", ...(name ? { name } : {}) });
+const slot = (name?: string, fallback?: RenderNode[]): RenderNode => ({
+  type: "slot",
+  ...(name ? { name } : {}),
+  ...(fallback ? { fallback } : {}),
+});
 const dataSlot = (value: string): AttributeContract => ({
   name: "data-slot",
   value: literal(value),
@@ -21,28 +25,61 @@ const primitive = (
 
 const formatOptions = ["hex", "rgb", "hsl", "hsb"] as const;
 
-const formatOptionNodes = (component: "native-select" | "select"): RenderNode[] =>
-  formatOptions.map((format) => ({
-    type: "component",
-    component,
-    exportName: component === "select" ? "SelectItem" : "NativeSelectOption",
-    attrs: [
-      { name: "value", value: literal(format) },
-      ...(component === "native-select"
-        ? [
-            {
-              name: "selected",
-              value: {
-                type: "raw" as const,
-                code: `(initial?.properties.value ?? rest.value) === "${format}"`,
-              },
-              frameworks: ["astro" as const],
-            },
-          ]
-        : []),
+const formatOptionNodes = (component: "native-select" | "select"): RenderNode[] => [
+  {
+    type: "repeat",
+    each: "normalizedFormats",
+    item: "formatOption",
+    index: "formatIndex",
+    children: [
+      {
+        type: "component",
+        component,
+        exportName: component === "select" ? "SelectItem" : "NativeSelectOption",
+        attrs: [
+          { name: "value", value: { type: "raw", code: "formatOption" } },
+          {
+            name: "key",
+            value: { type: "raw", code: "`${formatOption}-${formatIndex}`" },
+            frameworks: ["react"],
+          },
+          ...(component === "native-select"
+            ? [
+                {
+                  name: "selected",
+                  value: {
+                    type: "raw" as const,
+                    code: "initial?.formatSelect.initial.properties.value === formatOption",
+                  },
+                  frameworks: ["astro" as const],
+                },
+              ]
+            : []),
+        ],
+        children: [{ type: "text", value: "{formatOption.toUpperCase()}" }],
+      },
     ],
-    children: [{ type: "text", value: format.toUpperCase() }],
-  }));
+  },
+];
+
+const formatFields = [
+  {
+    name: "formatControl",
+    optional: true,
+    type: '"select" | "native" | "none"',
+  },
+  {
+    name: "formats",
+    optional: true,
+    type: 'readonly import("@starwind-ui/runtime/color-picker").ColorPickerFormat[]',
+  },
+] as const;
+
+const swatchesField = {
+  name: "swatches",
+  optional: true,
+  type: 'readonly (import("@starwind-ui/runtime/color-picker").ColorPickerValue | { value: import("@starwind-ui/runtime/color-picker").ColorPickerValue; label: string; disabled?: boolean })[]',
+} as const;
 
 function simplePart(
   exportName: string,
@@ -65,7 +102,6 @@ function simplePart(
         ...(omitHtmlAttributes.length > 0
           ? [{ type: "omitHtmlAttributes" as const, element, keys: omitHtmlAttributes }]
           : [{ type: "htmlAttributes" as const, element }]),
-        { type: "variantProps", variant },
       ],
       fields,
     },
@@ -73,7 +109,6 @@ function simplePart(
       props: [
         ...(fields ?? []).map((field) => ({ name: field.name })),
         { name: "class", alias: "className" },
-        { name: "size", defaultValue: '"md"' },
       ],
       rest: "rest",
     },
@@ -87,15 +122,15 @@ function simplePart(
               ? {
                   type: "classJoin",
                   items: [
-                    { type: "classVariant", variant, args: { size: "size" } },
-                    { type: "classVariant", variant: layoutVariant, args: { size: "size" } },
+                    { type: "classVariant", variant, args: {} },
+                    { type: "classVariant", variant: layoutVariant, args: {} },
                     { type: "variable", name: "className" },
                   ],
                 }
               : {
                   type: "classVariant",
                   variant,
-                  args: { size: "size", class: "className" },
+                  args: { class: "className" },
                 },
           },
           ...extraAttrs,
@@ -108,6 +143,497 @@ function simplePart(
   };
 }
 
+function defaultAnatomyNodes(inline: boolean): RenderNode[] {
+  const labelNode: RenderNode = {
+    type: "conditional",
+    condition: "label != null",
+    then: [
+      primitive(
+        "Label",
+        [
+          {
+            name: "class",
+            value: { type: "classVariant", variant: "colorPickerLabel", args: {} },
+          },
+          dataSlot("color-picker-label"),
+        ],
+        [{ type: "text", value: "{label}" }],
+      ),
+    ],
+    else: [],
+  };
+
+  const editor: RenderNode = {
+    type: "component",
+    component: "color-picker",
+    exportName: "ColorPickerDefaultEditor",
+    attrs: [
+      { name: "size", value: variable("size") },
+      { name: "formatControl", value: variable("formatControl") },
+      { name: "formats", value: variable("normalizedFormats") },
+      { name: "showEyeDropper", value: variable("showEyeDropper") },
+      { name: "swatches", value: variable("swatches") },
+    ],
+  };
+
+  if (inline) return [labelNode, editor];
+
+  return [
+    labelNode,
+    {
+      type: "fragment",
+      children: [
+        primitive(
+          "Control",
+          [
+            {
+              name: "class",
+              value: {
+                type: "classVariant",
+                variant: "colorPickerControl",
+                args: {},
+              },
+            },
+            dataSlot("color-picker-control"),
+          ],
+          [
+            {
+              type: "component",
+              component: "color-picker",
+              exportName: "ColorPickerTrigger",
+              attrs: [
+                { name: "showValueText", value: variable("showValueText") },
+                {
+                  name: "aria-label",
+                  value: {
+                    type: "raw",
+                    code: 'label ? `Open ${label.toLowerCase()} picker` : "Open color picker"',
+                  },
+                },
+              ],
+            },
+          ],
+        ),
+        {
+          type: "component",
+          component: "color-picker",
+          exportName: "ColorPickerContent",
+          attrs: [
+            { name: "size", value: variable("size") },
+            { name: "formatControl", value: variable("formatControl") },
+            { name: "formats", value: variable("normalizedFormats") },
+            { name: "showEyeDropper", value: variable("showEyeDropper") },
+            { name: "swatches", value: variable("swatches") },
+            { name: "side", value: variable("side") },
+            { name: "align", value: variable("align") },
+            { name: "sideOffset", value: variable("sideOffset") },
+            { name: "avoidCollisions", value: variable("avoidCollisions") },
+            {
+              name: "aria-label",
+              value: {
+                type: "raw",
+                code: 'label ? `${label} editor` : "Color editor"',
+              },
+            },
+          ],
+        },
+      ],
+    },
+  ];
+}
+
+function colorPickerRootNode(floating: boolean, inline: boolean): RenderNode {
+  return primitive(
+    "Root",
+    [
+      {
+        name: "class",
+        value: {
+          type: "classVariant",
+          variant: "colorPicker",
+          args: { size: "size", class: "className" },
+        },
+      },
+      { name: "value", value: variable("value"), frameworks: ["react"] },
+      { name: "defaultValue", value: variable("defaultValue") },
+      { name: "format", value: variable("resolvedFormat") },
+      { name: "alpha", value: variable("alpha") },
+      { name: "allowEmpty", value: variable("clearable") },
+      { name: "disabled", value: variable("disabled") },
+      { name: "readOnly", value: variable("readOnly") },
+      { name: "name", value: variable("name") },
+      { name: "form", value: variable("form") },
+      { name: "required", value: variable("required") },
+      { name: "locale", value: variable("locale") },
+      { name: "dir", value: variable("dir") },
+      { name: "onValueChange", value: variable("onValueChange"), frameworks: ["react"] },
+      {
+        name: "onValueCommitted",
+        value: variable("onValueCommitted"),
+        frameworks: ["react"],
+      },
+      {
+        name: "onFormatChange",
+        value: variable("handleFormatChange"),
+        frameworks: ["react"],
+      },
+      { name: "spread", value: variable("rest") },
+      { name: "data-size", value: variable("size") },
+      ...(floating ? [{ name: "data-floating-root", value: literal(true) }] : []),
+      { name: "ref", value: variable("ref"), frameworks: ["react"] },
+      dataSlot("color-picker"),
+    ],
+    [
+      slot(undefined, defaultAnatomyNodes(inline)),
+      primitive(
+        "HiddenInput",
+        [
+          {
+            name: "class",
+            value: { type: "classVariant", variant: "colorPickerHiddenInput" },
+          },
+          dataSlot("color-picker-hidden-input"),
+        ],
+        [],
+      ),
+    ],
+  );
+}
+
+function defaultEditorNodes(): RenderNode[] {
+  return [
+    {
+      type: "component",
+      component: "color-picker",
+      exportName: "ColorPickerArea",
+      attrs: [],
+    },
+    {
+      type: "element",
+      tag: "div",
+      attrs: [
+        {
+          name: "class",
+          value: {
+            type: "classVariant",
+            variant: "colorPickerSliderActionRow",
+            args: {},
+          },
+        },
+        dataSlot("color-picker-slider-action-row"),
+      ],
+      children: [
+        {
+          type: "element",
+          tag: "div",
+          attrs: [
+            {
+              name: "class",
+              value: {
+                type: "classVariant",
+                variant: "colorPickerSliders",
+                args: { class: '"min-w-0 flex-1"' },
+              },
+            },
+            dataSlot("color-picker-sliders"),
+          ],
+          children: [
+            {
+              type: "component",
+              component: "color-picker",
+              exportName: "ColorPickerChannelSlider",
+              attrs: [{ name: "channel", value: literal("hue") }],
+            },
+            {
+              type: "component",
+              component: "color-picker",
+              exportName: "ColorPickerChannelSlider",
+              attrs: [{ name: "channel", value: literal("alpha") }],
+            },
+          ],
+        },
+        {
+          type: "conditional",
+          condition: "showEyeDropper",
+          then: [
+            {
+              type: "component",
+              component: "color-picker",
+              exportName: "ColorPickerEyeDropper",
+              attrs: [{ name: "aria-label", value: literal("Pick a color from the screen") }],
+              children: [
+                {
+                  type: "icon",
+                  importName: "ColorPicker",
+                  attrs: [
+                    { name: "class", value: literal("size-4") },
+                    { name: "aria-hidden", value: literal("true") },
+                  ],
+                },
+              ],
+            },
+          ],
+          else: [],
+        },
+      ],
+    },
+    {
+      type: "element",
+      tag: "div",
+      attrs: [
+        {
+          name: "class",
+          value: {
+            type: "classVariant",
+            variant: "colorPickerValueFormatRow",
+            args: {},
+          },
+        },
+        dataSlot("color-picker-value-format-row"),
+      ],
+      children: [
+        {
+          type: "component",
+          component: "color-picker",
+          exportName: "ColorPickerInput",
+          attrs: [
+            { name: "formatContentSize", value: variable("size") },
+            { name: "formatControl", value: variable("formatControl") },
+            { name: "formats", value: variable("formats") },
+            { name: "class", value: literal("min-w-0 flex-1") },
+          ],
+        },
+      ],
+    },
+    {
+      type: "element",
+      tag: "div",
+      attrs: [
+        { name: "class", value: literal("contents") },
+        { name: "data-has-swatches", value: variable("hasSwatchesAttribute") },
+        dataSlot("color-picker-footer"),
+      ],
+      children: [
+        {
+          type: "element",
+          tag: "div",
+          selfClosing: true,
+          attrs: [
+            {
+              name: "class",
+              value: {
+                type: "classVariant",
+                variant: "colorPickerSeparator",
+                args: {},
+              },
+            },
+            { name: "role", value: literal("separator") },
+            { name: "aria-hidden", value: literal("true") },
+            dataSlot("color-picker-separator"),
+          ],
+        },
+        {
+          type: "conditional",
+          condition: "normalizedSwatches.length > 0",
+          then: [
+            {
+              type: "component",
+              component: "color-picker",
+              exportName: "ColorPickerSwatchGroup",
+              attrs: [{ name: "aria-label", value: literal("Suggested colors") }],
+              children: [
+                {
+                  type: "repeat",
+                  each: "normalizedSwatches",
+                  item: "swatch",
+                  index: "swatchIndex",
+                  children: [
+                    {
+                      type: "component",
+                      component: "color-picker",
+                      exportName: "ColorPickerSwatch",
+                      attrs: [
+                        { name: "value", value: { type: "raw", code: "swatch.value" } },
+                        { name: "disabled", value: { type: "raw", code: "swatch.disabled" } },
+                        { name: "aria-label", value: { type: "raw", code: "swatch.label" } },
+                        {
+                          name: "key",
+                          value: { type: "raw", code: "`${String(swatch.value)}-${swatchIndex}`" },
+                          frameworks: ["react"],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          else: [],
+        },
+        {
+          type: "component",
+          component: "color-picker",
+          exportName: "ColorPickerClear",
+          attrs: [{ name: "aria-label", value: literal("Clear color") }],
+          children: [{ type: "text", value: "Clear" }],
+        },
+      ],
+    },
+  ];
+}
+
+function colorPickerInputNodes(): RenderNode[] {
+  return [
+    {
+      type: "element",
+      tag: "div",
+      attrs: [
+        {
+          name: "class",
+          value: {
+            type: "classVariant",
+            variant: "colorPickerInput",
+            args: { class: "className" },
+          },
+        },
+        { name: "spread", value: variable("rest") },
+        dataSlot("color-picker-input"),
+      ],
+      children: [
+        primitive(
+          "ValueInput",
+          [
+            {
+              name: "class",
+              value: {
+                type: "classJoin",
+                items: [
+                  {
+                    type: "classVariant",
+                    variant: "colorPickerValueInput",
+                    args: {},
+                  },
+                  {
+                    type: "classVariant",
+                    variant: "colorPickerValueInputLayout",
+                    args: {},
+                  },
+                ],
+              },
+            },
+            dataSlot("color-picker-value-input"),
+          ],
+          [],
+        ),
+        {
+          type: "conditional",
+          condition: 'formatControl === "native"',
+          then: [
+            {
+              type: "element",
+              tag: "div",
+              attrs: [
+                {
+                  name: "class",
+                  value: {
+                    type: "classVariant",
+                    variant: "colorPickerNativeFormatSelectWrapper",
+                  },
+                },
+                dataSlot("color-picker-native-format-select-wrapper"),
+              ],
+              children: [
+                primitive(
+                  "FormatSelect",
+                  [
+                    {
+                      name: "class",
+                      value: {
+                        type: "classVariant",
+                        variant: "colorPickerNativeFormatSelect",
+                        args: {},
+                      },
+                    },
+                    { name: "aria-label", value: literal("Color format") },
+                    dataSlot("color-picker-native-format-select"),
+                  ],
+                  formatOptionNodes("native-select"),
+                ),
+                {
+                  type: "icon",
+                  importName: "ChevronDown",
+                  attrs: [
+                    {
+                      name: "class",
+                      value: {
+                        type: "classVariant",
+                        variant: "colorPickerNativeFormatSelectIcon",
+                        args: {},
+                      },
+                    },
+                    { name: "aria-hidden", value: literal("true") },
+                    dataSlot("color-picker-native-format-select-icon"),
+                  ],
+                },
+              ],
+            },
+          ],
+          else: [],
+        },
+        {
+          type: "conditional",
+          condition: 'formatControl === "select"',
+          then: [
+            primitive(
+              "FormatControl",
+              [
+                { name: "class", value: literal("shrink-0") },
+                dataSlot("color-picker-format-control"),
+              ],
+              [
+                {
+                  type: "component",
+                  component: "select",
+                  exportName: "Select",
+                  children: [
+                    {
+                      type: "component",
+                      component: "select",
+                      exportName: "SelectTrigger",
+                      attrs: [
+                        { name: "aria-label", value: literal("Color format") },
+                        {
+                          name: "class",
+                          value: {
+                            type: "classVariant",
+                            variant: "colorPickerFormatSelectTrigger",
+                            args: {},
+                          },
+                        },
+                      ],
+                    },
+                    {
+                      type: "component",
+                      component: "select",
+                      exportName: "SelectContent",
+                      attrs: [
+                        { name: "size", value: variable("formatContentSize") },
+                        { name: "data-sw-color-picker-format-options", value: literal("") },
+                      ],
+                      children: formatOptionNodes("select"),
+                    },
+                  ],
+                },
+              ],
+            ),
+          ],
+          else: [],
+        },
+      ],
+    },
+  ];
+}
+
 export const colorPickerStyledContract: StyledAdapterContract = {
   component: "color-picker",
   frameworks: ["astro", "react"],
@@ -118,11 +644,10 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       "Inline, input-only, and swatch-only compositions use no floating behavior.",
     ],
     composition: [
-      "ColorPicker composes Popover with Color Picker Primitive Root.",
-      "ColorPickerRoot is the popup-free base for inline, input-only, and swatch-only compositions.",
-      "ColorPickerContent provides the canonical area, grouped hue and optional alpha sliders with EyeDropper, value and format editing, optional Clear, separator, and consumer swatch slot.",
-      "ColorPickerValueInput, ColorPickerNativeFormatSelect, and ColorPickerFormatSelect are standalone editors for custom layouts.",
-      "No fixed swatch palette is contract-owned.",
+      "ColorPicker provides a complete popup editor by default and switches to the popup-free editor when inline is true.",
+      "Supplying children replaces the default visible anatomy while ColorPicker retains the Primitive root and hidden form input.",
+      "ColorPickerContent and ColorPickerInput provide focused escape hatches for custom popup layouts and native, styled, or omitted format controls.",
+      "Preset swatches are consumer-owned data rendered by the default editor or explicit Swatch parts.",
     ],
     portalGuidance: [
       "ColorPickerContent inherits Popover Portal discovery of the nearest data-floating-root.",
@@ -132,49 +657,31 @@ export const colorPickerStyledContract: StyledAdapterContract = {
   dependencies: { styledComponents: ["popover", "select", "native-select", "input"] },
   publicExports: [
     "ColorPicker",
-    "ColorPickerRoot",
-    "ColorPickerLabel",
-    "ColorPickerControl",
     "ColorPickerInput",
     "ColorPickerTrigger",
     "ColorPickerContent",
     "ColorPickerArea",
-    "ColorPickerAreaThumb",
-    "ColorPickerSliders",
     "ColorPickerChannelSlider",
     "ColorPickerChannelInput",
-    "ColorPickerValueInput",
-    "ColorPickerNativeFormatSelect",
-    "ColorPickerFormatSelect",
     "ColorPickerValueSwatch",
     "ColorPickerSwatchGroup",
     "ColorPickerSwatch",
     "ColorPickerEyeDropper",
     "ColorPickerClear",
-    "ColorPickerHiddenInput",
   ],
   defaultExport: {
     Root: "ColorPicker",
-    InlineRoot: "ColorPickerRoot",
-    Label: "ColorPickerLabel",
-    Control: "ColorPickerControl",
     Input: "ColorPickerInput",
     Trigger: "ColorPickerTrigger",
     Content: "ColorPickerContent",
     Area: "ColorPickerArea",
-    AreaThumb: "ColorPickerAreaThumb",
-    Sliders: "ColorPickerSliders",
     ChannelSlider: "ColorPickerChannelSlider",
     ChannelInput: "ColorPickerChannelInput",
-    ValueInput: "ColorPickerValueInput",
-    NativeFormatSelect: "ColorPickerNativeFormatSelect",
-    FormatSelect: "ColorPickerFormatSelect",
     ValueSwatch: "ColorPickerValueSwatch",
     SwatchGroup: "ColorPickerSwatchGroup",
     Swatch: "ColorPickerSwatch",
     EyeDropper: "ColorPickerEyeDropper",
     Clear: "ColorPickerClear",
-    HiddenInput: "ColorPickerHiddenInput",
   },
   variantCollectionName: "ColorPickerVariants",
   variantAliases: {
@@ -210,11 +717,14 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       "ColorPickerArea",
       "ColorPickerChannelSlider",
       "ColorPickerContent",
-      "ColorPickerFormatSelect",
+      "ColorPickerInput",
       "ColorPickerValueSwatch",
       "ColorPickerSwatch",
     ],
     content: [
+      '[data-slot="color-picker"][data-size="sm"], [data-sw-color-picker-content][data-size="sm"] { --sw-color-picker-font-size: 0.875rem; --sw-color-picker-label-font-size: 0.75rem; --sw-color-picker-gap: 0.75rem; --sw-color-picker-compact-gap: 0.375rem; --sw-color-picker-control-height: 2.25rem; --sw-color-picker-control-padding: 0.5rem; --sw-color-picker-content-width: 16rem; --sw-color-picker-content-gap: 0.5rem; --sw-color-picker-content-padding: 0.5rem; --sw-color-picker-area-height: 150px; --sw-color-picker-area-thumb-size: 0.875rem; --sw-color-picker-slider-gap: 0.5rem; --sw-color-picker-slider-size: 0.625rem; --sw-color-picker-slider-vertical-size: 10rem; --sw-color-picker-slider-thumb-size: 0.75rem; --sw-color-picker-input-width: 4rem; --sw-color-picker-swatch-size: 1.5rem; --sw-color-picker-value-swatch-size: 1rem; --sw-color-picker-value-swatch-radius: 4.5px; --sw-color-picker-format-width: 5rem; }',
+      '[data-slot="color-picker"][data-size="md"], [data-sw-color-picker-content][data-size="md"] { --sw-color-picker-font-size: 1rem; --sw-color-picker-label-font-size: 0.875rem; --sw-color-picker-gap: 0.75rem; --sw-color-picker-compact-gap: 0.5rem; --sw-color-picker-control-height: 2.75rem; --sw-color-picker-control-padding: 0.75rem; --sw-color-picker-content-width: 18rem; --sw-color-picker-content-gap: 0.75rem; --sw-color-picker-content-padding: 0.75rem; --sw-color-picker-area-height: 175px; --sw-color-picker-area-thumb-size: 1rem; --sw-color-picker-slider-gap: 0.75rem; --sw-color-picker-slider-size: 0.75rem; --sw-color-picker-slider-vertical-size: 12rem; --sw-color-picker-slider-thumb-size: 1rem; --sw-color-picker-input-width: 5rem; --sw-color-picker-swatch-size: 1.75rem; --sw-color-picker-value-swatch-size: 1.25rem; --sw-color-picker-value-swatch-radius: 5.5px; --sw-color-picker-format-width: 6rem; }',
+      '[data-slot="color-picker"][data-size="lg"], [data-sw-color-picker-content][data-size="lg"] { --sw-color-picker-font-size: 1.125rem; --sw-color-picker-label-font-size: 1rem; --sw-color-picker-gap: 0.75rem; --sw-color-picker-compact-gap: 0.625rem; --sw-color-picker-control-height: 3rem; --sw-color-picker-control-padding: 1rem; --sw-color-picker-content-width: 20rem; --sw-color-picker-content-gap: 1rem; --sw-color-picker-content-padding: 1rem; --sw-color-picker-area-height: 200px; --sw-color-picker-area-thumb-size: 1.25rem; --sw-color-picker-slider-gap: 1rem; --sw-color-picker-slider-size: 1rem; --sw-color-picker-slider-vertical-size: 14rem; --sw-color-picker-slider-thumb-size: 1.25rem; --sw-color-picker-input-width: 6rem; --sw-color-picker-swatch-size: 2rem; --sw-color-picker-value-swatch-size: 1.5rem; --sw-color-picker-value-swatch-radius: 6.5px; --sw-color-picker-format-width: 6rem; }',
       '[data-slot="color-picker-area-background"] { background: var(--sw-color-picker-area-background-overlay, linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent)), var(--sw-color-picker-area-background, hsl(var(--sw-color-picker-hue) 100% 50%)); }',
       '[data-slot="color-picker-channel-slider"] { --sw-color-picker-channel-gradient-direction: to right; --sw-color-picker-channel-gradient: linear-gradient(var(--sw-color-picker-channel-gradient-direction), transparent, var(--sw-color-picker-color, #000)); }',
       '[data-slot="color-picker-channel-slider"][data-orientation="vertical"] { --sw-color-picker-channel-gradient-direction: to top; }',
@@ -237,137 +747,79 @@ export const colorPickerStyledContract: StyledAdapterContract = {
   },
   variants: {
     colorPicker: {
-      base: "relative flex flex-col gap-3",
-      variants: { size: { sm: "text-sm", md: "text-base", lg: "text-lg" } },
+      base: "relative flex flex-col gap-(--sw-color-picker-gap) text-(length:--sw-color-picker-font-size)",
+      variants: { size: { sm: "", md: "", lg: "" } },
       defaultVariants: { size: "md" },
     },
     colorPickerLabel: {
-      base: "font-medium leading-none data-disabled:cursor-not-allowed data-disabled:opacity-50",
-      variants: { size: { sm: "text-xs", md: "text-sm", lg: "text-base" } },
-      defaultVariants: { size: "md" },
+      base: "text-(length:--sw-color-picker-label-font-size) font-medium leading-none data-disabled:cursor-not-allowed data-disabled:opacity-50",
     },
     colorPickerControl: {
-      base: "flex items-center gap-2",
-      variants: { size: { sm: "gap-1.5", md: "gap-2", lg: "gap-2.5" } },
-      defaultVariants: { size: "md" },
+      base: "flex items-center gap-(--sw-color-picker-compact-gap)",
     },
     colorPickerTrigger: {
-      base: "border-input bg-background focus-visible:ring-outline/50 inline-flex items-center rounded-md border shadow-xs outline-none focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50",
-      variants: {
-        size: {
-          sm: "h-9 gap-2 px-2 text-sm",
-          md: "h-11 gap-2.5 px-3",
-          lg: "h-12 gap-3 px-4 text-lg",
-        },
-      },
-      defaultVariants: { size: "md" },
+      base: "border-input bg-background focus-visible:ring-outline/50 inline-flex h-(--sw-color-picker-control-height) items-center gap-(--sw-color-picker-compact-gap) rounded-md border px-(--sw-color-picker-control-padding) text-(length:--sw-color-picker-font-size) shadow-xs outline-none focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50",
     },
     colorPickerContent: {
-      base: "flex max-h-[var(--sw-floating-available-height)] w-72 flex-col gap-3 p-3",
-      variants: { size: { sm: "w-64 gap-2 p-2", md: "w-72 gap-3 p-3", lg: "w-80 gap-4 p-4" } },
+      base: "flex max-h-(--sw-floating-available-height) w-(--sw-color-picker-content-width) flex-col gap-(--sw-color-picker-content-gap) p-(--sw-color-picker-content-padding) text-(length:--sw-color-picker-font-size)",
+      variants: { size: { sm: "", md: "", lg: "" } },
       defaultVariants: { size: "md" },
     },
     colorPickerInput: {
-      base: "flex items-center gap-2",
-      variants: { size: { sm: "gap-1.5", md: "gap-2", lg: "gap-2.5" } },
-      defaultVariants: { size: "md" },
+      base: "flex items-center gap-(--sw-color-picker-compact-gap)",
     },
     colorPickerValueInputLayout: {
-      base: "min-w-0 flex-1 data-invalid:border-error data-invalid:focus-visible:ring-error/40",
-      variants: { size: { sm: "", md: "", lg: "" } },
-      defaultVariants: { size: "md" },
+      base: "!h-(--sw-color-picker-control-height) min-w-0 flex-1 !px-(--sw-color-picker-control-padding) !text-(length:--sw-color-picker-font-size) data-invalid:border-error data-invalid:focus-visible:ring-error/40",
     },
     colorPickerArea: {
-      base: "group/color-picker-area border-outline relative min-h-32 w-full shrink-0 cursor-crosshair touch-none rounded-md border [&>[data-slot=color-picker-area-background]]:inset-0 [&>[data-slot=color-picker-area-background]]:size-full [&>[data-slot=color-picker-area-background]]:rounded-[7px]",
-      variants: { size: { sm: "h-[150px]", md: "h-[175px]", lg: "h-[200px]" } },
-      defaultVariants: { size: "md" },
+      base: "group/color-picker-area border-outline relative h-(--sw-color-picker-area-height) min-h-32 w-full shrink-0 cursor-crosshair touch-none rounded-md border [&>[data-slot=color-picker-area-background]]:inset-0 [&>[data-slot=color-picker-area-background]]:size-full [&>[data-slot=color-picker-area-background]]:rounded-[7px]",
     },
     colorPickerAreaThumb: {
-      base: "group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-outline/60 pointer-events-none absolute top-[clamp(1px,var(--sw-color-picker-area-y),calc(100%_-_1px))] left-[clamp(1px,var(--sw-color-picker-area-x),calc(100%_-_1px))] z-10 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[var(--sw-color-picker-area-thumb-color)] shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-3 focus-visible:ring-3 data-disabled:opacity-50 data-dragging:scale-110",
-      variants: { size: { sm: "size-3.5", md: "size-4", lg: "size-5" } },
-      defaultVariants: { size: "md" },
+      base: "group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-outline/60 pointer-events-none absolute top-[clamp(1px,var(--sw-color-picker-area-y),calc(100%_-_1px))] left-[clamp(1px,var(--sw-color-picker-area-x),calc(100%_-_1px))] z-10 size-(--sw-color-picker-area-thumb-size) -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-(--sw-color-picker-area-thumb-color) shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-area-input-x]:focus-visible]/color-picker-area:ring-3 focus-visible:ring-3 data-disabled:opacity-50 data-dragging:scale-110",
     },
     colorPickerSliders: {
-      base: "flex flex-col gap-3 px-2",
-      variants: { size: { sm: "gap-2", md: "gap-3", lg: "gap-4" } },
-      defaultVariants: { size: "md" },
+      base: "flex flex-col gap-(--sw-color-picker-slider-gap) px-2",
     },
     colorPickerSliderActionRow: {
-      base: "flex items-center gap-2",
-      variants: { size: { sm: "gap-1.5", md: "gap-2", lg: "gap-2.5" } },
-      defaultVariants: { size: "md" },
+      base: "flex items-center gap-(--sw-color-picker-compact-gap)",
     },
     colorPickerValueFormatRow: {
-      base: "flex items-center gap-2",
-      variants: { size: { sm: "gap-1.5", md: "gap-2", lg: "gap-2.5" } },
-      defaultVariants: { size: "md" },
+      base: "flex items-center gap-(--sw-color-picker-compact-gap)",
     },
     colorPickerSeparator: {
-      base: "bg-border h-px w-full",
-      variants: { size: { sm: "my-0.5", md: "my-1", lg: "my-1.5" } },
-      defaultVariants: { size: "md" },
+      base: "bg-border my-[calc(var(--sw-color-picker-compact-gap)/2)] h-px w-full",
     },
     colorPickerChannelSlider: {
-      base: "group/color-picker-channel-slider bg-border relative touch-none rounded-full [&>[data-slot=color-picker-channel-slider-track]]:inset-px [&>[data-slot=color-picker-channel-slider-track]]:size-auto [&>[data-slot=color-picker-transparency-grid]]:inset-px [&>[data-slot=color-picker-transparency-grid]]:size-auto",
-      variants: {
-        size: {
-          sm: "h-2.5 data-[orientation=vertical]:h-40 data-[orientation=vertical]:w-2.5",
-          md: "h-3 data-[orientation=vertical]:h-48 data-[orientation=vertical]:w-3",
-          lg: "h-4 data-[orientation=vertical]:h-56 data-[orientation=vertical]:w-4",
-        },
-      },
-      defaultVariants: { size: "md" },
+      base: "group/color-picker-channel-slider bg-border relative h-(--sw-color-picker-slider-size) touch-none rounded-full data-[orientation=vertical]:h-(--sw-color-picker-slider-vertical-size) data-[orientation=vertical]:w-(--sw-color-picker-slider-size) [&>[data-slot=color-picker-channel-slider-track]]:inset-px [&>[data-slot=color-picker-channel-slider-track]]:size-auto [&>[data-slot=color-picker-transparency-grid]]:inset-px [&>[data-slot=color-picker-transparency-grid]]:size-auto",
     },
     colorPickerChannelSliderThumb: {
-      base: "group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-outline/60 pointer-events-none absolute top-1/2 left-[var(--sw-color-picker-channel-position)] z-10 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-2 border-white shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-3 group-data-[orientation=vertical]/color-picker-channel-slider:top-[calc(100%-var(--sw-color-picker-channel-position))] group-data-[orientation=vertical]/color-picker-channel-slider:left-1/2 data-disabled:opacity-50 data-dragging:scale-110",
-      variants: { size: { sm: "size-3", md: "size-4", lg: "size-5" } },
-      defaultVariants: { size: "md" },
+      base: "group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-outline/60 pointer-events-none absolute top-1/2 left-(--sw-color-picker-channel-position) z-10 size-(--sw-color-picker-slider-thumb-size) -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border-2 border-white shadow-md ring-1 ring-black/30 outline-none group-has-[[data-slot=color-picker-channel-slider-input]:focus-visible]/color-picker-channel-slider:ring-3 group-data-[orientation=vertical]/color-picker-channel-slider:top-[calc(100%-var(--sw-color-picker-channel-position))] group-data-[orientation=vertical]/color-picker-channel-slider:left-1/2 data-disabled:opacity-50 data-dragging:scale-110",
     },
     colorPickerChannelInputLayout: {
-      base: "text-center data-invalid:border-error data-invalid:focus-visible:ring-error/40",
-      variants: { size: { sm: "h-9 w-16 text-sm", md: "h-11 w-20", lg: "h-12 w-24 text-lg" } },
-      defaultVariants: { size: "md" },
+      base: "h-(--sw-color-picker-control-height) w-(--sw-color-picker-input-width) px-(--sw-color-picker-control-padding) text-center text-(length:--sw-color-picker-font-size) data-invalid:border-error data-invalid:focus-visible:ring-error/40",
     },
     colorPickerSwatch: {
-      base: "relative overflow-hidden rounded-md border shadow-xs outline-none focus-visible:ring-3 data-selected:ring-2 data-disabled:opacity-50",
-      variants: { size: { sm: "size-6", md: "size-7", lg: "size-8" } },
-      defaultVariants: { size: "md" },
+      base: "relative size-(--sw-color-picker-swatch-size) overflow-hidden rounded-md border shadow-xs outline-none focus-visible:ring-3 data-selected:ring-2 data-disabled:opacity-50",
     },
     colorPickerSwatchGroup: {
-      base: "flex flex-wrap gap-2",
-      variants: { size: { sm: "gap-1.5", md: "gap-2", lg: "gap-2.5" } },
-      defaultVariants: { size: "md" },
+      base: "flex flex-wrap gap-(--sw-color-picker-compact-gap)",
     },
     colorPickerValueSwatch: {
-      base: "border-input relative shrink-0 overflow-hidden border",
-      variants: {
-        size: {
-          sm: "size-4 rounded-[4.5px]",
-          md: "size-5 rounded-[5.5px]",
-          lg: "size-6 rounded-[6.5px]",
-        },
-      },
-      defaultVariants: { size: "md" },
+      base: "border-input relative size-(--sw-color-picker-value-swatch-size) shrink-0 overflow-hidden rounded-(--sw-color-picker-value-swatch-radius) border",
     },
     colorPickerFormatSelectTrigger: {
-      base: "uppercase",
-      variants: { size: { sm: "min-w-20", md: "min-w-24", lg: "min-w-24" } },
-      defaultVariants: { size: "md" },
+      base: "h-(--sw-color-picker-control-height) min-w-(--sw-color-picker-format-width) px-(--sw-color-picker-control-padding) text-(length:--sw-color-picker-font-size) uppercase",
     },
     colorPickerAction: {
-      base: "border-input bg-background inline-flex items-center justify-center rounded-md border outline-none focus-visible:ring-3 disabled:opacity-50",
-      variants: { size: { sm: "h-9 px-2 text-sm", md: "h-11 px-3", lg: "h-12 px-4 text-lg" } },
-      defaultVariants: { size: "md" },
+      base: "border-input bg-background inline-flex h-(--sw-color-picker-control-height) items-center justify-center rounded-md border px-(--sw-color-picker-control-padding) text-(length:--sw-color-picker-font-size) outline-none focus-visible:ring-3 disabled:opacity-50",
     },
     colorPickerHiddenInput: {
       base: "sr-only",
-      variants: { size: { sm: "", md: "", lg: "" } },
-      defaultVariants: { size: "md" },
     },
   },
   components: [
     {
-      exportName: "ColorPickerRoot",
+      exportName: "ColorPicker",
       forwardRef: { targetType: "HTMLDivElement" },
       primitiveAliases: { "color-picker": "ColorPickerPrimitive" },
       props: {
@@ -397,7 +849,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
             type: 'import("@starwind-ui/runtime/color-picker").ColorPickerFormat',
           },
           { name: "alpha", optional: true, type: "boolean" },
-          { name: "allowEmpty", optional: true, type: "boolean" },
+          { name: "clearable", optional: true, type: "boolean" },
           { name: "disabled", optional: true, type: "boolean" },
           { name: "readOnly", optional: true, type: "boolean" },
           { name: "name", optional: true, type: "string" },
@@ -409,6 +861,23 @@ export const colorPickerStyledContract: StyledAdapterContract = {
             optional: true,
             type: 'import("@starwind-ui/runtime/color-picker").ColorPickerDirection',
           },
+          { name: "inline", optional: true, type: "boolean" },
+          { name: "label", optional: true, type: "string" },
+          { name: "showEyeDropper", optional: true, type: "boolean" },
+          { name: "showValueText", optional: true, type: "boolean" },
+          ...formatFields,
+          swatchesField,
+          { name: "defaultOpen", optional: true, type: "boolean" },
+          { name: "open", optional: true, type: "boolean", frameworks: ["react"] },
+          { name: "closeOnEscape", optional: true, type: "boolean" },
+          { name: "closeOnOutsideInteract", optional: true, type: "boolean" },
+          { name: "modal", optional: true, type: "boolean" },
+          { name: "openOnHover", optional: true, type: "boolean" },
+          { name: "closeDelay", optional: true, type: "number" },
+          { name: "side", optional: true, type: '"top" | "right" | "bottom" | "left"' },
+          { name: "align", optional: true, type: '"start" | "center" | "end"' },
+          { name: "sideOffset", optional: true, type: "number" },
+          { name: "avoidCollisions", optional: true, type: "boolean" },
           {
             name: "onValueChange",
             optional: true,
@@ -428,92 +897,6 @@ export const colorPickerStyledContract: StyledAdapterContract = {
             frameworks: ["react"],
           },
           {
-            name: "ref",
-            optional: true,
-            type: "React.Ref<HTMLDivElement>",
-            frameworks: ["react"],
-          },
-        ],
-      },
-      destructure: {
-        props: [
-          { name: "value", frameworks: ["react"] },
-          { name: "defaultValue", defaultValue: '"#000000"' },
-          { name: "format", defaultValue: '"hex"', frameworks: ["astro"] },
-          { name: "format", frameworks: ["react"] },
-          { name: "alpha", defaultValue: "true" },
-          { name: "allowEmpty", defaultValue: "false" },
-          { name: "disabled", defaultValue: "false" },
-          { name: "readOnly", defaultValue: "false" },
-          { name: "name" },
-          { name: "form" },
-          { name: "required", defaultValue: "false" },
-          { name: "locale" },
-          { name: "dir" },
-          { name: "onValueChange", frameworks: ["react"] },
-          { name: "onValueCommitted", frameworks: ["react"] },
-          { name: "onFormatChange", frameworks: ["react"] },
-          { name: "ref", frameworks: ["react"] },
-          { name: "class", alias: "className" },
-          { name: "size", defaultValue: '"md"' },
-        ],
-        rest: "rest",
-      },
-      render: [
-        primitive("Root", [
-          {
-            name: "class",
-            value: {
-              type: "classVariant",
-              variant: "colorPicker",
-              args: { size: "size", class: "className" },
-            },
-          },
-          { name: "value", value: variable("value"), frameworks: ["react"] },
-          { name: "defaultValue", value: variable("defaultValue") },
-          { name: "format", value: variable("format") },
-          { name: "alpha", value: variable("alpha") },
-          { name: "allowEmpty", value: variable("allowEmpty") },
-          { name: "disabled", value: variable("disabled") },
-          { name: "readOnly", value: variable("readOnly") },
-          { name: "name", value: variable("name") },
-          { name: "form", value: variable("form") },
-          { name: "required", value: variable("required") },
-          { name: "locale", value: variable("locale") },
-          { name: "dir", value: variable("dir") },
-          { name: "onValueChange", value: variable("onValueChange"), frameworks: ["react"] },
-          {
-            name: "onValueCommitted",
-            value: variable("onValueCommitted"),
-            frameworks: ["react"],
-          },
-          {
-            name: "onFormatChange",
-            value: variable("onFormatChange"),
-            frameworks: ["react"],
-          },
-          { name: "spread", value: variable("rest") },
-          { name: "ref", value: variable("ref"), frameworks: ["react"] },
-          dataSlot("color-picker"),
-        ]),
-      ],
-    },
-    {
-      exportName: "ColorPicker",
-      forwardRef: { targetType: "HTMLDivElement" },
-      props: {
-        extends: [
-          { type: "componentProps", component: "color-picker", exportName: "ColorPickerRoot" },
-        ],
-        fields: [
-          { name: "defaultOpen", optional: true, type: "boolean" },
-          { name: "open", optional: true, type: "boolean", frameworks: ["react"] },
-          { name: "closeOnEscape", optional: true, type: "boolean" },
-          { name: "closeOnOutsideInteract", optional: true, type: "boolean" },
-          { name: "modal", optional: true, type: "boolean" },
-          { name: "openOnHover", optional: true, type: "boolean" },
-          { name: "closeDelay", optional: true, type: "number" },
-          {
             name: "onOpenChange",
             optional: true,
             type: 'React.ComponentProps<typeof Popover>["onOpenChange"]',
@@ -525,25 +908,21 @@ export const colorPickerStyledContract: StyledAdapterContract = {
             type: 'React.ComponentProps<typeof Popover>["onCloseComplete"]',
             frameworks: ["react"],
           },
+          {
+            name: "ref",
+            optional: true,
+            type: "React.Ref<HTMLDivElement>",
+            frameworks: ["react"],
+          },
         ],
       },
       destructure: {
         props: [
-          { name: "defaultOpen", defaultValue: "false" },
-          { name: "open", frameworks: ["react"] },
-          { name: "closeOnEscape", defaultValue: "true" },
-          { name: "closeOnOutsideInteract", defaultValue: "true" },
-          { name: "modal", defaultValue: "false" },
-          { name: "openOnHover", defaultValue: "false" },
-          { name: "closeDelay", defaultValue: "200" },
-          { name: "onOpenChange", frameworks: ["react"] },
-          { name: "onCloseComplete", frameworks: ["react"] },
           { name: "value", frameworks: ["react"] },
           { name: "defaultValue", defaultValue: '"#000000"' },
-          { name: "format", defaultValue: '"hex"', frameworks: ["astro"] },
-          { name: "format", frameworks: ["react"] },
+          { name: "format" },
           { name: "alpha", defaultValue: "true" },
-          { name: "allowEmpty", defaultValue: "false" },
+          { name: "clearable", defaultValue: "false" },
           { name: "disabled", defaultValue: "false" },
           { name: "readOnly", defaultValue: "false" },
           { name: "name" },
@@ -551,168 +930,198 @@ export const colorPickerStyledContract: StyledAdapterContract = {
           { name: "required", defaultValue: "false" },
           { name: "locale" },
           { name: "dir" },
+          { name: "inline", defaultValue: "false" },
+          { name: "label" },
+          { name: "showEyeDropper", defaultValue: "true" },
+          { name: "showValueText", defaultValue: "true" },
+          { name: "formatControl", defaultValue: '"select"' },
+          { name: "formats", defaultValue: JSON.stringify(formatOptions) },
+          { name: "swatches", defaultValue: "[]" },
+          { name: "defaultOpen", defaultValue: "false" },
+          { name: "open", frameworks: ["react"] },
+          { name: "closeOnEscape", defaultValue: "true" },
+          { name: "closeOnOutsideInteract", defaultValue: "true" },
+          { name: "modal", defaultValue: "false" },
+          { name: "openOnHover", defaultValue: "false" },
+          { name: "closeDelay", defaultValue: "200" },
+          { name: "side", defaultValue: '"bottom"' },
+          { name: "align", defaultValue: '"start"' },
+          { name: "sideOffset", defaultValue: "4" },
+          { name: "avoidCollisions", defaultValue: "true" },
           { name: "onValueChange", frameworks: ["react"] },
           { name: "onValueCommitted", frameworks: ["react"] },
           { name: "onFormatChange", frameworks: ["react"] },
+          { name: "onOpenChange", frameworks: ["react"] },
+          { name: "onCloseComplete", frameworks: ["react"] },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
           { name: "size", defaultValue: '"md"' },
         ],
         rest: "rest",
       },
+      variables: [
+        {
+          name: "initialFormat",
+          frameworks: ["react"],
+          value: { type: "raw", code: 'format ?? formats[0] ?? "hex"' },
+        },
+        {
+          name: "uncontrolledFormatState",
+          frameworks: ["react"],
+          value: { type: "raw", code: "React.useState(initialFormat)" },
+        },
+        {
+          name: "uncontrolledFormat",
+          frameworks: ["react"],
+          value: { type: "raw", code: "uncontrolledFormatState[0]" },
+        },
+        {
+          name: "setUncontrolledFormat",
+          frameworks: ["react"],
+          value: { type: "raw", code: "uncontrolledFormatState[1]" },
+        },
+        {
+          name: "resolvedFormat",
+          frameworks: ["react"],
+          value: { type: "raw", code: "format ?? uncontrolledFormat" },
+        },
+        {
+          name: "resolvedFormat",
+          frameworks: ["astro"],
+          value: { type: "raw", code: 'format ?? formats[0] ?? "hex"' },
+        },
+        {
+          name: "requestedFormats",
+          value: { type: "raw", code: "Array.from(new Set(formats))" },
+        },
+        {
+          name: "normalizedFormats",
+          value: {
+            type: "raw",
+            code: "requestedFormats.includes(resolvedFormat) ? requestedFormats : [resolvedFormat, ...requestedFormats]",
+          },
+        },
+        {
+          name: "handleFormatChange",
+          frameworks: ["react"],
+          value: {
+            type: "raw",
+            code: "(...args: Parameters<NonNullable<typeof onFormatChange>>) => { const [nextFormat, details] = args; if (format === undefined) setUncontrolledFormat(nextFormat); onFormatChange?.(nextFormat, details); }",
+          },
+        },
+      ],
       render: [
         {
-          type: "component",
-          component: "popover",
-          exportName: "Popover",
-          attrs: [
-            { name: "defaultOpen", value: variable("defaultOpen") },
-            { name: "open", value: variable("open"), frameworks: ["react"] },
-            { name: "closeOnEscape", value: variable("closeOnEscape") },
-            {
-              name: "closeOnOutsideInteract",
-              value: variable("closeOnOutsideInteract"),
-            },
-            { name: "modal", value: variable("modal") },
-            { name: "openOnHover", value: variable("openOnHover") },
-            { name: "closeDelay", value: variable("closeDelay") },
-            {
-              name: "onOpenChange",
-              value: variable("onOpenChange"),
-              frameworks: ["react"],
-            },
-            {
-              name: "onCloseComplete",
-              value: variable("onCloseComplete"),
-              frameworks: ["react"],
-            },
-          ],
-          children: [
+          type: "conditional",
+          condition: "inline",
+          then: [colorPickerRootNode(false, true)],
+          else: [
             {
               type: "component",
-              component: "color-picker",
-              exportName: "ColorPickerRoot",
+              component: "popover",
+              exportName: "Popover",
               attrs: [
-                { name: "value", value: variable("value"), frameworks: ["react"] },
-                { name: "defaultValue", value: variable("defaultValue") },
-                { name: "format", value: variable("format") },
-                { name: "alpha", value: variable("alpha") },
-                { name: "allowEmpty", value: variable("allowEmpty") },
-                { name: "disabled", value: variable("disabled") },
-                { name: "readOnly", value: variable("readOnly") },
-                { name: "name", value: variable("name") },
-                { name: "form", value: variable("form") },
-                { name: "required", value: variable("required") },
-                { name: "locale", value: variable("locale") },
-                { name: "dir", value: variable("dir") },
-                { name: "spread", value: variable("rest") },
-                { name: "data-floating-root", value: literal(true) },
-                { name: "onValueChange", value: variable("onValueChange"), frameworks: ["react"] },
+                { name: "defaultOpen", value: variable("defaultOpen") },
+                { name: "open", value: variable("open"), frameworks: ["react"] },
+                { name: "closeOnEscape", value: variable("closeOnEscape") },
+                { name: "closeOnOutsideInteract", value: variable("closeOnOutsideInteract") },
+                { name: "modal", value: variable("modal") },
+                { name: "openOnHover", value: variable("openOnHover") },
+                { name: "closeDelay", value: variable("closeDelay") },
+                { name: "onOpenChange", value: variable("onOpenChange"), frameworks: ["react"] },
                 {
-                  name: "onValueCommitted",
-                  value: variable("onValueCommitted"),
+                  name: "onCloseComplete",
+                  value: variable("onCloseComplete"),
                   frameworks: ["react"],
                 },
-                {
-                  name: "onFormatChange",
-                  value: variable("onFormatChange"),
-                  frameworks: ["react"],
-                },
-                { name: "ref", value: variable("ref"), frameworks: ["react"] },
-                { name: "class", value: variable("className") },
-                { name: "size", value: variable("size") },
               ],
-              children: [slot()],
+              children: [colorPickerRootNode(true, false)],
             },
           ],
         },
       ],
     },
-    simplePart("ColorPickerLabel", "Label", "label", "colorPickerLabel", "color-picker-label"),
-    simplePart(
-      "ColorPickerControl",
-      "Control",
-      "div",
-      "colorPickerControl",
-      "color-picker-control",
-    ),
+    {
+      exportName: "ColorPickerDefaultEditor",
+      imports: [
+        {
+          importName: "ColorPicker",
+          source: "@tabler/icons/outline/color-picker.svg",
+          type: "default",
+        },
+      ],
+      props: {
+        fields: [
+          { name: "size", optional: true, type: '"sm" | "md" | "lg"' },
+          { name: "showEyeDropper", optional: true, type: "boolean" },
+          ...formatFields,
+          swatchesField,
+        ],
+      },
+      destructure: {
+        props: [
+          { name: "size", defaultValue: '"md"' },
+          { name: "showEyeDropper", defaultValue: "true" },
+          { name: "formatControl", defaultValue: '"select"' },
+          { name: "formats", defaultValue: JSON.stringify(formatOptions) },
+          { name: "swatches", defaultValue: "[]" },
+        ],
+      },
+      variables: [
+        {
+          name: "normalizedSwatches",
+          value: {
+            type: "raw",
+            code: 'swatches.map((swatch) => typeof swatch === "object" && swatch !== null && "value" in swatch ? swatch : { value: swatch, label: String(swatch) })',
+          },
+        },
+        {
+          name: "hasSwatchesAttribute",
+          value: { type: "raw", code: 'normalizedSwatches.length > 0 ? "true" : "false"' },
+        },
+      ],
+      render: defaultEditorNodes(),
+    },
     {
       exportName: "ColorPickerInput",
+      primitiveAliases: { "color-picker": "ColorPickerPrimitive" },
+      imports: [
+        {
+          importName: "ChevronDown",
+          source: "@tabler/icons/outline/chevron-down.svg",
+          type: "default",
+        },
+      ],
       props: {
-        extends: [
-          { type: "htmlAttributes", element: "div" },
-          { type: "variantProps", variant: "colorPickerInput" },
+        extends: [{ type: "htmlAttributes", element: "div" }],
+        fields: [
+          ...formatFields,
+          { name: "formatContentSize", optional: true, type: '"sm" | "md" | "lg"' },
         ],
-        fields: [{ name: "formatControl", optional: true, type: '"select" | "native"' }],
       },
       destructure: {
         props: [
           { name: "formatControl", defaultValue: '"select"' },
+          { name: "formats", defaultValue: JSON.stringify(formatOptions) },
+          { name: "formatContentSize", defaultValue: '"md"' },
           { name: "class", alias: "className" },
-          { name: "size", defaultValue: '"md"' },
         ],
         rest: "rest",
       },
-      render: [
-        {
-          type: "element",
-          tag: "div",
-          attrs: [
-            {
-              name: "class",
-              value: {
-                type: "classVariant",
-                variant: "colorPickerInput",
-                args: { size: "size", class: "className" },
-              },
-            },
-            { name: "spread", value: variable("rest") },
-            dataSlot("color-picker-input"),
-          ],
-          children: [
-            {
-              type: "component",
-              component: "color-picker",
-              exportName: "ColorPickerValueInput",
-              attrs: [{ name: "size", value: variable("size") }],
-            },
-            {
-              type: "conditional",
-              condition: 'formatControl === "native"',
-              then: [
-                {
-                  type: "component",
-                  component: "color-picker",
-                  exportName: "ColorPickerNativeFormatSelect",
-                  attrs: [{ name: "size", value: variable("size") }],
-                },
-              ],
-              else: [
-                {
-                  type: "component",
-                  component: "color-picker",
-                  exportName: "ColorPickerFormatSelect",
-                  attrs: [{ name: "size", value: variable("size") }],
-                },
-              ],
-            },
-          ],
-        },
+      variables: [
+        { name: "normalizedFormats", value: { type: "raw", code: "Array.from(new Set(formats))" } },
       ],
+      render: colorPickerInputNodes(),
     },
     {
       exportName: "ColorPickerTrigger",
       props: {
-        extends: [
-          { type: "componentProps", component: "popover", exportName: "PopoverTrigger" },
-          { type: "variantProps", variant: "colorPickerTrigger" },
-        ],
+        extends: [{ type: "componentProps", component: "popover", exportName: "PopoverTrigger" }],
         fields: [{ name: "showValueText", optional: true, type: "boolean" }],
       },
       destructure: {
         props: [
           { name: "class", alias: "className" },
-          { name: "size", defaultValue: '"md"' },
           { name: "showValueText", defaultValue: "true" },
         ],
         rest: "rest",
@@ -728,7 +1137,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
               value: {
                 type: "classVariant",
                 variant: "colorPickerTrigger",
-                args: { size: "size", class: "className" },
+                args: { class: "className" },
               },
             },
             { name: "spread", value: variable("rest") },
@@ -744,7 +1153,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
                   value: {
                     type: "classVariant",
                     variant: "colorPickerValueSwatch",
-                    args: { size: "size" },
+                    args: {},
                   },
                 },
                 dataSlot("color-picker-value-swatch"),
@@ -781,57 +1190,31 @@ export const colorPickerStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "ColorPickerContent",
-      imports: [
-        {
-          importName: "ColorPicker",
-          source: "@tabler/icons/outline/color-picker.svg",
-          type: "default",
-        },
-      ],
       props: {
         extends: [
           { type: "componentProps", component: "popover", exportName: "PopoverContent" },
           { type: "variantProps", variant: "colorPickerContent" },
         ],
         fields: [
-          { name: "alpha", optional: true, type: "boolean" },
           { name: "showEyeDropper", optional: true, type: "boolean" },
-          { name: "showClear", optional: true, type: "boolean" },
+          ...formatFields,
+          swatchesField,
         ],
       },
       destructure: {
         props: [
           { name: "class", alias: "className" },
           { name: "size", defaultValue: '"md"' },
-          { name: "alpha", defaultValue: "true" },
           { name: "showEyeDropper", defaultValue: "true" },
-          { name: "showClear", defaultValue: "false" },
+          { name: "formatControl", defaultValue: '"select"' },
+          { name: "formats", defaultValue: JSON.stringify(formatOptions) },
+          { name: "swatches", defaultValue: "[]" },
           { name: "side", defaultValue: '"bottom"' },
           { name: "align", defaultValue: '"start"' },
           { name: "exitMotion", defaultValue: '"fade"' },
         ],
         rest: "rest",
       },
-      variables: [
-        {
-          name: "inputSize",
-          value: { type: "raw", code: 'size === "lg" ? "md" : "sm"' },
-        },
-        {
-          name: "hasSwatches",
-          frameworks: ["astro"],
-          value: { type: "raw", code: 'Astro.slots.has("swatches")' },
-        },
-        {
-          name: "hasSwatches",
-          frameworks: ["react"],
-          value: { type: "raw", code: "swatches != null" },
-        },
-        {
-          name: "hasSwatchesAttribute",
-          value: { type: "raw", code: 'hasSwatches ? "true" : "false"' },
-        },
-      ],
       render: [
         {
           type: "component",
@@ -851,153 +1234,25 @@ export const colorPickerStyledContract: StyledAdapterContract = {
             { name: "collisionStrategy", value: literal("best-fit") },
             { name: "exitMotion", value: variable("exitMotion") },
             { name: "spread", value: variable("rest") },
+            { name: "data-sw-color-picker-content", value: literal("") },
+            { name: "data-size", value: variable("size") },
             dataSlot("color-picker-content"),
           ],
           children: [
-            {
-              type: "slot",
-              fallback: [
-                {
-                  type: "component",
-                  component: "color-picker",
-                  exportName: "ColorPickerArea",
-                  attrs: [{ name: "size", value: variable("size") }],
-                },
-                {
-                  type: "element",
-                  tag: "div",
-                  attrs: [
-                    {
-                      name: "class",
-                      value: {
-                        type: "classVariant",
-                        variant: "colorPickerSliderActionRow",
-                        args: { size: "size" },
-                      },
-                    },
-                    dataSlot("color-picker-slider-action-row"),
-                  ],
-                  children: [
-                    {
-                      type: "component",
-                      component: "color-picker",
-                      exportName: "ColorPickerSliders",
-                      attrs: [
-                        { name: "alpha", value: variable("alpha") },
-                        { name: "size", value: variable("size") },
-                        { name: "class", value: literal("min-w-0 flex-1") },
-                      ],
-                    },
-                    {
-                      type: "conditional",
-                      condition: "showEyeDropper",
-                      then: [
-                        {
-                          type: "component",
-                          component: "color-picker",
-                          exportName: "ColorPickerEyeDropper",
-                          attrs: [
-                            { name: "size", value: variable("size") },
-                            { name: "aria-label", value: literal("Pick a color from the screen") },
-                          ],
-                          children: [
-                            {
-                              type: "icon",
-                              importName: "ColorPicker",
-                              attrs: [
-                                { name: "class", value: literal("size-4") },
-                                { name: "aria-hidden", value: literal("true") },
-                              ],
-                            },
-                          ],
-                        },
-                      ],
-                      else: [],
-                    },
-                  ],
-                },
-                {
-                  type: "element",
-                  tag: "div",
-                  attrs: [
-                    {
-                      name: "class",
-                      value: {
-                        type: "classVariant",
-                        variant: "colorPickerValueFormatRow",
-                        args: { size: "size" },
-                      },
-                    },
-                    dataSlot("color-picker-value-format-row"),
-                  ],
-                  children: [
-                    {
-                      type: "component",
-                      component: "color-picker",
-                      exportName: "ColorPickerInput",
-                      attrs: [
-                        { name: "size", value: variable("inputSize") },
-                        { name: "class", value: literal("min-w-0 flex-1") },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: "element",
-                  tag: "div",
-                  attrs: [
-                    { name: "class", value: literal("contents") },
-                    { name: "data-has-swatches", value: variable("hasSwatchesAttribute") },
-                    dataSlot("color-picker-footer"),
-                  ],
-                  children: [
-                    {
-                      type: "conditional",
-                      condition: "(hasSwatches || showClear)",
-                      then: [
-                        {
-                          type: "element",
-                          tag: "div",
-                          selfClosing: true,
-                          attrs: [
-                            {
-                              name: "class",
-                              value: {
-                                type: "classVariant",
-                                variant: "colorPickerSeparator",
-                                args: { size: "size" },
-                              },
-                            },
-                            { name: "role", value: literal("separator") },
-                            { name: "aria-hidden", value: literal("true") },
-                            dataSlot("color-picker-separator"),
-                          ],
-                        },
-                      ],
-                      else: [],
-                    },
-                    slot("swatches"),
-                    {
-                      type: "conditional",
-                      condition: "showClear",
-                      then: [
-                        {
-                          type: "component",
-                          component: "color-picker",
-                          exportName: "ColorPickerClear",
-                          attrs: [
-                            { name: "size", value: variable("inputSize") },
-                            { name: "aria-label", value: literal("Clear color") },
-                          ],
-                          children: [{ type: "text", value: "Clear" }],
-                        },
-                      ],
-                      else: [],
-                    },
-                  ],
-                },
-              ],
-            },
+            slot(undefined, [
+              {
+                type: "component",
+                component: "color-picker",
+                exportName: "ColorPickerDefaultEditor",
+                attrs: [
+                  { name: "size", value: variable("size") },
+                  { name: "showEyeDropper", value: variable("showEyeDropper") },
+                  { name: "formatControl", value: variable("formatControl") },
+                  { name: "formats", value: variable("formats") },
+                  { name: "swatches", value: variable("swatches") },
+                ],
+              },
+            ]),
           ],
         },
       ],
@@ -1006,16 +1261,10 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       exportName: "ColorPickerArea",
       primitiveAliases: { "color-picker": "ColorPickerPrimitive" },
       props: {
-        extends: [
-          { type: "htmlAttributes", element: "div" },
-          { type: "variantProps", variant: "colorPickerArea" },
-        ],
+        extends: [{ type: "htmlAttributes", element: "div" }],
       },
       destructure: {
-        props: [
-          { name: "class", alias: "className" },
-          { name: "size", defaultValue: '"md"' },
-        ],
+        props: [{ name: "class", alias: "className" }],
         rest: "rest",
       },
       render: [
@@ -1027,7 +1276,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
               value: {
                 type: "classVariant",
                 variant: "colorPickerArea",
-                args: { size: "size", class: "className" },
+                args: { class: "className" },
               },
             },
             { name: "spread", value: variable("rest") },
@@ -1042,12 +1291,21 @@ export const colorPickerStyledContract: StyledAdapterContract = {
               ],
               [],
             ),
-            {
-              type: "component",
-              component: "color-picker",
-              exportName: "ColorPickerAreaThumb",
-              attrs: [{ name: "size", value: variable("size") }],
-            },
+            primitive(
+              "AreaThumb",
+              [
+                {
+                  name: "class",
+                  value: {
+                    type: "classVariant",
+                    variant: "colorPickerAreaThumb",
+                    args: {},
+                  },
+                },
+                dataSlot("color-picker-area-thumb"),
+              ],
+              [],
+            ),
             primitive(
               "AreaInput",
               [
@@ -1070,84 +1328,11 @@ export const colorPickerStyledContract: StyledAdapterContract = {
         ),
       ],
     },
-    simplePart(
-      "ColorPickerAreaThumb",
-      "AreaThumb",
-      "span",
-      "colorPickerAreaThumb",
-      "color-picker-area-thumb",
-    ),
-    {
-      exportName: "ColorPickerSliders",
-      props: {
-        extends: [
-          { type: "htmlAttributes", element: "div" },
-          { type: "variantProps", variant: "colorPickerSliders" },
-        ],
-        fields: [{ name: "alpha", optional: true, type: "boolean" }],
-      },
-      destructure: {
-        props: [
-          { name: "alpha", defaultValue: "true" },
-          { name: "class", alias: "className" },
-          { name: "size", defaultValue: '"md"' },
-        ],
-        rest: "rest",
-      },
-      render: [
-        {
-          type: "element",
-          tag: "div",
-          attrs: [
-            {
-              name: "class",
-              value: {
-                type: "classVariant",
-                variant: "colorPickerSliders",
-                args: { size: "size", class: "className" },
-              },
-            },
-            { name: "spread", value: variable("rest") },
-            dataSlot("color-picker-sliders"),
-          ],
-          children: [
-            {
-              type: "component",
-              component: "color-picker",
-              exportName: "ColorPickerChannelSlider",
-              attrs: [
-                { name: "channel", value: literal("hue") },
-                { name: "size", value: variable("size") },
-              ],
-            },
-            {
-              type: "conditional",
-              condition: "alpha",
-              then: [
-                {
-                  type: "component",
-                  component: "color-picker",
-                  exportName: "ColorPickerChannelSlider",
-                  attrs: [
-                    { name: "channel", value: literal("alpha") },
-                    { name: "size", value: variable("size") },
-                  ],
-                },
-              ],
-              else: [],
-            },
-          ],
-        },
-      ],
-    },
     {
       exportName: "ColorPickerChannelSlider",
       primitiveAliases: { "color-picker": "ColorPickerPrimitive" },
       props: {
-        extends: [
-          { type: "htmlAttributes", element: "div" },
-          { type: "variantProps", variant: "colorPickerChannelSlider" },
-        ],
+        extends: [{ type: "htmlAttributes", element: "div" }],
         fields: [
           {
             name: "channel",
@@ -1161,7 +1346,6 @@ export const colorPickerStyledContract: StyledAdapterContract = {
           { name: "channel" },
           { name: "orientation", defaultValue: '"horizontal"' },
           { name: "class", alias: "className" },
-          { name: "size", defaultValue: '"md"' },
         ],
         rest: "rest",
       },
@@ -1176,7 +1360,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
               value: {
                 type: "classVariant",
                 variant: "colorPickerChannelSlider",
-                args: { size: "size", class: "className" },
+                args: { class: "className" },
               },
             },
             { name: "spread", value: variable("rest") },
@@ -1207,7 +1391,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
                   value: {
                     type: "classVariant",
                     variant: "colorPickerChannelSliderThumb",
-                    args: { size: "size" },
+                    args: {},
                   },
                 },
                 dataSlot("color-picker-channel-slider-thumb"),
@@ -1228,7 +1412,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
                   selfClosing: true,
                   attrs: [
                     className(
-                      "pointer-events-none absolute inset-0 size-full bg-[var(--sw-color-picker-channel-thumb-color)]",
+                      "pointer-events-none absolute inset-0 size-full bg-(--sw-color-picker-channel-thumb-color)",
                     ),
                     dataSlot("color-picker-channel-thumb-color-layer"),
                   ],
@@ -1258,176 +1442,14 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       [],
       "colorPickerChannelInputLayout",
     ),
-    simplePart(
-      "ColorPickerValueInput",
-      "ValueInput",
-      "input",
-      "colorPickerValueInput",
-      "color-picker-value-input",
-      [],
-      [],
-      ["size"],
-      "colorPickerValueInputLayout",
-    ),
-    {
-      exportName: "ColorPickerNativeFormatSelect",
-      primitiveAliases: { "color-picker": "ColorPickerPrimitive" },
-      imports: [
-        {
-          importName: "ChevronDown",
-          source: "@tabler/icons/outline/chevron-down.svg",
-          type: "default",
-        },
-      ],
-      props: {
-        extends: [
-          { type: "omitHtmlAttributes", element: "select", keys: ["size"] },
-          { type: "variantProps", variant: "colorPickerNativeFormatSelect" },
-        ],
-      },
-      destructure: {
-        props: [
-          { name: "class", alias: "className" },
-          { name: "size", defaultValue: '"md"' },
-        ],
-        rest: "rest",
-      },
-      render: [
-        {
-          type: "element",
-          tag: "div",
-          attrs: [
-            {
-              name: "class",
-              value: {
-                type: "classVariant",
-                variant: "colorPickerNativeFormatSelectWrapper",
-              },
-            },
-            dataSlot("color-picker-native-format-select-wrapper"),
-          ],
-          children: [
-            primitive(
-              "FormatSelect",
-              [
-                {
-                  name: "class",
-                  value: {
-                    type: "classVariant",
-                    variant: "colorPickerNativeFormatSelect",
-                    args: { size: "size", class: "className" },
-                  },
-                },
-                { name: "aria-label", value: literal("Color format") },
-                { name: "spread", value: variable("rest") },
-                dataSlot("color-picker-native-format-select"),
-              ],
-              formatOptionNodes("native-select"),
-            ),
-            {
-              type: "icon",
-              importName: "ChevronDown",
-              attrs: [
-                {
-                  name: "class",
-                  value: {
-                    type: "classVariant",
-                    variant: "colorPickerNativeFormatSelectIcon",
-                    args: { size: "size" },
-                  },
-                },
-                { name: "aria-hidden", value: literal("true") },
-                dataSlot("color-picker-native-format-select-icon"),
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      exportName: "ColorPickerFormatSelect",
-      primitiveAliases: { "color-picker": "ColorPickerPrimitive" },
-      props: {
-        extends: [{ type: "htmlAttributes", element: "div" }],
-        fields: [{ name: "size", optional: true, type: '"sm" | "md" | "lg"' }],
-      },
-      destructure: {
-        props: [
-          { name: "class", alias: "className" },
-          { name: "size", defaultValue: '"md"' },
-        ],
-        rest: "rest",
-      },
-      render: [
-        primitive(
-          "FormatControl",
-          [
-            {
-              name: "class",
-              value: {
-                type: "classJoin",
-                items: [
-                  { type: "literal", value: "shrink-0" },
-                  { type: "variable", name: "className" },
-                ],
-              },
-            },
-            { name: "spread", value: variable("rest") },
-            dataSlot("color-picker-format-control"),
-          ],
-          [
-            {
-              type: "component",
-              component: "select",
-              exportName: "Select",
-              children: [
-                {
-                  type: "component",
-                  component: "select",
-                  exportName: "SelectTrigger",
-                  attrs: [
-                    { name: "size", value: variable("size") },
-                    { name: "aria-label", value: literal("Color format") },
-                    {
-                      name: "class",
-                      value: {
-                        type: "classVariant",
-                        variant: "colorPickerFormatSelectTrigger",
-                        args: { size: "size" },
-                      },
-                    },
-                  ],
-                },
-                {
-                  type: "component",
-                  component: "select",
-                  exportName: "SelectContent",
-                  attrs: [
-                    { name: "size", value: variable("size") },
-                    { name: "data-sw-color-picker-format-options", value: literal("") },
-                  ],
-                  children: formatOptionNodes("select"),
-                },
-              ],
-            },
-          ],
-        ),
-      ],
-    },
     {
       exportName: "ColorPickerValueSwatch",
       primitiveAliases: { "color-picker": "ColorPickerPrimitive" },
       props: {
-        extends: [
-          { type: "htmlAttributes", element: "span" },
-          { type: "variantProps", variant: "colorPickerValueSwatch" },
-        ],
+        extends: [{ type: "htmlAttributes", element: "span" }],
       },
       destructure: {
-        props: [
-          { name: "class", alias: "className" },
-          { name: "size", defaultValue: '"md"' },
-        ],
+        props: [{ name: "class", alias: "className" }],
         rest: "rest",
       },
       render: [
@@ -1439,7 +1461,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
               value: {
                 type: "classVariant",
                 variant: "colorPickerValueSwatch",
-                args: { size: "size", class: "className" },
+                args: { class: "className" },
               },
             },
             { name: "spread", value: variable("rest") },
@@ -1478,10 +1500,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       exportName: "ColorPickerSwatch",
       primitiveAliases: { "color-picker": "ColorPickerPrimitive" },
       props: {
-        extends: [
-          { type: "htmlAttributes", element: "button" },
-          { type: "variantProps", variant: "colorPickerSwatch" },
-        ],
+        extends: [{ type: "omitHtmlAttributes", element: "button", keys: ["value"] }],
         fields: [
           { name: "value", type: 'import("@starwind-ui/runtime/color-picker").ColorPickerValue' },
           { name: "disabled", optional: true, type: "boolean" },
@@ -1492,7 +1511,6 @@ export const colorPickerStyledContract: StyledAdapterContract = {
           { name: "value" },
           { name: "disabled", defaultValue: "false" },
           { name: "class", alias: "className" },
-          { name: "size", defaultValue: '"md"' },
         ],
         rest: "rest",
       },
@@ -1507,7 +1525,7 @@ export const colorPickerStyledContract: StyledAdapterContract = {
               value: {
                 type: "classVariant",
                 variant: "colorPickerSwatch",
-                args: { size: "size", class: "className" },
+                args: { class: "className" },
               },
             },
             { name: "spread", value: variable("rest") },
@@ -1544,12 +1562,5 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       "color-picker-eye-dropper",
     ),
     simplePart("ColorPickerClear", "Clear", "button", "colorPickerAction", "color-picker-clear"),
-    simplePart(
-      "ColorPickerHiddenInput",
-      "HiddenInput",
-      "input",
-      "colorPickerHiddenInput",
-      "color-picker-hidden-input",
-    ),
   ],
 };

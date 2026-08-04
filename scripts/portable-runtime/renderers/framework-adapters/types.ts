@@ -1524,12 +1524,31 @@ export type AdapterOptionCollectionOverlayFacts = {
     value: string;
     valueData: string;
   };
+  collection: {
+    itemIdentity: {
+      attribute: string;
+      kind: "primitive-value";
+      part: AdapterOptionCollectionOverlayPartName;
+      prop: string;
+    };
+    selectedLabel: {
+      emptyItemText: "preserve";
+      fallbackEmptyText: "missing";
+      itemPart: AdapterOptionCollectionOverlayPartName;
+      itemTextPart: AdapterOptionCollectionOverlayPartName;
+      searchParts: AdapterOptionCollectionOverlayPartName[];
+      trim: boolean;
+    };
+  };
   context: {
     fileExportMembers: AdapterExportMember[];
     itemContext: string;
     itemContextValueType: string;
+    itemValues: string[];
     rootContext: string;
     rootContextValueType: string;
+    rootOperations: string[];
+    rootValues: string[];
     useItemContext: string;
     useRootContext: string;
   };
@@ -1561,6 +1580,11 @@ export type AdapterOptionCollectionOverlayFacts = {
     sideDefault: string;
     sideOffsetDefault: string;
   };
+  form: {
+    fieldIntegration: boolean;
+    reset: "runtime-readback-after-native-reset";
+    setter: { method: string; props: string[] };
+  };
   index: {
     importMembers: AdapterExportMember[];
     namespaceMembers: Array<{ key: string; name: string }>;
@@ -1571,6 +1595,44 @@ export type AdapterOptionCollectionOverlayFacts = {
     AdapterFamilyPart & { namespaceKey: string; role?: string }
   > & {
     input: AdapterFamilyPart;
+  };
+  lifecycle: {
+    cleanup: string;
+    recreateOnControllednessChange: string[];
+    setup: "after-mount";
+    updateSetters: {
+      disabled: string;
+      highlightItemOnHover: string;
+      modal: string;
+      readOnly: string;
+    };
+  };
+  models: Array<{
+    controlledProp: string;
+    defaultProp: string;
+    event: {
+      callbackProp: string;
+      callbackTiming: "before-state-commit";
+      cancelable: boolean;
+      detailsType: string;
+      name: string;
+      valueProperty: string;
+    };
+    getter: string;
+    name: "open" | "value";
+    setter: string;
+    valueType: string;
+  }>;
+  portal: {
+    activation: "after-root-mount";
+    defaultTarget: string;
+    owner: "component-instance";
+    part: AdapterOptionCollectionOverlayPartName;
+    referenceOption: string;
+  };
+  presence: {
+    initialHiddenParts: string[];
+    unmountPolicy: "runtime-owned";
   };
   props: {
     align: AdapterFamilyProp;
@@ -1593,6 +1655,7 @@ export type AdapterOptionCollectionOverlayFacts = {
     sideOffset: AdapterFamilyProp;
     value: AdapterFamilyProp;
   };
+  publicRefs: string[];
   runtime: {
     factory: string;
     importSource: string;
@@ -1658,6 +1721,11 @@ export type AdapterBooleanFormControlFacts = {
     readonlyAriaFalseWhenFalse: boolean;
   };
   displayName: string;
+  escapeDeclarations: Array<{
+    boundary: string;
+    reason: string;
+    tests: string[];
+  }>;
   event: {
     callbackProp: string;
     detailsType: string;
@@ -1687,6 +1755,7 @@ export type AdapterBooleanFormControlFacts = {
     input: AdapterFamilyPart;
     root: AdapterFamilyPart;
     stateIndicator?: AdapterFamilyPart & { namespaceKey: string };
+    uncheckedInput?: AdapterFamilyPart;
   };
   props: {
     defaultState: AdapterFamilyProp;
@@ -2192,6 +2261,7 @@ export type AdapterRangeControlFacts = {
   state: {
     getter: string;
     name: string;
+    syncEvent: string;
     type: string;
   };
   thumbInput: {

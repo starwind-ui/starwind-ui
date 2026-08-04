@@ -165,7 +165,7 @@ export async function verifyAstroDisplayControlCases({ page }) {
   if (
     cardCount !== 4 ||
     cardState.dataSize !== "sm" ||
-    defaultCardState.dataSize !== "default" ||
+    defaultCardState.dataSize !== "md" ||
     cardState.hasDataSwCard !== true ||
     cardState.className?.includes("runtime-card-custom") !== true ||
     cardState.className?.includes("bg-card") !== true ||

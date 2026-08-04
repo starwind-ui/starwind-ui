@@ -337,16 +337,30 @@ function printVueCheckboxRoot(
   const state = facts.props.state.name;
   const defaultState = facts.props.defaultState.name;
   const disabled = facts.props.disabled.name;
-  const form = requireProp(facts.props.form?.name, "form");
-  const id = requireProp(facts.props.id?.name, "id");
-  const indeterminate = requireProp(facts.props.indeterminate?.name, "indeterminate");
-  const name = requireProp(facts.props.name?.name, "name");
+  const form = requireProp(facts.props.form?.name, "form", facts.displayName);
+  const id = requireProp(facts.props.id?.name, "id", facts.displayName);
+  const indeterminate = requireProp(
+    facts.props.indeterminate?.name,
+    "indeterminate",
+    facts.displayName,
+  );
+  const name = requireProp(facts.props.name?.name, "name", facts.displayName);
   const nativeButton = facts.props.nativeButton.name;
-  const readOnly = requireProp(facts.props.readOnly?.name, "readOnly");
-  const required = requireProp(facts.props.required?.name, "required");
-  const uncheckedValue = requireProp(facts.props.uncheckedValue?.name, "uncheckedValue");
-  const value = requireProp(facts.props.value?.name, "value");
+  const readOnly = requireProp(facts.props.readOnly?.name, "readOnly", facts.displayName);
+  const required = requireProp(facts.props.required?.name, "required", facts.displayName);
+  const uncheckedValue = requireProp(
+    facts.props.uncheckedValue?.name,
+    "uncheckedValue",
+    facts.displayName,
+  );
+  const value = requireProp(facts.props.value?.name, "value", facts.displayName);
   const detailType = facts.event.detailsType;
+  const uncheckedInput = facts.parts.uncheckedInput;
+  if (!uncheckedInput) {
+    throw new TypeError(
+      `Vue ${facts.displayName} projection requires a Runtime-owned unchecked input fact.`,
+    );
+  }
   const group = facts.group;
   const groupImport = group ? `import { ${group.hookName} } from "${group.importPath}";` : "";
   const groupSetup = group
@@ -480,7 +494,7 @@ function removeRuntimeOwnedUncheckedInput(): void {
   const candidate = inputRef.value?.nextElementSibling;
   if (
     candidate instanceof HTMLInputElement &&
-    candidate.hasAttribute("data-sw-checkbox-unchecked-input")
+    candidate.hasAttribute("${uncheckedInput.discoveryAttribute}")
   ) {
     candidate.remove();
   }
@@ -655,9 +669,11 @@ function printVueCheckboxIndicator(
   file: AdapterComponentFile,
   facts: BooleanFormControlFacts,
 ): AdapterPrintedFile {
-  const keepMounted = requireProp(facts.props.keepMounted?.name, "keepMounted");
+  const keepMounted = requireProp(facts.props.keepMounted?.name, "keepMounted", facts.displayName);
   const indicator = facts.parts.stateIndicator;
-  if (!indicator) throw new TypeError("Vue Checkbox projection requires an indicator part.");
+  if (!indicator) {
+    throw new TypeError(`Vue ${facts.displayName} projection requires an indicator part.`);
+  }
 
   return {
     contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
@@ -724,10 +740,11 @@ function printVueExternalBooleanRoot(
   const value = requireProp(facts.props.value?.name, "value", facts.displayName);
   const inputRefProp = requireProp(facts.input.refProp?.name, "inputRef", facts.displayName);
   const detailType = facts.event.detailsType;
+  const uncheckedInput = facts.parts.uncheckedInput;
   const formOptionsSetter = facts.setters.formOptions;
-  if (!formOptionsSetter) {
+  if (!formOptionsSetter || !uncheckedInput) {
     throw new TypeError(
-      `Vue ${facts.displayName} projection requires the form-options setter contract fact.`,
+      `Vue ${facts.displayName} projection requires form-options and Runtime-owned unchecked-input contract facts.`,
     );
   }
 
@@ -826,7 +843,7 @@ function removeRuntimeOwnedUncheckedInput(): void {
   const candidate = ${inputRefProp}.value?.nextElementSibling;
   if (
     candidate instanceof HTMLInputElement &&
-    candidate.hasAttribute("${facts.parts.input.discoveryAttribute.replace("-input", "-unchecked-input")}")
+    candidate.hasAttribute("${uncheckedInput.discoveryAttribute}")
   ) {
     candidate.remove();
   }
@@ -1007,11 +1024,7 @@ defineExpose({
   };
 }
 
-function requireProp(
-  value: string | undefined,
-  expected: string,
-  displayName = "Checkbox",
-): string {
+function requireProp(value: string | undefined, expected: string, displayName: string): string {
   if (!value)
     throw new TypeError(`Vue ${displayName} projection requires the ${expected} contract fact.`);
   return value;

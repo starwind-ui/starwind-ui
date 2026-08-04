@@ -21,8 +21,13 @@ const sideExamples = [
       {
         sideExamples.map(({ side, label }) => (
           <HoverCard id={`runtime-hover-card-side-${side}`} openDelay={0} closeDelay={0}>
-            <HoverCardTrigger asChild>
-              <Button id={`runtime-hover-card-side-${side}-trigger`} variant="outline" size="sm">
+            <HoverCardTrigger asChild class="tracking-[0.234px]">
+              <Button
+                id={`runtime-hover-card-side-${side}-trigger`}
+                variant="outline"
+                size="sm"
+                class="uppercase"
+              >
                 {label} side
               </Button>
             </HoverCardTrigger>
@@ -45,6 +50,19 @@ const sideExamples = [
     </div>
 
     <div class="flex min-h-36 flex-wrap items-center justify-center gap-4 sm:px-20">
+      <HoverCard id="runtime-hover-card-native" openDelay={0} closeDelay={0}>
+        <HoverCardTrigger
+          id="runtime-hover-card-native-trigger"
+          href="#runtime-hover-card-native"
+          class="cursor-help"
+        >
+          Native trigger
+        </HoverCardTrigger>
+        <HoverCardContent id="runtime-hover-card-native-content" class="duration-0">
+          Native trigger content
+        </HoverCardContent>
+      </HoverCard>
+
       <HoverCard id="runtime-hover-card-aligned" openDelay={100} closeDelay={250}>
         <HoverCardTrigger asChild>
           <Button id="runtime-hover-card-aligned-trigger" variant="secondary" size="sm">
@@ -87,11 +105,14 @@ const sideExamples = [
       </HoverCard>
 
       <HoverCard id="runtime-hover-card-as-child" openDelay={0} closeDelay={150}>
-        <HoverCardTrigger asChild>
+        <HoverCardTrigger asChild class="tracking-[0.123px]">
           <a
             id="runtime-hover-card-as-child-trigger"
             href="#runtime-hover-card-as-child"
-            class="text-primary text-sm font-medium underline-offset-4 hover:underline"
+            class="text-primary text-sm font-medium uppercase underline-offset-4 hover:underline"
+            style="word-spacing: 1.234px"
+            data-listener-count="0"
+            onclick="this.dataset.listenerCount = String(Number(this.dataset.listenerCount) + 1); document.getElementById('runtime-hover-card-as-child-listener-count').textContent = this.dataset.listenerCount"
           >
             As child link
           </a>
@@ -109,6 +130,7 @@ const sideExamples = [
             </p>
           </div>
         </HoverCardContent>
+        <span id="runtime-hover-card-as-child-listener-count" class="sr-only">0</span>
       </HoverCard>
     </div>
   </div>

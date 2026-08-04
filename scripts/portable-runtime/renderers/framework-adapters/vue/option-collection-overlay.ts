@@ -30,6 +30,7 @@ export function printVueOptionCollectionOverlayOutput(
   if (!facts || facts.kind !== "option-collection-overlay") {
     throw new TypeError("Vue option-collection-overlay projection requires family facts.");
   }
+  assertVueOptionCollectionOverlayFacts(facts.facts);
   const index = model.files.find((file): file is AdapterIndexFile => file.kind === "index");
   if (!index)
     throw new TypeError("Vue option-collection-overlay projection requires an index file.");
@@ -46,7 +47,9 @@ function printComponent(
 ): AdapterPrintedFile {
   const family = file.component.family;
   if (!family || family.kind !== "option-collection-overlay") {
-    throw new TypeError("Vue Select component is missing option-collection-overlay facts.");
+    throw new TypeError(
+      `Vue ${facts.displayName} component is missing option-collection-overlay facts.`,
+    );
   }
 
   const printers: Record<
@@ -110,13 +113,13 @@ export const ${context.itemContext}: InjectionKey<${context.itemContextValueType
 
 export function ${context.useRootContext}(part = "part"): ${context.rootContextValueType} {
   const value = inject(${context.rootContext});
-  if (!value) throw new Error(\`Select.\${part} requires an owning Select.Root.\`);
+  if (!value) throw new Error(\`${facts.displayName}.\${part} requires an owning ${facts.displayName}.Root.\`);
   return value;
 }
 
 export function ${context.useItemContext}(part = "part"): ${context.itemContextValueType} {
   const value = inject(${context.itemContext});
-  if (!value) throw new Error(\`Select.\${part} requires an owning Select.Item.\`);
+  if (!value) throw new Error(\`${facts.displayName}.\${part} requires an owning ${facts.displayName}.Item.\`);
   return value;
 }
 </script>`;
@@ -124,6 +127,15 @@ export function ${context.useItemContext}(part = "part"): ${context.itemContextV
 
 function printRoot(facts: AdapterOptionCollectionOverlayFacts): string {
   const { attrs, events, props, runtime, state } = facts;
+  const openModel = requireModel(facts, "open");
+  const valueModel = requireModel(facts, "value");
+  const label = facts.collection.selectedLabel;
+  const itemAttribute = facts.attrs[label.itemPart];
+  const itemTextAttribute = facts.attrs[label.itemTextPart];
+  const setters = facts.lifecycle.updateSetters;
+  if (!openModel.event.cancelable || !valueModel.event.cancelable) {
+    throw new TypeError(`Vue ${facts.displayName} projection requires cancelable model events.`);
+  }
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 ${printContextModule(facts)}
 <script setup lang="ts">
@@ -242,8 +254,9 @@ defineExpose({
 
 function readItemLabel(item: HTMLElement | undefined): string | null {
   if (!item) return null;
-  const textElement = item.querySelector<HTMLElement>("[${attrs.itemText}]");
-  const text = (textElement ?? item).textContent?.trim() ?? "";
+  const textElement = item.querySelector<HTMLElement>("[${itemTextAttribute}]");
+  if (textElement) return textElement.textContent?.trim() ?? "";
+  const text = item.textContent?.trim() ?? "";
   return text.length > 0 ? text : null;
 }
 
@@ -253,8 +266,8 @@ function findSelectedLabel(value: string | null): string | null {
     (candidate): candidate is HTMLElement => candidate instanceof HTMLElement,
   );
   const item = roots
-    .flatMap((candidate) => [...candidate.querySelectorAll<HTMLElement>("[${attrs.item}]")])
-    .find((candidate) => candidate.getAttribute("${attrs.valueData}") === value);
+    .flatMap((candidate) => [...candidate.querySelectorAll<HTMLElement>("[${itemAttribute}]")])
+    .find((candidate) => candidate.getAttribute("${facts.collection.itemIdentity.attribute}") === value);
   return readItemLabel(item);
 }
 
@@ -310,7 +323,7 @@ function destroyOwnedInstance(): void {
   unbindFormReset();
   const ownedInstance = instance;
   instance = undefined;
-  ownedInstance?.destroy();
+  ownedInstance?.${facts.lifecycle.cleanup}();
 }
 
 function setupRuntime(): void {
@@ -328,7 +341,7 @@ function setupRuntime(): void {
     ${props.name.name}: props.${props.name.name},
     ${events.openChange.callbackProp}: handleOpenChange,
     ${events.valueChange.callbackProp}: handleValueChange,
-    portalReference: portalReference ?? undefined,
+    ${facts.portal.referenceOption}: portalReference ?? undefined,
     ${props.readOnly.name}: props.${props.readOnly.name},
     ${props.required.name}: props.${props.required.name},
     ...(props.open === undefined
@@ -391,7 +404,7 @@ watch(
   () => props.${props.disabled.name},
   (value) => {
     if (!instance) return;
-    instance.setDisabled(value);
+    instance.${setters.disabled}(value);
     if (value) {
       if (props.open === undefined) uncontrolledOpen.value = false;
       return;
@@ -403,16 +416,16 @@ watch(
     }
   },
 );
-watch(() => props.${props.readOnly.name}, (value) => instance?.setReadOnly(value));
-watch(() => props.${props.modal.name}, (value) => instance?.setModal(value));
+watch(() => props.${props.readOnly.name}, (value) => instance?.${setters.readOnly}(value));
+watch(() => props.${props.modal.name}, (value) => instance?.${setters.modal}(value));
 watch(
   () => props.${props.highlightItemOnHover.name},
-  (value) => instance?.setHighlightItemOnHover(value),
+  (value) => instance?.${setters.highlightItemOnHover}(value),
 );
 watch(
   () => [props.${props.autoComplete.name}, props.${props.form.name}, props.${props.name.name}, props.${props.required.name}] as const,
   ([autoComplete, form, name, required]) => {
-    instance?.setFormOptions({ autoComplete, form, name, required });
+    instance?.${facts.form.setter.method}({ autoComplete, form, name, required });
     bindFormReset();
   },
   { flush: "post" },
@@ -544,7 +557,7 @@ import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ container?: string | HTMLElement; disabled?: boolean }>(), {
-  container: "body",
+  container: "${facts.portal.defaultTarget}",
   disabled: false,
 });
 defineSlots<{ default?: () => unknown }>();
@@ -640,6 +653,7 @@ defineExpose({ element: elementRef });
 
 function printItem(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.item;
+  const identity = facts.collection.itemIdentity;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
 import { computed, provide, ref, useAttrs } from "vue";
@@ -649,12 +663,12 @@ import {
 } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
-const props = withDefaults(defineProps<{ disabled?: boolean; value: string }>(), { disabled: false });
+const props = withDefaults(defineProps<{ disabled?: boolean; ${identity.prop}: string }>(), { disabled: false });
 defineSlots<{ default?: () => unknown }>();
 const attrs = useAttrs();
 const itemRef = ref<HTMLDivElement | null>(null);
 const select = ${facts.context.useRootContext}("Item");
-const value = computed(() => props.value);
+const value = computed(() => props.${identity.prop});
 const disabled = computed(() => props.disabled);
 const selected = computed(() => select.value.value === value.value);
 provide(${facts.context.itemContext}, { disabled, value });
@@ -667,7 +681,7 @@ defineExpose({ element: itemRef });
     v-bind="attrs"
     ${facts.attrs.item}
     data-sw-part="${part.name}"
-    :${facts.attrs.valueData}="props.value"
+    :${identity.attribute}="props.${identity.prop}"
     role="${part.role ?? "option"}"
     :aria-selected="selected"
     :aria-disabled="props.disabled ? 'true' : undefined"
@@ -774,4 +788,48 @@ function getElementType(tag: string): string {
     span: "HTMLSpanElement",
   };
   return types[tag] ?? "HTMLElement";
+}
+
+function requireModel(facts: AdapterOptionCollectionOverlayFacts, name: "open" | "value") {
+  const model = facts.models.find((candidate) => candidate.name === name);
+  if (!model) {
+    throw new TypeError(`Vue ${facts.displayName} projection requires the ${name} model fact.`);
+  }
+  return model;
+}
+
+function assertVueOptionCollectionOverlayFacts(facts: AdapterOptionCollectionOverlayFacts): void {
+  const hasAll = (actual: string[], expected: string[]) =>
+    actual.length === expected.length && expected.every((value) => actual.includes(value));
+  if (
+    !hasAll(facts.context.rootValues, [
+      "disabled",
+      "mounted",
+      "open",
+      "readOnly",
+      "required",
+      "selectedLabel",
+      "value",
+    ]) ||
+    !hasAll(facts.context.itemValues, ["disabled", "value"]) ||
+    !hasAll(facts.context.rootOperations, ["registerPortal"])
+  ) {
+    throw new TypeError(
+      `Vue ${facts.displayName} projection requires complete root and item context facts.`,
+    );
+  }
+  if (
+    facts.form.reset !== "runtime-readback-after-native-reset" ||
+    facts.portal.activation !== "after-root-mount" ||
+    facts.portal.owner !== "component-instance" ||
+    facts.lifecycle.setup !== "after-mount" ||
+    !hasAll(facts.lifecycle.recreateOnControllednessChange, ["open", "value"]) ||
+    facts.presence.unmountPolicy !== "runtime-owned" ||
+    !hasAll(facts.presence.initialHiddenParts, ["popup", "itemIndicator"]) ||
+    !hasAll(facts.publicRefs, ["root", "trigger", "popup", "item"])
+  ) {
+    throw new TypeError(
+      `Vue ${facts.displayName} projection requires complete form, portal, presence, ref, and lifecycle facts.`,
+    );
+  }
 }

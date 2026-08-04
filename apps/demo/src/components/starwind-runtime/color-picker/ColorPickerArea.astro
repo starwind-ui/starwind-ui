@@ -1,23 +1,20 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import type { VariantProps } from "tailwind-variants";
 
 import "./styles.css";
 import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
-import ColorPickerAreaThumb from "./ColorPickerAreaThumb.astro";
-import { colorPickerArea } from "./variants";
+import { colorPickerArea, colorPickerAreaThumb } from "./variants";
 
-type Props = HTMLAttributes<"div"> &
-  VariantProps<typeof colorPickerArea> & {
-    initial?: import("@starwind-ui/astro/color-picker").ColorPickerAreaProjection;
-  };
+type Props = HTMLAttributes<"div"> & {
+  initial?: import("@starwind-ui/astro/color-picker").ColorPickerAreaProjection;
+};
 
-const { initial, class: className, size = "md", ...rest } = Astro.props;
+const { initial, class: className, ...rest } = Astro.props;
 ---
 
 <ColorPickerPrimitive.Area
   initial={initial?.root.initial}
-  class={colorPickerArea({ size, class: className })}
+  class={colorPickerArea({ class: className })}
   {...rest}
   data-slot="color-picker-area"
 >
@@ -27,7 +24,11 @@ const { initial, class: className, size = "md", ...rest } = Astro.props;
     data-slot="color-picker-area-background"
   />
 
-  <ColorPickerAreaThumb initial={initial?.thumb.initial} size={size} />
+  <ColorPickerPrimitive.AreaThumb
+    initial={initial?.thumb.initial}
+    class={colorPickerAreaThumb()}
+    data-slot="color-picker-area-thumb"
+  />
 
   <ColorPickerPrimitive.AreaInput
     initial={initial?.input({ axis: "x" }).initial}

@@ -28,7 +28,7 @@ export function SelectDemo() {
       <h2 className="font-heading text-xl font-semibold">Select</h2>
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-3">
-          <h3 className="font-heading text-base font-semibold">Uncontrolled form value</h3>
+          <h3 className="font-heading text-base font-semibold">Small control and content</h3>
           <Select
             id="react-runtime-select-theme"
             defaultValue="system"
@@ -38,10 +38,11 @@ export function SelectDemo() {
           >
             <SelectTrigger
               id="react-runtime-select-theme-trigger"
+              size="sm"
               className="runtime-select-trigger-custom w-full"
               placeholder="Pick theme"
             />
-            <SelectContent id="react-runtime-select-theme-content">
+            <SelectContent id="react-runtime-select-theme-content" size="sm">
               <SelectGroup>
                 <SelectLabel>Appearance</SelectLabel>
                 {selectThemes.map((item) => (
@@ -64,7 +65,7 @@ export function SelectDemo() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-heading text-base font-semibold">Controlled value</h3>
+          <h3 className="font-heading text-base font-semibold">Medium control and content</h3>
           <Select
             id="react-runtime-select-controlled"
             value={controlledSelectValue}
@@ -77,10 +78,11 @@ export function SelectDemo() {
           >
             <SelectTrigger
               id="react-runtime-select-controlled-trigger"
+              size="md"
               className="w-full"
               placeholder="Pick theme"
             />
-            <SelectContent id="react-runtime-select-controlled-content">
+            <SelectContent id="react-runtime-select-controlled-content" size="md">
               {selectThemes
                 .filter((item) => !item.disabled)
                 .map((item) => (
@@ -99,18 +101,25 @@ export function SelectDemo() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-heading text-base font-semibold">asChild trigger</h3>
+          <h3 className="font-heading text-base font-semibold">
+            Large asChild control and content
+          </h3>
           <Select
             id="react-runtime-select-density"
             defaultValue="comfortable"
             name="reactRuntimeDensity"
           >
-            <SelectTrigger asChild showIcon={false} className={button({ variant: "outline" })}>
+            <SelectTrigger
+              asChild
+              showIcon={false}
+              size="lg"
+              className={button({ variant: "outline" })}
+            >
               <button id="react-runtime-select-density-trigger" type="button">
                 <SelectValue placeholder="Density" />
               </button>
             </SelectTrigger>
-            <SelectContent id="react-runtime-select-density-content" sideOffset={6}>
+            <SelectContent id="react-runtime-select-density-content" size="lg" sideOffset={6}>
               {selectDensity.map((item) => (
                 <SelectItem
                   key={item.value}
@@ -125,7 +134,7 @@ export function SelectDemo() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-heading text-base font-semibold">Read-only form metadata</h3>
+          <h3 className="font-heading text-base font-semibold">Mismatched control and content</h3>
           <Select
             id="react-runtime-select-readonly"
             defaultValue="dark"
@@ -137,10 +146,11 @@ export function SelectDemo() {
           >
             <SelectTrigger
               id="react-runtime-select-readonly-trigger"
+              size="sm"
               className="w-full"
               placeholder="Theme"
             />
-            <SelectContent id="react-runtime-select-readonly-content">
+            <SelectContent id="react-runtime-select-readonly-content" size="lg">
               {selectThemes
                 .filter((item) => !item.disabled)
                 .map((item) => (

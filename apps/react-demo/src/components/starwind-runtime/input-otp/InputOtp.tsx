@@ -22,6 +22,7 @@ export type InputOtpProps = Omit<
     ref?: React.Ref<HTMLDivElement>;
     readOnly?: boolean;
     required?: boolean;
+    size?: "sm" | "md" | "lg";
     value?: string;
   };
 
@@ -38,6 +39,7 @@ function InputOtp(props: InputOtpProps) {
     ref,
     readOnly = false,
     required = false,
+    size = "md",
     value,
     className,
     children,
@@ -60,6 +62,7 @@ function InputOtp(props: InputOtpProps) {
       required={required}
       value={value}
       {...rest}
+      data-size={size}
       data-slot="input-otp"
     >
       {children}

@@ -138,18 +138,6 @@ export const tooltipStyledContract: StyledAdapterContract = {
       },
       variables: [
         {
-          frameworks: ["astro"],
-          name: "triggerClassName",
-          value: {
-            type: "classJoin",
-            items: [
-              { type: "raw", code: 'asChild ? "contents" : "inline-flex"' },
-              { type: "variable", name: "className" },
-            ],
-          },
-        },
-        {
-          frameworks: ["react"],
           name: "triggerClassName",
           value: {
             type: "classJoin",

@@ -1,6 +1,7 @@
 import { getPrimitivePackageExportNames } from "../primitive-inventory.js";
 import { astroFrameworkAdapterTarget } from "./astro/index.js";
 import { reactFrameworkAdapterTarget } from "./react/index.js";
+import { svelteFrameworkAdapterTarget } from "./svelte/index.js";
 import { vueFrameworkAdapterTarget } from "./vue/index.js";
 import type {
   FrameworkAdapterTargetPrimitiveSupport,
@@ -11,6 +12,7 @@ export const primitiveFrameworkAdapterTargets = [
   astroFrameworkAdapterTarget,
   reactFrameworkAdapterTarget,
   vueFrameworkAdapterTarget,
+  svelteFrameworkAdapterTarget,
 ] as const satisfies readonly FrameworkAdapterTargetRegistration[];
 
 export const frameworkAdapterTargets = primitiveFrameworkAdapterTargets;
@@ -20,7 +22,7 @@ export type PrimitiveFrameworkAdapterTarget =
 
 export type FrameworkAdapterRegisteredTarget = Exclude<
   PrimitiveFrameworkAdapterTarget,
-  typeof vueFrameworkAdapterTarget.target
+  typeof vueFrameworkAdapterTarget.target | typeof svelteFrameworkAdapterTarget.target
 >;
 
 type PrimitiveFrameworkAdapterTargetRegistration =
@@ -49,21 +51,31 @@ export type FrameworkAdapterTargetStyledCapabilityEntry = {
   target: PrimitiveFrameworkAdapterTarget;
 };
 
-const primitiveFrameworkAdapterTargetMap = new Map<
-  PrimitiveFrameworkAdapterTarget,
-  PrimitiveFrameworkAdapterTargetRegistration
->(primitiveFrameworkAdapterTargets.map((registration) => [registration.target, registration]));
+export function createPrimitiveFrameworkAdapterTargetLookup(
+  registrations: readonly FrameworkAdapterTargetRegistration[],
+): (target: string) => FrameworkAdapterTargetRegistration {
+  const targetMap = new Map(
+    registrations.map((registration) => [registration.target, registration]),
+  );
+  return (target) => {
+    const registration = targetMap.get(target);
+    if (!registration) {
+      throw new Error(`Unsupported primitive Framework Adapter target: ${target}`);
+    }
+    return registration;
+  };
+}
+
+const lookupPrimitiveFrameworkAdapterTarget = createPrimitiveFrameworkAdapterTargetLookup(
+  primitiveFrameworkAdapterTargets,
+);
 
 export function getPrimitiveFrameworkAdapterTarget<TTarget extends PrimitiveFrameworkAdapterTarget>(
   target: TTarget,
 ): PrimitiveFrameworkAdapterRegistrationFor<TTarget> {
-  const registration = primitiveFrameworkAdapterTargetMap.get(target);
-
-  if (!registration) {
-    throw new Error(`Unsupported primitive Framework Adapter target: ${target}`);
-  }
-
-  return registration as PrimitiveFrameworkAdapterRegistrationFor<TTarget>;
+  return lookupPrimitiveFrameworkAdapterTarget(
+    target,
+  ) as PrimitiveFrameworkAdapterRegistrationFor<TTarget>;
 }
 
 export function getPrimitiveFrameworkAdapterTargetNames(): readonly PrimitiveFrameworkAdapterTarget[] {

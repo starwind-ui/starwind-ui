@@ -2,10 +2,7 @@
 import { Button } from "@/components/starwind-runtime/button";
 import {
   ColorPicker,
-  ColorPickerHiddenInput,
   ColorPickerInput,
-  ColorPickerLabel,
-  ColorPickerRoot,
   ColorPickerValueSwatch,
 } from "@/components/starwind-runtime/color-picker";
 import {
@@ -32,7 +29,7 @@ const formats = [
     <p class="text-muted-foreground">
       Keyboard, pointer, swatches, alpha, EyeDropper UI, and popup focus return.
     </p>
-    <ColorPicker id="popup-picker" defaultValue="#ff000080" format="hex" alpha>
+    <ColorPicker id="popup-picker" defaultValue="#ff000080" clearable>
       {
         (initial) => (
           <PickerSurface initial={initial} id="popup" label="Brand color" popup alpha clear />
@@ -49,8 +46,9 @@ const formats = [
 
   <section class="space-y-4" aria-labelledby="inline-heading">
     <h2 id="inline-heading" class="text-2xl font-semibold">Inline editor and formats</h2>
-    <ColorPickerRoot
+    <ColorPicker
       id="inline-picker"
+      inline
       defaultValue="hsb(210, 70%, 80%)"
       format="hsb"
       alpha={false}
@@ -66,11 +64,12 @@ const formats = [
           />
         )
       }
-    </ColorPickerRoot>
+    </ColorPicker>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {
         formats.map(({ format, value, label }) => (
-          <ColorPickerRoot
+          <ColorPicker
+            inline
             defaultValue={value}
             format={format}
             alpha={false}
@@ -78,7 +77,7 @@ const formats = [
           >
             {(initial) => (
               <Fragment>
-                <ColorPickerLabel initial={initial.label.initial}>{label}</ColorPickerLabel>
+                <span class="text-sm font-medium">{label}</span>
                 <div class="mt-2 flex items-center gap-2">
                   <ColorPickerValueSwatch initial={initial} />
                   <ColorPickerInput
@@ -87,10 +86,9 @@ const formats = [
                     data-testid={`format-${format}-input`}
                   />
                 </div>
-                <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
               </Fragment>
             )}
-          </ColorPickerRoot>
+          </ColorPicker>
         ))
       }
     </div>
@@ -99,66 +97,63 @@ const formats = [
   <section class="space-y-4" aria-labelledby="states-heading">
     <h2 id="states-heading" class="text-2xl font-semibold">Focused compositions and states</h2>
     <div class="grid gap-4 md:grid-cols-4">
-      <ColorPickerRoot defaultValue="#14b8a6" format="hex" data-testid="input-only-root">
+      <ColorPicker inline defaultValue="#14b8a6" format="hex" data-testid="input-only-root">
         {
           (initial) => (
             <Fragment>
               <>
-                <ColorPickerLabel initial={initial.label.initial}>Input focused</ColorPickerLabel>
-                <ColorPickerInput initial={initial} data-testid="input-only" />
-                <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
+                <span class="text-sm font-medium">Input focused</span>
+                <ColorPickerInput initial={initial} formatControl="none" data-testid="input-only" />
               </>
             </Fragment>
           )
         }
-      </ColorPickerRoot>
-      <ColorPickerRoot defaultValue="#e11d48" disabled data-testid="disabled-picker-root">
+      </ColorPicker>
+      <ColorPicker inline defaultValue="#e11d48" disabled data-testid="disabled-picker-root">
         {
           (initial) => (
             <Fragment>
               <>
-                <ColorPickerLabel initial={initial.label.initial}>Disabled</ColorPickerLabel>
+                <span class="text-sm font-medium">Disabled</span>
                 <ColorPickerInput initial={initial} data-testid="disabled-picker" />
-                <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
               </>
             </Fragment>
           )
         }
-      </ColorPickerRoot>
-      <ColorPickerRoot defaultValue="#f59e0b" data-testid="swatch-only-root">
+      </ColorPicker>
+      <ColorPicker inline defaultValue="#f59e0b" data-testid="swatch-only-root">
         {
           (initial) => (
             <Fragment>
-              <ColorPickerLabel initial={initial.label.initial}>Swatch focused</ColorPickerLabel>
+              <span class="text-sm font-medium">Swatch focused</span>
               <ColorPickerValueSwatch initial={initial} data-testid="swatch-only" />
-              <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
             </Fragment>
           )
         }
-      </ColorPickerRoot>
-      <ColorPickerRoot defaultValue="#7c3aed" readOnly data-testid="readonly-picker-root">
+      </ColorPicker>
+      <ColorPicker inline defaultValue="#7c3aed" readOnly data-testid="readonly-picker-root">
         {
           (initial) => (
             <Fragment>
               <>
-                <ColorPickerLabel initial={initial.label.initial}>Read only</ColorPickerLabel>
+                <span class="text-sm font-medium">Read only</span>
                 <ColorPickerInput initial={initial} data-testid="readonly-picker" />
-                <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
               </>
             </Fragment>
           )
         }
-      </ColorPickerRoot>
+      </ColorPicker>
     </div>
   </section>
 
   <section class="space-y-4" aria-labelledby="form-heading">
     <h2 id="form-heading" class="text-2xl font-semibold">Required and empty form values</h2>
     <form id="color-picker-form" class="space-y-4" data-testid="color-picker-form">
-      <ColorPickerRoot
+      <ColorPicker
         id="required-picker"
+        inline
         defaultValue="#000000"
-        allowEmpty
+        clearable
         required
         name="accent"
         format="hex"
@@ -174,7 +169,7 @@ const formats = [
             />
           )
         }
-      </ColorPickerRoot>
+      </ColorPicker>
       <div class="flex gap-2">
         <Button type="submit">Submit palette</Button><Button type="reset" variant="outline"
           >Reset palette</Button

@@ -9,6 +9,7 @@ import {
   pagination,
   paginationContent,
   paginationEllipsis,
+  paginationLink,
   paginationNext,
   paginationPrevious,
 } from "./variants";
@@ -17,6 +18,7 @@ const PaginationVariants = {
   pagination,
   paginationContent,
   paginationEllipsis,
+  paginationLink,
   paginationNext,
   paginationPrevious,
 };

@@ -12,6 +12,7 @@ jobs:
     name: Detect verification scope
     runs-on: ubuntu-latest
     outputs:
+      svelte: ${{ steps.changes.outputs.svelte }}
       vue: ${{ steps.changes.outputs.vue }}
     steps:
       - name: Checkout Repo
@@ -20,13 +21,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Detect Vue-impacting changes
+      - name: Detect private-adapter-impacting changes
         id: changes
         shell: bash
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "$BASE_SHA^{commit}"; then
+            echo "svelte=true" >> "$GITHUB_OUTPUT"
             echo "vue=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -36,6 +38,12 @@ jobs:
             echo "vue=true" >> "$GITHUB_OUTPUT"
           else
             echo "vue=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if grep -Eq '^(packages/(runtime|svelte)/|scripts/portable-runtime/(contracts/|renderers/|generate-svelte-wrappers|check-svelte)|package\.json$|pnpm-lock\.yaml$)' "$RUNNER_TEMP/changed-files.txt"; then
+            echo "svelte=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "svelte=false" >> "$GITHUB_OUTPUT"
           fi
 
   static:
@@ -155,6 +163,30 @@ jobs:
       - name: Run quarantined Vue verification
         run: pnpm vue:verify
 
+  svelte-tests:
+    name: Svelte verification
+    needs: scope
+    if: needs.scope.outputs.svelte == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
+        with:
+          cache: true
+      - name: Setup Node.js 24
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm --filter=react-demo exec playwright install --with-deps chromium
+      - name: Run quarantined Svelte verification
+        run: pnpm svelte:verify
+
   build-drift:
     name: Build and generated drift
     runs-on: ubuntu-latest
@@ -189,6 +221,7 @@ jobs:
       - generator-tests
       - browser-adapter-tests
       - vue-tests
+      - svelte-tests
       - build-drift
     runs-on: ubuntu-latest
     steps:
@@ -206,5 +239,10 @@ jobs:
 
           if [[ "${{ needs.vue-tests.result }}" != "success" &&
                 "${{ needs.vue-tests.result }}" != "skipped" ]]; then
+            exit 1
+          fi
+
+          if [[ "${{ needs.svelte-tests.result }}" != "success" &&
+                "${{ needs.svelte-tests.result }}" != "skipped" ]]; then
             exit 1
           fi

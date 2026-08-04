@@ -1,27 +1,25 @@
 import ColorPickerPrimitive from "@starwind-ui/react/color-picker";
 import type * as React from "react";
-import type { VariantProps } from "tailwind-variants";
 import { PopoverTrigger } from "../popover";
 import { colorPickerTrigger, colorPickerValueSwatch } from "./variants";
 
-export type ColorPickerTriggerProps = React.ComponentProps<typeof PopoverTrigger> &
-  VariantProps<typeof colorPickerTrigger> & {
-    showValueText?: boolean;
-  };
+export type ColorPickerTriggerProps = React.ComponentProps<typeof PopoverTrigger> & {
+  showValueText?: boolean;
+};
 
 function ColorPickerTrigger(props: ColorPickerTriggerProps) {
-  const { className, size = "md", showValueText = true, children, ...rest } = props;
+  const { className, showValueText = true, children, ...rest } = props;
 
   return (
     <PopoverTrigger
-      className={colorPickerTrigger({ size, class: className })}
+      className={colorPickerTrigger({ class: className })}
       {...rest}
       data-slot="color-picker-trigger"
     >
       {children}
 
       <ColorPickerPrimitive.ValueSwatch
-        className={colorPickerValueSwatch({ size })}
+        className={colorPickerValueSwatch()}
         data-slot="color-picker-value-swatch"
       >
         <ColorPickerPrimitive.TransparencyGrid

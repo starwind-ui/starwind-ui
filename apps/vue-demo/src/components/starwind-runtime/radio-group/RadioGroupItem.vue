@@ -20,7 +20,6 @@ export type RadioGroupItemProps = Omit<
   | "required"
   | "value"
 > &
-  VariantProps<typeof radioWrapper> &
   VariantProps<typeof radioControl> & {
     disabled?: boolean;
     form?: string;
@@ -43,11 +42,9 @@ type RadioGroupItemDeclaredProps = {
   value: string;
   class?: ClassValue;
   variant?: RadioGroupItemProps["variant"];
-  size?: RadioGroupItemProps["size"];
 } & /* @vue-ignore */ RadioGroupItemProps;
 const {
   variant,
-  size = "md",
   disabled = false,
   form,
   id,
@@ -77,7 +74,7 @@ function handleCheckedChange(
 </script>
 
 <template>
-  <div :class="radioWrapper({ size })" data-slot="radio-group-item-wrapper">
+  <div :class="radioWrapper()" data-slot="radio-group-item-wrapper">
     <RadioPrimitive.RadioRoot
       :class="radioItem()"
       :disabled="disabled"
@@ -97,7 +94,7 @@ function handleCheckedChange(
         data-slot="radio-group-item-control"
       >
         <RadioPrimitive.RadioIndicator
-          :class="radioIndicator({ size })"
+          :class="radioIndicator()"
           data-slot="radio-group-item-indicator"
         >
           <slot name="icon">

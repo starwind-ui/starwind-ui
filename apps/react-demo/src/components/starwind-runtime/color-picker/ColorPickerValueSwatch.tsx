@@ -1,18 +1,16 @@
 import type * as React from "react";
-import type { VariantProps } from "tailwind-variants";
 import "./styles.css";
 import ColorPickerPrimitive from "@starwind-ui/react/color-picker";
 import { colorPickerValueSwatch } from "./variants";
 
-export type ColorPickerValueSwatchProps = React.ComponentPropsWithoutRef<"span"> &
-  VariantProps<typeof colorPickerValueSwatch>;
+export type ColorPickerValueSwatchProps = React.ComponentPropsWithoutRef<"span">;
 
 function ColorPickerValueSwatch(props: ColorPickerValueSwatchProps) {
-  const { className, size = "md", ...rest } = props;
+  const { className, ...rest } = props;
 
   return (
     <ColorPickerPrimitive.ValueSwatch
-      className={colorPickerValueSwatch({ size, class: className })}
+      className={colorPickerValueSwatch({ class: className })}
       {...rest}
       data-slot="color-picker-value-swatch"
     >

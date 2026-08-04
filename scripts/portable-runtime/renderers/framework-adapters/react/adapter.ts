@@ -856,10 +856,105 @@ function printReactBooleanFormControlComponent(
   family: AdapterBooleanFormControlComponentProjection,
 ): string {
   if (family.part === "state-indicator") {
-    return printReactBooleanFormControlStateIndicator(family.facts);
+    const output = printReactBooleanFormControlStateIndicator(family.facts);
+    return family.facts.behavior.hasIndeterminate
+      ? addReactIndeterminateIndicatorPresenceBridge(output, family.facts)
+      : output;
   }
 
-  return printReactBooleanFormControlRoot(family.facts);
+  const output = printReactBooleanFormControlRoot(family.facts);
+  return family.facts.behavior.hasIndeterminate
+    ? addReactIndeterminateRootIndicatorPresenceBridge(output, family.facts)
+    : output;
+}
+
+function addReactIndeterminateRootIndicatorPresenceBridge(
+  output: string,
+  facts: AdapterBooleanFormControlFacts,
+): string {
+  const contextName = `${facts.displayName}IndicatorContext`;
+  const contextType = `${facts.displayName}IndicatorState`;
+  const renderedState = `rendered${facts.state.pascalName}`;
+
+  let next = replaceRequired(
+    output,
+    `const ${facts.exports.root} = React.forwardRef`,
+    `type ${contextType} = {\n  checked: boolean;\n  disabled: boolean;\n  indeterminate: boolean;\n  readOnly: boolean;\n  registerIndicatorVisibility(node: HTMLElement, explicitlyHidden: boolean): void;\n  required: boolean;\n};\n\nexport const ${contextName} = React.createContext<${contextType}>({\n  checked: false,\n  disabled: false,\n  indeterminate: false,\n  readOnly: false,\n  registerIndicatorVisibility: () => {},\n  required: false,\n});\n\nconst ${facts.exports.root} = React.forwardRef`,
+    "indeterminate indicator context declaration",
+  );
+  next = replaceRequired(
+    next,
+    "    const rootRef = React.useRef<",
+    `    const explicitlyHiddenIndicatorsRef = React.useRef(new Set<HTMLElement>());\n    const registerIndicatorVisibility = React.useCallback(\n      (node: HTMLElement, explicitlyHidden: boolean) => {\n        if (explicitlyHidden) {\n          explicitlyHiddenIndicatorsRef.current.add(node);\n        } else {\n          explicitlyHiddenIndicatorsRef.current.delete(node);\n        }\n      },\n      [],\n    );\n    const rootRef = React.useRef<`,
+    "indeterminate indicator visibility registry",
+  );
+  next = replaceRequired(
+    next,
+    `    const aria${facts.state.pascalName}: React.AriaAttributes`,
+    `    const indicatorState = React.useMemo(\n      () => ({\n        checked: ${renderedState},\n        disabled: effectiveDisabled,\n        indeterminate: renderedIndeterminate,\n        readOnly: ${facts.props.readOnly?.name},\n        registerIndicatorVisibility,\n        required: ${facts.props.required?.name},\n      }),\n      [\n        effectiveDisabled,\n        ${facts.props.readOnly?.name},\n        registerIndicatorVisibility,\n        ${renderedState},\n        renderedIndeterminate,\n        ${facts.props.required?.name},\n      ],\n    );\n\n    useIsomorphicLayoutEffect(() => {\n      explicitlyHiddenIndicatorsRef.current.forEach((indicator) => {\n        indicator.hidden = true;\n      });\n    });\n\n    const aria${facts.state.pascalName}: React.AriaAttributes`,
+    "indeterminate rendered indicator state",
+  );
+  next = replaceRequired(
+    next,
+    "            {children}\n          </button>",
+    `            <${contextName}.Provider value={indicatorState}>\n              {children}\n            </${contextName}.Provider>\n          </button>`,
+    "indeterminate native root indicator provider",
+  );
+
+  return replaceRequired(
+    next,
+    "        {children}\n        {input}\n      </span>",
+    `        <${contextName}.Provider value={indicatorState}>\n          {children}\n        </${contextName}.Provider>\n        {input}\n      </span>`,
+    "indeterminate non-native root indicator provider",
+  );
+}
+
+function addReactIndeterminateIndicatorPresenceBridge(
+  output: string,
+  facts: AdapterBooleanFormControlFacts,
+): string {
+  const contextName = `${facts.displayName}IndicatorContext`;
+  const exportName = requireString(facts.exports.stateIndicator, "stateIndicator export");
+  const keepMounted = requireFamilyProp(facts.props.keepMounted, "keepMounted").name;
+
+  let next = replaceRequired(
+    output,
+    'import * as React from "react";\n',
+    `import * as React from "react";\nimport { ${contextName} } from "./${facts.exports.root}";\n`,
+    "indeterminate indicator context import",
+  );
+  next = replaceRequired(
+    next,
+    `  function ${exportName}({ hidden, ${keepMounted} = false, ...props }, forwardedRef) {\n    const composedRef`,
+    `  function ${exportName}({ hidden, ${keepMounted} = false, ...props }, forwardedRef) {\n    const indicatorState = React.useContext(${contextName});\n    const active = indicatorState.checked || indicatorState.indeterminate;\n    const indicatorRef = React.useRef<HTMLSpanElement>(null);\n    const composedRef`,
+    "indeterminate indicator rendered state read",
+  );
+  next = replaceRequired(
+    next,
+    "        if (node) {\n          node.hidden = hidden ?? !keepMounted;\n        }",
+    "        const previousNode = indicatorRef.current;\n        if (previousNode && previousNode !== node) {\n          indicatorState.registerIndicatorVisibility(previousNode, false);\n        }\n\n        indicatorRef.current = node;\n        if (node) {\n          indicatorState.registerIndicatorVisibility(node, hidden === true);\n          node.hidden = hidden ?? false;\n        }",
+    "indeterminate indicator ref presence",
+  );
+  next = replaceRequired(
+    next,
+    `      [forwardedRef, hidden, ${keepMounted}],`,
+    "      [forwardedRef, hidden, indicatorState],",
+    "indeterminate indicator ref dependencies",
+  );
+  next = replaceRequired(
+    next,
+    `    );\n\n    return (`,
+    `    );\n\n    if (!${keepMounted} && !active) return null;\n\n    return (`,
+    "indeterminate indicator root-owned hidden precedence",
+  );
+  next = replaceRequired(
+    next,
+    "        data-unchecked\n        ref={composedRef}",
+    `        data-checked={indicatorState.checked ? "" : undefined}\n        data-disabled={indicatorState.disabled ? "" : undefined}\n        data-indeterminate={indicatorState.indeterminate ? "" : undefined}\n        data-readonly={indicatorState.readOnly ? "" : undefined}\n        data-required={indicatorState.required ? "" : undefined}\n        data-unchecked={!indicatorState.checked ? "" : undefined}\n        hidden={hidden ?? false}\n        ref={composedRef}`,
+    "indeterminate indicator rendered attributes",
+  );
+
+  return next;
 }
 
 function printReactBooleanFormControlRoot(facts: AdapterBooleanFormControlFacts): string {

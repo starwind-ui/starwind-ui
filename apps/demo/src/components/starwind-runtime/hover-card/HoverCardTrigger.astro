@@ -18,10 +18,13 @@ const {
   class: className,
   ...rest
 } = Astro.props;
+
+const triggerBaseClassName = hoverCardTrigger({ class: className });
+const triggerClassName = asChild ? className : triggerBaseClassName;
 ---
 
 <PreviewCardPrimitive.Trigger
-  class={hoverCardTrigger({ class: className })}
+  class={triggerClassName}
   asChild={asChild}
   closeDelay={closeDelay}
   disabled={disabled}

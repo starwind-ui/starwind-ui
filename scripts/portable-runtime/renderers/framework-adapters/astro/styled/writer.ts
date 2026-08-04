@@ -129,15 +129,8 @@ function renderComponent(
   const variables = renderVariables(component.variables ?? [], ASTRO_FRAMEWORK);
   const script = [imports, props, destructure, variables].filter(Boolean).join("\n\n");
   let renderedNodes = renderNodes(component.render, 0, primitiveAliases);
-  if (
-    group.component === "color-picker" &&
-    (component.exportName === "ColorPicker" || component.exportName === "ColorPickerRoot")
-  ) {
-    const slotIndent = component.exportName === "ColorPickerRoot" ? "  " : "    ";
-    renderedNodes = renderedNodes.replace(
-      `${slotIndent}<slot />`,
-      `${slotIndent}{async (initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection) => (\n${slotIndent}  <Fragment set:html={await Astro.slots.render("default", [initial])} />\n${slotIndent})}`,
-    );
+  if (group.component === "color-picker" && component.exportName === "ColorPicker") {
+    renderedNodes = renderColorPickerRootSlots(renderedNodes);
   }
   const clientScript = renderClientScript(component, runtimeImportContext);
 
@@ -147,4 +140,36 @@ function renderComponent(
 ${renderedNodes}
 ${clientScript}
 `;
+}
+
+function renderColorPickerRootSlots(renderedNodes: string): string {
+  let replacements = 0;
+  const projected = renderedNodes.replace(
+    /^(\s*)<slot>\n([\s\S]*?)^\1<\/slot>\n\n(\1<ColorPickerPrimitive\.HiddenInput[\s\S]*?^\1\/>)$/gm,
+    (_match, indent: string, fallback: string, hiddenInput: string) => {
+      replacements += 1;
+      const inner = `${indent}  `;
+      const nested = `${inner}  `;
+      return `${indent}{async (initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection) => (
+${inner}<>
+${nested}{Astro.slots.has("default") ? (
+${nested}  <Fragment set:html={await Astro.slots.render("default", [initial])} />
+${nested}) : (
+${nested}  <>
+${fallback}
+${nested}  </>
+${nested})}
+${hiddenInput}
+${inner}</>
+${indent})}`;
+    },
+  );
+
+  if (replacements !== 2) {
+    throw new Error(
+      `Expected two ColorPicker Primitive root slot projections, received ${replacements}.`,
+    );
+  }
+
+  return projected;
 }

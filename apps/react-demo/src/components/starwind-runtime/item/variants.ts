@@ -13,13 +13,13 @@ export const item = tv({
       muted: "bg-muted/50",
     },
     size: {
-      default: "gap-4 p-4",
       sm: "gap-2.5 px-4 py-3",
+      md: "gap-4 p-4",
     },
   },
   defaultVariants: {
     variant: "default",
-    size: "default",
+    size: "md",
   },
 });
 

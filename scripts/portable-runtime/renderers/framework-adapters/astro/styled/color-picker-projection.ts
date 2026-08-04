@@ -5,30 +5,27 @@ import type {
 } from "../../../styled-output-model/index.js";
 
 const projectionTypes: Record<string, string> = {
-  ColorPickerLabel: "ColorPickerInitialPartProjection",
-  ColorPickerControl: "ColorPickerInitialPartProjection",
+  ColorPickerDefaultEditor: "ColorPickerRenderProjection",
   ColorPickerInput: "ColorPickerRenderProjection",
   ColorPickerTrigger: "ColorPickerRenderProjection",
   ColorPickerContent: "ColorPickerRenderProjection",
   ColorPickerArea: "ColorPickerAreaProjection",
-  ColorPickerAreaThumb: "ColorPickerInitialPartProjection",
-  ColorPickerSliders: "ColorPickerRenderProjection",
   ColorPickerChannelSlider: "ColorPickerRenderProjection",
   ColorPickerChannelInput: "ColorPickerInitialPartProjection",
-  ColorPickerValueInput: "ColorPickerInitialPartProjection",
-  ColorPickerNativeFormatSelect: "ColorPickerInitialPartProjection",
-  ColorPickerFormatSelect: "ColorPickerInitialPartProjection",
   ColorPickerValueSwatch: "ColorPickerRenderProjection",
   ColorPickerSwatchGroup: "ColorPickerInitialPartProjection",
   ColorPickerSwatch: "ColorPickerRenderProjection",
   ColorPickerEyeDropper: "ColorPickerInitialPartProjection",
   ColorPickerClear: "ColorPickerInitialPartProjection",
-  ColorPickerHiddenInput: "ColorPickerInitialPartProjection",
 };
 
 export function projectAstroColorPickerComponent(
   component: StyledOutputComponent,
 ): StyledOutputComponent {
+  if (component.exportName === "ColorPicker") {
+    return { ...component, render: projectNodes(component.exportName, component.render) };
+  }
+
   const projectionType = projectionTypes[component.exportName];
   if (!projectionType) return component;
 
@@ -110,22 +107,24 @@ function primitiveProjection(
   attrs: StyledOutputAttribute[],
 ): string | undefined {
   const simple: Record<string, string> = {
-    ColorPickerLabel: "initial",
-    ColorPickerControl: "initial",
-    ColorPickerAreaThumb: "initial",
     ColorPickerChannelInput: "initial",
-    ColorPickerValueInput: "initial",
-    ColorPickerNativeFormatSelect: "initial",
-    ColorPickerFormatSelect: "initial",
     ColorPickerSwatchGroup: "initial",
     ColorPickerEyeDropper: "initial",
     ColorPickerClear: "initial",
-    ColorPickerHiddenInput: "initial",
   };
   if (simple[exportName]) return simple[exportName];
 
-  if (exportName === "ColorPickerInput")
-    return part === "ValueInput" ? "initial?.valueInput.initial" : "initial?.formatSelect.initial";
+  if (exportName === "ColorPicker") {
+    if (part === "Label") return "initial?.label.initial";
+    if (part === "Control") return "initial?.control.initial";
+    if (part === "HiddenInput") return "initial?.hiddenInput.initial";
+  }
+
+  if (exportName === "ColorPickerInput") {
+    if (part === "ValueInput") return "initial?.valueInput.initial";
+    if (part === "FormatSelect") return "initial?.formatSelect.initial";
+    if (part === "FormatControl") return "initial?.formatControl.initial";
+  }
   if (exportName === "ColorPickerTrigger") {
     if (part === "ValueSwatch") return "initial?.valueSwatch.initial";
     if (part === "TransparencyGrid") return "initial?.transparencyGrid.initial";
@@ -134,6 +133,7 @@ function primitiveProjection(
   if (exportName === "ColorPickerArea") {
     if (part === "Area") return "initial?.root.initial";
     if (part === "AreaBackground") return "initial?.background.initial";
+    if (part === "AreaThumb") return "initial?.thumb.initial";
     if (part === "AreaInput")
       return `initial?.input({ axis: "${literalAttribute(attrs, "axis")}" }).initial`;
   }
@@ -161,28 +161,32 @@ function primitiveProjection(
 }
 
 function componentProjection(exportName: string, childExportName: string): string | undefined {
-  if (exportName === "ColorPickerArea" && childExportName === "ColorPickerAreaThumb")
-    return "initial?.thumb.initial";
+  if (exportName === "ColorPicker") {
+    const values: Record<string, string> = {
+      ColorPickerDefaultEditor: "initial",
+      ColorPickerTrigger: "initial",
+      ColorPickerContent: "initial",
+    };
+    return values[childExportName];
+  }
   if (exportName === "ColorPickerContent") {
     const values: Record<string, string> = {
+      ColorPickerDefaultEditor: "initial",
+    };
+    return values[childExportName];
+  }
+  if (exportName === "ColorPickerDefaultEditor") {
+    const values: Record<string, string> = {
       ColorPickerArea: "initial?.area()",
-      ColorPickerSliders: "initial",
+      ColorPickerChannelSlider: "initial",
       ColorPickerInput: "initial",
       ColorPickerEyeDropper: "initial?.eyeDropperTrigger.initial",
+      ColorPickerSwatchGroup: "initial?.swatchGroup.initial",
+      ColorPickerSwatch: "initial",
       ColorPickerClear: "initial?.clear.initial",
     };
     return values[childExportName];
   }
-  if (exportName === "ColorPickerInput") {
-    const values: Record<string, string> = {
-      ColorPickerValueInput: "initial?.valueInput.initial",
-      ColorPickerNativeFormatSelect: "initial?.formatSelect.initial",
-      ColorPickerFormatSelect: "initial?.formatControl.initial",
-    };
-    return values[childExportName];
-  }
-  if (exportName === "ColorPickerSliders" && childExportName === "ColorPickerChannelSlider")
-    return "initial";
   return undefined;
 }
 

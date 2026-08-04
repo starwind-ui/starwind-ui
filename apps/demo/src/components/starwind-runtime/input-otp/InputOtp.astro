@@ -17,6 +17,7 @@ interface Props
   pattern?: RegExp | string;
   readOnly?: boolean;
   required?: boolean;
+  size?: "sm" | "md" | "lg";
   value?: string;
 }
 
@@ -30,6 +31,7 @@ const {
   pattern,
   readOnly = false,
   required = false,
+  size = "md",
   value,
   class: className,
   ...rest
@@ -49,6 +51,7 @@ const {
   required={required}
   value={value}
   {...rest}
+  data-size={size}
   data-slot="input-otp"
 >
   <slot />

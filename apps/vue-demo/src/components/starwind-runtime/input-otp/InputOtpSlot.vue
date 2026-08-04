@@ -1,22 +1,20 @@
 <script setup lang="ts">
 import * as InputOtpPrimitive from "@starwind-ui/vue/input-otp";
-import type { ClassValue, VariantProps } from "tailwind-variants";
+import type { ClassValue } from "tailwind-variants";
 import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
 import { inputOtpSlot } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
-export type InputOtpSlotProps = Omit<HTMLAttributes, "class" | "index"> &
-  VariantProps<typeof inputOtpSlot> & {
-    index?: number;
-    class?: ClassValue;
-  };
+export type InputOtpSlotProps = Omit<HTMLAttributes, "class" | "index"> & {
+  index?: number;
+  class?: ClassValue;
+};
 type InputOtpSlotDeclaredProps = {
   index?: number;
   class?: ClassValue;
-  size?: InputOtpSlotProps["size"];
 } & /* @vue-ignore */ InputOtpSlotProps;
-const { size, index, class: className } = defineProps<InputOtpSlotDeclaredProps>();
+const { index, class: className } = defineProps<InputOtpSlotDeclaredProps>();
 defineSlots<{}>();
 const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
@@ -45,7 +43,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
 <template>
   <InputOtpPrimitive.InputOtpSlot
     :ref="setElement"
-    :class="inputOtpSlot({ size, class: className })"
+    :class="inputOtpSlot({ class: className })"
     :index="index"
     v-bind="attrs"
     data-slot="input-otp-slot"

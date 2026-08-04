@@ -219,9 +219,22 @@ class AccordionController implements AccordionInstance {
 
   private refreshItems(): void {
     this.items = Array.from(this.root.querySelectorAll<HTMLElement>("[data-sw-accordion-item]"))
+      .filter((element) => element.closest("[data-sw-accordion]") === this.root)
       .map((element, index): AccordionItem | null => {
-        const trigger = element.querySelector<HTMLButtonElement>("[data-sw-accordion-trigger]");
-        const content = element.querySelector<HTMLElement>("[data-sw-accordion-content]");
+        const trigger = Array.from(
+          element.querySelectorAll<HTMLButtonElement>("[data-sw-accordion-trigger]"),
+        ).find(
+          (candidate) =>
+            candidate.closest("[data-sw-accordion]") === this.root &&
+            candidate.closest("[data-sw-accordion-item]") === element,
+        );
+        const content = Array.from(
+          element.querySelectorAll<HTMLElement>("[data-sw-accordion-content]"),
+        ).find(
+          (candidate) =>
+            candidate.closest("[data-sw-accordion]") === this.root &&
+            candidate.closest("[data-sw-accordion-item]") === element,
+        );
 
         if (!trigger || !content) return null;
 
@@ -332,7 +345,7 @@ class AccordionController implements AccordionInstance {
     if (!(target instanceof Element)) return null;
 
     const trigger = target.closest<HTMLButtonElement>("[data-sw-accordion-trigger]");
-    if (!trigger || !this.root.contains(trigger)) return null;
+    if (!trigger || trigger.closest("[data-sw-accordion]") !== this.root) return null;
 
     return trigger;
   }

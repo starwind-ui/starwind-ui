@@ -2,6 +2,7 @@
 import type { ComponentProps } from "astro/types";
 
 import { Button } from "../button";
+import { paginationLink } from "./variants";
 
 type Props = Omit<ComponentProps<typeof Button>, "variant" | "as" | "ref"> & {
   isActive?: boolean;
@@ -9,7 +10,6 @@ type Props = Omit<ComponentProps<typeof Button>, "variant" | "as" | "ref"> & {
 
 const {
   isActive,
-  size = "icon",
   "data-slot": dataSlot = "pagination-link",
   class: className,
   ...rest
@@ -19,8 +19,8 @@ const {
 <Button
   aria-current={isActive ? "page" : undefined}
   variant={isActive ? "outline" : "ghost"}
-  size={size}
-  class={className}
+  size="md"
+  class={paginationLink({ class: className })}
   {...rest}
   as="a"
   data-slot={dataSlot}

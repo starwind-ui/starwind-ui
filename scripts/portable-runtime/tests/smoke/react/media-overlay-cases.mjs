@@ -1,5 +1,9 @@
 import { expectText } from "../shared/text.mjs";
-import { verifyTooltipPlacements, verifyTooltipPropExamples } from "../shared/tooltip.mjs";
+import {
+  verifyTooltipCompositionCases,
+  verifyTooltipPlacements,
+  verifyTooltipPropExamples,
+} from "../shared/tooltip.mjs";
 import { verifyHoverCardCases } from "../shared/hover-card.mjs";
 import { verifyVideoCases } from "../shared/video.mjs";
 import { verifyDialogEntryAnimationGestures } from "../shared/dialog-entry-animation.mjs";
@@ -23,19 +27,23 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
       asChildHref: "#react-runtime-hover-card-as-child",
       asChildSide: "left",
       asChildTrigger: "react-runtime-hover-card-as-child-trigger",
+      asChildListenerCount: "react-runtime-hover-card-as-child-listener-count",
       alignedContent: "react-runtime-hover-card-aligned-content",
       alignedTrigger: "react-runtime-hover-card-aligned-trigger",
       controlledContent: "react-runtime-hover-card-controlled-content",
       controlledRoot: "react-runtime-hover-card-controlled",
       controlledTrigger: "react-runtime-hover-card-controlled-trigger",
       demo: "react-runtime-hover-card-demo",
-      expectedRootCount: 8,
+      expectedRootCount: 9,
       hoverableContent: "react-runtime-hover-card-aligned-content",
       hoverableTrigger: "react-runtime-hover-card-aligned-trigger",
       nonHoverableContent: "react-runtime-hover-card-no-hoverable-content",
       nonHoverableTrigger: "react-runtime-hover-card-no-hoverable-trigger",
+      nativeContent: "react-runtime-hover-card-native-content",
+      nativeTrigger: "react-runtime-hover-card-native-trigger",
       sideContent: (side) => `react-runtime-hover-card-side-${side}-content`,
       sideTrigger: (side) => `react-runtime-hover-card-side-${side}-trigger`,
+      styledSlot: "hover-card-trigger",
     },
     label: "React",
   });
@@ -377,6 +385,10 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
     );
   });
 
+  await verifyTooltipCompositionCases(page, "react-runtime", {
+    react: true,
+    styledSlot: "breadcrumb-link",
+  });
   await verifyTooltipPropExamples(page, "react-runtime", { react: true });
   await verifyTooltipPlacements(page, "react-runtime");
 

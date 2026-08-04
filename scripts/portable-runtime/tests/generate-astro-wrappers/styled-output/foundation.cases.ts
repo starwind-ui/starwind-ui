@@ -56,6 +56,7 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   const sidebar = await readGeneratedFile(outputRoot, "sidebar/Sidebar.astro");
   const sidebarTrigger = await readGeneratedFile(outputRoot, "sidebar/SidebarTrigger.astro");
   const sidebarRail = await readGeneratedFile(outputRoot, "sidebar/SidebarRail.astro");
+  const sidebarGroupLabel = await readGeneratedFile(outputRoot, "sidebar/SidebarGroupLabel.astro");
   const sidebarMenuButton = await readGeneratedFile(outputRoot, "sidebar/SidebarMenuButton.astro");
   const sidebarStyles = await readGeneratedFile(outputRoot, "sidebar/styles.css");
   const sidebarVariants = await readGeneratedFile(outputRoot, "sidebar/variants.ts");
@@ -346,6 +347,18 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(sidebarRail).toContain('SidebarPrimitive from "../primitives/astro/sidebar"');
   expect(sidebarRail).toContain("<SidebarPrimitive.Rail");
   expect(sidebarRail).toContain('tabindex="-1"');
+  const sidebarGroupLabelTemplate = sidebarGroupLabel.match(/^---[\s\S]*?---([\s\S]*)$/)?.[1];
+  expect(sidebarGroupLabelTemplate).toBeDefined();
+  expect(
+    sidebarGroupLabelTemplate?.match(
+      /<div\b(?=[^>]*\bclass=\{sidebarGroupLabel\(\{\s*class:\s*className\s*\}\)\})(?=[^>]*\bdata-as-child=\{asChild\s*\?\s*true\s*:\s*undefined\})(?=[^>]*\bdata-slot="sidebar-group-label")[^>]*>\s*<slot\s*\/>\s*<\/div>/g,
+    ) ?? [],
+  ).toHaveLength(1);
+  expect(sidebarGroupLabelTemplate?.match(/<div\b/g) ?? []).toHaveLength(1);
+  expect(sidebarGroupLabelTemplate?.match(/\basChild\s*\?/g) ?? []).toHaveLength(1);
+  expect(sidebarGroupLabel).not.toContain("SidebarPrimitive");
+  expect(sidebarGroupLabel).not.toContain("if (asChild)");
+  expect(sidebarGroupLabel).not.toMatch(/asChild\s*\?\s*</);
   expect(sidebarMenuButton).toContain('import "./styles.css";');
   expect(sidebarMenuButton).toContain("<Tooltip");
   expect(sidebarMenuButton).toContain('<TooltipTrigger class="w-full">');
@@ -377,7 +390,7 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(card).toContain('type Props = HTMLAttributes<"div"> & VariantProps<typeof card>;');
   expect(card).toContain("<div");
   expect(card).toContain("VariantProps<typeof card>");
-  expect(card).toContain('size = "default"');
+  expect(card).toContain('size = "md"');
   expect(card).toContain("card({ size, class: className })");
   expect(card).toContain("data-size={size}");
   expect(card).toContain('data-slot="card"');
@@ -403,7 +416,7 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(cardVariants).toContain("bg-card text-card-foreground group/card");
   expect(cardVariants).toContain("gap-(--card-spacing)");
   expect(cardVariants).toContain("py-(--card-spacing)");
-  expect(cardVariants).toContain('default: "[--card-spacing:--spacing(5)]"');
+  expect(cardVariants).toContain('md: "[--card-spacing:--spacing(5)]"');
   expect(cardVariants).toMatch(
     /sm: "(?:text-sm \[--card-spacing:--spacing\(4\)\]|\[--card-spacing:--spacing\(4\)\] text-sm)"/,
   );

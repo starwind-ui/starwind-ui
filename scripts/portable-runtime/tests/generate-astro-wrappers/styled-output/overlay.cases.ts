@@ -277,7 +277,14 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(popover).toContain('data-slot="popover"');
   expect(popoverTrigger).toContain("<PopoverPrimitive.Trigger");
   expect(popoverTrigger).toContain("asChild={asChild}");
-  expect(popoverTrigger).toContain("popoverTrigger({ class: className })");
+  expect(popoverTrigger).toContain(
+    "const triggerBaseClassName = popoverTrigger({ class: className });",
+  );
+  expect(popoverTrigger).toContain(
+    "const triggerClassName = asChild ? className : triggerBaseClassName;",
+  );
+  expect(popoverTrigger).toContain("class={triggerClassName}");
+  expect(popoverTrigger).not.toContain("class={popoverTrigger({ class: className })}");
   expect(popoverTrigger).toContain('data-slot="popover-trigger"');
   expect(popoverTrigger).not.toContain("data-as-child");
   expect(popoverContent).toContain("<PopoverPrimitive.Portal");
@@ -317,6 +324,10 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(navigationMenu).toContain("sideOffset = 8");
   expect(navigationMenu).toContain("openDelay={openDelay}");
   expect(navigationMenu).toContain("closeDelay={closeDelay}");
+  expect(navigationMenu).toContain('size?: "sm" | "md";');
+  expect(navigationMenu).toContain('contentSize?: "sm" | "md";');
+  expect(navigationMenu).toContain('size = "md"');
+  expect(navigationMenu).toContain("contentSize = size");
   expect(navigationMenu).toContain(
     'import NavigationMenuPositioner from "./NavigationMenuPositioner.astro";',
   );
@@ -327,12 +338,25 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(navigationMenu).toContain("alignOffset={alignOffset}");
   expect(navigationMenu).toContain("avoidCollisions={avoidCollisions}");
   expect(navigationMenu).toContain("collisionPadding={collisionPadding}");
+  expect(navigationMenu).toContain("size={contentSize}");
+  expect(navigationMenu.indexOf("{...rest}")).toBeLessThan(
+    navigationMenu.indexOf("data-size={size}"),
+  );
   expect(navigationMenu).not.toContain("<NavigationMenuPrimitive.Portal");
   expect(navigationMenu).not.toContain("<NavigationMenuPrimitive.Positioner");
   expect(navigationMenu).not.toContain("<NavigationMenuPrimitive.Popup");
   expect(navigationMenu).not.toContain("<NavigationMenuPrimitive.Viewport");
   expect(navigationMenu).not.toContain("@starwind-ui/runtime");
   expect(navigationMenuTrigger).toContain("<NavigationMenuPrimitive.Trigger");
+  expect(navigationMenuTrigger).toContain("asChild?: boolean;");
+  expect(navigationMenuTrigger).toContain(
+    "const triggerBaseClassName = navigationMenuTrigger({ class: className });",
+  );
+  expect(navigationMenuTrigger).toContain(
+    "const triggerClassName = asChild ? className : triggerBaseClassName;",
+  );
+  expect(navigationMenuTrigger).toContain("class={triggerClassName}");
+  expect(navigationMenuTrigger).toContain("asChild={asChild}");
   expect(navigationMenuTrigger).toContain("openDelay={openDelay}");
   expect(navigationMenuTrigger).toContain("closeDelay={closeDelay}");
   expect(navigationMenuTrigger).toContain("<NavigationMenuPrimitive.Icon");
@@ -342,6 +366,14 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   );
   expect(navigationMenuTrigger).toContain("<ChevronDown />");
   expect(navigationMenuTrigger).toContain('data-slot="navigation-menu-trigger"');
+  const astroAsChildBranch = navigationMenuTrigger.slice(
+    navigationMenuTrigger.indexOf("asChild ? ("),
+    navigationMenuTrigger.indexOf(") : ("),
+  );
+  expect(astroAsChildBranch).toContain("class={triggerClassName}");
+  expect(astroAsChildBranch).not.toContain("navigationMenuTrigger(");
+  expect(astroAsChildBranch).not.toContain("NavigationMenuPrimitive.Icon");
+  expect(astroAsChildBranch).not.toContain("ChevronDown");
   expect(navigationMenuLink).toContain("closeOnClick?: boolean;");
   expect(navigationMenuLink).toContain("closeOnClick = true");
   expect(navigationMenuLink).toContain("closeOnClick={closeOnClick}");
@@ -349,25 +381,36 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(navigationMenuPositioner).toContain("<NavigationMenuPrimitive.Portal");
   expect(navigationMenuPositioner).toContain("<NavigationMenuPrimitive.Positioner");
   expect(navigationMenuPositioner).toContain("sideOffset = 8");
+  expect(navigationMenuPositioner).toContain('size?: "sm" | "md";');
+  expect(navigationMenuPositioner).toContain('size = "md"');
+  expect(navigationMenuPositioner.indexOf("{...rest}")).toBeLessThan(
+    navigationMenuPositioner.indexOf("data-size={size}"),
+  );
   expect(navigationMenuPositioner).toContain("<NavigationMenuPrimitive.Popup");
   expect(navigationMenuPositioner).toContain("<NavigationMenuPrimitive.Viewport");
   expect(navigationMenuVariants).not.toContain("starwind-navigation-menu");
   expect(navigationMenuVariants).not.toContain("destructive");
   expect(navigationMenuVariants).toContain(
-    "group/navigation-menu relative flex max-w-max flex-1 items-center justify-center",
+    "group/nav-menu relative flex max-w-max flex-1 items-center justify-center",
   );
-  expect(navigationMenuVariants).not.toContain("group/navigation-menu relative z-10");
-  expect(navigationMenuVariants).toContain("gap-0");
+  expect(navigationMenuVariants).not.toContain("group/nav-menu relative z-10");
+  expect(navigationMenuVariants).toContain("group-data-[size=sm]/nav-menu:gap-0");
+  expect(navigationMenuVariants).toContain("group-data-[size=md]/nav-menu:gap-1");
+  expect(navigationMenuVariants).not.toContain("group-data-[size=lg]/nav-menu");
   expect(navigationMenuVariants).toContain(
-    "rounded-lg px-2.5 py-1.5 text-sm font-medium transition-all outline-none",
+    "group-data-[size=sm]/nav-menu:h-9 group-data-[size=sm]/nav-menu:px-2.5 group-data-[size=sm]/nav-menu:py-1.5 group-data-[size=sm]/nav-menu:text-sm",
+  );
+  expect(navigationMenuVariants).toContain(
+    "group-data-[size=md]/nav-menu:h-11 group-data-[size=md]/nav-menu:px-3 group-data-[size=md]/nav-menu:py-2 group-data-[size=md]/nav-menu:text-base",
   );
   expect(navigationMenuVariants).toContain("focus-visible:ring-3 focus-visible:outline-1");
   expect(navigationMenuVariants).toContain(
     "relative top-px ml-1 size-3 shrink-0 origin-center transition duration-300 [&>svg]:size-3 [&>svg]:shrink-0",
   );
   expect(navigationMenuVariants).toContain(
-    "group-data-[state=open]/navigation-menu-trigger:rotate-180",
+    "group-data-[size=md]/nav-menu:ml-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
   );
+  expect(navigationMenuVariants).toContain("group-data-[state=open]/nav-menu-trigger:rotate-180");
   expect(navigationMenuVariants).toContain(
     "data-[state=closed]:pointer-events-none data-[state=closed]:absolute data-[state=closed]:inset-0",
   );
@@ -383,8 +426,19 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(navigationMenuVariants).not.toContain("data-[state=closed]:animate-out");
   expect(navigationMenuVariants).not.toContain("slide-in-from-right-4");
   expect(navigationMenuVariants).not.toContain("slide-in-from-left-4");
-  expect(navigationMenuVariants).toContain("in-data-[slot=navigation-menu-content]:rounded-md");
+  expect(navigationMenuContentVariant).toContain("p-1");
+  expect(navigationMenuVariants).toContain("in-data-[slot=navigation-menu-content]:rounded-sm");
   expect(navigationMenuVariants).toContain("flex items-center gap-2 rounded-lg p-2 text-sm");
+  expect(navigationMenuVariants).toContain(
+    "group-data-[size=sm]/nav-menu-positioner:gap-2 group-data-[size=sm]/nav-menu-positioner:px-2 group-data-[size=sm]/nav-menu-positioner:py-1.5 group-data-[size=sm]/nav-menu-positioner:text-sm",
+  );
+  expect(navigationMenuVariants).toContain(
+    "group-data-[size=md]/nav-menu-positioner:gap-2.5 group-data-[size=md]/nav-menu-positioner:px-3 group-data-[size=md]/nav-menu-positioner:py-2 group-data-[size=md]/nav-menu-positioner:text-base",
+  );
+  expect(navigationMenuVariants).not.toContain("group-data-[size=lg]/nav-menu-positioner");
+  expect(navigationMenuVariants).toContain(
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  );
   expect(navigationMenuVariants).toContain("hover:bg-muted");
   expect(navigationMenuVariants).toContain("focus:bg-muted");
   expect(navigationMenuVariants).not.toContain("flex flex-col gap-1 rounded-sm p-2 text-sm");
@@ -410,9 +464,7 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(navigationMenuVariants).not.toContain("rounded-md border shadow-md");
   expect(navigationMenuVariants).toContain("data-active:bg-muted/50");
   expect(navigationMenuVariants).toContain("data-disabled:pointer-events-none");
-  expect(navigationMenuVariants).toContain(
-    "group-data-[orientation=vertical]/navigation-menu:flex-col",
-  );
+  expect(navigationMenuVariants).toContain("group-data-[orientation=vertical]/nav-menu:flex-col");
   const navigationMenuPositionerVariant =
     navigationMenuVariants.match(
       /export const navigationMenuPositioner = tv\(\{\n  base: \[\n([\s\S]*?)\n  \],\n\}\);/,
@@ -438,7 +490,9 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(tooltip).toContain('data-slot="tooltip"');
   expect(tooltipTrigger).toContain("<TooltipPrimitive.Trigger");
   expect(tooltipTrigger).toContain("asChild = true");
-  expect(tooltipTrigger).toContain('asChild ? "contents" : "inline-flex"');
+  expect(tooltipTrigger).toContain('asChild ? undefined : "inline-flex"');
+  expect(tooltipTrigger).not.toContain('asChild ? "contents" : "inline-flex"');
+  expect(tooltipTrigger).not.toContain('asChild ? "inline-flex" : undefined');
   expect(tooltipTrigger).toContain('data-slot="tooltip-trigger"');
   expect(tooltipTrigger).not.toContain("openDelay");
   expect(tooltipTrigger).not.toContain("closeDelay");

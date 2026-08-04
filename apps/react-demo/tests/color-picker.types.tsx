@@ -3,7 +3,6 @@ import * as React from "react";
 import type { ColorPickerColor } from "@starwind-ui/react/color-picker";
 import ColorPicker from "../src/components/starwind-runtime/color-picker/ColorPicker";
 import ColorPickerContent from "../src/components/starwind-runtime/color-picker/ColorPickerContent";
-import ColorPickerRoot from "../src/components/starwind-runtime/color-picker/ColorPickerRoot";
 import ColorPickerSwatch from "../src/components/starwind-runtime/color-picker/ColorPickerSwatch";
 import ColorPickerSwatchGroup from "../src/components/starwind-runtime/color-picker/ColorPickerSwatchGroup";
 import ColorPickerTrigger from "../src/components/starwind-runtime/color-picker/ColorPickerTrigger";
@@ -12,7 +11,7 @@ declare const color: ColorPickerColor;
 
 const ref = React.createRef<HTMLDivElement>();
 const root = (
-  <ColorPickerRoot ref={ref} defaultValue={color} id="inline" aria-label="Inline color" />
+  <ColorPicker ref={ref} inline defaultValue={color} id="inline" aria-label="Inline color" />
 );
 const popup = (
   <ColorPicker
@@ -26,17 +25,13 @@ const popup = (
   />
 );
 const canonical = (
-  <ColorPicker defaultValue={color} alpha allowEmpty>
+  <ColorPicker defaultValue={color} alpha clearable>
     <ColorPickerTrigger showValueText aria-label="Open color picker" />
-    <ColorPickerContent
-      size="lg"
-      showClear
-      swatches={
-        <ColorPickerSwatchGroup aria-label="Suggested colors">
-          <ColorPickerSwatch value="#4f46e5" aria-label="Indigo" />
-        </ColorPickerSwatchGroup>
-      }
-    />
+    <ColorPickerContent size="lg">
+      <ColorPickerSwatchGroup aria-label="Suggested colors">
+        <ColorPickerSwatch value="#4f46e5" aria-label="Indigo" />
+      </ColorPickerSwatchGroup>
+    </ColorPickerContent>
   </ColorPicker>
 );
 

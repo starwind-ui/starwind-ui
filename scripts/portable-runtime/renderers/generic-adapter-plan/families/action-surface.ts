@@ -93,35 +93,111 @@ function createActionSurfaceComponentFile(
 
 export function isActionSurfaceOutputModelPlan(plan: GenericAdapterPlan): boolean {
   const rootPart = plan.parts.find((part) => part.name === "root");
-  const optionProps = plan.runtime.optionProps ?? [];
-  const propNames = new Set(plan.props.map((prop) => prop.name));
   const partFiles = plan.files.filter((file) => file.kind === "part");
-  const hasInitialAttributes = [
+  const indexFiles = plan.files.filter((file) => file.kind === "index");
+  const requiredAttributes = [
     "type",
     "data-focusable-when-disabled",
     "data-disabled",
     "aria-disabled",
-  ].every((name) =>
-    plan.staticAttributes.some(
-      (attribute) =>
-        attribute.part === "root" && attribute.name === name && attribute.source === "prop",
-    ),
-  );
+  ];
+  const hasExactInitialAttributes =
+    plan.staticAttributes.length === requiredAttributes.length &&
+    requiredAttributes.every((name) =>
+      plan.staticAttributes.some(
+        (attribute) =>
+          attribute.part === "root" &&
+          attribute.name === name &&
+          attribute.source === "prop" &&
+          attribute.value === undefined,
+      ),
+    );
+  const hasExactProps =
+    hasExactNames(plan.props, ["disabled", "focusableWhenDisabled", "type"]) &&
+    plan.props.every((prop) => {
+      if (prop.name === "type") {
+        return (
+          prop.kind === "attribute" &&
+          prop.type === "button | submit | reset" &&
+          prop.targets?.length === 1 &&
+          prop.targets[0] === "root" &&
+          prop.defaultValue === undefined &&
+          prop.required === undefined &&
+          prop.unsupportedTargets === undefined
+        );
+      }
+      return (
+        prop.kind === "option" &&
+        prop.type === "boolean" &&
+        prop.defaultValue === "false" &&
+        prop.required === undefined &&
+        prop.targets === undefined &&
+        prop.unsupportedTargets === undefined
+      );
+    });
+  const hasExactRuntimeBridge =
+    plan.runtime.destroys === true &&
+    plan.runtime.rootPart === "root" &&
+    typeof plan.runtime.factory === "string" &&
+    typeof plan.runtime.importSource === "string" &&
+    hasExactNames(
+      (plan.runtime.optionProps ?? []).map((name) => ({ name })),
+      ["disabled"],
+    );
+  const hasExactSetter =
+    plan.setters.length === 1 &&
+    plan.setters[0]?.method === "setDisabled" &&
+    plan.setters[0]?.prop === "disabled" &&
+    plan.setters[0]?.options === undefined &&
+    plan.setters[0]?.props === undefined &&
+    plan.setters[0]?.stateModel === undefined &&
+    plan.setters[0]?.suppressesEmit === undefined;
+  const hasExactRef =
+    plan.refs.length === 1 && plan.refs[0]?.part === "root" && plan.refs[0]?.public === true;
+  const hasExactFilesAndExports =
+    plan.files.length === 2 &&
+    partFiles.length === 1 &&
+    partFiles[0]?.part === "root" &&
+    indexFiles.length === 1 &&
+    plan.exports.defaultNamespace === true &&
+    plan.exports.members.length === 1 &&
+    plan.exports.members[0]?.part === "root" &&
+    plan.exports.members[0]?.name === partFiles[0]?.exportName;
+  const hasNoUnsupportedFacts =
+    plan.events.length === 0 &&
+    plan.stateModels.length === 0 &&
+    plan.escapeDeclarations.length === 0 &&
+    plan.asChild === undefined &&
+    plan.context === undefined &&
+    plan.form === undefined &&
+    plan.floating === undefined &&
+    plan.presence === undefined;
 
   return (
-    plan.component === "button" &&
     plan.category === "static-semantic" &&
     plan.parts.length === 1 &&
-    partFiles.length === 1 &&
     rootPart !== undefined &&
     rootPart.ownsRuntime === true &&
     rootPart.forwardsRef === true &&
-    propNames.has("disabled") &&
-    propNames.has("focusableWhenDisabled") &&
-    propNames.has("type") &&
-    optionProps.length === 1 &&
-    optionProps.includes("disabled") &&
-    hasInitialAttributes
+    rootPart.role === undefined &&
+    rootPart.initExclusionAttributes === undefined &&
+    hasExactProps &&
+    hasExactRuntimeBridge &&
+    hasExactSetter &&
+    hasExactRef &&
+    hasExactFilesAndExports &&
+    hasExactInitialAttributes &&
+    hasNoUnsupportedFacts
+  );
+}
+
+function hasExactNames(
+  values: readonly { name: string }[],
+  expectedNames: readonly string[],
+): boolean {
+  return (
+    values.length === expectedNames.length &&
+    expectedNames.every((name) => values.some((value) => value.name === name))
   );
 }
 

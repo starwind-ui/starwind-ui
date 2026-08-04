@@ -12,7 +12,7 @@ export type ItemProps = React.ComponentPropsWithoutRef<"div"> &
 function Item(props: ItemProps) {
   const {
     variant = "default",
-    size = "default",
+    size = "md",
     as: Tag = "div",
     ref,
     className,

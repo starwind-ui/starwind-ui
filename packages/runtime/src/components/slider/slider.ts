@@ -86,6 +86,7 @@ export type SliderInstance = {
     event: "valueCommitted",
     callback: (details: SliderValueCommitDetails) => void,
   ): () => void;
+  subscribe(event: "stateSync", callback: () => void): () => void;
 };
 
 type SliderElements = {
@@ -169,6 +170,8 @@ class SliderController implements SliderInstance {
   private readonly boundThumbInputs = new WeakSet<HTMLInputElement>();
   private readonly controlled: boolean;
   private formBridgeObserver: MutationObserver | undefined;
+  private resetForm: HTMLFormElement | null = null;
+  private resetTimer: number | undefined;
   private name?: string;
   private readonly onValueChange?: (value: SliderValue, details: SliderValueChangeDetails) => void;
   private readonly onValueCommitted?: (
@@ -176,6 +179,7 @@ class SliderController implements SliderInstance {
     details: SliderValueCommitDetails,
   ) => void;
   private readonly subscribers = {
+    stateSync: new Set<() => void>(),
     valueChange: new Set<(details: SliderValueChangeDetails) => void>(),
     valueCommitted: new Set<(details: SliderValueCommitDetails) => void>(),
   };
@@ -201,6 +205,8 @@ class SliderController implements SliderInstance {
   private interactionValue: SliderValue | undefined;
   private syncingFormBridge = false;
   private values: number[];
+  private valueRevision = 0;
+  private readonly initialResetValues: number[];
 
   constructor(root: HTMLElement, options: SliderOptions) {
     this.root = root;
@@ -229,10 +235,12 @@ class SliderController implements SliderInstance {
     this.step = readNumberOption(options.step, root, SLIDER_STEP_ATTRIBUTE, 1);
     this.elements = getSliderElements(root);
     this.values = this.readInitialValues(options);
+    this.initialResetValues = [...this.values];
 
     this.setupInputs();
     this.bindEvents();
     this.render();
+    this.syncFormResetListener();
     this.observeFormBridgeAttributes();
   }
 
@@ -240,8 +248,11 @@ class SliderController implements SliderInstance {
     if (this.destroyed) return;
 
     this.stopDocumentDraggingListeners();
+    this.clearResetTimer();
+    this.detachFormResetListener();
     this.abortController.abort();
     this.formBridgeObserver?.disconnect();
+    this.subscribers.stateSync.clear();
     this.subscribers.valueChange.clear();
     this.subscribers.valueCommitted.clear();
     instances.delete(this.root);
@@ -256,10 +267,14 @@ class SliderController implements SliderInstance {
     const currentValue = this.getValue();
     this.readOptionsFromAttributes();
     this.elements = getSliderElements(this.root);
-    this.values = this.normalizeValues(currentValue, this.getExpectedValueLength(currentValue));
+    this.acceptValues(
+      this.normalizeValues(currentValue, this.getExpectedValueLength(currentValue)),
+    );
     this.setupInputs();
     this.bindPartEvents();
     this.render();
+    this.syncFormResetListener();
+    if (!areSliderValuesEqual(currentValue, this.getValue())) this.notifyStateSync();
   }
 
   setDisabled(disabled: boolean): void {
@@ -321,21 +336,30 @@ class SliderController implements SliderInstance {
     }
 
     if (shouldNormalizeValues) {
-      this.values = this.normalizeValues(currentValue, this.getExpectedValueLength(currentValue));
+      this.acceptValues(
+        this.normalizeValues(currentValue, this.getExpectedValueLength(currentValue)),
+      );
     }
 
     this.setupInputs();
     this.render();
+    this.syncFormResetListener();
+    if (!areSliderValuesEqual(currentValue, this.getValue())) this.notifyStateSync();
   }
 
   setValue(value: SliderValue, options: SliderSetValueOptions = {}): void {
     const previousValues = this.values;
     const nextValues = this.normalizeValues(value, this.getExpectedValueLength(value));
+    const stateChanged = !areValuesEqual(previousValues, nextValues);
 
-    this.values = nextValues;
+    this.acceptValues(nextValues, true);
     this.render();
 
-    if (options.emit === false || areValuesEqual(previousValues, nextValues)) return;
+    if (options.emit === false) {
+      if (stateChanged) this.notifyStateSync();
+      return;
+    }
+    if (!stateChanged) return;
 
     const details = new SliderValueChangeDetailsImpl({
       activeThumbIndex: options.activeThumbIndex ?? -1,
@@ -349,11 +373,20 @@ class SliderController implements SliderInstance {
   }
 
   subscribe(
-    event: "valueChange" | "valueCommitted",
+    event: "stateSync" | "valueChange" | "valueCommitted",
     callback:
+      | (() => void)
       | ((details: SliderValueChangeDetails) => void)
       | ((details: SliderValueCommitDetails) => void),
   ): () => void {
+    if (event === "stateSync") {
+      const stateSyncCallback = callback as () => void;
+      this.subscribers.stateSync.add(stateSyncCallback);
+      return () => {
+        this.subscribers.stateSync.delete(stateSyncCallback);
+      };
+    }
+
     if (event === "valueChange") {
       const valueChangeCallback = callback as (details: SliderValueChangeDetails) => void;
       this.subscribers.valueChange.add(valueChangeCallback);
@@ -469,6 +502,7 @@ class SliderController implements SliderInstance {
       }
 
       this.syncThumbInputFormAttributes();
+      this.syncFormResetListener();
     });
 
     this.formBridgeObserver.observe(this.root, {
@@ -522,6 +556,46 @@ class SliderController implements SliderInstance {
     this.bindPartEvents();
     this.root.addEventListener("focusin", this.handleFocusIn, { signal });
     this.root.addEventListener("focusout", this.handleFocusOut, { signal });
+  }
+
+  private readonly handleFormReset = (event: Event): void => {
+    const resetRevision = this.valueRevision;
+    this.clearResetTimer();
+    this.resetTimer = window.setTimeout(() => {
+      this.resetTimer = undefined;
+      if (event.defaultPrevented || this.destroyed) return;
+
+      let stateChanged = false;
+      if (!this.controlled && this.valueRevision === resetRevision) {
+        const nextValues = [...this.initialResetValues];
+        stateChanged = !areValuesEqual(this.values, nextValues);
+        this.values = nextValues;
+      }
+
+      this.render();
+      if (stateChanged) this.notifyStateSync();
+    }, 0);
+  };
+
+  private clearResetTimer(): void {
+    if (this.resetTimer === undefined) return;
+
+    window.clearTimeout(this.resetTimer);
+    this.resetTimer = undefined;
+  }
+
+  private syncFormResetListener(): void {
+    const nextForm = this.elements.thumbs[0]?.input.form ?? null;
+    if (this.resetForm === nextForm) return;
+
+    this.detachFormResetListener();
+    nextForm?.addEventListener("reset", this.handleFormReset);
+    this.resetForm = nextForm;
+  }
+
+  private detachFormResetListener(): void {
+    this.resetForm?.removeEventListener("reset", this.handleFormReset);
+    this.resetForm = null;
   }
 
   private bindPartEvents(): void {
@@ -889,7 +963,7 @@ class SliderController implements SliderInstance {
       return false;
     }
 
-    this.values = nextValues;
+    this.acceptValues(nextValues);
     this.render();
 
     if (request.commit) {
@@ -907,6 +981,13 @@ class SliderController implements SliderInstance {
     }
 
     return true;
+  }
+
+  private acceptValues(nextValues: number[], forceRevision = false): void {
+    if (forceRevision || !areValuesEqual(this.values, nextValues)) {
+      this.valueRevision += 1;
+    }
+    this.values = nextValues;
   }
 
   private getKeyboardValue(index: number, event: KeyboardEvent): number | undefined {
@@ -1086,6 +1167,10 @@ class SliderController implements SliderInstance {
     if (event.defaultPrevented) details.cancel();
     this.onValueChange?.(details.value, details);
     this.subscribers.valueChange.forEach((subscriber) => subscriber(details));
+  }
+
+  private notifyStateSync(): void {
+    for (const subscriber of [...this.subscribers.stateSync]) subscriber();
   }
 
   private notifyCommitted(details: SliderValueCommitDetails, source?: object): void {
@@ -1289,6 +1374,13 @@ function releasePointerCapture(element: HTMLElement, pointerId: number): void {
 
 function areValuesEqual(left: readonly number[], right: readonly number[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function areSliderValuesEqual(left: SliderValue, right: SliderValue): boolean {
+  return areValuesEqual(
+    Array.isArray(left) ? left : [left],
+    Array.isArray(right) ? right : [right],
+  );
 }
 
 function clamp(value: number, min: number, max: number): number {

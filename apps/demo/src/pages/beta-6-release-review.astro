@@ -1,0 +1,119 @@
+---
+import CardDemo from "@/components/runtime-prototype/CardDemo.astro";
+import { ColorPickerDemo } from "@/components/runtime-prototype";
+import HoverCardDemo from "@/components/runtime-prototype/HoverCardDemo.astro";
+import TooltipDemo from "@/components/runtime-prototype/TooltipDemo.astro";
+import Layout from "@/layouts/Layout.astro";
+
+const reviewSections = [
+  {
+    href: "#review-color-picker",
+    title: "Color Picker",
+    status: "Fixed — recheck independent popup",
+    checks: [
+      "Small, medium, and large controls visibly scale together.",
+      "The value input and format selector have matching heights in every popup.",
+      "The small trigger with an independent large popup keeps the two sizes independent.",
+      "Dragging, typing, format selection, swatches, clear, and popup dismissal all work.",
+    ],
+  },
+  {
+    href: "#review-card",
+    title: "Card",
+    status: "Visually confirmed",
+    checks: [
+      "The small card is visibly tighter than the default medium card.",
+      "Header, content, and footer share one horizontal inset.",
+      "The action remains in the upper-right without overlapping text.",
+      "The tinted footer reaches the lower edges and preserves rounded corners.",
+    ],
+  },
+  {
+    href: "#review-hover-card",
+    title: "Hover Card",
+    status: "Visually confirmed",
+    checks: [
+      "Every side example opens on the labeled side.",
+      "Native, Button, and asChild link triggers all open their content.",
+      "The asChild link retains its uppercase, underline, spacing, and click behavior.",
+      "Moving from a normal trigger into its content keeps the card open.",
+    ],
+  },
+  {
+    href: "#review-tooltip",
+    title: "Tooltip",
+    status: "Visually confirmed",
+    checks: [
+      "Every side and alignment example opens in the labeled position.",
+      "Native, raw button, styled link, and Button triggers all open their tooltip.",
+      "Raw and styled asChild triggers retain their authored appearance and click behavior.",
+      "Disabled stays closed; default-open and dismissal examples follow their labels.",
+    ],
+  },
+] as const;
+---
+
+<Layout
+  title="Beta 6 Release Review"
+  description="Focused manual QA page for the Starwind UI Beta 6 release candidate"
+>
+  <main class="container mx-auto max-w-5xl px-4 py-10 sm:py-14">
+    <header class="border-error/40 bg-error/5 mb-10 rounded-2xl border-2 p-5 sm:p-7">
+      <div
+        class="bg-error text-error-foreground mb-3 inline-flex rounded-full px-3 py-1 text-xs font-bold tracking-wider uppercase"
+      >
+        Manual QA only — Beta 6
+      </div>
+      <h1 class="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        Beta 6 release review
+      </h1>
+      <p class="text-muted-foreground mt-3 max-w-3xl">
+        This page isolates the components that were fixed or still need visual confirmation. Review
+        each checklist, then test the examples directly below it. Dropdown is intentionally
+        excluded.
+      </p>
+    </header>
+
+    <nav class="mb-12 grid gap-3 sm:grid-cols-2" aria-label="Release review sections">
+      {
+        reviewSections.map((section) => (
+          <a
+            href={section.href}
+            class="bg-card hover:bg-muted/50 rounded-xl border p-4 transition-colors"
+          >
+            <span class="font-heading block text-lg font-semibold">{section.title}</span>
+            <span class="text-muted-foreground text-sm">{section.status}</span>
+          </a>
+        ))
+      }
+    </nav>
+
+    {
+      reviewSections.map((section) => (
+        <section id={section.href.slice(1)} class="scroll-mt-6 border-t pt-10 first:border-t-0">
+          <div class="bg-muted/40 mb-6 rounded-xl border p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h2 class="font-heading text-2xl font-semibold">Review: {section.title}</h2>
+              <span class="bg-background rounded-full border px-3 py-1 text-xs font-medium">
+                {section.status}
+              </span>
+            </div>
+            <ul class="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+              {section.checks.map((check) => (
+                <li class="bg-background flex gap-2 rounded-lg border p-3">
+                  <span aria-hidden="true">□</span>
+                  <span>{check}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {section.title === "Color Picker" && <ColorPickerDemo />}
+          {section.title === "Card" && <CardDemo />}
+          {section.title === "Hover Card" && <HoverCardDemo />}
+          {section.title === "Tooltip" && <TooltipDemo />}
+        </section>
+      ))
+    }
+  </main>
+</Layout>

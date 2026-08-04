@@ -1,29 +1,62 @@
 ---
-import type { ComponentProps } from "astro/types";
-
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
 import { Popover } from "../popover";
-import ColorPickerRoot from "./ColorPickerRoot.astro";
+import ColorPickerContent from "./ColorPickerContent.astro";
+import ColorPickerDefaultEditor from "./ColorPickerDefaultEditor.astro";
+import ColorPickerTrigger from "./ColorPickerTrigger.astro";
+import {
+  colorPicker,
+  colorPickerControl,
+  colorPickerHiddenInput,
+  colorPickerLabel,
+} from "./variants";
 
-type Props = ComponentProps<typeof ColorPickerRoot> & {
-  defaultOpen?: boolean;
-  closeOnEscape?: boolean;
-  closeOnOutsideInteract?: boolean;
-  modal?: boolean;
-  openOnHover?: boolean;
-  closeDelay?: number;
-};
+type Props = Omit<HTMLAttributes<"div">, "value" | "defaultValue" | "onChange" | "dir"> &
+  VariantProps<typeof colorPicker> & {
+    defaultValue?: import("@starwind-ui/astro/color-picker").ColorPickerValue;
+    format?: import("@starwind-ui/astro/color-picker").ColorPickerFormat;
+    alpha?: boolean;
+    clearable?: boolean;
+    disabled?: boolean;
+    readOnly?: boolean;
+    name?: string;
+    form?: string;
+    required?: boolean;
+    locale?: string;
+    dir?: import("@starwind-ui/astro/color-picker").ColorPickerDirection;
+    inline?: boolean;
+    label?: string;
+    showEyeDropper?: boolean;
+    showValueText?: boolean;
+    formatControl?: "select" | "native" | "none";
+    formats?: readonly import("@starwind-ui/astro/color-picker").ColorPickerFormat[];
+    swatches?: readonly (
+      | import("@starwind-ui/astro/color-picker").ColorPickerValue
+      | {
+          value: import("@starwind-ui/astro/color-picker").ColorPickerValue;
+          label: string;
+          disabled?: boolean;
+        }
+    )[];
+    defaultOpen?: boolean;
+    closeOnEscape?: boolean;
+    closeOnOutsideInteract?: boolean;
+    modal?: boolean;
+    openOnHover?: boolean;
+    closeDelay?: number;
+    side?: "top" | "right" | "bottom" | "left";
+    align?: "start" | "center" | "end";
+    sideOffset?: number;
+    avoidCollisions?: boolean;
+  };
 
 const {
-  defaultOpen = false,
-  closeOnEscape = true,
-  closeOnOutsideInteract = true,
-  modal = false,
-  openOnHover = false,
-  closeDelay = 200,
   defaultValue = "#000000",
-  format = "hex",
+  format,
   alpha = true,
-  allowEmpty = false,
+  clearable = false,
   disabled = false,
   readOnly = false,
   name,
@@ -31,41 +64,170 @@ const {
   required = false,
   locale,
   dir,
+  inline = false,
+  label,
+  showEyeDropper = true,
+  showValueText = true,
+  formatControl = "select",
+  formats = ["hex", "rgb", "hsl", "hsb"],
+  swatches = [],
+  defaultOpen = false,
+  closeOnEscape = true,
+  closeOnOutsideInteract = true,
+  modal = false,
+  openOnHover = false,
+  closeDelay = 200,
+  side = "bottom",
+  align = "start",
+  sideOffset = 4,
+  avoidCollisions = true,
   class: className,
   size = "md",
   ...rest
 } = Astro.props;
+
+const resolvedFormat = format ?? formats[0] ?? "hex";
+const requestedFormats = Array.from(new Set(formats));
+const normalizedFormats = requestedFormats.includes(resolvedFormat)
+  ? requestedFormats
+  : [resolvedFormat, ...requestedFormats];
 ---
 
-<Popover
-  defaultOpen={defaultOpen}
-  closeOnEscape={closeOnEscape}
-  closeOnOutsideInteract={closeOnOutsideInteract}
-  modal={modal}
-  openOnHover={openOnHover}
-  closeDelay={closeDelay}
->
-  <ColorPickerRoot
-    defaultValue={defaultValue}
-    format={format}
-    alpha={alpha}
-    allowEmpty={allowEmpty}
-    disabled={disabled}
-    readOnly={readOnly}
-    name={name}
-    form={form}
-    required={required}
-    locale={locale}
-    dir={dir}
-    {...rest}
-    data-floating-root={true}
-    class={className}
-    size={size}
-  >
-    {
-      async (initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection) => (
-        <Fragment set:html={await Astro.slots.render("default", [initial])} />
-      )
-    }
-  </ColorPickerRoot>
-</Popover>
+{
+  inline ? (
+    <ColorPickerPrimitive.Root
+      class={colorPicker({ size, class: className })}
+      defaultValue={defaultValue}
+      format={resolvedFormat}
+      alpha={alpha}
+      allowEmpty={clearable}
+      disabled={disabled}
+      readOnly={readOnly}
+      name={name}
+      form={form}
+      required={required}
+      locale={locale}
+      dir={dir}
+      {...rest}
+      data-size={size}
+      data-slot="color-picker"
+    >
+      {async (initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection) => (
+        <>
+          {Astro.slots.has("default") ? (
+            <Fragment set:html={await Astro.slots.render("default", [initial])} />
+          ) : (
+            <>
+              {label != null && (
+                <ColorPickerPrimitive.Label
+                  initial={initial?.label.initial}
+                  class={colorPickerLabel()}
+                  data-slot="color-picker-label"
+                >
+                  {label}
+                </ColorPickerPrimitive.Label>
+              )}
+
+              <ColorPickerDefaultEditor
+                initial={initial}
+                size={size}
+                formatControl={formatControl}
+                formats={normalizedFormats}
+                showEyeDropper={showEyeDropper}
+                swatches={swatches}
+              />
+            </>
+          )}
+          <ColorPickerPrimitive.HiddenInput
+            initial={initial?.hiddenInput.initial}
+            class={colorPickerHiddenInput()}
+            data-slot="color-picker-hidden-input"
+          />
+        </>
+      )}
+    </ColorPickerPrimitive.Root>
+  ) : (
+    <Popover
+      defaultOpen={defaultOpen}
+      closeOnEscape={closeOnEscape}
+      closeOnOutsideInteract={closeOnOutsideInteract}
+      modal={modal}
+      openOnHover={openOnHover}
+      closeDelay={closeDelay}
+    >
+      <ColorPickerPrimitive.Root
+        class={colorPicker({ size, class: className })}
+        defaultValue={defaultValue}
+        format={resolvedFormat}
+        alpha={alpha}
+        allowEmpty={clearable}
+        disabled={disabled}
+        readOnly={readOnly}
+        name={name}
+        form={form}
+        required={required}
+        locale={locale}
+        dir={dir}
+        {...rest}
+        data-size={size}
+        data-floating-root={true}
+        data-slot="color-picker"
+      >
+        {async (initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection) => (
+          <>
+            {Astro.slots.has("default") ? (
+              <Fragment set:html={await Astro.slots.render("default", [initial])} />
+            ) : (
+              <>
+                {label != null && (
+                  <ColorPickerPrimitive.Label
+                    initial={initial?.label.initial}
+                    class={colorPickerLabel()}
+                    data-slot="color-picker-label"
+                  >
+                    {label}
+                  </ColorPickerPrimitive.Label>
+                )}
+
+                <>
+                  <ColorPickerPrimitive.Control
+                    initial={initial?.control.initial}
+                    class={colorPickerControl()}
+                    data-slot="color-picker-control"
+                  >
+                    <ColorPickerTrigger
+                      initial={initial}
+                      showValueText={showValueText}
+                      aria-label={
+                        label ? `Open ${label.toLowerCase()} picker` : "Open color picker"
+                      }
+                    />
+                  </ColorPickerPrimitive.Control>
+
+                  <ColorPickerContent
+                    initial={initial}
+                    size={size}
+                    formatControl={formatControl}
+                    formats={normalizedFormats}
+                    showEyeDropper={showEyeDropper}
+                    swatches={swatches}
+                    side={side}
+                    align={align}
+                    sideOffset={sideOffset}
+                    avoidCollisions={avoidCollisions}
+                    aria-label={label ? `${label} editor` : "Color editor"}
+                  />
+                </>
+              </>
+            )}
+            <ColorPickerPrimitive.HiddenInput
+              initial={initial?.hiddenInput.initial}
+              class={colorPickerHiddenInput()}
+              data-slot="color-picker-hidden-input"
+            />
+          </>
+        )}
+      </ColorPickerPrimitive.Root>
+    </Popover>
+  )
+}

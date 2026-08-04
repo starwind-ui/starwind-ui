@@ -1,0 +1,11 @@
+{
+  "components": {
+    "color-picker": "major",
+    "combobox": "patch",
+    "input-otp": "major",
+    "pagination": "major",
+    "radio-group": "major",
+    "select": "patch",
+    "toggle-group": "major"
+  }
+}

@@ -22,30 +22,89 @@ import {
 } from "./shared.js";
 
 export function defineReactColorPickerOutputTests(getTempRoot: GetTempRoot): void {
-  it("generates the canonical styled Color Picker composition deterministically", async () => {
+  it("generates the simplified styled Color Picker composition deterministically", async () => {
     const tempRoot = getTempRoot();
     const outputDir = "generated/styled/react";
     const primitiveOutputDir = "generated/primitives/react";
     await generateStarwindReactWrappers({ outputDir, primitiveOutputDir, repoRoot: tempRoot });
 
     const tree = await readGeneratedTree(path.join(tempRoot, outputDir, "color-picker"));
+    expect(Object.keys(tree).sort()).toEqual(
+      [
+        "ColorPicker.tsx",
+        "ColorPickerArea.tsx",
+        "ColorPickerChannelInput.tsx",
+        "ColorPickerChannelSlider.tsx",
+        "ColorPickerClear.tsx",
+        "ColorPickerContent.tsx",
+        "ColorPickerDefaultEditor.tsx",
+        "ColorPickerEyeDropper.tsx",
+        "ColorPickerInput.tsx",
+        "ColorPickerSwatch.tsx",
+        "ColorPickerSwatchGroup.tsx",
+        "ColorPickerTrigger.tsx",
+        "ColorPickerValueSwatch.tsx",
+        "index.ts",
+        "styles.css",
+        "variants.ts",
+      ].sort(),
+    );
+    const root = tree["ColorPicker.tsx"];
     const content = tree["ColorPickerContent.tsx"];
-    expect(content).toContain(
+    const editor = tree["ColorPickerDefaultEditor.tsx"];
+    expect(editor).toContain(
       'import { IconColorPicker as ColorPicker } from "@tabler/icons-react";',
     );
-    expect(content).toContain('const inputSize = size === "lg" ? "md" : "sm";');
-    expect(content).toContain("const hasSwatches = swatches != null;");
-    expect(content).toMatch(/<ColorPicker\s+className="size-4"\s+aria-hidden="true"/);
-    expect(content).not.toContain(">Pick<");
-    expect(content).toContain("size={inputSize}");
+    expect(editor).toContain("formatContentSize={size}");
+    expect(editor).not.toContain("inputSize");
+    expect(editor).toContain("normalizedSwatches.length > 0");
+    expect(editor).toMatch(/<ColorPicker\s+className="size-4"\s+aria-hidden="true"/);
+    expect(editor).not.toContain(">Pick<");
+    expect(editor).toContain("normalizedSwatches.map");
+    expect(editor).toContain("<ColorPickerClear");
     expect(content).toContain('collisionStrategy="best-fit"');
-    expect(content).toContain("(hasSwatches || showClear) &&");
-    expect(content.indexOf("{swatches}")).toBeLessThan(content.indexOf("<ColorPickerClear"));
+    expect(content).toContain("<ColorPickerDefaultEditor");
+    expect(content).toContain('size = "md"');
+    expect(content).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
+    expect(root).toContain("inline = false");
+    expect(root).toContain("alpha = true");
+    expect(root).toContain("allowEmpty={clearable}");
+    expect(root).toContain('format ?? formats[0] ?? "hex"');
+    expect(root).toContain('size = "md"');
+    expect(root).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
+    expect(root).toContain("requestedFormats.includes(resolvedFormat)");
+    expect(root.match(/<ColorPickerPrimitive\.HiddenInput/g)).toHaveLength(2);
+    expect(root).toContain("Parameters<NonNullable<typeof onFormatChange>>");
+    expect(tree["ColorPickerInput.tsx"]).toContain('formatControl?: "select" | "native" | "none"');
+    expect(tree["ColorPickerInput.tsx"]).toContain('formatContentSize?: "sm" | "md" | "lg"');
+    expect(tree["ColorPickerInput.tsx"]).toContain('formatContentSize = "md"');
+    expect(tree["ColorPickerInput.tsx"]).toMatch(/<SelectContent\s+size=\{formatContentSize\}/);
+    expect(tree["ColorPickerInput.tsx"]).toContain("normalizedFormats.map");
+    expect(tree["ColorPickerArea.tsx"]).toContain("<ColorPickerPrimitive.AreaThumb");
+    expect(tree["index.ts"]).not.toContain("ColorPickerDefaultEditor");
+    expect(tree["index.ts"]).not.toContain("InlineRoot");
     expect(tree["styles.css"]).toContain('data-has-swatches="false"');
-    expect(tree["variants.ts"]).toContain('sm: "size-6"');
-    expect(tree["variants.ts"]).toContain('sm: "h-2.5');
+    expect(tree["styles.css"]).toContain(
+      '[data-slot="color-picker"][data-size="sm"], [data-sw-color-picker-content][data-size="sm"]',
+    );
+    expect(tree["variants.ts"]).toContain("size-(--sw-color-picker-swatch-size)");
+    expect(tree["variants.ts"]).toContain("h-(--sw-color-picker-slider-size)");
+    for (const part of [
+      "ColorPickerArea.tsx",
+      "ColorPickerChannelInput.tsx",
+      "ColorPickerChannelSlider.tsx",
+      "ColorPickerClear.tsx",
+      "ColorPickerEyeDropper.tsx",
+      "ColorPickerInput.tsx",
+      "ColorPickerSwatch.tsx",
+      "ColorPickerSwatchGroup.tsx",
+      "ColorPickerTrigger.tsx",
+      "ColorPickerValueSwatch.tsx",
+    ]) {
+      expect(tree[part]).not.toContain("size?:");
+    }
     expect(tree["variants.ts"]).toContain("min-h-32 w-full shrink-0");
-    expect(tree["variants.ts"]).toContain("max-h-[var(--sw-floating-available-height)]");
+    expect(tree["variants.ts"]).toContain("max-h-(--sw-floating-available-height)");
 
     const first = tree;
     await generateStarwindReactWrappers({ outputDir, primitiveOutputDir, repoRoot: tempRoot });

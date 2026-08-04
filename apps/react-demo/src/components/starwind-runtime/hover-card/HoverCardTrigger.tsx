@@ -20,9 +20,12 @@ function HoverCardTrigger(props: HoverCardTriggerProps) {
     ...rest
   } = props;
 
+  const triggerBaseClassName = hoverCardTrigger({ class: className });
+  const triggerClassName = asChild ? className : triggerBaseClassName;
+
   return (
     <PreviewCardPrimitive.Trigger
-      className={hoverCardTrigger({ class: className })}
+      className={triggerClassName}
       asChild={asChild}
       closeDelay={closeDelay}
       disabled={disabled}

@@ -7,7 +7,7 @@ export const radioGroupStyledContract: StyledAdapterContract = {
   variantCollectionName: "RadioGroupVariants",
   variants: {
     radioGroup: {
-      base: "disabled:cursor-not-allowed disabled:opacity-70",
+      base: "group/radio-group disabled:cursor-not-allowed disabled:opacity-70",
       variants: {
         orientation: {
           vertical: "grid gap-3",
@@ -17,15 +17,10 @@ export const radioGroupStyledContract: StyledAdapterContract = {
       defaultVariants: { orientation: "vertical" },
     },
     radioWrapper: {
-      base: "relative isolate flex shrink-0",
-      variants: {
-        size: {
-          sm: "size-4",
-          md: "size-5",
-          lg: "size-6",
-        },
-      },
-      defaultVariants: { size: "md" },
+      base: [
+        "relative isolate flex shrink-0",
+        "group-data-[size=sm]/radio-group:size-4 group-data-[size=md]/radio-group:size-5 group-data-[size=lg]/radio-group:size-6",
+      ],
     },
     radioItem: {
       base: [
@@ -68,15 +63,8 @@ export const radioGroupStyledContract: StyledAdapterContract = {
         "flex items-center justify-center",
         "opacity-0 transition-opacity data-checked:opacity-100",
         "[&>svg]:size-full [&>svg]:shrink-0",
+        "group-data-[size=sm]/radio-group:size-2 group-data-[size=md]/radio-group:size-3 group-data-[size=lg]/radio-group:size-4",
       ],
-      variants: {
-        size: {
-          sm: "size-2",
-          md: "size-3",
-          lg: "size-4",
-        },
-      },
-      defaultVariants: { size: "md" },
     },
   },
   components: [
@@ -109,6 +97,7 @@ export const radioGroupStyledContract: StyledAdapterContract = {
             frameworks: ["react"],
           },
           { name: "required", optional: true, type: "boolean" },
+          { name: "size", optional: true, type: '"sm" | "md" | "lg"' },
           {
             name: "value",
             optional: true,
@@ -130,6 +119,7 @@ export const radioGroupStyledContract: StyledAdapterContract = {
           { name: "readOnly", defaultValue: "false" },
           { name: "ref", frameworks: ["react"] },
           { name: "required", defaultValue: "false" },
+          { name: "size", defaultValue: '"md"' },
           { name: "value" },
           { name: "class", alias: "className" },
         ],
@@ -165,6 +155,7 @@ export const radioGroupStyledContract: StyledAdapterContract = {
             { name: "value", value: { type: "variable", name: "value" } },
             { name: "aria-label", value: { type: "variable", name: "legend" } },
             { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "data-slot", value: { type: "literal", value: "radio-group" } },
           ],
           children: [
@@ -206,7 +197,6 @@ export const radioGroupStyledContract: StyledAdapterContract = {
             element: "span",
             keys: ["defaultChecked", "onChange"],
           },
-          { type: "variantProps", variant: "radioWrapper" },
           { type: "variantProps", variant: "radioControl" },
         ],
         fields: [
@@ -237,7 +227,6 @@ export const radioGroupStyledContract: StyledAdapterContract = {
       destructure: {
         props: [
           { name: "variant" },
-          { name: "size", defaultValue: '"md"' },
           { name: "checked" },
           { name: "defaultChecked" },
           { name: "disabled", defaultValue: "false" },
@@ -261,7 +250,7 @@ export const radioGroupStyledContract: StyledAdapterContract = {
           attrs: [
             {
               name: "class",
-              value: { type: "classVariant", variant: "radioWrapper", args: { size: "size" } },
+              value: { type: "classVariant", variant: "radioWrapper" },
             },
             { name: "data-slot", value: { type: "literal", value: "radio-group-item-wrapper" } },
           ],
@@ -323,7 +312,6 @@ export const radioGroupStyledContract: StyledAdapterContract = {
                           value: {
                             type: "classVariant",
                             variant: "radioIndicator",
-                            args: { size: "size" },
                           },
                         },
                         {

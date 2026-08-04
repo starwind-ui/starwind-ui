@@ -37,7 +37,6 @@ const toggleGroupStyle =
 <ToggleGroupPrimitive.Root
   class={toggleGroup({ class: className })}
   data-variant={variant}
-  data-size={size}
   data-spacing={spacing}
   data-horizontal={orientation === "horizontal" ? "" : undefined}
   data-vertical={orientation === "vertical" ? "" : undefined}
@@ -48,6 +47,7 @@ const toggleGroupStyle =
   orientation={orientation}
   style={toggleGroupStyle}
   {...rest}
+  data-size={size}
   data-slot="toggle-group"
 >
   <slot />

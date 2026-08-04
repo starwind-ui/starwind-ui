@@ -7,6 +7,7 @@ export const approvedTestHomePrefixes = [
   "packages/cli/tests/",
   "packages/react/tests/",
   "packages/runtime/tests/",
+  "packages/svelte/tests/",
   "packages/vue/tests/",
   "scripts/portable-runtime/tests/",
   "scripts/tests/",
@@ -14,13 +15,20 @@ export const approvedTestHomePrefixes = [
 
 export const testSuiteOwners = [
   {
+    name: "portable-svelte",
+    prefixes: ["scripts/portable-runtime/tests/generate-svelte-proof/"],
+  },
+  {
     name: "portable-vue",
     prefixes: ["scripts/portable-runtime/tests/generate-vue-wrappers/"],
   },
   {
     name: "portable-runtime",
     prefixes: ["scripts/portable-runtime/tests/"],
-    excludePrefixes: ["scripts/portable-runtime/tests/generate-vue-wrappers/"],
+    excludePrefixes: [
+      "scripts/portable-runtime/tests/generate-svelte-proof/",
+      "scripts/portable-runtime/tests/generate-vue-wrappers/",
+    ],
   },
   {
     name: "repo-scripts",
@@ -37,6 +45,10 @@ export const testSuiteOwners = [
   {
     name: "runtime",
     prefixes: ["packages/runtime/tests/"],
+  },
+  {
+    name: "svelte",
+    prefixes: ["packages/svelte/tests/"],
   },
   {
     name: "vue",

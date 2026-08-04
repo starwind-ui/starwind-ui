@@ -97,6 +97,7 @@ export async function assertAstroStyledFormOutput(outputRoot: string): Promise<v
   expect(selectTrigger).toContain("<SelectPrimitive.Icon");
   expect(selectTrigger).toContain("!asChild && showIcon && (");
   expect(selectTrigger).toContain('size = "md"');
+  expect(selectTrigger).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
   expect(selectTrigger).toContain('data-slot="select-trigger"');
   expect(selectContent).toContain("<SelectPrimitive.Portal");
   expect(selectContent).toContain("<SelectPrimitive.Popup");
@@ -107,6 +108,7 @@ export async function assertAstroStyledFormOutput(outputRoot: string): Promise<v
   expect(selectContent).toContain('data-align-trigger={alignItemWithTrigger ? "true" : "false"}');
   expect(selectContent).not.toContain("alignItemsWithTrigger");
   expect(selectContent).toContain('size = "md"');
+  expect(selectContent).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
   expect(selectContent).toContain("selectContent({ size, class: className })");
   expect(selectContent).not.toContain("selectContent({ side, align");
   expect(selectContent).toContain('data-slot="select-content"');
@@ -155,6 +157,7 @@ export async function assertAstroStyledFormOutput(outputRoot: string): Promise<v
   expect(comboboxInputGroup).toContain("<InputGroup");
   expect(comboboxInputGroup).toContain("data-sw-combobox-input-group");
   expect(comboboxInputGroup).toContain('size = "md"');
+  expect(comboboxInputGroup).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
   expect(comboboxVariants).toContain("[&>[data-align=inline-end]:has(>div>button)]:mr-[-0.3rem]");
   expect(comboboxInput).toContain(
     'import { InputGroup, InputGroupAddon, InputGroupButton } from "../input-group";',
@@ -182,6 +185,7 @@ export async function assertAstroStyledFormOutput(outputRoot: string): Promise<v
   expect(comboboxContent).toContain("<ComboboxPrimitive.Popup");
   expect(comboboxContent).toContain("<ComboboxPrimitive.List");
   expect(comboboxContent).toContain('size = "md"');
+  expect(comboboxContent).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
   expect(comboboxContent).toContain("comboboxContent({ size, class: className })");
   expect(comboboxContent).not.toContain("comboboxContent({ side, align");
   expect(comboboxItem).toContain("<ComboboxPrimitive.Item");
@@ -281,6 +285,8 @@ export async function assertAstroStyledFormOutput(outputRoot: string): Promise<v
   expect(radioGroup).toContain('RadioGroupPrimitive from "../primitives/astro/radio-group"');
   expect(radioGroup).toContain("<RadioGroupPrimitive.Root");
   expect(radioGroup).toContain("orientation={orientation}");
+  expect(radioGroup).toContain('size = "md"');
+  expect(radioGroup).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
   expect(radioGroup).toContain('data-slot="radio-group"');
   expect(radioGroup).not.toContain("@starwind-ui/runtime");
   expect(radioGroupItem).toContain('RadioPrimitive from "../primitives/astro/radio"');
@@ -288,14 +294,16 @@ export async function assertAstroStyledFormOutput(outputRoot: string): Promise<v
   expect(radioGroupItem).toContain("<RadioPrimitive.Indicator");
   expect(radioGroupItem).toContain('slot name="icon"');
   expect(radioGroupItem).toContain('data-slot="radio-group-item"');
+  expect(radioGroupItem).not.toContain("size?:");
+  expect(radioGroupItem).not.toContain("data-size=");
   expect(radioGroupVariants).not.toContain("starwind-radio");
   expect(radioGroupVariants).toContain("disabled:cursor-not-allowed disabled:opacity-70");
   expect(radioGroupVariants).toContain("group-data-error-visible/radio:border-error");
   expect(radioGroupVariants).toContain("flex items-center justify-center");
   expect(radioGroupVariants).toContain("[&>svg]:size-full [&>svg]:shrink-0");
-  expect(radioGroupVariants).toContain('sm: "size-2"');
-  expect(radioGroupVariants).toContain('md: "size-3"');
-  expect(radioGroupVariants).toContain('lg: "size-4"');
+  expect(radioGroupVariants).toContain("group-data-[size=sm]/radio-group:size-2");
+  expect(radioGroupVariants).toContain("group-data-[size=md]/radio-group:size-3");
+  expect(radioGroupVariants).toContain("group-data-[size=lg]/radio-group:size-4");
   expect(radioGroupIndex).toContain("RadioGroupItem");
   expect(radioGroupIndex).toContain("Root: RadioGroup");
   expect(radioGroupIndex).toContain("Item: RadioGroupItem");
@@ -480,12 +488,16 @@ export async function assertAstroStyledFormOutput(outputRoot: string): Promise<v
   expect(inputOtp).toContain('InputOtpPrimitive from "../primitives/astro/input-otp"');
   expect(inputOtp).toContain("<InputOtpPrimitive.Root");
   expect(inputOtp).toContain("pattern={pattern}");
+  expect(inputOtp).toContain('size = "md"');
+  expect(inputOtp).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
   expect(inputOtp).toContain('data-slot="input-otp"');
   expect(inputOtp).not.toContain("@starwind-ui/runtime");
   expect(inputOtpGroup).toContain("<InputOtpPrimitive.Group");
   expect(inputOtpGroup).toContain('data-slot="input-otp-group"');
   expect(inputOtpSlot).toContain("<InputOtpPrimitive.Slot");
-  expect(inputOtpSlot).toContain("inputOtpSlot({ size, class: className })");
+  expect(inputOtpSlot).toContain("inputOtpSlot({ class: className })");
+  expect(inputOtpSlot).not.toContain("size?:");
+  expect(inputOtpSlot).not.toContain("data-size=");
   expect(inputOtpSlot).toContain('data-slot="input-otp-slot"');
   expect(inputOtpSeparator).toContain('import Minus from "@tabler/icons/outline/minus.svg"');
   expect(inputOtpSeparator).toContain("<InputOtpPrimitive.Separator");
@@ -494,6 +506,9 @@ export async function assertAstroStyledFormOutput(outputRoot: string): Promise<v
   expect(inputOtpVariants).toContain("flex items-center gap-2 outline-none");
   expect(inputOtpVariants).toContain("data-[active=true]:border-outline");
   expect(inputOtpVariants).toContain("data-[active=true]:data-error-visible:ring-error/40");
+  expect(inputOtpVariants).toContain("group-data-[size=sm]/input-otp:size-9");
+  expect(inputOtpVariants).toContain("group-data-[size=md]/input-otp:size-11");
+  expect(inputOtpVariants).toContain("group-data-[size=lg]/input-otp:size-12");
   expect(inputOtpVariants).toContain(
     "data-error-visible:border-error data-[active=true]:data-error-visible:border-error",
   );

@@ -283,6 +283,28 @@ const getStyledContractField = (
   return field;
 };
 
+const auditedAsChildVisualOwnership = [
+  ["alert-dialog", "AlertDialogTrigger", "delegates-appearance", "wrapper"],
+  ["alert-dialog", "AlertDialogAction", "preserves-styled-identity", "wrapper"],
+  ["alert-dialog", "AlertDialogCancel", "preserves-styled-identity", "wrapper"],
+  ["breadcrumb", "BreadcrumbLink", "delegates-appearance", "wrapper"],
+  ["collapsible", "CollapsibleTrigger", "delegates-appearance", "primitive-override"],
+  ["combobox", "ComboboxClear", "preserves-styled-identity", "primitive-override"],
+  ["combobox", "ComboboxTrigger", "preserves-styled-identity", "primitive-override"],
+  ["dialog", "DialogTrigger", "delegates-appearance", "wrapper"],
+  ["dialog", "DialogClose", "delegates-appearance", "wrapper"],
+  ["dropdown", "DropdownTrigger", "delegates-appearance", "primitive-override"],
+  ["hover-card", "HoverCardTrigger", "delegates-appearance", "primitive-override"],
+  ["navigation-menu", "NavigationMenuTrigger", "delegates-appearance", "primitive-override"],
+  ["popover", "PopoverTrigger", "delegates-appearance", "primitive-override"],
+  ["select", "SelectTrigger", "preserves-styled-identity", "primitive-override"],
+  ["sheet", "SheetTrigger", "delegates-appearance", "wrapper"],
+  ["sheet", "SheetClose", "delegates-appearance", "wrapper"],
+  ["sidebar", "SidebarGroupLabel", "preserves-styled-identity", "wrapper"],
+  ["sidebar", "SidebarMenuButton", "preserves-styled-identity", "wrapper"],
+  ["tooltip", "TooltipTrigger", "delegates-appearance", "primitive-override"],
+] as const;
+
 describe("generateLayeredDocsMetadata", () => {
   it("keeps the compatibility entrypoint public runtime exports stable", () => {
     expect(Object.keys(layeredDocsGenerator).sort()).toEqual([
@@ -348,6 +370,37 @@ describe("generateLayeredDocsMetadata", () => {
     expect(checkbox?.inheritance.some((entry) => entry.kind === "primitive-props")).toBe(false);
 
     for (const framework of ["astro", "react"] as const) {
+      const colorPicker = byId
+        .get("color-picker")
+        ?.styledApi[framework].exports.find((entry) => entry.exportName === "ColorPicker");
+      expect(
+        colorPicker?.props.find((prop) => prop.name === "dir"),
+        framework,
+      ).toMatchObject({
+        type: 'import("@starwind-ui/runtime/color-picker").ColorPickerDirection',
+        displayType: '"ltr" | "rtl"',
+        typeDefinitions: [
+          {
+            name: "ColorPickerDirection",
+            definition: 'type ColorPickerDirection = "ltr" | "rtl";',
+          },
+        ],
+      });
+      expect(
+        colorPicker?.props.find((prop) => prop.name === "format"),
+        framework,
+      ).toMatchObject({
+        displayType: '"hex" | "rgb" | "hsl" | "hsb"',
+      });
+      expect(
+        colorPicker?.props.find((prop) => prop.name === "defaultValue"),
+        framework,
+      ).toMatchObject({
+        displayType: "string | ColorPickerColor | null",
+      });
+    }
+
+    for (const framework of ["astro", "react"] as const) {
       const field = byId
         .get("field")
         ?.styledApi[framework].exports.find((entry) => entry.exportName === "Field");
@@ -383,12 +436,195 @@ describe("generateLayeredDocsMetadata", () => {
         for (const entry of component.styledApi[framework].exports) {
           expect(new Set(entry.props.map((prop) => prop.name)).size).toBe(entry.props.length);
           expect(entry.props.every((prop) => Boolean(prop.description?.length))).toBe(true);
+          for (const prop of entry.props.filter((candidate) =>
+            candidate.type.includes("import("),
+          )) {
+            expect(
+              prop.displayType,
+              `${component.id}.${entry.exportName}.${prop.name}`,
+            ).toBeTruthy();
+            expect(
+              prop.displayType,
+              `${component.id}.${entry.exportName}.${prop.name}`,
+            ).not.toContain("import(");
+          }
           expect(
             entry.inheritance.some((inheritance) => inheritance.kind === "primitive-props"),
           ).toBe(false);
         }
       }
     }
+  });
+
+  it("projects visual ownership for every audited public asChild export", () => {
+    const metadata = buildLayeredDocsMetadata();
+    const byId = new Map(metadata.styledComponents.map((component) => [component.id, component]));
+
+    for (const framework of ["astro", "react"] as const) {
+      const projected = metadata.styledComponents.flatMap((component) =>
+        component.styledApi[framework].exports.flatMap((entry) =>
+          entry.props
+            .filter((prop) => prop.visualOwnership !== undefined)
+            .map((prop) => `${component.id}.${entry.exportName}.${prop.name}`),
+        ),
+      );
+      expect(projected, framework).toHaveLength(auditedAsChildVisualOwnership.length);
+
+      for (const [
+        componentId,
+        exportName,
+        visualOwnership,
+        classification,
+      ] of auditedAsChildVisualOwnership) {
+        const asChild = byId
+          .get(componentId)
+          ?.styledApi[framework].exports.find((entry) => entry.exportName === exportName)
+          ?.props.find((prop) => prop.name === "asChild");
+
+        expect(asChild, `${framework}:${componentId}.${exportName}.asChild`).toMatchObject({
+          classification,
+          visualOwnership,
+        });
+      }
+    }
+
+    const breadcrumbLink = byId
+      .get("breadcrumb")
+      ?.styledApi.astro.exports.find((entry) => entry.exportName === "BreadcrumbLink")
+      ?.props.find((prop) => prop.name === "asChild");
+    expect(breadcrumbLink).toMatchObject({
+      descriptionSource: "annotation",
+      visualOwnership: "delegates-appearance",
+    });
+    expect(breadcrumbLink?.description).toContain("rather than preserving the native link recipe");
+
+    const sidebarGroupLabel = byId
+      .get("sidebar")
+      ?.styledApi.astro.exports.find((entry) => entry.exportName === "SidebarGroupLabel")
+      ?.props.find((prop) => prop.name === "asChild");
+    expect(sidebarGroupLabel).toMatchObject({
+      descriptionSource: "annotation",
+      visualOwnership: "preserves-styled-identity",
+    });
+    expect(sidebarGroupLabel?.description).toContain("recipe on its existing wrapper");
+
+    const alertDialogAction = byId
+      .get("alert-dialog")
+      ?.styledApi.astro.exports.find((entry) => entry.exportName === "AlertDialogAction")
+      ?.props.find((prop) => prop.name === "asChild");
+    expect(alertDialogAction).toMatchObject({
+      classification: "wrapper",
+      description: "Merges the component behavior and props into its child element.",
+      descriptionSource: "catalog",
+      visualOwnership: "preserves-styled-identity",
+    });
+  });
+
+  it("rejects a missing visual-ownership value from the fixed asChild audit", () => {
+    const alertDialog = styledDocsAnnotations["alert-dialog"]!;
+    const trigger = alertDialog.styledApi?.AlertDialogTrigger;
+    const asChild = trigger?.props?.asChild;
+    expect(asChild).toBeDefined();
+    if (!asChild) return;
+
+    const { visualOwnership: _missing, ...withoutVisualOwnership } = asChild;
+
+    expect(() =>
+      buildLayeredDocsMetadata({
+        styledAnnotations: {
+          ...styledDocsAnnotations,
+          "alert-dialog": {
+            ...alertDialog,
+            styledApi: {
+              ...alertDialog.styledApi,
+              AlertDialogTrigger: {
+                ...trigger,
+                props: {
+                  ...trigger?.props,
+                  asChild: withoutVisualOwnership,
+                },
+              },
+            },
+          },
+        },
+      }),
+    ).toThrow(
+      "alert-dialog.AlertDialogTrigger asChild is missing audited visualOwnership metadata.",
+    );
+  });
+
+  it("rejects a missing audited styled contract, component, or public export", () => {
+    const alertDialog = starwindStyledContracts.find(
+      (contract) => contract.component === "alert-dialog",
+    );
+    expect(alertDialog).toBeDefined();
+    if (!alertDialog) return;
+
+    expect(() =>
+      buildLayeredDocsMetadata({
+        styledContracts: starwindStyledContracts.filter(
+          (contract) => contract.component !== "alert-dialog",
+        ),
+      }),
+    ).toThrow("alert-dialog.AlertDialogTrigger is missing its audited styled contract.");
+
+    const missingComponent = {
+      ...alertDialog,
+      components: alertDialog.components.filter(
+        (component) => component.exportName !== "AlertDialogTrigger",
+      ),
+    };
+    expect(() =>
+      buildLayeredDocsMetadata({
+        styledContracts: starwindStyledContracts.map((contract) =>
+          contract.component === "alert-dialog" ? missingComponent : contract,
+        ),
+      }),
+    ).toThrow(
+      "alert-dialog.AlertDialogTrigger is missing from the audited styled contract components.",
+    );
+
+    const missingPublicExport = {
+      ...alertDialog,
+      publicExports: alertDialog.publicExports.filter(
+        (exportName) => exportName !== "AlertDialogTrigger",
+      ),
+    };
+    expect(() =>
+      buildLayeredDocsMetadata({
+        styledContracts: starwindStyledContracts.map((contract) =>
+          contract.component === "alert-dialog" ? missingPublicExport : contract,
+        ),
+      }),
+    ).toThrow(
+      "alert-dialog.AlertDialogTrigger must remain a public export for the fixed asChild audit.",
+    );
+  });
+
+  it("rejects a missing audited asChild prop candidate and projection", () => {
+    const alertDialog = starwindStyledContracts.find(
+      (contract) => contract.component === "alert-dialog",
+    );
+    expect(alertDialog).toBeDefined();
+    if (!alertDialog) return;
+
+    const missingAsChild = cloneContract(alertDialog);
+    const trigger = missingAsChild.components.find(
+      (component) => component.exportName === "AlertDialogTrigger",
+    );
+    expect(trigger?.props?.fields).toBeDefined();
+    if (!trigger?.props?.fields) return;
+    trigger.props.fields = trigger.props.fields.filter((field) => field.name !== "asChild");
+
+    expect(() =>
+      buildLayeredDocsMetadata({
+        styledContracts: starwindStyledContracts.map((contract) =>
+          contract.component === "alert-dialog" ? missingAsChild : contract,
+        ),
+      }),
+    ).toThrow(
+      /alert-dialog\.AlertDialogTrigger is missing its audited asChild prop candidate\.[\s\S]*alert-dialog\.AlertDialogTrigger asChild is missing its audited astro projection\.[\s\S]*alert-dialog\.AlertDialogTrigger asChild is missing its audited react projection\./,
+    );
   });
 
   it("loads and validates the released Primitive version inventory", () => {
@@ -842,6 +1078,53 @@ describe("generateLayeredDocsMetadata", () => {
     );
     expect(styling).toHaveProperty("docsPath", "/docs/components/navigation-menu/");
 
+    for (const framework of ["astro", "react"] as const) {
+      const styledExports = styled?.styledApi[framework].exports ?? [];
+      const rootApi = styledExports.find((item) => item.exportName === "NavigationMenu");
+      const positionerApi = styledExports.find(
+        (item) => item.exportName === "NavigationMenuPositioner",
+      );
+      const styledTriggerApi = styledExports.find(
+        (item) => item.exportName === "NavigationMenuTrigger",
+      );
+
+      expect(rootApi?.props).toContainEqual(
+        expect.objectContaining({
+          name: "size",
+          defaultValue: '"md"',
+          description:
+            "Sets the visual size of native styled triggers, List spacing, indicators, and top-level Links using navigationMenuTriggerStyle().",
+          descriptionSource: "annotation",
+        }),
+      );
+      expect(rootApi?.props).toContainEqual(
+        expect.objectContaining({
+          name: "contentSize",
+          defaultValue: "size",
+          description:
+            "Sets the independently portaled popup content size and defaults to the resolved Navigation Menu size.",
+          descriptionSource: "annotation",
+        }),
+      );
+      expect(positionerApi?.props).toContainEqual(
+        expect.objectContaining({
+          name: "size",
+          defaultValue: '"md"',
+          description:
+            "Sets the popup content size when rendering NavigationMenuPositioner directly.",
+          descriptionSource: "annotation",
+        }),
+      );
+      expect(styledTriggerApi?.props).toContainEqual(
+        expect.objectContaining({
+          name: "asChild",
+          description:
+            "Delegates markup and complete visual ownership to the child while retaining Navigation Menu behavior and accessibility wiring.",
+          descriptionSource: "annotation",
+        }),
+      );
+    }
+
     expect(primitive).toMatchObject({
       docsPage: { status: "published", path: "/docs/primitives/navigation-menu/" },
       runtime: {
@@ -887,6 +1170,12 @@ describe("generateLayeredDocsMetadata", () => {
     );
     expect(triggerReference?.dataAttributes).toContainEqual(
       expect.objectContaining({ name: "data-sw-nav-menu-trigger" }),
+    );
+    expect(triggerReference?.props).toContainEqual(
+      expect.objectContaining({
+        name: "asChild",
+        description: "Merges trigger behavior into the slotted child control.",
+      }),
     );
     expect(linkReference?.props).toContainEqual(expect.objectContaining({ name: "closeOnClick" }));
 

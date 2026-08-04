@@ -97,6 +97,85 @@ describe("Vue Slider public behavior", () => {
     expect(new FormData(form).get("price[1]")).toBe("50");
   });
 
+  it("synchronizes uncontrolled model state after Runtime-owned native form reset", async () => {
+    const form = document.createElement("form");
+    form.id = "slider-reset-form";
+    document.body.append(form);
+    const model = ref<number | number[]>([20, 80]);
+    const onValueChange = vi.fn();
+    const onValueCommitted = vi.fn();
+    const host = mountSlider(
+      {
+        defaultValue: [20, 80],
+        form: "slider-reset-form",
+        name: "price",
+        onValueChange,
+        onValueCommitted,
+        "onUpdate:modelValue": (value: number | number[]) => (model.value = value),
+      },
+      2,
+    );
+    const thumb = host.querySelector<HTMLElement>("[data-sw-slider-thumb]")!;
+
+    thumb.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+    await nextTick();
+    expect(model.value).toEqual([21, 80]);
+
+    onValueChange.mockClear();
+    onValueCommitted.mockClear();
+    form.reset();
+    await new Promise((resolve) => window.setTimeout(resolve, 10));
+    await nextTick();
+
+    const root = host.querySelector<HTMLElement>("[data-sw-slider]")!;
+    const inputs = host.querySelectorAll<HTMLInputElement>("[data-sw-slider-input]");
+    expect(model.value).toEqual([20, 80]);
+    expect(root.getAttribute("data-value")).toBe("[20,80]");
+    expect([...inputs].map((input) => input.value)).toEqual(["20", "80"]);
+    expect(new FormData(form).get("price[0]")).toBe("20");
+    expect(new FormData(form).get("price[1]")).toBe("80");
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(onValueCommitted).not.toHaveBeenCalled();
+  });
+
+  it("synchronizes an uncontrolled scalar model after Runtime-owned native form reset", async () => {
+    const form = document.createElement("form");
+    form.id = "scalar-slider-reset-form";
+    document.body.append(form);
+    const model = ref<number>();
+    const onValueChange = vi.fn();
+    const onValueCommitted = vi.fn();
+    const host = mountSlider({
+      defaultValue: 30,
+      form: "scalar-slider-reset-form",
+      name: "volume",
+      onValueChange,
+      onValueCommitted,
+      "onUpdate:modelValue": (value: number) => (model.value = value),
+    });
+    const thumb = host.querySelector<HTMLElement>("[data-sw-slider-thumb]")!;
+
+    thumb.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
+    await nextTick();
+    expect(model.value).toBe(31);
+    expect(new FormData(form).get("volume")).toBe("31");
+
+    onValueChange.mockClear();
+    onValueCommitted.mockClear();
+    form.reset();
+    await new Promise((resolve) => window.setTimeout(resolve, 10));
+    await nextTick();
+
+    const root = host.querySelector<HTMLElement>("[data-sw-slider]")!;
+    const input = host.querySelector<HTMLInputElement>("[data-sw-slider-input]")!;
+    expect(model.value).toBe(30);
+    expect(root.getAttribute("data-value")).toBe("30");
+    expect(input.value).toBe("30");
+    expect(new FormData(form).get("volume")).toBe("30");
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(onValueCommitted).not.toHaveBeenCalled();
+  });
+
   it("refreshes after dynamic thumb DOM flush and preserves controlled arrays", async () => {
     const value = ref<number | number[]>([20, 80]);
     const host = mountSlider(

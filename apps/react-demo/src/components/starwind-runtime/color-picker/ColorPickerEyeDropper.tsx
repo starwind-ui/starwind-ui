@@ -1,17 +1,15 @@
 import ColorPickerPrimitive from "@starwind-ui/react/color-picker";
 import type * as React from "react";
-import type { VariantProps } from "tailwind-variants";
 import { colorPickerAction } from "./variants";
 
-export type ColorPickerEyeDropperProps = React.ComponentPropsWithoutRef<"button"> &
-  VariantProps<typeof colorPickerAction>;
+export type ColorPickerEyeDropperProps = React.ComponentPropsWithoutRef<"button">;
 
 function ColorPickerEyeDropper(props: ColorPickerEyeDropperProps) {
-  const { className, size = "md", children, ...rest } = props;
+  const { className, children, ...rest } = props;
 
   return (
     <ColorPickerPrimitive.EyeDropperTrigger
-      className={colorPickerAction({ size, class: className })}
+      className={colorPickerAction({ class: className })}
       {...rest}
       data-slot="color-picker-eye-dropper"
     >

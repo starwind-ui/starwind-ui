@@ -40,6 +40,24 @@ const visuallyHiddenStyle = {
   width: "1px",
 } satisfies React.CSSProperties;
 
+type CheckboxIndicatorState = {
+  checked: boolean;
+  disabled: boolean;
+  indeterminate: boolean;
+  readOnly: boolean;
+  registerIndicatorVisibility(node: HTMLElement, explicitlyHidden: boolean): void;
+  required: boolean;
+};
+
+export const CheckboxIndicatorContext = React.createContext<CheckboxIndicatorState>({
+  checked: false,
+  disabled: false,
+  indeterminate: false,
+  readOnly: false,
+  registerIndicatorVisibility: () => {},
+  required: false,
+});
+
 const CheckboxRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, CheckboxRootProps>(
   function CheckboxRoot(
     {
@@ -61,6 +79,17 @@ const CheckboxRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, Check
     },
     forwardedRef,
   ) {
+    const explicitlyHiddenIndicatorsRef = React.useRef(new Set<HTMLElement>());
+    const registerIndicatorVisibility = React.useCallback(
+      (node: HTMLElement, explicitlyHidden: boolean) => {
+        if (explicitlyHidden) {
+          explicitlyHiddenIndicatorsRef.current.add(node);
+        } else {
+          explicitlyHiddenIndicatorsRef.current.delete(node);
+        }
+      },
+      [],
+    );
     const rootRef = React.useRef<HTMLSpanElement | HTMLButtonElement>(null);
     const inputElementRef = React.useRef<HTMLInputElement>(null);
     const instanceRef = React.useRef<ReturnType<typeof createCheckbox> | undefined>(undefined);
@@ -197,6 +226,31 @@ const CheckboxRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, Check
     }, [effectiveDisabled]);
 
     const renderedChecked = checked ?? groupChecked ?? uncontrolledChecked;
+    const indicatorState = React.useMemo(
+      () => ({
+        checked: renderedChecked,
+        disabled: effectiveDisabled,
+        indeterminate: renderedIndeterminate,
+        readOnly: readOnly,
+        registerIndicatorVisibility,
+        required: required,
+      }),
+      [
+        effectiveDisabled,
+        readOnly,
+        registerIndicatorVisibility,
+        renderedChecked,
+        renderedIndeterminate,
+        required,
+      ],
+    );
+
+    useIsomorphicLayoutEffect(() => {
+      explicitlyHiddenIndicatorsRef.current.forEach((indicator) => {
+        indicator.hidden = true;
+      });
+    });
+
     const ariaChecked: React.AriaAttributes["aria-checked"] = renderedIndeterminate
       ? "mixed"
       : renderedChecked;
@@ -249,7 +303,9 @@ const CheckboxRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, Check
             ref={composedRef as React.Ref<HTMLButtonElement>}
             type="button"
           >
-            {children}
+            <CheckboxIndicatorContext.Provider value={indicatorState}>
+              {children}
+            </CheckboxIndicatorContext.Provider>
           </button>
           {input}
         </>
@@ -262,7 +318,9 @@ const CheckboxRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, Check
         {...commonProps}
         ref={composedRef as React.Ref<HTMLSpanElement>}
       >
-        {children}
+        <CheckboxIndicatorContext.Provider value={indicatorState}>
+          {children}
+        </CheckboxIndicatorContext.Provider>
         {input}
       </span>
     );

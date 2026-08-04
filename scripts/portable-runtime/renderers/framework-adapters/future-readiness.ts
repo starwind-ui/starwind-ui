@@ -1,18 +1,38 @@
-export type FrameworkAdapterReadinessTarget = "astro" | "react" | "solid" | "vue";
+export type FrameworkAdapterReadinessTarget = "astro" | "react" | "solid" | "svelte" | "vue";
 
 export type FrameworkAdapterReadiness = {
-  booleanAttributeStrategy: "html-empty-string" | "jsx-boolean" | "vue-bound-attribute";
-  contextStrategy: "none" | "react-context" | "solid-context" | "vue-provide-inject";
-  eventStrategy: "dom-custom-event" | "react-callback-prop" | "solid-callback-prop" | "vue-emit";
-  fileExtension: ".astro" | ".tsx" | ".vue";
+  booleanAttributeStrategy:
+    | "html-empty-string"
+    | "jsx-boolean"
+    | "svelte-boolean-attribute"
+    | "vue-bound-attribute";
+  contextStrategy:
+    | "none"
+    | "react-context"
+    | "solid-context"
+    | "svelte-context"
+    | "vue-provide-inject";
+  eventStrategy:
+    | "dom-custom-event"
+    | "react-callback-prop"
+    | "solid-callback-prop"
+    | "svelte-callback-prop"
+    | "vue-emit";
+  fileExtension: ".astro" | ".svelte" | ".tsx" | ".vue";
   lifecycleStrategy:
     | "astro-init-script"
     | "react-effect-cleanup"
     | "solid-mount-effect-cleanup"
+    | "svelte-attachment-cleanup"
     | "vue-mounted-watch-cleanup";
   normalizeAttributeName: (name: string) => string;
   portalStrategy: "react-portal" | "runtime-owned" | "solid-portal" | "vue-teleport";
-  propStrategy: "astro-attributes" | "jsx-props" | "solid-jsx-props" | "vue-bindings";
+  propStrategy:
+    | "astro-attributes"
+    | "jsx-props"
+    | "solid-jsx-props"
+    | "svelte-props"
+    | "vue-bindings";
   publicSupport: {
     cliRegistry: boolean;
     demoIntegration: boolean;
@@ -20,8 +40,13 @@ export type FrameworkAdapterReadiness = {
     publicDocsClaim: boolean;
     status: "non-shipping-tracer" | "shipping";
   };
-  refStrategy: "astro-dom-query" | "react-forward-ref" | "solid-ref" | "vue-template-ref";
-  slotStrategy: "astro-slot" | "react-children" | "solid-children" | "vue-slot";
+  refStrategy:
+    | "astro-dom-query"
+    | "react-forward-ref"
+    | "solid-ref"
+    | "svelte-attachment-ref"
+    | "vue-template-ref";
+  slotStrategy: "astro-slot" | "react-children" | "solid-children" | "svelte-snippet" | "vue-slot";
   target: FrameworkAdapterReadinessTarget;
 };
 
@@ -33,12 +58,12 @@ export type FutureFrameworkAdapterReadiness = FrameworkAdapterReadiness & {
     publicDocsClaim: false;
     status: "non-shipping-tracer";
   };
-  target: "solid" | "vue";
+  target: "solid" | "svelte" | "vue";
 };
 
-export const SVELTE_FRAMEWORK_ADAPTER_DEFERRED = {
-  reason: "setup-model-undecided",
-  status: "deferred",
+export const SVELTE_FRAMEWORK_ADAPTER_PRIVATE_TARGET = {
+  reason: "private-package-verification-only",
+  status: "non-shipping-tracer",
   target: "svelte",
 } as const;
 

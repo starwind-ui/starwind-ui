@@ -393,7 +393,9 @@ try {
     '[data-slot="popover-content"][aria-label="Brand color editor"]',
   );
   await canonicalPopup.waitFor();
-  assert.equal(await canonicalPopup.locator('[data-slot="color-picker-clear"]').count(), 0);
+  const canonicalClear = canonicalPopup.locator('[data-slot="color-picker-clear"]');
+  assert.equal(await canonicalClear.count(), 1);
+  assert.equal(await canonicalClear.isVisible(), false);
   assert.equal(
     await canonicalPopup
       .locator('[data-slot="color-picker-footer"]')
@@ -511,31 +513,22 @@ try {
   );
   await page.keyboard.press("Escape");
 
-  await page.getByTestId("ineligible-clear-color-picker-trigger").click();
-  const ineligiblePopup = page.getByTestId("ineligible-clear-color-picker-content");
-  await ineligiblePopup.waitFor();
-  const ineligibleClear = ineligiblePopup.locator('[data-slot="color-picker-clear"]');
-  assert.equal(await ineligibleClear.count(), 1);
-  assert.equal(await ineligibleClear.getAttribute("hidden"), "");
-  assert.equal(await ineligibleClear.getAttribute("disabled"), "");
-  assert.equal(await ineligibleClear.isVisible(), false);
-  const ineligibleSeparator = ineligiblePopup.locator('[data-slot="color-picker-separator"]');
-  assert.equal(await ineligibleSeparator.count(), 1);
-  assert.equal(await ineligibleSeparator.isVisible(), false);
-  await page.keyboard.press("Escape");
-
   await page.getByTestId("canonical-color-picker-swatch-trigger").click();
   const swatchOnlyPopup = page.locator(
     '[data-slot="popover-content"][aria-label="Swatch-only color editor"]',
   );
   await swatchOnlyPopup.waitFor();
-  assert.equal(await swatchOnlyPopup.locator('[data-slot="color-picker-separator"]').count(), 0);
-  assert.equal(await swatchOnlyPopup.locator('[data-slot="color-picker-clear"]').count(), 0);
+  const swatchOnlySeparator = swatchOnlyPopup.locator('[data-slot="color-picker-separator"]');
+  const swatchOnlyClear = swatchOnlyPopup.locator('[data-slot="color-picker-clear"]');
+  assert.equal(await swatchOnlySeparator.count(), 1);
+  assert.equal(await swatchOnlySeparator.isVisible(), false);
+  assert.equal(await swatchOnlyClear.count(), 1);
+  assert.equal(await swatchOnlyClear.isVisible(), false);
   await page.keyboard.press("Escape");
 
   for (const fixture of [
     { size: "sm", trackHeight: "10px", contentWidth: "256px", formatWidth: "80px" },
-    { size: "md", trackHeight: "12px", contentWidth: "288px", formatWidth: "80px" },
+    { size: "md", trackHeight: "12px", contentWidth: "288px", formatWidth: "96px" },
     { size: "lg", trackHeight: "16px", contentWidth: "320px", formatWidth: "96px" },
   ]) {
     await page.getByTestId(`canonical-color-picker-${fixture.size}-trigger`).click();
@@ -561,6 +554,25 @@ try {
     );
     await page.keyboard.press("Escape");
   }
+
+  await page.getByTestId("canonical-color-picker-mismatch-trigger").click();
+  const independentPopup = page.getByTestId("canonical-color-picker-mismatch-content");
+  await independentPopup.waitFor();
+  assert.equal(await independentPopup.getAttribute("data-size"), "lg");
+  assert.equal(await independentPopup.getAttribute("data-sw-color-picker-content"), "");
+  assert.equal(
+    await independentPopup.evaluate((popupElement) =>
+      getComputedStyle(popupElement).getPropertyValue("--sw-color-picker-content-width").trim(),
+    ),
+    "20rem",
+    "the explicit popup size owns its Color Picker custom properties",
+  );
+  assert.equal(
+    await independentPopup.evaluate((popupElement) => getComputedStyle(popupElement).width),
+    "320px",
+    "an explicitly large Color Picker popup stays independent from its small root",
+  );
+  await page.keyboard.press("Escape");
 
   await assertConstrainedColorPickerPlacement({
     page,

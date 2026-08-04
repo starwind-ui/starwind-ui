@@ -64,17 +64,18 @@ export function InputOTPDemo() {
             value={controlledInputOtpValue}
             onValueChange={handleControlledInputOtpValueChange}
             pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+            size="sm"
           >
             <InputOtpGroup>
-              <InputOtpSlot index={0} size="sm" />
-              <InputOtpSlot index={1} size="sm" />
-              <InputOtpSlot index={2} size="sm" />
+              <InputOtpSlot index={0} />
+              <InputOtpSlot index={1} />
+              <InputOtpSlot index={2} />
             </InputOtpGroup>
             <InputOtpSeparator />
             <InputOtpGroup>
-              <InputOtpSlot index={3} size="sm" />
-              <InputOtpSlot index={4} size="sm" />
-              <InputOtpSlot index={5} size="sm" />
+              <InputOtpSlot index={3} />
+              <InputOtpSlot index={4} />
+              <InputOtpSlot index={5} />
             </InputOtpGroup>
           </InputOtp>
           <p data-runtime-input-otp-value>Input OTP value: {controlledInputOtpValue}</p>

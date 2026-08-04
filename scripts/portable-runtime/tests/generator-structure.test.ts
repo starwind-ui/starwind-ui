@@ -439,6 +439,13 @@ describe("portable runtime generator structure", () => {
         },
         target: "vue",
       },
+      {
+        support: {
+          components: ["button", "checkbox", "select", "accordion", "dialog", "slider"],
+          kind: "subset",
+        },
+        target: "svelte",
+      },
     ]);
     expect(
       lineCount(await readPortableFile("renderers/framework-adapters/astro/primitive-package.ts")),
@@ -562,11 +569,24 @@ describe("portable runtime generator structure", () => {
       "renderers/framework-adapters/target-registry.ts",
     );
 
-    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(["astro", "react", "vue"]);
+    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(["astro", "react", "vue", "svelte"]);
     expect(frameworkAdapterRegistry).toContain("primitiveFrameworkAdapterTargets");
     expect(frameworkAdapterRegistry).toContain("astroFrameworkAdapterTarget");
     expect(frameworkAdapterRegistry).toContain("reactFrameworkAdapterTarget");
     expect(frameworkAdapterRegistry).toContain("vueFrameworkAdapterTarget");
+    expect(frameworkAdapterRegistry).toContain("svelteFrameworkAdapterTarget");
+    expect(frameworkAdapterRegistry).toContain(
+      "typeof vueFrameworkAdapterTarget.target | typeof svelteFrameworkAdapterTarget.target",
+    );
+    const svelteTarget = primitiveFrameworkAdapterTargets.find(({ target }) => target === "svelte");
+    expect(svelteTarget?.styled).toBeUndefined();
+    expect(svelteTarget?.publicSupport).toEqual({
+      cliRegistry: false,
+      demoIntegration: false,
+      packageExports: false,
+      publicDocsClaim: false,
+      status: "non-shipping-tracer",
+    });
     expect(routeFreeGenerator).not.toContain("const ROUTE_FREE_PRIMITIVE_TARGETS");
     expect(routeFreeGenerator).not.toContain("routeFreeFrameworkAdapters");
     expect(routeFreeGenerator).not.toContain("writeAstroAdapterOutput");
@@ -1460,7 +1480,10 @@ describe("portable runtime generator structure", () => {
     expect(outputModelBuilder).not.toContain("function getBooleanFormControlFacts(");
     expect(booleanFormFamily).toContain("booleanFormControlAdapterFamilyPlan");
     expect(booleanFormFamily).toContain("function isBooleanFormControlOutputModelPlan(");
-    expect(booleanFormFamily).toContain('getPart(plan, "thumb")');
+    expect(booleanFormFamily).toContain(
+      "hasExactBooleanFormControlShape(plan, shape, inputPart.name)",
+    );
+    expect(booleanFormFamily).toContain("getBooleanFormControlStateIndicatorCandidate(plan)");
     expect(booleanFormFamily).toContain("plan.form?.hiddenInput?.part");
     expect(booleanFormFamily).toContain("getPart(plan, inputPartName)");
     expect(booleanFormFamily).toContain('getStateModel(plan, "checked")');
@@ -1495,12 +1518,17 @@ describe("portable runtime generator structure", () => {
     expect(outputModelBuilder).toContain("booleanFormControlAdapterFamilyPlan");
     expect(outputModelBuilder).not.toContain("function getBooleanFormControlFacts(");
     expect(booleanFormFamily).toContain("function isBooleanFormControlOutputModelPlan(");
-    expect(booleanFormFamily).toContain('getPart(plan, "indicator")');
+    expect(booleanFormFamily).toContain(
+      "hasExactBooleanFormControlShape(plan, shape, inputPart.name)",
+    );
+    expect(booleanFormFamily).toContain("getBooleanFormControlStateIndicatorCandidate(plan)");
     expect(booleanFormFamily).toContain("plan.form?.hiddenInput?.part");
     expect(booleanFormFamily).toContain('getStateModel(plan, "checked")');
-    expect(booleanFormFamily).toContain('getStateModel(plan, "indeterminate")');
+    expect(booleanFormFamily).toContain(
+      'if (plan.stateModels.some((state) => state.name === "indeterminate")) return "checkbox";',
+    );
     expect(booleanFormFamily).toContain("indeterminateStateModel.controlledProp");
-    expect(booleanFormFamily).toContain('getRenderingPropForTarget(plan, "indicator")');
+    expect(booleanFormFamily).toContain("hasExactBooleanContext(plan, shape)");
     expect(booleanFormFamily).toContain('getEvent(plan, "checkedChange")');
     expect(booleanFormFamily).toContain('getSetterForState(plan, "checked")');
     expect(booleanFormFamily).toContain('getSetterForState(plan, "indeterminate")');
@@ -1508,9 +1536,8 @@ describe("portable runtime generator structure", () => {
     expect(booleanFormFamily).toContain("stateEvent.valueProperty");
     expect(booleanFormFamily).toContain("indeterminateSetter.options");
     expect(booleanFormFamily).toContain("groupContext");
-    expect(booleanFormFamily).toContain('context.name === "checkbox-group"');
     expect(booleanFormFamily).toContain('groupContext.values.includes("disabled")');
-    expect(booleanFormFamily).toContain('groupContext.values.includes("value")');
+    expect(booleanFormFamily).toContain("hasExactValues(context.values, values)");
   });
 
   it("uses Radio contract parts, state, event, context, presence, and setter facts in its renderers", async () => {
@@ -1525,23 +1552,26 @@ describe("portable runtime generator structure", () => {
     expect(outputModelBuilder).toContain("booleanFormControlAdapterFamilyPlan");
     expect(outputModelBuilder).not.toContain("function getBooleanFormControlFacts(");
     expect(booleanFormFamily).toContain("function isBooleanFormControlOutputModelPlan(");
-    expect(booleanFormFamily).toContain('getPart(plan, "indicator")');
+    expect(booleanFormFamily).toContain(
+      "hasExactBooleanFormControlShape(plan, shape, inputPart.name)",
+    );
+    expect(booleanFormFamily).toContain("getBooleanFormControlStateIndicatorCandidate(plan)");
     expect(booleanFormFamily).toContain("plan.form?.hiddenInput?.part");
     expect(booleanFormFamily).toContain('getStateModel(plan, "checked")');
-    expect(booleanFormFamily).toContain('getRenderingPropForTarget(plan, "indicator")');
+    expect(booleanFormFamily).toContain(
+      'if (plan.context?.some((context) => context.values.includes("form"))) return "radio";',
+    );
     expect(booleanFormFamily).toContain('getRenderingPropForTarget(plan, "root")');
     expect(booleanFormFamily).toContain('getEvent(plan, "checkedChange")');
     expect(booleanFormFamily).toContain('getSetterForState(plan, "checked")');
     expect(booleanFormFamily).toContain("getSetterForProp(plan, disabledPropName)");
-    expect(booleanFormFamily).toContain("getSetterForProp(plan, readOnlyPropName)");
-    expect(booleanFormFamily).toContain("getSetterForProps(plan, [");
+    expect(booleanFormFamily).toContain(
+      "hasExactValues(plan.setters.map(getSetterKey), expectedSetters)",
+    );
     expect(booleanFormFamily).toContain("stateEvent.valueProperty");
     expect(booleanFormFamily).toContain("groupContext");
-    expect(booleanFormFamily).toContain('context.name === "radio-group"');
-    expect(booleanFormFamily).toContain(
-      'for (const value of ["disabled", "form", "name", "readOnly", "required", "value"])',
-    );
-    expect(booleanFormFamily).toContain("groupContext.values.includes(value)");
+    expect(booleanFormFamily).toContain("hasExactBooleanContext(plan, shape)");
+    expect(booleanFormFamily).toContain("hasExactValues(context.values, values)");
   });
 
   it("routes Slider through the range control Adapter Output Model family", async () => {

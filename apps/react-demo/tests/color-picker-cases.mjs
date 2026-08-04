@@ -44,10 +44,12 @@ async function assertCanonicalDocsComposition(page) {
   assert.equal(await root.locator('[data-slot="color-picker-value-text"]').count(), 1);
 
   await root.getByRole("button", { name: "Open brand color picker" }).click();
-  const content = page.getByTestId("canonical-docs-color-picker-content");
+  const content = page.locator('[data-slot="popover-content"][aria-label="Brand color editor"]');
   await content.waitFor();
 
-  assert.equal(await content.locator('[data-slot="color-picker-clear"]').count(), 0);
+  const clear = content.locator('[data-slot="color-picker-clear"]');
+  assert.equal(await clear.count(), 1);
+  assert.equal(await clear.isVisible(), false);
   assert.equal(await content.locator('[data-slot="color-picker-swatch"]').count(), 5);
   assert.equal(await content.locator('[data-slot="color-picker-channel-slider"]').count(), 2);
   assert.equal(await content.locator('[data-slot="color-picker-separator"]').isVisible(), true);
@@ -166,8 +168,8 @@ async function assertSliderEndpointGeometry(content) {
 async function assertRenderedSizeScale(page) {
   const expected = {
     sm: { controlHeight: 36, minWidth: 80, swatchSize: 24 },
-    md: { controlHeight: 36, minWidth: 80, swatchSize: 28 },
-    lg: { controlHeight: 44, minWidth: 96, swatchSize: 32 },
+    md: { controlHeight: 44, minWidth: 96, swatchSize: 28 },
+    lg: { controlHeight: 48, minWidth: 96, swatchSize: 32 },
   };
 
   for (const [label, size] of [
@@ -214,6 +216,26 @@ async function assertRenderedSizeScale(page) {
     await page.keyboard.press("Escape");
     await content.waitFor({ state: "hidden" });
   }
+
+  await page.getByTestId("canonical-color-picker-mismatch-trigger").click();
+  const independentPopup = page.getByTestId("canonical-color-picker-mismatch-content");
+  await independentPopup.waitFor();
+  assert.equal(await independentPopup.getAttribute("data-size"), "lg");
+  assert.equal(await independentPopup.getAttribute("data-sw-color-picker-content"), "");
+  assert.equal(
+    await independentPopup.evaluate((popupElement) =>
+      getComputedStyle(popupElement).getPropertyValue("--sw-color-picker-content-width").trim(),
+    ),
+    "20rem",
+  );
+  assert.equal(
+    await independentPopup.evaluate((popupElement) =>
+      Number.parseFloat(getComputedStyle(popupElement).width),
+    ),
+    320,
+  );
+  await page.keyboard.press("Escape");
+  await independentPopup.waitFor({ state: "hidden" });
 }
 
 async function assertNestedCompositeFormatSelect(page, root) {
@@ -514,7 +536,15 @@ async function assertSpecParityFixtures(page) {
     await page
       .locator('#react-color-picker-alpha-disabled [data-slot="color-picker-channel-slider-input"]')
       .count(),
-    1,
+    2,
+  );
+  assert.equal(
+    await page
+      .locator(
+        '#react-color-picker-alpha-disabled [data-slot="color-picker-channel-slider"][data-channel="alpha"]',
+      )
+      .getAttribute("hidden"),
+    "",
   );
   assert.match(
     await page.locator("#react-color-picker-alpha-disabled").getByRole("textbox").inputValue(),
@@ -524,34 +554,18 @@ async function assertSpecParityFixtures(page) {
 
 async function assertClearEligibility(page) {
   const fixture = page.getByTestId("color-picker-clear-eligibility-fixture");
-  await fixture.getByRole("button", { name: "Open advanced Clear color picker" }).click();
-  const content = page.getByTestId("color-picker-clear-eligibility-content");
+  await fixture.getByRole("button", { name: "Open optional color picker" }).click();
+  const content = page.locator('[data-slot="popover-content"][aria-label="Optional color editor"]');
   await content.waitFor();
-  const clear = content.getByRole("button", { name: "Clear color", includeHidden: true });
+  const clear = content.getByRole("button", { name: "Clear color" });
   const separator = content.locator('[data-slot="color-picker-separator"]');
 
-  assert.equal(await clear.getAttribute("hidden"), "");
-  assert.equal(await clear.isDisabled(), true);
-  assert.equal(await separator.isVisible(), false);
-
-  await fixture.getByRole("button", { name: "Toggle empty values" }).click();
   await page
     .getByTestId("color-picker-clear-eligibility-state")
     .getByText(/allowed$/)
     .waitFor();
-  await clear.waitFor({ state: "visible" });
   assert.equal(await clear.isDisabled(), false);
   assert.equal(await separator.isVisible(), true);
-
-  await fixture.getByRole("button", { name: "Toggle empty values" }).click();
-  await page
-    .getByTestId("color-picker-clear-eligibility-state")
-    .getByText(/disallowed$/)
-    .waitFor();
-  await clear.waitFor({ state: "hidden" });
-  assert.equal(await clear.getAttribute("hidden"), "");
-  assert.equal(await clear.isDisabled(), true);
-  assert.equal(await separator.isVisible(), false);
 
   await page.keyboard.press("Escape");
   await content.waitFor({ state: "hidden" });

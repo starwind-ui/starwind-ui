@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useRuntimePrototypeContext } from "../context";
 import {
+  Button,
   button,
   Popover,
   PopoverContent,
@@ -13,6 +15,7 @@ const alignments = ["start", "center", "end"] as const;
 const sides = ["top", "right", "bottom", "left"] as const;
 
 export function PopoverDemo() {
+  const [asChildClickCount, setAsChildClickCount] = useState(0);
   const {
     controlledPopoverOpen,
     setControlledPopoverOpen,
@@ -28,7 +31,7 @@ export function PopoverDemo() {
       <div className="space-y-4">
         <div className="flex flex-wrap gap-3">
           <Popover id="react-runtime-popover-default">
-            <PopoverTrigger className={button({ variant: "outline" })}>
+            <PopoverTrigger id="react-runtime-popover-native-trigger" className="cursor-help">
               Open React popover
             </PopoverTrigger>
             <PopoverContent
@@ -83,18 +86,48 @@ export function PopoverDemo() {
           </Popover>
 
           <Popover id="react-runtime-popover-as-child">
-            <PopoverTrigger asChild className={button({ variant: "ghost" })}>
-              <button id="react-runtime-popover-as-child-trigger" type="button">
+            <PopoverTrigger asChild className="tracking-[0.123px]">
+              <a
+                id="react-runtime-popover-as-child-trigger"
+                href="#react-runtime-popover-as-child"
+                className="uppercase"
+                style={{ wordSpacing: "1.234px" }}
+                data-listener-count={asChildClickCount}
+                onClick={() => setAsChildClickCount((count) => count + 1)}
+              >
                 As child popover
-              </button>
+              </a>
             </PopoverTrigger>
             <PopoverContent id="react-runtime-popover-as-child-content" side="top" align="end">
               <PopoverHeader>
                 <PopoverTitle>As child popover</PopoverTitle>
                 <PopoverDescription>
-                  The trigger is a supplied child button with runtime attributes applied.
+                  The trigger is a supplied child link with runtime attributes applied.
                 </PopoverDescription>
               </PopoverHeader>
+            </PopoverContent>
+            <span id="react-runtime-popover-as-child-listener-count" className="sr-only">
+              {asChildClickCount}
+            </span>
+          </Popover>
+
+          <Popover id="react-runtime-popover-styled-child">
+            <PopoverTrigger asChild className="tracking-[0.234px]">
+              <Button
+                id="react-runtime-popover-styled-child-trigger"
+                variant="ghost"
+                size="sm"
+                className="uppercase"
+              >
+                Styled child popover
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              id="react-runtime-popover-styled-child-content"
+              side="top"
+              align="start"
+            >
+              <PopoverTitle>Styled child content</PopoverTitle>
             </PopoverContent>
           </Popover>
 

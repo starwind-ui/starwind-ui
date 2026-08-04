@@ -11,14 +11,12 @@ type Props = Omit<
   disabled?: boolean;
   nativeButton?: boolean;
   pressed?: boolean;
-  size?: "sm" | "md" | "lg";
   value?: string;
   variant?: "default" | "outline";
 };
 
 const {
   variant,
-  size,
   defaultPressed,
   disabled = false,
   nativeButton,
@@ -30,9 +28,8 @@ const {
 ---
 
 <TogglePrimitive.Root
-  class={toggleGroupItem({ variant, size, class: className })}
+  class={toggleGroupItem({ variant, class: className })}
   data-variant={variant}
-  data-size={size}
   defaultPressed={defaultPressed}
   disabled={disabled}
   nativeButton={nativeButton}

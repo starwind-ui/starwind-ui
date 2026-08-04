@@ -66,13 +66,20 @@ describe("generated Vue Button Primitive", () => {
     expect(source.match(/v-bind="attrs"/g)).toHaveLength(1);
     expect(source).toContain(':type="props.type"');
     expect(source).toContain('type: "button"');
-    expect(source).toContain("const rootRef = ref<HTMLButtonElement | null>(null);");
+    expect(source).toContain('const rootRef = useTemplateRef<HTMLButtonElement>("rootRef");');
     expect(source).toContain("onMounted(setupRuntime);");
+    expect(source).toContain("watch(() => props.focusableWhenDisabled, setupRuntime);");
+    expect(source).toContain("instance?.setDisabled(disabled);");
     expect(source).toContain("onBeforeUnmount(destroyOwnedInstance);");
     expect(source).toContain("ownedInstance.destroy();");
+    expect(source.match(/<button\b/g)).toHaveLength(1);
+    expect(source.match(/<\/button>/g)).toHaveLength(1);
     expect(source).not.toContain("asChild");
     expect(source).not.toContain("<component");
     expect(source).not.toContain("Teleport");
+    expect(source).not.toMatch(
+      /defineModel|defineEmits|provide\(|inject\(|hidden input|collection/i,
+    );
   });
 
   async function generateButton(): Promise<{ index: string; source: string }> {

@@ -1,7 +1,7 @@
 # Framework Renderer Authoring
 
 Status: current
-Date: 2026-07-07
+Date: 2026-08-02
 
 This guide is for future Primitive Framework Adapter targets such as Vue, Solid, Svelte, or another
 framework. It records the authoring pattern proven by the React and Astro renderer refactors:
@@ -9,14 +9,19 @@ target adapters should print from Runtime Adapter Contracts, Generic Adapter Pla
 Plans, Specialized Adapter Specs, and Adapter Output Models without copying large unstructured
 string templates.
 
-Vue, Solid, and Svelte implementation is out of scope for the Primitive Renderer Authoring Refactor
-PRD. Vue and Solid currently remain non-shipping tracer homes. Svelte remains deferred until its
-setup model is chosen. This guide describes how future target work should be shaped when a separate
-issue accepts that work.
+Astro and React are shipping targets. Vue and Svelte have private, non-shipping workspace packages;
+Solid remains a tracer-only target. A private package proves realistic generation, build, types,
+SSR/hydration, and consumer resolution, but does not imply CLI support, public documentation, or
+publication.
 
 Vue target work follows the repository's accepted idiomatic Vue adapter semantics. The typed Vue
 public contract lives in the Vue target home and owns model/event naming, composition, lifecycle,
 SSR/hydration, and delayed Teleport projection while Vue remains non-shipping.
+
+Svelte target work follows the accepted Svelte 5.29+ component-and-attachment model. Typed
+`$props`, snippets, context, attachments, reactive Runtime setters, and teardown remain owned by the
+Svelte target home. The current private package deliberately covers only Button, Checkbox, and
+Select.
 
 ## Target Home Ownership
 
@@ -128,8 +133,8 @@ Preserve framework behavior inside the target home without changing shared contr
 - Astro is static-markup-first. It needs frontmatter, `Astro.props`, static attributes, `<slot />`,
   scoped initialization scripts, `astro:after-swap`, `starwind:init`, and explicit cleanup only for
   families that own tracked Runtime instances.
-- Svelte needs an accepted action/component setup model before package or preview work can start.
-  Keep Svelte examples out of package exports until that model is documented.
+- Svelte uses components with attachment-owned Runtime connections. Reactive setter effects update
+  live controller options without reconnecting. Keep that framework lifecycle policy target-local.
 
 Do not move Runtime behavior into generated adapters. Adapters should wire framework props, refs,
 events, and markup to Runtime controllers.
@@ -139,7 +144,8 @@ events, and markup to Runtime controllers.
 Test new target work at the generator/output seam first:
 
 1. Add or update Framework Adapter conformance coverage for the target home.
-2. Generate output into a temporary fixture or non-shipping tracer path.
+2. Generate output into the target's committed package, private package, or tracer path according
+   to its registered support tier.
 3. Assert deterministic output for representative static, stateful, form, overlay, context, and
    portal families.
 4. Check that unsupported targets do not create package exports, CLI registry entries, demo
@@ -155,10 +161,11 @@ unchanged after formatting unless the issue explicitly accepts a formatting-only
 
 Future-framework tracer output is not public support.
 
-- Vue and Solid tracer homes may print deterministic `__future-fixtures` for tests.
-- They must not add `@starwind-ui/vue`, `@starwind-ui/solid`, package exports, CLI registry
-  artifacts, demo dependencies, install instructions, or public docs claims.
-- Svelte must stay deferred until its setup model is accepted.
+- Vue and Svelte may keep private packages only while they remain `private: true`, version `0.0.0`,
+  ignored by Changesets, absent from the release package set, absent from public CLI registry
+  artifacts, and described as non-shipping.
+- Solid tracer output must not add a package, CLI registry artifacts, demo dependencies, install
+  instructions, or public docs claims.
 - Any public API difference from Astro or React must be documented as framework semantics, not a
   generator gap.
 

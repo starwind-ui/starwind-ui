@@ -1,7 +1,7 @@
 import { tv } from "tailwind-variants";
 
 export const radioGroup = tv({
-  base: "disabled:cursor-not-allowed disabled:opacity-70",
+  base: "group/radio-group disabled:cursor-not-allowed disabled:opacity-70",
   variants: {
     orientation: {
       vertical: "grid gap-3",
@@ -14,17 +14,10 @@ export const radioGroup = tv({
 });
 
 export const radioWrapper = tv({
-  base: "relative isolate flex shrink-0",
-  variants: {
-    size: {
-      sm: "size-4",
-      md: "size-5",
-      lg: "size-6",
-    },
-  },
-  defaultVariants: {
-    size: "md",
-  },
+  base: [
+    "relative isolate flex shrink-0",
+    "group-data-[size=lg]/radio-group:size-6 group-data-[size=md]/radio-group:size-5 group-data-[size=sm]/radio-group:size-4",
+  ],
 });
 
 export const radioItem = tv({
@@ -72,15 +65,6 @@ export const radioIndicator = tv({
     "flex items-center justify-center",
     "opacity-0 transition-opacity data-checked:opacity-100",
     "[&>svg]:size-full [&>svg]:shrink-0",
+    "group-data-[size=lg]/radio-group:size-4 group-data-[size=md]/radio-group:size-3 group-data-[size=sm]/radio-group:size-2",
   ],
-  variants: {
-    size: {
-      sm: "size-2",
-      md: "size-3",
-      lg: "size-4",
-    },
-  },
-  defaultVariants: {
-    size: "md",
-  },
 });

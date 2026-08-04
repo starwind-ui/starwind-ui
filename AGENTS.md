@@ -11,6 +11,8 @@ controllers, generated Primitive adapters, and the `starwind` CLI.
 - `packages/astro` and `packages/react`: generated first-party Primitive adapters.
 - `packages/vue`: private, non-shipping Vue adapter verification output; it is not an npm or CLI
   support surface until a dedicated release transition removes the quarantine.
+- `packages/svelte`: private, non-shipping Svelte adapter verification output for Button,
+  Checkbox, and Select; it is not an npm or CLI support surface.
 - `packages/cli`: CLI commands, registries, migrations, and project integration.
 - `apps/demo` and `apps/react-demo`: complete Astro and React integration demos.
 - `apps/vue-demo`: private Vue integration verification for the quarantined adapter.
@@ -52,7 +54,7 @@ pnpm runtime:size:check
   existing vendored primitives. Use `patch` for compatible changes and `minor` for breaking changes
   while primitive versions remain below `1.0.0`.
 - Add a Changeset for package-facing changes. Never add Changesets for retired `@starwind-ui/core`,
-  or for `@starwind-ui/vue` and `vue-demo` while they remain quarantined.
+  or for `@starwind-ui/vue`, `@starwind-ui/svelte`, and `vue-demo` while they remain quarantined.
 - Use conventional commits such as `feat(runtime): ...`, `fix(cli): ...`, or `docs: ...`.
 
 Before handoff, run the narrowest relevant tests and report any checks that were not run.

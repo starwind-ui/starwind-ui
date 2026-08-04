@@ -145,6 +145,95 @@ export function NavigationMenuDemo() {
     <section className="space-y-8">
       <h2 className="font-heading text-xl font-semibold">Navigation Menu</h2>
 
+      <div className="space-y-3" id="react-runtime-navigation-menu-sizing-showcase">
+        <h3 className="font-heading text-lg font-semibold">Sizing and visual ownership</h3>
+
+        <div className="flex flex-wrap items-start gap-6">
+          <NavigationMenu
+            id="react-runtime-navigation-menu-size-sm"
+            size="sm"
+            aria-label="Small navigation menu"
+          >
+            <NavigationMenuList>
+              <NavigationMenuItem value="small">
+                <NavigationMenuTrigger id="react-runtime-navigation-menu-size-sm-trigger">
+                  Small
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="w-64">
+                  <NavigationMenuLink
+                    id="react-runtime-navigation-menu-size-sm-link"
+                    href="#small-default-icon"
+                  >
+                    <IconAlertCircle />
+                    Default icon
+                  </NavigationMenuLink>
+                  <NavigationMenuLink href="#small-explicit-icon">
+                    <IconCircleCheck className="size-6" />
+                    Explicit icon
+                  </NavigationMenuLink>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          <NavigationMenu
+            id="react-runtime-navigation-menu-size-default"
+            aria-label="Default navigation menu"
+          >
+            <NavigationMenuList>
+              <NavigationMenuItem value="default">
+                <NavigationMenuTrigger
+                  id="react-runtime-navigation-menu-size-default-trigger"
+                  className="underline decoration-dotted"
+                >
+                  Default md
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="w-56">
+                  <NavigationMenuLink
+                    id="react-runtime-navigation-menu-size-default-link"
+                    href="#default-size"
+                  >
+                    Default content
+                  </NavigationMenuLink>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink
+                  id="react-runtime-navigation-menu-size-default-trigger-link"
+                  href="#default-link"
+                  className={navigationMenuTriggerStyle()}
+                >
+                  Trigger-style link
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          <NavigationMenu
+            id="react-runtime-navigation-menu-size-mismatch"
+            size="sm"
+            contentSize="md"
+            aria-label="Independent popup sizing"
+          >
+            <NavigationMenuList>
+              <NavigationMenuItem value="mismatch">
+                <NavigationMenuTrigger id="react-runtime-navigation-menu-size-mismatch-trigger">
+                  Small trigger
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="w-72">
+                  <NavigationMenuLink
+                    id="react-runtime-navigation-menu-size-mismatch-link"
+                    href="#medium-popup"
+                  >
+                    Medium popup content
+                  </NavigationMenuLink>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
+      </div>
+
       <div className="space-y-3">
         <h3 className="font-heading text-lg font-semibold">Shadcn-style docs navigation</h3>
         <NavigationMenu
@@ -500,12 +589,18 @@ export function NavigationMenuDemo() {
           <h3 className="font-heading text-lg font-semibold">Composition</h3>
           <NavigationMenu
             id="react-runtime-navigation-menu-composition"
+            size="md"
             aria-label="Composed navigation controls"
           >
             <NavigationMenuList>
               <NavigationMenuItem value="custom-trigger">
-                <NavigationMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
+                <NavigationMenuTrigger asChild className="uppercase">
+                  <Button
+                    id="react-runtime-navigation-menu-composed-trigger"
+                    variant="outline"
+                    size="sm"
+                    className="tracking-wide"
+                  >
                     Custom trigger
                   </Button>
                 </NavigationMenuTrigger>

@@ -8,12 +8,11 @@ export type PaginationNextProps = React.ComponentProps<typeof PaginationLink> & 
 };
 
 function PaginationNext(props: PaginationNextProps) {
-  const { size = "md", ref, className, children, icon, ...rest } = props;
+  const { ref, className, children, icon, ...rest } = props;
 
   return (
     <PaginationLink
       aria-label="Go to next page"
-      size={size}
       className={paginationNext({ class: className })}
       {...rest}
       ref={ref}

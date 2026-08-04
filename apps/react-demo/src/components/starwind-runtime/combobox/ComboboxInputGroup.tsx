@@ -13,6 +13,7 @@ function ComboboxInputGroup(props: ComboboxInputGroupProps) {
     <InputGroup
       className={comboboxInputGroup({ size, class: className })}
       {...rest}
+      data-size={size}
       data-sw-combobox-input-group=""
       data-slot="combobox-input-group"
     >

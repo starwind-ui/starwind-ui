@@ -810,6 +810,7 @@ describe("generateCliRegistry", () => {
       (component) => component.name === "navigation-menu",
     );
     expect(navigationMenu).toBeDefined();
+    expect(navigationMenu?.version).toBe("1.0.0");
     expect(navigationMenu?.targets).toBeDefined();
     const navigationMenuTargets = navigationMenu!.targets!;
     expect(navigationMenuTargets.astro.packageRequirements).toEqual(
@@ -830,10 +831,21 @@ describe("generateCliRegistry", () => {
     expect(navigationMenuReactRoot?.content).toContain(
       'import NavigationMenuPrimitive from "@starwind-ui/react/navigation-menu";',
     );
+    for (const root of [navigationMenuAstroRoot, navigationMenuReactRoot]) {
+      expect(root?.content).toContain('size?: "sm" | "md";');
+      expect(root?.content).toContain('contentSize?: "sm" | "md";');
+      expect(root?.content).toContain("contentSize = size");
+      expect(root?.content).toContain("size={contentSize}");
+      expect(root?.content).toContain("data-size={size}");
+    }
     const navigationMenuReactTrigger = navigationMenuTargets.react.files.find((file) =>
       file.path.endsWith("/navigation-menu/NavigationMenuTrigger.tsx"),
     );
     expect(navigationMenuReactTrigger?.content).toContain("if (asChild) {");
+    expect(navigationMenuReactTrigger?.content).toContain(
+      "const triggerClassName = asChild ? className : triggerBaseClassName;",
+    );
+    expect(navigationMenuReactTrigger?.content).toContain("className={triggerClassName}");
     expect(navigationMenuReactTrigger?.content).toContain("{showIcon && (");
     expect(navigationMenuReactTrigger?.content).not.toContain("{!asChild && showIcon && (");
     const navigationMenuAstroVariants = navigationMenuTargets.astro.files.find((file) =>
@@ -845,14 +857,21 @@ describe("generateCliRegistry", () => {
     for (const variantFile of [navigationMenuAstroVariants, navigationMenuReactVariants]) {
       expect(variantFile, "navigation-menu registry variants").toBeDefined();
       expect(variantFile?.content).toContain(
-        "group/navigation-menu relative flex max-w-max flex-1 items-center justify-center",
+        "group/nav-menu relative flex max-w-max flex-1 items-center justify-center",
       );
-      expect(variantFile?.content).not.toContain("group/navigation-menu relative z-10");
+      expect(variantFile?.content).not.toContain("group/nav-menu relative z-10");
       expect(variantFile?.content).toContain(
-        "rounded-lg px-2.5 py-1.5 text-sm font-medium transition-all outline-none",
+        "group-data-[size=sm]/nav-menu:h-9 group-data-[size=sm]/nav-menu:px-2.5",
       );
+      expect(variantFile?.content).toContain(
+        "group-data-[size=md]/nav-menu:h-11 group-data-[size=md]/nav-menu:px-3",
+      );
+      expect(variantFile?.content).not.toContain("group-data-[size=lg]/nav-menu");
       expect(variantFile?.content).toContain(
         "ml-1 size-3 shrink-0 origin-center transition duration-300",
+      );
+      expect(variantFile?.content).toContain(
+        "group-data-[size=md]/nav-menu:ml-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
       );
       expect(variantFile?.content).toContain(
         "data-[state=closed]:pointer-events-none data-[state=closed]:absolute data-[state=closed]:inset-0",
@@ -1339,24 +1358,16 @@ describe("generateCliRegistry", () => {
     const styledComponentCandidates = [
       "ColorPicker",
       "ColorPickerArea",
-      "ColorPickerAreaThumb",
       "ColorPickerChannelInput",
       "ColorPickerChannelSlider",
       "ColorPickerClear",
       "ColorPickerContent",
-      "ColorPickerControl",
+      "ColorPickerDefaultEditor",
       "ColorPickerEyeDropper",
-      "ColorPickerFormatSelect",
-      "ColorPickerHiddenInput",
       "ColorPickerInput",
-      "ColorPickerLabel",
-      "ColorPickerNativeFormatSelect",
-      "ColorPickerRoot",
-      "ColorPickerSliders",
       "ColorPickerSwatch",
       "ColorPickerSwatchGroup",
       "ColorPickerTrigger",
-      "ColorPickerValueInput",
       "ColorPickerValueSwatch",
     ] as const;
     const styledCandidatePaths = new Map<"astro" | "react", string[]>();
@@ -1367,7 +1378,7 @@ describe("generateCliRegistry", () => {
     expect(styledContract).toBeDefined();
     expect(styledColorPickerVersion).toBeDefined();
     expect(primitiveColorPickerVersion).toBeDefined();
-    expect(styledComponentCandidates).toHaveLength(21);
+    expect(styledComponentCandidates).toHaveLength(13);
 
     const firstRegistry = await buildRuntimeRegistry({
       contracts: [styledContract!],

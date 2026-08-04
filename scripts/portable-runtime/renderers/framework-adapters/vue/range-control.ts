@@ -106,6 +106,7 @@ const renderedValue = computed(() =>
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
 let unsubscribeChange: (() => void) | undefined;
 let unsubscribeCommitted: (() => void) | undefined;
+let unsubscribeStateSync: (() => void) | undefined;
 let refreshRevision = 0;
 
 function valuesEqual(left: ${facts.serializer.valueType}, right: ${facts.serializer.valueType}): boolean {
@@ -119,6 +120,15 @@ function valuesEqual(left: ${facts.serializer.valueType}, right: ${facts.seriali
 
 function serializeValue(value: ${facts.serializer.valueType}): string {
   return Array.isArray(value) ? JSON.stringify(value) : String(value);
+}
+
+function handleStateSync(): void {
+  if (controlled || !instance) return;
+  const nextValue = instance.${facts.state.getter}();
+  if (valuesEqual(uncontrolledValue.value, nextValue)) return;
+
+  uncontrolledValue.value = nextValue;
+  modelValue.value = nextValue;
 }
 
 async function refreshAfterVueFlush(): Promise<void> {
@@ -138,7 +148,7 @@ defineExpose({ element });
 
 onMounted(() => {
   if (!element.value) return;
-  instance = ${facts.runtime.factory}(element.value, {
+  const createdInstance = ${facts.runtime.factory}(element.value, {
     ${props.defaultValue.name}: initialDefaultValue,
     ${props.disabled.name}: props.${props.disabled.name},
     ${props.form.name}: props.${props.form.name},
@@ -153,16 +163,18 @@ onMounted(() => {
       ? { ${props.value.name}: modelValue.value }
       : {}),
   });
-  unsubscribeChange = instance.subscribe("${valueChange.name}", (detail) => {
+  instance = createdInstance;
+  unsubscribeChange = createdInstance.subscribe("${valueChange.name}", (detail) => {
     emit("valueChange", detail.${valueChange.valueProperty}, detail);
     if (detail.isCanceled) return;
 
     if (!controlled) uncontrolledValue.value = detail.${valueChange.valueProperty};
     modelValue.value = detail.${valueChange.valueProperty};
   });
-  unsubscribeCommitted = instance.subscribe("${valueCommitted.name}", (detail) => {
+  unsubscribeCommitted = createdInstance.subscribe("${valueCommitted.name}", (detail) => {
     emit("valueCommitted", detail.${valueCommitted.valueProperty}, detail);
   });
+  unsubscribeStateSync = createdInstance.subscribe("${facts.state.syncEvent}", handleStateSync);
 });
 
 onUpdated(() => {
@@ -214,8 +226,10 @@ watch(
 
 onBeforeUnmount(() => {
   refreshRevision += 1;
+  unsubscribeStateSync?.();
   unsubscribeChange?.();
   unsubscribeCommitted?.();
+  unsubscribeStateSync = undefined;
   unsubscribeChange = undefined;
   unsubscribeCommitted = undefined;
   instance?.destroy();

@@ -5,6 +5,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  buildContractGenerationProofMeasurementRows,
   committedComparatorBaselines,
   evaluateColorPickerSizeComparison,
   formatColorPickerSizeComparisonMarkdown,
@@ -12,6 +13,75 @@ import {
   getPackageSizeMeasurementPlan,
   writePackageSizeReports,
 } from "../measure-package-sizes.mjs";
+
+describe("contract-generation proof measurement rows", () => {
+  it("projects every exact shipping row without exposing release budgets", () => {
+    const rows = buildContractGenerationProofMeasurementRows({
+      bundleResults: [
+        measurement("@starwind-ui/runtime", 100, 10),
+        measurement("@starwind-ui/react + runtime", 200, 20),
+      ],
+      sourcePayloadResults: [
+        payload("@starwind-ui/astro", 301, 31, 3_001, 30_001),
+        payload("@starwind-ui/react", 302, 32, 3_002, 30_002),
+        payload("@starwind-ui/runtime", 303, 33, 3_003, 30_003),
+      ],
+      supportResults: [
+        supportMeasurement("all-three-overlap", 400, 40),
+        supportMeasurement("starwind-zag-overlap", 500, 50),
+        componentMeasurement("button", 601, 61),
+        componentMeasurement("checkbox", 602, 62),
+        componentMeasurement("select", 603, 63),
+      ],
+    });
+
+    expect(Object.keys(rows)).toEqual([
+      "runtimeHeadline",
+      "reactWithRuntime",
+      "allThreeOverlap",
+      "starwindZagOverlap",
+      "isolatedButton",
+      "isolatedCheckbox",
+      "isolatedSelect",
+      "packagePayloads",
+    ]);
+    expect(rows.isolatedCheckbox).toEqual({ gzipBytes: 62, minifiedBytes: 602 });
+    expect(rows.packagePayloads).toEqual({
+      astro: {
+        minifiedBytes: 301,
+        packageGzipBytes: 3_001,
+        packageUnpackedBytes: 30_001,
+        sourceGzipBytes: 31,
+      },
+      react: {
+        minifiedBytes: 302,
+        packageGzipBytes: 3_002,
+        packageUnpackedBytes: 30_002,
+        sourceGzipBytes: 32,
+      },
+      runtime: {
+        minifiedBytes: 303,
+        packageGzipBytes: 3_003,
+        packageUnpackedBytes: 30_003,
+        sourceGzipBytes: 33,
+      },
+    });
+  });
+
+  it("rejects missing and nonnumeric proof measurements", () => {
+    const input = completeProofMeasurementFixture();
+    input.supportResults = input.supportResults.filter(({ component }) => component !== "button");
+    expect(() => buildContractGenerationProofMeasurementRows(input)).toThrow(
+      "Missing required shipping measurement: isolatedButton",
+    );
+
+    const nonnumeric = completeProofMeasurementFixture();
+    nonnumeric.bundleResults[0].gzipBytes = null;
+    expect(() => buildContractGenerationProofMeasurementRows(nonnumeric)).toThrow(
+      "Nonnumeric shipping measurement: runtimeHeadline.gzipBytes",
+    );
+  });
+});
 
 describe("package-size public and diagnostic reports", () => {
   it("keeps release checks local and reserves comparator installs for explicit refreshes", () => {
@@ -198,6 +268,39 @@ describe("standalone Color Picker package-size comparison", () => {
 
 function measurement(label, minifiedBytes, gzipBytes) {
   return { gzipBytes, label, minifiedBytes };
+}
+
+function supportMeasurement(comparisonSet, minifiedBytes, gzipBytes) {
+  return { comparisonSet, gzipBytes, minifiedBytes, provider: "starwind" };
+}
+
+function componentMeasurement(component, minifiedBytes, gzipBytes) {
+  return { component, gzipBytes, minifiedBytes, provider: "starwind" };
+}
+
+function payload(label, minifiedBytes, gzipBytes, packageGzipBytes, packageUnpackedBytes) {
+  return { gzipBytes, label, minifiedBytes, packageGzipBytes, packageUnpackedBytes };
+}
+
+function completeProofMeasurementFixture() {
+  return {
+    bundleResults: [
+      measurement("@starwind-ui/runtime", 100, 10),
+      measurement("@starwind-ui/react + runtime", 200, 20),
+    ],
+    sourcePayloadResults: [
+      payload("@starwind-ui/astro", 301, 31, 3_001, 30_001),
+      payload("@starwind-ui/react", 302, 32, 3_002, 30_002),
+      payload("@starwind-ui/runtime", 303, 33, 3_003, 30_003),
+    ],
+    supportResults: [
+      supportMeasurement("all-three-overlap", 400, 40),
+      supportMeasurement("starwind-zag-overlap", 500, 50),
+      componentMeasurement("button", 601, 61),
+      componentMeasurement("checkbox", 602, 62),
+      componentMeasurement("select", 603, 63),
+    ],
+  };
 }
 
 function reportFixture() {

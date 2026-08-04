@@ -45,6 +45,7 @@ function ComboboxContent(props: ComboboxContentProps) {
           side={side}
           sideOffset={sideOffset}
           {...rest}
+          data-size={size}
           data-slot="combobox-content"
         >
           <ComboboxPrimitive.List className={comboboxList()} data-slot="combobox-list">

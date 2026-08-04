@@ -33,6 +33,7 @@ function SelectTrigger(props: SelectTriggerProps) {
       className={selectTrigger({ size, class: className })}
       asChild={asChild}
       {...rest}
+      data-size={size}
       data-slot="select-trigger"
     >
       {children ?? (
