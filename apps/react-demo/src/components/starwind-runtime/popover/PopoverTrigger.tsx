@@ -9,9 +9,12 @@ export type PopoverTriggerProps = React.ComponentPropsWithoutRef<"button"> & {
 function PopoverTrigger(props: PopoverTriggerProps) {
   const { asChild = false, className, children, ...rest } = props;
 
+  const triggerBaseClassName = popoverTrigger({ class: className });
+  const triggerClassName = asChild ? className : triggerBaseClassName;
+
   return (
     <PopoverPrimitive.Trigger
-      className={popoverTrigger({ class: className })}
+      className={triggerClassName}
       asChild={asChild}
       {...rest}
       data-slot="popover-trigger"

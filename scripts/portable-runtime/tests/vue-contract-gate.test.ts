@@ -130,6 +130,7 @@ const approvedChangesetIgnore = [
   "vue-demo",
   "@starwind-ui/core",
   "@starwind-ui/vue",
+  "@starwind-ui/svelte",
 ];
 const approvedProductPositioningVueClaim =
   /Current first-party Primitive adapter packages are Astro and React\. Runtime adapter contract types\s+already allow future targets such as Vue, Svelte, and Solid, but do not claim those adapters are\s+shipped until generated package output and demos exist\./;
@@ -519,6 +520,7 @@ describe("Vue non-shipping public-contract gate", () => {
       "astro",
       "react",
       "vue",
+      "svelte",
     ]);
     expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
     expect(

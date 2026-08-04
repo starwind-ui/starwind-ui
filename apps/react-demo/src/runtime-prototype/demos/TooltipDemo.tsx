@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Tooltip, TooltipContent, TooltipTrigger } from "../kit";
+import { BreadcrumbLink, Button, Tooltip, TooltipContent, TooltipTrigger } from "../kit";
 
 const sideExamples = [
   { side: "top", label: "Top" },
@@ -17,6 +17,7 @@ const alignExamples = [
 export function TooltipDemo() {
   const [controlledOpen, setControlledOpen] = useState(false);
   const [controlledDisabled, setControlledDisabled] = useState(true);
+  const [rawChildClickCount, setRawChildClickCount] = useState(0);
 
   return (
     <section className="space-y-4">
@@ -82,6 +83,61 @@ export function TooltipDemo() {
         </div>
 
         <div className="flex min-h-28 flex-wrap items-center justify-center gap-4 sm:px-20">
+          <Tooltip id="react-runtime-tooltip-native" openDelay={0} closeDelay={0}>
+            <TooltipTrigger
+              asChild={false}
+              id="react-runtime-tooltip-native-trigger"
+              className="tracking-[0.111px]"
+            >
+              Native tooltip
+            </TooltipTrigger>
+            <TooltipContent id="react-runtime-tooltip-native-content" className="duration-0">
+              Native tooltip content
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip id="react-runtime-tooltip-raw-child" openDelay={0} closeDelay={0}>
+            <TooltipTrigger
+              asChild
+              className="tracking-[0.123px]"
+              ref={(node) => {
+                node?.setAttribute("data-tooltip-ref-witness", node.id);
+              }}
+            >
+              <button
+                id="react-runtime-tooltip-raw-child-trigger"
+                type="button"
+                className="uppercase"
+                style={{ wordSpacing: "1.234px" }}
+                data-listener-count={rawChildClickCount}
+                onClick={() => setRawChildClickCount((count) => count + 1)}
+              >
+                Raw child tooltip
+              </button>
+            </TooltipTrigger>
+            <TooltipContent id="react-runtime-tooltip-raw-child-content" className="duration-0">
+              Raw child tooltip content
+            </TooltipContent>
+            <span id="react-runtime-tooltip-raw-child-listener-count" className="sr-only">
+              {rawChildClickCount}
+            </span>
+          </Tooltip>
+
+          <Tooltip id="react-runtime-tooltip-styled-child" openDelay={0} closeDelay={0}>
+            <TooltipTrigger asChild className="tracking-[0.234px]">
+              <BreadcrumbLink
+                id="react-runtime-tooltip-styled-child-trigger"
+                href="#react-runtime-tooltip-styled-child"
+                className="uppercase"
+              >
+                Styled child tooltip
+              </BreadcrumbLink>
+            </TooltipTrigger>
+            <TooltipContent id="react-runtime-tooltip-styled-child-content" className="duration-0">
+              Styled child tooltip content
+            </TooltipContent>
+          </Tooltip>
+
           <Tooltip id="react-runtime-tooltip-offset" openDelay={0} closeDelay={0}>
             <TooltipTrigger>
               <Button id="react-runtime-tooltip-offset-trigger" variant="ghost" size="sm">

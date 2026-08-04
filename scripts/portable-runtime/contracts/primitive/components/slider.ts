@@ -127,6 +127,7 @@ export const sliderRuntimeAdapterContract = {
       defaultProp: "defaultValue",
       initialAttribute: "data-default-value",
       runtimeGetter: "getValue",
+      runtimeSyncEvent: "stateSync",
       runtimeSetter: "setValue",
       valueType: "SliderValue",
       controlledStateSync: "unsupported",

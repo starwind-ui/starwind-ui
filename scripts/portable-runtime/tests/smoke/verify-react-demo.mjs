@@ -5,6 +5,7 @@ import { verifyReactCarouselCases } from "./react/carousel-cases.mjs";
 import { verifyReactColorPickerCases } from "../../../../apps/react-demo/tests/color-picker-cases.mjs";
 import { verifyReactFormControlCases } from "./react/form-control-cases.mjs";
 import { verifyReactFoundationCases } from "./react/foundation-cases.mjs";
+import { verifyNavigationMenuSizingCases } from "./shared/navigation-menu-sizing.mjs";
 import { verifyReactMediaOverlayCases } from "./react/media-overlay-cases.mjs";
 import { verifyReactSheetMenuCases } from "./react/sheet-menu-cases.mjs";
 import { verifyNestedSidebarPageCases, verifySidebarCases } from "./shared/sidebar.mjs";
@@ -64,6 +65,12 @@ try {
   await verifyReactAppNav({ page, activeLabel: "Runtime Prototype" });
 
   await verifyReactFoundationCases({ page });
+  await verifyNavigationMenuSizingCases({
+    page,
+    prefix: "react-runtime-navigation-menu",
+    label: "React",
+    composedDataSlot: "navigation-menu-trigger",
+  });
   await verifyReactColorPickerCases({ page });
   await verifyReactCarouselCases({ page });
   await page.goto(new URL("/pages/runtime-sidebar-demo", url).toString(), {

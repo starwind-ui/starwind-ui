@@ -28,35 +28,26 @@ import {
 const execFileAsync = promisify(execFile);
 
 export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): void {
-  it("generates the complete styled Color Picker family with function-child SSR projection", async () => {
+  it("generates the simplified styled Color Picker family with zero-child SSR projection", async () => {
     const tempRoot = getTempRoot();
     const outputDir = "generated/styled/astro";
     await generateStarwindAstroWrappers({ outputDir, repoRoot: tempRoot });
 
     const tree = await readGeneratedTree(path.join(tempRoot, outputDir, "color-picker"));
-    const popoverOpen = tree["ColorPicker.astro"].match(/<Popover[\s\S]*?>/)?.[0];
     expect(Object.keys(tree).sort()).toEqual(
       [
         "ColorPicker.astro",
         "ColorPickerArea.astro",
-        "ColorPickerAreaThumb.astro",
         "ColorPickerChannelInput.astro",
         "ColorPickerChannelSlider.astro",
         "ColorPickerClear.astro",
         "ColorPickerContent.astro",
-        "ColorPickerControl.astro",
+        "ColorPickerDefaultEditor.astro",
         "ColorPickerEyeDropper.astro",
-        "ColorPickerFormatSelect.astro",
-        "ColorPickerHiddenInput.astro",
         "ColorPickerInput.astro",
-        "ColorPickerLabel.astro",
-        "ColorPickerNativeFormatSelect.astro",
-        "ColorPickerRoot.astro",
-        "ColorPickerSliders.astro",
         "ColorPickerSwatch.astro",
         "ColorPickerSwatchGroup.astro",
         "ColorPickerTrigger.astro",
-        "ColorPickerValueInput.astro",
         "ColorPickerValueSwatch.astro",
         "index.ts",
         "styles.css",
@@ -66,78 +57,86 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(tree["ColorPicker.astro"]).toContain(
       'async (initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection)',
     );
+    expect(
+      tree["ColorPicker.astro"].match(/Astro\.slots\.render\("default", \[initial\]\)/g),
+    ).toHaveLength(2);
     expect(tree["ColorPicker.astro"]).toContain('Astro.slots.render("default", [initial])');
+    expect(tree["ColorPicker.astro"]).toContain('Astro.slots.has("default")');
     expect(tree["ColorPicker.astro"]).toContain("data-floating-root={true}");
     expect(tree["ColorPicker.astro"]).toContain("<Popover");
-    expect(tree["ColorPicker.astro"]).toContain("<ColorPickerRoot");
-    expect(tree["ColorPicker.astro"]).not.toContain("ComponentProps<typeof Popover>");
+    expect(tree["ColorPicker.astro"].match(/<ColorPickerPrimitive\.Root/g)).toHaveLength(2);
+    expect(tree["ColorPicker.astro"].match(/<ColorPickerPrimitive\.HiddenInput/g)).toHaveLength(2);
+    expect(tree["ColorPicker.astro"]).toContain("allowEmpty={clearable}");
+    expect(tree["ColorPicker.astro"]).toContain("alpha = true");
+    expect(tree["ColorPicker.astro"]).toContain("inline = false");
+    expect(tree["ColorPicker.astro"]).toContain('formatControl = "select"');
+    expect(tree["ColorPicker.astro"]).toContain("showEyeDropper = true");
+    expect(tree["ColorPicker.astro"]).toContain("showValueText = true");
+    expect(tree["ColorPicker.astro"]).toContain('size = "md"');
+    expect(tree["ColorPicker.astro"]).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
+    expect(tree["ColorPicker.astro"]).toContain("Array.from(new Set(formats))");
+    expect(tree["ColorPicker.astro"]).toContain("requestedFormats.includes(resolvedFormat)");
     expect(tree["ColorPicker.astro"]).toContain("defaultOpen={defaultOpen}");
-    expect(popoverOpen).not.toContain("{...rest}");
     expect(tree["ColorPicker.astro"]).toMatch(
-      /<ColorPickerRoot[\s\S]*?\{\.\.\.rest\}[\s\S]*?data-floating-root/,
+      /<ColorPickerPrimitive\.Root[\s\S]*?\{\.\.\.rest\}[\s\S]*?data-floating-root/,
     );
-    expect(tree["ColorPickerRoot.astro"]).toContain(
-      'async (initial: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection)',
-    );
-    expect(tree["ColorPickerRoot.astro"]).toContain('Astro.slots.render("default", [initial])');
-    expect(tree["ColorPickerRoot.astro"]).toContain("<ColorPickerPrimitive.Root");
-    expect(tree["ColorPickerRoot.astro"]).not.toContain("Popover");
-    expect(tree["ColorPickerRoot.astro"]).not.toContain("data-floating-root");
     expect(tree["ColorPickerContent.astro"]).toContain("<PopoverContent");
     expect(tree["ColorPickerContent.astro"]).toContain('collisionStrategy="best-fit"');
-    expect(tree["ColorPickerContent.astro"]).toContain("initial={initial?.area()}");
-    expect(tree["ColorPickerContent.astro"]).toContain("initial={initial}");
-    expect(tree["ColorPickerContent.astro"]).toContain(
-      "initial={initial?.eyeDropperTrigger.initial}",
+    expect(tree["ColorPickerContent.astro"]).toContain("<ColorPickerDefaultEditor");
+    expect(tree["ColorPickerContent.astro"]).toContain('size = "md"');
+    expect(tree["ColorPickerContent.astro"]).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
+    expect(tree["ColorPickerDefaultEditor.astro"]).toContain("<ColorPickerArea");
+    expect(tree["ColorPickerDefaultEditor.astro"].match(/<ColorPickerChannelSlider/g)).toHaveLength(
+      2,
     );
-    expect(tree["ColorPickerContent.astro"]).toContain("initial={initial?.clear.initial}");
-    expect(tree["ColorPickerContent.astro"]).toContain('<slot name="swatches" />');
-    expect(tree["ColorPickerContent.astro"]).toContain(
-      'import ColorPicker from "@tabler/icons/outline/color-picker.svg";',
-    );
-    expect(tree["ColorPickerContent.astro"]).toContain(
-      'const inputSize = size === "lg" ? "md" : "sm";',
-    );
-    expect(tree["ColorPickerContent.astro"]).toContain(
-      'const hasSwatches = Astro.slots.has("swatches");',
-    );
-    expect(tree["ColorPickerContent.astro"]).toMatch(
-      /<ColorPicker\s+class="size-4"\s+aria-hidden="true"/,
-    );
-    expect(tree["ColorPickerContent.astro"]).not.toContain(">Pick<");
-    expect(tree["ColorPickerContent.astro"]).toContain("size={inputSize}");
-    expect(tree["ColorPickerContent.astro"]).toContain("hasSwatches || showClear");
-    expect(tree["ColorPickerContent.astro"].indexOf('<slot name="swatches" />')).toBeLessThan(
-      tree["ColorPickerContent.astro"].indexOf("<ColorPickerClear"),
-    );
+    expect(tree["ColorPickerDefaultEditor.astro"]).toContain('channel="alpha"');
+    expect(tree["ColorPickerDefaultEditor.astro"]).toContain("normalizedSwatches.map");
+    expect(tree["ColorPickerDefaultEditor.astro"]).toContain("<ColorPickerClear");
     expect(tree["ColorPickerInput.astro"]).toContain("initial={initial?.valueInput.initial}");
     expect(tree["ColorPickerInput.astro"]).toContain("initial={initial?.formatSelect.initial}");
     expect(tree["ColorPickerInput.astro"]).toContain("initial={initial?.formatControl.initial}");
-    expect(tree["ColorPickerValueInput.astro"]).toContain('Omit<HTMLAttributes<"input">, "size">');
+    expect(tree["ColorPickerInput.astro"]).toContain(
+      'formatControl?: "select" | "native" | "none"',
+    );
+    expect(tree["ColorPickerInput.astro"]).toContain('formatContentSize?: "sm" | "md" | "lg"');
+    expect(tree["ColorPickerInput.astro"]).toContain('formatContentSize = "md"');
+    expect(tree["ColorPickerInput.astro"]).toContain("<SelectContent size={formatContentSize}");
+    expect(tree["ColorPickerInput.astro"]).toContain("normalizedFormats.map");
     expect(tree["variants.ts"]).toContain("min-h-32 w-full shrink-0");
-    expect(tree["variants.ts"]).toContain("max-h-[var(--sw-floating-available-height)]");
-    expect(tree["ColorPickerNativeFormatSelect.astro"]).toContain(
-      "initial?.properties.value ?? rest.value",
-    );
-    expect(tree["ColorPickerNativeFormatSelect.astro"]).toContain(
-      'selected={(initial?.properties.value ?? rest.value) === "rgb"}',
-    );
-    expect(tree["ColorPickerFormatSelect.astro"]).toContain("initial={initial}");
-    expect(tree["ColorPickerFormatSelect.astro"]).toContain(
-      'data-sw-color-picker-format-options=""',
-    );
+    expect(tree["variants.ts"]).toContain("max-h-(--sw-floating-available-height)");
+    expect(tree["ColorPickerArea.astro"]).toContain("<ColorPickerPrimitive.AreaThumb");
+    expect(tree["ColorPickerInput.astro"]).toContain('data-sw-color-picker-format-options=""');
     expect(tree["styles.css"]).toContain(
       '[data-sw-color-picker][data-floating-root] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
     );
     expect(tree["styles.css"]).toContain("--sw-color-picker-channel-gradient");
     expect(tree["styles.css"]).toContain('data-has-swatches="false"');
     expect(tree["styles.css"]).toContain('[data-slot="color-picker-value-swatch"] {');
-    expect(tree["variants.ts"]).toContain('sm: "text-sm"');
-    expect(tree["variants.ts"]).toContain('sm: "size-6"');
-    expect(tree["variants.ts"]).toContain('sm: "h-2.5');
-    expect(tree["variants.ts"]).toContain('lg: "text-lg"');
+    expect(tree["styles.css"]).toContain(
+      '[data-slot="color-picker"][data-size="sm"], [data-sw-color-picker-content][data-size="sm"]',
+    );
+    expect(tree["styles.css"]).toContain("--sw-color-picker-area-height: 175px");
+    expect(tree["styles.css"]).toContain("--sw-color-picker-content-width: 20rem");
+    expect(tree["variants.ts"]).toContain("h-(--sw-color-picker-area-height)");
+    expect(tree["variants.ts"]).toContain("size-(--sw-color-picker-swatch-size)");
+    expect(tree["variants.ts"]).toContain("h-(--sw-color-picker-slider-size)");
+    for (const part of [
+      "ColorPickerArea.astro",
+      "ColorPickerChannelInput.astro",
+      "ColorPickerChannelSlider.astro",
+      "ColorPickerClear.astro",
+      "ColorPickerEyeDropper.astro",
+      "ColorPickerInput.astro",
+      "ColorPickerSwatch.astro",
+      "ColorPickerSwatchGroup.astro",
+      "ColorPickerTrigger.astro",
+      "ColorPickerValueSwatch.astro",
+    ]) {
+      expect(tree[part]).not.toContain("size?:");
+    }
     expect(tree["index.ts"]).toContain("Root: ColorPicker");
-    expect(tree["index.ts"]).toContain("InlineRoot: ColorPickerRoot");
+    expect(tree["index.ts"]).not.toContain("InlineRoot");
+    expect(tree["index.ts"]).not.toContain("ColorPickerDefaultEditor");
     expect(Object.values(tree).join("\n")).not.toMatch(/(?:class|data-[\w-]+)=["'][^"']*starwind-/);
 
     const first = tree;
@@ -189,7 +188,7 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(html).toContain("data-floating-root");
     expect(inlineRoot).toContain("data-sw-color-picker");
     expect(inlineRoot).not.toContain("data-floating-root");
-    expect(html.match(/data-sw-popover(?:[\s=>])/g)).toHaveLength(1);
+    expect(html.match(/data-sw-popover(?:[\s=>])/g)).toHaveLength(2);
     expect(html).toContain('data-format="hsl"');
     expect(html).not.toContain('data-alpha="false"');
     expect(inlineRoot).toContain("data-alpha");
@@ -209,10 +208,13 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(html).toMatch(
       /data-slot="popover-content"[\s\S]*data-slot="color-picker-area"[\s\S]*data-slot="color-picker-channel-slider"[\s\S]*data-slot="color-picker-value-input"/,
     );
-    expect(html.match(/--sw-color-picker-area-x:/g)).toHaveLength(2);
-    expect(html.match(/--sw-color-picker-channel-position:/g)).toHaveLength(2);
-    expect(html.match(/--sw-color-picker-area-thumb-color:/g)).toHaveLength(2);
-    expect(html.match(/--sw-color-picker-channel-thumb-color:/g)).toHaveLength(2);
+    expect(html.match(/--sw-color-picker-area-x:/g)).toHaveLength(4);
+    expect(html.match(/--sw-color-picker-channel-position:/g)).toHaveLength(7);
+    expect(html.match(/--sw-color-picker-area-thumb-color:/g)).toHaveLength(4);
+    expect(html.match(/--sw-color-picker-channel-thumb-color:/g)).toHaveLength(7);
+    expect(html.match(/data-slot="color-picker-hidden-input"/g)).toHaveLength(3);
+    expect(html).toContain("Zero popup");
+    expect(html).toMatch(/<button(?=[^>]*aria-label="Slate")(?=[^>]*disabled)[^>]*>/);
     expect(html).toMatch(
       /<input(?=[^>]*data-slot="color-picker-hidden-input")(?=[^>]*name="theme")(?=[^>]*value="hsl\(210, 50%, 40%\)")[^>]*>/,
     );
@@ -437,10 +439,7 @@ import {
   ColorPickerArea,
   ColorPickerChannelSlider,
   ColorPickerContent,
-  ColorPickerHiddenInput,
   ColorPickerInput,
-  ColorPickerNativeFormatSelect,
-  ColorPickerRoot,
   ColorPickerSwatch,
   ColorPickerSwatchGroup,
   ColorPickerValueSwatch,
@@ -452,6 +451,7 @@ const objectDefaultValue = parseColor("#33669980")!;
   defaultValue={objectDefaultValue}
   format="hsl"
   alpha={false}
+  clearable
   name="theme"
   locale="ar-EG"
   dir="rtl"
@@ -460,25 +460,23 @@ const objectDefaultValue = parseColor("#33669980")!;
     <Fragment>
       <ColorPickerArea initial={initial.area({ xStep: 5, yStep: 10 })} />
       <ColorPickerChannelSlider initial={initial} channel="hue" step={7} />
-      <ColorPickerInput initial={initial} />
-      <ColorPickerNativeFormatSelect initial={initial.formatSelect.initial} />
+      <ColorPickerInput initial={initial} formatControl="native" />
       <ColorPickerValueSwatch initial={initial} />
       <ColorPickerSwatchGroup initial={initial.swatchGroup.initial}>
         <ColorPickerSwatch initial={initial} value="#33669980" />
       </ColorPickerSwatchGroup>
-      <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
-      <ColorPickerContent initial={initial} alpha={false} showEyeDropper showClear />
+      <ColorPickerContent initial={initial} showEyeDropper />
     </Fragment>
   )}
 </ColorPicker>
-<ColorPickerRoot id="inline-picker" defaultValue={objectDefaultValue} name="inline">
-  {(initial) => (
-    <Fragment>
-      <ColorPickerInput initial={initial} />
-      <ColorPickerHiddenInput initial={initial.hiddenInput.initial} />
-    </Fragment>
-  )}
-</ColorPickerRoot>
+<ColorPicker inline id="inline-picker" label="Inline color" defaultValue={objectDefaultValue} name="inline" />
+<ColorPicker
+  id="zero-popup"
+  defaultOpen
+  label="Zero popup"
+  defaultValue="#0ea5e9"
+  swatches={["#0ea5e9", { value: "#64748b", label: "Slate", disabled: true }]}
+/>
 `;
 }
 

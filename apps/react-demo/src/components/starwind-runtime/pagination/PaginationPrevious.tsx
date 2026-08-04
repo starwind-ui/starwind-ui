@@ -8,12 +8,11 @@ export type PaginationPreviousProps = React.ComponentProps<typeof PaginationLink
 };
 
 function PaginationPrevious(props: PaginationPreviousProps) {
-  const { size = "md", ref, className, children, icon, ...rest } = props;
+  const { ref, className, children, icon, ...rest } = props;
 
   return (
     <PaginationLink
       aria-label="Go to previous page"
-      size={size}
       className={paginationPrevious({ class: className })}
       {...rest}
       ref={ref}

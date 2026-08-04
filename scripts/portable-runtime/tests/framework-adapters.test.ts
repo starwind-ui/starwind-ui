@@ -6,6 +6,9 @@ import {
   createVueContractFixtureFiles,
   VUE_CONTRACT_FIXTURE_PATHS,
 } from "../check-vue-tracer-fixtures.js";
+import { accordionRuntimeAdapterContract } from "../contracts/primitive/components/accordion.js";
+import { dialogRuntimeAdapterContract } from "../contracts/primitive/components/dialog.js";
+import { sliderRuntimeAdapterContract } from "../contracts/primitive/components/slider.js";
 import { checkboxGroupRuntimeAdapterContract } from "../contracts/primitive/representatives.js";
 import { buttonStyledContract } from "../contracts/styled/components/button.js";
 import { colorPickerStyledContract } from "../contracts/styled/components/color-picker.js";
@@ -38,9 +41,11 @@ import {
   printFrameworkAdapterConformanceFixture,
   projectStyledOutputModel,
   reactFrameworkAdapter,
-  SVELTE_FRAMEWORK_ADAPTER_DEFERRED,
   solidFrameworkAdapter,
   solidFrameworkAdapterReadiness,
+  svelteAdapterPublicContract,
+  svelteFrameworkAdapterReadiness,
+  svelteFrameworkAdapterTarget,
   toStyledAdapterContract,
   vueFrameworkAdapter,
   vueFrameworkAdapterReadiness,
@@ -56,6 +61,12 @@ import {
   buildGenericAdapterOutputModel,
   buildGenericAdapterPlan,
 } from "../renderers/generic-adapter-plan/index.js";
+import {
+  buildAccordionAdapterOutputModel,
+  buildAccordionSpecializedAdapterSpec,
+  buildSliderAdapterOutputModel,
+  buildSliderSpecializedAdapterSpec,
+} from "../renderers/specialized-adapter-spec/index.js";
 import type { StyledOutputComponentGroup } from "../renderers/styled-output-model/index.js";
 
 describe("Framework Adapter seam", () => {
@@ -425,9 +436,10 @@ describe("Framework Adapter seam", () => {
     expect(components?.find(({ exportName }) => exportName === "ColorPicker")?.forwardRef).toEqual({
       targetType: "HTMLDivElement",
     });
+    expect(components?.find(({ exportName }) => exportName === "ColorPickerRoot")).toBeUndefined();
     expect(
-      components?.find(({ exportName }) => exportName === "ColorPickerRoot")?.forwardRef,
-    ).toEqual({ targetType: "HTMLDivElement" });
+      components?.find(({ exportName }) => exportName === "ColorPickerDefaultEditor")?.forwardRef,
+    ).toBeUndefined();
     expect(projectStyledOutputModel(model.componentGroups.map(toStyledAdapterContract))).toEqual(
       model,
     );
@@ -729,6 +741,7 @@ describe("Framework Adapter seam", () => {
             projectSpecialized: typeof registration.primitive.outputModel.projectSpecialized,
             write: typeof registration.primitive.outputModel.write,
           },
+          ...(registration.target === "svelte" ? { support: registration.primitive.support } : {}),
         },
         publicSupport: registration.publicSupport,
         styled: {
@@ -869,19 +882,71 @@ describe("Framework Adapter seam", () => {
         },
         target: "vue",
       },
+      {
+        adapterTarget: "svelte",
+        cliRegistry: {
+          generatedImportCandidateExtensions: [".svelte", ".ts", ".js"],
+          styledArtifact: {
+            collectPackageImportSources: "undefined",
+            outputDir: "svelte",
+            primitiveOutputDir: "svelte-primitives",
+          },
+          setupPackageRequirements: [],
+        },
+        fileExtension: ".svelte",
+        home: "scripts/portable-runtime/renderers/framework-adapters/svelte",
+        packageName: "@starwind-ui/svelte",
+        primitive: {
+          generatePackage: "function",
+          manualPrimitives: "undefined",
+          outputModel: {
+            projectSpecialized: "function",
+            write: "function",
+          },
+          support: {
+            components: ["button", "checkbox", "select", "accordion", "dialog", "slider"],
+            kind: "subset",
+          },
+        },
+        publicSupport: {
+          cliRegistry: false,
+          demoIntegration: false,
+          packageExports: false,
+          publicDocsClaim: false,
+          status: "non-shipping-tracer",
+        },
+        styled: {
+          project: "undefined",
+          write: "undefined",
+        },
+        target: "svelte",
+      },
     ]);
     for (const registration of primitiveFrameworkAdapterTargets) {
-      expect(Object.keys(registration).sort()).toEqual([
-        "adapter",
-        "cliRegistry",
-        "displayName",
-        "home",
-        "packageName",
-        "primitive",
-        "publicSupport",
-        "styled",
-        "target",
-      ]);
+      expect(Object.keys(registration).sort()).toEqual(
+        registration.target === "svelte"
+          ? [
+              "adapter",
+              "cliRegistry",
+              "displayName",
+              "home",
+              "packageName",
+              "primitive",
+              "publicSupport",
+              "target",
+            ]
+          : [
+              "adapter",
+              "cliRegistry",
+              "displayName",
+              "home",
+              "packageName",
+              "primitive",
+              "publicSupport",
+              "styled",
+              "target",
+            ],
+      );
       for (const key of legacyLowLevelRegistrationKeys) {
         expect(
           registration,
@@ -889,16 +954,20 @@ describe("Framework Adapter seam", () => {
         ).not.toHaveProperty(key);
       }
       expect(Object.keys(registration.primitive).sort()).toEqual(
-        registration.target === "vue"
-          ? ["generatePackage", "manualPrimitives", "outputModel", "support"]
-          : ["generatePackage", "manualPrimitives", "outputModel"],
+        registration.target === "svelte"
+          ? ["generatePackage", "outputModel", "support"]
+          : registration.target === "vue"
+            ? ["generatePackage", "manualPrimitives", "outputModel", "support"]
+            : ["generatePackage", "manualPrimitives", "outputModel"],
       );
-      expect(Object.keys(registration.primitive.outputModel).sort()).toEqual([
-        "capabilities",
-        "projectSpecialized",
-        "write",
-      ]);
-      expect(Object.keys(registration.styled ?? {}).sort()).toEqual(["project", "write"]);
+      expect(Object.keys(registration.primitive.outputModel).sort()).toEqual(
+        registration.target === "svelte"
+          ? ["projectSpecialized", "write"]
+          : ["capabilities", "projectSpecialized", "write"],
+      );
+      expect(Object.keys(registration.styled ?? {}).sort()).toEqual(
+        registration.target === "svelte" ? [] : ["project", "write"],
+      );
     }
     expect(getPrimitiveFrameworkAdapterTarget("astro").adapter).toBe(astroFrameworkAdapter);
     expect(getPrimitiveFrameworkAdapterTarget("react").adapter).toBe(reactFrameworkAdapter);
@@ -946,6 +1015,24 @@ describe("Framework Adapter seam", () => {
         status: "non-shipping-tracer",
       },
     });
+    const svelteTarget = getPrimitiveFrameworkAdapterTarget("svelte");
+    expect(svelteTarget).toMatchObject({
+      packageName: "@starwind-ui/svelte",
+      primitive: {
+        support: {
+          components: ["button", "checkbox", "select", "accordion", "dialog", "slider"],
+          kind: "subset",
+        },
+      },
+      publicSupport: {
+        cliRegistry: false,
+        demoIntegration: false,
+        packageExports: false,
+        publicDocsClaim: false,
+        status: "non-shipping-tracer",
+      },
+    });
+    expect(svelteTarget).not.toHaveProperty("styled");
     expect(
       new Set(primitiveFrameworkAdapterTargets.map((registration) => registration.target)).size,
     ).toBe(primitiveFrameworkAdapterTargets.length);
@@ -1247,7 +1334,121 @@ describe("Framework Adapter seam", () => {
       .map((entry) => readFileSync(join(adapterDirectory, entry.name), "utf8"))
       .join("\n");
 
-    expect(contractSource).not.toMatch(/\b(Accordion|Select|Menu|Carousel|Toast)\b/);
+    expect(contractSource).not.toMatch(
+      /\b(Accordion|Button|Carousel|Checkbox|Menu|Select|Toast)\b/,
+    );
+  });
+
+  it("routes the Vue holdouts only through their approved family kinds", () => {
+    const outputs = {
+      accordion: buildAccordionAdapterOutputModel(
+        buildAccordionSpecializedAdapterSpec(accordionRuntimeAdapterContract),
+      ),
+      dialog: buildGenericAdapterOutputModel(buildGenericAdapterPlan(dialogRuntimeAdapterContract)),
+      slider: buildSliderAdapterOutputModel(
+        buildSliderSpecializedAdapterSpec(sliderRuntimeAdapterContract),
+      ),
+    };
+    const familyKinds = Object.fromEntries(
+      Object.entries(outputs).map(([component, output]) => [
+        component,
+        [
+          ...new Set(
+            output.files.flatMap((file) => {
+              if (file.kind === "component") {
+                return file.component.family ? [file.component.family.kind] : [];
+              }
+              return file.kind === "index" && file.family ? [file.family.kind] : [];
+            }),
+          ),
+        ],
+      ]),
+    );
+
+    expect(familyKinds).toEqual({
+      accordion: ["repeated-disclosure"],
+      dialog: ["native-overlay"],
+      slider: ["range-control"],
+    });
+
+    const vuePrimitiveProjectionSource = [
+      "adapter.ts",
+      "native-overlay.ts",
+      "range-control.ts",
+      "repeated-disclosure.ts",
+    ]
+      .map((name) =>
+        readFileSync(
+          join(process.cwd(), "scripts/portable-runtime/renderers/framework-adapters/vue", name),
+          "utf8",
+        ),
+      )
+      .join("\n");
+
+    expect(getVueHoldoutIdentityDispatchViolations(vuePrimitiveProjectionSource)).toEqual([]);
+    expect(
+      getVueHoldoutIdentityDispatchViolations(
+        `${vuePrimitiveProjectionSource}\nif (file.component.id === "dialog") return renderDialog();`,
+      ),
+    ).toEqual(["target component identity dispatch"]);
+    expect(
+      getVueHoldoutIdentityDispatchViolations(
+        `${vuePrimitiveProjectionSource}\nswitch (componentName) { case "slider": return renderSlider(); }`,
+      ),
+    ).toEqual(["target component identity dispatch"]);
+    expect(vuePrimitiveProjectionSource).toMatch(/"repeated-disclosure"/);
+    expect(vuePrimitiveProjectionSource).toMatch(/"native-overlay"/);
+    expect(vuePrimitiveProjectionSource).toMatch(/"range-control"/);
+  });
+
+  it("rejects executable target and Runtime behavior payloads from Vue holdout shared facts", () => {
+    const accordionSpec = buildAccordionSpecializedAdapterSpec(accordionRuntimeAdapterContract);
+    const dialogPlan = buildGenericAdapterPlan(dialogRuntimeAdapterContract);
+    const sliderSpec = buildSliderSpecializedAdapterSpec(sliderRuntimeAdapterContract);
+    const sharedFacts = {
+      accordion: {
+        output: buildAccordionAdapterOutputModel(accordionSpec),
+        spec: accordionSpec,
+      },
+      dialog: {
+        output: buildGenericAdapterOutputModel(dialogPlan),
+        plan: dialogPlan,
+      },
+      slider: {
+        output: buildSliderAdapterOutputModel(sliderSpec),
+        spec: sliderSpec,
+      },
+    };
+
+    expect(getVueHoldoutSharedFactViolationLabels(sharedFacts)).toEqual([]);
+
+    const mutations = [
+      {
+        expected: "framework import",
+        payload: 'import { ref } from "vue";',
+      },
+      {
+        expected: "framework source",
+        payload: '<script setup lang="ts">defineModel()</script>',
+      },
+      {
+        expected: "behavior algorithm",
+        payload: { keyboardMath: { code: "nextValue = value + step" } },
+      },
+      {
+        expected: "serialized target lifecycle program",
+        payload: { targetLifecycleProgram: "onMounted(() => setupRuntime())" },
+      },
+    ] as const;
+
+    for (const mutation of mutations) {
+      expect(
+        getVueHoldoutSharedFactViolationLabels({
+          ...sharedFacts,
+          injectedMutation: mutation.payload,
+        }),
+      ).toContain(mutation.expected);
+    }
   });
 
   it.each([
@@ -1636,20 +1837,39 @@ describe("Framework Adapter seam", () => {
     expect(compileScript).toContain("rm(fixtureRoot, { force: true, recursive: true })");
   });
 
-  it("documents Svelte as deferred until its setup model is chosen", () => {
+  it("documents the registered private Svelte package and its non-shipping boundary", () => {
     const svelteReadme = readFileSync(
       join(process.cwd(), "scripts/portable-runtime/renderers/framework-adapters/svelte/README.md"),
       "utf8",
     );
+    const normalizedSvelteReadme = svelteReadme.replace(/\s+/g, " ");
 
-    expect(SVELTE_FRAMEWORK_ADAPTER_DEFERRED).toMatchObject({
-      reason: "setup-model-undecided",
-      status: "deferred",
+    expect(svelteFrameworkAdapterReadiness).toMatchObject({
+      fileExtension: ".svelte",
+      lifecycleStrategy: "svelte-attachment-cleanup",
+      publicSupport: svelteAdapterPublicContract.publicSupport,
       target: "svelte",
     });
-    expect(svelteReadme).toContain("deferred");
-    expect(svelteReadme).toContain("setup model");
-    expect(svelteReadme).not.toContain("package-ready");
+    expect(svelteFrameworkAdapterTarget.publicSupport).toEqual({
+      cliRegistry: false,
+      demoIntegration: false,
+      packageExports: false,
+      publicDocsClaim: false,
+      status: "non-shipping-tracer",
+    });
+    expect(svelteReadme).toContain("private, non-shipping Svelte 5.29+ target");
+    expect(svelteReadme).toContain("single Svelte registration");
+    expect(normalizedSvelteReadme).toContain(
+      "Do not add CLI registry entries, demo dependencies, install docs, public",
+    );
+    expect(normalizedSvelteReadme).toContain(
+      "The target supports exactly Button, Checkbox, and Select.",
+    );
+    expect(svelteReadme).not.toContain(
+      "The target supports exactly Button, Checkbox, and Select; this proof currently generates Button.",
+    );
+    expect(svelteReadme).not.toContain("deferred");
+    expect(svelteReadme).toContain("packages/svelte/src");
   });
 });
 
@@ -1755,6 +1975,82 @@ function expectSafeCliRegistryPath(target: string, value: string): void {
   expect(portablePath, `${target} CLI registry path must stay inside repo`).not.toMatch(
     /^(?:\.?\.\/|\.{1,2}$)/,
   );
+}
+
+const VUE_HOLDOUT_SHARED_FACT_VIOLATION_LABELS = [
+  "framework import",
+  "framework source",
+  "behavior algorithm",
+  "serialized target lifecycle program",
+] as const;
+
+type VueHoldoutSharedFactViolation = (typeof VUE_HOLDOUT_SHARED_FACT_VIOLATION_LABELS)[number];
+
+function getVueHoldoutSharedFactViolationLabels(facts: unknown): VueHoldoutSharedFactViolation[] {
+  const violations = new Set<VueHoldoutSharedFactViolation>();
+  const visited = new WeakSet<object>();
+
+  visit(facts);
+  return VUE_HOLDOUT_SHARED_FACT_VIOLATION_LABELS.filter((label) => violations.has(label));
+
+  function visit(value: unknown, key = ""): void {
+    if (typeof value === "string") {
+      if (
+        /\b(?:(?:import|export)\s+(?:[^;]*?\s+from\s+)?|require\s*\(|import\s*\()\s*["'](?:astro|react|react-dom|svelte|vue)(?:\/[^"']*)?["']/.test(
+          value,
+        )
+      ) {
+        violations.add("framework import");
+      }
+      if (
+        /<script\b|<template\b|<Teleport\b|\{@render\b|\bAstro\.props\b|\bReact\.(?:createContext|forwardRef|use[A-Z]\w*)\b|\b(?:defineEmits|defineModel|defineProps|\$effect|\$props|\$state)\s*\(/.test(
+          value,
+        )
+      ) {
+        violations.add("framework source");
+      }
+      if (
+        /^(?:lifecycleProgram|serializedLifecycleProgram|targetLifecycle|targetLifecycleProgram|vueLifecycleProgram)$/i.test(
+          key,
+        ) ||
+        /\b(?:onBeforeUnmount|onMount|onMounted|useEffect)\s*\(/.test(value)
+      ) {
+        violations.add("serialized target lifecycle program");
+      }
+      return;
+    }
+
+    if (!value || typeof value !== "object" || visited.has(value)) return;
+    visited.add(value);
+
+    for (const [childKey, childValue] of Object.entries(value)) {
+      if (
+        /^(?:behaviorAlgorithm|dismissalAlgorithm|focusAlgorithm|formAlgorithm|geometryAlgorithm|keyboardMath|keyboardNavigation|panelMeasurement|pointerCapture|pointerMath)$/i.test(
+          childKey,
+        )
+      ) {
+        violations.add("behavior algorithm");
+      }
+      visit(childValue, childKey);
+    }
+  }
+}
+
+function getVueHoldoutIdentityDispatchViolations(source: string): string[] {
+  const componentIdentity = String.raw`(?:\bcomponent(?:Id|Name|DisplayName)\b|\b(?:file\.)?component(?:\.(?:id|name|displayName))?)`;
+  const holdoutIdentity = String.raw`(?:accordion|dialog|slider)`;
+  const comparison = new RegExp(
+    String.raw`(?:${componentIdentity}\s*={2,3}\s*["']${holdoutIdentity}["']|["']${holdoutIdentity}["']\s*={2,3}\s*${componentIdentity})`,
+    "i",
+  );
+  const switchDispatch = new RegExp(
+    String.raw`switch\s*\(\s*${componentIdentity}\s*\)\s*\{[\s\S]*?case\s+["']${holdoutIdentity}["']\s*:`,
+    "i",
+  );
+
+  return comparison.test(source) || switchDispatch.test(source)
+    ? ["target component identity dispatch"]
+    : [];
 }
 
 const recordingAdapter = defineFrameworkAdapter({

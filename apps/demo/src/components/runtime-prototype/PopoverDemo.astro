@@ -1,5 +1,6 @@
 ---
 import { button } from "@/components/starwind-runtime/button/variants";
+import { Button } from "@/components/starwind-runtime/button";
 import {
   Popover,
   PopoverContent,
@@ -18,7 +19,7 @@ const sides = ["top", "right", "bottom", "left"] as const;
   <div class="space-y-4">
     <div class="flex flex-wrap gap-3">
       <Popover id="runtime-popover-default">
-        <PopoverTrigger class={button({ variant: "outline", size: "md" })}>
+        <PopoverTrigger id="runtime-popover-native-trigger" class="cursor-help">
           Open popover
         </PopoverTrigger>
         <PopoverContent
@@ -49,16 +50,42 @@ const sides = ["top", "right", "bottom", "left"] as const;
       </Popover>
 
       <Popover id="runtime-popover-as-child">
-        <PopoverTrigger asChild class={button({ variant: "ghost", size: "sm" })}>
-          <button id="runtime-popover-as-child-trigger" type="button"> As child popover </button>
+        <PopoverTrigger asChild class="tracking-[0.123px]">
+          <a
+            id="runtime-popover-as-child-trigger"
+            href="#runtime-popover-as-child"
+            class="uppercase"
+            style="word-spacing: 1.234px"
+            data-listener-count="0"
+            onclick="this.dataset.listenerCount = String(Number(this.dataset.listenerCount) + 1); document.getElementById('runtime-popover-as-child-listener-count').textContent = this.dataset.listenerCount"
+          >
+            As child popover
+          </a>
         </PopoverTrigger>
         <PopoverContent id="runtime-popover-as-child-content" side="top" align="end">
           <PopoverHeader>
             <PopoverTitle>As child popover</PopoverTitle>
             <PopoverDescription>
-              The trigger is a supplied child button with runtime attributes applied.
+              The trigger is a supplied child link with runtime attributes applied.
             </PopoverDescription>
           </PopoverHeader>
+        </PopoverContent>
+        <span id="runtime-popover-as-child-listener-count" class="sr-only">0</span>
+      </Popover>
+
+      <Popover id="runtime-popover-styled-child">
+        <PopoverTrigger asChild class="tracking-[0.234px]">
+          <Button
+            id="runtime-popover-styled-child-trigger"
+            variant="ghost"
+            size="sm"
+            class="uppercase"
+          >
+            Styled child popover
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent id="runtime-popover-styled-child-content" side="top" align="start">
+          <PopoverTitle>Styled child content</PopoverTitle>
         </PopoverContent>
       </Popover>
 

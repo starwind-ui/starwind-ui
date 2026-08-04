@@ -10,6 +10,7 @@ const sideExamples = [
 
 export function HoverCardDemo() {
   const [controlledOpen, setControlledOpen] = useState(false);
+  const [asChildClickCount, setAsChildClickCount] = useState(0);
 
   return (
     <section className="space-y-4" id="react-runtime-hover-card-demo">
@@ -23,11 +24,12 @@ export function HoverCardDemo() {
               openDelay={0}
               closeDelay={0}
             >
-              <HoverCardTrigger asChild>
+              <HoverCardTrigger asChild className="tracking-[0.234px]">
                 <Button
                   id={`react-runtime-hover-card-side-${side}-trigger`}
                   variant="outline"
                   size="sm"
+                  className="uppercase"
                 >
                   {label} side
                 </Button>
@@ -50,6 +52,19 @@ export function HoverCardDemo() {
         </div>
 
         <div className="flex min-h-36 flex-wrap items-center justify-center gap-4 sm:px-20">
+          <HoverCard id="react-runtime-hover-card-native" openDelay={0} closeDelay={0}>
+            <HoverCardTrigger
+              id="react-runtime-hover-card-native-trigger"
+              href="#react-runtime-hover-card-native"
+              className="cursor-help"
+            >
+              Native trigger
+            </HoverCardTrigger>
+            <HoverCardContent id="react-runtime-hover-card-native-content" className="duration-0">
+              Native trigger content
+            </HoverCardContent>
+          </HoverCard>
+
           <HoverCard id="react-runtime-hover-card-aligned" openDelay={100} closeDelay={250}>
             <HoverCardTrigger asChild>
               <Button id="react-runtime-hover-card-aligned-trigger" variant="secondary" size="sm">
@@ -122,11 +137,14 @@ export function HoverCardDemo() {
           </HoverCard>
 
           <HoverCard id="react-runtime-hover-card-as-child" openDelay={0} closeDelay={150}>
-            <HoverCardTrigger asChild>
+            <HoverCardTrigger asChild className="tracking-[0.123px]">
               <a
                 id="react-runtime-hover-card-as-child-trigger"
                 href="#react-runtime-hover-card-as-child"
-                className="text-primary text-sm font-medium underline-offset-4 hover:underline"
+                className="text-primary text-sm font-medium uppercase underline-offset-4 hover:underline"
+                style={{ wordSpacing: "1.234px" }}
+                data-listener-count={asChildClickCount}
+                onClick={() => setAsChildClickCount((count) => count + 1)}
               >
                 As child link
               </a>
@@ -144,6 +162,9 @@ export function HoverCardDemo() {
                 </p>
               </div>
             </HoverCardContent>
+            <span id="react-runtime-hover-card-as-child-listener-count" className="sr-only">
+              {asChildClickCount}
+            </span>
           </HoverCard>
         </div>
       </div>

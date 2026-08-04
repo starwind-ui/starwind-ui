@@ -501,6 +501,97 @@ describe("createAccordion", () => {
     });
   });
 
+  it("keeps nested roots isolated across interaction, dynamic discovery, and destroy", async () => {
+    document.body.innerHTML = `
+      <div data-sw-accordion data-default-value="outer" data-collapsible>
+        <div data-sw-accordion-item data-value="outer">
+          <button data-sw-accordion-trigger>Outer</button>
+          <div data-sw-accordion-content>
+            <div data-sw-accordion data-default-value="inner-a" data-collapsible>
+              ${renderItem("inner-a", "Inner A")}
+              ${renderItem("inner-b", "Inner B")}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    const outerRoot = document.querySelector<HTMLElement>("[data-sw-accordion]")!;
+    const innerRoot = outerRoot.querySelector<HTMLElement>("[data-sw-accordion]")!;
+    const outerChange = vi.fn();
+    const innerChange = vi.fn();
+    const outerAccordion = createAccordion(outerRoot, { onValueChange: outerChange });
+    const innerAccordion = createAccordion(innerRoot, { onValueChange: innerChange });
+    const outerTrigger = outerRoot.querySelector<HTMLButtonElement>(
+      '[data-sw-accordion-item][data-value="outer"] > [data-sw-accordion-trigger]',
+    )!;
+    const outerContent = outerRoot.querySelector<HTMLElement>(
+      '[data-sw-accordion-item][data-value="outer"] > [data-sw-accordion-content]',
+    )!;
+    const getInnerTrigger = (value: string) =>
+      innerRoot.querySelector<HTMLButtonElement>(
+        `[data-sw-accordion-item][data-value="${value}"] > [data-sw-accordion-trigger]`,
+      )!;
+    const getInnerContent = (value: string) =>
+      innerRoot.querySelector<HTMLElement>(
+        `[data-sw-accordion-item][data-value="${value}"] > [data-sw-accordion-content]`,
+      )!;
+
+    expect(outerAccordion.getValue()).toBe("outer");
+    expect(innerAccordion.getValue()).toBe("inner-a");
+    expect(outerTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(outerContent.hidden).toBe(false);
+    expect(getInnerTrigger("inner-a").getAttribute("aria-expanded")).toBe("true");
+    expect(getInnerContent("inner-a").hidden).toBe(false);
+
+    getInnerTrigger("inner-b").click();
+
+    expect(innerAccordion.getValue()).toBe("inner-b");
+    expect(getInnerTrigger("inner-b").getAttribute("aria-expanded")).toBe("true");
+    expect(getInnerContent("inner-b").hidden).toBe(false);
+    expect(outerAccordion.getValue()).toBe("outer");
+    expect(outerTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(outerContent.hidden).toBe(false);
+    expect(innerChange).toHaveBeenCalledTimes(1);
+    expect(outerChange).not.toHaveBeenCalled();
+
+    const innerDynamicItem = createAccordionItem("inner-c", "Inner C");
+    innerRoot.append(innerDynamicItem);
+    await waitForMutationObserver();
+    getInnerTrigger("inner-c").click();
+
+    expect(innerAccordion.getValue()).toBe("inner-c");
+    expect(getInnerTrigger("inner-c").getAttribute("aria-expanded")).toBe("true");
+    expect(getInnerContent("inner-c").hidden).toBe(false);
+    expect(outerAccordion.getValue()).toBe("outer");
+    expect(outerTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(outerChange).not.toHaveBeenCalled();
+
+    innerDynamicItem.remove();
+    await waitForMutationObserver();
+
+    expect(innerAccordion.getValue()).toBeNull();
+    expect(outerAccordion.getValue()).toBe("outer");
+    expect(outerTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(outerContent.hidden).toBe(false);
+
+    outerAccordion.destroy();
+    getInnerTrigger("inner-a").click();
+
+    expect(innerAccordion.getValue()).toBe("inner-a");
+    expect(getInnerTrigger("inner-a").getAttribute("aria-expanded")).toBe("true");
+    expect(innerChange).toHaveBeenCalledTimes(3);
+
+    const replacementOuter = createAccordion(outerRoot, { onValueChange: outerChange });
+    innerAccordion.destroy();
+    outerTrigger.click();
+
+    expect(replacementOuter.getValue()).toBeNull();
+    expect(outerTrigger.getAttribute("aria-expanded")).toBe("false");
+    expect(outerContent.hidden).toBe(true);
+    expect(outerChange).toHaveBeenCalledTimes(1);
+    replacementOuter.destroy();
+  });
+
   it("refreshes dynamic items for insertion, removal, disablement, and reorder", async () => {
     const root = renderAccordion({ collapsible: true });
     const accordion = createAccordion(root);

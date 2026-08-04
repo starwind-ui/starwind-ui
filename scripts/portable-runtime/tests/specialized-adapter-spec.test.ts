@@ -570,7 +570,7 @@ function expectSpecializedPrimitiveRegistrySource({
   buildOutputModel: string;
   buildSpec: string;
   component: string;
-  targets?: Array<"astro" | "react" | "vue">;
+  targets?: Array<"astro" | "react" | "svelte" | "vue">;
 }): void {
   const entry = getPrimitiveGeneratorEntry(component);
   const registrySource = readFileSync(
@@ -854,8 +854,10 @@ describe("SpecializedAdapterSpec", () => {
     expect(spec.select.contextProjection).toEqual({
       filePath: "select/SelectContext",
       itemContext: "SelectItemContext",
+      itemValues: ["disabled", "value"],
       rootContext: "SelectContext",
-      values: ["open", "value"],
+      rootOperations: ["registerPortal"],
+      rootValues: ["disabled", "mounted", "open", "readOnly", "required", "selectedLabel", "value"],
     });
     expect(spec.select.hiddenInput).toEqual({
       part: "input",
@@ -885,6 +887,49 @@ describe("SpecializedAdapterSpec", () => {
       selectedStateAttribute: "data-state",
     });
     expect(spec.select.scrollArrows).toEqual(["scrollUpArrow", "scrollDownArrow"]);
+    expect(spec.select.collection).toEqual(
+      expect.objectContaining({
+        itemIdentity: {
+          attribute: "data-value",
+          kind: "primitive-value",
+          part: "item",
+          prop: "value",
+        },
+        selectedLabel: expect.objectContaining({
+          emptyItemText: "preserve",
+          itemTextPart: "itemText",
+          searchParts: ["root", "portal"],
+        }),
+      }),
+    );
+    expect(spec.select.models.map((model) => model.name)).toEqual(["open", "value"]);
+    expect(spec.select.models.every((model) => model.event.cancelable)).toBe(true);
+    expect(spec.select.formControl).toEqual(
+      expect.objectContaining({
+        fieldIntegration: true,
+        reset: "runtime-readback-after-native-reset",
+        setter: { method: "setFormOptions", props: ["autoComplete", "form", "name", "required"] },
+      }),
+    );
+    expect(spec.select.portal).toEqual({
+      activation: "after-root-mount",
+      defaultTarget: "body",
+      owner: "component-instance",
+      part: "portal",
+      referenceOption: "portalReference",
+    });
+    expect(spec.select.presence).toEqual({
+      initialHiddenParts: ["popup", "itemIndicator"],
+      unmountPolicy: "runtime-owned",
+    });
+    expect(spec.select.publicRefs).toEqual(["root", "trigger", "popup", "item"]);
+    expect(spec.select.lifecycle).toEqual(
+      expect.objectContaining({
+        cleanup: "destroy",
+        recreateOnControllednessChange: ["open", "value"],
+        setup: "after-mount",
+      }),
+    );
     expect(spec.select.asChildTrigger).toEqual({
       merges: ["aria", "className", "data", "ref"],
       part: "trigger",
@@ -902,6 +947,28 @@ describe("SpecializedAdapterSpec", () => {
       "dismissal",
       "cleanup",
     ]);
+
+    const serializedSelectFacts = JSON.stringify(spec.select);
+    for (const forbidden of ["<script setup", 'from "vue"', "<Teleport", "onMounted(", "watch("]) {
+      expect(serializedSelectFacts).not.toContain(forbidden);
+    }
+    const selectSpecFiles = readdirSync(
+      join(process.cwd(), "scripts/portable-runtime/renderers/specialized-adapter-spec"),
+    ).filter((name) => name.includes("select-specialized-adapter-spec"));
+    expect(selectSpecFiles).toEqual(["select-specialized-adapter-spec.ts"]);
+    const vueSelectSpecFiles = readdirSync(
+      join(process.cwd(), "scripts/portable-runtime/renderers/framework-adapters/vue"),
+    ).filter((name) => name.toLowerCase().includes("select"));
+    expect(vueSelectSpecFiles).toEqual([]);
+    const vuePrinterSource = readFileSync(
+      join(
+        process.cwd(),
+        "scripts/portable-runtime/renderers/framework-adapters/vue/option-collection-overlay.ts",
+      ),
+      "utf8",
+    );
+    expect(vuePrinterSource).not.toMatch(/facts\.displayName\s*===?\s*["']Select["']/);
+    expect(vuePrinterSource).not.toContain("packages/vue/src/select");
   });
 
   it("builds and prints Select through the Adapter Output Model", async () => {
@@ -914,6 +981,32 @@ describe("SpecializedAdapterSpec", () => {
     );
     const astroFiles = printAstroSelectAdapterOutputModel(spec);
     const reactFiles = printReactSelectAdapterOutputModel(spec);
+    const rootFamily = buildSelectAdapterOutputModel(spec).files.find(
+      (file) =>
+        file.kind === "component" && file.component.family?.kind === "option-collection-overlay",
+    );
+    if (
+      rootFamily?.kind !== "component" ||
+      rootFamily.component.family?.kind !== "option-collection-overlay"
+    ) {
+      throw new Error("Select option-collection root family facts were not found.");
+    }
+    expect(rootFamily.component.family.facts.collection.itemIdentity).toEqual(
+      spec.select.collection.itemIdentity,
+    );
+    expect(rootFamily.component.family.facts.context).toEqual(
+      expect.objectContaining({
+        itemValues: ["disabled", "value"],
+        rootOperations: ["registerPortal"],
+        rootValues: spec.select.contextProjection.rootValues,
+      }),
+    );
+    expect(rootFamily.component.family.facts.presence).toEqual(spec.select.presence);
+    expect(rootFamily.component.family.facts.publicRefs).toEqual(spec.select.publicRefs);
+    expect(rootFamily.component.family.facts.lifecycle.recreateOnControllednessChange).toEqual([
+      "open",
+      "value",
+    ]);
 
     expect(hasPrebuiltFile(astroOutputModel.files)).toBe(false);
     expect(hasPrebuiltFile(reactOutputModel.files)).toBe(false);
@@ -3147,7 +3240,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildAccordionAdapterOutputModel",
       buildSpec: "buildAccordionSpecializedAdapterSpec",
       component: "accordion",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
     const spec = buildAccordionSpecializedAdapterSpec(accordionRuntimeAdapterContract);
     const outputRoot = join(
@@ -3192,7 +3285,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildAccordionAdapterOutputModel",
       buildSpec: "buildAccordionSpecializedAdapterSpec",
       component: "accordion",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
     const spec = buildAccordionSpecializedAdapterSpec(accordionRuntimeAdapterContract);
     const outputRoot = join(
@@ -4580,6 +4673,7 @@ describe("SpecializedAdapterSpec", () => {
         getter: "getValue",
         initialAttribute: "data-default-value",
         name: "value",
+        syncEvent: "stateSync",
         setter: "setValue",
         valueType: "SliderValue",
       },
@@ -4971,7 +5065,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildSliderAdapterOutputModel",
       buildSpec: "buildSliderSpecializedAdapterSpec",
       component: "slider",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
     const spec = buildSliderSpecializedAdapterSpec(sliderRuntimeAdapterContract);
     const outputRoot = join(
@@ -5016,7 +5110,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildSliderAdapterOutputModel",
       buildSpec: "buildSliderSpecializedAdapterSpec",
       component: "slider",
-      targets: ["astro", "react", "vue"],
+      targets: ["astro", "react", "vue", "svelte"],
     });
     const spec = buildSliderSpecializedAdapterSpec(sliderRuntimeAdapterContract);
     const outputRoot = join(

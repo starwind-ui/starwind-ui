@@ -93,7 +93,14 @@ export function defineAstroPreviewCardOutputTests(getTempRoot: GetTempRoot): voi
     expect(trigger).toContain('HTMLAttributes<"a">');
     expect(trigger).toContain("<PreviewCardPrimitive.Trigger");
     expect(trigger).toContain("asChild={asChild}");
-    expect(trigger).toContain("hoverCardTrigger({ class: className })");
+    expect(trigger).toContain(
+      "const triggerBaseClassName = hoverCardTrigger({ class: className });",
+    );
+    expect(trigger).toContain(
+      "const triggerClassName = asChild ? className : triggerBaseClassName;",
+    );
+    expect(trigger).toContain("class={triggerClassName}");
+    expect(trigger).not.toContain("class={hoverCardTrigger({ class: className })}");
     expect(content).toContain("<PreviewCardPrimitive.Portal");
     expect(content).toContain("<PreviewCardPrimitive.Positioner");
     expect(content).toContain("<PreviewCardPrimitive.Popup");

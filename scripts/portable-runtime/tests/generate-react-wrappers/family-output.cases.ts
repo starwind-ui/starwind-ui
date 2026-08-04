@@ -175,6 +175,8 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(pagination).toContain('role="navigation"');
     expect(pagination).toContain('aria-label="pagination"');
     expect(pagination).toContain("pagination({ class: className })");
+    expect(pagination).toContain('size = "md"');
+    expect(pagination).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
     expect(pagination).toContain('data-slot="pagination"');
     expect(paginationContent).toContain("paginationContent({ class: className })");
     expect(paginationContent).toContain('data-slot="pagination-content"');
@@ -185,23 +187,22 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
       'Omit<React.ComponentProps<typeof Button>, "variant" | "as" | "ref">',
     );
     expect(paginationLink).toContain("ref?: React.Ref<HTMLAnchorElement>;");
-    expect(paginationLink).toContain('size = "icon"');
+    expect(paginationLink).not.toContain("size?:");
     expect(paginationLink).toContain('"data-slot": dataSlot = "pagination-link"');
     expect(paginationLink).toContain('aria-current={isActive ? "page" : undefined}');
     expect(paginationLink).toContain("<Button");
     expect(paginationLink).toContain('as="a"');
     expect(paginationLink).toContain('{...rest}\n      as="a"');
     expect(paginationLink).toContain('variant={isActive ? "outline" : "ghost"}');
-    expect(paginationLink).toContain("size={size}");
-    expect(paginationLink).toContain("className={className}");
-    expect(paginationLink).not.toContain("paginationLink(");
+    expect(paginationLink).toContain('size="md"');
+    expect(paginationLink).toContain("paginationLink({ class: className })");
     expect(paginationLink).toContain("data-slot={dataSlot}");
     expect(paginationPrevious).toContain('import PaginationLink from "./PaginationLink";');
     expect(paginationPrevious).toContain(
       "export type PaginationPreviousProps = React.ComponentProps<typeof PaginationLink>",
     );
     expect(paginationPrevious).toContain('aria-label="Go to previous page"');
-    expect(paginationPrevious).toContain('size = "md"');
+    expect(paginationPrevious).not.toContain("size =");
     expect(paginationPrevious).toContain('data-slot="pagination-previous"');
     expect(paginationPrevious).toContain("<ChevronLeft");
     expect(paginationPrevious).toContain("paginationPrevious({ class: className })");
@@ -209,7 +210,8 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(paginationNext).toContain('data-slot="pagination-next"');
     expect(paginationNext).toContain("<ChevronRight");
     expect(paginationEllipsis).toContain("IconDots as Dots");
-    expect(paginationEllipsis).toContain("paginationEllipsis({ size, class: className })");
+    expect(paginationEllipsis).toContain("paginationEllipsis({ class: className })");
+    expect(paginationEllipsis).not.toContain("size?:");
     expect(paginationEllipsis).toContain("aria-hidden");
     expect(paginationEllipsis).toContain("<Dots");
     expect(paginationEllipsis).toContain('<span className="sr-only">More pages</span>');
@@ -217,8 +219,8 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(paginationIndex).toContain("Next: PaginationNext");
     expect(paginationVariants).toContain("mx-auto flex w-full justify-center");
     expect(paginationVariants).toContain("flex flex-row items-center gap-1");
-    expect(paginationVariants).not.toContain("paginationLink");
-    expect(paginationVariants).toContain('"icon-lg": "size-12');
+    expect(paginationVariants).toContain("export const paginationLink");
+    expect(paginationVariants).toContain("group-data-[size=lg]/pagination:size-12");
   });
 
   it("generates Table styled React wrappers", async () => {

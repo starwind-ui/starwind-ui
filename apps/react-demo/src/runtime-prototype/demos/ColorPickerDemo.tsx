@@ -8,14 +8,10 @@ import { useCallback, useState } from "react";
 import {
   ColorPicker,
   ColorPickerArea,
+  ColorPickerChannelSlider,
   ColorPickerClear,
   ColorPickerContent,
-  ColorPickerControl,
-  ColorPickerHiddenInput,
   ColorPickerInput,
-  ColorPickerLabel,
-  ColorPickerRoot,
-  ColorPickerSliders,
   ColorPickerSwatch,
   ColorPickerSwatchGroup,
   ColorPickerTrigger,
@@ -48,73 +44,43 @@ const FORMAT_EXAMPLES = [
 function PopupPicker({ id, ...props }: { id: string } & React.ComponentProps<typeof ColorPicker>) {
   return (
     <ColorPicker id={id} {...props}>
-      <ColorPickerLabel>Accent color</ColorPickerLabel>
-      <ColorPickerControl>
+      <span className="text-sm font-medium" data-slot="color-picker-label">
+        Accent color
+      </span>
+      <div className="flex items-center gap-2" data-slot="color-picker-control">
         <ColorPickerInput />
         <ColorPickerTrigger aria-label="Open accent color picker" disabled={props.disabled} />
-      </ColorPickerControl>
+      </div>
       <ColorPickerContent
         aria-label="Accent color picker"
-        showClear={props.allowEmpty}
-        swatches={
-          <ColorPickerSwatchGroup aria-label="Preset colors">
-            {SWATCHES.map((value) => (
-              <ColorPickerSwatch key={value} value={value} aria-label={`Use ${value}`} />
-            ))}
-          </ColorPickerSwatchGroup>
-        }
+        swatches={SWATCHES.map((value) => ({ value, label: `Use ${value}` }))}
       />
-      <ColorPickerHiddenInput />
     </ColorPicker>
   );
 }
 
-function CompactInlinePicker(
-  props: React.ComponentProps<typeof ColorPickerRoot> & { label: string },
-) {
+function CompactInlinePicker(props: React.ComponentProps<typeof ColorPicker> & { label: string }) {
   const { label, ...rootProps } = props;
   return (
-    <ColorPickerRoot {...rootProps}>
-      <ColorPickerLabel>{label}</ColorPickerLabel>
+    <ColorPicker inline {...rootProps}>
+      <span className="text-sm font-medium">{label}</span>
       <ColorPickerInput />
-      <ColorPickerHiddenInput />
-    </ColorPickerRoot>
+    </ColorPicker>
   );
 }
 
 function AdvancedClearEligibilityPicker() {
-  const [allowEmpty, setAllowEmpty] = useState(false);
-
   return (
     <div className="space-y-3" data-testid="color-picker-clear-eligibility-fixture">
-      <h3 className="font-medium">Advanced Clear eligibility</h3>
+      <h3 className="font-medium">Clearable color</h3>
       <ColorPicker
         id="react-color-picker-clear-eligibility"
+        label="Optional color"
         defaultValue="#f97316"
-        allowEmpty={allowEmpty}
-      >
-        <ColorPickerLabel>Optional color</ColorPickerLabel>
-        <ColorPickerControl>
-          <ColorPickerTrigger aria-label="Open advanced Clear color picker" />
-        </ColorPickerControl>
-        <ColorPickerContent
-          showClear
-          showEyeDropper={false}
-          aria-label="Advanced Clear color editor"
-          data-testid="color-picker-clear-eligibility-content"
-        />
-      </ColorPicker>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        onClick={() => setAllowEmpty((current) => !current)}
-      >
-        Toggle empty values
-      </Button>
-      <output data-testid="color-picker-clear-eligibility-state">
-        Empty values: {allowEmpty ? "allowed" : "disallowed"}
-      </output>
+        clearable
+        showEyeDropper={false}
+      />
+      <output data-testid="color-picker-clear-eligibility-state">Empty values: allowed</output>
     </div>
   );
 }
@@ -129,7 +95,8 @@ function ControlledModeInvariantPicker() {
   return (
     <div className="space-y-2" data-testid="initially-controlled-mode-fixture">
       <h4 className="font-medium">Initially controlled</h4>
-      <ColorPickerRoot
+      <ColorPicker
+        inline
         id="react-color-picker-mode-controlled"
         {...(passesValue ? { value } : {})}
         onValueChange={(nextValue, details) => {
@@ -139,13 +106,13 @@ function ControlledModeInvariantPicker() {
         }}
         onValueCommitted={() => setCommitCount((count) => count + 1)}
       >
-        <ColorPickerLabel>Initially controlled color</ColorPickerLabel>
+        <span className="text-sm font-medium">Initially controlled color</span>
         <ColorPickerInput />
         <ColorPickerSwatchGroup aria-label="Initially controlled presets">
           <ColorPickerSwatch value="#e11d48" aria-label="Controlled choose rose" />
           <ColorPickerSwatch value="#4f46e5" aria-label="Controlled choose indigo" />
         </ColorPickerSwatchGroup>
-      </ColorPickerRoot>
+      </ColorPicker>
       <Button type="button" size="sm" onClick={() => setPassesValue(false)}>
         Attempt to omit controlled value
       </Button>
@@ -181,7 +148,8 @@ function UncontrolledModeInvariantPicker() {
   return (
     <div className="space-y-2" data-testid="initially-uncontrolled-mode-fixture">
       <h4 className="font-medium">Initially uncontrolled</h4>
-      <ColorPickerRoot
+      <ColorPicker
+        inline
         id="react-color-picker-mode-uncontrolled"
         defaultValue="#4f46e5"
         {...(passesValue ? { value: GREEN } : {})}
@@ -191,13 +159,13 @@ function UncontrolledModeInvariantPicker() {
         }}
         onValueCommitted={() => setCommitCount((count) => count + 1)}
       >
-        <ColorPickerLabel>Initially uncontrolled color</ColorPickerLabel>
+        <span className="text-sm font-medium">Initially uncontrolled color</span>
         <ColorPickerInput />
         <ColorPickerSwatchGroup aria-label="Initially uncontrolled presets">
           <ColorPickerSwatch value="#e11d48" aria-label="Uncontrolled choose rose" />
           <ColorPickerSwatch value="#4f46e5" aria-label="Uncontrolled choose indigo" />
         </ColorPickerSwatchGroup>
-      </ColorPickerRoot>
+      </ColorPicker>
       <Button type="button" size="sm" onClick={() => setPassesValue(true)}>
         Attempt to pass controlled green
       </Button>
@@ -298,24 +266,27 @@ export function ColorPickerDemo() {
 
         <div className="space-y-2" data-testid="color-picker-alpha-enabled">
           <h3 className="font-medium">Alpha enabled</h3>
-          <ColorPickerRoot id="react-color-picker-alpha-enabled" defaultValue="#0ea5e980">
-            <ColorPickerLabel>Translucent color</ColorPickerLabel>
-            <ColorPickerSliders alpha />
+          <ColorPicker inline id="react-color-picker-alpha-enabled" defaultValue="#0ea5e980">
+            <span className="text-sm font-medium">Translucent color</span>
+            <ColorPickerChannelSlider channel="hue" aria-label="Translucent color hue" />
+            <ColorPickerChannelSlider channel="alpha" aria-label="Translucent color alpha" />
             <ColorPickerInput />
-          </ColorPickerRoot>
+          </ColorPicker>
         </div>
 
         <div className="space-y-2" data-testid="color-picker-alpha-disabled">
           <h3 className="font-medium">Alpha disabled</h3>
-          <ColorPickerRoot
+          <ColorPicker
+            inline
             id="react-color-picker-alpha-disabled"
             defaultValue="#0ea5e980"
             alpha={false}
           >
-            <ColorPickerLabel>Opaque color</ColorPickerLabel>
-            <ColorPickerSliders alpha={false} />
+            <span className="text-sm font-medium">Opaque color</span>
+            <ColorPickerChannelSlider channel="hue" aria-label="Opaque color hue" />
+            <ColorPickerChannelSlider channel="alpha" aria-label="Opaque color alpha" />
             <ColorPickerInput />
-          </ColorPickerRoot>
+          </ColorPicker>
         </div>
 
         <div className="space-y-2 sm:col-span-2" data-testid="color-picker-invalid-draft">
@@ -329,25 +300,26 @@ export function ColorPickerDemo() {
 
         <div className="space-y-2">
           <h3 className="font-medium">Inline editor</h3>
-          <ColorPickerRoot id="react-color-picker-inline" defaultValue="#16a34a">
-            <ColorPickerLabel>Inline color</ColorPickerLabel>
+          <ColorPicker inline id="react-color-picker-inline" defaultValue="#16a34a">
+            <span className="text-sm font-medium">Inline color</span>
             <ColorPickerArea aria-label="Inline saturation and brightness" />
-            <ColorPickerSliders />
+            <ColorPickerChannelSlider channel="hue" aria-label="Inline color hue" />
+            <ColorPickerChannelSlider channel="alpha" aria-label="Inline color alpha" />
             <ColorPickerInput />
-          </ColorPickerRoot>
+          </ColorPicker>
         </div>
 
         <div className="space-y-2">
           <h3 className="font-medium">Input and swatches</h3>
-          <ColorPickerRoot id="react-color-picker-input-swatch" defaultValue="#e11d48">
-            <ColorPickerLabel>Brand color</ColorPickerLabel>
+          <ColorPicker inline id="react-color-picker-input-swatch" defaultValue="#e11d48">
+            <span className="text-sm font-medium">Brand color</span>
             <ColorPickerInput />
             <ColorPickerSwatchGroup aria-label="Brand presets">
               {SWATCHES.map((value) => (
                 <ColorPickerSwatch key={value} value={value} aria-label={`Choose ${value}`} />
               ))}
             </ColorPickerSwatchGroup>
-          </ColorPickerRoot>
+          </ColorPicker>
         </div>
 
         <div className="space-y-2">
@@ -367,23 +339,24 @@ export function ColorPickerDemo() {
         }}
       >
         <h3 className="font-medium">Empty required color</h3>
-        <ColorPickerRoot
+        <ColorPicker
+          inline
           id="react-color-picker-required"
           name="required-color"
           defaultValue={null}
-          allowEmpty
+          clearable
           required
         >
-          <ColorPickerLabel>Required color</ColorPickerLabel>
+          <span className="text-sm font-medium">Required color</span>
           <ColorPickerInput />
           <ColorPickerArea aria-label="Required color saturation and brightness" />
-          <ColorPickerSliders />
+          <ColorPickerChannelSlider channel="hue" aria-label="Required color hue" />
+          <ColorPickerChannelSlider channel="alpha" aria-label="Required color alpha" />
           <ColorPickerSwatchGroup aria-label="Required color presets">
             <ColorPickerSwatch value="#16a34a" aria-label="Choose required green" />
           </ColorPickerSwatchGroup>
           <ColorPickerClear>Clear required color</ColorPickerClear>
-          <ColorPickerHiddenInput />
-        </ColorPickerRoot>
+        </ColorPicker>
         <Button type="submit" size="sm">
           Submit required color
         </Button>
@@ -398,7 +371,7 @@ export function ColorPickerDemo() {
         <PopupPicker
           id="react-color-picker-controlled"
           value={controlledValue}
-          allowEmpty
+          clearable
           open={controlledOpen}
           onOpenChange={setControlledOpen}
           onValueChange={handleValueChange}
@@ -472,15 +445,15 @@ export function ColorPickerDemo() {
         onReset={() => setFormResult("reset")}
       >
         <h3 className="font-medium">Form value and reset</h3>
-        <ColorPickerRoot
+        <ColorPicker
+          inline
           id="react-color-picker-form-field"
           name="theme-color"
           defaultValue="#0ea5e9"
         >
-          <ColorPickerLabel>Popup-free form color</ColorPickerLabel>
+          <span className="text-sm font-medium">Popup-free form color</span>
           <ColorPickerInput />
-          <ColorPickerHiddenInput />
-        </ColorPickerRoot>
+        </ColorPicker>
         <div className="flex gap-2">
           <Button type="submit" size="sm">
             Submit color

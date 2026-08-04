@@ -19,7 +19,7 @@ function SidebarMenuButton(props: SidebarMenuButtonProps) {
     isActive = false,
     tooltip,
     variant,
-    size = "default",
+    size = "md",
     href,
     className,
     children,

@@ -138,6 +138,43 @@ describe("createSelect", () => {
     expect(root.getAttribute("data-value")).toBe("system");
   });
 
+  it("preserves an intentionally empty adapter label and lazy form value", () => {
+    document.body.innerHTML = `
+      <form>
+        <div
+          data-sw-select
+          data-default-value="empty"
+          data-name="theme"
+          data-selected-value="empty"
+          data-selected-label=""
+        >
+          <button data-sw-select-trigger type="button">
+            <span data-sw-select-value data-placeholder="Pick theme">Pick theme</span>
+          </button>
+          <input data-sw-select-input type="hidden" name="theme" />
+          <div data-sw-select-portal>
+            <div data-sw-select-positioner>
+              <div data-sw-select-popup role="listbox" hidden></div>
+            </div>
+          </div>
+        </div>
+      </form>
+    `;
+
+    const form = document.querySelector<HTMLFormElement>("form")!;
+    const root = form.querySelector<HTMLElement>("[data-sw-select]")!;
+    const select = createSelect(root);
+
+    expect(select.getValue()).toBe("empty");
+    expect(root.querySelector("[data-sw-select-item]")).toBeNull();
+    expect(root.getAttribute("data-selected-label")).toBe("");
+    expect(root.getAttribute("data-value")).toBe("empty");
+    expect(root.hasAttribute("data-placeholder")).toBe(false);
+    expect(root.querySelector("[data-sw-select-value]")?.textContent).toBe("");
+    expect(root.querySelector<HTMLInputElement>("[data-sw-select-input]")?.value).toBe("empty");
+    expect(new FormData(form).get("theme")).toBe("empty");
+  });
+
   it("keeps an empty string value as clear/no-value semantics", () => {
     const root = renderSelect({ defaultValue: "system", name: "theme" });
     const select = createSelect(root);
@@ -557,6 +594,46 @@ describe("createSelect", () => {
 
     expect(getPopup().hidden).toBe(true);
     expect(getPositioner().parentElement).toBe(root);
+  });
+
+  it("follows a configured portal reference and restores authored topology on destroy", async () => {
+    const firstTarget = document.createElement("div");
+    const secondTarget = document.createElement("div");
+    const portalReference = document.createElement("span");
+    firstTarget.setAttribute("data-floating-root", "");
+    secondTarget.setAttribute("data-floating-root", "");
+    firstTarget.append(portalReference);
+    document.body.append(firstTarget, secondTarget);
+
+    const root = renderSelect({
+      alignItemWithTrigger: false,
+      defaultValue: "system",
+      modal: false,
+    });
+    const positioner = getPositioner();
+    const select = createSelect(root, { portalReference });
+
+    select.setOpen(true, { emit: false });
+
+    expect(positioner.parentElement).toBe(firstTarget);
+    expect(firstTarget.querySelectorAll("[data-sw-select-positioner]")).toHaveLength(1);
+    expect(secondTarget.querySelectorAll("[data-sw-select-positioner]")).toHaveLength(0);
+
+    select.setOpen(false, { emit: false });
+    await waitForMicrotasks();
+    secondTarget.append(portalReference);
+    select.setOpen(true, { emit: false });
+
+    expect(positioner.parentElement).toBe(secondTarget);
+    expect(firstTarget.querySelectorAll("[data-sw-select-positioner]")).toHaveLength(0);
+    expect(secondTarget.querySelectorAll("[data-sw-select-positioner]")).toHaveLength(1);
+
+    select.destroy();
+
+    expect(positioner.parentElement).toBe(root);
+    expect(firstTarget.querySelectorAll("[data-sw-select-positioner]")).toHaveLength(0);
+    expect(secondTarget.querySelectorAll("[data-sw-select-positioner]")).toHaveLength(0);
+    expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
   });
 
   it("lets the topmost select own Escape focus restoration", () => {

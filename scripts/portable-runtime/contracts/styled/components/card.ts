@@ -30,11 +30,11 @@ export const cardStyledContract: StyledAdapterContract = {
       ],
       variants: {
         size: {
-          default: "[--card-spacing:--spacing(5)]",
           sm: "[--card-spacing:--spacing(4)] text-sm",
+          md: "[--card-spacing:--spacing(5)]",
         },
       },
-      defaultVariants: { size: "default" },
+      defaultVariants: { size: "md" },
     },
     cardAction: {
       base: "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
@@ -78,7 +78,7 @@ export const cardStyledContract: StyledAdapterContract = {
       },
       destructure: {
         props: [
-          { name: "size", defaultValue: '"default"' },
+          { name: "size", defaultValue: '"md"' },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
         ],

@@ -25,18 +25,21 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
   variantCollectionName: "NavigationMenuVariants",
   variants: {
     navigationMenu: {
-      base: "group/navigation-menu relative flex max-w-max flex-1 items-center justify-center",
+      base: "group/nav-menu relative flex max-w-max flex-1 items-center justify-center",
     },
     navigationMenuList: {
       base: [
-        "group flex flex-1 list-none items-center justify-center gap-0",
-        "group-data-[orientation=vertical]/navigation-menu:flex-col group-data-[orientation=vertical]/navigation-menu:items-stretch",
+        "group flex flex-1 list-none items-center justify-center",
+        "group-data-[size=sm]/nav-menu:gap-0 group-data-[size=md]/nav-menu:gap-1",
+        "group-data-[orientation=vertical]/nav-menu:flex-col group-data-[orientation=vertical]/nav-menu:items-stretch",
       ],
     },
     navigationMenuItem: { base: "relative" },
     navigationMenuTrigger: {
       base: [
-        "group/navigation-menu-trigger inline-flex h-9 w-max items-center justify-center rounded-lg px-2.5 py-1.5 text-sm font-medium transition-all outline-none",
+        "group/nav-menu-trigger inline-flex w-max items-center justify-center rounded-lg font-medium transition-all outline-none",
+        "group-data-[size=sm]/nav-menu:h-9 group-data-[size=sm]/nav-menu:px-2.5 group-data-[size=sm]/nav-menu:py-1.5 group-data-[size=sm]/nav-menu:text-sm",
+        "group-data-[size=md]/nav-menu:h-11 group-data-[size=md]/nav-menu:px-3 group-data-[size=md]/nav-menu:py-2 group-data-[size=md]/nav-menu:text-base",
         "hover:bg-muted focus:bg-muted focus-visible:ring-outline/50 focus-visible:ring-3 focus-visible:outline-1",
         "disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50",
         "data-[state=open]:bg-muted/50 data-[state=open]:hover:bg-muted data-[state=open]:focus:bg-muted",
@@ -45,7 +48,8 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
     navigationMenuIndicator: {
       base: [
         "relative top-px ml-1 size-3 shrink-0 origin-center transition duration-300 [&>svg]:size-3 [&>svg]:shrink-0",
-        "group-data-[state=open]/navigation-menu-trigger:rotate-180",
+        "group-data-[size=md]/nav-menu:ml-1.5 group-data-[size=md]/nav-menu:size-4 group-data-[size=md]/nav-menu:[&>svg]:size-4",
+        "group-data-[state=open]/nav-menu-trigger:rotate-180",
       ],
     },
     navigationMenuContent: {
@@ -58,14 +62,16 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
     navigationMenuLink: {
       base: [
         "flex items-center gap-2 rounded-lg p-2 text-sm transition-all outline-none",
+        "group-data-[size=sm]/nav-menu-positioner:gap-2 group-data-[size=sm]/nav-menu-positioner:px-2 group-data-[size=sm]/nav-menu-positioner:py-1.5 group-data-[size=sm]/nav-menu-positioner:text-sm",
+        "group-data-[size=md]/nav-menu-positioner:gap-2.5 group-data-[size=md]/nav-menu-positioner:px-3 group-data-[size=md]/nav-menu-positioner:py-2 group-data-[size=md]/nav-menu-positioner:text-base",
         "focus-visible:ring-outline/50 focus-visible:ring-3 focus-visible:outline-1",
         "hover:bg-muted focus:bg-muted data-active:bg-muted/50 data-active:hover:bg-muted data-active:focus:bg-muted",
-        "in-data-[slot=navigation-menu-content]:rounded-md [&_svg:not([class*='size-'])]:size-4",
+        "in-data-[slot=navigation-menu-content]:rounded-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       ],
     },
     navigationMenuPositioner: {
       base: [
-        "pointer-events-none h-(--positioner-height) w-(--positioner-width) max-w-(--available-width) data-instant:transition-none isolate z-50 transition-[top,left,right,bottom,transform] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "group/nav-menu-positioner pointer-events-none h-(--positioner-height) w-(--positioner-width) max-w-(--available-width) data-instant:transition-none isolate z-50 transition-[top,left,right,bottom,transform] duration-[0.35s] ease-[cubic-bezier(0.22,1,0.36,1)]",
         "data-[side=bottom]:before:top-[-10px] data-[side=bottom]:before:right-0 data-[side=bottom]:before:left-0",
       ],
     },
@@ -109,6 +115,8 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
           { name: "alignOffset", optional: true, type: "number" },
           { name: "avoidCollisions", optional: true, type: "boolean" },
           { name: "collisionPadding", optional: true, type: "number" },
+          { name: "size", optional: true, type: '"sm" | "md"' },
+          { name: "contentSize", optional: true, type: '"sm" | "md"' },
           {
             name: "onValueChange",
             optional: true,
@@ -132,6 +140,8 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
           { name: "alignOffset", defaultValue: "0" },
           { name: "avoidCollisions", defaultValue: "true" },
           { name: "collisionPadding", defaultValue: "8" },
+          { name: "size", defaultValue: '"md"' },
+          { name: "contentSize", defaultValue: "size" },
           { name: "onValueChange", frameworks: ["react"] },
           { name: "class", alias: "className" },
         ],
@@ -167,6 +177,7 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
               frameworks: ["react"],
             },
             { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "data-slot", value: { type: "literal", value: "navigation-menu" } },
           ],
           children: [
@@ -185,6 +196,7 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
                   name: "collisionPadding",
                   value: { type: "variable", name: "collisionPadding" },
                 },
+                { name: "size", value: { type: "variable", name: "contentSize" } },
               ],
             },
           ],
@@ -283,6 +295,23 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
         ],
         rest: "rest",
       },
+      variables: [
+        {
+          name: "triggerBaseClassName",
+          value: {
+            type: "classVariant",
+            variant: "navigationMenuTrigger",
+            args: { class: "className" },
+          },
+        },
+        {
+          name: "triggerClassName",
+          value: {
+            type: "raw",
+            code: "asChild ? className : triggerBaseClassName",
+          },
+        },
+      ],
       render: [
         {
           type: "conditional",
@@ -295,11 +324,7 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
               attrs: [
                 {
                   name: "class",
-                  value: {
-                    type: "classVariant",
-                    variant: "navigationMenuTrigger",
-                    args: { class: "className" },
-                  },
+                  value: { type: "variable", name: "triggerClassName" },
                 },
                 { name: "asChild", value: { type: "variable", name: "asChild" } },
                 { name: "disabled", value: { type: "variable", name: "disabled" } },
@@ -322,11 +347,7 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
               attrs: [
                 {
                   name: "class",
-                  value: {
-                    type: "classVariant",
-                    variant: "navigationMenuTrigger",
-                    args: { class: "className" },
-                  },
+                  value: { type: "variable", name: "triggerClassName" },
                 },
                 { name: "asChild", value: { type: "variable", name: "asChild" } },
                 { name: "disabled", value: { type: "variable", name: "disabled" } },
@@ -496,6 +517,7 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
           { name: "alignOffset", optional: true, type: "number" },
           { name: "avoidCollisions", optional: true, type: "boolean" },
           { name: "collisionPadding", optional: true, type: "number" },
+          { name: "size", optional: true, type: '"sm" | "md"' },
         ],
       },
       destructure: {
@@ -506,6 +528,7 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
           { name: "alignOffset", defaultValue: "0" },
           { name: "avoidCollisions", defaultValue: "true" },
           { name: "collisionPadding", defaultValue: "8" },
+          { name: "size", defaultValue: '"md"' },
           { name: "class", alias: "className" },
         ],
         rest: "rest",
@@ -542,6 +565,7 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
                   value: { type: "variable", name: "collisionPadding" },
                 },
                 { name: "spread", value: { type: "variable", name: "rest" } },
+                { name: "data-size", value: { type: "variable", name: "size" } },
                 {
                   name: "data-slot",
                   value: { type: "literal", value: "navigation-menu-positioner" },

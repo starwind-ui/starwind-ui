@@ -20,6 +20,7 @@ export type InputOtpProps = Omit<
   | "pattern"
   | "readOnly"
   | "required"
+  | "size"
   | "value"
 > &
   VariantProps<typeof inputOtp> & {
@@ -32,6 +33,7 @@ export type InputOtpProps = Omit<
     pattern?: RegExp | string;
     readOnly?: boolean;
     required?: boolean;
+    size?: "sm" | "md" | "lg";
     class?: ClassValue;
     modelValue?: string | undefined;
   };
@@ -45,6 +47,7 @@ type InputOtpDeclaredProps = {
   pattern?: RegExp | string;
   readOnly?: boolean;
   required?: boolean;
+  size?: "sm" | "md" | "lg";
   class?: ClassValue;
   modelValue?: string | undefined;
 } & /* @vue-ignore */ InputOtpProps;
@@ -58,6 +61,7 @@ const {
   pattern,
   readOnly = false,
   required = false,
+  size = "md",
   class: className,
   modelValue,
 } = defineProps<InputOtpDeclaredProps>();
@@ -116,6 +120,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :required="required"
     :model-value="modelValue"
     v-bind="attrs"
+    :data-size="size"
     data-slot="input-otp"
     @update:model-value="emit('update:modelValue', $event)"
     @value-change="handleValueChange"

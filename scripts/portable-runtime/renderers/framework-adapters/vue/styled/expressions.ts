@@ -51,6 +51,8 @@ export function projectVueComputedExpression(
     case 'padding ?? (size === "sm" ? 2.5 : size === "lg" ? 4 : 3)':
     case 'size === "sm" ? 4 : size === "lg" ? 6 : 5':
       return { type: "source", code: value.code };
+    case "asChild ? className : triggerBaseClassName":
+      return parts("asChild ? className : ", ref("triggerBaseClassName"));
     case "value ?? defaultValue":
       return parts({ name: "modelValue", unwrap: false }, " ?? defaultValue");
     case "Array.isArray(resolvedValue) ? resolvedValue : [resolvedValue]":

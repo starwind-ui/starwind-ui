@@ -443,8 +443,10 @@ function getSelectedOptionTextFromProps(props: {
     getStringPropText(props["aria-label"]);
   if (explicitText !== null) return explicitText;
 
-  const childText =
-    getSelectItemTextFromReactNode(props.children) ?? getTextFromReactNode(props.children).trim();
+  const itemText = getSelectItemTextFromReactNode(props.children);
+  if (itemText !== null) return itemText;
+
+  const childText = getTextFromReactNode(props.children).trim();
   return childText.length > 0 ? childText : null;
 }
 
@@ -462,8 +464,7 @@ function getSelectItemTextFromReactNode(node: React.ReactNode): string | null {
         ${JSON.stringify(facts.attrs.itemText)}?: unknown;
       };
       if (isSelectItemTextElement(child)) {
-        const text = getTextFromReactNode(childProps.children).trim();
-        selectedText = text.length > 0 ? text : null;
+        selectedText = getTextFromReactNode(childProps.children).trim();
         return;
       }
 
@@ -516,7 +517,9 @@ function getTextFromSelectItem(item: HTMLElement | undefined): string | null {
   if (!item) return null;
 
   const textElement = item.querySelector<HTMLElement>("[${facts.attrs.itemText}]");
-  const text = (textElement ?? item).textContent?.trim() ?? "";
+  if (textElement) return textElement.textContent?.trim() ?? "";
+
+  const text = item.textContent?.trim() ?? "";
   return text.length > 0 ? text : null;
 }
 `;

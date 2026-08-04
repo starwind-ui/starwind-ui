@@ -38,6 +38,7 @@ function validateContract(
   contract: RuntimeAdapterContract,
   issues: RuntimeAdapterContractIssue[],
 ): void {
+  validateFrameworkNeutralFacts(contract, issues);
   const parts = new Map<string, PrimitivePartContract>();
   const discoveryAttributes = new Set<string>();
 
@@ -379,6 +380,40 @@ function validateContract(
   for (const [index, escapeHatch] of (contract.escapeHatches ?? []).entries()) {
     validateEscapeHatch(contract, escapeHatch, index, issues);
   }
+}
+
+const frameworkSourcePatterns = [
+  /\bimport\s+[\s\S]*?\sfrom\s+["'](?:astro|react|solid-js|svelte|vue)(?:[\/"'])/,
+  /<(?:script\s+setup|template)(?:\s|>)/,
+  /\b(?:defineEmits|defineModel|defineProps|onMounted|useEffect|useTemplateRef)\s*\(/,
+  /\b(?:if|switch)\s*\([^)]*\b(?:framework|target)\b[^)]*\b(?:astro|react|solid|svelte|vue)\b/i,
+];
+
+function validateFrameworkNeutralFacts(
+  contract: RuntimeAdapterContract,
+  issues: RuntimeAdapterContractIssue[],
+): void {
+  const visit = (value: unknown, path: string): void => {
+    if (typeof value === "string") {
+      if (frameworkSourcePatterns.some((pattern) => pattern.test(value))) {
+        issues.push(
+          issue(contract, path, "Framework source syntax is not allowed in contract-owned facts."),
+        );
+      }
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((entry, index) => visit(entry, `${path}.${index}`));
+      return;
+    }
+    if (!value || typeof value !== "object") return;
+
+    for (const [key, entry] of Object.entries(value)) {
+      visit(entry, path ? `${path}.${key}` : key);
+    }
+  };
+
+  visit(contract, "");
 }
 
 function validateEscapeHatch(

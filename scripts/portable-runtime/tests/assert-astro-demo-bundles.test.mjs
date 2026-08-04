@@ -43,12 +43,20 @@ describe("assert-astro-demo-bundles helpers", () => {
     expect(collectDynamicJsImports(source, importerPath)).toEqual(["/_astro/lazy.js"]);
   });
 
-  it("attributes the nested-sidebar lifecycle chunk to its exact static importer", () => {
+  it("attributes nested-sidebar shared chunks to their exact static importers", () => {
     const report = {
       staticImportEdges: [
         {
           imported: "/_astro/controller-lifecycle.DmuKRW05.js",
           importer: "/_astro/SidebarProvider.astro_astro_type_script_index_0_lang.DUG3d4hi.js",
+        },
+        {
+          imported: "/_astro/floating-portal.CfE7Ljmv.js",
+          importer: "/_astro/floating-disclosure.VwGOAKAG.js",
+        },
+        {
+          imported: "/_astro/cancelable-details.BbRqbJ6N.js",
+          importer: "/_astro/overlay-open-change.BY2e_BDB.js",
         },
       ],
     };
@@ -59,6 +67,20 @@ describe("assert-astro-demo-bundles helpers", () => {
         importerPattern: /^SidebarProvider\.astro_astro_type_script_index_0_lang\./,
       }),
     ).toEqual(report.staticImportEdges[0]);
+
+    expect(
+      findAttributedStaticChunk(report, {
+        assetPattern: /^floating-portal\./,
+        importerPattern: /^floating-disclosure\./,
+      }),
+    ).toEqual(report.staticImportEdges[1]);
+
+    expect(
+      findAttributedStaticChunk(report, {
+        assetPattern: /^cancelable-details\./,
+        importerPattern: /^overlay-open-change\./,
+      }),
+    ).toEqual(report.staticImportEdges[2]);
   });
 
   it("creates the configured diagnostics directory before writing a report", () => {

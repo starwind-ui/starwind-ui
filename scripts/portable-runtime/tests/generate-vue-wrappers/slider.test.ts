@@ -1,9 +1,11 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
+import { format, resolveConfig } from "prettier";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { formatGeneratedOutput } from "../../format-generated-output.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
@@ -24,23 +26,36 @@ describe("generated Vue Slider", () => {
   it("generates deterministic range-control Primitive output", async () => {
     const first = await generateSlider();
     const second = await generateSlider();
+    const committed = await readGeneratedDirectory(
+      path.join(process.cwd(), "packages/vue/src/slider"),
+    );
 
     expect(first).toEqual(second);
+    expect(first).toEqual(committed);
     for (const [name, source] of Object.entries(first)) {
-      if (name === "index") continue;
-      expect(() => assertVueSfcCompiles(source, `${name}.vue`)).not.toThrow();
+      if (!name.endsWith(".vue")) continue;
+      expect(() => assertVueSfcCompiles(source, name)).not.toThrow();
     }
-    expect(first.root).toContain("defineModel<SliderValue>()");
-    expect(first.root).toMatch(
+    expect(first["SliderRoot.vue"]).toContain("defineModel<SliderValue>()");
+    expect(first["SliderRoot.vue"]).toMatch(
       /emit\("valueChange", detail\.value, detail\);[\s\S]*detail\.isCanceled[\s\S]*modelValue\.value = detail\.value/,
     );
-    expect(first.root).toContain('emit("valueCommitted", detail.value, detail)');
-    expect(first.root).toMatch(
+    expect(first["SliderRoot.vue"]).toContain('emit("valueCommitted", detail.value, detail)');
+    expect(first["SliderRoot.vue"]).toContain(
+      'createdInstance.subscribe("stateSync", handleStateSync)',
+    );
+    expect(first["SliderRoot.vue"]).toMatch(
+      /function handleStateSync\(\): void \{[\s\S]*if \(controlled \|\| !instance\) return;[\s\S]*instance\.getValue\(\)[\s\S]*valuesEqual\(uncontrolledValue\.value, nextValue\)[\s\S]*uncontrolledValue\.value = nextValue;[\s\S]*modelValue\.value = nextValue;/,
+    );
+    expect(first["SliderRoot.vue"]).toMatch(
+      /unsubscribeStateSync\?\.\(\);[\s\S]*instance\?\.destroy\(\)/,
+    );
+    expect(first["SliderRoot.vue"]).toMatch(
       /await nextTick\(\);[\s\S]*instance\.refresh\(\);[\s\S]*instance\.setValue\(value, \{ emit: false \}\)/,
     );
-    expect(first.thumb).toContain("<input");
-    expect(first.thumb).toContain("data-sw-slider-input");
-    expect(first.index).toContain("SliderValueCommitDetails");
+    expect(first["SliderThumb.vue"]).toContain("<input");
+    expect(first["SliderThumb.vue"]).toContain("data-sw-slider-input");
+    expect(first["index.ts"]).toContain("SliderValueCommitDetails");
   });
 
   it("generates Styled Slider with model, events, geometry, and canonical slots", async () => {
@@ -72,14 +87,31 @@ describe("generated Vue Slider", () => {
       target: "vue",
     });
     const directory = path.join(outputRoot, "slider");
-    return {
-      control: await readFile(path.join(directory, "SliderControl.vue"), "utf8"),
-      index: await readFile(path.join(directory, "index.ts"), "utf8"),
-      indicator: await readFile(path.join(directory, "SliderIndicator.vue"), "utf8"),
-      label: await readFile(path.join(directory, "SliderLabel.vue"), "utf8"),
-      root: await readFile(path.join(directory, "SliderRoot.vue"), "utf8"),
-      thumb: await readFile(path.join(directory, "SliderThumb.vue"), "utf8"),
-      track: await readFile(path.join(directory, "SliderTrack.vue"), "utf8"),
-    };
+    await formatGeneratedOutput([directory], process.cwd());
+    return readGeneratedDirectory(directory, true);
   }
 });
+
+async function readGeneratedDirectory(
+  directory: string,
+  formatSources = false,
+): Promise<Record<string, string>> {
+  const names = (await readdir(directory)).sort();
+  const prettierConfig = formatSources
+    ? ((await resolveConfig(path.join(process.cwd(), "prettier.config.mjs"))) ?? {})
+    : {};
+  return Object.fromEntries(
+    await Promise.all(
+      names.map(async (name) => {
+        const file = path.join(directory, name);
+        const source = await readFile(file, "utf8");
+        return [
+          name,
+          formatSources && name.endsWith(".ts")
+            ? await format(source, { ...prettierConfig, filepath: file })
+            : source,
+        ] as const;
+      }),
+    ),
+  );
+}

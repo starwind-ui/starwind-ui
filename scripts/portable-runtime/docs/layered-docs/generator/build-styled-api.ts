@@ -13,6 +13,7 @@ import type {
   StyledApiInheritanceMetadata,
   StyledApiPropMetadata,
   StyledApiTargetMetadata,
+  StyledComponentDocsMetadata,
   StyledDocsAnnotation,
   StyledFrameworkTarget,
 } from "../types.js";
@@ -20,6 +21,47 @@ import { commonStyledPropDescriptions } from "../styled-api-descriptions.js";
 
 const TARGETS = ["astro", "react"] as const satisfies readonly StyledFrameworkTarget[];
 const FRAMEWORK_PLUMBING_PROPS = new Set(["children", "class", "className", "data-slot", "ref"]);
+const INLINE_TYPE_IMPORT_PATTERN = /import\((?:"|')([^"']+)(?:"|')\)\.([A-Za-z_$][\w$]*)/g;
+const COLOR_PICKER_TYPE_DEFINITIONS = new Map<string, string>([
+  ["ColorPickerDirection", 'type ColorPickerDirection = "ltr" | "rtl";'],
+  ["ColorPickerFormat", 'type ColorPickerFormat = "hex" | "rgb" | "hsl" | "hsb";'],
+  [
+    "ColorPickerChannel",
+    'type ColorPickerChannel = "hue" | "saturation" | "brightness" | "lightness" | "red" | "green" | "blue" | "alpha";',
+  ],
+  ["ColorPickerValue", "type ColorPickerValue = string | ColorPickerColor | null;"],
+]);
+const STYLED_DISPLAY_TYPE_OVERRIDES = new Map<string, string>([
+  ["ColorPickerDirection", '"ltr" | "rtl"'],
+  ["ColorPickerFormat", '"hex" | "rgb" | "hsl" | "hsb"'],
+  [
+    "ColorPickerChannel",
+    '"hue" | "saturation" | "brightness" | "lightness" | "red" | "green" | "blue" | "alpha"',
+  ],
+  ["ColorPickerValue", "string | ColorPickerColor | null"],
+]);
+
+const AUDITED_AS_CHILD_EXPORTS = [
+  ["alert-dialog", "AlertDialogTrigger"],
+  ["alert-dialog", "AlertDialogAction"],
+  ["alert-dialog", "AlertDialogCancel"],
+  ["breadcrumb", "BreadcrumbLink"],
+  ["collapsible", "CollapsibleTrigger"],
+  ["combobox", "ComboboxClear"],
+  ["combobox", "ComboboxTrigger"],
+  ["dialog", "DialogTrigger"],
+  ["dialog", "DialogClose"],
+  ["dropdown", "DropdownTrigger"],
+  ["hover-card", "HoverCardTrigger"],
+  ["navigation-menu", "NavigationMenuTrigger"],
+  ["popover", "PopoverTrigger"],
+  ["select", "SelectTrigger"],
+  ["sheet", "SheetTrigger"],
+  ["sheet", "SheetClose"],
+  ["sidebar", "SidebarGroupLabel"],
+  ["sidebar", "SidebarMenuButton"],
+  ["tooltip", "TooltipTrigger"],
+] as const;
 
 type PrimitivePartReference = {
   attrs: readonly AttributeContract[];
@@ -37,8 +79,8 @@ export const buildStyledApiMetadata = (
   primitiveById: ReadonlyMap<string, RuntimeAdapterContract>,
   annotation: StyledDocsAnnotation,
   validationIssues: string[],
-): Readonly<Record<StyledFrameworkTarget, StyledApiTargetMetadata>> =>
-  Object.fromEntries(
+): Readonly<Record<StyledFrameworkTarget, StyledApiTargetMetadata>> => {
+  return Object.fromEntries(
     TARGETS.map((framework) => [
       framework,
       buildTargetMetadata(
@@ -51,6 +93,7 @@ export const buildStyledApiMetadata = (
       ),
     ]),
   ) as Readonly<Record<StyledFrameworkTarget, StyledApiTargetMetadata>>;
+};
 
 export const buildEmptyStyledApiMetadata = (): Readonly<
   Record<StyledFrameworkTarget, StyledApiTargetMetadata>
@@ -125,12 +168,15 @@ const buildExportMetadata = (
       const propAnnotation = exportAnnotation?.props?.[candidate.name];
       if (propAnnotation?.include === false) return false;
       if (propAnnotation?.include === true) return true;
-      return !candidate.exactPrimitivePassthrough;
+      return propAnnotation?.visualOwnership !== undefined || !candidate.exactPrimitivePassthrough;
     })
     .map(({ exactPrimitivePassthrough: _exactPrimitivePassthrough, ...candidate }) => {
       const propAnnotation = exportAnnotation?.props?.[candidate.name];
       const description =
         propAnnotation?.description ?? commonStyledPropDescriptions[candidate.name];
+      const type = propAnnotation?.type ?? candidate.type;
+      const displayType = getStyledDisplayType(type);
+      const typeDefinitions = getStyledTypeDefinitions(type);
       if (!description) {
         validationIssues.push(
           `${contract.component}.${component.exportName} styled API prop ${candidate.name} is missing an authored description.`,
@@ -139,8 +185,14 @@ const buildExportMetadata = (
 
       return {
         ...candidate,
+        type,
+        ...(displayType !== type ? { displayType } : {}),
+        ...(typeDefinitions.length > 0 ? { typeDefinitions } : {}),
         ...(propAnnotation?.classification
           ? { classification: propAnnotation.classification }
+          : {}),
+        ...(propAnnotation?.visualOwnership
+          ? { visualOwnership: propAnnotation.visualOwnership }
           : {}),
         ...(propAnnotation?.defaultValue !== undefined
           ? { defaultValue: propAnnotation.defaultValue }
@@ -148,7 +200,6 @@ const buildExportMetadata = (
         ...(propAnnotation?.deprecated ? { deprecated: propAnnotation.deprecated } : {}),
         ...(description ? { description } : {}),
         descriptionSource: propAnnotation?.description ? "annotation" : "catalog",
-        ...(propAnnotation?.type ? { type: propAnnotation.type } : {}),
       } satisfies StyledApiPropMetadata;
     })
     .sort((left, right) => left.name.localeCompare(right.name));
@@ -164,6 +215,80 @@ const buildExportMetadata = (
         : {}),
     })),
   };
+};
+
+export const validateAuditedAsChildVisualOwnership = (
+  contracts: readonly StyledAdapterContract[],
+  annotations: Readonly<Record<string, StyledDocsAnnotation>>,
+  styledComponents: readonly StyledComponentDocsMetadata[],
+  validationIssues: string[],
+) => {
+  const contractById = new Map(contracts.map((contract) => [contract.component, contract]));
+  const metadataById = new Map(styledComponents.map((component) => [component.id, component]));
+
+  for (const [componentId, exportName] of AUDITED_AS_CHILD_EXPORTS) {
+    const key = `${componentId}.${exportName}`;
+    const contract = contractById.get(componentId);
+    if (!contract) {
+      validationIssues.push(`${key} is missing its audited styled contract.`);
+      continue;
+    }
+
+    const component = contract.components.find((candidate) => candidate.exportName === exportName);
+    if (!component) {
+      validationIssues.push(`${key} is missing from the audited styled contract components.`);
+    }
+    if (!contract.publicExports.includes(exportName)) {
+      validationIssues.push(`${key} must remain a public export for the fixed asChild audit.`);
+    }
+    if (!component?.props?.fields?.some((field) => field.name === "asChild")) {
+      validationIssues.push(`${key} is missing its audited asChild prop candidate.`);
+    }
+
+    const visualOwnership =
+      annotations[componentId]?.styledApi?.[exportName]?.props?.asChild?.visualOwnership;
+    if (!visualOwnership) {
+      validationIssues.push(`${key} asChild is missing audited visualOwnership metadata.`);
+    }
+
+    const metadata = metadataById.get(componentId);
+    for (const framework of TARGETS) {
+      const projectedAsChild = metadata?.styledApi[framework].exports
+        .find((entry) => entry.exportName === exportName)
+        ?.props.find((prop) => prop.name === "asChild");
+      if (!projectedAsChild) {
+        validationIssues.push(`${key} asChild is missing its audited ${framework} projection.`);
+      } else if (visualOwnership && projectedAsChild.visualOwnership !== visualOwnership) {
+        validationIssues.push(
+          `${key} asChild ${framework} visualOwnership does not match its annotation.`,
+        );
+      }
+    }
+  }
+};
+
+const getStyledDisplayType = (type: string) => {
+  const withoutInlineImports = type.replace(
+    INLINE_TYPE_IMPORT_PATTERN,
+    (_match, _moduleName: string, typeName: string) => typeName,
+  );
+
+  return STYLED_DISPLAY_TYPE_OVERRIDES.get(withoutInlineImports) ?? withoutInlineImports;
+};
+
+const getStyledTypeDefinitions = (type: string) => {
+  const typeNames = new Set<string>();
+
+  for (const match of type.matchAll(INLINE_TYPE_IMPORT_PATTERN)) {
+    typeNames.add(match[2]);
+  }
+
+  return [...typeNames]
+    .map((name) => {
+      const definition = COLOR_PICKER_TYPE_DEFINITIONS.get(name);
+      return definition ? { name, definition } : undefined;
+    })
+    .filter((entry): entry is { name: string; definition: string } => entry !== undefined);
 };
 
 const collectPropCandidates = (

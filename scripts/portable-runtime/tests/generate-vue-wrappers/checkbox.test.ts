@@ -80,8 +80,9 @@ describe("generated Vue Checkbox Primitive", () => {
     expect(root).not.toMatch(/props\.checked\s*=(?!=)/);
     expect(root).toContain('emit("checkedChange", checked, detail);');
     expect(root).toMatch(
-      /emit\("checkedChange", checked, detail\);[\s\S]*if \(detail\.isCanceled\) return;[\s\S]*emit\("update:checked", checked\);/,
+      /emit\("checkedChange", checked, detail\);[\s\S]*if \(detail\.isCanceled\) return;[\s\S]*uncontrolledChecked\.value = checked;[\s\S]*renderedIndeterminate\.value = false;[\s\S]*emit\("update:checked", checked\);/,
     );
+    expect(root.match(/emit\("update:checked", checked\)/g)).toHaveLength(1);
     expect(root).toContain("groupChecked.value !== undefined");
     expect(root).toContain("? { checked: props.checked }");
     expect(root).toMatch(
@@ -90,6 +91,7 @@ describe("generated Vue Checkbox Primitive", () => {
     expect(root).toContain("useCheckboxGroupContext()");
     expect(root).toContain("Object.is(instance.getChecked(), checked)");
     expect(root).toContain("instance.setChecked(checked, { emit: false });");
+    expect(root).toContain("if (props.checked === undefined)");
     expect(root).toContain("instance?.setIndeterminate(value, { emit: false });");
     expect(root).toContain("onMounted(setupRuntime);");
     expect(root).toContain("onBeforeUnmount(destroyOwnedInstance);");
@@ -99,11 +101,31 @@ describe("generated Vue Checkbox Primitive", () => {
     expect(root).toContain(':form="props.form"');
     expect(root).toContain("handleFormReset");
     expect(root).toContain("<component");
+    expect(root).toContain('v-if="!props.nativeButton"');
+    expect(root).toContain('v-if="props.nativeButton"');
+    expect(root).toContain("if (controllednessChanged)");
+    expect(root).toContain("setupRuntime();");
+    expect(root).toContain("unbindFormReset();");
     expect(root).not.toContain("asChild");
     expect(root).not.toContain("container");
     expect(indicator).toContain("data-sw-checkbox-indicator");
     expect(indicator).toContain("data-unchecked");
     expect(indicator).toContain(':hidden="!props.keepMounted"');
+  });
+
+  it("keeps Checkbox choices in semantic facts instead of target-local identity literals", async () => {
+    const printer = await readFile(
+      path.join(
+        process.cwd(),
+        "scripts/portable-runtime/renderers/framework-adapters/vue/boolean-form-control.ts",
+      ),
+      "utf8",
+    );
+
+    expect(printer).not.toContain('hasAttribute("data-sw-checkbox-unchecked-input")');
+    expect(printer).not.toMatch(/facts\.displayName\s*===?\s*["']Checkbox["']/);
+    expect(printer).not.toMatch(/displayName\s*=\s*["']Checkbox["']/);
+    expect(printer).not.toContain("Vue Checkbox projection requires");
   });
 
   async function generateCheckbox(): Promise<{

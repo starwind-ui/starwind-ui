@@ -8,12 +8,12 @@ export const card = tv({
   ],
   variants: {
     size: {
-      default: "[--card-spacing:--spacing(5)]",
       sm: "text-sm [--card-spacing:--spacing(4)]",
+      md: "[--card-spacing:--spacing(5)]",
     },
   },
   defaultVariants: {
-    size: "default",
+    size: "md",
   },
 });
 

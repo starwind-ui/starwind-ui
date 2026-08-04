@@ -16,7 +16,7 @@ export const inputOtpStyledContract: StyledAdapterContract = {
   variantCollectionName: "InputOtpVariants",
   variants: {
     inputOtp: {
-      base: "flex items-center gap-2 outline-none data-disabled:opacity-50",
+      base: "group/input-otp flex items-center gap-2 outline-none data-disabled:opacity-50",
     },
     inputOtpGroup: {
       base: "flex items-center",
@@ -32,15 +32,10 @@ export const inputOtpStyledContract: StyledAdapterContract = {
         "data-[active=true]:border-outline data-[active=true]:ring-outline/50 data-[active=true]:z-10 data-[active=true]:ring-3",
         "data-[active=true]:data-error-visible:ring-error/40",
         "data-error-visible:border-error data-[active=true]:data-error-visible:border-error",
+        "group-data-[size=sm]/input-otp:size-9 group-data-[size=sm]/input-otp:text-sm",
+        "group-data-[size=md]/input-otp:size-11 group-data-[size=md]/input-otp:text-base",
+        "group-data-[size=lg]/input-otp:size-12 group-data-[size=lg]/input-otp:text-lg",
       ],
-      variants: {
-        size: {
-          sm: "size-9 text-sm",
-          md: "size-11 text-base",
-          lg: "size-12 text-lg",
-        },
-      },
-      defaultVariants: { size: "md" },
     },
   },
   components: [
@@ -79,6 +74,7 @@ export const inputOtpStyledContract: StyledAdapterContract = {
           },
           { name: "readOnly", optional: true, type: "boolean" },
           { name: "required", optional: true, type: "boolean" },
+          { name: "size", optional: true, type: '"sm" | "md" | "lg"' },
           { name: "value", optional: true, type: "string" },
         ],
       },
@@ -95,6 +91,7 @@ export const inputOtpStyledContract: StyledAdapterContract = {
           { name: "ref", frameworks: ["react"] },
           { name: "readOnly", defaultValue: "false" },
           { name: "required", defaultValue: "false" },
+          { name: "size", defaultValue: '"md"' },
           { name: "value" },
           { name: "class", alias: "className" },
         ],
@@ -131,6 +128,7 @@ export const inputOtpStyledContract: StyledAdapterContract = {
             { name: "required", value: { type: "variable", name: "required" } },
             { name: "value", value: { type: "variable", name: "value" } },
             { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "data-slot", value: { type: "literal", value: "input-otp" } },
           ],
           children: [{ type: "slot" }],
@@ -184,10 +182,7 @@ export const inputOtpStyledContract: StyledAdapterContract = {
       exportName: "InputOtpSlot",
       primitiveAliases: { "input-otp": "InputOtpPrimitive" },
       props: {
-        extends: [
-          { type: "htmlAttributes", element: "div" },
-          { type: "variantProps", variant: "inputOtpSlot" },
-        ],
+        extends: [{ type: "htmlAttributes", element: "div" }],
         fields: [
           { name: "index", optional: true, type: "number" },
           {
@@ -200,7 +195,6 @@ export const inputOtpStyledContract: StyledAdapterContract = {
       },
       destructure: {
         props: [
-          { name: "size" },
           { name: "index" },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
@@ -219,7 +213,7 @@ export const inputOtpStyledContract: StyledAdapterContract = {
               value: {
                 type: "classVariant",
                 variant: "inputOtpSlot",
-                args: { size: "size", class: "className" },
+                args: { class: "className" },
               },
             },
             { name: "index", value: { type: "variable", name: "index" } },

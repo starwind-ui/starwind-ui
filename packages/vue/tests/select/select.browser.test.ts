@@ -193,6 +193,39 @@ describe("Vue Select public behavior", () => {
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("preserves an explicitly empty item label and its selected-value association", async () => {
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        renderSelect(
+          { defaultValue: "apple" },
+          [
+            { label: "Apple", value: "apple" },
+            { label: "", value: "empty" },
+          ],
+          { disabled: true },
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+
+    host.querySelector<HTMLButtonElement>("[data-sw-select-trigger]")!.click();
+    await frame();
+    const emptyItem = host.querySelector<HTMLElement>('[data-sw-select-item][data-value="empty"]')!;
+    emptyItem.click();
+    await frame();
+
+    const root = host.querySelector<HTMLElement>("[data-sw-select]")!;
+    const value = host.querySelector<HTMLElement>("[data-sw-select-value]")!;
+    expect(root.getAttribute("data-value")).toBe("empty");
+    expect(root.getAttribute("data-selected-value")).toBe("empty");
+    expect(root.hasAttribute("data-selected-label")).toBe(true);
+    expect(root.getAttribute("data-selected-label")).toBe("");
+    expect(emptyItem.getAttribute("aria-selected")).toBe("true");
+    expect(value.textContent).toBe("");
+    expect(value.textContent).not.toContain("Pick fruit");
+  });
+
   it("reconciles disabled open state without inventing model events", async () => {
     const uncontrolled = reactive({ disabled: false });
     const uncontrolledEvents: string[] = [];

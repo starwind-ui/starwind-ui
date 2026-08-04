@@ -39,9 +39,13 @@ import {
   reactFrameworkAdapter,
 } from "../renderers/framework-adapters/index.js";
 import { getPrimitiveFrameworkAdapterTargetsForComponent } from "../renderers/framework-adapters/target-registry.js";
-import { booleanFormControlAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/boolean-form-control.js";
+import {
+  booleanFormControlAdapterFamilyPlan,
+  getBooleanFormControlFacts,
+} from "../renderers/generic-adapter-plan/families/boolean-form-control.js";
 import { disclosurePresenceAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/disclosure-presence.js";
 import { formFieldCoordinatorAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/form-field-coordinator.js";
+import { isActionSurfaceOutputModelPlan } from "../renderers/generic-adapter-plan/families/action-surface.js";
 import { createGroupedValueControlAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/grouped-value-control.js";
 import { mediaStatusAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/media-status.js";
 import { nativeOverlayAdapterFamilyPlan } from "../renderers/generic-adapter-plan/families/native-overlay.js";
@@ -145,6 +149,27 @@ describe("GenericAdapterPlan output model printers", () => {
       "type",
     ]);
     expect(plan.runtime.optionProps).toEqual(["disabled"]);
+    const componentFile = astroOutputModel.files.find((file) => file.kind === "component");
+    expect(componentFile?.kind === "component" ? componentFile.component : undefined).toEqual(
+      expect.objectContaining({
+        context: [],
+        events: [],
+        lifecycle: undefined,
+        portals: [],
+        stateSync: [],
+      }),
+    );
+    expect(
+      componentFile?.kind === "component" ? componentFile.component.render : undefined,
+    ).toEqual(
+      expect.objectContaining({
+        children: [{ kind: "slot" }],
+        defaultElement: "button",
+        events: [],
+        kind: "element",
+        part: "root",
+      }),
+    );
 
     const astroRoot = astroFiles.find((file) => file.path === "button/ButtonRoot.astro")?.contents;
     const reactRoot = reactFiles.find((file) => file.path === "button/ButtonRoot.tsx")?.contents;
@@ -1689,6 +1714,7 @@ describe("GenericAdapterPlan output model printers", () => {
     const reactOutputModel = buildGenericAdapterOutputModel(plan);
     const planDrivenButton = {
       ...plan,
+      component: "action",
       displayName: "Action",
       exports: {
         ...plan.exports,
@@ -1705,6 +1731,7 @@ describe("GenericAdapterPlan output model printers", () => {
       parts: plan.parts.map((part) =>
         part.name === "root" ? { ...part, defaultElement: "span" } : part,
       ),
+      sourceContract: "action",
     } satisfies GenericAdapterPlan;
 
     expect(astroOutputModel).toEqual(reactOutputModel);
@@ -1742,8 +1769,30 @@ describe("GenericAdapterPlan output model printers", () => {
     } satisfies GenericAdapterPlan;
 
     expect(() => printReactGenericAdapterOutputModel(noPublicRefButton)).toThrow(
-      "Button generic adapter plan root part must declare a public forwarded ref.",
+      "Button generic adapter plan does not match a structured Adapter Output Model family.",
     );
+  });
+
+  it("rejects action-surface near misses instead of truncating unsupported facts", () => {
+    const plan = buildGenericAdapterPlan(buttonRuntimeAdapterContract);
+    const extraProp = {
+      ...plan,
+      props: [...plan.props, { kind: "option", name: "variant", type: "string" }],
+    } satisfies GenericAdapterPlan;
+    const extraEvent = {
+      ...plan,
+      events: [
+        {
+          callbackProp: "onOpenChange",
+          emitsFrom: "root",
+          name: "open-change",
+        },
+      ],
+    } satisfies GenericAdapterPlan;
+
+    expect(isActionSurfaceOutputModelPlan(plan)).toBe(true);
+    expect(isActionSurfaceOutputModelPlan(extraProp)).toBe(false);
+    expect(isActionSurfaceOutputModelPlan(extraEvent)).toBe(false);
   });
 
   it("prints the current Progress primitive state and ARIA mapping through the range-status family", () => {
@@ -3619,9 +3668,62 @@ describe("GenericAdapterPlan output model printers", () => {
     const checkboxPlan = buildGenericAdapterPlan(checkboxRuntimeAdapterContract);
     const radioPlan = buildGenericAdapterPlan(radioRuntimeAdapterContract);
     const togglePlan = buildGenericAdapterPlan(toggleRuntimeAdapterContract);
-    const switchNearMiss: GenericAdapterPlan = {
+    const renamedSwitch: GenericAdapterPlan = {
       ...switchPlan,
-      component: "switch-near-miss",
+      component: "renamed-switch",
+      sourceContract: "renamed-switch",
+    };
+    const extraEventSwitch: GenericAdapterPlan = {
+      ...switchPlan,
+      events: [
+        ...switchPlan.events,
+        { ...switchPlan.events[0]!, callbackProp: "onSecondaryChange", name: "secondaryChange" },
+      ],
+    };
+    const customEscapeDeclaration = {
+      boundary: "Synthetic supported metadata.",
+      reason: "Proves the Boolean family preserves declarative escape metadata.",
+      tests: ["synthetic.test.ts"],
+    };
+    const escapeDeclarationSwitch: GenericAdapterPlan = {
+      ...switchPlan,
+      escapeDeclarations: [...switchPlan.escapeDeclarations, customEscapeDeclaration],
+    };
+    const extraStateCheckbox: GenericAdapterPlan = {
+      ...checkboxPlan,
+      props: [
+        ...checkboxPlan.props,
+        { defaultValue: "false", kind: "control", name: "pressed", type: "boolean" },
+      ],
+      stateModels: [
+        ...checkboxPlan.stateModels,
+        {
+          controlledProp: "pressed",
+          controlledStateSync: "unsupported",
+          name: "pressed",
+          valueType: "boolean",
+        },
+      ],
+    };
+    const ambiguousUncheckedInputCheckbox: GenericAdapterPlan = {
+      ...checkboxPlan,
+      parts: [
+        ...checkboxPlan.parts,
+        {
+          defaultElement: "input",
+          discoveryAttribute: "data-sw-checkbox-secondary-hidden-input",
+          name: "secondaryHiddenInput",
+        },
+      ],
+      staticAttributes: [
+        ...checkboxPlan.staticAttributes,
+        {
+          name: "type",
+          part: "secondaryHiddenInput",
+          source: "constant",
+          value: "hidden",
+        },
+      ],
     };
     const toggleNearMiss: GenericAdapterPlan = {
       ...togglePlan,
@@ -3631,9 +3733,39 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(booleanFormControlAdapterFamilyPlan.matches(switchPlan)).toBe(true);
     expect(booleanFormControlAdapterFamilyPlan.matches(checkboxPlan)).toBe(true);
     expect(booleanFormControlAdapterFamilyPlan.matches(radioPlan)).toBe(true);
-    expect(booleanFormControlAdapterFamilyPlan.matches(switchNearMiss)).toBe(false);
+    expect(booleanFormControlAdapterFamilyPlan.matches(renamedSwitch)).toBe(true);
+    expect(booleanFormControlAdapterFamilyPlan.matches(extraEventSwitch)).toBe(false);
+    expect(booleanFormControlAdapterFamilyPlan.matches(escapeDeclarationSwitch)).toBe(true);
+    expect(booleanFormControlAdapterFamilyPlan.matches(extraStateCheckbox)).toBe(false);
+    expect(booleanFormControlAdapterFamilyPlan.matches(ambiguousUncheckedInputCheckbox)).toBe(
+      false,
+    );
+    expect(() => getBooleanFormControlFacts(ambiguousUncheckedInputCheckbox)).toThrow(
+      /exactly one Runtime-owned unchecked input part with constant type="hidden"/,
+    );
+
+    const checkboxFacts = getBooleanFormControlFacts(checkboxPlan);
+    expect(checkboxFacts.escapeDeclarations).toEqual(checkboxPlan.escapeDeclarations);
+    expect(getBooleanFormControlFacts(radioPlan).escapeDeclarations).toEqual(
+      radioPlan.escapeDeclarations,
+    );
+    expect(checkboxFacts.behavior).toEqual(
+      expect.objectContaining({
+        acceptedChangeNotification: undefined,
+        canCancelChange: true,
+        formResetSync: true,
+        groupStrategy: "array-includes",
+        hasIndeterminate: true,
+        inputIdStrategy: "always-prop",
+        inputPlacement: "nested-when-non-native",
+      }),
+    );
+    expect(checkboxFacts.parts.stateIndicator?.name).toBe("indicator");
+    expect(checkboxFacts.parts.uncheckedInput?.name).toBe("uncheckedInput");
 
     const switchOutputModel = booleanFormControlAdapterFamilyPlan.buildOutputModel(switchPlan);
+    const escapeDeclarationSwitchOutputModel =
+      booleanFormControlAdapterFamilyPlan.buildOutputModel(escapeDeclarationSwitch);
 
     expect(switchOutputModel.files.map((file) => file.kind)).toEqual([
       "component",
@@ -3653,9 +3785,20 @@ describe("GenericAdapterPlan output model printers", () => {
         family: expect.objectContaining({ kind: "boolean-form-control" }),
       }),
     );
-    expect(() => booleanFormControlAdapterFamilyPlan.buildOutputModel(switchNearMiss)).toThrow(
-      "Switch generic adapter plan is not a boolean form-control plan.",
+    expect(() => booleanFormControlAdapterFamilyPlan.buildOutputModel(renamedSwitch)).not.toThrow();
+    const escapeDeclarationIndex = escapeDeclarationSwitchOutputModel.files.find(
+      (file) => file.kind === "index",
     );
+    if (
+      escapeDeclarationIndex?.kind !== "index" ||
+      escapeDeclarationIndex.family?.kind !== "boolean-form-control"
+    ) {
+      throw new Error("Switch escape-declaration output-model index was not found.");
+    }
+    expect(escapeDeclarationIndex.family.facts.escapeDeclarations).toEqual([
+      ...switchPlan.escapeDeclarations,
+      customEscapeDeclaration,
+    ]);
 
     expect(singleBooleanControlAdapterFamilyPlan.matches(togglePlan)).toBe(true);
     expect(singleBooleanControlAdapterFamilyPlan.matches(toggleNearMiss)).toBe(false);
@@ -3903,6 +4046,7 @@ describe("GenericAdapterPlan output model printers", () => {
             }
           : part,
       ),
+      refs: plan.refs.map((ref) => (ref.part === "input" ? { ...ref, part: "nativeInput" } : ref)),
       staticAttributes: plan.staticAttributes.map((attribute) =>
         attribute.part === "input" ? { ...attribute, part: "nativeInput" } : attribute,
       ),
@@ -4052,10 +4196,20 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactRoot).not.toContain("instance.setChecked(groupChecked, { emit: false });");
     expect(reactRoot).toContain("instance.setDisabled(effectiveDisabled);");
     expect(reactRoot).toContain('const ariaChecked: React.AriaAttributes["aria-checked"]');
+    expect(reactRoot).toContain("export const CheckboxIndicatorContext = React.createContext");
+    expect(reactRoot).toContain("<CheckboxIndicatorContext.Provider value={indicatorState}>");
+    expect(reactRoot).toContain("explicitlyHiddenIndicatorsRef.current.forEach");
     expect(reactRoot).toContain('"aria-checked": ariaChecked');
     expect(reactRoot).toContain("<input\n        data-sw-checkbox-input");
     expect(reactIndicator).toContain("keepMounted?: boolean;");
-    expect(reactIndicator).toContain("node.hidden = hidden ?? !keepMounted;");
+    expect(reactIndicator).toContain("React.useContext(CheckboxIndicatorContext)");
+    expect(reactIndicator).toContain("if (!keepMounted && !active) return null;");
+    expect(reactIndicator).toContain("node.hidden = hidden ?? false;");
+    expect(reactIndicator).toContain("hidden={hidden ?? false}");
+    expect(reactIndicator).toContain("data-disabled={indicatorState.disabled");
+    expect(reactIndicator).toContain("data-readonly={indicatorState.readOnly");
+    expect(reactIndicator).toContain("data-required={indicatorState.required");
+    expect(reactIndicator).not.toContain("React.useEffect");
     expect(reactIndicator).toContain("data-sw-checkbox-indicator");
     expect(reactIndicator).toContain('data-keep-mounted={keepMounted ? "true" : undefined}');
     expect(reactIndicator).toContain("data-unchecked");

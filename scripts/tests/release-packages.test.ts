@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
 
@@ -23,10 +23,14 @@ import {
 } from "../runtime-release-policy.mjs";
 
 type PackageJson = {
+  dependencies?: Record<string, string>;
   description?: string;
+  exports?: Record<string, unknown>;
   name?: string;
+  peerDependencies?: Record<string, string>;
   private?: boolean;
   scripts?: Record<string, string>;
+  sideEffects?: boolean;
   version?: string;
 };
 
@@ -67,15 +71,17 @@ describe("release package tooling", () => {
     ]);
     expect(RELEASE_PACKAGE_SET).toBe(RUNTIME_RELEASE_PACKAGE_SET);
     expect(RELEASE_PACKAGE_SET.map((entry) => entry.name)).not.toContain("@starwind-ui/vue");
+    expect(RELEASE_PACKAGE_SET.map((entry) => entry.name)).not.toContain("@starwind-ui/svelte");
   });
 
-  it("keeps Vue quarantined outside Changesets and publication", async () => {
+  it("keeps Vue and Svelte quarantined outside Changesets and publication", async () => {
     expect(CHANGESET_IGNORED_PACKAGES).toEqual([
       "demo",
       "react-demo",
       "vue-demo",
       "@starwind-ui/core",
       "@starwind-ui/vue",
+      "@starwind-ui/svelte",
     ]);
     expect(RUNTIME_FIXED_GROUP).toEqual([
       "@starwind-ui/runtime",
@@ -85,13 +91,48 @@ describe("release package tooling", () => {
     expect(
       createPublishCommands({ dryRun: true }).map((command) => command.packageName),
     ).not.toContain("@starwind-ui/vue");
+    expect(
+      createPublishCommands({ dryRun: true }).map((command) => command.packageName),
+    ).not.toContain("@starwind-ui/svelte");
 
-    const vuePackage = await readJson<PackageJson>("packages/vue/package.json");
+    const [vuePackage, sveltePackage] = await Promise.all([
+      readJson<PackageJson>("packages/vue/package.json"),
+      readJson<PackageJson>("packages/svelte/package.json"),
+    ]);
     expect(vuePackage).toMatchObject({
       name: "@starwind-ui/vue",
       private: true,
       version: "0.0.0",
     });
+    expect(sveltePackage).toMatchObject({
+      dependencies: { "@starwind-ui/runtime": "workspace:*" },
+      name: "@starwind-ui/svelte",
+      peerDependencies: { svelte: ">=5.29.0" },
+      private: true,
+      sideEffects: false,
+      version: "0.0.0",
+    });
+    expect(Object.keys(sveltePackage.exports ?? {})).toEqual([
+      ".",
+      "./button",
+      "./checkbox",
+      "./select",
+      "./accordion",
+      "./dialog",
+      "./slider",
+    ]);
+    expect(
+      Object.keys(sveltePackage.scripts ?? {}).filter((script) => script.startsWith("publish")),
+    ).toEqual([]);
+
+    const changesetFiles = (await readdir(".changeset", { withFileTypes: true }))
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+      .map((entry) => entry.name);
+    for (const file of changesetFiles) {
+      expect(await readFile(`.changeset/${file}`, "utf8"), file).not.toContain(
+        '"@starwind-ui/svelte"',
+      );
+    }
   });
 
   it("keeps the retired Core package permanently source-only", async () => {

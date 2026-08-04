@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createSlider } from "../../../src/components/slider/slider";
+import { createSlider, type SliderValue } from "../../../src/components/slider/slider";
 import { getFormValueRevision } from "../../../src/internal/form-value-revision";
 
 describe("createSlider", () => {
@@ -181,6 +181,266 @@ describe("createSlider", () => {
     expect(new FormData(form).get("loudness")).toBeNull();
   });
 
+  it("silently restores normalized uncontrolled values after native form reset", async () => {
+    document.body.innerHTML = `<form id="settings-form"></form>`;
+    const form = document.querySelector<HTMLFormElement>("#settings-form")!;
+    const scalarRoot = renderSlider({ defaultValue: 23, name: "volume" });
+    const rangeRoot = renderSlider({ defaultValue: [18, 83], name: "price" });
+    form.append(scalarRoot, rangeRoot);
+    const onValueChange = vi.fn();
+    const onValueCommitted = vi.fn();
+    const valueChangeListener = vi.fn();
+    const valueCommittedListener = vi.fn();
+    scalarRoot.addEventListener("starwind:value-change", valueChangeListener);
+    scalarRoot.addEventListener("starwind:value-committed", valueCommittedListener);
+
+    const scalar = createSlider(scalarRoot, { onValueChange, onValueCommitted, step: 5 });
+    const range = createSlider(rangeRoot, { step: 5 });
+
+    expect(scalar.getValue()).toBe(25);
+    expect(range.getValue()).toEqual([20, 85]);
+
+    scalar.setValue(60, { emit: false });
+    range.setValue([35, 70], { emit: false });
+    const scalarStateSync = vi.fn(() => {
+      expect(scalar.getValue()).toBe(25);
+      expect(scalarRoot.getAttribute("data-value")).toBe("25");
+      expect(getInput(scalarRoot, 0).value).toBe("25");
+      expect(new FormData(form).get("volume")).toBe("25");
+    });
+    const rangeStateSync = vi.fn(() => {
+      expect(range.getValue()).toEqual([20, 85]);
+      expect(rangeRoot.getAttribute("data-value")).toBe("[20,85]");
+      expect(getInput(rangeRoot, 0).value).toBe("20");
+      expect(getInput(rangeRoot, 1).value).toBe("85");
+      expect(new FormData(form).get("price[0]")).toBe("20");
+      expect(new FormData(form).get("price[1]")).toBe("85");
+    });
+    scalar.subscribe("stateSync", scalarStateSync);
+    range.subscribe("stateSync", rangeStateSync);
+    form.reset();
+    await waitForMutationObserver();
+
+    expect(scalar.getValue()).toBe(25);
+    expect(scalarRoot.getAttribute("data-value")).toBe("25");
+    expect(getThumb(scalarRoot, 0).getAttribute("aria-valuenow")).toBe("25");
+    expect(getInput(scalarRoot, 0).value).toBe("25");
+    expect(getIndicator(scalarRoot).style.width).toBe("25%");
+    expect(range.getValue()).toEqual([20, 85]);
+    expect(rangeRoot.getAttribute("data-value")).toBe("[20,85]");
+    expect(getThumb(rangeRoot, 0).getAttribute("aria-valuenow")).toBe("20");
+    expect(getThumb(rangeRoot, 1).getAttribute("aria-valuenow")).toBe("85");
+    expect(getInput(rangeRoot, 0).value).toBe("20");
+    expect(getInput(rangeRoot, 1).value).toBe("85");
+    expect(getIndicator(rangeRoot).style.left).toBe("20%");
+    expect(getIndicator(rangeRoot).style.width).toBe("65%");
+    expect(new FormData(form).get("volume")).toBe("25");
+    expect(new FormData(form).getAll("price[0]")).toEqual(["20"]);
+    expect(new FormData(form).getAll("price[1]")).toEqual(["85"]);
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(onValueCommitted).not.toHaveBeenCalled();
+    expect(valueChangeListener).not.toHaveBeenCalled();
+    expect(valueCommittedListener).not.toHaveBeenCalled();
+    expect(scalarStateSync).toHaveBeenCalledOnce();
+    expect(rangeStateSync).toHaveBeenCalledOnce();
+  });
+
+  it("preserves the current accepted controlled value after native form reset", async () => {
+    document.body.innerHTML = `<form id="settings-form"></form>`;
+    const form = document.querySelector<HTMLFormElement>("#settings-form")!;
+    const root = renderSlider({ defaultValue: [20, 80], name: "price" });
+    form.append(root);
+    const onValueChange = vi.fn();
+    const onValueCommitted = vi.fn();
+    const slider = createSlider(root, {
+      onValueChange,
+      onValueCommitted,
+      value: [20, 80],
+    });
+    slider.setValue([30, 70], { emit: false });
+    const stateSync = vi.fn();
+    slider.subscribe("stateSync", stateSync);
+
+    form.reset();
+    await waitForMutationObserver();
+
+    expect(slider.getValue()).toEqual([30, 70]);
+    expect(root.getAttribute("data-value")).toBe("[30,70]");
+    expect(getInput(root, 0).value).toBe("30");
+    expect(getInput(root, 1).value).toBe("70");
+    expect(getThumb(root, 0).getAttribute("aria-valuenow")).toBe("30");
+    expect(getThumb(root, 1).getAttribute("aria-valuenow")).toBe("70");
+    expect(getIndicator(root).style.left).toBe("30%");
+    expect(getIndicator(root).style.width).toBe("40%");
+    expect(new FormData(form).get("price[0]")).toBe("30");
+    expect(new FormData(form).get("price[1]")).toBe("70");
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(onValueCommitted).not.toHaveBeenCalled();
+    expect(stateSync).not.toHaveBeenCalled();
+  });
+
+  it("rebinds reset ownership across runtime and observed external form changes", async () => {
+    document.body.innerHTML = `<form id="first-form"></form><form id="second-form"></form>`;
+    const firstForm = document.querySelector<HTMLFormElement>("#first-form")!;
+    const secondForm = document.querySelector<HTMLFormElement>("#second-form")!;
+    const root = renderSlider({ defaultValue: [20, 80], name: "price" });
+    const slider = createSlider(root, { form: "first-form" });
+
+    slider.setOptions({ form: "second-form" });
+    slider.setValue([30, 70], { emit: false });
+    firstForm.reset();
+    await waitForMutationObserver();
+    expect(slider.getValue()).toEqual([30, 70]);
+
+    secondForm.reset();
+    await waitForMutationObserver();
+    expect(slider.getValue()).toEqual([20, 80]);
+
+    slider.setValue([35, 65], { emit: false });
+    root.setAttribute("data-form", "first-form");
+    await waitForMutationObserver();
+    secondForm.reset();
+    await waitForMutationObserver();
+    expect(slider.getValue()).toEqual([35, 65]);
+
+    firstForm.reset();
+    await waitForMutationObserver();
+    expect(slider.getValue()).toEqual([20, 80]);
+    expect(new FormData(firstForm).get("price[0]")).toBe("20");
+    expect(new FormData(firstForm).get("price[1]")).toBe("80");
+  });
+
+  it("finishes pending reset reconciliation after observed form ownership moves", async () => {
+    document.body.innerHTML = `<form id="first-form"></form><form id="second-form"></form>`;
+    const firstForm = document.querySelector<HTMLFormElement>("#first-form")!;
+    const secondForm = document.querySelector<HTMLFormElement>("#second-form")!;
+    const root = renderSlider({ defaultValue: [20, 80], name: "price" });
+    const slider = createSlider(root, { form: "first-form" });
+    slider.setValue([35, 65], { emit: false });
+
+    firstForm.reset();
+    root.setAttribute("data-form", "second-form");
+    await waitForMutationObserver();
+
+    expect(slider.getValue()).toEqual([20, 80]);
+    expect(root.getAttribute("data-value")).toBe("[20,80]");
+    expect(getThumb(root, 0).getAttribute("aria-valuenow")).toBe("20");
+    expect(getThumb(root, 1).getAttribute("aria-valuenow")).toBe("80");
+    expect(getInput(root, 0).value).toBe("20");
+    expect(getInput(root, 1).value).toBe("80");
+    expect(getIndicator(root).style.left).toBe("20%");
+    expect(getIndicator(root).style.width).toBe("60%");
+    expect(new FormData(firstForm).get("price[0]")).toBeNull();
+    expect(new FormData(secondForm).get("price[0]")).toBe("20");
+    expect(new FormData(secondForm).get("price[1]")).toBe("80");
+
+    slider.setValue([30, 70], { emit: false });
+    firstForm.reset();
+    await waitForMutationObserver();
+    expect(slider.getValue()).toEqual([30, 70]);
+    expect(new FormData(secondForm).get("price[0]")).toBe("30");
+    expect(new FormData(secondForm).get("price[1]")).toBe("70");
+  });
+
+  it("preserves later accepted values while native reset reconciliation is pending", async () => {
+    document.body.innerHTML = `<form id="settings-form"></form>`;
+    const form = document.querySelector<HTMLFormElement>("#settings-form")!;
+    const root = renderSlider({ defaultValue: 25, name: "volume" });
+    form.append(root);
+    const slider = createSlider(root);
+    slider.setValue(40, { emit: false });
+    const stateSync = vi.fn();
+    slider.subscribe("stateSync", stateSync);
+
+    form.reset();
+    slider.setValue(65, { emit: false });
+    await waitForMutationObserver();
+
+    expect(slider.getValue()).toBe(65);
+    expect(root.getAttribute("data-value")).toBe("65");
+    expect(getThumb(root, 0).getAttribute("aria-valuenow")).toBe("65");
+    expect(getInput(root, 0).value).toBe("65");
+    expect(getIndicator(root).style.width).toBe("65%");
+    expect(new FormData(form).get("volume")).toBe("65");
+    expect(stateSync).toHaveBeenCalledOnce();
+  });
+
+  it("ignores a native form reset whose default action is canceled", async () => {
+    document.body.innerHTML = `<form id="settings-form"></form>`;
+    const form = document.querySelector<HTMLFormElement>("#settings-form")!;
+    const root = renderSlider({ defaultValue: 25, name: "volume" });
+    form.append(root);
+    const slider = createSlider(root);
+    slider.setValue(40, { emit: false });
+    const stateSync = vi.fn();
+    slider.subscribe("stateSync", stateSync);
+    form.addEventListener("reset", (event) => event.preventDefault());
+
+    form.reset();
+    await waitForMutationObserver();
+
+    expect(slider.getValue()).toBe(40);
+    expect(root.getAttribute("data-value")).toBe("40");
+    expect(getThumb(root, 0).getAttribute("aria-valuenow")).toBe("40");
+    expect(getInput(root, 0).value).toBe("40");
+    expect(getIndicator(root).style.width).toBe("40%");
+    expect(new FormData(form).get("volume")).toBe("40");
+    expect(stateSync).not.toHaveBeenCalled();
+  });
+
+  it("keeps reset ownership after refreshing dynamically rendered thumbs", async () => {
+    document.body.innerHTML = `<form id="settings-form"></form>`;
+    const form = document.querySelector<HTMLFormElement>("#settings-form")!;
+    const root = renderSlider({ defaultValue: [20, 80], name: "price" });
+    form.append(root);
+    const slider = createSlider(root);
+
+    root.querySelectorAll("[data-sw-slider-thumb]").forEach((thumb) => thumb.remove());
+    getControl(root).insertAdjacentHTML(
+      "beforeend",
+      `<div data-sw-slider-thumb data-index="0"><input data-sw-slider-input /></div>
+       <div data-sw-slider-thumb data-index="1"><input data-sw-slider-input /></div>`,
+    );
+    slider.refresh();
+    slider.setValue([35, 65], { emit: false });
+
+    form.reset();
+    await waitForMutationObserver();
+
+    expect(slider.getValue()).toEqual([20, 80]);
+    expect(getInput(root, 0).value).toBe("20");
+    expect(getInput(root, 1).value).toBe("80");
+    expect(new FormData(form).get("price[0]")).toBe("20");
+    expect(new FormData(form).get("price[1]")).toBe("80");
+  });
+
+  it("cancels pending reset work and detaches reset ownership on destroy", () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = `<form id="settings-form"></form>`;
+    const form = document.querySelector<HTMLFormElement>("#settings-form")!;
+    const root = renderSlider({ defaultValue: 25, name: "volume" });
+    form.append(root);
+    const slider = createSlider(root);
+    slider.setValue(40, { emit: false });
+    const stateSync = vi.fn();
+    slider.subscribe("stateSync", stateSync);
+
+    form.reset();
+    slider.destroy();
+    root.setAttribute("data-value", "sentinel");
+    getInput(root, 0).value = "33";
+    vi.runAllTimers();
+
+    expect(root.getAttribute("data-value")).toBe("sentinel");
+    expect(getInput(root, 0).value).toBe("33");
+    expect(stateSync).not.toHaveBeenCalled();
+
+    form.reset();
+    vi.runAllTimers();
+    expect(root.getAttribute("data-value")).toBe("sentinel");
+    expect(getInput(root, 0).value).toBe("50");
+  });
+
   it("restores root-owned hidden input form attributes after external input mutation", async () => {
     document.body.innerHTML = `<form id="settings-form"></form>`;
     const root = renderSlider({ defaultValue: [20, 80], name: "price" });
@@ -310,6 +570,30 @@ describe("createSlider", () => {
     expect(getThumb(root, 0).getAttribute("aria-valuenow")).toBe("50");
     expect(getInput(root, 0).value).toBe("50");
     expect(getIndicator(root).style.width).toBe("37.5%");
+  });
+
+  it("publishes settled readback for silent setters and Runtime normalization only", () => {
+    const root = renderSlider({ defaultValue: 80, name: "volume" });
+    const onValueChange = vi.fn();
+    const onValueCommitted = vi.fn();
+    const slider = createSlider(root, { onValueChange, onValueCommitted });
+    const settledValues: SliderValue[] = [];
+    slider.subscribe("stateSync", () => {
+      settledValues.push(slider.getValue());
+      expect(root.getAttribute("data-value")).toBe(String(slider.getValue()));
+      expect(getInput(root, 0).value).toBe(String(slider.getValue()));
+    });
+
+    slider.setValue(80, { emit: false });
+    slider.setValue(70, { emit: false });
+    slider.setOptions({ max: 60, step: 5 });
+    slider.setOptions({ max: 60, step: 5 });
+    root.setAttribute("data-max", "50");
+    slider.refresh();
+
+    expect(settledValues).toEqual([70, 60, 50]);
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(onValueCommitted).not.toHaveBeenCalled();
   });
 
   it("lets controlled callers observe changes and update value imperatively", () => {

@@ -110,6 +110,7 @@ type SliderRequiredState = SpecializedAdapterSpec["stateModels"][number] & {
   defaultProp: string;
   initialAttribute: string;
   runtimeGetter: string;
+  runtimeSyncEvent: string;
   runtimeSetter: string;
   valueType: string;
 };
@@ -169,6 +170,7 @@ type SliderValueControlRecipe = {
     initialAttribute: string;
     name: "value";
     setter: string;
+    syncEvent: string;
     valueType: string;
   };
 };
@@ -628,6 +630,7 @@ function getSliderRangeControlFacts(spec: SliderSpecializedAdapterSpec): Adapter
     state: {
       getter: valueControl.state.getter,
       name: valueControl.state.name,
+      syncEvent: valueControl.state.syncEvent,
       type: valueControl.state.valueType,
     },
     thumbInput: {
@@ -836,6 +839,7 @@ function buildValueControlRecipe(spec: SpecializedAdapterSpec): SliderValueContr
       initialAttribute: valueState.initialAttribute,
       name: "value",
       setter: valueState.runtimeSetter,
+      syncEvent: valueState.runtimeSyncEvent,
       valueType: valueState.valueType,
     },
   };
@@ -1254,6 +1258,7 @@ function getRequiredState(spec: SpecializedAdapterSpec, stateName: string): Slid
     !state.defaultProp ||
     !state.initialAttribute ||
     !state.runtimeGetter ||
+    !state.runtimeSyncEvent ||
     !state.runtimeSetter ||
     state.controlledStateSync !== "unsupported"
   ) {

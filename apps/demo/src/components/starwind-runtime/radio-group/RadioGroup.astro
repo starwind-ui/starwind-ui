@@ -14,6 +14,7 @@ type Props = Omit<HTMLAttributes<"div">, "defaultValue" | "onChange"> &
     orientation?: "horizontal" | "vertical";
     readOnly?: boolean;
     required?: boolean;
+    size?: "sm" | "md" | "lg";
     value?: string;
   };
 
@@ -26,6 +27,7 @@ const {
   orientation = "vertical",
   readOnly = false,
   required = false,
+  size = "md",
   value,
   class: className,
   ...rest
@@ -44,6 +46,7 @@ const {
   value={value}
   aria-label={legend}
   {...rest}
+  data-size={size}
   data-slot="radio-group"
 >
   {

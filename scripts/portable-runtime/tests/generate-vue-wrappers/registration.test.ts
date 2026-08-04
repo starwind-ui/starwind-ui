@@ -23,7 +23,12 @@ describe("registered Vue Framework Adapter target", () => {
   });
 
   it("registers exactly the approved non-shipping Primitive subset", () => {
-    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(["astro", "react", "vue"]);
+    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual([
+      "astro",
+      "react",
+      "vue",
+      "svelte",
+    ]);
     expect(resolvePrimitiveFrameworkAdapterTargetComponents("vue")).toEqual(vuePrimitiveComponents);
     expect(vueFrameworkAdapterTarget.primitive.support).toEqual({
       components: vuePrimitiveComponents,
@@ -52,6 +57,7 @@ describe("registered Vue Framework Adapter target", () => {
       "astro",
       "react",
       "vue",
+      "svelte",
     ]);
 
     const dialog = primitiveGeneratorRegistry.find((entry) => entry.component === "dialog");

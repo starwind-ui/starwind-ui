@@ -99,6 +99,7 @@ export {
   ComboboxSeparator,
   ComboboxTrigger,
 } from "../components/starwind-runtime/combobox";
+export { comboboxInput } from "../components/starwind-runtime/combobox/variants";
 export {
   ContextMenu,
   ContextMenuCheckboxItem,

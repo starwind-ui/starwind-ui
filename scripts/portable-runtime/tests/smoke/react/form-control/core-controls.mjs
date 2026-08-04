@@ -22,8 +22,8 @@ export async function verifyReactCoreControlCases({ page, messages }) {
     };
   });
   if (
-    inputGroupState.groupCount !== 21 ||
-    inputGroupState.comboboxGroupCount !== 7 ||
+    inputGroupState.groupCount !== 25 ||
+    inputGroupState.comboboxGroupCount !== 11 ||
     inputGroupState.controlCount !== 14 ||
     inputGroupState.textareaControlCount !== 1 ||
     inputGroupState.firstControlSlot !== "input-group-control" ||

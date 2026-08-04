@@ -49,6 +49,7 @@ function SelectContent(props: SelectContentProps) {
           sideOffset={sideOffset}
           data-align-trigger={alignItemWithTrigger ? "true" : "false"}
           {...rest}
+          data-size={size}
           data-slot="select-content"
         >
           <SelectPrimitive.List className={selectList()} data-slot="select-list">

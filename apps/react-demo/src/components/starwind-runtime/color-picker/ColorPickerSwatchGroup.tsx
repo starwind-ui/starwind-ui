@@ -1,17 +1,15 @@
 import ColorPickerPrimitive from "@starwind-ui/react/color-picker";
 import type * as React from "react";
-import type { VariantProps } from "tailwind-variants";
 import { colorPickerSwatchGroup } from "./variants";
 
-export type ColorPickerSwatchGroupProps = React.ComponentPropsWithoutRef<"div"> &
-  VariantProps<typeof colorPickerSwatchGroup>;
+export type ColorPickerSwatchGroupProps = React.ComponentPropsWithoutRef<"div">;
 
 function ColorPickerSwatchGroup(props: ColorPickerSwatchGroupProps) {
-  const { className, size = "md", children, ...rest } = props;
+  const { className, children, ...rest } = props;
 
   return (
     <ColorPickerPrimitive.SwatchGroup
-      className={colorPickerSwatchGroup({ size, class: className })}
+      className={colorPickerSwatchGroup({ class: className })}
       {...rest}
       data-slot="color-picker-swatch-group"
     >

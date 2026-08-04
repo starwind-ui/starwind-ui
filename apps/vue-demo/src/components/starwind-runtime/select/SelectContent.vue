@@ -72,6 +72,7 @@ const attrs = useAttrs();
         :side-offset="sideOffset"
         :data-align-trigger="alignItemWithTrigger ? 'true' : 'false'"
         v-bind="attrs"
+        :data-size="size"
         data-slot="select-content"
       >
         <SelectPrimitive.SelectList :class="selectList()" data-slot="select-list">

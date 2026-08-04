@@ -5,6 +5,7 @@
 
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import { CheckboxIndicatorContext } from "./CheckboxRoot";
 
 export type CheckboxIndicatorProps = React.HTMLAttributes<HTMLSpanElement> & {
   keepMounted?: boolean;
@@ -12,22 +13,40 @@ export type CheckboxIndicatorProps = React.HTMLAttributes<HTMLSpanElement> & {
 
 const CheckboxIndicator = React.forwardRef<HTMLSpanElement, CheckboxIndicatorProps>(
   function CheckboxIndicator({ hidden, keepMounted = false, ...props }, forwardedRef) {
+    const indicatorState = React.useContext(CheckboxIndicatorContext);
+    const active = indicatorState.checked || indicatorState.indeterminate;
+    const indicatorRef = React.useRef<HTMLSpanElement>(null);
     const composedRef = React.useCallback(
       (node: HTMLSpanElement | null) => {
+        const previousNode = indicatorRef.current;
+        if (previousNode && previousNode !== node) {
+          indicatorState.registerIndicatorVisibility(previousNode, false);
+        }
+
+        indicatorRef.current = node;
         if (node) {
-          node.hidden = hidden ?? !keepMounted;
+          indicatorState.registerIndicatorVisibility(node, hidden === true);
+          node.hidden = hidden ?? false;
         }
 
         return setRef(forwardedRef, node);
       },
-      [forwardedRef, hidden, keepMounted],
+      [forwardedRef, hidden, indicatorState],
     );
+
+    if (!keepMounted && !active) return null;
 
     return (
       <span
         data-sw-checkbox-indicator
         data-keep-mounted={keepMounted ? "true" : undefined}
-        data-unchecked
+        data-checked={indicatorState.checked ? "" : undefined}
+        data-disabled={indicatorState.disabled ? "" : undefined}
+        data-indeterminate={indicatorState.indeterminate ? "" : undefined}
+        data-readonly={indicatorState.readOnly ? "" : undefined}
+        data-required={indicatorState.required ? "" : undefined}
+        data-unchecked={!indicatorState.checked ? "" : undefined}
+        hidden={hidden ?? false}
         ref={composedRef}
         {...props}
       />

@@ -246,6 +246,7 @@ export const selectStyledContract: StyledAdapterContract = {
             },
             { name: "asChild", value: { type: "variable", name: "asChild" } },
             { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "data-slot", value: { type: "literal", value: "select-trigger" } },
           ],
           children: [
@@ -431,6 +432,7 @@ export const selectStyledContract: StyledAdapterContract = {
                       },
                     },
                     { name: "spread", value: { type: "variable", name: "rest" } },
+                    { name: "data-size", value: { type: "variable", name: "size" } },
                     { name: "data-slot", value: { type: "literal", value: "select-content" } },
                   ],
                   children: [

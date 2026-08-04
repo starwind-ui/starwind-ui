@@ -293,6 +293,9 @@ export const selectRuntimeAdapterContract = {
       domEvent: "starwind:open-change",
       emitsFrom: "root",
       valueProperty: "open",
+      valueType: "boolean",
+      callbackTiming: "before-state-commit",
+      cancelable: true,
     },
     {
       name: "valueChange",
@@ -301,6 +304,9 @@ export const selectRuntimeAdapterContract = {
       domEvent: "starwind:value-change",
       emitsFrom: "root",
       valueProperty: "value",
+      valueType: "string | null",
+      callbackTiming: "before-state-commit",
+      cancelable: true,
     },
   ],
   setters: [

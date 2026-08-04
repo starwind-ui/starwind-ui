@@ -21,7 +21,6 @@ import {
   getRuntimeOptionProps,
   getRuntimeTypeImportSource,
   getSetterForProp,
-  getSetterForProps,
   getSetterForState,
   getStateModel,
   getStaticAttributeName,
@@ -220,10 +219,7 @@ function getBooleanFormControlStateIndicatorProps(facts: AdapterBooleanFormContr
 }
 
 export function isBooleanFormControlOutputModelPlan(plan: GenericAdapterPlan): boolean {
-  if (
-    plan.category !== "single-boolean-control" ||
-    !["checkbox", "radio", "switch"].includes(plan.component)
-  ) {
+  if (plan.category !== "single-boolean-control") {
     return false;
   }
 
@@ -235,24 +231,38 @@ export function isBooleanFormControlOutputModelPlan(plan: GenericAdapterPlan): b
     (prop) => prop.name === "nativeButton" && prop.targets?.includes("root"),
   );
 
-  return (
-    rootPart?.ownsRuntime === true &&
-    rootPart.defaultElement === "span" &&
-    inputPart?.defaultElement === "input" &&
-    stateModel?.controlledProp === "checked" &&
-    stateModel.defaultProp === "defaultChecked" &&
-    stateModel.valueType === "boolean" &&
-    event?.callbackProp === "onCheckedChange" &&
-    event.valueProperty === "checked" &&
-    (plan.component !== "radio" ||
-      (event.callbackTiming === "before-state-commit" && event.cancelable === true)) &&
-    nativeButtonProp?.defaultValue === "false"
-  );
+  if (
+    !(
+      rootPart?.ownsRuntime === true &&
+      rootPart.defaultElement === "span" &&
+      inputPart?.defaultElement === "input" &&
+      stateModel?.controlledProp === "checked" &&
+      stateModel.defaultProp === "defaultChecked" &&
+      stateModel.valueType === "boolean" &&
+      event?.callbackProp === "onCheckedChange" &&
+      event.valueProperty === "checked" &&
+      nativeButtonProp?.defaultValue === "false"
+    )
+  ) {
+    return false;
+  }
+
+  const shape = getBooleanFormControlShape(plan, inputPart.name);
+  return shape !== undefined && hasExactBooleanFormControlShape(plan, shape, inputPart.name);
 }
 
 export function getBooleanFormControlFacts(
   plan: GenericAdapterPlan,
 ): AdapterBooleanFormControlFacts {
+  const uncheckedInputCandidates = getRuntimeOwnedUncheckedInputParts(plan);
+  if (
+    plan.props.some((prop) => prop.name === "uncheckedValue") &&
+    uncheckedInputCandidates.length !== 1
+  ) {
+    throw new Error(
+      `${plan.displayName} boolean form-control plan must expose exactly one Runtime-owned unchecked input part with constant type="hidden".`,
+    );
+  }
   if (!isBooleanFormControlOutputModelPlan(plan)) {
     throw new Error(`${plan.displayName} generic adapter plan is not a boolean form-control plan.`);
   }
@@ -263,8 +273,7 @@ export function getBooleanFormControlFacts(
     `${plan.displayName} boolean form-control plan is missing hidden input part.`,
   );
   const inputPart = getPart(plan, inputPartName);
-  const stateIndicatorPart =
-    plan.component === "switch" ? getPart(plan, "thumb") : getPart(plan, "indicator");
+  const stateIndicatorPart = getBooleanFormControlStateIndicatorPart(plan);
   const stateModel = getStateModel(plan, "checked");
   const statePropName = getRuntimeOptionProps(plan, [
     getRequiredPlanValue(
@@ -285,28 +294,35 @@ export function getBooleanFormControlFacts(
   const readOnlyPropName = getOptionalRuntimeOptionProp(plan, "readOnly");
   const groupContext = getBooleanFormControlGroupContext(plan);
   const stateIndicatorExport = getOptionalPartExportName(plan, stateIndicatorPart.name);
-  const keepMountedProp =
-    stateIndicatorPart.name === "indicator"
-      ? getAdapterFamilyProp(getRenderingPropForTarget(plan, "indicator"))
-      : undefined;
-  const indeterminateStateModel =
-    plan.component === "checkbox" ? getStateModel(plan, "indeterminate") : undefined;
+  const keepMountedPropName = plan.presence?.keepMountedProp;
+  const keepMountedProp = keepMountedPropName
+    ? getAdapterFamilyProp(getPlanProp(plan, keepMountedPropName))
+    : undefined;
+  const indeterminateStateModel = plan.stateModels.find(
+    (candidate) => candidate.name === "indeterminate",
+  );
   const indeterminatePropName = indeterminateStateModel?.controlledProp
     ? getRuntimeOptionProps(plan, [indeterminateStateModel.controlledProp])[0]
     : undefined;
   const indeterminateSetter = indeterminatePropName
     ? getSetterForState(plan, "indeterminate")
     : undefined;
-  const readOnlySetter =
-    plan.component === "radio" && readOnlyPropName
-      ? getSetterForProp(plan, readOnlyPropName)
-      : undefined;
-  const formOptionsSetter =
-    plan.component === "radio"
-      ? getSetterForProps(plan, ["form", "name", "required", "value"])
-      : plan.component === "switch"
-        ? getSetterForProps(plan, ["form", "name", "required", "uncheckedValue", "value"])
-        : undefined;
+  const readOnlySetter = readOnlyPropName
+    ? plan.setters.find((setter) => "prop" in setter && setter.prop === readOnlyPropName)
+    : undefined;
+  const formOptionsSetter = plan.setters.find(
+    (setter) => "props" in setter && setter.props !== undefined,
+  );
+  const uncheckedInputPart = uncheckedInputCandidates[0];
+  const inputPlacement = plan.refs.some((ref) => ref.part === inputPart.name && ref.public)
+    ? "external"
+    : "nested-when-non-native";
+  const inputIdStrategy =
+    inputPlacement === "external"
+      ? "suffixed-when-native"
+      : uncheckedInputPart
+        ? "always-prop"
+        : "omit-when-native";
 
   return {
     attrs: {
@@ -342,25 +358,25 @@ export function getBooleanFormControlFacts(
     },
     behavior: {
       acceptedChangeNotification: stateEvent.acceptanceNotification,
-      canCancelChange: plan.component !== "radio" || stateEvent.cancelable === true,
-      formResetSync: true,
+      canCancelChange: stateEvent.cancelable !== false,
+      formResetSync: plan.form?.fieldIntegration === true,
       groupStrategy:
-        plan.component === "checkbox"
-          ? "array-includes"
-          : plan.component === "radio"
+        groupContext === undefined
+          ? undefined
+          : groupContext.values.includes("form")
             ? "value-equals"
-            : undefined,
-      hasIndeterminate: plan.component === "checkbox",
-      inputIdStrategy:
-        plan.component === "switch"
-          ? "suffixed-when-native"
-          : plan.component === "radio"
-            ? "omit-when-native"
-            : "always-prop",
-      inputPlacement: plan.component === "switch" ? "external" : "nested-when-non-native",
-      readonlyAriaFalseWhenFalse: plan.component === "checkbox",
+            : "array-includes",
+      hasIndeterminate: indeterminateStateModel !== undefined,
+      inputIdStrategy,
+      inputPlacement,
+      readonlyAriaFalseWhenFalse: indeterminateStateModel !== undefined,
     },
     displayName: plan.displayName,
+    escapeDeclarations: plan.escapeDeclarations.map(({ boundary, reason, tests }) => ({
+      boundary,
+      reason,
+      tests: [...tests],
+    })),
     event: {
       callbackProp: stateEvent.callbackProp,
       detailsType: getRequiredPlanValue(
@@ -393,11 +409,11 @@ export function getBooleanFormControlFacts(
       : undefined,
     input: {
       elementType: getElementType(inputPart.defaultElement),
-      idHelperName: plan.component === "switch" ? `get${plan.displayName}InputId` : undefined,
-      refProp:
-        plan.component === "switch"
-          ? { name: "inputRef", type: getElementType(inputPart.defaultElement) }
-          : undefined,
+      idHelperName:
+        inputIdStrategy === "suffixed-when-native" ? `get${plan.displayName}InputId` : undefined,
+      refProp: plan.refs.some((ref) => ref.part === inputPart.name && ref.public)
+        ? { name: "inputRef", type: getElementType(inputPart.defaultElement) }
+        : undefined,
       type: getRequiredPlanValue(
         plan.form?.hiddenInput?.type,
         `${plan.displayName} boolean form-control plan is missing hidden input type.`,
@@ -412,6 +428,7 @@ export function getBooleanFormControlFacts(
             namespaceKey: toPascalCase(stateIndicatorPart.name),
           }
         : undefined,
+      uncheckedInput: uncheckedInputPart,
     },
     props: {
       defaultState: getAdapterFamilyProp(getPlanProp(plan, defaultStatePropName)),
@@ -487,36 +504,354 @@ export function getBooleanFormControlFacts(
 
 function getBooleanFormControlGroupContext(plan: GenericAdapterPlan) {
   const groupContext = plan.context?.find(
-    (context) =>
-      (context.name === "checkbox-group" || context.name === "radio-group") &&
-      context.direction === "consumes",
+    (context) => context.direction === "consumes" && context.values.includes("value"),
   );
 
-  if (plan.component === "checkbox") {
-    if (!groupContext) {
-      throw new Error(
-        `${plan.displayName} generic adapter plan is missing checkbox-group context.`,
-      );
-    }
-
-    if (!groupContext.values.includes("disabled") || !groupContext.values.includes("value")) {
-      throw new Error(`${plan.displayName} checkbox-group context must expose disabled and value.`);
-    }
-  }
-
-  if (plan.component === "radio") {
-    if (!groupContext) {
-      throw new Error(`${plan.displayName} generic adapter plan is missing radio-group context.`);
-    }
-
-    for (const value of ["disabled", "form", "name", "readOnly", "required", "value"]) {
-      if (!groupContext.values.includes(value)) {
-        throw new Error(
-          `${plan.displayName} radio-group context must expose disabled, form, name, readOnly, required, and value.`,
-        );
-      }
-    }
+  if (groupContext && !groupContext.values.includes("disabled")) {
+    throw new Error(`${plan.displayName} boolean-control context must expose disabled and value.`);
   }
 
   return groupContext;
+}
+
+function getBooleanFormControlStateIndicatorPart(plan: GenericAdapterPlan) {
+  if (plan.presence?.initialHiddenParts.length === 1) {
+    return getPart(plan, plan.presence.initialHiddenParts[0]!);
+  }
+
+  const rootPartName = plan.runtime.rootPart;
+  const inputPartName = plan.form?.hiddenInput?.part;
+  const exportedPartNames = new Set(
+    plan.files.filter((file) => file.kind === "part").map((file) => file.part),
+  );
+  const candidates = plan.parts.filter(
+    (part) =>
+      part.name !== rootPartName && part.name !== inputPartName && exportedPartNames.has(part.name),
+  );
+  if (candidates.length !== 1) {
+    throw new Error(
+      `${plan.displayName} boolean form-control plan must expose one state-indicator part.`,
+    );
+  }
+  return candidates[0]!;
+}
+
+type BooleanFormControlShape = "checkbox" | "radio" | "switch";
+
+function getBooleanFormControlShape(
+  plan: GenericAdapterPlan,
+  inputPartName: string,
+): BooleanFormControlShape | undefined {
+  if (plan.stateModels.some((state) => state.name === "indeterminate")) return "checkbox";
+  if (plan.context?.some((context) => context.values.includes("form"))) return "radio";
+  if (plan.refs.some((ref) => ref.part === inputPartName && ref.public)) return "switch";
+  return undefined;
+}
+
+function hasExactBooleanFormControlShape(
+  plan: GenericAdapterPlan,
+  shape: BooleanFormControlShape,
+  inputPartName: string,
+): boolean {
+  const rootPartName = plan.runtime.rootPart;
+  const indicatorPart = getBooleanFormControlStateIndicatorCandidate(plan);
+  const uncheckedInputs = getRuntimeOwnedUncheckedInputParts(plan);
+  const uncheckedInput = uncheckedInputs[0];
+  const expectedProps = {
+    checkbox: [
+      "checked",
+      "defaultChecked",
+      "disabled",
+      "form",
+      "id",
+      "indeterminate",
+      "keepMounted",
+      "name",
+      "nativeButton",
+      "onCheckedChange",
+      "readOnly",
+      "required",
+      "uncheckedValue",
+      "value",
+    ],
+    radio: [
+      "checked",
+      "defaultChecked",
+      "disabled",
+      "form",
+      "id",
+      "keepMounted",
+      "name",
+      "nativeButton",
+      "onCheckedChange",
+      "readOnly",
+      "required",
+      "value",
+    ],
+    switch: [
+      "checked",
+      "defaultChecked",
+      "disabled",
+      "form",
+      "id",
+      "name",
+      "nativeButton",
+      "onCheckedChange",
+      "readOnly",
+      "required",
+      "uncheckedValue",
+      "value",
+    ],
+  }[shape];
+  const expectedStates = shape === "checkbox" ? ["checked", "indeterminate"] : ["checked"];
+  const expectedRuntimeOptions = expectedProps.filter(
+    (name) => !["keepMounted", "nativeButton", "onCheckedChange"].includes(name),
+  );
+  const expectedSetters = {
+    checkbox: ["prop:disabled", "state:checked", "state:indeterminate"],
+    radio: ["prop:disabled", "prop:readOnly", "props:form,name,required,value", "state:checked"],
+    switch: ["prop:disabled", "props:form,name,required,uncheckedValue,value", "state:checked"],
+  }[shape];
+  const expectedRefs = [
+    `${rootPartName}:true`,
+    `${indicatorPart?.name}:true`,
+    ...(shape === "switch" ? [`${inputPartName}:true`] : []),
+  ];
+  const expectedParts = [
+    rootPartName,
+    inputPartName,
+    indicatorPart?.name,
+    uncheckedInput?.name,
+  ].filter((name): name is string => Boolean(name));
+  const exportedParts = plan.files.filter((file) => file.kind === "part").map((file) => file.part);
+  const exportMemberParts = plan.exports.members.map((member) => member.part);
+
+  return (
+    indicatorPart !== undefined &&
+    uncheckedInputs.length === (shape === "radio" ? 0 : 1) &&
+    hasExactBooleanProps(plan, expectedProps) &&
+    plan.runtime.destroys === true &&
+    hasExactValues(plan.runtime.optionProps ?? [], expectedRuntimeOptions) &&
+    hasExactValues(
+      plan.stateModels.map((state) => state.name),
+      expectedStates,
+    ) &&
+    plan.events.length === 1 &&
+    plan.events[0]?.name === "checkedChange" &&
+    plan.events[0]?.callbackProp === "onCheckedChange" &&
+    hasExactValues(plan.setters.map(getSetterKey), expectedSetters) &&
+    hasExactValues(
+      plan.refs.map((ref) => `${ref.part}:${ref.public}`),
+      expectedRefs,
+    ) &&
+    hasExactValues(
+      plan.parts.map((part) => part.name),
+      expectedParts,
+    ) &&
+    plan.parts.every((part) => part.initExclusionAttributes === undefined) &&
+    hasExactValues(exportedParts, [rootPartName, indicatorPart.name]) &&
+    hasExactValues(exportMemberParts, [rootPartName, indicatorPart.name]) &&
+    plan.files.filter((file) => file.kind === "index").length === 1 &&
+    plan.files.length === 3 &&
+    plan.asChild === undefined &&
+    plan.floating === undefined &&
+    hasExactBooleanContext(plan, shape) &&
+    hasExactBooleanForm(plan, shape, inputPartName) &&
+    hasExactBooleanPresence(plan, shape, indicatorPart.name) &&
+    hasExactBooleanStaticAttributes(
+      plan,
+      shape,
+      rootPartName,
+      indicatorPart.name,
+      inputPartName,
+      uncheckedInput?.name,
+    )
+  );
+}
+
+function hasExactBooleanProps(plan: GenericAdapterPlan, expected: readonly string[]): boolean {
+  return (
+    hasExactValues(
+      plan.props.map((prop) => prop.name),
+      expected,
+    ) &&
+    plan.props.every((prop) => {
+      if (prop.unsupportedTargets !== undefined) return false;
+      if (prop.name === "nativeButton") {
+        return prop.kind === "rendering" && hasExactValues(prop.targets ?? [], ["root"]);
+      }
+      if (prop.name === "keepMounted") {
+        return prop.kind === "rendering" && hasExactValues(prop.targets ?? [], ["indicator"]);
+      }
+      return prop.targets === undefined;
+    })
+  );
+}
+
+function getBooleanFormControlStateIndicatorCandidate(plan: GenericAdapterPlan) {
+  const inputPartName = plan.form?.hiddenInput?.part;
+  const exportedPartNames = new Set(
+    plan.files.filter((file) => file.kind === "part").map((file) => file.part),
+  );
+  const candidates = plan.parts.filter(
+    (part) =>
+      part.name !== plan.runtime.rootPart &&
+      part.name !== inputPartName &&
+      exportedPartNames.has(part.name),
+  );
+  return candidates.length === 1 ? candidates[0] : undefined;
+}
+
+function getRuntimeOwnedUncheckedInputParts(plan: GenericAdapterPlan) {
+  const exportedPartNames = new Set(
+    plan.files.filter((file) => file.kind === "part").map((file) => file.part),
+  );
+  return plan.parts.filter(
+    (part) =>
+      part.name !== plan.form?.hiddenInput?.part &&
+      part.defaultElement === "input" &&
+      !exportedPartNames.has(part.name) &&
+      plan.staticAttributes.some(
+        (attribute) =>
+          attribute.part === part.name &&
+          attribute.name === "type" &&
+          attribute.source === "constant" &&
+          attribute.value === "hidden",
+      ),
+  );
+}
+
+function getSetterKey(setter: GenericAdapterPlan["setters"][number]): string {
+  if ("stateModel" in setter) return `state:${setter.stateModel}`;
+  if ("prop" in setter) return `prop:${setter.prop}`;
+  return `props:${[...(setter.props ?? [])].sort().join(",")}`;
+}
+
+function hasExactValues(actual: readonly string[], expected: readonly string[]): boolean {
+  return (
+    actual.length === expected.length &&
+    new Set(actual).size === actual.length &&
+    expected.every((value) => actual.includes(value))
+  );
+}
+
+function hasExactBooleanContext(plan: GenericAdapterPlan, shape: BooleanFormControlShape): boolean {
+  if (shape === "switch") return plan.context === undefined;
+  if (plan.context?.length !== 1) return false;
+  const context = plan.context[0]!;
+  const values =
+    shape === "checkbox"
+      ? ["disabled", "value"]
+      : ["disabled", "form", "name", "readOnly", "required", "value"];
+  return (
+    context.direction === "consumes" &&
+    context.requirement === "optional" &&
+    hasExactValues(context.values, values)
+  );
+}
+
+function hasExactBooleanForm(
+  plan: GenericAdapterPlan,
+  shape: BooleanFormControlShape,
+  inputPartName: string,
+): boolean {
+  if (
+    !plan.form ||
+    plan.form.fieldIntegration !== true ||
+    plan.form.hiddenInput?.part !== inputPartName
+  ) {
+    return false;
+  }
+  const props =
+    shape === "radio"
+      ? ["form", "id", "name", "required", "value"]
+      : ["form", "id", "name", "required", "uncheckedValue", "value"];
+  return (
+    plan.form.hiddenInput.type === (shape === "radio" ? "radio" : "checkbox") &&
+    hasExactValues(plan.form.props, props)
+  );
+}
+
+function hasExactBooleanPresence(
+  plan: GenericAdapterPlan,
+  shape: BooleanFormControlShape,
+  indicatorPartName: string,
+): boolean {
+  if (shape === "switch") return plan.presence === undefined;
+  return (
+    plan.presence?.keepMountedProp === "keepMounted" &&
+    plan.presence.unmountPolicy === "runtime-owned" &&
+    hasExactValues(plan.presence.initialHiddenParts, [indicatorPartName])
+  );
+}
+
+function hasExactBooleanStaticAttributes(
+  plan: GenericAdapterPlan,
+  shape: BooleanFormControlShape,
+  rootPartName: string,
+  indicatorPartName: string,
+  inputPartName: string,
+  uncheckedInputPartName: string | undefined,
+): boolean {
+  const rootNames = {
+    checkbox: [
+      "aria-checked",
+      "aria-readonly",
+      "aria-required",
+      "data-checked",
+      "data-default-checked",
+      "data-disabled",
+      "data-form",
+      "data-id",
+      "data-indeterminate",
+      "data-name",
+      "data-readonly",
+      "data-required",
+      "data-unchecked",
+      "data-unchecked-value",
+      "data-value",
+    ],
+    radio: [
+      "aria-checked",
+      "data-checked",
+      "data-default-checked",
+      "data-disabled",
+      "data-form",
+      "data-id",
+      "data-name",
+      "data-readonly",
+      "data-required",
+      "data-unchecked",
+      "data-value",
+    ],
+    switch: [
+      "aria-checked",
+      "aria-readonly",
+      "aria-required",
+      "data-checked",
+      "data-default-checked",
+      "data-disabled",
+      "data-filled",
+      "data-form",
+      "data-id",
+      "data-name",
+      "data-readonly",
+      "data-required",
+      "data-unchecked",
+      "data-unchecked-value",
+      "data-value",
+    ],
+  }[shape];
+  const expected = [
+    ...rootNames.map((name) => `${rootPartName}:${name}`),
+    ...(shape === "switch"
+      ? []
+      : ["data-keep-mounted", "data-unchecked"].map((name) => `${indicatorPartName}:${name}`)),
+    ...["type", "aria-hidden", "tabIndex"].map((name) => `${inputPartName}:${name}`),
+    ...(uncheckedInputPartName ? [`${uncheckedInputPartName}:type`] : []),
+  ];
+  return hasExactValues(
+    plan.staticAttributes.map((attribute) => `${attribute.part}:${attribute.name}`),
+    expected,
+  );
 }

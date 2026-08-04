@@ -101,6 +101,13 @@ describe("generated Vue Select Primitive", () => {
     expect(root).toContain("data-sw-select-input");
     expect(root).not.toContain(':value="initialDefaultValue');
     expect(root).toContain("portalReference");
+    expect(root).toContain('if (textElement) return textElement.textContent?.trim() ?? "";');
+    expect(root).toContain("return text.length > 0 ? text : null;");
+    expect(root).toMatch(/emit\("openChange"[\s\S]*detail\.isCanceled[\s\S]*emit\("update:open"/);
+    expect(root).toMatch(
+      /instance\?\.setFormOptions\(\{\s*autoComplete,\s*form,\s*name,\s*required\s*\}\)/,
+    );
+    expect(root).toContain("ownedInstance?.destroy();");
     expect(root).not.toContain("asChild");
 
     expect(portal).toContain("container?: string | HTMLElement");
@@ -108,6 +115,7 @@ describe("generated Vue Select Primitive", () => {
     expect(portal).toContain("select.registerPortal(owner, portalRef.value)");
     expect(portal).toContain("select.registerPortal(owner, null)");
     expect(trigger).not.toContain("asChild");
+    expect(output.get("SelectItem.vue")).toContain(':data-value="props.value"');
     expect(index).toContain("const Select = {");
     expect(index).toContain("useSelectContext");
     expect(index).toContain("SelectOpenChangeDetails");

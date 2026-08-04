@@ -126,20 +126,30 @@ export const hoverCardStyledContract: StyledAdapterContract = {
         ],
         rest: "rest",
       },
+      variables: [
+        {
+          name: "triggerBaseClassName",
+          value: {
+            type: "classVariant",
+            variant: "hoverCardTrigger",
+            args: { class: "className" },
+          },
+        },
+        {
+          name: "triggerClassName",
+          value: {
+            type: "raw",
+            code: "asChild ? className : triggerBaseClassName",
+          },
+        },
+      ],
       render: [
         {
           type: "primitive",
           component: "preview-card",
           part: "Trigger",
           attrs: [
-            {
-              name: "class",
-              value: {
-                type: "classVariant",
-                variant: "hoverCardTrigger",
-                args: { class: "className" },
-              },
-            },
+            { name: "class", value: { type: "variable", name: "triggerClassName" } },
             { name: "asChild", value: { type: "variable", name: "asChild" } },
             { name: "closeDelay", value: { type: "variable", name: "closeDelay" } },
             { name: "disabled", value: { type: "variable", name: "disabled" } },

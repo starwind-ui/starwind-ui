@@ -8,7 +8,7 @@ type Props<Tag extends HTMLTag> = Polymorphic<{ as: Tag }> & VariantProps<typeof
 
 const {
   variant = "default",
-  size = "default",
+  size = "md",
   as: Tag = "div",
   class: className,
   ...rest

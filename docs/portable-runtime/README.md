@@ -14,6 +14,8 @@ composition.
 - `packages/vue` and `apps/vue-demo` are committed verification surfaces, but remain private,
   unversioned, and excluded from npm publication and CLI support claims until the Vue release gate
   is completed.
+- `packages/svelte` is a committed private verification package for Button, Checkbox, and Select.
+  It remains unversioned and excluded from npm publication, demos, and CLI support claims.
 
 ## Primitive Creation Flow
 
@@ -39,8 +41,8 @@ policy; shared generators model framework-neutral facts.
 ## Current Exceptions And Follow-Ups
 
 Astro and React currently expose the same 36 Runtime-backed Primitive families, including Color
-Picker. Vue has a private non-shipping verification package and demo, Solid remains an architecture
-fixture, and Svelte remains deferred.
+Picker. Vue has a private non-shipping verification package and demo, Svelte has a private
+three-component verification package, and Solid remains an architecture fixture.
 
 ## Beta Packages
 

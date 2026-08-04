@@ -9,6 +9,7 @@ export type NavigationMenuPositionerProps = React.ComponentPropsWithoutRef<"div"
   alignOffset?: number;
   avoidCollisions?: boolean;
   collisionPadding?: number;
+  size?: "sm" | "md";
 };
 
 function NavigationMenuPositioner(props: NavigationMenuPositionerProps) {
@@ -19,6 +20,7 @@ function NavigationMenuPositioner(props: NavigationMenuPositionerProps) {
     alignOffset = 0,
     avoidCollisions = true,
     collisionPadding = 8,
+    size = "md",
     className,
     ...rest
   } = props;
@@ -34,6 +36,7 @@ function NavigationMenuPositioner(props: NavigationMenuPositionerProps) {
         avoidCollisions={avoidCollisions}
         collisionPadding={collisionPadding}
         {...rest}
+        data-size={size}
         data-slot="navigation-menu-positioner"
       >
         <NavigationMenuPrimitive.Popup

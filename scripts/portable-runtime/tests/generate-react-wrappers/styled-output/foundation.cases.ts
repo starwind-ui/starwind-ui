@@ -53,6 +53,7 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   const sidebar = await readGeneratedFile(outputRoot, "sidebar/Sidebar.tsx");
   const sidebarTrigger = await readGeneratedFile(outputRoot, "sidebar/SidebarTrigger.tsx");
   const sidebarRail = await readGeneratedFile(outputRoot, "sidebar/SidebarRail.tsx");
+  const sidebarGroupLabel = await readGeneratedFile(outputRoot, "sidebar/SidebarGroupLabel.tsx");
   const sidebarMenuButton = await readGeneratedFile(outputRoot, "sidebar/SidebarMenuButton.tsx");
   const sidebarStyles = await readGeneratedFile(outputRoot, "sidebar/styles.css");
   const sidebarVariants = await readGeneratedFile(outputRoot, "sidebar/variants.ts");
@@ -365,6 +366,22 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   expect(sidebarRail).toContain('SidebarPrimitive from "../primitives/react/sidebar"');
   expect(sidebarRail).toContain("<SidebarPrimitive.Rail");
   expect(sidebarRail).toContain("tabIndex={-1}");
+  const sidebarGroupLabelImplementation = sidebarGroupLabel.slice(
+    sidebarGroupLabel.indexOf("function SidebarGroupLabel"),
+  );
+  expect(sidebarGroupLabelImplementation).toContain("function SidebarGroupLabel");
+  expect(
+    sidebarGroupLabelImplementation.match(
+      /<div\b(?=[^>]*\bclassName=\{sidebarGroupLabel\(\{\s*class:\s*className\s*\}\)\})(?=[^>]*\bdata-as-child=\{asChild\s*\?\s*true\s*:\s*undefined\})(?=[^>]*\bdata-slot="sidebar-group-label")[^>]*>\s*\{children\}\s*<\/div>/g,
+    ) ?? [],
+  ).toHaveLength(1);
+  expect(sidebarGroupLabelImplementation.match(/<div\b/g) ?? []).toHaveLength(1);
+  expect(sidebarGroupLabelImplementation.match(/\basChild\s*\?/g) ?? []).toHaveLength(1);
+  expect(sidebarGroupLabel).not.toContain("SidebarPrimitive");
+  expect(sidebarGroupLabel).not.toContain("cloneElement");
+  expect(sidebarGroupLabel).not.toContain("if (asChild)");
+  expect(sidebarGroupLabel).not.toMatch(/asChild\s*\?\s*</);
+  expect(sidebarGroupLabel).not.toContain("return children;");
   expect(sidebarMenuButton).toContain('import "./styles.css";');
   expect(sidebarMenuButton).toContain("<Tooltip");
   expect(sidebarMenuButton).toContain("<TooltipTrigger");
@@ -395,7 +412,7 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   expect(card).toContain("<div");
   expect(card).toContain("VariantProps<typeof card>");
   expect(card).toContain("ref?: React.Ref<HTMLDivElement>;");
-  expect(card).toContain('const { size = "default", ref, className, children, ...rest } = props;');
+  expect(card).toContain('const { size = "md", ref, className, children, ...rest } = props;');
   expect(card).toContain("card({ size, class: className })");
   expect(card).toContain("data-size={size}");
   expect(card).toContain("ref={ref}");
@@ -427,7 +444,7 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   expect(cardVariants).toContain("bg-card text-card-foreground group/card");
   expect(cardVariants).toContain("gap-(--card-spacing)");
   expect(cardVariants).toContain("py-(--card-spacing)");
-  expect(cardVariants).toContain('default: "[--card-spacing:--spacing(5)]"');
+  expect(cardVariants).toContain('md: "[--card-spacing:--spacing(5)]"');
   expect(cardVariants).toMatch(
     /sm: "(?:text-sm \[--card-spacing:--spacing\(4\)\]|\[--card-spacing:--spacing\(4\)\] text-sm)"/,
   );

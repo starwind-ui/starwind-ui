@@ -1,4 +1,6 @@
 ---
+import ComboboxPrimitive from "@starwind-ui/astro/combobox";
+
 import { button } from "@/components/starwind-runtime/button/variants";
 import {
   Combobox,
@@ -7,11 +9,13 @@ import {
   ComboboxGroup,
   ComboboxGroupLabel,
   ComboboxInput,
+  ComboboxInputGroup,
   ComboboxItem,
   ComboboxLabel,
   ComboboxSeparator,
   ComboboxTrigger,
 } from "@/components/starwind-runtime/combobox";
+import { comboboxInput } from "@/components/starwind-runtime/combobox/variants";
 import { InputGroupAddon } from "@/components/starwind-runtime/input-group";
 
 const comboboxFruits = [
@@ -145,6 +149,76 @@ const comboboxDesserts = [
           }
         </ComboboxContent>
       </Combobox>
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Small control and content</h3>
+      <ComboboxPrimitive.Root id="runtime-combobox-size-sm" defaultValue="apple">
+        <ComboboxInputGroup size="sm">
+          <ComboboxPrimitive.Input
+            class={comboboxInput()}
+            data-slot="combobox-input"
+            placeholder="Small combobox"
+          />
+        </ComboboxInputGroup>
+        <ComboboxContent id="runtime-combobox-size-sm-content" size="sm">
+          <ComboboxItem value="apple">Apple</ComboboxItem>
+          <ComboboxItem value="banana">Banana</ComboboxItem>
+        </ComboboxContent>
+      </ComboboxPrimitive.Root>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Medium control and content</h3>
+      <ComboboxPrimitive.Root id="runtime-combobox-size-md" defaultValue="apple">
+        <ComboboxInputGroup size="md">
+          <ComboboxPrimitive.Input
+            class={comboboxInput()}
+            data-slot="combobox-input"
+            placeholder="Medium combobox"
+          />
+        </ComboboxInputGroup>
+        <ComboboxContent id="runtime-combobox-size-md-content" size="md">
+          <ComboboxItem value="apple">Apple</ComboboxItem>
+          <ComboboxItem value="banana">Banana</ComboboxItem>
+        </ComboboxContent>
+      </ComboboxPrimitive.Root>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Large control and content</h3>
+      <ComboboxPrimitive.Root id="runtime-combobox-size-lg" defaultValue="apple">
+        <ComboboxInputGroup size="lg">
+          <ComboboxPrimitive.Input
+            class={comboboxInput()}
+            data-slot="combobox-input"
+            placeholder="Large combobox"
+          />
+        </ComboboxInputGroup>
+        <ComboboxContent id="runtime-combobox-size-lg-content" size="lg">
+          <ComboboxItem value="apple">Apple</ComboboxItem>
+          <ComboboxItem value="banana">Banana</ComboboxItem>
+        </ComboboxContent>
+      </ComboboxPrimitive.Root>
+    </div>
+
+    <div class="space-y-3">
+      <h3 class="font-heading text-base font-semibold">Mismatched control and content</h3>
+      <ComboboxPrimitive.Root id="runtime-combobox-size-mismatch" defaultValue="apple">
+        <ComboboxInputGroup size="sm">
+          <ComboboxPrimitive.Input
+            class={comboboxInput()}
+            data-slot="combobox-input"
+            placeholder="Small control"
+          />
+        </ComboboxInputGroup>
+        <ComboboxContent id="runtime-combobox-size-mismatch-content" size="lg">
+          <ComboboxItem value="apple">Large popup item</ComboboxItem>
+          <ComboboxItem value="banana">Another item</ComboboxItem>
+        </ComboboxContent>
+      </ComboboxPrimitive.Root>
     </div>
   </div>
 </section>

@@ -7,12 +7,11 @@ import { paginationPrevious } from "./variants";
 
 type Props = ComponentProps<typeof PaginationLink>;
 
-const { size = "md", class: className, ...rest } = Astro.props;
+const { class: className, ...rest } = Astro.props;
 ---
 
 <PaginationLink
   aria-label="Go to previous page"
-  size={size}
   class={paginationPrevious({ class: className })}
   {...rest}
   data-slot="pagination-previous"

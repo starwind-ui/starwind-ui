@@ -4,7 +4,68 @@ export async function verifyHoverCardCases({ page, ids, label }) {
   const initialState = await page.evaluate(readHoverCardState, {
     asChildTrigger: ids.asChildTrigger,
     demo: ids.demo,
+    nativeTrigger: ids.nativeTrigger,
+    styledTrigger: ids.sideTrigger("top"),
   });
+
+  const nativeRecipeClasses = [
+    "inline-flex",
+    "items-center",
+    "justify-center",
+    "focus-visible:ring-outline/50",
+    "transition-[color,box-shadow]",
+    "outline-none",
+    "focus-visible:ring-3",
+    "disabled:pointer-events-none",
+  ];
+  if (
+    !nativeRecipeClasses.every((className) => initialState.nativeClasses.includes(className)) ||
+    initialState.nativeClasses.includes("cursor-help") !== true ||
+    initialState.nativeCursor !== "help" ||
+    initialState.nativeSlot !== "hover-card-trigger" ||
+    nativeRecipeClasses.some((className) => initialState.asChildClasses.includes(className)) ||
+    initialState.asChildClasses.includes("tracking-[0.123px]") !== true ||
+    initialState.asChildClasses.includes("uppercase") !== true ||
+    initialState.asChildLetterSpacing !== "0.123px" ||
+    initialState.asChildTextTransform !== "uppercase" ||
+    initialState.asChildWordSpacing !== "1.234px" ||
+    initialState.asChildSlot !== "hover-card-trigger" ||
+    initialState.styledClasses.includes("tracking-[0.234px]") !== true ||
+    initialState.styledClasses.includes("uppercase") !== true ||
+    initialState.styledLetterSpacing !== "0.234px" ||
+    initialState.styledSlot !== ids.styledSlot
+  ) {
+    throw new Error(
+      `Expected ${label} HoverCard trigger appearance to keep the native recipe and delegate asChild appearance and slots, got ${JSON.stringify(
+        initialState,
+      )}.`,
+    );
+  }
+
+  await page.locator(`#${ids.nativeTrigger}`).hover();
+  await page.locator(`#${ids.nativeContent}`).waitFor({ state: "visible" });
+  const nativeState = await page.evaluate(readOpenContentState, {
+    contentId: ids.nativeContent,
+    triggerId: ids.nativeTrigger,
+  });
+  if (
+    nativeState.hidden !== false ||
+    nativeState.state !== "open" ||
+    nativeState.triggerState !== "open" ||
+    nativeState.triggerDescribedBy !== ids.nativeContent ||
+    (await page.locator(`#${ids.nativeContent}`).textContent())?.trim() !== "Native trigger content"
+  ) {
+    throw new Error(
+      `Expected ${label} native HoverCard trigger to retain interaction and visible content, got ${JSON.stringify(
+        nativeState,
+      )}.`,
+    );
+  }
+  await page.mouse.move(0, 0);
+  await page.waitForFunction(
+    ({ contentId }) => document.getElementById(contentId)?.getAttribute("data-state") === "closed",
+    { contentId: ids.nativeContent },
+  );
 
   for (const side of ["top", "right", "bottom", "left"]) {
     const triggerId = ids.sideTrigger(side);
@@ -129,11 +190,30 @@ export async function verifyHoverCardCases({ page, ids, label }) {
     );
   }
 
-  await page.keyboard.press("Tab");
+  await page.locator(`#${ids.asChildTrigger}`).evaluate((element) => element.blur());
   await page.waitForFunction(
     ({ contentId }) => document.getElementById(contentId)?.getAttribute("data-state") === "closed",
     { contentId: ids.asChildContent },
   );
+
+  await page.locator(`#${ids.asChildTrigger}`).click();
+  const listenerState = await page.evaluate(
+    ({ listenerId, triggerId }) => ({
+      countText: document.getElementById(listenerId)?.textContent ?? null,
+      triggerCount: document.getElementById(triggerId)?.getAttribute("data-listener-count") ?? null,
+    }),
+    { listenerId: ids.asChildListenerCount, triggerId: ids.asChildTrigger },
+  );
+  if (listenerState.countText !== "1" || listenerState.triggerCount !== "1") {
+    throw new Error(
+      `Expected ${label} HoverCard asChild trigger to preserve the child listener, got ${JSON.stringify(
+        listenerState,
+      )}.`,
+    );
+  }
+  await page.locator(`#${ids.asChildTrigger}`).evaluate((element) => element.blur());
+  await page.keyboard.press("Escape");
+  await page.mouse.move(0, 0);
 
   await page.locator(`#${ids.hoverableTrigger}`).hover();
   await page.locator(`#${ids.hoverableContent}`).waitFor({ state: "visible" });
@@ -164,7 +244,6 @@ export async function verifyHoverCardCases({ page, ids, label }) {
     ({ contentId }) => document.getElementById(contentId)?.getAttribute("data-state") === "closed",
     { contentId: ids.nonHoverableContent },
   );
-
   if (ids.controlledTrigger && ids.controlledContent) {
     await page.locator(`#${ids.controlledTrigger}`).hover();
     await page.waitForFunction(
@@ -268,14 +347,33 @@ async function waitForFloatingPosition(page, options = undefined) {
 }
 
 function readHoverCardState(ids) {
+  const asChildTrigger = document.getElementById(ids.asChildTrigger);
+  const nativeTrigger = document.getElementById(ids.nativeTrigger);
+  const styledTrigger = document.getElementById(ids.styledTrigger);
   return {
-    asChildTriggerTag: document.getElementById(ids.asChildTrigger)?.tagName ?? null,
+    asChildClasses: Array.from(asChildTrigger?.classList ?? []),
+    asChildLetterSpacing:
+      asChildTrigger instanceof HTMLElement ? getComputedStyle(asChildTrigger).letterSpacing : null,
+    asChildSlot: asChildTrigger?.getAttribute("data-slot") ?? null,
+    asChildTextTransform:
+      asChildTrigger instanceof HTMLElement ? getComputedStyle(asChildTrigger).textTransform : null,
+    asChildTriggerTag: asChildTrigger?.tagName ?? null,
+    asChildWordSpacing:
+      asChildTrigger instanceof HTMLElement ? getComputedStyle(asChildTrigger).wordSpacing : null,
+    nativeClasses: Array.from(nativeTrigger?.classList ?? []),
+    nativeCursor:
+      nativeTrigger instanceof HTMLElement ? getComputedStyle(nativeTrigger).cursor : null,
+    nativeSlot: nativeTrigger?.getAttribute("data-slot") ?? null,
     openRootCount: document.querySelectorAll(
       `#${ids.demo} [data-slot='hover-card'][data-state='open']`,
     ).length,
     rootCount: document.querySelectorAll(
       `#${ids.demo} [data-slot='hover-card'][data-sw-preview-card]`,
     ).length,
+    styledClasses: Array.from(styledTrigger?.classList ?? []),
+    styledLetterSpacing:
+      styledTrigger instanceof HTMLElement ? getComputedStyle(styledTrigger).letterSpacing : null,
+    styledSlot: styledTrigger?.getAttribute("data-slot") ?? null,
   };
 }
 

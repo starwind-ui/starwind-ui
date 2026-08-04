@@ -201,7 +201,7 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
     expect(directRuntimeRefs).toEqual([]);
   });
 
-  it("generates the complete controlled React Color Picker composition deterministically", async () => {
+  it("generates the simplified controlled React Color Picker composition deterministically", async () => {
     const tempRoot = getTempRoot();
     const outputDir = "generated/starwind-runtime";
     const primitiveOutputDir = "generated/starwind-runtime/primitives/react";
@@ -213,126 +213,87 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
     const outputRoot = path.join(tempRoot, outputDir);
     const firstTree = await readGeneratedTree(path.join(outputRoot, "color-picker"));
     const root = firstTree["ColorPicker.tsx"];
-    const inlineRoot = firstTree["ColorPickerRoot.tsx"];
     const content = firstTree["ColorPickerContent.tsx"];
+    const editor = firstTree["ColorPickerDefaultEditor.tsx"];
     const area = firstTree["ColorPickerArea.tsx"];
     const channelSlider = firstTree["ColorPickerChannelSlider.tsx"];
     const input = firstTree["ColorPickerInput.tsx"];
-    const formatSelect = firstTree["ColorPickerFormatSelect.tsx"];
-    const nativeFormatSelect = firstTree["ColorPickerNativeFormatSelect.tsx"];
-    const valueInput = firstTree["ColorPickerValueInput.tsx"];
     const trigger = firstTree["ColorPickerTrigger.tsx"];
     const index = firstTree["index.ts"];
     const styles = firstTree["styles.css"];
     const variants = firstTree["variants.ts"];
-    const popoverOpen = root.match(/<Popover[\s\S]*?>/)?.[0];
 
     expect(Object.keys(firstTree).sort()).toEqual([
       "ColorPicker.tsx",
       "ColorPickerArea.tsx",
-      "ColorPickerAreaThumb.tsx",
       "ColorPickerChannelInput.tsx",
       "ColorPickerChannelSlider.tsx",
       "ColorPickerClear.tsx",
       "ColorPickerContent.tsx",
-      "ColorPickerControl.tsx",
+      "ColorPickerDefaultEditor.tsx",
       "ColorPickerEyeDropper.tsx",
-      "ColorPickerFormatSelect.tsx",
-      "ColorPickerHiddenInput.tsx",
       "ColorPickerInput.tsx",
-      "ColorPickerLabel.tsx",
-      "ColorPickerNativeFormatSelect.tsx",
-      "ColorPickerRoot.tsx",
-      "ColorPickerSliders.tsx",
       "ColorPickerSwatch.tsx",
       "ColorPickerSwatchGroup.tsx",
       "ColorPickerTrigger.tsx",
-      "ColorPickerValueInput.tsx",
       "ColorPickerValueSwatch.tsx",
       "index.ts",
       "styles.css",
       "variants.ts",
     ]);
     expect(root).toContain('import { Popover } from "../popover";');
-    expect(root).toContain('import ColorPickerRoot from "./ColorPickerRoot";');
+    expect(root).toContain('import ColorPickerPrimitive from "../primitives/react/color-picker";');
     expect(root).toContain('import * as React from "react";');
     expect(root).toContain("React.forwardRef<HTMLDivElement, ColorPickerProps>");
     expect(root).toContain("function ColorPicker(props, forwardedRef)");
     expect(root).not.toMatch(/&\s*React\.ComponentProps<typeof Popover>/);
     expect(root).toContain("value={value}");
-    expect(root).toContain("format={format}");
-    expect(root).not.toContain('format = "hex"');
+    expect(root).toContain("format={resolvedFormat}");
+    expect(root).toContain("alpha = true");
+    expect(root).toContain("inline = false");
+    expect(root).toContain("allowEmpty={clearable}");
     expect(root).toContain("onValueChange={onValueChange}");
     expect(root).toContain("onValueCommitted={onValueCommitted}");
-    expect(root).toContain("onFormatChange={onFormatChange}");
-    expect(root).toContain("onFormatChange,");
+    expect(root).toContain("onFormatChange={handleFormatChange}");
     expect(root).toContain("defaultOpen={defaultOpen}");
     expect(root).toContain("onOpenChange={onOpenChange}");
-    expect(popoverOpen).not.toContain("{...rest}");
-    expect(root).toMatch(/<ColorPickerRoot[\s\S]*?\{\.\.\.rest\}[\s\S]*?data-floating-root/);
-    expect(root).not.toContain("useState");
-    expect(root).not.toContain("setValue");
-    expect(root).not.toContain("setFormat");
+    expect(root).toMatch(
+      /<ColorPickerPrimitive\.Root[\s\S]*?\{\.\.\.rest\}[\s\S]*?data-floating-root/,
+    );
+    expect(root).toContain("React.useState(initialFormat)");
+    expect(root).toContain("requestedFormats.includes(resolvedFormat)");
     expect(root).not.toContain("open={value}");
     expect(root).toContain("data-floating-root={true}");
-    expect(inlineRoot).toContain(
-      'import ColorPickerPrimitive from "../primitives/react/color-picker";',
-    );
-    expect(inlineRoot).toContain("<ColorPickerPrimitive.Root");
-    expect(inlineRoot).toContain('import * as React from "react";');
-    expect(inlineRoot).toContain("React.forwardRef<HTMLDivElement, ColorPickerRootProps>");
-    expect(inlineRoot).toContain("function ColorPickerRoot(props, forwardedRef)");
-    expect(inlineRoot).toContain("ref={forwardedRef}");
-    expect(inlineRoot).not.toMatch(/\bref,\s*\n/);
-    expect(inlineRoot).toContain(
-      'defaultValue?: import("@starwind-ui/runtime/color-picker").ColorPickerValue',
-    );
-    expect(inlineRoot).toContain("onValueChange={onValueChange}");
-    expect(inlineRoot).not.toContain("Popover");
-    expect(inlineRoot).not.toContain("data-floating-root");
-    expect(content).toMatch(/<ColorPickerArea\s+size=\{size\}\s*\/>/);
-    expect(content).toContain('data-slot="color-picker-slider-action-row"');
-    expect(content).toMatch(
-      /<ColorPickerSliders\s+alpha=\{alpha\}\s+size=\{size\}\s+className="min-w-0 flex-1"\s*\/>/,
-    );
-    expect(content).toContain("{showEyeDropper && (");
-    expect(content).toContain('data-slot="color-picker-value-format-row"');
-    expect(content).toContain('const inputSize = size === "lg" ? "md" : "sm";');
-    expect(content).toMatch(
-      /<ColorPickerInput\s+size=\{inputSize\}\s+className="min-w-0 flex-1"\s*\/>/,
-    );
-    expect(content).toContain("{showClear && (");
-    expect(content).toContain('data-slot="color-picker-separator"');
-    expect(content).toContain("{swatches}");
+    expect(root).toContain('size = "md"');
+    expect(root).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
+    expect(root.match(/<ColorPickerPrimitive\.Root/g)).toHaveLength(2);
+    expect(root.match(/<ColorPickerPrimitive\.HiddenInput/g)).toHaveLength(2);
+    expect(root).toContain("Parameters<NonNullable<typeof onFormatChange>>");
+    expect(content).toContain("<ColorPickerDefaultEditor");
     expect(content).toContain("<PopoverContent");
+    expect(content).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
+    expect(editor).toContain("<ColorPickerArea");
+    expect(editor.match(/<ColorPickerChannelSlider/g)).toHaveLength(2);
+    expect(editor).toContain("normalizedSwatches.map");
+    expect(editor).toContain("<ColorPickerClear");
     expect(area).not.toContain("Popover");
     expect(input).not.toContain("Popover");
-    expect(input).toContain('formatControl?: "select" | "native";');
+    expect(input).toContain('formatControl?: "select" | "native" | "none";');
     expect(input).toContain('formatControl = "select"');
-    expect(input).toMatch(/<ColorPickerValueInput\s+size=\{size\}\s*\/>/);
+    expect(input).toContain('formatContentSize = "md"');
+    expect(input).toMatch(/<SelectContent\s+size=\{formatContentSize\}/);
+    expect(input).not.toContain("size?:");
+    expect(input).toContain("<ColorPickerPrimitive.ValueInput");
     expect(input).toContain('formatControl === "native"');
-    expect(input).toMatch(/<ColorPickerNativeFormatSelect\s+size=\{size\}\s*\/>/);
-    expect(input).toMatch(/<ColorPickerFormatSelect\s+size=\{size\}\s*\/>/);
-    expect(formatSelect).toContain(
-      'import { Select, SelectContent, SelectItem, SelectTrigger } from "../select";',
-    );
-    expect(formatSelect).toContain("<ColorPickerPrimitive.FormatControl");
-    expect(formatSelect).toContain('data-sw-color-picker-format-options=""');
-    expect(formatSelect.match(/value="(?:hex|rgb|hsl|hsb)"/g)).toHaveLength(4);
-    expect(nativeFormatSelect).toContain('import { NativeSelectOption } from "../native-select";');
-    expect(nativeFormatSelect).toContain("<ColorPickerPrimitive.FormatSelect");
-    expect(nativeFormatSelect).toContain('data-slot="color-picker-native-format-select"');
-    expect(valueInput).toContain("<ColorPickerPrimitive.ValueInput");
-    expect(valueInput).toContain('data-slot="color-picker-value-input"');
-    expect(valueInput).toContain('Omit<React.ComponentPropsWithoutRef<"input">, "size">');
+    expect(input).toContain("<ColorPickerPrimitive.FormatSelect");
+    expect(input).toContain("<ColorPickerPrimitive.FormatControl");
+    expect(input).toContain("normalizedFormats.map");
     expect(trigger).toContain("<PopoverTrigger");
+    expect(trigger).not.toContain("size?:");
     expect(index).toContain("const ColorPickerVariants = {");
     expect(index).toContain("Root: ColorPicker");
-    expect(index).toContain("InlineRoot: ColorPickerRoot");
-    expect(index).toContain("ValueInput: ColorPickerValueInput");
-    expect(index).toContain("NativeFormatSelect: ColorPickerNativeFormatSelect");
-    expect(index).toContain("FormatSelect: ColorPickerFormatSelect");
-    expect(index).toContain("HiddenInput: ColorPickerHiddenInput");
+    expect(index).not.toContain("InlineRoot");
+    expect(index).not.toContain("ColorPickerDefaultEditor");
     expect(styles).toContain('[data-slot="color-picker-transparency-grid"]');
     expect(styles).toContain('[data-slot="color-picker-channel-slider"][data-channel="hue"]');
     expect(styles).toContain(

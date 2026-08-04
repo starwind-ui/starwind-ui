@@ -1,10 +1,7 @@
 ---
 import {
   ColorPickerContent,
-  ColorPickerControl,
-  ColorPickerHiddenInput,
   ColorPickerInput,
-  ColorPickerLabel,
   ColorPickerTrigger,
   ColorPickerValueSwatch,
 } from "@/components/starwind-runtime/color-picker";
@@ -33,8 +30,8 @@ const {
 } = Astro.props;
 ---
 
-<ColorPickerLabel id={`${id}-label`} initial={initial.label.initial}>{label}</ColorPickerLabel>
-<ColorPickerControl initial={initial.control.initial}>
+<span id={`${id}-label`} class="text-sm font-medium">{label}</span>
+<div class="flex items-center gap-2">
   <ColorPickerValueSwatch initial={initial} />
   {
     popup ? (
@@ -47,16 +44,10 @@ const {
       <ColorPickerInput initial={initial} data-testid={`${id}-control-input`} />
     )
   }
-</ColorPickerControl>
+</div>
 {
   popup ? (
-    <ColorPickerContent
-      initial={initial}
-      alpha={alpha}
-      showEyeDropper
-      showClear={clear}
-      aria-label={`${label} editor`}
-    >
+    <ColorPickerContent initial={initial} showEyeDropper aria-label={`${label} editor`}>
       <ColorPickerEditor {initial} {id} {label} {alpha} {channels} {swatches} {clear} />
     </ColorPickerContent>
   ) : (
@@ -65,4 +56,3 @@ const {
     </div>
   )
 }
-<ColorPickerHiddenInput initial={initial.hiddenInput.initial} />

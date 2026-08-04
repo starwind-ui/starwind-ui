@@ -19,6 +19,7 @@ describe("test file home guardrail", () => {
         "packages/cli/tests/commands/init.test.ts",
         "packages/react/tests/color-picker.browser.test.tsx",
         "packages/runtime/tests/components/button/button.browser.test.ts",
+        "packages/svelte/tests/package-build.ssr.test.ts",
       ]),
     ).toEqual([]);
   });
@@ -92,6 +93,11 @@ describe("test file home guardrail", () => {
     expect(findTestSuiteOwners("scripts/tests/check-test-homes.test.ts")).toEqual(["repo-scripts"]);
     expect(
       findTestSuiteOwners(
+        "scripts/portable-runtime/tests/generate-svelte-proof/generation.test.ts",
+      ),
+    ).toEqual(["portable-svelte"]);
+    expect(
+      findTestSuiteOwners(
         "scripts/portable-runtime/tests/generate-vue-wrappers/styled-public-contract.test.ts",
       ),
     ).toEqual(["portable-vue"]);
@@ -100,6 +106,9 @@ describe("test file home guardrail", () => {
     ).toEqual(["portable-runtime"]);
     expect(findTestSuiteOwners("packages/runtime/tests/package-exports.test.ts")).toEqual([
       "runtime",
+    ]);
+    expect(findTestSuiteOwners("packages/svelte/tests/package-build.ssr.test.ts")).toEqual([
+      "svelte",
     ]);
   });
 

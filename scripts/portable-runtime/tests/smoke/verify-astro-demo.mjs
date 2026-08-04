@@ -12,6 +12,7 @@ import { verifyAstroFoundationCases } from "./astro/foundation-cases.mjs";
 import { verifyAstroMediaOverlayCases } from "./astro/media-overlay-cases.mjs";
 import { verifyAstroSheetMenuCases } from "./astro/sheet-menu-cases.mjs";
 import { waitForAstroSmokePage } from "./astro-smoke-readiness.mjs";
+import { verifyNavigationMenuSizingCases } from "./shared/navigation-menu-sizing.mjs";
 import { verifyNestedSidebarPageCases, verifySidebarCases } from "./shared/sidebar.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -122,6 +123,12 @@ try {
   await verifyAstroColorPickerCases({ page });
 
   await verifyAstroFoundationCases({ page });
+  await verifyNavigationMenuSizingCases({
+    page,
+    prefix: "runtime-navigation-menu",
+    label: "Astro",
+    composedDataSlot: "button",
+  });
   await verifyAstroCarouselCases({ page });
   await page.goto(`http://${HOST}:${PORT}/pages/runtime-sidebar-demo`, {
     waitUntil: SERVER_MODE === "dev" ? "domcontentloaded" : "networkidle",
@@ -448,7 +455,7 @@ async function verifyAstroColorPickerCases({ page }) {
   }
 
   const beforeSwatch = await root.getAttribute("data-value");
-  await content.getByRole("button", { name: "Sky swatch" }).click();
+  await content.getByRole("button", { name: "Sky" }).click();
   if ((await root.getAttribute("data-value")) === beforeSwatch) {
     throw new Error("Canonical consumer swatch did not update the Color Picker value.");
   }
@@ -459,12 +466,12 @@ async function verifyAstroColorPickerCases({ page }) {
     throw new Error("Canonical Color Picker did not restore focus to its trigger.");
   }
 
-  await nativeSelect.selectOption("hsb");
+  await nativeSelect.selectOption("hex");
   if (
-    (await nativeRoot.getAttribute("data-format")) !== "hsb" ||
-    (await nativeSelect.inputValue()) !== "hsb"
+    (await nativeRoot.getAttribute("data-format")) !== "hex" ||
+    (await nativeSelect.inputValue()) !== "hex"
   ) {
-    throw new Error("Canonical native format control did not synchronize to HSB.");
+    throw new Error("Canonical restricted native format control did not synchronize to HEX.");
   }
 }
 

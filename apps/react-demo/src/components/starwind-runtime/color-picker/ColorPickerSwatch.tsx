@@ -1,23 +1,21 @@
 import type * as React from "react";
-import type { VariantProps } from "tailwind-variants";
 import "./styles.css";
 import ColorPickerPrimitive from "@starwind-ui/react/color-picker";
 import { colorPickerSwatch } from "./variants";
 
-export type ColorPickerSwatchProps = React.ComponentPropsWithoutRef<"button"> &
-  VariantProps<typeof colorPickerSwatch> & {
-    value: import("@starwind-ui/react/color-picker").ColorPickerValue;
-    disabled?: boolean;
-  };
+export type ColorPickerSwatchProps = Omit<React.ComponentPropsWithoutRef<"button">, "value"> & {
+  value: import("@starwind-ui/react/color-picker").ColorPickerValue;
+  disabled?: boolean;
+};
 
 function ColorPickerSwatch(props: ColorPickerSwatchProps) {
-  const { value, disabled = false, className, size = "md", children, ...rest } = props;
+  const { value, disabled = false, className, children, ...rest } = props;
 
   return (
     <ColorPickerPrimitive.Swatch
       swatchValue={value}
       swatchDisabled={disabled}
-      className={colorPickerSwatch({ size, class: className })}
+      className={colorPickerSwatch({ class: className })}
       {...rest}
       data-slot="color-picker-swatch"
     >

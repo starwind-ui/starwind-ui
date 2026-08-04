@@ -1,21 +1,19 @@
 ---
 import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
 import type { ComponentProps } from "astro/types";
-import type { VariantProps } from "tailwind-variants";
 import { PopoverTrigger } from "../popover";
 import { colorPickerTrigger, colorPickerValueSwatch } from "./variants";
 
-type Props = ComponentProps<typeof PopoverTrigger> &
-  VariantProps<typeof colorPickerTrigger> & {
-    showValueText?: boolean;
-    initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
-  };
+type Props = ComponentProps<typeof PopoverTrigger> & {
+  showValueText?: boolean;
+  initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+};
 
-const { initial, class: className, size = "md", showValueText = true, ...rest } = Astro.props;
+const { initial, class: className, showValueText = true, ...rest } = Astro.props;
 ---
 
 <PopoverTrigger
-  class={colorPickerTrigger({ size, class: className })}
+  class={colorPickerTrigger({ class: className })}
   {...rest}
   data-slot="color-picker-trigger"
 >
@@ -23,7 +21,7 @@ const { initial, class: className, size = "md", showValueText = true, ...rest } 
 
   <ColorPickerPrimitive.ValueSwatch
     initial={initial?.valueSwatch.initial}
-    class={colorPickerValueSwatch({ size })}
+    class={colorPickerValueSwatch()}
     data-slot="color-picker-value-swatch"
   >
     <ColorPickerPrimitive.TransparencyGrid

@@ -7,9 +7,6 @@ import { userEvent } from "vitest/browser";
 import ColorPicker from "../../../apps/react-demo/src/components/starwind-runtime/color-picker/ColorPicker";
 import ColorPickerContent from "../../../apps/react-demo/src/components/starwind-runtime/color-picker/ColorPickerContent";
 import ColorPickerInput from "../../../apps/react-demo/src/components/starwind-runtime/color-picker/ColorPickerInput";
-import ColorPickerRoot from "../../../apps/react-demo/src/components/starwind-runtime/color-picker/ColorPickerRoot";
-import ColorPickerSwatch from "../../../apps/react-demo/src/components/starwind-runtime/color-picker/ColorPickerSwatch";
-import ColorPickerSwatchGroup from "../../../apps/react-demo/src/components/starwind-runtime/color-picker/ColorPickerSwatchGroup";
 import ColorPickerTrigger from "../../../apps/react-demo/src/components/starwind-runtime/color-picker/ColorPickerTrigger";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -36,14 +33,15 @@ describe("React styled Color Picker root", () => {
 
     try {
       await mount(
-        <ColorPickerRoot
+        <ColorPicker
+          inline
           ref={ref}
           defaultValue="#ff0000"
           onValueChange={changed}
           onValueCommitted={committed}
         >
           <ColorPickerInput />
-        </ColorPickerRoot>,
+        </ColorPicker>,
       );
 
       const root = query<HTMLElement>("[data-sw-color-picker]");
@@ -163,18 +161,12 @@ describe("React styled Color Picker root", () => {
 
   it("renders the canonical generated footer, icon, compact controls, and framed surfaces", async () => {
     await mount(
-      <ColorPicker defaultValue="#ff000080" alpha allowEmpty>
-        <ColorPickerTrigger showValueText>Choose color</ColorPickerTrigger>
-        <ColorPickerContent
-          size="sm"
-          showClear
-          swatches={
-            <ColorPickerSwatchGroup aria-label="Suggested colors">
-              <ColorPickerSwatch value="#4f46e5" aria-label="Indigo" />
-            </ColorPickerSwatchGroup>
-          }
-        />
-      </ColorPicker>,
+      <ColorPicker
+        defaultValue="#ff000080"
+        clearable
+        size="sm"
+        swatches={[{ value: "#4f46e5", label: "Indigo" }]}
+      />,
     );
 
     await act(async () => userEvent.click(query("[data-sw-popover-trigger]")));
@@ -197,14 +189,16 @@ describe("React styled Color Picker root", () => {
     expect(footer.lastElementChild).toBe(clear);
     expect(clear).not.toHaveAttribute("hidden");
     expect(eyeDropper).toHaveAccessibleName("Pick a color from the screen");
+    if (!("EyeDropper" in window)) expect(eyeDropper).toHaveAttribute("hidden");
     expect(eyeDropper.textContent).toBe("");
     expect(eyeDropper.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
-    expect(formatTrigger.className).toContain("min-w-20");
+    expect(content).toHaveAttribute("data-size", "sm");
+    expect(formatTrigger.className).toContain("min-w-(--sw-color-picker-format-width)");
     expect(area.className).toContain("border-outline");
     expect(area.className).not.toContain("overflow-hidden");
     expect(areaThumb.className).toContain("z-10");
     expect(areaThumb.className).toContain("clamp(1px");
-    expect(slider.className).toContain("h-2.5");
+    expect(slider.className).toContain("h-(--sw-color-picker-slider-size)");
     expect(sliderThumb.className).toContain("z-10");
   });
 
@@ -212,27 +206,17 @@ describe("React styled Color Picker root", () => {
     await mount(
       <>
         {(["sm", "md", "lg"] as const).map((size) => (
-          <ColorPicker key={size} defaultValue="#4f46e5" defaultOpen>
+          <ColorPicker key={size} defaultValue="#4f46e5" defaultOpen size={size}>
             <ColorPickerTrigger>Choose {size}</ColorPickerTrigger>
             <ColorPickerContent
               size={size}
               data-testid={`size-content-${size}`}
-              swatches={
-                <ColorPickerSwatchGroup size={size} aria-label={`${size} suggested colors`}>
-                  <ColorPickerSwatch size={size} value="#4f46e5" aria-label={`${size} indigo`} />
-                </ColorPickerSwatchGroup>
-              }
+              swatches={[{ value: "#4f46e5", label: `${size} indigo` }]}
             />
           </ColorPicker>
         ))}
       </>,
     );
-
-    const expected = {
-      sm: { controlHeightClass: "h-9", selectorWidthClass: "min-w-20", swatchClass: "size-6" },
-      md: { controlHeightClass: "h-9", selectorWidthClass: "min-w-20", swatchClass: "size-7" },
-      lg: { controlHeightClass: "h-11", selectorWidthClass: "min-w-24", swatchClass: "size-8" },
-    } as const;
 
     for (const size of ["sm", "md", "lg"] as const) {
       const content = query<HTMLElement>(`[data-testid="size-content-${size}"]`);
@@ -244,14 +228,15 @@ describe("React styled Color Picker root", () => {
       )!;
       const swatch = content.querySelector<HTMLElement>('[data-slot="color-picker-swatch"]')!;
 
-      expect(input.className).toContain(expected[size].controlHeightClass);
-      expect(select.className).toContain(expected[size].controlHeightClass);
-      expect(select.className).toContain(expected[size].selectorWidthClass);
-      expect(swatch.className).toContain(expected[size].swatchClass);
+      expect(content).toHaveAttribute("data-size", size);
+      expect(input.className).toContain("h-(--sw-color-picker-control-height)");
+      expect(select.className).toContain("h-(--sw-color-picker-control-height)");
+      expect(select.className).toContain("min-w-(--sw-color-picker-format-width)");
+      expect(swatch.className).toContain("size-(--sw-color-picker-swatch-size)");
     }
   });
 
-  it("reconciles Clear and separator visibility when allowEmpty changes", async () => {
+  it("reconciles Clear and separator visibility when clearable changes", async () => {
     await mount(clearEligibilityPicker(false));
 
     const clear = query<HTMLButtonElement>('[data-slot="color-picker-clear"]');
@@ -276,14 +261,153 @@ describe("React styled Color Picker root", () => {
       expect(getComputedStyle(separator).display).toBe("none");
     });
   });
+
+  it("renders zero-child popup and inline editors with normalized convenience props", async () => {
+    await mount(
+      <>
+        <ColorPicker
+          id="zero-popup"
+          defaultOpen
+          label="Brand color"
+          name="brand"
+          defaultValue="hsl(210, 50%, 40%)"
+          format="hsl"
+          formats={["rgb", "rgb"]}
+          formatControl="native"
+          alpha={false}
+          showEyeDropper={false}
+          swatches={["#111111", { value: "#222222", label: "Second color", disabled: true }]}
+        />
+        <ColorPicker
+          id="zero-inline"
+          inline
+          label="Inline color"
+          defaultValue="#33669980"
+          formatControl="none"
+        />
+        <ColorPicker id="custom-children" inline defaultValue="#ff0000">
+          <span data-custom-child>Custom editor</span>
+        </ColorPicker>
+      </>,
+    );
+
+    const popup = query<HTMLElement>("#zero-popup");
+    const inline = query<HTMLElement>("#zero-inline");
+    const custom = query<HTMLElement>("#custom-children");
+    const native = popup.querySelector<HTMLSelectElement>(
+      '[data-slot="color-picker-native-format-select"]',
+    )!;
+    const nativeValues = [...native.options].map((option) => option.value);
+    const popupAlpha = popup.querySelector<HTMLElement>(
+      '[data-slot="color-picker-channel-slider"][data-channel="alpha"]',
+    )!;
+    const inlineAlpha = inline.querySelector<HTMLElement>(
+      '[data-slot="color-picker-channel-slider"][data-channel="alpha"]',
+    )!;
+    const swatches = popup.querySelectorAll<HTMLButtonElement>('[data-slot="color-picker-swatch"]');
+
+    expect(popup.querySelector('[data-slot="color-picker-label"]')).toHaveTextContent(
+      "Brand color",
+    );
+    expect(nativeValues).toEqual(["hsl", "rgb"]);
+    expect(popup.querySelector('[data-slot="color-picker-format-control"]')).toBeNull();
+    expect(popupAlpha).toHaveAttribute("hidden");
+    expect(popup.querySelector('[data-slot="color-picker-eye-dropper"]')).toBeNull();
+    expect(swatches).toHaveLength(2);
+    expect(swatches[0]).toHaveAccessibleName("#111111");
+    expect(swatches[1]).toHaveAccessibleName("Second color");
+    expect(swatches[1]).toBeDisabled();
+    expect(popup.querySelectorAll('[data-slot="color-picker-hidden-input"]')).toHaveLength(1);
+
+    expect(inline.querySelector('[data-slot="color-picker-area"]')).not.toBeNull();
+    expect(inlineAlpha).not.toHaveAttribute("hidden");
+    expect(inline.querySelector('[data-slot="color-picker-format-control"]')).toBeNull();
+    expect(inline.querySelector('[data-slot="color-picker-native-format-select"]')).toBeNull();
+    expect(inline.querySelectorAll('[data-slot="color-picker-hidden-input"]')).toHaveLength(1);
+
+    expect(custom.querySelector("[data-custom-child]")).toHaveTextContent("Custom editor");
+    expect(custom.querySelector('[data-slot="color-picker-area"]')).toBeNull();
+    expect(custom.querySelectorAll('[data-slot="color-picker-hidden-input"]')).toHaveLength(1);
+  });
+
+  it("clears required form state and restores the initial value on reset", async () => {
+    await mount(
+      <form id="palette-form">
+        <ColorPicker
+          id="form-picker"
+          inline
+          name="accent"
+          defaultValue="#0ea5e9"
+          clearable
+          required
+          showEyeDropper={false}
+        />
+      </form>,
+    );
+
+    const form = query<HTMLFormElement>("#palette-form");
+    const root = query<HTMLElement>("#form-picker");
+    const hidden = root.querySelector<HTMLInputElement>('[data-slot="color-picker-hidden-input"]')!;
+    const clear = root.querySelector<HTMLButtonElement>('[data-slot="color-picker-clear"]')!;
+
+    expect(hidden.value).toBe("#0ea5e9");
+    expect(hidden.checkValidity()).toBe(true);
+
+    await act(async () => userEvent.click(clear));
+    await settle();
+    expect(root).toHaveAttribute("data-invalid");
+    expect(hidden.value).toBe("");
+    expect(hidden.checkValidity()).toBe(false);
+
+    await act(() => form.reset());
+    await settle();
+    expect(root).not.toHaveAttribute("data-invalid");
+    expect(hidden.value).toBe("#0ea5e9");
+    expect(hidden.checkValidity()).toBe(true);
+  });
+
+  it("keeps controlled values and formats synchronized through the styled root", async () => {
+    await mount(
+      <ColorPicker
+        id="controlled-styled"
+        inline
+        value="#ff0000"
+        format="rgb"
+        formats={["hex"]}
+        formatControl="native"
+      />,
+    );
+
+    const root = query<HTMLElement>("#controlled-styled");
+    const options = () =>
+      [...root.querySelectorAll<HTMLOptionElement>("option")].map((option) => option.value);
+    expect(root).toHaveAttribute("data-value", "rgb(255, 0, 0)");
+    expect(root).toHaveAttribute("data-format", "rgb");
+    expect(options()).toEqual(["rgb", "hex"]);
+
+    await act(() =>
+      reactRoot!.render(
+        <ColorPicker
+          id="controlled-styled"
+          inline
+          value="#00ff00"
+          format="hsl"
+          formats={["hex"]}
+          formatControl="native"
+        />,
+      ),
+    );
+    await settle();
+
+    expect(root).toHaveAttribute("data-value", "hsl(120, 100%, 50%)");
+    expect(root).toHaveAttribute("data-format", "hsl");
+    expect(options()).toEqual(["hsl", "hex"]);
+  });
 });
 
-function clearEligibilityPicker(allowEmpty: boolean) {
+function clearEligibilityPicker(clearable: boolean) {
   return (
-    <ColorPicker defaultValue="#f97316" allowEmpty={allowEmpty} defaultOpen>
-      <ColorPickerTrigger>Choose color</ColorPickerTrigger>
-      <ColorPickerContent showClear showEyeDropper={false} />
-    </ColorPicker>
+    <ColorPicker defaultValue="#f97316" clearable={clearable} defaultOpen showEyeDropper={false} />
   );
 }
 

@@ -1,0 +1,7 @@
+{
+  "components": {
+    "hover-card": "patch",
+    "popover": "patch",
+    "tooltip": "patch"
+  }
+}

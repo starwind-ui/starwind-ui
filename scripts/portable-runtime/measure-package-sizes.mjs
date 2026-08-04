@@ -553,8 +553,8 @@ export function getPackageSizeMeasurementPlan({ checkOnly = false } = {}) {
   };
 }
 
-async function main() {
-  const plan = getPackageSizeMeasurementPlan({ checkOnly: CHECK_ONLY });
+export async function runPackageSizeMeasurements({ checkOnly = false } = {}) {
+  const plan = getPackageSizeMeasurementPlan({ checkOnly });
   if (plan.installComparators) prepareTempInstall();
 
   const bundleResults = [...plan.bundleBaselines];
@@ -599,16 +599,19 @@ async function main() {
     packageBudgetResults.advisories.push(colorPickerCheck.advisory);
   }
 
-  const reportsWritten = writePackageSizeReports(
-    {
-      bundleResults,
-      packageBudgetResults,
-      sourceContributionAnalyses,
-      sourcePayloadResults,
-      supportResults,
-    },
-    { checkOnly: CHECK_ONLY },
-  );
+  return {
+    bundleResults,
+    packageBudgetResults,
+    sourceContributionAnalyses,
+    sourcePayloadResults,
+    supportResults,
+  };
+}
+
+async function main() {
+  const results = await runPackageSizeMeasurements({ checkOnly: CHECK_ONLY });
+
+  const reportsWritten = writePackageSizeReports(results, { checkOnly: CHECK_ONLY });
   if (!reportsWritten) {
     console.log("Package size budgets evaluated without rewriting the comparison report.");
   } else {
@@ -616,18 +619,94 @@ async function main() {
     console.log(`Wrote ${DIAGNOSTIC_REPORT_PATH}`);
   }
 
-  if (packageBudgetResults.advisories.length > 0) {
+  if (results.packageBudgetResults.advisories.length > 0) {
     console.warn(
-      `\nPackage size comparison advisories:\n\n${packageBudgetResults.advisories.join("\n\n")}`,
+      `\nPackage size comparison advisories:\n\n${results.packageBudgetResults.advisories.join("\n\n")}`,
     );
   }
 
-  if (packageBudgetResults.failures.length > 0) {
+  if (results.packageBudgetResults.failures.length > 0) {
     console.error(
-      `\nPackage size budget check failed:\n\n${packageBudgetResults.failures.join("\n\n")}`,
+      `\nPackage size budget check failed:\n\n${results.packageBudgetResults.failures.join("\n\n")}`,
     );
     process.exitCode = 1;
   }
+}
+
+export function buildContractGenerationProofMeasurementRows({
+  bundleResults,
+  sourcePayloadResults,
+  supportResults,
+}) {
+  const bundle = (label) =>
+    pickRequiredMeasurement(
+      bundleResults.find((row) => row.label === label),
+      label === "@starwind-ui/runtime" ? "runtimeHeadline" : "reactWithRuntime",
+      ["gzipBytes", "minifiedBytes"],
+    );
+  const support = (name, predicate) =>
+    pickRequiredMeasurement(supportResults.find(predicate), name, ["gzipBytes", "minifiedBytes"]);
+  const payload = (name, label) => {
+    const result = sourcePayloadResults.find((row) => row.label === label);
+    const values = pickRequiredMeasurement(result, `packagePayloads.${name}`, [
+      "minifiedBytes",
+      "gzipBytes",
+      "packageGzipBytes",
+      "packageUnpackedBytes",
+    ]);
+
+    return {
+      minifiedBytes: values.minifiedBytes,
+      packageGzipBytes: values.packageGzipBytes,
+      packageUnpackedBytes: values.packageUnpackedBytes,
+      sourceGzipBytes: values.gzipBytes,
+    };
+  };
+
+  return {
+    runtimeHeadline: bundle("@starwind-ui/runtime"),
+    reactWithRuntime: bundle("@starwind-ui/react + runtime"),
+    allThreeOverlap: support(
+      "allThreeOverlap",
+      (row) => row.comparisonSet === "all-three-overlap" && row.provider === "starwind",
+    ),
+    starwindZagOverlap: support(
+      "starwindZagOverlap",
+      (row) => row.comparisonSet === "starwind-zag-overlap" && row.provider === "starwind",
+    ),
+    isolatedButton: support(
+      "isolatedButton",
+      (row) => row.component === "button" && row.provider === "starwind",
+    ),
+    isolatedCheckbox: support(
+      "isolatedCheckbox",
+      (row) => row.component === "checkbox" && row.provider === "starwind",
+    ),
+    isolatedSelect: support(
+      "isolatedSelect",
+      (row) => row.component === "select" && row.provider === "starwind",
+    ),
+    packagePayloads: {
+      astro: payload("astro", "@starwind-ui/astro"),
+      react: payload("react", "@starwind-ui/react"),
+      runtime: payload("runtime", "@starwind-ui/runtime"),
+    },
+  };
+}
+
+function pickRequiredMeasurement(result, name, fields) {
+  if (!result) {
+    throw new Error(`Missing required shipping measurement: ${name}`);
+  }
+
+  return Object.fromEntries(
+    fields.map((field) => {
+      if (typeof result[field] !== "number" || !Number.isFinite(result[field])) {
+        throw new Error(`Nonnumeric shipping measurement: ${name}.${field}`);
+      }
+      return [field, result[field]];
+    }),
+  );
 }
 
 export function evaluateColorPickerSizeComparison(bundleResults) {

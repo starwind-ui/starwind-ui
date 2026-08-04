@@ -1,10 +1,12 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
+import { format, resolveConfig } from "prettier";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { dialogRuntimeAdapterContract } from "../../contracts/primitive/components/dialog.js";
+import { formatGeneratedOutput } from "../../format-generated-output.js";
 import { createVueComponentHeader } from "../../renderers/framework-adapters/vue/primitive-package.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import {
@@ -71,28 +73,24 @@ describe("generated Vue Dialog", () => {
       target: "vue",
     });
     const directory = path.join(outputRoot, "dialog");
-    const files = await Promise.all(
-      [
-        "DialogBackdrop.vue",
-        "DialogClose.vue",
-        "DialogDescription.vue",
-        "DialogPopup.vue",
-        "DialogRoot.vue",
-        "DialogTitle.vue",
-        "DialogTrigger.vue",
-      ].map(async (name) => [name, await readFile(path.join(directory, name), "utf8")] as const),
+    await formatGeneratedOutput([directory], process.cwd());
+    const files = await readGeneratedDirectory(directory, true);
+    const committed = await readGeneratedDirectory(
+      path.join(process.cwd(), "packages/vue/src/dialog"),
     );
-    for (const [name, source] of files) {
+    expect(files).toEqual(committed);
+    for (const [name, source] of Object.entries(files)) {
+      if (!name.endsWith(".vue")) continue;
       expect(() => assertVueSfcCompiles(source, name)).not.toThrow();
     }
-    const root = Object.fromEntries(files)["DialogRoot.vue"]!;
+    const root = files["DialogRoot.vue"]!;
     expect(root).toMatch(
       /emit\("openChange", nextOpen, detail\);[\s\S]*detail\.isCanceled[\s\S]*emit\("update:open", nextOpen\);/,
     );
     expect(root).toContain("instance.setOpen(nextOpen, { emit: false });");
     expect(root).toContain("onCloseComplete: handleCloseComplete");
     expect(root).toContain("ownedInstance.destroy()");
-    expect(await readFile(path.join(directory, "index.ts"), "utf8")).not.toMatch(/Portal|Viewport/);
+    expect(files["index.ts"]).not.toMatch(/Portal|Viewport/);
   });
 
   it("generates Styled Dialog's backdrop fallback, Popup tree, close affordance, model, and CSS", async () => {
@@ -135,3 +133,27 @@ describe("generated Vue Dialog", () => {
     expect(styles).toContain("--nested-offset");
   });
 });
+
+async function readGeneratedDirectory(
+  directory: string,
+  formatSources = false,
+): Promise<Record<string, string>> {
+  const names = (await readdir(directory)).sort();
+  const prettierConfig = formatSources
+    ? ((await resolveConfig(path.join(process.cwd(), "prettier.config.mjs"))) ?? {})
+    : {};
+  return Object.fromEntries(
+    await Promise.all(
+      names.map(async (name) => {
+        const file = path.join(directory, name);
+        const source = await readFile(file, "utf8");
+        return [
+          name,
+          formatSources && name.endsWith(".ts")
+            ? await format(source, { ...prettierConfig, filepath: file })
+            : source,
+        ] as const;
+      }),
+    ),
+  );
+}

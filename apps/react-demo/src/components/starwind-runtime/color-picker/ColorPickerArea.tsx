@@ -1,19 +1,16 @@
 import type * as React from "react";
-import type { VariantProps } from "tailwind-variants";
 import "./styles.css";
 import ColorPickerPrimitive from "@starwind-ui/react/color-picker";
-import ColorPickerAreaThumb from "./ColorPickerAreaThumb";
-import { colorPickerArea } from "./variants";
+import { colorPickerArea, colorPickerAreaThumb } from "./variants";
 
-export type ColorPickerAreaProps = React.ComponentPropsWithoutRef<"div"> &
-  VariantProps<typeof colorPickerArea>;
+export type ColorPickerAreaProps = React.ComponentPropsWithoutRef<"div">;
 
 function ColorPickerArea(props: ColorPickerAreaProps) {
-  const { className, size = "md", ...rest } = props;
+  const { className, ...rest } = props;
 
   return (
     <ColorPickerPrimitive.Area
-      className={colorPickerArea({ size, class: className })}
+      className={colorPickerArea({ class: className })}
       {...rest}
       data-slot="color-picker-area"
     >
@@ -22,7 +19,10 @@ function ColorPickerArea(props: ColorPickerAreaProps) {
         data-slot="color-picker-area-background"
       />
 
-      <ColorPickerAreaThumb size={size} />
+      <ColorPickerPrimitive.AreaThumb
+        className={colorPickerAreaThumb()}
+        data-slot="color-picker-area-thumb"
+      />
 
       <ColorPickerPrimitive.AreaInput
         axis="x"

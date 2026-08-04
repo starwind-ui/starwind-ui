@@ -4,6 +4,7 @@ export const CHANGESET_IGNORED_PACKAGES = Object.freeze([
   "vue-demo",
   "@starwind-ui/core",
   "@starwind-ui/vue",
+  "@starwind-ui/svelte",
 ]);
 
 export const RUNTIME_FIXED_GROUP = Object.freeze([

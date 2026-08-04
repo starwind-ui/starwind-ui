@@ -142,7 +142,8 @@ defineExpose({
 function readItemLabel(item: HTMLElement | undefined): string | null {
   if (!item) return null;
   const textElement = item.querySelector<HTMLElement>("[data-sw-select-item-text]");
-  const text = (textElement ?? item).textContent?.trim() ?? "";
+  if (textElement) return textElement.textContent?.trim() ?? "";
+  const text = item.textContent?.trim() ?? "";
   return text.length > 0 ? text : null;
 }
 

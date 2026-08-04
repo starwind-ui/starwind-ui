@@ -1,4 +1,8 @@
-import { verifyTooltipPlacements, verifyTooltipPropExamples } from "../shared/tooltip.mjs";
+import {
+  verifyTooltipCompositionCases,
+  verifyTooltipPlacements,
+  verifyTooltipPropExamples,
+} from "../shared/tooltip.mjs";
 import { verifyHoverCardCases } from "../shared/hover-card.mjs";
 import { verifyVideoCases } from "../shared/video.mjs";
 import { verifyDialogEntryAnimationGestures } from "../shared/dialog-entry-animation.mjs";
@@ -23,16 +27,20 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
       asChildHref: "#runtime-hover-card-as-child",
       asChildSide: "right",
       asChildTrigger: "runtime-hover-card-as-child-trigger",
+      asChildListenerCount: "runtime-hover-card-as-child-listener-count",
       alignedContent: "runtime-hover-card-aligned-content",
       alignedTrigger: "runtime-hover-card-aligned-trigger",
       demo: "runtime-hover-card-demo",
-      expectedRootCount: 7,
+      expectedRootCount: 8,
       hoverableContent: "runtime-hover-card-aligned-content",
       hoverableTrigger: "runtime-hover-card-aligned-trigger",
       nonHoverableContent: "runtime-hover-card-no-hoverable-content",
       nonHoverableTrigger: "runtime-hover-card-no-hoverable-trigger",
+      nativeContent: "runtime-hover-card-native-content",
+      nativeTrigger: "runtime-hover-card-native-trigger",
       sideContent: (side) => `runtime-hover-card-side-${side}-content`,
       sideTrigger: (side) => `runtime-hover-card-side-${side}-trigger`,
+      styledSlot: "button",
       wrapperDisplay: "contents",
     },
     label: "Astro",
@@ -344,6 +352,7 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     );
   });
 
+  await verifyTooltipCompositionCases(page, "runtime", { styledSlot: "breadcrumb-link" });
   await verifyTooltipPropExamples(page, "runtime");
   await verifyTooltipPlacements(page, "runtime");
 

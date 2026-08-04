@@ -20,6 +20,8 @@ export type NavigationMenuProps = Omit<
   alignOffset?: number;
   avoidCollisions?: boolean;
   collisionPadding?: number;
+  size?: "sm" | "md";
+  contentSize?: "sm" | "md";
   onValueChange?: (
     value: string | null,
     details: import("@starwind-ui/react/navigation-menu").NavigationMenuValueChangeDetails,
@@ -41,6 +43,8 @@ function NavigationMenu(props: NavigationMenuProps) {
     alignOffset = 0,
     avoidCollisions = true,
     collisionPadding = 8,
+    size = "md",
+    contentSize = size,
     onValueChange,
     className,
     children,
@@ -59,6 +63,7 @@ function NavigationMenu(props: NavigationMenuProps) {
       orientation={orientation}
       onValueChange={onValueChange}
       {...rest}
+      data-size={size}
       data-slot="navigation-menu"
     >
       {children}
@@ -70,6 +75,7 @@ function NavigationMenu(props: NavigationMenuProps) {
         alignOffset={alignOffset}
         avoidCollisions={avoidCollisions}
         collisionPadding={collisionPadding}
+        size={contentSize}
       />
     </NavigationMenuPrimitive.Root>
   );

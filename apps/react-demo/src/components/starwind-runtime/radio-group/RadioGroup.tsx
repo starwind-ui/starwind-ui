@@ -21,6 +21,7 @@ export type RadioGroupProps = Omit<
     readOnly?: boolean;
     ref?: React.Ref<HTMLDivElement>;
     required?: boolean;
+    size?: "sm" | "md" | "lg";
     value?: import("@starwind-ui/react/radio-group").RadioGroupValue;
   };
 
@@ -36,6 +37,7 @@ function RadioGroup(props: RadioGroupProps) {
     readOnly = false,
     ref,
     required = false,
+    size = "md",
     value,
     className,
     children,
@@ -57,6 +59,7 @@ function RadioGroup(props: RadioGroupProps) {
       value={value}
       aria-label={legend}
       {...rest}
+      data-size={size}
       data-slot="radio-group"
     >
       {legend && (

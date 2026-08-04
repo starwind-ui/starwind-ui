@@ -1,7 +1,7 @@
 import { tv } from "tailwind-variants";
 
 export const inputOtp = tv({
-  base: "flex items-center gap-2 outline-none data-disabled:opacity-50",
+  base: "group/input-otp flex items-center gap-2 outline-none data-disabled:opacity-50",
 });
 
 export const inputOtpGroup = tv({
@@ -20,15 +20,8 @@ export const inputOtpSlot = tv({
     "data-[active=true]:border-outline data-[active=true]:ring-outline/50 data-[active=true]:z-10 data-[active=true]:ring-3",
     "data-[active=true]:data-error-visible:ring-error/40",
     "data-error-visible:border-error data-[active=true]:data-error-visible:border-error",
+    "group-data-[size=sm]/input-otp:size-9 group-data-[size=sm]/input-otp:text-sm",
+    "group-data-[size=md]/input-otp:size-11 group-data-[size=md]/input-otp:text-base",
+    "group-data-[size=lg]/input-otp:size-12 group-data-[size=lg]/input-otp:text-lg",
   ],
-  variants: {
-    size: {
-      sm: "size-9 text-sm",
-      md: "size-11 text-base",
-      lg: "size-12 text-lg",
-    },
-  },
-  defaultVariants: {
-    size: "md",
-  },
 });

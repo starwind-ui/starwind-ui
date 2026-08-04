@@ -71,6 +71,17 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     groupId: "overlay-disclosure",
     docsPage: componentPage("alert-dialog"),
     foundation: { type: "direct-primitive" },
+    styledApi: {
+      AlertDialogTrigger: {
+        props: { asChild: { visualOwnership: "delegates-appearance" } },
+      },
+      AlertDialogAction: {
+        props: { asChild: { visualOwnership: "preserves-styled-identity" } },
+      },
+      AlertDialogCancel: {
+        props: { asChild: { visualOwnership: "preserves-styled-identity" } },
+      },
+    },
   },
   "aspect-ratio": {
     groupId: "layout-structure",
@@ -107,6 +118,17 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     groupId: "navigation",
     docsPage: componentPage("breadcrumb"),
     foundation: { type: "styled-only" },
+    styledApi: {
+      BreadcrumbLink: {
+        props: {
+          asChild: {
+            visualOwnership: "delegates-appearance",
+            description:
+              "Delegates markup and visual ownership to the child rather than preserving the native link recipe.",
+          },
+        },
+      },
+    },
   },
   button: {
     groupId: "form-input",
@@ -141,10 +163,21 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     docsPage: componentPage("color-picker"),
     foundation: { type: "direct-primitive" },
     styledApi: {
-      ColorPickerRoot: {
+      ColorPicker: {
         props: {
           format: { description: "Sets the editable color format." },
           dir: { description: "Sets the picker direction explicitly." },
+          clearable: {
+            description: "Allows an empty value and includes the default Clear action.",
+          },
+          inline: { description: "Renders the complete editor without a Popover shell." },
+          formats: { description: "Restricts and orders the available color formats." },
+          formatControl: {
+            description: "Chooses a styled, native, or absent format control.",
+          },
+          showEyeDropper: { description: "Shows the EyeDropper trigger when supported." },
+          showValueText: { description: "Shows the formatted value beside the trigger swatch." },
+          swatches: { description: "Adds suggested colors to the default editor." },
         },
       },
       ColorPickerTrigger: {
@@ -154,12 +187,8 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
       },
       ColorPickerContent: {
         props: {
-          alpha: { description: "Includes alpha controls in the picker content." },
           showEyeDropper: { description: "Shows the EyeDropper trigger when supported." },
         },
-      },
-      ColorPickerSliders: {
-        props: { alpha: { description: "Includes an alpha channel slider." } },
       },
       ColorPickerChannelSlider: {
         props: { channel: { description: "Selects the channel rendered by this slider." } },
@@ -170,8 +199,10 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
       ColorPickerInput: {
         props: {
           formatControl: {
-            description:
-              "Chooses the composite Select or progressively enhanced native format control.",
+            description: "Chooses a styled, native, or absent format control.",
+          },
+          formatContentSize: {
+            description: "Sets the independently portaled format Select popup size.",
           },
         },
       },
@@ -186,11 +217,24 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     groupId: "form-input",
     docsPage: componentPage("combobox"),
     foundation: { type: "direct-primitive" },
+    styledApi: {
+      ComboboxClear: {
+        props: { asChild: { visualOwnership: "preserves-styled-identity" } },
+      },
+      ComboboxTrigger: {
+        props: { asChild: { visualOwnership: "preserves-styled-identity" } },
+      },
+    },
   },
   collapsible: {
     groupId: "overlay-disclosure",
     docsPage: componentPage("collapsible"),
     foundation: { type: "direct-primitive" },
+    styledApi: {
+      CollapsibleTrigger: {
+        props: { asChild: { visualOwnership: "delegates-appearance" } },
+      },
+    },
   },
   "context-menu": {
     groupId: "overlay-disclosure",
@@ -201,6 +245,14 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     groupId: "overlay-disclosure",
     docsPage: componentPage("dialog"),
     foundation: { type: "direct-primitive" },
+    styledApi: {
+      DialogTrigger: {
+        props: { asChild: { visualOwnership: "delegates-appearance" } },
+      },
+      DialogClose: {
+        props: { asChild: { visualOwnership: "delegates-appearance" } },
+      },
+    },
   },
   dropdown: {
     groupId: "navigation",
@@ -210,6 +262,11 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
       reason: "The styled docs use the Dropdown name while the behavior primitive is menu.",
     },
     aliases: ["Dropdown"],
+    styledApi: {
+      DropdownTrigger: {
+        props: { asChild: { visualOwnership: "delegates-appearance" } },
+      },
+    },
   },
   dropzone: {
     groupId: "form-input",
@@ -282,6 +339,11 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
       reason: "The styled docs use Hover Card while the primitive is preview-card.",
     },
     aliases: ["preview-card", "Preview Card"],
+    styledApi: {
+      HoverCardTrigger: {
+        props: { asChild: { visualOwnership: "delegates-appearance" } },
+      },
+    },
   },
   image: {
     groupId: "content-media",
@@ -338,6 +400,37 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     docsPage: componentPage("navigation-menu"),
     foundation: { type: "direct-primitive" },
     aliases: ["Navigation Menu", "mega menu", "navbar menu"],
+    styledApi: {
+      NavigationMenu: {
+        props: {
+          size: {
+            description:
+              "Sets the visual size of native styled triggers, List spacing, indicators, and top-level Links using navigationMenuTriggerStyle().",
+          },
+          contentSize: {
+            description:
+              "Sets the independently portaled popup content size and defaults to the resolved Navigation Menu size.",
+          },
+        },
+      },
+      NavigationMenuPositioner: {
+        props: {
+          size: {
+            description:
+              "Sets the popup content size when rendering NavigationMenuPositioner directly.",
+          },
+        },
+      },
+      NavigationMenuTrigger: {
+        props: {
+          asChild: {
+            visualOwnership: "delegates-appearance",
+            description:
+              "Delegates markup and complete visual ownership to the child while retaining Navigation Menu behavior and accessibility wiring.",
+          },
+        },
+      },
+    },
   },
   pagination: {
     groupId: "navigation",
@@ -348,6 +441,11 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     groupId: "overlay-disclosure",
     docsPage: componentPage("popover"),
     foundation: { type: "direct-primitive" },
+    styledApi: {
+      PopoverTrigger: {
+        props: { asChild: { visualOwnership: "delegates-appearance" } },
+      },
+    },
   },
   progress: {
     groupId: "feedback-status",
@@ -379,6 +477,7 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     styledApi: {
       SelectTrigger: {
         props: {
+          asChild: { visualOwnership: "preserves-styled-identity" },
           placeholder: {
             description:
               "Provides fallback text for the value element generated inside the trigger.",
@@ -400,14 +499,32 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
       reason: "The styled docs use Sheet while the behavior primitive is drawer.",
     },
     aliases: ["drawer", "Drawer"],
+    styledApi: {
+      SheetTrigger: {
+        props: { asChild: { visualOwnership: "delegates-appearance" } },
+      },
+      SheetClose: {
+        props: { asChild: { visualOwnership: "delegates-appearance" } },
+      },
+    },
   },
   sidebar: {
     groupId: "navigation",
     docsPage: componentPage("sidebar"),
     foundation: { type: "direct-primitive" },
     styledApi: {
+      SidebarGroupLabel: {
+        props: {
+          asChild: {
+            visualOwnership: "preserves-styled-identity",
+            description:
+              "Preserves the Sidebar Group Label recipe on its existing wrapper while rendering the supplied child inside it.",
+          },
+        },
+      },
       SidebarMenuButton: {
         props: {
+          asChild: { visualOwnership: "preserves-styled-identity" },
           tooltip: {
             description: "Provides collapsed-sidebar tooltip text for this menu button.",
           },
@@ -486,6 +603,11 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     groupId: "overlay-disclosure",
     docsPage: componentPage("tooltip"),
     foundation: { type: "direct-primitive" },
+    styledApi: {
+      TooltipTrigger: {
+        props: { asChild: { visualOwnership: "delegates-appearance" } },
+      },
+    },
   },
   video: {
     groupId: "content-media",

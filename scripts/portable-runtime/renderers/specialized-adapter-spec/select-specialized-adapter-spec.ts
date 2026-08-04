@@ -16,10 +16,33 @@ export type SelectSpecializedAdapterSpec = SpecializedAdapterSpec & {
     contextProjection: {
       filePath: "select/SelectContext";
       itemContext: "SelectItemContext";
+      itemValues: ["disabled", "value"];
       rootContext: "SelectContext";
-      values: ["open", "value"];
+      rootOperations: ["registerPortal"];
+      rootValues: ["disabled", "mounted", "open", "readOnly", "required", "selectedLabel", "value"];
     };
     floating: NonNullable<SpecializedAdapterSpec["renderPlan"]["floating"]>;
+    collection: {
+      itemIdentity: {
+        attribute: "data-value";
+        kind: "primitive-value";
+        part: "item";
+        prop: "value";
+      };
+      selectedLabel: {
+        emptyItemText: "preserve";
+        fallbackEmptyText: "missing";
+        itemPart: "item";
+        itemTextPart: "itemText";
+        searchParts: ["root", "portal"];
+        trim: true;
+      };
+    };
+    formControl: {
+      fieldIntegration: true;
+      reset: "runtime-readback-after-native-reset";
+      setter: { method: string; props: string[] };
+    };
     hiddenInput: {
       part: "input";
       props: string[];
@@ -30,6 +53,45 @@ export type SelectSpecializedAdapterSpec = SpecializedAdapterSpec & {
       hiddenPart: "itemIndicator";
       selectedStateAttribute: "data-state";
     };
+    lifecycle: {
+      cleanup: "destroy";
+      recreateOnControllednessChange: ["open", "value"];
+      setup: "after-mount";
+      updateSetters: {
+        disabled: string;
+        highlightItemOnHover: string;
+        modal: string;
+        readOnly: string;
+      };
+    };
+    models: Array<{
+      controlledProp: string;
+      defaultProp: string;
+      event: {
+        callbackProp: string;
+        callbackTiming: "before-state-commit";
+        cancelable: true;
+        detailsType: string;
+        name: string;
+        valueProperty: string;
+      };
+      getter: string;
+      name: "open" | "value";
+      setter: string;
+      valueType: string;
+    }>;
+    portal: {
+      activation: "after-root-mount";
+      defaultTarget: "body";
+      owner: "component-instance";
+      part: "portal";
+      referenceOption: "portalReference";
+    };
+    presence: {
+      initialHiddenParts: string[];
+      unmountPolicy: "runtime-owned";
+    };
+    publicRefs: string[];
     runtimeBoundary: string[];
     scrollArrows: ["scrollUpArrow", "scrollDownArrow"];
   };
@@ -60,6 +122,12 @@ export function buildSelectSpecializedAdapterSpec(
   if (!floating) {
     throw new Error("Select specialized adapter spec requires floating part metadata.");
   }
+  if (!spec.renderPlan.presence) {
+    throw new Error("Select specialized adapter spec requires presence metadata.");
+  }
+  if (spec.renderPlan.presence.unmountPolicy !== "runtime-owned") {
+    throw new Error("Select specialized adapter spec requires runtime-owned presence.");
+  }
   if (!asChildTrigger) {
     throw new Error("Select specialized adapter spec requires trigger asChild merge metadata.");
   }
@@ -83,11 +151,37 @@ export function buildSelectSpecializedAdapterSpec(
     ...spec,
     select: {
       asChildTrigger: { merges: [...asChildTrigger.merges], part: "trigger" },
+      collection: {
+        itemIdentity: {
+          attribute: "data-value",
+          kind: "primitive-value",
+          part: "item",
+          prop: "value",
+        },
+        selectedLabel: {
+          emptyItemText: "preserve",
+          fallbackEmptyText: "missing",
+          itemPart: "item",
+          itemTextPart: "itemText",
+          searchParts: ["root", "portal"],
+          trim: true,
+        },
+      },
       contextProjection: {
         filePath: "select/SelectContext",
         itemContext: "SelectItemContext",
+        itemValues: ["disabled", "value"],
         rootContext: "SelectContext",
-        values: ["open", "value"],
+        rootOperations: ["registerPortal"],
+        rootValues: [
+          "disabled",
+          "mounted",
+          "open",
+          "readOnly",
+          "required",
+          "selectedLabel",
+          "value",
+        ],
       },
       floating,
       hiddenInput: {
@@ -95,11 +189,43 @@ export function buildSelectSpecializedAdapterSpec(
         props: spec.renderPlan.form?.props ? [...spec.renderPlan.form.props] : [],
         type: hiddenInput.type,
       },
+      formControl: {
+        fieldIntegration: true,
+        reset: "runtime-readback-after-native-reset",
+        setter: {
+          method: "setFormOptions",
+          props: ["autoComplete", "form", "name", "required"],
+        },
+      },
       itemContext: { part: "item", valueProp: "value" },
       itemIndicator: {
         hiddenPart: "itemIndicator",
         selectedStateAttribute: "data-state",
       },
+      lifecycle: {
+        cleanup: "destroy",
+        recreateOnControllednessChange: ["open", "value"],
+        setup: "after-mount",
+        updateSetters: {
+          disabled: "setDisabled",
+          highlightItemOnHover: "setHighlightItemOnHover",
+          modal: "setModal",
+          readOnly: "setReadOnly",
+        },
+      },
+      models: [buildSelectModel(openState, openEvent), buildSelectModel(valueState, valueEvent)],
+      portal: {
+        activation: "after-root-mount",
+        defaultTarget: "body",
+        owner: "component-instance",
+        part: "portal",
+        referenceOption: "portalReference",
+      },
+      presence: {
+        initialHiddenParts: [...spec.renderPlan.presence.initialHiddenParts],
+        unmountPolicy: "runtime-owned",
+      },
+      publicRefs: spec.refs.filter((ref) => ref.public).map((ref) => ref.part),
       runtimeBoundary: [
         "collection registration",
         "item text extraction",
@@ -118,7 +244,6 @@ export function buildSelectSpecializedAdapterSpec(
     sourcePrimitiveContract: contract,
   };
 }
-
 
 const SELECT_OUTPUT_MODEL_PARTS = [
   "root",
@@ -180,15 +305,17 @@ const SELECT_NAMESPACE_PART_ORDER = [
   "scrollDownArrow",
 ] as const satisfies readonly AdapterOptionCollectionOverlayPartName[];
 
-export function buildSelectAdapterOutputModel(spec: SelectSpecializedAdapterSpec): AdapterOutputModel {
+export function buildSelectAdapterOutputModel(
+  spec: SelectSpecializedAdapterSpec,
+): AdapterOutputModel {
   const facts = getSelectOptionCollectionOverlayFacts(spec);
 
   return {
     files: [
-    ...SELECT_OUTPUT_MODEL_PARTS.map((partName) =>
-      createSelectComponentFile(spec, partName, facts),
-    ),
-    createSelectIndexFile(spec, facts),
+      ...SELECT_OUTPUT_MODEL_PARTS.map((partName) =>
+        createSelectComponentFile(spec, partName, facts),
+      ),
+      createSelectIndexFile(spec, facts),
     ],
   };
 }
@@ -264,7 +391,10 @@ function getSelectOptionCollectionOverlayFacts(
   const openEvent = getEvent(spec, "openChange");
   const valueEvent = getEvent(spec, "valueChange");
   const exportsByPart = Object.fromEntries(
-    SELECT_OUTPUT_MODEL_PARTS.map((partName) => [partName, getSelectFileExportName(spec, partName)]),
+    SELECT_OUTPUT_MODEL_PARTS.map((partName) => [
+      partName,
+      getSelectFileExportName(spec, partName),
+    ]),
   ) as Record<AdapterOptionCollectionOverlayPartName, string>;
 
   return {
@@ -305,17 +435,33 @@ function getSelectOptionCollectionOverlayFacts(
       value: getPartDiscoveryAttribute(spec, "value"),
       valueData: attrs.valueData,
     },
+    collection: {
+      itemIdentity: { ...spec.select.collection.itemIdentity },
+      selectedLabel: {
+        ...spec.select.collection.selectedLabel,
+        searchParts: [...spec.select.collection.selectedLabel.searchParts],
+      },
+    },
     context: {
       fileExportMembers: [
-        { from: `./${spec.select.contextProjection.rootContext}`, name: spec.select.contextProjection.rootContext },
-        { from: `./${spec.select.contextProjection.rootContext}`, name: spec.select.contextProjection.itemContext },
+        {
+          from: `./${spec.select.contextProjection.rootContext}`,
+          name: spec.select.contextProjection.rootContext,
+        },
+        {
+          from: `./${spec.select.contextProjection.rootContext}`,
+          name: spec.select.contextProjection.itemContext,
+        },
         { from: `./${spec.select.contextProjection.rootContext}`, name: "useSelectContext" },
         { from: `./${spec.select.contextProjection.rootContext}`, name: "useSelectItemContext" },
       ],
       itemContext: spec.select.contextProjection.itemContext,
       itemContextValueType: `${spec.displayName}ItemContextValue`,
+      itemValues: [...spec.select.contextProjection.itemValues],
       rootContext: spec.select.contextProjection.rootContext,
       rootContextValueType: `${spec.displayName}ContextValue`,
+      rootOperations: [...spec.select.contextProjection.rootOperations],
+      rootValues: [...spec.select.contextProjection.rootValues],
       useItemContext: `use${spec.displayName}ItemContext`,
       useRootContext: `use${spec.displayName}Context`,
     },
@@ -347,6 +493,14 @@ function getSelectOptionCollectionOverlayFacts(
       avoidCollisionsDefault: getDefaultValue(spec, "avoidCollisions"),
       sideDefault: getDefaultValue(spec, "side"),
       sideOffsetDefault: getDefaultValue(spec, "sideOffset"),
+    },
+    form: {
+      fieldIntegration: spec.select.formControl.fieldIntegration,
+      reset: spec.select.formControl.reset,
+      setter: {
+        method: spec.select.formControl.setter.method,
+        props: [...spec.select.formControl.setter.props],
+      },
     },
     index: {
       importMembers: SELECT_INDEX_IMPORT_PART_ORDER.map((partName) => ({
@@ -382,6 +536,20 @@ function getSelectOptionCollectionOverlayFacts(
       trigger: getSelectAdapterPart(spec, "trigger"),
       value: getSelectAdapterPart(spec, "value"),
     },
+    lifecycle: {
+      ...spec.select.lifecycle,
+      recreateOnControllednessChange: [...spec.select.lifecycle.recreateOnControllednessChange],
+      updateSetters: { ...spec.select.lifecycle.updateSetters },
+    },
+    models: spec.select.models.map((model) => ({
+      ...model,
+      event: { ...model.event },
+    })),
+    portal: { ...spec.select.portal },
+    presence: {
+      ...spec.select.presence,
+      initialHiddenParts: [...spec.select.presence.initialHiddenParts],
+    },
     props: {
       align: getAdapterFamilyProp(spec, "align"),
       alignItemWithTrigger: getAdapterFamilyProp(spec, "alignItemWithTrigger"),
@@ -403,6 +571,7 @@ function getSelectOptionCollectionOverlayFacts(
       sideOffset: getAdapterFamilyProp(spec, "sideOffset"),
       value: getAdapterFamilyProp(spec, "value"),
     },
+    publicRefs: [...spec.select.publicRefs],
     runtime: {
       factory: spec.root.runtimeFactory,
       importSource: spec.root.runtimeImportSource,
@@ -482,6 +651,21 @@ export function assertSelectSpecializedAdapterSpec(spec: SelectSpecializedAdapte
   ) {
     throw new Error("Select specialized adapter spec context projection must match SelectContext.");
   }
+  assertRequiredValues(
+    spec.select.contextProjection.rootValues,
+    ["disabled", "mounted", "open", "readOnly", "required", "selectedLabel", "value"],
+    "Select specialized adapter spec root context values",
+  );
+  assertRequiredValues(
+    spec.select.contextProjection.itemValues,
+    ["disabled", "value"],
+    "Select specialized adapter spec item context values",
+  );
+  assertRequiredValues(
+    spec.select.publicRefs,
+    ["root", "trigger", "popup", "item"],
+    "Select specialized adapter spec public refs",
+  );
 
   if (
     spec.select.itemContext.part !== "item" ||
@@ -499,6 +683,38 @@ export function assertSelectSpecializedAdapterSpec(spec: SelectSpecializedAdapte
     spec.select.scrollArrows[1] !== "scrollDownArrow"
   ) {
     throw new Error("Select specialized adapter spec scroll arrows are invalid.");
+  }
+
+  if (
+    spec.select.collection.itemIdentity.kind !== "primitive-value" ||
+    spec.select.collection.itemIdentity.part !== "item" ||
+    spec.select.collection.itemIdentity.prop !== "value" ||
+    spec.select.collection.itemIdentity.attribute !== "data-value" ||
+    spec.select.collection.selectedLabel.emptyItemText !== "preserve" ||
+    spec.select.collection.selectedLabel.itemTextPart !== "itemText"
+  ) {
+    throw new Error(
+      "Select specialized adapter spec collection identity and label facts are invalid.",
+    );
+  }
+  if (
+    spec.select.models.length !== 2 ||
+    !spec.select.models.every(
+      (model) => model.event.callbackTiming === "before-state-commit" && model.event.cancelable,
+    )
+  ) {
+    throw new Error("Select specialized adapter spec requires two cancelable pre-commit models.");
+  }
+  if (
+    spec.select.formControl.fieldIntegration !== true ||
+    spec.select.formControl.reset !== "runtime-readback-after-native-reset" ||
+    spec.select.portal.owner !== "component-instance" ||
+    spec.select.lifecycle.cleanup !== "destroy" ||
+    spec.select.lifecycle.setup !== "after-mount"
+  ) {
+    throw new Error(
+      "Select specialized adapter spec form, portal, and lifecycle facts are invalid.",
+    );
   }
 }
 
@@ -611,6 +827,34 @@ function assertSetter(spec: SpecializedAdapterSpec, method: string): void {
   }
 }
 
+function buildSelectModel(
+  state: SpecializedAdapterSpec["stateModels"][number],
+  event: SpecializedAdapterSpec["events"][number],
+): SelectSpecializedAdapterSpec["select"]["models"][number] {
+  if (state.name !== "open" && state.name !== "value") {
+    throw new Error(`Select specialized adapter spec does not support ${state.name} model.`);
+  }
+  if (event.callbackTiming !== "before-state-commit" || event.cancelable !== true) {
+    throw new Error(`Select ${state.name} model requires cancelable pre-commit event metadata.`);
+  }
+  return {
+    controlledProp: getRequiredValue(state.controlledProp, `${state.name} controlled prop`),
+    defaultProp: getRequiredValue(state.defaultProp, `${state.name} default prop`),
+    event: {
+      callbackProp: event.callbackProp,
+      callbackTiming: event.callbackTiming,
+      cancelable: event.cancelable,
+      detailsType: getRequiredValue(event.detailsType, `${state.name} details type`),
+      name: event.name,
+      valueProperty: getRequiredValue(event.valueProperty, `${state.name} value property`),
+    },
+    getter: getRequiredValue(state.runtimeGetter, `${state.name} getter`),
+    name: state.name,
+    setter: getRequiredValue(state.runtimeSetter, `${state.name} setter`),
+    valueType: state.valueType,
+  };
+}
+
 function assertDetails(actual: string | undefined, expected: string): void {
   if (actual !== expected) {
     throw new Error(`Select specialized adapter spec expected ${expected} details.`);
@@ -627,7 +871,6 @@ function assertRequiredValues(
     throw new Error(`${label} must include ${required.join(", ")}.`);
   }
 }
-
 
 export function getSelectFixturePartExports(spec: SelectSpecializedAdapterSpec): Array<{
   alias: string;

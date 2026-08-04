@@ -9,9 +9,7 @@ type Props = HTMLAttributes<"span"> & {
 
 const { asChild = true, disabled = false, class: className, ...rest } = Astro.props;
 
-const triggerClassName = [asChild ? "contents" : "inline-flex", className]
-  .filter(Boolean)
-  .join(" ");
+const triggerClassName = [asChild ? undefined : "inline-flex", className].filter(Boolean).join(" ");
 ---
 
 <TooltipPrimitive.Trigger

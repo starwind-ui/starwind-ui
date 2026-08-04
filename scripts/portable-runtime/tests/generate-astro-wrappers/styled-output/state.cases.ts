@@ -106,9 +106,10 @@ export async function assertAstroStyledStateOutput(outputRoot: string): Promise<
   expect(toggleGroup).not.toContain("<ToggleGroupItem");
   expect(toggleGroupItem).toContain('TogglePrimitive from "../primitives/astro/toggle"');
   expect(toggleGroupItem).toContain("<TogglePrimitive.Root");
-  expect(toggleGroupItem).toContain("toggleGroupItem({ variant, size, class: className })");
+  expect(toggleGroupItem).toContain("toggleGroupItem({ variant, class: className })");
   expect(toggleGroupItem).toContain("data-variant={variant}");
-  expect(toggleGroupItem).toContain("data-size={size}");
+  expect(toggleGroupItem).not.toContain("data-size={size}");
+  expect(toggleGroupItem).not.toContain("size?:");
   expect(toggleGroupItem).toContain('data-slot="toggle-group-item"');
   expect(toggleGroupVariants).not.toContain("starwind-toggle-group");
   expect(toggleGroupVariants).not.toContain("starwind-runtime-toggle");
@@ -117,6 +118,9 @@ export async function assertAstroStyledStateOutput(outputRoot: string): Promise<
   expect(toggleGroupVariants).toContain("inline-flex shrink-0 items-center justify-center");
   expect(toggleGroupVariants).toContain("data-[state=on]:bg-muted");
   expect(toggleGroupVariants).toContain("hover:bg-muted hover:text-foreground");
+  expect(toggleGroupVariants).toContain("group-data-[size=sm]/toggle-group:h-9");
+  expect(toggleGroupVariants).toContain("group-data-[size=md]/toggle-group:h-11");
+  expect(toggleGroupVariants).toContain("group-data-[size=lg]/toggle-group:h-12");
   expect(toggleGroupVariants).toContain("group-data-[spacing=0]/toggle-group:rounded-none");
   expect(toggleGroupVariants).toContain("data-vertical:flex-col");
   expect(toggleGroupVariants).toContain(

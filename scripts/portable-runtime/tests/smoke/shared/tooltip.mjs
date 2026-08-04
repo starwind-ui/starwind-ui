@@ -1,3 +1,195 @@
+export async function verifyTooltipCompositionCases(page, prefix, options = {}) {
+  const ids = {
+    nativeContent: `${prefix}-tooltip-native-content`,
+    nativeTrigger: `${prefix}-tooltip-native-trigger`,
+    rawContent: `${prefix}-tooltip-raw-child-content`,
+    rawListener: `${prefix}-tooltip-raw-child-listener-count`,
+    rawTrigger: `${prefix}-tooltip-raw-child-trigger`,
+    styledContent: `${prefix}-tooltip-styled-child-content`,
+    styledTrigger: `${prefix}-tooltip-styled-child-trigger`,
+  };
+  await page.waitForFunction(({ rawTrigger, styledTrigger }) => {
+    const raw = document.getElementById(rawTrigger);
+    const styled = document.getElementById(styledTrigger);
+
+    return (
+      raw?.getAttribute("data-state") === "closed" &&
+      raw.closest("[data-sw-tooltip-trigger]") !== null &&
+      styled?.getAttribute("data-state") === "closed" &&
+      styled.closest("[data-sw-tooltip-trigger]") !== null
+    );
+  }, ids);
+  const initialState = await page.evaluate(readTooltipCompositionState, {
+    ...ids,
+    includeRef: options.react === true,
+  });
+
+  if (
+    initialState.native.tagName !== "BUTTON" ||
+    initialState.native.classes.includes("inline-flex") !== true ||
+    initialState.native.classes.includes("tracking-[0.111px]") !== true ||
+    initialState.native.display !== "inline-flex" ||
+    initialState.native.letterSpacing !== "0.111px" ||
+    initialState.native.slot !== "tooltip-trigger" ||
+    initialState.native.hasRuntimeHook !== true ||
+    initialState.raw.tagName !== "BUTTON" ||
+    initialState.raw.classes.includes("contents") ||
+    initialState.raw.classes.includes("inline-flex") ||
+    initialState.raw.hostClasses.includes("tracking-[0.123px]") !== true ||
+    initialState.raw.classes.includes("uppercase") !== true ||
+    initialState.raw.letterSpacing !== "0.123px" ||
+    initialState.raw.textTransform !== "uppercase" ||
+    initialState.raw.wordSpacing !== "1.234px" ||
+    initialState.raw.hostSlot !== "tooltip-trigger" ||
+    initialState.raw.hostHasRuntimeHook !== true ||
+    initialState.styled.tagName !== "A" ||
+    initialState.styled.classes.includes("contents") ||
+    initialState.styled.classes.includes("inline-flex") ||
+    initialState.styled.hostClasses.includes("tracking-[0.234px]") !== true ||
+    initialState.styled.classes.includes("uppercase") !== true ||
+    initialState.styled.letterSpacing !== "0.234px" ||
+    initialState.styled.textTransform !== "uppercase" ||
+    initialState.styled.slot !== options.styledSlot ||
+    initialState.styled.hostHasRuntimeHook !== true ||
+    (options.react === true && initialState.raw.refWitness !== ids.rawTrigger)
+  ) {
+    throw new Error(
+      `Expected ${prefix} Tooltip native/composed targets to expose the approved display, class, slot, runtime, and ref contract, got ${JSON.stringify(
+        initialState,
+      )}.`,
+    );
+  }
+
+  await openTooltipAndAssert(page, {
+    contentId: ids.nativeContent,
+    expectedText: "Native tooltip content",
+    triggerId: ids.nativeTrigger,
+  });
+  await closeTooltip(page, ids.nativeContent);
+
+  await openTooltipAndAssert(page, {
+    contentId: ids.rawContent,
+    expectedText: "Raw child tooltip content",
+    triggerId: ids.rawTrigger,
+  });
+  await closeTooltip(page, ids.rawContent);
+
+  await page.locator(`#${ids.rawTrigger}`).focus();
+  await page.locator(`#${ids.rawContent}`).waitFor({ state: "visible" });
+  const focusedRawState = await page.evaluate(readOpenTooltipState, {
+    contentId: ids.rawContent,
+    triggerId: ids.rawTrigger,
+  });
+  if (
+    focusedRawState.hidden !== false ||
+    focusedRawState.contentState !== "open" ||
+    focusedRawState.triggerState !== "open" ||
+    focusedRawState.describedBy !== ids.rawContent
+  ) {
+    throw new Error(
+      `Expected ${prefix} raw-child Tooltip to open from focus, got ${JSON.stringify(
+        focusedRawState,
+      )}.`,
+    );
+  }
+  await page.keyboard.press("Tab");
+  await page.locator(`#${ids.rawContent}`).waitFor({ state: "hidden" });
+
+  await page.locator(`#${ids.rawTrigger}`).click();
+  const listenerState = await page.evaluate(
+    ({ listenerId, triggerId }) => ({
+      count: document.getElementById(triggerId)?.getAttribute("data-listener-count") ?? null,
+      text: document.getElementById(listenerId)?.textContent ?? null,
+    }),
+    { listenerId: ids.rawListener, triggerId: ids.rawTrigger },
+  );
+  if (listenerState.count !== "1" || listenerState.text !== "1") {
+    throw new Error(
+      `Expected ${prefix} raw-child Tooltip to preserve its child listener, got ${JSON.stringify(
+        listenerState,
+      )}.`,
+    );
+  }
+  await page.keyboard.press("Tab");
+  await page.mouse.move(20, 20);
+
+  await openTooltipAndAssert(page, {
+    contentId: ids.styledContent,
+    expectedText: "Styled child tooltip content",
+    triggerId: ids.styledTrigger,
+  });
+  await closeTooltip(page, ids.styledContent);
+}
+
+function readTooltipCompositionState(ids) {
+  const readTarget = (id, includeRef = false) => {
+    const target = document.getElementById(id);
+    const host = target?.closest("[data-sw-tooltip-trigger]");
+    return {
+      classes: Array.from(target?.classList ?? []),
+      display: target instanceof HTMLElement ? getComputedStyle(target).display : null,
+      hasRuntimeHook:
+        target instanceof HTMLElement ? target.hasAttribute("data-sw-tooltip-trigger") : null,
+      hostClasses: Array.from(host?.classList ?? []),
+      hostHasRuntimeHook:
+        host instanceof HTMLElement ? host.hasAttribute("data-sw-tooltip-trigger") : null,
+      hostSlot: host?.getAttribute("data-slot") ?? null,
+      letterSpacing: target instanceof HTMLElement ? getComputedStyle(target).letterSpacing : null,
+      refWitness: includeRef ? (target?.getAttribute("data-tooltip-ref-witness") ?? null) : null,
+      slot: target?.getAttribute("data-slot") ?? null,
+      tagName: target?.tagName ?? null,
+      textTransform: target instanceof HTMLElement ? getComputedStyle(target).textTransform : null,
+      wordSpacing: target instanceof HTMLElement ? getComputedStyle(target).wordSpacing : null,
+    };
+  };
+
+  return {
+    native: readTarget(ids.nativeTrigger),
+    raw: readTarget(ids.rawTrigger, ids.includeRef),
+    styled: readTarget(ids.styledTrigger),
+  };
+}
+
+async function openTooltipAndAssert(page, { contentId, expectedText, triggerId }) {
+  await page.locator(`#${triggerId}`).hover();
+  await page.locator(`#${contentId}`).waitFor({ state: "visible" });
+  const state = await page.evaluate(readOpenTooltipState, { contentId, triggerId });
+  if (
+    state.hidden !== false ||
+    state.contentState !== "open" ||
+    state.triggerState !== "open" ||
+    state.describedBy !== contentId ||
+    state.contentRole !== "tooltip" ||
+    state.positionerParentTag !== "BODY" ||
+    state.text !== expectedText
+  ) {
+    throw new Error(
+      `Expected Tooltip ${triggerId} to open with portaled visible content and synchronized ARIA/state, got ${JSON.stringify(
+        state,
+      )}.`,
+    );
+  }
+}
+
+function readOpenTooltipState({ contentId, triggerId }) {
+  const content = document.getElementById(contentId);
+  const trigger = document.getElementById(triggerId);
+  return {
+    contentRole: content?.getAttribute("role") ?? null,
+    contentState: content?.getAttribute("data-state") ?? null,
+    describedBy: trigger?.getAttribute("aria-describedby") ?? null,
+    hidden: content instanceof HTMLElement ? content.hidden : null,
+    positionerParentTag: content?.parentElement?.parentElement?.tagName ?? null,
+    text: content?.textContent?.trim() ?? null,
+    triggerState: trigger?.getAttribute("data-state") ?? null,
+  };
+}
+
+async function closeTooltip(page, contentId) {
+  await page.mouse.move(20, 20);
+  await page.locator(`#${contentId}`).waitFor({ state: "hidden" });
+}
+
 export async function verifyTooltipPlacements(page, prefix) {
   const sideExamples = ["top", "right", "bottom", "left"];
   const alignExamples = ["start", "center", "end"];

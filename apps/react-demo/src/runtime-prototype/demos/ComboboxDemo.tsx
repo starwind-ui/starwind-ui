@@ -1,12 +1,16 @@
+import ComboboxPrimitive from "@starwind-ui/react/combobox";
+
 import { useRuntimePrototypeContext } from "../context";
 import {
   button,
+  comboboxInput,
   Combobox,
   ComboboxContent,
   ComboboxEmpty,
   ComboboxGroup,
   ComboboxGroupLabel,
   ComboboxInput,
+  ComboboxInputGroup,
   ComboboxItem,
   ComboboxLabel,
   ComboboxSeparator,
@@ -208,6 +212,38 @@ export function ComboboxDemo() {
             </ComboboxContent>
           </Combobox>
         </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {(
+          [
+            ["sm", "sm", "Small control and content"],
+            ["md", "md", "Medium control and content"],
+            ["lg", "lg", "Large control and content"],
+            ["sm", "lg", "Mismatched control and content"],
+          ] as const
+        ).map(([controlSize, contentSize, label]) => {
+          const id = `react-runtime-combobox-size-${controlSize}-${contentSize}`;
+
+          return (
+            <div className="space-y-3" key={id}>
+              <h3 className="font-heading text-base font-semibold">{label}</h3>
+              <ComboboxPrimitive.Root id={id} defaultValue="apple">
+                <ComboboxInputGroup size={controlSize}>
+                  <ComboboxPrimitive.Input
+                    className={comboboxInput()}
+                    data-slot="combobox-input"
+                    placeholder={`${controlSize} control`}
+                  />
+                </ComboboxInputGroup>
+                <ComboboxContent id={`${id}-content`} size={contentSize}>
+                  <ComboboxItem value="apple">Apple</ComboboxItem>
+                  <ComboboxItem value="banana">Banana</ComboboxItem>
+                </ComboboxContent>
+              </ComboboxPrimitive.Root>
+            </div>
+          );
+        })}
       </div>
     </section>
   );

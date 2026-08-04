@@ -8,7 +8,6 @@ export type RadioGroupItemProps = Omit<
   React.ComponentPropsWithoutRef<"span">,
   "defaultChecked" | "onChange"
 > &
-  VariantProps<typeof radioWrapper> &
   VariantProps<typeof radioControl> & {
     checked?: boolean;
     defaultChecked?: boolean;
@@ -31,7 +30,6 @@ export type RadioGroupItemProps = Omit<
 function RadioGroupItem(props: RadioGroupItemProps) {
   const {
     variant,
-    size = "md",
     checked,
     defaultChecked,
     disabled = false,
@@ -50,7 +48,7 @@ function RadioGroupItem(props: RadioGroupItemProps) {
   } = props;
 
   return (
-    <div className={radioWrapper({ size })} data-slot="radio-group-item-wrapper">
+    <div className={radioWrapper()} data-slot="radio-group-item-wrapper">
       <RadioPrimitive.Root
         className={radioItem()}
         checked={checked}
@@ -73,7 +71,7 @@ function RadioGroupItem(props: RadioGroupItemProps) {
           data-slot="radio-group-item-control"
         >
           <RadioPrimitive.Indicator
-            className={radioIndicator({ size })}
+            className={radioIndicator()}
             data-slot="radio-group-item-indicator"
           >
             {icon ?? <CircleFilled />}

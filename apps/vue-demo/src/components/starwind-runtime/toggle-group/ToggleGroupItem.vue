@@ -20,14 +20,12 @@ export type ToggleGroupItemProps = Omit<
   | "disabled"
   | "nativeButton"
   | "onChange"
-  | "size"
   | "type"
   | "value"
   | "variant"
 > & {
   disabled?: boolean;
   nativeButton?: boolean;
-  size?: "sm" | "md" | "lg";
   value?: string;
   variant?: "default" | "outline";
   class?: ClassValue;
@@ -35,14 +33,12 @@ export type ToggleGroupItemProps = Omit<
 type ToggleGroupItemDeclaredProps = {
   disabled?: boolean;
   nativeButton?: boolean;
-  size?: "sm" | "md" | "lg";
   value?: string;
   variant?: "default" | "outline";
   class?: ClassValue;
 } & /* @vue-ignore */ ToggleGroupItemProps;
 const {
   variant,
-  size,
   disabled = false,
   nativeButton,
   value,
@@ -89,9 +85,8 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
 <template>
   <TogglePrimitive.ToggleRoot
     :ref="setElement"
-    :class="toggleGroupItem({ variant, size, class: className })"
+    :class="toggleGroupItem({ variant, class: className })"
     :data-variant="variant"
-    :data-size="size"
     :disabled="disabled"
     :native-button="nativeButton"
     :value="value"

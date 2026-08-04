@@ -3,14 +3,9 @@ import { useState } from "react";
 
 import {
   ColorPicker,
+  ColorPickerArea,
   ColorPickerContent,
-  ColorPickerControl,
-  ColorPickerHiddenInput,
   ColorPickerInput,
-  ColorPickerLabel,
-  ColorPickerRoot,
-  ColorPickerSwatch,
-  ColorPickerSwatchGroup,
   ColorPickerTrigger,
 } from "../../../components/starwind-runtime/color-picker";
 
@@ -29,14 +24,14 @@ const SIZES = [
 ] as const;
 
 const ANATOMY = [
-  ["Closed control", "ColorPickerLabel + ColorPickerControl + ColorPickerTrigger"],
-  ["Color surface", "ColorPickerArea + ColorPickerAreaThumb"],
-  ["Channels", "ColorPickerSliders + ColorPickerChannelSlider"],
-  ["Exact editing", "ColorPickerValueInput + ColorPickerFormatSelect"],
-  ["Native editing", "ColorPickerNativeFormatSelect"],
+  ["Complete picker", "ColorPicker"],
+  ["Popup shell", "ColorPickerTrigger + ColorPickerContent"],
+  ["Color surface", "ColorPickerArea"],
+  ["Channels", "ColorPickerChannelSlider + ColorPickerChannelInput"],
+  ["Exact editing", "ColorPickerInput"],
   ["Actions", "ColorPickerEyeDropper + ColorPickerClear"],
   ["Consumer colors", "ColorPickerSwatchGroup + ColorPickerSwatch"],
-  ["Form value", "ColorPickerHiddenInput"],
+  ["Form value", "Automatically rendered by ColorPicker"],
 ] as const;
 
 export function CanonicalColorPickerDemo() {
@@ -50,10 +45,10 @@ export function CanonicalColorPickerDemo() {
           <div className="bg-primary text-primary-foreground inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide uppercase">
             Canonical docs example
           </div>
-          <h3 className="font-heading text-2xl font-semibold">Proposed documentation default</h3>
+          <h3 className="font-heading text-2xl font-semibold">Simple common usage</h3>
           <p className="text-muted-foreground max-w-3xl text-sm">
-            This is the main styled example shown first on the Color Picker documentation page. It
-            includes alpha, value text, and consumer-provided swatches without enabling Clear.
+            ColorPicker supplies the complete popup editor, alpha controls, EyeDropper, formatted
+            input, swatches, and hidden form input when no children are provided.
           </p>
         </header>
 
@@ -61,28 +56,11 @@ export function CanonicalColorPickerDemo() {
           <div className="w-full max-w-sm" data-color-picker-example="default">
             <ColorPicker
               id="react-runtime-prototype-docs-canonical-color-picker"
-              defaultValue="#ff000080"
-              format="hex"
-              alpha
+              label="Brand color"
               name="brand-color"
-            >
-              <ColorPickerLabel>Brand color</ColorPickerLabel>
-              <ColorPickerControl>
-                <ColorPickerTrigger showValueText aria-label="Open brand color picker" />
-              </ColorPickerControl>
-              <ColorPickerContent
-                aria-label="Brand color editor"
-                data-testid="canonical-docs-color-picker-content"
-                swatches={
-                  <ColorPickerSwatchGroup aria-label="Suggested brand colors">
-                    {SWATCHES.map(({ label, value }) => (
-                      <ColorPickerSwatch key={value} value={value} aria-label={`${label} swatch`} />
-                    ))}
-                  </ColorPickerSwatchGroup>
-                }
-              />
-              <ColorPickerHiddenInput />
-            </ColorPicker>
+              defaultValue="#ff000080"
+              swatches={SWATCHES}
+            />
           </div>
         </div>
       </section>
@@ -91,8 +69,8 @@ export function CanonicalColorPickerDemo() {
         <header className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <h3 className="font-heading text-lg font-semibold">Product surface</h3>
           <p className="text-muted-foreground max-w-3xl text-sm">
-            Styled Popover composition with Starwind format controls, actions, and consumer
-            swatches.
+            Convenience props handle common customization; children remain an escape hatch for
+            authored layouts.
           </p>
         </header>
 
@@ -100,66 +78,56 @@ export function CanonicalColorPickerDemo() {
           <div className="bg-card space-y-4 rounded-xl border p-3 shadow-sm">
             <ColorPicker
               id="canonical-color-picker-root"
+              label="Brand color"
               defaultValue="rgba(255, 0, 0, 0.5)"
               format={format}
-              alpha
-              allowEmpty
+              clearable
+              swatches={SWATCHES}
               name="canonicalColor"
               onFormatChange={setFormat}
             >
-              <ColorPickerLabel>Brand color</ColorPickerLabel>
-              <ColorPickerControl>
+              <span className="text-sm font-medium">Brand color</span>
+              <div className="flex items-center gap-2" data-slot="color-picker-control">
                 <ColorPickerTrigger
                   aria-label="Open canonical brand color picker"
                   data-testid="canonical-color-picker-trigger"
-                >
-                  Brand
-                </ColorPickerTrigger>
-              </ColorPickerControl>
+                />
+              </div>
               <ColorPickerContent
-                showClear
+                swatches={SWATCHES}
                 aria-label="Canonical brand color editor"
                 data-testid="canonical-color-picker-content"
-                swatches={
-                  <ColorPickerSwatchGroup
-                    aria-label="Suggested brand colors"
-                    data-testid="canonical-color-picker-swatches"
-                  >
-                    {SWATCHES.map(({ label, value }) => (
-                      <ColorPickerSwatch key={value} value={value} aria-label={`${label} swatch`} />
-                    ))}
-                  </ColorPickerSwatchGroup>
-                }
               />
-              <ColorPickerHiddenInput />
             </ColorPicker>
             <p className="text-muted-foreground text-sm">
-              The red default places the area and hue thumbs on track boundaries so their projected
-              fill remains directly reviewable.
+              The controlled format still updates through the styled selector.
             </p>
           </div>
 
           <div className="bg-card space-y-4 rounded-xl border p-3 shadow-sm">
             <h4 className="font-heading text-base font-semibold">Native format control</h4>
             <p className="text-muted-foreground text-sm">
-              The native option keeps progressive enhancement while sharing the same value editor
-              and Color Picker state.
+              Native, styled, and absent format controls use the same value editor.
             </p>
-            <ColorPickerRoot
+            <ColorPicker
               id="canonical-native-color-picker"
+              inline
               defaultValue="rgb(37, 99, 235)"
               format={nativeFormat}
+              formats={["rgb", "hex"]}
+              formatControl="native"
               alpha={false}
+              showEyeDropper={false}
               data-testid="canonical-native-color-picker"
               onFormatChange={setNativeFormat}
             >
-              <ColorPickerLabel>Accent color</ColorPickerLabel>
+              <span className="text-sm font-medium">Accent color</span>
               <ColorPickerInput
                 formatControl="native"
+                formats={["rgb", "hex"]}
                 data-testid="canonical-native-color-picker-input"
               />
-              <ColorPickerHiddenInput />
-            </ColorPickerRoot>
+            </ColorPicker>
           </div>
         </div>
 
@@ -167,63 +135,67 @@ export function CanonicalColorPickerDemo() {
           <div className="space-y-1">
             <h4 className="font-heading text-base font-semibold">Swatch-only trigger</h4>
             <p className="text-muted-foreground text-sm">
-              The same Popover composition can use a compact color swatch button without value text.
+              Custom children replace the default visible anatomy; the hidden input remains
+              automatic.
             </p>
           </div>
-          <ColorPicker defaultValue="#0ea5e9" format="hex" alpha={false} name="swatchOnlyColor">
-            <ColorPickerLabel>Swatch-only color</ColorPickerLabel>
-            <ColorPickerControl>
-              <ColorPickerTrigger
-                showValueText={false}
-                className="size-11 p-2"
-                aria-label="Open swatch-only color picker"
-                data-testid="canonical-color-picker-swatch-trigger"
-              />
-            </ColorPickerControl>
-            <ColorPickerContent
-              alpha={false}
-              showEyeDropper={false}
-              aria-label="Swatch-only color editor"
+          <ColorPicker defaultValue="#0ea5e9" alpha={false} name="swatchOnlyColor">
+            <span className="text-sm font-medium">Swatch-only color</span>
+            <ColorPickerTrigger
+              showValueText={false}
+              className="size-11 p-2"
+              aria-label="Open swatch-only color picker"
+              data-testid="canonical-color-picker-swatch-trigger"
             />
-            <ColorPickerHiddenInput />
+            <ColorPickerContent showEyeDropper={false} aria-label="Swatch-only color editor" />
           </ColorPicker>
         </div>
 
         <div className="space-y-3" data-testid="canonical-color-picker-sizes">
           <h4 className="font-heading text-base font-semibold">Starwind size scale</h4>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {SIZES.map(({ label, size, value }) => (
               <div key={size} className="bg-card rounded-xl border p-4">
-                <ColorPicker defaultValue={value} format="hex" alpha={false} size={size}>
-                  <ColorPickerLabel size={size}>{label}</ColorPickerLabel>
-                  <ColorPickerControl size={size}>
+                <ColorPicker defaultValue={value} alpha={false} size={size}>
+                  <span className="text-sm font-medium">{label}</span>
+                  <div data-slot="color-picker-control">
                     <ColorPickerTrigger
-                      size={size}
                       aria-label={`Open ${label.toLowerCase()} color picker`}
                       data-testid={`canonical-color-picker-${size}-trigger`}
-                    >
-                      {label}
-                    </ColorPickerTrigger>
-                  </ColorPickerControl>
+                    />
+                  </div>
                   <ColorPickerContent
                     size={size}
-                    alpha={false}
                     showEyeDropper={false}
+                    swatches={[{ value, label: `${label} sample swatch` }]}
                     aria-label={`${label} color editor`}
                     data-testid={`canonical-color-picker-${size}-content`}
-                    swatches={
-                      <ColorPickerSwatchGroup size={size} aria-label={`${label} suggested colors`}>
-                        <ColorPickerSwatch
-                          size={size}
-                          value={value}
-                          aria-label={`${label} sample swatch`}
-                        />
-                      </ColorPickerSwatchGroup>
-                    }
                   />
                 </ColorPicker>
               </div>
             ))}
+            <div className="bg-card rounded-xl border p-4">
+              <ColorPicker defaultValue="#0ea5e9" alpha={false} size="sm">
+                <span className="text-sm font-medium">Independent popup</span>
+                <div data-slot="color-picker-control">
+                  <ColorPickerTrigger
+                    aria-label="Open independently sized color picker"
+                    data-testid="canonical-color-picker-mismatch-trigger"
+                  />
+                </div>
+                <ColorPickerContent
+                  size="lg"
+                  aria-label="Large custom color editor"
+                  data-testid="canonical-color-picker-mismatch-content"
+                >
+                  <ColorPickerArea />
+                  <ColorPickerInput
+                    formatContentSize="sm"
+                    data-testid="canonical-color-picker-format-popup-sm"
+                  />
+                </ColorPickerContent>
+              </ColorPicker>
+            </div>
           </div>
         </div>
 

@@ -23,12 +23,15 @@ const {
   class: className,
   ...rest
 } = Astro.props;
+
+const triggerBaseClassName = navigationMenuTrigger({ class: className });
+const triggerClassName = asChild ? className : triggerBaseClassName;
 ---
 
 {
   asChild ? (
     <NavigationMenuPrimitive.Trigger
-      class={navigationMenuTrigger({ class: className })}
+      class={triggerClassName}
       asChild={asChild}
       disabled={disabled}
       openDelay={openDelay}
@@ -40,7 +43,7 @@ const {
     </NavigationMenuPrimitive.Trigger>
   ) : (
     <NavigationMenuPrimitive.Trigger
-      class={navigationMenuTrigger({ class: className })}
+      class={triggerClassName}
       asChild={asChild}
       disabled={disabled}
       openDelay={openDelay}

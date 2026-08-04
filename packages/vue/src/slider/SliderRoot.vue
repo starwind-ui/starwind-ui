@@ -61,6 +61,7 @@ const renderedValue = computed(() =>
 let instance: ReturnType<typeof createSlider> | undefined;
 let unsubscribeChange: (() => void) | undefined;
 let unsubscribeCommitted: (() => void) | undefined;
+let unsubscribeStateSync: (() => void) | undefined;
 let refreshRevision = 0;
 
 function valuesEqual(left: SliderValue, right: SliderValue): boolean {
@@ -74,6 +75,15 @@ function valuesEqual(left: SliderValue, right: SliderValue): boolean {
 
 function serializeValue(value: SliderValue): string {
   return Array.isArray(value) ? JSON.stringify(value) : String(value);
+}
+
+function handleStateSync(): void {
+  if (controlled || !instance) return;
+  const nextValue = instance.getValue();
+  if (valuesEqual(uncontrolledValue.value, nextValue)) return;
+
+  uncontrolledValue.value = nextValue;
+  modelValue.value = nextValue;
 }
 
 async function refreshAfterVueFlush(): Promise<void> {
@@ -93,7 +103,7 @@ defineExpose({ element });
 
 onMounted(() => {
   if (!element.value) return;
-  instance = createSlider(element.value, {
+  const createdInstance = createSlider(element.value, {
     defaultValue: initialDefaultValue,
     disabled: props.disabled,
     form: props.form,
@@ -106,16 +116,18 @@ onMounted(() => {
     step: props.step,
     ...(controlled && modelValue.value !== undefined ? { value: modelValue.value } : {}),
   });
-  unsubscribeChange = instance.subscribe("valueChange", (detail) => {
+  instance = createdInstance;
+  unsubscribeChange = createdInstance.subscribe("valueChange", (detail) => {
     emit("valueChange", detail.value, detail);
     if (detail.isCanceled) return;
 
     if (!controlled) uncontrolledValue.value = detail.value;
     modelValue.value = detail.value;
   });
-  unsubscribeCommitted = instance.subscribe("valueCommitted", (detail) => {
+  unsubscribeCommitted = createdInstance.subscribe("valueCommitted", (detail) => {
     emit("valueCommitted", detail.value, detail);
   });
+  unsubscribeStateSync = createdInstance.subscribe("stateSync", handleStateSync);
 });
 
 onUpdated(() => {
@@ -168,8 +180,10 @@ watch(
 
 onBeforeUnmount(() => {
   refreshRevision += 1;
+  unsubscribeStateSync?.();
   unsubscribeChange?.();
   unsubscribeCommitted?.();
+  unsubscribeStateSync = undefined;
   unsubscribeChange = undefined;
   unsubscribeCommitted = undefined;
   instance?.destroy();

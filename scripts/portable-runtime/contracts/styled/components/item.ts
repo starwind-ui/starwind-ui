@@ -100,13 +100,13 @@ export const itemStyledContract: StyledAdapterContract = {
           muted: "bg-muted/50",
         },
         size: {
-          default: "gap-4 p-4",
           sm: "gap-2.5 px-4 py-3",
+          md: "gap-4 p-4",
         },
       },
       defaultVariants: {
         variant: "default",
-        size: "default",
+        size: "md",
       },
     },
     itemActions: {
@@ -186,7 +186,7 @@ export const itemStyledContract: StyledAdapterContract = {
       destructure: {
         props: [
           { name: "variant", defaultValue: '"default"' },
-          { name: "size", defaultValue: '"default"' },
+          { name: "size", defaultValue: '"md"' },
           { name: "as", alias: "Tag", defaultValue: '"div"' },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },

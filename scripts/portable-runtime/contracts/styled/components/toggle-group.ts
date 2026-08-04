@@ -40,11 +40,6 @@ export const toggleGroupStyledContract: StyledAdapterContract = {
           outline:
             "border-input hover:bg-muted hover:text-foreground border bg-transparent shadow-xs",
         },
-        size: {
-          sm: "h-9 min-w-9 px-2 text-sm",
-          md: "h-11 min-w-11 px-2.5 text-base",
-          lg: "h-12 min-w-12 px-3 text-lg",
-        },
       },
     },
   },
@@ -127,7 +122,6 @@ export const toggleGroupStyledContract: StyledAdapterContract = {
               },
             },
             { name: "data-variant", value: { type: "variable", name: "variant" } },
-            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "data-spacing", value: { type: "variable", name: "spacing" } },
             {
               name: "data-horizontal",
@@ -160,6 +154,7 @@ export const toggleGroupStyledContract: StyledAdapterContract = {
             },
             { name: "value", value: { type: "variable", name: "value" }, frameworks: ["react"] },
             { name: "spread", value: { type: "variable", name: "rest" } },
+            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "data-slot", value: { type: "literal", value: "toggle-group" } },
           ],
           children: [{ type: "slot" }],
@@ -194,7 +189,6 @@ export const toggleGroupStyledContract: StyledAdapterContract = {
             type: "React.Ref<HTMLButtonElement | HTMLSpanElement>",
             frameworks: ["react"],
           },
-          { name: "size", optional: true, type: '"sm" | "md" | "lg"' },
           { name: "value", optional: true, type: "string" },
           { name: "variant", optional: true, type: '"default" | "outline"' },
         ],
@@ -202,7 +196,6 @@ export const toggleGroupStyledContract: StyledAdapterContract = {
       destructure: {
         props: [
           { name: "variant" },
-          { name: "size" },
           { name: "defaultPressed" },
           { name: "disabled", defaultValue: "false" },
           { name: "nativeButton" },
@@ -225,11 +218,10 @@ export const toggleGroupStyledContract: StyledAdapterContract = {
               value: {
                 type: "classVariant",
                 variant: "toggleGroupItem",
-                args: { variant: "variant", size: "size", class: "className" },
+                args: { variant: "variant", class: "className" },
               },
             },
             { name: "data-variant", value: { type: "variable", name: "variant" } },
-            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "defaultPressed", value: { type: "variable", name: "defaultPressed" } },
             { name: "disabled", value: { type: "variable", name: "disabled" } },
             { name: "nativeButton", value: { type: "variable", name: "nativeButton" } },

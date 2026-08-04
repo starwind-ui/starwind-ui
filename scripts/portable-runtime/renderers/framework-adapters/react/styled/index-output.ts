@@ -5,7 +5,12 @@ import { renderNamedExport, renderNamedImport } from "./formatting.js";
 import { renderIdentifierObject } from "./render-tree.js";
 
 export function renderIndex(group: StyledOutputComponentGroup, tsHeader: string): string {
-  const componentImports = [...group.components]
+  const indexComponentNames = new Set([
+    ...group.publicExports,
+    ...group.defaultExport.members.map((member) => member.localName),
+  ]);
+  const componentImports = group.components
+    .filter((component) => indexComponentNames.has(component.exportName))
     .sort((left, right) => left.exportName.localeCompare(right.exportName))
     .map(
       (component) =>

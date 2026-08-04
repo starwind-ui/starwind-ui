@@ -26,6 +26,9 @@ const resolve = {
 };
 
 export default defineConfig({
+  optimizeDeps: {
+    include: ["react/jsx-dev-runtime"],
+  },
   root: repoRoot,
   resolve,
   test: {

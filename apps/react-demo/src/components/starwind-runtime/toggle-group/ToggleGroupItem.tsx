@@ -15,7 +15,6 @@ export type ToggleGroupItemProps = Omit<
   ) => void;
   pressed?: boolean;
   ref?: React.Ref<HTMLButtonElement | HTMLSpanElement>;
-  size?: "sm" | "md" | "lg";
   value?: string;
   variant?: "default" | "outline";
 };
@@ -23,7 +22,6 @@ export type ToggleGroupItemProps = Omit<
 function ToggleGroupItem(props: ToggleGroupItemProps) {
   const {
     variant,
-    size,
     defaultPressed,
     disabled = false,
     nativeButton,
@@ -38,9 +36,8 @@ function ToggleGroupItem(props: ToggleGroupItemProps) {
 
   return (
     <TogglePrimitive.Root
-      className={toggleGroupItem({ variant, size, class: className })}
+      className={toggleGroupItem({ variant, class: className })}
       data-variant={variant}
-      data-size={size}
       defaultPressed={defaultPressed}
       disabled={disabled}
       nativeButton={nativeButton}

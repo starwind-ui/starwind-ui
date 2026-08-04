@@ -21,7 +21,7 @@ export async function verifyAstroCoreControlCases({ page }) {
   });
   if (
     inputGroupState.groupCount !== 20 ||
-    inputGroupState.comboboxGroupCount !== 6 ||
+    inputGroupState.comboboxGroupCount !== 10 ||
     inputGroupState.controlCount !== 14 ||
     inputGroupState.textareaControlCount !== 1 ||
     inputGroupState.firstControlSlot !== "input-group-control" ||

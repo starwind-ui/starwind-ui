@@ -38,7 +38,7 @@ const selectScrollableItems = Array.from({ length: 64 }, (_, index) => {
   <h2 class="font-heading mb-4 text-2xl font-semibold">Select</h2>
   <div class="grid gap-6 md:grid-cols-2">
     <div class="space-y-3">
-      <h3 class="font-heading text-base font-semibold">Uncontrolled form value</h3>
+      <h3 class="font-heading text-base font-semibold">Small control and content</h3>
       <Select
         id="runtime-select-theme"
         defaultValue="system"
@@ -48,10 +48,11 @@ const selectScrollableItems = Array.from({ length: 64 }, (_, index) => {
       >
         <SelectTrigger
           id="runtime-select-theme-trigger"
+          size="sm"
           class="runtime-select-trigger-custom w-full"
           placeholder="Pick theme"
         />
-        <SelectContent id="runtime-select-theme-content">
+        <SelectContent id="runtime-select-theme-content" size="sm">
           <SelectGroup>
             <SelectLabel>Appearance</SelectLabel>
             {
@@ -73,14 +74,14 @@ const selectScrollableItems = Array.from({ length: 64 }, (_, index) => {
     </div>
 
     <div class="space-y-3">
-      <h3 class="font-heading text-base font-semibold">asChild trigger</h3>
+      <h3 class="font-heading text-base font-semibold">Medium asChild control and content</h3>
       <Select id="runtime-select-density" defaultValue="comfortable" name="runtimeDensity">
-        <SelectTrigger asChild showIcon={false} class={button({ variant: "outline" })}>
+        <SelectTrigger asChild showIcon={false} size="md" class={button({ variant: "outline" })}>
           <button id="runtime-select-density-trigger" type="button">
             <SelectValue placeholder="Density" />
           </button>
         </SelectTrigger>
-        <SelectContent id="runtime-select-density-content" sideOffset={6}>
+        <SelectContent id="runtime-select-density-content" size="md" sideOffset={6}>
           {
             selectDensity.map((item) => (
               <SelectItem id={`runtime-select-density-${item.value}`} value={item.value}>
@@ -93,7 +94,7 @@ const selectScrollableItems = Array.from({ length: 64 }, (_, index) => {
     </div>
 
     <div class="space-y-3">
-      <h3 class="font-heading text-base font-semibold">Read-only form metadata</h3>
+      <h3 class="font-heading text-base font-semibold">Large control and content</h3>
       <Select
         id="runtime-select-readonly"
         defaultValue="dark"
@@ -103,8 +104,13 @@ const selectScrollableItems = Array.from({ length: 64 }, (_, index) => {
         readOnly
         class="w-72"
       >
-        <SelectTrigger id="runtime-select-readonly-trigger" class="w-full" placeholder="Theme" />
-        <SelectContent id="runtime-select-readonly-content">
+        <SelectTrigger
+          id="runtime-select-readonly-trigger"
+          class="w-full"
+          placeholder="Theme"
+          size="lg"
+        />
+        <SelectContent id="runtime-select-readonly-content" size="lg">
           {
             selectThemes
               .filter((item) => !item.disabled)
@@ -119,7 +125,7 @@ const selectScrollableItems = Array.from({ length: 64 }, (_, index) => {
     </div>
 
     <div class="space-y-3">
-      <h3 class="font-heading text-base font-semibold">No hover highlight</h3>
+      <h3 class="font-heading text-base font-semibold">Mismatched control and content</h3>
       <Select
         id="runtime-select-no-hover"
         defaultValue="compact"
@@ -127,8 +133,13 @@ const selectScrollableItems = Array.from({ length: 64 }, (_, index) => {
         highlightItemOnHover={false}
         class="w-72"
       >
-        <SelectTrigger id="runtime-select-no-hover-trigger" class="w-full" placeholder="Density" />
-        <SelectContent id="runtime-select-no-hover-content">
+        <SelectTrigger
+          id="runtime-select-no-hover-trigger"
+          class="w-full"
+          placeholder="Density"
+          size="sm"
+        />
+        <SelectContent id="runtime-select-no-hover-content" size="lg">
           {
             selectDensity.map((item) => (
               <SelectItem id={`runtime-select-no-hover-${item.value}`} value={item.value}>

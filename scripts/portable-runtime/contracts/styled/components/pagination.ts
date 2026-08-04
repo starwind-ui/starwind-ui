@@ -91,21 +91,37 @@ export const paginationStyledContract: StyledAdapterContract = {
   },
   variantCollectionName: "PaginationVariants",
   variants: {
-    pagination: { base: "mx-auto flex w-full justify-center" },
+    pagination: { base: "group/pagination mx-auto flex w-full justify-center" },
     paginationContent: { base: "flex flex-row items-center gap-1" },
-    paginationEllipsis: {
-      base: "flex items-center justify-center",
-      variants: {
-        size: {
-          "icon-sm": "size-9",
-          icon: "size-11",
-          "icon-lg": "size-12",
-        },
-      },
-      defaultVariants: { size: "icon" },
+    paginationLink: {
+      base: [
+        "group-data-[size=sm]/pagination:size-9 group-data-[size=sm]/pagination:p-0 group-data-[size=sm]/pagination:text-sm",
+        "group-data-[size=md]/pagination:size-11 group-data-[size=md]/pagination:p-0 group-data-[size=md]/pagination:text-base",
+        "group-data-[size=lg]/pagination:size-12 group-data-[size=lg]/pagination:p-0 group-data-[size=lg]/pagination:text-lg",
+      ],
     },
-    paginationNext: { base: "group gap-1" },
-    paginationPrevious: { base: "group gap-1" },
+    paginationEllipsis: {
+      base: [
+        "flex items-center justify-center",
+        "group-data-[size=sm]/pagination:size-9 group-data-[size=md]/pagination:size-11 group-data-[size=lg]/pagination:size-12",
+      ],
+    },
+    paginationNext: {
+      base: [
+        "group w-auto gap-1",
+        "group-data-[size=sm]/pagination:h-9 group-data-[size=sm]/pagination:px-4 group-data-[size=sm]/pagination:text-sm",
+        "group-data-[size=md]/pagination:h-11 group-data-[size=md]/pagination:px-5 group-data-[size=md]/pagination:text-base",
+        "group-data-[size=lg]/pagination:h-12 group-data-[size=lg]/pagination:px-8 group-data-[size=lg]/pagination:text-lg",
+      ],
+    },
+    paginationPrevious: {
+      base: [
+        "group w-auto gap-1",
+        "group-data-[size=sm]/pagination:h-9 group-data-[size=sm]/pagination:px-4 group-data-[size=sm]/pagination:text-sm",
+        "group-data-[size=md]/pagination:h-11 group-data-[size=md]/pagination:px-5 group-data-[size=md]/pagination:text-base",
+        "group-data-[size=lg]/pagination:h-12 group-data-[size=lg]/pagination:px-8 group-data-[size=lg]/pagination:text-lg",
+      ],
+    },
   },
   components: [
     {
@@ -113,6 +129,7 @@ export const paginationStyledContract: StyledAdapterContract = {
       props: {
         extends: [{ type: "htmlAttributes", element: "nav" }],
         fields: [
+          { name: "size", optional: true, type: '"sm" | "md" | "lg"' },
           {
             name: "ref",
             optional: true,
@@ -123,6 +140,7 @@ export const paginationStyledContract: StyledAdapterContract = {
       },
       destructure: {
         props: [
+          { name: "size", defaultValue: '"md"' },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
         ],
@@ -145,6 +163,7 @@ export const paginationStyledContract: StyledAdapterContract = {
             },
             { name: "spread", value: { type: "variable", name: "rest" } },
             { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
+            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "data-slot", value: { type: "literal", value: "pagination" } },
           ],
           children: [{ type: "slot" }],
@@ -177,7 +196,6 @@ export const paginationStyledContract: StyledAdapterContract = {
       destructure: {
         props: [
           { name: "isActive" },
-          { name: "size", defaultValue: '"icon"' },
           { name: "data-slot", alias: "dataSlot", defaultValue: '"pagination-link"' },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
@@ -198,8 +216,15 @@ export const paginationStyledContract: StyledAdapterContract = {
               name: "variant",
               value: { type: "raw", code: 'isActive ? "outline" : "ghost"' },
             },
-            { name: "size", value: { type: "variable", name: "size" } },
-            { name: "class", value: { type: "variable", name: "className" } },
+            { name: "size", value: { type: "literal", value: "md" } },
+            {
+              name: "class",
+              value: {
+                type: "classVariant",
+                variant: "paginationLink",
+                args: { class: "className" },
+              },
+            },
             { name: "spread", value: { type: "variable", name: "rest" } },
             { name: "as", value: { type: "literal", value: "a" } },
             { name: "ref", value: { type: "variable", name: "ref" }, frameworks: ["react"] },
@@ -219,7 +244,6 @@ export const paginationStyledContract: StyledAdapterContract = {
       },
       destructure: {
         props: [
-          { name: "size", defaultValue: '"md"' },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
         ],
@@ -232,7 +256,6 @@ export const paginationStyledContract: StyledAdapterContract = {
           exportName: "PaginationLink",
           attrs: [
             { name: "aria-label", value: { type: "literal", value: "Go to previous page" } },
-            { name: "size", value: { type: "variable", name: "size" } },
             {
               name: "class",
               value: {
@@ -280,7 +303,6 @@ export const paginationStyledContract: StyledAdapterContract = {
       },
       destructure: {
         props: [
-          { name: "size", defaultValue: '"md"' },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
         ],
@@ -293,7 +315,6 @@ export const paginationStyledContract: StyledAdapterContract = {
           exportName: "PaginationLink",
           attrs: [
             { name: "aria-label", value: { type: "literal", value: "Go to next page" } },
-            { name: "size", value: { type: "variable", name: "size" } },
             {
               name: "class",
               value: {
@@ -335,10 +356,7 @@ export const paginationStyledContract: StyledAdapterContract = {
       exportName: "PaginationEllipsis",
       imports: [dotsImport],
       props: {
-        extends: [
-          { type: "htmlAttributes", element: "span" },
-          { type: "variantProps", variant: "paginationEllipsis" },
-        ],
+        extends: [{ type: "htmlAttributes", element: "span" }],
         fields: [
           {
             name: "ref",
@@ -350,7 +368,6 @@ export const paginationStyledContract: StyledAdapterContract = {
       },
       destructure: {
         props: [
-          { name: "size" },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
         ],
@@ -367,7 +384,7 @@ export const paginationStyledContract: StyledAdapterContract = {
               value: {
                 type: "classVariant",
                 variant: "paginationEllipsis",
-                args: { size: "size", class: "className" },
+                args: { class: "className" },
               },
             },
             { name: "spread", value: { type: "variable", name: "rest" } },

@@ -18,6 +18,8 @@ type Props = Omit<HTMLAttributes<"nav">, "defaultValue" | "onChange" | "value"> 
   alignOffset?: number;
   avoidCollisions?: boolean;
   collisionPadding?: number;
+  size?: "sm" | "md";
+  contentSize?: "sm" | "md";
 };
 
 const {
@@ -34,6 +36,8 @@ const {
   alignOffset = 0,
   avoidCollisions = true,
   collisionPadding = 8,
+  size = "md",
+  contentSize = size,
   class: className,
   ...rest
 } = Astro.props;
@@ -49,6 +53,7 @@ const {
   closeOnOutsideInteract={closeOnOutsideInteract}
   orientation={orientation}
   {...rest}
+  data-size={size}
   data-slot="navigation-menu"
 >
   <slot />
@@ -60,5 +65,6 @@ const {
     alignOffset={alignOffset}
     avoidCollisions={avoidCollisions}
     collisionPadding={collisionPadding}
+    size={contentSize}
   />
 </NavigationMenuPrimitive.Root>

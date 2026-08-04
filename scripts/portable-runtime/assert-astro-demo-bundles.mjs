@@ -81,13 +81,23 @@ const routeExpectations = [
       maxInitialExternalGzipBytes: 34_000,
       maxInitialExternalRawBytes: 100_000,
       maxInitialJsGzipBytes: 36_000,
-      maxStaticChunkCount: 19,
+      maxStaticChunkCount: 21,
     },
     attributedStaticChunks: [
       {
         assetPattern: /^controller-lifecycle\./,
         importerPattern: /^SidebarProvider\.astro_astro_type_script_index_0_lang\./,
         note: "pre-feature report recorded 18 chunks; the shared Astro controller lifecycle is now extracted from SidebarProvider (680 B raw), with no Color Picker asset in the initial graph",
+      },
+      {
+        assetPattern: /^floating-portal\./,
+        importerPattern: /^floating-disclosure\./,
+        note: "dialog-aware floating portal ownership split the shared portal/session code from overlay dismissal; the unchanged raw and gzip byte budgets still bound its initial cost",
+      },
+      {
+        assetPattern: /^cancelable-details\./,
+        importerPattern: /^overlay-open-change\./,
+        note: "the 239 B raw cancelable-details helper became a shared chunk after Accordion adopted the same cancellation contract; the unchanged raw and gzip byte budgets still bound its initial cost",
       },
     ],
     forbiddenAssets: runtimeNestedSidebarForbiddenAssets,

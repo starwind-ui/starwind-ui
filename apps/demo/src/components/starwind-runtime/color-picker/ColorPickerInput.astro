@@ -1,29 +1,95 @@
 ---
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
 import type { HTMLAttributes } from "astro/types";
-import type { VariantProps } from "tailwind-variants";
 
-import ColorPickerFormatSelect from "./ColorPickerFormatSelect.astro";
-import ColorPickerNativeFormatSelect from "./ColorPickerNativeFormatSelect.astro";
-import ColorPickerValueInput from "./ColorPickerValueInput.astro";
-import { colorPickerInput } from "./variants";
+import "./styles.css";
+import ColorPickerPrimitive from "@starwind-ui/astro/color-picker";
+import { NativeSelectOption } from "../native-select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "../select";
+import {
+  colorPickerFormatSelectTrigger,
+  colorPickerInput,
+  colorPickerNativeFormatSelect,
+  colorPickerNativeFormatSelectIcon,
+  colorPickerNativeFormatSelectWrapper,
+  colorPickerValueInput,
+  colorPickerValueInputLayout,
+} from "./variants";
 
-type Props = HTMLAttributes<"div"> &
-  VariantProps<typeof colorPickerInput> & {
-    formatControl?: "select" | "native";
-    initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
-  };
+type Props = HTMLAttributes<"div"> & {
+  formatControl?: "select" | "native" | "none";
+  formats?: readonly import("@starwind-ui/astro/color-picker").ColorPickerFormat[];
+  formatContentSize?: "sm" | "md" | "lg";
+  initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
+};
 
-const { initial, formatControl = "select", class: className, size = "md", ...rest } = Astro.props;
+const {
+  initial,
+  formatControl = "select",
+  formats = ["hex", "rgb", "hsl", "hsb"],
+  formatContentSize = "md",
+  class: className,
+  ...rest
+} = Astro.props;
+
+const normalizedFormats = Array.from(new Set(formats));
 ---
 
-<div class={colorPickerInput({ size, class: className })} {...rest} data-slot="color-picker-input">
-  <ColorPickerValueInput initial={initial?.valueInput.initial} size={size} />
+<div class={colorPickerInput({ class: className })} {...rest} data-slot="color-picker-input">
+  <ColorPickerPrimitive.ValueInput
+    initial={initial?.valueInput.initial}
+    class={[colorPickerValueInput(), colorPickerValueInputLayout()].filter(Boolean).join(" ")}
+    data-slot="color-picker-value-input"
+  />
 
   {
-    formatControl === "native" ? (
-      <ColorPickerNativeFormatSelect initial={initial?.formatSelect.initial} size={size} />
-    ) : (
-      <ColorPickerFormatSelect initial={initial?.formatControl.initial} size={size} />
+    formatControl === "native" && (
+      <div
+        class={colorPickerNativeFormatSelectWrapper()}
+        data-slot="color-picker-native-format-select-wrapper"
+      >
+        <ColorPickerPrimitive.FormatSelect
+          initial={initial?.formatSelect.initial}
+          class={colorPickerNativeFormatSelect()}
+          aria-label="Color format"
+          data-slot="color-picker-native-format-select"
+        >
+          {normalizedFormats.map((formatOption, formatIndex) => (
+            <NativeSelectOption
+              value={formatOption}
+              selected={initial?.formatSelect.initial.properties.value === formatOption}
+            >
+              {formatOption.toUpperCase()}
+            </NativeSelectOption>
+          ))}
+        </ColorPickerPrimitive.FormatSelect>
+
+        <ChevronDown
+          class={colorPickerNativeFormatSelectIcon()}
+          aria-hidden="true"
+          data-slot="color-picker-native-format-select-icon"
+        />
+      </div>
+    )
+  }
+
+  {
+    formatControl === "select" && (
+      <ColorPickerPrimitive.FormatControl
+        initial={initial?.formatControl.initial}
+        class="shrink-0"
+        data-slot="color-picker-format-control"
+      >
+        <Select>
+          <SelectTrigger aria-label="Color format" class={colorPickerFormatSelectTrigger()} />
+
+          <SelectContent size={formatContentSize} data-sw-color-picker-format-options="">
+            {normalizedFormats.map((formatOption, formatIndex) => (
+              <SelectItem value={formatOption}>{formatOption.toUpperCase()}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </ColorPickerPrimitive.FormatControl>
     )
   }
 </div>

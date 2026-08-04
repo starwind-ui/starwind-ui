@@ -6,7 +6,6 @@ import type { VariantProps } from "tailwind-variants";
 import { radioControl, radioIndicator, radioItem, radioWrapper } from "./variants";
 
 type Props = Omit<HTMLAttributes<"span">, "defaultChecked" | "onChange"> &
-  VariantProps<typeof radioWrapper> &
   VariantProps<typeof radioControl> & {
     checked?: boolean;
     defaultChecked?: boolean;
@@ -22,7 +21,6 @@ type Props = Omit<HTMLAttributes<"span">, "defaultChecked" | "onChange"> &
 
 const {
   variant,
-  size = "md",
   checked,
   defaultChecked,
   disabled = false,
@@ -38,7 +36,7 @@ const {
 } = Astro.props;
 ---
 
-<div class={radioWrapper({ size })} data-slot="radio-group-item-wrapper">
+<div class={radioWrapper()} data-slot="radio-group-item-wrapper">
   <RadioPrimitive.Root
     class={radioItem()}
     checked={checked}
@@ -55,10 +53,7 @@ const {
     data-slot="radio-group-item"
   >
     <span class={radioControl({ variant, class: className })} data-slot="radio-group-item-control">
-      <RadioPrimitive.Indicator
-        class={radioIndicator({ size })}
-        data-slot="radio-group-item-indicator"
-      >
+      <RadioPrimitive.Indicator class={radioIndicator()} data-slot="radio-group-item-indicator">
         <slot name="icon">
           <CircleFilled />
         </slot>

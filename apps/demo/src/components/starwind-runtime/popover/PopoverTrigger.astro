@@ -8,10 +8,13 @@ type Props = HTMLAttributes<"button"> & {
 };
 
 const { asChild = false, class: className, ...rest } = Astro.props;
+
+const triggerBaseClassName = popoverTrigger({ class: className });
+const triggerClassName = asChild ? className : triggerBaseClassName;
 ---
 
 <PopoverPrimitive.Trigger
-  class={popoverTrigger({ class: className })}
+  class={triggerClassName}
   asChild={asChild}
   {...rest}
   data-slot="popover-trigger"

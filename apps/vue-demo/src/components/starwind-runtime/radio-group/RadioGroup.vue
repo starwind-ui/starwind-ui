@@ -19,6 +19,7 @@ export type RadioGroupProps = Omit<
   | "orientation"
   | "readOnly"
   | "required"
+  | "size"
 > &
   VariantProps<typeof radioGroup> & {
     defaultValue?: string;
@@ -29,6 +30,7 @@ export type RadioGroupProps = Omit<
     orientation?: "horizontal" | "vertical";
     readOnly?: boolean;
     required?: boolean;
+    size?: "sm" | "md" | "lg";
     class?: ClassValue;
     modelValue?: import("@starwind-ui/vue/radio-group").RadioGroupValue;
   };
@@ -41,6 +43,7 @@ type RadioGroupDeclaredProps = {
   orientation?: "horizontal" | "vertical";
   readOnly?: boolean;
   required?: boolean;
+  size?: "sm" | "md" | "lg";
   class?: ClassValue;
   modelValue?: import("@starwind-ui/vue/radio-group").RadioGroupValue;
 } & /* @vue-ignore */ RadioGroupProps;
@@ -53,6 +56,7 @@ const {
   orientation = "vertical",
   readOnly = false,
   required = false,
+  size = "md",
   class: className,
   modelValue,
 } = defineProps<RadioGroupDeclaredProps>();
@@ -87,6 +91,7 @@ function handleValueChange(
     :required="required"
     :model-value="modelValue"
     v-bind="{ ...(legend === undefined ? {} : { 'aria-label': legend }), ...attrs }"
+    :data-size="size"
     data-slot="radio-group"
     @update:model-value="emit('update:modelValue', $event)"
     @value-change="handleValueChange"
