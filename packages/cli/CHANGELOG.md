@@ -1,5 +1,102 @@
 # starwind
 
+## 3.0.0-beta.6
+
+### Minor Changes
+
+- Centralize styled component sizing around one explicit owner per visual scope. Existing `sm`, `md`,
+  and `lg` size families continue to default to `md`.
+
+  Migrate compound components by moving child sizes to their root:
+
+  ```diff
+  -<PaginationLink size="sm" />
+  +<Pagination size="sm"><PaginationLink /></Pagination>
+
+  -<RadioGroupItem size="lg" value="one" />
+  +<RadioGroup size="lg"><RadioGroupItem value="one" /></RadioGroup>
+
+  -<InputOtpSlot size="sm" index={0} />
+  +<InputOtp size="sm"><InputOtpSlot index={0} /></InputOtp>
+
+  -<ToggleGroupItem size="lg" value="bold" />
+  +<ToggleGroup size="lg"><ToggleGroupItem value="bold" /></ToggleGroup>
+  ```
+
+  Select and Combobox controls remain independently sizeable from their portaled content. Set both
+  props when they should match, or set them differently on purpose:
+
+  ```astro
+  <SelectTrigger size="sm" />
+  <SelectContent size="lg">...</SelectContent>
+
+  <ComboboxInputGroup size="sm">...</ComboboxInputGroup>
+  <ComboboxContent size="lg">...</ComboboxContent>
+  ```
+
+  Color Picker now owns trigger-side and inline sizing on `ColorPicker`, while
+  `ColorPickerContent` independently owns the portaled editor. Remove `size` from inner Color Picker
+  parts. For a custom `ColorPickerInput`, use `formatContentSize` only when its nested Select popup
+  needs an explicit size:
+
+  ```diff
+  -<ColorPicker size="sm"><ColorPickerTrigger size="sm" /></ColorPicker>
+  +<ColorPicker size="sm"><ColorPickerTrigger /></ColorPicker>
+
+  -<ColorPickerInput size="sm" />
+  +<ColorPickerInput formatContentSize="sm" />
+  ```
+
+- Add `sm` and `md` sizing to the styled Navigation Menu. `size` controls native triggers,
+  List spacing, indicators, and Links using `navigationMenuTriggerStyle()`. `contentSize` controls the
+  shared portaled popup and defaults to the resolved `size`, so matching sizes require one prop while
+  intentional root/content mismatches remain possible.
+
+  Correct the styled `NavigationMenuTrigger asChild` visual-ownership contract. A native Trigger still
+  receives Navigation Menu's complete trigger recipe and generated chevron. A composed control now
+  keeps its own markup and complete appearance while preserving the existing Primitive composition
+  behavior, child-owned attribute precedence, and consumer-provided Trigger class.
+
+  Migration: styled composed controls no longer receive Navigation Menu's default trigger recipe,
+  root sizing, or generated chevron. Style the child directly and place any desired icon inside it.
+
+- Normalize the standard Card, Item, and Sidebar menu button size name from `default` to `md`.
+  Omitting `size` continues to select the same medium styling; pass `size="md"` when an explicit
+  medium size is useful.
+- Simplify the styled Color Picker around a complete zero-child default and a smaller advanced
+  composition API. `ColorPicker` now renders either the popup shell or, with `inline`, the inline
+  editor; alpha remains enabled by default. Common customization moves to `formatControl`, `formats`,
+  `showEyeDropper`, `showValueText`, `clearable`, `swatches`, and `label` props.
+
+  Migrate `ColorPickerRoot` to `<ColorPicker inline>`. Use `label` or an authored label instead of
+  `ColorPickerLabel`, and an authored container instead of `ColorPickerControl`. `ColorPickerArea`
+  now includes its thumb, `ColorPickerInput` includes the value input and accepts
+  `formatControl="select" | "native" | "none"`, and `ColorPicker` always renders its hidden form
+  input. Replace `allowEmpty` plus `showClear` with `clearable`, and pass swatch data through the
+  `swatches` array for the default editor.
+
+  The styled API no longer supports requesting a visible Clear action while empty values are
+  forbidden, or replacing only the internal area thumb, format-selector anatomy, or hidden input.
+  Use the Color Picker Primitive when those raw anatomy customizations are required. Popup, inline,
+  input-only, swatch-only, native-select, forms, and custom channel layouts remain supported.
+
+### Patch Changes
+
+- Correct styled Hover Card, Popover, and Tooltip Trigger composition so composed children no longer
+  receive the Trigger's native recipe or display classes. Native Trigger rendering remains unchanged.
+
+  Migration: if a composed child relied on those native Trigger classes for its appearance, style the
+  child directly instead.
+
+- Correct the vendored React Checkbox indicator presence behavior for active, kept, and explicitly
+  hidden indicators.
+- Ensure Color Picker value and format controls follow the selected small, medium, or large size instead of retaining the shared input's medium dimensions.
+- Preserve intentionally empty Select item labels and their lazy hidden form values in the vendored
+  React adapter.
+- Use Tailwind CSS v4 custom-property shorthand throughout the installed Color Picker classes. This
+  keeps the generated CSS and visual behavior unchanged while removing redundant `var(...)`
+  arbitrary-value wrappers.
+
 ## 3.0.0-beta.5
 
 ### Patch Changes

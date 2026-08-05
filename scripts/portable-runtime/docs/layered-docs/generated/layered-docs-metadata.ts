@@ -36629,7 +36629,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "checkbox",
       displayName: "Checkbox",
       category: "single-boolean-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "checkbox",
         factory: "createCheckbox",
@@ -63444,7 +63444,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "select",
       displayName: "Select",
       category: "floating-value-control",
-      registryVersion: "0.1.2",
+      registryVersion: "0.1.3",
       runtime: {
         primitiveId: "select",
         factory: "createSelect",
