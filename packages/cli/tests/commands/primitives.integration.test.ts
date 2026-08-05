@@ -46,6 +46,9 @@ const mockLog = vi.mocked(clackPrompts.log);
 const runtimePackage = JSON.parse(
   readFileSync(new URL("../../../runtime/package.json", import.meta.url), "utf8"),
 ) as { version: string };
+const primitiveVersions = JSON.parse(
+  readFileSync(new URL("../../registry/primitive-versions.json", import.meta.url), "utf8"),
+) as { primitives: Record<string, string> };
 const CURRENT_BETA_RUNTIME_SPEC = `@starwind-ui/runtime@^${runtimePackage.version}`;
 
 describe.sequential("primitives add integration", () => {
@@ -136,7 +139,7 @@ describe.sequential("primitives add integration", () => {
     expect(updatedConfig.primitives).toEqual([
       {
         name: "button",
-        version: "0.1.1",
+        version: primitiveVersions.primitives.button,
         framework: "astro",
         source: "bundled",
       },
@@ -152,7 +155,7 @@ describe.sequential("primitives add integration", () => {
     config.primitives = [
       {
         name: "checkbox",
-        version: "0.1.0",
+        version: "0.0.1",
         framework: "astro",
         source: "bundled",
       },
@@ -176,13 +179,13 @@ describe.sequential("primitives add integration", () => {
     expect(updatedConfig.primitives).toEqual([
       {
         name: "checkbox",
-        version: "0.1.0",
+        version: "0.0.1",
         framework: "astro",
         source: "bundled",
       },
       {
         name: "button",
-        version: "0.1.1",
+        version: primitiveVersions.primitives.button,
         framework: "astro",
         source: "bundled",
       },
@@ -256,7 +259,7 @@ describe.sequential("primitives add integration", () => {
     expect(updatedConfig.primitives).toEqual([
       {
         name: "checkbox",
-        version: "0.1.0",
+        version: primitiveVersions.primitives.checkbox,
         framework: "astro",
         source: "bundled",
       },

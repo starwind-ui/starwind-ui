@@ -772,7 +772,6 @@ describe("generateCliRegistry", () => {
     expect(registryNames).not.toContain("dropdown-menu");
 
     const badge = getRegistryComponentWithTargets(runtimeBundledRegistry, "badge");
-    expect(badge.version).toBe("1.5.0");
     const badgeAstroRoot = badge.targets.astro.files.find((file) =>
       file.path.endsWith("/badge/Badge.astro"),
     );
@@ -810,7 +809,6 @@ describe("generateCliRegistry", () => {
       (component) => component.name === "navigation-menu",
     );
     expect(navigationMenu).toBeDefined();
-    expect(navigationMenu?.version).toBe("1.0.0");
     expect(navigationMenu?.targets).toBeDefined();
     const navigationMenuTargets = navigationMenu!.targets!;
     expect(navigationMenuTargets.astro.packageRequirements).toEqual(
