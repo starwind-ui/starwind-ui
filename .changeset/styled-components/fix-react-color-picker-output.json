@@ -1,6 +1,7 @@
 {
   "components": {
     "color-picker": "patch",
+    "input-group": "patch",
     "spinner": "patch"
   }
 }
