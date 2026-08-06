@@ -1,0 +1,232 @@
+import { createTsHeader } from "../../shared.js";
+
+export function renderVueAsChildHelper(generatedBy: string): string {
+  return `${createTsHeader(generatedBy)}import {
+  Comment,
+  Fragment,
+  Text,
+  cloneVNode,
+  isRef,
+  isVNode,
+  mergeProps,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  type ComponentPublicInstance,
+  type Ref,
+  type VNode,
+} from "vue";
+
+type ComponentRoot = ComponentPublicInstance & {
+  element?: unknown;
+};
+
+const nativeTargetChangeEvent = "starwind:vue-native-target-change";
+const booleanDomAttributes = new Set([
+  "allowfullscreen",
+  "async",
+  "autofocus",
+  "autoplay",
+  "checked",
+  "controls",
+  "default",
+  "defer",
+  "disabled",
+  "formnovalidate",
+  "hidden",
+  "inert",
+  "ismap",
+  "itemscope",
+  "loop",
+  "multiple",
+  "muted",
+  "nomodule",
+  "novalidate",
+  "open",
+  "playsinline",
+  "readonly",
+  "required",
+  "reversed",
+  "selected",
+]);
+
+export type VueAsChildRenderOptions = {
+  children: readonly VNode[];
+  consumerProps?: Record<string, unknown>;
+  defaultedProps?: Record<string, unknown>;
+  defaultNativeButtonType?: string;
+  protectedProps?: Record<string, unknown>;
+};
+
+export function createVueAsChild(name: string, element: Ref<HTMLElement | null>) {
+  let lastNativeElement: HTMLElement | null = null;
+
+  function setElement(value: Element | ComponentPublicInstance | null): void {
+    if (value === null) {
+      element.value = null;
+      return;
+    }
+
+    const nativeElement = resolveNativeElement(value);
+    if (!nativeElement) {
+      element.value = null;
+      throw new TypeError(
+        \`\${name} asChild component must expose an HTMLElement as "element" or render one native HTMLElement root. Rootless and multiple-root components are invalid.\`,
+      );
+    }
+    const previousNativeElement = lastNativeElement;
+    lastNativeElement = nativeElement;
+    element.value = nativeElement;
+    if (previousNativeElement && previousNativeElement !== nativeElement) {
+      void nextTick(() => {
+        if (lastNativeElement !== nativeElement || !nativeElement.isConnected) return;
+        nativeElement.dispatchEvent(
+          new Event(nativeTargetChangeEvent, { bubbles: true, composed: true }),
+        );
+      });
+    }
+  }
+
+  function render({
+    children,
+    consumerProps = {},
+    defaultedProps = {},
+    defaultNativeButtonType,
+    protectedProps = {},
+  }: VueAsChildRenderOptions): VNode {
+    const child = normalizeChild(name, children);
+    const nativeButtonDefault =
+      defaultNativeButtonType !== undefined &&
+      child.type === "button" &&
+      child.props?.type === undefined &&
+      consumerProps.type === undefined
+        ? { type: defaultNativeButtonType }
+        : {};
+
+    const mergedProps = mergeProps(
+      defaultedProps,
+      nativeButtonDefault,
+      consumerProps,
+      protectedProps,
+      {
+        ref: setElement,
+      },
+    );
+    return cloneVNode(child, normalizeComponentBooleanAttrs(child, mergedProps), true);
+  }
+
+  return { render, setElement } as const;
+}
+
+export function useVueAsChildRuntimeOwner(
+  root: Ref<HTMLElement | null>,
+  recreateRuntime: () => void | Promise<void>,
+): void {
+  function handleNativeTargetChange(event: Event): void {
+    event.stopPropagation();
+    void recreateRuntime();
+  }
+
+  onMounted(() => root.value?.addEventListener(nativeTargetChangeEvent, handleNativeTargetChange));
+  onBeforeUnmount(() =>
+    root.value?.removeEventListener(nativeTargetChangeEvent, handleNativeTargetChange),
+  );
+}
+
+function normalizeComponentBooleanAttrs(
+  child: VNode,
+  props: Record<string, unknown>,
+): Record<string, unknown> {
+  if (typeof child.type === "string") return props;
+
+  const normalized = { ...props };
+  for (const [key, value] of Object.entries(props)) {
+    if (
+      value === false &&
+      booleanDomAttributes.has(normalizePropName(key)) &&
+      !componentDeclaresProp(child.type, key)
+    ) {
+      normalized[key] = undefined;
+    }
+  }
+  return normalized;
+}
+
+function componentDeclaresProp(type: VNode["type"], key: string): boolean {
+  if ((typeof type !== "object" && typeof type !== "function") || type === null) return false;
+
+  const declared = (type as { props?: readonly string[] | Record<string, unknown> }).props;
+  if (Array.isArray(declared)) {
+    return declared.some((name) => normalizePropName(name) === normalizePropName(key));
+  }
+  return Boolean(
+    declared &&
+      Object.keys(declared).some((name) => normalizePropName(name) === normalizePropName(key)),
+  );
+}
+
+function normalizePropName(name: string): string {
+  return name.replaceAll("-", "").toLowerCase();
+}
+
+function normalizeChild(name: string, children: readonly VNode[]): VNode {
+  if (children.length !== 1) {
+    throw new TypeError(
+      \`\${name} asChild requires exactly one child VNode; received \${children.length}.\`,
+    );
+  }
+
+  let child: unknown = children[0];
+  if (!isVNode(child)) throw invalidVNodeError(name, child);
+
+  if (child.type === Fragment) {
+    const fragmentChildren = Array.isArray(child.children) ? child.children : [];
+    if (fragmentChildren.length !== 1) {
+      throw new TypeError(
+        \`\${name} asChild accepts one Fragment boundary with exactly one child VNode; received \${fragmentChildren.length}.\`,
+      );
+    }
+    child = fragmentChildren[0];
+    if (!isVNode(child)) throw invalidVNodeError(name, child);
+  }
+
+  if (
+    child.type === Comment ||
+    child.type === Text ||
+    child.type === Fragment ||
+    (typeof child.type !== "string" &&
+      typeof child.type !== "object" &&
+      typeof child.type !== "function")
+  ) {
+    throw invalidVNodeError(name, child);
+  }
+
+  return child;
+}
+
+function invalidVNodeError(name: string, value: unknown): TypeError {
+  const kind =
+    isVNode(value) && value.type === Comment
+      ? "Comment"
+      : isVNode(value) && value.type === Text
+        ? "Text"
+        : isVNode(value) && value.type === Fragment
+          ? "nested Fragment"
+          : "non-VNode";
+  return new TypeError(
+    \`\${name} asChild requires one native element VNode or one component VNode with a single native root; received \${kind}.\`,
+  );
+}
+
+function resolveNativeElement(value: Element | ComponentPublicInstance): HTMLElement | null {
+  if (value instanceof HTMLElement) return value;
+
+  const component = value as ComponentRoot;
+  const exposedElement = isRef(component.element) ? component.element.value : component.element;
+  if (exposedElement instanceof HTMLElement) return exposedElement;
+
+  const publicRoot = component.$el;
+  return publicRoot instanceof HTMLElement ? publicRoot : null;
+}
+`;
+}

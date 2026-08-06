@@ -7,6 +7,7 @@ import AlertDialogReview from "./AlertDialogReview.vue";
 import ButtonReview from "./ButtonReview.vue";
 import CheckboxReview from "./CheckboxReview.vue";
 import CollapsibleReview from "./CollapsibleReview.vue";
+import ComplexServicesStyledReview from "./ComplexServicesStyledReview.vue";
 import DialogReview from "./DialogReview.vue";
 import DrawerReview from "./DrawerReview.vue";
 import DropzoneReview from "./DropzoneReview.vue";
@@ -14,7 +15,9 @@ import FormReview from "./FormReview.vue";
 import FieldReview from "./FieldReview.vue";
 import InputReview from "./InputReview.vue";
 import InputOtpReview from "./InputOtpReview.vue";
+import MenusFloatingStyledReview from "./MenusFloatingStyledReview.vue";
 import PopoverReview from "./PopoverReview.vue";
+import PortableStyledClosureReview from "./PortableStyledClosureReview.vue";
 import ProgressReview from "./ProgressReview.vue";
 import RadioGroupReview from "./RadioGroupReview.vue";
 import ScrollAreaReview from "./ScrollAreaReview.vue";
@@ -66,6 +69,17 @@ const themeClickCount = ref(0);
         <a href="#toggle-review">Toggle</a>
         <a href="#toggle-group-review">Toggle Group</a>
         <a href="#styled-review">Styled</a>
+        <a href="#styled-tooltip-review">Tooltip</a>
+        <a href="#styled-hover-card-review">Hover Card</a>
+        <a href="#styled-dropdown-review">Dropdown</a>
+        <a href="#styled-context-menu-review">Context Menu</a>
+        <a href="#styled-navigation-menu-review">Navigation Menu</a>
+        <a href="#styled-combobox-review">Combobox</a>
+        <a href="#styled-carousel-review">Carousel</a>
+        <a href="#styled-sidebar-review">Sidebar</a>
+        <a href="#styled-color-picker-review">Color Picker</a>
+        <a href="#styled-toast-review">Toast</a>
+        <a href="#portable-styled-closure-review">Portable Styled closure</a>
       </nav>
     </header>
 
@@ -145,5 +159,8 @@ const themeClickCount = ref(0);
     <ToggleReview />
     <ToggleGroupReview />
     <StyledReview />
+    <MenusFloatingStyledReview />
+    <ComplexServicesStyledReview />
+    <PortableStyledClosureReview />
   </main>
 </template>

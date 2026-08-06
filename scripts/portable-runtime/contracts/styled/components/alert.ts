@@ -33,6 +33,7 @@ export const alertStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Alert",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "interface",
         extends: [
@@ -91,6 +92,7 @@ export const alertStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "AlertTitle",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLHeadingElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "h5" }],
@@ -134,6 +136,7 @@ export const alertStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "AlertDescription",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLParagraphElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "p" }],

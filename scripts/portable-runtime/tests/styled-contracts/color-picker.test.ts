@@ -24,8 +24,8 @@ const PUBLIC_EXPORTS = [
 ];
 
 describe("styled Color Picker contract", () => {
-  it("publishes the simplified Astro and React family with one private editor", () => {
-    expect(colorPickerStyledContract.frameworks).toEqual(["astro", "react"]);
+  it("publishes the simplified Astro, React, and private Vue family with one private editor", () => {
+    expect(colorPickerStyledContract.frameworks).toEqual(["astro", "react", "vue"]);
     expect(
       validateStyledAdapterContracts([
         nativeSelectStyledContract,

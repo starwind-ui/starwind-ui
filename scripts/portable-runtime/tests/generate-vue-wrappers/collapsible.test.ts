@@ -74,8 +74,8 @@ describe("generated Vue Collapsible", () => {
     expect(first.root).toContain('emit("update:open", nextOpen);');
     expect(first.root).toContain("instance.setOpen(nextOpen, { emit: false });");
     expect(first.root).toContain("watch(() => props.disabled, setupRuntime");
-    expect(first.trigger).toContain("cloneVNode(child, mergeProps(");
-    expect(first.trigger).toContain("exactly one native element VNode");
+    expect(first.trigger).toContain('import { createVueAsChild } from "../_internal/as-child";');
+    expect(first.trigger).toContain("asChild.render({");
     expect(first.trigger).toContain('"data-sw-collapsible-trigger": ""');
     expect(first.panel).toContain(`:hidden="props.hiddenUntilFound ? 'until-found' : true"`);
     expect(first.index).toContain("const Collapsible =");

@@ -23,6 +23,7 @@ function nativeSelectNativePart({
 }: NativeSelectNativePartOptions): StyledComponentContract {
   return {
     exportName,
+    forwardRef: { frameworks: ["vue"], targetType: refElement },
     props: {
       extends: [{ type: "htmlAttributes", element: htmlElement }],
       fields: [
@@ -115,6 +116,7 @@ export const nativeSelectStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "NativeSelect",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLSelectElement" },
       imports: [chevronDownImport],
       props: {
         extends: [

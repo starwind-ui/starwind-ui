@@ -115,11 +115,13 @@ describe("release package tooling", () => {
     expect(Object.keys(sveltePackage.exports ?? {})).toEqual([
       ".",
       "./button",
+      "./carousel",
       "./checkbox",
       "./select",
       "./accordion",
       "./dialog",
       "./slider",
+      "./toast",
     ]);
     expect(
       Object.keys(sveltePackage.scripts ?? {}).filter((script) => script.startsWith("publish")),
@@ -176,8 +178,18 @@ describe("release package tooling", () => {
       "pnpm audit:prod",
       "pnpm demo:smoke",
       "pnpm react-demo:smoke",
-      "pnpm runtime:size:check",
+      "pnpm runtime:size:check:prepared",
+      "pnpm release:candidate:acceptance",
     ]);
+    expect(root.scripts?.["runtime:size:check"]).toBe(
+      "pnpm runtime:build && pnpm react:build && node scripts/portable-runtime/measure-package-sizes.mjs --check",
+    );
+    expect(root.scripts?.["runtime:size:check:prepared"]).toBe(
+      "node scripts/portable-runtime/measure-package-sizes.mjs --check",
+    );
+    expect(root.scripts?.["release:candidate:acceptance"]).toBe(
+      "node scripts/release-candidate-acceptance.mjs",
+    );
     expect(root.scripts?.["release:prepare"]).not.toContain("build");
     expect(root.scripts?.["release:artifacts"]).toBe("node scripts/check-release-artifacts.mjs");
   });
@@ -196,7 +208,10 @@ describe("release package tooling", () => {
       }),
     ).toEqual({ errors: [], ok: true, tag: "rc" });
     expect(
-      validateReleasePackageManifests(manifests({ cli: "3.0.0", runtime: "0.1.0" }), undefined),
+      validateReleasePackageManifests(manifests({ cli: "3.0.0", runtime: "0.1.0" }), undefined).ok,
+    ).toBe(false);
+    expect(
+      validateReleasePackageManifests(manifests({ cli: "3.0.0", runtime: "1.0.0" }), undefined),
     ).toEqual({ errors: [], ok: true, tag: "latest" });
 
     expect(
@@ -206,7 +221,7 @@ describe("release package tooling", () => {
       }).ok,
     ).toBe(false);
     expect(
-      validateReleasePackageManifests(manifests({ cli: "3.0.0", runtime: "0.1.0" }), {
+      validateReleasePackageManifests(manifests({ cli: "3.0.0", runtime: "1.0.0" }), {
         mode: "pre",
         tag: "beta",
       }).ok,

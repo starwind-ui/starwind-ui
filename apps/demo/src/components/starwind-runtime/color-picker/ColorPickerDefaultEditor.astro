@@ -91,7 +91,7 @@ const hasSwatchesAttribute = normalizedSwatches.length > 0 ? "true" : "false";
   {
     normalizedSwatches.length > 0 && (
       <ColorPickerSwatchGroup initial={initial?.swatchGroup.initial} aria-label="Suggested colors">
-        {normalizedSwatches.map((swatch, swatchIndex) => (
+        {normalizedSwatches.map((swatch) => (
           <ColorPickerSwatch
             initial={initial}
             value={swatch.value}

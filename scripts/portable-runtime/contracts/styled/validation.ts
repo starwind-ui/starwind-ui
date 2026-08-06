@@ -12,6 +12,7 @@ import {
   getLocalVariantAliasSourceComponent,
   resolveStyledVariantDefinition,
 } from "./variant-resolution.js";
+import { resolveStyledSvgAsset } from "./svg-assets.js";
 
 export type StyledAdapterContractIssue = {
   component: string;
@@ -338,6 +339,12 @@ function validateComponent(
     issues.push(issue(contract, "components", "Component exportName must be non-empty."));
   }
 
+  validateFrameworkTargets(
+    contract,
+    component.forwardRef?.frameworks,
+    `${componentPath}.forwardRef.frameworks`,
+    issues,
+  );
   validateProps(contract, component, contractsByComponent, variants, componentPath, issues);
 
   for (const field of component.props?.fields ?? []) {
@@ -393,6 +400,43 @@ function validateComponent(
       issues,
     );
   }
+  validateIconAssets(contract, component, componentPath, issues);
+}
+
+function validateIconAssets(
+  contract: StyledAdapterContract,
+  component: StyledComponentContract,
+  componentPath: string,
+  issues: StyledAdapterContractIssue[],
+): void {
+  const imports = new Map((component.imports ?? []).map((entry) => [entry.importName, entry]));
+  const visit = (nodes: readonly RenderNode[], path: string): void => {
+    for (const [index, node] of nodes.entries()) {
+      const nodePath = `${path}.${index}`;
+      if (node.type === "icon") {
+        const imported = imports.get(node.importName);
+        if (!imported || !resolveStyledSvgAsset(imported)) {
+          issues.push(
+            issue(
+              contract,
+              `${nodePath}.importName`,
+              `Icon "${node.importName}" must resolve to a declared SVG asset.`,
+            ),
+          );
+        }
+        continue;
+      }
+      if (node.type === "conditional") {
+        visit(node.then, `${nodePath}.then`);
+        visit(node.else, `${nodePath}.else`);
+      } else if (node.type === "slot") {
+        visit(node.fallback ?? [], `${nodePath}.fallback`);
+      } else if ("children" in node) {
+        visit(node.children ?? [], `${nodePath}.children`);
+      }
+    }
+  };
+  visit(component.render, `${componentPath}.render`);
 }
 
 function validateProps(

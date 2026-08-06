@@ -36,6 +36,7 @@ export const breadcrumbStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Breadcrumb",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "nav" }],
@@ -73,6 +74,7 @@ export const breadcrumbStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "BreadcrumbList",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLOListElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "ol" }],
@@ -116,6 +118,7 @@ export const breadcrumbStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "BreadcrumbItem",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLLIElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "li" }],
@@ -159,6 +162,7 @@ export const breadcrumbStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "BreadcrumbLink",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLAnchorElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "a" }],
@@ -215,6 +219,7 @@ export const breadcrumbStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "BreadcrumbPage",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLSpanElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "span" }],
@@ -261,6 +266,7 @@ export const breadcrumbStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "BreadcrumbSeparator",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLLIElement" },
       imports: [
         {
           type: "default",
@@ -318,6 +324,7 @@ export const breadcrumbStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "BreadcrumbEllipsis",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLSpanElement" },
       imports: [{ type: "default", importName: "Dots", source: "@tabler/icons/outline/dots.svg" }],
       props: {
         declaration: "interface",

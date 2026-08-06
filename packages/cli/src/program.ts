@@ -227,6 +227,7 @@ export function createProgram(): Command {
     .argument("[components...]", "The components to remove (space separated)")
     .allowExcessArguments()
     .option("-a, --all", "Remove all installed components")
+    .option("-y, --yes", "Skip confirmation prompts")
     .addOption(
       new Option("--framework <framework>", "Framework target").choices(["astro", "react", "all"]),
     )

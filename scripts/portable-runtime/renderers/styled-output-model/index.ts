@@ -10,14 +10,17 @@ import type {
   RenderNode,
   StyledAdapterContract,
   StyledComponentContract,
+  StyledComponentForwardRefContract,
   ValueExpression,
 } from "../../contracts/styled/types.js";
+import { resolveStyledSvgAsset } from "../../contracts/styled/svg-assets.js";
 import type {
   StyledOutputAttribute,
   StyledOutputComment,
   StyledOutputComponent,
   StyledOutputComponentGroup,
   StyledOutputDestructureProp,
+  StyledOutputForwardRef,
   StyledOutputImport,
   StyledOutputModel,
   StyledOutputPropExtend,
@@ -150,6 +153,7 @@ export function toStyledAdapterContract(group: StyledOutputComponentGroup): Styl
 }
 
 function projectStyledOutputComponent(component: StyledComponentContract): StyledOutputComponent {
+  const imports = (component.imports ?? []).map(projectImport);
   return {
     client: component.client
       ? {
@@ -165,8 +169,8 @@ function projectStyledOutputComponent(component: StyledComponentContract): Style
         }
       : undefined,
     exportName: component.exportName,
-    forwardRef: component.forwardRef ? { ...component.forwardRef } : undefined,
-    imports: (component.imports ?? []).map(projectImport),
+    forwardRef: component.forwardRef ? projectForwardRef(component.forwardRef) : undefined,
+    imports,
     primitiveAliases: Object.entries(component.primitiveAliases ?? {}).map(
       ([primitiveComponent, alias]) => ({
         alias,
@@ -180,7 +184,7 @@ function projectStyledOutputComponent(component: StyledComponentContract): Style
           fields: (component.props.fields ?? []).map(projectPropField),
         }
       : undefined,
-    render: component.render.map(projectRenderNode),
+    render: attachSvgAssets(component.render.map(projectRenderNode), imports),
     sourceFileName: component.fileName,
     variables: (component.variables ?? []).map(projectVariable),
   };
@@ -204,7 +208,7 @@ function toStyledComponentContract(component: StyledOutputComponent): StyledComp
       : undefined,
     exportName: component.exportName,
     fileName: component.sourceFileName,
-    forwardRef: component.forwardRef ? { ...component.forwardRef } : undefined,
+    forwardRef: component.forwardRef ? toForwardRef(component.forwardRef) : undefined,
     imports: component.imports.map(toImport),
     primitiveAliases:
       component.primitiveAliases.length > 0
@@ -221,6 +225,22 @@ function toStyledComponentContract(component: StyledOutputComponent): StyledComp
       : undefined,
     render: component.render.map(toRenderNode),
     variables: component.variables.map(toVariable),
+  };
+}
+
+function projectForwardRef(forwardRef: StyledComponentForwardRefContract): StyledOutputForwardRef {
+  const targetScopes = projectTargetScopes(forwardRef.frameworks);
+  return {
+    ...(targetScopes ? { targetScopes } : {}),
+    targetType: forwardRef.targetType,
+  };
+}
+
+function toForwardRef(forwardRef: StyledOutputForwardRef): StyledComponentForwardRefContract {
+  const frameworks = toFrameworkTargets(forwardRef.targetScopes);
+  return {
+    ...(frameworks ? { frameworks } : {}),
+    targetType: forwardRef.targetType,
   };
 }
 
@@ -361,11 +381,13 @@ function toVariable(variable: StyledOutputVariable): LocalVariableContract {
 }
 
 function projectImport(importContract: ImportContract): StyledOutputImport {
+  const svg = resolveStyledSvgAsset(importContract);
   return {
     importName: importContract.importName,
     kind: importContract.type,
     localName: importContract.type === "named" ? importContract.localName : undefined,
     source: importContract.source,
+    ...(svg ? { svg } : {}),
     targetScopes: projectTargetScopes(importContract.frameworks),
   };
 }
@@ -376,6 +398,7 @@ function toImport(importContract: StyledOutputImport): ImportContract {
       frameworks: toFrameworkTargets(importContract.targetScopes),
       importName: importContract.importName,
       source: importContract.source,
+      ...(importContract.svg ? { svg: importContract.svg } : {}),
       type: "default",
     };
   }
@@ -385,8 +408,40 @@ function toImport(importContract: StyledOutputImport): ImportContract {
     importName: importContract.importName,
     localName: importContract.localName,
     source: importContract.source,
+    ...(importContract.svg ? { svg: importContract.svg } : {}),
     type: "named",
   };
+}
+
+function attachSvgAssets(
+  nodes: StyledOutputRenderNode[],
+  imports: readonly StyledOutputImport[],
+): StyledOutputRenderNode[] {
+  const importsByName = new Map(imports.map((entry) => [entry.importName, entry]));
+  const visit = (node: StyledOutputRenderNode): StyledOutputRenderNode => {
+    switch (node.type) {
+      case "icon": {
+        const asset = importsByName.get(node.importName)?.svg;
+        if (!asset) {
+          throw new TypeError(`Styled icon ${node.importName} is missing its projected SVG asset.`);
+        }
+        return { ...node, asset: structuredClone(asset) };
+      }
+      case "component":
+      case "element":
+      case "fragment":
+      case "primitive":
+      case "repeat":
+        return { ...node, children: node.children.map(visit) };
+      case "condition":
+        return { ...node, else: node.else.map(visit), then: node.then.map(visit) };
+      case "slot":
+        return { ...node, fallback: node.fallback.map(visit) };
+      case "text":
+        return node;
+    }
+  };
+  return nodes.map(visit);
 }
 
 function projectRenderNode(node: RenderNode): StyledOutputRenderNode {
@@ -415,6 +470,7 @@ function projectRenderNode(node: RenderNode): StyledOutputRenderNode {
         comments: (node.leadingComments ?? []).map(projectComment),
         selfClosing: Boolean(node.selfClosing),
         tag: node.tag,
+        tagBinding: node.tagBinding,
         type: "element",
       };
     case "fragment":
@@ -485,6 +541,7 @@ function toRenderNode(node: StyledOutputRenderNode): RenderNode {
         leadingComments: node.comments.map(toComment),
         selfClosing: node.selfClosing || undefined,
         tag: node.tag,
+        tagBinding: node.tagBinding,
         type: "element",
       };
     case "fragment":

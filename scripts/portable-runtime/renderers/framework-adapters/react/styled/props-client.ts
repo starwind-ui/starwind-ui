@@ -1,24 +1,22 @@
-import type {
-  FrameworkTarget,
-} from '../../../../contracts/styled/types.js';
+import type { FrameworkTarget } from "../../../../contracts/styled/types.js";
 import type {
   StyledOutputComponent,
   StyledOutputDestructure,
   StyledOutputPropExtend,
   StyledOutputProps,
   StyledOutputVariable,
-} from '../../../styled-output-model/index.js';
+} from "../../../styled-output-model/index.js";
 import {
   collectStyledOutputNamedSlots,
   usesStyledOutputDefaultSlot,
-} from '../../../styled-output-model/index.js';
-import type { RuntimeImportRewriteContext } from '../../../styled-runtime-imports.js';
+} from "../../../styled-output-model/index.js";
+import type { RuntimeImportRewriteContext } from "../../../styled-runtime-imports.js";
 import {
   rewriteRuntimeImportReferences,
   rewriteRuntimeTypeImportReferences,
-} from '../../../styled-runtime-imports.js';
-import { getComponentReferenceName } from './component-discovery.js';
-import { REACT_FRAMEWORK } from './constants.js';
+} from "../../../styled-runtime-imports.js";
+import { getComponentReferenceName } from "./component-discovery.js";
+import { REACT_FRAMEWORK } from "./constants.js";
 import {
   formatObjectKey,
   indentBlock,
@@ -26,9 +24,9 @@ import {
   isIdentifier,
   mapReactPropName,
   toReactSlotPropName,
-} from './formatting.js';
-import { collectPrimitiveComponents } from './primitive-helpers.js';
-import { renderReturn, renderValueExpression } from './render-tree.js';
+} from "./formatting.js";
+import { collectPrimitiveComponents } from "./primitive-helpers.js";
+import { renderReturn, renderValueExpression } from "./render-tree.js";
 
 export function renderProps(
   component: StyledOutputComponent,
@@ -218,8 +216,8 @@ function renderDestructure(
     (prop) => !props.some((existingProp) => getDestructuredPropName(existingProp) === prop),
   );
   const allProps = [...props, ...slotProps];
-  const rest = destructure?.rest ?? "rest";
-  const renderedProps = [...allProps, `...${rest}`];
+  const renderedProps = [...allProps, ...(destructure?.rest ? [`...${destructure.rest}`] : [])];
+  if (renderedProps.length === 0) return "";
   const inlineDestructure = `const { ${renderedProps.join(", ")} } = props;`;
   if (inlineDestructure.length <= 100) return inlineDestructure;
 
@@ -238,10 +236,7 @@ function getDestructuredPropName(prop: string): string {
   return prop.trim().match(/^[$A-Z_a-z][$\w]*/)?.[0] ?? prop.trim();
 }
 
-function renderVariables(
-  variables: StyledOutputVariable[],
-  framework: FrameworkTarget,
-): string {
+function renderVariables(variables: StyledOutputVariable[], framework: FrameworkTarget): string {
   if (!variables || variables.length === 0) return "";
 
   return variables

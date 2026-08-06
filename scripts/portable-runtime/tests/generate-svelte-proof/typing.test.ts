@@ -195,6 +195,51 @@ describe("generated Svelte Slider consumer typing", () => {
   });
 });
 
+describe("generated Svelte Carousel consumer typing", () => {
+  it("accepts options, plugins, API callbacks, snippets, refs, and native attributes", async () => {
+    const root = await createCarouselTypingRoot();
+    const result = runSvelteCheck(root);
+
+    expect(result.output).toContain("svelte-check found 0 errors and 0 warnings");
+    expect(result.status, result.output).toBe(0);
+  });
+
+  it("rejects an invalid orientation", async () => {
+    const root = await createCarouselTypingRoot();
+    await writeFile(
+      path.join(root, "InvalidConsumer.svelte"),
+      `<script lang="ts">import { CarouselRoot } from "./carousel/index";</script>\n<CarouselRoot orientation="diagonal" />\n`,
+      "utf8",
+    );
+    const result = runSvelteCheck(root);
+    expect(result.status, result.output).not.toBe(0);
+    expect(result.output).toContain("diagonal");
+  });
+});
+
+describe("generated Svelte Toast consumer typing", () => {
+  it("accepts snippets, refs, viewport options, service values, and Runtime callback options", async () => {
+    const root = await createToastTypingRoot();
+    const result = runSvelteCheck(root);
+
+    expect(result.output).toContain("svelte-check found 0 errors and 0 warnings");
+    expect(result.status, result.output).toBe(0);
+  });
+
+  it("rejects an invalid viewport position", async () => {
+    const root = await createToastTypingRoot();
+    await writeFile(
+      path.join(root, "InvalidConsumer.svelte"),
+      `<script lang="ts">import { ToastViewport } from "./toast/index";</script>\n<ToastViewport position="middle" />\n`,
+      "utf8",
+    );
+    const result = runSvelteCheck(root);
+
+    expect(result.status, result.output).not.toBe(0);
+    expect(result.output).toContain("middle");
+  });
+});
+
 async function createTypingRoot(): Promise<string> {
   const root = await mkdtemp(path.join(process.cwd(), ".svelte-proof-types-"));
   temporaryRoots.push(root);
@@ -591,6 +636,116 @@ async function createSliderTypingRoot(): Promise<string> {
           "@starwind-ui/runtime/slider": [
             path
               .join(process.cwd(), "packages/runtime/src/components/slider/index.ts")
+              .replaceAll("\\", "/"),
+          ],
+        },
+        strict: true,
+        target: "ES2022",
+        types: ["svelte"],
+      },
+      include: ["./**/*"],
+    }),
+    "utf8",
+  );
+  return root;
+}
+
+async function createCarouselTypingRoot(): Promise<string> {
+  const root = await mkdtemp(path.join(process.cwd(), ".svelte-carousel-types-"));
+  temporaryRoots.push(root);
+  const carouselRoot = path.join(root, "carousel");
+  await mkdir(carouselRoot);
+  const sourceRoot = path.join(process.cwd(), "packages/svelte/src/carousel");
+  for (const file of await readdir(sourceRoot)) {
+    await copyFile(path.join(sourceRoot, file), path.join(carouselRoot, file));
+  }
+  await writeFile(
+    path.join(root, "Consumer.svelte"),
+    `<script lang="ts">
+  import { CarouselContainer, CarouselItem, CarouselNext, CarouselPrevious, CarouselRoot, CarouselViewport, type CarouselInstance, type CarouselOptions } from "./carousel/index";
+  let rootElement: HTMLDivElement | null = $state(null);
+  let api: CarouselInstance["api"] | undefined = $state();
+  const opts: CarouselOptions["opts"] = { loop: true };
+</script>
+<CarouselRoot orientation="vertical" {opts} plugins={[]} setApi={(next) => api = next} ref={(element) => rootElement = element} aria-label="Typed carousel">
+  <CarouselViewport><CarouselContainer><CarouselItem>One</CarouselItem></CarouselContainer></CarouselViewport>
+  <CarouselPrevious>Previous</CarouselPrevious><CarouselNext>Next</CarouselNext>
+</CarouselRoot>
+<output>{rootElement?.tagName}:{String(api !== undefined)}</output>
+`,
+    "utf8",
+  );
+  await writeFile(
+    path.join(root, "tsconfig.json"),
+    JSON.stringify({
+      compilerOptions: {
+        allowJs: true,
+        baseUrl: ".",
+        checkJs: true,
+        module: "ESNext",
+        moduleResolution: "Bundler",
+        paths: {
+          "@starwind-ui/runtime": [
+            path.join(process.cwd(), "packages/runtime/src/index.ts").replaceAll("\\", "/"),
+          ],
+          "@starwind-ui/runtime/carousel": [
+            path
+              .join(process.cwd(), "packages/runtime/src/components/carousel/index.ts")
+              .replaceAll("\\", "/"),
+          ],
+        },
+        strict: true,
+        target: "ES2022",
+        types: ["svelte"],
+      },
+      include: ["./**/*"],
+    }),
+    "utf8",
+  );
+  return root;
+}
+
+async function createToastTypingRoot(): Promise<string> {
+  const root = await mkdtemp(path.join(process.cwd(), ".svelte-toast-types-"));
+  temporaryRoots.push(root);
+  const toastRoot = path.join(root, "toast");
+  await mkdir(toastRoot);
+  const sourceRoot = path.join(process.cwd(), "packages/svelte/src/toast");
+  for (const file of await readdir(sourceRoot)) {
+    await copyFile(path.join(sourceRoot, file), path.join(toastRoot, file));
+  }
+  await writeFile(
+    path.join(root, "Consumer.svelte"),
+    `<script lang="ts">
+  import { ToastAction, ToastClose, ToastContent, ToastDescription, ToastRoot, ToastTemplate, ToastTitle, ToastTitleText, ToastViewport, toast, type ToastOptions, type ToastPromiseOptions } from "./toast/index";
+  let viewport: HTMLDivElement | null = $state(null);
+  const options: ToastOptions = { duration: 0, onClose: () => {}, title: "Saved" };
+  const promiseOptions: ToastPromiseOptions<string> = { loading: "Loading", success: (value) => value, error: "Failed" };
+  void [toast, options, promiseOptions];
+</script>
+<ToastViewport position="top-right" duration={1000} limit={2} gap="8px" peek="12px" ref={(element) => viewport = element} aria-label="Typed toasts">
+  <ToastTemplate variant="default"><ToastRoot><ToastContent><ToastTitle><ToastTitleText>Title</ToastTitleText></ToastTitle><ToastDescription>Description</ToastDescription><ToastAction>Undo</ToastAction><ToastClose>Close</ToastClose></ToastContent></ToastRoot></ToastTemplate>
+</ToastViewport>
+<output>{viewport?.tagName}</output>
+`,
+    "utf8",
+  );
+  await writeFile(
+    path.join(root, "tsconfig.json"),
+    JSON.stringify({
+      compilerOptions: {
+        allowJs: true,
+        baseUrl: ".",
+        checkJs: true,
+        module: "ESNext",
+        moduleResolution: "Bundler",
+        paths: {
+          "@starwind-ui/runtime": [
+            path.join(process.cwd(), "packages/runtime/src/index.ts").replaceAll("\\", "/"),
+          ],
+          "@starwind-ui/runtime/toast": [
+            path
+              .join(process.cwd(), "packages/runtime/src/components/toast/index.ts")
               .replaceAll("\\", "/"),
           ],
         },

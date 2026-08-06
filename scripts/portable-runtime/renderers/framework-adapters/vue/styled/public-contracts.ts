@@ -4,11 +4,25 @@ import type {
   StyledOutputRenderNode,
 } from "../../../styled-output-model/index.js";
 
-import type { VueEmitProjection, VueModelProjection } from "./types.js";
+import {
+  getVueNativeElementSemantics,
+  type VueEmitProjection,
+  type VueModelProjection,
+} from "./types.js";
 import { projectVueModel } from "../public-contract.js";
+import { renderVueExpression } from "./expressions.js";
+import { renderVuePropKey } from "./props.js";
 import { supportsVueScope } from "./scope.js";
 
 type VueStyledPublicContract = {
+  additionalBindings?: ReadonlyArray<{
+    emits?: ReadonlyArray<VueEmitProjection>;
+    models?: ReadonlyArray<VueModelProjection>;
+    omittedTargetAttributes?: readonly string[];
+    target:
+      | { component: string; part: string; type: "primitive" }
+      | { component: string; exportName: string; type: "component" };
+  }>;
   attributeBindings?: Readonly<Record<string, string>>;
   declaredExtendsPublic?: boolean;
   declaredFieldTypes?: Readonly<Record<string, string>>;
@@ -18,7 +32,20 @@ type VueStyledPublicContract = {
   models?: ReadonlyArray<VueModelProjection>;
   omittedPropFields?: readonly string[];
   omittedTargetAttributes?: readonly string[];
+  objectBoundTargetAttributes?: ReadonlyArray<{
+    names: readonly string[];
+    target: { component: string; part: string };
+  }>;
+  primitiveSpreadExpressions?: ReadonlyArray<{
+    code: string;
+    omittedNames?: readonly string[];
+    target: { component: string; part: string };
+  }>;
   spreadExpression?: string;
+  componentSpreadExpressions?: ReadonlyArray<{
+    code: string;
+    target: { component: string; exportName: string };
+  }>;
   target?: { component: string; part: string };
   retainedAttributes?: ReadonlyArray<{
     name: string;
@@ -29,15 +56,35 @@ type VueStyledPublicContract = {
   }>;
 };
 
+type VueStyledTargetBinding = {
+  emits?: ReadonlyArray<VueEmitProjection>;
+  models?: ReadonlyArray<VueModelProjection>;
+  omittedTargetAttributes?: readonly string[];
+  target:
+    | { component: string; part: string; type: "primitive" }
+    | { component: string; exportName: string; type: "component" };
+};
+
 const EMPTY_CONTRACT: VueStyledPublicContract = {};
 const accordionValueModel = projectVueModel("value");
 const collapsibleOpenModel = projectVueModel("open");
+const comboboxInputValueModel = projectVueModel("inputValue");
+const comboboxOpenModel = projectVueModel("open");
+const comboboxValueModel = projectVueModel("value");
 const dialogOpenModel = projectVueModel("open");
+const menuOpenModel = projectVueModel("open");
+const menuValueModel = projectVueModel("value");
+const navigationMenuValueModel = projectVueModel("value");
 const popoverOpenModel = projectVueModel("open");
+const timedFloatingOpenModel = projectVueModel("open");
 const checkboxGroupValueModel = projectVueModel("value");
+const colorPickerValueModel = projectVueModel("value");
+const colorPickerFormatModel = projectVueModel("format");
 const radioGroupValueModel = projectVueModel("value");
 const inputOtpValueModel = projectVueModel("value");
 const sliderValueModel = projectVueModel("value");
+const sidebarOpenModel = projectVueModel("open");
+const sidebarMobileOpenModel = projectVueModel("mobileOpen");
 const tabsValueModel = projectVueModel("value");
 const toggleGroupValueModel = projectVueModel("value");
 
@@ -67,6 +114,235 @@ const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
       },
     ],
     target: { component: "accordion", part: "Root" },
+  },
+  "carousel:CarouselNext": {
+    omittedTargetAttributes: ["aria-label"],
+    spreadExpression: "({ ...attrs, 'aria-label': 'Next slide' } as Record<string, unknown>)",
+    target: { component: "carousel", part: "Next" },
+  },
+  "carousel:CarouselPrevious": {
+    omittedTargetAttributes: ["aria-label"],
+    spreadExpression: "({ ...attrs, 'aria-label': 'Previous slide' } as Record<string, unknown>)",
+    target: { component: "carousel", part: "Previous" },
+  },
+  "color-picker:ColorPicker": {
+    attributeBindings: { format: "format" },
+    additionalBindings: [
+      {
+        emits: [
+          {
+            handlerName: "handleOpenChange",
+            name: "openChange",
+            parameters: [
+              { name: "open", type: "boolean" },
+              {
+                name: "detail",
+                type: 'import("@starwind-ui/vue/popover").PopoverOpenChangeDetails',
+              },
+            ],
+          },
+          {
+            handlerName: "handleCloseComplete",
+            name: "closeComplete",
+            parameters: [
+              {
+                name: "detail",
+                type: 'import("@starwind-ui/vue/popover").PopoverCloseCompleteDetails',
+              },
+            ],
+          },
+        ],
+        models: [
+          {
+            name: timedFloatingOpenModel.modelProp,
+            type: "boolean",
+            updateEvent: timedFloatingOpenModel.updateEvent,
+          },
+        ],
+        omittedTargetAttributes: ["onOpenChange", "onCloseComplete"],
+        target: { component: "popover", exportName: "Popover", type: "component" },
+      },
+    ],
+    emits: [
+      {
+        handlerName: "handleValueChange",
+        name: "valueChange",
+        parameters: [
+          {
+            name: "value",
+            type: 'import("@starwind-ui/vue/color-picker").ColorPickerColor | null',
+          },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/color-picker").ColorPickerValueChangeDetails',
+          },
+        ],
+      },
+      {
+        handlerName: "handleValueCommitted",
+        name: "valueCommitted",
+        parameters: [
+          {
+            name: "value",
+            type: 'import("@starwind-ui/vue/color-picker").ColorPickerColor | null',
+          },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/color-picker").ColorPickerValueCommitDetails',
+          },
+        ],
+      },
+      {
+        handlerName: "handleFormatChange",
+        name: "formatChange",
+        parameters: [
+          {
+            name: "format",
+            type: 'import("@starwind-ui/vue/color-picker").ColorPickerFormat',
+          },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/color-picker").ColorPickerFormatChangeDetails',
+          },
+        ],
+      },
+    ],
+    models: [
+      {
+        name: colorPickerValueModel.modelProp,
+        type: 'import("@starwind-ui/vue/color-picker").ColorPickerValue',
+        updateEvent: colorPickerValueModel.updateEvent,
+      },
+      {
+        name: colorPickerFormatModel.modelProp,
+        type: 'import("@starwind-ui/vue/color-picker").ColorPickerFormat',
+        updateEvent: colorPickerFormatModel.updateEvent,
+      },
+    ],
+    omittedPropFields: [
+      "value",
+      "onValueChange",
+      "onValueCommitted",
+      "onFormatChange",
+      "onOpenChange",
+      "onCloseComplete",
+    ],
+    omittedTargetAttributes: ["onValueChange", "onValueCommitted", "onFormatChange"],
+    target: { component: "color-picker", part: "Root" },
+  },
+  "color-picker:ColorPickerChannelInput": {
+    declaredExtendsPublic: false,
+  },
+  "color-picker:ColorPickerContent": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof PopoverContent>['$props'], 'class' | 'style'>",
+        target: { component: "popover", exportName: "PopoverContent" },
+      },
+    ],
+  },
+  "color-picker:ColorPickerInput": {
+    primitiveSpreadExpressions: [
+      {
+        code: "({ 'aria-label': 'Color format' } as Record<string, unknown>)",
+        omittedNames: ["aria-label"],
+        target: { component: "color-picker", part: "FormatSelect" },
+      },
+    ],
+  },
+  "color-picker:ColorPickerTrigger": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof PopoverTrigger>['$props'], 'class' | 'style'>",
+        target: { component: "popover", exportName: "PopoverTrigger" },
+      },
+    ],
+  },
+  "sidebar:SidebarProvider": {
+    emits: [
+      {
+        handlerName: "handleOpenChange",
+        name: "openChange",
+        parameters: [
+          { name: "open", type: "boolean" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/sidebar").SidebarOpenChangeDetails',
+          },
+        ],
+      },
+      {
+        handlerName: "handleMobileOpenChange",
+        name: "mobileOpenChange",
+        parameters: [
+          { name: "open", type: "boolean" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/sidebar").SidebarMobileOpenChangeDetails',
+          },
+        ],
+      },
+    ],
+    models: [
+      {
+        name: sidebarOpenModel.modelProp,
+        type: "boolean",
+        updateEvent: sidebarOpenModel.updateEvent,
+      },
+      {
+        name: sidebarMobileOpenModel.modelProp,
+        type: "boolean",
+        updateEvent: sidebarMobileOpenModel.updateEvent,
+      },
+    ],
+    omittedPropFields: ["onOpenChange", "onMobileOpenChange"],
+    omittedTargetAttributes: ["onOpenChange", "onMobileOpenChange"],
+    target: { component: "sidebar", part: "Provider" },
+  },
+  "sidebar:SidebarGroupAction": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof Button>['$props'], 'class' | 'style'>",
+        target: { component: "button", exportName: "Button" },
+      },
+    ],
+  },
+  "sidebar:SidebarInput": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof Input>['$props'], 'class' | 'style'>",
+        target: { component: "input", exportName: "Input" },
+      },
+    ],
+  },
+  "sidebar:SidebarMenuAction": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof Button>['$props'], 'class' | 'style'>",
+        target: { component: "button", exportName: "Button" },
+      },
+    ],
+  },
+  "sidebar:SidebarRail": {
+    omittedTargetAttributes: ["aria-label"],
+    spreadExpression: "({ ...attrs, 'aria-label': 'Toggle Sidebar' } as Record<string, unknown>)",
+    target: { component: "sidebar", part: "Rail" },
+  },
+  "sidebar:SidebarSeparator": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof Separator>['$props'], 'class' | 'style'>",
+        target: { component: "separator", exportName: "Separator" },
+      },
+    ],
+  },
+  "sidebar:SidebarTrigger": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof Button>['$props'], 'class' | 'style'>",
+        target: { component: "button", exportName: "Button" },
+      },
+    ],
   },
   "alert-dialog:AlertDialog": {
     emits: [
@@ -257,6 +533,150 @@ const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
     ],
     target: { component: "collapsible", part: "Root" },
   },
+  "combobox:Combobox": {
+    emits: [
+      {
+        handlerName: "handleInputValueChange",
+        name: "inputValueChange",
+        parameters: [
+          { name: "inputValue", type: "string" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/combobox").ComboboxInputValueChangeDetails',
+          },
+        ],
+      },
+      {
+        handlerName: "handleOpenChange",
+        name: "openChange",
+        parameters: [
+          { name: "open", type: "boolean" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/combobox").ComboboxOpenChangeDetails',
+          },
+        ],
+      },
+      {
+        handlerName: "handleValueChange",
+        name: "valueChange",
+        parameters: [
+          { name: "value", type: "string | null" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/combobox").ComboboxValueChangeDetails',
+          },
+        ],
+      },
+    ],
+    models: [
+      {
+        name: comboboxInputValueModel.modelProp,
+        type: "string",
+        updateEvent: comboboxInputValueModel.updateEvent,
+      },
+      {
+        name: comboboxOpenModel.modelProp,
+        type: "boolean",
+        updateEvent: comboboxOpenModel.updateEvent,
+      },
+      {
+        name: comboboxValueModel.modelProp,
+        type: "string | null",
+        updateEvent: comboboxValueModel.updateEvent,
+      },
+    ],
+    omittedPropFields: ["onInputValueChange", "onOpenChange", "onValueChange", "value"],
+    omittedTargetAttributes: ["onInputValueChange", "onOpenChange", "onValueChange"],
+    target: { component: "combobox", part: "Root" },
+  },
+  "combobox:ComboboxClear": {
+    objectBoundTargetAttributes: [
+      {
+        names: ["aria-label", "disabled"],
+        target: { component: "combobox", part: "Clear" },
+      },
+    ],
+  },
+  "combobox:ComboboxInput": {
+    declaredExtendsPublic: false,
+    objectBoundTargetAttributes: [
+      { names: ["disabled"], target: { component: "combobox", part: "Input" } },
+      { names: ["disabled"], target: { component: "combobox", part: "Trigger" } },
+      {
+        names: ["aria-label", "disabled"],
+        target: { component: "combobox", part: "Clear" },
+      },
+    ],
+  },
+  "combobox:ComboboxInputGroup": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof InputGroup>['$props'], 'class' | 'style'>",
+        target: { component: "input-group", exportName: "InputGroup" },
+      },
+    ],
+  },
+  "context-menu:ContextMenu": {
+    emits: [
+      {
+        handlerName: "handleCloseComplete",
+        name: "closeComplete",
+        parameters: [
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/context-menu").ContextMenuCloseCompleteDetails',
+          },
+        ],
+      },
+      {
+        handlerName: "handleOpenChange",
+        name: "openChange",
+        parameters: [
+          { name: "open", type: "boolean" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/context-menu").ContextMenuOpenChangeDetails',
+          },
+        ],
+      },
+    ],
+    models: [
+      {
+        name: menuOpenModel.modelProp,
+        type: "boolean",
+        updateEvent: menuOpenModel.updateEvent,
+      },
+    ],
+    omittedPropFields: ["onCloseComplete", "onOpenChange"],
+    omittedTargetAttributes: ["onCloseComplete", "onOpenChange"],
+    target: { component: "context-menu", part: "Root" },
+  },
+  "context-menu:ContextMenuRadioGroup": {
+    emits: [
+      {
+        handlerName: "handleValueChange",
+        name: "valueChange",
+        parameters: [
+          { name: "value", type: "string" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/context-menu").MenuValueChangeDetails',
+          },
+        ],
+      },
+    ],
+    models: [
+      {
+        name: menuValueModel.modelProp,
+        type: "string",
+        updateEvent: menuValueModel.updateEvent,
+      },
+    ],
+    omittedPropFields: ["onValueChange", "value"],
+    omittedTargetAttributes: ["onValueChange"],
+    target: { component: "context-menu", part: "RadioGroup" },
+  },
   "dialog:Dialog": {
     emits: [
       {
@@ -311,6 +731,66 @@ const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
       },
     ],
     target: { component: "dropzone", part: "Root" },
+  },
+  "dropdown:Dropdown": {
+    emits: [
+      {
+        handlerName: "handleCloseComplete",
+        name: "closeComplete",
+        parameters: [
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/menu").MenuCloseCompleteDetails',
+          },
+        ],
+      },
+      {
+        handlerName: "handleOpenChange",
+        name: "openChange",
+        parameters: [
+          { name: "open", type: "boolean" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/menu").MenuOpenChangeDetails',
+          },
+        ],
+      },
+    ],
+    models: [
+      {
+        name: menuOpenModel.modelProp,
+        type: "boolean",
+        updateEvent: menuOpenModel.updateEvent,
+      },
+    ],
+    omittedPropFields: ["onCloseComplete", "onOpenChange"],
+    omittedTargetAttributes: ["onCloseComplete", "onOpenChange"],
+    target: { component: "menu", part: "Root" },
+  },
+  "dropdown:DropdownRadioGroup": {
+    emits: [
+      {
+        handlerName: "handleValueChange",
+        name: "valueChange",
+        parameters: [
+          { name: "value", type: "string" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/menu").MenuValueChangeDetails',
+          },
+        ],
+      },
+    ],
+    models: [
+      {
+        name: menuValueModel.modelProp,
+        type: "string",
+        updateEvent: menuValueModel.updateEvent,
+      },
+    ],
+    omittedPropFields: ["onValueChange", "value"],
+    omittedTargetAttributes: ["onValueChange"],
+    target: { component: "menu", part: "RadioGroup" },
   },
   "field:FieldControl": {
     declaredExtendsPublic: false,
@@ -408,6 +888,83 @@ const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
     ],
     omittedPropFields: ["value"],
     target: { component: "input-otp", part: "Root" },
+  },
+  "hover-card:HoverCard": {
+    emits: [
+      {
+        handlerName: "handleOpenChange",
+        name: "openChange",
+        parameters: [
+          { name: "open", type: "boolean" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/preview-card").PreviewCardOpenChangeDetails',
+          },
+        ],
+      },
+    ],
+    models: [
+      {
+        name: timedFloatingOpenModel.modelProp,
+        type: "boolean",
+        updateEvent: timedFloatingOpenModel.updateEvent,
+      },
+    ],
+    omittedPropFields: ["onOpenChange"],
+    omittedTargetAttributes: ["onOpenChange"],
+    target: { component: "preview-card", part: "Root" },
+  },
+  "input-group:InputGroupButton": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof Button>['$props'], 'class' | 'style'>",
+        target: { component: "button", exportName: "Button" },
+      },
+    ],
+  },
+  "input-group:InputGroupInput": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof Input>['$props'], 'class' | 'style'>",
+        target: { component: "input", exportName: "Input" },
+      },
+    ],
+  },
+  "input-group:InputGroupTextarea": {
+    componentSpreadExpressions: [
+      {
+        code: "attrs as Omit<InstanceType<typeof Textarea>['$props'], 'class' | 'style'>",
+        target: { component: "textarea", exportName: "Textarea" },
+      },
+    ],
+  },
+  "navigation-menu:NavigationMenu": {
+    emits: [
+      {
+        handlerName: "handleValueChange",
+        name: "valueChange",
+        parameters: [
+          {
+            name: "value",
+            type: 'import("@starwind-ui/vue/navigation-menu").NavigationMenuValue',
+          },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/navigation-menu").NavigationMenuValueChangeDetails',
+          },
+        ],
+      },
+    ],
+    models: [
+      {
+        name: navigationMenuValueModel.modelProp,
+        type: 'import("@starwind-ui/vue/navigation-menu").NavigationMenuValue',
+        updateEvent: navigationMenuValueModel.updateEvent,
+      },
+    ],
+    omittedPropFields: ["onValueChange", "value"],
+    omittedTargetAttributes: ["onValueChange"],
+    target: { component: "navigation-menu", part: "Root" },
   },
   "popover:Popover": {
     emits: [
@@ -658,6 +1215,34 @@ const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
     omittedTargetAttributes: ["defaultPressed", "pressed"],
     target: { component: "toggle", part: "Root" },
   },
+  "tooltip:Tooltip": {
+    emits: [
+      {
+        handlerName: "handleOpenChange",
+        name: "openChange",
+        parameters: [
+          { name: "open", type: "boolean" },
+          {
+            name: "detail",
+            type: 'import("@starwind-ui/vue/tooltip").TooltipOpenChangeDetails',
+          },
+        ],
+      },
+    ],
+    models: [
+      {
+        name: timedFloatingOpenModel.modelProp,
+        type: "boolean",
+        updateEvent: timedFloatingOpenModel.updateEvent,
+      },
+    ],
+    omittedPropFields: ["onOpenChange"],
+    omittedTargetAttributes: ["onOpenChange"],
+    target: { component: "tooltip", part: "Root" },
+  },
+  "textarea:Textarea": {
+    fields: [{ name: "data-slot", optional: true, type: "string" }],
+  },
 };
 
 export function getVueStyledPublicContract(
@@ -672,20 +1257,7 @@ export function getVueStyledPublicContract(
  * attributes. Generic elements deliberately use HTMLAttributes as the narrowest public fallback.
  */
 export function getVueNativeAttributesType(element: string): string {
-  switch (element) {
-    case "a":
-      return "AnchorHTMLAttributes";
-    case "button":
-      return "ButtonHTMLAttributes";
-    case "form":
-      return "FormHTMLAttributes";
-    case "img":
-      return "ImgHTMLAttributes";
-    case "input":
-      return "InputHTMLAttributes";
-    default:
-      return "HTMLAttributes";
-  }
+  return getVueNativeElementSemantics(element)?.attributesType ?? "HTMLAttributes";
 }
 
 export function collectVueNativeAttributesTypes(
@@ -708,21 +1280,24 @@ export function applyVueStyledPublicContractBindings(
 ): void {
   visitNodes(nodes, (node) => {
     retainCanonicalAttributes(node, contract);
-    if (!contract.target) return;
-    if (
-      node.type !== "primitive" ||
-      node.component !== contract.target?.component ||
-      node.part !== contract.target.part
-    ) {
-      return;
+    bindNarrowTargetAttributes(node, contract);
+    applyComponentSpreadExpression(node, contract);
+    applyPrimitiveSpreadExpression(node, contract);
+    if (contract.target) {
+      applyTargetBinding(node, {
+        emits: contract.emits,
+        models: contract.models,
+        omittedTargetAttributes: contract.omittedTargetAttributes,
+        target: { ...contract.target, type: "primitive" },
+      });
     }
-    if (contract.omittedTargetAttributes) {
-      node.attrs = node.attrs.filter(
-        (attribute) => !contract.omittedTargetAttributes?.includes(attribute.name),
-      );
-    }
+    for (const binding of contract.additionalBindings ?? []) applyTargetBinding(node, binding);
 
-    if (contract.spreadExpression) {
+    if (
+      contract.target &&
+      matchesTarget(node, { ...contract.target, type: "primitive" }) &&
+      contract.spreadExpression
+    ) {
       const spread = node.attrs.find(
         (attribute) => attribute.name === "spread" && isForVue(attribute),
       );
@@ -733,6 +1308,7 @@ export function applyVueStyledPublicContractBindings(
       }
       spread.value = { type: "raw", code: contract.spreadExpression };
     }
+    if (!contract.target || !matchesTarget(node, { ...contract.target, type: "primitive" })) return;
     for (const [name, code] of Object.entries(contract.attributeBindings ?? {})) {
       const attribute = node.attrs.find(
         (candidate) => candidate.name === name && isForVue(candidate),
@@ -744,38 +1320,155 @@ export function applyVueStyledPublicContractBindings(
       }
       attribute.value = { type: "raw", code };
     }
-
-    for (const model of contract.models ?? []) {
-      const legacyValueBinding =
-        model.name === "modelValue"
-          ? node.attrs.find((attribute) => attribute.name === "value" && isForVue(attribute))
-          : undefined;
-      if (legacyValueBinding) {
-        legacyValueBinding.name = model.name;
-        legacyValueBinding.value = { type: "variable", name: model.name };
-      } else if (
-        !node.attrs.some((attribute) => attribute.name === model.name && isForVue(attribute))
-      ) {
-        node.attrs.push({ name: model.name, value: { type: "variable", name: model.name } });
-      }
-      node.attrs.push({
-        name: `@${toKebabCase(model.updateEvent)}`,
-        value: { type: "raw", code: `emit(${JSON.stringify(model.updateEvent)}, $event)` },
-      });
-    }
-    for (const event of contract.emits ?? []) {
-      const eventAttributeName = `@${toKebabCase(event.name)}`;
-      const existing = node.attrs.find(
-        (attribute) => attribute.name === eventAttributeName && isForVue(attribute),
-      );
-      const handler: StyledOutputAttribute = {
-        name: eventAttributeName,
-        value: { type: "variable", name: event.handlerName },
-      };
-      if (existing) Object.assign(existing, handler);
-      else node.attrs.push(handler);
-    }
   });
+}
+
+function applyPrimitiveSpreadExpression(
+  node: StyledOutputRenderNode,
+  contract: VueStyledPublicContract,
+): void {
+  if (node.type !== "primitive") return;
+  for (const binding of contract.primitiveSpreadExpressions ?? []) {
+    if (node.component !== binding.target.component || node.part !== binding.target.part) continue;
+    const firstOmittedIndex = node.attrs.findIndex((attribute) =>
+      binding.omittedNames?.includes(attribute.name),
+    );
+    const insertionIndex = firstOmittedIndex < 0 ? node.attrs.length : firstOmittedIndex;
+    node.attrs = node.attrs.filter((attribute) => !binding.omittedNames?.includes(attribute.name));
+    node.attrs.splice(insertionIndex, 0, {
+      name: "spread",
+      targetScopes: ["vue"],
+      value: { type: "raw", code: binding.code },
+    });
+  }
+}
+
+function applyTargetBinding(node: StyledOutputRenderNode, binding: VueStyledTargetBinding): void {
+  if (!matchesTarget(node, binding.target)) return;
+  if (binding.omittedTargetAttributes) {
+    node.attrs = node.attrs.filter(
+      (attribute) => !binding.omittedTargetAttributes?.includes(attribute.name),
+    );
+  }
+  for (const model of binding.models ?? []) {
+    const legacyValueBinding =
+      model.name === "modelValue"
+        ? node.attrs.find((attribute) => attribute.name === "value" && isForVue(attribute))
+        : undefined;
+    if (legacyValueBinding) {
+      legacyValueBinding.name = model.name;
+      legacyValueBinding.value = { type: "variable", name: model.name };
+    } else if (
+      !node.attrs.some((attribute) => attribute.name === model.name && isForVue(attribute))
+    ) {
+      node.attrs.push({ name: model.name, value: { type: "variable", name: model.name } });
+    }
+    node.attrs.push({
+      name: `@${toKebabCase(model.updateEvent)}`,
+      value: { type: "raw", code: `emit(${JSON.stringify(model.updateEvent)}, $event)` },
+    });
+  }
+  for (const event of binding.emits ?? []) {
+    const eventAttributeName = `@${toKebabCase(event.name)}`;
+    const existing = node.attrs.find(
+      (attribute) => attribute.name === eventAttributeName && isForVue(attribute),
+    );
+    const handler: StyledOutputAttribute = {
+      name: eventAttributeName,
+      value: { type: "variable", name: event.handlerName },
+    };
+    if (existing) Object.assign(existing, handler);
+    else node.attrs.push(handler);
+  }
+}
+
+function matchesTarget(
+  node: StyledOutputRenderNode,
+  target: VueStyledTargetBinding["target"],
+): node is Extract<StyledOutputRenderNode, { type: "component" | "primitive" }> {
+  return target.type === "primitive"
+    ? node.type === "primitive" && node.component === target.component && node.part === target.part
+    : node.type === "component" &&
+        node.component === target.component &&
+        node.exportName === target.exportName;
+}
+
+export function collectVueStyledPublicModels(
+  contract: VueStyledPublicContract,
+): VueModelProjection[] {
+  return [
+    ...(contract.models ?? []),
+    ...(contract.additionalBindings ?? []).flatMap((binding) => binding.models ?? []),
+  ];
+}
+
+export function collectVueStyledPublicEmits(
+  contract: VueStyledPublicContract,
+): VueEmitProjection[] {
+  return [
+    ...(contract.emits ?? []),
+    ...(contract.additionalBindings ?? []).flatMap((binding) => binding.emits ?? []),
+  ];
+}
+
+function bindNarrowTargetAttributes(
+  node: StyledOutputRenderNode,
+  contract: VueStyledPublicContract,
+): void {
+  if (node.type !== "primitive") return;
+  for (const binding of contract.objectBoundTargetAttributes ?? []) {
+    if (node.component !== binding.target.component || node.part !== binding.target.part) continue;
+    const bound = node.attrs.filter(
+      (attribute) => binding.names.includes(attribute.name) && isForVue(attribute),
+    );
+    if (!bound.length) continue;
+    const spread = node.attrs.find(
+      (attribute) => attribute.name === "spread" && isForVue(attribute),
+    );
+    const entries = bound.map((attribute) => {
+      const value = attribute.value ?? { type: "literal" as const, value: true };
+      return `${renderVuePropKey(attribute.name)}: ${renderVueExpression(value)}`;
+    });
+    const spreadExpression = spread?.value
+      ? spread.value.type === "variable" && spread.value.name === "rest"
+        ? "attrs"
+        : renderVueExpression(spread.value)
+      : undefined;
+    const value = {
+      type: "raw" as const,
+      code: `{ ${spreadExpression ? `...${spreadExpression}, ` : ""}${entries.join(", ")} }`,
+    };
+    if (spread) spread.value = value;
+    const insertionIndex = spread ? -1 : node.attrs.indexOf(bound[0]!);
+    node.attrs = node.attrs.filter((attribute) => !bound.includes(attribute));
+    if (!spread && insertionIndex >= 0) {
+      node.attrs.splice(insertionIndex, 0, { name: "spread", targetScopes: ["vue"], value });
+    }
+  }
+}
+
+function applyComponentSpreadExpression(
+  node: StyledOutputRenderNode,
+  contract: VueStyledPublicContract,
+): void {
+  if (node.type !== "component") return;
+  for (const binding of contract.componentSpreadExpressions ?? []) {
+    if (
+      node.component !== binding.target.component ||
+      node.exportName !== binding.target.exportName
+    ) {
+      continue;
+    }
+    const spread = node.attrs.find(
+      (attribute) => attribute.name === "spread" && isForVue(attribute),
+    );
+    if (!spread) {
+      throw new TypeError(
+        `Vue Styled ${binding.target.component}.${binding.target.exportName} public contract requires an attrs spread.`,
+      );
+    }
+    spread.value = { type: "raw", code: binding.code };
+  }
 }
 
 function retainCanonicalAttributes(

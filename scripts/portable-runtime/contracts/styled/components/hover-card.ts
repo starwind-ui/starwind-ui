@@ -37,7 +37,7 @@ export const hoverCardStyledContract: StyledAdapterContract = {
         extends: [{ type: "htmlAttributes", element: "div" }],
         fields: [
           { name: "defaultOpen", optional: true, type: "boolean" },
-          { name: "open", optional: true, type: "boolean", frameworks: ["react"] },
+          { name: "open", optional: true, type: "boolean", frameworks: ["react", "vue"] },
           { name: "closeDelay", optional: true, type: "number" },
           { name: "closeOnEscape", optional: true, type: "boolean" },
           { name: "closeOnOutsideInteract", optional: true, type: "boolean" },
@@ -46,7 +46,7 @@ export const hoverCardStyledContract: StyledAdapterContract = {
             name: "onOpenChange",
             optional: true,
             type: '(open: boolean, details: import("@starwind-ui/runtime").PreviewCardOpenChangeDetails) => void',
-            frameworks: ["react"],
+            frameworks: ["react", "vue"],
           },
           { name: "openDelay", optional: true, type: "number" },
         ],
@@ -54,12 +54,12 @@ export const hoverCardStyledContract: StyledAdapterContract = {
       destructure: {
         props: [
           { name: "defaultOpen", defaultValue: "false" },
-          { name: "open", frameworks: ["react"] },
+          { name: "open", frameworks: ["react", "vue"] },
           { name: "closeDelay", defaultValue: "300" },
           { name: "closeOnEscape", defaultValue: "true" },
           { name: "closeOnOutsideInteract", defaultValue: "true" },
           { name: "disableHoverableContent", defaultValue: "false" },
-          { name: "onOpenChange", frameworks: ["react"] },
+          { name: "onOpenChange", frameworks: ["react", "vue"] },
           { name: "openDelay", defaultValue: "600" },
           { name: "class", alias: "className" },
         ],
@@ -80,7 +80,11 @@ export const hoverCardStyledContract: StyledAdapterContract = {
               },
             },
             { name: "defaultOpen", value: { type: "variable", name: "defaultOpen" } },
-            { name: "open", value: { type: "variable", name: "open" }, frameworks: ["react"] },
+            {
+              name: "open",
+              value: { type: "variable", name: "open" },
+              frameworks: ["react", "vue"],
+            },
             { name: "closeDelay", value: { type: "variable", name: "closeDelay" } },
             { name: "closeOnEscape", value: { type: "variable", name: "closeOnEscape" } },
             {
@@ -94,7 +98,7 @@ export const hoverCardStyledContract: StyledAdapterContract = {
             {
               name: "onOpenChange",
               value: { type: "variable", name: "onOpenChange" },
-              frameworks: ["react"],
+              frameworks: ["react", "vue"],
             },
             { name: "openDelay", value: { type: "variable", name: "openDelay" } },
             { name: "spread", value: { type: "variable", name: "rest" } },

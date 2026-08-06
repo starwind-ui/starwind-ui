@@ -28,6 +28,10 @@
       "types": "./dist/button/index.d.ts",
       "import": "./dist/button/index.js"
     },
+    "./carousel": {
+      "types": "./dist/carousel/index.d.ts",
+      "import": "./dist/carousel/index.js"
+    },
     "./checkbox": {
       "types": "./dist/checkbox/index.d.ts",
       "import": "./dist/checkbox/index.js"
@@ -39,6 +43,18 @@
     "./collapsible": {
       "types": "./dist/collapsible/index.d.ts",
       "import": "./dist/collapsible/index.js"
+    },
+    "./color-picker": {
+      "types": "./dist/color-picker/index.d.ts",
+      "import": "./dist/color-picker/index.js"
+    },
+    "./combobox": {
+      "types": "./dist/combobox/index.d.ts",
+      "import": "./dist/combobox/index.js"
+    },
+    "./context-menu": {
+      "types": "./dist/context-menu/index.d.ts",
+      "import": "./dist/context-menu/index.js"
     },
     "./dialog": {
       "types": "./dist/dialog/index.d.ts",
@@ -72,9 +88,21 @@
       "types": "./dist/input-otp/index.d.ts",
       "import": "./dist/input-otp/index.js"
     },
+    "./menu": {
+      "types": "./dist/menu/index.d.ts",
+      "import": "./dist/menu/index.js"
+    },
+    "./navigation-menu": {
+      "types": "./dist/navigation-menu/index.d.ts",
+      "import": "./dist/navigation-menu/index.js"
+    },
     "./popover": {
       "types": "./dist/popover/index.d.ts",
       "import": "./dist/popover/index.js"
+    },
+    "./preview-card": {
+      "types": "./dist/preview-card/index.d.ts",
+      "import": "./dist/preview-card/index.js"
     },
     "./progress": {
       "types": "./dist/progress/index.d.ts",
@@ -96,6 +124,10 @@
       "types": "./dist/select/index.d.ts",
       "import": "./dist/select/index.js"
     },
+    "./sidebar": {
+      "types": "./dist/sidebar/index.d.ts",
+      "import": "./dist/sidebar/index.js"
+    },
     "./slider": {
       "types": "./dist/slider/index.d.ts",
       "import": "./dist/slider/index.js"
@@ -108,6 +140,10 @@
       "types": "./dist/tabs/index.d.ts",
       "import": "./dist/tabs/index.js"
     },
+    "./toast": {
+      "types": "./dist/toast/index.d.ts",
+      "import": "./dist/toast/index.js"
+    },
     "./toggle": {
       "types": "./dist/toggle/index.d.ts",
       "import": "./dist/toggle/index.js"
@@ -115,6 +151,10 @@
     "./toggle-group": {
       "types": "./dist/toggle-group/index.d.ts",
       "import": "./dist/toggle-group/index.js"
+    },
+    "./tooltip": {
+      "types": "./dist/tooltip/index.d.ts",
+      "import": "./dist/tooltip/index.js"
     },
     "./theme": {
       "types": "./dist/theme/index.d.ts",

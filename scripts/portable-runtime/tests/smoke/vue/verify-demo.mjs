@@ -26,9 +26,35 @@ const visualEvidence = {
   styledAlertDialogLight: path.join(os.tmpdir(), "starwind-vue-styled-alert-dialog-open-light.png"),
   styledPopoverDark: path.join(os.tmpdir(), "starwind-vue-styled-popover-open-dark.png"),
   styledPopoverLight: path.join(os.tmpdir(), "starwind-vue-styled-popover-open-light.png"),
+  styledMenusFloatingDark: path.join(
+    os.tmpdir(),
+    "starwind-vue-styled-menus-floating-open-dark.png",
+  ),
+  styledMenusFloatingLight: path.join(
+    os.tmpdir(),
+    "starwind-vue-styled-menus-floating-open-light.png",
+  ),
+  portableClosureDesktopDark: path.join(
+    os.tmpdir(),
+    "starwind-vue-portable-closure-desktop-dark.png",
+  ),
+  portableClosureDesktopLight: path.join(
+    os.tmpdir(),
+    "starwind-vue-portable-closure-desktop-light.png",
+  ),
+  portableClosureNarrowDark: path.join(
+    os.tmpdir(),
+    "starwind-vue-portable-closure-narrow-dark.png",
+  ),
+  portableClosureNarrowLight: path.join(
+    os.tmpdir(),
+    "starwind-vue-portable-closure-narrow-light.png",
+  ),
 };
 const visualEvidenceDimensions = {};
 const styledSheetGeometries = [];
+const portableClosureEvidenceStyle =
+  '[data-testid="vue-demo-header"] { visibility: hidden !important; }';
 for (const theme of ["light", "dark"]) {
   for (const side of ["top", "right", "bottom", "left"]) {
     visualEvidence[`styledSheet${capitalize(side)}${capitalize(theme)}`] = path.join(
@@ -86,7 +112,10 @@ try {
   await verifyInput(page);
   await verifyForm(page);
   await verifySelect(page);
+  await verifyStyledMenusFloating(page);
+  await verifyStyledComplexServices(page);
   const styledProof = await verifyStyled(page);
+  const portableClosureProof = await verifyPortableStyledClosure(page, visualEvidence);
   await verifyStyledPopover(page, visualEvidence.styledPopoverLight, "light");
   visualEvidenceDimensions.styledAlertDialogLight = await verifyStyledAlertDialog(
     page,
@@ -95,11 +124,13 @@ try {
     "light",
   );
   await verifyStyledSheetEvidence(page, "light", visualEvidence);
+  await captureStyledMenusFloatingEvidence(page, visualEvidence.styledMenusFloatingLight, "light");
   const avatarProof = await verifyAvatar(page);
   const progressProof = await verifyProgress(page);
   const scrollAreaProof = await verifyScrollArea(page);
   await captureReviewEvidence(page, visualEvidence.light);
   const themeProof = await verifyTheme(page);
+  await verifyPortableStyledClosureDark(page, portableClosureProof, visualEvidence);
   await verifyAvatarDark(page, avatarProof);
   await verifyProgressDark(page, progressProof);
   await verifyScrollAreaDark(page, scrollAreaProof);
@@ -112,6 +143,7 @@ try {
     "dark",
   );
   await verifyStyledSheetEvidence(page, "dark", visualEvidence);
+  await captureStyledMenusFloatingEvidence(page, visualEvidence.styledMenusFloatingDark, "dark");
   await captureReviewEvidence(page, visualEvidence.dark);
   await assertNoErrors(messages);
 
@@ -122,7 +154,7 @@ try {
   await assertNoErrors(messages);
 
   console.log(
-    `Vue production demo smoke passed at ${new URL("/review", baseUrl)}. Visual evidence: ${visualEvidence.light}, ${visualEvidence.dark}. Styled Popover evidence: ${visualEvidence.styledPopoverLight}, ${visualEvidence.styledPopoverDark}. Styled Alert Dialog evidence: ${visualEvidence.styledAlertDialogLight} (${formatDimensions(visualEvidenceDimensions.styledAlertDialogLight)}), ${visualEvidence.styledAlertDialogDark} (${formatDimensions(visualEvidenceDimensions.styledAlertDialogDark)}). Styled Sheet geometries: ${JSON.stringify(styledSheetGeometries)}. Styled Sheet side evidence: ${["light", "dark"].flatMap((theme) => ["top", "right", "bottom", "left"].map((side) => visualEvidence[`styledSheet${capitalize(side)}${capitalize(theme)}`])).join(", ")}`,
+    `Vue production demo smoke passed at ${new URL("/review", baseUrl)}. Visual evidence: ${visualEvidence.light}, ${visualEvidence.dark}. Portable closure evidence: ${visualEvidence.portableClosureDesktopLight}, ${visualEvidence.portableClosureDesktopDark}, ${visualEvidence.portableClosureNarrowLight}, ${visualEvidence.portableClosureNarrowDark}. Styled menus and floating evidence: ${visualEvidence.styledMenusFloatingLight}, ${visualEvidence.styledMenusFloatingDark}. Styled Popover evidence: ${visualEvidence.styledPopoverLight}, ${visualEvidence.styledPopoverDark}. Styled Alert Dialog evidence: ${visualEvidence.styledAlertDialogLight} (${formatDimensions(visualEvidenceDimensions.styledAlertDialogLight)}), ${visualEvidence.styledAlertDialogDark} (${formatDimensions(visualEvidenceDimensions.styledAlertDialogDark)}). Styled Sheet geometries: ${JSON.stringify(styledSheetGeometries)}. Styled Sheet side evidence: ${["light", "dark"].flatMap((theme) => ["top", "right", "bottom", "left"].map((side) => visualEvidence[`styledSheet${capitalize(side)}${capitalize(theme)}`])).join(", ")}`,
   );
 } catch (error) {
   throw new Error(
@@ -134,6 +166,297 @@ try {
 } finally {
   await browser?.close();
   await server.close();
+}
+
+async function verifyPortableStyledClosure(page, evidence) {
+  const section = page.getByTestId("portable-styled-closure-review");
+  await section.scrollIntoViewIfNeeded();
+  await assertEqual(await section.count(), 1, "portable closure catalog inventory");
+  await assertEqual(
+    await section.locator("[data-closure-group]").count(),
+    19,
+    "portable closure group inventory",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-closure-grid").getAttribute("data-closure-group-count"),
+    "19",
+    "portable closure declared group count",
+  );
+
+  await assertEqual(
+    await page.getByTestId("portable-alert").getAttribute("role"),
+    "alert",
+    "portable Alert inferred semantics",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-alert").getAttribute("data-forwarded"),
+    "alert",
+    "portable Alert attrs",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-aspect-ratio").evaluate((element) => element.tagName),
+    "FIGURE",
+    "portable Aspect Ratio dynamic root",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-breadcrumb").evaluate((element) => element.tagName),
+    "NAV",
+    "portable Breadcrumb semantics",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-breadcrumb").getAttribute("aria-label"),
+    "Portable catalog path",
+    "portable Breadcrumb public label",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-native-select").evaluate((element) => element.tagName),
+    "SELECT",
+    "portable Native Select semantics",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-native-select").inputValue(),
+    "eu",
+    "portable Native Select value",
+  );
+  const nativeSelectGeometry = await page
+    .getByTestId("portable-native-select")
+    .evaluate((select) => {
+      const wrapper = select.parentElement;
+      const icon = wrapper?.querySelector('[data-testid="portable-native-select-icon"]');
+      if (!(wrapper instanceof HTMLElement) || !(icon instanceof HTMLElement)) {
+        throw new Error("portable Native Select wrapper and custom icon are required");
+      }
+      const wrapperBounds = wrapper.getBoundingClientRect();
+      const iconBounds = icon.getBoundingClientRect();
+      const iconStyle = getComputedStyle(icon);
+      return {
+        contained:
+          iconBounds.left >= wrapperBounds.left &&
+          iconBounds.right <= wrapperBounds.right &&
+          iconBounds.top >= wrapperBounds.top &&
+          iconBounds.bottom <= wrapperBounds.bottom,
+        height: iconBounds.height,
+        position: iconStyle.position,
+        rightInset: wrapperBounds.right - iconBounds.right,
+        verticalDelta: Math.abs(
+          iconBounds.top + iconBounds.height / 2 - (wrapperBounds.top + wrapperBounds.height / 2),
+        ),
+        visibility: iconStyle.visibility,
+        width: iconBounds.width,
+      };
+    });
+  await assertEqual(
+    nativeSelectGeometry.contained,
+    true,
+    "portable Native Select icon containment",
+  );
+  await assertEqual(
+    nativeSelectGeometry.position,
+    "absolute",
+    "portable Native Select icon position",
+  );
+  await assertEqual(
+    nativeSelectGeometry.visibility,
+    "visible",
+    "portable Native Select icon visibility",
+  );
+  if (
+    nativeSelectGeometry.width <= 0 ||
+    nativeSelectGeometry.height <= 0 ||
+    nativeSelectGeometry.rightInset < 8 ||
+    nativeSelectGeometry.rightInset > 16 ||
+    nativeSelectGeometry.verticalDelta > 1
+  ) {
+    throw new Error(
+      `portable Native Select icon geometry: ${JSON.stringify(nativeSelectGeometry)}`,
+    );
+  }
+  await assertEqual(
+    await page.getByTestId("portable-label").getAttribute("for"),
+    "portable-labelled-input",
+    "portable Label target",
+  );
+  const labelledInputGeometry = await page
+    .getByTestId("portable-labelled-input")
+    .evaluate((input) => {
+      const bounds = input.getBoundingClientRect();
+      const style = getComputedStyle(input);
+      const label = document.querySelector('[data-testid="portable-label"]');
+      return {
+        associated:
+          label instanceof HTMLLabelElement &&
+          label.control === input &&
+          input instanceof HTMLInputElement,
+        display: style.display,
+        height: bounds.height,
+        visibility: style.visibility,
+        width: bounds.width,
+      };
+    });
+  await assertEqual(labelledInputGeometry.associated, true, "portable Label control association");
+  if (
+    labelledInputGeometry.display === "none" ||
+    labelledInputGeometry.visibility !== "visible" ||
+    labelledInputGeometry.width <= 0 ||
+    labelledInputGeometry.height <= 0
+  ) {
+    throw new Error(`portable labelled Input geometry: ${JSON.stringify(labelledInputGeometry)}`);
+  }
+  const paginationLinks = await page
+    .getByTestId("portable-pagination")
+    .locator("a, button")
+    .evaluateAll((elements) =>
+      elements.map((element) => ({
+        ariaCurrent: element.getAttribute("aria-current"),
+        dataSlot: element.getAttribute("data-slot"),
+      })),
+    );
+  const activePaginationLinks = paginationLinks.filter(({ ariaCurrent }) => ariaCurrent === "page");
+  if (activePaginationLinks.length !== 1) {
+    throw new Error(`portable Pagination semantics: ${JSON.stringify(paginationLinks)}`);
+  }
+  await assertEqual(
+    JSON.stringify(paginationLinks.map(({ dataSlot }) => dataSlot)),
+    JSON.stringify([
+      "pagination-previous",
+      "pagination-link",
+      "pagination-link",
+      "pagination-next",
+    ]),
+    "portable Pagination public part identity",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-spinner").getAttribute("role"),
+    "status",
+    "portable Spinner semantics",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-table").locator("thead, tbody, tfoot, caption").count(),
+    4,
+    "portable Table semantic sections",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-textarea").getAttribute("name"),
+    "notes",
+    "portable Textarea native attrs",
+  );
+  await assertEqual(
+    await page.getByTestId("portable-video").evaluate((element) => element.tagName),
+    "VIDEO",
+    "portable Video native root",
+  );
+  await assertText(
+    page.getByTestId("portable-closure-ref-state"),
+    "refs: DIV/ARTICLE/SELECT/TEXTAREA/VIDEO",
+    "portable closure exposed refs",
+  );
+
+  const lightCard = await readPortableClosureVisual(page);
+  await section.screenshot({
+    path: evidence.portableClosureDesktopLight,
+    style: portableClosureEvidenceStyle,
+  });
+  await page.setViewportSize({ height: 844, width: 390 });
+  await section.scrollIntoViewIfNeeded();
+  const narrowLayout = await section.evaluate((element) => {
+    const groups = Array.from(element.querySelectorAll("[data-closure-group]"));
+    const bounds = groups.map((group) => group.getBoundingClientRect());
+    const sectionBounds = element.getBoundingClientRect();
+    return {
+      allContained: bounds.every(
+        (bounds) =>
+          bounds.left >= sectionBounds.left - 1 && bounds.right <= sectionBounds.right + 1,
+      ),
+      columns: getComputedStyle(element.querySelector('[data-testid="portable-closure-grid"]'))
+        .gridTemplateColumns,
+      overflow: element.scrollWidth - element.clientWidth,
+    };
+  });
+  await assertEqual(narrowLayout.allContained, true, "portable closure narrow containment");
+  if (narrowLayout.overflow > 1) {
+    throw new Error(`portable closure narrow overflow: ${JSON.stringify(narrowLayout)}`);
+  }
+  if (narrowLayout.columns.trim().split(/\s+/).length !== 1) {
+    throw new Error(`portable closure narrow columns: ${JSON.stringify(narrowLayout)}`);
+  }
+  await section.screenshot({
+    path: evidence.portableClosureNarrowLight,
+    style: portableClosureEvidenceStyle,
+  });
+  await page.setViewportSize({ height: 1000, width: 1440 });
+  await section.scrollIntoViewIfNeeded();
+
+  await page.getByTestId("portable-closure-remount").click();
+  await assertEqual(
+    await page.getByTestId("portable-closure-grid").count(),
+    0,
+    "portable closure unmount cleanup",
+  );
+  await assertText(
+    page.getByTestId("portable-closure-ref-state"),
+    "refs: none/none/none/none/none",
+    "portable closure cleared refs",
+  );
+  await page.getByTestId("portable-closure-remount").click();
+  await page.getByTestId("portable-closure-grid").waitFor();
+  await assertEqual(
+    await section.locator("[data-closure-group]").count(),
+    19,
+    "portable closure remount inventory",
+  );
+  await assertText(
+    page.getByTestId("portable-closure-ref-state"),
+    "refs: DIV/ARTICLE/SELECT/TEXTAREA/VIDEO",
+    "portable closure restored refs",
+  );
+  return lightCard;
+}
+
+async function verifyPortableStyledClosureDark(page, lightVisual, evidence) {
+  const section = page.getByTestId("portable-styled-closure-review");
+  await section.scrollIntoViewIfNeeded();
+  const darkVisual = await readPortableClosureVisual(page);
+  if (
+    darkVisual.backgroundColor === lightVisual.backgroundColor &&
+    darkVisual.borderColor === lightVisual.borderColor &&
+    darkVisual.color === lightVisual.color
+  ) {
+    throw new Error(
+      `portable closure dark theme did not change visible styling: light=${JSON.stringify(lightVisual)}, dark=${JSON.stringify(darkVisual)}`,
+    );
+  }
+  if (
+    Math.abs(darkVisual.height - lightVisual.height) > 1 ||
+    Math.abs(darkVisual.width - lightVisual.width) > 1
+  ) {
+    throw new Error(
+      `portable closure theme geometry drifted: light=${JSON.stringify(lightVisual)}, dark=${JSON.stringify(darkVisual)}`,
+    );
+  }
+  await section.screenshot({
+    path: evidence.portableClosureDesktopDark,
+    style: portableClosureEvidenceStyle,
+  });
+  await page.setViewportSize({ height: 844, width: 390 });
+  await section.screenshot({
+    path: evidence.portableClosureNarrowDark,
+    style: portableClosureEvidenceStyle,
+  });
+  await page.setViewportSize({ height: 1000, width: 1440 });
+}
+
+async function readPortableClosureVisual(page) {
+  return page.getByTestId("portable-card").evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      backgroundColor: style.backgroundColor,
+      borderColor: style.borderColor,
+      color: style.color,
+      height: bounds.height,
+      width: bounds.width,
+    };
+  });
 }
 
 async function verifyAccordion(page) {
@@ -2438,6 +2761,362 @@ async function verifySelect(page) {
   await assertEqual(await page.getByTestId("select-cleanup-root").count(), 1, "Select remount");
 }
 
+async function verifyStyledMenusFloating(page) {
+  const tooltipSection = page.getByTestId("styled-tooltip-review");
+  await assertEqual(
+    await tooltipSection.locator("[data-sw-tooltip]").count(),
+    3,
+    "Styled Tooltip multiple instances",
+  );
+  const tooltipTrigger = page.getByTestId("styled-tooltip-controlled-trigger");
+  await tooltipTrigger.hover();
+  const tooltipContent = page.getByTestId("styled-tooltip-controlled-content");
+  await tooltipContent.waitFor({ state: "visible" });
+  await assertTextIncludes(
+    page.getByTestId("styled-tooltip-state"),
+    "open: true",
+    "Styled Tooltip model",
+  );
+  await assertResolvedGeometry(tooltipContent, "Styled Tooltip content");
+  await page.getByTestId("styled-tooltip-cleanup-toggle").click();
+  await assertEqual(await tooltipTrigger.count(), 0, "Styled Tooltip unmount");
+  await assertEqual(await tooltipContent.count(), 0, "Styled Tooltip portal cleanup");
+  await page.getByTestId("styled-tooltip-cleanup-toggle").click();
+  await page.getByTestId("styled-tooltip-controlled-trigger").waitFor();
+
+  const hoverSection = page.getByTestId("styled-hover-card-review");
+  await assertEqual(
+    await hoverSection.locator("[data-sw-preview-card]").count(),
+    2,
+    "Styled Hover Card multiple instances",
+  );
+  await page.getByTestId("styled-hover-card-controlled-trigger").hover();
+  const hoverContent = page.getByTestId("styled-hover-card-controlled-content");
+  await hoverContent.waitFor({ state: "visible" });
+  await assertTextIncludes(
+    page.getByTestId("styled-hover-card-state"),
+    "open: true",
+    "Styled Hover Card model",
+  );
+  await assertResolvedGeometry(hoverContent, "Styled Hover Card content");
+  await page.mouse.move(0, 0);
+  await hoverContent.waitFor({ state: "hidden" });
+
+  const dropdownTrigger = page.getByTestId("styled-dropdown-trigger");
+  await dropdownTrigger.click();
+  const dropdownContent = page.getByTestId("styled-dropdown-content");
+  await dropdownContent.waitFor({ state: "visible" });
+  await assertTextIncludes(
+    page.getByTestId("styled-dropdown-state"),
+    "open: true",
+    "Styled Dropdown model",
+  );
+  await assertResolvedGeometry(dropdownContent, "Styled Dropdown content");
+  await page.getByTestId("styled-dropdown-sub-trigger").hover();
+  const dropdownSubContent = page.getByTestId("styled-dropdown-sub-content");
+  await dropdownSubContent.waitFor({ state: "visible" });
+  await assertResolvedGeometry(dropdownSubContent, "Styled Dropdown nested content");
+  await page.getByTestId("styled-dropdown-archive").click();
+  await dropdownContent.waitFor({ state: "hidden" });
+
+  const contextTrigger = page.getByTestId("styled-context-menu-trigger");
+  await contextTrigger.click({ button: "right" });
+  const contextContent = page.getByTestId("styled-context-menu-content");
+  await contextContent.waitFor({ state: "visible" });
+  await assertTextIncludes(
+    page.getByTestId("styled-context-menu-state"),
+    "open: true",
+    "Styled Context Menu model",
+  );
+  await assertResolvedGeometry(contextContent, "Styled Context Menu content");
+  await page.getByTestId("styled-context-menu-sub-trigger").hover();
+  const contextSubContent = page.getByTestId("styled-context-menu-sub-content");
+  await contextSubContent.waitFor({ state: "visible" });
+  await assertResolvedGeometry(contextSubContent, "Styled Context Menu nested content");
+  await page.getByTestId("styled-context-menu-frame").click();
+  await contextContent.waitFor({ state: "hidden" });
+
+  const navigationTrigger = page.getByTestId("styled-navigation-trigger-guides");
+  await navigationTrigger.click();
+  const navigationContent = page.getByTestId("styled-navigation-content-guides");
+  await navigationContent.waitFor({ state: "visible" });
+  await assertTextIncludes(
+    page.getByTestId("styled-navigation-state"),
+    "guides",
+    "Styled Navigation Menu model",
+  );
+  await assertResolvedGeometry(navigationContent, "Styled Navigation Menu content");
+  await page.getByTestId("styled-navigation-add-item").click();
+  await page.getByTestId("styled-navigation-trigger-patterns").waitFor();
+  await assertEqual(
+    await page
+      .getByTestId("styled-navigation-menu-review")
+      .locator("[data-sw-nav-menu-item]")
+      .count(),
+    3,
+    "Styled Navigation Menu dynamic collection",
+  );
+  await page.getByTestId("styled-navigation-trigger-patterns").click();
+  await page.getByTestId("styled-navigation-content-patterns").waitFor({ state: "visible" });
+  await page.keyboard.press("Escape");
+
+  await page.getByTestId("styled-combobox-add-item").click();
+  const comboboxSection = page.getByTestId("styled-combobox-review");
+  const comboboxInput = page.getByTestId("styled-combobox-input");
+  await comboboxInput.click();
+  await comboboxInput.fill("cher");
+  const comboboxContent = page.getByTestId("styled-combobox-content");
+  await comboboxContent.waitFor({ state: "visible" });
+  await assertResolvedGeometry(comboboxContent, "Styled Combobox content");
+  await page.getByTestId("styled-combobox-item-cherry").click();
+  await assertTextIncludes(
+    page.getByTestId("styled-combobox-state"),
+    "value: cherry",
+    "Styled Combobox model",
+  );
+  await page.getByTestId("styled-combobox-submit").click();
+  await assertTextIncludes(
+    page.getByTestId("styled-combobox-form-result"),
+    '"fruit":"cherry"',
+    "Styled Combobox form value",
+  );
+  await page.getByTestId("styled-combobox-cleanup-toggle").click();
+  await assertEqual(
+    await comboboxSection.locator("[data-sw-combobox]").count(),
+    0,
+    "Styled Combobox unmount",
+  );
+  await assertEqual(
+    await page.locator("[data-sw-combobox-portal]").count(),
+    0,
+    "Styled Combobox portal cleanup",
+  );
+  await page.getByTestId("styled-combobox-cleanup-toggle").click();
+  await comboboxSection.locator("[data-sw-combobox]").waitFor();
+}
+
+async function verifyStyledComplexServices(page) {
+  const section = page.getByTestId("styled-complex-services-review");
+  await assertEqual(
+    await section.locator("[data-sw-carousel]").count(),
+    2,
+    "Styled Carousel multiple instances",
+  );
+  await assertTextIncludes(
+    page.getByTestId("styled-carousel-state"),
+    "api: ready",
+    "Styled Carousel API delivery",
+  );
+  await page.getByTestId("styled-carousel-next").click();
+  await page.getByTestId("styled-carousel-add").click();
+  await assertTextIncludes(
+    page.getByTestId("styled-carousel-state"),
+    "items: 4",
+    "Styled Carousel dynamic item",
+  );
+  await page.getByTestId("styled-carousel-cleanup-toggle").click();
+  await assertEqual(
+    await page.getByTestId("styled-carousel-controlled").count(),
+    0,
+    "Styled Carousel cleanup",
+  );
+  await page.getByTestId("styled-carousel-cleanup-toggle").click();
+  await page.getByTestId("styled-carousel-controlled").waitFor();
+
+  await assertTextIncludes(
+    page.getByTestId("styled-sidebar-state"),
+    "ref: DIV",
+    "Styled Sidebar exposed ref",
+  );
+  const desktopViewport = page.viewportSize();
+  await page.setViewportSize({ height: desktopViewport?.height ?? 900, width: 600 });
+  await assertEqual(
+    await page.getByTestId("styled-sidebar-trigger").getAttribute("aria-expanded"),
+    "false",
+    "Styled Sidebar mobile media presentation",
+  );
+  await page.getByTestId("styled-sidebar-trigger").click();
+  await assertTextIncludes(
+    page.getByTestId("styled-sidebar-state"),
+    "mobile: true",
+    "Styled Sidebar mobile public trigger",
+  );
+  await assertEqual(
+    await page.getByTestId("styled-sidebar-trigger").getAttribute("aria-expanded"),
+    "true",
+    "Styled Sidebar mobile expanded presentation",
+  );
+  await page.setViewportSize({
+    height: desktopViewport?.height ?? 900,
+    width: desktopViewport?.width ?? 1440,
+  });
+  await page.getByTestId("styled-sidebar-trigger").click();
+  await assertTextIncludes(
+    page.getByTestId("styled-sidebar-state"),
+    "open: false",
+    "Styled Sidebar desktop public trigger",
+  );
+  await page.getByTestId("styled-sidebar-cleanup-toggle").click();
+  await assertEqual(
+    await page.getByTestId("styled-sidebar-controlled").count(),
+    0,
+    "Styled Sidebar cleanup",
+  );
+  await page.getByTestId("styled-sidebar-cleanup-toggle").click();
+  await page.getByTestId("styled-sidebar-controlled").waitFor();
+
+  await assertTextIncludes(
+    page.getByTestId("styled-color-picker-state"),
+    "ref: DIV",
+    "Styled Color Picker exposed ref",
+  );
+  const controlledColorTrigger = page
+    .getByTestId("styled-color-picker-controlled")
+    .locator('[data-slot="popover-trigger"]');
+  const controlledColorPopupId = await controlledColorTrigger.getAttribute("aria-controls");
+  if (!controlledColorPopupId) {
+    throw new Error("Styled Color Picker trigger did not identify its popup.");
+  }
+  await controlledColorTrigger.click();
+  await assertTextIncludes(
+    page.getByTestId("styled-color-picker-state"),
+    "open: true",
+    "Styled Color Picker open model",
+  );
+  await page
+    .locator(`[id="${controlledColorPopupId}"]`)
+    .locator("[data-sw-color-picker-format-select]")
+    .selectOption("rgb");
+  await assertTextIncludes(
+    page.getByTestId("styled-color-picker-state"),
+    "format: rgb",
+    "Styled Color Picker format model interaction",
+  );
+  await assertTextIncludes(
+    page.getByTestId("styled-color-picker-state"),
+    "format:rgb:rgb",
+    "Styled Color Picker detailed format event",
+  );
+  await page.locator("[data-sw-color-picker-swatch]:visible").nth(1).click();
+  await assertTextIncludes(
+    page.getByTestId("styled-color-picker-state"),
+    "value: #16a34a",
+    "Styled Color Picker value model interaction",
+  );
+  await assertTextIncludes(
+    page.getByTestId("styled-color-picker-state"),
+    "detail:#16a34a",
+    "Styled Color Picker detailed value event",
+  );
+  const uncontrolledFormat = page
+    .getByTestId("styled-color-picker-inline")
+    .locator('[data-slot="color-picker-native-format-select"]');
+  await uncontrolledFormat.selectOption("hsl");
+  await page.getByTestId("styled-color-picker-unrelated-update").click();
+  await assertEqual(
+    await uncontrolledFormat.inputValue(),
+    "hsl",
+    "Styled Color Picker uncontrolled format survives unrelated render",
+  );
+  await page.getByTestId("styled-color-picker-submit").click();
+  await assertTextIncludes(
+    page.getByTestId("styled-color-picker-state"),
+    "reviewColor",
+    "Styled Color Picker form value",
+  );
+  await page.getByTestId("styled-color-picker-cleanup-toggle").click();
+  await assertEqual(
+    await page.getByTestId("styled-color-picker-controlled").count(),
+    0,
+    "Styled Color Picker cleanup",
+  );
+  await page.getByTestId("styled-color-picker-cleanup-toggle").click();
+  await page.getByTestId("styled-color-picker-controlled").waitFor();
+
+  await assertTextIncludes(
+    page.getByTestId("styled-toast-state"),
+    "ref: DIV",
+    "Styled Toast exposed ref",
+  );
+  await assertEqual(
+    await section.locator('[data-slot="toast-viewport"]').count(),
+    2,
+    "Styled Toast multiple instances",
+  );
+  await page.getByTestId("styled-toast-success").click();
+  await page.getByTestId("styled-toaster-secondary").locator('[data-slot="toast"]').waitFor();
+  await assertEqual(
+    await page.getByTestId("styled-toaster").locator('[data-slot="toast"]').count(),
+    0,
+    "Styled Toast routes to newest instance",
+  );
+  await assertTextIncludes(
+    page.getByTestId("styled-toast-state"),
+    "sent: 1",
+    "Styled Toast service",
+  );
+  await page.getByTestId("styled-toast-secondary-cleanup-toggle").click();
+  await assertEqual(
+    await page.getByTestId("styled-toaster-secondary").count(),
+    0,
+    "Styled secondary Toaster cleanup",
+  );
+  await page.getByTestId("styled-toast-info").click();
+  await page.getByTestId("styled-toaster").locator('[data-slot="toast"]').waitFor();
+  await page.getByTestId("styled-toast-secondary-cleanup-toggle").click();
+  await page.getByTestId("styled-toaster-secondary").waitFor({ state: "attached" });
+  await page.getByTestId("styled-toast-promise").click();
+  await page.getByTestId("styled-toast-dismiss").click();
+  await page.getByTestId("styled-toast-cleanup-toggle").click();
+  await assertEqual(await page.getByTestId("styled-toaster").count(), 0, "Styled Toast cleanup");
+  await page.getByTestId("styled-toast-cleanup-toggle").click();
+  await page.getByTestId("styled-toaster").waitFor({ state: "attached" });
+}
+
+async function captureStyledMenusFloatingEvidence(page, evidencePath, theme) {
+  const trigger = page.getByTestId("styled-dropdown-trigger");
+  await trigger.scrollIntoViewIfNeeded();
+  await trigger.click();
+  const content = page.getByTestId("styled-dropdown-content");
+  await content.waitFor({ state: "visible" });
+  await assertResolvedGeometry(content, `${theme} Styled Dropdown evidence`);
+  await page.getByTestId("styled-dropdown-sub-trigger").hover();
+  const subContent = page.getByTestId("styled-dropdown-sub-content");
+  await subContent.waitFor({ state: "visible" });
+  await assertResolvedGeometry(subContent, `${theme} Styled Dropdown nested evidence`);
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  await page.screenshot({ path: evidencePath });
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+}
+
+async function assertResolvedGeometry(locator, label) {
+  await locator.evaluate(async (element) => {
+    const animations = element.getAnimations({ subtree: true });
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+  });
+  const geometry = await locator.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      height: bounds.height,
+      opacity: Number.parseFloat(style.opacity),
+      width: bounds.width,
+    };
+  });
+  if (
+    !Number.isFinite(geometry.height) ||
+    !Number.isFinite(geometry.width) ||
+    geometry.height <= 0 ||
+    geometry.width <= 0 ||
+    geometry.opacity <= 0
+  ) {
+    throw new Error(`${label} geometry was unresolved: ${JSON.stringify(geometry)}`);
+  }
+}
+
 async function verifyPopover(page) {
   const trigger = page.getByTestId("popover-trigger");
   const popup = page.getByTestId("popover-popup");
@@ -3054,6 +3733,12 @@ async function readSpecializedCohortVisuals(page, mode) {
       .first(),
     Slider: page.getByTestId("slider-review").getByTestId("styled-slider"),
     Tabs: page.getByTestId("tabs-review").getByTestId("styled-tabs-trigger"),
+    Tooltip: page.getByTestId("styled-tooltip-controlled-trigger"),
+    "Hover Card": page.getByTestId("styled-hover-card-controlled-trigger"),
+    Dropdown: page.getByTestId("styled-dropdown-trigger"),
+    "Context Menu": page.getByTestId("styled-context-menu-trigger"),
+    "Navigation Menu": page.getByTestId("styled-navigation-trigger-guides"),
+    Combobox: page.getByTestId("styled-combobox-input"),
   };
   const visuals = {};
   for (const [name, control] of Object.entries(controls)) {

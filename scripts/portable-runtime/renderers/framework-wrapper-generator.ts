@@ -20,6 +20,7 @@ export type GenerateFrameworkStyledWrappersOptions = {
   outputRoot: string;
   primitiveImportBase?: string;
   primitiveOutputRoot: string;
+  roots?: readonly string[];
 };
 
 export async function generateFrameworkPrimitiveWrappers(

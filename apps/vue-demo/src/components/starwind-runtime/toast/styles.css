@@ -1,0 +1,74 @@
+[data-sw-toast-viewport] [data-slot="toast"] {
+  --scale: max(0.9, 1 - (var(--toast-index, 0) * 0.05));
+  z-index: calc(1000 - var(--toast-index, 0));
+  transform: translateX(var(--toast-swipe-movement-x, 0px))
+    translateY(calc(var(--toast-swipe-movement-y, 0px) - (var(--toast-index, 0) * var(--peek))))
+    scale(var(--scale));
+}
+[data-sw-toast-viewport] [data-slot="toast"][data-swiping] {
+  transition: none;
+}
+[data-sw-toast-viewport] [data-slot="toast"][data-expanded] {
+  --scale: 1;
+  transform: translateX(var(--toast-swipe-movement-x, 0px))
+    translateY(calc(var(--toast-swipe-movement-y, 0px) - var(--toast-offset-y, 0px)));
+}
+[data-sw-toast-viewport] [data-slot="toast"][data-state="closed"][data-swipe-direction="down"] {
+  transform: translateY(calc(var(--toast-swipe-movement-y, 0px) + 150%));
+  opacity: 0;
+}
+[data-sw-toast-viewport] [data-slot="toast"][data-state="closed"][data-swipe-direction="up"] {
+  transform: translateY(calc(var(--toast-swipe-movement-y, 0px) - 150%));
+  opacity: 0;
+}
+[data-sw-toast-viewport] [data-slot="toast"][data-state="closed"][data-swipe-direction="right"] {
+  transform: translateX(calc(var(--toast-swipe-movement-x, 0px) + 150%))
+    translateY(calc(var(--toast-offset-y, 0px) * -1));
+  opacity: 0;
+}
+[data-sw-toast-viewport] [data-slot="toast"][data-state="closed"][data-swipe-direction="left"] {
+  transform: translateX(calc(var(--toast-swipe-movement-x, 0px) - 150%))
+    translateY(calc(var(--toast-offset-y, 0px) * -1));
+  opacity: 0;
+}
+[data-sw-toast-viewport][data-position^="top"] [data-slot="toast"] {
+  top: 0;
+  bottom: auto;
+  transform-origin: top center;
+  transform: translateX(var(--toast-swipe-movement-x, 0px))
+    translateY(calc(var(--toast-swipe-movement-y, 0px) + (var(--toast-index, 0) * var(--peek))))
+    scale(var(--scale));
+}
+[data-sw-toast-viewport][data-position^="top"] [data-slot="toast"][data-expanded] {
+  transform: translateX(var(--toast-swipe-movement-x, 0px))
+    translateY(calc(var(--toast-swipe-movement-y, 0px) + var(--toast-offset-y, 0px)));
+}
+[data-sw-toast-viewport][data-position^="top"]
+  [data-slot="toast"][data-state="closed"][data-swipe-direction="left"] {
+  transform: translateX(calc(var(--toast-swipe-movement-x, 0px) - 150%))
+    translateY(var(--toast-offset-y, 0px));
+  opacity: 0;
+}
+[data-sw-toast-viewport][data-position^="top"]
+  [data-slot="toast"][data-state="closed"][data-swipe-direction="right"] {
+  transform: translateX(calc(var(--toast-swipe-movement-x, 0px) + 150%))
+    translateY(var(--toast-offset-y, 0px));
+  opacity: 0;
+}
+[data-sw-toast-viewport] [data-slot="toast"][data-starting-style] {
+  transform: translateY(150%);
+  opacity: 0;
+}
+[data-sw-toast-viewport] [data-slot="toast"][data-state="closed"]:not([data-swipe-direction]) {
+  transform: translateY(150%);
+  opacity: 0;
+}
+[data-sw-toast-viewport][data-position^="top"] [data-slot="toast"][data-starting-style] {
+  transform: translateY(-150%);
+  opacity: 0;
+}
+[data-sw-toast-viewport][data-position^="top"]
+  [data-slot="toast"][data-state="closed"]:not([data-swipe-direction]) {
+  transform: translateY(-150%);
+  opacity: 0;
+}

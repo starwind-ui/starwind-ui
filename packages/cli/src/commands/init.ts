@@ -41,6 +41,22 @@ type InitOptions = {
   react?: boolean;
 };
 
+type ProjectPackage = {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+};
+
+const ASTRO_CONFIG_FILES = [
+  "astro.config.js",
+  "astro.config.mjs",
+  "astro.config.cjs",
+  "astro.config.ts",
+  "astro.config.mts",
+  "astro.config.cts",
+];
+
 function resolveFrameworkOption(options?: InitOptions): StarwindFramework | undefined {
   const selected = [
     options?.framework,
@@ -53,6 +69,22 @@ function resolveFrameworkOption(options?: InitOptions): StarwindFramework | unde
   }
 
   return selected[0];
+}
+
+async function detectProjectFramework(pkg: ProjectPackage): Promise<StarwindFramework | undefined> {
+  const dependencies = {
+    ...pkg.peerDependencies,
+    ...pkg.optionalDependencies,
+    ...pkg.devDependencies,
+    ...pkg.dependencies,
+  };
+  const hasAstroConfig = (
+    await Promise.all(ASTRO_CONFIG_FILES.map((configFile) => fileExists(configFile)))
+  ).some(Boolean);
+
+  if (dependencies.astro || hasAstroConfig) return "astro";
+  if (dependencies.react || dependencies["react-dom"]) return "react";
+  return undefined;
 }
 
 function getProNextStepsMessage(): string {
@@ -172,6 +204,14 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     }
 
     const selectedFramework = resolveFrameworkOption(options);
+    const defaultFramework = options?.defaults
+      ? (selectedFramework ?? (await detectProjectFramework(pkg)))
+      : selectedFramework;
+    if (options?.defaults && !defaultFramework) {
+      throw new Error(
+        "Unable to detect an Astro or React project. Pass --astro, --react, or --framework <astro|react>.",
+      );
+    }
     const bundledRegistry = await loadRegistry({ type: "bundled" });
 
     // Check Astro version compatibility
@@ -186,7 +226,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     // Use defaults if specified, otherwise prompt user for choices
     if (options?.defaults) {
       configChoices = {
-        framework: selectedFramework ?? "astro",
+        framework: defaultFramework!,
         componentDir: PATHS.LOCAL_STARWIND_COMPONENTS_DIR,
         cssFile: PATHS.LOCAL_CSS_FILE,
         twBaseColor: "neutral",

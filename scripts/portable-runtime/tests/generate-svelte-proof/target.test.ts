@@ -38,18 +38,22 @@ describe("private Svelte proof target", () => {
     expect(resolvePrimitiveFrameworkAdapterTargetComponents("svelte")).toEqual([
       "accordion",
       "button",
+      "carousel",
       "checkbox",
       "dialog",
       "select",
       "slider",
+      "toast",
     ]);
     expect(SVELTE_PRIMITIVE_COMPONENTS).toEqual([
       "button",
+      "carousel",
       "checkbox",
       "select",
       "accordion",
       "dialog",
       "slider",
+      "toast",
     ]);
     expect(svelteFrameworkAdapterTarget.styled).toBeUndefined();
     expect(svelteFrameworkAdapterTarget.packageName).toBe("@starwind-ui/svelte");
@@ -64,6 +68,24 @@ describe("private Svelte proof target", () => {
       svelteAdapterPublicContract.publicSupport,
     );
     expect(svelteAdapterPublicContract.framework.minimumVersion).toBe("5.29.0");
+  });
+
+  it("dispatches Carousel output only through the engine-viewport family", async () => {
+    const sourceRoot = path.join(
+      process.cwd(),
+      "scripts/portable-runtime/renderers/framework-adapters/svelte",
+    );
+    const sources = await Promise.all(
+      ["adapter.ts", "engine-viewport.ts"].map((file) =>
+        readFile(path.join(sourceRoot, file), "utf8"),
+      ),
+    );
+    const implementation = sources.join("\n");
+
+    expect(implementation).toContain('kind === "engine-viewport"');
+    expect(implementation).not.toMatch(
+      /(?:component|componentName|componentId)\s*={2,3}\s*["']carousel["']/i,
+    );
   });
 
   it("dispatches Dialog output only through the native-overlay family", async () => {
@@ -102,6 +124,27 @@ describe("private Svelte proof target", () => {
     );
     expect(implementation).not.toMatch(
       /addEventListener|getBoundingClientRect|PointerEvent|KeyboardEvent|FormData|requestAnimationFrame|setPointerCapture|clientX|clientY/,
+    );
+  });
+
+  it("dispatches Toast output only through the notification-system family", async () => {
+    const sourceRoot = path.join(
+      process.cwd(),
+      "scripts/portable-runtime/renderers/framework-adapters/svelte",
+    );
+    const sources = await Promise.all(
+      ["adapter.ts", "notification-system.ts"].map((file) =>
+        readFile(path.join(sourceRoot, file), "utf8"),
+      ),
+    );
+    const implementation = sources.join("\n");
+
+    expect(implementation).toContain('kind === "notification-system"');
+    expect(implementation).not.toMatch(
+      /(?:component|componentName|componentId)\s*={2,3}\s*["']toast["']/i,
+    );
+    expect(implementation).not.toMatch(
+      /(?:queue|setTimeout|pointermove|cloneNode|ToastManagerController|toast\.promise)/,
     );
   });
 
@@ -244,6 +287,13 @@ describe("private Svelte proof target", () => {
       version: "0.0.0",
     });
     expect(packageManifest.exports).toEqual(sveltePackageExports);
+    const packageReadme = (
+      await readFile(path.join(process.cwd(), "packages/svelte/README.md"), "utf8")
+    ).replace(/\s+/g, " ");
+    expect(packageReadme).toContain(
+      "Its exact Primitive inventory is Button, Carousel, Checkbox, Select, Accordion, Dialog, Slider, and Toast.",
+    );
+    expect(packageReadme).toContain("This package is not public Svelte support.");
 
     for (const absentPath of [
       "apps/svelte-demo",

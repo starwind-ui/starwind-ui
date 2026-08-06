@@ -406,12 +406,14 @@ export const navigationMenuRuntimeAdapterContract = {
         "discovery attributes",
         "initial hidden state",
         "floating option attributes",
+        "Runtime refreshes owned items and lists after child-list mutations",
+        "Authored explicit floating targets must be compatible with the active reference's Dialog owner; outside-dialog targets fall back safely",
       ],
       demotionCriteria:
         "Move viewport measurement details into the contract only when multiple adapters need to generate the same sizing logic.",
       reason:
         "The runtime owns active content movement and shared viewport sizing; adapters only render the anatomy.",
-      tests: ["packages/runtime/src/components/navigation-menu/navigation-menu.browser.test.ts"],
+      tests: ["packages/runtime/tests/components/navigation-menu/navigation-menu.browser.test.ts"],
     },
     {
       affectedFrameworks: ["astro", "react", "solid", "svelte", "vue"],
@@ -424,7 +426,7 @@ export const navigationMenuRuntimeAdapterContract = {
         "Promote nested behavior only when Starwind has an important use case that justifies the additional runtime behavior.",
       reason:
         "Navigation Menu v1 stays focused on top-level shared viewport panels to limit JavaScript complexity.",
-      tests: ["packages/runtime/src/components/navigation-menu/navigation-menu.browser.test.ts"],
+      tests: ["packages/runtime/tests/components/navigation-menu/navigation-menu.browser.test.ts"],
     },
   ],
 } as const satisfies RuntimeAdapterContract;

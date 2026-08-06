@@ -8,7 +8,7 @@ import {
 } from "../../../styled-output-model/index.js";
 import { renderIndex } from "./index-output.js";
 import { renderVueComponent } from "./render.js";
-import { isVueStyledCheckpointContract } from "./scope.js";
+import { selectVueStyledContracts } from "./scope.js";
 import { renderVariants } from "./variants.js";
 
 export type GenerateStarwindVueWrappersOptions = {
@@ -17,6 +17,7 @@ export type GenerateStarwindVueWrappersOptions = {
   outputRoot: string;
   primitiveImportBase?: string;
   primitiveOutputRoot: string;
+  roots?: readonly string[];
 };
 
 export async function generateStarwindVueWrappers({
@@ -24,8 +25,9 @@ export async function generateStarwindVueWrappers({
   outputRoot,
   primitiveImportBase,
   primitiveOutputRoot,
+  roots,
 }: GenerateStarwindVueWrappersOptions): Promise<void> {
-  const outputModel = projectStyledOutputModel(contracts.filter(isVueStyledCheckpointContract));
+  const outputModel = projectStyledOutputModel(selectVueStyledContracts(contracts, roots));
 
   await Promise.all(
     outputModel.componentGroups.map((group) =>

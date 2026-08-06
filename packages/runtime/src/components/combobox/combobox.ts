@@ -990,7 +990,10 @@ class ComboboxController implements ComboboxInstance {
         clearFloatingStyles: () => this.clearFloatingStyles(),
         containsTarget: (target) => this.containsTarget(target),
         getElement: () => this.getPortalElement(),
-        getTarget: () => resolveFloatingPortalTarget(this.portalReference ?? this.getReference()),
+        getTarget: () =>
+          resolveFloatingPortalTarget(this.getReference(), {
+            explicitReferences: [this.portalReference, this.getPortalElement()],
+          }),
         onOwnerCloseRequest: () => {
           this.requestOpen(false, { reason: "imperative-action" });
         },

@@ -14,12 +14,16 @@ const presenceTokens = new WeakMap<HTMLElement, object>();
 
 export function showElement(element: HTMLElement, options: ShowElementOptions = {}): void {
   const wasHidden = element.hidden;
-  const token = {};
+  const isStarting = element.hasAttribute(PRESENCE_STARTING_ATTRIBUTE);
 
-  presenceTokens.set(element, token);
   element.hidden = false;
   element.classList.remove("hidden");
   element.removeAttribute(PRESENCE_ENDING_ATTRIBUTE);
+
+  if (!wasHidden && isStarting) return;
+
+  const token = {};
+  presenceTokens.set(element, token);
 
   if (wasHidden) {
     element.setAttribute(PRESENCE_STARTING_ATTRIBUTE, "");

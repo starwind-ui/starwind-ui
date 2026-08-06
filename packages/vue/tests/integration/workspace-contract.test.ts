@@ -31,7 +31,7 @@ describe("private Vue vertical-slice workspace contract", () => {
   });
 
   it("keeps the package and review app private and out of Changesets", async () => {
-    const vuePackage = await readRepoJson<{ name: string; private: boolean }>(
+    const vuePackage = await readRepoJson<{ name: string; private: boolean; version: string }>(
       "packages/vue/package.json",
     );
     const demoPackage = await readRepoJson<{ name: string; private: boolean }>(
@@ -41,7 +41,11 @@ describe("private Vue vertical-slice workspace contract", () => {
       ".changeset/config.json",
     );
 
-    expect(vuePackage).toMatchObject({ name: "@starwind-ui/vue", private: true });
+    expect(vuePackage).toMatchObject({
+      name: "@starwind-ui/vue",
+      private: true,
+      version: "0.0.0",
+    });
     expect(demoPackage).toMatchObject({ name: "vue-demo", private: true });
     expect(changesets.fixed.flat()).not.toContain("@starwind-ui/vue");
     expect(changesets.ignore).toEqual(

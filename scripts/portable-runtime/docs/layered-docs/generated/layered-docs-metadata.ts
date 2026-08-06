@@ -30171,6 +30171,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   element: "svg",
                   omittedProps: [
                     "aria-label",
+                    "mode",
                     "role",
                   ],
                 },
@@ -30192,6 +30193,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   element: "svg",
                   omittedProps: [
                     "aria-label",
+                    "mode",
                     "role",
                   ],
                 },

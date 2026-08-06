@@ -126,9 +126,9 @@ const TOAST_POSITION_ATTRIBUTE = "data-position";
 const SWIPE_THRESHOLD = 40;
 const DAMPING_FACTOR = 0.1;
 const LONG_PRESS_DURATION = 300;
+const TOAST_MANAGER_REGISTRY = Symbol.for("@starwind-ui/runtime/toast-manager-registry");
 
 const instances = new WeakMap<HTMLElement, ToastManagerController>();
-let globalManager: ToastManagerController | null = null;
 
 declare global {
   interface Window {
@@ -155,7 +155,7 @@ export function createToastManager(
 }
 
 export function getToastManager(): ToastManager | null {
-  return getRegisteredToastManager() ?? globalManager ?? null;
+  return getRegisteredToastManager() ?? getNewestActiveToastManager();
 }
 
 const createToast = ((
@@ -393,12 +393,7 @@ class ToastManagerController implements ToastManager {
     this.viewport.removeAttribute("data-expanded");
     this.viewport.style.removeProperty("height");
     instances.delete(this.viewport);
-    if (globalManager === this) {
-      globalManager = null;
-    }
-    if (window.__starwindRuntime__?.toast === this) {
-      window.__starwindRuntime__.toast = null;
-    }
+    unregisterGlobalManager(this);
   }
 
   private setupViewport(): void {
@@ -989,9 +984,41 @@ function queryToastPart(root: HTMLElement, attribute: string, slot: string): HTM
 }
 
 function installGlobalManager(manager: ToastManagerController): void {
-  globalManager = manager;
+  const managers = getActiveToastManagers(true);
+  if (!managers.includes(manager)) managers.push(manager);
   window.__starwindRuntime__ = window.__starwindRuntime__ || {};
   window.__starwindRuntime__.toast = manager;
+}
+
+function unregisterGlobalManager(manager: ToastManager): void {
+  const managers = getActiveToastManagers();
+  const index = managers.indexOf(manager);
+  if (index >= 0) managers.splice(index, 1);
+
+  if (managers.length === 0) {
+    delete (window as unknown as Record<PropertyKey, unknown>)[TOAST_MANAGER_REGISTRY];
+  }
+
+  if (window.__starwindRuntime__?.toast === manager) {
+    window.__starwindRuntime__.toast = managers.at(-1) ?? null;
+  }
+}
+
+function getNewestActiveToastManager(): ToastManager | null {
+  return getActiveToastManagers().at(-1) ?? null;
+}
+
+function getActiveToastManagers(create = false): ToastManager[] {
+  if (typeof window === "undefined") return [];
+
+  const owner = window as unknown as Record<PropertyKey, unknown>;
+  const existing = owner[TOAST_MANAGER_REGISTRY];
+  if (Array.isArray(existing)) return existing as ToastManager[];
+  if (!create) return [];
+
+  const managers: ToastManager[] = [];
+  owner[TOAST_MANAGER_REGISTRY] = managers;
+  return managers;
 }
 
 function getRegisteredToastManager(): ToastManager | null {

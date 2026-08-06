@@ -4,10 +4,7 @@ import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import { formatGeneratedOutput } from "../../format-generated-output.js";
 import { generateStarwindVueWrappers } from "../../generate-vue-wrappers.js";
-import {
-  analyzeStyledOutputGroup,
-  projectStyledOutputComponentGroup,
-} from "../../renderers/styled-output-model/index.js";
+import { selectVueStyledContracts } from "../../renderers/framework-adapters/vue/styled.js";
 
 type GenerateSelectedVueStyledGroupsOptions = {
   format?: boolean;
@@ -26,7 +23,7 @@ export async function generateSelectedVueStyledGroups({
   const selectedGroups = contracts.map((contract) => contract.component);
   const outputRoot = path.join(repoRoot, outputDir);
 
-  await generateStarwindVueWrappers({ contracts, outputDir, repoRoot });
+  await generateStarwindVueWrappers({ contracts, outputDir, repoRoot, roots: groups });
   if (format) {
     await formatGeneratedOutput(
       selectedGroups.map((group) => path.join(outputRoot, group)),
@@ -38,48 +35,5 @@ export async function generateSelectedVueStyledGroups({
 }
 
 function resolveSelectedVueStyledContracts(groups: readonly string[]): StyledAdapterContract[] {
-  const contractsByComponent = new Map(
-    starwindStyledContracts.map((contract) => [contract.component, contract]),
-  );
-  const pending = [...new Set(groups)].sort();
-  const selected = new Set<string>();
-
-  for (const group of pending) {
-    if (!contractsByComponent.has(group)) {
-      throw new TypeError(`Unknown Vue Styled group "${group}".`);
-    }
-  }
-
-  while (pending.length > 0) {
-    const component = pending.shift();
-    if (!component || selected.has(component)) continue;
-    const contract = contractsByComponent.get(component);
-    if (!contract) {
-      throw new TypeError(`Missing Vue Styled dependency "${component}".`);
-    }
-    selected.add(component);
-
-    const dependencies = analyzeStyledOutputGroup(projectStyledOutputComponentGroup(contract), {
-      target: "vue",
-    }).dependencies.styledComponents;
-    for (const dependency of dependencies) {
-      if (!contractsByComponent.has(dependency)) {
-        throw new TypeError(
-          `Missing Vue Styled dependency "${dependency}" required by "${component}".`,
-        );
-      }
-      if (!selected.has(dependency) && !pending.includes(dependency)) {
-        pending.push(dependency);
-      }
-    }
-    pending.sort();
-  }
-
-  return [...selected].sort().map((component) => {
-    const contract = contractsByComponent.get(component);
-    if (!contract) {
-      throw new TypeError(`Missing Vue Styled dependency "${component}".`);
-    }
-    return contract;
-  });
+  return selectVueStyledContracts(starwindStyledContracts, groups);
 }

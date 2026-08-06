@@ -1,6 +1,25 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+
 import { expect, it, representativeRuntimeAdapterContracts } from "./shared.js";
 
 export function defineRuntimeOverlayFloatingTests(): void {
+  it("keeps Navigation Menu escape-hatch evidence pointed at its Runtime browser coverage", () => {
+    const navigationMenu = representativeRuntimeAdapterContracts.find(
+      (contract) => contract.component === "navigation-menu",
+    )!;
+    const testPaths = navigationMenu.escapeHatches?.flatMap((escapeHatch) => escapeHatch.tests);
+
+    expect(testPaths).toEqual([
+      "packages/runtime/tests/components/navigation-menu/navigation-menu.browser.test.ts",
+      "packages/runtime/tests/components/navigation-menu/navigation-menu.browser.test.ts",
+    ]);
+
+    for (const testPath of testPaths ?? []) {
+      expect(existsSync(join(process.cwd(), testPath))).toBe(true);
+    }
+  });
+
   it("describes Tooltip open state, floating anatomy, asChild trigger, and overlay escape hatch", () => {
     const tooltip = representativeRuntimeAdapterContracts.find(
       (contract) => contract.component === "tooltip",

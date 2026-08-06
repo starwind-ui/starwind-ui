@@ -21,6 +21,7 @@ export const kbdStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Kbd",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLElement" },
       props: {
         extends: [{ type: "htmlAttributes", element: "kbd" }],
         fields: [
@@ -59,6 +60,7 @@ export const kbdStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "KbdGroup",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLElement" },
       props: {
         extends: [{ type: "htmlAttributes", element: "kbd" }],
         fields: [

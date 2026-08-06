@@ -53,6 +53,10 @@ export const videoStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Video",
+      forwardRef: {
+        frameworks: ["vue"],
+        targetType: "HTMLVideoElement | HTMLIFrameElement",
+      },
       props: {
         declaration: "type",
         extends: [
@@ -62,12 +66,23 @@ export const videoStyledContract: StyledAdapterContract = {
         fields: [
           { name: "src", type: "string" },
           { name: "title", optional: true, type: "string" },
-          { name: "autoplay", optional: true, type: "boolean", frameworks: ["astro"] },
+          {
+            name: "autoplay",
+            optional: true,
+            type: "boolean",
+            frameworks: ["astro", "vue"],
+          },
           { name: "autoPlay", optional: true, type: "boolean", frameworks: ["react"] },
           { name: "muted", optional: true, type: "boolean" },
           { name: "loop", optional: true, type: "boolean" },
           { name: "controls", optional: true, type: "boolean" },
           { name: "poster", optional: true, type: "string" },
+          {
+            name: "srcdoc",
+            optional: true,
+            type: "string",
+            frameworks: ["vue"],
+          },
           {
             name: "ref",
             optional: true,
@@ -83,7 +98,7 @@ export const videoStyledContract: StyledAdapterContract = {
           {
             name: "autoplay",
             defaultValue: "false",
-            frameworks: ["astro"],
+            frameworks: ["astro", "vue"],
           },
           {
             name: "autoPlay",
@@ -95,7 +110,7 @@ export const videoStyledContract: StyledAdapterContract = {
           { name: "loop", defaultValue: "false" },
           { name: "controls", defaultValue: "true" },
           { name: "poster" },
-          { name: "srcdoc", frameworks: ["astro"] },
+          { name: "srcdoc", frameworks: ["astro", "vue"] },
           { name: "srcDoc", alias: "srcdoc", frameworks: ["react"] },
           { name: "ref", frameworks: ["react"] },
           { name: "class", alias: "className" },
@@ -146,7 +161,7 @@ export const videoStyledContract: StyledAdapterContract = {
                 {
                   name: "autoplay",
                   value: { type: "variable", name: "autoplay" },
-                  frameworks: ["astro"],
+                  frameworks: ["astro", "vue"],
                 },
                 {
                   name: "autoPlay",
@@ -194,7 +209,7 @@ export const videoStyledContract: StyledAdapterContract = {
                 {
                   name: "srcdoc",
                   value: { type: "variable", name: "srcdoc" },
-                  frameworks: ["astro"],
+                  frameworks: ["astro", "vue"],
                 },
                 {
                   name: "srcDoc",
@@ -213,14 +228,14 @@ export const videoStyledContract: StyledAdapterContract = {
                 {
                   name: "referrerpolicy",
                   value: { type: "literal", value: "strict-origin-when-cross-origin" },
-                  frameworks: ["astro"],
+                  frameworks: ["astro", "vue"],
                 },
                 {
                   name: "referrerPolicy",
                   value: { type: "literal", value: "strict-origin-when-cross-origin" },
                   frameworks: ["react"],
                 },
-                { name: "allowfullscreen", frameworks: ["astro"] },
+                { name: "allowfullscreen", frameworks: ["astro", "vue"] },
                 { name: "allowFullScreen", frameworks: ["react"] },
                 {
                   name: "data-video-type",

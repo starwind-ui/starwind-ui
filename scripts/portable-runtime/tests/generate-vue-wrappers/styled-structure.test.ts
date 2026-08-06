@@ -110,5 +110,11 @@ describe("Vue Styled renderer structure", () => {
       code: "progressValue === null",
     });
     expect(renderVueComputedExpression(projected)).toBe("progressValue.value === null");
+    expect(
+      renderVueExpression({
+        entries: { "aria-label": { type: "literal", value: "Clear selection" } },
+        type: "object",
+      }),
+    ).toBe('{ "aria-label": "Clear selection" }');
   });
 });

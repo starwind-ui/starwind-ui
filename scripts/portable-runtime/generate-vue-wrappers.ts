@@ -39,6 +39,7 @@ export type GenerateStarwindVueWrappersOptions = {
   primitiveImportBase?: string;
   primitiveOutputDir?: string;
   repoRoot?: string;
+  roots?: readonly string[];
 };
 
 export async function generateVuePrimitiveWrappers(
@@ -81,6 +82,7 @@ export async function generateStarwindVueWrappers(
     outputRoot: path.join(repoRoot, outputDir),
     primitiveImportBase: options.primitiveImportBase ?? VUE_PRIMITIVE_IMPORT_BASE,
     primitiveOutputRoot: path.join(repoRoot, primitiveOutputDir),
+    roots: options.roots,
   });
 }
 

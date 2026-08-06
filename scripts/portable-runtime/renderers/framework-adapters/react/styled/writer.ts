@@ -105,11 +105,21 @@ function renderComponent(
   primitiveImportBase: string | undefined,
   tsHeader: string,
 ): string {
-  const renderedComponent = component.forwardRef ? projectForwardedRef(component) : component;
+  const forwardRef =
+    component.forwardRef && isForFramework(component.forwardRef, REACT_FRAMEWORK)
+      ? component.forwardRef
+      : undefined;
+  const renderedComponent = forwardRef ? projectForwardedRef(component) : component;
   const primitiveAliases = getReactPrimitiveAliases(renderedComponent);
   const runtimeImportContext = getRuntimeImportRewriteContext(
     renderedComponent,
     primitiveImportBase,
+  );
+  const props = renderProps(renderedComponent, runtimeImportContext);
+  const componentBody = renderComponentBody(
+    renderedComponent,
+    primitiveAliases,
+    runtimeImportContext,
   );
   const imports = renderComponentImports(
     group,
@@ -119,20 +129,15 @@ function renderComponent(
     primitiveOutputRoot,
     primitiveImportBase,
     runtimeImportContext,
-  );
-  const props = renderProps(renderedComponent, runtimeImportContext);
-  const componentBody = renderComponentBody(
-    renderedComponent,
-    primitiveAliases,
-    runtimeImportContext,
+    Boolean(component.forwardRef) || /\bReact\./.test(`${props}\n${componentBody}`),
   );
 
-  if (component.forwardRef) {
+  if (forwardRef) {
     return `${tsHeader}${imports}
 
 ${props}
 
-const ${component.exportName} = React.forwardRef<${component.forwardRef.targetType}, ${component.exportName}Props>(
+const ${component.exportName} = React.forwardRef<${forwardRef.targetType}, ${component.exportName}Props>(
   function ${component.exportName}(props, forwardedRef) {
 ${componentBody
   .split("\n")

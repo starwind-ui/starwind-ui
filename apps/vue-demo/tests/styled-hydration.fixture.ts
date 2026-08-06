@@ -2,6 +2,84 @@ import { createSSRApp, defineComponent, h, nextTick, ref } from "vue";
 import { initThemeController } from "@starwind-ui/vue/theme";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../src/components/starwind-runtime/avatar";
+import { Alert, AlertDescription, AlertTitle } from "../src/components/starwind-runtime/alert";
+import { AspectRatio } from "../src/components/starwind-runtime/aspect-ratio";
+import { Badge } from "../src/components/starwind-runtime/badge";
+import {
+  Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "../src/components/starwind-runtime/breadcrumb";
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+  ButtonGroupText,
+} from "../src/components/starwind-runtime/button-group";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../src/components/starwind-runtime/card";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+  InputGroupTextarea,
+} from "../src/components/starwind-runtime/input-group";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemFooter,
+  ItemGroup,
+  ItemHeader,
+  ItemMedia,
+  ItemSeparator,
+  ItemTitle,
+} from "../src/components/starwind-runtime/item";
+import { Kbd, KbdGroup } from "../src/components/starwind-runtime/kbd";
+import { Label } from "../src/components/starwind-runtime/label";
+import {
+  NativeSelect,
+  NativeSelectOptGroup,
+  NativeSelectOption,
+} from "../src/components/starwind-runtime/native-select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../src/components/starwind-runtime/pagination";
+import { Prose } from "../src/components/starwind-runtime/prose";
+import { Separator } from "../src/components/starwind-runtime/separator";
+import { Skeleton } from "../src/components/starwind-runtime/skeleton";
+import { Spinner } from "../src/components/starwind-runtime/spinner";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFoot,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../src/components/starwind-runtime/table";
+import { Textarea } from "../src/components/starwind-runtime/textarea";
+import { Video } from "../src/components/starwind-runtime/video";
 import {
   Accordion,
   AccordionContent,
@@ -11,6 +89,30 @@ import {
 import { Button } from "../src/components/starwind-runtime/button";
 import { Checkbox } from "../src/components/starwind-runtime/checkbox";
 import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "../src/components/starwind-runtime/carousel";
+import { ColorPicker } from "../src/components/starwind-runtime/color-picker";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxItemText,
+} from "../src/components/starwind-runtime/combobox";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "../src/components/starwind-runtime/context-menu";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -19,6 +121,15 @@ import {
 } from "../src/components/starwind-runtime/dialog";
 import { Input } from "../src/components/starwind-runtime/input";
 import { Dropzone } from "../src/components/starwind-runtime/dropzone";
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownSub,
+  DropdownSubContent,
+  DropdownSubTrigger,
+  DropdownTrigger,
+} from "../src/components/starwind-runtime/dropdown";
 import {
   Field,
   FieldControl,
@@ -34,6 +145,19 @@ import {
   InputOtpSlot,
 } from "../src/components/starwind-runtime/input-otp";
 import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../src/components/starwind-runtime/hover-card";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "../src/components/starwind-runtime/navigation-menu";
+import {
   Popover,
   PopoverContent,
   PopoverDescription,
@@ -44,6 +168,11 @@ import { Progress } from "../src/components/starwind-runtime/progress";
 import { RadioGroup, RadioGroupItem } from "../src/components/starwind-runtime/radio-group";
 import { ScrollArea } from "../src/components/starwind-runtime/scroll-area";
 import { Slider } from "../src/components/starwind-runtime/slider";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarProvider,
+} from "../src/components/starwind-runtime/sidebar";
 import {
   Sheet,
   SheetContent,
@@ -61,6 +190,80 @@ import { ThemeToggle } from "../src/components/starwind-runtime/theme-toggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../src/components/starwind-runtime/tabs";
 import { Toggle } from "../src/components/starwind-runtime/toggle";
 import { ToggleGroup, ToggleGroupItem } from "../src/components/starwind-runtime/toggle-group";
+import { Toaster } from "../src/components/starwind-runtime/toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "../src/components/starwind-runtime/tooltip";
+
+const PORTABLE_CLOSURE_EXPORTS = [
+  "Alert",
+  "AlertDescription",
+  "AlertTitle",
+  "AspectRatio",
+  "Badge",
+  "Breadcrumb",
+  "BreadcrumbEllipsis",
+  "BreadcrumbItem",
+  "BreadcrumbLink",
+  "BreadcrumbList",
+  "BreadcrumbPage",
+  "BreadcrumbSeparator",
+  "ButtonGroup",
+  "ButtonGroupSeparator",
+  "ButtonGroupText",
+  "Card",
+  "CardAction",
+  "CardContent",
+  "CardDescription",
+  "CardFooter",
+  "CardHeader",
+  "CardTitle",
+  "InputGroup",
+  "InputGroupAddon",
+  "InputGroupButton",
+  "InputGroupInput",
+  "InputGroupText",
+  "InputGroupTextarea",
+  "Item",
+  "ItemActions",
+  "ItemContent",
+  "ItemDescription",
+  "ItemFooter",
+  "ItemGroup",
+  "ItemHeader",
+  "ItemMedia",
+  "ItemSeparator",
+  "ItemTitle",
+  "Kbd",
+  "KbdGroup",
+  "Label",
+  "NativeSelect",
+  "NativeSelectOptGroup",
+  "NativeSelectOption",
+  "Pagination",
+  "PaginationContent",
+  "PaginationEllipsis",
+  "PaginationItem",
+  "PaginationLink",
+  "PaginationNext",
+  "PaginationPrevious",
+  "Prose",
+  "Separator",
+  "Skeleton",
+  "Spinner",
+  "Table",
+  "TableBody",
+  "TableCaption",
+  "TableCell",
+  "TableFoot",
+  "TableHead",
+  "TableHeader",
+  "TableRow",
+  "Textarea",
+  "Video",
+] as const;
 
 export function renderStyledFixture(onButtonClick = () => undefined) {
   return h("main", null, [
@@ -163,6 +366,9 @@ export function renderStyledFixture(onButtonClick = () => undefined) {
       },
     ),
     h(StyledCohortFixture),
+    h(StyledMenusFloatingFixture),
+    h(StyledComplexServicesFixture),
+    h(PortableStyledClosureFixture),
     h(
       Toggle,
       { defaultPressed: true, id: "hydrated-styled-toggle", variant: "outline" },
@@ -217,7 +423,24 @@ export function renderStyledFixture(onButtonClick = () => undefined) {
 export async function runStyledHydrationChecks() {
   const host = document.querySelector<HTMLElement>("#styled-hydration-host");
   assert(host, "Styled hydration host is missing");
-  assert(host.querySelectorAll("[data-sw-button]").length === 3, "Styled SSR duplicated Button");
+  assertPortableClosureExports(host, "SSR");
+  assert(
+    Array.from(host.querySelectorAll("[data-sw-button]")).filter(
+      (element) => !element.closest("#hydrated-portable-styled-closure"),
+    ).length === 5,
+    "Styled SSR Button inventory drifted",
+  );
+  assert(
+    host.querySelectorAll(
+      '#hydrated-styled-combobox [data-sw-button][data-slot="combobox-trigger"]',
+    ).length === 1,
+    "Styled SSR Combobox duplicated its InputGroupButton Trigger",
+  );
+  assert(
+    host.querySelectorAll('#hydrated-styled-combobox [data-sw-button][data-slot="combobox-clear"]')
+      .length === 1,
+    "Styled SSR Combobox duplicated its InputGroupButton Clear",
+  );
   assert(
     host.querySelectorAll("[data-sw-checkbox]").length === 1,
     "Styled SSR duplicated Checkbox",
@@ -226,8 +449,47 @@ export async function runStyledHydrationChecks() {
   assert(host.querySelectorAll("[data-sw-dialog]").length === 1, "Styled SSR duplicated Dialog");
   assert(host.querySelectorAll("[data-sw-drawer]").length === 1, "Styled SSR duplicated Sheet");
   assert(host.querySelectorAll("[data-sw-popover]").length === 1, "Styled SSR duplicated Popover");
+  assert(host.querySelectorAll("[data-sw-tooltip]").length === 1, "Styled SSR duplicated Tooltip");
   assert(
-    host.querySelectorAll("[data-sw-input]").length === 2,
+    host.querySelectorAll("[data-sw-preview-card]").length === 1,
+    "Styled SSR duplicated Hover Card",
+  );
+  assert(
+    host.querySelectorAll("[data-sw-menu]:not([data-sw-context-menu])").length === 1,
+    "Styled SSR duplicated Dropdown",
+  );
+  assert(
+    host.querySelectorAll("[data-sw-context-menu]").length === 1,
+    "Styled SSR duplicated Context Menu",
+  );
+  assert(
+    host.querySelectorAll("[data-sw-nav-menu]").length === 1,
+    "Styled SSR duplicated Navigation Menu",
+  );
+  assert(
+    host.querySelectorAll("[data-sw-combobox]").length === 1,
+    "Styled SSR duplicated Combobox",
+  );
+  assert(
+    host.querySelectorAll("[data-sw-carousel]").length === 1,
+    "Styled SSR duplicated Carousel",
+  );
+  assert(
+    host.querySelectorAll("[data-sw-sidebar-provider]").length === 1,
+    "Styled SSR duplicated Sidebar",
+  );
+  assert(
+    host.querySelectorAll("[data-sw-color-picker]").length === 1,
+    "Styled SSR duplicated Color Picker",
+  );
+  assert(
+    host.querySelectorAll("[data-sw-toast-viewport]").length === 1,
+    "Styled SSR duplicated Toast viewport",
+  );
+  assert(
+    Array.from(host.querySelectorAll("[data-sw-input]")).filter(
+      (element) => !element.closest("#hydrated-portable-styled-closure"),
+    ).length === 2,
     "Styled SSR Input and FieldControl inventory drifted",
   );
   assert(host.querySelectorAll("[data-sw-avatar]").length === 1, "Styled SSR duplicated Avatar");
@@ -294,7 +556,9 @@ export async function runStyledHydrationChecks() {
       target === host ||
       host.contains(target) ||
       (target instanceof Element &&
-        target.closest("[data-sw-select-portal], [data-sw-popover-portal]") !== null),
+        target.closest(
+          "[data-sw-select-portal], [data-sw-popover-portal], [data-sw-tooltip-portal], [data-sw-preview-card-portal], [data-sw-menu-portal], [data-sw-nav-menu-portal], [data-sw-combobox-portal]",
+        ) !== null),
   );
   let buttonClicks = 0;
   const warnings: string[] = [];
@@ -314,6 +578,7 @@ export async function runStyledHydrationChecks() {
 
   try {
     app.mount(host);
+    assertPortableClosureExports(host, "hydration");
     const hydratedToggle = host.querySelector<HTMLButtonElement>("#hydrated-styled-toggle");
     assert(hydratedToggle, "Styled Toggle root is missing after hydration mount");
     assert(
@@ -325,6 +590,18 @@ export async function runStyledHydrationChecks() {
     assert(
       host.querySelectorAll("#hydrated-styled-button").length === 1,
       "Styled hydration duplicated Button",
+    );
+    assert(
+      host.querySelectorAll(
+        '#hydrated-styled-combobox [data-sw-button][data-slot="combobox-trigger"]',
+      ).length === 1,
+      "Styled hydration duplicated the Combobox InputGroupButton Trigger",
+    );
+    assert(
+      host.querySelectorAll(
+        '#hydrated-styled-combobox [data-sw-button][data-slot="combobox-clear"]',
+      ).length === 1,
+      "Styled hydration duplicated the Combobox InputGroupButton Clear",
     );
     assert(
       host.querySelectorAll("#hydrated-styled-checkbox").length === 1,
@@ -360,12 +637,39 @@ export async function runStyledHydrationChecks() {
       "#hydrated-styled-slider",
       "#hydrated-styled-input-otp",
       "#hydrated-styled-dropzone",
+      "#hydrated-styled-tooltip",
+      "#hydrated-styled-hover-card",
+      "#hydrated-styled-dropdown",
+      "#hydrated-styled-context-menu",
+      "#hydrated-styled-navigation-menu",
+      "#hydrated-styled-combobox",
+      "#hydrated-styled-carousel",
+      "#hydrated-styled-sidebar",
+      "#hydrated-styled-color-picker",
+      "#hydrated-styled-toaster",
     ]) {
       assert(
         host.querySelectorAll(selector).length === 1,
         `Styled hydration duplicated ${selector}`,
       );
     }
+    const uncontrolledFormat = host.querySelector<HTMLSelectElement>(
+      '#hydrated-styled-color-picker [data-slot="color-picker-native-format-select"]',
+    );
+    const unrelatedColorUpdate = host.querySelector<HTMLButtonElement>(
+      "#hydrated-styled-color-picker-unrelated-update",
+    );
+    assert(uncontrolledFormat, "Styled Color Picker native format control is missing");
+    assert(unrelatedColorUpdate, "Styled Color Picker unrelated update control is missing");
+    uncontrolledFormat.value = "hsl";
+    uncontrolledFormat.dispatchEvent(new Event("change", { bubbles: true }));
+    await frame();
+    unrelatedColorUpdate.click();
+    await frame();
+    assert(
+      uncontrolledFormat.value === "hsl",
+      "Styled Color Picker reset its uncontrolled format after an unrelated render",
+    );
     assert(
       host.querySelectorAll("[data-sw-select-portal]").length === 0,
       "Styled hydration left Select portal content under its source owner",
@@ -381,6 +685,72 @@ export async function runStyledHydrationChecks() {
     assert(
       document.body.querySelectorAll(":scope > [data-sw-popover-portal]").length === 1,
       "Styled hydration did not move Popover portal content to body",
+    );
+
+    const tooltipTrigger = host.querySelector<HTMLElement>("#hydrated-styled-tooltip-trigger");
+    const tooltipPopup = document.body.querySelector<HTMLElement>(
+      "#hydrated-styled-tooltip-content",
+    );
+    assert(tooltipTrigger, "Styled Tooltip trigger is missing");
+    assert(tooltipPopup, "Styled Tooltip content did not Teleport to body");
+    tooltipTrigger.focus();
+    await runtimeMutationTurn();
+    assert(!tooltipPopup.hidden, "Styled Tooltip did not open after hydration");
+    tooltipTrigger.blur();
+    await runtimeMutationTurn();
+
+    const dropdownTrigger = host.querySelector<HTMLButtonElement>(
+      "#hydrated-styled-dropdown-trigger",
+    );
+    assert(dropdownTrigger, "Styled Dropdown trigger is missing");
+    dropdownTrigger.click();
+    await frame();
+    assert(
+      dropdownTrigger.getAttribute("aria-expanded") === "true",
+      "Styled Dropdown did not open",
+    );
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+    await frame();
+
+    const navigationTrigger = host.querySelector<HTMLButtonElement>(
+      "#hydrated-styled-navigation-trigger-guides",
+    );
+    assert(navigationTrigger, "Styled Navigation Menu trigger is missing");
+    navigationTrigger.click();
+    await frame();
+    assert(
+      navigationTrigger.getAttribute("aria-expanded") === "true",
+      "Styled Navigation Menu did not open",
+    );
+    host.querySelector<HTMLButtonElement>("#hydrated-styled-navigation-add")?.click();
+    await frame();
+    assert(
+      host.querySelectorAll("[data-sw-nav-menu-item]").length === 3,
+      "Styled Navigation Menu did not refresh dynamic items",
+    );
+
+    const comboboxInput = host.querySelector<HTMLInputElement>("#hydrated-styled-combobox-input");
+    assert(comboboxInput, "Styled Combobox input is missing");
+    comboboxInput.click();
+    await frame();
+    host.querySelector<HTMLButtonElement>("#hydrated-styled-combobox-add")?.click();
+    await frame();
+    assert(
+      document.body.querySelectorAll("[data-sw-combobox-item]").length === 3,
+      "Styled Combobox did not refresh dynamic items",
+    );
+    comboboxInput.value = "cher";
+    comboboxInput.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await frame();
+    document.body
+      .querySelector<HTMLElement>('[data-sw-combobox-item][data-value="cherry"]')
+      ?.click();
+    await frame();
+    assert(
+      host.querySelector("#hydrated-styled-combobox")?.getAttribute("data-value") === "cherry",
+      "Styled Combobox did not select a hydrated dynamic item",
     );
 
     host.querySelector<HTMLButtonElement>("#hydrated-styled-button")?.click();
@@ -636,8 +1006,241 @@ export async function runStyledHydrationChecks() {
     document.body.querySelectorAll(":scope > [data-sw-popover-portal]").length === 0,
     "Styled Popover portal leaked after unmount",
   );
+  for (const selector of [
+    ":scope > [data-sw-tooltip-portal]",
+    ":scope > [data-sw-preview-card-portal]",
+    ":scope > [data-sw-menu-portal]",
+    ":scope > [data-sw-nav-menu-portal]",
+    ":scope > [data-sw-combobox-portal]",
+  ]) {
+    assert(
+      document.body.querySelectorAll(selector).length === 0,
+      `Styled floating portal leaked after unmount: ${selector}`,
+    );
+  }
   assert(!document.body.hasAttribute("data-sw-scroll-locked"), "Styled Dialog leaked scroll lock");
 }
+
+function closureProps(exportName: string, props: Record<string, unknown> = {}) {
+  return { ...props, "data-closure-export": exportName };
+}
+
+const PortableStyledClosureFixture = defineComponent({
+  name: "PortableStyledClosureFixture",
+  setup: () => () =>
+    h("section", { id: "hydrated-portable-styled-closure" }, [
+      h(Alert, closureProps("Alert", { variant: "warning" }), {
+        default: () => [
+          h(AlertTitle, closureProps("AlertTitle"), () => "Hydrated alert"),
+          h(AlertDescription, closureProps("AlertDescription"), () => "Portable status"),
+        ],
+      }),
+      h(
+        AspectRatio,
+        closureProps("AspectRatio", { as: "figure", ratio: 16 / 9 }),
+        () => "Hydrated aspect ratio",
+      ),
+      h(Badge, closureProps("Badge", { variant: "success" }), () => "Ready"),
+      h(Breadcrumb, closureProps("Breadcrumb", { "aria-label": "Hydrated path" }), () =>
+        h(BreadcrumbList, closureProps("BreadcrumbList"), () => [
+          h(BreadcrumbItem, closureProps("BreadcrumbItem"), () =>
+            h(BreadcrumbLink, closureProps("BreadcrumbLink", { href: "/" }), () => "Home"),
+          ),
+          h(BreadcrumbSeparator, closureProps("BreadcrumbSeparator")),
+          h(BreadcrumbItem, { id: "hydrated-breadcrumb-more" }, () =>
+            h(BreadcrumbEllipsis, closureProps("BreadcrumbEllipsis")),
+          ),
+          h(BreadcrumbSeparator, { id: "hydrated-breadcrumb-current-separator" }),
+          h(BreadcrumbItem, { id: "hydrated-breadcrumb-current" }, () =>
+            h(BreadcrumbPage, closureProps("BreadcrumbPage"), () => "Closure"),
+          ),
+        ]),
+      ),
+      h(ButtonGroup, closureProps("ButtonGroup"), () => [
+        h("button", { type: "button" }, "Previous"),
+        h(ButtonGroupSeparator, closureProps("ButtonGroupSeparator")),
+        h(ButtonGroupText, closureProps("ButtonGroupText"), () => "2 of 5"),
+      ]),
+      h(Card, closureProps("Card", { size: "sm" }), () => [
+        h(CardHeader, closureProps("CardHeader"), () => [
+          h(CardTitle, closureProps("CardTitle"), () => "Hydrated card"),
+          h(CardDescription, closureProps("CardDescription"), () => "Portable anatomy"),
+          h(CardAction, closureProps("CardAction"), () => "Vue"),
+        ]),
+        h(CardContent, closureProps("CardContent"), () => "SSR content"),
+        h(CardFooter, closureProps("CardFooter"), () => "Order 11"),
+      ]),
+      h(InputGroup, closureProps("InputGroup"), () => [
+        h(InputGroupAddon, closureProps("InputGroupAddon", { align: "inline-start" }), () =>
+          h(InputGroupText, closureProps("InputGroupText"), () => "@"),
+        ),
+        h(
+          InputGroupInput,
+          closureProps("InputGroupInput", { "aria-label": "Hydrated handle", value: "starwind" }),
+        ),
+        h(InputGroupButton, closureProps("InputGroupButton", { type: "button" }), () => "Copy"),
+      ]),
+      h(InputGroup, { id: "hydrated-input-group-textarea" }, () =>
+        h(
+          InputGroupTextarea,
+          closureProps("InputGroupTextarea", { "aria-label": "Hydrated release notes" }),
+        ),
+      ),
+      h(ItemGroup, closureProps("ItemGroup"), () =>
+        h(Item, closureProps("Item", { as: "article", variant: "outline" }), () => [
+          h(ItemHeader, closureProps("ItemHeader"), () => "Catalog record"),
+          h(ItemMedia, closureProps("ItemMedia", { variant: "icon" }), () => "SW"),
+          h(ItemContent, closureProps("ItemContent"), () => [
+            h(ItemTitle, closureProps("ItemTitle"), () => "Hydrated item"),
+            h(ItemDescription, closureProps("ItemDescription"), () => "Portable content"),
+          ]),
+          h(ItemActions, closureProps("ItemActions"), () => "Verified"),
+          h(ItemSeparator, closureProps("ItemSeparator")),
+          h(ItemFooter, closureProps("ItemFooter"), () => "Order 11"),
+        ]),
+      ),
+      h(KbdGroup, closureProps("KbdGroup"), () => [
+        h(Kbd, closureProps("Kbd"), () => "Ctrl"),
+        h("span", "+"),
+        h(Kbd, { id: "hydrated-kbd-secondary" }, () => "K"),
+      ]),
+      h(Label, closureProps("Label", { for: "hydrated-labelled-input" }), () => "Project"),
+      h("input", { id: "hydrated-labelled-input", value: "Starwind" }),
+      h(
+        NativeSelect,
+        closureProps("NativeSelect", {
+          "aria-label": "Hydrated deployment region",
+          value: "eu",
+        }),
+        {
+          default: () => [
+            h(NativeSelectOptGroup, closureProps("NativeSelectOptGroup", { label: "Europe" }), () =>
+              h(
+                NativeSelectOption,
+                closureProps("NativeSelectOption", { value: "eu" }),
+                () => "Europe",
+              ),
+            ),
+          ],
+          icon: () => h("span", { "data-hydrated-select-icon": "" }, "⌄"),
+        },
+      ),
+      h(Pagination, closureProps("Pagination", { "aria-label": "Hydrated pages" }), () =>
+        h(PaginationContent, closureProps("PaginationContent"), () => [
+          h(PaginationItem, closureProps("PaginationItem"), () =>
+            h(PaginationPrevious, closureProps("PaginationPrevious", { href: "#" })),
+          ),
+          h(PaginationItem, { id: "hydrated-page-one" }, () =>
+            h(
+              PaginationLink,
+              closureProps("PaginationLink", { href: "#", isActive: true }),
+              () => "1",
+            ),
+          ),
+          h(PaginationItem, { id: "hydrated-page-more" }, () =>
+            h(PaginationEllipsis, closureProps("PaginationEllipsis")),
+          ),
+          h(PaginationItem, { id: "hydrated-page-next" }, () =>
+            h(PaginationNext, closureProps("PaginationNext", { href: "#" })),
+          ),
+        ]),
+      ),
+      h(Prose, closureProps("Prose"), () => [
+        h("h2", "Hydrated prose"),
+        h("p", "Semantic server-rendered content."),
+      ]),
+      h(Separator, closureProps("Separator")),
+      h(Skeleton, closureProps("Skeleton", { class: "h-4 w-24" })),
+      h(Spinner, closureProps("Spinner")),
+      h(Table, closureProps("Table"), () => [
+        h(TableCaption, closureProps("TableCaption"), () => "Hydrated inventory"),
+        h(TableHeader, closureProps("TableHeader"), () =>
+          h(TableRow, closureProps("TableRow"), () => [
+            h(TableHead, closureProps("TableHead"), () => "Group"),
+            h(TableHead, { id: "hydrated-table-status-head" }, () => "Status"),
+          ]),
+        ),
+        h(TableBody, closureProps("TableBody"), () =>
+          h(TableRow, { id: "hydrated-table-body-row" }, () => [
+            h(TableCell, closureProps("TableCell"), () => "Closure"),
+            h(TableCell, { id: "hydrated-table-ready-cell" }, () => "Ready"),
+          ]),
+        ),
+        h(TableFoot, closureProps("TableFoot"), () =>
+          h(TableRow, { id: "hydrated-table-foot-row" }, () =>
+            h(TableCell, { colspan: 2 }, () => "65 exports"),
+          ),
+        ),
+      ]),
+      h(
+        Textarea,
+        closureProps("Textarea", {
+          "aria-label": "Hydrated review notes",
+          name: "notes",
+          rows: 3,
+        }),
+      ),
+      h(
+        Video,
+        closureProps("Video", {
+          "aria-label": "Hydrated video preview",
+          preload: "none",
+          src: "data:video/mp4;base64,AAAA",
+        }),
+      ),
+    ]),
+});
+
+const StyledComplexServicesFixture = defineComponent({
+  name: "StyledComplexServicesFixture",
+  setup() {
+    const sidebarOpen = ref(true);
+    const colorValue = ref("#2563eb");
+    const colorLabel = ref("Hydrated color");
+    return () =>
+      h("section", { id: "hydrated-styled-complex-services" }, [
+        h(Carousel, { id: "hydrated-styled-carousel" }, () => [
+          h(CarouselContent, null, () => [
+            h(CarouselItem, null, () => "Hydrated slide one"),
+            h(CarouselItem, null, () => "Hydrated slide two"),
+          ]),
+          h(CarouselPrevious, { id: "hydrated-styled-carousel-previous" }),
+          h(CarouselNext, { id: "hydrated-styled-carousel-next" }),
+        ]),
+        h(
+          SidebarProvider,
+          {
+            id: "hydrated-styled-sidebar",
+            open: sidebarOpen.value,
+            "onUpdate:open": (value: boolean) => (sidebarOpen.value = value),
+          },
+          () => [
+            h(Sidebar, { collapsible: "none" }, () => [
+              h(SidebarContent, null, () => "Hydrated sidebar content"),
+            ]),
+          ],
+        ),
+        h(ColorPicker, {
+          defaultValue: colorValue.value,
+          formatControl: "native",
+          id: "hydrated-styled-color-picker",
+          inline: true,
+          label: colorLabel.value,
+          showEyeDropper: false,
+        }),
+        h(
+          "button",
+          {
+            id: "hydrated-styled-color-picker-unrelated-update",
+            onClick: () => (colorLabel.value = `${colorLabel.value} updated`),
+            type: "button",
+          },
+          "Update hydrated color label",
+        ),
+        h(Toaster, { id: "hydrated-styled-toaster", limit: 2 }),
+      ]);
+  },
+});
 
 const StyledCohortFixture = defineComponent({
   setup() {
@@ -763,6 +1366,120 @@ const StyledCohortFixture = defineComponent({
         "aria-label": "Toggle hydrated theme",
         id: "hydrated-styled-theme-toggle",
       }),
+    ];
+  },
+});
+
+const StyledMenusFloatingFixture = defineComponent({
+  setup() {
+    const navigationItems = ref([
+      { label: "Guides", value: "guides" },
+      { label: "Examples", value: "examples" },
+    ]);
+    const navigationValue = ref<string | null>(null);
+    const comboboxItems = ref([
+      { label: "Apple", value: "apple" },
+      { label: "Banana", value: "banana" },
+    ]);
+    const comboboxValue = ref<string | null>("apple");
+    return () => [
+      h(Tooltip, { id: "hydrated-styled-tooltip", openDelay: 0 }, () => [
+        h(TooltipTrigger, null, () =>
+          h("button", { id: "hydrated-styled-tooltip-trigger" }, "Tooltip trigger"),
+        ),
+        h(TooltipContent, { id: "hydrated-styled-tooltip-content" }, () => "Tooltip content"),
+      ]),
+      h(HoverCard, { closeDelay: 0, id: "hydrated-styled-hover-card", openDelay: 0 }, () => [
+        h(
+          HoverCardTrigger,
+          { id: "hydrated-styled-hover-card-trigger" },
+          () => "Hover Card trigger",
+        ),
+        h(
+          HoverCardContent,
+          { id: "hydrated-styled-hover-card-content" },
+          () => "Hover Card content",
+        ),
+      ]),
+      h(Dropdown, { id: "hydrated-styled-dropdown" }, () => [
+        h(DropdownTrigger, { id: "hydrated-styled-dropdown-trigger" }, () => "Dropdown trigger"),
+        h(DropdownContent, { id: "hydrated-styled-dropdown-content" }, () => [
+          h(DropdownItem, null, () => "Rename"),
+          h(DropdownSub, null, () => [
+            h(DropdownSubTrigger, null, () => "Move"),
+            h(DropdownSubContent, null, () => h(DropdownItem, null, () => "Archive")),
+          ]),
+        ]),
+      ]),
+      h(ContextMenu, { id: "hydrated-styled-context-menu" }, () => [
+        h(ContextMenuTrigger, { id: "hydrated-styled-context-menu-trigger" }, () => "Canvas"),
+        h(ContextMenuContent, { id: "hydrated-styled-context-menu-content" }, () => [
+          h(ContextMenuItem, null, () => "Rename"),
+          h(ContextMenuSub, null, () => [
+            h(ContextMenuSubTrigger, null, () => "Insert"),
+            h(ContextMenuSubContent, null, () => h(ContextMenuItem, null, () => "Frame")),
+          ]),
+        ]),
+      ]),
+      h(
+        NavigationMenu,
+        {
+          id: "hydrated-styled-navigation-menu",
+          modelValue: navigationValue.value,
+          "onUpdate:modelValue": (value: string | null) => (navigationValue.value = value),
+        },
+        () =>
+          h(NavigationMenuList, null, () =>
+            navigationItems.value.map((item) =>
+              h(NavigationMenuItem, { key: item.value, value: item.value }, () => [
+                h(
+                  NavigationMenuTrigger,
+                  { id: `hydrated-styled-navigation-trigger-${item.value}` },
+                  () => item.label,
+                ),
+                h(NavigationMenuContent, null, () =>
+                  h(NavigationMenuLink, { href: `#${item.value}` }, () => item.label),
+                ),
+              ]),
+            ),
+          ),
+      ),
+      h(
+        "button",
+        {
+          id: "hydrated-styled-navigation-add",
+          onClick: () => navigationItems.value.push({ label: "Patterns", value: "patterns" }),
+          type: "button",
+        },
+        "Add navigation item",
+      ),
+      h(
+        Combobox,
+        {
+          id: "hydrated-styled-combobox",
+          modelValue: comboboxValue.value,
+          "onUpdate:modelValue": (value: string | null) => (comboboxValue.value = value),
+        },
+        () => [
+          h(ComboboxInput, { id: "hydrated-styled-combobox-input", showClear: true }),
+          h(ComboboxContent, { id: "hydrated-styled-combobox-content" }, () =>
+            comboboxItems.value.map((item) =>
+              h(ComboboxItem, { key: item.value, value: item.value }, () =>
+                h(ComboboxItemText, null, () => item.label),
+              ),
+            ),
+          ),
+        ],
+      ),
+      h(
+        "button",
+        {
+          id: "hydrated-styled-combobox-add",
+          onClick: () => comboboxItems.value.push({ label: "Cherry", value: "cherry" }),
+          type: "button",
+        },
+        "Add combobox item",
+      ),
     ];
   },
 });
@@ -940,6 +1657,17 @@ function assertObserverRecords(
     assert(record.disposalCount > 0, `${name} was never disposed`);
     assert(record.duplicateDisposals === 0, `${name} was disposed twice without being observed`);
   }
+}
+
+function assertPortableClosureExports(root: ParentNode, phase: string): void {
+  const actual = Array.from(root.querySelectorAll<HTMLElement>("[data-closure-export]"))
+    .map((element) => element.dataset.closureExport ?? "")
+    .sort();
+  const expected = [...PORTABLE_CLOSURE_EXPORTS].sort();
+  assert(
+    JSON.stringify(actual) === JSON.stringify(expected),
+    `Portable closure ${phase} export inventory drifted: ${JSON.stringify(actual)}`,
+  );
 }
 
 function assert(condition: unknown, message: string): asserts condition {

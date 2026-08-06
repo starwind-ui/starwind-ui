@@ -55,6 +55,7 @@ export type FloatingAutoUpdateOptions = {
 
 type ResolveFloatingPortalTargetOptions = {
   dialogFloatingHostSelector?: string;
+  explicitReferences?: readonly (Element | null)[];
   floatingRootSelector?: string;
 };
 
@@ -133,10 +134,26 @@ export function resolveFloatingPortalTarget(
 ): HTMLElement {
   const {
     dialogFloatingHostSelector = DEFAULT_DIALOG_FLOATING_HOST_SELECTOR,
+    explicitReferences = [],
     floatingRootSelector = DEFAULT_FLOATING_ROOT_SELECTOR,
   } = options;
 
   const dialogOwner = resolveFloatingPortalOwner(reference, { dialogFloatingHostSelector });
+  const explicitTarget = explicitReferences
+    .map((explicitReference) =>
+      resolveExplicitFloatingPortalTarget(explicitReference, floatingRootSelector),
+    )
+    .find(
+      (target): target is HTMLElement =>
+        target !== null &&
+        (!dialogOwner ||
+          resolveFloatingPortalTargetOwner(target, {
+            dialogFloatingHostSelector,
+            floatingRootSelector,
+          }) === dialogOwner),
+    );
+  if (explicitTarget) return explicitTarget;
+
   if (dialogOwner) {
     const dialogFloatingRoots = Array.from(dialogOwner.children).filter(
       (child): child is HTMLElement =>
@@ -160,6 +177,25 @@ export function resolveFloatingPortalTarget(
   return reference?.ownerDocument.body ?? document.body;
 }
 
+function resolveExplicitFloatingPortalTarget(
+  reference: Element | null,
+  floatingRootSelector: string,
+): HTMLElement | null {
+  if (!reference?.isConnected) return null;
+
+  let current: Element | null = reference;
+  while (current) {
+    const target: Element | null = current.closest(floatingRootSelector);
+    if (!target) return null;
+    if (target instanceof HTMLElement && !target.hasAttribute("data-sw-floating-root")) {
+      return target;
+    }
+    current = target.parentElement;
+  }
+
+  return null;
+}
+
 export function resolveFloatingPortalOwner(
   reference: Element | null,
   options: Pick<ResolveFloatingPortalTargetOptions, "dialogFloatingHostSelector"> = {},
@@ -178,15 +214,10 @@ export function resolveFloatingPortalTargetOwner(
     dialogFloatingHostSelector = DEFAULT_DIALOG_FLOATING_HOST_SELECTOR,
     floatingRootSelector = DEFAULT_FLOATING_ROOT_SELECTOR,
   } = options;
-  const parent = portalTarget.parentElement;
+  if (!portalTarget.matches(floatingRootSelector)) return null;
 
-  if (
-    parent instanceof HTMLDialogElement &&
-    parent.matches(dialogFloatingHostSelector) &&
-    portalTarget.matches(floatingRootSelector)
-  ) {
-    return parent;
-  }
+  const dialogOwner = portalTarget.closest(dialogFloatingHostSelector);
+  if (dialogOwner instanceof HTMLDialogElement) return dialogOwner;
 
   return null;
 }

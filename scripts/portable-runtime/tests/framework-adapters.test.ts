@@ -676,7 +676,8 @@ describe("Framework Adapter seam", () => {
     const body = renderReactStyledComponentBody(component, {}, {});
 
     expect(props.match(/cardFooter\?: React\.ReactNode;/g)).toHaveLength(1);
-    expect(body).toContain("const { cardFooter, ...rest } = props;");
+    expect(body).toContain("const { cardFooter } = props;");
+    expect(body).not.toContain("...rest");
     expect(body).not.toContain("cardFooter, cardFooter");
   });
 
@@ -904,7 +905,16 @@ describe("Framework Adapter seam", () => {
             write: "function",
           },
           support: {
-            components: ["button", "checkbox", "select", "accordion", "dialog", "slider"],
+            components: [
+              "button",
+              "carousel",
+              "checkbox",
+              "select",
+              "accordion",
+              "dialog",
+              "slider",
+              "toast",
+            ],
             kind: "subset",
           },
         },
@@ -980,9 +990,13 @@ describe("Framework Adapter seam", () => {
             "alert-dialog",
             "avatar",
             "button",
+            "carousel",
             "checkbox",
             "checkbox-group",
             "collapsible",
+            "color-picker",
+            "combobox",
+            "context-menu",
             "dialog",
             "drawer",
             "dropzone",
@@ -991,17 +1005,23 @@ describe("Framework Adapter seam", () => {
             "form",
             "input",
             "input-otp",
+            "menu",
+            "navigation-menu",
             "popover",
+            "preview-card",
             "progress",
             "radio",
             "radio-group",
             "scroll-area",
             "select",
+            "sidebar",
             "slider",
             "switch",
             "tabs",
+            "toast",
             "toggle",
             "toggle-group",
+            "tooltip",
             "theme",
           ],
           kind: "subset",
@@ -1020,7 +1040,16 @@ describe("Framework Adapter seam", () => {
       packageName: "@starwind-ui/svelte",
       primitive: {
         support: {
-          components: ["button", "checkbox", "select", "accordion", "dialog", "slider"],
+          components: [
+            "button",
+            "carousel",
+            "checkbox",
+            "select",
+            "accordion",
+            "dialog",
+            "slider",
+            "toast",
+          ],
           kind: "subset",
         },
       },
@@ -1768,8 +1797,15 @@ describe("Framework Adapter seam", () => {
     expect(selectSpecSource).not.toContain("FrameworkAdapterReadiness");
     expect(selectSpecSource).not.toMatch(/__future-fixtures\/(?:vue|solid)\//);
     expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
-    for (const unsupportedComponent of ["combobox", "menu", "navigation-menu"]) {
-      expect(existsSync(join(process.cwd(), "packages/vue/src", unsupportedComponent))).toBe(false);
+    for (const cohortComponent of [
+      "combobox",
+      "context-menu",
+      "menu",
+      "navigation-menu",
+      "preview-card",
+      "tooltip",
+    ]) {
+      expect(existsSync(join(process.cwd(), "packages/vue/src", cohortComponent))).toBe(true);
     }
     expect(rootPackage.private).toBe(true);
     expect(rootVueScripts).toEqual(approvedPrivateVueScripts);
@@ -1863,7 +1899,7 @@ describe("Framework Adapter seam", () => {
       "Do not add CLI registry entries, demo dependencies, install docs, public",
     );
     expect(normalizedSvelteReadme).toContain(
-      "The target supports exactly Button, Checkbox, and Select.",
+      "The target supports exactly Button, Carousel, Checkbox, Select, Accordion, Dialog, Slider, and Toast.",
     );
     expect(svelteReadme).not.toContain(
       "The target supports exactly Button, Checkbox, and Select; this proof currently generates Button.",

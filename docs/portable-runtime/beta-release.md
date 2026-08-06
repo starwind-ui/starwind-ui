@@ -20,8 +20,20 @@ artifacts, and advance package versions; do not hand-edit prerelease versions. B
 `pnpm changeset status --verbose` must describe the intended package set with no unexplained pending
 work.
 
-Keep `latest` reserved for stable releases. A stable release from the same line drops the
-prerelease suffix only after the complete release gate passes.
+Keep `latest` reserved for stable releases. The first stable Runtime adapter line is `1.0.0`, while
+the first stable CLI line is `3.0.0`. Do not publish Runtime, Astro, or React as `0.1.0` stable.
+
+When stable publication is authorized, add one release-only major Changeset for
+`@starwind-ui/runtime`, `@starwind-ui/astro`, and `@starwind-ui/react`. Then run
+`pnpm changeset pre exit` and commit its prerelease-exit intent before the Version Packages PR runs
+`pnpm release:version`. Inspect that PR and require these exact first-stable versions:
+
+- `@starwind-ui/runtime@1.0.0`
+- `@starwind-ui/astro@1.0.0`
+- `@starwind-ui/react@1.0.0`
+- `starwind@3.0.0`
+
+Release metadata validation rejects a stable Runtime adapter version below `1.0.0`.
 
 ## Prepare And Dry Run
 
@@ -42,8 +54,10 @@ package metadata, dependency ranges, derived channel, and release summary before
 
 The release helpers regenerate package and registry artifacts, then run repository verification,
 Astro and React browser smoke tests, dependency audit, and package-size budgets. After the gate,
-they rebuild publishable JavaScript packages directly so a Turbo cache restore cannot leave obsolete
-files in `dist` before packing.
+they run one packed-candidate matrix. The matrix installs local tarballs in fresh Astro 5, Astro 7,
+React 18, and React 19 projects. It checks framework auto-detection, all-component installation,
+update/remove/add lifecycle behavior, framework checks, production builds, React SSR, and browser
+behavior. A React 19 npm project also covers the critical non-pnpm compile and build path.
 
 Package-size release blocking uses Starwind's absolute minified-plus-gzip ceilings. Matched-support
 measurements against Zag and Base UI are comparison advisories, not release gates, because the
@@ -78,8 +92,9 @@ After publishing, query npm for all four exact versions and verify:
 - Astro and React declare the intended Runtime version
 - the CLI declares compatible adapter and Runtime requirements
 
-Install the released CLI in disposable Astro and React projects, add `button`, `dialog`, and
-`context-menu`, build both projects, and exercise Dialog and Context Menu behavior in a browser.
+Install the released CLI in disposable Astro and React projects, add `button`, `dialog`,
+`context-menu`, and `color-picker`, build both projects, and exercise Dialog, Context Menu, and
+Color Picker behavior in a browser.
 
 Run the persistent published-package acceptance harness with the exact CLI version:
 
@@ -88,8 +103,8 @@ pnpm test:published-release -- --version <cli-version>
 ```
 
 The harness creates disposable Astro and React projects, installs the exact published CLI, verifies
-the installed adapter and Runtime versions, builds both projects, and checks Dialog and Context Menu
-behavior in Chromium. It removes temporary projects after the run. The public repository also
+the installed adapter and Runtime versions, builds both projects, and checks Dialog, Context Menu,
+and Color Picker behavior in Chromium. It removes temporary projects after the run. The public repository also
 provides the manually dispatched **Published Beta Acceptance** workflow, with logs, screenshots on
 browser failure, and a package-version summary uploaded as workflow diagnostics.
 

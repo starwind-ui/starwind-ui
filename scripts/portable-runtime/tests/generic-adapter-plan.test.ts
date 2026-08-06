@@ -1243,7 +1243,7 @@ describe("GenericAdapterPlan", () => {
     expect(readinessFutureTracerList).not.toContain("- `sidebar/vue`");
     expect(readinessFutureTracerList).not.toContain("- `sidebar/solid`");
     expect(gate).toContain(
-      "Vue has private, non-shipping generated output for Button, Checkbox, and Select",
+      "Vue has private, non-shipping generated output for its registered Primitive surface",
     );
     expect(gate).toMatch(/Existing Solid\s+tracers are frozen comparison artifacts/);
   });

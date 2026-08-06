@@ -545,7 +545,7 @@ export const colorPickerRuntimeAdapterContract = {
   },
   escapeHatches: [
     {
-      affectedFrameworks: ["astro", "react"],
+      affectedFrameworks: ["astro", "react", "vue"],
       boundary:
         "Adapters own the compound part tree, repeatable axis/channel/swatch rendering, refs, controlled prop projection, and immutable Runtime facade re-exports. Runtime owns parsing, color state, editing drafts, interaction sessions, accessibility reflection, form synchronization, and EyeDropper behavior.",
       contractOwnedFacts: [

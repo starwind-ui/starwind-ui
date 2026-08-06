@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createCombobox } from "../../../src/components/combobox/combobox";
+import { createDialog } from "../../../src/components/dialog/dialog";
 
 describe("createCombobox", () => {
   beforeEach(() => {
@@ -558,6 +559,156 @@ describe("createCombobox", () => {
     expect(positioner.parentElement).toBe(floatingRoot);
     expect(popup.style.getPropertyValue("--anchor-width")).toBe("320px");
     expect(positioner.style.getPropertyValue("--anchor-width")).toBe("320px");
+  });
+
+  it("keeps an initially open dialog-owned popup inside its dialog when the explicit portal is outside", () => {
+    const dialogRoot = document.createElement("div");
+    dialogRoot.setAttribute("data-sw-dialog", "");
+    dialogRoot.innerHTML = `
+      <button data-sw-dialog-trigger>Open dialog</button>
+      <dialog data-sw-dialog-content data-slot="dialog-content"></dialog>
+    `;
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("dialog")!;
+    const root = renderCombobox();
+    const outsideTarget = document.createElement("div");
+    const portalReference = document.createElement("div");
+    outsideTarget.setAttribute("data-floating-root", "");
+    outsideTarget.append(portalReference);
+    dialogContent.append(root);
+    document.body.append(dialogRoot, outsideTarget);
+    const dialog = createDialog(dialogRoot);
+    dialog.open();
+    const positioner = root.querySelector<HTMLElement>("[data-sw-combobox-positioner]")!;
+
+    const combobox = createCombobox(root, { defaultOpen: true, portalReference });
+
+    expect(dialogContent.contains(positioner)).toBe(true);
+    expect(outsideTarget.contains(positioner)).toBe(false);
+
+    dialog.close();
+
+    expect(combobox.getOpen()).toBe(false);
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(positioner.parentElement).toBe(root);
+
+    combobox.destroy();
+    dialog.destroy();
+  });
+
+  it("keeps an authored custom target and follows it across close and reopen", async () => {
+    const root = renderCombobox();
+    const positioner = root.querySelector<HTMLElement>("[data-sw-combobox-positioner]")!;
+    const firstTarget = document.createElement("div");
+    const secondTarget = document.createElement("div");
+    const portalReference = document.createElement("div");
+    firstTarget.setAttribute("data-floating-root", "");
+    secondTarget.setAttribute("data-floating-root", "");
+    firstTarget.append(portalReference);
+    document.body.append(firstTarget, secondTarget);
+
+    const combobox = createCombobox(root, { defaultOpen: true, portalReference });
+
+    expect(positioner.parentElement).toBe(firstTarget);
+
+    combobox.setOpen(false, { emit: false });
+    await waitForMicrotasks();
+    secondTarget.append(portalReference);
+    combobox.setOpen(true, { emit: false });
+
+    expect(positioner.parentElement).toBe(secondTarget);
+    expect(firstTarget.querySelector("[data-sw-combobox-positioner]")).toBeNull();
+
+    combobox.destroy();
+
+    expect(positioner.parentElement).toBe(root);
+    expect(document.querySelector("[data-sw-floating-portal]")).toBeNull();
+  });
+
+  it("keeps a same-dialog nested target and closes it through dialog ownership", () => {
+    const dialogRoot = document.createElement("div");
+    dialogRoot.setAttribute("data-sw-dialog", "");
+    dialogRoot.innerHTML = `
+      <button data-sw-dialog-trigger>Open dialog</button>
+      <dialog data-sw-dialog-content data-slot="dialog-content">
+        <div data-custom-container>
+          <div data-floating-root><div data-portal-reference></div></div>
+        </div>
+      </dialog>
+    `;
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("dialog")!;
+    const nestedTarget = dialogContent.querySelector<HTMLElement>("[data-floating-root]")!;
+    const portalReference = dialogContent.querySelector<HTMLElement>("[data-portal-reference]")!;
+    const root = renderCombobox();
+    const positioner = root.querySelector<HTMLElement>("[data-sw-combobox-positioner]")!;
+    dialogContent.append(root);
+    document.body.append(dialogRoot);
+    const dialog = createDialog(dialogRoot);
+    dialog.open();
+
+    const combobox = createCombobox(root, { defaultOpen: true, portalReference });
+
+    expect(nestedTarget.contains(positioner)).toBe(true);
+    expect(nestedTarget.querySelector("[data-sw-floating-portal]")).not.toBeNull();
+
+    dialog.close();
+
+    expect(combobox.getOpen()).toBe(false);
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(positioner.parentElement).toBe(root);
+
+    dialog.open();
+    combobox.setOpen(true, { emit: false });
+
+    expect(nestedTarget.contains(positioner)).toBe(true);
+
+    combobox.destroy();
+    dialog.destroy();
+
+    expect(positioner.parentElement).toBe(root);
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+  });
+
+  it("suppresses and restores a controlled same-dialog target with its owner", () => {
+    const dialogRoot = document.createElement("div");
+    dialogRoot.setAttribute("data-sw-dialog", "");
+    dialogRoot.innerHTML = `
+      <button data-sw-dialog-trigger>Open dialog</button>
+      <dialog data-sw-dialog-content data-slot="dialog-content">
+        <div data-floating-root><div data-portal-reference></div></div>
+      </dialog>
+    `;
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("dialog")!;
+    const nestedTarget = dialogContent.querySelector<HTMLElement>("[data-floating-root]")!;
+    const portalReference = dialogContent.querySelector<HTMLElement>("[data-portal-reference]")!;
+    const root = renderCombobox();
+    const positioner = root.querySelector<HTMLElement>("[data-sw-combobox-positioner]")!;
+    const openIntents: boolean[] = [];
+    dialogContent.append(root);
+    document.body.append(dialogRoot);
+    const dialog = createDialog(dialogRoot);
+    dialog.open();
+    const combobox = createCombobox(root, {
+      onOpenChange: (open) => openIntents.push(open),
+      open: true,
+      portalReference,
+    });
+
+    expect(nestedTarget.contains(positioner)).toBe(true);
+
+    dialog.close();
+
+    expect(openIntents).toEqual([false]);
+    expect(combobox.getOpen()).toBe(true);
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    dialog.open();
+
+    expect(nestedTarget.contains(positioner)).toBe(true);
+    expect(nestedTarget.querySelector("[data-sw-floating-portal]")).not.toBeNull();
+
+    combobox.setOpen(false, { emit: false });
+    combobox.destroy();
+    dialog.destroy();
   });
 
   it("unportals and releases lifecycle effects when destroyed while open or closing", async () => {

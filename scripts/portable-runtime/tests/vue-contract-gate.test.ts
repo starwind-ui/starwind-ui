@@ -30,6 +30,7 @@ import {
   projectVueDetailedEvent,
   vueAdapterPublicContract,
 } from "../renderers/framework-adapters/vue/index.js";
+import { vuePackageExports } from "../renderers/framework-adapters/vue/inventory.js";
 
 function getFixture(path: (typeof VUE_CONTRACT_FIXTURE_PATHS)[number]): string {
   const fixture = createVueContractFixtureFiles().find((file) => file.path === path);
@@ -173,6 +174,7 @@ function findBoundaryAwareVueSurfaces(surfaces: TextSurface[]): string[] {
 function isApprovedVueDocumentation({ path, source }: TextSurface): boolean {
   if (!containsBoundaryAwareVue(source)) return true;
   if (path.startsWith("docs/portable-runtime/")) return true;
+  if (path === "docs/agents/test-health.md") return true;
   if (path === approvedVueArchitectureDoc) return true;
   if (path !== "docs/product/positioning.md") return false;
 
@@ -572,37 +574,11 @@ describe("Vue non-shipping public-contract gate", () => {
       name: "@starwind-ui/vue",
       peerDependencies: { vue: ">=3.5" },
       private: true,
+      version: "0.0.0",
     });
-    expect(Object.keys(vueManifest.exports ?? {})).toEqual([
-      ".",
-      "./accordion",
-      "./alert-dialog",
-      "./avatar",
-      "./button",
-      "./checkbox",
-      "./checkbox-group",
-      "./collapsible",
-      "./dialog",
-      "./drawer",
-      "./dropzone",
-      "./fieldset",
-      "./field",
-      "./form",
-      "./input",
-      "./input-otp",
-      "./popover",
-      "./progress",
-      "./radio",
-      "./radio-group",
-      "./scroll-area",
-      "./select",
-      "./slider",
-      "./switch",
-      "./tabs",
-      "./toggle",
-      "./toggle-group",
-      "./theme",
-    ]);
+    expect(Object.keys(vueManifest.exports ?? {}).sort()).toEqual(
+      Object.keys(vuePackageExports).sort(),
+    );
     const vueDemoManifest = JSON.parse(
       readFileSync(join(process.cwd(), "apps/vue-demo/package.json"), "utf8"),
     ) as PackageManifest;
@@ -623,21 +599,18 @@ describe("Vue non-shipping public-contract gate", () => {
         smoke: "pnpm build && node ../../scripts/portable-runtime/tests/smoke/vue/verify-demo.mjs",
       },
     });
-    for (const unsupportedComponent of ["combobox", "menu", "navigation-menu"]) {
+    for (const cohortComponent of [
+      "combobox",
+      "context-menu",
+      "menu",
+      "navigation-menu",
+      "preview-card",
+      "tooltip",
+    ]) {
       expect(
-        existsSync(join(process.cwd(), "packages/vue/src", unsupportedComponent)),
-        `packages/vue/src/${unsupportedComponent}`,
-      ).toBe(false);
-      expect(
-        existsSync(
-          join(
-            process.cwd(),
-            "apps/vue-demo/src/components/starwind-runtime",
-            unsupportedComponent,
-          ),
-        ),
-        `apps/vue-demo/src/components/starwind-runtime/${unsupportedComponent}`,
-      ).toBe(false);
+        existsSync(join(process.cwd(), "packages/vue/src", cohortComponent)),
+        `packages/vue/src/${cohortComponent}`,
+      ).toBe(true);
     }
 
     expect(rootManifest.private).toBe(true);
@@ -728,6 +701,7 @@ describe("Vue non-shipping public-contract gate", () => {
         .every(
           ({ path }) =>
             path.startsWith("docs/portable-runtime/") ||
+            path === "docs/agents/test-health.md" ||
             path === approvedVueArchitectureDoc ||
             path === "docs/product/positioning.md",
         ),

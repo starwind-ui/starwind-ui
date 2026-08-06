@@ -9,9 +9,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { generateVuePrimitiveWrappers } from "../../generate-vue-wrappers.js";
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { vueFutureFrameworkTracer } from "../../renderers/framework-adapters/vue/future-framework-tracer.js";
+import { vueStyledComponents } from "../../renderers/framework-adapters/vue/inventory.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const VUE_TSC_TIMEOUT_MS = 30_000;
+const EXPECTED_MATERIALIZED_STYLED_COMPONENTS = [...vueStyledComponents].sort();
 
 describe("Vue Primitive package generation", () => {
   let tempRoot: string;
@@ -28,36 +30,49 @@ describe("Vue Primitive package generation", () => {
     await generateVuePrimitiveWrappers({ outputDir: "generated", repoRoot: tempRoot });
     const outputRoot = path.join(tempRoot, "generated");
 
-    expect(await readdir(outputRoot)).toEqual([
-      "accordion",
-      "alert-dialog",
-      "avatar",
-      "button",
-      "checkbox",
-      "checkbox-group",
-      "collapsible",
-      "dialog",
-      "drawer",
-      "dropzone",
-      "field",
-      "fieldset",
-      "form",
-      "index.ts",
-      "input",
-      "input-otp",
-      "popover",
-      "progress",
-      "radio",
-      "radio-group",
-      "scroll-area",
-      "select",
-      "slider",
-      "switch",
-      "tabs",
-      "theme",
-      "toggle",
-      "toggle-group",
-    ]);
+    expect((await readdir(outputRoot)).sort()).toEqual(
+      [
+        "accordion",
+        "alert-dialog",
+        "avatar",
+        "button",
+        "carousel",
+        "checkbox",
+        "checkbox-group",
+        "collapsible",
+        "color-picker",
+        "combobox",
+        "context-menu",
+        "dialog",
+        "drawer",
+        "dropzone",
+        "field",
+        "fieldset",
+        "form",
+        "index.ts",
+        "input",
+        "input-otp",
+        "menu",
+        "navigation-menu",
+        "popover",
+        "preview-card",
+        "progress",
+        "radio",
+        "radio-group",
+        "scroll-area",
+        "select",
+        "sidebar",
+        "slider",
+        "switch",
+        "tabs",
+        "theme",
+        "toast",
+        "toggle",
+        "toggle-group",
+        "tooltip",
+        "_internal",
+      ].sort(),
+    );
     const rootIndex = await readFile(path.join(outputRoot, "index.ts"), "utf8");
     expect(rootIndex).toContain('export * from "./accordion";');
     expect(rootIndex).toContain('export * from "./alert-dialog";');
@@ -66,23 +81,30 @@ describe("Vue Primitive package generation", () => {
     expect(rootIndex).toContain('export * from "./checkbox";');
     expect(rootIndex).toContain('export * from "./checkbox-group";');
     expect(rootIndex).toContain('export * from "./collapsible";');
+    expect(rootIndex).toContain('export * from "./color-picker";');
+    expect(rootIndex).toContain('export * from "./context-menu";');
     expect(rootIndex).toContain('export * from "./dialog";');
     expect(rootIndex).toContain('export * from "./field";');
     expect(rootIndex).toContain('export * from "./fieldset";');
     expect(rootIndex).toContain('export * from "./form";');
     expect(rootIndex).toContain('export * from "./input";');
+    expect(rootIndex).toContain('export * from "./menu";');
+    expect(rootIndex).toContain('export * from "./navigation-menu";');
     expect(rootIndex).toContain('export * from "./popover";');
+    expect(rootIndex).toContain('export * from "./preview-card";');
     expect(rootIndex).toContain('export * from "./progress";');
     expect(rootIndex).toContain('export * from "./radio";');
     expect(rootIndex).toContain('export * from "./radio-group";');
     expect(rootIndex).toContain('export * from "./scroll-area";');
     expect(rootIndex).toContain('export * from "./slider";');
     expect(rootIndex).toContain('export * from "./select";');
+    expect(rootIndex).toContain('export * from "./sidebar";');
     expect(rootIndex).toContain('export * from "./switch";');
     expect(rootIndex).toContain('export * from "./tabs";');
     expect(rootIndex).toContain('export * from "./theme";');
     expect(rootIndex).toContain('export * from "./toggle";');
     expect(rootIndex).toContain('export * from "./toggle-group";');
+    expect(rootIndex).toContain('export * from "./tooltip";');
     const files = await readFiles(outputRoot);
     expect(files.some((file) => file.relativePath.includes("__future-fixtures"))).toBe(false);
     expect(files.filter((file) => file.relativePath.endsWith(".vue")).length).toBeGreaterThan(0);
@@ -91,16 +113,30 @@ describe("Vue Primitive package generation", () => {
     }
   });
 
-  it("generates identical paths and bytes in separate roots", async () => {
-    await generateVuePrimitiveWrappers({ outputDir: "first", repoRoot: tempRoot });
-    await generateVuePrimitiveWrappers({ outputDir: "second", repoRoot: tempRoot });
+  it("generates the complete Primitive and Styled surfaces with identical paths and bytes in isolated roots", async () => {
+    const firstRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-complete-first-"));
+    const secondRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-complete-second-"));
 
-    expect(await readFiles(path.join(tempRoot, "first"))).toEqual(
-      await readFiles(path.join(tempRoot, "second")),
-    );
+    try {
+      for (const root of [firstRoot, secondRoot]) {
+        await generateVuePrimitiveWrappers({ outputDir: "primitive", repoRoot: root });
+        const styledRoot = await generateSelectedVueStyledGroups({
+          groups: vueStyledComponents,
+          outputDir: "styled",
+          repoRoot: root,
+        });
+        expect((await readdir(styledRoot)).sort()).toEqual(EXPECTED_MATERIALIZED_STYLED_COMPONENTS);
+      }
+
+      expect(await readFiles(firstRoot)).toEqual(await readFiles(secondRoot));
+    } finally {
+      await Promise.all(
+        [firstRoot, secondRoot].map((root) => rm(root, { force: true, recursive: true })),
+      );
+    }
   });
 
-  it("retains non-shipping tracer evidence for unsupported Vue components", () => {
+  it("retains historical non-normative tracer artifacts outside production output", () => {
     expect(vueFutureFrameworkTracer.classifications).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ component: "menu/vue" }),

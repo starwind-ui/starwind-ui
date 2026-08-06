@@ -152,6 +152,8 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(comboboxInputGroup).toContain("data-sw-combobox-input-group");
   expect(comboboxInputGroup).toContain('size = "md"');
   expect(comboboxInputGroup).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
+  expect(comboboxInputGroup).toMatch(/\{\.\.\.rest\}[\s\S]*data-slot="combobox-input-group"/);
+  expect(inputGroup).toMatch(/data-slot="input-group"[\s\S]*\{\.\.\.rest\}/);
   expect(comboboxVariants).toContain("[&>[data-align=inline-end]:has(>div>button)]:mr-[-0.3rem]");
   expect(comboboxInput).toContain(
     'import { InputGroup, InputGroupAddon, InputGroupButton } from "../input-group";',

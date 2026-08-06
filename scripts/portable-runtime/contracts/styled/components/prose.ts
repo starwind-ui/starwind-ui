@@ -19,6 +19,7 @@ export const proseStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Prose",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "div" }],

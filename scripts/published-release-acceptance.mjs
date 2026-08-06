@@ -66,6 +66,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "../components/starwind/context-menu";
+import { ColorPicker } from "../components/starwind/color-picker";
 ---
 
 <html lang="en">
@@ -99,6 +100,12 @@ import {
           <ContextMenuItem id="context-item">Accept action</ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
+      <ColorPicker
+        id="acceptance-color-picker"
+        label="Accent color"
+        defaultValue="#336699"
+        swatches={[{ value: "#ff0000", label: "Published red" }]}
+      />
     </main>
   </body>
 </html>
@@ -119,6 +126,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "./components/starwind/context-menu";
+import { ColorPicker } from "./components/starwind/color-picker";
 
 function App() {
   return (
@@ -146,6 +154,12 @@ function App() {
           <ContextMenuItem id="context-item">Accept action</ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
+      <ColorPicker
+        id="acceptance-color-picker"
+        label="Accent color"
+        defaultValue="#336699"
+        swatches={[{ value: "#ff0000", label: "Published red" }]}
+      />
     </main>
   );
 }
@@ -194,7 +208,7 @@ export function parseArgs(argv) {
 export function createAcceptancePlan({ root, version }) {
   const cliSpecifier = `starwind@${version}`;
   const cliEntrypoint = path.join(root, "node_modules", "starwind", "dist", "index.js");
-  const components = ["button", "dialog", "context-menu"];
+  const components = ["button", "dialog", "context-menu", "color-picker"];
   const createProject = (framework, scaffoldArgs) => {
     const directory = path.join(root, framework);
 
@@ -208,7 +222,7 @@ export function createAcceptancePlan({ root, version }) {
       directory,
       framework,
       init: {
-        args: [cliEntrypoint, "init", "--defaults", `--${framework}`],
+        args: [cliEntrypoint, "init", "--defaults"],
         command: process.execPath,
         cwd: directory,
       },
@@ -265,7 +279,7 @@ function getPnpmCommand() {
 }
 
 function quoteWindowsCommandArg(argument) {
-  if (/^[A-Za-z0-9._:/=@+-]+$/.test(argument)) return argument;
+  if (/^[A-Za-z0-9._:/=@+\\-]+$/.test(argument)) return argument;
   if (/["&<>|^%!\r\n]/.test(argument)) {
     throw new Error(`Cannot safely pass argument to cmd.exe: ${argument}`);
   }
@@ -276,14 +290,17 @@ function createSpawn(command, args) {
   if (process.platform === "win32" && command.endsWith(".cmd")) {
     return {
       args: ["/d", "/s", "/c", [command, ...args].map(quoteWindowsCommandArg).join(" ")],
-      command: "cmd.exe",
+      command: process.env.ComSpec ?? "C:\\Windows\\System32\\cmd.exe",
     };
   }
 
   return { args, command };
 }
 
-async function runCommand({ args, command = getPnpmCommand(), cwd }, { capture = false } = {}) {
+export async function runCommand(
+  { args, command = getPnpmCommand(), cwd },
+  { capture = false } = {},
+) {
   const spawned = createSpawn(command, args);
   console.log(`[acceptance] ${path.basename(cwd)}: ${command} ${args.join(" ")}`);
 
@@ -321,7 +338,7 @@ async function runCommand({ args, command = getPnpmCommand(), cwd }, { capture =
   });
 }
 
-async function writeFixtures(project) {
+export async function writeFixtures(project) {
   for (const file of getFixtureFiles(project.framework)) {
     const target = path.join(project.directory, file.path);
     await mkdir(path.dirname(target), { recursive: true });
@@ -390,26 +407,18 @@ async function getFreePort() {
   });
 }
 
-function resolvePreviewBin(project) {
-  const projectRequire = createRequire(path.join(project.directory, "package.json"));
-  const packageName = project.framework === "astro" ? "astro" : "vite";
-  const packageJsonPath = projectRequire.resolve(`${packageName}/package.json`);
-  return path.join(
-    path.dirname(packageJsonPath),
-    project.framework === "astro" ? "bin/astro.mjs" : "bin/vite.js",
-  );
-}
-
 function startPreview(project, port) {
-  const child = spawn(
-    process.execPath,
-    [resolvePreviewBin(project), "preview", "--host", HOST, "--port", String(port)],
-    {
-      cwd: project.directory,
-      env: { ...process.env, ASTRO_TELEMETRY_DISABLED: "1" },
-      stdio: ["ignore", "pipe", "pipe"],
-    },
-  );
+  const command = project.packageManager === "npm" ? "npm.cmd" : getPnpmCommand();
+  const args =
+    project.packageManager === "npm"
+      ? ["run", "preview", "--", "--host", HOST, "--port", String(port)]
+      : ["preview", "--host", HOST, "--port", String(port)];
+  const spawned = createSpawn(command, args);
+  const child = spawn(spawned.command, spawned.args, {
+    cwd: project.directory,
+    env: { ...process.env, ASTRO_TELEMETRY_DISABLED: "1" },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   let output = "";
   child.stdout.on("data", (chunk) => {
     output += chunk.toString();
@@ -444,6 +453,16 @@ async function waitForPreview(url, preview) {
 
 async function stopPreview(preview) {
   if (preview.child.exitCode !== null) return;
+  if (process.platform === "win32" && preview.child.pid) {
+    await new Promise((resolve) => {
+      const killer = spawn("taskkill.exe", ["/pid", String(preview.child.pid), "/t", "/f"], {
+        stdio: "ignore",
+      });
+      killer.once("error", resolve);
+      killer.once("exit", resolve);
+    });
+    return;
+  }
   preview.child.kill();
   await Promise.race([
     new Promise((resolve) => preview.child.once("exit", resolve)),
@@ -451,7 +470,8 @@ async function stopPreview(preview) {
   ]);
 }
 
-async function verifyBrowserProject({ artifacts, browser, project }) {
+export async function verifyBrowserProject({ artifacts, browser, project }) {
+  await mkdir(artifacts, { recursive: true });
   const port = await getFreePort();
   const url = `http://${HOST}:${port}/`;
   const preview = startPreview(project, port);
@@ -494,17 +514,28 @@ async function verifyBrowserProject({ artifacts, browser, project }) {
     await menuItem.click();
     await menuItem.waitFor({ state: "hidden" });
 
+    const colorPicker = page.locator("#acceptance-color-picker");
+    await colorPicker.getByRole("button", { name: "Open accent color picker" }).click();
+    const redSwatch = colorPicker.getByRole("button", { name: "Published red" });
+    await redSwatch.waitFor({ state: "visible" });
+    await redSwatch.click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector("#acceptance-color-picker")?.getAttribute("data-value") ===
+        "#ff0000",
+    );
+
     assert.deepEqual(browserErrors, [], `${project.framework} browser errors`);
     console.log(`[acceptance] ${project.framework} browser behavior passed at ${url}`);
   } catch (error) {
     await page.screenshot({
       fullPage: true,
-      path: path.join(artifacts, `${project.framework}-failure.png`),
+      path: path.join(artifacts, `${project.id ?? project.framework}-failure.png`),
     });
     throw error;
   } finally {
     await writeFile(
-      path.join(artifacts, `${project.framework}-preview.log`),
+      path.join(artifacts, `${project.id ?? project.framework}-preview.log`),
       preview.getOutput(),
       "utf8",
     );

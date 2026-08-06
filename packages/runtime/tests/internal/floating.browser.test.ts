@@ -5,6 +5,7 @@ import {
   type FloatingAlign,
   type FloatingSide,
   resolveFloatingPortalTarget,
+  resolveFloatingPortalTargetOwner,
 } from "../../src/internal/floating";
 
 describe("floating internals", () => {
@@ -242,5 +243,121 @@ describe("floating internals", () => {
     expect(resolveFloatingPortalTarget(reference)).toBe(authorRoot);
 
     dialog.remove();
+  });
+
+  it("resolves a nested explicit floating root to its owning dialog", () => {
+    const dialog = document.createElement("dialog");
+    const customContainer = document.createElement("div");
+    const floatingRoot = document.createElement("div");
+    dialog.setAttribute("data-slot", "dialog-content");
+    floatingRoot.setAttribute("data-floating-root", "");
+    customContainer.append(floatingRoot);
+    dialog.append(customContainer);
+    document.body.append(dialog);
+
+    expect(resolveFloatingPortalTargetOwner(floatingRoot)).toBe(dialog);
+
+    document.body.append(floatingRoot);
+
+    expect(resolveFloatingPortalTargetOwner(floatingRoot)).toBeNull();
+
+    dialog.remove();
+    floatingRoot.remove();
+  });
+
+  it("rejects an explicit root outside the active reference dialog", () => {
+    const dialog = document.createElement("dialog");
+    const reference = document.createElement("button");
+    const outsideRoot = document.createElement("div");
+    const portalReference = document.createElement("div");
+    dialog.setAttribute("data-slot", "dialog-content");
+    outsideRoot.setAttribute("data-floating-root", "");
+    outsideRoot.append(portalReference);
+    dialog.append(reference);
+    document.body.append(dialog, outsideRoot);
+
+    const target = resolveFloatingPortalTarget(reference, {
+      explicitReferences: [portalReference],
+    });
+
+    expect(dialog.contains(target)).toBe(true);
+    expect(target).not.toBe(outsideRoot);
+
+    dialog.remove();
+    outsideRoot.remove();
+  });
+
+  it("uses a later compatible explicit target when the first candidate is outside the reference dialog", () => {
+    const dialog = document.createElement("dialog");
+    const reference = document.createElement("button");
+    const outsideRoot = document.createElement("div");
+    const outsideReference = document.createElement("div");
+    const insideRoot = document.createElement("div");
+    const insideReference = document.createElement("div");
+    dialog.setAttribute("data-slot", "dialog-content");
+    outsideRoot.setAttribute("data-floating-root", "");
+    insideRoot.setAttribute("data-floating-root", "");
+    outsideRoot.append(outsideReference);
+    insideRoot.append(insideReference);
+    dialog.append(reference, insideRoot);
+    document.body.append(dialog, outsideRoot);
+
+    expect(
+      resolveFloatingPortalTarget(reference, {
+        explicitReferences: [outsideReference, insideReference],
+      }),
+    ).toBe(insideRoot);
+
+    dialog.remove();
+    outsideRoot.remove();
+  });
+
+  it("prefers an explicit authored root with no reference dialog or the same dialog", () => {
+    const dialog = document.createElement("dialog");
+    const reference = document.createElement("button");
+    const authoredRoot = document.createElement("div");
+    const portalReference = document.createElement("div");
+    dialog.setAttribute("data-slot", "dialog-content");
+    authoredRoot.setAttribute("data-floating-root", "");
+    authoredRoot.append(portalReference);
+    document.body.append(reference, authoredRoot, dialog);
+
+    expect(resolveFloatingPortalTarget(reference, { explicitReferences: [portalReference] })).toBe(
+      authoredRoot,
+    );
+
+    dialog.append(reference, authoredRoot);
+
+    expect(resolveFloatingPortalTarget(reference, { explicitReferences: [portalReference] })).toBe(
+      authoredRoot,
+    );
+
+    dialog.remove();
+  });
+
+  it("keeps Runtime-created roots under fallback ownership", () => {
+    const reference = document.createElement("button");
+    const authoredRoot = document.createElement("div");
+    const runtimeRoot = document.createElement("div");
+    const portalReference = document.createElement("div");
+    authoredRoot.setAttribute("data-floating-root", "");
+    runtimeRoot.setAttribute("data-floating-root", "");
+    runtimeRoot.setAttribute("data-sw-floating-root", "dialog");
+    runtimeRoot.append(portalReference);
+    document.body.append(reference, runtimeRoot);
+
+    expect(resolveFloatingPortalTarget(reference, { explicitReferences: [portalReference] })).toBe(
+      document.body,
+    );
+
+    authoredRoot.append(runtimeRoot);
+    document.body.append(authoredRoot);
+
+    expect(resolveFloatingPortalTarget(reference, { explicitReferences: [portalReference] })).toBe(
+      authoredRoot,
+    );
+
+    reference.remove();
+    authoredRoot.remove();
   });
 });

@@ -16,6 +16,7 @@ export function printVueOwnedInstanceDestroy(): string {
 }
 
 export type CurrentVuePrimitiveFamilyKind =
+  | "anchored-menu-overlay"
   | "action-surface"
   | "boolean-form-control"
   | "disclosure-presence"
@@ -29,6 +30,7 @@ export type CurrentVuePrimitiveFamilyKind =
   | "presence-floating-overlay"
   | "range-status"
   | "single-boolean-control"
+  | "timed-floating-overlay"
   | "viewport-measurement";
 
 /** Preserves the common namespace/index bytes while requiring a typed family projection. */

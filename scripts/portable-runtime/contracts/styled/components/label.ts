@@ -19,6 +19,7 @@ export const labelStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Label",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLLabelElement" },
       props: {
         declaration: "interface",
         extends: [

@@ -20,8 +20,8 @@ SSR/hydration, and delayed Teleport projection while Vue remains non-shipping.
 
 Svelte target work follows the accepted Svelte 5.29+ component-and-attachment model. Typed
 `$props`, snippets, context, attachments, reactive Runtime setters, and teardown remain owned by the
-Svelte target home. The current private package deliberately covers only Button, Checkbox, and
-Select.
+Svelte target home. The current private package deliberately covers Button, Carousel, Checkbox,
+Select, Accordion, Dialog, Slider, and Toast.
 
 ## Target Home Ownership
 

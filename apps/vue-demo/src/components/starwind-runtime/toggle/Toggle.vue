@@ -47,7 +47,7 @@ type ToggleDeclaredProps = {
   class?: ClassValue;
   variant?: ToggleProps["variant"];
   size?: ToggleProps["size"];
-} & /* @vue-ignore */ ToggleProps;
+} & /* @vue-ignore */ Omit<ToggleProps, "data-slot">;
 const {
   variant,
   size,

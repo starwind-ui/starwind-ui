@@ -437,6 +437,7 @@ export const comboboxRuntimeAdapterContract = {
         "events",
         "form input",
         "floating parts",
+        "Authored explicit floating targets must be compatible with the active reference's Dialog owner; outside-dialog targets fall back safely",
         "asChild trigger and clear merge requirements",
       ],
       demotionCriteria:
@@ -447,6 +448,7 @@ export const comboboxRuntimeAdapterContract = {
         "scripts/portable-runtime/tests/runtime-adapter-contract.test.ts",
         "scripts/portable-runtime/tests/generate-astro-wrappers.test.ts",
         "scripts/portable-runtime/tests/generate-react-wrappers.test.ts",
+        "packages/runtime/tests/components/combobox/combobox.browser.test.ts",
       ],
     },
   ],

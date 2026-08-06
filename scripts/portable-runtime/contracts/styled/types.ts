@@ -64,6 +64,7 @@ export type StyledComponentContract = {
 };
 
 export type StyledComponentForwardRefContract = {
+  frameworks?: FrameworkTarget[];
   targetType: string;
 };
 
@@ -124,6 +125,7 @@ export type ImportContract =
       frameworks?: FrameworkTarget[];
       importName: string;
       source: string;
+      svg?: SvgAsset;
       type: "default";
     }
   | {
@@ -131,8 +133,25 @@ export type ImportContract =
       importName: string;
       localName?: string;
       source: string;
+      svg?: SvgAsset;
       type: "named";
     };
+
+export type SvgAsset = {
+  attributes: SvgAssetAttribute[];
+  children: SvgAssetElement[];
+  omittedAttributes?: string[];
+};
+
+export type SvgAssetAttribute = {
+  name: string;
+  value: string;
+};
+
+export type SvgAssetElement = {
+  attributes: SvgAssetAttribute[];
+  tag: "path";
+};
 
 export type RenderNode =
   | ComponentNode
@@ -169,6 +188,8 @@ export type ElementNode = {
   leadingComments?: CommentContract[];
   selfClosing?: boolean;
   tag: string;
+  /** Treats `tag` as a runtime binding instead of a literal element name. */
+  tagBinding?: true;
   type: "element";
 };
 

@@ -69,6 +69,23 @@ flowchart TD
 
 See [Portable Runtime](docs/portable-runtime/README.md) for the current implementation details.
 
+## AI integration
+
+Resources for AI:
+
+- [Starwind Skills](https://starwind.dev/docs/getting-started/skills/)
+- [MCP server](https://starwind.dev/docs/getting-started/mcp/)
+- [llms.txt](https://starwind.dev/llms.txt)
+- [llms-full.txt](https://starwind.dev/llms-full.txt)
+
+## Contributing
+
+Please read the [contributing guide](/CONTRIBUTING.md).
+
+## License
+
+Licensed under the [MIT license](/LICENSE).
+
 ## Built with Codex and GPT-5.6
 
 Starwind UI existed before OpenAI Build Week. During the submission period beginning July 13,
@@ -101,20 +118,3 @@ The key decisions and results are visible in the
 [performance comparison](docs/portable-runtime/runtime-performance-comparison.md),
 [package-size comparison](docs/portable-runtime/package-size-comparison.md), and the repository's
 [commit history](https://github.com/starwind-ui/starwind-ui/commits/main/).
-
-## AI integration
-
-Resources for AI:
-
-- [Starwind Skills](https://starwind.dev/docs/getting-started/skills/)
-- [MCP server](https://starwind.dev/docs/getting-started/mcp/)
-- [llms.txt](https://starwind.dev/llms.txt)
-- [llms-full.txt](https://starwind.dev/llms-full.txt)
-
-## Contributing
-
-Please read the [contributing guide](/CONTRIBUTING.md).
-
-## License
-
-Licensed under the [MIT license](/LICENSE).

@@ -565,7 +565,7 @@ function expectSpecializedPrimitiveRegistrySource({
   buildOutputModel,
   buildSpec,
   component,
-  targets = ["astro", "react"],
+  targets,
 }: {
   buildOutputModel: string;
   buildSpec: string;
@@ -582,8 +582,9 @@ function expectSpecializedPrimitiveRegistrySource({
   expect(entry.routeFree).toMatchObject({
     kind: "adapter-output-model",
     strategy: "specialized-adapter-spec",
-    targets,
   });
+  if (targets) expect(entry.routeFree?.targets).toEqual(targets);
+  else expect(entry.routeFree?.targets).toEqual(expect.arrayContaining(["astro", "react"]));
   expect(registrySource).toContain(component.includes("-") ? `"${component}":` : `${component}:`);
   expect(registrySource).toContain("component: entry.component");
   expect(registrySource).toContain(`buildSpec: ${buildSpec}`);
@@ -12865,12 +12866,12 @@ submenuTrigger:
 
     expect(fixturePaths.every((path) => path.startsWith("__future-fixtures/"))).toBe(true);
     expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
-    expect(existsSync(join(process.cwd(), "packages/vue/src/navigation-menu"))).toBe(false);
+    expect(existsSync(join(process.cwd(), "packages/vue/src/navigation-menu"))).toBe(true);
     expect(
       existsSync(
         join(process.cwd(), "apps/vue-demo/src/components/starwind-runtime/navigation-menu"),
       ),
-    ).toBe(false);
+    ).toBe(true);
     expect(existsSync(join(process.cwd(), "packages/solid"))).toBe(false);
     expect(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")).not.toContain(
       "packages/vue",
@@ -12915,7 +12916,7 @@ submenuTrigger:
 
     expect(fixturePaths.every((path) => path.startsWith("__future-fixtures/"))).toBe(true);
     expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
-    expect(existsSync(join(process.cwd(), "packages/vue/src/menu"))).toBe(false);
+    expect(existsSync(join(process.cwd(), "packages/vue/src/menu"))).toBe(true);
     expect(
       existsSync(join(process.cwd(), "apps/vue-demo/src/components/starwind-runtime/menu")),
     ).toBe(false);
@@ -12948,10 +12949,10 @@ submenuTrigger:
 
     expect(fixturePaths.every((path) => path.startsWith("__future-fixtures/"))).toBe(true);
     expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
-    expect(existsSync(join(process.cwd(), "packages/vue/src/combobox"))).toBe(false);
+    expect(existsSync(join(process.cwd(), "packages/vue/src/combobox"))).toBe(true);
     expect(
       existsSync(join(process.cwd(), "apps/vue-demo/src/components/starwind-runtime/combobox")),
-    ).toBe(false);
+    ).toBe(true);
     expect(existsSync(join(process.cwd(), "packages/solid"))).toBe(false);
     expect(readFileSync(join(process.cwd(), "pnpm-workspace.yaml"), "utf8")).not.toContain(
       "packages/vue",

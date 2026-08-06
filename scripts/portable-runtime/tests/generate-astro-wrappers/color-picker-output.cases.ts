@@ -91,6 +91,7 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     );
     expect(tree["ColorPickerDefaultEditor.astro"]).toContain('channel="alpha"');
     expect(tree["ColorPickerDefaultEditor.astro"]).toContain("normalizedSwatches.map");
+    expect(tree["ColorPickerDefaultEditor.astro"]).not.toContain("swatchIndex");
     expect(tree["ColorPickerDefaultEditor.astro"]).toContain("<ColorPickerClear");
     expect(tree["ColorPickerInput.astro"]).toContain("initial={initial?.valueInput.initial}");
     expect(tree["ColorPickerInput.astro"]).toContain("initial={initial?.formatSelect.initial}");
@@ -102,6 +103,7 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(tree["ColorPickerInput.astro"]).toContain('formatContentSize = "md"');
     expect(tree["ColorPickerInput.astro"]).toContain("<SelectContent size={formatContentSize}");
     expect(tree["ColorPickerInput.astro"]).toContain("normalizedFormats.map");
+    expect(tree["ColorPickerInput.astro"]).not.toContain("formatIndex");
     expect(tree["variants.ts"]).toContain("min-h-32 w-full shrink-0");
     expect(tree["variants.ts"]).toContain("max-h-(--sw-floating-available-height)");
     expect(tree["ColorPickerArea.astro"]).toContain("<ColorPickerPrimitive.AreaThumb");

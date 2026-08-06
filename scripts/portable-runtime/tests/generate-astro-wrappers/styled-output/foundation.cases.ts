@@ -270,6 +270,7 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(spinner).toContain('import Loader2 from "@tabler/icons/outline/loader-2.svg"');
   expect(spinner).toContain('role="status"');
   expect(spinner).toContain('aria-label="Loading"');
+  expect(spinner).toContain('"role" | "aria-label" | "mode"');
   expect(spinner).toContain("spinner({ class: className })");
   expect(spinner).toContain('data-slot="spinner"');
   expect(spinnerVariants).toContain("size-4 animate-spin");

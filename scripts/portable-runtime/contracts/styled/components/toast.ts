@@ -430,6 +430,14 @@ export const toastStyledContract: StyledAdapterContract = {
             code: '{ "--gap": gap, "--peek": peek, ...(style ?? {}) } as React.CSSProperties & Record<"--gap" | "--peek", string>',
           },
         },
+        {
+          frameworks: ["vue"],
+          name: "viewportStyle",
+          value: {
+            type: "raw",
+            code: '[{ "--gap": gap, "--peek": peek }, style]',
+          },
+        },
       ],
       render: [
         {

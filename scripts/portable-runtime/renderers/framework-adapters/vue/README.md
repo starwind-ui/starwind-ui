@@ -1,26 +1,36 @@
 # Vue Framework Adapter
 
-This is the internally registered, non-shipping Vue Framework Adapter home. The current target
-generates a private Primitive package surface for Accordion, Alert Dialog, Avatar, Button, Checkbox,
-Checkbox Group, Collapsible, Dialog, Drawer, Dropzone, Field, Fieldset, Form, Input, Input OTP,
-Popover, Progress, Radio, Radio Group, Scroll Area, Select, Slider, Switch, Tabs, Toggle, Toggle
-Group, and the manual Theme facade. Its generated Styled surface is Accordion, Alert Dialog, Avatar,
-Button, Checkbox, Checkbox Group, Collapsible, Dialog, Dropzone, Field, Sheet, Form, Input, Input
-OTP, Popover, Progress, Radio Group, Scroll Area, Select, Slider, Switch, Tabs, Theme Toggle, Toggle,
-and Toggle Group. Every public-support flag remains disabled.
+This is the internally registered, non-shipping Vue Framework Adapter home. It generates the
+private `@starwind-ui/vue` package at version `0.0.0`. Every public-support flag remains disabled.
 
-Those generated Primitive adapters and Styled components are the sole normative evidence for their
-families. Menu, Navigation Menu, and Combobox remain genuinely unsupported and have active,
-explicitly non-normative future tracers for Vue syntax, lifecycle, refs, emits, slots,
-provide/inject, and Teleport. The older Toggle printer fixture remains only as contract-conformance
-evidence; it does not replace or qualify the real generated Toggle package projection. The legacy
-Collapsible printer fixture is isolated to direct printer-unit coverage and is absent from active
-future-tracer classifications, checker output, and the contract gate.
+`inventory.ts` is the authoritative inventory. The current Primitive surface contains Accordion,
+Alert Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Color Picker,
+Combobox, Context Menu, Dialog, Drawer, Dropzone, Field, Fieldset, Form, Input, Input OTP, Menu,
+Navigation Menu, Popover, Preview Card, Progress, Radio, Radio Group, Scroll Area, Select, Sidebar,
+Slider, Switch, Tabs, Toast, Toggle, Toggle Group, Tooltip, and the manual Theme facade.
 
-The target may create deterministic internal `@starwind-ui/vue` package output for the approved
-private subset and may print `__future-fixtures/vue` review fixtures for unsupported components. It
-must not create CLI registry entries, public demo dependencies, install docs, release configuration,
-or public Vue support claims.
+The complete private Styled surface contains 54 portable roots exactly once: Accordion, Alert
+Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Combobox, Color Picker,
+Context Menu, Dialog, Dropzone, Dropdown, Field, Sheet, Form, Hover Card, Input, Input OTP,
+Navigation Menu, Popover, Progress, Radio Group, Scroll Area, Select, Separator, Sidebar, Slider,
+Switch, Tabs, Theme Toggle, Toast, Toggle, Toggle Group, Tooltip, Alert, Aspect Ratio, Badge,
+Breadcrumb, Button Group, Card, Input Group, Item, Kbd, Label, Native Select, Pagination, Prose,
+Skeleton, Spinner, Table, Textarea, and Video. Image is the sole excluded Styled contract because it
+is Astro-only.
+
+Tooltip and Preview Card share the timed-floating projection. Menu uses the composite-menu
+projection. Context Menu composes that menu seam with anchored context facts. Navigation Menu uses
+the shared-viewport projection. Combobox uses the editable-collection projection. Their Styled
+names map to Tooltip, Hover Card, Dropdown, Context Menu, Navigation Menu, and Combobox.
+
+Generated Primitive adapters and Styled components are the normative evidence. Older Menu,
+Navigation Menu, Combobox, and Toggle tracer artifacts remain historical, non-normative review
+fixtures. They do not define target support or package output. The legacy Collapsible printer
+fixture remains isolated printer-unit evidence.
+
+The target may create deterministic private package and Vue demo output. It must not create CLI
+registry entries, public demo dependencies, install docs, release configuration, or public Vue
+support claims.
 
 `public-contract.ts` is the typed, target-local source of truth for Vue 3.5 public naming,
 composition, lifecycle, SSR, hydration, and Teleport projection. It records how framework-neutral
@@ -28,17 +38,24 @@ Runtime Adapter Contract and output-model facts become Vue semantics without add
 to shared contracts. The repository's accepted Vue adapter decision keeps that policy durable while
 this target remains quarantined.
 
-The active private Primitive and Styled subsets are the complete lists above. Run
-`pnpm runtime:generate:vue:test` for deterministic generation and compiler coverage, or
-`pnpm vue:verify` for the package compiler, source/browser suites, built hydration, every-export SSR,
-and release-like distribution checks. The specialized Accordion, Tabs, Field, Slider, Input OTP,
-and Dropzone cohort is pinned by exact export inventories, every-export SSR, six-family built
-hydration with owned-resource disposal accounting, and release-consumer imports. Run
-`pnpm vue-demo:smoke` for the production native-form, keyboard, pointer-geometry, deterministic-file,
-remount, cleanup, and light/dark visual review matrix. Remaining Vue tracers derive model and event
-names from `public-contract.ts`, inspect cancellation synchronously, and use typed `InjectionKey`
-Symbol helpers with descriptive required-context errors. Existing Solid tracers are frozen
-comparisons rather than an active target.
+The lists above are exact private subsets. Run `pnpm runtime:generate:vue:test` for isolated
+path-and-byte generation, compiler coverage, and exact inventory checks. Run `pnpm vue:verify` for
+package typechecking, source and browser tests, built hydration, every-export SSR, and release-like
+distribution checks. Run `pnpm vue-demo:smoke` for production behavior, remount and cleanup
+accounting, plus light and dark visual review. Existing Solid tracers are frozen comparisons rather
+than an active target.
+
+## Portable Styled Closure Verdict
+
+Order 11 closed with a PROCEED depth verdict on 2026-08-06. The Styled Output Model and registered
+target `styled` capability form the small interface. Contracts own component composition and shared
+render facts. This target owns Vue props, attrs, slots, refs, SFC syntax, and deterministic output.
+
+The exact 54-contract inventory, Image exclusion, component-identity scans, deletion and byte
+parity, typechecking, SSR, hydration, browser smoke, visual review, private quarantine, protected
+Astro and React output, bundle guard, and current size guard pass. No closure component adds
+Vue-local behavior, lifecycle, a component printer, or handwritten SFC input. Vue remains private
+and non-shipping while order 12 owns CLI and registry work.
 
 Before expanding this tracer, read `docs/portable-runtime/framework-renderer-authoring.md` for the
 target-local renderer fragment/helper pattern and public-support guardrails.

@@ -1,4 +1,4 @@
-import type { ClassVariantDefinition } from "../../contracts/styled/types.js";
+import type { ClassVariantDefinition, SvgAsset } from "../../contracts/styled/types.js";
 
 export type StyledOutputModel = {
   componentGroups: StyledOutputComponentGroup[];
@@ -39,6 +39,7 @@ export type StyledOutputComponent = {
 };
 
 export type StyledOutputForwardRef = {
+  targetScopes?: StyledOutputTargetScope[];
   targetType: string;
 };
 
@@ -144,6 +145,7 @@ export type StyledOutputImport =
       importName: string;
       kind: "default";
       source: string;
+      svg?: SvgAsset;
       targetScopes?: StyledOutputTargetScope[];
     }
   | {
@@ -151,6 +153,7 @@ export type StyledOutputImport =
       kind: "named";
       localName?: string;
       source: string;
+      svg?: SvgAsset;
       targetScopes?: StyledOutputTargetScope[];
     };
 
@@ -199,6 +202,7 @@ export type StyledOutputElementNode = {
   comments: StyledOutputComment[];
   selfClosing: boolean;
   tag: string;
+  tagBinding?: true;
   type: "element";
 };
 
@@ -208,6 +212,7 @@ export type StyledOutputFragmentNode = {
 };
 
 export type StyledOutputIconNode = {
+  asset?: SvgAsset;
   attrs: StyledOutputAttribute[];
   importName: string;
   type: "icon";

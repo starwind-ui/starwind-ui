@@ -37,6 +37,140 @@ describe("createNavigationMenu", () => {
     expect(getViewport()).toContainElement(getContent("products"));
   });
 
+  it("keeps a connected explicit portal owner across open, close, recreation, and destroy", () => {
+    const root = renderNavigationMenu();
+    const explicitTarget = document.createElement("div");
+    explicitTarget.setAttribute("data-floating-root", "");
+    document.body.append(explicitTarget);
+    const authoredPortal = root.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!;
+    const positioner = getPositioner();
+    let menu = createNavigationMenu(root);
+
+    explicitTarget.append(authoredPortal);
+    menu.setValue("products", { emit: false });
+
+    expect(positioner.parentElement).toBe(explicitTarget);
+    expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+
+    menu.close();
+
+    expect(positioner.parentElement).toBe(authoredPortal);
+    expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+
+    menu.setValue("products", { emit: false });
+
+    expect(positioner.parentElement).toBe(explicitTarget);
+    expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+
+    root.append(authoredPortal);
+    menu.destroy();
+    menu = createNavigationMenu(root);
+    explicitTarget.append(authoredPortal);
+    menu.setValue("products", { emit: false });
+
+    expect(positioner.parentElement).toBe(explicitTarget);
+    expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+
+    menu.destroy();
+
+    expect(positioner.parentElement).toBe(authoredPortal);
+    expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+    expect(explicitTarget.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
+  });
+
+  it("follows its connected authored portal owner while open", () => {
+    const root = renderNavigationMenu();
+    const firstTarget = document.createElement("div");
+    const secondTarget = document.createElement("div");
+    firstTarget.setAttribute("data-floating-root", "");
+    secondTarget.setAttribute("data-floating-root", "");
+    document.body.append(firstTarget, secondTarget);
+    const authoredPortal = root.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!;
+    const positioner = getPositioner();
+    const menu = createNavigationMenu(root);
+
+    firstTarget.append(authoredPortal);
+    menu.setValue("products", { emit: false });
+    secondTarget.append(authoredPortal);
+    menu.setValue("company", { emit: false });
+
+    expect(positioner.parentElement).toBe(secondTarget);
+    expect(firstTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(0);
+    expect(secondTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+    expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
+
+    menu.destroy();
+
+    expect(positioner.parentElement).toBe(authoredPortal);
+    expect(firstTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(0);
+    expect(secondTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+  });
+
+  it("coordinates dialog close when its explicit portal owner is nested", () => {
+    const root = renderNavigationMenu();
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div data-sw-dialog>
+        <button data-sw-dialog-trigger>Open dialog</button>
+        <dialog data-sw-dialog-content data-slot="dialog-content">
+          <div data-custom-container></div>
+        </dialog>
+      </div>
+    `;
+    const dialogRoot = wrapper.firstElementChild as HTMLElement;
+    const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("dialog")!;
+    const customContainer = dialogContent.querySelector<HTMLElement>("[data-custom-container]")!;
+    const authoredPortal = root.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!;
+    const positioner = getPositioner();
+    dialogContent.append(root);
+    document.body.append(dialogRoot);
+    const dialog = createDialog(dialogRoot);
+    const menu = createNavigationMenu(root);
+
+    authoredPortal.setAttribute("data-floating-root", "");
+    customContainer.append(authoredPortal);
+    dialog.open();
+    menu.setValue("products", { emit: false });
+
+    expect(authoredPortal.contains(positioner)).toBe(true);
+    expect(authoredPortal.querySelector("[data-sw-floating-portal]")).not.toBeNull();
+
+    dialog.close();
+
+    expect(menu.getValue()).toBe(null);
+    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
+  it("keeps trigger dialog ownership when the explicit portal owner is outside", () => {
+    const fixture = renderNavigationMenuInDialog();
+    const authoredPortal = fixture.menuRoot.querySelector<HTMLElement>(
+      "[data-sw-nav-menu-portal]",
+    )!;
+    const positioner = getPositioner();
+    const dialog = createDialog(fixture.dialogRoot);
+    const menu = createNavigationMenu(fixture.menuRoot);
+
+    authoredPortal.setAttribute("data-floating-root", "");
+    document.body.append(authoredPortal);
+    dialog.open();
+    menu.setValue("products", { emit: false });
+
+    expect(fixture.dialogContent.contains(positioner)).toBe(true);
+    expect(authoredPortal.contains(positioner)).toBe(false);
+
+    dialog.close();
+
+    expect(menu.getValue()).toBe(null);
+    expect(fixture.dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(positioner.parentElement).toBe(authoredPortal);
+
+    menu.destroy();
+    dialog.destroy();
+  });
+
   it("promotes dialog-owned content and closes it through the owner lifecycle", () => {
     const fixture = renderNavigationMenuInDialog();
     const floatingAction = document.createElement("button");
@@ -955,6 +1089,209 @@ describe("createNavigationMenu", () => {
 
     expect(menu.getValue()).toBe("last");
     expect(document.activeElement).toBe(link);
+  });
+
+  it("adds inserted items to accessibility and keyboard ownership", async () => {
+    const root = renderNavigationMenuWithKeyboard({ orientation: "vertical" });
+    createNavigationMenu(root);
+    const list = root.querySelector<HTMLElement>("[data-sw-nav-menu-list]")!;
+    const inserted = createDynamicNavigationMenuItem("inserted");
+    list.append(inserted);
+    await waitForMicrotasks();
+
+    const first = getTrigger("first");
+    const insertedTrigger = getTrigger("inserted");
+    expect(insertedTrigger.getAttribute("aria-expanded")).toBe("false");
+    expect(insertedTrigger.getAttribute("data-state")).toBe("closed");
+
+    first.focus();
+    first.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "End" }));
+
+    expect(document.activeElement).toBe(insertedTrigger);
+  });
+
+  it("removes deleted items from keyboard ownership", async () => {
+    const root = renderNavigationMenuWithKeyboard({ orientation: "vertical" });
+    createNavigationMenu(root);
+    const lastItem = getTrigger("last").closest<HTMLElement>("[data-sw-nav-menu-item]")!;
+    lastItem.remove();
+    await waitForMicrotasks();
+
+    const first = getTrigger("first");
+    first.focus();
+    first.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "End" }));
+
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("owns inserted pointer behavior once across repeated mutations", async () => {
+    const root = renderNavigationMenuWithKeyboard();
+    root.setAttribute("data-open-delay", "0");
+    const values: Array<string | null> = [];
+    const menu = createNavigationMenu(root, {
+      onValueChange(value) {
+        values.push(value);
+      },
+    });
+    const list = root.querySelector<HTMLElement>("[data-sw-nav-menu-list]")!;
+    const inserted = createDynamicNavigationMenuItem("inserted");
+    list.append(inserted);
+    await waitForMicrotasks();
+
+    for (let index = 0; index < 3; index += 1) {
+      const marker = document.createElement("span");
+      list.append(marker);
+      marker.remove();
+      await waitForMicrotasks();
+    }
+
+    getTrigger("inserted").dispatchEvent(
+      new PointerEvent("pointerenter", { bubbles: false, pointerType: "mouse" }),
+    );
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+
+    expect(menu.getValue()).toBe("inserted");
+    expect(values).toEqual(["inserted"]);
+  });
+
+  it("closes cleanly when the active item is removed", async () => {
+    const root = renderNavigationMenuWithKeyboard();
+    const menu = createNavigationMenu(root);
+    const last = getTrigger("last");
+    const lastItem = last.closest<HTMLElement>("[data-sw-nav-menu-item]")!;
+    last.click();
+    expect(menu.getValue()).toBe("last");
+
+    lastItem.remove();
+    await waitForMicrotasks();
+
+    expect(menu.getValue()).toBe(null);
+    expect(getPopup().getAttribute("data-state")).toBe("closed");
+    expect(getViewport().querySelector('[data-testid="content-last"]')).toBeNull();
+  });
+
+  it("makes collection mutations inert after destroy", async () => {
+    const root = renderNavigationMenuWithKeyboard();
+    const values: Array<string | null> = [];
+    const menu = createNavigationMenu(root, {
+      onValueChange(value) {
+        values.push(value);
+      },
+    });
+    menu.destroy();
+    root
+      .querySelector<HTMLElement>("[data-sw-nav-menu-list]")!
+      .append(createDynamicNavigationMenuItem("inserted"));
+    await waitForMicrotasks();
+
+    const inserted = getTrigger("inserted");
+    inserted.click();
+
+    expect(inserted.getAttribute("aria-expanded")).toBeNull();
+    expect(values).toEqual([]);
+  });
+
+  it("preserves controlled and canceled value changes for inserted items", async () => {
+    const root = renderNavigationMenuWithKeyboard();
+    let cancel = true;
+    const requested: Array<string | null> = [];
+    const menu = createNavigationMenu(root, {
+      value: null,
+      onValueChange(value, details) {
+        requested.push(value);
+        if (cancel) details.cancel();
+      },
+    });
+    root
+      .querySelector<HTMLElement>("[data-sw-nav-menu-list]")!
+      .append(createDynamicNavigationMenuItem("inserted"));
+    await waitForMicrotasks();
+
+    getTrigger("inserted").click();
+    expect(menu.getValue()).toBe(null);
+    expect(requested).toEqual(["inserted"]);
+
+    cancel = false;
+    getTrigger("inserted").click();
+    expect(menu.getValue()).toBe(null);
+    expect(requested).toEqual(["inserted", "inserted"]);
+
+    menu.setValue("inserted", { emit: false });
+    expect(menu.getValue()).toBe("inserted");
+    expect(getTrigger("inserted").getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("adds inserted lists to orientation and collection ownership", async () => {
+    const root = renderNavigationMenuWithKeyboard({ orientation: "vertical" });
+    createNavigationMenu(root);
+    const list = document.createElement("ul");
+    list.setAttribute("data-sw-nav-menu-list", "");
+    list.append(createDynamicNavigationMenuItem("inserted"));
+    root.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!.before(list);
+    await waitForMicrotasks();
+
+    expect(list.getAttribute("data-orientation")).toBe("vertical");
+    const first = getTrigger("first");
+    first.focus();
+    first.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "End" }));
+    expect(document.activeElement).toBe(getTrigger("inserted"));
+  });
+
+  it("activates a controlled value when its item is inserted later", async () => {
+    const root = renderNavigationMenuWithKeyboard();
+    const requested: Array<string | null> = [];
+    const menu = createNavigationMenu(root, {
+      value: "future",
+      onValueChange(value) {
+        requested.push(value);
+      },
+    });
+    expect(menu.getValue()).toBe(null);
+
+    root
+      .querySelector<HTMLElement>("[data-sw-nav-menu-list]")!
+      .append(createDynamicNavigationMenuItem("future"));
+    await waitForMicrotasks();
+
+    const trigger = getTrigger("future");
+    const content = getContent("future");
+    expect(menu.getValue()).toBe("future");
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(trigger.querySelector("[data-sw-nav-menu-icon]")?.getAttribute("data-state")).toBe(
+      "open",
+    );
+    expect(getViewport()).toContainElement(content);
+    expect(requested).toEqual([]);
+  });
+
+  it("restores unchanged controlled intent when an active item is removed and reinserted", async () => {
+    const root = renderNavigationMenuWithKeyboard();
+    const requested: Array<string | null> = [];
+    const menu = createNavigationMenu(root, {
+      value: "last",
+      onValueChange(value) {
+        requested.push(value);
+      },
+    });
+    const activeItem = getTrigger("last").closest<HTMLElement>("[data-sw-nav-menu-item]")!;
+    activeItem.remove();
+    await waitForMicrotasks();
+
+    expect(menu.getValue()).toBe(null);
+    expect(getPopup().getAttribute("data-state")).toBe("closed");
+
+    root
+      .querySelector<HTMLElement>("[data-sw-nav-menu-list]")!
+      .append(createDynamicNavigationMenuItem("last"));
+    await waitForMicrotasks();
+
+    expect(menu.getValue()).toBe("last");
+    expect(getTrigger("last").getAttribute("aria-expanded")).toBe("true");
+    expect(
+      getTrigger("last").querySelector("[data-sw-nav-menu-icon]")?.getAttribute("data-state"),
+    ).toBe("open");
+    expect(getViewport()).toContainElement(getContent("last"));
+    expect(requested).toEqual([]);
   });
 
   it("resolves asChild triggers and keeps disabled child triggers inert", () => {
@@ -2588,6 +2925,22 @@ function renderNavigationMenuWithKeyboard({
   const root = wrapper.firstElementChild as HTMLElement;
   document.body.append(root);
   return root;
+}
+
+function createDynamicNavigationMenuItem(value: string): HTMLElement {
+  const item = document.createElement("li");
+  item.setAttribute("data-sw-nav-menu-item", "");
+  item.setAttribute("data-value", value);
+  item.innerHTML = `
+    <button type="button" data-sw-nav-menu-trigger data-testid="trigger-${value}">
+      ${value}
+      <span data-sw-nav-menu-icon></span>
+    </button>
+    <div data-sw-nav-menu-content data-testid="content-${value}">
+      <a data-sw-nav-menu-link data-testid="${value}-link" href="#${value}">${value} link</a>
+    </div>
+  `;
+  return item;
 }
 
 function renderNavigationMenuWithPopupFocusControls(): HTMLElement {
