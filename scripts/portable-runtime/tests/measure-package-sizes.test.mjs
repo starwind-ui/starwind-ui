@@ -14,6 +14,21 @@ import {
   writePackageSizeReports,
 } from "../measure-package-sizes.mjs";
 
+describe("package-size command prerequisites", () => {
+  it("builds the Runtime and React packages before refresh and check measurements", () => {
+    const rootPackage = JSON.parse(
+      readFileSync(new URL("../../../package.json", import.meta.url), "utf8"),
+    );
+
+    expect(rootPackage.scripts["runtime:size"]).toBe(
+      "pnpm runtime:build && pnpm react:build && node scripts/portable-runtime/measure-package-sizes.mjs",
+    );
+    expect(rootPackage.scripts["runtime:size:check"]).toBe(
+      "pnpm runtime:build && pnpm react:build && node scripts/portable-runtime/measure-package-sizes.mjs --check",
+    );
+  });
+});
+
 describe("contract-generation proof measurement rows", () => {
   it("projects every exact shipping row without exposing release budgets", () => {
     const rows = buildContractGenerationProofMeasurementRows({

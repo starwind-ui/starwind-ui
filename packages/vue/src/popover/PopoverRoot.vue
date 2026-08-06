@@ -18,6 +18,7 @@ import {
   createPopover,
 } from "@starwind-ui/runtime/popover";
 import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
+import { useVueAsChildRuntimeOwner } from "../_internal/as-child";
 
 defineOptions({ inheritAttrs: false });
 
@@ -126,6 +127,7 @@ async function recreateRuntime(): Promise<void> {
   mounted.value = true;
 }
 
+useVueAsChildRuntimeOwner(rootRef, recreateRuntime);
 onMounted(() => {
   setupRuntime();
   mounted.value = true;

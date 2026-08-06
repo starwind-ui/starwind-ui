@@ -1,4 +1,7 @@
 import type { StyledOutputValueExpression } from "../../../styled-output-model/index.js";
+import ts from "typescript";
+
+import { renderVuePropKey } from "./props.js";
 
 export type VueExpressionReference = {
   name: string;
@@ -7,12 +10,18 @@ export type VueExpressionReference = {
 };
 
 export type VueComputedExpression =
-  | { code: string; type: "source" }
+  | { code: string; references?: readonly string[]; type: "source" }
   | { parts: Array<string | VueExpressionReference>; type: "parts" }
   | { type: "shared"; value: StyledOutputValueExpression };
 
+export type VueExpressionBindings = {
+  computed: readonly string[];
+  props: ReadonlyArray<{ sourceName: string; targetName: string }>;
+};
+
 export function projectVueComputedExpression(
   value: StyledOutputValueExpression,
+  bindings?: VueExpressionBindings,
 ): VueComputedExpression {
   if (value.type === "object") {
     const keys = Object.keys(value.entries);
@@ -50,7 +59,64 @@ export function projectVueComputedExpression(
     case "pressed ?? defaultPressed ?? false":
     case 'padding ?? (size === "sm" ? 2.5 : size === "lg" ? 4 : 3)':
     case 'size === "sm" ? 4 : size === "lg" ? 6 : 5':
+    case '({ "--sidebar-width": "18rem" })':
       return { type: "source", code: value.code };
+    case '[{ "--sidebar-width": "18rem", "--sidebar-width-icon": "3.5rem" }, style]':
+      return parts(
+        '[{ "--sidebar-width": "18rem", "--sidebar-width-icon": "3.5rem" }, ',
+        { name: "style", unwrap: false },
+        "]",
+      );
+    case '({ "--skeleton-width": skeletonWidth })':
+      return parts('({ "--skeleton-width": ', ref("skeletonWidth"), " })");
+    case 'width ?? "70%"':
+      return parts({ name: "width", unwrap: false }, ' ?? "70%"');
+    case 'asChild ? "div" : href ? "a" : "button"':
+      return parts(
+        { name: "asChild", unwrap: false },
+        ' ? "div" : ',
+        { name: "href", unwrap: false },
+        ' ? "a" : "button"',
+      );
+    case 'format ?? formats[0] ?? "hex"':
+      return parts(
+        { name: "format", unwrap: false },
+        " ?? ",
+        { name: "formats", unwrap: false },
+        '[0] ?? "hex"',
+      );
+    case "Array.from(new Set(formats))":
+      return parts("Array.from(new Set(", { name: "formats", unwrap: false }, "))");
+    case "requestedFormats.includes(resolvedFormat) ? requestedFormats : [resolvedFormat, ...requestedFormats]":
+      return parts(
+        ref("requestedFormats"),
+        ".includes(",
+        ref("resolvedFormat"),
+        ") ? ",
+        ref("requestedFormats"),
+        " : [",
+        ref("resolvedFormat"),
+        ", ...",
+        ref("requestedFormats"),
+        "]",
+      );
+    case 'swatches.map((swatch) => typeof swatch === "object" && swatch !== null && "value" in swatch ? swatch : { value: swatch, label: String(swatch) })':
+      return parts(
+        { name: "swatches", unwrap: false },
+        '.map((swatch) => typeof swatch === "object" && swatch !== null && "value" in swatch ? swatch : { value: swatch, label: String(swatch) })',
+      );
+    case 'normalizedSwatches.length > 0 ? "true" : "false"':
+      return parts(ref("normalizedSwatches"), '.length > 0 ? "true" : "false"');
+    case '[{ "--gap": gap, "--peek": peek }, style]':
+      return parts(
+        '[{ "--gap": ',
+        { name: "gap", unwrap: false },
+        ', "--peek": ',
+        { name: "peek", unwrap: false },
+        " }, ",
+        { name: "style", unwrap: false },
+        "]",
+      );
     case "asChild ? className : triggerBaseClassName":
       return parts("asChild ? className : ", ref("triggerBaseClassName"));
     case "value ?? defaultValue":
@@ -162,10 +228,270 @@ export function projectVueComputedExpression(
         "}%)` }",
       );
     default:
+      if (bindings) {
+        return { ...projectBindingAwareRawExpression(value.code, bindings), type: "source" };
+      }
       throw new Error(
         `Unsupported Vue computed raw expression ${JSON.stringify(value.code)}. Add an explicit target-local expression projection instead of rewriting source identifiers.`,
       );
   }
+}
+
+function projectBindingAwareRawExpression(
+  code: string,
+  bindings: VueExpressionBindings,
+): { code: string; references: readonly string[] } {
+  const wrapped = `(${code})`;
+  const sourceFile = ts.createSourceFile(
+    "vue-styled-expression.ts",
+    wrapped,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const statement = sourceFile.statements[0];
+  if (!statement || !ts.isExpressionStatement(statement)) {
+    throw new TypeError(`Invalid Vue Styled computed expression ${JSON.stringify(code)}.`);
+  }
+  const rootExpression = ts.isParenthesizedExpression(statement.expression)
+    ? statement.expression.expression
+    : statement.expression;
+  const requiresGrouping = startsWithUngroupedObjectLiteral(rootExpression);
+
+  const propBindings = new Map(
+    bindings.props.map(({ sourceName, targetName }) => [sourceName, targetName]),
+  );
+  const computedBindings = new Set(bindings.computed);
+  const safeGlobals = new Set([
+    "Array",
+    "BigInt",
+    "Boolean",
+    "Date",
+    "Infinity",
+    "JSON",
+    "Map",
+    "Math",
+    "NaN",
+    "Number",
+    "Object",
+    "Promise",
+    "RegExp",
+    "Set",
+    "String",
+    "Symbol",
+    "URL",
+    "URLSearchParams",
+    "undefined",
+  ]);
+  const replacements: Array<{ end: number; start: number; value: string }> = [];
+  const references = new Set<string>();
+  const unresolved = new Set<string>();
+
+  visit(statement.expression, new Set());
+  if (unresolved.size) {
+    throw new TypeError(
+      `Unresolved Vue Styled computed binding${unresolved.size === 1 ? "" : "s"} ${[
+        ...unresolved,
+      ].join(
+        ", ",
+      )} in ${JSON.stringify(code)}. Declare each value as a prop, an earlier computed variable, a local expression binding, or a safe global.`,
+    );
+  }
+
+  let projected = code;
+  for (const replacement of replacements.sort((left, right) => right.start - left.start)) {
+    projected = `${projected.slice(0, replacement.start)}${replacement.value}${projected.slice(
+      replacement.end,
+    )}`;
+  }
+  return {
+    code: requiresGrouping ? `(${projected})` : projected,
+    references: [...references].sort(),
+  };
+
+  function visit(node: ts.Node, localBindings: ReadonlySet<string>): void {
+    if (isRuntimeFunctionLike(node)) {
+      const nestedBindings = new Set(localBindings);
+      if (node.name && ts.isIdentifier(node.name)) {
+        nestedBindings.add(node.name.text);
+      }
+      for (const parameter of node.parameters) {
+        collectBindingName(parameter.name, nestedBindings);
+      }
+      collectFunctionScopedBindings(node, nestedBindings);
+      ts.forEachChild(node, (child) => visit(child, nestedBindings));
+      return;
+    }
+    if (ts.isCatchClause(node)) {
+      const nestedBindings = new Set(localBindings);
+      collectBindingName(node.variableDeclaration?.name, nestedBindings);
+      ts.forEachChild(node, (child) => visit(child, nestedBindings));
+      return;
+    }
+    if (ts.isClassStaticBlockDeclaration(node)) {
+      const nestedBindings = new Set(localBindings);
+      collectVarScopedBindings(node.body, nestedBindings);
+      ts.forEachChild(node, (child) => visit(child, nestedBindings));
+      return;
+    }
+    if (ts.isBlock(node) || ts.isCaseBlock(node)) {
+      const nestedBindings = new Set(localBindings);
+      collectBlockScopedBindings(node, nestedBindings);
+      ts.forEachChild(node, (child) => visit(child, nestedBindings));
+      return;
+    }
+    if (ts.isForStatement(node) || ts.isForInStatement(node) || ts.isForOfStatement(node)) {
+      const nestedBindings = new Set(localBindings);
+      collectLoopScopedBindings(node, nestedBindings);
+      ts.forEachChild(node, (child) => visit(child, nestedBindings));
+      return;
+    }
+    if (ts.isIdentifier(node) && isExpressionReference(node)) {
+      const name = node.text;
+      const start = node.getStart(sourceFile) - 1;
+      const end = node.getEnd() - 1;
+      const propTarget = propBindings.get(name);
+      if (localBindings.has(name)) {
+        // The nearest expression-local binding owns this identifier.
+      } else if (propTarget) {
+        replacements.push({
+          end,
+          start,
+          value: preserveShorthandKey(node, name, propTarget),
+        });
+        references.add(propTarget);
+      } else if (computedBindings.has(name)) {
+        const alreadyUnwrapped =
+          ts.isPropertyAccessExpression(node.parent) &&
+          node.parent.expression === node &&
+          node.parent.name.text === "value";
+        const value = alreadyUnwrapped ? name : `${name}.value`;
+        replacements.push({ end, start, value: preserveShorthandKey(node, name, value) });
+        references.add(name);
+      } else if (!safeGlobals.has(name)) {
+        unresolved.add(name);
+      }
+    }
+    ts.forEachChild(node, (child) => visit(child, localBindings));
+  }
+}
+
+function startsWithUngroupedObjectLiteral(expression: ts.Expression): boolean {
+  if (ts.isObjectLiteralExpression(expression)) return true;
+  if (ts.isAsExpression(expression) || ts.isSatisfiesExpression(expression)) {
+    return startsWithUngroupedObjectLiteral(expression.expression);
+  }
+  return false;
+}
+
+function collectFunctionScopedBindings(
+  node: ts.FunctionLikeDeclaration,
+  bindings: Set<string>,
+): void {
+  if (!node.body) return;
+  collectVarScopedBindings(node.body, bindings);
+}
+
+function collectVarScopedBindings(body: ts.Node, bindings: Set<string>): void {
+  visit(body);
+
+  function visit(candidate: ts.Node): void {
+    if (
+      candidate !== body &&
+      (isRuntimeFunctionLike(candidate) || ts.isClassStaticBlockDeclaration(candidate))
+    ) {
+      return;
+    }
+    if (
+      ts.isVariableDeclaration(candidate) &&
+      ts.isVariableDeclarationList(candidate.parent) &&
+      !(candidate.parent.flags & ts.NodeFlags.BlockScoped)
+    ) {
+      collectBindingName(candidate.name, bindings);
+    }
+    ts.forEachChild(candidate, visit);
+  }
+}
+
+function collectBlockScopedBindings(node: ts.Block | ts.CaseBlock, bindings: Set<string>): void {
+  const statements = ts.isBlock(node)
+    ? node.statements
+    : node.clauses.flatMap((clause) => [...clause.statements]);
+  for (const statement of statements) {
+    if (
+      ts.isVariableStatement(statement) &&
+      statement.declarationList.flags & ts.NodeFlags.BlockScoped
+    ) {
+      for (const declaration of statement.declarationList.declarations) {
+        collectBindingName(declaration.name, bindings);
+      }
+    }
+    if (ts.isClassDeclaration(statement)) collectBindingName(statement.name, bindings);
+    if (ts.isFunctionDeclaration(statement)) collectBindingName(statement.name, bindings);
+  }
+}
+
+function collectLoopScopedBindings(
+  node: ts.ForStatement | ts.ForInStatement | ts.ForOfStatement,
+  bindings: Set<string>,
+): void {
+  const initializer = node.initializer;
+  if (!initializer || !ts.isVariableDeclarationList(initializer)) return;
+  if (!(initializer.flags & ts.NodeFlags.BlockScoped)) return;
+  for (const declaration of initializer.declarations) {
+    collectBindingName(declaration.name, bindings);
+  }
+}
+
+function isRuntimeFunctionLike(node: ts.Node): node is ts.FunctionLikeDeclaration {
+  return ts.isFunctionLike(node) && "body" in node;
+}
+
+function preserveShorthandKey(node: ts.Identifier, sourceName: string, value: string): string {
+  return ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node
+    ? value === sourceName
+      ? sourceName
+      : `${sourceName}: ${value}`
+    : value;
+}
+
+function collectBindingName(name: ts.BindingName | undefined, bindings: Set<string>): void {
+  if (!name) return;
+  if (ts.isIdentifier(name)) {
+    bindings.add(name.text);
+    return;
+  }
+  for (const element of name.elements) {
+    if (ts.isBindingElement(element)) collectBindingName(element.name, bindings);
+  }
+}
+
+function isExpressionReference(node: ts.Identifier): boolean {
+  const parent = node.parent;
+  if (
+    (ts.isPropertyAccessExpression(parent) && parent.name === node) ||
+    (ts.isPropertyAssignment(parent) && parent.name === node) ||
+    (ts.isMethodDeclaration(parent) && parent.name === node) ||
+    (ts.isPropertySignature(parent) && parent.name === node) ||
+    (ts.isTypeReferenceNode(parent) && parent.typeName === node) ||
+    (ts.isTypeQueryNode(parent) && parent.exprName === node) ||
+    (ts.isParameter(parent) && parent.name === node) ||
+    (ts.isVariableDeclaration(parent) && parent.name === node) ||
+    (ts.isBindingElement(parent) && parent.name === node)
+  ) {
+    return false;
+  }
+  return !isInsideTypeNode(node);
+}
+
+function isInsideTypeNode(node: ts.Node): boolean {
+  let current = node.parent;
+  while (current) {
+    if (ts.isTypeNode(current)) return true;
+    if (ts.isExpression(current) || ts.isStatement(current)) return false;
+    current = current.parent;
+  }
+  return false;
 }
 
 export function renderVueComputedExpression(expression: VueComputedExpression): string {
@@ -189,10 +515,10 @@ export function computedExpressionUsesReference(
   expression: VueComputedExpression,
   name: string,
 ): boolean {
-  return (
-    expression.type === "parts" &&
-    expression.parts.some((part) => typeof part !== "string" && part.name === name)
-  );
+  if (expression.type === "source") return expression.references?.includes(name) ?? false;
+  return expression.type === "parts"
+    ? expression.parts.some((part) => typeof part !== "string" && part.name === name)
+    : false;
 }
 
 export function renderVueExpression(value: StyledOutputValueExpression): string {
@@ -205,7 +531,7 @@ export function renderVueExpression(value: StyledOutputValueExpression): string 
       return JSON.stringify(value.value);
     case "object":
       return `{ ${Object.entries(value.entries)
-        .map(([key, entry]) => `${key}: ${renderVueExpression(entry)}`)
+        .map(([key, entry]) => `${renderVuePropKey(key)}: ${renderVueExpression(entry)}`)
         .join(", ")} }`;
     case "raw":
       return value.code;

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -6,11 +6,34 @@ import { spawnSync } from "node:child_process";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { comboboxStyledContract } from "../../contracts/styled/components/combobox.js";
+import { contextMenuStyledContract } from "../../contracts/styled/components/context-menu.js";
+import { dropdownStyledContract } from "../../contracts/styled/components/dropdown.js";
+import { hoverCardStyledContract } from "../../contracts/styled/components/hover-card.js";
+import { navigationMenuStyledContract } from "../../contracts/styled/components/navigation-menu.js";
+import { tooltipStyledContract } from "../../contracts/styled/components/tooltip.js";
+import { renderIndex } from "../../renderers/framework-adapters/vue/styled/index-output.js";
+import { renderVueComponent } from "../../renderers/framework-adapters/vue/styled/render.js";
+import { renderVariants } from "../../renderers/framework-adapters/vue/styled/variants.js";
+import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+
 const FIXTURE_ROOT = path.join(
   process.cwd(),
   "scripts/portable-runtime/tests/generate-vue-wrappers/fixtures/styled-public-contract",
 );
 const VUE_TSC_TIMEOUT_MS = 30_000;
+const MENUS_FLOATING_FIXTURES = [
+  ["Tooltip open model", "invalid-tooltip-open-model.vue", /string.*boolean/s],
+  ["Hover Card open event", "invalid-hover-card-open-event.vue", /PreviewCardOpenChangeDetails/],
+  ["Dropdown open model", "invalid-dropdown-open-model.vue", /string.*boolean/s],
+  [
+    "Context Menu open event",
+    "invalid-context-menu-open-event.vue",
+    /(?:ContextMenu|Menu)OpenChangeDetails/,
+  ],
+  ["Navigation Menu value model", "invalid-navigation-menu-value-model.vue", /number.*string/s],
+  ["Combobox input model", "invalid-combobox-input-model.vue", /number.*string/s],
+] as const;
 
 const INVALID_CONTRACT_CASES = [
   ["button native attributes", "invalid-button-native.vue", /email/],
@@ -152,6 +175,87 @@ describe("generated Vue Styled public contracts", () => {
   });
 });
 
+describe("candidate Vue Styled menus and floating public contracts", () => {
+  let root: string;
+  let outputRoot: string;
+
+  beforeAll(async () => {
+    root = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-styled-menus-floating-"));
+    outputRoot = path.join(root, "styled");
+    await writeCandidateMenusAndFloatingComponents(outputRoot);
+  });
+
+  afterAll(async () => {
+    await rm(root, { force: true, recursive: true });
+  });
+
+  it("projects idiomatic models, detailed events, slots, attrs, and provider-owned updates", async () => {
+    const sources = await Promise.all(
+      [
+        "tooltip/Tooltip.vue",
+        "hover-card/HoverCard.vue",
+        "dropdown/Dropdown.vue",
+        "dropdown/DropdownRadioGroup.vue",
+        "context-menu/ContextMenu.vue",
+        "context-menu/ContextMenuRadioGroup.vue",
+        "navigation-menu/NavigationMenu.vue",
+        "combobox/Combobox.vue",
+      ].map(
+        async (relativePath) =>
+          [relativePath, await readFile(path.join(outputRoot, relativePath), "utf8")] as const,
+      ),
+    );
+    const sourceByPath = Object.fromEntries(sources);
+
+    expect(sourceByPath["tooltip/Tooltip.vue"]).toContain('"update:open"');
+    expect(sourceByPath["hover-card/HoverCard.vue"]).toContain('"openChange":');
+    expect(sourceByPath["dropdown/Dropdown.vue"]).toContain('"closeComplete":');
+    expect(sourceByPath["dropdown/DropdownRadioGroup.vue"]).toContain('"update:modelValue"');
+    expect(sourceByPath["context-menu/ContextMenu.vue"]).toContain('"openChange":');
+    expect(sourceByPath["context-menu/ContextMenuRadioGroup.vue"]).toContain('"valueChange":');
+    expect(sourceByPath["navigation-menu/NavigationMenu.vue"]).toContain('"update:modelValue"');
+    expect(sourceByPath["combobox/Combobox.vue"]).toContain('"update:inputValue"');
+    expect(sourceByPath["combobox/Combobox.vue"]).toContain('"update:open"');
+    expect(sourceByPath["combobox/Combobox.vue"]).toContain('"update:modelValue"');
+
+    for (const [relativePath, source] of sources) {
+      expect(source, relativePath).not.toMatch(
+        /\bon(?:CloseComplete|InputValueChange|OpenChange|ValueChange)\??:/,
+      );
+      expect(source, relativePath).toContain("defineSlots");
+      expect(source, relativePath).toContain('v-bind="attrs"');
+      expect(source, relativePath).not.toContain(".value =");
+    }
+
+    expect(sourceByPath["combobox/Combobox.vue"]).toContain(
+      '@input-value-change="handleInputValueChange"',
+    );
+    expect(sourceByPath["combobox/Combobox.vue"]).toMatch(
+      /function handleInputValueChange[\s\S]*emit\("inputValueChange", inputValue, detail\);/,
+    );
+  });
+
+  it("accepts valid APIs and rejects invalid model and detailed-event payloads", async () => {
+    const valid = await runVueTypecheck(
+      root,
+      outputRoot,
+      ["valid-menus-floating.vue"],
+      "valid-menus-floating-public-contract",
+    );
+    expect(valid.status, valid.diagnostics).toBe(0);
+
+    const invalid = await runVueTypecheck(
+      root,
+      outputRoot,
+      MENUS_FLOATING_FIXTURES.map(([, file]) => file),
+      "invalid-menus-floating-public-contract",
+    );
+
+    expect(invalid.status, invalid.diagnostics).not.toBe(0);
+    assertExpectedInvalidVueDiagnostics(invalid.diagnostics, root, MENUS_FLOATING_FIXTURES);
+  });
+});
+
 type ExpectedInvalidVueDiagnostic = readonly [
   caseName: string,
   fixtureName: string,
@@ -251,6 +355,7 @@ async function runVueTypecheck(
           moduleResolution: "Bundler",
           noEmit: true,
           paths: {
+            "#candidate/*": [`${outputRoot.split(path.sep).join("/")}/*`],
             "#styled/*": [`${outputRoot.split(path.sep).join("/")}/*/index.ts`],
             "@starwind-ui/runtime": ["packages/runtime/src/index.ts"],
             "@starwind-ui/runtime/theme": ["packages/runtime/src/theme/theme.ts"],
@@ -291,4 +396,37 @@ async function runVueTypecheck(
     diagnostics: `${result.stdout ?? ""}${result.stderr ?? ""}`,
     status: result.status,
   };
+}
+
+async function writeCandidateMenusAndFloatingComponents(outputRoot: string): Promise<void> {
+  const selections = [
+    [tooltipStyledContract, ["Tooltip"]],
+    [hoverCardStyledContract, ["HoverCard"]],
+    [dropdownStyledContract, ["Dropdown", "DropdownRadioGroup"]],
+    [contextMenuStyledContract, ["ContextMenu", "ContextMenuRadioGroup"]],
+    [navigationMenuStyledContract, ["NavigationMenu", "NavigationMenuPositioner"]],
+    [comboboxStyledContract, ["Combobox"]],
+  ] as const;
+
+  for (const [contract, exportNames] of selections) {
+    const group = projectStyledOutputComponentGroup(contract);
+    const directory = path.join(outputRoot, group.component);
+    await mkdir(directory, { recursive: true });
+    for (const exportName of exportNames) {
+      const component = group.components.find((candidate) => candidate.exportName === exportName);
+      if (!component) throw new Error(`Missing candidate Vue Styled ${exportName}.`);
+      await writeFile(
+        path.join(directory, `${exportName}.vue`),
+        renderVueComponent(group, component, {
+          directory,
+          outputRoot,
+          primitiveImportBase: "@starwind-ui/vue",
+          primitiveOutputRoot: path.join(process.cwd(), "packages/vue/src"),
+        }),
+        "utf8",
+      );
+    }
+    await writeFile(path.join(directory, "index.ts"), renderIndex(group), "utf8");
+    await writeFile(path.join(directory, "variants.ts"), renderVariants(group), "utf8");
+  }
 }

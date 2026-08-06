@@ -20,15 +20,19 @@ import {
 } from "../../renderers/framework-adapters/vue/inventory.js";
 
 describe("internal Vue package foundation", () => {
-  it("derives every executable Vue projection from one typed inventory", () => {
+  it("derives every executable Vue projection from one typed inventory", async () => {
     expect(vueAdapterInventory.runtimePrimitives.map(({ component }) => component)).toEqual([
       "accordion",
       "alert-dialog",
       "avatar",
       "button",
+      "carousel",
       "checkbox",
       "checkbox-group",
       "collapsible",
+      "color-picker",
+      "combobox",
+      "context-menu",
       "dialog",
       "drawer",
       "dropzone",
@@ -37,17 +41,23 @@ describe("internal Vue package foundation", () => {
       "form",
       "input",
       "input-otp",
+      "menu",
+      "navigation-menu",
       "popover",
+      "preview-card",
       "progress",
       "radio",
       "radio-group",
       "scroll-area",
       "select",
+      "sidebar",
       "slider",
       "switch",
       "tabs",
+      "toast",
       "toggle",
       "toggle-group",
+      "tooltip",
     ]);
     expect(vueAdapterInventory.manualFacades.map(({ component }) => component)).toEqual(["theme"]);
     expect(vuePrimitiveComponents).toEqual([
@@ -55,9 +65,13 @@ describe("internal Vue package foundation", () => {
       "alert-dialog",
       "avatar",
       "button",
+      "carousel",
       "checkbox",
       "checkbox-group",
       "collapsible",
+      "color-picker",
+      "combobox",
+      "context-menu",
       "dialog",
       "drawer",
       "dropzone",
@@ -66,17 +80,23 @@ describe("internal Vue package foundation", () => {
       "form",
       "input",
       "input-otp",
+      "menu",
+      "navigation-menu",
       "popover",
+      "preview-card",
       "progress",
       "radio",
       "radio-group",
       "scroll-area",
       "select",
+      "sidebar",
       "slider",
       "switch",
       "tabs",
+      "toast",
       "toggle",
       "toggle-group",
+      "tooltip",
       "theme",
     ]);
     expect(vueStyledComponents).toEqual([
@@ -84,38 +104,79 @@ describe("internal Vue package foundation", () => {
       "alert-dialog",
       "avatar",
       "button",
+      "carousel",
       "checkbox",
       "checkbox-group",
       "collapsible",
+      "combobox",
+      "color-picker",
+      "context-menu",
       "dialog",
       "dropzone",
+      "dropdown",
       "field",
       "sheet",
       "form",
+      "hover-card",
       "input",
       "input-otp",
+      "navigation-menu",
       "popover",
       "progress",
       "radio-group",
       "scroll-area",
       "select",
       "separator",
+      "sidebar",
       "slider",
       "switch",
       "tabs",
       "theme-toggle",
+      "toast",
       "toggle",
       "toggle-group",
+      "tooltip",
+      "alert",
+      "aspect-ratio",
+      "badge",
+      "breadcrumb",
+      "button-group",
+      "card",
+      "input-group",
+      "item",
+      "kbd",
+      "label",
+      "native-select",
+      "pagination",
+      "prose",
+      "skeleton",
+      "spinner",
+      "table",
+      "textarea",
+      "video",
     ]);
+    const targetReadme = (
+      await readFile("scripts/portable-runtime/renderers/framework-adapters/vue/README.md", "utf8")
+    ).replace(/\s+/g, " ");
+    expect(targetReadme).toContain(
+      "The current Primitive surface contains Accordion, Alert Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Color Picker, Combobox, Context Menu, Dialog, Drawer, Dropzone, Field, Fieldset, Form, Input, Input OTP, Menu, Navigation Menu, Popover, Preview Card, Progress, Radio, Radio Group, Scroll Area, Select, Sidebar, Slider, Switch, Tabs, Toast, Toggle, Toggle Group, Tooltip, and the manual Theme facade.",
+    );
+    expect(targetReadme).toContain(
+      "The complete private Styled surface contains 54 portable roots exactly once: Accordion, Alert Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Combobox, Color Picker, Context Menu, Dialog, Dropzone, Dropdown, Field, Sheet, Form, Hover Card, Input, Input OTP, Navigation Menu, Popover, Progress, Radio Group, Scroll Area, Select, Separator, Sidebar, Slider, Switch, Tabs, Theme Toggle, Toast, Toggle, Toggle Group, Tooltip, Alert, Aspect Ratio, Badge, Breadcrumb, Button Group, Card, Input Group, Item, Kbd, Label, Native Select, Pagination, Prose, Skeleton, Spinner, Table, Textarea, and Video. Image is the sole excluded Styled contract because it is Astro-only.",
+    );
     expect(vuePackageSubpaths.map(({ subpath }) => subpath)).toEqual([
       ".",
       "./accordion",
       "./alert-dialog",
       "./avatar",
       "./button",
+      "./carousel",
       "./checkbox",
       "./checkbox-group",
       "./collapsible",
+      "./color-picker",
+      "./combobox",
+      "./context-menu",
       "./dialog",
       "./drawer",
       "./dropzone",
@@ -124,17 +185,23 @@ describe("internal Vue package foundation", () => {
       "./form",
       "./input",
       "./input-otp",
+      "./menu",
+      "./navigation-menu",
       "./popover",
+      "./preview-card",
       "./progress",
       "./radio",
       "./radio-group",
       "./scroll-area",
       "./select",
+      "./sidebar",
       "./slider",
       "./switch",
       "./tabs",
+      "./toast",
       "./toggle",
       "./toggle-group",
+      "./tooltip",
       "./theme",
     ]);
     expect(vuePackageExports).toEqual(
@@ -146,14 +213,20 @@ describe("internal Vue package foundation", () => {
     expect(vueGeneratedSourceFiles).toContain("accordion/AccordionRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("tabs/TabsRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("select/SelectRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("sidebar/SidebarProvider.vue");
     expect(vueGeneratedSourceFiles).toContain("slider/SliderRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("checkbox-group/CheckboxGroupRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("collapsible/CollapsibleRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("color-picker/ColorPickerRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("combobox/ComboboxRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("context-menu/ContextMenuRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("dialog/DialogRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("drawer/DrawerRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("fieldset/FieldsetRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("form/FormRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("input/InputRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("menu/MenuRoot.vue");
+    expect(vueGeneratedSourceFiles).toContain("navigation-menu/NavigationMenuRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("popover/PopoverRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("toggle/ToggleRoot.vue");
     expect(vueGeneratedSourceFiles).toContain("toggle-group/ToggleGroupRoot.vue");
@@ -269,5 +342,15 @@ describe("internal Vue package foundation", () => {
     expect(rootPackage.scripts["runtime:generate:all"]).not.toContain("vue");
     expect(rootPackage.scripts["release:prepare"]).not.toContain("vue");
     expect(rootPackage.scripts["release:artifacts"]).not.toContain("vue");
+
+    const changesetConfig = JSON.parse(await readFile(".changeset/config.json", "utf8"));
+    expect(changesetConfig.ignore).toEqual(
+      expect.arrayContaining(["vue-demo", "@starwind-ui/vue"]),
+    );
+
+    const vueDemoPackage = JSON.parse(await readFile("apps/vue-demo/package.json", "utf8"));
+    expect(vueDemoPackage.private).toBe(true);
+    const cliPackage = JSON.parse(await readFile("packages/cli/package.json", "utf8"));
+    expect(JSON.stringify(cliPackage)).not.toContain("@starwind-ui/vue");
   });
 });

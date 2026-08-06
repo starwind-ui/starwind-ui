@@ -210,6 +210,7 @@ class NavigationMenuController implements NavigationMenuInstance {
   private readonly closeOnOutsideInteract: boolean;
   private readonly controlled: boolean;
   private readonly elements: NavigationMenuElements;
+  private readonly itemAbortControllers = new Map<HTMLElement, AbortController>();
   private readonly requestedFloatingAlign: FloatingAlign;
   private readonly requestedFloatingSide: FloatingSide;
   private readonly onValueChange?: (
@@ -217,12 +218,15 @@ class NavigationMenuController implements NavigationMenuInstance {
     details: NavigationMenuValueChangeDetails,
   ) => void;
   private readonly openDelay: number;
+  private controlledValueIntent: NavigationMenuValue = null;
   private readonly valueChangeSubscribers = new Set<
     (details: NavigationMenuValueChangeDetails) => void
   >();
   private activeIndex: number | null = null;
   private activeTrigger: HTMLElement | null = null;
   private closeTimer: number | null = null;
+  private collectionObserver: MutationObserver | null = null;
+  private collectionRefreshQueued = false;
   private dismissalHandle: OverlayDismissalHandle | null = null;
   private destroyed = false;
   private floatingPositioner: FloatingPositioner | null = null;
@@ -250,7 +254,7 @@ class NavigationMenuController implements NavigationMenuInstance {
       canPromote: () => this.valueState !== null,
       root,
       getPortalElement: () => this.getPortalElement(),
-      getPortalTarget: () => resolveFloatingPortalTarget(this.activeTrigger),
+      getPortalTarget: () => this.getPortalTarget(),
       onOwnerCloseRequest: () => {
         const request: ValueRequest = {
           reason: "imperative-action",
@@ -286,11 +290,14 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.onValueChange = options.onValueChange;
     this.openDelay =
       options.openDelay ?? readNumberAttribute(root, NAV_MENU_OPEN_DELAY_ATTRIBUTE, 50);
-    this.valueState = this.resolveKnownValue(getInitialValue(root, options, this.controlled));
+    const initialValue = getInitialValue(root, options, this.controlled);
+    this.controlledValueIntent = this.controlled ? initialValue : null;
+    this.valueState = this.resolveKnownValue(initialValue);
 
     this.setupAccessibility();
     this.bindEvents();
     this.applyValueState(this.valueState);
+    this.observeCollections();
   }
 
   close(): void {
@@ -301,6 +308,11 @@ class NavigationMenuController implements NavigationMenuInstance {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.collectionObserver?.disconnect();
+    this.collectionObserver = null;
+    this.collectionRefreshQueued = false;
+    this.itemAbortControllers.forEach((controller) => controller.abort());
+    this.itemAbortControllers.clear();
     this.clearCloseTimer();
     this.clearOpenTimer();
     this.clearPendingKeyboardOpenFocus();
@@ -312,6 +324,7 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.floatingPositioner?.destroy();
     this.floatingPositioner = null;
     this.valueChangeSubscribers.clear();
+    this.controlledValueIntent = null;
     this.valueState = null;
     this.renderState(null);
     this.portalSession.destroy();
@@ -335,6 +348,7 @@ class NavigationMenuController implements NavigationMenuInstance {
       trigger: options.trigger,
     };
 
+    if (this.controlled) this.controlledValueIntent = value;
     this.valueState = this.resolveKnownValue(value);
     this.applyValueState(this.valueState);
     this.focusPendingKeyboardOpenControl(options);
@@ -437,81 +451,7 @@ class NavigationMenuController implements NavigationMenuInstance {
       { signal },
     );
 
-    this.elements.items.forEach((item) => {
-      item.element.addEventListener(
-        "pointerenter",
-        (event) => {
-          if (!isMousePointer(event) || item.trigger || item.content) return;
-          this.closeFromLinkOnlyHover(item, event);
-        },
-        { signal },
-      );
-
-      item.trigger?.addEventListener(
-        "click",
-        (event) => {
-          if (!item.trigger) return;
-          if (isDisabledElement(item.trigger)) {
-            event.preventDefault();
-            return;
-          }
-          event.preventDefault();
-          this.requestValue(this.getTriggerPressValue(item), {
-            event,
-            reason: "trigger-press",
-            trigger: item.trigger,
-          });
-        },
-        { signal },
-      );
-
-      item.trigger?.addEventListener(
-        "keydown",
-        (event) => {
-          this.handleTriggerKeyDown(item, event);
-        },
-        { signal },
-      );
-
-      item.trigger?.addEventListener(
-        "pointerenter",
-        (event) => {
-          if (!item.trigger || !isMousePointer(event) || isDisabledElement(item.trigger)) return;
-          this.openFromHover(item, event);
-        },
-        { signal },
-      );
-
-      item.trigger?.addEventListener(
-        "pointerleave",
-        (event) => {
-          if (!isMousePointer(event)) return;
-          if (this.isPointerMovingWithinMenu(event)) {
-            this.clearCloseTimer();
-            return;
-          }
-
-          this.closeAfterDelay(event);
-        },
-        { signal },
-      );
-
-      item.links.forEach((link) => {
-        link.addEventListener(
-          "click",
-          (event) => {
-            if (this.valueState === null || !shouldCloseOnLinkActivation(link)) return;
-
-            this.requestValue(null, {
-              event,
-              reason: "link-press",
-              trigger: link,
-            });
-          },
-          { signal },
-        );
-      });
-    });
+    this.elements.items.forEach((item) => this.bindItemEvents(item));
 
     this.getHoverElements().forEach((element) => {
       element.addEventListener(
@@ -537,6 +477,145 @@ class NavigationMenuController implements NavigationMenuInstance {
         { signal },
       );
     });
+  }
+
+  private bindItemEvents(item: NavigationMenuItem): void {
+    const existing = this.itemAbortControllers.get(item.element);
+    existing?.abort();
+    const controller = new AbortController();
+    this.itemAbortControllers.set(item.element, controller);
+    const { signal } = controller;
+
+    item.element.addEventListener(
+      "pointerenter",
+      (event) => {
+        if (!isMousePointer(event) || item.trigger || item.content) return;
+        this.closeFromLinkOnlyHover(item, event);
+      },
+      { signal },
+    );
+
+    item.trigger?.addEventListener(
+      "click",
+      (event) => {
+        if (!item.trigger) return;
+        if (isDisabledElement(item.trigger)) {
+          event.preventDefault();
+          return;
+        }
+        event.preventDefault();
+        this.requestValue(this.getTriggerPressValue(item), {
+          event,
+          reason: "trigger-press",
+          trigger: item.trigger,
+        });
+      },
+      { signal },
+    );
+
+    item.trigger?.addEventListener(
+      "keydown",
+      (event) => {
+        this.handleTriggerKeyDown(item, event);
+      },
+      { signal },
+    );
+
+    item.trigger?.addEventListener(
+      "pointerenter",
+      (event) => {
+        if (!item.trigger || !isMousePointer(event) || isDisabledElement(item.trigger)) return;
+        this.openFromHover(item, event);
+      },
+      { signal },
+    );
+
+    item.trigger?.addEventListener(
+      "pointerleave",
+      (event) => {
+        if (!isMousePointer(event)) return;
+        if (this.isPointerMovingWithinMenu(event)) {
+          this.clearCloseTimer();
+          return;
+        }
+
+        this.closeAfterDelay(event);
+      },
+      { signal },
+    );
+
+    item.links.forEach((link) => {
+      link.addEventListener(
+        "click",
+        (event) => {
+          if (this.valueState === null || !shouldCloseOnLinkActivation(link)) return;
+
+          this.requestValue(null, {
+            event,
+            reason: "link-press",
+            trigger: link,
+          });
+        },
+        { signal },
+      );
+    });
+  }
+
+  private observeCollections(): void {
+    this.collectionObserver = new MutationObserver(() => {
+      if (this.destroyed || this.collectionRefreshQueued) return;
+      this.collectionRefreshQueued = true;
+      queueMicrotask(() => {
+        this.collectionRefreshQueued = false;
+        if (!this.destroyed) this.refreshCollections();
+      });
+    });
+    this.collectionObserver.observe(this.root, { childList: true, subtree: true });
+  }
+
+  private refreshCollections(): void {
+    const previousItems = this.elements.items;
+    const previousByElement = new Map(previousItems.map((item) => [item.element, item]));
+    const itemElements = queryOwnElements(this.root, `[${NAV_MENU_ITEM_ATTRIBUTE}]`);
+    const nextItems = itemElements.map((element, index) => {
+      const previous = previousByElement.get(element);
+      const candidate = getNavigationMenuItem(this.root, element, index, previous);
+      return previous && navigationMenuItemsEqual(previous, candidate) ? previous : candidate;
+    });
+    const nextLists = queryOwnElements(this.root, `[${NAV_MENU_LIST_ATTRIBUTE}]`);
+    if (
+      arraysEqualByIdentity(previousItems, nextItems) &&
+      arraysEqualByIdentity(this.elements.lists, nextLists)
+    ) {
+      return;
+    }
+
+    const nextByElement = new Map(nextItems.map((item) => [item.element, item]));
+    previousItems.forEach((item) => {
+      if (nextByElement.get(item.element) === item) return;
+      this.itemAbortControllers.get(item.element)?.abort();
+      this.itemAbortControllers.delete(item.element);
+      if (!item.element.isConnected && item.content?.parentElement === this.elements.viewport) {
+        item.content.remove();
+      }
+    });
+
+    this.elements.items = nextItems;
+    this.elements.lists = nextLists;
+    this.setupAccessibility();
+    nextItems.forEach((item) => {
+      if (previousByElement.get(item.element) !== item) this.bindItemEvents(item);
+    });
+
+    const nextValue = this.resolveKnownValue(
+      this.controlled ? this.controlledValueIntent : this.valueState,
+    );
+    if (nextValue !== this.valueState) {
+      this.valueState = nextValue;
+      this.applyValueState(nextValue);
+    } else {
+      this.renderState(nextValue);
+    }
   }
 
   private handleTriggerKeyDown(item: NavigationMenuItem, event: KeyboardEvent): void {
@@ -1347,6 +1426,13 @@ class NavigationMenuController implements NavigationMenuInstance {
     return this.elements.positioner ?? this.elements.popup;
   }
 
+  private getPortalTarget(): HTMLElement {
+    const portalElement = this.getPortalElement();
+    return resolveFloatingPortalTarget(this.activeTrigger, {
+      explicitReferences: [this.elements.portal, portalElement],
+    });
+  }
+
   private async positionPopup(): Promise<unknown> {
     if (this.valueState === null) return undefined;
 
@@ -1646,12 +1732,21 @@ function getNavigationMenuItem(
   root: HTMLElement,
   element: HTMLElement,
   index: number,
+  previous?: NavigationMenuItem,
 ): NavigationMenuItem {
-  const content = queryItemElement(root, element, `[${NAV_MENU_CONTENT_ATTRIBUTE}]`);
-  const placeholder = content
-    ? document.createComment("navigation-menu-content-placeholder")
-    : null;
-  if (content && placeholder) {
+  const queriedContent = queryItemElement(root, element, `[${NAV_MENU_CONTENT_ATTRIBUTE}]`);
+  const content =
+    queriedContent ??
+    (previous?.content?.parentElement?.hasAttribute(NAV_MENU_VIEWPORT_ATTRIBUTE)
+      ? previous.content
+      : null);
+  const placeholder =
+    content === previous?.content
+      ? previous.contentPlaceholder
+      : content
+        ? document.createComment("navigation-menu-content-placeholder")
+        : null;
+  if (content && placeholder && placeholder !== previous?.contentPlaceholder) {
     content.parentNode?.insertBefore(placeholder, content);
     rememberUnsupportedNestedNavigationMenuRoots(content);
   }
@@ -1669,6 +1764,22 @@ function getNavigationMenuItem(
       element.getAttribute(NAV_MENU_VALUE_ATTRIBUTE) ??
       `${ensureId(root, "sw-nav-menu")}-item-${index + 1}`,
   };
+}
+
+function navigationMenuItemsEqual(first: NavigationMenuItem, second: NavigationMenuItem): boolean {
+  return (
+    first.content === second.content &&
+    first.contentPlaceholder === second.contentPlaceholder &&
+    first.element === second.element &&
+    first.icon === second.icon &&
+    first.trigger === second.trigger &&
+    first.value === second.value &&
+    arraysEqualByIdentity(first.links, second.links)
+  );
+}
+
+function arraysEqualByIdentity<T>(first: T[], second: T[]): boolean {
+  return first.length === second.length && first.every((value, index) => value === second[index]);
 }
 
 function rememberUnsupportedNestedNavigationMenuRoots(content: HTMLElement): void {

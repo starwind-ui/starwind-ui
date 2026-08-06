@@ -18,7 +18,9 @@ export const spinnerStyledContract: StyledAdapterContract = {
         { importName: "Loader2", source: "@tabler/icons/outline/loader-2.svg", type: "default" },
       ],
       props: {
-        extends: [{ type: "omitHtmlAttributes", element: "svg", keys: ["role", "aria-label"] }],
+        extends: [
+          { type: "omitHtmlAttributes", element: "svg", keys: ["role", "aria-label", "mode"] },
+        ],
       },
       destructure: {
         props: [{ name: "class", alias: "className" }],

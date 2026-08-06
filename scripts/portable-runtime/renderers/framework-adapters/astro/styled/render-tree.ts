@@ -74,11 +74,12 @@ function renderRepeatNode(
   level: number,
   primitiveAliases: Record<string, string>,
 ): string {
-  const indexParameter = node.index ? `, ${node.index}` : "";
+  const renderedChildren = renderNodes(node.children, level + 2, primitiveAliases);
+  const indexParameter = node.index && renderedChildren.includes(node.index) ? `, ${node.index}` : "";
 
   return `${indent(level)}{
 ${indent(level + 1)}${node.each}.map((${node.item}${indexParameter}) => (
-${renderNodes(node.children, level + 2, primitiveAliases)}
+${renderedChildren}
 ${indent(level + 1)}))
 ${indent(level)}}`;
 }

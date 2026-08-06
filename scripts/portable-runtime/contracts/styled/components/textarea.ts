@@ -29,6 +29,7 @@ export const textareaStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Textarea",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLTextAreaElement" },
       props: {
         declaration: "interface",
         extends: [

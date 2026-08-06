@@ -55,7 +55,7 @@ describe("Color Picker Runtime Adapter Contract", () => {
       props: ["form", "name", "required", "value"],
     });
     expect(colorPickerRuntimeAdapterContract.escapeHatches?.[0]).toMatchObject({
-      affectedFrameworks: ["astro", "react"],
+      affectedFrameworks: ["astro", "react", "vue"],
     });
     expect(runtimeAdapterContracts.map((contract) => contract.component)).toContain("color-picker");
     expect(validateRuntimeAdapterContracts([colorPickerRuntimeAdapterContract])).toEqual([]);

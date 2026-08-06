@@ -1,17 +1,17 @@
-import path from 'node:path';
+import path from "node:path";
 
-import { getRelativeImportPath } from '../../../shared.js';
+import { getRelativeImportPath } from "../../../shared.js";
 import type {
   StyledOutputComponent,
   StyledOutputComponentGroup,
   StyledOutputImport,
-} from '../../../styled-output-model/index.js';
-import type { RuntimeImportRewriteContext } from '../../../styled-runtime-imports.js';
-import { rewriteRuntimeImportSource } from '../../../styled-runtime-imports.js';
-import { collectComponentVariants, renderComposedComponentImports } from './component-discovery.js';
-import { REACT_FRAMEWORK } from './constants.js';
-import { isForFramework } from './formatting.js';
-import { collectPrimitiveComponents, getReactPrimitiveAliases } from './primitive-helpers.js';
+} from "../../../styled-output-model/index.js";
+import type { RuntimeImportRewriteContext } from "../../../styled-runtime-imports.js";
+import { rewriteRuntimeImportSource } from "../../../styled-runtime-imports.js";
+import { collectComponentVariants, renderComposedComponentImports } from "./component-discovery.js";
+import { REACT_FRAMEWORK } from "./constants.js";
+import { isForFramework } from "./formatting.js";
+import { collectPrimitiveComponents, getReactPrimitiveAliases } from "./primitive-helpers.js";
 
 export function renderComponentImports(
   group: StyledOutputComponentGroup,
@@ -21,12 +21,17 @@ export function renderComponentImports(
   primitiveOutputRoot: string,
   primitiveImportBase: string | undefined,
   runtimeImportContext: RuntimeImportRewriteContext,
+  usesReactNamespace: boolean,
 ): string {
-  const imports: string[] = [
-    component.client?.effects || component.forwardRef
-      ? 'import * as React from "react";'
-      : 'import type * as React from "react";',
-  ];
+  const imports: string[] = [];
+  if (usesReactNamespace) {
+    imports.push(
+      component.client?.effects ||
+        (component.forwardRef && isForFramework(component.forwardRef, REACT_FRAMEWORK))
+        ? 'import * as React from "react";'
+        : 'import type * as React from "react";',
+    );
+  }
   const usesVariantProps = component.props?.extends?.some(
     (propExtend) =>
       isForFramework(propExtend, REACT_FRAMEWORK) && propExtend.kind === "variant-props",

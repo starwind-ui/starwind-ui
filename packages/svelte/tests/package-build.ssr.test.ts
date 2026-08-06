@@ -8,10 +8,12 @@ import { promisify } from "node:util";
 import * as SveltePackage from "@starwind-ui/svelte";
 import * as AccordionPackage from "@starwind-ui/svelte/accordion";
 import * as ButtonPackage from "@starwind-ui/svelte/button";
+import * as CarouselPackage from "@starwind-ui/svelte/carousel";
 import * as CheckboxPackage from "@starwind-ui/svelte/checkbox";
 import * as DialogPackage from "@starwind-ui/svelte/dialog";
 import * as SelectPackage from "@starwind-ui/svelte/select";
 import * as SliderPackage from "@starwind-ui/svelte/slider";
+import * as ToastPackage from "@starwind-ui/svelte/toast";
 import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -29,20 +31,24 @@ afterEach(async () => {
 const componentPackages = {
   accordion: AccordionPackage,
   button: ButtonPackage,
+  carousel: CarouselPackage,
   checkbox: CheckboxPackage,
   dialog: DialogPackage,
   select: SelectPackage,
   slider: SliderPackage,
+  toast: ToastPackage,
 } as const;
 
 describe("private Svelte package build", () => {
   it("resolves the root and component subpath exports from processed output", () => {
     expect(SveltePackage.AccordionRoot).toBe(AccordionPackage.AccordionRoot);
     expect(SveltePackage.ButtonRoot).toBe(ButtonPackage.ButtonRoot);
+    expect(SveltePackage.CarouselRoot).toBe(CarouselPackage.CarouselRoot);
     expect(SveltePackage.CheckboxRoot).toBe(CheckboxPackage.CheckboxRoot);
     expect(SveltePackage.DialogRoot).toBe(DialogPackage.DialogRoot);
     expect(SveltePackage.SelectRoot).toBe(SelectPackage.SelectRoot);
     expect(SveltePackage.SliderRoot).toBe(SliderPackage.SliderRoot);
+    expect(SveltePackage.ToastRoot).toBe(ToastPackage.ToastRoot);
   });
 
   it("emits processed declarations and external Svelte imports for every private subpath", async () => {
@@ -55,11 +61,13 @@ describe("private Svelte package build", () => {
     expect(Object.keys(manifest.exports)).toEqual([
       ".",
       "./button",
+      "./carousel",
       "./checkbox",
       "./select",
       "./accordion",
       "./dialog",
       "./slider",
+      "./toast",
     ]);
     expect(manifest.peerDependencies.svelte).toBe(">=5.29.0");
     expect(manifest.sideEffects).toBe(false);
@@ -73,7 +81,7 @@ describe("private Svelte package build", () => {
       ),
     );
 
-    for (const component of ["accordion", "dialog", "slider"] as const) {
+    for (const component of ["accordion", "carousel", "dialog", "slider", "toast"] as const) {
       const rootName = `${component[0]?.toUpperCase()}${component.slice(1)}Root.svelte`;
       const source = await readFile(`dist/${component}/${rootName}`, "utf8");
       expect(source, component).toMatch(/from ["']svelte["']/);
@@ -165,16 +173,26 @@ describe("private Svelte package build", () => {
     const dialog = render(DialogPackage.DialogRoot, {
       props: { "aria-label": "Private Dialog", defaultOpen: true },
     }).body;
+    const carousel = render(CarouselPackage.CarouselRoot, {
+      props: { "aria-label": "Private Carousel", orientation: "vertical", opts: { loop: true } },
+    }).body;
     const slider = render(SliderPackage.SliderRoot, {
       props: { "aria-label": "Private Slider", defaultValue: [20, 80] },
+    }).body;
+    const toast = render(ToastPackage.ToastViewport, {
+      props: { "aria-label": "Private Toasts", duration: 1000, limit: 2 },
     }).body;
 
     expect(accordion).toContain('data-sw-accordion=""');
     expect(accordion).toContain('aria-label="Private Accordion"');
     expect(dialog).toContain('data-sw-dialog=""');
     expect(dialog).toContain('data-state="open"');
+    expect(carousel).toContain('data-sw-carousel=""');
+    expect(carousel).toContain('data-axis="y"');
     expect(slider).toContain('data-sw-slider=""');
     expect(slider).toContain('aria-label="Private Slider"');
+    expect(toast).toContain('data-sw-toast-viewport=""');
+    expect(toast).toContain('aria-label="Private Toasts"');
   });
 });
 
@@ -190,10 +208,12 @@ const DIST_CONSUMER_SOURCE = `
 import {
   AccordionRoot as RootAccordion,
   ButtonRoot as RootButton,
+  CarouselRoot as RootCarousel,
   CheckboxRoot as RootCheckbox,
   DialogRoot as RootDialog,
   SelectRoot as RootSelect,
   SliderRoot as RootSlider,
+  ToastRoot as RootToast,
   type AccordionValue as RootAccordionValue,
   type DialogOpenChangeDetails as RootDialogOpenChangeDetails,
   type SliderValue as RootSliderValue,
@@ -204,6 +224,12 @@ import {
   type AccordionValueChangeDetails,
 } from "@starwind-ui/svelte/accordion";
 import { ButtonRoot } from "@starwind-ui/svelte/button";
+import {
+  CarouselRoot,
+  type CarouselInstance,
+  type CarouselOptions,
+  createCarousel,
+} from "@starwind-ui/svelte/carousel";
 import {
   CheckboxRoot,
   type CheckboxCheckedChangeDetails,
@@ -224,33 +250,49 @@ import {
   type SliderValueChangeDetails,
   type SliderValueCommitDetails,
 } from "@starwind-ui/svelte/slider";
+import {
+  ToastRoot,
+  ToastViewport,
+  toast,
+  type ToastOptions,
+  type ToastPromiseOptions,
+} from "@starwind-ui/svelte/toast";
 import type { ComponentProps } from "svelte";
 
 const roots = [
   RootAccordion,
   RootButton,
+  RootCarousel,
   RootCheckbox,
   RootDialog,
   RootSelect,
   RootSlider,
+  RootToast,
   AccordionRoot,
   ButtonRoot,
+  CarouselRoot,
   CheckboxRoot,
   DialogRoot,
   SelectRoot,
   SliderRoot,
+  ToastRoot,
+  ToastViewport,
 ] as const;
 void roots;
 
 type ComponentContracts = [
   ComponentProps<typeof AccordionRoot>,
   ComponentProps<typeof ButtonRoot>,
+  ComponentProps<typeof CarouselRoot>,
   ComponentProps<typeof CheckboxRoot>,
   ComponentProps<typeof DialogRoot>,
   ComponentProps<typeof SelectRoot>,
   ComponentProps<typeof SliderRoot>,
+  ComponentProps<typeof ToastViewport>,
 ];
 type ValueContracts = AccordionValue | RootAccordionValue | SliderValue | RootSliderValue;
+type CarouselContracts = CarouselInstance | CarouselOptions;
+type ToastContracts = ToastOptions | ToastPromiseOptions<string>;
 type ChangeContracts =
   | AccordionValueChangeDetails
   | CheckboxCheckedChangeDetails
@@ -264,8 +306,10 @@ type ChangeContracts =
 
 declare const componentContracts: ComponentContracts;
 declare const valueContract: ValueContracts;
+declare const carouselContract: CarouselContracts;
+declare const toastContract: ToastContracts;
 declare const changeContract: ChangeContracts;
-void [componentContracts, valueContract, changeContract];
+void [componentContracts, valueContract, changeContract, carouselContract, toastContract, createCarousel, toast];
 
 const validButtonProps: ComponentProps<typeof ButtonRoot> = { disabled: true };
 const validAccordionValue: AccordionValue = ["first", "second"];

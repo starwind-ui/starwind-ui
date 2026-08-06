@@ -102,7 +102,7 @@ describe("Vue adapter public contract", () => {
     });
   });
 
-  it("pins attrs, lazy slots, and strict asChild composition", () => {
+  it("pins attrs, lazy slots, and component-rooted asChild composition", () => {
     expect(vueAdapterPublicContract.attrs).toEqual({
       automaticFallthrough: "disabled-for-wrapper-or-multiple-roots",
       declaredComponentEventsAsNativeListeners: false,
@@ -121,10 +121,18 @@ describe("Vue adapter public contract", () => {
       mergeApi: "mergeProps",
       mergeOrder: ["defaulted-props", "consumer-props", "protected-props"],
       refPolicy: "compose-child-adapter-and-public-element-refs",
+      rootResolution: ["exposed-element", "component-public-instance-native-root"],
       renderApi: "cloneVNode",
       requiredChildren: 1,
-      supportedVNode: "one-native-element-vnode",
-      unsupportedVNodeTypes: ["Comment", "Text", "Fragment", "component"],
+      supportedVNode: "one-native-or-single-native-root-component-vnode",
+      supportedSlotBoundary: "one-single-child-fragment",
+      unsupportedVNodeTypes: [
+        "Comment",
+        "Text",
+        "multiple-children",
+        "multiple-roots",
+        "rootless-component",
+      ],
     });
   });
 

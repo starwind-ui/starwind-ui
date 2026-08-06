@@ -184,6 +184,18 @@ describe("starwind CLI parser", () => {
     },
   );
 
+  it("passes --yes through to the remove command", async () => {
+    const program = createTestProgram();
+
+    await program.parseAsync(["remove", "button", "--yes"], { from: "user" });
+
+    expect(mockRemove).toHaveBeenCalledWith(
+      ["button"],
+      expect.objectContaining({ yes: true }),
+      expect.anything(),
+    );
+  });
+
   it("rejects the removed init --component-layer option through Commander", async () => {
     const program = createTestProgram();
     let stderr = "";

@@ -2,6 +2,7 @@ import type {
   StyledOutputAttribute,
   StyledOutputComponent,
   StyledOutputComponentGroup,
+  StyledOutputIconNode,
   StyledOutputPropExtend,
   StyledOutputRenderNode,
   StyledOutputValueExpression,
@@ -331,8 +332,13 @@ function renderProps(props: VuePropsProjection): string {
     .map((field) => `  ${JSON.stringify(field.name)}${field.optional ? "?" : ""}: ${field.type};`)
     .join("\n");
 
+  const publicExtensionType = props.declared.replacedPublicSourceFields.length
+    ? `Omit<${props.public.name}, ${props.declared.replacedPublicSourceFields
+        .map((name) => JSON.stringify(name))
+        .join(" | ")}>`
+    : props.public.name;
   const publicExtension = props.declared.extendsPublic
-    ? ` & /* @vue-ignore */ ${props.public.name}`
+    ? ` & /* @vue-ignore */ ${publicExtensionType}`
     : "";
   return `export type ${props.public.name} = ${type};\ntype ${props.declared.name} = {\n${declaredFields}\n}${publicExtension};`;
 }
@@ -374,13 +380,13 @@ function renderOmit(type: string, keys: readonly string[]): string {
 }
 
 function renderSetup(projection: VueStyledComponentProjection): string {
-  const { props, usesAttrs } = projection;
+  const { filtersComponentAttrs, props, usesAttrs } = projection;
   const slotLines = projection.slots.map(
     (slot) => `  ${JSON.stringify(slot.name)}?: ${slot.signature};`,
   );
   const slots = `defineSlots<{\n${slotLines.join("\n")}\n}>();`;
   const destructuredNames = new Set(props.destructure.map((prop) => prop.name));
-  const destructureProps = [
+  const projectedDestructureProps = [
     ...props.destructure.map((prop) => {
       const model = projection.models.find((candidate) => candidate.name === prop.name);
       return model?.type === "boolean" && prop.defaultValue === undefined
@@ -394,8 +400,37 @@ function renderSetup(projection: VueStyledComponentProjection): string {
         defaultValue: model.type === "boolean" ? "undefined" : undefined,
         name: model.name,
       })),
-  ].map((prop) => {
+  ];
+  const propBindings = new Set(projectedDestructureProps.map((prop) => prop.alias ?? prop.name));
+  const dependentBindings = new Set(
+    projectedDestructureProps
+      .filter((prop) => prop.defaultValue !== undefined && propBindings.has(prop.defaultValue))
+      .map((prop) => prop.alias ?? prop.name),
+  );
+  const dependentDefaults = projectedDestructureProps.flatMap((prop, index) => {
+    const binding = prop.alias ?? prop.name;
+    if (!prop.defaultValue || !dependentBindings.has(binding)) return [];
+    const source = dependentBindings.has(prop.defaultValue)
+      ? `${prop.defaultValue}.value`
+      : prop.defaultValue;
+    return [
+      {
+        binding,
+        declaration: `const ${binding} = computed(() => __vueDependentProp${index} === undefined ? ${source} : __vueDependentProp${index});`,
+        index,
+      },
+    ];
+  });
+  const dependentDefaultsByBinding = new Map(
+    dependentDefaults.map((entry) => [entry.binding, entry]),
+  );
+  const destructureProps = projectedDestructureProps.map((prop) => {
     const key = renderVuePropKey(prop.name);
+    const binding = prop.alias ?? prop.name;
+    const dependentDefault = dependentDefaultsByBinding.get(binding);
+    if (dependentDefault) {
+      return `  ${key}: __vueDependentProp${dependentDefault.index},`;
+    }
     const alias = prop.alias && prop.alias !== prop.name ? `: ${prop.alias}` : "";
     return `  ${key}${alias}${prop.defaultValue ? ` = ${prop.defaultValue}` : ""},`;
   });
@@ -438,7 +473,20 @@ function renderSetup(projection: VueStyledComponentProjection): string {
     propsDeclaration,
     slots,
     ...(usesAttrs ? ["const attrs = useAttrs();"] : []),
+    ...(filtersComponentAttrs
+      ? [
+          `function omitForwardedAttrs(
+  source: Readonly<Record<string, unknown>>,
+  ownedNames: readonly string[],
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(source).filter(([name]) => !ownedNames.includes(name)),
+  );
+}`,
+        ]
+      : []),
     emits,
+    ...dependentDefaults.map((entry) => entry.declaration),
     variables,
     eventHandlers,
   ]
@@ -471,18 +519,32 @@ function renderNode(
       );
     case "primitive":
       return renderTag(
-        `${primitiveAliases[node.component]}.${toPascalCase(node.component)}${node.part}`,
+        `${primitiveAliases[node.component]}.${renderPrimitiveExportName(node.component, node.part)}`,
         node.attrs,
         node.children,
         level,
         primitiveAliases,
       );
     case "element":
-      return renderTag(node.tag, node.attrs, node.children, level, primitiveAliases);
+      return node.tagBinding
+        ? renderTag(
+            "component",
+            [
+              {
+                name: "is",
+                value: { name: node.tag, type: "variable" },
+              },
+              ...node.attrs,
+            ],
+            node.children,
+            level,
+            primitiveAliases,
+          )
+        : renderTag(node.tag, node.attrs, node.children, level, primitiveAliases);
     case "fragment":
       return renderNodes(node.children, level, primitiveAliases);
     case "icon":
-      return renderIcon(node.importName, node.attrs, level);
+      return renderIcon(node, level);
     case "condition":
       return `${pad}<template v-if="${escapeVueAttribute(node.condition)}">\n${renderNodes(
         node.then,
@@ -533,6 +595,11 @@ function renderNode(
   }
 }
 
+function renderPrimitiveExportName(component: string, part: string): string {
+  if (component === "sidebar" && part === "Sidebar") return "SidebarComponent";
+  return `${toPascalCase(component)}${part}`;
+}
+
 function renderTag(
   tag: string,
   attrs: readonly StyledOutputAttribute[],
@@ -558,7 +625,7 @@ function renderAttribute(attribute: StyledOutputAttribute): string {
       attribute.value.type === "variable" && attribute.value.name === "rest"
         ? "attrs"
         : renderVueExpression(attribute.value);
-    return `v-bind="${expression}"`;
+    return `v-bind="${escapeVueAttribute(expression)}"`;
   }
   if (!attribute.value) return attribute.name;
   if (attribute.name.startsWith("@")) {
@@ -575,104 +642,27 @@ function renderValue(value: StyledOutputValueExpression): string {
   return renderVueExpression(value);
 }
 
-export function renderIcon(
-  importName: string,
-  attrs: readonly StyledOutputAttribute[],
-  level: number,
-): string {
-  if (importName === "Sun" || importName === "Moon") {
-    return renderThemeIcon(importName, attrs, level);
+export function renderIcon(icon: StyledOutputIconNode, level: number): string {
+  if (!icon.asset) {
+    throw new TypeError(`Vue Styled icon ${icon.importName} requires a projected SVG asset.`);
   }
-  if (importName === "CircleFilled") {
-    return renderFilledCircleIcon(attrs, level);
-  }
-  const paths =
-    importName === "Check"
-      ? ['<path d="M5 12l5 5l10 -10" />']
-      : importName === "Minus"
-        ? ['<path d="M5 12h14" />']
-        : importName === "ChevronDown"
-          ? ['<path d="M6 9l6 6l6 -6" />']
-          : importName === "X"
-            ? ['<path d="M18 6l-12 12" />', '<path d="M6 6l12 12" />']
-            : importName === "CloudUpload"
-              ? [
-                  '<path d="M7 18a4.6 4.4 0 0 1 0 -9c.26 -3.008 2.42 -4.508 5 -4.508c2.58 0 4.74 1.5 5 4.508h.5a3.5 3.5 0 0 1 0 7h-.5" />',
-                  '<path d="M9 15l3 -3l3 3" />',
-                  '<path d="M12 12l0 9" />',
-                ]
-              : importName === "Loader2"
-                ? ['<path d="M12 3a9 9 0 1 0 9 9" />', '<path d="M12 7v5l3 3" />']
-                : undefined;
-  if (!paths) {
-    throw new TypeError(`Unsupported Vue Styled icon import: ${importName}.`);
-  }
+  const asset = icon.asset;
   const pad = "  ".repeat(level);
-  const renderedAttrs = attrs
-    .filter((attribute) => attribute.name !== "aria-hidden")
+  const renderedAttrs = icon.attrs
+    .filter((attribute) => !asset.omittedAttributes?.includes(attribute.name))
     .filter(isForVue)
     .map(renderAttribute);
-  return `${pad}<svg\n${[
-    'xmlns="http://www.w3.org/2000/svg"',
-    'viewBox="0 0 24 24"',
-    'fill="none"',
-    'stroke="currentColor"',
-    'stroke-width="2"',
-    'stroke-linecap="round"',
-    'stroke-linejoin="round"',
-    'aria-hidden="true"',
-    ...renderedAttrs,
-  ]
+  return `${pad}<svg\n${[...asset.attributes.map(renderSvgAttribute), ...renderedAttrs]
     .map((attr) => `${pad}  ${attr}`)
-    .join("\n")}\n${pad}>\n${pad}  <path stroke="none" d="M0 0h24v24H0z" fill="none" />\n${paths
-    .map((path) => `${pad}  ${path}`)
+    .join("\n")}\n${pad}>\n${asset.children
+    .map(
+      (child) => `${pad}  <${child.tag} ${child.attributes.map(renderSvgAttribute).join(" ")} />`,
+    )
     .join("\n")}\n${pad}</svg>`;
 }
 
-function renderFilledCircleIcon(attrs: readonly StyledOutputAttribute[], level: number): string {
-  const pad = "  ".repeat(level);
-  const renderedAttrs = attrs.filter(isForVue).map(renderAttribute);
-  return `${pad}<svg\n${[
-    'xmlns="http://www.w3.org/2000/svg"',
-    'viewBox="0 0 24 24"',
-    'fill="currentColor"',
-    'aria-hidden="true"',
-    ...renderedAttrs,
-  ]
-    .map((attr) => `${pad}  ${attr}`)
-    .join(
-      "\n",
-    )}\n${pad}>\n${pad}  <path d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20z" stroke="none" />\n${pad}</svg>`;
-}
-
-function renderThemeIcon(
-  importName: "Moon" | "Sun",
-  attrs: readonly StyledOutputAttribute[],
-  level: number,
-): string {
-  const pad = "  ".repeat(level);
-  const renderedAttrs = attrs.filter(isForVue).map(renderAttribute);
-  const paths =
-    importName === "Sun"
-      ? [
-          '<path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />',
-          '<path d="M4 12h.01M12 4v.01M20 12h.01M12 20v.01M6.31 6.31l-.01 -.01M17.7 6.3l-.01 .01M17.7 17.7l-.01 -.01M6.3 17.7l.01 -.01" />',
-        ]
-      : [
-          '<path d="M12 3c.132 0 .263 0 .393 .008a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />',
-        ];
-  return `${pad}<svg\n${[
-    'xmlns="http://www.w3.org/2000/svg"',
-    'viewBox="0 0 24 24"',
-    'fill="none"',
-    'stroke="currentColor"',
-    'stroke-width="2"',
-    'stroke-linecap="round"',
-    'stroke-linejoin="round"',
-    ...renderedAttrs,
-  ]
-    .map((attr) => `${pad}  ${attr}`)
-    .join("\n")}\n${pad}>\n${paths.map((path) => `${pad}  ${path}`).join("\n")}\n${pad}</svg>`;
+function renderSvgAttribute({ name, value }: { name: string; value: string }): string {
+  return `${name}=${JSON.stringify(value)}`;
 }
 
 function projectSelectTriggerSfc(projection: VueStyledComponentProjection): VueSfcSections {
@@ -687,6 +677,7 @@ function projectSelectTriggerSfc(projection: VueStyledComponentProjection): VueS
     throw new TypeError("Select Trigger requires its projected root ref binding.");
   }
   const elementType = exposedRef.elementTypes[0];
+  const icon = findProjectedIcon(projection.render);
   const baseImports = renderVueImports(projection.imports, { includeFramework: false });
   const primitiveSource = projection.imports.primitiveSources.select;
   if (!primitiveSource)
@@ -791,7 +782,7 @@ const AsChildTrigger = defineComponent({
       data-slot="select-icon"
     >
       <slot name="icon">
-${renderIcon("ChevronDown", [], 4)}
+${renderIcon(icon, 4)}
       </slot>
     </SelectPrimitive.SelectIcon>
   </SelectPrimitive.SelectTrigger>`;
@@ -802,6 +793,34 @@ ${renderIcon("ChevronDown", [], 4)}
     setup,
     template,
   };
+}
+
+function findProjectedIcon(nodes: readonly StyledOutputRenderNode[]): StyledOutputIconNode {
+  for (const node of nodes) {
+    if (node.type === "icon") return node;
+    if (node.type === "condition") {
+      try {
+        return findProjectedIcon([...node.then, ...node.else]);
+      } catch {
+        continue;
+      }
+    }
+    if (node.type === "slot") {
+      try {
+        return findProjectedIcon(node.fallback);
+      } catch {
+        continue;
+      }
+    }
+    if ("children" in node) {
+      try {
+        return findProjectedIcon(node.children);
+      } catch {
+        continue;
+      }
+    }
+  }
+  throw new TypeError("Vue Styled specialization requires a projected SVG icon.");
 }
 
 function projectSelectValueSfc(projection: VueStyledComponentProjection): VueSfcSections {

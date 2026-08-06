@@ -1,17 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createToastManager, toast } from "../../../src/components/toast/toast";
+import { createToastManager, getToastManager, toast } from "../../../src/components/toast/toast";
 
 type ToastModule = typeof import("../../../src/components/toast/toast");
 
 describe("createToastManager", () => {
   beforeEach(() => {
+    destroyRegisteredToastManagers();
     document.body.innerHTML = "";
     vi.useFakeTimers();
   });
 
   afterEach(() => {
     toast.dismiss();
+    destroyRegisteredToastManagers();
     vi.useRealTimers();
     document.body.innerHTML = "";
   });
@@ -76,6 +78,75 @@ describe("createToastManager", () => {
 
     expect(onRemove).not.toHaveBeenCalled();
     expect(manager.getToasts()).toEqual([]);
+  });
+
+  it("restores the previous active manager when the newest manager is destroyed", () => {
+    const firstViewport = renderToaster();
+    const firstManager = createToastManager(firstViewport);
+    const secondManager = createToastManager(renderToaster());
+
+    secondManager.destroy();
+
+    expect(getToastManager()).toBe(firstManager);
+    expect(window.__starwindRuntime__?.toast).toBe(firstManager);
+    const id = toast("Restored manager", { duration: 0 });
+    expect(firstViewport.querySelector(`[data-toast-id="${id}"]`)).not.toBeNull();
+  });
+
+  it("keeps the newest manager active when an older manager is destroyed", () => {
+    const firstManager = createToastManager(renderToaster());
+    const secondViewport = renderToaster();
+    const secondManager = createToastManager(secondViewport);
+
+    firstManager.destroy();
+
+    expect(getToastManager()).toBe(secondManager);
+    expect(window.__starwindRuntime__?.toast).toBe(secondManager);
+    const id = toast("Newest manager", { duration: 0 });
+    expect(secondViewport.querySelector(`[data-toast-id="${id}"]`)).not.toBeNull();
+  });
+
+  it("clears final routing and tolerates repeated destruction", () => {
+    const manager = createToastManager(renderToaster());
+
+    manager.destroy();
+    manager.destroy();
+
+    expect(getToastManager()).toBeNull();
+    expect(window.__starwindRuntime__?.toast).toBeNull();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(toast("No manager", { duration: 0 })).toBe("");
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
+  });
+
+  it("keeps duplicate creation for one viewport idempotent", () => {
+    const viewport = renderToaster();
+    const first = createToastManager(viewport);
+    const duplicate = createToastManager(viewport);
+
+    expect(duplicate).toBe(first);
+    duplicate.destroy();
+    expect(getToastManager()).toBeNull();
+    expect(window.__starwindRuntime__?.toast).toBeNull();
+  });
+
+  it("registers a fresh manager when a destroyed viewport is remounted", () => {
+    const viewport = renderToaster();
+    const first = createToastManager(viewport);
+    first.destroy();
+    viewport.remove();
+    document.body.append(viewport);
+
+    const remounted = createToastManager(viewport);
+
+    expect(remounted).not.toBe(first);
+    expect(getToastManager()).toBe(remounted);
+    expect(window.__starwindRuntime__?.toast).toBe(remounted);
+    const id = toast("Remounted manager", { duration: 0 });
+    expect(viewport.querySelector(`[data-toast-id="${id}"]`)).not.toBeNull();
+    remounted.destroy();
+    expect(getToastManager()).toBeNull();
   });
 
   it("exposes the global toast shortcuts and promise helper", async () => {
@@ -775,6 +846,16 @@ function getToastByText(text: string): HTMLElement | null {
 
 function getPart(root: HTMLElement | null, attribute: string): HTMLElement | null {
   return root?.querySelector<HTMLElement>(`[${attribute}]`) ?? null;
+}
+
+function destroyRegisteredToastManagers(): void {
+  const destroyed = new Set<ReturnType<typeof createToastManager>>();
+  let manager = getToastManager();
+  while (manager && !destroyed.has(manager)) {
+    destroyed.add(manager);
+    manager.destroy();
+    manager = getToastManager();
+  }
 }
 
 async function waitForMutationObserver(): Promise<void> {

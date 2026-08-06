@@ -61,6 +61,7 @@ export const cardStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Card",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "interface",
         extends: [
@@ -109,6 +110,7 @@ export const cardStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "CardHeader",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "div" }],
@@ -152,6 +154,7 @@ export const cardStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "CardTitle",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "div" }],
@@ -195,6 +198,7 @@ export const cardStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "CardDescription",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "div" }],
@@ -238,6 +242,7 @@ export const cardStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "CardContent",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "div" }],
@@ -281,6 +286,7 @@ export const cardStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "CardFooter",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "div" }],
@@ -324,6 +330,7 @@ export const cardStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "CardAction",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "htmlAttributes", element: "div" }],

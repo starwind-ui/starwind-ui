@@ -6,6 +6,7 @@ import {
   createCollapsible,
 } from "@starwind-ui/runtime/collapsible";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { useVueAsChildRuntimeOwner } from "../_internal/as-child";
 
 defineOptions({ inheritAttrs: false });
 
@@ -69,6 +70,7 @@ function setupRuntime(): void {
   });
 }
 
+useVueAsChildRuntimeOwner(rootRef, setupRuntime);
 onMounted(setupRuntime);
 
 watch(

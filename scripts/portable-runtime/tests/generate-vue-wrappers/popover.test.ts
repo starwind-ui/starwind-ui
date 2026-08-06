@@ -71,8 +71,8 @@ describe("generated Vue Popover", () => {
       /emit\("openChange", nextOpen, detail\);[\s\S]*detail\.isCanceled[\s\S]*emit\("update:open", nextOpen\);/,
     );
     expect(trigger).toContain("const AsChildTrigger = defineComponent");
-    expect(trigger).toContain("cloneVNode(child, mergeProps(");
-    expect(trigger).toContain('typeof value.type === "string"');
+    expect(trigger).toContain('import { createVueAsChild } from "../_internal/as-child";');
+    expect(trigger).toContain("asChild.render({");
     expect(portal).toContain("container?: string | HTMLElement");
     expect(portal).toContain(':disabled="props.disabled || !root.mounted.value"');
     expect(portal).toContain("root.registerPortal(owner, null)");

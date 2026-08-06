@@ -200,6 +200,62 @@ describe("init command", () => {
     expect(JSON.stringify(mockInstallDependencies.mock.calls)).not.toContain('"@tabler/icons@^3"');
   });
 
+  it("detects a React project when defaults are used without a framework flag", async () => {
+    mockReadJsonFile.mockResolvedValue({
+      dependencies: {
+        react: "^19.2.0",
+        "react-dom": "^19.2.0",
+      },
+    });
+
+    await init(true, { defaults: true, packageManager: "pnpm" });
+
+    expect(mockUpdateConfig).toHaveBeenCalledWith(expect.objectContaining({ framework: "react" }), {
+      appendComponents: false,
+    });
+    expect(mockInstallDependencies.mock.calls).toEqual([
+      [[CURRENT_REACT_SPEC], "pnpm"],
+      [REACT_SETUP_REQUIREMENTS, "pnpm", false, false],
+    ]);
+  });
+
+  it("keeps Astro as the project framework when React is used for Astro islands", async () => {
+    mockReadJsonFile.mockResolvedValue({
+      dependencies: {
+        astro: "^7.0.0",
+        react: "^19.2.0",
+        "react-dom": "^19.2.0",
+      },
+    });
+
+    await init(true, { defaults: true, packageManager: "pnpm" });
+
+    expect(mockUpdateConfig).toHaveBeenCalledWith(expect.objectContaining({ framework: "astro" }), {
+      appendComponents: false,
+    });
+    expect(mockInstallDependencies.mock.calls[0]).toEqual([[CURRENT_ASTRO_SPEC], "pnpm"]);
+  });
+
+  it("requires an explicit framework when defaults cannot identify the project", async () => {
+    mockReadJsonFile.mockResolvedValue({ devDependencies: { vite: "^9.1.1" } });
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
+
+    try {
+      await expect(init(true, { defaults: true, packageManager: "pnpm" })).rejects.toThrow(
+        "process.exit called",
+      );
+      expect(clackPrompts.log.error).toHaveBeenCalledWith(
+        expect.stringMatching(/--astro.*--react.*--framework/s),
+      );
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+      expect(mockUpdateConfig).not.toHaveBeenCalled();
+    } finally {
+      exitSpy.mockRestore();
+    }
+  });
+
   it("configures Pro authorization during fresh init without shadcn components config", async () => {
     await init(true, {
       defaults: true,

@@ -17,6 +17,7 @@ import { sleep } from "@/utils/sleep.js";
 interface RemoveOptions {
   all?: boolean;
   framework?: StarwindFramework | "all";
+  yes?: boolean;
 }
 
 export async function remove(components?: string[], options?: RemoveOptions) {
@@ -103,15 +104,17 @@ export async function remove(components?: string[], options?: RemoveOptions) {
     }
 
     // Confirm removal using the exact framework-qualified identities.
-    const confirmed = await p.confirm({
-      message: `Remove ${targetsToRemove
-        .map((target) => highlighter.info(formatRemovalTarget(target)))
-        .join(", ")} ${targetsToRemove.length > 1 ? "components" : "component"}?`,
-    });
+    if (!options?.yes) {
+      const confirmed = await p.confirm({
+        message: `Remove ${targetsToRemove
+          .map((target) => highlighter.info(formatRemovalTarget(target)))
+          .join(", ")} ${targetsToRemove.length > 1 ? "components" : "component"}?`,
+      });
 
-    if (!confirmed || p.isCancel(confirmed)) {
-      p.cancel("Operation cancelled");
-      process.exit(0);
+      if (!confirmed || p.isCancel(confirmed)) {
+        p.cancel("Operation cancelled");
+        process.exit(0);
+      }
     }
 
     const results = {

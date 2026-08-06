@@ -505,6 +505,11 @@ export const badgeStyledContract: StyledAdapterContract = {
       },
       variables: [
         {
+          frameworks: ["vue"],
+          name: "rest",
+          value: { type: "raw", code: "rest" },
+        },
+        {
           name: "usesComposedBadgeStyle",
           value: { type: "raw", code: "tone !== undefined || appearance !== undefined" },
         },
@@ -532,6 +537,7 @@ export const badgeStyledContract: StyledAdapterContract = {
         {
           type: "element",
           tag: "Tag",
+          tagBinding: true,
           attrs: [
             { name: "data-sw-badge" },
             {

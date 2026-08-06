@@ -44,6 +44,7 @@ import {
   ${facts.runtime.factory},
 } from "${facts.runtime.importSource}";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { useVueAsChildRuntimeOwner } from "../_internal/as-child";
 
 defineOptions({ inheritAttrs: false });
 
@@ -107,6 +108,7 @@ function setupRuntime(): void {
   });
 }
 
+useVueAsChildRuntimeOwner(rootRef, setupRuntime);
 onMounted(setupRuntime);
 
 watch(
@@ -157,16 +159,8 @@ function printTrigger(
 ): string {
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import {
-  cloneVNode,
-  defineComponent,
-  isVNode,
-  mergeProps,
-  ref,
-  useAttrs,
-  type ComponentPublicInstance,
-  type VNode,
-} from "vue";
+import { defineComponent, ref, useAttrs, type VNode } from "vue";
+import { createVueAsChild } from "../_internal/as-child";
 
 defineOptions({ inheritAttrs: false });
 
@@ -176,47 +170,32 @@ const props = withDefaults(defineProps<{ ${facts.props.asChild.name}?: boolean }
 const slots = defineSlots<{ default?: () => VNode[] }>();
 const attrs = useAttrs();
 const element = ref<HTMLElement | null>(null);
+const asChild = createVueAsChild("${facts.exports.trigger}", element);
+const { setElement } = asChild;
 
 defineExpose({ element });
-
-function setElement(value: Element | ComponentPublicInstance | null): void {
-  element.value = value instanceof HTMLElement ? value : null;
-}
 
 const AsChildTrigger = defineComponent({
   inheritAttrs: false,
   setup() {
     return () => {
       const children = slots.default?.() ?? [];
-      const child = children[0];
-      if (children.length !== 1 || !isNativeElementVNode(child)) {
-        throw new TypeError(
-          "${facts.exports.trigger} asChild requires exactly one native element VNode.",
-        );
-      }
-
-      const defaultedProps =
-        child.type === "button" &&
-        child.props?.type === undefined &&
-        attrs.type === undefined
-          ? { type: "button" }
-          : {};
       const protectedProps = {
         "${facts.attrs.trigger}": "",
         "${facts.attrs.triggerExpanded}": "false",
         "${facts.attrs.triggerState}": "closed",
         "data-as-child": "",
         "data-sw-part": "${facts.parts.trigger.name}",
-        ref: setElement,
       };
-      return cloneVNode(child, mergeProps(defaultedProps, attrs, protectedProps), true);
+      return asChild.render({
+        children,
+        consumerProps: attrs,
+        defaultNativeButtonType: "button",
+        protectedProps,
+      });
     };
   },
 });
-
-function isNativeElementVNode(value: unknown): value is VNode & { type: string } {
-  return isVNode(value) && typeof value.type === "string";
-}
 </script>
 
 <template>

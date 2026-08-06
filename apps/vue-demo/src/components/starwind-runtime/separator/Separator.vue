@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes, ref, useAttrs } from "vue";
 import { separator } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -14,21 +14,24 @@ export type SeparatorProps = Omit<
     class?: ClassValue;
   };
 type SeparatorDeclaredProps = {
-  "data-slot"?: string;
+  dataSlot?: string;
   class?: ClassValue;
   orientation?: SeparatorProps["orientation"];
-} & /* @vue-ignore */ SeparatorProps;
+} & /* @vue-ignore */ Omit<SeparatorProps, "data-slot">;
 const {
   orientation = "horizontal",
-  "data-slot": dataSlot = "separator",
+  dataSlot = "separator",
   class: className,
 } = defineProps<SeparatorDeclaredProps>();
 defineSlots<{}>();
 const attrs = useAttrs();
+const element = ref<HTMLDivElement | null>(null);
+defineExpose({ element });
 </script>
 
 <template>
   <div
+    ref="element"
     data-sw-separator
     role="separator"
     :aria-orientation="orientation"

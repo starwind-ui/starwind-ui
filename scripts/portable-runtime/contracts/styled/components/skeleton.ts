@@ -14,6 +14,7 @@ export const skeletonStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Skeleton",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "interface",
         extends: [{ type: "omitHtmlAttributes", element: "div", keys: ["children"] }],

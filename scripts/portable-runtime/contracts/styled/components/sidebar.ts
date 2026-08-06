@@ -399,19 +399,19 @@ function sidebarProviderComponent(): StyledComponentContract {
       fields: [
         { name: "defaultOpen", optional: true, type: "boolean" },
         { name: "defaultMobileOpen", optional: true, type: "boolean" },
-        { name: "open", optional: true, type: "boolean", frameworks: ["react"] },
-        { name: "mobileOpen", optional: true, type: "boolean", frameworks: ["react"] },
+        { name: "open", optional: true, type: "boolean", frameworks: ["react", "vue"] },
+        { name: "mobileOpen", optional: true, type: "boolean", frameworks: ["react", "vue"] },
         {
           name: "onOpenChange",
           optional: true,
           type: '(open: boolean, details: import("@starwind-ui/runtime").SidebarOpenChangeDetails) => void',
-          frameworks: ["react"],
+          frameworks: ["react", "vue"],
         },
         {
           name: "onMobileOpenChange",
           optional: true,
           type: '(open: boolean, details: import("@starwind-ui/runtime").SidebarMobileOpenChangeDetails) => void',
-          frameworks: ["react"],
+          frameworks: ["react", "vue"],
         },
         { name: "keyboardShortcut", optional: true, type: "string" },
         { name: "mobileQuery", optional: true, type: "string" },
@@ -430,10 +430,10 @@ function sidebarProviderComponent(): StyledComponentContract {
       props: [
         { name: "defaultOpen", defaultValue: "true" },
         { name: "defaultMobileOpen", defaultValue: "false" },
-        { name: "open", frameworks: ["react"] },
-        { name: "mobileOpen", frameworks: ["react"] },
-        { name: "onOpenChange", frameworks: ["react"] },
-        { name: "onMobileOpenChange", frameworks: ["react"] },
+        { name: "open", frameworks: ["react", "vue"] },
+        { name: "mobileOpen", frameworks: ["react", "vue"] },
+        { name: "onOpenChange", frameworks: ["react", "vue"] },
+        { name: "onMobileOpenChange", frameworks: ["react", "vue"] },
         { name: "keyboardShortcut", defaultValue: '"b"' },
         { name: "mobileQuery", defaultValue: '"(max-width: 767.98px)"' },
         { name: "persistOpen", defaultValue: "false" },
@@ -471,6 +471,14 @@ function sidebarProviderComponent(): StyledComponentContract {
           code: '{ "--sidebar-width": "18rem", "--sidebar-width-icon": "3.5rem", ...style } as React.CSSProperties',
         },
       },
+      {
+        frameworks: ["vue"],
+        name: "providerStyle",
+        value: {
+          type: "raw",
+          code: '[{ "--sidebar-width": "18rem", "--sidebar-width-icon": "3.5rem" }, style]',
+        },
+      },
     ],
     render: [
       {
@@ -488,21 +496,21 @@ function sidebarProviderComponent(): StyledComponentContract {
           },
           { name: "defaultOpen", value: { type: "variable", name: "defaultOpen" } },
           { name: "defaultMobileOpen", value: { type: "variable", name: "defaultMobileOpen" } },
-          { name: "open", value: { type: "variable", name: "open" }, frameworks: ["react"] },
+          { name: "open", value: { type: "variable", name: "open" }, frameworks: ["react", "vue"] },
           {
             name: "mobileOpen",
             value: { type: "variable", name: "mobileOpen" },
-            frameworks: ["react"],
+            frameworks: ["react", "vue"],
           },
           {
             name: "onOpenChange",
             value: { type: "variable", name: "onOpenChange" },
-            frameworks: ["react"],
+            frameworks: ["react", "vue"],
           },
           {
             name: "onMobileOpenChange",
             value: { type: "variable", name: "onMobileOpenChange" },
-            frameworks: ["react"],
+            frameworks: ["react", "vue"],
           },
           { name: "data-keyboard-shortcut", value: { type: "variable", name: "keyboardShortcut" } },
           { name: "data-mobile-query", value: { type: "variable", name: "mobileQuery" } },
@@ -563,6 +571,11 @@ function sidebarComponent(): StyledComponentContract {
         name: "mobileStyle",
         frameworks: ["react"],
         value: { type: "raw", code: '{ "--sidebar-width": "18rem" } as React.CSSProperties' },
+      },
+      {
+        name: "mobileStyle",
+        frameworks: ["vue"],
+        value: { type: "raw", code: '({ "--sidebar-width": "18rem" })' },
       },
     ],
     render: [
@@ -1117,6 +1130,11 @@ function sidebarMenuButtonComponent(): StyledComponentContract {
         },
       },
       {
+        name: "Tag",
+        frameworks: ["vue"],
+        value: { type: "raw", code: 'asChild ? "div" : href ? "a" : "button"' },
+      },
+      {
         name: "buttonClassName",
         value: {
           type: "classVariant",
@@ -1256,6 +1274,11 @@ function sidebarMenuSkeletonComponent(): StyledComponentContract {
           type: "raw",
           code: '{ "--skeleton-width": skeletonWidth } as React.CSSProperties',
         },
+      },
+      {
+        name: "skeletonStyle",
+        frameworks: ["vue"],
+        value: { type: "raw", code: '({ "--skeleton-width": skeletonWidth })' },
       },
     ],
     render: [

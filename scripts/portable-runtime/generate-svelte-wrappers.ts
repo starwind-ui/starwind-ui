@@ -22,7 +22,16 @@ export async function generateSveltePrimitiveWrappers(
   const repoRoot = options.repoRoot ?? process.cwd();
   const outputRoot = options.outputRoot ?? path.join(repoRoot, SVELTE_PRIMITIVE_OUTPUT_DIR);
   const registration = getPrimitiveFrameworkAdapterTarget("svelte");
-  const components = ["button", "checkbox", "select", "accordion", "dialog", "slider"] as const;
+  const components = [
+    "button",
+    "carousel",
+    "checkbox",
+    "select",
+    "accordion",
+    "dialog",
+    "slider",
+    "toast",
+  ] as const;
 
   await registration.primitive.generatePackage({
     components,

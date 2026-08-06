@@ -17,12 +17,16 @@ import {
   renderIcon,
   renderVueComponent,
 } from "../../renderers/framework-adapters/vue/styled/render.js";
-import { vuePrimitiveComponents } from "../../renderers/framework-adapters/vue/inventory.js";
+import {
+  vuePrimitiveComponents,
+  vueStyledComponents,
+} from "../../renderers/framework-adapters/vue/inventory.js";
 import { generateFrameworkStyledWrappers } from "../../renderers/framework-wrapper-generator.js";
 import { projectStyledOutputComponentGroup } from "../../renderers/styled-output-model/index.js";
+import { PORTABLE_STYLED_CLOSURE } from "../styled-contracts/portable-styled-closure.test.js";
 import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
-const EXPECTED_INVENTORY = {
+const EXPECTED_REQUESTED_ROOT_FILES = {
   accordion: [
     "Accordion.vue",
     "AccordionContent.vue",
@@ -31,6 +35,7 @@ const EXPECTED_INVENTORY = {
     "index.ts",
     "variants.ts",
   ],
+  alert: ["Alert.vue", "AlertDescription.vue", "AlertTitle.vue", "index.ts", "variants.ts"],
   "alert-dialog": [
     "AlertDialog.vue",
     "AlertDialogAction.vue",
@@ -44,14 +49,111 @@ const EXPECTED_INVENTORY = {
     "index.ts",
     "variants.ts",
   ],
+  "aspect-ratio": ["AspectRatio.vue", "index.ts", "variants.ts"],
   avatar: ["Avatar.vue", "AvatarFallback.vue", "AvatarImage.vue", "index.ts", "variants.ts"],
+  badge: ["Badge.vue", "index.ts", "variants.ts"],
+  breadcrumb: [
+    "Breadcrumb.vue",
+    "BreadcrumbEllipsis.vue",
+    "BreadcrumbItem.vue",
+    "BreadcrumbLink.vue",
+    "BreadcrumbList.vue",
+    "BreadcrumbPage.vue",
+    "BreadcrumbSeparator.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   button: ["Button.vue", "index.ts", "variants.ts"],
+  "button-group": [
+    "ButtonGroup.vue",
+    "ButtonGroupSeparator.vue",
+    "ButtonGroupText.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  card: [
+    "Card.vue",
+    "CardAction.vue",
+    "CardContent.vue",
+    "CardDescription.vue",
+    "CardFooter.vue",
+    "CardHeader.vue",
+    "CardTitle.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  carousel: [
+    "Carousel.vue",
+    "CarouselContent.vue",
+    "CarouselItem.vue",
+    "CarouselNext.vue",
+    "CarouselPrevious.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   checkbox: ["Checkbox.vue", "index.ts", "styles.css", "variants.ts"],
   "checkbox-group": ["CheckboxGroup.vue", "index.ts", "variants.ts"],
   collapsible: [
     "Collapsible.vue",
     "CollapsibleContent.vue",
     "CollapsibleTrigger.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  combobox: [
+    "Combobox.vue",
+    "ComboboxClear.vue",
+    "ComboboxContent.vue",
+    "ComboboxEmpty.vue",
+    "ComboboxGroup.vue",
+    "ComboboxGroupLabel.vue",
+    "ComboboxInput.vue",
+    "ComboboxInputGroup.vue",
+    "ComboboxItem.vue",
+    "ComboboxItemIndicator.vue",
+    "ComboboxItemText.vue",
+    "ComboboxLabel.vue",
+    "ComboboxSeparator.vue",
+    "ComboboxTrigger.vue",
+    "ComboboxValue.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  "color-picker": [
+    "ColorPicker.vue",
+    "ColorPickerArea.vue",
+    "ColorPickerChannelInput.vue",
+    "ColorPickerChannelSlider.vue",
+    "ColorPickerClear.vue",
+    "ColorPickerContent.vue",
+    "ColorPickerDefaultEditor.vue",
+    "ColorPickerEyeDropper.vue",
+    "ColorPickerInput.vue",
+    "ColorPickerSwatch.vue",
+    "ColorPickerSwatchGroup.vue",
+    "ColorPickerTrigger.vue",
+    "ColorPickerValueSwatch.vue",
+    "index.ts",
+    "styles.css",
+    "variants.ts",
+  ],
+  "context-menu": [
+    "ContextMenu.vue",
+    "ContextMenuCheckboxItem.vue",
+    "ContextMenuCheckboxItemIndicator.vue",
+    "ContextMenuContent.vue",
+    "ContextMenuGroup.vue",
+    "ContextMenuItem.vue",
+    "ContextMenuLabel.vue",
+    "ContextMenuRadioGroup.vue",
+    "ContextMenuRadioItem.vue",
+    "ContextMenuRadioItemIndicator.vue",
+    "ContextMenuSeparator.vue",
+    "ContextMenuShortcut.vue",
+    "ContextMenuSub.vue",
+    "ContextMenuSubContent.vue",
+    "ContextMenuSubTrigger.vue",
+    "ContextMenuTrigger.vue",
     "index.ts",
     "variants.ts",
   ],
@@ -76,6 +178,27 @@ const EXPECTED_INVENTORY = {
     "index.ts",
     "variants.ts",
   ],
+  dropdown: [
+    "Dropdown.vue",
+    "DropdownCheckboxItem.vue",
+    "DropdownCheckboxItemIndicator.vue",
+    "DropdownContent.vue",
+    "DropdownGroup.vue",
+    "DropdownItem.vue",
+    "DropdownLabel.vue",
+    "DropdownLinkItem.vue",
+    "DropdownRadioGroup.vue",
+    "DropdownRadioItem.vue",
+    "DropdownRadioItemIndicator.vue",
+    "DropdownSeparator.vue",
+    "DropdownShortcut.vue",
+    "DropdownSub.vue",
+    "DropdownSubContent.vue",
+    "DropdownSubTrigger.vue",
+    "DropdownTrigger.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   field: [
     "Field.vue",
     "FieldContent.vue",
@@ -94,12 +217,75 @@ const EXPECTED_INVENTORY = {
     "variants.ts",
   ],
   form: ["Form.vue", "FormErrorSummary.vue", "index.ts", "variants.ts"],
+  "hover-card": [
+    "HoverCard.vue",
+    "HoverCardContent.vue",
+    "HoverCardTrigger.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   input: ["Input.vue", "index.ts", "variants.ts"],
+  "input-group": [
+    "InputGroup.vue",
+    "InputGroupAddon.vue",
+    "InputGroupButton.vue",
+    "InputGroupInput.vue",
+    "InputGroupText.vue",
+    "InputGroupTextarea.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   "input-otp": [
     "InputOtp.vue",
     "InputOtpGroup.vue",
     "InputOtpSeparator.vue",
     "InputOtpSlot.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  item: [
+    "Item.vue",
+    "ItemActions.vue",
+    "ItemContent.vue",
+    "ItemDescription.vue",
+    "ItemFooter.vue",
+    "ItemGroup.vue",
+    "ItemHeader.vue",
+    "ItemMedia.vue",
+    "ItemSeparator.vue",
+    "ItemTitle.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  kbd: ["Kbd.vue", "KbdGroup.vue", "index.ts", "variants.ts"],
+  label: ["Label.vue", "index.ts", "variants.ts"],
+  "native-select": [
+    "NativeSelect.vue",
+    "NativeSelectOptGroup.vue",
+    "NativeSelectOption.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  "navigation-menu": [
+    "NavigationMenu.vue",
+    "NavigationMenuContent.vue",
+    "NavigationMenuIndicator.vue",
+    "NavigationMenuItem.vue",
+    "NavigationMenuLink.vue",
+    "NavigationMenuList.vue",
+    "NavigationMenuPositioner.vue",
+    "NavigationMenuTrigger.vue",
+    "index.ts",
+    "variants.ts",
+  ],
+  pagination: [
+    "Pagination.vue",
+    "PaginationContent.vue",
+    "PaginationEllipsis.vue",
+    "PaginationItem.vue",
+    "PaginationLink.vue",
+    "PaginationNext.vue",
+    "PaginationPrevious.vue",
     "index.ts",
     "variants.ts",
   ],
@@ -114,6 +300,7 @@ const EXPECTED_INVENTORY = {
     "variants.ts",
   ],
   progress: ["Progress.vue", "index.ts", "variants.ts"],
+  prose: ["Prose.vue", "index.ts", "styles.css", "variants.ts"],
   "radio-group": ["RadioGroup.vue", "RadioGroupItem.vue", "index.ts", "variants.ts"],
   "scroll-area": [
     "ScrollArea.vue",
@@ -155,8 +342,50 @@ const EXPECTED_INVENTORY = {
     "index.ts",
     "variants.ts",
   ],
+  sidebar: [
+    "Sidebar.vue",
+    "SidebarContent.vue",
+    "SidebarFooter.vue",
+    "SidebarGroup.vue",
+    "SidebarGroupAction.vue",
+    "SidebarGroupContent.vue",
+    "SidebarGroupLabel.vue",
+    "SidebarHeader.vue",
+    "SidebarInput.vue",
+    "SidebarInset.vue",
+    "SidebarMenu.vue",
+    "SidebarMenuAction.vue",
+    "SidebarMenuBadge.vue",
+    "SidebarMenuButton.vue",
+    "SidebarMenuItem.vue",
+    "SidebarMenuSkeleton.vue",
+    "SidebarMenuSub.vue",
+    "SidebarMenuSubButton.vue",
+    "SidebarMenuSubItem.vue",
+    "SidebarProvider.vue",
+    "SidebarRail.vue",
+    "SidebarSeparator.vue",
+    "SidebarTrigger.vue",
+    "index.ts",
+    "styles.css",
+    "variants.ts",
+  ],
   slider: ["Slider.vue", "index.ts", "variants.ts"],
+  skeleton: ["Skeleton.vue", "index.ts", "variants.ts"],
+  spinner: ["Spinner.vue", "index.ts", "variants.ts"],
   switch: ["Switch.vue", "index.ts", "variants.ts"],
+  table: [
+    "Table.vue",
+    "TableBody.vue",
+    "TableCaption.vue",
+    "TableCell.vue",
+    "TableFoot.vue",
+    "TableHead.vue",
+    "TableHeader.vue",
+    "TableRow.vue",
+    "index.ts",
+    "variants.ts",
+  ],
   tabs: [
     "Tabs.vue",
     "TabsContent.vue",
@@ -165,10 +394,28 @@ const EXPECTED_INVENTORY = {
     "index.ts",
     "variants.ts",
   ],
+  textarea: ["Textarea.vue", "index.ts", "variants.ts"],
   "theme-toggle": ["ThemeToggle.vue", "index.ts", "variants.ts"],
+  toast: [
+    "ToastAction.vue",
+    "ToastClose.vue",
+    "ToastContent.vue",
+    "ToastDescription.vue",
+    "ToastItem.vue",
+    "ToastTemplate.vue",
+    "ToastTitle.vue",
+    "Toaster.vue",
+    "index.ts",
+    "styles.css",
+    "variants.ts",
+  ],
   toggle: ["Toggle.vue", "index.ts", "variants.ts"],
   "toggle-group": ["ToggleGroup.vue", "ToggleGroupItem.vue", "index.ts", "variants.ts"],
+  tooltip: ["Tooltip.vue", "TooltipContent.vue", "TooltipTrigger.vue", "index.ts", "variants.ts"],
+  video: ["Video.vue", "index.ts", "variants.ts"],
 } as const;
+
+const EXPECTED_OUTPUT_FILES = EXPECTED_REQUESTED_ROOT_FILES;
 
 const vuePrimitiveSubpathPattern = vuePrimitiveComponents.join("|");
 
@@ -912,7 +1159,7 @@ describe("generated Vue Styled wrappers", () => {
     });
   });
 
-  it("emits the exact deterministic styled checkpoint inventory", async () => {
+  it("emits exact requested roots plus deterministic derived dependency output", async () => {
     const firstRoot = await createProductionContextOutputRoot();
     const secondRoot = await createOutputRoot();
 
@@ -921,9 +1168,15 @@ describe("generated Vue Styled wrappers", () => {
 
     const firstOutput = path.join(firstRoot, "styled");
     const secondOutput = path.join(secondRoot, "styled");
-    expect((await readdir(firstOutput)).sort()).toEqual(Object.keys(EXPECTED_INVENTORY));
+    expect(Object.keys(EXPECTED_REQUESTED_ROOT_FILES).sort()).toEqual(
+      [...vueStyledComponents].sort(),
+    );
+    expect(vueStyledComponents).toEqual(
+      expect.arrayContaining(["input-group", "native-select", "skeleton", "textarea"]),
+    );
+    expect((await readdir(firstOutput)).sort()).toEqual(Object.keys(EXPECTED_OUTPUT_FILES).sort());
 
-    for (const [component, expectedFiles] of Object.entries(EXPECTED_INVENTORY)) {
+    for (const [component, expectedFiles] of Object.entries(EXPECTED_OUTPUT_FILES)) {
       expect((await readdir(path.join(firstOutput, component))).sort()).toEqual(expectedFiles);
     }
 
@@ -953,6 +1206,122 @@ describe("generated Vue Styled wrappers", () => {
     expect(firstTree["scroll-area/ScrollArea.vue"]).toContain(
       'import * as ScrollAreaPrimitive from "@starwind-ui/vue/scroll-area";',
     );
+    expect(firstTree["tooltip/Tooltip.vue"]).toContain(
+      'import * as TooltipPrimitive from "@starwind-ui/vue/tooltip";',
+    );
+    expect(firstTree["hover-card/HoverCard.vue"]).toContain(
+      'import * as PreviewCardPrimitive from "@starwind-ui/vue/preview-card";',
+    );
+    expect(firstTree["dropdown/Dropdown.vue"]).toContain(
+      'import * as MenuPrimitive from "@starwind-ui/vue/menu";',
+    );
+    expect(firstTree["context-menu/ContextMenu.vue"]).toContain(
+      'import * as ContextMenuPrimitive from "@starwind-ui/vue/context-menu";',
+    );
+    expect(firstTree["navigation-menu/NavigationMenu.vue"]).toContain(
+      'import * as NavigationMenuPrimitive from "@starwind-ui/vue/navigation-menu";',
+    );
+    expect(firstTree["combobox/Combobox.vue"]).toContain(
+      'import * as ComboboxPrimitive from "@starwind-ui/vue/combobox";',
+    );
+
+    for (const relativePath of [
+      "tooltip/Tooltip.vue",
+      "hover-card/HoverCard.vue",
+      "dropdown/Dropdown.vue",
+      "context-menu/ContextMenu.vue",
+      "navigation-menu/NavigationMenu.vue",
+      "combobox/Combobox.vue",
+    ]) {
+      expect(firstTree[relativePath], relativePath).toContain("defineSlots");
+      expect(firstTree[relativePath], relativePath).toContain('v-bind="attrs"');
+      expect(firstTree[relativePath], relativePath).not.toContain("createRuntime");
+    }
+
+    expect(firstTree["tooltip/Tooltip.vue"]).toContain('"update:open": [value: boolean]');
+    expect(firstTree["tooltip/Tooltip.vue"]).toContain(
+      '@update:open="emit(&quot;update:open&quot;, $event)"',
+    );
+    expect(firstTree["tooltip/Tooltip.vue"]).toContain('"openChange":');
+    expect(firstTree["dropdown/Dropdown.vue"]).toContain('"closeComplete":');
+    expect(firstTree["navigation-menu/NavigationMenu.vue"]).toContain(
+      '"update:modelValue": [value: import("@starwind-ui/vue/navigation-menu").NavigationMenuValue]',
+    );
+    expect(firstTree["navigation-menu/NavigationMenu.vue"]).toContain(
+      "contentSize: __vueDependentProp13,",
+    );
+    expect(firstTree["navigation-menu/NavigationMenu.vue"]).toContain(
+      "const contentSize = computed(() => __vueDependentProp13 === undefined ? size : __vueDependentProp13);",
+    );
+    expect(firstTree["navigation-menu/NavigationMenu.vue"]).not.toContain("contentSize = size");
+    expect(firstTree["combobox/Combobox.vue"]).toContain('"update:inputValue": [value: string]');
+    expect(firstTree["combobox/Combobox.vue"]).toContain(
+      '"update:modelValue": [value: string | null]',
+    );
+    expect(firstTree["tooltip/TooltipContent.vue"]).toContain('data-slot="tooltip-content"');
+    expect(firstTree["dropdown/DropdownContent.vue"]).toContain('data-slot="dropdown-content"');
+    expect(firstTree["combobox/ComboboxContent.vue"]).toContain('data-slot="combobox-content"');
+    expect(firstTree["combobox/ComboboxContent.vue"]).not.toContain(
+      '<ComboboxPrimitive.ComboboxPortal data-slot="combobox-portal">',
+    );
+    expect(firstTree["combobox/ComboboxClear.vue"]).toContain(
+      `v-bind="{ ...attrs, disabled: disabled, &quot;aria-label&quot;: &quot;Clear selection&quot; }"`,
+    );
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain(`v-bind="{ disabled: disabled }"`);
+    expect(firstTree["combobox/ComboboxInput.vue"]).not.toContain(
+      "/* @vue-ignore */ ComboboxInputProps",
+    );
+    expect(firstTree["combobox/ComboboxInputGroup.vue"]).toContain(
+      `v-bind="attrs as Omit<InstanceType<typeof InputGroup>['$props'], 'class' | 'style'>"`,
+    );
+    expect(firstTree["combobox/ComboboxInputGroup.vue"]).toMatch(
+      /v-bind="attrs as Omit<InstanceType<typeof InputGroup>\['\$props'\], 'class' \| 'style'>"[\s\S]*data-slot="combobox-input-group"/,
+    );
+    expect(firstTree["input-group/InputGroup.vue"]).toMatch(
+      /data-slot="input-group"[\s\S]*v-bind="attrs"/,
+    );
+    expect(firstTree["input-group/InputGroupButton.vue"]).toContain(
+      `v-bind="attrs as Omit<InstanceType<typeof Button>['$props'], 'class' | 'style'>"`,
+    );
+    expect(firstTree["textarea/Textarea.vue"]).toContain('"data-slot"?: string;');
+    expect(firstTree["tooltip/variants.ts"]).toContain("animate-in fade-in zoom-in-95");
+    expect(firstTree["dropdown/variants.ts"]).toContain("data-[state=open]:animate-in");
+    expect(firstTree["navigation-menu/variants.ts"]).toContain(
+      "transition-[opacity,transform,width,height,scale,translate]",
+    );
+
+    expect(firstTree["carousel/Carousel.vue"]).toContain(
+      'import * as CarouselPrimitive from "@starwind-ui/vue/carousel"',
+    );
+    expect(firstTree["carousel/Carousel.vue"]).toContain(':set-api="setApi"');
+    expect(firstTree["carousel/Carousel.vue"]).toContain("defineExpose({ element });");
+    expect(firstTree["sidebar/SidebarProvider.vue"]).toContain('"update:open": [value: boolean]');
+    expect(firstTree["sidebar/SidebarProvider.vue"]).toContain(
+      '"update:mobileOpen": [value: boolean]',
+    );
+    expect(firstTree["sidebar/SidebarProvider.vue"]).toContain("handleMobileOpenChange");
+    expect(firstTree["sidebar/SidebarProvider.vue"]).toContain("defineExpose({ element });");
+    expect(firstTree["sidebar/Sidebar.vue"]).toContain('from "../sheet"');
+    expect(firstTree["sidebar/styles.css"]).toContain("data-starwind-sidebar-tooltips");
+    expect(firstTree["color-picker/ColorPicker.vue"]).toContain(
+      '"update:modelValue": [value: import("@starwind-ui/vue/color-picker").ColorPickerValue]',
+    );
+    expect(firstTree["color-picker/ColorPicker.vue"]).toContain('"update:open": [value: boolean]');
+    expect(firstTree["color-picker/ColorPicker.vue"]).toContain("handleValueCommitted");
+    expect(firstTree["color-picker/ColorPicker.vue"]).toContain("handleCloseComplete");
+    expect(firstTree["color-picker/ColorPicker.vue"]).toContain("defineExpose({ element });");
+    expect(firstTree["color-picker/ColorPicker.vue"]).toContain(':format="format"');
+    expect(firstTree["color-picker/ColorPicker.vue"]).not.toContain(':format="resolvedFormat"');
+    expect(firstTree["color-picker/ColorPicker.vue"]).toContain(
+      'import { Popover } from "../popover"',
+    );
+    expect(firstTree["color-picker/styles.css"]).toContain("--sw-color-picker-area-background");
+    expect(firstTree["toast/Toaster.vue"]).toContain(
+      'import * as ToastPrimitive from "@starwind-ui/vue/toast"',
+    );
+    expect(firstTree["toast/Toaster.vue"]).toContain("defineExpose({ element });");
+    expect(firstTree["toast/Toaster.vue"]).toContain('<path d="M9 12l2 2l4 -4" />');
+    expect(firstTree["toast/styles.css"]).toContain("--toast-swipe-movement-x");
 
     expect(firstTree["button/Button.vue"]).toContain('dataSlot = "button"');
     expect(firstTree["button/Button.vue"]).toContain(`:data-slot="dataSlot || 'button'"`);
@@ -1021,9 +1390,33 @@ describe("generated Vue Styled wrappers", () => {
     await expectVueTypecheck(firstRoot, firstOutput);
     const formattedTree = await readTree(firstOutput);
     const checkedInTree = await readTree(checkedInRoot);
-    for (const relativePath of Object.keys(formattedTree)) {
-      expect(formattedTree[relativePath], relativePath).toBe(checkedInTree[relativePath]);
-    }
+    expect(formattedTree).toEqual(checkedInTree);
+  }, 120_000);
+
+  it("restores exact closure bytes after deletion without changing unrelated Vue groups", async () => {
+    const root = await createOutputRoot();
+    const outputRoot = path.join(root, "styled");
+    const closure = new Set<string>(PORTABLE_STYLED_CLOSURE);
+
+    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+    const before = await readTree(outputRoot);
+    const unrelatedBefore = Object.fromEntries(
+      Object.entries(before).filter(([relativePath]) => !closure.has(relativePath.split("/")[0]!)),
+    );
+
+    await Promise.all(
+      PORTABLE_STYLED_CLOSURE.map((group) =>
+        rm(path.join(outputRoot, group), { force: true, recursive: true }),
+      ),
+    );
+    await generateStarwindVueWrappers({ outputDir: "styled", repoRoot: root });
+
+    const after = await readTree(outputRoot);
+    const unrelatedAfter = Object.fromEntries(
+      Object.entries(after).filter(([relativePath]) => !closure.has(relativePath.split("/")[0]!)),
+    );
+    expect(unrelatedAfter).toEqual(unrelatedBefore);
+    expect(after).toEqual(before);
   }, 120_000);
 
   it("keeps automatic fallthrough enabled when a generated component does not forward attrs", () => {
@@ -1068,9 +1461,9 @@ describe("generated Vue Styled wrappers", () => {
   });
 
   it("fails generation for an unsupported Styled icon instead of substituting another glyph", () => {
-    expect(() => renderIcon("UnsupportedIcon", [], 0)).toThrowError(
-      "Unsupported Vue Styled icon import: UnsupportedIcon.",
-    );
+    expect(() =>
+      renderIcon({ attrs: [], importName: "UnsupportedIcon", type: "icon" }, 0),
+    ).toThrowError("Vue Styled icon UnsupportedIcon requires a projected SVG asset.");
   });
 
   it("fails clearly when a registered target has no Styled capability", async () => {

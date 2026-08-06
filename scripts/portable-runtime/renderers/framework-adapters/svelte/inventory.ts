@@ -1,10 +1,12 @@
 export const SVELTE_PRIMITIVE_COMPONENTS = [
   "button",
+  "carousel",
   "checkbox",
   "select",
   "accordion",
   "dialog",
   "slider",
+  "toast",
 ] as const;
 
 export type SveltePrimitiveComponent = (typeof SVELTE_PRIMITIVE_COMPONENTS)[number];

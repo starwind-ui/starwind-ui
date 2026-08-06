@@ -37,28 +37,20 @@ describe("Vue Framework Adapter conformance projection", () => {
     expect(source).not.toContain('emit("valueChange", event);');
   });
 
-  it("forwards attrs once, preserves lazy slots, and enforces strict native asChild composition", () => {
+  it("forwards attrs once and delegates component-rooted asChild composition", () => {
     const source = printConformanceComponent();
 
     expect(source).toContain("defineOptions({ inheritAttrs: false });");
     expect(source.match(/v-bind="\$attrs"/g)).toHaveLength(1);
     expect(source).toContain("const children = slots.default?.() ?? [];");
-    expect(source).toContain('typeof value.type === "string"');
-    expect(source).toContain(
-      'throw new TypeError("ConformanceRoot asChild requires exactly one native element VNode.")',
-    );
-    expect(source).toContain("mergeProps(defaultedProps, consumerProps, protectedProps)");
-    expect(source).toContain(
-      "cloneVNode(child, mergeProps(defaultedProps, consumerProps, protectedProps), true)",
-    );
-    expect(source).toContain("ref: setRootElement");
-    expect(source).toContain("type ComponentPublicInstance,");
+    expect(source).toContain('import { createVueAsChild } from "../_internal/as-child";');
+    expect(source).toContain('const asChild = createVueAsChild("ConformanceRoot", rootRef);');
+    expect(source).toContain("return asChild.render({");
+    expect(source).toContain('defaultNativeButtonType: "button"');
+    expect(source).toContain("const { setElement: setRootElement } = asChild;");
     expect(source).toContain("const rootRef = ref<HTMLElement | null>(null);");
-    expect(source).toContain(
-      "function setRootElement(element: Element | ComponentPublicInstance | null): void {",
-    );
-    expect(source).toContain("rootRef.value = element instanceof HTMLElement ? element : null;");
-    expect(source).not.toContain("element as HTMLElement");
+    expect(source).not.toContain("cloneVNode");
+    expect(source).not.toContain("isNativeElementVNode");
     expect(source).not.toContain("child.ref");
   });
 

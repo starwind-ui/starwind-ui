@@ -36,6 +36,12 @@ export const aspectRatioStyledContract: StyledAdapterContract = {
             frameworks: ["react"],
           },
           {
+            name: "as",
+            optional: true,
+            type: "string",
+            frameworks: ["vue"],
+          },
+          {
             name: "ratio",
             optional: true,
             type: "number",
@@ -71,6 +77,11 @@ export const aspectRatioStyledContract: StyledAdapterContract = {
             code: "{ paddingBottom: `${100 / ratio}%` } as React.CSSProperties",
           },
         },
+        {
+          frameworks: ["vue"],
+          name: "wrapperStyle",
+          value: { type: "raw", code: "{ paddingBottom: `${100 / ratio}%` }" },
+        },
       ],
       render: [
         {
@@ -91,6 +102,7 @@ export const aspectRatioStyledContract: StyledAdapterContract = {
             {
               type: "element",
               tag: "Tag",
+              tagBinding: true,
               attrs: [
                 {
                   name: "class",

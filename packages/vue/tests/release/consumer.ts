@@ -5,9 +5,11 @@ import {
   AlertDialogRoot,
   AvatarRoot,
   ButtonRoot,
+  CarouselRoot,
   CheckboxGroupRoot,
   CheckboxRoot,
   CollapsibleRoot,
+  ColorPickerRoot,
   DialogRoot,
   DrawerRoot,
   DropzoneRoot,
@@ -22,9 +24,11 @@ import {
   RadioRoot,
   ScrollAreaRoot,
   SelectRoot,
+  SidebarProvider,
   SliderRoot,
   SwitchRoot,
   TabsRoot,
+  ToastRoot,
   ToggleRoot,
   ToggleGroupRoot,
 } from "@starwind-ui/vue";
@@ -77,6 +81,22 @@ import {
 } from "@starwind-ui/vue/tabs";
 import TabsDefault from "@starwind-ui/vue/tabs";
 import {
+  Toast,
+  ToastAction,
+  ToastClose,
+  ToastContent,
+  ToastDescription,
+  ToastRoot as ToastSubpath,
+  ToastTemplate,
+  ToastTitle,
+  ToastTitleText,
+  ToastViewport,
+  toast,
+  type ToastOptions,
+  type ToastPromiseOptions,
+} from "@starwind-ui/vue/toast";
+import ToastDefault from "@starwind-ui/vue/toast";
+import {
   AlertDialog,
   AlertDialogBackdrop,
   AlertDialogClose,
@@ -103,6 +123,19 @@ import AvatarDefault from "@starwind-ui/vue/avatar";
 import { Button, ButtonRoot as ButtonSubpath } from "@starwind-ui/vue/button";
 import ButtonDefault from "@starwind-ui/vue/button";
 import {
+  Carousel,
+  CarouselContainer,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  CarouselRoot as CarouselSubpath,
+  CarouselViewport,
+  type CarouselInstance,
+  type CarouselOptions,
+  createCarousel,
+} from "@starwind-ui/vue/carousel";
+import CarouselDefault from "@starwind-ui/vue/carousel";
+import {
   Checkbox,
   CheckboxIndicator,
   CheckboxRoot as CheckboxSubpath,
@@ -124,6 +157,37 @@ import {
   type CollapsibleOpenChangeDetails,
 } from "@starwind-ui/vue/collapsible";
 import CollapsibleDefault from "@starwind-ui/vue/collapsible";
+import {
+  ColorPicker,
+  ColorPickerArea,
+  ColorPickerAreaInput,
+  ColorPickerChannelSlider,
+  ColorPickerChannelSliderInput,
+  ColorPickerHiddenInput,
+  ColorPickerRoot as ColorPickerSubpath,
+  ColorPickerSwatch,
+  type ColorPickerColor,
+  type ColorPickerFormat,
+  type ColorPickerValueChangeDetails,
+  createColorPickerInitialState,
+  parseColor,
+  projectColorPickerInitialPart,
+} from "@starwind-ui/vue/color-picker";
+import ColorPickerDefault from "@starwind-ui/vue/color-picker";
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxRoot as ComboboxSubpath,
+} from "@starwind-ui/vue/combobox";
+import ComboboxDefault from "@starwind-ui/vue/combobox";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuRoot as ContextMenuSubpath,
+  ContextMenuTrigger,
+} from "@starwind-ui/vue/context-menu";
+import ContextMenuDefault from "@starwind-ui/vue/context-menu";
 import {
   Dialog,
   DialogBackdrop,
@@ -176,6 +240,15 @@ import {
   type InputOtpValueChangeDetails,
 } from "@starwind-ui/vue/input-otp";
 import InputOtpDefault from "@starwind-ui/vue/input-otp";
+import { Menu, MenuItem, MenuRoot as MenuSubpath, MenuTrigger } from "@starwind-ui/vue/menu";
+import MenuDefault from "@starwind-ui/vue/menu";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuRoot as NavigationMenuSubpath,
+  NavigationMenuTrigger,
+} from "@starwind-ui/vue/navigation-menu";
+import NavigationMenuDefault from "@starwind-ui/vue/navigation-menu";
 import {
   Popover,
   PopoverArrow,
@@ -193,6 +266,12 @@ import {
   type PopoverOpenChangeDetails,
 } from "@starwind-ui/vue/popover";
 import PopoverDefault from "@starwind-ui/vue/popover";
+import {
+  PreviewCard,
+  PreviewCardRoot as PreviewCardSubpath,
+  PreviewCardTrigger,
+} from "@starwind-ui/vue/preview-card";
+import PreviewCardDefault from "@starwind-ui/vue/preview-card";
 import {
   Progress,
   ProgressIndicator,
@@ -250,6 +329,20 @@ import {
 } from "@starwind-ui/vue/select";
 import SelectDefault from "@starwind-ui/vue/select";
 import {
+  Sidebar,
+  SidebarComponent,
+  SidebarMenuButton,
+  SidebarProvider as SidebarProviderSubpath,
+  SidebarRail,
+  SidebarTrigger,
+  type SidebarContextValue,
+  type SidebarMobileOpenChangeDetails,
+  type SidebarOpenChangeDetails,
+  type SidebarPersistenceStorage,
+  useSidebarContext,
+} from "@starwind-ui/vue/sidebar";
+import SidebarDefault from "@starwind-ui/vue/sidebar";
+import {
   Slider,
   SliderControl,
   SliderIndicator,
@@ -283,6 +376,8 @@ import {
   useToggleGroupContext,
 } from "@starwind-ui/vue/toggle-group";
 import ToggleGroupDefault from "@starwind-ui/vue/toggle-group";
+import { Tooltip, TooltipRoot as TooltipSubpath, TooltipTrigger } from "@starwind-ui/vue/tooltip";
+import TooltipDefault from "@starwind-ui/vue/tooltip";
 import {
   getThemeInitScript,
   initThemeController,
@@ -329,6 +424,15 @@ const components: Component[] = [
   ButtonSubpath,
   Button.Root,
   ButtonDefault.Root,
+  CarouselRoot,
+  CarouselSubpath,
+  CarouselContainer,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  CarouselViewport,
+  Carousel.Root,
+  CarouselDefault.Root,
   CheckboxRoot,
   CheckboxSubpath,
   CheckboxIndicator,
@@ -349,7 +453,27 @@ const components: Component[] = [
   Collapsible.Panel,
   CollapsibleDefault.Root,
   CollapsibleDefault.Trigger,
+  ColorPickerRoot,
+  ColorPickerSubpath,
+  ColorPickerArea,
+  ColorPickerAreaInput,
+  ColorPickerChannelSlider,
+  ColorPickerChannelSliderInput,
+  ColorPickerHiddenInput,
+  ColorPickerSwatch,
+  ColorPicker.Root,
+  ColorPickerDefault.Root,
   CollapsibleDefault.Panel,
+  ComboboxSubpath,
+  ComboboxInput,
+  ComboboxItem,
+  Combobox.Root,
+  ComboboxDefault.Root,
+  ContextMenuSubpath,
+  ContextMenuTrigger,
+  ContextMenuItem,
+  ContextMenu.Root,
+  ContextMenuDefault.Root,
   DialogRoot,
   DrawerRoot,
   DropzoneRoot,
@@ -446,6 +570,16 @@ const components: Component[] = [
   InputOtpDefault.Group,
   InputOtpDefault.Separator,
   InputOtpDefault.Slot,
+  MenuSubpath,
+  MenuTrigger,
+  MenuItem,
+  Menu.Root,
+  MenuDefault.Root,
+  NavigationMenuSubpath,
+  NavigationMenuTrigger,
+  NavigationMenuItem,
+  NavigationMenu.Root,
+  NavigationMenuDefault.Root,
   ProgressRoot,
   ProgressSubpath,
   ProgressTrack,
@@ -496,6 +630,10 @@ const components: Component[] = [
   PopoverDefault.Title,
   PopoverDefault.Trigger,
   PopoverDefault.Viewport,
+  PreviewCardSubpath,
+  PreviewCardTrigger,
+  PreviewCard.Root,
+  PreviewCardDefault.Root,
   RadioRoot,
   RadioSubpath,
   RadioIndicator,
@@ -585,6 +723,19 @@ const components: Component[] = [
   TabsDefault.List,
   TabsDefault.Panel,
   TabsDefault.Tab,
+  ToastRoot,
+  ToastSubpath,
+  ToastAction,
+  ToastClose,
+  ToastContent,
+  ToastDescription,
+  ToastTemplate,
+  ToastTitle,
+  ToastTitleText,
+  ToastViewport,
+  Toast.Root,
+  Toast.Viewport,
+  ToastDefault.Root,
   ToggleRoot,
   ToggleSubpath,
   Toggle.Root,
@@ -593,6 +744,10 @@ const components: Component[] = [
   ToggleGroupSubpath,
   ToggleGroup.Root,
   ToggleGroupDefault.Root,
+  TooltipSubpath,
+  TooltipTrigger,
+  Tooltip.Root,
+  TooltipDefault.Root,
   SelectDefault.Label,
   SelectDefault.Trigger,
   SelectDefault.Value,
@@ -609,6 +764,18 @@ const components: Component[] = [
   SelectDefault.Separator,
   SelectDefault.ScrollUpArrow,
   SelectDefault.ScrollDownArrow,
+  SidebarProvider,
+  SidebarProviderSubpath,
+  SidebarComponent,
+  SidebarTrigger,
+  SidebarRail,
+  SidebarMenuButton,
+  Sidebar.Provider,
+  Sidebar.Sidebar,
+  Sidebar.Trigger,
+  Sidebar.Rail,
+  Sidebar.MenuButton,
+  SidebarDefault.Provider,
   SliderRoot,
   SliderSubpath,
   SliderControl,
@@ -630,11 +797,21 @@ const components: Component[] = [
   SliderDefault.Track,
 ];
 const context: SelectContextValue | undefined = undefined;
+const sidebarContext = undefined as SidebarContextValue | undefined;
+const sidebarOpenDetail = undefined as SidebarOpenChangeDetails | undefined;
+const sidebarMobileOpenDetail = undefined as SidebarMobileOpenChangeDetails | undefined;
+const sidebarStorage: SidebarPersistenceStorage = "localStorage";
 const accordionValue: AccordionValue = "alpha";
 const accordionDetail = undefined as AccordionValueChangeDetails | undefined;
 const tabsOrientation: TabsOrientation = "horizontal";
 const tabsValue: TabsValue = "account";
 const tabsDetail = undefined as TabsValueChangeDetails | undefined;
+const toastOptions: ToastOptions = { duration: 0, title: "Release toast" };
+const toastPromiseOptions: ToastPromiseOptions<string> = {
+  error: "Failed",
+  loading: "Loading",
+  success: "Loaded",
+};
 const themeOptions: ThemeInitScriptOptions = { defaultTheme: "system" };
 const avatarStatus: AvatarImageLoadingStatus = "idle";
 const formValidationTiming: FormValidationTiming = "submit";
@@ -643,6 +820,8 @@ const fieldInputValue: FieldInputValue = "release field";
 const fieldInputDetail = undefined as FieldInputValueChangeDetails | undefined;
 const inputOtpDetail = undefined as InputOtpValueChangeDetails | undefined;
 const sliderValue: SliderValue = [20, 80];
+const carouselOptions: CarouselOptions = { orientation: "horizontal" };
+const carouselInstance = undefined as CarouselInstance | undefined;
 const sliderChangeDetail = undefined as SliderValueChangeDetails | undefined;
 const sliderCommitDetail = undefined as SliderValueCommitDetails | undefined;
 const popoverCloseDetail = undefined as PopoverCloseCompleteDetails | undefined;
@@ -658,6 +837,9 @@ const toggleGroupValue: ToggleGroupValue = ["alpha"];
 const checkboxGroupContext = undefined as CheckboxGroupContextValue | undefined;
 const checkboxGroupValue: CheckboxGroupValue = [];
 const collapsibleDetail = undefined as CollapsibleOpenChangeDetails | undefined;
+const colorPickerColor = undefined as ColorPickerColor | undefined;
+const colorPickerFormat: ColorPickerFormat = "hex";
+const colorPickerDetail = undefined as ColorPickerValueChangeDetails | undefined;
 const dialogCloseDetail = undefined as DialogCloseCompleteDetails | undefined;
 const dialogOpenDetail = undefined as DialogOpenChangeDetails | undefined;
 const drawerCloseDetail = undefined as DrawerCloseCompleteDetails | undefined;
@@ -677,7 +859,15 @@ void useTabsContext;
 void tabsOrientation;
 void tabsValue;
 void tabsDetail;
+void toastOptions;
+void toastPromiseOptions;
+void toast;
 void context;
+void sidebarContext;
+void sidebarOpenDetail;
+void sidebarMobileOpenDetail;
+void sidebarStorage;
+void useSidebarContext;
 void avatarDetail;
 void formValidationTiming;
 void inputValue;
@@ -685,6 +875,9 @@ void fieldInputValue;
 void fieldInputDetail;
 void inputOtpDetail;
 void sliderValue;
+void carouselOptions;
+void carouselInstance;
+void createCarousel;
 void sliderChangeDetail;
 void sliderCommitDetail;
 void popoverCloseDetail;
@@ -696,6 +889,12 @@ void toggleGroupValue;
 void checkboxGroupContext;
 void checkboxGroupValue;
 void collapsibleDetail;
+void colorPickerColor;
+void colorPickerFormat;
+void colorPickerDetail;
+void createColorPickerInitialState;
+void parseColor;
+void projectColorPickerInitialPart;
 void dialogCloseDetail;
 void dialogOpenDetail;
 void drawerCloseDetail;

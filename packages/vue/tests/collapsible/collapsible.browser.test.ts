@@ -264,17 +264,18 @@ describe("Vue Collapsible public behavior", () => {
     ["multiple children", () => [h("button"), h("button")]],
     ["text", () => "text"],
     ["comment", () => createCommentVNode("comment")],
-    ["fragment", () => h(Fragment, null, [h("button")])],
+    ["multiple-child fragment", () => h(Fragment, null, [h("button"), h("span")])],
     [
-      "component",
+      "multiple-root component",
       () =>
         h(
           defineComponent({
-            render: () => h("button"),
+            render: () => [h("button"), h("span")],
           }),
         ),
     ],
-  ])("rejects strict asChild %s", (_name, invalidChild) => {
+    ["rootless component", () => h(defineComponent({ render: () => null }))],
+  ])("rejects invalid asChild %s with an actionable error", (_name, invalidChild) => {
     const host = appendHost();
     const app = createApp({
       render: () =>
@@ -287,7 +288,7 @@ describe("Vue Collapsible public behavior", () => {
     });
     app.config.warnHandler = () => {};
     expect(() => app.mount(host)).toThrow(
-      "CollapsibleTrigger asChild requires exactly one native element VNode.",
+      /CollapsibleTrigger asChild .*(child|native|Fragment|root)/,
     );
   });
 

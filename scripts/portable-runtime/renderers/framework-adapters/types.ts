@@ -71,6 +71,7 @@ export type FrameworkAdapterTargetStyledProjectArgs = {
   outputRoot: string;
   primitiveImportBase?: string;
   primitiveOutputRoot: string;
+  roots?: readonly string[];
 };
 
 export type FrameworkAdapterTargetStyledWriteArgs = FrameworkAdapterTargetStyledProjectArgs & {

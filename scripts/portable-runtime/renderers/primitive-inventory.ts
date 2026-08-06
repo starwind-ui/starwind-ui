@@ -93,6 +93,14 @@ const primitiveRuntimeAdapterFacts = [
     runtimeFacades: { types: ["CollapsibleOpenChangeDetails"] },
   },
   {
+    component: "color-picker",
+    generation: { source: "specialized-adapter-spec", strategy: "specialized-adapter-spec" },
+    runtimeFacades: {
+      types: colorPickerRuntimeFacade.types,
+      values: colorPickerRuntimeFacade.values,
+    },
+  },
+  {
     component: "combobox",
     generation: { source: "specialized-adapter-spec", strategy: "specialized-adapter-spec" },
     runtimeFacades: {
@@ -101,14 +109,6 @@ const primitiveRuntimeAdapterFacts = [
         "ComboboxOpenChangeDetails",
         "ComboboxValueChangeDetails",
       ],
-    },
-  },
-  {
-    component: "color-picker",
-    generation: { source: "specialized-adapter-spec", strategy: "specialized-adapter-spec" },
-    runtimeFacades: {
-      types: colorPickerRuntimeFacade.types,
-      values: colorPickerRuntimeFacade.values,
     },
   },
   {

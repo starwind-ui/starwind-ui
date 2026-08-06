@@ -101,6 +101,21 @@ describe.sequential("remove command", () => {
     expect((await readConfig()).components).toEqual([component("button", "react")]);
   });
 
+  it("removes an explicit target without confirmation when yes is set", async () => {
+    await writeConfig(
+      runtimeConfig({
+        components: [component("button", "react")],
+      }),
+    );
+    const reactFile = await writeComponent("src/components/starwind-react", "button", "index.tsx");
+
+    await remove(["button"], { framework: "react", yes: true });
+
+    await expect(stat(reactFile)).rejects.toThrow();
+    expect((await readConfig()).components).toEqual([]);
+    expect(mockConfirm).not.toHaveBeenCalled();
+  });
+
   it("removes an explicit React target from componentDirs.react", async () => {
     await writeConfig(
       runtimeConfig({

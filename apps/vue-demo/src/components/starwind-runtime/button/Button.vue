@@ -47,7 +47,7 @@ type ButtonDeclaredProps = {
   class?: ClassValue;
   variant?: ButtonProps["variant"];
   size?: ButtonProps["size"];
-} & /* @vue-ignore */ ButtonProps;
+} & /* @vue-ignore */ Omit<ButtonProps, "data-slot">;
 const {
   variant,
   size,

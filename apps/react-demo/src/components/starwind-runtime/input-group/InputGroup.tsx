@@ -10,8 +10,8 @@ function InputGroup(props: InputGroupProps) {
     <div
       role="group"
       className={inputGroup({ class: className })}
-      {...rest}
       data-slot="input-group"
+      {...rest}
     >
       {children}
     </div>

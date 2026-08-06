@@ -87,18 +87,14 @@ allowBuilds:
         args: [cliEntrypoint, "--version"],
         command: process.execPath,
       });
-      expect(project.init.args).toEqual([
-        cliEntrypoint,
-        "init",
-        "--defaults",
-        `--${project.framework}`,
-      ]);
+      expect(project.init.args).toEqual([cliEntrypoint, "init", "--defaults"]);
       expect(project.add.args).toEqual([
         cliEntrypoint,
         "add",
         "button",
         "dialog",
         "context-menu",
+        "color-picker",
         "--yes",
       ]);
     }
@@ -116,8 +112,10 @@ allowBuilds:
       expect(fixture).toContain('id="dialog-content"');
       expect(fixture).toContain('id="context-trigger"');
       expect(fixture).toContain('id="context-item"');
+      expect(fixture).toContain('id="acceptance-color-picker"');
       expect(fixture).toContain("Published package dialog");
       expect(fixture).toContain("Accept action");
+      expect(fixture).toContain("Published red");
     }
   });
 

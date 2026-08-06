@@ -101,6 +101,19 @@ describe("presence", () => {
     expect(element.hasAttribute("data-starting-style")).toBe(false);
   });
 
+  it("keeps the pending release when an open element is shown again", async () => {
+    const element = renderElementWithAnimationDuration("200ms");
+    element.hidden = true;
+
+    showElement(element);
+    showElement(element);
+
+    expect(element.hasAttribute("data-starting-style")).toBe(true);
+
+    await nextAnimationFrame();
+    expect(element.hasAttribute("data-starting-style")).toBe(false);
+  });
+
   it("does not let a stale release clear a newer starting style", async () => {
     const element = renderElementWithAnimationDuration("0ms");
     element.hidden = true;

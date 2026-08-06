@@ -38,6 +38,11 @@ export const vueBrowserProjectOwnership = [
     tests: ["packages/vue/tests/button/button.browser.test.ts"],
   },
   {
+    component: "carousel",
+    config: "packages/vue/tests/carousel/vitest.config.ts",
+    tests: ["packages/vue/tests/carousel/carousel.browser.test.ts"],
+  },
+  {
     component: "checkbox",
     config: "packages/vue/tests/checkbox/vitest.config.ts",
     tests: ["packages/vue/tests/checkbox/checkbox.browser.test.ts"],
@@ -51,6 +56,21 @@ export const vueBrowserProjectOwnership = [
     component: "collapsible",
     config: "packages/vue/tests/collapsible/vitest.config.ts",
     tests: ["packages/vue/tests/collapsible/collapsible.browser.test.ts"],
+  },
+  {
+    component: "color-picker",
+    config: "packages/vue/tests/color-picker/vitest.config.ts",
+    tests: ["packages/vue/tests/color-picker/color-picker.browser.test.ts"],
+  },
+  {
+    component: "combobox",
+    config: "packages/vue/tests/combobox/vitest.config.ts",
+    tests: ["packages/vue/tests/combobox/combobox.browser.test.ts"],
+  },
+  {
+    component: "context-menu",
+    config: "packages/vue/tests/context-menu/vitest.config.ts",
+    tests: ["packages/vue/tests/context-menu/context-menu.browser.test.ts"],
   },
   {
     component: "dialog",
@@ -88,9 +108,24 @@ export const vueBrowserProjectOwnership = [
     tests: ["packages/vue/tests/input/input.browser.test.ts"],
   },
   {
+    component: "menu",
+    config: "packages/vue/tests/menu/vitest.config.ts",
+    tests: ["packages/vue/tests/menu/menu.browser.test.ts"],
+  },
+  {
+    component: "navigation-menu",
+    config: "packages/vue/tests/navigation-menu/vitest.config.ts",
+    tests: ["packages/vue/tests/navigation-menu/navigation-menu.browser.test.ts"],
+  },
+  {
     component: "popover",
     config: "packages/vue/tests/popover/vitest.config.ts",
     tests: ["packages/vue/tests/popover/popover.browser.test.ts"],
+  },
+  {
+    component: "preview-card",
+    config: "packages/vue/tests/preview-card/vitest.config.ts",
+    tests: ["packages/vue/tests/preview-card/preview-card.browser.test.ts"],
   },
   {
     component: "progress",
@@ -121,6 +156,11 @@ export const vueBrowserProjectOwnership = [
     tests: ["packages/vue/tests/select/select.browser.test.ts"],
   },
   {
+    component: "sidebar",
+    config: "packages/vue/tests/sidebar/vitest.config.ts",
+    tests: ["packages/vue/tests/sidebar/sidebar.browser.test.ts"],
+  },
+  {
     component: "input-otp",
     config: "packages/vue/tests/input-otp/vitest.config.ts",
     tests: ["packages/vue/tests/input-otp/input-otp.browser.test.ts"],
@@ -141,6 +181,11 @@ export const vueBrowserProjectOwnership = [
     tests: ["packages/vue/tests/tabs/tabs.browser.test.ts"],
   },
   {
+    component: "toast",
+    config: "packages/vue/tests/toast/vitest.config.ts",
+    tests: ["packages/vue/tests/toast/toast.browser.test.ts"],
+  },
+  {
     component: "toggle",
     config: "packages/vue/tests/toggle/vitest.config.ts",
     tests: ["packages/vue/tests/toggle/toggle.browser.test.ts"],
@@ -149,6 +194,11 @@ export const vueBrowserProjectOwnership = [
     component: "toggle-group",
     config: "packages/vue/tests/toggle-group/vitest.config.ts",
     tests: ["packages/vue/tests/toggle-group/toggle-group.browser.test.ts"],
+  },
+  {
+    component: "tooltip",
+    config: "packages/vue/tests/tooltip/vitest.config.ts",
+    tests: ["packages/vue/tests/tooltip/tooltip.browser.test.ts"],
   },
 ] as const satisfies readonly VueBrowserProjectOwnership[];
 
@@ -295,6 +345,7 @@ export function createVueBrowserProjectConfig(component: string) {
       __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: true,
     },
     plugins: [vueSfcPlugin],
+    optimizeDeps: { include: ["vue", "vue/server-renderer"] },
     resolve,
     root: repoRoot,
     test: {
@@ -310,6 +361,7 @@ export function createVueBrowserProjectConfig(component: string) {
         },
         {
           cacheDir: path.join(repoRoot, "node_modules/.vite/vue-browser", component),
+          optimizeDeps: { include: ["vue", "vue/server-renderer"] },
           plugins: [vueSfcPlugin],
           resolve,
           test: {

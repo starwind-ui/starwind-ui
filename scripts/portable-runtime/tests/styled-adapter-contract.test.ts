@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { buttonStyledContract } from "../contracts/styled/components/button.js";
 import { carouselStyledContract } from "../contracts/styled/components/carousel.js";
+import { comboboxStyledContract } from "../contracts/styled/components/combobox.js";
+import { contextMenuStyledContract } from "../contracts/styled/components/context-menu.js";
+import { dropdownStyledContract } from "../contracts/styled/components/dropdown.js";
+import { hoverCardStyledContract } from "../contracts/styled/components/hover-card.js";
+import { navigationMenuStyledContract } from "../contracts/styled/components/navigation-menu.js";
 import { proseStyledContract } from "../contracts/styled/components/prose.js";
+import { tooltipStyledContract } from "../contracts/styled/components/tooltip.js";
 import { starwindStyledContracts } from "../contracts/styled/starwind.js";
 import type { StyledAdapterContract } from "../contracts/styled/types.js";
 import { validateStyledAdapterContracts } from "../contracts/styled/validation.js";
@@ -25,6 +31,67 @@ describe("StyledAdapterContract inventory", () => {
         path: "frameworks",
       }),
     ]);
+  });
+
+  it("exposes the menus and floating model and detailed-event facts to Vue", () => {
+    const cases = [
+      [tooltipStyledContract, "Tooltip", ["open", "onOpenChange"]],
+      [hoverCardStyledContract, "HoverCard", ["open", "onOpenChange"]],
+      [dropdownStyledContract, "Dropdown", ["open", "onOpenChange", "onCloseComplete"]],
+      [dropdownStyledContract, "DropdownRadioGroup", ["value", "onValueChange"]],
+      [contextMenuStyledContract, "ContextMenu", ["open", "onOpenChange", "onCloseComplete"]],
+      [contextMenuStyledContract, "ContextMenuRadioGroup", ["value", "onValueChange"]],
+      [navigationMenuStyledContract, "NavigationMenu", ["value", "onValueChange"]],
+      [
+        comboboxStyledContract,
+        "Combobox",
+        ["inputValue", "open", "value", "onInputValueChange", "onOpenChange", "onValueChange"],
+      ],
+    ] as const;
+
+    for (const [contract, exportName, names] of cases) {
+      const component = contract.components.find(
+        (candidate) => candidate.exportName === exportName,
+      );
+      expect(component, `${contract.component}:${exportName}`).toBeDefined();
+      const root = component?.render[0];
+      expect(root?.type, `${contract.component}:${exportName} root`).toBe("primitive");
+      for (const name of names) {
+        expect(
+          component?.props?.fields?.find((field) => field.name === name),
+          `${contract.component}:${exportName} prop ${name}`,
+        ).toSatisfy(supportsVue);
+        expect(
+          component?.destructure?.props.find((prop) => prop.name === name),
+          `${contract.component}:${exportName} destructure ${name}`,
+        ).toSatisfy(supportsVue);
+        expect(
+          root?.type === "primitive" ? root.attrs?.find((attr) => attr.name === name) : undefined,
+          `${contract.component}:${exportName} binding ${name}`,
+        ).toSatisfy(supportsVue);
+      }
+    }
+  });
+
+  it("keeps React-only ref, render-prop, and portal facts scoped to React", () => {
+    const cases = [
+      [tooltipStyledContract, "TooltipTrigger", "ref"],
+      [dropdownStyledContract, "DropdownTrigger", "ref"],
+      [contextMenuStyledContract, "ContextMenuTrigger", "ref"],
+      [comboboxStyledContract, "ComboboxInput", "children"],
+      [comboboxStyledContract, "ComboboxContent", "keepMounted"],
+    ] as const;
+
+    for (const [contract, exportName, fieldName] of cases) {
+      const component = contract.components.find(
+        (candidate) => candidate.exportName === exportName,
+      );
+      const field = component?.props?.fields?.find((candidate) => candidate.name === fieldName);
+
+      expect(field, `${contract.component}:${exportName} prop ${fieldName}`).toMatchObject({
+        frameworks: ["react"],
+      });
+    }
   });
 
   it("resolves variant omissions through the declared alias source and dependency", () => {
@@ -243,4 +310,8 @@ describe("StyledAdapterContract inventory", () => {
 
 function cloneStyledContract(contract: StyledAdapterContract): StyledAdapterContract {
   return JSON.parse(JSON.stringify(contract)) as StyledAdapterContract;
+}
+
+function supportsVue(value: { frameworks?: readonly string[] } | undefined): boolean {
+  return Boolean(value && (!value.frameworks || value.frameworks.includes("vue")));
 }

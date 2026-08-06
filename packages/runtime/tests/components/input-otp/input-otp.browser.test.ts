@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createField } from "../../../src/components/field/field";
 import {
   createInputOtp,
   type InputOtpValueChangeDetails,
@@ -453,6 +454,94 @@ describe("createInputOtp", () => {
 
     expect(instance.getValue()).toBe("12");
     expect(new FormData(form).get("code")).toBe("12");
+  });
+
+  it("keeps the authored default when Field reconnects during native reset", async () => {
+    document.body.innerHTML = `
+      <form>
+        <div data-sw-field data-name="code">
+          ${createInputOtpMarkup({ defaultValue: "12", maxLength: 4 })}
+        </div>
+      </form>
+    `;
+    const form = document.querySelector<HTMLFormElement>("form")!;
+    const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const root = document.querySelector<HTMLElement>("[data-sw-input-otp]")!;
+    const onValueChange = vi.fn();
+    const instance = createInputOtp(root, { onValueChange });
+    createField(field);
+
+    instance.setValue("34");
+    getInput().defaultValue = "34";
+    onValueChange.mockClear();
+    form.addEventListener("reset", () => {
+      field.setAttribute("data-name", "verification-code");
+    });
+
+    form.reset();
+    await waitForMacrotask();
+
+    expect(instance.getValue()).toBe("12");
+    expect(root).toHaveAttribute("data-value", "12");
+    expect(getInput().value).toBe("12");
+    expect(getSlotText()).toEqual(["1", "2", "", ""]);
+    expect(new FormData(form).get("verification-code")).toBe("12");
+    expect(onValueChange).not.toHaveBeenCalled();
+
+    instance.setValue("56");
+
+    expect(instance.getValue()).toBe("56");
+    expect(new FormData(form).get("verification-code")).toBe("56");
+    expect(onValueChange).toHaveBeenCalledOnce();
+  });
+
+  it("keeps a controlled value when Field reconnects during native reset", async () => {
+    document.body.innerHTML = `
+      <form>
+        <div data-sw-field data-name="code">
+          ${createInputOtpMarkup({ defaultValue: "12", maxLength: 4 })}
+        </div>
+      </form>
+    `;
+    const form = document.querySelector<HTMLFormElement>("form")!;
+    const field = document.querySelector<HTMLElement>("[data-sw-field]")!;
+    const root = document.querySelector<HTMLElement>("[data-sw-input-otp]")!;
+    const instance = createInputOtp(root, { value: "34" });
+    createField(field);
+    form.addEventListener("reset", () => {
+      field.setAttribute("data-name", "verification-code");
+    });
+
+    form.reset();
+    await waitForMacrotask();
+
+    expect(instance.getValue()).toBe("34");
+    expect(root).toHaveAttribute("data-value", "34");
+    expect(getInput().value).toBe("34");
+    expect(getSlotText()).toEqual(["3", "4", "", ""]);
+    expect(new FormData(form).get("verification-code")).toBe("34");
+  });
+
+  it("preserves the current value when native reset is canceled", async () => {
+    document.body.innerHTML = `
+      <form>
+        ${createInputOtpMarkup({ defaultValue: "12", maxLength: 4, name: "code" })}
+      </form>
+    `;
+    const form = document.querySelector<HTMLFormElement>("form")!;
+    const root = document.querySelector<HTMLElement>("[data-sw-input-otp]")!;
+    const instance = createInputOtp(root);
+    instance.setValue("34");
+    form.addEventListener("reset", (event) => event.preventDefault());
+
+    form.reset();
+    await waitForMacrotask();
+
+    expect(instance.getValue()).toBe("34");
+    expect(root).toHaveAttribute("data-value", "34");
+    expect(getInput().value).toBe("34");
+    expect(getSlotText()).toEqual(["3", "4", "", ""]);
+    expect(new FormData(form).get("code")).toBe("34");
   });
 
   it("rebinds native reset handling when form ownership changes", async () => {

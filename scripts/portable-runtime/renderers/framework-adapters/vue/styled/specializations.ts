@@ -177,6 +177,34 @@ export function specializeVueStyledComponent(
     result.rootBindings.push({ attribute: "ref", target: "checkbox primitive root" });
   }
 
+  if (groupName === "carousel" && component.exportName === "Carousel") {
+    addPrimitiveBinding(component.render, "carousel", "Root", refBinding());
+    result.exposedRefs.push(primitiveRef("HTMLDivElement"));
+    result.imports.push(...primitiveRefImports());
+    result.rootBindings.push({ attribute: "ref", target: "carousel primitive root" });
+  }
+
+  if (groupName === "sidebar" && component.exportName === "SidebarProvider") {
+    addPrimitiveBinding(component.render, "sidebar", "Provider", refBinding());
+    result.exposedRefs.push(primitiveRef("HTMLDivElement"));
+    result.imports.push(...primitiveRefImports());
+    result.rootBindings.push({ attribute: "ref", target: "sidebar provider primitive root" });
+  }
+
+  if (groupName === "color-picker" && component.exportName === "ColorPicker") {
+    addPrimitiveBinding(component.render, "color-picker", "Root", refBinding());
+    result.exposedRefs.push(primitiveRef("HTMLDivElement"));
+    result.imports.push(...primitiveRefImports());
+    result.rootBindings.push({ attribute: "ref", target: "color picker primitive root" });
+  }
+
+  if (groupName === "toast" && component.exportName === "Toaster") {
+    addPrimitiveBinding(component.render, "toast", "Viewport", refBinding());
+    result.exposedRefs.push(primitiveRef("HTMLDivElement"));
+    result.imports.push(...primitiveRefImports());
+    result.rootBindings.push({ attribute: "ref", target: "toast viewport primitive root" });
+  }
+
   if (groupName === "dialog") {
     const part = dialogPart(component.exportName);
     if (part && result.specialization.kind !== "dialog-as-child") {

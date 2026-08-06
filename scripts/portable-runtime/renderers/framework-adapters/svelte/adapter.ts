@@ -13,9 +13,17 @@ import {
   printSvelteBooleanFormControlIndex,
 } from "./boolean-form-control.js";
 import {
+  printSvelteEngineViewportComponent,
+  printSvelteEngineViewportIndex,
+} from "./engine-viewport.js";
+import {
   printSvelteOptionCollectionOverlayComponent,
   printSvelteOptionCollectionOverlayIndex,
 } from "./option-collection-overlay.js";
+import {
+  printSvelteNotificationSystemComponent,
+  printSvelteNotificationSystemIndex,
+} from "./notification-system.js";
 import {
   printSvelteNativeOverlayComponent,
   printSvelteNativeOverlayIndex,
@@ -75,6 +83,12 @@ export const svelteFrameworkAdapter = defineFrameworkAdapter({
     if (file.component.family?.kind === "range-control") {
       return printSvelteRangeControlComponent(file);
     }
+    if (file.component.family?.kind === "engine-viewport") {
+      return printSvelteEngineViewportComponent(file);
+    }
+    if (file.component.family?.kind === "notification-system") {
+      return printSvelteNotificationSystemComponent(file);
+    }
     throw unsupportedOutput("component", file.component.family?.kind);
   },
   printIndexFile(file) {
@@ -90,6 +104,10 @@ export const svelteFrameworkAdapter = defineFrameworkAdapter({
     }
     if (file.family?.kind === "native-overlay") return printSvelteNativeOverlayIndex(file);
     if (file.family?.kind === "range-control") return printSvelteRangeControlIndex(file);
+    if (file.family?.kind === "engine-viewport") return printSvelteEngineViewportIndex(file);
+    if (file.family?.kind === "notification-system") {
+      return printSvelteNotificationSystemIndex(file);
+    }
     throw unsupportedOutput("index", file.family?.kind);
   },
   printHelperFile(file) {

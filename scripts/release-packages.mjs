@@ -112,6 +112,7 @@ function parseVersion(version) {
   if (!match) return undefined;
   const prerelease = match[4];
   return {
+    major: Number(match[1]),
     prerelease,
     tag: prerelease ? prerelease.split(".")[0] : "latest",
     version,
@@ -158,6 +159,14 @@ export function validateReleasePackageManifests(packageManifests, preState) {
     }
   } else if (tag === "latest" && preState) {
     errors.push("Stable publication requires Changesets prerelease state to be fully consumed.");
+  }
+
+  if (tag === "latest") {
+    for (const parsed of parsedVersions) {
+      if (parsed.entry.name !== "starwind" && parsed.major < 1) {
+        errors.push(`${parsed.entry.name} stable releases must start at 1.0.0 or later.`);
+      }
+    }
   }
 
   return { errors, ok: errors.length === 0, tag };

@@ -1,0 +1,6 @@
+{
+  "components": {
+    "color-picker": "patch",
+    "spinner": "patch"
+  }
+}

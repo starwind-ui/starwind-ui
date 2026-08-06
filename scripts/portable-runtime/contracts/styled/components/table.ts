@@ -21,6 +21,7 @@ function tablePart({
 }: TablePartOptions): StyledComponentContract {
   return {
     exportName,
+    forwardRef: { frameworks: ["vue"], targetType: refType },
     props: {
       extends: [{ type: "htmlAttributes", element: htmlElement }],
       fields: [
@@ -115,6 +116,7 @@ export const tableStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Table",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLTableElement" },
       props: {
         extends: [
           { type: "htmlAttributes", element: "table" },

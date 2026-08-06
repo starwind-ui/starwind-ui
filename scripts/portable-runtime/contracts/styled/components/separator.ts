@@ -23,6 +23,7 @@ export const separatorStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Separator",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         declaration: "type",
         extends: [

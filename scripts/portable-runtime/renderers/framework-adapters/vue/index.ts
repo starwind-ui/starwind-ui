@@ -10,7 +10,7 @@ import { vueManualPrimitiveGenerators } from "./manual-primitives.js";
 import { projectVueSpecializedAdapterOutputModel } from "./specialized-adapter-spec.js";
 import { vueAdapterPublicContract } from "./public-contract.js";
 import type { FrameworkAdapterTargetRegistration } from "../types.js";
-import { generateStarwindVueWrappers, isVueStyledCheckpointContract } from "./styled.js";
+import { generateStarwindVueWrappers, selectVueStyledContracts } from "./styled.js";
 import {
   assertVueInventorySnapshot,
   vuePackageExports,
@@ -80,7 +80,7 @@ const vueFrameworkAdapterTargetDefinition = {
   publicSupport: vueAdapterPublicContract.publicSupport,
   styled: {
     project(args) {
-      return projectStyledOutputModel(args.contracts.filter(isVueStyledCheckpointContract));
+      return projectStyledOutputModel(selectVueStyledContracts(args.contracts, args.roots));
     },
     write(args) {
       return generateStarwindVueWrappers(args);

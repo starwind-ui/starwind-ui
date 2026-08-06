@@ -19,7 +19,7 @@ export type InputProps = Omit<
   };
 type InputDeclaredProps = {
   defaultValue?: import("@starwind-ui/vue/input").InputValue;
-  "data-slot"?: string;
+  dataSlot?: string;
   disabled?: boolean;
   class?: ClassValue;
   modelValue?: import("@starwind-ui/vue/input").InputValue | undefined;
@@ -29,7 +29,7 @@ const {
   size,
   defaultValue,
   disabled = false,
-  "data-slot": dataSlot = "input",
+  dataSlot = "input",
   class: className,
   modelValue,
 } = defineProps<InputDeclaredProps>();

@@ -34,6 +34,18 @@ import {
   printVueFileDropControlComponent,
   printVueFileDropControlIndex,
 } from "./file-drop-control.js";
+import { printVueEngineViewportComponent, printVueEngineViewportIndex } from "./engine-viewport.js";
+import {
+  printVueColorPickerComponent,
+  printVueColorPickerIndex,
+  type VueColorPickerComponentProjection,
+  type VueColorPickerIndexProjection,
+} from "./color-picker.js";
+import {
+  printVueSidebarComponent,
+  printVueSidebarContext,
+  printVueSidebarIndex,
+} from "./sidebar.js";
 import {
   printVueGroupedValueControlComponent,
   printVueGroupedValueControlHelper,
@@ -54,11 +66,35 @@ import {
   printVueOptionCollectionOverlayIndex,
   printVueOptionCollectionOverlayOutput,
 } from "./option-collection-overlay.js";
+import {
+  isVueEditableCollectionOverlayOutput,
+  printVueEditableCollectionOverlayOutput,
+} from "./editable-collection-overlay.js";
+import {
+  isVueCompositeMenuOverlayOutput,
+  printVueCompositeMenuOverlayOutput,
+} from "./composite-menu-overlay.js";
+import {
+  isVueAnchoredMenuOverlayOutput,
+  printVueAnchoredMenuOverlayOutput,
+} from "./anchored-menu-overlay.js";
+import {
+  isVueSharedViewportNavigationOutput,
+  printVueSharedViewportNavigationOutput,
+} from "./shared-viewport-navigation.js";
 import { printVueNativeOverlayComponent, printVueNativeOverlayIndex } from "./native-overlay.js";
+import {
+  printVueNotificationSystemComponent,
+  printVueNotificationSystemIndex,
+} from "./notification-system.js";
 import {
   printVuePresenceFloatingOverlayComponent,
   printVuePresenceFloatingOverlayIndex,
 } from "./presence-floating-overlay.js";
+import {
+  printVueTimedFloatingOverlayComponent,
+  printVueTimedFloatingOverlayIndex,
+} from "./timed-floating-overlay.js";
 import { printVueRangeStatusComponent, printVueRangeStatusIndex } from "./range-status.js";
 import { printVueRangeControlComponent, printVueRangeControlIndex } from "./range-control.js";
 import {
@@ -97,8 +133,20 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
   fileExtension: vueFrameworkAdapterReadiness.fileExtension,
   target: vueFrameworkAdapterReadiness.target,
   printOutput(model) {
+    if (isVueSharedViewportNavigationOutput(model)) {
+      return printVueSharedViewportNavigationOutput(model);
+    }
+    if (isVueAnchoredMenuOverlayOutput(model)) {
+      return printVueAnchoredMenuOverlayOutput(model);
+    }
+    if (isVueCompositeMenuOverlayOutput(model)) {
+      return printVueCompositeMenuOverlayOutput(model);
+    }
     if (isVueOptionCollectionOverlayOutput(model)) {
       return printVueOptionCollectionOverlayOutput(model);
+    }
+    if (isVueEditableCollectionOverlayOutput(model)) {
+      return printVueEditableCollectionOverlayOutput(model);
     }
     return model.files
       .filter((file) => !file.target || file.target === this.target)
@@ -110,6 +158,32 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
       });
   },
   printComponentFile(file) {
+    if ((file.component.family as { kind?: string } | undefined)?.kind === "vue-color-picker") {
+      return {
+        contents: printVueColorPickerComponent(
+          file.component.family as unknown as VueColorPickerComponentProjection,
+        ),
+        path: `${file.path}${this.fileExtension}`,
+      };
+    }
+    if (file.component.family?.kind === "sidebar") {
+      return {
+        contents: printVueSidebarComponent(file.component.family),
+        path: `${file.path}${this.fileExtension}`,
+      };
+    }
+    if (file.component.family?.kind === "engine-viewport") {
+      return {
+        contents: printVueEngineViewportComponent(file.component.family),
+        path: `${file.path}${this.fileExtension}`,
+      };
+    }
+    if (file.component.family?.kind === "notification-system") {
+      return {
+        contents: printVueNotificationSystemComponent(file.component.family),
+        path: `${file.path}${this.fileExtension}`,
+      };
+    }
     if (file.component.family?.kind === "controlled-value-presence") {
       return {
         contents: printVueControlledValuePresenceComponent(file.component.family),
@@ -185,9 +259,32 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
     if (file.component.family?.kind === "presence-floating-overlay") {
       return printVuePresenceFloatingOverlayComponent(file);
     }
+    if (file.component.family?.kind === "timed-floating-overlay") {
+      return printVueTimedFloatingOverlayComponent(file);
+    }
     if (file.component.family?.kind === "option-collection-overlay") {
       throw new TypeError(
         "Vue option-collection-overlay components must be printed through the family output projection.",
+      );
+    }
+    if (file.component.family?.kind === "editable-collection-overlay") {
+      throw new TypeError(
+        "Vue editable-collection-overlay components must be printed through the family output projection.",
+      );
+    }
+    if (file.component.family?.kind === "composite-menu-overlay") {
+      throw new TypeError(
+        "Vue composite-menu-overlay components must be printed through the family output projection.",
+      );
+    }
+    if (file.component.family?.kind === "anchored-menu-overlay") {
+      throw new TypeError(
+        "Vue anchored-menu-overlay components must be printed through the family output projection.",
+      );
+    }
+    if (file.component.family?.kind === "shared-viewport-navigation") {
+      throw new TypeError(
+        "Vue shared-viewport-navigation components must be printed through the family output projection.",
       );
     }
     return {
@@ -196,6 +293,12 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
     };
   },
   printHelperFile(file) {
+    if (file.path.endsWith("ColorPickerContext.ts")) {
+      return { contents: file.body.code, path: file.path };
+    }
+    if (file.family?.kind === "sidebar-context") {
+      return { contents: printVueSidebarContext(file.family.facts), path: file.path };
+    }
     if (file.family?.kind === "controlled-value-presence") {
       return { contents: file.body.code, path: file.path };
     }
@@ -211,6 +314,24 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
     };
   },
   printIndexFile(file) {
+    if ((file.family as { kind?: string } | undefined)?.kind === "vue-color-picker") {
+      return {
+        contents: printVueColorPickerIndex(file.family as unknown as VueColorPickerIndexProjection),
+        path: file.path,
+      };
+    }
+    if (file.family?.kind === "sidebar") {
+      return { contents: printVueSidebarIndex(file.family), path: file.path };
+    }
+    if (file.family?.kind === "engine-viewport") {
+      return { contents: printVueEngineViewportIndex(file.family), path: file.path };
+    }
+    if (file.family?.kind === "notification-system") {
+      return {
+        contents: printVueNotificationSystemIndex(file.family),
+        path: file.path,
+      };
+    }
     if (file.family?.kind === "controlled-value-presence") {
       return printVueControlledValuePresenceIndex(file.family);
     }
@@ -248,6 +369,9 @@ export const vueFrameworkAdapter = defineFrameworkAdapter({
     }
     if (file.family?.kind === "presence-floating-overlay") {
       return printVuePresenceFloatingOverlayIndex(file);
+    }
+    if (file.family?.kind === "timed-floating-overlay") {
+      return printVueTimedFloatingOverlayIndex(file);
     }
     if (file.family?.kind === "range-status") return printVueRangeStatusIndex(file);
     if (file.family?.kind === "range-control") {
@@ -391,20 +515,17 @@ function printVueComponent(component: VueComponent): string {
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
 ${imports}
+import { createVueAsChild } from "../_internal/as-child";
 import {
-  cloneVNode,
   computed,
   defineComponent,
   inject,
-  isVNode,
-  mergeProps,
   onBeforeUnmount,
   onMounted,
   provide,
   ref,
   useAttrs,
   watch,
-  type ComponentPublicInstance,
   type InjectionKey,
   type VNode,
 } from "vue";
@@ -433,36 +554,29 @@ const slots = defineSlots<{
 }>();
 const attrs = useAttrs();
 const rootRef = ref<HTMLElement | null>(null);
+const asChild = createVueAsChild("ConformanceRoot", rootRef);
+const { setElement: setRootElement } = asChild;
 const mounted = ref(false);
 let instance: ReturnType<typeof ${component.lifecycle?.factory ?? "Object"}> | undefined;
 
 ${stateSetup}
-
-function setRootElement(element: Element | ComponentPublicInstance | null): void {
-  rootRef.value = element instanceof HTMLElement ? element : null;
-}
 
 const AsChildRoot = defineComponent({
   inheritAttrs: false,
   setup() {
     return () => {
       const children = slots.default?.() ?? [];
-      const child = children[0];
-      if (children.length !== 1 || !isNativeElementVNode(child)) {
-        throw new TypeError("ConformanceRoot asChild requires exactly one native element VNode.");
-      }
-
-      const defaultedProps = { type: child.type === "button" ? "button" : undefined };
       const consumerProps = attrs;
-      const protectedProps = { "data-sw-part": "${render?.part ?? "root"}", ref: setRootElement };
-      return cloneVNode(child, mergeProps(defaultedProps, consumerProps, protectedProps), true);
+      const protectedProps = { "data-sw-part": "${render?.part ?? "root"}" };
+      return asChild.render({
+        children,
+        consumerProps,
+        defaultNativeButtonType: "button",
+        protectedProps,
+      });
     };
   },
 });
-
-function isNativeElementVNode(value: unknown): value is VNode & { type: string } {
-  return isVNode(value) && typeof value.type === "string";
-}
 
 ${contextSetup}
 ${publicMethods}

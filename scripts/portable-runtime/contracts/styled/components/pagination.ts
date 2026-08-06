@@ -26,6 +26,11 @@ function paginationPart(
 ): StyledComponentContract {
   return {
     exportName,
+    forwardRef: {
+      frameworks: ["vue"],
+      targetType:
+        element === "ul" ? "HTMLUListElement" : element === "li" ? "HTMLLIElement" : "HTMLElement",
+    },
     props: {
       extends: [{ type: "htmlAttributes", element }],
       fields: [
@@ -126,6 +131,7 @@ export const paginationStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Pagination",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLElement" },
       props: {
         extends: [{ type: "htmlAttributes", element: "nav" }],
         fields: [
@@ -354,6 +360,7 @@ export const paginationStyledContract: StyledAdapterContract = {
     },
     {
       exportName: "PaginationEllipsis",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLSpanElement" },
       imports: [dotsImport],
       props: {
         extends: [{ type: "htmlAttributes", element: "span" }],

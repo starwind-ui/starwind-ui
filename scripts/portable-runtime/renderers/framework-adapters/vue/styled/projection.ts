@@ -10,9 +10,13 @@ import { computedExpressionUsesReference, projectVueComputedExpression } from ".
 import { projectVueImports } from "./imports.js";
 import {
   applyVueStyledPublicContractBindings,
+  collectVueStyledPublicEmits,
+  collectVueStyledPublicModels,
   collectVueNativeAttributesTypes,
   getVueStyledPublicContract,
 } from "./public-contracts.js";
+import { hasVueDependentPropDefault } from "./props.js";
+import { applyGenericNativeElementRef } from "./ref-bridges.js";
 import { supportsVueScope } from "./scope.js";
 import { specializeVueStyledComponent } from "./specializations.js";
 import type {
@@ -30,18 +34,41 @@ export function projectVueStyledComponent(
   const component = structuredClone(sourceComponent);
   const manuallyForwardsAttrs = component.render.some(renderNodeUsesVueAttrs);
   const specialization = specializeVueStyledComponent(group.component, component);
+  applyGenericNativeElementRef(component, specialization);
   const publicContract = getVueStyledPublicContract(group.component, component.exportName);
   applyVueStyledPublicContractBindings(component.render, publicContract);
+  applyGenericNativeClassBindings(component);
+  const filtersComponentAttrs = applyGenericComponentAttrForwarding(component);
+  const props = projectProps(component, publicContract);
   const vueVariables = component.variables.filter(isForVue);
-  const computed = vueVariables.map((variable) => ({
-    expression: projectVueComputedExpression(variable.value),
-    name: variable.name,
-  }));
+  const computedNames: string[] = [];
+  const expressionProps = [
+    ...props.destructure.map((prop) => {
+      const localName = prop.alias ?? prop.name;
+      return { sourceName: localName, targetName: localName };
+    }),
+    ...(component.destructure?.rest
+      ? [{ sourceName: component.destructure.rest, targetName: "attrs" }]
+      : []),
+  ];
+  const computed = vueVariables.map((variable) => {
+    const projection = {
+      expression: projectVueComputedExpression(variable.value, {
+        computed: computedNames,
+        props: expressionProps,
+      }),
+      name: variable.name,
+    };
+    computedNames.push(variable.name);
+    return projection;
+  });
   const usesAttrs =
     manuallyForwardsAttrs ||
     computed.some((variable) => computedExpressionUsesReference(variable.expression, "attrs"));
   const imports: VueImportName[] = [
-    ...(vueVariables.length ? [{ kind: "value" as const, name: "computed" }] : []),
+    ...(vueVariables.length || hasVueDependentPropDefault(component.destructure?.props ?? [])
+      ? [{ kind: "value" as const, name: "computed" }]
+      : []),
     ...(usesAttrs ? [{ kind: "value" as const, name: "useAttrs" }] : []),
     ...specialization.imports,
     ...collectVueNativeAttributesTypes((component.props?.extends ?? []).filter(isForVue)).map(
@@ -50,13 +77,14 @@ export function projectVueStyledComponent(
   ];
   return {
     computed,
-    emits: publicContract.emits ?? [],
+    emits: collectVueStyledPublicEmits(publicContract),
     exposedRefs: specialization.exposedRefs,
     exportName: component.exportName,
+    filtersComponentAttrs,
     manuallyForwardsAttrs,
     imports: projectVueImports(group, component, options, dedupeImports(imports)),
-    models: publicContract.models ?? [],
-    props: projectProps(component, publicContract),
+    models: collectVueStyledPublicModels(publicContract),
+    props,
     render: component.render,
     rootBindings: specialization.rootBindings,
     setup: specialization.setup,
@@ -75,6 +103,103 @@ export function projectVueStyledComponent(
     specialization: specialization.specialization,
     usesAttrs,
   };
+}
+
+function applyGenericComponentAttrForwarding(component: StyledOutputComponent): boolean {
+  const restBinding = component.destructure?.rest;
+  if (!restBinding) return false;
+  let filtersAttrs = false;
+
+  visitRenderNodes(component.render, (node) => {
+    if (node.type !== "component") return;
+    const spread = node.attrs.find(
+      (attribute) =>
+        isForVue(attribute) &&
+        attribute.name === "spread" &&
+        attribute.value?.type === "variable" &&
+        attribute.value.name === restBinding,
+    );
+    if (!spread) return;
+    const ownedNames = [
+      ...new Set(
+        node.attrs
+          .filter((attribute) => attribute !== spread && isForVue(attribute))
+          .map((attribute) => toVueFallthroughName(attribute.name)),
+      ),
+    ];
+    if (!ownedNames.length) return;
+    const childName = node.localName ?? node.exportName;
+    const keys = ownedNames.map((name) => `'${name}'`).join(" | ");
+    const names = ownedNames.map((name) => `'${name}'`).join(", ");
+    spread.value = {
+      type: "raw",
+      code: `omitForwardedAttrs(attrs, [${names}]) as Omit<InstanceType<typeof ${childName}>['$props'], ${keys}>`,
+    };
+    filtersAttrs = true;
+  });
+
+  return filtersAttrs;
+}
+
+function toVueFallthroughName(name: string): string {
+  if (!name.startsWith("@")) return name;
+  return `on${name
+    .slice(1)
+    .split("-")
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join("")}`;
+}
+
+function applyGenericNativeClassBindings(component: StyledOutputComponent): void {
+  const classProp = component.destructure?.props.find(
+    (prop) => isForVue(prop) && prop.name === "class",
+  );
+  if (!classProp) return;
+  const classBinding = classProp.alias ?? classProp.name;
+
+  visitRenderNodes(component.render, (node) => {
+    if (node.type !== "element" || node.tagBinding) return;
+    const classAttribute = node.attrs.find(
+      (attribute) =>
+        isForVue(attribute) &&
+        attribute.name === "class" &&
+        attribute.value?.type === "variable" &&
+        attribute.value.name === classBinding,
+    );
+    if (!classAttribute) return;
+    classAttribute.value = {
+      type: "raw",
+      code: `${classBinding} as import('vue').ClassValue`,
+    };
+  });
+}
+
+function visitRenderNodes(
+  nodes: StyledOutputRenderNode[],
+  visitor: (node: StyledOutputRenderNode) => void,
+): void {
+  for (const node of nodes) {
+    visitor(node);
+    switch (node.type) {
+      case "component":
+      case "element":
+      case "fragment":
+      case "primitive":
+      case "repeat":
+        visitRenderNodes(node.children, visitor);
+        break;
+      case "condition":
+        visitRenderNodes(node.then, visitor);
+        visitRenderNodes(node.else, visitor);
+        break;
+      case "slot":
+        visitRenderNodes(node.fallback, visitor);
+        break;
+      case "icon":
+      case "text":
+        break;
+    }
+  }
 }
 
 function dedupeImports(imports: VueImportName[]): VueImportName[] {
@@ -126,12 +251,27 @@ function projectProps(
   const destructure = (component.destructure?.props ?? []).filter(
     (prop) => isForVue(prop) && !omittedPropFields.has(prop.name),
   );
-  const declaredPropNames = publicContract.declaredPropNames ?? {};
+  const declaredPropNames: Record<string, string> = {
+    ...publicContract.declaredPropNames,
+  };
+  for (const prop of destructure) {
+    const normalizedName = toVueRuntimePropName(prop.name);
+    if (prop.alias === normalizedName && normalizedName !== prop.name) {
+      declaredPropNames[prop.name] = normalizedName;
+    }
+  }
+  const replacedPublicSourceFields = [
+    ...new Set(
+      Object.entries(declaredPropNames).flatMap(([sourceName, targetName]) =>
+        sourceName === targetName ? [] : [sourceName],
+      ),
+    ),
+  ].sort();
   const declaredDestructure = destructure.map((prop) => {
     const name = declaredPropNames[prop.name] ?? prop.name;
     return name === prop.name ? prop : { ...prop, name };
   });
-  const models = publicContract.models ?? [];
+  const models = collectVueStyledPublicModels(publicContract);
   const inheritedPublicFields = destructure.flatMap((prop) => {
     if (publicFields.some((field) => field.name === prop.name)) return [];
     const type = getInheritedPropType(component, prop.name);
@@ -172,6 +312,7 @@ function projectProps(
       extendsPublic: publicContract.declaredExtendsPublic ?? true,
       fields: [...declaredFields.values()],
       name: `${component.exportName}DeclaredProps`,
+      replacedPublicSourceFields,
     },
     destructure: declaredDestructure,
     public: {
@@ -189,6 +330,21 @@ function projectProps(
       name: `${component.exportName}Props`,
     },
   };
+}
+
+function toVueRuntimePropName(name: string): string {
+  let normalized = "";
+  for (let index = 0; index < name.length; index += 1) {
+    const character = name[index]!;
+    const nextCode = name.charCodeAt(index + 1);
+    if (character === "-" && nextCode >= 97 && nextCode <= 122) {
+      normalized += String.fromCharCode(nextCode - 32);
+      index += 1;
+    } else {
+      normalized += character;
+    }
+  }
+  return normalized;
 }
 
 function getInheritedPropType(component: StyledOutputComponent, name: string): string {

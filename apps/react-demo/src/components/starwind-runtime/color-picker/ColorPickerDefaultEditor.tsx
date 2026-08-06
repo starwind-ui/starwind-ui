@@ -1,5 +1,4 @@
 import { IconColorPicker as ColorPicker } from "@tabler/icons-react";
-import type * as React from "react";
 import ColorPickerArea from "./ColorPickerArea";
 import ColorPickerChannelSlider from "./ColorPickerChannelSlider";
 import ColorPickerClear from "./ColorPickerClear";
@@ -36,7 +35,6 @@ function ColorPickerDefaultEditor(props: ColorPickerDefaultEditorProps) {
     formatControl = "select",
     formats = ["hex", "rgb", "hsl", "hsb"],
     swatches = [],
-    ...rest
   } = props;
 
   const normalizedSwatches = swatches.map((swatch) =>

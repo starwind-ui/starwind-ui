@@ -152,17 +152,17 @@ These tracers do not imply package exports, CLI registry entries, demo dependenc
 target. The retained `toggle/vue` fixture is contract-conformance evidence for a registered Vue
 projection; it does not define the package surface.
 
-Vue has private, non-shipping generated output for Button, Checkbox, and Select, but those three
-projections are only part of its current registered Primitive and Styled subset. The exact subset is
-documented by the
+Vue has private, non-shipping generated output for its registered Primitive surface and current
+Styled subset. The exact inventories are documented by the
 [Vue Framework Adapter README](../../scripts/portable-runtime/renderers/framework-adapters/vue/README.md)
 and owned by the
 [Vue adapter inventory](../../scripts/portable-runtime/renderers/framework-adapters/vue/inventory.ts).
 Those registrations are authoritative rather than the future-framework tracer list. Vue remains at
 version `0.0.0` with every public-support flag disabled.
 
-Existing Solid tracers are frozen comparison artifacts. Svelte has a private three-component
-verification package. None of these targets is a preview or shipping adapter.
+Existing Solid tracers are frozen comparison artifacts. Svelte has a private verification package
+for Button, Carousel, Checkbox, Select, Accordion, Dialog, Slider, and Toast. None of these targets
+is a preview or shipping adapter.
 
 ## Gate Tiers
 
@@ -297,15 +297,15 @@ High-complexity islands remain human-gated:
 `select`, `menu`, `context-menu`, `navigation-menu`, `combobox`, `color-picker`, `tooltip`, `preview-card`,
 `tabs`, `accordion`, `sidebar`, `slider`, `input-otp`, `dropzone`, `field`, `carousel`, and `toast`
 are no longer manual islands. They are Specialized Adapter Spec generated for Astro and React. Vue
-has a real registered private, non-shipping projection for Select; the exact current private
-Primitive and Styled subset is documented by the
+has registered private, non-shipping projections for its current Primitive and Styled surfaces. The
+exact inventories are documented by the
 [Vue Framework Adapter README](../../scripts/portable-runtime/renderers/framework-adapters/vue/README.md)
 and owned by the
 [Vue adapter inventory](../../scripts/portable-runtime/renderers/framework-adapters/vue/inventory.ts).
-Menu, Navigation Menu, and Combobox remain genuinely unsupported Vue future tracers. Solid's
+Legacy Vue tracer fixtures remain historical evidence and do not define package output. Solid's
 fixtures remain frozen, non-shipping comparison artifacts rather than an active expansion target.
-Neither private Vue generation nor tracer evidence changes public support: Vue remains at version
-`0.0.0` with every public-support flag disabled.
+Private Vue generation does not change public support: Vue remains at version `0.0.0` with every
+public-support flag disabled.
 
 The specialized form controls still need future target helper coverage for form hidden inputs,
 callback/ref mapping, and controlled setter synchronization before any target preview can ship them.

@@ -4,7 +4,7 @@ import type { HTMLAttributes } from "astro/types";
 
 import { spinner } from "./variants";
 
-type Props = Omit<HTMLAttributes<"svg">, "role" | "aria-label">;
+type Props = Omit<HTMLAttributes<"svg">, "role" | "aria-label" | "mode">;
 
 const { class: className, ...rest } = Astro.props;
 ---

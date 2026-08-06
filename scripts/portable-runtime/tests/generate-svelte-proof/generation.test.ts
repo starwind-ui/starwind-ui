@@ -45,6 +45,13 @@ describe("Svelte Button proof generation", () => {
       "accordion/index.ts",
       "button/ButtonRoot.svelte",
       "button/index.ts",
+      "carousel/CarouselContainer.svelte",
+      "carousel/CarouselItem.svelte",
+      "carousel/CarouselNext.svelte",
+      "carousel/CarouselPrevious.svelte",
+      "carousel/CarouselRoot.svelte",
+      "carousel/CarouselViewport.svelte",
+      "carousel/index.ts",
       "checkbox/CheckboxIndicator.svelte",
       "checkbox/CheckboxRoot.svelte",
       "checkbox/index.ts",
@@ -82,6 +89,16 @@ describe("Svelte Button proof generation", () => {
       "slider/SliderThumb.svelte",
       "slider/SliderTrack.svelte",
       "slider/index.ts",
+      "toast/ToastAction.svelte",
+      "toast/ToastClose.svelte",
+      "toast/ToastContent.svelte",
+      "toast/ToastDescription.svelte",
+      "toast/ToastRoot.svelte",
+      "toast/ToastTemplate.svelte",
+      "toast/ToastTitle.svelte",
+      "toast/ToastTitleText.svelte",
+      "toast/ToastViewport.svelte",
+      "toast/index.ts",
     ]);
     expect(second).toEqual(first);
 
@@ -392,6 +409,44 @@ describe("Svelte Slider proof generation", () => {
     expect(tree.get("SliderThumb.svelte")).toMatch(
       /<div[\s\S]*data-sw-slider-thumb[\s\S]*<input[\s\S]*data-sw-slider-input[\s\S]*type="range"/,
     );
+
+    for (const [file, source] of tree) {
+      if (!file.endsWith(".svelte")) continue;
+      for (const generate of ["client", "server"] as const) {
+        expect(compile(source, { filename: file, generate, modernAst: true }).warnings).toEqual([]);
+      }
+    }
+  });
+});
+
+describe("Svelte Carousel proof generation", () => {
+  it("generates and compiles the engine-viewport family from neutral facts", async () => {
+    const outputRoot = await createTemporaryRoot();
+    const entry = getPrimitiveGeneratorEntries().find(
+      (candidate) => candidate.component === "carousel",
+    );
+    expect(entry).toBeDefined();
+
+    await entry!.generateTarget({
+      componentHeader: "<!-- carousel proof -->\n",
+      moduleHeader: "/** carousel proof */\n",
+      outputRoot,
+      target: "svelte",
+    });
+
+    const tree = await readTree(path.join(outputRoot, "carousel"));
+    expect([...tree.keys()]).toEqual([
+      "CarouselContainer.svelte",
+      "CarouselItem.svelte",
+      "CarouselNext.svelte",
+      "CarouselPrevious.svelte",
+      "CarouselRoot.svelte",
+      "CarouselViewport.svelte",
+      "index.ts",
+    ]);
+    expect(tree.get("CarouselRoot.svelte")).toContain("createCarousel");
+    expect(tree.get("CarouselRoot.svelte")).toContain("instance.reInit");
+    expect(tree.get("CarouselRoot.svelte")).toContain("instance.destroy()");
 
     for (const [file, source] of tree) {
       if (!file.endsWith(".svelte")) continue;

@@ -55,6 +55,8 @@ export function defineReactColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(editor).toContain(
       'import { IconColorPicker as ColorPicker } from "@tabler/icons-react";',
     );
+    expect(editor).not.toContain('from "react";');
+    expect(editor).not.toContain("...rest");
     expect(editor).toContain("formatContentSize={size}");
     expect(editor).not.toContain("inputSize");
     expect(editor).toContain("normalizedSwatches.length > 0");

@@ -18,6 +18,10 @@ const itemPart = ({
   variant,
 }: ItemPartOptions): StyledComponentContract => ({
   exportName,
+  forwardRef: {
+    frameworks: ["vue"],
+    targetType: htmlElement === "p" ? "HTMLParagraphElement" : "HTMLDivElement",
+  },
   props: {
     extends: [{ type: "htmlAttributes", element: htmlElement }],
     fields: [
@@ -156,6 +160,7 @@ export const itemStyledContract: StyledAdapterContract = {
   components: [
     {
       exportName: "Item",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLElement" },
       props: {
         extends: [
           { type: "htmlAttributes", element: "div" },
@@ -174,6 +179,12 @@ export const itemStyledContract: StyledAdapterContract = {
             optional: true,
             type: "React.ElementType",
             frameworks: ["react"],
+          },
+          {
+            name: "as",
+            optional: true,
+            type: "string",
+            frameworks: ["vue"],
           },
           {
             name: "ref",
@@ -197,6 +208,7 @@ export const itemStyledContract: StyledAdapterContract = {
         {
           type: "element",
           tag: "Tag",
+          tagBinding: true,
           attrs: [
             { name: "data-sw-item" },
             {
@@ -250,6 +262,7 @@ export const itemStyledContract: StyledAdapterContract = {
     }),
     {
       exportName: "ItemMedia",
+      forwardRef: { frameworks: ["vue"], targetType: "HTMLDivElement" },
       props: {
         extends: [
           { type: "htmlAttributes", element: "div" },

@@ -130,6 +130,8 @@ class InputOtpController implements InputOtpInstance {
   readonly root: HTMLElement;
 
   private readonly abortController = new AbortController();
+  private readonly authoredDefaultValue: string;
+  private readonly controlled: boolean;
   private form?: string;
   private id?: string;
   private readonly managesTabIndex: boolean;
@@ -154,6 +156,7 @@ class InputOtpController implements InputOtpInstance {
   constructor(root: HTMLElement, options: InputOtpOptions) {
     this.root = root;
     this.elements = getInputOtpElements(root);
+    this.controlled = options.value !== undefined;
     this.disabled = options.disabled ?? readBooleanAttribute(root, INPUT_OTP_DISABLED_ATTRIBUTE);
     this.form =
       options.form ??
@@ -175,6 +178,7 @@ class InputOtpController implements InputOtpInstance {
     this.required = options.required ?? readBooleanAttribute(root, INPUT_OTP_REQUIRED_ATTRIBUTE);
     this.maxLength = readMaxLength(options.maxLength, root, this.elements.slots.length);
     this.values = this.normalizeValueToChars(readInitialValue(root, this.elements.input, options));
+    this.authoredDefaultValue = this.getValue();
 
     ensureId(this.root, "starwind-input-otp");
     this.currentIndex = this.getNextEditableIndex(this.getValue().length);
@@ -489,11 +493,16 @@ class InputOtpController implements InputOtpInstance {
     this.render();
   };
 
-  private readonly handleFormReset = (): void => {
+  private readonly handleFormReset = (event: Event): void => {
     this.clearResetTimer();
     this.resetTimer = window.setTimeout(() => {
       this.resetTimer = undefined;
-      this.values = this.normalizeValueToChars(this.elements.input.value);
+      if (event.defaultPrevented || this.controlled) {
+        this.render();
+        return;
+      }
+
+      this.values = this.normalizeValueToChars(this.authoredDefaultValue);
       this.currentIndex = this.getNextEditableIndex(this.getValue().length);
       this.render();
     }, 0);

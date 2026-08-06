@@ -81,7 +81,7 @@ describe("Color Picker specialized adapter model", () => {
     expect(facts.initialStateProjection).toEqual(
       colorPickerRuntimeAdapterContract.initialStateProjection,
     );
-    expect(facts.escapeHatch.affectedFrameworks).toEqual(["astro", "react"]);
+    expect(facts.escapeHatch.affectedFrameworks).toEqual(["astro", "react", "vue"]);
     expect(facts.escapeHatch.boundary).toContain("Runtime owns parsing");
     expect(facts.cssVariables).toHaveLength(15);
     expect(JSON.stringify(facts)).not.toMatch(

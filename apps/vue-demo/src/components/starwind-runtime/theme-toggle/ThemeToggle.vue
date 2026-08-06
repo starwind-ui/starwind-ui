@@ -34,14 +34,14 @@ type ThemeToggleDeclaredProps = {
   ariaLabel?: string;
   defaultPressed?: boolean;
   disabled?: boolean;
-  "data-slot"?: string;
+  dataSlot?: string;
   pressed?: boolean;
   syncGroup?: string;
   value?: string;
   class?: ClassValue;
   variant?: ThemeToggleProps["variant"];
   size?: ThemeToggleProps["size"];
-} & /* @vue-ignore */ ThemeToggleProps;
+} & /* @vue-ignore */ Omit<ThemeToggleProps, "data-slot">;
 const {
   ariaLabel = "Toggle theme",
   variant = "outline",
@@ -51,7 +51,7 @@ const {
   pressed,
   syncGroup = "starwind-theme",
   value,
-  "data-slot": dataSlot = "theme-toggle",
+  dataSlot = "theme-toggle",
   class: className,
 } = defineProps<ThemeToggleDeclaredProps>();
 defineSlots<{

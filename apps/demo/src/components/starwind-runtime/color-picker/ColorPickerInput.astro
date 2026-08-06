@@ -54,7 +54,7 @@ const normalizedFormats = Array.from(new Set(formats));
           aria-label="Color format"
           data-slot="color-picker-native-format-select"
         >
-          {normalizedFormats.map((formatOption, formatIndex) => (
+          {normalizedFormats.map((formatOption) => (
             <NativeSelectOption
               value={formatOption}
               selected={initial?.formatSelect.initial.properties.value === formatOption}
@@ -84,7 +84,7 @@ const normalizedFormats = Array.from(new Set(formats));
           <SelectTrigger aria-label="Color format" class={colorPickerFormatSelectTrigger()} />
 
           <SelectContent size={formatContentSize} data-sw-color-picker-format-options="">
-            {normalizedFormats.map((formatOption, formatIndex) => (
+            {normalizedFormats.map((formatOption) => (
               <SelectItem value={formatOption}>{formatOption.toUpperCase()}</SelectItem>
             ))}
           </SelectContent>
