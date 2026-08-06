@@ -1,5 +1,25 @@
 # @starwind-ui/react
 
+## 0.1.0-beta.7
+
+### Patch Changes
+
+- Fix generated React Color Picker source and the Astro Spinner SVG prop contract. Detect Astro and
+  React projects during default CLI initialization, and add a non-interactive remove option. Add
+  packed Astro and React release-candidate tests across supported framework versions and package
+  managers.
+- Refresh Navigation Menu item and list ownership when its DOM collection changes.
+- Keep Navigation Menu positioners inside a connected explicit floating root that already owns the
+  portal, while preserving trigger-derived dialog ownership, nested dialog roots, and body fallback.
+- Preserve the pending starting-style release when an open element receives a repeated presence
+  refresh before the next animation frame.
+- Preserve uncontrolled Input OTP authored defaults when Field reconnects during native form reset.
+- Keep Combobox and Navigation Menu explicit portal targets compatible with their active dialog owner.
+- Restore the previous active Toast manager when a newer manager is destroyed so global toast calls
+  continue to route through a mounted provider.
+- Updated dependencies
+  - @starwind-ui/runtime@0.1.0-beta.7
+
 ## 0.1.0-beta.6
 
 ### Patch Changes
