@@ -2,7 +2,10 @@ import { IconLoader2 as Loader2 } from "@tabler/icons-react";
 import type * as React from "react";
 import { spinner } from "./variants";
 
-export type SpinnerProps = Omit<React.ComponentPropsWithoutRef<"svg">, "role" | "aria-label">;
+export type SpinnerProps = Omit<
+  React.ComponentPropsWithoutRef<"svg">,
+  "role" | "aria-label" | "mode"
+>;
 
 function Spinner(props: SpinnerProps) {
   const { className, ...rest } = props;

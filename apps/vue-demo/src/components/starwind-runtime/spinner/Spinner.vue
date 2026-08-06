@@ -5,7 +5,7 @@ import { spinner } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
-export type SpinnerProps = Omit<HTMLAttributes, "aria-label" | "class" | "role"> & {
+export type SpinnerProps = Omit<HTMLAttributes, "aria-label" | "class" | "mode" | "role"> & {
   class?: ClassValue;
 };
 type SpinnerDeclaredProps = {
