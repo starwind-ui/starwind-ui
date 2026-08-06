@@ -1,4 +1,5 @@
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -6,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   createCandidatePlan,
   getCandidateMatrix,
+  startCandidateRegistry,
   getCandidateWorkspacePackage,
   getCandidateWorkspacePolicy,
 } from "../release-candidate-acceptance.mjs";
@@ -46,6 +48,47 @@ describe("release candidate acceptance", () => {
     expect(workspace).toContain(
       `"@starwind-ui/runtime": "file:${packages.runtime.replaceAll("\\", "/")}"`,
     );
+  });
+
+  it("serves packed scoped packages through npm-compatible metadata", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "starwind-candidate-registry-"));
+    const tarball = path.join(directory, "runtime.tgz");
+    const adapterTarball = path.join(directory, "astro.tgz");
+    await writeFile(tarball, "packed runtime");
+    await writeFile(adapterTarball, "packed astro adapter");
+    const registry = await startCandidateRegistry({
+      astro: {
+        file: adapterTarball,
+        manifest: { dependencies: { "@starwind-ui/runtime": "workspace:*" } },
+        name: "@starwind-ui/astro",
+        version: "0.1.0-beta.7",
+      },
+      runtime: {
+        file: tarball,
+        name: "@starwind-ui/runtime",
+        version: "0.1.0-beta.7",
+      },
+    });
+
+    try {
+      const metadataResponse = await fetch(`${registry.url}/@starwind-ui%2Fruntime`);
+      const metadata = await metadataResponse.json();
+      expect(metadata.versions["0.1.0-beta.7"].dist.tarball).toBe(
+        `${registry.url}/@starwind-ui/runtime/-/runtime-0.1.0-beta.7.tgz`,
+      );
+      expect(metadata["dist-tags"].beta).toBe("0.1.0-beta.7");
+
+      const adapterMetadata = await (await fetch(`${registry.url}/@starwind-ui%2Fastro`)).json();
+      expect(adapterMetadata.versions["0.1.0-beta.7"].dependencies["@starwind-ui/runtime"]).toBe(
+        "0.1.0-beta.7",
+      );
+
+      const tarballResponse = await fetch(metadata.versions["0.1.0-beta.7"].dist.tarball);
+      expect(await tarballResponse.text()).toBe("packed runtime");
+    } finally {
+      await registry.close();
+      await rm(directory, { force: true, recursive: true });
+    }
   });
 
   it("runs auto-detect, all-component install, lifecycle, checks, builds, SSR, and browser work", () => {
