@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -19,6 +21,104 @@ const VITE_SCAFFOLD_VERSION = "9.1.1";
 
 function fileSpecifier(file) {
   return `file:${file.replaceAll("\\", "/")}`;
+}
+
+export async function startCandidateRegistry(packageEntries) {
+  const packagesByName = new Map();
+  const versionsByName = new Map(
+    Object.values(packageEntries).map((entry) => [entry.name, entry.version]),
+  );
+
+  for (const entry of Object.values(packageEntries)) {
+    const tarball = await readFile(entry.file);
+    const packageFileName = `${entry.name.split("/").at(-1)}-${entry.version}.tgz`;
+    const manifest = structuredClone(entry.manifest ?? {});
+    for (const field of ["dependencies", "optionalDependencies", "peerDependencies"]) {
+      for (const [dependencyName, dependencyVersion] of Object.entries(manifest[field] ?? {})) {
+        if (!dependencyVersion.startsWith("workspace:")) continue;
+        const packedVersion = versionsByName.get(dependencyName);
+        assert(packedVersion, `Missing packed workspace dependency ${dependencyName}`);
+        const workspaceRange = dependencyVersion.slice("workspace:".length);
+        manifest[field][dependencyName] =
+          workspaceRange === "*"
+            ? packedVersion
+            : workspaceRange === "^" || workspaceRange === "~"
+              ? `${workspaceRange}${packedVersion}`
+              : workspaceRange;
+      }
+    }
+    packagesByName.set(entry.name, {
+      ...entry,
+      integrity: `sha512-${createHash("sha512").update(tarball).digest("base64")}`,
+      manifest,
+      packageFileName,
+      shasum: createHash("sha1").update(tarball).digest("hex"),
+      tarball,
+    });
+  }
+
+  let registryUrl = "";
+  const server = createServer((request, response) => {
+    if (request.method !== "GET" || !request.url) {
+      response.writeHead(405).end();
+      return;
+    }
+
+    const requestPath = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+    const entry = [...packagesByName.values()].find(
+      (candidate) =>
+        requestPath === `/${candidate.name}` ||
+        requestPath === `/${candidate.name}/-/${candidate.packageFileName}`,
+    );
+    if (!entry) {
+      response.writeHead(404).end();
+      return;
+    }
+
+    if (requestPath.endsWith(`/-/${entry.packageFileName}`)) {
+      response.writeHead(200, {
+        "content-length": entry.tarball.length,
+        "content-type": "application/octet-stream",
+      });
+      response.end(entry.tarball);
+      return;
+    }
+
+    const tarballUrl = `${registryUrl}/${entry.name}/-/${entry.packageFileName}`;
+    const body = JSON.stringify({
+      "dist-tags": { beta: entry.version },
+      name: entry.name,
+      versions: {
+        [entry.version]: {
+          ...entry.manifest,
+          dist: { integrity: entry.integrity, shasum: entry.shasum, tarball: tarballUrl },
+          name: entry.name,
+          version: entry.version,
+        },
+      },
+    });
+    response.writeHead(200, {
+      "content-length": Buffer.byteLength(body),
+      "content-type": "application/json",
+    });
+    response.end(body);
+  });
+
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  assert(address && typeof address === "object");
+  registryUrl = `http://127.0.0.1:${address.port}`;
+
+  return {
+    close: () =>
+      new Promise((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      ),
+    url: registryUrl,
+  };
 }
 
 export function getCandidateMatrix() {
@@ -220,6 +320,28 @@ async function packWorkspacePackages(packDirectory) {
   return packages;
 }
 
+async function getCandidateRegistryPackages(packages) {
+  const packageDirectories = {
+    astro: "packages/astro",
+    react: "packages/react",
+    runtime: "packages/runtime",
+  };
+  const entries = {};
+
+  for (const name of Object.keys(packageDirectories)) {
+    const manifest = JSON.parse(
+      await readFile(path.join(REPO_ROOT, packageDirectories[name], "package.json"), "utf8"),
+    );
+    entries[name] = {
+      file: packages[name],
+      manifest,
+      name: manifest.name,
+      version: manifest.version,
+    };
+  }
+  return entries;
+}
+
 async function installNpmCandidatePackages(project, packages) {
   await runCommand({ args: ["install"], command: "npm.cmd", cwd: project.directory });
   await runCommand(project.init);
@@ -301,6 +423,7 @@ export async function runReleaseCandidateAcceptance({
   const packages = await packWorkspacePackages(path.join(root, "packs"));
   const plan = createCandidatePlan({ packages, root });
   let browser;
+  let registry;
 
   await mkdir(artifacts, { recursive: true });
   await writeFile(path.join(root, "package.json"), getCandidateWorkspacePackage(packages), "utf8");
@@ -313,9 +436,15 @@ export async function runReleaseCandidateAcceptance({
   console.log(`[candidate] diagnostic artifacts: ${artifacts}`);
 
   try {
+    registry = await startCandidateRegistry(await getCandidateRegistryPackages(packages));
     for (const project of plan.projects) {
       await runCommand(project.scaffold);
       await prepareProjectManifest(project);
+      await writeFile(
+        path.join(project.directory, ".npmrc"),
+        `@starwind-ui:registry=${registry.url}\n`,
+        "utf8",
+      );
       if (project.packageManager === "pnpm") {
         await writeFile(
           path.join(project.directory, "pnpm-workspace.yaml"),
@@ -350,6 +479,7 @@ export async function runReleaseCandidateAcceptance({
     return { artifacts, summary };
   } finally {
     await browser?.close();
+    await registry?.close();
     if (keepTemp) console.log(`[candidate] preserved temporary projects: ${root}`);
     else await rm(root, { force: true, maxRetries: 5, recursive: true, retryDelay: 500 });
   }
