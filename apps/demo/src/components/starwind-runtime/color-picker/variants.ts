@@ -1,10 +1,6 @@
 import { tv } from "tailwind-variants";
 import { input as channelInputRecipe, input as valueInputRecipe } from "../input/variants";
-import {
-  nativeSelectIcon as nativeSelectIconRecipe,
-  nativeSelect as nativeSelectRecipe,
-  nativeSelectWrapper as nativeSelectWrapperRecipe,
-} from "../native-select/variants";
+import { nativeSelectIcon as nativeSelectIconRecipe, nativeSelect as nativeSelectRecipe, nativeSelectWrapper as nativeSelectWrapperRecipe } from "../native-select/variants";
 
 export const colorPickerChannelInput = channelInputRecipe;
 
