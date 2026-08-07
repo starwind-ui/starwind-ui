@@ -1,0 +1,645 @@
+---
+import ChartLegend from "./ChartLegend.astro";
+import ChartTooltip from "./ChartTooltip.astro";
+import type { ChartConfig } from "./variants";
+
+type Props = {
+  data: Record<string, string | number>[];
+  config: ChartConfig;
+  mode?: "bars" | "stacked" | "gauge";
+  // bars / gauge: one arc per data row
+  nameKey?: string;
+  dataKey?: string;
+  // stacked: one arc band, segments end-to-end
+  series?: string[];
+  categoryKey?: string;
+  // geometry
+  startAngle?: number;
+  endAngle?: number;
+  innerRadiusRatio?: number;
+  /** Explicit outer radius in SVG units (matches shadcn outerRadius prop). */
+  outerRadius?: number;
+  /** Explicit inner radius in SVG units (matches shadcn innerRadius prop). */
+  innerRadius?: number;
+  /** Override ring-background radii [outer, inner] (matches shadcn PolarGrid polarRadius). */
+  polarRadius?: [number, number];
+  barGap?: number;
+  maxValue?: number;
+  // display
+  showLabels?: boolean;
+  /** "value" = numeric value at arc tip; "name" = capitalized series name inside arc start. */
+  labelMode?: "value" | "name";
+  centerText?: string;
+  centerLabel?: string;
+  showLegend?: boolean;
+  showTooltip?: boolean;
+  cornerRadius?: number;
+  /** Hide the muted background track behind each arc (set false for grid variant). */
+  showTrack?: boolean;
+  /** Draw concentric circle grid lines at each arc radius (grid variant). */
+  showGrid?: boolean;
+  /** Draw a muted-filled outer ring + background-filled inner circle behind the arc (text / shape variants). */
+  ringBackground?: boolean;
+};
+
+const {
+  data,
+  config,
+  mode = "bars",
+  nameKey = "name",
+  dataKey = "value",
+  series = [],
+  categoryKey,
+  startAngle = 0,
+  endAngle = 360,
+  innerRadiusRatio = 0.3,
+  outerRadius: outerRadiusProp,
+  innerRadius: innerRadiusProp,
+  polarRadius: polarRadiusProp,
+  barGap = 2,
+  maxValue,
+  showLabels = false,
+  labelMode = "value",
+  centerText,
+  centerLabel,
+  showLegend = false,
+  showTooltip = true,
+  cornerRadius = 0,
+  showTrack = true,
+  showGrid = false,
+  ringBackground = false,
+} = Astro.props;
+
+// Recharts radial examples render into the 250px chart box with 1 SVG unit = 1px.
+const W = 250;
+const H = 250;
+const cx = W / 2;
+const cy = H / 2;
+const outerR = outerRadiusProp ?? 108;
+const innerR =
+  innerRadiusProp !== undefined ? innerRadiusProp : outerR * Math.max(innerRadiusRatio, 0.1);
+// Whether explicit radii were given (affects gauge strokeW and stack geometry)
+const hasExplicitRadii = outerRadiusProp !== undefined && innerRadiusProp !== undefined;
+// Angle direction: Recharts endAngle > startAngle → CCW on screen (SVG sweep-flag 0)
+const isCCW = endAngle > startAngle;
+const sf: 0 | 1 = isCCW ? 0 : 1; // SVG sweep-flag: 1=CW, 0=CCW
+const totalSweep = Math.abs(startAngle - endAngle);
+// Ring background support (text / shape variants): outer fill = muted, inner fill = background.
+// polarRadiusProp overrides; otherwise use outerR / innerR (or fallback outerR-24 for gauge).
+const ringBgOuterR = polarRadiusProp ? polarRadiusProp[0] : outerR;
+const ringBgInnerR = polarRadiusProp
+  ? polarRadiusProp[1]
+  : innerRadiusProp !== undefined
+    ? innerR
+    : outerR - 24;
+
+// Format to 2dp, drop trailing zeros — keeps SVG path strings compact
+function f(n: number): string {
+  return Number(n.toFixed(2)).toString();
+}
+
+// Recharts angle convention: 90 = top, clockwise = decreasing angle.
+// Maps to SVG coordinates where y increases downward.
+// x = cx + r·cos(θ), y = cy − r·sin(θ)  (standard math, y-flipped for SVG screen)
+function polarToXY(r: number, angleDeg: number): [number, number] {
+  const rad = (angleDeg * Math.PI) / 180;
+  return [cx + r * Math.cos(rad), cy - r * Math.sin(rad)];
+}
+
+// Stroked arc path from sa → ea.
+// sweepFlag: 1 = CW on screen (sa > ea), 0 = CCW on screen (sa < ea).
+// Handles the degenerate ≥360° case by splitting into two semicircles.
+// large-arc-flag: 1 when sweep > 180° (must take the major arc), else 0.
+function arcD(r: number, sa: number, ea: number, sweepFlag: 0 | 1 = 1): string {
+  const sweep = Math.abs(sa - ea);
+  if (sweep <= 0) return "";
+  if (sweep >= 360) {
+    // Full circle: single-arc from/to the same point is degenerate in SVG —
+    // split into two semicircles joined end-to-end.
+    const [x1, y1] = polarToXY(r, sa);
+    const [x2, y2] = polarToXY(r, sweepFlag === 1 ? sa - 180 : sa + 180);
+    return (
+      `M${f(x1)},${f(y1)} A${r},${r},0,1,${sweepFlag},${f(x2)},${f(y2)}` +
+      ` A${r},${r},0,1,${sweepFlag},${f(x1)},${f(y1)}`
+    );
+  }
+  const [x1, y1] = polarToXY(r, sa);
+  const [x2, y2] = polarToXY(r, ea);
+  const large = sweep > 180 ? 1 : 0;
+  return `M${f(x1)},${f(y1)} A${r},${r},0,${large},${sweepFlag},${f(x2)},${f(y2)}`;
+}
+
+function sectorD(inner: number, outer: number, sa: number, ea: number): string {
+  if (Math.abs(ea - sa) >= 360) {
+    const dir = ea >= sa ? 1 : -1;
+    const mid = sa + dir * 180;
+    const outerSweep: 0 | 1 = dir > 0 ? 0 : 1;
+    const innerSweep: 0 | 1 = dir > 0 ? 1 : 0;
+    const [osx, osy] = polarToXY(outer, sa);
+    const [omx, omy] = polarToXY(outer, mid);
+    const [isx, isy] = polarToXY(inner, sa);
+    const [imx, imy] = polarToXY(inner, mid);
+    return (
+      `M${f(osx)},${f(osy)} A${outer},${outer},0,1,${outerSweep},${f(omx)},${f(omy)}` +
+      ` A${outer},${outer},0,1,${outerSweep},${f(osx)},${f(osy)}` +
+      ` L${f(isx)},${f(isy)} A${inner},${inner},0,1,${innerSweep},${f(imx)},${f(imy)}` +
+      ` A${inner},${inner},0,1,${innerSweep},${f(isx)},${f(isy)} Z`
+    );
+  }
+
+  const signedSweep = Math.sign(ea - sa || 1) * Math.min(Math.abs(ea - sa), 359.999);
+  const end = sa + signedSweep;
+  const [osx, osy] = polarToXY(outer, sa);
+  const [oex, oey] = polarToXY(outer, end);
+  const [isx, isy] = polarToXY(inner, sa);
+  const [iex, iey] = polarToXY(inner, end);
+  const large = Math.abs(signedSweep) > 180 ? 1 : 0;
+  const outerSweep = sa > end ? 1 : 0;
+  const innerSweep = sa <= end ? 1 : 0;
+  return `M${f(osx)},${f(osy)} A${outer},${outer},0,${large},${outerSweep},${f(oex)},${f(oey)} L${f(iex)},${f(iey)} A${inner},${inner},0,${large},${innerSweep},${f(isx)},${f(isy)} Z`;
+}
+
+function niceMax(v: number): number {
+  if (v <= 0) return 10;
+  const exp = Math.floor(Math.log10(v));
+  const step = Math.pow(10, exp);
+  return Math.ceil(v / step) * step;
+}
+
+// ── bars / gauge ─────────────────────────────────────────────────────────────
+// Each data row becomes one concentric arc (outermost = index 0).
+type ArcItem = {
+  midR: number;
+  strokeW: number;
+  trackD: string;
+  valueD: string;
+  color: string;
+  seriesKey: string;
+  category: string;
+  value: string;
+  label: string;
+  valueAngle: number;
+  filled: boolean;
+};
+
+const arcs: ArcItem[] = [];
+const legendKeys: string[] = [];
+const gridRadii: number[] = [];
+const gridSpokeAngles: number[] = [];
+
+if (mode === "bars" || mode === "gauge") {
+  const N = data.length;
+  if (N > 0) {
+    const rawVals = data.map((d) => Number(d[dataKey] ?? 0));
+    const maxVal = maxValue ?? (Math.max(...rawVals, 0) || 10);
+    const isGauge = mode === "gauge";
+    const gaugeW = hasExplicitRadii ? Math.max(4, Math.min(12, (outerR - innerR) * 0.4)) : 24;
+    const slotW = isGauge ? gaugeW : (outerR - innerR) / N;
+    const strokeW = isGauge ? gaugeW : Math.max(Math.floor(slotW * 0.8), 2);
+    const usesStroke = isGauge && cornerRadius > 0;
+
+    if (showGrid && !isGauge) {
+      for (let i = 0; i < N; i++) gridRadii.push(innerR + i * slotW);
+      const step = maxVal > 200 ? 20 : Math.max(1, Math.ceil(maxVal / 12));
+      for (let v = 0; v < maxVal; v += step) {
+        const spokeSweep = (v / maxVal) * totalSweep;
+        gridSpokeAngles.push(isCCW ? startAngle + spokeSweep : startAngle - spokeSweep);
+      }
+    }
+
+    for (let i = 0; i < N; i++) {
+      const row = data[i];
+      const val = Number(row[dataKey] ?? 0);
+      const key = String(row[nameKey] ?? i);
+      const midR = isGauge
+        ? hasExplicitRadii
+          ? innerR
+          : outerR - strokeW / 2
+        : innerR - slotW / 2 + slotW * 0.1 + strokeW / 2 + i * slotW;
+      const innerEdge = Math.max(midR - strokeW / 2, 0);
+      const outerEdge = midR + strokeW / 2;
+      const valueSweep = maxVal > 0 ? (val / maxVal) * totalSweep : 0;
+      // CCW: angle increases from startAngle; CW: angle decreases
+      const valueEnd = isCCW ? startAngle + valueSweep : startAngle - valueSweep;
+
+      arcs.push({
+        midR,
+        strokeW,
+        trackD: usesStroke
+          ? arcD(midR, startAngle, endAngle, sf)
+          : sectorD(innerEdge, outerEdge, startAngle, endAngle),
+        valueD: usesStroke
+          ? arcD(midR, startAngle, valueEnd, sf)
+          : sectorD(innerEdge, outerEdge, startAngle, valueEnd),
+        color: `var(--color-${key})`,
+        seriesKey: key,
+        category: String(row[nameKey] ?? key),
+        value: String(val),
+        label: config[key]?.label ?? key,
+        valueAngle: valueEnd,
+        filled: !usesStroke,
+      });
+      legendKeys.push(key);
+    }
+  }
+}
+
+// ── stacked ───────────────────────────────────────────────────────────────────
+// Single arc band; multiple series fill it end-to-end like a pie-on-a-ring.
+type StackedSeg = {
+  d: string;
+  trackD: string;
+  midR: number;
+  strokeW: number;
+  color: string;
+  seriesKey: string;
+  category: string;
+  value: string;
+  label: string;
+  linecap: "round" | "butt";
+};
+
+const stackedSegs: StackedSeg[] = [];
+let stackedTotal = 0;
+
+if (mode === "stacked" && data.length > 0 && series.length > 0) {
+  const row = data[0];
+  const strokeW = hasExplicitRadii
+    ? Math.max(4, Math.min(12, (outerR - innerR) * 0.4))
+    : Math.max(outerR - outerR * 0.72, 2);
+  const midR = hasExplicitRadii ? innerR : outerR - strokeW / 2;
+  const stackLinecap = cornerRadius > 0 ? "round" : "butt";
+  const cat = categoryKey ? String(row[categoryKey] ?? "") : "";
+  const vals = series.map((s) => Number(row[s] ?? 0));
+  stackedTotal = vals.reduce((a, b) => a + b, 0);
+  const maxVal = maxValue ?? (stackedTotal || 10);
+  const trackD = arcD(midR, startAngle, endAngle, sf);
+  let currentA = startAngle;
+
+  for (let i = 0; i < series.length; i++) {
+    const key = series[i];
+    const val = vals[i];
+    const segSweep = maxVal > 0 ? (val / maxVal) * totalSweep : 0;
+    const segEnd = isCCW ? currentA + segSweep : currentA - segSweep;
+    const innerEdge = Math.max(midR - strokeW / 2, 0);
+    const outerEdge = midR + strokeW / 2;
+
+    stackedSegs.push({
+      d: sectorD(innerEdge, outerEdge, currentA, segEnd),
+      trackD: i === 0 ? trackD : "", // draw full track once, behind all segments
+      midR,
+      strokeW,
+      color: `var(--color-${key})`,
+      seriesKey: key,
+      category: cat,
+      value: String(val),
+      label: config[key]?.label ?? key,
+      linecap: stackLinecap,
+    });
+    currentA = segEnd;
+    legendKeys.push(key);
+  }
+}
+
+// Label just outside the arc end (radially outward by half stroke + margin)
+function labelXY(midR: number, strokeW: number, angle: number): [number, number] {
+  return polarToXY(midR + strokeW / 2 + 10, angle);
+}
+
+// Unique per-instance id prefix for the insideStart label textPaths (multiple radial
+// charts can share a page, so path ids must not collide).
+const gid = Math.random().toString(36).slice(2, 9);
+// shadcn's insideStart LabelList rides a circular textPath at the bar's own mid-radius,
+// starting 5deg into the sweep from startAngle (Recharts' Label default `offset`).
+const nameLabelStart = startAngle + (isCCW ? 1 : -1) * 5;
+const nameLabelEnd = nameLabelStart + (isCCW ? 1 : -1) * 359;
+
+// Center value: explicit prop, or auto-inferred for gauge (single row) / stacked total
+const autoCenter =
+  centerText ??
+  (mode === "gauge" && data.length === 1
+    ? Number(data[0][dataKey] ?? 0).toLocaleString("en-US")
+    : mode === "stacked" && stackedTotal > 0
+      ? stackedTotal.toLocaleString("en-US")
+      : undefined);
+
+const ariaLabel =
+  mode === "stacked"
+    ? `Radial stacked chart: ${series.map((s) => config[s]?.label ?? s).join(", ")}`
+    : `Radial ${mode} chart: ${data.map((d) => String(d[nameKey] ?? "")).join(", ")}`;
+
+// ponytail: stroke-linecap="round" gives cap shape for free; no manual cap path math needed
+const linecap = cornerRadius > 0 ? "round" : "butt";
+---
+
+<svg
+  viewBox={`0 0 ${W} ${H}`}
+  width="100%"
+  preserveAspectRatio="xMidYMid meet"
+  role="img"
+  aria-label={ariaLabel}
+>
+  <!-- Ring background: muted outer disk + background inner disk → visible ring (text / shape variants) -->
+  {ringBackground && <circle cx={cx} cy={cy} r={ringBgOuterR} fill="var(--muted)" />}
+  {ringBackground && <circle cx={cx} cy={cy} r={ringBgInnerR} fill="var(--background)" />}
+
+  <!-- Concentric grid circles at each arc radius (grid variant) -->
+  {
+    showGrid &&
+      gridRadii.map((r) => (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill="none"
+          stroke="var(--border)"
+          stroke-width="1"
+          data-sw="1"
+        />
+      ))
+  }
+  {
+    showGrid &&
+      gridSpokeAngles.map((angle) => {
+        const [x1, y1] = polarToXY(innerR, angle);
+        const [x2, y2] = polarToXY(outerR, angle);
+        return (
+          <line
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke="var(--border)"
+            stroke-width="1"
+            data-sw="1"
+          />
+        );
+      })
+  }
+
+  <!-- Fallback hover surface for empty radial space; exact arc paths render later and win on top. -->
+  {
+    showTooltip && arcs.length > 0 && (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={outerR + 16}
+        fill="transparent"
+        pointer-events="all"
+        data-series={arcs[0]?.seriesKey}
+        data-category={arcs[0]?.category}
+        data-items={JSON.stringify(
+          arcs.map((arc) => ({
+            series: arc.seriesKey,
+            label: arc.label,
+            value: arc.value,
+          })),
+        )}
+      />
+    )
+  }
+  {
+    showTooltip && arcs.length === 0 && stackedSegs.length > 0 && (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={outerR + 16}
+        fill="transparent"
+        pointer-events="all"
+        data-series={stackedSegs[0]?.seriesKey}
+        data-category={stackedSegs[0]?.category}
+        data-items={JSON.stringify(
+          stackedSegs.map((seg) => ({
+            series: seg.seriesKey,
+            label: seg.label,
+            value: seg.value,
+          })),
+        )}
+      />
+    )
+  }
+
+  <!-- Background tracks (bars / gauge) -->
+  {
+    showTrack &&
+      arcs.map(
+        (arc) =>
+          arc.trackD &&
+          (arc.filled ? (
+            <path d={arc.trackD} fill="var(--muted)" stroke="none" />
+          ) : (
+            <path
+              d={arc.trackD}
+              fill="none"
+              stroke="var(--muted)"
+              stroke-width={arc.strokeW}
+              stroke-linecap={linecap}
+            />
+          )),
+      )
+  }
+
+  <!-- Background track (stacked — drawn once, behind all segments) -->
+  {
+    showTrack &&
+      stackedSegs.map(
+        (seg) =>
+          seg.trackD && (
+            <path
+              d={seg.trackD}
+              fill="none"
+              stroke="var(--muted)"
+              stroke-width={seg.strokeW}
+              stroke-linecap="butt"
+            />
+          ),
+      )
+  }
+
+  <!-- Value arcs (bars / gauge) — data-* attrs drive the shared tooltip -->
+  {
+    arcs.map(
+      (arc) =>
+        arc.valueD &&
+        (arc.filled ? (
+          <path
+            d={arc.valueD}
+            fill={arc.color}
+            stroke="none"
+            data-series={arc.seriesKey}
+            data-category={arc.category}
+            data-value={arc.value}
+            data-label={arc.label}
+          />
+        ) : (
+          <path
+            d={arc.valueD}
+            fill="none"
+            stroke={arc.color}
+            stroke-width={arc.strokeW}
+            stroke-linecap={linecap}
+            data-series={arc.seriesKey}
+            data-category={arc.category}
+            data-value={arc.value}
+            data-label={arc.label}
+          />
+        )),
+    )
+  }
+
+  <!-- Value arcs (stacked) -->
+  {
+    stackedSegs.map(
+      (seg) =>
+        seg.d && (
+          <path
+            d={seg.d}
+            fill={seg.color}
+            stroke="transparent"
+            stroke-width={cornerRadius > 0 ? "2" : "0"}
+            stroke-linecap={seg.linecap}
+            data-series={seg.seriesKey}
+            data-category={seg.category}
+            data-value={seg.value}
+            data-label={seg.label}
+          />
+        ),
+    )
+  }
+
+  <!-- Invisible full-ring hit paths for tooltip parity with Recharts. -->
+  {
+    showTooltip &&
+      arcs.map(
+        (arc) =>
+          arc.trackD &&
+          (arc.filled ? (
+            <path
+              d={arc.trackD}
+              fill="transparent"
+              stroke="none"
+              pointer-events="all"
+              data-series={arc.seriesKey}
+              data-category={arc.category}
+              data-value={arc.value}
+              data-label={arc.label}
+            />
+          ) : (
+            <path
+              d={arc.trackD}
+              fill="none"
+              stroke="transparent"
+              stroke-width={arc.strokeW + 6}
+              stroke-linecap={linecap}
+              pointer-events="stroke"
+              data-series={arc.seriesKey}
+              data-category={arc.category}
+              data-value={arc.value}
+              data-label={arc.label}
+            />
+          )),
+      )
+  }
+  {
+    showTooltip &&
+      stackedSegs.map(
+        (seg) =>
+          seg.trackD && (
+            <path
+              d={seg.trackD}
+              fill="none"
+              stroke="transparent"
+              stroke-width={seg.strokeW + 6}
+              stroke-linecap="butt"
+              pointer-events="stroke"
+              data-series={stackedSegs[0]?.seriesKey}
+              data-category={seg.category}
+              data-items={JSON.stringify(
+                stackedSegs.map((item) => ({
+                  series: item.seriesKey,
+                  label: item.label,
+                  value: item.value,
+                })),
+              )}
+            />
+          ),
+      )
+  }
+
+  <!-- Per-arc value labels at arc end (optional) -->
+  {
+    showLabels &&
+      arcs.map((arc, i) => {
+        if (labelMode === "name") {
+          // Capitalized series name riding the arc's own ring, starting just inside
+          // its sweep (shadcn insideStart — a curved textPath, not a fixed point).
+          const pathId = `radial-label-${gid}-${i}`;
+          return (
+            <text
+              fill="#fff"
+              font-size="11"
+              data-fs="11"
+              dominant-baseline="central"
+              style="text-transform: capitalize; mix-blend-mode: luminosity;"
+            >
+              <defs>
+                <path id={pathId} d={arcD(arc.midR, nameLabelStart, nameLabelEnd, sf)} />
+              </defs>
+              <textPath xlink:href={`#${pathId}`}>{arc.label}</textPath>
+            </text>
+          );
+        }
+        const [lx, ly] = labelXY(arc.midR, arc.strokeW, arc.valueAngle);
+        return (
+          <text
+            x={lx}
+            y={ly}
+            text-anchor="middle"
+            dominant-baseline="middle"
+            fill="var(--foreground)"
+            font-size="11"
+            font-weight="500"
+            data-fs="11"
+          >
+            {arc.value}
+          </text>
+        );
+      })
+  }
+
+  <!-- Center value (gauge single-value or stacked total) -->
+  {
+    autoCenter && (
+      <text
+        x={cx}
+        y={mode === "stacked" ? cy - 16 : cy}
+        text-anchor="middle"
+        dominant-baseline="middle"
+        fill="var(--foreground)"
+      >
+        <tspan
+          x={cx}
+          y={mode === "stacked" ? cy - 16 : cy}
+          font-size={mode === "stacked" ? "24" : "36"}
+          font-weight="700"
+        >
+          {autoCenter}
+        </tspan>
+        {centerLabel && (
+          <tspan
+            x={cx}
+            y={mode === "stacked" ? cy + 4 : cy + 24}
+            fill="var(--muted-foreground)"
+            font-size="13"
+            font-weight="400"
+          >
+            {centerLabel}
+          </tspan>
+        )}
+      </text>
+    )
+  }
+</svg>
+
+{showLegend && <ChartLegend config={config} series={legendKeys} />}
+{showTooltip && <ChartTooltip />}

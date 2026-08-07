@@ -1,0 +1,190 @@
+---
+import "@/styles/global.css";
+import { Chart } from "@/components/starwind/chart";
+import type { ChartConfig } from "@/components/starwind/chart";
+import RadialChart from "@/components/starwind/chart/RadialChart.astro";
+
+// Browser data — shadcn radial sample
+const browserData = [
+  { browser: "chrome", visitors: 275 },
+  { browser: "safari", visitors: 200 },
+  { browser: "firefox", visitors: 187 },
+  { browser: "edge", visitors: 173 },
+  { browser: "other", visitors: 90 },
+];
+
+const browserConfig: ChartConfig = {
+  chrome: { label: "Chrome", color: "var(--chart-1)" },
+  safari: { label: "Safari", color: "var(--chart-2)" },
+  firefox: { label: "Firefox", color: "var(--chart-3)" },
+  edge: { label: "Edge", color: "var(--chart-4)" },
+  other: { label: "Other", color: "var(--chart-5)" },
+};
+
+// Single row for gauge
+const gaugeData = [{ browser: "chrome", visitors: 275 }];
+const gaugeConfig: ChartConfig = {
+  chrome: { label: "Chrome", color: "var(--chart-1)" },
+};
+
+// Stacked data — single row, two series
+const stackedData = [{ month: "january", desktop: 1260, mobile: 570 }];
+const stackedConfig: ChartConfig = {
+  desktop: { label: "Desktop", color: "var(--chart-1)" },
+  mobile: { label: "Mobile", color: "var(--chart-2)" },
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Radial Chart Demo — Starwind UI</title>
+    <!-- Theme init: eliminate FART -->
+    <script is:inline>
+      const t = localStorage.getItem("colorTheme");
+      if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
+  </head>
+
+  <body class="bg-background text-foreground min-h-screen p-8">
+    <h1 class="mb-2 text-2xl font-semibold">Radial Chart Demo</h1>
+    <p class="text-muted-foreground mb-10 text-sm">
+      Radial chart variants — Starwind UI (light + dark sections below)
+    </p>
+
+    <!-- Light mode section -->
+    <div class="mb-12 grid gap-8">
+      <!-- 1. Gauge (single arc, semicircle, center value) -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">1. Gauge — single arc with center value</h2>
+        <Chart config={gaugeConfig}>
+          <RadialChart
+            data={gaugeData}
+            config={gaugeConfig}
+            mode="gauge"
+            nameKey="browser"
+            dataKey="visitors"
+            startAngle={180}
+            endAngle={0}
+            centerLabel="Visitors"
+          />
+        </Chart>
+      </section>
+
+      <!-- 2. Bars (5 concentric arcs) -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">2. Bars — concentric arcs by browser</h2>
+        <Chart config={browserConfig}>
+          <RadialChart
+            data={browserData}
+            config={browserConfig}
+            mode="bars"
+            nameKey="browser"
+            dataKey="visitors"
+          />
+        </Chart>
+      </section>
+
+      <!-- 3. Bars with value labels -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">3. Bars with value labels</h2>
+        <Chart config={browserConfig}>
+          <RadialChart
+            data={browserData}
+            config={browserConfig}
+            mode="bars"
+            nameKey="browser"
+            dataKey="visitors"
+            showLabels
+          />
+        </Chart>
+      </section>
+
+      <!-- 4. Bars with legend -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">4. Bars with legend</h2>
+        <Chart config={browserConfig}>
+          <RadialChart
+            data={browserData}
+            config={browserConfig}
+            mode="bars"
+            nameKey="browser"
+            dataKey="visitors"
+            showLegend
+          />
+        </Chart>
+      </section>
+
+      <!-- 5. Stacked (two segments + center total) -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">5. Stacked — desktop + mobile with center total</h2>
+        <Chart config={stackedConfig}>
+          <RadialChart
+            data={stackedData}
+            config={stackedConfig}
+            mode="stacked"
+            series={["desktop", "mobile"]}
+            categoryKey="month"
+            centerLabel="Visitors"
+            showLegend
+          />
+        </Chart>
+      </section>
+    </div>
+
+    <!-- Dark mode mirror -->
+    <div class="dark rounded-xl bg-neutral-950 p-8">
+      <h2 class="mb-6 text-sm font-medium text-neutral-200">Dark mode</h2>
+      <div class="grid gap-8">
+        <section>
+          <h3 class="mb-3 text-sm font-medium text-neutral-400">Gauge</h3>
+          <Chart config={gaugeConfig}>
+            <RadialChart
+              data={gaugeData}
+              config={gaugeConfig}
+              mode="gauge"
+              nameKey="browser"
+              dataKey="visitors"
+              startAngle={180}
+              endAngle={0}
+              centerLabel="Visitors"
+            />
+          </Chart>
+        </section>
+
+        <section>
+          <h3 class="mb-3 text-sm font-medium text-neutral-400">Bars</h3>
+          <Chart config={browserConfig}>
+            <RadialChart
+              data={browserData}
+              config={browserConfig}
+              mode="bars"
+              nameKey="browser"
+              dataKey="visitors"
+              showLegend
+            />
+          </Chart>
+        </section>
+
+        <section>
+          <h3 class="mb-3 text-sm font-medium text-neutral-400">Stacked</h3>
+          <Chart config={stackedConfig}>
+            <RadialChart
+              data={stackedData}
+              config={stackedConfig}
+              mode="stacked"
+              series={["desktop", "mobile"]}
+              categoryKey="month"
+              centerLabel="Visitors"
+              showLegend
+            />
+          </Chart>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>

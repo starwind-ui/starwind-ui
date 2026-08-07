@@ -1,0 +1,54 @@
+---
+import type { ChartConfig } from "./variants";
+import { chartLegend } from "./variants";
+
+type Props = {
+  config: ChartConfig;
+  series: string[];
+};
+
+const { config, series } = Astro.props;
+
+// Inline lucide icon paths for the variants whose legend uses icons instead of
+// colour swatches (area-icons, radar-icons). Keyed by the config `icon` name.
+const ICONS: Record<string, string> = {
+  "trending-up":
+    '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+  "trending-down":
+    '<polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/>',
+  "arrow-up-from-line": '<path d="m18 9-6-6-6 6"/><path d="M12 3v14"/><path d="M5 21h14"/>',
+  "arrow-down-from-line": '<path d="M19 3H5"/><path d="M12 21V7"/><path d="m6 15 6 6 6-6"/>',
+};
+---
+
+<div data-slot="chart-legend" class={chartLegend()}>
+  {
+    series.map((key) => {
+      const icon = config[key]?.icon;
+      return (
+        <div class="flex items-center gap-1.5">
+          {icon && ICONS[icon] ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="text-muted-foreground h-3 w-3 shrink-0"
+              aria-hidden="true"
+              set:html={ICONS[icon]}
+            />
+          ) : (
+            <span
+              class="inline-block h-2 w-2 shrink-0 rounded-[2px]"
+              style={`background: var(--color-${key})`}
+            />
+          )}
+          <span>{config[key]?.label ?? key}</span>
+        </div>
+      );
+    })
+  }
+</div>
