@@ -1,3 +1,5 @@
+"use client";
+
 import MenuPrimitive from "@starwind-ui/react/menu";
 import type * as React from "react";
 import { dropdownItem } from "./variants";

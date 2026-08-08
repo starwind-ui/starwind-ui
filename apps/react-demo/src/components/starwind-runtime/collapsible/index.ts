@@ -1,3 +1,5 @@
+"use client";
+
 import Collapsible from "./Collapsible";
 import CollapsibleContent from "./CollapsibleContent";
 import CollapsibleTrigger from "./CollapsibleTrigger";
@@ -9,10 +11,12 @@ const CollapsibleVariants = {
   collapsibleTrigger,
 };
 
-export { Collapsible, CollapsibleContent, CollapsibleTrigger, CollapsibleVariants };
-
-export default {
+const CollapsibleParts = {
   Root: Collapsible,
   Content: CollapsibleContent,
   Trigger: CollapsibleTrigger,
 };
+
+export { Collapsible, CollapsibleContent, CollapsibleTrigger, CollapsibleVariants };
+
+export default CollapsibleParts;

@@ -1,3 +1,5 @@
+"use client";
+
 import AvatarPrimitive from "@starwind-ui/react/avatar";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";

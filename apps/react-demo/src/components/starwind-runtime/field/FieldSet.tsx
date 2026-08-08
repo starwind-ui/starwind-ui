@@ -1,3 +1,5 @@
+"use client";
+
 import FieldsetPrimitive from "@starwind-ui/react/fieldset";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";

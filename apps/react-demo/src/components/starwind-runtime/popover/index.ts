@@ -1,3 +1,5 @@
+"use client";
+
 import Popover from "./Popover";
 import PopoverContent from "./PopoverContent";
 import PopoverDescription from "./PopoverDescription";
@@ -22,6 +24,15 @@ const PopoverVariants = {
   popoverTrigger,
 };
 
+const PopoverParts = {
+  Root: Popover,
+  Trigger: PopoverTrigger,
+  Content: PopoverContent,
+  Header: PopoverHeader,
+  Title: PopoverTitle,
+  Description: PopoverDescription,
+};
+
 export {
   Popover,
   PopoverContent,
@@ -32,11 +43,4 @@ export {
   PopoverVariants,
 };
 
-export default {
-  Root: Popover,
-  Trigger: PopoverTrigger,
-  Content: PopoverContent,
-  Header: PopoverHeader,
-  Title: PopoverTitle,
-  Description: PopoverDescription,
-};
+export default PopoverParts;

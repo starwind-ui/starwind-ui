@@ -6,11 +6,19 @@ import { inputOtp, inputOtpGroup, inputOtpSeparator, inputOtpSlot } from "./vari
 
 const REGEXP_ONLY_DIGITS = /^[0-9]+$/;
 const REGEXP_ONLY_DIGITS_AND_CHARS = /^[A-Za-z0-9]+$/;
+
 const InputOtpVariants = {
   inputOtp,
   inputOtpGroup,
   inputOtpSeparator,
   inputOtpSlot,
+};
+
+const InputOtpParts = {
+  Root: InputOtp,
+  Group: InputOtpGroup,
+  Separator: InputOtpSeparator,
+  Slot: InputOtpSlot,
 };
 
 export {
@@ -23,9 +31,4 @@ export {
   REGEXP_ONLY_DIGITS_AND_CHARS,
 };
 
-export default {
-  Root: InputOtp,
-  Group: InputOtpGroup,
-  Separator: InputOtpSeparator,
-  Slot: InputOtpSlot,
-};
+export default InputOtpParts;

@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import InputOtpGroup from "./InputOtpGroup";
 import InputOtpRoot from "./InputOtpRoot";
 import InputOtpSeparator from "./InputOtpSeparator";

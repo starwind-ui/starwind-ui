@@ -11,6 +11,8 @@ export type { TabsTriggerProps } from "./TabsTrigger.vue";
 
 const TabsVariants = { tabs, tabsContent, tabsList, tabsTrigger };
 
+const TabsParts = { Root: Tabs, List: TabsList, Trigger: TabsTrigger, Content: TabsContent };
+
 export { Tabs, TabsContent, TabsList, TabsTrigger, TabsVariants };
 
-export default { Root: Tabs, List: TabsList, Trigger: TabsTrigger, Content: TabsContent };
+export default TabsParts;

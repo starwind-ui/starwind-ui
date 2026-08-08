@@ -5,7 +5,7 @@ import {
   resolveAsChildControl,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { dispatchCustomEvent } from "../../internal/events";
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import {
   COLLAPSIBLE_PANEL_HIDDEN_UNTIL_FOUND_ATTRIBUTE,
   hideClosedCollapsiblePanel,
@@ -145,14 +145,26 @@ class CollapsibleController implements CollapsibleInstance {
       reason: "imperative-action",
     });
 
-    this.notify(details);
-    if (details.isCanceled) {
-      this.render();
-      return;
-    }
-
-    this.openState = open;
-    this.render();
+    runCancelableDetailsTransaction({
+      apply: () => {
+        this.openState = open;
+        this.render();
+      },
+      details,
+      eventType: "starwind:open-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.forEach((subscriber) => subscriber(acceptedDetails));
+      },
+      notifyCallback: (proposalDetails) =>
+        this.onOpenChange?.(proposalDetails.open, proposalDetails),
+      rollbackCanceled: () => {
+        if (this.openState === open && previousOpen !== open) {
+          this.setOpen(previousOpen, { emit: false });
+        }
+      },
+      target: this.root,
+    });
+    if (details.isCanceled) this.render();
   }
 
   getOpen(): boolean {
@@ -249,15 +261,30 @@ class CollapsibleController implements CollapsibleInstance {
       trigger: request.trigger,
     });
 
-    this.notify(details);
+    const applied = runCancelableDetailsTransaction({
+      apply: () => {
+        if (!this.controlled) this.openState = open;
+        this.render();
+      },
+      details,
+      eventType: "starwind:open-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.forEach((subscriber) => subscriber(acceptedDetails));
+      },
+      notifyCallback: (proposalDetails) =>
+        this.onOpenChange?.(proposalDetails.open, proposalDetails),
+      rollbackCanceled: () => {
+        if (this.openState === open && details.previousOpen !== open) {
+          this.setOpen(details.previousOpen, { emit: false });
+        }
+      },
+      target: this.root,
+    });
 
-    if (details.isCanceled || this.controlled) {
+    if (!applied) {
       this.render();
       return details;
     }
-
-    this.openState = open;
-    this.render();
     return details;
   }
 
@@ -306,15 +333,6 @@ class CollapsibleController implements CollapsibleInstance {
     this.closeAbortController = closeAbortController;
 
     return closeAbortController.signal;
-  }
-
-  private notify(details: CollapsibleOpenChangeDetails): void {
-    const event = dispatchCustomEvent(this.root, "starwind:open-change", details, {
-      cancelable: true,
-    });
-    if (event.defaultPrevented) details.cancel();
-    this.onOpenChange?.(details.open, details);
-    this.subscribers.forEach((subscriber) => subscriber(details));
   }
 
   private isTriggerDisabled(trigger: CollapsibleTrigger): boolean {

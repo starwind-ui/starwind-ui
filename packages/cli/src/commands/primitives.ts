@@ -2,6 +2,10 @@ import * as p from "@clack/prompts";
 
 import { getConfigState, type StarwindConfig, type StarwindFramework } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
+import {
+  sortComponentNames,
+  sortComponentPresentationByName,
+} from "@/utils/component-presentation.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import {
@@ -94,7 +98,7 @@ export async function primitivesAdd(primitives?: string[], options?: PrimitiveAd
       return process.exit(0);
     }
 
-    p.log.info(`Installing primitives: ${primitivesToInstall.join(", ")}`);
+    p.log.info(`Installing primitives: ${sortComponentNames(primitivesToInstall).join(", ")}`);
 
     const results = await installPrimitiveComponents(primitivesToInstall, {
       config: runtimeConfig,
@@ -176,7 +180,7 @@ export async function primitivesUpdate(primitives?: string[], options?: Primitiv
       process.exit(0);
     }
 
-    p.log.info(`Updating primitives: ${primitivesToUpdate.join(", ")}`);
+    p.log.info(`Updating primitives: ${sortComponentNames(primitivesToUpdate).join(", ")}`);
 
     if (previewMode.enabled) {
       const plan = await planPrimitiveComponentUpdates(primitivesToUpdate, {
@@ -374,7 +378,7 @@ async function getPrimitivesToInstall(
 
     if (invalid.length > 0) {
       p.log.warn(
-        `${highlighter.warn("Invalid primitives found:")}\n${invalid
+        `${highlighter.warn("Invalid primitives found:")}\n${sortComponentNames(invalid)
           .map((name) => `  ${name}`)
           .join("\n")}`,
       );
@@ -401,7 +405,11 @@ async function getPrimitivesToInstall(
 
   const selected = await p.multiselect({
     message: "Select primitives to add ('a' for all, space to select, enter to confirm)",
-    options: uninstalledPrimitives.map((primitive) => ({
+    options: sortComponentPresentationByName(
+      uninstalledPrimitives,
+      (primitive) => primitive.component,
+      (primitive) => primitive.framework,
+    ).map((primitive) => ({
       label: primitive.component,
       value: primitive.component,
     })),
@@ -627,7 +635,7 @@ function logPrimitiveUpdateSummary(results: PrimitiveUpdateSummary): void {
 }
 
 function formatPrimitiveResults(results: PrimitiveAddResult[]): string {
-  return results
+  return sortComponentPresentationByName(results, (result) => result.name)
     .map((result) => {
       if (result.status === "failed") {
         return `  ${result.name} - ${result.error ?? "Unknown error"}`;
@@ -639,7 +647,7 @@ function formatPrimitiveResults(results: PrimitiveAddResult[]): string {
 }
 
 function formatPrimitiveUpdateResults(results: PrimitiveUpdateResult[]): string {
-  return results
+  return sortComponentPresentationByName(results, (result) => result.name)
     .map((result) => {
       if (result.status === "failed") {
         return `  ${result.name} - ${result.error ?? "Unknown error"}`;

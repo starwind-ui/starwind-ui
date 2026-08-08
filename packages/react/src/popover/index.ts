@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import PopoverArrow from "./PopoverArrow";
 import PopoverBackdrop from "./PopoverBackdrop";
 import PopoverClose from "./PopoverClose";

@@ -1,3 +1,5 @@
+"use client";
+
 import FormPrimitive from "@starwind-ui/react/form";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";

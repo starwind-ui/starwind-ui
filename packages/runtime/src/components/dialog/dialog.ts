@@ -90,6 +90,7 @@ type DialogElements = {
 };
 
 type OpenRequest = {
+  forceApply?: boolean;
   reason: DialogOpenChangeReason;
   event?: Event;
   trigger?: Element;
@@ -214,6 +215,16 @@ class DialogController implements DialogInstance {
   }
 
   setOpen(open: boolean, options: DialogSetOpenOptions = {}): void {
+    if (open === this.openState && options.emit !== false) {
+      this.setOpen(open, { ...options, emit: false });
+      return;
+    }
+
+    if (options.emit !== false) {
+      this.requestOpen(open, { ...this.resolveSetOpenRequest(open, options), forceApply: true });
+      return;
+    }
+
     const previousOpen = this.openState;
     const request = this.resolveSetOpenRequest(open, options);
     this.openState = open;
@@ -223,17 +234,6 @@ class DialogController implements DialogInstance {
       this.applyOpenState(false, request);
     }
     this.pendingControlledCloseRequest = null;
-    if (options.emit !== false && previousOpen !== open) {
-      this.notifyOpenChange(
-        createOpenChangeDetails({
-          open,
-          previousOpen,
-          reason: request.reason,
-          event: request.event,
-          trigger: request.trigger,
-        }),
-      );
-    }
   }
 
   getOpen(): boolean {
@@ -462,18 +462,20 @@ class DialogController implements DialogInstance {
   }
 
   private requestOpen(open: boolean, request: OpenRequest): void {
-    if (open === this.openState && !this.controlled) return;
+    if (open === this.openState && !this.controlled && !request.forceApply) return;
 
     const previousOpen = this.openState;
     const transaction =
-      open && !this.controlled ? createInitializationTransaction(this.root.ownerDocument) : null;
+      open && (!this.controlled || request.forceApply)
+        ? createInitializationTransaction(this.root.ownerDocument)
+        : null;
 
     try {
       if (transaction) this.initializeNestedDialogs(transaction);
 
       const result = runOverlayOpenChangeShell({
         root: this.root,
-        controlled: this.controlled,
+        controlled: this.controlled && !request.forceApply,
         createDetails: createOpenChangeDetails,
         open,
         previousOpen,
@@ -494,6 +496,11 @@ class DialogController implements DialogInstance {
           }
         },
         onBeforeOpenChange: () => this.dispatchOpenChangeIntent(open, request),
+        onCanceledOpenChange: () => {
+          if (this.openState === open && previousOpen !== open) {
+            this.setOpen(previousOpen, { emit: false, reason: request.reason });
+          }
+        },
         onNotifyOpenChangeSubscribers: (details) => this.notifyOpenChange(details),
         onOpenChange: (nextOpen, details) => {
           this.onOpenChange?.(nextOpen, details);

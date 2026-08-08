@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import AlertDialogBackdrop from "./AlertDialogBackdrop";
 import AlertDialogClose from "./AlertDialogClose";
 import AlertDialogDescription from "./AlertDialogDescription";

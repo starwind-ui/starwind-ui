@@ -198,6 +198,37 @@ describe("primitives command", () => {
     );
   });
 
+  it("sorts primitive choices and summaries without changing installer order", async () => {
+    mockGetPrimitiveComponents.mockReturnValue([
+      {
+        component: "zebra",
+        framework: "astro",
+        version: "0.1.0",
+        files: [],
+        packageRequirements: [],
+      },
+      {
+        component: "Alpha",
+        framework: "astro",
+        version: "0.1.0",
+        files: [],
+        packageRequirements: [],
+      },
+    ]);
+    mockMultiselect.mockResolvedValue([]);
+
+    await expect(primitivesAdd(undefined, { yes: true })).rejects.toThrow("process.exit called");
+
+    expect(mockMultiselect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: [
+          { label: "Alpha", value: "Alpha" },
+          { label: "zebra", value: "zebra" },
+        ],
+      }),
+    );
+  });
+
   it("installs multiple valid primitives while warning about invalid names", async () => {
     mockInstallPrimitiveComponents.mockResolvedValue({
       installed: [
@@ -498,6 +529,37 @@ describe("primitives command", () => {
     expect(mockLog.success).toHaveBeenCalledWith(
       expect.stringContaining("button (0.1.0 -> 0.2.0)"),
     );
+  });
+
+  it("sorts shuffled primitive update summaries without changing updater order", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        primitives: [
+          { name: "zebra", version: "0.1.0", framework: "astro", source: "bundled" },
+          { name: "Alpha", version: "0.1.0", framework: "astro", source: "bundled" },
+        ],
+      }),
+    });
+    mockUpdatePrimitiveComponents.mockResolvedValue({
+      updated: [
+        { name: "zebra", status: "updated", oldVersion: "0.1.0", newVersion: "0.2.0" },
+        { name: "Alpha", status: "updated", oldVersion: "0.1.0", newVersion: "0.2.0" },
+      ],
+      skipped: [],
+      failed: [],
+    });
+
+    await primitivesUpdate(["zebra", "Alpha"], { yes: true });
+
+    expect(mockUpdatePrimitiveComponents).toHaveBeenCalledWith(
+      ["zebra", "Alpha"],
+      expect.any(Object),
+    );
+    const summary = mockLog.success.mock.calls.find(([message]) =>
+      String(message).includes("Successfully updated primitives:"),
+    )?.[0] as string;
+    expect(summary.indexOf("Alpha")).toBeLessThan(summary.indexOf("zebra"));
   });
 
   it("updates all installed primitives with --all", async () => {

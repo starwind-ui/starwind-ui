@@ -278,6 +278,7 @@ export const navigationMenuRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      stateModel: "value",
       callbackTiming: "before-state-commit",
       cancelable: true,
       callbackProp: "onValueChange",

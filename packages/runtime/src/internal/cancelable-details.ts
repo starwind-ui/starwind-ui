@@ -37,3 +37,41 @@ export function dispatchCancelableDetailsEvent<TDetails extends CancelableDetail
 
   return event;
 }
+
+export function runCancelableDetailsTransaction<TDetails extends CancelableDetails>({
+  apply,
+  details,
+  eventType,
+  notifyAccepted,
+  notifyCallback,
+  rollbackCanceled,
+  target,
+}: {
+  apply?: () => void;
+  details: TDetails;
+  eventType: string;
+  notifyAccepted?: (details: TDetails) => void;
+  notifyCallback?: (details: TDetails) => void;
+  rollbackCanceled?: () => void;
+  target: HTMLElement;
+}): boolean {
+  notifyCallback?.(details);
+  dispatchCancelableDetailsEvent(target, eventType, details);
+
+  if (details.isCanceled) {
+    rollbackCanceled?.();
+    return false;
+  }
+
+  apply?.();
+  commitCancelableDetails(details);
+  notifyAccepted?.(details);
+  return true;
+}
+
+function commitCancelableDetails(details: CancelableDetails): void {
+  Object.defineProperty(details, "cancel", {
+    configurable: true,
+    value: () => {},
+  });
+}

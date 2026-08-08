@@ -1,3 +1,5 @@
+"use client";
+
 import type * as React from "react";
 import "./styles.css";
 import ToastPrimitive from "@starwind-ui/react/toast";

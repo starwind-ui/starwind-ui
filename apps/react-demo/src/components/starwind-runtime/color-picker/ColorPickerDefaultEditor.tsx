@@ -37,10 +37,14 @@ function ColorPickerDefaultEditor(props: ColorPickerDefaultEditorProps) {
     swatches = [],
   } = props;
 
+  const isSwatchDescriptor = (
+    swatch: (typeof swatches)[number],
+  ): swatch is Extract<(typeof swatches)[number], { value: unknown }> =>
+    typeof swatch === "object" && swatch !== null && "value" in swatch && "label" in swatch;
   const normalizedSwatches = swatches.map((swatch) =>
-    typeof swatch === "object" && swatch !== null && "value" in swatch
+    isSwatchDescriptor(swatch)
       ? swatch
-      : { value: swatch, label: String(swatch) },
+      : { value: swatch, label: String(swatch), disabled: undefined },
   );
   const hasSwatchesAttribute = normalizedSwatches.length > 0 ? "true" : "false";
 

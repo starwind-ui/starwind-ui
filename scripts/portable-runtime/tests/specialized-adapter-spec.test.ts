@@ -5266,6 +5266,7 @@ describe("SpecializedAdapterSpec", () => {
         domEvent: "starwind:value-change",
         emitsFrom: "root",
         lifecycle: "constructor-callback-ref",
+        runtimeEvent: "valueChange",
         valueProperty: "value",
         valueType: "string",
       },

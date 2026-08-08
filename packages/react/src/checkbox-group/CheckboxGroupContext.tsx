@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import type { CheckboxGroupValue } from "@starwind-ui/runtime/checkbox-group";
 import * as React from "react";
 

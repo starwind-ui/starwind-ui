@@ -1,10 +1,15 @@
 import path from "node:path";
 
-import type { StyledOutputComponentGroup } from "../../../styled-output-model/index.js";
+import {
+  assertStyledPartsIdentifier,
+  getStyledPartsIdentifier,
+  type StyledOutputComponentGroup,
+} from "../../../styled-output-model/index.js";
 import { renderNamedExport, renderNamedImport } from "./formatting.js";
 import { renderIdentifierObject } from "./render-tree.js";
 
 export function renderIndex(group: StyledOutputComponentGroup, tsHeader: string): string {
+  assertStyledPartsIdentifier(group);
   const indexComponentNames = new Set([
     ...group.publicExports,
     ...group.defaultExport.members.map((member) => member.localName),
@@ -38,6 +43,14 @@ export function renderIndex(group: StyledOutputComponentGroup, tsHeader: string)
           Object.fromEntries(variantNames.map((variant) => [variant, variant])),
         )};`
       : "";
+  const partsDeclaration =
+    group.defaultExport.mode === "parts"
+      ? `const ${getStyledPartsIdentifier(group)} = ${renderIdentifierObject(
+          Object.fromEntries(
+            group.defaultExport.members.map((member) => [member.exportName, member.localName]),
+          ),
+        )};`
+      : "";
   const exports = [
     ...sortedConstants.map((constant) => constant.name),
     ...group.publicExports,
@@ -47,7 +60,9 @@ export function renderIndex(group: StyledOutputComponentGroup, tsHeader: string)
   ];
 
   const importBlock = [componentImports, variantImport].filter(Boolean).join("\n");
-  const declarationBlock = [constants, variantCollection].filter(Boolean).join("\n");
+  const declarationBlock = [constants, variantCollection, partsDeclaration]
+    .filter(Boolean)
+    .join("\n\n");
 
   return `${tsHeader}${[importBlock, declarationBlock].filter(Boolean).join("\n\n")}
 
@@ -67,9 +82,5 @@ function renderDefaultExport(group: StyledOutputComponentGroup): string {
     return defaultExport;
   }
 
-  return renderIdentifierObject(
-    Object.fromEntries(
-      group.defaultExport.members.map((member) => [member.exportName, member.localName]),
-    ),
-  );
+  return getStyledPartsIdentifier(group);
 }

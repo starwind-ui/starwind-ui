@@ -235,8 +235,22 @@ export async function getShadcnCommand(): Promise<[string, string[]]> {
  * @param pm - The package manager to use
  * @param dev - Whether to install as dev dependencies
  * @param force - Whether to force install packages
+ * @remarks Runs without terminal progress so an enclosing task can own the renderer.
  */
 export async function installDependencies(
+  packages: string[],
+  pm?: PackageManager,
+  dev = false,
+  force = false,
+): Promise<void> {
+  const packageManager = pm ?? detectPackageManager().name;
+  await execa(packageManager, buildInstallDependencyArgs(packages, packageManager, dev, force));
+}
+
+/**
+ * Installs packages while reporting progress for callers that do not own a progress renderer
+ */
+export async function installDependenciesWithProgress(
   packages: string[],
   pm?: PackageManager,
   dev = false,
@@ -246,7 +260,7 @@ export async function installDependencies(
   const spinner = p.spinner();
   spinner.start(`Installing dependencies with ${packageManager}...`);
   try {
-    await execa(packageManager, buildInstallDependencyArgs(packages, packageManager, dev, force));
+    await installDependencies(packages, packageManager, dev, force);
     spinner.stop(`Dependencies installed with ${packageManager}.`);
   } catch (error) {
     spinner.stop(`Failed to install dependencies with ${packageManager}.`, 1);

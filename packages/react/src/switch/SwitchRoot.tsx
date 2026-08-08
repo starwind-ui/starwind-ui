@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import { createSwitch, type SwitchCheckedChangeDetails } from "@starwind-ui/runtime/switch";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
@@ -62,6 +64,7 @@ const SwitchRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, SwitchR
   ) {
     const rootRef = React.useRef<HTMLSpanElement | HTMLButtonElement>(null);
     const inputElementRef = React.useRef<HTMLInputElement>(null);
+    const runtimeInputNameRef = React.useRef<string | undefined>(name);
     const instanceRef = React.useRef<ReturnType<typeof createSwitch> | undefined>(undefined);
     const checkedRef = React.useRef(checked);
     const onCheckedChangeRef = React.useRef(onCheckedChange);
@@ -73,6 +76,7 @@ const SwitchRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, SwitchR
     const uncontrolledCheckedRef = React.useRef(uncontrolledChecked);
 
     const setUncontrolledChecked = React.useCallback((nextChecked: boolean) => {
+      runtimeInputNameRef.current = inputElementRef.current?.name || undefined;
       uncontrolledCheckedRef.current = nextChecked;
       setUncontrolledCheckedState(nextChecked);
     }, []);
@@ -115,6 +119,9 @@ const SwitchRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, SwitchR
         required,
         uncheckedValue,
         value,
+        onCheckedChange: (checked, details) => {
+          onCheckedChangeRef.current?.(checked, details);
+        },
         ...(checkedRef.current !== undefined ? { checked: checkedRef.current } : {}),
       });
       instanceRef.current = instance;
@@ -135,7 +142,6 @@ const SwitchRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, SwitchR
         }, 0);
       };
       const unsubscribe = instance.subscribe("checkedChange", (details) => {
-        onCheckedChangeRef.current?.(details.checked, details);
         if (details.isCanceled) return;
 
         if (checkedRef.current === undefined) {
@@ -207,6 +213,38 @@ const SwitchRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, SwitchR
         value,
       });
     }, [form, name, required, uncheckedValue, value]);
+
+    useIsomorphicLayoutEffect(() => {
+      if (name !== undefined) return;
+      const inputElement = inputElementRef.current;
+      if (!inputElement || typeof MutationObserver === "undefined") return;
+
+      const syncRuntimeInputName = () => {
+        runtimeInputNameRef.current = inputElement.name || undefined;
+      };
+      const observer = new MutationObserver(syncRuntimeInputName);
+      observer.observe(inputElement, { attributes: true, attributeFilter: ["name"] });
+      syncRuntimeInputName();
+
+      return () => {
+        observer.disconnect();
+      };
+    }, [name]);
+
+    useIsomorphicLayoutEffect(() => {
+      if (name !== undefined) return;
+      const inputElement = inputElementRef.current;
+      const runtimeInputName = runtimeInputNameRef.current;
+      if (
+        !inputElement ||
+        runtimeInputName === undefined ||
+        inputElement.name === runtimeInputName
+      ) {
+        return;
+      }
+
+      inputElement.name = runtimeInputName;
+    });
 
     const renderedChecked = checked ?? uncontrolledChecked;
     const commonProps: React.HTMLAttributes<HTMLElement> &

@@ -1,3 +1,5 @@
+"use client";
+
 import NavigationMenuPrimitive from "@starwind-ui/react/navigation-menu";
 import type * as React from "react";
 import { navigationMenuContent } from "./variants";

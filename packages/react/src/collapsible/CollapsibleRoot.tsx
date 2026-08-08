@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import {
   type CollapsibleOpenChangeDetails,
   createCollapsible,
@@ -59,11 +61,13 @@ const CollapsibleRoot = React.forwardRef<HTMLDivElement, CollapsibleRootProps>(
       const instance = createCollapsible(root, {
         defaultOpen: uncontrolledOpenRef.current,
         disabled,
+        onOpenChange: (open, details) => {
+          onOpenChangeRef.current?.(open, details);
+        },
         ...(openRef.current !== undefined ? { open: openRef.current } : {}),
       });
       instanceRef.current = instance;
       const unsubscribe = instance.subscribe("openChange", (details) => {
-        onOpenChangeRef.current?.(details.open, details);
         if (details.isCanceled) return;
 
         if (openRef.current === undefined) {

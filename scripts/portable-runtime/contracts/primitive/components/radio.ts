@@ -106,6 +106,7 @@ export const radioRuntimeAdapterContract = {
   events: [
     {
       name: "checkedChange",
+      stateModel: "checked",
       acceptanceNotification: "detail-on-accepted",
       callbackTiming: "before-state-commit",
       cancelable: true,

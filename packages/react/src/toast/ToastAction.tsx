@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import * as React from "react";
 
 export type ToastActionProps = React.ButtonHTMLAttributes<HTMLButtonElement>;

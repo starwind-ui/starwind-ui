@@ -14,6 +14,7 @@ import type {
   ValueExpression,
 } from "../../contracts/styled/types.js";
 import { resolveStyledSvgAsset } from "../../contracts/styled/svg-assets.js";
+import { allocateStyledPartsIdentifier } from "./default-export.js";
 import type {
   StyledOutputAttribute,
   StyledOutputComment,
@@ -32,27 +33,38 @@ import type {
 } from "./types.js";
 
 export * from "./analysis.js";
+export * from "./default-export.js";
 export type * from "./types.js";
 
 export function createStyledOutputModelSkeleton(
   contracts: readonly Pick<StyledAdapterContract, "component">[],
 ): StyledOutputModel {
   return {
-    componentGroups: contracts.map((contract) => ({
-      component: contract.component,
-      components: [],
-      constants: [],
-      defaultExport: {
-        members: [],
-        mode: "parts",
-      },
-      dependencies: {
-        styledComponents: [],
-      },
-      publicExports: [],
-      variantAliases: [],
-      variants: [],
-    })),
+    componentGroups: contracts.map((contract) => {
+      const group = {
+        component: contract.component,
+        components: [],
+        constants: [],
+        defaultExport: {
+          members: [],
+          mode: "parts" as const,
+        },
+        dependencies: {
+          styledComponents: [],
+        },
+        publicExports: [],
+        variantAliases: [],
+        variants: [],
+      };
+
+      return {
+        ...group,
+        defaultExport: {
+          ...group.defaultExport,
+          identifier: allocateStyledPartsIdentifier(group),
+        },
+      };
+    }),
   };
 }
 
@@ -67,7 +79,7 @@ export function projectStyledOutputModel(
 export function projectStyledOutputComponentGroup(
   contract: StyledAdapterContract,
 ): StyledOutputComponentGroup {
-  return {
+  const group = {
     component: contract.component,
     components: contract.components.map(projectStyledOutputComponent),
     constants: Object.entries(contract.constants ?? {}).map(([name, value]) => ({ name, value })),
@@ -102,7 +114,25 @@ export function projectStyledOutputComponentGroup(
       definition,
       name,
     })),
+  } satisfies Omit<StyledOutputComponentGroup, "defaultExport"> & {
+    defaultExport: Pick<StyledOutputComponentGroup["defaultExport"], "members" | "mode">;
   };
+
+  return group.defaultExport.mode === "parts"
+    ? {
+        ...group,
+        defaultExport: {
+          ...group.defaultExport,
+          identifier: allocateStyledPartsIdentifier(group),
+        },
+      }
+    : {
+        ...group,
+        defaultExport: {
+          members: group.defaultExport.members,
+          mode: "component",
+        },
+      };
 }
 
 export function toStyledAdapterContract(group: StyledOutputComponentGroup): StyledAdapterContract {

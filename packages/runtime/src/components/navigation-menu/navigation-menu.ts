@@ -6,6 +6,7 @@ import {
   resolveAsChildControl,
   setBooleanAttribute,
 } from "../../internal/dom";
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
 import {
   createFloatingPositioner,
@@ -98,6 +99,7 @@ type NavigationMenuItem = {
 
 type ValueRequest = {
   event?: Event;
+  forceApply?: boolean;
   reason: NavigationMenuValueChangeReason;
   trigger?: Element;
 };
@@ -341,29 +343,23 @@ class NavigationMenuController implements NavigationMenuInstance {
   }
 
   setValue(value: NavigationMenuValue, options: NavigationMenuSetValueOptions = {}): void {
-    const previousValue = this.valueState;
     const request = {
       event: options.event,
       reason: options.reason ?? "imperative-action",
       trigger: options.trigger,
     };
 
+    if (options.emit !== false) {
+      if (this.requestValue(value, { ...request, forceApply: true })) {
+        this.focusPendingKeyboardOpenControl(options);
+      }
+      return;
+    }
+
     if (this.controlled) this.controlledValueIntent = value;
     this.valueState = this.resolveKnownValue(value);
     this.applyValueState(this.valueState);
     this.focusPendingKeyboardOpenControl(options);
-
-    if (options.emit !== false) {
-      this.notifyValueChange(
-        createValueChangeDetails({
-          event: request.event,
-          previousValue,
-          reason: request.reason,
-          trigger: request.trigger,
-          value: this.valueState,
-        }),
-      );
-    }
   }
 
   subscribe(
@@ -905,23 +901,25 @@ class NavigationMenuController implements NavigationMenuInstance {
       value: nextValue,
     });
 
-    this.onValueChange?.(nextValue, details);
-    const valueChangeEvent = dispatchCustomEvent(this.root, "starwind:value-change", details, {
-      cancelable: true,
+    return runCancelableDetailsTransaction({
+      apply:
+        this.controlled && !request.forceApply
+          ? undefined
+          : () => {
+              this.valueState = nextValue;
+              this.applyValueState(nextValue, request);
+            },
+      details,
+      eventType: "starwind:value-change",
+      notifyAccepted: (acceptedDetails) => this.notifyValueChange(acceptedDetails),
+      notifyCallback: (proposalDetails) => this.onValueChange?.(nextValue, proposalDetails),
+      rollbackCanceled: () => {
+        if (this.valueState === nextValue && previousValue !== nextValue) {
+          this.setValue(previousValue, { emit: false });
+        }
+      },
+      target: this.root,
     });
-    if (valueChangeEvent.defaultPrevented) {
-      details.cancel();
-    }
-
-    if (details.isCanceled) return false;
-
-    if (!this.controlled) {
-      this.valueState = nextValue;
-      this.applyValueState(nextValue, request);
-    }
-
-    this.notifyValueChange(details);
-    return true;
   }
 
   private applyValueState(value: NavigationMenuValue, request?: ValueRequest): void {

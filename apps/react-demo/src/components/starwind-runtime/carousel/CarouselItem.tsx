@@ -1,3 +1,5 @@
+"use client";
+
 import CarouselPrimitive from "@starwind-ui/react/carousel";
 import type * as React from "react";
 import { carouselItem } from "./variants";

@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import {
   type CheckboxGroupValue,
   type CheckboxGroupValueChangeDetails,
@@ -74,11 +76,13 @@ const CheckboxGroupRoot = React.forwardRef<HTMLDivElement, CheckboxGroupRootProp
       const instance = createCheckboxGroup(root, {
         defaultValue: defaultValueRef.current,
         disabled: disabledRef.current,
+        onValueChange: (details) => {
+          onValueChangeRef.current?.(details.value, details);
+        },
         ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
       });
       instanceRef.current = instance;
       const unsubscribe = instance.subscribe("valueChange", (details) => {
-        onValueChangeRef.current?.(details.value, details);
         if (details.isCanceled) return;
 
         if (valueRef.current === undefined) {

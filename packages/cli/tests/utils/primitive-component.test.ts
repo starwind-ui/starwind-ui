@@ -30,7 +30,7 @@ const mockUpdateConfig = vi.mocked(config.updateConfig);
 const mockFilterUninstalledDependencies = vi.mocked(
   dependencyResolver.filterUninstalledDependencies,
 );
-const mockInstallDependencies = vi.mocked(packageManager.installDependencies);
+const mockInstallDependencies = vi.mocked(packageManager.installDependenciesWithProgress);
 const mockConfirm = vi.mocked(clackPrompts.confirm);
 const mockPromptLog = vi.mocked(clackPrompts.log);
 

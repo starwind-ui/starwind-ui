@@ -1,3 +1,5 @@
+"use client";
+
 import ContextMenuPrimitive from "@starwind-ui/react/context-menu";
 import type * as React from "react";
 import { contextMenuRadioItemIndicator } from "./variants";

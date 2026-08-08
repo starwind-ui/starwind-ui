@@ -13,6 +13,7 @@ export async function verifyReactColorPickerCases({ page }) {
   await defaultRoot.scrollIntoViewIfNeeded();
 
   await assertPublicAnatomy(defaultRoot);
+  await assertInitialFormatLabels(page);
   await assertSpecParityFixtures(page);
   await assertClearEligibility(page);
   await assertInlineKeyboardAndPointer(page);
@@ -23,6 +24,29 @@ export async function verifyReactColorPickerCases({ page }) {
   await assertRequiredAndInvalidRecovery(page);
   await assertDisabledAndReadOnly(page);
   await assertNestedPopupFocus(page);
+}
+
+async function assertInitialFormatLabels(page) {
+  for (const format of ["hex", "rgb", "hsl", "hsb"]) {
+    const root = page.locator(`#react-color-picker-format-${format}`);
+    const trigger = root.locator(
+      '[data-slot="color-picker-format-control"] [data-slot="select-trigger"]',
+    );
+    const value = root.locator(
+      '[data-slot="color-picker-format-control"] [data-slot="select-value"]',
+    );
+    assert.equal(
+      (await value.textContent()).trim(),
+      format.toUpperCase(),
+      `${format.toUpperCase()} is visible before the format Select is opened`,
+    );
+    assert.equal(await trigger.getAttribute("data-placeholder"), null);
+    assert.equal(
+      await trigger.evaluate((element) => getComputedStyle(element).color),
+      await page.locator("body").evaluate((element) => getComputedStyle(element).color),
+      `${format.toUpperCase()} uses selected-value text color before interaction`,
+    );
+  }
 }
 
 async function assertCanonicalDocsComposition(page) {

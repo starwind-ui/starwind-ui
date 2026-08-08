@@ -4,7 +4,7 @@ import {
   readBooleanAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { dispatchCustomEvent } from "../../internal/events";
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
@@ -184,18 +184,23 @@ class SwitchController implements SwitchInstance {
     }
 
     const previousChecked = this.checkedState;
-    this.checkedState = checked;
-    this.render();
+    if (options.emit === false) {
+      this.checkedState = checked;
+      this.render();
+      return;
+    }
 
-    if (options.emit === false) return;
-
-    this.notify(
+    this.runCheckedChange(
       new SwitchCheckedChangeDetailsImpl({
         checked,
         event: options.event,
         previousChecked,
         trigger: options.trigger,
       }),
+      () => {
+        this.checkedState = checked;
+        this.render();
+      },
     );
   }
 
@@ -438,14 +443,13 @@ class SwitchController implements SwitchInstance {
       trigger,
     });
 
-    this.notify(details);
-    if (details.isCanceled || this.controlled) {
+    const applied = this.runCheckedChange(details, () => {
+      if (!this.controlled) this.checkedState = checked;
+      this.render();
+    });
+    if (!applied) {
       this.elements.input.checked = this.checkedState;
-      return;
     }
-
-    this.checkedState = checked;
-    this.render();
   }
 
   private readonly handleRootClick = (event: MouseEvent): void => {
@@ -507,14 +511,24 @@ class SwitchController implements SwitchInstance {
     this.resetTimer = undefined;
   }
 
-  private notify(details: SwitchCheckedChangeDetails): void {
+  private runCheckedChange(details: SwitchCheckedChangeDetails, apply: () => void): boolean {
     attachFormValueRevision(details, details.event);
-    const event = dispatchCustomEvent(this.root, "starwind:checked-change", details, {
-      cancelable: true,
+    return runCancelableDetailsTransaction({
+      apply,
+      details,
+      eventType: "starwind:checked-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.forEach((subscriber) => subscriber(acceptedDetails));
+      },
+      notifyCallback: (proposalDetails) =>
+        this.onCheckedChange?.(proposalDetails.checked, proposalDetails),
+      rollbackCanceled: () => {
+        if (this.checkedState === details.checked && details.previousChecked !== details.checked) {
+          this.setChecked(details.previousChecked, { emit: false });
+        }
+      },
+      target: this.root,
     });
-    if (event.defaultPrevented) details.cancel();
-    this.onCheckedChange?.(details.checked, details);
-    this.subscribers.forEach((subscriber) => subscriber(details));
   }
 }
 

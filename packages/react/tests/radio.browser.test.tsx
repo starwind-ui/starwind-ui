@@ -64,6 +64,35 @@ describe("React Radio cancellation", () => {
     expect(inputs[1]?.checked).toBe(false);
   });
 
+  it("keeps grouped React state unchanged when the DOM event cancels after the callback", async () => {
+    const observations: string[] = [];
+    let callbackDetails: { readonly isCanceled: boolean } | undefined;
+    const onValueChange = vi.fn((_value, details) => {
+      observations.push("callback");
+      callbackDetails = details;
+    });
+    await mount(
+      <RadioGroup.Root defaultValue="ssd" name="storage" onValueChange={onValueChange}>
+        <Radio.Root value="ssd" />
+        <Radio.Root value="hdd" />
+      </RadioGroup.Root>,
+    );
+    const group = query<HTMLElement>("[data-sw-radio-group]");
+    group.addEventListener("starwind:value-change", (event) => {
+      observations.push("dom-event");
+      expect((event as CustomEvent).detail).toBe(callbackDetails);
+      event.preventDefault();
+    });
+
+    queryAll<HTMLElement>("[data-sw-radio]")[1]!.click();
+    await flush();
+
+    expect(observations).toEqual(["callback", "dom-event"]);
+    expect(callbackDetails?.isCanceled).toBe(true);
+    expect(group).toHaveAttribute("data-value", "ssd");
+    expect(queryAll<HTMLElement>("[data-sw-radio]")[1]).toHaveAttribute("aria-checked", "false");
+  });
+
   it("does not publish child uncontrolled state before a group veto", async () => {
     const accepted = vi.fn();
     const onCheckedChange = vi.fn((_checked, details) => details.onAccepted(accepted));

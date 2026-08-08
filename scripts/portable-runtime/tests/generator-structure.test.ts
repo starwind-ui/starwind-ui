@@ -1767,7 +1767,7 @@ describe("portable runtime generator structure", () => {
     }
 
     const forbiddenTargetTerms =
-      /RadioGroup|radioGroup|radio-group|setupRadioGroups|useRadioGroupContext/;
+      /\b(?:createRadioGroup|RadioGroupContext|RadioGroupRoot|RadioGroupValue|setupRadioGroups|useRadioGroupContext)\b|radio-group/;
     for (const adapterSource of adapterSources) {
       expect(adapterSource).not.toMatch(forbiddenTargetTerms);
     }

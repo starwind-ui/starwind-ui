@@ -1,6 +1,10 @@
 import * as p from "@clack/prompts";
 
 import { PATHS } from "@/utils/constants.js";
+import {
+  sortComponentPresentation,
+  sortComponentPresentationByName,
+} from "@/utils/component-presentation.js";
 import { highlighter } from "@/utils/highlighter.js";
 import {
   getPrimitiveDiscoveryResults,
@@ -162,10 +166,15 @@ export async function search(query?: string, options?: SearchOptions) {
 
     if (hasPro) {
       p.log.message(highlighter.underline("Pro Blocks"));
+      const displayProBlocks = sortComponentPresentationByName(
+        proBlocks,
+        (block) => block.name,
+        (block) => [block.id, block.plan],
+      );
 
-      const maxNameLen = Math.max(...proBlocks.map((b) => b.name.length));
+      const maxNameLen = Math.max(...displayProBlocks.map((block) => block.name.length));
 
-      for (const block of proBlocks) {
+      for (const block of displayProBlocks) {
         const planBadge =
           block.plan === "pro" ? highlighter.info("[pro] ") : highlighter.success("[free]");
         const paddedName = block.name.padEnd(maxNameLen + 2);
@@ -177,10 +186,11 @@ export async function search(query?: string, options?: SearchOptions) {
 
     if (hasCore) {
       p.log.message(highlighter.underline("Core Components"));
+      const displayComponents = sortComponentPresentation(matchedComponents);
 
-      const maxNameLen = Math.max(...matchedComponents.map((c) => c.name.length));
+      const maxNameLen = Math.max(...displayComponents.map((component) => component.name.length));
 
-      for (const comp of matchedComponents) {
+      for (const comp of displayComponents) {
         const paddedName = comp.name.padEnd(maxNameLen + 2);
         p.log.info(`  ${highlighter.info(paddedName)}starwind add ${comp.name}`);
       }

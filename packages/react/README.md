@@ -26,9 +26,9 @@ when they unmount or their behavior options change.
 
 ## Theme initialization
 
-Use `getThemeInitScript` from `@starwind-ui/react/theme` in your document-head or Vite integration
-to apply the stored theme before the first paint. The Starwind CLI configures this for supported
-Vite React projects.
+Use `ThemeInitScript` in a server-rendered document head, or use `getThemeInitScript` in a Vite
+integration, to apply the stored theme before the first paint. The Starwind CLI configures this for
+supported Vite React, Next.js, TanStack Start, and React Router projects.
 
 ## Start with the CLI
 

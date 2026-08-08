@@ -481,6 +481,7 @@ describe("Framework Adapter seam", () => {
         { name: "A_CONSTANT", value: '"a"' },
       ],
       defaultExport: {
+        identifier: "ConstantOrderParts",
         members: [],
         mode: "parts",
       },

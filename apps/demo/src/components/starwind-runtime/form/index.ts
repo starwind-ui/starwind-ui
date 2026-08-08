@@ -7,9 +7,11 @@ const FormVariants = {
   formErrorSummary,
 };
 
-export { Form, FormErrorSummary, FormVariants };
-
-export default {
+const FormParts = {
   ErrorSummary: FormErrorSummary,
   Root: Form,
 };
+
+export { Form, FormErrorSummary, FormVariants };
+
+export default FormParts;

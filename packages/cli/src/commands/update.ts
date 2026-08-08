@@ -1,6 +1,7 @@
 import * as p from "@clack/prompts";
 
 import { getConfigState, type StarwindConfig, type StarwindFramework } from "@/utils/config.js";
+import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
 import { PATHS } from "@/utils/constants.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
@@ -86,7 +87,7 @@ export async function update(components?: string[], options?: UpdateOptions) {
 
       if (invalid.length > 0) {
         p.log.warn(
-          `${highlighter.warn("Components not found in project:")}\n${invalid
+          `${highlighter.warn("Components not found in project:")}\n${sortComponentNames(invalid)
             .map((name) => `  ${name}`)
             .join("\n")}`,
         );
@@ -102,13 +103,15 @@ export async function update(components?: string[], options?: UpdateOptions) {
       }
     } else {
       // Show interactive prompt with installed components
-      const choices = getUniqueComponentNames(installedComponents).map((name) => ({
-        value: name,
-        label:
-          options?.framework === "all" && hasMultipleInstalledFrameworks(config, name)
-            ? `${name} [all frameworks]`
-            : name,
-      }));
+      const choices = sortComponentNames(getUniqueComponentNames(installedComponents)).map(
+        (name) => ({
+          value: name,
+          label:
+            options?.framework === "all" && hasMultipleInstalledFrameworks(config, name)
+              ? `${name} [all frameworks]`
+              : name,
+        }),
+      );
 
       const selected = await p.multiselect({
         message: "Select components to update",
@@ -170,7 +173,9 @@ export async function update(components?: string[], options?: UpdateOptions) {
 
     if (results.failed.length > 0) {
       p.log.error(
-        `${highlighter.error("Failed to update components:")}\n${results.failed
+        `${highlighter.error("Failed to update components:")}\n${sortComponentPresentation(
+          results.failed,
+        )
           .map((r) => `  ${formatUpdateResultName(r)} - ${r.error}`)
           .join("\n")}`,
       );
@@ -178,7 +183,9 @@ export async function update(components?: string[], options?: UpdateOptions) {
 
     if (results.skipped.length > 0) {
       p.log.info(
-        `${highlighter.info("Components already up to date or skipped:")}\n${results.skipped
+        `${highlighter.info("Components already up to date or skipped:")}\n${sortComponentPresentation(
+          results.skipped,
+        )
           .map((r) => `  ${formatUpdateResultName(r)} (${r.oldVersion})`)
           .join("\n")}`,
       );
@@ -186,7 +193,9 @@ export async function update(components?: string[], options?: UpdateOptions) {
 
     if (results.updated.length > 0) {
       p.log.success(
-        `${highlighter.success("Successfully updated components:")}\n${results.updated
+        `${highlighter.success("Successfully updated components:")}\n${sortComponentPresentation(
+          results.updated,
+        )
           .map((r) => `  ${formatUpdateResultName(r)} (${r.oldVersion} → ${r.newVersion})`)
           .join("\n")}`,
       );

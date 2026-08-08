@@ -5,6 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
@@ -352,10 +353,9 @@ class SliderController implements SliderInstance {
     const nextValues = this.normalizeValues(value, this.getExpectedValueLength(value));
     const stateChanged = !areValuesEqual(previousValues, nextValues);
 
-    this.acceptValues(nextValues, true);
-    this.render();
-
     if (options.emit === false) {
+      this.acceptValues(nextValues, true);
+      this.render();
       if (stateChanged) this.notifyStateSync();
       return;
     }
@@ -369,7 +369,12 @@ class SliderController implements SliderInstance {
       trigger: options.trigger,
       value: toSliderValue(nextValues),
     });
-    this.notifyChange(details);
+    const applied = this.runValueChange(details, () => {
+      this.acceptValues(nextValues, true);
+      this.render();
+      this.notifyStateSync();
+    });
+    if (!applied) this.render();
   }
 
   subscribe(
@@ -930,22 +935,23 @@ class SliderController implements SliderInstance {
       value: nextValue,
     });
 
-    this.notifyChange(details);
-    if (details.isCanceled) {
+    const applied = this.runValueChange(details, () => {
+      this.interactionChanged = true;
+      this.interactionValue = nextValue;
+      this.lastInteractionEvent = request.event;
+      this.lastInteractionReason = request.reason;
+      this.lastInteractionRevisionSource = details;
+      this.lastInteractionTrigger = request.trigger;
+
+      if (!this.controlled) this.acceptValues(nextValues);
+      this.render();
+    });
+    if (!applied) {
       this.render();
       return false;
     }
 
-    this.interactionChanged = true;
-    this.interactionValue = nextValue;
-    this.lastInteractionEvent = request.event;
-    this.lastInteractionReason = request.reason;
-    this.lastInteractionRevisionSource = details;
-    this.lastInteractionTrigger = request.trigger;
-
     if (this.controlled) {
-      this.render();
-
       if (request.commit) {
         this.notifyCommitted(
           {
@@ -963,9 +969,6 @@ class SliderController implements SliderInstance {
       return false;
     }
 
-    this.acceptValues(nextValues);
-    this.render();
-
     if (request.commit) {
       this.notifyCommitted(
         {
@@ -981,6 +984,28 @@ class SliderController implements SliderInstance {
     }
 
     return true;
+  }
+
+  private runValueChange(details: SliderValueChangeDetails, apply: () => void): boolean {
+    attachFormValueRevision(details, details.event);
+    return runCancelableDetailsTransaction({
+      apply: () => {
+        apply();
+      },
+      details,
+      eventType: "starwind:value-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.valueChange.forEach((subscriber) => subscriber(acceptedDetails));
+      },
+      notifyCallback: (proposalDetails) =>
+        this.onValueChange?.(proposalDetails.value, proposalDetails),
+      rollbackCanceled: () => {
+        if (areSliderValuesEqual(this.getValue(), details.value)) {
+          this.setValue(details.previousValue, { emit: false });
+        }
+      },
+      target: this.root,
+    });
   }
 
   private acceptValues(nextValues: number[], forceRevision = false): void {
@@ -1157,16 +1182,6 @@ class SliderController implements SliderInstance {
     this.lastInteractionRevisionSource = undefined;
     this.lastInteractionTrigger = undefined;
     this.render();
-  }
-
-  private notifyChange(details: SliderValueChangeDetails): void {
-    attachFormValueRevision(details, details.event);
-    const event = dispatchCustomEvent(this.root, "starwind:value-change", details, {
-      cancelable: true,
-    });
-    if (event.defaultPrevented) details.cancel();
-    this.onValueChange?.(details.value, details);
-    this.subscribers.valueChange.forEach((subscriber) => subscriber(details));
   }
 
   private notifyStateSync(): void {

@@ -1,3 +1,5 @@
+"use client";
+
 import TogglePrimitive from "@starwind-ui/react/toggle";
 import type * as React from "react";
 import { toggleGroupItem } from "./variants";

@@ -1,3 +1,5 @@
+"use client";
+
 import NavigationMenuPrimitive from "@starwind-ui/react/navigation-menu";
 import { IconChevronDown as ChevronDown } from "@tabler/icons-react";
 import type * as React from "react";

@@ -5,6 +5,7 @@ import semver from "semver";
 
 import { tailwindConfig } from "@/templates/starwind.css.js";
 import { setupAstroConfig } from "@/utils/astro-config.js";
+import { ensureAstroReactIntegration } from "@/utils/astro-react-integration.js";
 import {
   CONFIG_SCHEMA_V2_URL,
   getConfigState,
@@ -17,6 +18,12 @@ import { ASTRO_PACKAGES, MIN_ASTRO_VERSION, PATHS } from "@/utils/constants.js";
 import { checkStarwindProEnv, setupStarwindProEnv } from "@/utils/env.js";
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
+import {
+  detectHostPlan,
+  formatDetectedHost,
+  validateHostTarget,
+  type HostPlan,
+} from "@/utils/host-planner.js";
 import { setupLayoutCssImport } from "@/utils/layout.js";
 import {
   detectPackageManager,
@@ -24,11 +31,16 @@ import {
   type PackageManager,
 } from "@/utils/package-manager.js";
 import { loadRegistry } from "@/utils/registry.js";
+import {
+  getReactPackageRequirements,
+  setupReactProject,
+  type ReactProjectPlan,
+  validateReactProjectSetup,
+} from "@/utils/react-project.js";
 import { getRuntimeSetupPlan } from "@/utils/runtime-setup.js";
 import { sleep } from "@/utils/sleep.js";
 import { setupSnippets } from "@/utils/snippets.js";
 import { setupTsConfig } from "@/utils/tsconfig.js";
-import { setupReactCssImport, setupReactViteConfig } from "@/utils/vite-config.js";
 
 import { migrate } from "./migrate.js";
 
@@ -40,22 +52,6 @@ type InitOptions = {
   pro?: boolean;
   react?: boolean;
 };
-
-type ProjectPackage = {
-  dependencies?: Record<string, string>;
-  devDependencies?: Record<string, string>;
-  optionalDependencies?: Record<string, string>;
-  peerDependencies?: Record<string, string>;
-};
-
-const ASTRO_CONFIG_FILES = [
-  "astro.config.js",
-  "astro.config.mjs",
-  "astro.config.cjs",
-  "astro.config.ts",
-  "astro.config.mts",
-  "astro.config.cts",
-];
 
 function resolveFrameworkOption(options?: InitOptions): StarwindFramework | undefined {
   const selected = [
@@ -71,20 +67,46 @@ function resolveFrameworkOption(options?: InitOptions): StarwindFramework | unde
   return selected[0];
 }
 
-async function detectProjectFramework(pkg: ProjectPackage): Promise<StarwindFramework | undefined> {
-  const dependencies = {
-    ...pkg.peerDependencies,
-    ...pkg.optionalDependencies,
-    ...pkg.devDependencies,
-    ...pkg.dependencies,
-  };
-  const hasAstroConfig = (
-    await Promise.all(ASTRO_CONFIG_FILES.map((configFile) => fileExists(configFile)))
-  ).some(Boolean);
+async function selectHostTarget(
+  plan: HostPlan<StarwindFramework>,
+  explicitFramework: StarwindFramework | undefined,
+): Promise<StarwindFramework> {
+  if (explicitFramework) {
+    const framework = validateHostTarget(plan, explicitFramework);
+    p.log.info(formatDetectedHost(plan, framework));
+    return framework;
+  }
 
-  if (dependencies.astro || hasAstroConfig) return "astro";
-  if (dependencies.react || dependencies["react-dom"]) return "react";
-  return undefined;
+  const readyTargets = plan.targets.filter((target) => target.readiness === "ready");
+  if (readyTargets.length === 0) {
+    throw new Error(
+      plan.diagnostic ??
+        "No supported Starwind target was detected. Pass --astro or run Starwind in a supported React host.",
+    );
+  }
+
+  if (readyTargets.length === 1) {
+    const framework = readyTargets[0]!.framework;
+    p.log.info(formatDetectedHost(plan, framework));
+    return framework;
+  }
+
+  const framework = (await p.select({
+    message: "Which detected framework target would you like to use?",
+    initialValue: readyTargets[0]!.framework,
+    options: readyTargets.map((target) => ({
+      label: target.framework === "astro" ? "Astro" : "React",
+      value: target.framework,
+    })),
+  })) as StarwindFramework | symbol;
+
+  if (p.isCancel(framework)) {
+    p.cancel("Operation cancelled.");
+    return process.exit(0);
+  }
+
+  p.log.info(formatDetectedHost(plan, framework));
+  return framework;
 }
 
 function getProNextStepsMessage(): string {
@@ -155,6 +177,8 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     }
 
     const pkg = await readJsonFile("package.json");
+    const pm: PackageManager = options?.packageManager ?? detectPackageManager().name;
+    const selectedFramework = resolveFrameworkOption(options);
     const configState = await getConfigState();
 
     if (configState.status === "legacy") {
@@ -203,14 +227,24 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       return;
     }
 
-    const selectedFramework = resolveFrameworkOption(options);
-    const defaultFramework = options?.defaults
-      ? (selectedFramework ?? (await detectProjectFramework(pkg)))
-      : selectedFramework;
-    if (options?.defaults && !defaultFramework) {
-      throw new Error(
-        "Unable to detect an Astro or React project. Pass --astro, --react, or --framework <astro|react>.",
-      );
+    const hostPlan = await detectHostPlan(pkg);
+    const defaultFramework = await selectHostTarget(hostPlan, selectedFramework);
+    const isAstroReactTarget = hostPlan.host.kind === "astro" && defaultFramework === "react";
+    const projectFramework: StarwindFramework = isAstroReactTarget ? "astro" : defaultFramework;
+    const reactProjectPlan: ReactProjectPlan | undefined = hostPlan.reactProject;
+    if (isAstroReactTarget) {
+      const setupOutcome = await ensureAstroReactIntegration({
+        packageManager: pm,
+        skipPrompts: options?.defaults,
+      });
+      if (setupOutcome.status === "cancelled" || setupOutcome.status === "declined") return;
+    } else if (defaultFramework === "react") {
+      if (!reactProjectPlan) {
+        throw new Error(
+          "The React target requires host configuration before initialization can continue.",
+        );
+      }
+      await validateReactProjectSetup(reactProjectPlan);
     }
     const bundledRegistry = await loadRegistry({ type: "bundled" });
 
@@ -227,8 +261,12 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     if (options?.defaults) {
       configChoices = {
         framework: defaultFramework!,
-        componentDir: PATHS.LOCAL_STARWIND_COMPONENTS_DIR,
-        cssFile: PATHS.LOCAL_CSS_FILE,
+        componentDir:
+          reactProjectPlan?.componentDir ??
+          (isAstroReactTarget
+            ? "src/components/starwind-react"
+            : PATHS.LOCAL_STARWIND_COMPONENTS_DIR),
+        cssFile: reactProjectPlan?.cssFile ?? PATHS.LOCAL_CSS_FILE,
         twBaseColor: "neutral",
       };
 
@@ -238,22 +276,17 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     } else {
       configChoices = await p.group(
         {
-          framework: async () =>
-            selectedFramework ??
-            ((await p.select({
-              message: "Which framework is this project using?",
-              initialValue: "astro",
-              options: [
-                { label: "Astro", value: "astro" },
-                { label: "React", value: "react" },
-              ],
-            })) as StarwindFramework),
+          framework: async () => defaultFramework,
           // ask where to install components
           componentDir: () =>
             p.text({
               message: "What is your components directory?",
-              placeholder: PATHS.LOCAL_STARWIND_COMPONENTS_DIR,
-              initialValue: PATHS.LOCAL_STARWIND_COMPONENTS_DIR,
+              placeholder: isAstroReactTarget
+                ? "src/components/starwind-react"
+                : PATHS.LOCAL_STARWIND_COMPONENTS_DIR,
+              initialValue: isAstroReactTarget
+                ? "src/components/starwind-react"
+                : PATHS.LOCAL_STARWIND_COMPONENTS_DIR,
               validate(value) {
                 // Check for empty value
                 if (value.length === 0) return `Value is required!`;
@@ -336,7 +369,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       );
     }
 
-    const utilsDir = PATHS.LOCAL_UTILS_DIR;
+    const utilsDir = reactProjectPlan?.utilsDir ?? PATHS.LOCAL_UTILS_DIR;
 
     // ================================================================
     //            Make sure appropriate directories exist
@@ -365,7 +398,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       },
     });
 
-    if (configChoices.framework === "astro") {
+    if (projectFramework === "astro") {
       // ================================================================
       //                Prepare Astro config file setup
       // ================================================================
@@ -382,14 +415,11 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       });
     } else {
       configTasks.push({
-        title: "Setup React Vite config",
+        title: `Setup ${reactProjectPlan!.kind} React project`,
         task: async () => {
-          const success = await setupReactViteConfig();
-          if (!success) {
-            throw new Error("Failed to setup React Vite config");
-          }
+          await setupReactProject(reactProjectPlan!, configChoices.cssFile);
           await sleep(250);
-          return "React Vite config setup completed";
+          return "React project setup completed";
         },
       });
     }
@@ -400,7 +430,15 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     configTasks.push({
       title: "Setup TypeScript path aliases",
       task: async () => {
-        const success = await setupTsConfig(configChoices.framework as StarwindFramework);
+        const success =
+          projectFramework === "react"
+            ? await setupTsConfig(
+                "react",
+                reactProjectPlan!.sourceRoot,
+                reactProjectPlan!.kind === "vite" &&
+                  /\.(?:js|jsx)$/.test(reactProjectPlan!.cssEntry),
+              )
+            : await setupTsConfig("astro");
         if (!success) {
           throw new Error("Failed to setup tsconfig.json");
         }
@@ -459,7 +497,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       });
     }
 
-    if (configChoices.framework === "astro") {
+    if (projectFramework === "astro") {
       // ================================================================
       //                 Add CSS import to layout file
       // ================================================================
@@ -474,18 +512,6 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
           return "CSS import added to layout";
         },
       });
-    } else {
-      configTasks.push({
-        title: "Adding CSS import to React entry",
-        task: async () => {
-          const success = await setupReactCssImport(configChoices.cssFile);
-          if (!success) {
-            throw new Error("Failed to add CSS import to React entry");
-          }
-          await sleep(250);
-          return "CSS import added to React entry";
-        },
-      });
     }
 
     // ================================================================
@@ -498,7 +524,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
           {
             $schema: CONFIG_SCHEMA_V2_URL,
             version: 2,
-            framework: configChoices.framework as StarwindFramework,
+            framework: projectFramework,
             registry: {
               source: "bundled",
               version: bundledRegistry.version,
@@ -516,7 +542,10 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
             // aliases: {
             // 	components: "@/components",
             // },
-            componentDir: configChoices.componentDir,
+            componentDir: isAstroReactTarget
+              ? PATHS.LOCAL_STARWIND_COMPONENTS_DIR
+              : configChoices.componentDir,
+            ...(isAstroReactTarget ? { componentDirs: { react: configChoices.componentDir } } : {}),
             utilsDir,
             components: [],
           },
@@ -563,11 +592,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     //                Prepare astro installation
     // ================================================================
     // Determine package manager: use provided option or auto-detect
-    const pm: PackageManager = options?.packageManager ?? detectPackageManager().name;
-    const runtimeSetupPlan = getRuntimeSetupPlan(
-      configChoices.framework as StarwindFramework,
-      bundledRegistry,
-    );
+    const runtimeSetupPlan = getRuntimeSetupPlan(defaultFramework, bundledRegistry);
 
     installTasks.push({
       title: "Installing Starwind Runtime packages",
@@ -577,7 +602,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       },
     });
 
-    if (configChoices.framework === "astro") {
+    if (projectFramework === "astro") {
       if (pkg.dependencies?.astro) {
         const astroVersion = pkg.dependencies.astro.replace(/^\^|~/, "");
         if (!semver.gte(astroVersion, MIN_ASTRO_VERSION)) {
@@ -637,7 +662,9 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     // ================================================================
     //         Prepare tailwind and other package installation
     // ================================================================
-    const otherPackages = runtimeSetupPlan.packageRequirements;
+    const otherPackages = reactProjectPlan
+      ? getReactPackageRequirements(runtimeSetupPlan.packageRequirements, reactProjectPlan.kind)
+      : runtimeSetupPlan.packageRequirements;
 
     const shouldInstall = options?.defaults
       ? true
@@ -686,7 +713,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     p.note(nextStepsMessage, "Next steps");
 
     if (!withinAdd) {
-      sleep(1000);
+      await sleep(1000);
       const outroMessage = options?.pro
         ? "Enjoy using Starwind UI with Pro components! 🚀"
         : "Enjoy using Starwind UI 🚀";

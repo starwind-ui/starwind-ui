@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import { createRadio, type RadioCheckedChangeDetails } from "@starwind-ui/runtime/radio";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
@@ -109,6 +111,9 @@ const RadioRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, RadioRoo
         readOnly: effectiveReadOnly,
         required: effectiveRequired,
         value,
+        onCheckedChange: (checked, details) => {
+          onCheckedChangeRef.current?.(checked, details);
+        },
         ...(checkedRef.current !== undefined
           ? { checked: checkedRef.current }
           : groupChecked !== undefined
@@ -117,7 +122,6 @@ const RadioRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, RadioRoo
       });
       instanceRef.current = instance;
       const unsubscribe = instance.subscribe("checkedChange", (details) => {
-        onCheckedChangeRef.current?.(details.checked, details);
         details.onAccepted(() => {
           if (checkedRef.current === undefined && radioGroup === undefined) {
             setUncontrolledChecked(details.checked);

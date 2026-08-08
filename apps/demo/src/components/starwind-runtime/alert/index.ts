@@ -9,10 +9,12 @@ const AlertVariants = {
   alertTitle,
 };
 
-export { Alert, AlertDescription, AlertTitle, AlertVariants };
-
-export default {
+const AlertParts = {
   Root: Alert,
   Description: AlertDescription,
   Title: AlertTitle,
 };
+
+export { Alert, AlertDescription, AlertTitle, AlertVariants };
+
+export default AlertParts;

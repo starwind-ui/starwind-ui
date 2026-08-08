@@ -1,3 +1,5 @@
+"use client";
+
 import HoverCard from "./HoverCard";
 import HoverCardContent from "./HoverCardContent";
 import HoverCardTrigger from "./HoverCardTrigger";
@@ -9,10 +11,12 @@ const HoverCardVariants = {
   hoverCardTrigger,
 };
 
-export { HoverCard, HoverCardContent, HoverCardTrigger, HoverCardVariants };
-
-export default {
+const HoverCardParts = {
   Root: HoverCard,
   Trigger: HoverCardTrigger,
   Content: HoverCardContent,
 };
+
+export { HoverCard, HoverCardContent, HoverCardTrigger, HoverCardVariants };
+
+export default HoverCardParts;

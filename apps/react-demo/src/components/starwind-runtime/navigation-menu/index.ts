@@ -1,3 +1,5 @@
+"use client";
+
 import NavigationMenu from "./NavigationMenu";
 import NavigationMenuContent from "./NavigationMenuContent";
 import NavigationMenuIndicator from "./NavigationMenuIndicator";
@@ -20,6 +22,7 @@ import {
 } from "./variants";
 
 const navigationMenuTriggerStyle = navigationMenuTrigger;
+
 const NavigationMenuVariants = {
   navigationMenu,
   navigationMenuContent,
@@ -31,6 +34,17 @@ const NavigationMenuVariants = {
   navigationMenuPositioner,
   navigationMenuTrigger,
   navigationMenuViewport,
+};
+
+const NavigationMenuParts = {
+  Root: NavigationMenu,
+  List: NavigationMenuList,
+  Item: NavigationMenuItem,
+  Trigger: NavigationMenuTrigger,
+  Content: NavigationMenuContent,
+  Link: NavigationMenuLink,
+  Indicator: NavigationMenuIndicator,
+  Positioner: NavigationMenuPositioner,
 };
 
 export {
@@ -46,13 +60,4 @@ export {
   navigationMenuTriggerStyle,
 };
 
-export default {
-  Root: NavigationMenu,
-  List: NavigationMenuList,
-  Item: NavigationMenuItem,
-  Trigger: NavigationMenuTrigger,
-  Content: NavigationMenuContent,
-  Link: NavigationMenuLink,
-  Indicator: NavigationMenuIndicator,
-  Positioner: NavigationMenuPositioner,
-};
+export default NavigationMenuParts;

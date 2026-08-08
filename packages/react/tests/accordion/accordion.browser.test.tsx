@@ -65,6 +65,31 @@ describe("React Accordion cancellation", () => {
     expect(trigger("billing")).toHaveAttribute("aria-expanded", "true");
     expect(panel("billing").hidden).toBe(false);
   });
+
+  it("keeps React state unchanged when the DOM event cancels after the callback", async () => {
+    const observations: string[] = [];
+    let callbackDetails: AccordionValueChangeDetails | undefined;
+    const onValueChange = vi.fn((details: AccordionValueChangeDetails) => {
+      observations.push("callback");
+      callbackDetails = details;
+    });
+
+    await mount(<TestAccordion collapsible onValueChange={onValueChange} />);
+    const root = container!.querySelector<HTMLElement>("[data-sw-accordion]")!;
+    root.addEventListener("starwind:value-change", (event) => {
+      observations.push("dom-event");
+      expect((event as CustomEvent).detail).toBe(callbackDetails);
+      event.preventDefault();
+    });
+
+    await click(trigger("billing"));
+
+    expect(observations).toEqual(["callback", "dom-event"]);
+    expect(callbackDetails?.isCanceled).toBe(true);
+    expect(trigger("shipping")).toHaveAttribute("aria-expanded", "true");
+    expect(trigger("billing")).toHaveAttribute("aria-expanded", "false");
+    expect(panel("billing").hidden).toBe(true);
+  });
 });
 
 function TestAccordion({

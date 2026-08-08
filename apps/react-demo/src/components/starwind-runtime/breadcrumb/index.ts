@@ -23,6 +23,16 @@ const BreadcrumbVariants = {
   breadcrumbSeparator,
 };
 
+const BreadcrumbParts = {
+  Root: Breadcrumb,
+  List: BreadcrumbList,
+  Ellipsis: BreadcrumbEllipsis,
+  Item: BreadcrumbItem,
+  Link: BreadcrumbLink,
+  Separator: BreadcrumbSeparator,
+  Page: BreadcrumbPage,
+};
+
 export {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -34,12 +44,4 @@ export {
   BreadcrumbVariants,
 };
 
-export default {
-  Root: Breadcrumb,
-  List: BreadcrumbList,
-  Ellipsis: BreadcrumbEllipsis,
-  Item: BreadcrumbItem,
-  Link: BreadcrumbLink,
-  Separator: BreadcrumbSeparator,
-  Page: BreadcrumbPage,
-};
+export default BreadcrumbParts;

@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import ProgressIndicator from "./ProgressIndicator";
 import ProgressLabel from "./ProgressLabel";
 import ProgressRoot from "./ProgressRoot";

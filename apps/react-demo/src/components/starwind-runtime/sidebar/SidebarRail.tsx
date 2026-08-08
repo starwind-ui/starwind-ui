@@ -1,3 +1,5 @@
+"use client";
+
 import SidebarPrimitive from "@starwind-ui/react/sidebar";
 import type * as React from "react";
 import { sidebarRail } from "./variants";

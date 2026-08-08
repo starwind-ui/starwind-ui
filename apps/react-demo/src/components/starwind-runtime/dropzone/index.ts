@@ -1,3 +1,5 @@
+"use client";
+
 import Dropzone from "./Dropzone";
 import DropzoneFilesList from "./DropzoneFilesList";
 import DropzoneLoadingIndicator from "./DropzoneLoadingIndicator";
@@ -16,6 +18,13 @@ const DropzoneVariants = {
   dropzoneUploadIndicator,
 };
 
+const DropzoneParts = {
+  Root: Dropzone,
+  FilesList: DropzoneFilesList,
+  LoadingIndicator: DropzoneLoadingIndicator,
+  UploadIndicator: DropzoneUploadIndicator,
+};
+
 export {
   Dropzone,
   DropzoneFilesList,
@@ -24,9 +33,4 @@ export {
   DropzoneVariants,
 };
 
-export default {
-  Root: Dropzone,
-  FilesList: DropzoneFilesList,
-  LoadingIndicator: DropzoneLoadingIndicator,
-  UploadIndicator: DropzoneUploadIndicator,
-};
+export default DropzoneParts;

@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import * as React from "react";
 import type { RefCapableElementProps } from "../internal/compose-refs";
 import {
@@ -31,6 +33,7 @@ const SelectTrigger = React.forwardRef<HTMLElement, SelectTriggerProps>(function
     "aria-required": select.required ? "true" : undefined,
     "aria-readonly": select.readOnly ? "true" : "false",
     "data-disabled": select.disabled ? "" : undefined,
+    "data-placeholder": select.value === null || select.selectedLabel === null ? "" : undefined,
     "data-required": select.required ? "" : undefined,
     "data-readonly": select.readOnly ? "" : undefined,
     "data-state": select.open ? "open" : "closed",

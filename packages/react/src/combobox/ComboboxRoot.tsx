@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import {
   type ComboboxInputValueChangeDetails,
   type ComboboxOpenChangeDetails,
@@ -178,56 +180,12 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
       name,
       onInputValueChange: (nextInputValue, details) => {
         onInputValueChangeRef.current?.(nextInputValue, details);
-        if (details.isCanceled) return;
-
-        if (inputValueRef.current === undefined) {
-          setUncontrolledInputValue(nextInputValue);
-        }
       },
       onOpenChange: (nextOpen, details) => {
         onOpenChangeRef.current?.(nextOpen, details);
-        if (details.isCanceled) return;
-
-        if (openRef.current === undefined) {
-          setUncontrolledOpen(nextOpen);
-        }
       },
       onValueChange: (nextValue, details) => {
         onValueChangeRef.current?.(nextValue, details);
-        if (details.isCanceled) return;
-
-        const nextRuntimeInputValue =
-          inputValueRef.current === undefined ? instanceRef.current?.getInputValue() : undefined;
-        const nextSelectedInputValue =
-          getTextFromComboboxItem(details.item) ??
-          (nextValue === null ? null : findSelectedComboboxItemText(children, nextValue)) ??
-          nextRuntimeInputValue ??
-          null;
-        if (nextSelectedInputValue !== null || nextValue === null) {
-          setSelectedInputValue({
-            inputValue:
-              nextSelectedInputValue && nextSelectedInputValue.length > 0
-                ? nextSelectedInputValue
-                : null,
-            value: nextValue,
-          });
-        }
-
-        if (inputValueRef.current === undefined) {
-          const nextInputValue =
-            nextValue === null ? "" : (nextSelectedInputValue ?? nextRuntimeInputValue ?? "");
-          if (nextRuntimeInputValue !== nextInputValue) {
-            instanceRef.current?.setInputValue(nextInputValue, {
-              emit: false,
-              filter: false,
-            });
-          }
-          setUncontrolledInputValue(nextInputValue);
-        }
-
-        if (valueRef.current === undefined) {
-          setUncontrolledValue(nextValue);
-        }
       },
       readOnly,
       required,
@@ -236,6 +194,51 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
       ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
     });
     instanceRef.current = instance;
+    instance.subscribe("inputValueChange", (details) => {
+      if (inputValueRef.current === undefined) {
+        setUncontrolledInputValue(details.inputValue);
+      }
+    });
+    instance.subscribe("openChange", (details) => {
+      if (openRef.current === undefined) {
+        setUncontrolledOpen(details.open);
+      }
+    });
+    instance.subscribe("valueChange", (details) => {
+      const nextValue = details.value;
+      const nextRuntimeInputValue =
+        inputValueRef.current === undefined ? instance.getInputValue() : undefined;
+      const nextSelectedInputValue =
+        getTextFromComboboxItem(details.item) ??
+        (nextValue === null ? null : findSelectedComboboxItemText(children, nextValue)) ??
+        nextRuntimeInputValue ??
+        null;
+      if (nextSelectedInputValue !== null || nextValue === null) {
+        setSelectedInputValue({
+          inputValue:
+            nextSelectedInputValue && nextSelectedInputValue.length > 0
+              ? nextSelectedInputValue
+              : null,
+          value: nextValue,
+        });
+      }
+
+      if (inputValueRef.current === undefined) {
+        const nextInputValue =
+          nextValue === null ? "" : (nextSelectedInputValue ?? nextRuntimeInputValue ?? "");
+        if (nextRuntimeInputValue !== nextInputValue) {
+          instance.setInputValue(nextInputValue, {
+            emit: false,
+            filter: false,
+          });
+        }
+        setUncontrolledInputValue(nextInputValue);
+      }
+
+      if (valueRef.current === undefined) {
+        setUncontrolledValue(nextValue);
+      }
+    });
     return instance;
   }, [
     children,
@@ -272,9 +275,9 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
       if (!instance) return;
 
       const nextValue = detail.value === "" ? null : detail.value;
-      instance.setValue(nextValue, {
-        emit: typeof detail.emit === "boolean" ? detail.emit : undefined,
-      });
+      const emit = typeof detail.emit === "boolean" ? detail.emit : undefined;
+      instance.setValue(nextValue, { emit });
+      if (emit !== false) return;
 
       if (valueRef.current === undefined) {
         setUncontrolledValue(nextValue);

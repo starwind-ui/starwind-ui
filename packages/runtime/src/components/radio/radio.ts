@@ -237,6 +237,9 @@ class RadioController implements RadioInstance {
     });
     this.notify(details);
     if (details.isCanceled) {
+      if (this.getChecked() === checked) {
+        this.setChecked(previousChecked, { emit: false });
+      }
       this.render();
       return;
     }
@@ -476,6 +479,9 @@ class RadioController implements RadioInstance {
 
     this.notify(details);
     if (details.isCanceled) {
+      if (this.getChecked() === checked) {
+        this.setChecked(previousChecked, { emit: false });
+      }
       this.render();
       return;
     }
@@ -574,12 +580,11 @@ class RadioController implements RadioInstance {
 
   private notify(details: RadioCheckedChangeDetails): void {
     attachFormValueRevision(details, details.event);
+    this.onCheckedChange?.(details.checked, details);
     const event = dispatchCustomEvent(this.root, "starwind:checked-change", details, {
       cancelable: true,
     });
     if (event.defaultPrevented) details.cancel();
-    this.onCheckedChange?.(details.checked, details);
-    this.subscribers.forEach((subscriber) => subscriber(details));
   }
 
   private completeAcceptance(
@@ -587,6 +592,14 @@ class RadioController implements RadioInstance {
     precedingErrors: unknown[] = [],
   ): void {
     const errors: unknown[] = [...precedingErrors];
+    details.commit();
+    for (const subscriber of [...this.subscribers]) {
+      try {
+        subscriber(details);
+      } catch (error) {
+        errors.push(error);
+      }
+    }
     errors.push(...details.accept());
     for (const subscriber of [...this.syncSubscribers]) {
       try {
@@ -664,6 +677,7 @@ class RadioCheckedChangeDetailsImpl implements RadioCheckedChangeDetails {
   readonly trigger?: Element;
 
   private canceled = false;
+  private committed = false;
   private accepted = false;
   private readonly acceptedCallbacks = new Set<() => void>();
 
@@ -692,7 +706,7 @@ class RadioCheckedChangeDetailsImpl implements RadioCheckedChangeDetails {
   }
 
   cancel(): void {
-    if (this.accepted) return;
+    if (this.committed || this.accepted) return;
     this.canceled = true;
     this.acceptedCallbacks.clear();
   }
@@ -704,6 +718,10 @@ class RadioCheckedChangeDetailsImpl implements RadioCheckedChangeDetails {
       return;
     }
     this.acceptedCallbacks.add(callback);
+  }
+
+  commit(): void {
+    if (!this.canceled) this.committed = true;
   }
 
   accept(): unknown[] {

@@ -10,13 +10,16 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
+  getFixtureFiles,
   runCommand,
   verifyBrowserProject,
-  writeFixtures,
 } from "./published-release-acceptance.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
+const NEXT_SCAFFOLD_VERSION = "16.3.0";
+const REACT_ROUTER_SCAFFOLD_VERSION = "8.3.0";
+const TANSTACK_CLI_VERSION = "0.70.1";
 const VITE_SCAFFOLD_VERSION = "9.1.1";
 
 function fileSpecifier(file) {
@@ -137,14 +140,63 @@ export function getCandidateMatrix() {
       packageManager: "pnpm",
       scaffoldVersion: "5.2.3",
     },
-    { framework: "react", frameworkVersion: "18.3.1", id: "react-18", packageManager: "pnpm" },
-    { framework: "react", frameworkVersion: "19.2.0", id: "react-19", packageManager: "pnpm" },
+    {
+      framework: "react",
+      frameworkVersion: "18.3.1",
+      host: "vite",
+      id: "react-18",
+      packageManager: "pnpm",
+    },
+    {
+      framework: "react",
+      frameworkVersion: "19.2.0",
+      host: "vite",
+      id: "react-19",
+      packageManager: "pnpm",
+    },
+    {
+      framework: "react",
+      frameworkVersion: "19.2.0",
+      host: "vite",
+      id: "react-19-js",
+      language: "javascript",
+      packageManager: "pnpm",
+    },
     {
       browser: false,
       framework: "react",
       frameworkVersion: "19.2.0",
+      host: "vite",
       id: "react-19-npm",
       packageManager: "npm",
+    },
+    {
+      framework: "react",
+      frameworkVersion: "19.2.0",
+      host: "next-app",
+      id: "next-app",
+      packageManager: "pnpm",
+    },
+    {
+      framework: "react",
+      frameworkVersion: "19.2.0",
+      host: "next-pages",
+      id: "next-pages",
+      packageManager: "pnpm",
+    },
+    {
+      framework: "react",
+      frameworkVersion: "19.2.0",
+      host: "tanstack-start",
+      id: "tanstack-start",
+      packageManager: "pnpm",
+    },
+    {
+      framework: "react",
+      frameworkVersion: "19.2.0",
+      host: "react-router",
+      id: "react-router",
+      packageManager: "pnpm",
     },
   ];
 }
@@ -175,80 +227,176 @@ function getScaffoldArgs(entry) {
     ];
   }
 
+  if (entry.host === "next-app" || entry.host === "next-pages") {
+    return [
+      "dlx",
+      `create-next-app@${NEXT_SCAFFOLD_VERSION}`,
+      entry.id,
+      "--ts",
+      "--tailwind",
+      "--eslint",
+      entry.host === "next-app" ? "--app" : "--no-app",
+      entry.host === "next-app" ? "--src-dir" : "--no-src-dir",
+      "--import-alias",
+      "@/*",
+      "--use-pnpm",
+      "--skip-install",
+      "--disable-git",
+      "--yes",
+    ];
+  }
+
+  if (entry.host === "tanstack-start") {
+    return [
+      "dlx",
+      `@tanstack/cli@${TANSTACK_CLI_VERSION}`,
+      "create",
+      entry.id,
+      "--framework",
+      "React",
+      "--package-manager",
+      "pnpm",
+      "--no-install",
+      "--no-examples",
+      "--no-git",
+      "--no-intent",
+      "--yes",
+    ];
+  }
+
+  if (entry.host === "react-router") {
+    return [
+      "dlx",
+      `create-react-router@${REACT_ROUTER_SCAFFOLD_VERSION}`,
+      entry.id,
+      "--package-manager",
+      "pnpm",
+      "--no-install",
+      "--no-git-init",
+      "--no-agent-skills",
+      "--yes",
+    ];
+  }
+
   return [
     "create",
     `vite@${VITE_SCAFFOLD_VERSION}`,
     entry.id,
     "--template",
-    "react-ts",
+    entry.language === "javascript" ? "react" : "react-ts",
     "--no-interactive",
   ];
 }
 
-export function createCandidatePlan({ packages, root }) {
+export function createCandidatePlan({ packages, projectIds, root }) {
   const cliEntrypoint = path.join(root, "node_modules", "starwind", "dist", "index.js");
-  const projects = getCandidateMatrix().map((entry) => {
-    const directory = path.join(root, entry.id);
-    const command = entry.packageManager === "npm" ? "npm.cmd" : undefined;
-    const packageManagerArgs = entry.packageManager === "npm" ? ["--package-manager", "npm"] : [];
-    const cli = (args) => ({
-      args: [cliEntrypoint, ...args],
-      command: process.execPath,
-      cwd: directory,
-    });
-    const packageCommand = (args) => ({ args, command, cwd: directory });
+  const matrix = getCandidateMatrix();
+  const selectedIds = projectIds ? new Set(projectIds) : undefined;
+  if (selectedIds) {
+    for (const id of selectedIds) {
+      if (!matrix.some((entry) => entry.id === id)) {
+        throw new Error(`Unknown candidate project: ${id}`);
+      }
+    }
+  }
+  const projects = matrix
+    .filter((entry) => !selectedIds || selectedIds.has(entry.id))
+    .map((entry) => {
+      const directory = path.join(root, entry.id);
+      const command = entry.packageManager === "npm" ? "npm.cmd" : undefined;
+      const packageManagerArgs = entry.packageManager === "npm" ? ["--package-manager", "npm"] : [];
+      const lifecycleComponent = entry.host === "next-pages" ? "dialog" : "button";
+      const isJavaScript = entry.language === "javascript";
+      const cli = (args) => ({
+        args: [cliEntrypoint, ...args],
+        command: process.execPath,
+        cwd: directory,
+      });
+      const packageCommand = (args) => ({ args, command, cwd: directory });
 
-    return {
-      ...entry,
-      add: cli(["add", "--all", "--yes", ...packageManagerArgs]),
-      browser: entry.browser ?? true,
-      build: packageCommand(entry.packageManager === "npm" ? ["run", "build"] : ["build"]),
-      check: packageCommand(
-        entry.framework === "astro"
-          ? ["exec", "astro", "check"]
-          : entry.packageManager === "npm"
-            ? ["exec", "tsc", "--", "--noEmit"]
-            : ["exec", "tsc", "--noEmit"],
-      ),
-      directory,
-      init: cli(["init", "--defaults"]),
-      localAdapter: packages[entry.framework],
-      remove: cli(["remove", "button", "--yes"]),
-      scaffold: { args: getScaffoldArgs(entry), cwd: root },
-      ssr:
-        entry.framework === "react"
-          ? packageCommand(
-              entry.packageManager === "npm"
-                ? [
-                    "exec",
-                    "vite",
-                    "--",
-                    "build",
-                    "--ssr",
-                    "src/acceptance-ssr.tsx",
-                    "--outDir",
-                    "dist-ssr",
-                  ]
-                : [
-                    "exec",
-                    "vite",
-                    "build",
-                    "--ssr",
-                    "src/acceptance-ssr.tsx",
-                    "--outDir",
-                    "dist-ssr",
-                  ],
-            )
-          : undefined,
-      update: cli(["update", "button", "--yes", ...packageManagerArgs]),
-    };
-  });
+      return {
+        ...entry,
+        add: cli(["add", "--all", "--yes", ...packageManagerArgs]),
+        browser: entry.browser ?? true,
+        build: packageCommand(entry.packageManager === "npm" ? ["run", "build"] : ["build"]),
+        check: packageCommand(
+          entry.framework === "astro"
+            ? ["exec", "astro", "check"]
+            : entry.host === "react-router"
+              ? ["typecheck"]
+              : isJavaScript
+                ? ["exec", "tsc", "--noEmit", "--project", "tsconfig.json"]
+                : entry.packageManager === "npm"
+                  ? ["exec", "tsc", "--", "--noEmit"]
+                  : ["exec", "tsc", "--noEmit"],
+        ),
+        directory,
+        init: cli(["init", "--defaults"]),
+        lint:
+          entry.host === "next-app" || entry.host === "next-pages"
+            ? { cwd: directory, manifestScript: "lint" }
+            : undefined,
+        localAdapter: packages[entry.framework],
+        preview: getCandidatePreview(entry),
+        readd: cli(["add", lifecycleComponent, "--yes", ...packageManagerArgs]),
+        remove: cli(["remove", lifecycleComponent, "--yes"]),
+        scaffold: { args: getScaffoldArgs(entry), cwd: root },
+        ssrMarker: entry.host && entry.host !== "vite" ? "data-sw-color-picker" : undefined,
+        ssr:
+          entry.host === "vite"
+            ? packageCommand(
+                entry.packageManager === "npm"
+                  ? [
+                      "exec",
+                      "vite",
+                      "--",
+                      "build",
+                      "--ssr",
+                      `src/acceptance-ssr.${isJavaScript ? "jsx" : "tsx"}`,
+                      "--outDir",
+                      "dist-ssr",
+                    ]
+                  : [
+                      "exec",
+                      "vite",
+                      "build",
+                      "--ssr",
+                      `src/acceptance-ssr.${isJavaScript ? "jsx" : "tsx"}`,
+                      "--outDir",
+                      "dist-ssr",
+                    ],
+              )
+            : undefined,
+        themeInitScriptCount:
+          entry.host === "next-app" || entry.host === "next-pages" || entry.host === "react-router"
+            ? 1
+            : undefined,
+        typegen:
+          entry.host === "next-app" || entry.host === "next-pages"
+            ? packageCommand(["exec", "next", "typegen"])
+            : entry.host === "tanstack-start"
+              ? packageCommand(["generate-routes"])
+              : undefined,
+        update: cli(["update", "button", "--yes", ...packageManagerArgs]),
+      };
+    });
 
   return { cliEntrypoint, packages, projects, root };
 }
 
+function getCandidatePreview(entry) {
+  if (entry.host === "next-app" || entry.host === "next-pages") {
+    return {
+      args: ["--hostname", "{host}", "--port", "{port}"],
+      script: "start",
+    };
+  }
+  if (entry.host === "react-router") return { args: [], script: "start" };
+  return { args: ["--host", "{host}", "--port", "{port}"], script: "preview" };
+}
+
 export function getCandidateWorkspacePolicy(_projects, packages) {
-  return `packages: []\nminimumReleaseAge: 0\nminimumReleaseAgeStrict: false\nallowBuilds:\n  esbuild: true\n  sharp: true\noverrides:\n  "@starwind-ui/astro": "${fileSpecifier(packages.astro)}"\n  "@starwind-ui/react": "${fileSpecifier(packages.react)}"\n  "@starwind-ui/runtime": "${fileSpecifier(packages.runtime)}"\n  starwind: "${fileSpecifier(packages.cli)}"\n`;
+  return `packages: []\nminimumReleaseAge: 0\nminimumReleaseAgeStrict: false\nallowBuilds:\n  esbuild: true\n  sharp: true\n  unrs-resolver: true\noverrides:\n  "@starwind-ui/astro": "${fileSpecifier(packages.astro)}"\n  "@starwind-ui/react": "${fileSpecifier(packages.react)}"\n  "@starwind-ui/runtime": "${fileSpecifier(packages.runtime)}"\n  starwind: "${fileSpecifier(packages.cli)}"\n`;
 }
 
 async function prepareProjectManifest(project) {
@@ -271,8 +419,10 @@ async function prepareProjectManifest(project) {
     const typeVersion = project.frameworkVersion.startsWith("18.") ? "^18.3.0" : "^19.2.0";
     manifest.devDependencies = {
       ...manifest.devDependencies,
+      ...(project.language === "javascript" ? { "@types/node": "^24.0.0" } : {}),
       "@types/react": typeVersion,
       "@types/react-dom": typeVersion,
+      ...(project.language === "javascript" ? { typescript: "^5.9.3" } : {}),
     };
   }
 
@@ -291,9 +441,127 @@ if (!html.includes("acceptance-ssr-color-picker") || !html.includes("data-sw-col
 console.log("React Color Picker SSR passed");
 `;
 
+function createReactHostFixture({ importRoot, routeImport = "", routeRegistration = "" }) {
+  return `${routeImport}import { Button } from "${importRoot}/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "${importRoot}/dialog";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "${importRoot}/context-menu";
+import { ColorPicker } from "${importRoot}/color-picker";
+
+${routeRegistration}${routeRegistration ? "" : "export default "}function AcceptancePage() {
+  return (
+    <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-10 p-10">
+      <h1 className="text-2xl font-semibold">React published release acceptance</h1>
+      <Dialog id="acceptance-dialog">
+        <DialogTrigger asChild>
+          <Button id="dialog-trigger" type="button">Open dialog</Button>
+        </DialogTrigger>
+        <DialogContent id="dialog-content">
+          <DialogHeader>
+            <DialogTitle>Published package dialog</DialogTitle>
+            <DialogDescription>Runtime-backed dialog acceptance test.</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+      <ContextMenu id="acceptance-context-menu">
+        <ContextMenuTrigger
+          id="context-trigger"
+          className="border-input bg-card flex min-h-40 items-center justify-center rounded-md border border-dashed p-6"
+        >
+          Right-click this area
+        </ContextMenuTrigger>
+        <ContextMenuContent id="context-content">
+          <ContextMenuItem id="context-item">Accept action</ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+      <ColorPicker
+        id="acceptance-color-picker"
+        label="Accent color"
+        defaultValue="#336699"
+        swatches={[{ value: "#ff0000", label: "Published red" }]}
+      />
+    </main>
+  );
+}
+`;
+}
+
+export function getCandidateFixtureFiles(project) {
+  if (project.framework === "astro" || project.host === "vite") {
+    const files = getFixtureFiles(project.framework);
+    return project.language === "javascript"
+      ? files.map((file) => ({ ...file, path: file.path.replace(/\.tsx$/, ".jsx") }))
+      : files;
+  }
+
+  if (project.host === "next-app") {
+    return [
+      {
+        content: createReactHostFixture({ importRoot: "../components/starwind" }),
+        path: "src/app/page.tsx",
+      },
+    ];
+  }
+  if (project.host === "next-pages") {
+    return [
+      {
+        content: createReactHostFixture({ importRoot: "../components/starwind" }),
+        path: "pages/index.tsx",
+      },
+    ];
+  }
+  if (project.host === "tanstack-start") {
+    return [
+      {
+        content: createReactHostFixture({
+          importRoot: "../components/starwind",
+          routeImport: 'import { createFileRoute } from "@tanstack/react-router";\n',
+          routeRegistration:
+            'export const Route = createFileRoute("/")({ component: AcceptancePage });\n\n',
+        }),
+        path: "src/routes/index.tsx",
+      },
+    ];
+  }
+  if (project.host === "react-router") {
+    return [
+      {
+        content: createReactHostFixture({ importRoot: "../components/starwind" }),
+        path: "app/routes/home.tsx",
+      },
+    ];
+  }
+
+  throw new Error(`Unsupported candidate host: ${project.host}`);
+}
+
+async function writeCandidateFixtures(project) {
+  for (const file of getCandidateFixtureFiles(project)) {
+    const target = path.join(project.directory, file.path);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, file.content, "utf8");
+  }
+}
+
 async function writeSsrFixture(project) {
   if (!project.ssr) return;
-  await writeFile(path.join(project.directory, "src", "acceptance-ssr.tsx"), SSR_FIXTURE, "utf8");
+  const extension = project.language === "javascript" ? "jsx" : "tsx";
+  await writeFile(
+    path.join(project.directory, "src", `acceptance-ssr.${extension}`),
+    SSR_FIXTURE,
+    "utf8",
+  );
 }
 
 async function packWorkspacePackages(packDirectory) {
@@ -385,22 +653,19 @@ async function runProjectLifecycle(project, plan) {
   await runCommand(project.add);
   await runCommand(project.update);
   await runCommand(project.remove);
-  await runCommand({
-    args: [
-      plan.cliEntrypoint,
-      "add",
-      "button",
-      "--yes",
-      ...(project.packageManager === "npm" ? ["--package-manager", "npm"] : []),
-    ],
-    command: process.execPath,
-    cwd: project.directory,
-  });
-  await writeFixtures(project);
+  await runCommand(project.readd);
+  await writeCandidateFixtures(project);
   await writeSsrFixture(project);
   await validateCandidateAdapter(project);
-  await runCommand(project.check);
-  await runCommand(project.build);
+  const manifest = JSON.parse(await readFile(path.join(project.directory, "package.json"), "utf8"));
+  for (const phase of createCandidateVerificationPlan(project, manifest)) {
+    if (phase.name === "lint") {
+      console.log(
+        `[candidate] ${project.id} lint: ${manifest.scripts[project.lint.manifestScript]}`,
+      );
+    }
+    await runCommand(phase.command);
+  }
 
   if (project.ssr) {
     await runCommand(project.ssr);
@@ -412,16 +677,34 @@ async function runProjectLifecycle(project, plan) {
   }
 }
 
+export function getCandidateManifestScriptCommand({ cwd, manifestScript }, manifest) {
+  const script = manifest.scripts?.[manifestScript];
+  assert.equal(typeof script, "string", `Missing ${manifestScript} script in ${cwd}`);
+  return { args: ["run", manifestScript], cwd };
+}
+
+export function createCandidateVerificationPlan(project, manifest = {}) {
+  return [
+    ...(project.lint
+      ? [{ command: getCandidateManifestScriptCommand(project.lint, manifest), name: "lint" }]
+      : []),
+    ...(project.typegen ? [{ command: project.typegen, name: "typegen" }] : []),
+    { command: project.check, name: "check" },
+    { command: project.build, name: "build" },
+  ];
+}
+
 export async function runReleaseCandidateAcceptance({
   artifacts: artifactsOption,
   keepTemp = false,
+  projectIds,
 } = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), "starwind-release-candidate-"));
   const artifacts = artifactsOption
     ? path.resolve(artifactsOption)
     : await mkdtemp(path.join(os.tmpdir(), "starwind-release-candidate-artifacts-"));
   const packages = await packWorkspacePackages(path.join(root, "packs"));
-  const plan = createCandidatePlan({ packages, root });
+  const plan = createCandidatePlan({ packages, projectIds, root });
   let browser;
   let registry;
 
@@ -468,12 +751,15 @@ export async function runReleaseCandidateAcceptance({
       await verifyBrowserProject({ artifacts, browser, project });
     }
 
-    const summary = plan.projects.map(({ framework, frameworkVersion, id, packageManager }) => ({
-      framework,
-      frameworkVersion,
-      id,
-      packageManager,
-    }));
+    const summary = plan.projects.map(
+      ({ framework, frameworkVersion, host, id, packageManager }) => ({
+        framework,
+        frameworkVersion,
+        ...(host ? { host } : {}),
+        id,
+        packageManager,
+      }),
+    );
     await writeFile(path.join(artifacts, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
     console.log("[candidate] packed Astro and React release candidate matrix passed");
     return { artifacts, summary };
@@ -485,9 +771,10 @@ export async function runReleaseCandidateAcceptance({
   }
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   let artifacts;
   let keepTemp = false;
+  const projectIds = [];
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === "--keep-temp") keepTemp = true;
@@ -495,9 +782,16 @@ function parseArgs(argv) {
       artifacts = argv[index + 1];
       if (!artifacts) throw new Error("Expected a path after --artifacts.");
       index += 1;
+    } else if (argument === "--project") {
+      const projectId = argv[index + 1];
+      if (!projectId) throw new Error("Expected an id after --project.");
+      projectIds.push(projectId);
+      index += 1;
+    } else if (argument.startsWith("--project=")) {
+      projectIds.push(argument.slice("--project=".length));
     } else throw new Error(`Unknown argument: ${argument}`);
   }
-  return { artifacts, keepTemp };
+  return { artifacts, keepTemp, projectIds: projectIds.length > 0 ? projectIds : undefined };
 }
 
 async function main() {

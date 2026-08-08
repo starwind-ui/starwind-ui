@@ -11,11 +11,13 @@ const TabsVariants = {
   tabsTrigger,
 };
 
-export { Tabs, TabsContent, TabsList, TabsTrigger, TabsVariants };
-
-export default {
+const TabsParts = {
   Root: Tabs,
   List: TabsList,
   Trigger: TabsTrigger,
   Content: TabsContent,
 };
+
+export { Tabs, TabsContent, TabsList, TabsTrigger, TabsVariants };
+
+export default TabsParts;

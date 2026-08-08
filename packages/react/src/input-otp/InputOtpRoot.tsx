@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import { createInputOtp, type InputOtpValueChangeDetails } from "@starwind-ui/runtime/input-otp";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
@@ -86,19 +88,20 @@ const InputOtpRoot = React.forwardRef<HTMLDivElement, InputOtpRootProps>(functio
       maxLength,
       onValueChange: (nextValue, details) => {
         onValueChangeRef.current?.(nextValue, details);
-        if (details.isCanceled) return;
-
-        if (valueRef.current === undefined) {
-          setUncontrolledValue(nextValue);
-        }
       },
       pattern: patternText,
       readOnly,
       ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
     });
     instanceRef.current = instance;
+    const unsubscribeValueChange = instance.subscribe("valueChange", (details) => {
+      if (valueRef.current === undefined) {
+        setUncontrolledValue(details.value);
+      }
+    });
 
     return () => {
+      unsubscribeValueChange();
       instance.destroy();
       if (instanceRef.current === instance) {
         instanceRef.current = undefined;

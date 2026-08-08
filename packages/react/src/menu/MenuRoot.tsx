@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import {
   createMenu,
   type MenuCloseCompleteDetails,
@@ -86,17 +88,18 @@ const MenuRoot = React.forwardRef<HTMLDivElement, MenuRootProps>(function MenuRo
       },
       onOpenChange: (nextOpen, details) => {
         onOpenChangeRef.current?.(nextOpen, details);
-        if (details.isCanceled) return;
-
-        if (openRef.current === undefined) {
-          setUncontrolledOpen(nextOpen);
-        }
       },
       ...(openRef.current !== undefined ? { open: openRef.current } : {}),
     });
     instanceRef.current = instance;
+    const unsubscribeOpenChange = instance.subscribe("openChange", (details) => {
+      if (openRef.current === undefined) {
+        setUncontrolledOpen(details.open);
+      }
+    });
 
     return () => {
+      unsubscribeOpenChange();
       instance.destroy();
       if (instanceRef.current === instance) {
         instanceRef.current = undefined;

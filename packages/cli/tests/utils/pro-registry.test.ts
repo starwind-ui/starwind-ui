@@ -16,7 +16,7 @@ vi.mock("../../src/utils/package-manager.js");
 const mockFilterUninstalledDependencies = vi.mocked(
   dependencyResolver.filterUninstalledDependencies,
 );
-const mockInstallDependencies = vi.mocked(packageManager.installDependencies);
+const mockInstallDependencies = vi.mocked(packageManager.installDependenciesWithProgress);
 
 function runtimeConfig(overrides: Partial<StarwindConfig> = {}): StarwindConfig {
   return {

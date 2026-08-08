@@ -421,14 +421,21 @@ async function getFreePort() {
 
 function startPreview(project, port) {
   const command = project.packageManager === "npm" ? "npm.cmd" : getPnpmCommand();
+  const preview = project.preview ?? {
+    args: ["--host", "{host}", "--port", "{port}"],
+    script: "preview",
+  };
+  const previewArgs = preview.args.map((argument) =>
+    argument.replace("{host}", HOST).replace("{port}", String(port)),
+  );
   const args =
     project.packageManager === "npm"
-      ? ["run", "preview", "--", "--host", HOST, "--port", String(port)]
-      : ["preview", "--host", HOST, "--port", String(port)];
+      ? ["run", preview.script, "--", ...previewArgs]
+      : [preview.script, ...previewArgs];
   const spawned = createSpawn(command, args);
   const child = spawn(spawned.command, spawned.args, {
     cwd: project.directory,
-    env: getPreviewEnvironment(),
+    env: { ...getPreviewEnvironment(), HOST, PORT: String(port) },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let output = "";
@@ -503,10 +510,26 @@ export async function verifyBrowserProject({ artifacts, browser, project }) {
 
   try {
     await waitForPreview(url, preview);
+    if (project.ssrMarker) {
+      const response = await fetch(url);
+      const html = await response.text();
+      assert.ok(
+        html.includes(project.ssrMarker),
+        `${project.id ?? project.framework} SSR output must include ${project.ssrMarker}`,
+      );
+    }
     await page.goto(url, { waitUntil: "networkidle" });
     await page
       .getByRole("heading", { name: new RegExp(`${project.framework} published release`, "i") })
       .waitFor();
+
+    if (project.themeInitScriptCount !== undefined) {
+      assert.equal(
+        await page.locator("script[data-starwind-theme-init]").count(),
+        project.themeInitScriptCount,
+        `${project.id ?? project.framework} theme initialization script count`,
+      );
+    }
 
     const dialogTrigger = page.getByRole("button", { name: "Open dialog" });
     await dialogTrigger.click();

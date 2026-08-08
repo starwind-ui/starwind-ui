@@ -9,9 +9,11 @@ import {
   type StarwindFramework,
   updateConfig,
 } from "@/utils/config.js";
+import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
 import { PATHS } from "@/utils/constants.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
+import { syncReactProjectComponentStyles } from "@/utils/runtime-component.js";
 import { sleep } from "@/utils/sleep.js";
 
 interface RemoveOptions {
@@ -61,7 +63,7 @@ export async function remove(components?: string[], options?: RemoveOptions) {
 
       if (invalid.length > 0) {
         p.log.warn(
-          `${highlighter.warn("Components not found:")}\n${invalid
+          `${highlighter.warn("Components not found:")}\n${sortComponentNames(invalid)
             .map((name) => `  ${name}`)
             .join("\n")}`,
         );
@@ -75,7 +77,7 @@ export async function remove(components?: string[], options?: RemoveOptions) {
         process.exit(0);
       }
     } else {
-      const choices = scopedTargets.map((target) => ({
+      const choices = sortComponentPresentation(scopedTargets).map((target) => ({
         value: getRemovalTargetKey(target),
         label: hasDuplicateName(scopedTargets, target.name)
           ? formatRemovalTarget(target)
@@ -106,7 +108,7 @@ export async function remove(components?: string[], options?: RemoveOptions) {
     // Confirm removal using the exact framework-qualified identities.
     if (!options?.yes) {
       const confirmed = await p.confirm({
-        message: `Remove ${targetsToRemove
+        message: `Remove ${sortComponentPresentation(targetsToRemove)
           .map((target) => highlighter.info(formatRemovalTarget(target)))
           .join(", ")} ${targetsToRemove.length > 1 ? "components" : "component"}?`,
       });
@@ -144,6 +146,7 @@ export async function remove(components?: string[], options?: RemoveOptions) {
       );
 
       await updateConfig({ components: updatedComponents }, { appendComponents: false });
+      await syncReactProjectComponentStyles(config);
     }
 
     // ================================================================
@@ -153,7 +156,9 @@ export async function remove(components?: string[], options?: RemoveOptions) {
 
     if (results.failed.length > 0) {
       p.log.error(
-        `${highlighter.error("Failed to remove components:")}\n${results.failed
+        `${highlighter.error("Failed to remove components:")}\n${sortComponentPresentation(
+          results.failed,
+        )
           .map((result) => `  ${formatRemovalTarget(result)} - ${result.error}`)
           .join("\n")}`,
       );
@@ -161,7 +166,9 @@ export async function remove(components?: string[], options?: RemoveOptions) {
 
     if (results.removed.length > 0) {
       p.log.success(
-        `${highlighter.success("Successfully removed components:")}\n${results.removed
+        `${highlighter.success("Successfully removed components:")}\n${sortComponentPresentation(
+          results.removed,
+        )
           .map((result) => `  ${formatRemovalTarget(result)}`)
           .join("\n")}`,
       );

@@ -22,6 +22,15 @@ const ScrollAreaVariants = {
   scrollAreaViewport,
 };
 
+const ScrollAreaParts = {
+  Root: ScrollArea,
+  Viewport: ScrollAreaViewport,
+  Content: ScrollAreaContent,
+  Scrollbar: ScrollBar,
+  Thumb: ScrollAreaThumb,
+  Corner: ScrollAreaCorner,
+};
+
 export {
   ScrollArea,
   ScrollAreaContent,
@@ -32,11 +41,4 @@ export {
   ScrollBar,
 };
 
-export default {
-  Root: ScrollArea,
-  Viewport: ScrollAreaViewport,
-  Content: ScrollAreaContent,
-  Scrollbar: ScrollBar,
-  Thumb: ScrollAreaThumb,
-  Corner: ScrollAreaCorner,
-};
+export default ScrollAreaParts;

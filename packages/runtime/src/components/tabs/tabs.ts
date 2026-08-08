@@ -4,6 +4,7 @@ import {
   readBooleanAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
 
 export type TabsValue = string | null;
@@ -217,18 +218,24 @@ class TabsController implements TabsInstance {
         value: nextValue,
       });
 
-      this.notify(details);
-      if (details.isCanceled) {
+      const applied = this.runValueChange(details, () => {
+        this.value = nextValue;
+        this.activationDirection = activationDirection;
+        this.focusValue = this.getResolvedFocusValue();
+        this.render();
+        this.persistSyncValue(nextValue);
+      });
+      if (!applied) {
         this.render();
         return;
       }
+    } else {
+      this.value = nextValue;
+      this.activationDirection = activationDirection;
+      this.focusValue = this.getResolvedFocusValue();
+      this.render();
+      this.persistSyncValue(nextValue);
     }
-
-    this.value = nextValue;
-    this.activationDirection = activationDirection;
-    this.focusValue = this.getResolvedFocusValue();
-    this.render();
-    this.persistSyncValue(nextValue);
 
     if (options.sync ?? options.emit !== false) {
       this.dispatchSyncValue(nextValue);
@@ -371,18 +378,19 @@ class TabsController implements TabsInstance {
       value: nextValue,
     });
 
-    this.notify(details);
-
-    if (details.isCanceled || this.controlled) {
+    const applied = this.runValueChange(details, () => {
+      if (!this.controlled) {
+        this.value = nextValue;
+        this.activationDirection = activationDirection;
+        this.focusValue = this.getResolvedFocusValue();
+        this.persistAndDispatchSyncValue(nextValue);
+      }
       this.render();
-      return;
-    }
+    });
 
-    this.value = nextValue;
-    this.activationDirection = activationDirection;
-    this.focusValue = this.getResolvedFocusValue();
-    this.render();
-    this.persistAndDispatchSyncValue(nextValue);
+    if (!applied) {
+      this.render();
+    }
   }
 
   private render(): void {
@@ -554,17 +562,16 @@ class TabsController implements TabsInstance {
       value: resolvedValue,
     });
 
-    this.notify(details);
-    if (details.isCanceled) {
+    const applied = this.runValueChange(details, () => {
+      this.value = resolvedValue;
+      this.activationDirection = activationDirection;
+      this.focusValue = this.getResolvedFocusValue();
       this.render();
-      return;
+      this.persistSyncValue(resolvedValue);
+    });
+    if (!applied) {
+      this.render();
     }
-
-    this.value = resolvedValue;
-    this.activationDirection = activationDirection;
-    this.focusValue = this.getResolvedFocusValue();
-    this.render();
-    this.persistSyncValue(resolvedValue);
   };
 
   private getActivationDirection(
@@ -603,15 +610,29 @@ class TabsController implements TabsInstance {
     options: { cancelable?: boolean } = {},
   ): void {
     const cancelable = options.cancelable ?? true;
-    const event = dispatchCustomEvent(this.root, "starwind:value-change", details, {
-      cancelable,
-    });
-    if (cancelable && event.defaultPrevented) {
-      details.cancel();
-    }
-
     this.onValueChange?.(details.value, details);
+    const event = dispatchCustomEvent(this.root, "starwind:value-change", details, { cancelable });
+    if (cancelable && event.defaultPrevented) details.cancel();
     this.subscribers.forEach((subscriber) => subscriber(details));
+  }
+
+  private runValueChange(details: TabsValueChangeDetailsImpl, apply: () => void): boolean {
+    return runCancelableDetailsTransaction({
+      apply,
+      details,
+      eventType: "starwind:value-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.forEach((subscriber) => subscriber(acceptedDetails));
+      },
+      notifyCallback: (proposalDetails) =>
+        this.onValueChange?.(proposalDetails.value, proposalDetails),
+      rollbackCanceled: () => {
+        if (this.value === details.value && details.previousValue !== details.value) {
+          this.setValue(details.previousValue, { emit: false });
+        }
+      },
+      target: this.root,
+    });
   }
 
   private readStoredSyncValue(): TabsValue | undefined {

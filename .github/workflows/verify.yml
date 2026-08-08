@@ -211,6 +211,55 @@ jobs:
       - name: Reject Generated Drift
         run: git diff --exit-code
 
+  node22-public-consumer:
+    name: Node 22.12 public consumer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
+        with:
+          cache: true
+      - name: Setup Node.js 24 for public package builds
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build public packages
+        run: pnpm runtime:build && pnpm react:build && pnpm cli:build && pnpm --filter=@starwind-ui/astro typecheck
+      - name: Pack public artifacts
+        run: pnpm release:pack:public-artifacts
+      - name: Setup exact public Node floor
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: 22.12.0
+      - name: Verify packed Astro and React consumers
+        run: npm run release:consumer:node22
+
+  windows-packed-cli:
+    name: Windows packed CLI
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
+        with:
+          cache: true
+      - name: Setup Node.js 24
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify packed Windows CLI lifecycle
+        run: pnpm test:windows-packed-cli
+
   verify:
     name: Verify
     if: always()
@@ -223,6 +272,8 @@ jobs:
       - vue-tests
       - svelte-tests
       - build-drift
+      - node22-public-consumer
+      - windows-packed-cli
     runs-on: ubuntu-latest
     steps:
       - name: Require every verification gate
@@ -233,7 +284,9 @@ jobs:
                 "${{ needs.node-tests.result }}" != "success" ||
                 "${{ needs.generator-tests.result }}" != "success" ||
                 "${{ needs.browser-adapter-tests.result }}" != "success" ||
-                "${{ needs.build-drift.result }}" != "success" ]]; then
+                "${{ needs.build-drift.result }}" != "success" ||
+                "${{ needs.node22-public-consumer.result }}" != "success" ||
+                "${{ needs.windows-packed-cli.result }}" != "success" ]]; then
             exit 1
           fi
 

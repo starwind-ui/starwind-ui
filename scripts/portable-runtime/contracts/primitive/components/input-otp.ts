@@ -165,6 +165,7 @@ export const inputOtpRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      stateModel: "value",
       callbackTiming: "before-state-commit",
       callbackProp: "onValueChange",
       cancelable: true,

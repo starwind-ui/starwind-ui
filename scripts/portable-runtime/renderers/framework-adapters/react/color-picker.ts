@@ -386,9 +386,6 @@ const ${rootExport} = React.forwardRef<React.ElementRef<"${root.defaultElement}"
       getColorDescription,
       onValueChange: (nextValue, details) => {
         onValueChangeRef.current?.(nextValue, details);
-        if (!details.isCanceled && !isValueControlledRef.current) {
-          setUncontrolledValue(() => nextValue);
-        }
       },
       onValueCommitted: (nextValue, details) => {
         onValueCommittedRef.current?.(nextValue, details);
@@ -406,6 +403,11 @@ const ${rootExport} = React.forwardRef<React.ElementRef<"${root.defaultElement}"
       },
     });
     instanceRef.current = instance;
+    const unsubscribeValueChange = instance.subscribe("valueChange", (details) => {
+      if (!isValueControlledRef.current) {
+        setUncontrolledValue(() => details.value);
+      }
+    });
     rootOwnershipPendingRef.current = false;
     instance.refresh();
     structuralFingerprintRef.current = colorPickerStructuralFingerprint(
@@ -415,6 +417,7 @@ const ${rootExport} = React.forwardRef<React.ElementRef<"${root.defaultElement}"
     );
 
     return () => {
+      unsubscribeValueChange();
       instance.destroy();
       if (instanceRef.current === instance) instanceRef.current = undefined;
     };

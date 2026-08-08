@@ -18,7 +18,6 @@ import {
   buildLayeredDocsMetadata,
   checkLayeredDocsMetadata,
   findPrimitiveReferenceDescriptionGaps,
-  formatPrimitiveStateControlSupport,
   generateLayeredDocsMetadata,
   getLayeredDocsCheckFailures,
   renderCanonicalLayeredDocsMetadata,
@@ -944,29 +943,97 @@ describe("generateLayeredDocsMetadata", () => {
       (part) => part.part === "root",
     );
     const checkedState = checkboxRoot?.stateModels.find((state) => state.name === "checked");
+    const defaultCheckedProp = checkboxRoot?.props.find((prop) => prop.name === "defaultChecked");
+    const checkedChangeProp = checkboxRoot?.props.find((prop) => prop.name === "onCheckedChange");
+    const checkedChangeEvent = checkboxRoot?.events.find((event) => event.name === "checkedChange");
     expect(checkboxRoot).toBeDefined();
     expect(checkedState).toBeDefined();
-    const checkedStateSupport = formatPrimitiveStateControlSupport(checkboxRoot!, checkedState!);
-
-    expect(checkedStateSupport).toContain("React supports controlled and default state");
-    expect(checkedStateSupport).toContain("Runtime/HTML reads initial state");
-    expect(checkedStateSupport).toContain("Astro adapters render initial/default state");
-    expect(checkedStateSupport).not.toContain("Astro: unsupported");
-    expect(checkedStateSupport).not.toContain("custom-event");
-    expect(checkedStateSupport).not.toContain("imperative");
+    expect(checkedState?.frameworkBehavior).toEqual([
+      {
+        target: "react",
+        label: "React",
+        summary:
+          "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+        apis: [
+          { kind: "controlled-prop", name: "checked" },
+          { kind: "default-prop", name: "defaultChecked" },
+          { kind: "callback", name: "onCheckedChange" },
+        ],
+      },
+      {
+        target: "astro",
+        label: "Astro",
+        summary:
+          "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+        apis: [
+          { kind: "initial-prop", name: "checked" },
+          { kind: "default-prop", name: "defaultChecked" },
+          { kind: "dom-event", name: "starwind:checked-change" },
+          { kind: "runtime-method", name: "setChecked" },
+        ],
+      },
+      {
+        target: "raw-html",
+        label: "Runtime / HTML",
+        summary:
+          "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+        apis: [
+          { kind: "initial-attribute", name: "data-default-checked" },
+          { kind: "dom-event", name: "starwind:checked-change" },
+          { kind: "runtime-method", name: "setChecked" },
+        ],
+      },
+    ]);
+    expect(defaultCheckedProp?.frameworkBehavior).toEqual(checkedState?.frameworkBehavior);
+    expect(checkedChangeProp?.frameworkBehavior).toEqual(checkedState?.frameworkBehavior);
+    expect(checkboxRoot?.props.some((prop) => prop.name === "defaultCheck")).toBe(false);
+    expect(checkbox?.docsReference.frameworkCoordination).toContain(
+      "share one semantic component API",
+    );
+    expect(checkedChangeEvent?.stateModel).toBe("checked");
+    expect(checkedChangeEvent?.cancellationSequence).toEqual([
+      { step: 1, action: "Check internal eligibility and intent." },
+      { step: 2, action: "Create one details object for the proposal." },
+      {
+        step: 3,
+        action:
+          "Call the Runtime callback with the details object when the controller exposes one.",
+      },
+      {
+        step: 4,
+        action:
+          "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+      },
+      {
+        step: 5,
+        action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+      },
+      { step: 6, action: "Apply the accepted state." },
+      { step: 7, action: "Notify Runtime subscribers and other accepted-only observers." },
+    ]);
+    for (const primitive of metadata.primitives) {
+      for (const event of primitive.events) {
+        if (event.cancelable) {
+          expect(event.cancellationSequence, `${primitive.id}.${event.name}`).toHaveLength(7);
+        } else {
+          expect(event.cancellationSequence, `${primitive.id}.${event.name}`).toBeUndefined();
+        }
+      }
+    }
 
     const menu = metadata.primitives.find((primitive) => primitive.id === "menu");
     const menuRoot = menu?.docsReference.apiReference.parts.find((part) => part.part === "root");
     const menuRadioValueState = menuRoot?.stateModels.find((state) => state.name === "radioValue");
     expect(menuRoot).toBeDefined();
     expect(menuRadioValueState).toBeDefined();
-    const menuRadioValueSupport = formatPrimitiveStateControlSupport(
-      menuRoot!,
-      menuRadioValueState!,
-      menu!.events,
-    );
-    expect(menuRadioValueSupport).toContain(
-      "Runtime/HTML reads initial state from data-value and emits starwind:value-change.",
+    expect(menuRadioValueState?.frameworkBehavior).toContainEqual(
+      expect.objectContaining({
+        target: "raw-html",
+        apis: expect.arrayContaining([
+          { kind: "initial-attribute", name: "data-value" },
+          { kind: "dom-event", name: "starwind:value-change" },
+        ]),
+      }),
     );
 
     const dropzone = metadata.primitives.find((primitive) => primitive.id === "dropzone");
@@ -976,15 +1043,88 @@ describe("generateLayeredDocsMetadata", () => {
     const uploadingState = dropzoneRoot?.stateModels.find((state) => state.name === "uploading");
     expect(dropzoneRoot).toBeDefined();
     expect(uploadingState).toBeDefined();
-    const uploadingStateSupport = formatPrimitiveStateControlSupport(
-      dropzoneRoot!,
-      uploadingState!,
-      dropzone!.events,
+    expect(uploadingState?.frameworkBehavior).toContainEqual(
+      expect.objectContaining({
+        target: "astro",
+        apis: expect.arrayContaining([
+          { kind: "initial-prop", name: "isUploading" },
+          { kind: "runtime-method", name: "setUploading" },
+        ]),
+      }),
     );
-    expect(uploadingStateSupport).toContain(
-      "Astro adapters render initial/default state and report changes through Runtime DOM events.",
+
+    const alertDialogRoot = metadata.primitives
+      .find((primitive) => primitive.id === "alert-dialog")
+      ?.docsReference.apiReference.parts.find((part) => part.part === "root");
+    const alertDialogOpen = alertDialogRoot?.stateModels.find((state) => state.name === "open");
+    expect(alertDialogRoot?.events.find((event) => event.name === "openChange")?.stateModel).toBe(
+      "open",
     );
-    expect(uploadingStateSupport).not.toContain("custom-event");
+    expect(
+      alertDialogRoot?.events.find((event) => event.name === "closeComplete")?.stateModel,
+    ).toBeUndefined();
+    expect(alertDialogOpen?.frameworkBehavior).toContainEqual({
+      target: "react",
+      label: "React",
+      summary:
+        "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+      apis: [
+        { kind: "controlled-prop", name: "open" },
+        { kind: "default-prop", name: "defaultOpen" },
+        { kind: "callback", name: "onOpenChange" },
+      ],
+    });
+    expect(alertDialogOpen?.frameworkBehavior.flatMap((entry) => entry.apis)).not.toContainEqual(
+      expect.objectContaining({ name: "onCloseComplete" }),
+    );
+
+    const sidebarProvider = metadata.primitives
+      .find((primitive) => primitive.id === "sidebar")
+      ?.docsReference.apiReference.parts.find((part) => part.part === "provider");
+    const sidebarOpen = sidebarProvider?.stateModels.find((state) => state.name === "open");
+    const sidebarMobileOpen = sidebarProvider?.stateModels.find(
+      (state) => state.name === "mobileOpen",
+    );
+    expect(sidebarOpen?.frameworkBehavior).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          target: "react",
+          apis: expect.arrayContaining([{ kind: "callback", name: "onOpenChange" }]),
+        }),
+        expect.objectContaining({
+          target: "astro",
+          apis: expect.arrayContaining([{ kind: "dom-event", name: "starwind:sidebar-change" }]),
+        }),
+      ]),
+    );
+    expect(sidebarMobileOpen?.frameworkBehavior).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          target: "react",
+          apis: expect.arrayContaining([{ kind: "callback", name: "onMobileOpenChange" }]),
+        }),
+        expect.objectContaining({
+          target: "astro",
+          apis: expect.arrayContaining([
+            { kind: "dom-event", name: "starwind:sidebar-mobile-change" },
+          ]),
+        }),
+      ]),
+    );
+    expect(sidebarOpen?.frameworkBehavior.flatMap((entry) => entry.apis)).not.toContainEqual(
+      expect.objectContaining({ name: "onMobileOpenChange" }),
+    );
+    expect(sidebarMobileOpen?.frameworkBehavior.flatMap((entry) => entry.apis)).not.toContainEqual(
+      expect.objectContaining({ name: "onOpenChange" }),
+    );
+
+    for (const state of [checkedState, alertDialogOpen, sidebarOpen, sidebarMobileOpen]) {
+      expect(state?.frameworkBehavior.map((entry) => entry.label)).toEqual([
+        "React",
+        "Astro",
+        "Runtime / HTML",
+      ]);
+    }
 
     const image = metadata.styledComponents.find((component) => component.id === "image");
     expect(image).toMatchObject({
@@ -3281,6 +3421,9 @@ describe("generateLayeredDocsMetadata", () => {
       ]);
       expect(selectPrimitiveSource).not.toContain('::example{id="positioned-select"}');
       expect(checkboxPrimitiveSource).not.toContain("## Demo");
+      expect(checkboxPrimitiveSource).toContain(
+        "Astro and React share one semantic component API.",
+      );
       const colorPicker = metadata.primitives.find((primitive) => primitive.id === "color-picker");
       expect(colorPicker?.cssVariables).toContainEqual({
         name: "--sw-color-picker-color",

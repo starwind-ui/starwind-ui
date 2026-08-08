@@ -120,15 +120,7 @@ describe("createRadioGroup", () => {
 
     radio.setChecked(false);
 
-    expect(checkedListener).toHaveBeenCalledOnce();
-    expect(checkedListener).toHaveBeenCalledWith(
-      expect.objectContaining({
-        checked: false,
-        isCanceled: true,
-        previousChecked: true,
-        reason: "imperative-action",
-      }),
-    );
+    expect(checkedListener).not.toHaveBeenCalled();
     expect(valueListener).not.toHaveBeenCalled();
     expect(group.getValue()).toBe("ssd");
     expect(root.getAttribute("data-value")).toBe("ssd");
@@ -143,13 +135,12 @@ describe("createRadioGroup", () => {
 
   it("handles canceled, accepted, and repeated imperative value changes", () => {
     const root = renderRadioGroup({ defaultValue: "ssd", name: "storage" });
-    const group = createRadioGroup(root);
     const [, hdd] = getRadios(root);
     let shouldCancel = true;
     const listener = vi.fn((_details) => {
       if (shouldCancel) _details.cancel();
     });
-    group.subscribe("valueChange", listener);
+    const group = createRadioGroup(root, { onValueChange: (_value, details) => listener(details) });
 
     group.setValue("hdd");
 
@@ -175,15 +166,16 @@ describe("createRadioGroup", () => {
   it("publishes group and child acceptance only after every veto owner accepts", () => {
     const root = renderRadioGroup({ defaultValue: "ssd", name: "storage" });
     const [, hdd] = getRadios(root);
-    const child = createRadio(hdd!);
-    const group = createRadioGroup(root);
     const observations: string[] = [];
+    const child = createRadio(hdd!);
+    hdd?.addEventListener("starwind:checked-change", () => observations.push("child-proposed"));
+    const group = createRadioGroup(root, {
+      onValueChange: () => observations.push("group-proposed"),
+    });
     child.subscribe("checkedChange", (details) => {
-      observations.push("child-proposed");
       details.onAccepted(() => observations.push("child-accepted"));
     });
     group.subscribe("valueChange", (details) => {
-      observations.push("group-proposed");
       details.onAccepted(() => observations.push("group-accepted"));
     });
 
@@ -231,13 +223,14 @@ describe("createRadioGroup", () => {
     const root = renderRadioGroup({ defaultValue: "ssd" });
     const [, hdd] = getRadios(root);
     const child = createRadio(hdd!);
-    const group = createRadioGroup(root);
     const error = new Error("group proposal failed");
     const childAccepted = vi.fn();
-    child.subscribe("checkedChange", (details) => details.onAccepted(childAccepted));
-    group.subscribe("valueChange", () => {
-      throw error;
+    const group = createRadioGroup(root, {
+      onValueChange() {
+        throw error;
+      },
     });
+    child.subscribe("checkedChange", (details) => details.onAccepted(childAccepted));
 
     expect(() => child.setChecked(true)).toThrow(error);
 
@@ -313,12 +306,15 @@ describe("createRadioGroup", () => {
     const root = renderRadioGroup({ defaultValue: "ssd", name: "storage" });
     const [ssd, hdd] = getRadios(root);
     const child = createRadio(hdd!);
-    const group = createRadioGroup(root);
     const accepted = vi.fn();
+    const group = createRadioGroup(root, {
+      onValueChange(_value, details) {
+        details.cancel();
+      },
+    });
     child.subscribe("checkedChange", (details) => details.onAccepted(accepted));
     group.subscribe("valueChange", (details) => {
       details.onAccepted(accepted);
-      details.cancel();
     });
 
     hdd?.click();

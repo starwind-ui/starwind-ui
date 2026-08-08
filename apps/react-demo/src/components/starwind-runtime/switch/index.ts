@@ -1,3 +1,5 @@
+"use client";
+
 import Switch from "./Switch";
 import { switchButton, switchLabel, switchToggle, switchWrapper } from "./variants";
 

@@ -1,3 +1,5 @@
+"use client";
+
 import ComboboxPrimitive from "@starwind-ui/react/combobox";
 import type * as React from "react";
 import { comboboxLabel } from "./variants";

@@ -313,6 +313,7 @@ class RadioGroupController implements RadioGroupInstance {
     const proposalErrors = this.notifySafely(details);
     if (details.isCanceled || proposalErrors.length > 0) {
       details.cancel();
+      this.rollbackMatchingValueProposal(proposalToken, nextValue, previousValue);
       this.render();
       if (proposalErrors.length > 0) throw proposalErrors[0];
       return;
@@ -555,6 +556,7 @@ class RadioGroupController implements RadioGroupInstance {
     if (details.isCanceled || proposalErrors.length > 0) {
       details.cancel();
       request.revisionSource?.cancel();
+      this.rollbackMatchingValueProposal(proposalToken, nextValue, previousValue);
       this.render();
       return {
         accepted: false,
@@ -600,7 +602,16 @@ class RadioGroupController implements RadioGroupInstance {
   }
 
   private completeAcceptance(details: RadioGroupValueChangeDetailsImpl): unknown[] {
-    const errors = details.accept();
+    const errors: unknown[] = [];
+    details.commit();
+    for (const subscriber of [...this.subscribers]) {
+      try {
+        subscriber(details);
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    errors.push(...details.accept());
     for (const subscriber of [...this.syncSubscribers]) {
       try {
         subscriber();
@@ -613,6 +624,17 @@ class RadioGroupController implements RadioGroupInstance {
 
   private wasValueProposalSuperseded(proposalToken: number, proposedValue: string): boolean {
     return this.transitionToken !== proposalToken && this.value !== proposedValue;
+  }
+
+  private rollbackMatchingValueProposal(
+    proposalToken: number,
+    proposedValue: string,
+    previousValue: RadioGroupValue,
+  ): void {
+    if (this.transitionToken === proposalToken || this.value !== proposedValue) return;
+
+    this.value = previousValue;
+    this.transitionToken += 1;
   }
 
   private bindFormReset(): void {
@@ -751,12 +773,11 @@ class RadioGroupController implements RadioGroupInstance {
 
   private notify(details: RadioGroupValueChangeDetails, source?: object): void {
     attachFormValueRevision(details, source ?? details.event);
+    this.onValueChange?.(details.value, details);
     const event = dispatchCustomEvent(this.root, "starwind:value-change", details, {
       cancelable: true,
     });
     if (event.defaultPrevented) details.cancel();
-    this.onValueChange?.(details.value, details);
-    this.subscribers.forEach((subscriber) => subscriber(details));
   }
 
   private notifySafely(details: RadioGroupValueChangeDetails, source?: object): unknown[] {
@@ -904,6 +925,7 @@ class RadioGroupValueChangeDetailsImpl implements RadioGroupValueChangeDetails {
   readonly value: string;
 
   private canceled = false;
+  private committed = false;
   private accepted = false;
   private readonly acceptedCallbacks = new Set<() => void>();
 
@@ -935,7 +957,7 @@ class RadioGroupValueChangeDetailsImpl implements RadioGroupValueChangeDetails {
   }
 
   cancel(): void {
-    if (this.accepted) return;
+    if (this.committed || this.accepted) return;
     this.canceled = true;
     this.acceptedCallbacks.clear();
   }
@@ -947,6 +969,10 @@ class RadioGroupValueChangeDetailsImpl implements RadioGroupValueChangeDetails {
       return;
     }
     this.acceptedCallbacks.add(callback);
+  }
+
+  commit(): void {
+    if (!this.canceled) this.committed = true;
   }
 
   accept(): unknown[] {

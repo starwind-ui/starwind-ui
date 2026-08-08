@@ -9,6 +9,12 @@ export type { CollapsibleTriggerProps } from "./CollapsibleTrigger.vue";
 
 const CollapsibleVariants = { collapsible, collapsibleContent, collapsibleTrigger };
 
+const CollapsibleParts = {
+  Root: Collapsible,
+  Content: CollapsibleContent,
+  Trigger: CollapsibleTrigger,
+};
+
 export { Collapsible, CollapsibleContent, CollapsibleTrigger, CollapsibleVariants };
 
-export default { Root: Collapsible, Content: CollapsibleContent, Trigger: CollapsibleTrigger };
+export default CollapsibleParts;

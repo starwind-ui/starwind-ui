@@ -1,3 +1,5 @@
+"use client";
+
 import TooltipPrimitive from "@starwind-ui/react/tooltip";
 import { IconCaretUpFilled as CaretUp } from "@tabler/icons-react";
 import type * as React from "react";

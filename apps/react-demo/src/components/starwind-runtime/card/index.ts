@@ -25,6 +25,16 @@ const CardVariants = {
   cardTitle,
 };
 
+const CardParts = {
+  Root: Card,
+  Header: CardHeader,
+  Footer: CardFooter,
+  Title: CardTitle,
+  Description: CardDescription,
+  Content: CardContent,
+  Action: CardAction,
+};
+
 export {
   Card,
   CardAction,
@@ -36,12 +46,4 @@ export {
   CardVariants,
 };
 
-export default {
-  Root: Card,
-  Header: CardHeader,
-  Footer: CardFooter,
-  Title: CardTitle,
-  Description: CardDescription,
-  Content: CardContent,
-  Action: CardAction,
-};
+export default CardParts;

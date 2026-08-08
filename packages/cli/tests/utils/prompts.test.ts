@@ -54,6 +54,26 @@ describe("prompts", () => {
       );
     });
 
+    it("sorts shuffled component choices case-insensitively", async () => {
+      mockMultiselect.mockResolvedValue([]);
+
+      await selectComponents([
+        { name: "zebra", version: "2.0.0", dependencies: [], type: "component" },
+        { name: "Alpha", version: "2.0.0", dependencies: [], type: "component" },
+        { name: "button", version: "2.0.0", dependencies: [], type: "component" },
+      ]);
+
+      expect(mockMultiselect).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: [
+            { label: "Alpha", value: "Alpha" },
+            { label: "button", value: "button" },
+            { label: "zebra", value: "zebra" },
+          ],
+        }),
+      );
+    });
+
     it("returns an empty array if user cancels", async () => {
       mockGetAllComponents.mockResolvedValue([
         { name: "button", version: "2.1.0", dependencies: [], type: "component" as const },

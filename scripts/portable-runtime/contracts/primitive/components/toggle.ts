@@ -68,11 +68,15 @@ export const toggleRuntimeAdapterContract = {
   events: [
     {
       name: "pressedChange",
+      stateModel: "pressed",
       callbackProp: "onPressedChange",
       detailsType: "TogglePressedChangeDetails",
       domEvent: "starwind:pressed-change",
       emitsFrom: "root",
       valueProperty: "pressed",
+      valueType: "boolean",
+      callbackTiming: "before-state-commit",
+      cancelable: true,
     },
   ],
   setters: [

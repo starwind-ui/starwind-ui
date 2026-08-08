@@ -43,10 +43,16 @@ export type StyledOutputForwardRef = {
   targetType: string;
 };
 
-export type StyledOutputDefaultExport = {
-  mode: "component" | "parts";
-  members: StyledOutputExportMember[];
-};
+export type StyledOutputDefaultExport =
+  | {
+      mode: "component";
+      members: StyledOutputExportMember[];
+    }
+  | {
+      identifier: string;
+      mode: "parts";
+      members: StyledOutputExportMember[];
+    };
 
 export type StyledOutputExportMember = {
   exportName: string;

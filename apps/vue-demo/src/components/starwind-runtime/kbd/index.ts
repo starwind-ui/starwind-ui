@@ -7,6 +7,8 @@ export type { KbdGroupProps } from "./KbdGroup.vue";
 
 const KbdVariants = { kbd, kbdGroup };
 
+const KbdParts = { Root: Kbd, Group: KbdGroup };
+
 export { Kbd, KbdGroup, KbdVariants };
 
-export default { Root: Kbd, Group: KbdGroup };
+export default KbdParts;

@@ -26,6 +26,17 @@ const ToastVariants = {
   toastViewport,
 };
 
+const ToastParts = {
+  Viewport: Toaster,
+  Template: ToastTemplate,
+  Item: ToastItem,
+  Content: ToastContent,
+  Title: ToastTitle,
+  Description: ToastDescription,
+  Action: ToastAction,
+  Close: ToastClose,
+};
+
 export {
   ToastAction,
   ToastClose,
@@ -38,13 +49,4 @@ export {
   ToastVariants,
 };
 
-export default {
-  Viewport: Toaster,
-  Template: ToastTemplate,
-  Item: ToastItem,
-  Content: ToastContent,
-  Title: ToastTitle,
-  Description: ToastDescription,
-  Action: ToastAction,
-  Close: ToastClose,
-};
+export default ToastParts;

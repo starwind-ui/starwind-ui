@@ -30,7 +30,7 @@ vi.mock("../../src/utils/package-manager.js", async (importOriginal) => {
 
   return {
     ...actual,
-    installDependencies: vi.fn(),
+    installDependenciesWithProgress: vi.fn(),
   };
 });
 
@@ -40,7 +40,7 @@ vi.mock("../../src/utils/sleep.js", () => ({
 
 import * as packageManager from "../../src/utils/package-manager.js";
 
-const mockInstallDependencies = vi.mocked(packageManager.installDependencies);
+const mockInstallDependencies = vi.mocked(packageManager.installDependenciesWithProgress);
 const mockConfirm = vi.mocked(clackPrompts.confirm);
 const mockLog = vi.mocked(clackPrompts.log);
 const runtimePackage = JSON.parse(

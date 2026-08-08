@@ -1,3 +1,5 @@
+"use client";
+
 import Form from "./Form";
 import FormErrorSummary from "./FormErrorSummary";
 import { form, formErrorSummary } from "./variants";
@@ -7,9 +9,11 @@ const FormVariants = {
   formErrorSummary,
 };
 
-export { Form, FormErrorSummary, FormVariants };
-
-export default {
+const FormParts = {
   ErrorSummary: FormErrorSummary,
   Root: Form,
 };
+
+export { Form, FormErrorSummary, FormVariants };
+
+export default FormParts;

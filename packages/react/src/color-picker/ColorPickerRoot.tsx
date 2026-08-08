@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import {
   type ColorPickerColor,
   type ColorPickerDirection,
@@ -299,9 +301,6 @@ const ColorPickerRoot = React.forwardRef<React.ElementRef<"div">, ColorPickerRoo
         getColorDescription,
         onValueChange: (nextValue, details) => {
           onValueChangeRef.current?.(nextValue, details);
-          if (!details.isCanceled && !isValueControlledRef.current) {
-            setUncontrolledValue(() => nextValue);
-          }
         },
         onValueCommitted: (nextValue, details) => {
           onValueCommittedRef.current?.(nextValue, details);
@@ -319,6 +318,11 @@ const ColorPickerRoot = React.forwardRef<React.ElementRef<"div">, ColorPickerRoo
         },
       });
       instanceRef.current = instance;
+      const unsubscribeValueChange = instance.subscribe("valueChange", (details) => {
+        if (!isValueControlledRef.current) {
+          setUncontrolledValue(() => details.value);
+        }
+      });
       rootOwnershipPendingRef.current = false;
       instance.refresh();
       structuralFingerprintRef.current = colorPickerStructuralFingerprint(
@@ -328,6 +332,7 @@ const ColorPickerRoot = React.forwardRef<React.ElementRef<"div">, ColorPickerRoo
       );
 
       return () => {
+        unsubscribeValueChange();
         instance.destroy();
         if (instanceRef.current === instance) instanceRef.current = undefined;
       };

@@ -436,8 +436,11 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(rootIndex).toContain("SelectOpenChangeDetails");
     expect(themeIndex).toContain("export { getThemeInitScript, initThemeController }");
     expect(themeIndex).toContain("ThemeInitScriptOptions");
+    expect(themeIndex).toContain("export function ThemeInitScript(");
+    expect(themeIndex).toContain("data-starwind-theme-init");
     expect(themeIndex).toContain('from "@starwind-ui/runtime/theme"');
 
+    expect(buttonRoot).toMatch(/^\/\*\*[\s\S]*?\*\/\s*"use client";/);
     expect(buttonRoot).toContain('import { createButton } from "@starwind-ui/runtime/button";');
     expect(buttonRoot).toContain(
       'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";',
@@ -523,12 +526,12 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       "...(openRef.current !== undefined ? { open: openRef.current } : {})",
     );
     expect(collapsibleRoot).toContain('instance.subscribe("openChange"');
-    expect(collapsibleRoot).toContain("onOpenChangeRef.current?.(details.open, details)");
-    expect(collapsibleRoot).toContain("if (details.isCanceled) return;");
-    expect(
-      collapsibleRoot.indexOf("onOpenChangeRef.current?.(details.open, details)"),
-    ).toBeLessThan(collapsibleRoot.indexOf("if (details.isCanceled) return;"));
-    expect(collapsibleRoot.indexOf("if (details.isCanceled) return;")).toBeLessThan(
+    expect(collapsibleRoot).toContain("onOpenChange: (open, details) => {");
+    expect(collapsibleRoot).toContain("onOpenChangeRef.current?.(open, details)");
+    expect(collapsibleRoot.indexOf("onOpenChangeRef.current?.(open, details)")).toBeLessThan(
+      collapsibleRoot.indexOf('instance.subscribe("openChange"'),
+    );
+    expect(collapsibleRoot.indexOf('instance.subscribe("openChange"')).toBeLessThan(
       collapsibleRoot.indexOf("setUncontrolledOpen(details.open)"),
     );
     expect(collapsibleRoot).toContain("const defaultOpenRef = React.useRef(defaultOpen)");
@@ -676,7 +679,8 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     );
     expect(drawerRoot).toContain("onCloseCompleteRef.current?.(details)");
     expect(drawerRoot).toContain("onOpenChange: (nextOpen, details) =>");
-    expect(drawerRoot).not.toContain('instance.subscribe("openChange"');
+    expect(drawerRoot).toContain('instance.subscribe("openChange"');
+    expect(drawerRoot).toContain("setUncontrolledOpen(details.open)");
     expect(drawerRoot).toContain("data-sw-drawer");
     expect(drawerTrigger).toContain("data-sw-drawer-trigger");
     expect(drawerTrigger).toContain("targetId?: string;");
@@ -806,7 +810,8 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(popoverRoot).toContain("onCloseCompleteRef.current?.(details)");
     expect(popoverRoot).toContain("onOpenChange: (nextOpen, details) =>");
     expect(popoverRoot).toContain("useIsomorphicLayoutEffect(() =>");
-    expect(popoverRoot).not.toContain('instance.subscribe("openChange"');
+    expect(popoverRoot).toContain('instance.subscribe("openChange"');
+    expect(popoverRoot).toContain("setUncontrolledOpen(details.open)");
     expect(popoverRoot).toContain("data-sw-popover");
     expect(popoverRoot).toContain("modal,");
     expect(popoverRoot).toContain("data-default-open");
@@ -920,7 +925,8 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     );
     expect(checkboxRoot).toContain("checkedRef.current !== undefined");
     expect(checkboxRoot).toContain("groupChecked !== undefined");
-    expect(checkboxRoot).toContain("onCheckedChangeRef.current?.(details.checked, details)");
+    expect(checkboxRoot).toContain("onCheckedChange: (checked, details) => {");
+    expect(checkboxRoot).toContain("onCheckedChangeRef.current?.(checked, details)");
     expect(checkboxRoot).toContain("if (details.isCanceled) return");
     expect(checkboxRoot).toContain("const resetSyncTimerRef = React.useRef");
     expect(checkboxRoot).toContain("syncUncontrolledAfterFormReset");
@@ -1024,9 +1030,9 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       "...(valueRef.current !== undefined ? { value: valueRef.current } : {})",
     );
     expect(checkboxGroupRoot).toContain("setUncontrolledValue(details.value)");
+    expect(checkboxGroupRoot).toContain("onValueChange: (details) => {");
     expect(checkboxGroupRoot).toContain("onValueChangeRef.current?.(details.value, details)");
-    expect(checkboxGroupRoot).toContain(`onValueChangeRef.current?.(details.value, details);
-        if (details.isCanceled) return;
+    expect(checkboxGroupRoot).toContain(`if (details.isCanceled) return;
 
         if (valueRef.current === undefined) {
           setUncontrolledValue(details.value);
@@ -1069,9 +1075,10 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(radioRoot).toContain("const radioGroup = useRadioGroupContext()");
     expect(radioRoot).toContain("const groupChecked =");
     expect(radioRoot).toContain("const effectiveDisabled =");
+    expect(radioRoot).toContain("onCheckedChange: (checked, details) => {");
+    expect(radioRoot).toContain("onCheckedChangeRef.current?.(checked, details)");
     expect(radioRoot).toContain(
-      `onCheckedChangeRef.current?.(details.checked, details);
-        details.onAccepted(() => {
+      `details.onAccepted(() => {
           if (checkedRef.current === undefined && radioGroup === undefined) {`,
     );
     expect(radioRoot).toContain('instance.subscribe("stateSync", () => {');
@@ -1113,9 +1120,10 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(radioGroupRoot).toContain("instance.setFormOptions({");
     expect(radioGroupRoot).toContain("instance.setOrientation(orientation)");
     expect(radioGroupRoot).toContain("instance.setReadOnly(readOnly)");
+    expect(radioGroupRoot).toContain("onValueChange: (value, details) => {");
+    expect(radioGroupRoot).toContain("onValueChangeRef.current?.(value, details)");
     expect(radioGroupRoot).toContain(
-      `onValueChangeRef.current?.(details.value, details);
-        details.onAccepted(() => {
+      `details.onAccepted(() => {
           if (valueRef.current === undefined) {`,
     );
     expect(radioGroupRoot).toContain("setUncontrolledValue(details.value)");
@@ -1745,12 +1753,17 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(comboboxRoot).toContain('root.addEventListener("starwind:set-value"');
     expect(comboboxRoot).toContain("const instance = ensureInstance();");
     expect(comboboxRoot).toContain('const nextValue = detail.value === "" ? null : detail.value;');
+    expect(comboboxRoot).toContain(
+      'const emit = typeof detail.emit === "boolean" ? detail.emit : undefined;',
+    );
+    expect(comboboxRoot).toContain("instance.setValue(nextValue, { emit });");
+    expect(comboboxRoot).toContain("if (emit !== false) return;");
     expect(comboboxRoot).toContain("event.stopImmediatePropagation();");
     expect(comboboxRoot).toContain("capture: true");
     expect(comboboxRoot).toContain("const nextRuntimeInputValue =");
     expect(comboboxRoot).toContain("findSelectedComboboxItemText(children, nextValue)");
     expect(comboboxRoot).toContain("instance.setInputValue(nextInputValue");
-    expect(comboboxRoot).toContain("instanceRef.current?.setInputValue(nextInputValue");
+    expect(comboboxRoot).toContain("instance.setInputValue(nextInputValue");
     expect(comboboxRoot).toContain("data-value={selectedValue ?? undefined}");
     expect(comboboxRoot).toContain("const defaultRuntimeInputValue =");
     expect(comboboxRoot).toContain("const defaultRuntimeFilterValue =");
@@ -1878,6 +1891,11 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(switchRoot).toContain("const renderedChecked = checked ?? uncontrolledChecked");
     expect(switchRoot).toContain("defaultValue={value}");
     expect(switchRoot).toContain("form={form}");
+    expect(switchRoot).toContain(
+      "const runtimeInputNameRef = React.useRef<string | undefined>(name)",
+    );
+    expect(switchRoot).toContain("new MutationObserver(syncRuntimeInputName)");
+    expect(switchRoot).toContain("inputElement.name = runtimeInputName");
     expect(switchRoot).toContain("name={name}");
     expect(switchRoot).toContain("required={required}");
     expect(switchRoot).toContain('"aria-readonly": readOnly ? "true" : undefined');
@@ -2016,7 +2034,7 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     );
     expect(toggleGroupRoot).toContain("if (details.isCanceled) return;");
     expect(toggleGroupRoot).toContain('instance.subscribe("valueChange"');
-    expect(toggleGroupRoot).toContain("onValueChangeRef.current?.(details.value, details)");
+    expect(toggleGroupRoot).toContain("onValueChangeRef.current?.(value, details)");
     expect(toggleGroupRoot).toContain("instance.setDisabled(disabled)");
     expect(toggleGroupRoot).toContain("instance.setLoopFocus(loopFocus)");
     expect(toggleGroupRoot).toContain("instance.setMultiple(multiple)");

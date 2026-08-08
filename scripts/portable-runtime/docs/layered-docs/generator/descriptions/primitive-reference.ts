@@ -1,5 +1,10 @@
 import { type RuntimeAdapterContract } from "../../../../contracts/primitive/types.js";
 import {
+  buildPrimitiveStateFrameworkBehavior,
+  cancelableEventSequence,
+  findPrimitivePropStateModel,
+} from "./framework-behavior.js";
+import {
   type PrimitiveDocsEnrichment,
   type PrimitiveEventMetadata,
   type PrimitivePartApiReferenceMetadata,
@@ -457,6 +462,7 @@ const toPrimitivePropReference = (
 ): PrimitivePropReferenceMetadata => {
   const description = partEnrichment?.props?.[prop.name] ?? enrichment.props?.[prop.name];
   const displayType = getPrimitivePropDisplayType(contract, prop);
+  const stateModel = findPrimitivePropStateModel(contract, prop.name);
 
   return {
     ...(prop.defaultValue !== undefined ? { defaultValue: prop.defaultValue } : {}),
@@ -469,6 +475,9 @@ const toPrimitivePropReference = (
     ...(displayType ? { displayType } : {}),
     description: description ?? getPrimitivePropFallbackDescription(contract, part, prop),
     descriptionSource: "authored",
+    ...(stateModel
+      ? { frameworkBehavior: buildPrimitiveStateFrameworkBehavior(contract, stateModel) }
+      : {}),
   };
 };
 
@@ -535,6 +544,7 @@ export const copyPrimitiveStateModel = (
     enrichment?.stateModels?.[stateModel.name] ??
     getPrimitiveStateFallbackDescription(contract, stateModel),
   descriptionSource: "authored",
+  frameworkBehavior: buildPrimitiveStateFrameworkBehavior(contract, stateModel),
 });
 
 const getPrimitiveStateFallbackDescription = (
@@ -585,11 +595,15 @@ export const toPrimitiveEventMetadata = (
   ...(event.detailsType ? { detailsType: event.detailsType } : {}),
   ...(event.domEvent ? { domEvent: event.domEvent } : {}),
   emitsFrom: event.emitsFrom,
+  ...(event.stateModel ? { stateModel: event.stateModel } : {}),
   ...(event.valueProperty ? { valueProperty: event.valueProperty } : {}),
   ...(event.valueType ? { valueType: event.valueType } : {}),
   description:
     enrichment?.events?.[event.name] ?? getPrimitiveEventFallbackDescription(contract, event),
   descriptionSource: "authored",
+  ...(event.cancelable
+    ? { cancellationSequence: cancelableEventSequence.map((step) => ({ ...step })) }
+    : {}),
 });
 
 const getPrimitiveEventFallbackDescription = (

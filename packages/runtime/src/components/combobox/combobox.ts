@@ -6,7 +6,10 @@ import {
   resolveAsChildControl,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { createCancelableDetails } from "../../internal/cancelable-details";
+import {
+  createCancelableDetails,
+  runCancelableDetailsTransaction,
+} from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import {
@@ -155,6 +158,7 @@ type ComboboxElements = {
 };
 
 type OpenRequest = {
+  forceApply?: boolean;
   event?: Event;
   reason: ComboboxOpenChangeReason;
   trigger?: Element;
@@ -162,8 +166,10 @@ type OpenRequest = {
 
 type ValueRequest = {
   event?: Event;
+  forceApply?: boolean;
   item?: HTMLElement;
   reason: ComboboxValueChangeReason;
+  syncInputValue?: boolean;
   value: string | null;
 };
 
@@ -174,6 +180,7 @@ type SetValueCommandDetail = {
 
 type InputValueRequest = {
   event?: Event;
+  forceApply?: boolean;
   inputValue: string;
   reason: ComboboxInputValueChangeReason;
 };
@@ -379,58 +386,53 @@ class ComboboxController implements ComboboxInstance {
   }
 
   setOpen(open: boolean, options: ComboboxSetOpenOptions = {}): void {
+    if (options.emit !== false) {
+      this.requestOpen(open, { forceApply: true, reason: "imperative-action" });
+      return;
+    }
+
     const previousOpen = this.openState;
     this.openState = open;
     this.applyOpenState(open, { reason: "imperative-action" });
-
-    if (options.emit !== false) {
-      this.notifyOpen(
-        createOpenChangeDetails({
-          open,
-          previousOpen,
-          reason: "imperative-action",
-        }),
-      );
-    }
   }
 
   setValue(value: string | null, options: ComboboxSetValueOptions = {}): void {
     const normalizedValue = normalizeValue(value) ?? null;
+    if (options.emit !== false) {
+      this.requestValue({
+        forceApply: true,
+        reason: "imperative-action",
+        syncInputValue: true,
+        value: normalizedValue,
+      });
+      return;
+    }
+
     const previousValue = this.valueState;
 
     this.valueState = normalizedValue;
     this.applyValueState(normalizedValue);
     this.syncInputValueFromValue(normalizedValue);
     this.markOpenCycleCommitted();
-
-    if (options.emit !== false) {
-      this.notifyValue(
-        createValueChangeDetails({
-          previousValue,
-          reason: "imperative-action",
-          value: normalizedValue,
-        }),
-      );
-    }
   }
 
   setInputValue(inputValue: string, options: ComboboxSetInputValueOptions = {}): void {
+    if (options.emit !== false) {
+      const accepted = this.requestInputValue({
+        forceApply: true,
+        inputValue,
+        reason: "imperative-action",
+      });
+      if (accepted && options.filter !== false) this.setFilterValue(inputValue);
+      return;
+    }
+
     const previousInputValue = this.inputValueState;
 
     this.inputValueState = inputValue;
     this.applyInputValueState(inputValue);
     if (options.filter !== false) {
       this.setFilterValue(inputValue);
-    }
-
-    if (options.emit !== false) {
-      this.notifyInputValue(
-        createInputValueChangeDetails({
-          inputValue,
-          previousInputValue,
-          reason: "imperative-action",
-        }),
-      );
     }
   }
 
@@ -817,12 +819,12 @@ class ComboboxController implements ComboboxInstance {
   }
 
   private requestOpen(open: boolean, request: OpenRequest): boolean {
-    if (open === this.openState && !this.controlledOpen) return false;
+    if (open === this.openState && !this.controlledOpen && !request.forceApply) return false;
 
     const previousOpen = this.openState;
     const result = runOverlayOpenChangeShell({
       root: this.root,
-      controlled: this.controlledOpen,
+      controlled: this.controlledOpen && !request.forceApply,
       createDetails: createOpenChangeDetails,
       open,
       previousOpen,
@@ -832,6 +834,11 @@ class ComboboxController implements ComboboxInstance {
         this.applyOpenState(open, request);
       },
       onNotifyOpenChangeSubscribers: (details) => this.notifyOpen(details),
+      onCanceledOpenChange: () => {
+        if (this.openState === open && previousOpen !== open) {
+          this.setOpen(previousOpen, { emit: false });
+        }
+      },
       onOpenChange: (nextOpen, details) => {
         this.onOpenChange?.(nextOpen, details);
       },
@@ -856,30 +863,38 @@ class ComboboxController implements ComboboxInstance {
     });
     attachFormValueRevision(details, request.event);
 
-    this.onValueChange?.(request.value, details);
-    const event = dispatchCustomEvent(this.root, "starwind:value-change", details, {
-      cancelable: true,
+    return runCancelableDetailsTransaction({
+      apply:
+        this.controlledValue && !request.forceApply
+          ? undefined
+          : () => {
+              this.valueState = request.value;
+              this.applyValueState(request.value);
+              if (request.syncInputValue) this.syncInputValueFromValue(request.value);
+            },
+      details,
+      eventType: "starwind:value-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.notifyValue(acceptedDetails);
+        this.markOpenCycleCommitted();
+      },
+      notifyCallback: (proposalDetails) => this.onValueChange?.(request.value, proposalDetails),
+      rollbackCanceled: () => {
+        if (this.valueState === request.value && details.previousValue !== request.value) {
+          this.setValue(details.previousValue, { emit: false });
+        }
+      },
+      target: this.root,
     });
-    if (event.defaultPrevented) details.cancel();
-    if (details.isCanceled) return false;
-
-    if (!this.controlledValue) {
-      this.valueState = request.value;
-      this.applyValueState(request.value);
-    }
-
-    this.notifyValue(details);
-    this.markOpenCycleCommitted();
-    return true;
   }
 
-  private requestInputValue(request: InputValueRequest): void {
+  private requestInputValue(request: InputValueRequest): boolean {
     if (this.readOnly) {
       this.elements.input.value = this.inputValueState;
-      return;
+      return false;
     }
 
-    if (request.inputValue === this.inputValueState && !this.controlledInputValue) return;
+    if (request.inputValue === this.inputValueState && !this.controlledInputValue) return false;
 
     const details = createInputValueChangeDetails({
       event: request.event,
@@ -889,21 +904,30 @@ class ComboboxController implements ComboboxInstance {
     });
     attachFormValueRevision(details, request.event);
 
-    this.onInputValueChange?.(request.inputValue, details);
-    const event = dispatchCustomEvent(this.root, "starwind:input-value-change", details, {
-      cancelable: true,
+    return runCancelableDetailsTransaction({
+      apply: () => {
+        if (!this.controlledInputValue || request.forceApply) {
+          this.inputValueState = request.inputValue;
+          this.applyInputValueState(request.inputValue);
+        } else {
+          this.elements.input.value = this.inputValueState;
+        }
+      },
+      details,
+      eventType: "starwind:input-value-change",
+      notifyAccepted: (acceptedDetails) => this.notifyInputValue(acceptedDetails),
+      notifyCallback: (proposalDetails) =>
+        this.onInputValueChange?.(request.inputValue, proposalDetails),
+      rollbackCanceled: () => {
+        if (
+          this.inputValueState === request.inputValue &&
+          details.previousInputValue !== request.inputValue
+        ) {
+          this.setInputValue(details.previousInputValue, { emit: false });
+        }
+      },
+      target: this.root,
     });
-    if (event.defaultPrevented) details.cancel();
-    if (details.isCanceled) return;
-
-    if (!this.controlledInputValue) {
-      this.inputValueState = request.inputValue;
-      this.applyInputValueState(request.inputValue);
-    } else {
-      this.elements.input.value = this.inputValueState;
-    }
-
-    this.notifyInputValue(details);
   }
 
   private applyOpenState(open: boolean, request?: OpenRequest): void {

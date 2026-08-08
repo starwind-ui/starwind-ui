@@ -134,6 +134,7 @@ type MenuSubmenuElements = {
 };
 
 type OpenRequest = {
+  forceApply?: boolean;
   event?: Event;
   focusItem?: MenuFocusTarget;
   reason: MenuOpenChangeReason;
@@ -283,6 +284,11 @@ class MenuController implements MenuInstance {
   }
 
   setOpen(open: boolean, options: MenuSetOpenOptions = {}): void {
+    if (options.emit !== false) {
+      this.requestOpen(open, { ...this.resolveSetOpenRequest(open, options), forceApply: true });
+      return;
+    }
+
     const previousOpen = this.openState;
     const request = this.resolveSetOpenRequest(open, options);
     this.openState = open;
@@ -299,18 +305,6 @@ class MenuController implements MenuInstance {
       this.queuePendingFocusItem();
     } else {
       this.pendingFocusItem = null;
-    }
-
-    if (options.emit !== false) {
-      this.notifyOpenChange(
-        createOpenChangeDetails({
-          event: request.event,
-          open,
-          previousOpen,
-          reason: request.reason,
-          trigger: request.trigger,
-        }),
-      );
     }
   }
 
@@ -578,7 +572,7 @@ class MenuController implements MenuInstance {
   }
 
   private requestOpen(open: boolean, request: OpenRequest): void {
-    if (open === this.openState && !this.controlled) {
+    if (open === this.openState && !this.controlled && !request.forceApply) {
       if (open && request.focusItem) {
         this.pendingFocusItem = request.focusItem;
         this.queuePendingFocusItem();
@@ -589,7 +583,7 @@ class MenuController implements MenuInstance {
     const previousOpen = this.openState;
     runOverlayOpenChangeShell({
       root: this.root,
-      controlled: this.controlled,
+      controlled: this.controlled && !request.forceApply,
       createDetails: createOpenChangeDetails,
       open,
       previousOpen,
@@ -612,6 +606,11 @@ class MenuController implements MenuInstance {
         this.openState = open;
         this.applyOpenState(open, request);
         this.completeOpenChangeApplication(open, request);
+      },
+      onCanceledOpenChange: () => {
+        if (this.openState === open && previousOpen !== open) {
+          this.setOpen(previousOpen, { emit: false, reason: request.reason });
+        }
       },
       onNotifyOpenChangeSubscribers: (details) => this.notifyOpenChange(details),
       onOpenChange: (nextOpen, details) => {

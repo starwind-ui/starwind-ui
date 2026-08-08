@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import DialogBackdrop from "./DialogBackdrop";
 import DialogClose from "./DialogClose";
 import DialogDescription from "./DialogDescription";

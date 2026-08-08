@@ -214,6 +214,7 @@ export const popoverRuntimeAdapterContract = {
   events: [
     {
       name: "openChange",
+      stateModel: "open",
       callbackTiming: "before-state-commit",
       cancelable: true,
       callbackProp: "onOpenChange",

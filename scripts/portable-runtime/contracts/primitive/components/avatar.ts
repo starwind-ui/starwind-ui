@@ -63,6 +63,7 @@ export const avatarRuntimeAdapterContract = {
   events: [
     {
       name: "loadingStatusChange",
+      stateModel: "imageLoadingStatus",
       callbackTiming: "after-state-commit",
       cancelable: false,
       callbackProp: "onLoadingStatusChange",

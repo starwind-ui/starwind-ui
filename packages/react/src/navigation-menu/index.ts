@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import NavigationMenuArrow from "./NavigationMenuArrow";
 import NavigationMenuContent from "./NavigationMenuContent";
 import NavigationMenuIcon from "./NavigationMenuIcon";

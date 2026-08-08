@@ -259,9 +259,11 @@ describe("createRadio", () => {
   it("publishes acceptance only after the Runtime transition commits", () => {
     const root = renderRadio();
     const observations: Array<[string, boolean]> = [];
-    const radio = createRadio(root);
+    const radio = createRadio(root, {
+      onCheckedChange: () => observations.push(["proposed", radio.getChecked()]),
+    });
     radio.subscribe("checkedChange", (details) => {
-      observations.push(["proposed", radio.getChecked()]);
+      observations.push(["subscriber", radio.getChecked()]);
       details.onAccepted(() => observations.push(["accepted", radio.getChecked()]));
     });
 
@@ -269,6 +271,7 @@ describe("createRadio", () => {
 
     expect(observations).toEqual([
       ["proposed", false],
+      ["subscriber", true],
       ["accepted", true],
     ]);
   });

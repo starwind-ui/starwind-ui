@@ -3,5 +3,15 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+import { getThemeInitScript, type ThemeInitScriptOptions } from "@starwind-ui/runtime/theme";
+import * as React from "react";
+
 export type { ThemeInitScriptOptions } from "@starwind-ui/runtime/theme";
 export { getThemeInitScript, initThemeController } from "@starwind-ui/runtime/theme";
+
+export function ThemeInitScript(options: ThemeInitScriptOptions = {}): React.ReactElement {
+  return React.createElement("script", {
+    "data-starwind-theme-init": "",
+    dangerouslySetInnerHTML: { __html: getThemeInitScript(options) },
+  });
+}

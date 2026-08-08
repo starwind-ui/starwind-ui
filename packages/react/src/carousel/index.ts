@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import CarouselContainer from "./CarouselContainer";
 import CarouselItem from "./CarouselItem";
 import CarouselNext from "./CarouselNext";
