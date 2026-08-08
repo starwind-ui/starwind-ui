@@ -1,5 +1,20 @@
 # starwind
 
+## 3.0.0-beta.8
+
+### Patch Changes
+
+- Complete CLI command lifecycles, alphabetize component lists, and detect supported host targets
+  during initialization. Configure React as an Astro secondary target and supply Vite React
+  JavaScript projects with TypeScript settings for generated TSX. Name generated Styled aggregate
+  default exports for clean framework tooling output.
+- Keep dependency installation under one progress renderer during project initialization.
+- Fix generated Astro and React styled Color Picker swatch normalization so public JavaScript and TypeScript consumers can use raw color values and labeled swatch descriptors without compile errors.
+- Initialize React Select state from silent programmatic value commands so Color Picker format controls show their configured format with selected-value styling before interaction. Synchronize the corrected Select Primitive source in the CLI registry.
+- Add framework-aware initialization for Vite React, Next.js App Router, and TanStack Start. Preserve React client boundaries and add server-rendered theme bootstrap support.
+- Support React Router framework mode and Next.js Pages Router initialization. Route Pages component styles through its global stylesheet so installed interactive components compile under Next.js.
+- Normalize cancelable Runtime state proposals so callbacks and DOM events share one details object before accepted state commits. Update React Primitive adapters to preserve pre-commit cancellation, accepted-only synchronization, Combobox command cancellation, and Switch native form association. Synchronize the affected vendored React Primitive sources in the CLI.
+
 ## 3.0.0-beta.7
 
 ### Patch Changes
