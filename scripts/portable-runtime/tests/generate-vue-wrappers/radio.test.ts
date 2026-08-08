@@ -62,10 +62,11 @@ describe("generated Vue Radio Primitive", () => {
     expect(() => assertVueSfcCompiles(first.root, "RadioRoot.vue")).not.toThrow();
     expect(() => assertVueSfcCompiles(first.indicator, "RadioIndicator.vue")).not.toThrow();
     expect(first.root).toContain("useRadioGroupContext()");
-    expect(first.root).toContain('createdInstance.subscribe("checkedChange", handleCheckedChange)');
+    expect(first.root).toContain("onCheckedChange: handleCheckedChange");
+    expect(first.root).not.toContain('createdInstance.subscribe("checkedChange"');
     expect(first.root).toContain('createdInstance.subscribe("stateSync", handleStateSync)');
     expect(first.root).toMatch(
-      /emit\("checkedChange", detail\.checked, detail\);[\s\S]*detail\.onAccepted\(\(\) => \{[\s\S]*emit\("update:checked", detail\.checked\);/,
+      /function handleCheckedChange\(_checked: boolean, detail: RadioCheckedChangeDetails\)[\s\S]*emit\("checkedChange", detail\.checked, detail\);[\s\S]*detail\.onAccepted\(\(\) => \{[\s\S]*emit\("update:checked", detail\.checked\);/,
     );
     expect(first.root).toContain("radioGroup ? radioGroup.value.value === props.value : undefined");
     expect(first.root).toContain("const isGroupOwned = radioGroup !== undefined");
