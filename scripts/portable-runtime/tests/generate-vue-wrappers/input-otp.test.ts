@@ -31,8 +31,17 @@ describe("generated Vue Input OTP", () => {
       expect(() => assertVueSfcCompiles(source, `${name}.vue`)).not.toThrow();
     }
     expect(first.root).toContain("defineModel<string>()");
+    expect(first.root).toContain("onValueChange: handleValueChangeProposal");
+    expect(first.root).toContain("function handleValueChangeProposal(");
+    expect(first.root).toContain('emit("valueChange", value, detail);');
     expect(first.root).toMatch(
-      /emit\("valueChange", detail\.value, detail\);[\s\S]*detail\.isCanceled[\s\S]*modelValue\.value = detail\.value/,
+      /function handleAcceptedValueChange\(detail: InputOtpValueChangeDetails\): void \{[\s\S]*modelValue\.value = detail\.value/,
+    );
+    expect(first.root).toContain(
+      'unsubscribeChange = instance.subscribe("valueChange", handleAcceptedValueChange)',
+    );
+    expect(first.root).not.toMatch(
+      /instance\.subscribe\("valueChange",[\s\S]*emit\("valueChange"/,
     );
     expect(first.root.match(/data-sw-input-otp-input/g)).toHaveLength(1);
     expect(first.root).toContain("v-once");

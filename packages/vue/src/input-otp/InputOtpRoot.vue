@@ -68,6 +68,16 @@ function destroyInstance(): void {
   instance = undefined;
 }
 
+function handleValueChangeProposal(value: string, detail: InputOtpValueChangeDetails): void {
+  emit("valueChange", value, detail);
+}
+
+function handleAcceptedValueChange(detail: InputOtpValueChangeDetails): void {
+  if (!controlled) uncontrolledValue.value = detail.value;
+  modelValue.value = detail.value;
+  if (controlled) void refreshAfterVueFlush();
+}
+
 function startInstance(value = renderedValue.value): void {
   if (!element.value) return;
   instance = createInputOtp(element.value, {
@@ -80,17 +90,11 @@ function startInstance(value = renderedValue.value): void {
     pattern: patternText.value,
     readOnly: props.readOnly,
     required: props.required,
+    onValueChange: handleValueChangeProposal,
     ...(controlled && modelValue.value !== undefined ? { value: modelValue.value } : {}),
   });
   slotElements = getOwnedSlotElements();
-  unsubscribeChange = instance.subscribe("valueChange", (detail) => {
-    emit("valueChange", detail.value, detail);
-    if (detail.isCanceled) return;
-
-    if (!controlled) uncontrolledValue.value = detail.value;
-    modelValue.value = detail.value;
-    if (controlled) void refreshAfterVueFlush();
-  });
+  unsubscribeChange = instance.subscribe("valueChange", handleAcceptedValueChange);
 }
 
 function getOwnedSlotElements(): HTMLElement[] {
