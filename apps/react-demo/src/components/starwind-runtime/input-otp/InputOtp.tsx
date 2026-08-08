@@ -1,3 +1,5 @@
+"use client";
+
 import InputOtpPrimitive from "@starwind-ui/react/input-otp";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";

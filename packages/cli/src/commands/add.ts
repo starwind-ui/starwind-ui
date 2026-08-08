@@ -2,6 +2,7 @@ import * as p from "@clack/prompts";
 
 import { getConfigState, type StarwindConfig, type StarwindFramework } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
+import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { detectPackageManager } from "@/utils/package-manager.js";
@@ -243,7 +244,9 @@ export async function add(components?: string[], options?: AddOptions) {
           process.exit(1);
         }
 
-        p.log.info(`Installing Pro registry components: ${registryComponents.join(", ")}`);
+        p.log.info(
+          `Installing Pro registry components: ${sortComponentNames(registryComponents).join(", ")}`,
+        );
         registryResults = await installProRegistryItems(registryComponents, {
           config: proInstallConfig,
           overwrite: options?.overwrite,
@@ -276,7 +279,7 @@ export async function add(components?: string[], options?: AddOptions) {
         // Warn about invalid components
         if (invalid.length > 0) {
           p.log.warn(
-            `${highlighter.warn("Invalid components found:")}\n${invalid
+            `${highlighter.warn("Invalid components found:")}\n${sortComponentNames(invalid)
               .map((name) => `  ${name}`)
               .join("\n")}`,
           );
@@ -389,6 +392,8 @@ export async function add(components?: string[], options?: AddOptions) {
             : registrySelection.source,
       });
 
+      if (runtimeResults.setupOutcome) return;
+
       for (const result of [
         ...runtimeResults.installed,
         ...runtimeResults.skipped,
@@ -405,7 +410,9 @@ export async function add(components?: string[], options?: AddOptions) {
 
     if (results.failed.length > 0) {
       p.log.error(
-        `${highlighter.error("Failed to install components:")}\n${results.failed
+        `${highlighter.error("Failed to install components:")}\n${sortComponentPresentation(
+          results.failed,
+        )
           .map((r) => `  ${r.name} - ${r.status === "failed" ? r.error : "Unknown error"}`)
           .join("\n")}`,
       );
@@ -413,7 +420,7 @@ export async function add(components?: string[], options?: AddOptions) {
 
     if (results.skipped.length > 0) {
       p.log.warn(
-        `${highlighter.warn("Skipped components:")}\n${results.skipped
+        `${highlighter.warn("Skipped components:")}\n${sortComponentPresentation(results.skipped)
           .map((r) =>
             r.error
               ? `  ${r.name} - ${r.error}`
@@ -426,7 +433,9 @@ export async function add(components?: string[], options?: AddOptions) {
     if (results.installed.length > 0) {
       p.log.success(
         `${highlighter.success("Successfully installed components:")}
-${results.installed.map((r) => `  ${r.name} v${r.version}`).join("\n")}`,
+${sortComponentPresentation(results.installed)
+  .map((r) => `  ${r.name} v${r.version}`)
+  .join("\n")}`,
       );
     }
 
@@ -435,7 +444,9 @@ ${results.installed.map((r) => `  ${r.name} v${r.version}`).join("\n")}`,
       if (registryResults.failed.length > 0) {
         p.log.error(
           `${highlighter.error("Failed to install Pro registry components:")}
-${registryResults.failed.map((result) => `  ${result.name} - ${result.error ?? "Unknown error"}`).join("\n")}`,
+${sortComponentPresentation(registryResults.failed)
+  .map((result) => `  ${result.name} - ${result.error ?? "Unknown error"}`)
+  .join("\n")}`,
         );
 
         if (hasProAuthorizationFailure(registryResults)) {
@@ -446,14 +457,18 @@ ${registryResults.failed.map((result) => `  ${result.name} - ${result.error ?? "
       if (registryResults.skipped.length > 0) {
         p.log.warn(
           `${highlighter.warn("Skipped Pro registry components:")}
-${registryResults.skipped.map((result) => `  ${result.name}`).join("\n")}`,
+${sortComponentPresentation(registryResults.skipped)
+  .map((result) => `  ${result.name}`)
+  .join("\n")}`,
         );
       }
 
       if (registryResults.installed.length > 0) {
         p.log.success(
           `${highlighter.success("Successfully installed Pro registry components:")}
-${registryResults.installed.map((result) => `  ${result.name}`).join("\n")}`,
+${sortComponentPresentation(registryResults.installed)
+  .map((result) => `  ${result.name}`)
+  .join("\n")}`,
         );
       }
     }

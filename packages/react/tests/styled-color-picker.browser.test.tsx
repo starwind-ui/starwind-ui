@@ -8,6 +8,12 @@ import ColorPicker from "../../../apps/react-demo/src/components/starwind-runtim
 import ColorPickerContent from "../../../apps/react-demo/src/components/starwind-runtime/color-picker/ColorPickerContent";
 import ColorPickerInput from "../../../apps/react-demo/src/components/starwind-runtime/color-picker/ColorPickerInput";
 import ColorPickerTrigger from "../../../apps/react-demo/src/components/starwind-runtime/color-picker/ColorPickerTrigger";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "../../../apps/react-demo/src/components/starwind-runtime/select";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -22,6 +28,73 @@ afterEach(async () => {
 });
 
 describe("React styled Color Picker root", () => {
+  it("shows each configured format in the nested Select before interaction", async () => {
+    const examples = [
+      { format: "hex", value: "#0ea5e9" },
+      { format: "rgb", value: "rgb(14, 165, 233)" },
+      { format: "hsl", value: "hsl(199.6 89.1% 48.4%)" },
+      { format: "hsb", value: "hsb(199.6 94% 91.4%)" },
+    ] as const;
+
+    await mount(
+      <>
+        {examples.map(({ format, value }) => (
+          <ColorPicker
+            id={`format-${format}`}
+            key={format}
+            inline
+            format={format}
+            defaultValue={value}
+          >
+            <ColorPickerInput />
+          </ColorPicker>
+        ))}
+      </>,
+    );
+
+    for (const { format } of examples) {
+      const formatValue = query<HTMLElement>(
+        `#format-${format} [data-slot="color-picker-format-control"] [data-slot="select-value"]`,
+      );
+      expect(formatValue).toHaveTextContent(format.toUpperCase());
+    }
+  });
+
+  it("uses selected-value styling for the initial nested format", async () => {
+    await mount(
+      <>
+        <ColorPicker id="styled-format" inline format="hex" defaultValue="#0ea5e9">
+          <ColorPickerInput />
+        </ColorPicker>
+        <Select defaultValue="hex">
+          <SelectTrigger aria-label="Reference format" />
+          <SelectContent>
+            <SelectItem value="hex">HEX</SelectItem>
+          </SelectContent>
+        </Select>
+      </>,
+    );
+
+    const colorPickerTrigger = query<HTMLElement>(
+      '#styled-format [data-slot="color-picker-format-control"] [data-slot="select-trigger"]',
+    );
+    const colorPickerValue = colorPickerTrigger.querySelector<HTMLElement>(
+      '[data-slot="select-value"]',
+    )!;
+    const referenceTrigger = query<HTMLElement>('[aria-label="Reference format"]');
+    const referenceValue = referenceTrigger.querySelector<HTMLElement>(
+      '[data-slot="select-value"]',
+    )!;
+
+    await vi.waitFor(() => {
+      expect(colorPickerValue).toHaveTextContent("HEX");
+      expect(referenceValue).toHaveTextContent("HEX");
+    });
+
+    expect(colorPickerTrigger).not.toHaveAttribute("data-placeholder");
+    expect(getComputedStyle(colorPickerValue).color).toBe(getComputedStyle(referenceValue).color);
+  });
+
   it("mounts and edits without creating a Popover controller or page error", async () => {
     const changed = vi.fn();
     const committed = vi.fn();

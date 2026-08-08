@@ -1190,7 +1190,7 @@ describe("Color Picker controller", () => {
     expect(picker.getValueAsString()).toBe("#ff0000");
   });
 
-  it("notifies DOM, callback, and subscribers in Slider order", () => {
+  it("notifies callbacks, DOM listeners, and accepted subscribers in transaction order", () => {
     const order: string[] = [];
     const root = render();
     root.addEventListener("starwind:value-change", () => order.push("change-dom"));
@@ -1210,8 +1210,8 @@ describe("Color Picker controller", () => {
     picker.setFormat("rgb");
 
     expect(order).toEqual([
-      "change-dom",
       "change-callback",
+      "change-dom",
       "change-subscriber",
       "commit-dom",
       "commit-callback",
@@ -1222,7 +1222,7 @@ describe("Color Picker controller", () => {
     ]);
   });
 
-  it("lets DOM listeners cancel atomically before callbacks and subscribers", () => {
+  it("lets DOM listeners cancel after callbacks and before accepted subscribers", () => {
     const root = render();
     const callback = vi.fn();
     const committed = vi.fn();
@@ -1237,8 +1237,24 @@ describe("Color Picker controller", () => {
     expect(picker.getValueAsString()).toBe("#ff0000");
     expect(channel(root, "hue").value).toBe("0");
     expect(callback.mock.calls[0]![1].isCanceled).toBe(true);
-    expect(subscriber.mock.calls[0]![0].isCanceled).toBe(true);
+    expect(subscriber).not.toHaveBeenCalled();
     expect(committed).not.toHaveBeenCalled();
+  });
+
+  it("locks accepted value details before subscribers run", () => {
+    const root = render();
+    const picker = createColorPicker(root, { defaultValue: "#ff0000" });
+    const observed: boolean[] = [];
+    picker.subscribe("valueChange", (details) => {
+      details.cancel();
+      observed.push(details.isCanceled);
+    });
+    picker.subscribe("valueChange", (details) => observed.push(details.isCanceled));
+
+    picker.setValue("#00ff00");
+
+    expect(picker.getValueAsString()).toBe("#00ff00");
+    expect(observed).toEqual([false, false]);
   });
 
   it("rolls back matching controlled synchronization when a later listener cancels", () => {
@@ -1252,7 +1268,7 @@ describe("Color Picker controller", () => {
       value: "hsb(0, 0%, 100%)",
       onValueChange: (value) => pointerPicker.setValue(value, { emit: false }),
     });
-    pointerPicker.subscribe("valueChange", (details) => details.cancel());
+    pointerRoot.addEventListener("starwind:value-change", (event) => event.preventDefault());
 
     pointerArea.dispatchEvent(pointer("pointerdown", { clientX: 50, clientY: 0, buttons: 1 }));
     pointerRoot.ownerDocument.dispatchEvent(
@@ -1272,7 +1288,7 @@ describe("Color Picker controller", () => {
       value: "#ff0000",
       onValueChange: (value) => nativePicker.setValue(value, { emit: false }),
     });
-    nativePicker.subscribe("valueChange", (details) => details.cancel());
+    nativeRoot.addEventListener("starwind:value-change", (event) => event.preventDefault());
 
     nativeHue.value = "120";
     nativeHue.dispatchEvent(new Event("input", { bubbles: true }));
@@ -1290,7 +1306,7 @@ describe("Color Picker controller", () => {
       value: "#ff0000",
       onValueChange: (value) => keyboardPicker.setValue(value, { emit: false }),
     });
-    keyboardPicker.subscribe("valueChange", (details) => details.cancel());
+    keyboardRoot.addEventListener("starwind:value-change", (event) => event.preventDefault());
 
     channel(keyboardRoot, "hue").dispatchEvent(key("ArrowRight"));
 

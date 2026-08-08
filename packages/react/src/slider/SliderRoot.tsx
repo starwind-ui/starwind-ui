@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import {
   createSlider,
   type SliderOrientation,
@@ -114,11 +116,13 @@ const SliderRoot = React.forwardRef<HTMLDivElement, SliderRootProps>(function Sl
       name: nameRef.current,
       orientation: orientationRef.current,
       step: stepRef.current,
+      onValueChange: (value, details) => {
+        onValueChangeRef.current?.(value, details);
+      },
       ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
     });
     instanceRef.current = instance;
     const unsubscribeChange = instance.subscribe("valueChange", (details) => {
-      onValueChangeRef.current?.(details.value, details);
       if (details.isCanceled) return;
 
       if (valueRef.current === undefined) {

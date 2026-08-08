@@ -1,3 +1,5 @@
+"use client";
+
 import InputOtpPrimitive from "@starwind-ui/react/input-otp";
 import { IconMinus as Minus } from "@tabler/icons-react";
 import type * as React from "react";

@@ -1,3 +1,5 @@
+"use client";
+
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";
 import "./styles.css";

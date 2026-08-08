@@ -1,3 +1,5 @@
+"use client";
+
 import InputPrimitive from "@starwind-ui/react/input";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";

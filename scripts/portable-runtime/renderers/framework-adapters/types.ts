@@ -2327,6 +2327,7 @@ export type AdapterHiddenInputVisualSlotFacts = {
     cancelable: true;
     detailsType: string;
     name: string;
+    runtimeEvent: string;
     valueProperty: string;
     valueType: string;
   };
@@ -3395,6 +3396,7 @@ export type AdapterGroupedValueControlFacts = {
   };
   behavior: {
     acceptedChangeNotification?: "detail-on-accepted";
+    callbackArguments: "details" | "value-details";
     canCancelChange: boolean;
     contextProvider: boolean;
     multipleValueNormalization: boolean;

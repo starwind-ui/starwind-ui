@@ -173,6 +173,7 @@ describe("GenericAdapterPlan output model printers", () => {
 
     const astroRoot = astroFiles.find((file) => file.path === "button/ButtonRoot.astro")?.contents;
     const reactRoot = reactFiles.find((file) => file.path === "button/ButtonRoot.tsx")?.contents;
+    const reactIndex = reactFiles.find((file) => file.path === "button/index.ts")?.contents;
 
     expect(astroRoot).toContain('interface Props extends HTMLAttributes<"button">');
     expect(astroRoot).toContain("focusableWhenDisabled?: boolean;");
@@ -198,6 +199,8 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactRoot).toContain(
       "export type ButtonRootProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {",
     );
+    expect(reactRoot).toMatch(/^"use client";\n\n/);
+    expect(reactIndex).toMatch(/^"use client";\n\n/);
     expect(reactRoot).toContain("focusableWhenDisabled?: boolean;");
     expect(reactRoot).toContain('type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];');
     expect(reactRoot).toContain("React.forwardRef<HTMLButtonElement, ButtonRootProps>");
@@ -373,9 +376,9 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactRoot).toContain("defaultOpen: uncontrolledOpenRef.current");
     expect(reactRoot).toContain("onCloseCompleteRef.current?.(details);");
     expect(reactRoot).toContain("onOpenChange: (nextOpen, details)");
-    expect(reactRoot).toContain("if (details.isCanceled) return;");
-    expect(reactRoot).toContain("setUncontrolledOpen(nextOpen);");
-    expect(reactRoot).not.toContain('instance.subscribe("openChange"');
+    expect(reactRoot).toContain("onOpenChangeRef.current?.(nextOpen, details);");
+    expect(reactRoot).toContain('instance.subscribe("openChange"');
+    expect(reactRoot).toContain("setUncontrolledOpen(details.open);");
     expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
     expect(reactRoot).toContain("}, [closeOnEscape, closeOnOutsideInteract, modal]);");
     expect(reactRoot).toContain('data-default-open={defaultOpenRef.current ? "true" : undefined}');
@@ -576,7 +579,8 @@ describe("GenericAdapterPlan output model printers", () => {
       expect(reactRoot).toContain("defaultOpen: uncontrolledOpenRef.current");
       expect(reactRoot).toContain("onCloseCompleteRef.current?.(details);");
       expect(reactRoot).toContain("onOpenChange: (nextOpen, details)");
-      expect(reactRoot).toContain("if (details.isCanceled) return;");
+      expect(reactRoot).toContain('instance.subscribe("openChange"');
+      expect(reactRoot).toContain("setUncontrolledOpen(details.open);");
       expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
       expect(reactRoot).toContain("}, [closeOnEscape, closeOnOutsideInteract, modal]);");
       expect(reactTrigger).toContain('type="button"');
@@ -861,8 +865,8 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactRoot).toContain("openOnHover,");
     expect(reactRoot).toContain("onCloseCompleteRef.current?.(details);");
     expect(reactRoot).toContain("onOpenChange: (nextOpen, details)");
-    expect(reactRoot).toContain("if (details.isCanceled) return;");
-    expect(reactRoot).toContain("setUncontrolledOpen(nextOpen);");
+    expect(reactRoot).toContain('instance.subscribe("openChange"');
+    expect(reactRoot).toContain("setUncontrolledOpen(details.open);");
     expect(reactRoot).toContain("instance.setOpen(open, { emit: false });");
     expect(reactRoot).toContain("}, [closeOnEscape, closeOnOutsideInteract, modal, openOnHover]);");
     expect(reactRoot).toContain('data-open-on-hover={openOnHover ? "true" : undefined}');
@@ -2540,7 +2544,7 @@ describe("GenericAdapterPlan output model printers", () => {
     );
     expect(reactRoot).toContain("const instance = createToggleGroup(root, {");
     expect(reactRoot).toContain('const unsubscribe = instance.subscribe("valueChange",');
-    expect(reactRoot).toContain("onValueChangeRef.current?.(details.value, details);");
+    expect(reactRoot).toContain("onValueChangeRef.current?.(value, details);");
     expect(reactRoot).toContain("setUncontrolledValue(details.value);");
     expect(reactRoot).toContain("instance.setDisabled(disabled);");
     expect(reactRoot).toContain("instance.setLoopFocus(loopFocus);");
@@ -2753,8 +2757,9 @@ describe("GenericAdapterPlan output model printers", () => {
       "const setUncontrolledValue = React.useCallback((nextValue: CheckboxGroupValue) => {",
     );
     expect(reactRoot).toContain("const instance = createCheckboxGroup(root, {");
-    expect(reactRoot).toContain('const unsubscribe = instance.subscribe("valueChange",');
+    expect(reactRoot).toContain("onValueChange: (details) => {");
     expect(reactRoot).toContain("onValueChangeRef.current?.(details.value, details);");
+    expect(reactRoot).toContain('const unsubscribe = instance.subscribe("valueChange",');
     expect(reactRoot).toContain("setUncontrolledValue(details.value);");
     expect(reactRoot).toContain("const observer = new MutationObserver(syncUncontrolledValue);");
     expect(reactRoot).toContain(
@@ -2994,7 +2999,7 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactRoot).toContain("const instance = createRadioGroup(root, {");
     expect(reactRoot).toContain('const unsubscribe = instance.subscribe("valueChange",');
     expect(reactRoot).toContain("setUncontrolledValue(details.value);");
-    expect(reactRoot).toContain("onValueChangeRef.current?.(details.value, details);");
+    expect(reactRoot).toContain("onValueChangeRef.current?.(value, details);");
     expect(reactRoot).toContain("instance.setDisabled(disabled);");
     expect(reactRoot).toContain("instance.setFormOptions({");
     expect(reactRoot).toContain("instance.setOrientation(orientation);");
@@ -3253,7 +3258,7 @@ describe("GenericAdapterPlan output model printers", () => {
     );
     expect(reactRoot).toContain("const instance = createCollapsible(root, {");
     expect(reactRoot).toContain('const unsubscribe = instance.subscribe("openChange",');
-    expect(reactRoot).toContain("onOpenChangeRef.current?.(details.open, details);");
+    expect(reactRoot).toContain("onOpenChangeRef.current?.(open, details);");
     expect(reactRoot).toContain("if (details.isCanceled) return;");
     expect(reactRoot).toContain("if (openRef.current === undefined) {");
     expect(reactRoot).toContain("setUncontrolledOpen(details.open);");
@@ -3657,6 +3662,11 @@ describe("GenericAdapterPlan output model printers", () => {
     expect(reactRoot).toContain('"data-filled": renderedChecked ? "" : undefined');
     expect(reactRoot).toContain("defaultChecked={defaultCheckedRef.current}");
     expect(reactRoot).toContain("id={getSwitchInputId(id, nativeButton)}");
+    expect(reactRoot).toContain(
+      "const runtimeInputNameRef = React.useRef<string | undefined>(name)",
+    );
+    expect(reactRoot).toContain("new MutationObserver(syncRuntimeInputName)");
+    expect(reactRoot).toContain("inputElement.name = runtimeInputName");
     expect(reactThumb).toContain(
       "return <span data-sw-switch-thumb ref={forwardedRef} {...props} />;",
     );

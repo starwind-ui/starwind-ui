@@ -1,3 +1,5 @@
+"use client";
+
 import CheckboxGroupPrimitive from "@starwind-ui/react/checkbox-group";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";

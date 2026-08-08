@@ -7,6 +7,8 @@ export type { FormErrorSummaryProps } from "./FormErrorSummary.vue";
 
 const FormVariants = { form, formErrorSummary };
 
+const FormParts = { ErrorSummary: FormErrorSummary, Root: Form };
+
 export { Form, FormErrorSummary, FormVariants };
 
-export default { ErrorSummary: FormErrorSummary, Root: Form };
+export default FormParts;

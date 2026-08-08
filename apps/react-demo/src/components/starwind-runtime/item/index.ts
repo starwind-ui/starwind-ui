@@ -34,6 +34,19 @@ const ItemVariants = {
   itemTitle,
 };
 
+const ItemParts = {
+  Root: Item,
+  Actions: ItemActions,
+  Content: ItemContent,
+  Description: ItemDescription,
+  Footer: ItemFooter,
+  Group: ItemGroup,
+  Header: ItemHeader,
+  Media: ItemMedia,
+  Separator: ItemSeparator,
+  Title: ItemTitle,
+};
+
 export {
   Item,
   ItemActions,
@@ -48,15 +61,4 @@ export {
   ItemVariants,
 };
 
-export default {
-  Root: Item,
-  Actions: ItemActions,
-  Content: ItemContent,
-  Description: ItemDescription,
-  Footer: ItemFooter,
-  Group: ItemGroup,
-  Header: ItemHeader,
-  Media: ItemMedia,
-  Separator: ItemSeparator,
-  Title: ItemTitle,
-};
+export default ItemParts;

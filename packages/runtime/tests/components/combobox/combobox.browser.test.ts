@@ -1361,6 +1361,21 @@ describe("createCombobox", () => {
     expect(getComboboxInput(controlledRoot).value).toBe("Owned text");
   });
 
+  it("applies accepted emitting value setters in controlled mode", () => {
+    const root = renderCombobox({ defaultValue: "banana" });
+    const combobox = createCombobox(root, {
+      inputValue: "Owned text",
+      value: "banana",
+    });
+
+    combobox.setValue("apricot");
+    combobox.setInputValue("New owned text");
+
+    expect(combobox.getValue()).toBe("apricot");
+    expect(combobox.getInputValue()).toBe("New owned text");
+    expect(getComboboxInput(root).value).toBe("New owned text");
+  });
+
   it("restores selected item text after Escape dismisses an uncommitted input value", async () => {
     const root = renderCombobox({ defaultValue: "banana", name: "fruit" });
     const combobox = createCombobox(root);
@@ -1560,7 +1575,7 @@ describe("createCombobox", () => {
         value: "apricot",
       }),
     );
-    expect(domValueListener).not.toHaveBeenCalled();
+    expect(domValueListener).toHaveBeenCalledTimes(1);
 
     root.dispatchEvent(
       new CustomEvent("starwind:set-value", {
@@ -1570,7 +1585,7 @@ describe("createCombobox", () => {
 
     expect(combobox.getValue()).toBe("apple");
     expect(valueSubscriber).toHaveBeenCalledTimes(1);
-    expect(domValueListener).not.toHaveBeenCalled();
+    expect(domValueListener).toHaveBeenCalledTimes(1);
   });
 
   it("removes the root-scoped value command listener when destroyed", () => {

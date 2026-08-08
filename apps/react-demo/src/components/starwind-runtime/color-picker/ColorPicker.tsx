@@ -1,3 +1,5 @@
+"use client";
+
 import ColorPickerPrimitive from "@starwind-ui/react/color-picker";
 import * as React from "react";
 import type { VariantProps } from "tailwind-variants";

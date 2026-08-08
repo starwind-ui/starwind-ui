@@ -1,7 +1,7 @@
 import {
   type CancelableDetails,
   createCancelableDetails,
-  dispatchCancelableDetailsEvent,
+  runCancelableDetailsTransaction,
 } from "./cancelable-details";
 
 export type OverlayOpenChangeRequest<TReason extends string, TTrigger = Element> = {
@@ -52,6 +52,9 @@ export type OverlayOpenChangeShellOptions<
     previousOpen: boolean;
     request: TRequest;
   }) => boolean | void;
+  onCanceledOpenChange?: (
+    context: OverlayOpenChangeShellContext<TReason, TRequest, TDetails>,
+  ) => void;
   onNotifyOpenChangeSubscribers?: (details: TDetails) => void;
   onOpenChange?: (open: boolean, details: TDetails) => void;
   open: boolean;
@@ -96,24 +99,25 @@ export function runOverlayOpenChangeShell<
     request: options.request,
   };
 
-  options.onOpenChange?.(options.open, details);
-  dispatchCancelableDetailsEvent(
-    options.root,
-    options.eventType ?? "starwind:open-change",
+  const applied = runCancelableDetailsTransaction({
+    apply: () => {
+      if (options.controlled) {
+        options.onApplyControlledOpenState?.(context);
+      } else {
+        options.onApplyUncontrolledOpenState?.(context);
+      }
+    },
     details,
-  );
+    eventType: options.eventType ?? "starwind:open-change",
+    notifyAccepted: options.onNotifyOpenChangeSubscribers,
+    notifyCallback: (proposalDetails) => options.onOpenChange?.(options.open, proposalDetails),
+    rollbackCanceled: () => options.onCanceledOpenChange?.(context),
+    target: options.root,
+  });
 
-  if (details.isCanceled) {
+  if (!applied) {
     return { status: "canceled", details };
   }
-
-  if (options.controlled) {
-    options.onApplyControlledOpenState?.(context);
-  } else {
-    options.onApplyUncontrolledOpenState?.(context);
-  }
-
-  options.onNotifyOpenChangeSubscribers?.(details);
 
   return { status: "applied", details };
 }

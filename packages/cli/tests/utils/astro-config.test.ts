@@ -2,7 +2,11 @@ import * as p from "@clack/prompts";
 import fs from "fs-extra";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { setupAstroConfig } from "../../src/utils/astro-config.js";
+import {
+  inspectAstroReactConfig,
+  setupAstroConfig,
+  setupAstroReactConfig,
+} from "../../src/utils/astro-config.js";
 import * as fsUtils from "../../src/utils/fs.js";
 
 // Mock dependencies
@@ -609,6 +613,79 @@ describe("astro-config", () => {
           "utf-8",
         );
       });
+    });
+  });
+
+  describe("Astro React integration", () => {
+    it("adds one collision-safe import and one integration while preserving comments", async () => {
+      mockFileExists.mockResolvedValueOnce(true).mockResolvedValue(false);
+      mockReadFile.mockResolvedValue(
+        `import react from "./local-react.js";\nimport { defineConfig } from "astro/config";\n\nexport default defineConfig({\n  // keep this adapter note\n  integrations: [],\n});\n` as any,
+      );
+
+      expect(await setupAstroReactConfig()).toBe(true);
+
+      const written = mockWriteFile.mock.calls[0]?.[1] as string;
+      expect(written).toContain('import astroReact from "@astrojs/react";');
+      expect(written).toContain("// keep this adapter note");
+      expect(written).toContain("integrations: [astroReact()]");
+      expect(written.match(/@astrojs\/react/g)).toHaveLength(1);
+      expect(written.match(/astroReact\(\)/g)).toHaveLength(1);
+    });
+
+    it("recognizes an aliased configured integration with options and comments", () => {
+      expect(
+        inspectAstroReactConfig(
+          `import renderer from "@astrojs/react";\nexport default defineConfig({ integrations: [\n // React files\n renderer({ include: ["src/react/**"] }),\n] });`,
+        ),
+      ).toEqual({ status: "ready" });
+    });
+
+    it("leaves an existing aliased integration unchanged", async () => {
+      mockFileExists.mockResolvedValueOnce(true).mockResolvedValue(false);
+      mockReadFile.mockResolvedValue(
+        `import renderer from "@astrojs/react";\nexport default defineConfig({ integrations: [renderer({ include: ["src/react/**"] })] });` as any,
+      );
+
+      expect(await setupAstroReactConfig()).toBe(true);
+      expect(mockWriteFile).not.toHaveBeenCalled();
+    });
+
+    it("requires manual action for a computed integrations value", () => {
+      expect(
+        inspectAstroReactConfig(
+          `import { defineConfig } from "astro/config";\nconst integrations = getIntegrations();\nexport default defineConfig({ integrations });`,
+        ),
+      ).toEqual(
+        expect.objectContaining({
+          status: "manual-action-required",
+          guidance: expect.stringContaining("integrations"),
+        }),
+      );
+    });
+
+    it.each([
+      `export default defineConfig({ ...sharedConfig });`,
+      `export default defineConfig({ ["integrations"]: [] });`,
+      `const integrationKey = "integrations"; export default defineConfig({ [integrationKey]: [] });`,
+      `export default defineConfig({ "integrations": [] });`,
+      `export default defineConfig({ vite: { assetsInclude: [/\\.wasm$/] } });`,
+    ])("requires manual action when safe mutation offsets cannot be proven", (content) => {
+      expect(inspectAstroReactConfig(content)).toEqual(
+        expect.objectContaining({
+          status: "manual-action-required",
+          guidance: expect.stringContaining("manually"),
+        }),
+      );
+    });
+
+    it.each([
+      `import react from "@astrojs/react";\nexport default defineConfig({ integrations: [[react()]] });`,
+      `import react from "@astrojs/react";\nexport default defineConfig({ integrations: [enabled && react()] });`,
+      `import react from "@astrojs/react";\nexport default defineConfig({ integrations: ["react()"] });`,
+      `import react from "@astrojs/react";\nreact();\nexport default defineConfig({ integrations: [] });`,
+    ])("does not treat indirect or unrelated React calls as ready", (content) => {
+      expect(inspectAstroReactConfig(content)).toEqual({ status: "configurable" });
     });
   });
 });

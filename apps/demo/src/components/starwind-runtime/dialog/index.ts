@@ -26,6 +26,17 @@ const DialogVariants = {
   dialogTitle,
 };
 
+const DialogParts = {
+  Root: Dialog,
+  Trigger: DialogTrigger,
+  Content: DialogContent,
+  Header: DialogHeader,
+  Footer: DialogFooter,
+  Title: DialogTitle,
+  Description: DialogDescription,
+  Close: DialogClose,
+};
+
 export {
   Dialog,
   DialogClose,
@@ -38,13 +49,4 @@ export {
   DialogVariants,
 };
 
-export default {
-  Root: Dialog,
-  Trigger: DialogTrigger,
-  Content: DialogContent,
-  Header: DialogHeader,
-  Footer: DialogFooter,
-  Title: DialogTitle,
-  Description: DialogDescription,
-  Close: DialogClose,
-};
+export default DialogParts;

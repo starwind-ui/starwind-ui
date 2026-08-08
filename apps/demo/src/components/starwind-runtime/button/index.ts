@@ -5,8 +5,10 @@ const ButtonVariants = {
   button,
 };
 
-export { Button, ButtonVariants };
-
-export default {
+const ButtonParts = {
   Root: Button,
 };
+
+export { Button, ButtonVariants };
+
+export default ButtonParts;

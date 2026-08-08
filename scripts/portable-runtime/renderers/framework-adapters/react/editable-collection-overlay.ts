@@ -250,9 +250,9 @@ ${openEffect}`,
         if (!instance) return;
 
         const nextValue = detail.value === "" ? null : detail.value;
-        instance.${facts.setters.value.method}(nextValue, {
-          emit: typeof detail.emit === "boolean" ? detail.emit : undefined,
-        });
+        const emit = typeof detail.emit === "boolean" ? detail.emit : undefined;
+        instance.${facts.setters.value.method}(nextValue, { emit });
+        if (emit !== false) return;
 
         if (${props.value.name}Ref.current === undefined) {
           setUncontrolledValue(nextValue);
@@ -330,6 +330,121 @@ ${openEffect}`,
     `          ${facts.attrs.required}={${props.required.name} ? "" : undefined}
           data-value={selectedValue ?? undefined}
           data-state={renderedOpen ? "open" : "closed"}`,
+  );
+
+  const inputValueEvent = facts.events.inputValueChange;
+  const openEvent = facts.events.openChange;
+  const valueEvent = facts.events.valueChange;
+  output = output.replace(
+    `        ${inputValueEvent.callbackProp}: (nextInputValue, details) => {
+          ${inputValueEvent.callbackProp}Ref.current?.(nextInputValue, details);
+          if (details.isCanceled) return;
+
+          if (${props.inputValue.name}Ref.current === undefined) {
+            setUncontrolledInputValue(nextInputValue);
+          }
+        },`,
+    `        ${inputValueEvent.callbackProp}: (nextInputValue, details) => {
+          ${inputValueEvent.callbackProp}Ref.current?.(nextInputValue, details);
+        },`,
+  );
+  output = output.replace(
+    `        ${openEvent.callbackProp}: (nextOpen, details) => {
+          ${openEvent.callbackProp}Ref.current?.(nextOpen, details);
+          if (details.isCanceled) return;
+
+          if (${props.open.name}Ref.current === undefined) {
+            setUncontrolledOpen(nextOpen);
+          }
+        },`,
+    `        ${openEvent.callbackProp}: (nextOpen, details) => {
+          ${openEvent.callbackProp}Ref.current?.(nextOpen, details);
+        },`,
+  );
+  output = output.replace(
+    `        ${valueEvent.callbackProp}: (nextValue, details) => {
+          ${valueEvent.callbackProp}Ref.current?.(nextValue, details);
+          if (details.isCanceled) return;
+
+          const nextRuntimeInputValue =
+            ${props.inputValue.name}Ref.current === undefined ? instanceRef.current?.${facts.states.inputValue.getter}() : undefined;
+          const nextSelectedInputValue =
+            getTextFromComboboxItem(details.item) ??
+            (nextValue === null ? null : findSelectedComboboxItemText(children, nextValue)) ??
+            nextRuntimeInputValue ??
+            null;
+          if (nextSelectedInputValue !== null || nextValue === null) {
+            setSelectedInputValue({
+              inputValue: nextSelectedInputValue && nextSelectedInputValue.length > 0 ? nextSelectedInputValue : null,
+              value: nextValue,
+            });
+          }
+
+          if (${props.inputValue.name}Ref.current === undefined) {
+            const nextInputValue = nextValue === null ? "" : (nextSelectedInputValue ?? nextRuntimeInputValue ?? "");
+            if (nextRuntimeInputValue !== nextInputValue) {
+              instanceRef.current?.${facts.setters.inputValue.method}(nextInputValue, {
+                emit: false,
+                filter: false,
+              });
+            }
+            setUncontrolledInputValue(nextInputValue);
+          }
+
+          if (${props.value.name}Ref.current === undefined) {
+            setUncontrolledValue(nextValue);
+          }
+        },`,
+    `        ${valueEvent.callbackProp}: (nextValue, details) => {
+          ${valueEvent.callbackProp}Ref.current?.(nextValue, details);
+        },`,
+  );
+  output = output.replace(
+    `      instanceRef.current = instance;
+      return instance;`,
+    `      instanceRef.current = instance;
+      instance.subscribe("${inputValueEvent.name}", (details) => {
+        if (${props.inputValue.name}Ref.current === undefined) {
+          setUncontrolledInputValue(details.${inputValueEvent.valueProperty});
+        }
+      });
+      instance.subscribe("${openEvent.name}", (details) => {
+        if (${props.open.name}Ref.current === undefined) {
+          setUncontrolledOpen(details.${openEvent.valueProperty});
+        }
+      });
+      instance.subscribe("${valueEvent.name}", (details) => {
+        const nextValue = details.${valueEvent.valueProperty};
+        const nextRuntimeInputValue =
+          ${props.inputValue.name}Ref.current === undefined ? instance.${facts.states.inputValue.getter}() : undefined;
+        const nextSelectedInputValue =
+          getTextFromComboboxItem(details.item) ??
+          (nextValue === null ? null : findSelectedComboboxItemText(children, nextValue)) ??
+          nextRuntimeInputValue ??
+          null;
+        if (nextSelectedInputValue !== null || nextValue === null) {
+          setSelectedInputValue({
+            inputValue: nextSelectedInputValue && nextSelectedInputValue.length > 0 ? nextSelectedInputValue : null,
+            value: nextValue,
+          });
+        }
+
+        if (${props.inputValue.name}Ref.current === undefined) {
+          const nextInputValue = nextValue === null ? "" : (nextSelectedInputValue ?? nextRuntimeInputValue ?? "");
+          if (nextRuntimeInputValue !== nextInputValue) {
+            instance.${facts.setters.inputValue.method}(nextInputValue, {
+              emit: false,
+              filter: false,
+            });
+          }
+          setUncontrolledInputValue(nextInputValue);
+        }
+
+        if (${props.value.name}Ref.current === undefined) {
+          setUncontrolledValue(nextValue);
+        }
+      });
+      return instance;`,
   );
 
   return output;

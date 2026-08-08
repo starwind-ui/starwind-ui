@@ -4,7 +4,7 @@ import {
   readBooleanAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { dispatchCustomEvent } from "../../internal/events";
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
@@ -191,19 +191,25 @@ class CheckboxController implements CheckboxInstance {
 
   setChecked(checked: boolean, options: CheckboxSetCheckedOptions = {}): void {
     const previousChecked = this.checkedState;
-    this.checkedState = checked;
-    this.indeterminateState = false;
-    this.render();
-
-    if (options.emit !== false) {
-      this.notify(
-        new CheckboxCheckedChangeDetailsImpl({
-          checked,
-          previousChecked,
-          reason: "imperative-action",
-        }),
-      );
+    if (options.emit === false) {
+      this.checkedState = checked;
+      this.indeterminateState = false;
+      this.render();
+      return;
     }
+
+    this.runCheckedChange(
+      new CheckboxCheckedChangeDetailsImpl({
+        checked,
+        previousChecked,
+        reason: "imperative-action",
+      }),
+      () => {
+        this.checkedState = checked;
+        this.indeterminateState = false;
+        this.render();
+      },
+    );
   }
 
   setDisabled(disabled: boolean): void {
@@ -242,18 +248,23 @@ class CheckboxController implements CheckboxInstance {
 
   setIndeterminate(indeterminate: boolean, options: CheckboxSetCheckedOptions = {}): void {
     const previousChecked = this.checkedState;
-    this.indeterminateState = indeterminate;
-    this.render();
-
-    if (options.emit !== false) {
-      this.notify(
-        new CheckboxCheckedChangeDetailsImpl({
-          checked: this.checkedState,
-          previousChecked,
-          reason: "imperative-action",
-        }),
-      );
+    if (options.emit === false) {
+      this.indeterminateState = indeterminate;
+      this.render();
+      return;
     }
+
+    this.runCheckedChange(
+      new CheckboxCheckedChangeDetailsImpl({
+        checked: this.checkedState,
+        previousChecked,
+        reason: "imperative-action",
+      }),
+      () => {
+        this.indeterminateState = indeterminate;
+        this.render();
+      },
+    );
   }
 
   subscribe(
@@ -446,15 +457,16 @@ class CheckboxController implements CheckboxInstance {
       trigger: request.trigger,
     });
 
-    this.notify(details);
-    if (details.isCanceled || this.controlled) {
+    const applied = this.runCheckedChange(details, () => {
+      if (!this.controlled) {
+        this.checkedState = checked;
+        this.indeterminateState = false;
+      }
       this.render();
-      return;
+    });
+    if (!applied) {
+      this.render();
     }
-
-    this.checkedState = checked;
-    this.indeterminateState = false;
-    this.render();
   }
 
   private readonly handleRootClick = (event: MouseEvent): void => {
@@ -579,14 +591,24 @@ class CheckboxController implements CheckboxInstance {
     form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true }));
   }
 
-  private notify(details: CheckboxCheckedChangeDetails): void {
+  private runCheckedChange(details: CheckboxCheckedChangeDetails, apply: () => void): boolean {
     attachFormValueRevision(details, details.event);
-    const event = dispatchCustomEvent(this.root, "starwind:checked-change", details, {
-      cancelable: true,
+    return runCancelableDetailsTransaction({
+      apply,
+      details,
+      eventType: "starwind:checked-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.forEach((subscriber) => subscriber(acceptedDetails));
+      },
+      notifyCallback: (proposalDetails) =>
+        this.onCheckedChange?.(proposalDetails.checked, proposalDetails),
+      rollbackCanceled: () => {
+        if (this.checkedState === details.checked && details.previousChecked !== details.checked) {
+          this.setChecked(details.previousChecked, { emit: false });
+        }
+      },
+      target: this.root,
     });
-    if (event.defaultPrevented) details.cancel();
-    this.onCheckedChange?.(details.checked, details);
-    this.subscribers.forEach((subscriber) => subscriber(details));
   }
 }
 

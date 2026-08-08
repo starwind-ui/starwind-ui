@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import ContextMenuCheckboxItem from "../menu/MenuCheckboxItem";
 import ContextMenuCheckboxItemIndicator from "../menu/MenuCheckboxItemIndicator";
 import ContextMenuGroup from "../menu/MenuGroup";

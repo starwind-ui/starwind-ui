@@ -269,6 +269,7 @@ export const colorPickerRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      stateModel: "value",
       callbackProp: "onValueChange",
       callbackTiming: "before-state-commit",
       cancelable: true,
@@ -290,6 +291,7 @@ export const colorPickerRuntimeAdapterContract = {
     },
     {
       name: "formatChange",
+      stateModel: "format",
       callbackProp: "onFormatChange",
       callbackTiming: "after-state-commit",
       detailsType: "ColorPickerFormatChangeDetails",

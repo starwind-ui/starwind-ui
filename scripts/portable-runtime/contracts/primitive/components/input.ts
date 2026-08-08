@@ -47,6 +47,7 @@ export const inputRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      stateModel: "value",
       callbackProp: "onValueChange",
       detailsType: "InputValueChangeDetails",
       domEvent: "starwind:value-change",

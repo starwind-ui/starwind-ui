@@ -1,3 +1,5 @@
+"use client";
+
 import ButtonPrimitive from "@starwind-ui/react/button";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";

@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import { type CheckboxCheckedChangeDetails, createCheckbox } from "@starwind-ui/runtime/checkbox";
 import * as React from "react";
 import { useCheckboxGroupContext } from "../checkbox-group/CheckboxGroupContext";
@@ -151,6 +153,9 @@ const CheckboxRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, Check
         required,
         uncheckedValue,
         value,
+        onCheckedChange: (checked, details) => {
+          onCheckedChangeRef.current?.(checked, details);
+        },
         ...(checkedRef.current !== undefined
           ? { checked: checkedRef.current }
           : groupChecked !== undefined
@@ -178,7 +183,6 @@ const CheckboxRoot = React.forwardRef<HTMLSpanElement | HTMLButtonElement, Check
         }, 0);
       };
       const unsubscribe = instance.subscribe("checkedChange", (details) => {
-        onCheckedChangeRef.current?.(details.checked, details);
         if (details.isCanceled) return;
 
         if (checkedRef.current === undefined) {

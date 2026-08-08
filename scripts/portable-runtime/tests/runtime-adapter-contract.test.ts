@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buttonRuntimeAdapterContract } from "../contracts/primitive/components/button.js";
 import { checkboxRuntimeAdapterContract } from "../contracts/primitive/components/checkbox.js";
 import { selectRuntimeAdapterContract } from "../contracts/primitive/components/select.js";
+import { runtimeAdapterContracts } from "../contracts/primitive/representatives.js";
 import type { RuntimeAdapterContract } from "../contracts/primitive/types.js";
 import { validateRuntimeAdapterContracts } from "../contracts/primitive/validation.js";
 
@@ -16,6 +17,22 @@ describe("RuntimeAdapterContract inventory", () => {
   defineRuntimeFormControlTests();
   defineRuntimeCollectionStaticTests();
   defineRuntimeOverlayFloatingTests();
+});
+
+describe("Cancelable Runtime Adapter Contract events", () => {
+  it("declare callback-before-commit timing for every framework projection", () => {
+    const cancelableEvents = (runtimeAdapterContracts as readonly RuntimeAdapterContract[]).flatMap(
+      (contract) =>
+        (contract.events ?? [])
+          .filter((event) => event.cancelable)
+          .map((event) => ({ component: contract.component, event })),
+    );
+
+    expect(cancelableEvents.length).toBeGreaterThan(0);
+    expect(
+      cancelableEvents.filter(({ event }) => event.callbackTiming !== "before-state-commit"),
+    ).toEqual([]);
+  });
 });
 
 describe("Button Runtime Adapter Contract proof", () => {

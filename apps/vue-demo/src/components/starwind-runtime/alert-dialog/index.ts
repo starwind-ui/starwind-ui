@@ -43,6 +43,18 @@ const AlertDialogVariants = {
   alertDialogTitle,
 };
 
+const AlertDialogParts = {
+  Root: AlertDialog,
+  Trigger: AlertDialogTrigger,
+  Content: AlertDialogContent,
+  Header: AlertDialogHeader,
+  Footer: AlertDialogFooter,
+  Title: AlertDialogTitle,
+  Description: AlertDialogDescription,
+  Action: AlertDialogAction,
+  Cancel: AlertDialogCancel,
+};
+
 export {
   AlertDialog,
   AlertDialogAction,
@@ -56,14 +68,4 @@ export {
   AlertDialogVariants,
 };
 
-export default {
-  Root: AlertDialog,
-  Trigger: AlertDialogTrigger,
-  Content: AlertDialogContent,
-  Header: AlertDialogHeader,
-  Footer: AlertDialogFooter,
-  Title: AlertDialogTitle,
-  Description: AlertDialogDescription,
-  Action: AlertDialogAction,
-  Cancel: AlertDialogCancel,
-};
+export default AlertDialogParts;

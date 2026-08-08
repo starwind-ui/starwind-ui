@@ -1,4 +1,5 @@
 import { getConfigState, type StarwindConfig, type StarwindFramework } from "./config.js";
+import { sortComponentPresentationByName } from "./component-presentation.js";
 import { getPrimitiveComponents, type PrimitiveVendoringArtifact } from "./primitive-component.js";
 
 export type PrimitiveDiscoveryFramework = StarwindFramework | "all";
@@ -45,8 +46,10 @@ export function getPrimitiveDiscoveryResults(
       : getPrimitiveComponents({ framework: options.framework ?? "astro" });
   const query = options.query?.trim().toLowerCase();
 
-  const sortedPrimitives = primitives.sort(
-    (a, b) => a.component.localeCompare(b.component) || a.framework.localeCompare(b.framework),
+  const sortedPrimitives = sortComponentPresentationByName(
+    primitives,
+    (primitive) => primitive.component,
+    (primitive) => primitive.framework,
   );
 
   if (!query) return sortedPrimitives;

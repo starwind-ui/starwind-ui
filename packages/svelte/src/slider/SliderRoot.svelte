@@ -40,10 +40,12 @@
     return Array.isArray(nextValue) ? JSON.stringify(nextValue) : String(nextValue);
   }
 
-  function handleValueChange(detail: SliderValueChangeDetails): void {
-    const nextValue = detail.value;
+  function handleValueChangeProposal(nextValue: SliderValue, detail: SliderValueChangeDetails): void {
     onValueChange?.(nextValue, detail);
-    if (detail.isCanceled) return;
+  }
+
+  function handleAcceptedValueChange(detail: SliderValueChangeDetails): void {
+    const nextValue = detail.value;
     if (!externallyControlled) uncontrolledValue = nextValue;
     value = nextValue;
   }
@@ -64,9 +66,10 @@
       name,
       orientation,
       step,
+      onValueChange: handleValueChangeProposal,
       ...(externallyControlled && value !== undefined ? { value } : {}),
     }));
-    const unsubscribeChange = instance.subscribe("valueChange", handleValueChange);
+    const unsubscribeChange = instance.subscribe("valueChange", handleAcceptedValueChange);
     const unsubscribeCommitted = instance.subscribe("valueCommitted", handleValueCommitted);
     const unsubscribeStateSync = instance.subscribe("stateSync", () => {
       if (externallyControlled) return;

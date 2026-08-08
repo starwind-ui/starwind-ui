@@ -7,6 +7,8 @@ export type { RadioGroupItemProps } from "./RadioGroupItem.vue";
 
 const RadioGroupVariants = { radioControl, radioGroup, radioIndicator, radioItem, radioWrapper };
 
+const RadioGroupParts = { Root: RadioGroup, Item: RadioGroupItem };
+
 export { RadioGroup, RadioGroupItem, RadioGroupVariants };
 
-export default { Root: RadioGroup, Item: RadioGroupItem };
+export default RadioGroupParts;

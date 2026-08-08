@@ -1,3 +1,5 @@
+"use client";
+
 import SheetPrimitive from "@starwind-ui/react/drawer";
 import type * as React from "react";
 import { sheetTitle } from "./variants";

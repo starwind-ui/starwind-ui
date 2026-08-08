@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import SelectGroup from "./SelectGroup";
 import SelectGroupLabel from "./SelectGroupLabel";
 import SelectIcon from "./SelectIcon";

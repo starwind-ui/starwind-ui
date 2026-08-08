@@ -85,6 +85,21 @@ const ColorPickerVariants = {
   colorPickerValueSwatch,
 };
 
+const ColorPickerParts = {
+  Root: ColorPicker,
+  Input: ColorPickerInput,
+  Trigger: ColorPickerTrigger,
+  Content: ColorPickerContent,
+  Area: ColorPickerArea,
+  ChannelSlider: ColorPickerChannelSlider,
+  ChannelInput: ColorPickerChannelInput,
+  ValueSwatch: ColorPickerValueSwatch,
+  SwatchGroup: ColorPickerSwatchGroup,
+  Swatch: ColorPickerSwatch,
+  EyeDropper: ColorPickerEyeDropper,
+  Clear: ColorPickerClear,
+};
+
 export {
   ColorPicker,
   ColorPickerArea,
@@ -101,17 +116,4 @@ export {
   ColorPickerVariants,
 };
 
-export default {
-  Root: ColorPicker,
-  Input: ColorPickerInput,
-  Trigger: ColorPickerTrigger,
-  Content: ColorPickerContent,
-  Area: ColorPickerArea,
-  ChannelSlider: ColorPickerChannelSlider,
-  ChannelInput: ColorPickerChannelInput,
-  ValueSwatch: ColorPickerValueSwatch,
-  SwatchGroup: ColorPickerSwatchGroup,
-  Swatch: ColorPickerSwatch,
-  EyeDropper: ColorPickerEyeDropper,
-  Clear: ColorPickerClear,
-};
+export default ColorPickerParts;

@@ -7,6 +7,8 @@ export type { ToggleGroupItemProps } from "./ToggleGroupItem.vue";
 
 const ToggleGroupVariants = { toggleGroup, toggleGroupItem };
 
+const ToggleGroupParts = { Root: ToggleGroup, Item: ToggleGroupItem };
+
 export { ToggleGroup, ToggleGroupItem, ToggleGroupVariants };
 
-export default { Root: ToggleGroup, Item: ToggleGroupItem };
+export default ToggleGroupParts;

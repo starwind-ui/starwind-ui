@@ -1,3 +1,5 @@
+"use client";
+
 import AccordionPrimitive from "@starwind-ui/react/accordion";
 import { IconChevronDown as ChevronDown } from "@tabler/icons-react";
 import type * as React from "react";

@@ -1,3 +1,5 @@
+"use client";
+
 import ToastPrimitive from "@starwind-ui/react/toast";
 import type * as React from "react";
 import { toastContent } from "./variants";

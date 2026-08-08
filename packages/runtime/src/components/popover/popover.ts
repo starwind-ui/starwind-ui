@@ -95,6 +95,7 @@ type PopoverElements = {
 };
 
 type OpenRequest = {
+  forceApply?: boolean;
   event?: Event;
   reason: PopoverOpenChangeReason;
   trigger?: Element;
@@ -258,24 +259,17 @@ class PopoverController implements PopoverInstance {
   }
 
   setOpen(open: boolean, options: PopoverSetOpenOptions = {}): void {
+    if (options.emit !== false) {
+      this.requestOpen(open, { ...this.resolveSetOpenRequest(open, options), forceApply: true });
+      return;
+    }
+
     const previousOpen = this.openState;
     const request = this.resolveSetOpenRequest(open, options);
     this.openState = open;
     this.applyOpenState(open, request, { captureFocusFallback: open && !previousOpen });
     this.pendingControlledOpenRequest = null;
     this.pendingControlledCloseRequest = null;
-
-    if (options.emit !== false) {
-      this.notifyOpenChange(
-        createOpenChangeDetails({
-          open,
-          previousOpen,
-          event: request.event,
-          reason: request.reason,
-          trigger: request.trigger,
-        }),
-      );
-    }
   }
 
   getOpen(): boolean {
@@ -479,14 +473,19 @@ class PopoverController implements PopoverInstance {
   private requestOpen(open: boolean, request: OpenRequest): void {
     const shouldSwitchActiveTrigger = this.shouldSwitchActiveTrigger(open, request);
 
-    if (open === this.openState && !this.controlled && !shouldSwitchActiveTrigger) {
+    if (
+      open === this.openState &&
+      !this.controlled &&
+      !shouldSwitchActiveTrigger &&
+      !request.forceApply
+    ) {
       return;
     }
 
     const previousOpen = this.openState;
     runOverlayOpenChangeShell({
       root: this.root,
-      controlled: this.controlled,
+      controlled: this.controlled && !request.forceApply,
       createDetails: createOpenChangeDetails,
       open,
       previousOpen,
@@ -509,6 +508,11 @@ class PopoverController implements PopoverInstance {
         this.applyOpenState(open, request, { captureFocusFallback: open && !previousOpen });
       },
       onBeforeOpenChange: () => this.dispatchOpenChangeIntent(open, request),
+      onCanceledOpenChange: () => {
+        if (this.openState === open && previousOpen !== open) {
+          this.setOpen(previousOpen, { emit: false, reason: request.reason });
+        }
+      },
       onNotifyOpenChangeSubscribers: (details) => this.notifyOpenChange(details),
       onOpenChange: (nextOpen, details) => {
         this.onOpenChange?.(nextOpen, details);

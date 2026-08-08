@@ -8,7 +8,7 @@ import {
   readStringOrStringArrayAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { dispatchCustomEvent } from "../../internal/events";
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { createToggle, type ToggleInstance, type TogglePressedChangeDetails } from "../toggle";
 
 export type ToggleGroupValue = string[];
@@ -220,14 +220,13 @@ class ToggleGroupController implements ToggleGroupInstance {
       value: nextValue,
     });
 
-    this.notify(details);
-    if (details.isCanceled) {
+    const applied = this.runValueChange(details, () => {
+      this.value = nextValue;
       this.render();
-      return;
+    });
+    if (!applied) {
+      this.render();
     }
-
-    this.value = nextValue;
-    this.render();
   }
 
   subscribe(
@@ -340,16 +339,15 @@ class ToggleGroupController implements ToggleGroupInstance {
       value: nextValue,
     });
 
-    this.notify(details);
+    const applied = this.runValueChange(details, () => {
+      if (!this.controlled) this.value = nextValue;
+      this.render();
+    });
 
-    if (details.isCanceled || this.controlled) {
+    if (!applied || this.controlled) {
       pressedDetails.cancel();
       this.render();
-      return;
     }
-
-    this.value = nextValue;
-    this.render();
   };
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
@@ -469,14 +467,29 @@ class ToggleGroupController implements ToggleGroupInstance {
     });
   }
 
-  private notify(details: ToggleGroupValueChangeDetails): void {
-    const event = dispatchCustomEvent(this.root, "starwind:value-change", details, {
-      cancelable: true,
+  private runValueChange(details: ToggleGroupValueChangeDetails, apply: () => void): boolean {
+    return runCancelableDetailsTransaction({
+      apply,
+      details,
+      eventType: "starwind:value-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.forEach((subscriber) => subscriber(acceptedDetails));
+      },
+      notifyCallback: (proposalDetails) =>
+        this.onValueChange?.(proposalDetails.value, proposalDetails),
+      rollbackCanceled: () => {
+        if (toggleGroupValuesEqual(this.value, details.value)) {
+          this.setValue(details.previousValue, { emit: false });
+        }
+      },
+      target: this.root,
     });
-    if (event.defaultPrevented) details.cancel();
-    this.onValueChange?.(details.value, details);
-    this.subscribers.forEach((subscriber) => subscriber(details));
   }
+}
+
+function toggleGroupValuesEqual(left: ToggleGroupValue, right: ToggleGroupValue): boolean {
+  if (typeof left === "string" || typeof right === "string") return left === right;
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 class ToggleGroupValueChangeDetailsImpl implements ToggleGroupValueChangeDetails {

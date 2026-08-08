@@ -1,3 +1,5 @@
+"use client";
+
 import TooltipPrimitive from "@starwind-ui/react/tooltip";
 import type * as React from "react";
 

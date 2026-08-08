@@ -10,9 +10,11 @@ const RadioGroupVariants = {
   radioWrapper,
 };
 
-export { RadioGroup, RadioGroupItem, RadioGroupVariants };
-
-export default {
+const RadioGroupParts = {
   Root: RadioGroup,
   Item: RadioGroupItem,
 };
+
+export { RadioGroup, RadioGroupItem, RadioGroupVariants };
+
+export default RadioGroupParts;

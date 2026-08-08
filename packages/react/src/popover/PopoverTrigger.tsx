@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import * as React from "react";
 import type { RefCapableElementProps } from "../internal/compose-refs";
 import {

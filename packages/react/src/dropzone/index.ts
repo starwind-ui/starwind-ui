@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import DropzoneFilesList from "./DropzoneFilesList";
 import DropzoneInput from "./DropzoneInput";
 import DropzoneLoadingIndicator from "./DropzoneLoadingIndicator";

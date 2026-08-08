@@ -428,10 +428,11 @@ function setUncontrolledValue(nextValue: ${facts.state.type}): void {
   uncontrolledValue.value = nextValue;
 }
 
-function handleValueChange(detail: ${facts.event.detailsType}): void {
+function handleValueChangeProposal(detail: ${facts.event.detailsType}): void {
   emit("${facts.event.name}", detail.${facts.event.valueProperty}, detail);
-  if (detail.isCanceled) return;
+}
 
+function handleAcceptedValueChange(detail: ${facts.event.detailsType}): void {
   if (props.${model.modelProp} === undefined) {
     setUncontrolledValue(detail.${facts.event.valueProperty});
   }
@@ -454,9 +455,10 @@ onMounted(() => {
   instance = ${facts.runtime.factory}(element, {
     ${facts.props.defaultValue.name}: initialDefaultValue,
     ${facts.props.disabled.name}: props.${facts.props.disabled.name},
+    ${facts.event.callbackProp}: handleValueChangeProposal,
     ...(props.${model.modelProp} === undefined ? {} : { ${facts.props.value.name}: props.${model.modelProp} }),
   });
-  instance.subscribe("${facts.event.name}", handleValueChange);
+  instance.subscribe("${facts.event.name}", handleAcceptedValueChange);
 
   observer = new MutationObserver(() => {
     if (props.${model.modelProp} !== undefined) return;

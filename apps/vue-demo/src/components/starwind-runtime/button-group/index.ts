@@ -9,6 +9,12 @@ export type { ButtonGroupTextProps } from "./ButtonGroupText.vue";
 
 const ButtonGroupVariants = { buttonGroup, buttonGroupSeparator, buttonGroupText };
 
+const ButtonGroupParts = {
+  Root: ButtonGroup,
+  Separator: ButtonGroupSeparator,
+  Text: ButtonGroupText,
+};
+
 export { ButtonGroup, ButtonGroupSeparator, ButtonGroupText, ButtonGroupVariants };
 
-export default { Root: ButtonGroup, Separator: ButtonGroupSeparator, Text: ButtonGroupText };
+export default ButtonGroupParts;

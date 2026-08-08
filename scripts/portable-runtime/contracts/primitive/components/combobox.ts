@@ -335,7 +335,9 @@ export const comboboxRuntimeAdapterContract = {
   events: [
     {
       name: "inputValueChange",
+      stateModel: "inputValue",
       callbackProp: "onInputValueChange",
+      callbackTiming: "before-state-commit",
       cancelable: true,
       detailsType: "ComboboxInputValueChangeDetails",
       domEvent: "starwind:input-value-change",
@@ -345,7 +347,9 @@ export const comboboxRuntimeAdapterContract = {
     },
     {
       name: "openChange",
+      stateModel: "open",
       callbackProp: "onOpenChange",
+      callbackTiming: "before-state-commit",
       cancelable: true,
       detailsType: "ComboboxOpenChangeDetails",
       domEvent: "starwind:open-change",
@@ -355,7 +359,9 @@ export const comboboxRuntimeAdapterContract = {
     },
     {
       name: "valueChange",
+      stateModel: "value",
       callbackProp: "onValueChange",
+      callbackTiming: "before-state-commit",
       cancelable: true,
       detailsType: "ComboboxValueChangeDetails",
       domEvent: "starwind:value-change",

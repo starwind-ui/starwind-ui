@@ -1,6 +1,11 @@
-import type { StyledOutputComponentGroup } from "../../../styled-output-model/index.js";
+import {
+  assertStyledPartsIdentifier,
+  getStyledPartsIdentifier,
+  type StyledOutputComponentGroup,
+} from "../../../styled-output-model/index.js";
 
 export function renderIndex(group: StyledOutputComponentGroup): string {
+  assertStyledPartsIdentifier(group);
   const imports = [...group.components]
     .sort((left, right) => left.exportName.localeCompare(right.exportName))
     .map((component) => `import ${component.exportName} from "./${component.exportName}.vue";`)
@@ -20,6 +25,16 @@ export function renderIndex(group: StyledOutputComponentGroup): string {
     variantNames.length && group.variantCollectionName
       ? `const ${group.variantCollectionName} = { ${variantNames.join(", ")} };`
       : "";
+  const partsDeclaration =
+    group.defaultExport.mode === "parts"
+      ? `const ${getStyledPartsIdentifier(group)} = { ${group.defaultExport.members
+          .map((member) =>
+            member.exportName === member.localName
+              ? member.exportName
+              : `${member.exportName}: ${member.localName}`,
+          )
+          .join(", ")} };`
+      : "";
   const namedExports = [
     ...group.constants.map((constant) => constant.name),
     ...group.publicExports,
@@ -35,17 +50,12 @@ export function renderIndex(group: StyledOutputComponentGroup): string {
   const defaultExport =
     group.defaultExport.mode === "component"
       ? group.defaultExport.members[0]?.localName
-      : `{ ${group.defaultExport.members
-          .map((member) =>
-            member.exportName === member.localName
-              ? member.exportName
-              : `${member.exportName}: ${member.localName}`,
-          )
-          .join(", ")} }`;
+      : getStyledPartsIdentifier(group);
 
   return `${[imports, variantImport].filter(Boolean).join("\n")}\n\n${typeExports}\n\n${[
     constants,
     variantCollection,
+    partsDeclaration,
   ]
     .filter(Boolean)
     .join("\n\n")}\n\nexport { ${namedExports.join(", ")} };\n\nexport default ${defaultExport};\n`;

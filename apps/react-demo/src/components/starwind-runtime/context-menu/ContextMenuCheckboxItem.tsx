@@ -1,3 +1,5 @@
+"use client";
+
 import ContextMenuPrimitive from "@starwind-ui/react/context-menu";
 import { IconCheck as Check } from "@tabler/icons-react";
 import type * as React from "react";

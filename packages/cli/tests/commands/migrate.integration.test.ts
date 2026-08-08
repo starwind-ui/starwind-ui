@@ -39,7 +39,7 @@ vi.mock("../../src/utils/package-manager.js", async (importOriginal) => {
       removeCmd: "pnpm remove",
       runCmd: "pnpm",
     })),
-    installDependencies: vi.fn(),
+    installDependenciesWithProgress: vi.fn(),
   };
 });
 
@@ -64,7 +64,7 @@ import * as registry from "../../src/utils/registry.js";
 const mockConfirm = vi.mocked(clackPrompts.confirm);
 const mockLog = vi.mocked(clackPrompts.log);
 const mockTasks = vi.mocked(clackPrompts.tasks);
-const mockInstallDependencies = vi.mocked(packageManager.installDependencies);
+const mockInstallDependencies = vi.mocked(packageManager.installDependenciesWithProgress);
 const mockLoadRegistry = vi.mocked(registry.loadRegistry);
 
 const registryFixture: registry.StarwindRegistry = {
@@ -563,6 +563,20 @@ describe.sequential("migrate command", () => {
     expect(mockLog.info).toHaveBeenCalledWith(expect.stringContaining("already using"));
     expect(mockLoadRegistry).not.toHaveBeenCalled();
     expect(mockInstallDependencies).not.toHaveBeenCalled();
+  });
+
+  it("sorts migration summary component lists case-insensitively", async () => {
+    await writeComponent(tempDir, "zebra-custom", "ZebraCustom.astro", "<div />\n");
+    await writeComponent(tempDir, "Alpha-custom", "AlphaCustom.astro", "<div />\n");
+
+    await migrate({ packageManager: "pnpm", yes: true });
+
+    const customSummary = mockLog.info.mock.calls.find(([message]) =>
+      String(message).includes("Left custom component folders untouched:"),
+    )?.[0] as string;
+    expect(customSummary.indexOf("Alpha-custom")).toBeLessThan(
+      customSummary.indexOf("zebra-custom"),
+    );
   });
 
   it("plans dependencies before writing so custom dependency folders can be skipped safely", async () => {

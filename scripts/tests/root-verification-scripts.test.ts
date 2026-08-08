@@ -109,6 +109,24 @@ describe("root verification scripts", () => {
     ).toEqual(["release:gate"]);
   });
 
+  it("runs the complete candidate gate once before the package dry-run", async () => {
+    const pkg = await readRootPackage();
+
+    expect(commandPhases(pkg.scripts?.["release:gate"])).toEqual([
+      "pnpm verify",
+      "pnpm audit:prod",
+      "pnpm demo:smoke",
+      "pnpm react-demo:smoke",
+      "pnpm runtime:size:check:prepared",
+      "pnpm release:candidate:acceptance",
+    ]);
+    expect(commandPhases(pkg.scripts?.["publish:release:dry-run"])).toEqual([
+      "pnpm release:artifacts",
+      "node scripts/release-packages.mjs --dry-run",
+    ]);
+    expect(pkg.scripts?.["publish:release"]).toBe("node scripts/release-packages.mjs --publish");
+  });
+
   it("gates release automation on parallel read-only verification jobs", async () => {
     const [verifyWorkflowSource, releaseWorkflowSource] = await Promise.all([
       readFile(".github/workflows/verify.yml", "utf8"),

@@ -1,5 +1,6 @@
 import { multiselect } from "@clack/prompts";
 
+import { sortComponentPresentation } from "./component-presentation.js";
 import type { Component } from "./registry.js";
 import { getAllComponents } from "./registry.js";
 
@@ -8,7 +9,7 @@ export async function selectComponents(availableComponents?: Component[]): Promi
 
   const selected = await multiselect({
     message: "Select components to add ('a' for all, space to select, enter to confirm)",
-    options: components.map((component) => ({
+    options: sortComponentPresentation(components).map((component) => ({
       label: component.name,
       value: component.name,
     })),

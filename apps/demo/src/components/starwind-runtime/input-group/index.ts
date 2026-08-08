@@ -22,6 +22,15 @@ const InputGroupVariants = {
   inputGroupTextarea,
 };
 
+const InputGroupParts = {
+  Root: InputGroup,
+  Addon: InputGroupAddon,
+  Button: InputGroupButton,
+  Input: InputGroupInput,
+  Text: InputGroupText,
+  Textarea: InputGroupTextarea,
+};
+
 export {
   InputGroup,
   InputGroupAddon,
@@ -32,11 +41,4 @@ export {
   InputGroupVariants,
 };
 
-export default {
-  Root: InputGroup,
-  Addon: InputGroupAddon,
-  Button: InputGroupButton,
-  Input: InputGroupInput,
-  Text: InputGroupText,
-  Textarea: InputGroupTextarea,
-};
+export default InputGroupParts;

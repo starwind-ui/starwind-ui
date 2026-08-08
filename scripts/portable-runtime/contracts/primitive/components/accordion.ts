@@ -100,6 +100,7 @@ export const accordionRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      stateModel: "value",
       callbackProp: "onValueChange",
       callbackTiming: "before-state-commit",
       cancelable: true,

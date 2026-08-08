@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import type { Command, OutputConfiguration } from "commander";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -407,6 +409,12 @@ describe("starwind CLI parser", () => {
 
   it("keeps command construction importable without running the bin entrypoint", () => {
     expect(createProgram().name()).toBe("starwind");
+  });
+
+  it("keeps the bin process alive until asynchronous command actions complete", () => {
+    const entrypoint = readFileSync(new URL("../../src/index.ts", import.meta.url), "utf8");
+
+    expect(entrypoint).toContain("await createProgram().parseAsync(process.argv)");
   });
 });
 

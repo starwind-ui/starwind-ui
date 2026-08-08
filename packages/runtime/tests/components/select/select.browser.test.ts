@@ -380,6 +380,17 @@ describe("createSelect", () => {
     select.destroy();
   });
 
+  it("applies an accepted emitting value setter without closing a controlled Select", () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const select = createSelect(root, { open: true, value: "system" });
+
+    select.setValue("dark");
+
+    expect(select.getValue()).toBe("dark");
+    expect(select.getOpen()).toBe(true);
+    expect(getPopup().hidden).toBe(false);
+  });
+
   it("clears highlighted item state when destroyed while open", async () => {
     const root = renderSelect({ defaultValue: "system" });
     const select = createSelect(root);
@@ -857,7 +868,7 @@ describe("createSelect", () => {
         value: "dark",
       }),
     );
-    expect(domValueListener).not.toHaveBeenCalled();
+    expect(domValueListener).toHaveBeenCalledTimes(1);
 
     root.dispatchEvent(
       new CustomEvent("starwind:set-value", {
@@ -867,7 +878,7 @@ describe("createSelect", () => {
 
     expect(select.getValue()).toBe("light");
     expect(valueSubscriber).toHaveBeenCalledTimes(1);
-    expect(domValueListener).not.toHaveBeenCalled();
+    expect(domValueListener).toHaveBeenCalledTimes(1);
   });
 
   it("does not handle document-global value command events", () => {

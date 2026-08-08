@@ -1,3 +1,5 @@
+"use client";
+
 import ContextMenuPrimitive from "@starwind-ui/react/context-menu";
 import { IconChevronRight as ChevronRight } from "@tabler/icons-react";
 import type * as React from "react";

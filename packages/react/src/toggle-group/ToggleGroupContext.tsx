@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import type { ToggleGroupValue } from "@starwind-ui/runtime/toggle-group";
 import * as React from "react";
 

@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import ComboboxClear from "./ComboboxClear";
 import ComboboxEmpty from "./ComboboxEmpty";
 import ComboboxGroup from "./ComboboxGroup";

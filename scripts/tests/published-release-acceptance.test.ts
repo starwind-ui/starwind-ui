@@ -4,10 +4,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   createAcceptancePlan,
+  getAcceptanceCleanupOptions,
   getAcceptancePnpmEnvironment,
   getAcceptanceRootPackage,
   getAcceptanceWorkspacePolicy,
   getFixtureFiles,
+  getPreviewEnvironment,
   parseArgs,
 } from "../published-release-acceptance.mjs";
 
@@ -28,6 +30,23 @@ allowBuilds:
     expect(JSON.parse(getAcceptanceRootPackage("3.0.0-beta.1"))).toMatchObject({
       devDependencies: { starwind: "3.0.0-beta.1" },
       private: true,
+    });
+  });
+
+  it("keeps Astro preview attached to the acceptance process", () => {
+    expect(getPreviewEnvironment({ CODEX_THREAD_ID: "test-thread" })).toMatchObject({
+      ASTRO_PREVIEW_BACKGROUND: "0",
+      ASTRO_TELEMETRY_DISABLED: "1",
+      CODEX_THREAD_ID: "test-thread",
+    });
+  });
+
+  it("retries temporary-project cleanup for transient Windows locks", () => {
+    expect(getAcceptanceCleanupOptions()).toEqual({
+      force: true,
+      maxRetries: 5,
+      recursive: true,
+      retryDelay: 500,
     });
   });
 

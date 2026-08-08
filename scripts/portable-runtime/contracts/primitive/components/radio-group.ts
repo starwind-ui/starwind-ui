@@ -76,6 +76,7 @@ export const radioGroupRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      stateModel: "value",
       acceptanceNotification: "detail-on-accepted",
       callbackTiming: "before-state-commit",
       cancelable: true,

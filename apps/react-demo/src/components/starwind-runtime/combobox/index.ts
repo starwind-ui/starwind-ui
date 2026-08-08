@@ -1,3 +1,5 @@
+"use client";
+
 import Combobox from "./Combobox";
 import ComboboxClear from "./ComboboxClear";
 import ComboboxContent from "./ComboboxContent";
@@ -51,6 +53,24 @@ const ComboboxVariants = {
   comboboxValue,
 };
 
+const ComboboxParts = {
+  Root: Combobox,
+  Label: ComboboxLabel,
+  InputGroup: ComboboxInputGroup,
+  Input: ComboboxInput,
+  Trigger: ComboboxTrigger,
+  Clear: ComboboxClear,
+  Value: ComboboxValue,
+  Content: ComboboxContent,
+  Empty: ComboboxEmpty,
+  Group: ComboboxGroup,
+  GroupLabel: ComboboxGroupLabel,
+  Item: ComboboxItem,
+  ItemText: ComboboxItemText,
+  ItemIndicator: ComboboxItemIndicator,
+  Separator: ComboboxSeparator,
+};
+
 export {
   Combobox,
   ComboboxClear,
@@ -70,20 +90,4 @@ export {
   ComboboxVariants,
 };
 
-export default {
-  Root: Combobox,
-  Label: ComboboxLabel,
-  InputGroup: ComboboxInputGroup,
-  Input: ComboboxInput,
-  Trigger: ComboboxTrigger,
-  Clear: ComboboxClear,
-  Value: ComboboxValue,
-  Content: ComboboxContent,
-  Empty: ComboboxEmpty,
-  Group: ComboboxGroup,
-  GroupLabel: ComboboxGroupLabel,
-  Item: ComboboxItem,
-  ItemText: ComboboxItemText,
-  ItemIndicator: ComboboxItemIndicator,
-  Separator: ComboboxSeparator,
-};
+export default ComboboxParts;

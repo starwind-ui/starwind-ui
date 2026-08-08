@@ -45,6 +45,22 @@ const FieldVariants = {
   fieldValidity,
 };
 
+const FieldParts = {
+  Content: FieldContent,
+  Control: FieldControl,
+  Description: FieldDescription,
+  Error: FieldError,
+  Group: FieldGroup,
+  Item: FieldItem,
+  Label: FieldLabel,
+  Legend: FieldLegend,
+  Root: Field,
+  Separator: FieldSeparator,
+  Set: FieldSet,
+  Title: FieldTitle,
+  Validity: FieldValidity,
+};
+
 export {
   Field,
   FieldContent,
@@ -62,18 +78,4 @@ export {
   FieldVariants,
 };
 
-export default {
-  Content: FieldContent,
-  Control: FieldControl,
-  Description: FieldDescription,
-  Error: FieldError,
-  Group: FieldGroup,
-  Item: FieldItem,
-  Label: FieldLabel,
-  Legend: FieldLegend,
-  Root: Field,
-  Separator: FieldSeparator,
-  Set: FieldSet,
-  Title: FieldTitle,
-  Validity: FieldValidity,
-};
+export default FieldParts;

@@ -34,7 +34,6 @@ export async function generateStarwindReactWrappers({
   primitiveImportBase,
   primitiveOutputRoot,
 }: GenerateStarwindReactWrappersOptions): Promise<void> {
-  const tsHeader = "";
   const targetContracts = contracts.filter((contract) => isForFramework(contract, REACT_FRAMEWORK));
   const outputModel = projectStyledOutputModel(targetContracts);
 
@@ -45,7 +44,6 @@ export async function generateStarwindReactWrappers({
         outputRoot,
         primitiveOutputRoot,
         primitiveImportBase,
-        tsHeader,
       ),
     ),
   );
@@ -57,9 +55,10 @@ async function generateStyledOutputComponentGroup(
   outputRoot: string,
   primitiveOutputRoot: string,
   primitiveImportBase: string | undefined,
-  tsHeader: string,
 ): Promise<void> {
   const dir = path.join(outputRoot, group.component);
+  const clientHeader = '"use client";\n\n';
+  const groupHasClientComponent = group.components.some(isReactStyledClientComponent);
   const writes: Array<Promise<void>> = [
     ...group.components.map((component) =>
       writeGeneratedFile(
@@ -72,15 +71,19 @@ async function generateStyledOutputComponentGroup(
           dir,
           primitiveOutputRoot,
           primitiveImportBase,
-          tsHeader,
+          isReactStyledClientComponent(component) ? clientHeader : "",
         ),
       ),
     ),
-    writeGeneratedFile(dir, "index.ts", renderIndex(group, tsHeader)),
+    writeGeneratedFile(
+      dir,
+      "index.ts",
+      renderIndex(group, groupHasClientComponent ? clientHeader : ""),
+    ),
   ];
 
   if (group.variants.length > 0 || (group.variantAliases ?? []).length > 0) {
-    writes.push(writeGeneratedFile(dir, "variants.ts", renderVariants(group, tsHeader)));
+    writes.push(writeGeneratedFile(dir, "variants.ts", renderVariants(group, "")));
   }
 
   if (group.styles) {
@@ -94,6 +97,10 @@ async function generateStyledOutputComponentGroup(
   }
 
   await Promise.all(writes);
+}
+
+function isReactStyledClientComponent(component: StyledOutputComponent): boolean {
+  return Object.keys(getReactPrimitiveAliases(component)).length > 0;
 }
 
 function renderComponent(

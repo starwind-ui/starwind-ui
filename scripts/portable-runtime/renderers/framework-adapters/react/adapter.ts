@@ -6,12 +6,14 @@ import type {
   AdapterBooleanFormControlIndexProjection,
   AdapterComponentFile,
   AdapterComponentModel,
+  AdapterCompositeMenuOverlayFacts,
   AdapterContextProjection,
   AdapterControlledValuePresenceComponentProjection,
   AdapterControlledValuePresenceFacts,
   AdapterControlledValuePresenceHelperProjection,
   AdapterControlledValuePresenceIndexProjection,
   AdapterDisclosurePresenceComponentProjection,
+  AdapterDisclosurePresenceFacts,
   AdapterDisclosurePresenceIndexProjection,
   AdapterElementRenderNode,
   AdapterEventBridge,
@@ -44,6 +46,7 @@ import type {
   AdapterPresenceFloatingOverlayComponentProjection,
   AdapterPresenceFloatingOverlayFacts,
   AdapterPresenceFloatingOverlayIndexProjection,
+  AdapterPrintedFile,
   AdapterProp,
   AdapterRangeControlComponentProjection,
   AdapterRangeControlFacts,
@@ -155,10 +158,13 @@ export const reactFrameworkAdapter = defineFrameworkAdapter({
     return model.files
       .filter((file) => !file.target || file.target === this.target)
       .map((file) => {
-        if (file.kind === "component") return this.printComponentFile(file);
-        if (file.kind === "helper") return this.printHelperFile(file);
-        if (file.kind === "index") return this.printIndexFile(file);
-        return this.printTypeFacadeFile(file);
+        let printedFile: AdapterPrintedFile;
+        if (file.kind === "component") printedFile = this.printComponentFile(file);
+        else if (file.kind === "helper") printedFile = this.printHelperFile(file);
+        else if (file.kind === "index") printedFile = this.printIndexFile(file);
+        else printedFile = this.printTypeFacadeFile(file);
+
+        return applyReactClientDirective(printedFile);
       });
   },
   printComponentFile(file) {
@@ -458,6 +464,19 @@ export const reactFrameworkAdapter = defineFrameworkAdapter({
   },
 }) satisfies FrameworkAdapter;
 
+function applyReactClientDirective(file: AdapterPrintedFile): AdapterPrintedFile {
+  if (!isReactClientEntry(file.path)) return file;
+
+  return {
+    ...file,
+    contents: `"use client";\n\n${file.contents}`,
+  };
+}
+
+function isReactClientEntry(filePath: string): boolean {
+  return filePath.endsWith(".tsx") || filePath === "index.ts" || /[/\\]index\.ts$/.test(filePath);
+}
+
 function printReactComponent(file: AdapterComponentFile): string {
   const component = file.component;
 
@@ -621,6 +640,80 @@ function applyReactFamilyPrintNormalizations(file: AdapterComponentFile, content
     return normalizeReactGroupedValueControlRoot(family.facts, contents);
   }
 
+  if (family?.kind === "disclosure-presence" && family.part === "root") {
+    return normalizeReactDisclosurePresenceRoot(family.facts, contents);
+  }
+
+  if (family?.kind === "range-control" && family.part === "root") {
+    return normalizeReactRangeControlRoot(family.facts, contents);
+  }
+
+  if (family?.kind === "single-boolean-control" && family.part === "root") {
+    return normalizeReactSingleBooleanControlRoot(family.facts, contents);
+  }
+
+  if (family?.kind === "native-overlay" && family.part === "root") {
+    return normalizeReactCancelableSingleStateRoot(contents, {
+      callbackProp: family.facts.events.openChange.callbackProp,
+      controlledProp: family.facts.props.open.name,
+      eventName: family.facts.events.openChange.name,
+      valueProperty: family.facts.events.openChange.valueProperty,
+    });
+  }
+
+  if (family?.kind === "presence-floating-overlay" && family.part === "root") {
+    return normalizeReactCancelableSingleStateRoot(contents, {
+      callbackProp: family.facts.events.openChange.callbackProp,
+      controlledProp: family.facts.props.open.name,
+      eventName: family.facts.events.openChange.name,
+      valueProperty: family.facts.events.openChange.valueProperty,
+    });
+  }
+
+  if (family?.kind === "timed-floating-overlay" && family.part === "root") {
+    return normalizeReactCancelableSingleStateRoot(contents, {
+      callbackProp: family.facts.event.callbackProp,
+      controlledProp: family.facts.props.open.name,
+      eventName: family.facts.event.name,
+      valueProperty: family.facts.event.valueProperty,
+    });
+  }
+
+  if (family?.kind === "composite-menu-overlay" && family.part === "root") {
+    return normalizeReactCancelableSingleStateRoot(contents, {
+      callbackProp: family.facts.events.openChange.callbackProp,
+      controlledProp: family.facts.props.open.name,
+      eventName: family.facts.events.openChange.name,
+      valueProperty: family.facts.events.openChange.valueProperty,
+    });
+  }
+
+  if (family?.kind === "composite-menu-overlay" && family.part === "checkboxItem") {
+    return normalizeReactCancelableMenuCheckboxItem(family.facts, contents);
+  }
+
+  if (family?.kind === "composite-menu-overlay" && family.part === "radioGroup") {
+    return normalizeReactCancelableMenuRadioGroup(family.facts, contents);
+  }
+
+  if (family?.kind === "anchored-menu-overlay" && family.part === "root") {
+    return normalizeReactCancelableSingleStateRoot(contents, {
+      callbackProp: family.facts.events.openChange.callbackProp,
+      controlledProp: family.facts.props.open.name,
+      eventName: family.facts.events.openChange.name,
+      valueProperty: family.facts.events.openChange.valueProperty,
+    });
+  }
+
+  if (family?.kind === "hidden-input-visual-slot" && family.part === "root") {
+    return normalizeReactCancelableSingleStateRoot(contents, {
+      callbackProp: family.facts.event.callbackProp,
+      controlledProp: family.facts.props.value.name,
+      eventName: family.facts.event.runtimeEvent,
+      valueProperty: family.facts.event.valueProperty,
+    });
+  }
+
   return contents;
 }
 
@@ -654,13 +747,24 @@ function normalizeReactRepeatedDisclosureRoot(
 
   next = replaceRequired(
     next,
+    `      ${facts.props.collapsible.name},
+      ...(${valueRef}.current !== undefined`,
+    `      ${facts.props.collapsible.name},
+      ${facts.events.valueChange.callbackProp}: (details) => {
+        ${facts.events.valueChange.callbackProp}Ref.current?.(details);
+      },
+      ...(${valueRef}.current !== undefined`,
+    "repeated-disclosure cancelable callback Runtime option",
+  );
+
+  next = replaceRequired(
+    next,
     `      ${facts.events.valueChange.callbackProp}Ref.current?.(details);
       if (${valueRef}.current === undefined) {
         setUncontrolledValue(details.${eventValueProperty});
       }
 `,
-    `      ${facts.events.valueChange.callbackProp}Ref.current?.(details);
-      if (details.isCanceled) return;
+    `      if (details.isCanceled) return;
 
       if (${valueRef}.current === undefined) {
         uncontrolledValueRef.current = details.${eventValueProperty};
@@ -746,6 +850,89 @@ function normalizeReactBooleanFormControlRoot(
     );
   }
 
+  if (facts.behavior.canCancelChange) {
+    next = insertCancelableCallbackBeforeControlledState(
+      next,
+      facts.event.callbackProp,
+      facts.props.state.name,
+      `(${facts.event.valueProperty}, details) => {
+          ${facts.event.callbackProp}Ref.current?.(${facts.event.valueProperty}, details);
+        }`,
+      "boolean form-control cancelable callback Runtime option",
+    );
+    next = replaceRequired(
+      next,
+      `        ${facts.event.callbackProp}Ref.current?.(details.${facts.event.valueProperty}, details);
+`,
+      "",
+      "boolean form-control accepted subscription callback removal",
+    );
+  }
+
+  if (facts.behavior.inputPlacement === "external") {
+    const form = requireFamilyProp(facts.props.form, "form").name;
+    const name = requireFamilyProp(facts.props.name, "name").name;
+    const required = requireFamilyProp(facts.props.required, "required").name;
+    const uncheckedValue = requireFamilyProp(facts.props.uncheckedValue, "uncheckedValue").name;
+    const value = requireFamilyProp(facts.props.value, "value").name;
+    next = replaceRequired(
+      next,
+      `    const inputElementRef = React.useRef<${facts.input.elementType}>(null);
+    const instanceRef =`,
+      `    const inputElementRef = React.useRef<${facts.input.elementType}>(null);
+    const runtimeInputNameRef = React.useRef<string | undefined>(${name});
+    const instanceRef =`,
+      "external boolean form-control Runtime-owned input name ref",
+    );
+    next = replaceRequired(
+      next,
+      `    const setUncontrolled${facts.state.pascalName} = React.useCallback((next${facts.state.pascalName}: ${facts.event.valueType}) => {
+      uncontrolled${facts.state.pascalName}Ref.current =`,
+      `    const setUncontrolled${facts.state.pascalName} = React.useCallback((next${facts.state.pascalName}: ${facts.event.valueType}) => {
+      runtimeInputNameRef.current = inputElementRef.current?.name || undefined;
+      uncontrolled${facts.state.pascalName}Ref.current =`,
+      "external boolean form-control pre-render input name capture",
+    );
+    next = replaceRequired(
+      next,
+      `    }, [${form}, ${name}, ${required}, ${uncheckedValue}, ${value}]);
+
+    const rendered${facts.state.pascalName} =`,
+      `    }, [${form}, ${name}, ${required}, ${uncheckedValue}, ${value}]);
+
+    useIsomorphicLayoutEffect(() => {
+      if (${name} !== undefined) return;
+      const inputElement = inputElementRef.current;
+      if (!inputElement || typeof MutationObserver === "undefined") return;
+
+      const syncRuntimeInputName = () => {
+        runtimeInputNameRef.current = inputElement.name || undefined;
+      };
+      const observer = new MutationObserver(syncRuntimeInputName);
+      observer.observe(inputElement, { attributes: true, attributeFilter: ["name"] });
+      syncRuntimeInputName();
+
+      return () => {
+        observer.disconnect();
+      };
+    }, [${name}]);
+
+    useIsomorphicLayoutEffect(() => {
+      if (${name} !== undefined) return;
+      const inputElement = inputElementRef.current;
+      const runtimeInputName = runtimeInputNameRef.current;
+      if (!inputElement || runtimeInputName === undefined || inputElement.name === runtimeInputName) {
+        return;
+      }
+
+      inputElement.name = runtimeInputName;
+    });
+
+    const rendered${facts.state.pascalName} =`,
+      "external boolean form-control Runtime-owned input name reconciliation",
+    );
+  }
+
   if (facts.behavior.acceptedChangeNotification !== "detail-on-accepted") return next;
 
   const syncEvent = requireString(facts.state.syncEvent, "state sync event");
@@ -795,11 +982,40 @@ function normalizeReactGroupedValueControlRoot(
   facts: AdapterGroupedValueControlFacts,
   contents: string,
 ): string {
-  if (facts.behavior.acceptedChangeNotification !== "detail-on-accepted") return contents;
+  let normalizedContents = contents;
+
+  if (facts.behavior.canCancelChange) {
+    normalizedContents = replaceRequired(
+      normalizedContents,
+      `        ${facts.event.callbackProp}Ref.current?.(details.${facts.event.valueProperty}, details);
+`,
+      "",
+      "grouped-value accepted subscription callback removal",
+    );
+    const callback =
+      facts.behavior.callbackArguments === "details"
+        ? `(details) => {
+          ${facts.event.callbackProp}Ref.current?.(details.${facts.event.valueProperty}, details);
+        }`
+        : `(${facts.event.valueProperty}, details) => {
+          ${facts.event.callbackProp}Ref.current?.(${facts.event.valueProperty}, details);
+        }`;
+    normalizedContents = insertCancelableCallbackBeforeControlledState(
+      normalizedContents,
+      facts.event.callbackProp,
+      facts.props.value.name,
+      callback,
+      "grouped-value cancelable callback Runtime option",
+    );
+  }
+
+  if (facts.behavior.acceptedChangeNotification !== "detail-on-accepted") {
+    return normalizedContents;
+  }
 
   const syncEvent = requireString(facts.state.syncEvent, "state sync event");
   let next = replaceRequired(
-    contents,
+    normalizedContents,
     `        if (details.isCanceled) return;
 
         if (${facts.props.value.name}Ref.current === undefined) {
@@ -837,6 +1053,241 @@ function normalizeReactGroupedValueControlRoot(
   );
 
   return next;
+}
+
+function normalizeReactDisclosurePresenceRoot(
+  facts: AdapterDisclosurePresenceFacts,
+  contents: string,
+): string {
+  let next = insertCancelableCallbackBeforeControlledState(
+    contents,
+    facts.event.callbackProp,
+    facts.props.open.name,
+    `(${facts.event.valueProperty}, details) => {
+        ${facts.event.callbackProp}Ref.current?.(${facts.event.valueProperty}, details);
+      }`,
+    "disclosure-presence cancelable callback Runtime option",
+    "      ",
+  );
+  next = replaceRequired(
+    next,
+    `        ${facts.event.callbackProp}Ref.current?.(details.${facts.event.valueProperty}, details);
+`,
+    "",
+    "disclosure-presence accepted subscription callback removal",
+  );
+  return next;
+}
+
+function normalizeReactRangeControlRoot(facts: AdapterRangeControlFacts, contents: string): string {
+  let next = insertCancelableCallbackBeforeControlledState(
+    contents,
+    facts.events.valueChange.callbackProp,
+    facts.props.value.name,
+    `(${facts.events.valueChange.valueProperty}, details) => {
+        ${facts.events.valueChange.callbackProp}Ref.current?.(${facts.events.valueChange.valueProperty}, details);
+      }`,
+    "range-control cancelable callback Runtime option",
+    "      ",
+  );
+  next = replaceRequired(
+    next,
+    `      ${facts.events.valueChange.callbackProp}Ref.current?.(details.${facts.events.valueChange.valueProperty}, details);
+`,
+    "",
+    "range-control accepted subscription callback removal",
+  );
+  return next;
+}
+
+function normalizeReactSingleBooleanControlRoot(
+  facts: AdapterSingleBooleanControlFacts,
+  contents: string,
+): string {
+  let next = insertCancelableCallbackBeforeControlledState(
+    contents,
+    facts.event.callbackProp,
+    facts.props.state.name,
+    `(${facts.event.valueProperty}, details) => {
+          ${facts.event.callbackProp}Ref.current?.(${facts.event.valueProperty}, details);
+        }`,
+    "single-boolean cancelable callback Runtime option",
+  );
+  next = replaceRequired(
+    next,
+    `        ${facts.event.callbackProp}Ref.current?.(details.${facts.event.valueProperty}, details);
+`,
+    "",
+    "single-boolean accepted subscription callback removal",
+  );
+  return next;
+}
+
+function insertCancelableCallbackBeforeControlledState(
+  contents: string,
+  callbackProp: string,
+  controlledProp: string,
+  callback: string,
+  description: string,
+  indent = "        ",
+): string {
+  const controlledStateSpread = `${indent}...(${controlledProp}Ref.current !== undefined`;
+  return replaceRequired(
+    contents,
+    controlledStateSpread,
+    `${indent}${callbackProp}: ${callback},
+${controlledStateSpread}`,
+    description,
+  );
+}
+
+type ReactCancelableSingleStateRoot = {
+  callbackProp: string;
+  controlledProp: string;
+  eventName: string;
+  valueProperty: string;
+};
+
+function normalizeReactCancelableSingleStateRoot(
+  contents: string,
+  event: ReactCancelableSingleStateRoot,
+): string {
+  const callbackInvocation = `${event.callbackProp}Ref.current?.(next${toPascalCase(event.valueProperty)}, details);`;
+  const callbackIndex = contents.indexOf(callbackInvocation);
+  if (callbackIndex < 0) {
+    throw new Error(
+      `Could not apply React family print normalization: ${event.callbackProp} Runtime callback.`,
+    );
+  }
+
+  const lineStart = contents.lastIndexOf("\n", callbackIndex) + 1;
+  const indent = contents.slice(lineStart, callbackIndex);
+  const nextValue = `next${toPascalCase(event.valueProperty)}`;
+  const earlyStatePublication = `${indent}${callbackInvocation}
+${indent}if (details.isCanceled) return;
+
+${indent}if (${event.controlledProp}Ref.current === undefined) {
+${indent}  setUncontrolled${toPascalCase(event.valueProperty)}(${nextValue});
+${indent}}`;
+  let next = replaceRequired(
+    contents,
+    earlyStatePublication,
+    `${indent}${callbackInvocation}`,
+    `${event.callbackProp} pre-DOM state publication removal`,
+  );
+
+  const instanceMarker = "instanceRef.current = instance;";
+  const instanceIndex = next.indexOf(instanceMarker, callbackIndex);
+  if (instanceIndex < 0) {
+    throw new Error(
+      `Could not apply React family print normalization: ${event.callbackProp} accepted subscription insertion.`,
+    );
+  }
+  const instanceLineStart = next.lastIndexOf("\n", instanceIndex) + 1;
+  const instanceIndent = next.slice(instanceLineStart, instanceIndex);
+  const unsubscribeName = `unsubscribe${toPascalCase(event.eventName)}`;
+  const acceptedSubscription = `${instanceIndent}${instanceMarker}
+${instanceIndent}const ${unsubscribeName} = instance.subscribe("${event.eventName}", (details) => {
+${instanceIndent}  if (${event.controlledProp}Ref.current === undefined) {
+${instanceIndent}    setUncontrolled${toPascalCase(event.valueProperty)}(details.${event.valueProperty});
+${instanceIndent}  }
+${instanceIndent}});`;
+  next =
+    next.slice(0, instanceLineStart) +
+    acceptedSubscription +
+    next.slice(instanceIndex + instanceMarker.length);
+
+  const destroyMarker = `${instanceIndent}  instance.destroy();`;
+  next = replaceRequired(
+    next,
+    destroyMarker,
+    `${instanceIndent}  ${unsubscribeName}();
+${destroyMarker}`,
+    `${event.callbackProp} accepted subscription cleanup`,
+  );
+  return next;
+}
+
+function normalizeReactCancelableMenuCheckboxItem(
+  facts: AdapterCompositeMenuOverlayFacts,
+  contents: string,
+): string {
+  const item = facts.checkboxItem;
+  const controlled = item.checkedState.controlledProp;
+  const event = item.event;
+  return replaceRequired(
+    contents,
+    `        if (details.isCanceled) return;
+
+        if (${controlled.name}Ref.current === undefined) {
+          setUncontrolledChecked(details.${event.valueProperty});
+          return;
+        }
+
+        queueMicrotask(() => {
+          const controlledChecked = ${controlled.name}Ref.current;
+          if (controlledChecked !== undefined && item.isConnected) {
+            syncCheckboxItemState(item, controlledChecked);
+          }
+        });`,
+    `        queueMicrotask(() => {
+          if (details.isCanceled) return;
+
+          if (${controlled.name}Ref.current === undefined) {
+            setUncontrolledChecked(details.${event.valueProperty});
+            return;
+          }
+
+          const controlledChecked = ${controlled.name}Ref.current;
+          if (controlledChecked !== undefined && item.isConnected) {
+            syncCheckboxItemState(item, controlledChecked);
+          }
+        });`,
+    "menu checkbox accepted DOM-event state publication",
+  );
+}
+
+function normalizeReactCancelableMenuRadioGroup(
+  facts: AdapterCompositeMenuOverlayFacts,
+  contents: string,
+): string {
+  const group = facts.radioGroup;
+  const value = group.valueState.controlledProp;
+  const event = group.event;
+  return replaceRequired(
+    contents,
+    `        if (details.isCanceled) return;
+
+        if (${value.name}Ref.current === undefined) {
+          setUncontrolledValue(details.${event.valueProperty});
+          return;
+        }
+
+        queueMicrotask(() => {
+          const controlledValue = ${value.name}Ref.current;
+          if (controlledValue !== undefined && group.isConnected) {
+            syncRadioGroupState(group, controlledValue);
+          }
+        });`,
+    `        queueMicrotask(() => {
+          if (details.isCanceled) return;
+
+          if (${value.name}Ref.current === undefined) {
+            setUncontrolledValue(details.${event.valueProperty});
+            return;
+          }
+
+          const controlledValue = ${value.name}Ref.current;
+          if (controlledValue !== undefined && group.isConnected) {
+            syncRadioGroupState(group, controlledValue);
+          }
+        });`,
+    "menu radio accepted DOM-event state publication",
+  );
+}
+
+function toPascalCase(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function replaceRequired(

@@ -402,6 +402,7 @@ export const menuRuntimeAdapterContract = {
   events: [
     {
       name: "openChange",
+      stateModel: "open",
       callbackTiming: "before-state-commit",
       cancelable: true,
       callbackProp: "onOpenChange",
@@ -424,6 +425,7 @@ export const menuRuntimeAdapterContract = {
     },
     {
       name: "checkedChange",
+      stateModel: "checked",
       callbackTiming: "before-state-commit",
       cancelable: true,
       callbackProp: "onCheckedChange",
@@ -435,6 +437,7 @@ export const menuRuntimeAdapterContract = {
     },
     {
       name: "valueChange",
+      stateModel: "radioValue",
       callbackTiming: "before-state-commit",
       cancelable: true,
       callbackProp: "onValueChange",

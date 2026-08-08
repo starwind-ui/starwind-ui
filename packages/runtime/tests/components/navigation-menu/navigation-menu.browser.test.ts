@@ -586,6 +586,16 @@ describe("createNavigationMenu", () => {
     expect(getTrigger("products").getAttribute("aria-expanded")).toBe("false");
   });
 
+  it("applies an accepted emitting value setter in controlled mode", () => {
+    const root = renderNavigationMenu();
+    const menu = createNavigationMenu(root, { value: "products" });
+
+    menu.setValue("company");
+
+    expect(menu.getValue()).toBe("company");
+    expect(getTrigger("company").getAttribute("aria-expanded")).toBe("true");
+  });
+
   it("treats root data-value as controlled state for static adapters", () => {
     const root = renderNavigationMenu();
     root.setAttribute("data-value", "products");

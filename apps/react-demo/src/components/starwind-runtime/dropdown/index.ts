@@ -1,3 +1,5 @@
+"use client";
+
 import Dropdown from "./Dropdown";
 import DropdownCheckboxItem from "./DropdownCheckboxItem";
 import DropdownCheckboxItemIndicator from "./DropdownCheckboxItemIndicator";
@@ -45,6 +47,26 @@ const DropdownVariants = {
   dropdownTrigger,
 };
 
+const DropdownParts = {
+  Root: Dropdown,
+  Trigger: DropdownTrigger,
+  Content: DropdownContent,
+  CheckboxItem: DropdownCheckboxItem,
+  CheckboxItemIndicator: DropdownCheckboxItemIndicator,
+  RadioGroup: DropdownRadioGroup,
+  RadioItem: DropdownRadioItem,
+  RadioItemIndicator: DropdownRadioItemIndicator,
+  Item: DropdownItem,
+  LinkItem: DropdownLinkItem,
+  Group: DropdownGroup,
+  Label: DropdownLabel,
+  Separator: DropdownSeparator,
+  Shortcut: DropdownShortcut,
+  Sub: DropdownSub,
+  SubTrigger: DropdownSubTrigger,
+  SubContent: DropdownSubContent,
+};
+
 export {
   Dropdown,
   DropdownCheckboxItem,
@@ -66,22 +88,4 @@ export {
   DropdownVariants,
 };
 
-export default {
-  Root: Dropdown,
-  Trigger: DropdownTrigger,
-  Content: DropdownContent,
-  CheckboxItem: DropdownCheckboxItem,
-  CheckboxItemIndicator: DropdownCheckboxItemIndicator,
-  RadioGroup: DropdownRadioGroup,
-  RadioItem: DropdownRadioItem,
-  RadioItemIndicator: DropdownRadioItemIndicator,
-  Item: DropdownItem,
-  LinkItem: DropdownLinkItem,
-  Group: DropdownGroup,
-  Label: DropdownLabel,
-  Separator: DropdownSeparator,
-  Shortcut: DropdownShortcut,
-  Sub: DropdownSub,
-  SubTrigger: DropdownSubTrigger,
-  SubContent: DropdownSubContent,
-};
+export default DropdownParts;

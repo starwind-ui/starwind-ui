@@ -5,6 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
@@ -251,9 +252,20 @@ class InputOtpController implements InputOtpInstance {
       return;
     }
 
+    if (options.emit === false) {
+      this.values = nextValues;
+      this.currentIndex = this.getNextEditableIndex(nextValue.length);
+      this.render();
+      return;
+    }
+
     if (
-      options.emit !== false &&
       !this.requestValueChange({
+        apply: () => {
+          this.values = nextValues;
+          this.currentIndex = this.getNextEditableIndex(nextValue.length);
+          this.render();
+        },
         event: options.event,
         previousValue,
         reason: options.reason ?? "imperative-action",
@@ -264,10 +276,6 @@ class InputOtpController implements InputOtpInstance {
       this.render();
       return;
     }
-
-    this.values = nextValues;
-    this.currentIndex = this.getNextEditableIndex(nextValue.length);
-    this.render();
   }
 
   subscribe(
@@ -447,6 +455,11 @@ class InputOtpController implements InputOtpInstance {
 
     if (
       !this.requestValueChange({
+        apply: () => {
+          this.values = chars;
+          this.currentIndex = this.getNextEditableIndex(this.currentIndex + filteredValue.length);
+          this.render();
+        },
         event,
         previousValue,
         reason: "paste",
@@ -457,10 +470,6 @@ class InputOtpController implements InputOtpInstance {
       this.render();
       return;
     }
-
-    this.values = chars;
-    this.currentIndex = this.getNextEditableIndex(this.currentIndex + filteredValue.length);
-    this.render();
   };
 
   private readonly handleInput = (event: Event): void => {
@@ -477,6 +486,11 @@ class InputOtpController implements InputOtpInstance {
 
     if (
       !this.requestValueChange({
+        apply: () => {
+          this.values = nextValues;
+          this.currentIndex = this.getNextEditableIndex(nextValue.length);
+          this.render();
+        },
         event,
         previousValue,
         reason: "input-change",
@@ -487,10 +501,6 @@ class InputOtpController implements InputOtpInstance {
       this.render();
       return;
     }
-
-    this.values = nextValues;
-    this.currentIndex = this.getNextEditableIndex(nextValue.length);
-    this.render();
   };
 
   private readonly handleFormReset = (event: Event): void => {
@@ -550,6 +560,10 @@ class InputOtpController implements InputOtpInstance {
     if (
       !this.requestValueChange({
         ...request,
+        apply: () => {
+          this.values = chars;
+          this.render();
+        },
         previousValue,
         value: nextValue,
       })
@@ -558,8 +572,6 @@ class InputOtpController implements InputOtpInstance {
       return false;
     }
 
-    this.values = chars;
-    this.render();
     return true;
   }
 
@@ -723,12 +735,14 @@ class InputOtpController implements InputOtpInstance {
   }
 
   private requestValueChange({
+    apply,
     event,
     previousValue,
     reason,
     trigger,
     value,
   }: {
+    apply: () => void;
     event?: Event;
     previousValue: string;
     reason: InputOtpValueChangeReason;
@@ -746,25 +760,29 @@ class InputOtpController implements InputOtpInstance {
 
     attachFormValueRevision(details, event);
 
-    const valueChangeEvent = dispatchCustomEvent(this.root, "starwind:value-change", details, {
-      cancelable: true,
+    return runCancelableDetailsTransaction({
+      apply,
+      details,
+      eventType: "starwind:value-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.forEach((callback) => callback(acceptedDetails));
+
+        const legacyDetails = {
+          inputOtpId: this.root.id,
+          value,
+        };
+        attachFormValueRevision(legacyDetails, acceptedDetails);
+        dispatchCustomEvent(this.root, "starwind-input-otp:change", legacyDetails);
+      },
+      notifyCallback: (proposalDetails) =>
+        this.onValueChange?.(proposalDetails.value, proposalDetails),
+      rollbackCanceled: () => {
+        if (this.getValue() === value && previousValue !== value) {
+          this.setValue(previousValue, { emit: false });
+        }
+      },
+      target: this.root,
     });
-    if (valueChangeEvent.defaultPrevented) {
-      details.cancel();
-    }
-    this.subscribers.forEach((callback) => callback(details));
-    this.onValueChange?.(value, details);
-
-    if (details.isCanceled) return false;
-
-    const legacyDetails = {
-      inputOtpId: this.root.id,
-      value,
-    };
-    attachFormValueRevision(legacyDetails, details);
-    dispatchCustomEvent(this.root, "starwind-input-otp:change", legacyDetails);
-
-    return true;
   }
 }
 

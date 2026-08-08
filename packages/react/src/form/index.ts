@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import FormErrorSummary from "./FormErrorSummary";
 import FormRoot from "./FormRoot";
 

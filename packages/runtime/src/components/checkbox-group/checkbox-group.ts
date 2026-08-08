@@ -8,7 +8,7 @@ import {
   readStringOrStringArrayAttribute,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { dispatchCustomEvent } from "../../internal/events";
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import {
   type CheckboxCheckedChangeDetails,
@@ -217,14 +217,13 @@ class CheckboxGroupController implements CheckboxGroupInstance {
       value: nextValue,
     });
 
-    this.notify(details);
-    if (details.isCanceled) {
+    const applied = this.runValueChange(details, undefined, () => {
+      this.value = nextValue;
       this.render();
-      return;
+    });
+    if (!applied) {
+      this.render();
     }
-
-    this.value = nextValue;
-    this.render();
   }
 
   subscribe(
@@ -415,16 +414,21 @@ class CheckboxGroupController implements CheckboxGroupInstance {
       value: nextValue,
     });
 
-    this.notify(details, checkedDetails);
+    const applied = this.runValueChange(details, checkedDetails, () => {
+      if (!this.controlled) this.value = nextValue;
+      this.render();
+    });
 
-    if (details.isCanceled || this.controlled) {
+    if (!applied) {
       checkedDetails.cancel();
       this.render();
       return;
     }
 
-    this.value = nextValue;
-    this.render();
+    if (this.controlled) {
+      checkedDetails.cancel();
+      this.render();
+    }
   }
 
   private render(): void {
@@ -452,15 +456,32 @@ class CheckboxGroupController implements CheckboxGroupInstance {
     this.value = this.value.filter((value) => itemValues.has(value));
   }
 
-  private notify(details: CheckboxGroupValueChangeDetails, source?: object): void {
+  private runValueChange(
+    details: CheckboxGroupValueChangeDetails,
+    source: object | undefined,
+    apply: () => void,
+  ): boolean {
     attachFormValueRevision(details, source ?? details.event);
-    const event = dispatchCustomEvent(this.root, "starwind:value-change", details, {
-      cancelable: true,
+    return runCancelableDetailsTransaction({
+      apply,
+      details,
+      eventType: "starwind:value-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.forEach((subscriber) => subscriber(acceptedDetails));
+      },
+      notifyCallback: (proposalDetails) => this.onValueChange?.(proposalDetails),
+      rollbackCanceled: () => {
+        if (checkboxGroupValuesEqual(this.value, details.value)) {
+          this.setValue(details.previousValue, { emit: false });
+        }
+      },
+      target: this.root,
     });
-    if (event.defaultPrevented) details.cancel();
-    this.onValueChange?.(details);
-    this.subscribers.forEach((subscriber) => subscriber(details));
   }
+}
+
+function checkboxGroupValuesEqual(left: CheckboxGroupValue, right: CheckboxGroupValue): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 class CheckboxGroupValueChangeDetailsImpl implements CheckboxGroupValueChangeDetails {

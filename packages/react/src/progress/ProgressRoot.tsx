@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import { createProgress, type ProgressValue } from "@starwind-ui/runtime/progress";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";

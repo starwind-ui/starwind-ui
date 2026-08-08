@@ -1,3 +1,5 @@
+"use client";
+
 import FieldPrimitive from "@starwind-ui/react/field";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";

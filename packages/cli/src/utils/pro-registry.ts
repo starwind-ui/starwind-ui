@@ -11,7 +11,7 @@ import {
 } from "./config.js";
 import { PATHS } from "./constants.js";
 import { filterUninstalledDependencies } from "./dependency-resolver.js";
-import { installDependencies, type PackageManager } from "./package-manager.js";
+import { installDependenciesWithProgress, type PackageManager } from "./package-manager.js";
 import { parsePackageSpec } from "./package-spec.js";
 import { resolveProjectMutationPath, resolveProjectPathLexically } from "./project-path.js";
 
@@ -246,12 +246,12 @@ async function installProRegistryPackages(
 
   const dependenciesToInstall = await filterUninstalledDependencies(dependencies);
   if (dependenciesToInstall.length > 0) {
-    await installDependencies(dependenciesToInstall, packageManager);
+    await installDependenciesWithProgress(dependenciesToInstall, packageManager);
   }
 
   const devDependenciesToInstall = await filterUninstalledDependencies(devDependencies);
   if (devDependenciesToInstall.length > 0) {
-    await installDependencies(devDependenciesToInstall, packageManager, true);
+    await installDependenciesWithProgress(devDependenciesToInstall, packageManager, true);
   }
 }
 

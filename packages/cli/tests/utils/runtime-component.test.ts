@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { StarwindConfig } from "../../src/utils/config.js";
 import * as config from "../../src/utils/config.js";
+import * as astroReactIntegration from "../../src/utils/astro-react-integration.js";
 import * as dependencyResolver from "../../src/utils/dependency-resolver.js";
 import * as packageManager from "../../src/utils/package-manager.js";
 import type { StarwindRegistry } from "../../src/utils/registry.js";
@@ -26,11 +27,15 @@ vi.mock("@clack/prompts", () => ({
   },
 }));
 vi.mock("../../src/utils/config.js");
+vi.mock("../../src/utils/astro-react-integration.js");
 vi.mock("../../src/utils/dependency-resolver.js");
 vi.mock("../../src/utils/package-manager.js");
 vi.mock("../../src/utils/registry.js");
 
 const mockLoadRegistry = vi.mocked(registry.loadRegistry);
+const mockEnsureAstroReactIntegration = vi.mocked(
+  astroReactIntegration.ensureAstroReactIntegration,
+);
 const mockGetStyledRegistrySource = vi.mocked(registry.getStyledRegistrySource);
 const mockUpdateConfig = vi.mocked(config.updateConfig);
 const mockGetStyledComponentDir = vi.mocked(config.getStyledComponentDir);
@@ -38,7 +43,7 @@ const mockGetStyledComponentDirConfigUpdate = vi.mocked(config.getStyledComponen
 const mockFilterUninstalledDependencies = vi.mocked(
   dependencyResolver.filterUninstalledDependencies,
 );
-const mockInstallDependencies = vi.mocked(packageManager.installDependencies);
+const mockInstallDependencies = vi.mocked(packageManager.installDependenciesWithProgress);
 const mockConfirm = vi.mocked(clackPrompts.confirm);
 const mockIsCancel = vi.mocked(clackPrompts.isCancel);
 const mockPromptLog = vi.mocked(clackPrompts.log);
@@ -137,6 +142,7 @@ describe.sequential("runtime component installs", () => {
     await writeFile("package.json", JSON.stringify({ dependencies: {} }), "utf-8");
 
     mockLoadRegistry.mockResolvedValue(registryFixture);
+    mockEnsureAstroReactIntegration.mockResolvedValue({ status: "ready" });
     mockGetStyledRegistrySource.mockImplementation((starwindConfig, registryReference) => {
       if (!registryReference || registryReference === "default") {
         return { type: "bundled" };
@@ -193,6 +199,75 @@ describe.sequential("runtime component installs", () => {
   afterEach(async () => {
     process.chdir(previousCwd);
     await rm(tempDir, { recursive: true, force: true });
+  });
+
+  it("prepares component CSS through the Next Pages global stylesheet", async () => {
+    await writeFile(
+      "package.json",
+      JSON.stringify({ dependencies: { next: "^16.3.0", react: "^19.2.0" } }),
+      "utf-8",
+    );
+    await mkdir("pages", { recursive: true });
+    await mkdir("styles", { recursive: true });
+    await writeFile(
+      "pages/_app.tsx",
+      'import "@/styles/globals.css";\nexport default function App() { return null; }\n',
+      "utf-8",
+    );
+    await writeFile("styles/globals.css", '@import "./starwind.css";\n', "utf-8");
+    await writeFile(
+      "styles/starwind.css",
+      '@import "tailwindcss";\n@import "tw-animate-css";\n@plugin "@tailwindcss/forms";\n',
+      "utf-8",
+    );
+    mockLoadRegistry.mockResolvedValue({
+      ...registryFixture,
+      components: [
+        {
+          name: "dialog",
+          version: "2.0.0",
+          type: "component",
+          dependencies: [],
+          targets: {
+            react: {
+              files: [
+                {
+                  path: "src/components/starwind/dialog/Dialog.tsx",
+                  content:
+                    '"use client";\n\nimport "./styles.css";\nexport default function Dialog() { return null; }\n',
+                },
+                {
+                  path: "src/components/starwind/dialog/styles.css",
+                  content: "[data-slot=dialog] { opacity: 1; }\n",
+                },
+              ],
+              componentDependencies: [],
+              packageRequirements: [{ name: "@starwind-ui/react", range: "^1.0.0" }],
+            },
+          },
+        },
+      ],
+    });
+    const nextPagesConfig: StarwindConfig = {
+      ...runtimeConfig,
+      tailwind: { ...runtimeConfig.tailwind, css: "styles/starwind.css" },
+      componentDir: "components/starwind",
+      utilsDir: "lib/utils",
+    };
+
+    const result = await installRuntimeComponents(["dialog"], {
+      config: nextPagesConfig,
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+
+    expect(result.failed).toEqual([]);
+    await expect(readFile("components/starwind/dialog/Dialog.tsx", "utf-8")).resolves.not.toContain(
+      'import "./styles.css"',
+    );
+    await expect(readFile("styles/starwind.css", "utf-8")).resolves.toContain(
+      '@import "../components/starwind/dialog/styles.css";',
+    );
   });
 
   it.each(["../button", "nested/button", "."])(
@@ -677,6 +752,11 @@ describe.sequential("runtime component installs", () => {
       skipPrompts: true,
     });
 
+    expect(mockEnsureAstroReactIntegration).toHaveBeenCalledWith({
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+
     expect(result.failed).toEqual([]);
     expect(result.installed).toEqual([{ name: "button", status: "installed", version: "2.0.0" }]);
     await expect(
@@ -703,6 +783,28 @@ describe.sequential("runtime component installs", () => {
       { appendComponents: true },
     );
   });
+
+  it.each(["cancelled", "declined"] as const)(
+    "stops before component planning when Astro React setup is %s",
+    async (status) => {
+      mockEnsureAstroReactIntegration.mockResolvedValue({ status });
+
+      const result = await installRuntimeComponents(["button"], {
+        config: { ...runtimeConfig, framework: "astro" },
+        framework: "react",
+        packageManager: "pnpm",
+      });
+
+      expect(result).toEqual({
+        failed: [],
+        installed: [],
+        skipped: [],
+        setupOutcome: status,
+      });
+      expect(mockLoadRegistry).not.toHaveBeenCalled();
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+    },
+  );
 
   it("uses configured alternative-framework styled component directories", async () => {
     const result = await installRuntimeComponents(["button"], {

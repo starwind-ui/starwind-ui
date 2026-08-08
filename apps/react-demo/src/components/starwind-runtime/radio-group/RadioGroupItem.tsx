@@ -1,3 +1,5 @@
+"use client";
+
 import RadioPrimitive from "@starwind-ui/react/radio";
 import { IconCircleFilled as CircleFilled } from "@tabler/icons-react";
 import type * as React from "react";

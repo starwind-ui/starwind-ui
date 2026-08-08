@@ -1,3 +1,5 @@
+"use client";
+
 import PopoverPrimitive from "@starwind-ui/react/popover";
 import type * as React from "react";
 import { popoverTitle } from "./variants";

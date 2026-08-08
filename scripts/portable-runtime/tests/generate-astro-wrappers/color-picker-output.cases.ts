@@ -91,6 +91,8 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     );
     expect(tree["ColorPickerDefaultEditor.astro"]).toContain('channel="alpha"');
     expect(tree["ColorPickerDefaultEditor.astro"]).toContain("normalizedSwatches.map");
+    expect(tree["ColorPickerDefaultEditor.astro"]).toContain("const isSwatchDescriptor = (");
+    expect(tree["ColorPickerDefaultEditor.astro"]).toContain("isSwatchDescriptor(swatch)");
     expect(tree["ColorPickerDefaultEditor.astro"]).not.toContain("swatchIndex");
     expect(tree["ColorPickerDefaultEditor.astro"]).toContain("<ColorPickerClear");
     expect(tree["ColorPickerInput.astro"]).toContain("initial={initial?.valueInput.initial}");

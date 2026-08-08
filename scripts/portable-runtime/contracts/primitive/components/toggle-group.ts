@@ -58,12 +58,15 @@ export const toggleGroupRuntimeAdapterContract = {
   events: [
     {
       name: "valueChange",
+      stateModel: "value",
       callbackProp: "onValueChange",
       detailsType: "ToggleGroupValueChangeDetails",
       domEvent: "starwind:value-change",
       emitsFrom: "root",
       valueProperty: "value",
       valueType: "ToggleGroupValue",
+      callbackTiming: "before-state-commit",
+      cancelable: true,
     },
   ],
   setters: [

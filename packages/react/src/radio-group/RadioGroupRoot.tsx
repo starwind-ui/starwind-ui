@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import {
   createRadioGroup,
   type RadioGroupValue,
@@ -118,11 +120,13 @@ const RadioGroupRoot = React.forwardRef<HTMLDivElement, RadioGroupRootProps>(
         orientation: orientationRef.current,
         readOnly: readOnlyRef.current,
         required: requiredRef.current,
+        onValueChange: (value, details) => {
+          onValueChangeRef.current?.(value, details);
+        },
         ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
       });
       instanceRef.current = instance;
       const unsubscribe = instance.subscribe("valueChange", (details) => {
-        onValueChangeRef.current?.(details.value, details);
         details.onAccepted(() => {
           if (valueRef.current === undefined) {
             setUncontrolledValue(details.value);

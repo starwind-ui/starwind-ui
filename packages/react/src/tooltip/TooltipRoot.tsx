@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import { createTooltip, type TooltipOpenChangeDetails } from "@starwind-ui/runtime/tooltip";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
@@ -78,17 +80,18 @@ const TooltipRoot = React.forwardRef<HTMLDivElement, TooltipRootProps>(function 
       openDelay,
       onOpenChange: (nextOpen, details) => {
         onOpenChangeRef.current?.(nextOpen, details);
-        if (details.isCanceled) return;
-
-        if (openRef.current === undefined) {
-          setUncontrolledOpen(nextOpen);
-        }
       },
       ...(openRef.current !== undefined ? { open: openRef.current } : {}),
     });
     instanceRef.current = instance;
+    const unsubscribeOpenChange = instance.subscribe("openChange", (details) => {
+      if (openRef.current === undefined) {
+        setUncontrolledOpen(details.open);
+      }
+    });
 
     return () => {
+      unsubscribeOpenChange();
       instance.destroy();
       if (instanceRef.current === instance) {
         instanceRef.current = undefined;

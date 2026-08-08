@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import type { ColorPickerInitialChannel } from "@starwind-ui/runtime/color-picker";
 import * as React from "react";
 import { useColorPickerPartProjection } from "./ColorPickerRoot";

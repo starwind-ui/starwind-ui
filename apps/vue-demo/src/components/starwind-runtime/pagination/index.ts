@@ -31,6 +31,16 @@ const PaginationVariants = {
   paginationPrevious,
 };
 
+const PaginationParts = {
+  Root: Pagination,
+  Content: PaginationContent,
+  Ellipsis: PaginationEllipsis,
+  Item: PaginationItem,
+  Link: PaginationLink,
+  Next: PaginationNext,
+  Previous: PaginationPrevious,
+};
+
 export {
   Pagination,
   PaginationContent,
@@ -42,12 +52,4 @@ export {
   PaginationVariants,
 };
 
-export default {
-  Root: Pagination,
-  Content: PaginationContent,
-  Ellipsis: PaginationEllipsis,
-  Item: PaginationItem,
-  Link: PaginationLink,
-  Next: PaginationNext,
-  Previous: PaginationPrevious,
-};
+export default PaginationParts;

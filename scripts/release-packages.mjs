@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { createSpawnCommand } from "./command-process.mjs";
 import {
   CHANGESET_IGNORED_PACKAGES,
   RUNTIME_RELEASE_PACKAGE_SET,
@@ -25,24 +26,6 @@ function getPnpmCommand() {
 
 function getPackageDir(entry) {
   return path.join(ROOT_DIR, entry.directory);
-}
-
-function quoteWindowsCommandArg(arg) {
-  if (/^[A-Za-z0-9._:/=@+-]+$/.test(arg)) return arg;
-  if (/["&<>|^%!\r\n]/.test(arg)) {
-    throw new Error(`Cannot safely pass argument to cmd.exe: ${arg}`);
-  }
-  return `"${arg}"`;
-}
-
-function createSpawn(command, args) {
-  if (process.platform === "win32" && command.endsWith(".cmd")) {
-    return {
-      args: ["/d", "/s", "/c", [command, ...args].map(quoteWindowsCommandArg).join(" ")],
-      command: "cmd.exe",
-    };
-  }
-  return { args, command };
 }
 
 export function redactCommandArgs(args) {
@@ -229,7 +212,7 @@ async function readPrereleaseState() {
   }
 }
 
-async function assertReleaseMetadata() {
+export async function assertReleaseMetadata() {
   const [packageManifests, preState, config] = await Promise.all([
     Promise.all(RELEASE_PACKAGE_SET.map((entry) => readPackageManifest(entry))),
     readPrereleaseState(),
@@ -241,7 +224,7 @@ async function assertReleaseMetadata() {
   ];
   const errors = results.flatMap((result) => result.errors);
   if (errors.length > 0) throw new Error(`Release metadata is not ready:\n${errors.join("\n")}`);
-  return { tag: results[0].tag };
+  return { packageManifests, tag: results[0].tag };
 }
 
 export function parseArgs(argv) {
@@ -280,7 +263,7 @@ export function parseArgs(argv) {
 
 function runCommand(command, args, options = {}) {
   return new Promise((resolve, reject) => {
-    const spawned = createSpawn(command, args);
+    const spawned = createSpawnCommand(command, args);
     const child = spawn(spawned.command, spawned.args, {
       cwd: options.cwd ?? ROOT_DIR,
       env: process.env,
@@ -342,7 +325,7 @@ export function validatePublishGitState({ branch, head, originMain, originUrl, s
   return { errors, ok: errors.length === 0 };
 }
 
-async function assertPublicMainForPublish() {
+export async function assertPublicMainForPublish() {
   const [status, originUrl, branch, head, originMain] = await Promise.all([
     readGitOutput(["status", "--porcelain"]),
     readGitOutput(["remote", "get-url", "origin"]),
@@ -352,22 +335,40 @@ async function assertPublicMainForPublish() {
   ]);
   const result = validatePublishGitState({ branch, head, originMain, originUrl, status });
   if (!result.ok) throw new Error(`Publish Git state is not ready:\n${result.errors.join("\n")}`);
+  return { head };
+}
+
+export async function executeReleasePublication({
+  dryRun,
+  finalize,
+  publishCommands,
+  runPublish = runCommand,
+}) {
+  for (const publishCommand of publishCommands) {
+    const relativeDir = path.relative(ROOT_DIR, publishCommand.cwd);
+    const modeLabel = dryRun ? "dry-run" : "publish";
+    console.log(`[${modeLabel}] ${publishCommand.packageName} from ${relativeDir}`);
+    await runPublish(publishCommand.command, publishCommand.args, {
+      cwd: publishCommand.cwd,
+      packageName: publishCommand.packageName,
+    });
+  }
+  if (!dryRun) await finalize();
 }
 
 async function main() {
   const { dryRun, otp, resumeFrom } = parseArgs(process.argv.slice(2));
   const { tag } = await assertReleaseMetadata();
   if (!dryRun) await assertPublicMainForPublish();
-
-  for (const publishCommand of createPublishCommands({ dryRun, otp, resumeFrom, tag })) {
-    const relativeDir = path.relative(ROOT_DIR, publishCommand.cwd);
-    const modeLabel = dryRun ? "dry-run" : "publish";
-    console.log(`[${modeLabel}] ${publishCommand.packageName} from ${relativeDir}`);
-    await runCommand(publishCommand.command, publishCommand.args, {
-      cwd: publishCommand.cwd,
-      packageName: publishCommand.packageName,
-    });
-  }
+  const finalize = async () => {
+    const { runReleaseFinalization } = await import("./release-finalization.mjs");
+    await runReleaseFinalization();
+  };
+  await executeReleasePublication({
+    dryRun,
+    finalize,
+    publishCommands: createPublishCommands({ dryRun, otp, resumeFrom, tag }),
+  });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

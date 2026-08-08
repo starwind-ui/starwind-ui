@@ -5,6 +5,7 @@ import {
   setBooleanAttribute,
 } from "../../internal/dom";
 import { dispatchCustomEvent } from "../../internal/events";
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 
 export type TogglePressedChangeReason = "none";
 
@@ -144,19 +145,23 @@ class ToggleController implements ToggleInstance {
     }
 
     const previousPressed = this.pressedState;
-    this.pressedState = pressed;
-    this.render();
-
-    if (options.emit !== false) {
-      this.notify(
+    if (options.emit === false) {
+      this.pressedState = pressed;
+      this.render();
+    } else {
+      const applied = this.runPressedChange(
         new TogglePressedChangeDetailsImpl({
           event: options.event,
           pressed,
           previousPressed,
           trigger: options.trigger,
         }),
+        () => {
+          this.pressedState = pressed;
+          this.render();
+        },
       );
-
+      if (!applied) return;
       this.dispatchLegacyChange(pressed);
     }
 
@@ -250,11 +255,13 @@ class ToggleController implements ToggleInstance {
       trigger,
     });
 
-    this.notify(details);
-    if (details.isCanceled || this.controlled) return;
-
-    this.pressedState = pressed;
-    this.render();
+    const applied = this.runPressedChange(details, () => {
+      if (!this.controlled) {
+        this.pressedState = pressed;
+        this.render();
+      }
+    });
+    if (!applied || this.controlled) return;
     this.dispatchLegacyChange(pressed);
     this.dispatchSyncPressed(pressed);
   }
@@ -272,14 +279,14 @@ class ToggleController implements ToggleInstance {
       previousPressed,
     });
 
-    this.notify(details);
-    if (details.isCanceled) {
+    const applied = this.runPressedChange(details, () => {
+      this.pressedState = detail.pressed;
+      this.render();
+    });
+    if (!applied) {
       this.render();
       return;
     }
-
-    this.pressedState = detail.pressed;
-    this.render();
     this.dispatchLegacyChange(detail.pressed);
   };
 
@@ -325,13 +332,23 @@ class ToggleController implements ToggleInstance {
     return !this.nativeButton && (event.key === "Enter" || event.key === " ");
   }
 
-  private notify(details: TogglePressedChangeDetails): void {
-    this.onPressedChange?.(details.pressed, details);
-    this.subscribers.forEach((subscriber) => subscriber(details));
-    const event = dispatchCustomEvent(this.root, "starwind:pressed-change", details, {
-      cancelable: true,
+  private runPressedChange(details: TogglePressedChangeDetails, apply: () => void): boolean {
+    return runCancelableDetailsTransaction({
+      apply,
+      details,
+      eventType: "starwind:pressed-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.forEach((subscriber) => subscriber(acceptedDetails));
+      },
+      notifyCallback: (proposalDetails) =>
+        this.onPressedChange?.(proposalDetails.pressed, proposalDetails),
+      rollbackCanceled: () => {
+        if (this.pressedState === details.pressed && details.previousPressed !== details.pressed) {
+          this.setPressed(details.previousPressed, { emit: false });
+        }
+      },
+      target: this.root,
     });
-    if (event.defaultPrevented) details.cancel();
   }
 
   private dispatchLegacyChange(pressed: boolean): void {

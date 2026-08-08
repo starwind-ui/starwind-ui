@@ -9,6 +9,8 @@ export type { HoverCardTriggerProps } from "./HoverCardTrigger.vue";
 
 const HoverCardVariants = { hoverCard, hoverCardContent, hoverCardTrigger };
 
+const HoverCardParts = { Root: HoverCard, Trigger: HoverCardTrigger, Content: HoverCardContent };
+
 export { HoverCard, HoverCardContent, HoverCardTrigger, HoverCardVariants };
 
-export default { Root: HoverCard, Trigger: HoverCardTrigger, Content: HoverCardContent };
+export default HoverCardParts;

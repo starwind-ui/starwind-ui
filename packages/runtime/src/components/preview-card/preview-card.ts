@@ -80,6 +80,7 @@ type PreviewCardElements = {
 };
 
 type OpenRequest = {
+  forceApply?: boolean;
   event?: Event;
   reason: PreviewCardOpenChangeReason;
   trigger?: HTMLElement;
@@ -214,23 +215,17 @@ class PreviewCardController implements PreviewCardInstance {
   }
 
   setOpen(open: boolean, options: PreviewCardSetOpenOptions = {}): void {
+    if (options.emit !== false) {
+      this.requestOpen(open, { forceApply: true, reason: "imperative-action" });
+      return;
+    }
+
     const previousOpen = this.openState;
     this.openState = open;
     if (open && !this.activeTrigger) {
       this.activeTrigger = this.elements.triggers[0] ?? null;
     }
     this.applyOpenState(open);
-
-    if (options.emit !== false) {
-      this.notify(
-        createOpenChangeDetails({
-          open,
-          previousOpen,
-          reason: "imperative-action",
-          trigger: this.activeTrigger ?? undefined,
-        }),
-      );
-    }
   }
 
   getOpen(): boolean {
@@ -383,12 +378,18 @@ class PreviewCardController implements PreviewCardInstance {
       : this.activeTrigger;
     const shouldSwitchActiveTrigger = open && nextActiveTrigger !== this.activeTrigger;
 
-    if (open === this.openState && !this.controlled && !shouldSwitchActiveTrigger) return;
+    if (
+      open === this.openState &&
+      !this.controlled &&
+      !shouldSwitchActiveTrigger &&
+      !request.forceApply
+    )
+      return;
 
     const previousOpen = this.openState;
     runOverlayOpenChangeShell({
       root: this.root,
-      controlled: this.controlled,
+      controlled: this.controlled && !request.forceApply,
       createDetails: createOpenChangeDetails,
       getTrigger: (request) => request.trigger ?? this.activeTrigger ?? undefined,
       open,
@@ -412,6 +413,11 @@ class PreviewCardController implements PreviewCardInstance {
         this.applyOpenState(open);
       },
       onBeforeOpenChange: () => this.dispatchOpenChangeIntent(open, request),
+      onCanceledOpenChange: () => {
+        if (this.openState === open && previousOpen !== open) {
+          this.setOpen(previousOpen, { emit: false });
+        }
+      },
       onNotifyOpenChangeSubscribers: (details) => this.notify(details),
       onOpenChange: (nextOpen, details) => {
         this.onOpenChange?.(nextOpen, details);

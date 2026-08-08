@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import type { MenuValueChangeDetails } from "@starwind-ui/runtime/menu";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
@@ -49,14 +51,14 @@ const MenuRadioGroup = React.forwardRef<HTMLDivElement, MenuRadioGroupProps>(
       const handleValueChange = (event: Event) => {
         const details = (event as CustomEvent<MenuValueChangeDetails>).detail;
         onValueChangeRef.current?.(details.value, details);
-        if (details.isCanceled) return;
-
-        if (valueRef.current === undefined) {
-          setUncontrolledValue(details.value);
-          return;
-        }
-
         queueMicrotask(() => {
+          if (details.isCanceled) return;
+
+          if (valueRef.current === undefined) {
+            setUncontrolledValue(details.value);
+            return;
+          }
+
           const controlledValue = valueRef.current;
           if (controlledValue !== undefined && group.isConnected) {
             syncRadioGroupState(group, controlledValue);

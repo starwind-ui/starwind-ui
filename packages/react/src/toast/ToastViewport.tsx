@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import { createToastManager } from "@starwind-ui/runtime/toast";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";

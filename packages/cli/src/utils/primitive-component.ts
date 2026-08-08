@@ -13,7 +13,7 @@ import {
 } from "./config.js";
 import { PATHS } from "./constants.js";
 import { filterUninstalledDependencies } from "./dependency-resolver.js";
-import { installDependencies, type PackageManager } from "./package-manager.js";
+import { installDependenciesWithProgress, type PackageManager } from "./package-manager.js";
 import {
   assertProjectRelativePath,
   resolveProjectMutationPath,
@@ -208,7 +208,7 @@ export async function installPrimitiveComponents(
   );
 
   if (packagesToInstall.length > 0) {
-    await installDependencies(packagesToInstall, options.packageManager);
+    await installDependenciesWithProgress(packagesToInstall, options.packageManager);
   }
 
   for (const artifact of writableArtifacts) {
@@ -393,7 +393,7 @@ export async function updatePrimitiveComponents(
     }
 
     if (!skipPackageDependentUpdates) {
-      await installDependencies(plan.packagesToInstall, options.packageManager);
+      await installDependenciesWithProgress(plan.packagesToInstall, options.packageManager);
     }
   }
 

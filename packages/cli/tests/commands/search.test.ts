@@ -176,6 +176,45 @@ describe("search command", () => {
     expect(mockLog.info).toHaveBeenCalledWith(expect.stringContaining("card"));
   });
 
+  it("sorts Core and Pro display results case-insensitively", async () => {
+    mockLoadRegistry.mockResolvedValue({
+      $schema: "https://starwind.dev/registry-schema.v2.json",
+      version: "0.1.0",
+      components: [
+        { name: "zebra", version: "1.0.0", dependencies: [], type: "component" },
+        { name: "Alpha", version: "1.0.0", dependencies: [], type: "component" },
+      ],
+    });
+    mockSearchProBlocks.mockResolvedValue([
+      {
+        id: "zebra-block",
+        name: "Zebra Block",
+        description: "Zebra",
+        categories: [],
+        keywords: [],
+        plan: "free",
+        installCommand: "starwind add @starwind-pro/zebra-block",
+        previewUrl: "/zebra",
+      },
+      {
+        id: "alpha-block",
+        name: "alpha Block",
+        description: "Alpha",
+        categories: [],
+        keywords: [],
+        plan: "free",
+        installCommand: "starwind add @starwind-pro/alpha-block",
+        previewUrl: "/alpha",
+      },
+    ]);
+
+    await search();
+
+    const output = getLogOutput(mockLog.info);
+    expect(output.indexOf("alpha Block")).toBeLessThan(output.indexOf("Zebra Block"));
+    expect(output.indexOf("starwind add Alpha")).toBeLessThan(output.indexOf("starwind add zebra"));
+  });
+
   it("shows no results warning when nothing matches", async () => {
     await search("xyz-nothing");
     expect(mockLog.warn).toHaveBeenCalledWith(expect.stringContaining("No results"));

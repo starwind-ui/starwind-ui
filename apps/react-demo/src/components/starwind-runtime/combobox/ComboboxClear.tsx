@@ -1,3 +1,5 @@
+"use client";
+
 import ComboboxPrimitive from "@starwind-ui/react/combobox";
 import { IconX as X } from "@tabler/icons-react";
 import type * as React from "react";

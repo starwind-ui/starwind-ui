@@ -7,9 +7,11 @@ const ToggleGroupVariants = {
   toggleGroupItem,
 };
 
-export { ToggleGroup, ToggleGroupItem, ToggleGroupVariants };
-
-export default {
+const ToggleGroupParts = {
   Root: ToggleGroup,
   Item: ToggleGroupItem,
 };
+
+export { ToggleGroup, ToggleGroupItem, ToggleGroupVariants };
+
+export default ToggleGroupParts;

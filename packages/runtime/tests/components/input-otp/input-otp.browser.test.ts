@@ -276,7 +276,7 @@ describe("createInputOtp", () => {
     expect(getSlotText()).toEqual(["1", "", "", ""]);
   });
 
-  it("lets subscriber cancellation prevent completion paste before onValueChange observes details", () => {
+  it("notifies subscribers after completion paste is accepted", () => {
     const root = renderInputOtp({ defaultValue: "1", maxLength: 4 });
     const onValueChangeCanceledSnapshots: boolean[] = [];
     const onValueChange = vi.fn((_value, details) => {
@@ -284,7 +284,8 @@ describe("createInputOtp", () => {
     });
     const legacyListener = vi.fn();
     const instance = createInputOtp(root, { onValueChange });
-    instance.subscribe("valueChange", (details) => details.cancel());
+    const subscriberValues: string[] = [];
+    instance.subscribe("valueChange", () => subscriberValues.push(instance.getValue()));
     root.addEventListener("starwind-input-otp:change", legacyListener);
 
     root.click();
@@ -293,18 +294,19 @@ describe("createInputOtp", () => {
     expect(onValueChange).toHaveBeenCalledWith(
       "1234",
       expect.objectContaining({
-        isCanceled: true,
+        isCanceled: false,
         previousValue: "1",
         reason: "paste",
         value: "1234",
       }),
     );
-    expect(onValueChangeCanceledSnapshots).toEqual([true]);
-    expect(legacyListener).not.toHaveBeenCalled();
-    expect(instance.getValue()).toBe("1");
-    expect(root.getAttribute("data-value")).toBe("1");
-    expect(getInput().value).toBe("1");
-    expect(getSlotText()).toEqual(["1", "", "", ""]);
+    expect(onValueChangeCanceledSnapshots).toEqual([false]);
+    expect(subscriberValues).toEqual(["1234"]);
+    expect(legacyListener).toHaveBeenCalledOnce();
+    expect(instance.getValue()).toBe("1234");
+    expect(root.getAttribute("data-value")).toBe("1234");
+    expect(getInput().value).toBe("1234");
+    expect(getSlotText()).toEqual(["1", "2", "3", "4"]);
   });
 
   it("lets value-change cancellation prevent deletion commits", () => {

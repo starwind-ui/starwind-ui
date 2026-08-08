@@ -5,6 +5,8 @@ export type { ButtonProps } from "./Button.vue";
 
 const ButtonVariants = { button };
 
+const ButtonParts = { Root: Button };
+
 export { Button, ButtonVariants };
 
-export default { Root: Button };
+export default ButtonParts;
