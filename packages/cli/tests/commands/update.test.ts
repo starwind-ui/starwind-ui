@@ -437,6 +437,37 @@ describe("update command", () => {
     expect(mockLog.success).toHaveBeenCalledWith(expect.stringContaining("button [react]"));
   });
 
+  it("sorts update summaries without changing the updater request order", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        components: [
+          { name: "zebra", version: "1.0.0", framework: "react" },
+          { name: "Alpha", version: "1.0.0", framework: "react" },
+        ],
+      }),
+    });
+    mockUpdateRuntimeComponents.mockResolvedValue({
+      updated: [
+        { name: "zebra", status: "updated", oldVersion: "1.0.0", newVersion: "2.0.0" },
+        { name: "Alpha", status: "updated", oldVersion: "1.0.0", newVersion: "2.0.0" },
+      ],
+      skipped: [],
+      failed: [],
+    });
+
+    await update(["zebra", "Alpha"], { yes: true });
+
+    expect(mockUpdateRuntimeComponents).toHaveBeenCalledWith(
+      ["zebra", "Alpha"],
+      expect.any(Object),
+    );
+    const summary = mockLog.success.mock.calls.find(([message]) =>
+      String(message).includes("Successfully updated components:"),
+    )?.[0] as string;
+    expect(summary.indexOf("Alpha")).toBeLessThan(summary.indexOf("zebra"));
+  });
+
   it("lets explicit wrong-framework component names reach the Runtime planner", async () => {
     mockGetConfigState.mockResolvedValue({
       status: "current",

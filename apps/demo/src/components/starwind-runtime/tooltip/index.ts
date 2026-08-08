@@ -9,10 +9,12 @@ const TooltipVariants = {
   tooltipContent,
 };
 
-export { Tooltip, TooltipContent, TooltipTrigger, TooltipVariants };
-
-export default {
+const TooltipParts = {
   Root: Tooltip,
   Trigger: TooltipTrigger,
   Content: TooltipContent,
 };
+
+export { Tooltip, TooltipContent, TooltipTrigger, TooltipVariants };
+
+export default TooltipParts;

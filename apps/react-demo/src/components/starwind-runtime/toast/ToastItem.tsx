@@ -1,3 +1,5 @@
+"use client";
+
 import ToastPrimitive from "@starwind-ui/react/toast";
 import { IconX as X } from "@tabler/icons-react";
 import type * as React from "react";

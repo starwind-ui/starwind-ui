@@ -1,3 +1,5 @@
+"use client";
+
 import SelectPrimitive from "@starwind-ui/react/select";
 import { IconChevronDown as ChevronDown } from "@tabler/icons-react";
 import type * as React from "react";

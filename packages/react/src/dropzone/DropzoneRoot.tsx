@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import { createDropzone, type DropzoneFilesChangeDetails } from "@starwind-ui/runtime/dropzone";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";

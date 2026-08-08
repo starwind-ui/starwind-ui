@@ -1,3 +1,5 @@
+"use client";
+
 import DropzonePrimitive from "@starwind-ui/react/dropzone";
 import { IconLoader2 as Loader2 } from "@tabler/icons-react";
 import type * as React from "react";

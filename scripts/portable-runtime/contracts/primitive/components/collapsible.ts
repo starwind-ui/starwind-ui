@@ -81,6 +81,7 @@ export const collapsibleRuntimeAdapterContract = {
   events: [
     {
       name: "openChange",
+      stateModel: "open",
       callbackProp: "onOpenChange",
       detailsType: "CollapsibleOpenChangeDetails",
       domEvent: "starwind:open-change",

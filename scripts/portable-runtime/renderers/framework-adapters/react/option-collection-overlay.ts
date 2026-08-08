@@ -185,24 +185,9 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
       ${props.modal.name},
       ${openEvent.callbackProp}: (nextOpen, details) => {
         ${openEvent.callbackProp}Ref.current?.(nextOpen, details);
-        if (details.isCanceled) return;
-
-        if (${props.open.name}Ref.current === undefined) {
-          setUncontrolledOpen(nextOpen);
-        }
       },
       ${valueEvent.callbackProp}: (nextValue, details) => {
         ${valueEvent.callbackProp}Ref.current?.(nextValue, details);
-        if (details.isCanceled) return;
-
-        const nextSelectedLabel = getTextFromSelectItem(details.item);
-        if (nextSelectedLabel !== null || nextValue === null) {
-          setSelectedLabel({ label: nextSelectedLabel, value: nextValue });
-        }
-
-        if (${props.value.name}Ref.current === undefined) {
-          setUncontrolledValue(nextValue);
-        }
       },
       ${props.name.name},
       ${props.readOnly.name},
@@ -211,6 +196,24 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
       ...(${props.value.name}Ref.current !== undefined ? { ${props.value.name}: ${props.value.name}Ref.current } : {}),
     });
     instanceRef.current = instance;
+    instance.subscribe("${openEvent.name}", (details) => {
+      if (${props.open.name}Ref.current === undefined) {
+        setUncontrolledOpen(details.${openEvent.valueProperty});
+      }
+    });
+    instance.subscribe("${valueEvent.name}", (details) => {
+        const nextSelectedLabel = getTextFromSelectItem(details.item);
+        if (nextSelectedLabel !== null || details.${valueEvent.valueProperty} === null) {
+          setSelectedLabel({
+            label: nextSelectedLabel,
+            value: details.${valueEvent.valueProperty},
+          });
+        }
+
+        if (${props.value.name}Ref.current === undefined) {
+          setUncontrolledValue(details.${valueEvent.valueProperty});
+        }
+    });
     return instance;
   }, [
     ${props.autoComplete.name},
@@ -224,6 +227,46 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
     setUncontrolledOpen,
     setUncontrolledValue,
   ]);
+
+  useIsomorphicLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const handleProgrammaticValueCommand = (event: Event) => {
+      if (!(event instanceof CustomEvent) || !event.detail || typeof event.detail !== "object")
+        return;
+
+      const detail = event.detail as { emit?: unknown; value?: unknown };
+      if (!Object.hasOwn(detail, "value")) return;
+      if (detail.value !== null && typeof detail.value !== "string") return;
+
+      event.stopImmediatePropagation();
+
+      const instance = ensureInstance();
+      if (!instance) return;
+
+      const nextValue = detail.value === "" ? null : detail.value;
+      const emit = typeof detail.emit === "boolean" ? detail.emit : undefined;
+      instance.${facts.state.value.setter}(nextValue, { emit });
+      if (emit !== false || ${props.value.name}Ref.current !== undefined) return;
+
+      setSelectedLabel({
+        label: findSelectedOptionText(children, nextValue),
+        value: nextValue,
+      });
+      setUncontrolledValue(nextValue);
+    };
+
+    root.addEventListener("starwind:set-value", handleProgrammaticValueCommand, {
+      capture: true,
+    });
+
+    return () => {
+      root.removeEventListener("starwind:set-value", handleProgrammaticValueCommand, {
+        capture: true,
+      });
+    };
+  }, [children, ensureInstance, setUncontrolledValue]);
 
   useIsomorphicLayoutEffect(() => {
     return () => {
@@ -559,6 +602,10 @@ const ${trigger} = React.forwardRef<HTMLElement, ${trigger}Props>(
       "aria-required": ${contextLocalName}.required ? "true" : undefined,
       "aria-readonly": ${contextLocalName}.readOnly ? "true" : "false",
       "data-disabled": ${contextLocalName}.disabled ? "" : undefined,
+      "data-placeholder":
+        ${contextLocalName}.value === null || ${contextLocalName}.selectedLabel === null
+          ? ""
+          : undefined,
       "data-required": ${contextLocalName}.required ? "" : undefined,
       "data-readonly": ${contextLocalName}.readOnly ? "" : undefined,
       "data-state": ${contextLocalName}.open ? "open" : "closed",

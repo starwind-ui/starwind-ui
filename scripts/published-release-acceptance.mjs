@@ -37,6 +37,18 @@ export function getAcceptancePnpmEnvironment() {
   };
 }
 
+export function getPreviewEnvironment(environment = process.env) {
+  return {
+    ...environment,
+    ASTRO_PREVIEW_BACKGROUND: "0",
+    ASTRO_TELEMETRY_DISABLED: "1",
+  };
+}
+
+export function getAcceptanceCleanupOptions() {
+  return { force: true, maxRetries: 5, recursive: true, retryDelay: 500 };
+}
+
 export function getAcceptanceRootPackage(version) {
   return `${JSON.stringify(
     {
@@ -409,14 +421,21 @@ async function getFreePort() {
 
 function startPreview(project, port) {
   const command = project.packageManager === "npm" ? "npm.cmd" : getPnpmCommand();
+  const preview = project.preview ?? {
+    args: ["--host", "{host}", "--port", "{port}"],
+    script: "preview",
+  };
+  const previewArgs = preview.args.map((argument) =>
+    argument.replace("{host}", HOST).replace("{port}", String(port)),
+  );
   const args =
     project.packageManager === "npm"
-      ? ["run", "preview", "--", "--host", HOST, "--port", String(port)]
-      : ["preview", "--host", HOST, "--port", String(port)];
+      ? ["run", preview.script, "--", ...previewArgs]
+      : [preview.script, ...previewArgs];
   const spawned = createSpawn(command, args);
   const child = spawn(spawned.command, spawned.args, {
     cwd: project.directory,
-    env: { ...process.env, ASTRO_TELEMETRY_DISABLED: "1" },
+    env: { ...getPreviewEnvironment(), HOST, PORT: String(port) },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let output = "";
@@ -491,10 +510,26 @@ export async function verifyBrowserProject({ artifacts, browser, project }) {
 
   try {
     await waitForPreview(url, preview);
+    if (project.ssrMarker) {
+      const response = await fetch(url);
+      const html = await response.text();
+      assert.ok(
+        html.includes(project.ssrMarker),
+        `${project.id ?? project.framework} SSR output must include ${project.ssrMarker}`,
+      );
+    }
     await page.goto(url, { waitUntil: "networkidle" });
     await page
       .getByRole("heading", { name: new RegExp(`${project.framework} published release`, "i") })
       .waitFor();
+
+    if (project.themeInitScriptCount !== undefined) {
+      assert.equal(
+        await page.locator("script[data-starwind-theme-init]").count(),
+        project.themeInitScriptCount,
+        `${project.id ?? project.framework} theme initialization script count`,
+      );
+    }
 
     const dialogTrigger = page.getByRole("button", { name: "Open dialog" });
     await dialogTrigger.click();
@@ -556,6 +591,7 @@ export async function runPublishedReleaseAcceptance(options) {
     Object.keys(acceptancePnpmEnvironment).map((key) => [key, process.env[key]]),
   );
   let browser;
+  let acceptanceError;
 
   await writeFile(
     path.join(root, ACCEPTANCE_WORKSPACE_FILE),
@@ -609,14 +645,35 @@ export async function runPublishedReleaseAcceptance(options) {
       "utf8",
     );
     console.log(`[acceptance] published release ${options.version} passed in Astro and React`);
+  } catch (error) {
+    acceptanceError = error;
+    throw error;
   } finally {
     for (const [key, value] of Object.entries(previousPnpmEnvironment)) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
-    await browser?.close();
-    if (options.keepTemp) console.log(`[acceptance] preserved temporary projects: ${root}`);
-    else await rm(root, { force: true, recursive: true });
+    let cleanupError;
+    try {
+      await browser?.close();
+    } catch (error) {
+      cleanupError = error;
+    }
+    if (options.keepTemp) {
+      console.log(`[acceptance] preserved temporary projects: ${root}`);
+    } else {
+      try {
+        await rm(root, getAcceptanceCleanupOptions());
+      } catch (error) {
+        cleanupError ??= error;
+      }
+    }
+    if (cleanupError) {
+      if (!acceptanceError) throw cleanupError;
+      console.error(
+        `[acceptance] cleanup also failed: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`,
+      );
+    }
   }
 
   return { artifacts, packageVersions };

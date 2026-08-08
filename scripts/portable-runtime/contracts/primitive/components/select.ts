@@ -288,6 +288,7 @@ export const selectRuntimeAdapterContract = {
   events: [
     {
       name: "openChange",
+      stateModel: "open",
       callbackProp: "onOpenChange",
       detailsType: "SelectOpenChangeDetails",
       domEvent: "starwind:open-change",
@@ -299,6 +300,7 @@ export const selectRuntimeAdapterContract = {
     },
     {
       name: "valueChange",
+      stateModel: "value",
       callbackProp: "onValueChange",
       detailsType: "SelectValueChangeDetails",
       domEvent: "starwind:value-change",

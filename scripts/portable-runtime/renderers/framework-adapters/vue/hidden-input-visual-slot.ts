@@ -118,6 +118,19 @@ function destroyInstance(): void {
   instance = undefined;
 }
 
+function handleValueChangeProposal(
+  value: ${event.valueType},
+  detail: ${event.detailsType},
+): void {
+  emit("valueChange", value, detail);
+}
+
+function handleAcceptedValueChange(detail: ${event.detailsType}): void {
+  if (!controlled) uncontrolledValue.value = detail.${event.valueProperty};
+  modelValue.value = detail.${event.valueProperty};
+  if (controlled) void refreshAfterVueFlush();
+}
+
 function startInstance(value = renderedValue.value): void {
   if (!element.value) return;
   instance = ${facts.runtime.factory}(element.value, {
@@ -130,19 +143,13 @@ function startInstance(value = renderedValue.value): void {
     ${props.pattern.name}: patternText.value,
     ${props.readOnly.name}: props.${props.readOnly.name},
     ${props.required.name}: props.${props.required.name},
+    ${event.callbackProp}: handleValueChangeProposal,
     ...(controlled && modelValue.value !== undefined
       ? { ${props.value.name}: modelValue.value }
       : {}),
   });
   slotElements = getOwnedSlotElements();
-  unsubscribeChange = instance.subscribe("valueChange", (detail) => {
-    emit("valueChange", detail.${event.valueProperty}, detail);
-    if (detail.isCanceled) return;
-
-    if (!controlled) uncontrolledValue.value = detail.${event.valueProperty};
-    modelValue.value = detail.${event.valueProperty};
-    if (controlled) void refreshAfterVueFlush();
-  });
+  unsubscribeChange = instance.subscribe("valueChange", handleAcceptedValueChange);
 }
 
 function getOwnedSlotElements(): HTMLElement[] {

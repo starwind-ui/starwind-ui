@@ -10,8 +10,18 @@ const generateReactPrimitiveTheme: FrameworkAdapterTargetManualPrimitiveGenerato
     await writeReactPrimitiveFile(
       dir,
       "index.ts",
-      `${moduleHeader}export type { ThemeInitScriptOptions } from "@starwind-ui/runtime/theme";
+      `${moduleHeader}import * as React from "react";
+import { getThemeInitScript, type ThemeInitScriptOptions } from "@starwind-ui/runtime/theme";
+
+export type { ThemeInitScriptOptions } from "@starwind-ui/runtime/theme";
 export { getThemeInitScript, initThemeController } from "@starwind-ui/runtime/theme";
+
+export function ThemeInitScript(options: ThemeInitScriptOptions = {}): React.ReactElement {
+  return React.createElement("script", {
+    "data-starwind-theme-init": "",
+    dangerouslySetInnerHTML: { __html: getThemeInitScript(options) },
+  });
+}
 `,
     );
   };

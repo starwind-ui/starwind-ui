@@ -429,6 +429,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current Accordion value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -440,10 +503,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "AccordionValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "AccordionValue",
             description: "Fires when the value changes for Accordion.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -496,6 +590,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether AlertDialog is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -520,10 +677,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "AlertDialogOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when AlertDialog opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -557,6 +745,53 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether the Avatar image is loading, loaded, or failed.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "The adapter coordinates this state without a dedicated state prop, and onLoadingStatusChange for state changes.",
+                apis: [
+                  {
+                    kind: "callback",
+                    name: "onLoadingStatusChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "listen for starwind:loading-status-change and call setImageLoadingStatus for later updates.",
+                apis: [
+                  {
+                    kind: "dom-event",
+                    name: "starwind:loading-status-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setImageLoadingStatus",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-image-loading-status for initial state, listen for starwind:loading-status-change, and call setImageLoadingStatus for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-image-loading-status",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:loading-status-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setImageLoadingStatus",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -568,6 +803,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "AvatarLoadingStatusChangeDetails",
             domEvent: "starwind:loading-status-change",
             emitsFrom: "root",
+            stateModel: "imageLoadingStatus",
             valueProperty: "status",
             valueType: "AvatarImageLoadingStatus",
             description: "Fires when the image loading status changes for Avatar.",
@@ -655,6 +891,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Checkbox is checked.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "checked",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultChecked",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onCheckedChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "checked",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultChecked",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:checked-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setChecked",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-checked",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:checked-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setChecked",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "indeterminate",
@@ -665,6 +964,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Checkbox is in a mixed state.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use indeterminate for controlled state.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "indeterminate",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use indeterminate for initial state and call setIndeterminate for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "indeterminate",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setIndeterminate",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-indeterminate for initial state and call setIndeterminate for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-indeterminate",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setIndeterminate",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -676,10 +1018,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "CheckboxCheckedChangeDetails",
             domEvent: "starwind:checked-change",
             emitsFrom: "root",
+            stateModel: "checked",
             valueProperty: "checked",
             valueType: "boolean",
             description: "Fires when the checked state changes for Checkbox.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -735,6 +1108,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current CheckboxGroup value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -746,10 +1182,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "CheckboxGroupValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "CheckboxGroupValue",
             description: "Fires when the value changes for CheckboxGroup.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -795,6 +1262,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Collapsible is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -806,10 +1336,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "CollapsibleOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when Collapsible opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -884,6 +1445,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "imperative",
             description: "The accepted immutable color value, or null when empty values are allowed.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "format",
@@ -895,6 +1519,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "imperative",
             description: "The accepted color string format used by editable and display parts.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use format for controlled state, and onFormatChange for state changes.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "format",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onFormatChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "format",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:format-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setFormat",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-format",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:format-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setFormat",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -906,10 +1585,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "ColorPickerValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "ColorPickerColor | null",
             description: "Cancelable continuous change emitted before a proposed value commits.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
             callbackTiming: "after-state-commit",
@@ -930,6 +1640,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "ColorPickerFormatChangeDetails",
             domEvent: "starwind:format-change",
             emitsFrom: "root",
+            stateModel: "format",
             valueProperty: "format",
             valueType: "ColorPickerFormat",
             description: "Emitted after the accepted string format changes.",
@@ -1048,6 +1759,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current text input value for Combobox.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use inputValue for controlled state and defaultInputValue for default state, and onInputValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "inputValue",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultInputValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onInputValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use inputValue or defaultInputValue for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "inputValue",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultInputValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:input-value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setInputValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-input-value for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-input-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:input-value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setInputValue",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "open",
@@ -1060,6 +1834,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Combobox is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "value",
@@ -1072,44 +1909,203 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current Combobox value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
           {
+            callbackTiming: "before-state-commit",
             cancelable: true,
             name: "inputValueChange",
             callbackProp: "onInputValueChange",
             detailsType: "ComboboxInputValueChangeDetails",
             domEvent: "starwind:input-value-change",
             emitsFrom: "root",
+            stateModel: "inputValue",
             valueProperty: "inputValue",
             valueType: "string",
             description: "Fires when the text input value changes for Combobox.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
+            callbackTiming: "before-state-commit",
             cancelable: true,
             name: "openChange",
             callbackProp: "onOpenChange",
             detailsType: "ComboboxOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when Combobox opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
+            callbackTiming: "before-state-commit",
             cancelable: true,
             name: "valueChange",
             callbackProp: "onValueChange",
             detailsType: "ComboboxValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "string | null",
             description: "Fires when the value changes for Combobox.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -1183,6 +2179,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether ContextMenu is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "checked",
@@ -1193,6 +2252,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether ContextMenu is checked.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "checked",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultChecked",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onCheckedChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "checked",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultChecked",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:checked-change",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-checked",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:checked-change",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "radioValue",
@@ -1203,6 +2317,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the selected radio value for ContextMenu.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-value for initial state and listen for starwind:value-change.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -1214,10 +2383,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "ContextMenuOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when ContextMenu opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
             callbackTiming: "after-state-commit",
@@ -1240,10 +2440,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "MenuCheckedChangeDetails",
             domEvent: "starwind:checked-change",
             emitsFrom: "checkboxItem",
+            stateModel: "checked",
             valueProperty: "checked",
             valueType: "boolean",
             description: "Fires when the checked state changes for ContextMenu.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
             callbackTiming: "before-state-commit",
@@ -1253,10 +2484,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "MenuValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "radioGroup",
+            stateModel: "radioValue",
             valueProperty: "value",
             valueType: "string",
             description: "Fires when the value changes for ContextMenu.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -1309,6 +2571,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Dialog is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -1320,10 +2645,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "DialogOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when Dialog opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
             callbackTiming: "after-state-commit",
@@ -1389,6 +2745,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Drawer is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -1400,10 +2819,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "DrawerOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when Drawer opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
             callbackTiming: "after-state-commit",
@@ -1460,6 +2910,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "custom-event",
             description: "Tracks whether Dropzone is uploading files.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use isUploading for controlled state.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "isUploading",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use isUploading for initial state and call setUploading for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "isUploading",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setUploading",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-is-uploading for initial state and call setUploading for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-is-uploading",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setUploading",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -1513,6 +3006,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether the Field value has changed.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use dirty for controlled state.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "dirty",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use dirty for initial state and call setDirty for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "dirty",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setDirty",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "call setDirty for later updates.",
+                apis: [
+                  {
+                    kind: "runtime-method",
+                    name: "setDirty",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "touched",
@@ -1522,6 +3054,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Field has been visited.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use touched for controlled state.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "touched",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use touched for initial state and call setTouched for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "touched",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setTouched",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "call setTouched for later updates.",
+                apis: [
+                  {
+                    kind: "runtime-method",
+                    name: "setTouched",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [],
@@ -1618,6 +3189,65 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current Input value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for state changes.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "listen for starwind:value-change and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -1627,6 +3257,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "InputValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "string",
             description: "Fires when the value changes for Input.",
@@ -1697,6 +3328,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current InputOtp value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -1708,10 +3402,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "InputOtpValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "string",
             description: "Fires when the value changes for InputOtp.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -1783,6 +3508,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Menu is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "checked",
@@ -1793,6 +3581,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Menu is checked.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "checked",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultChecked",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onCheckedChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "checked",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultChecked",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:checked-change",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-checked",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:checked-change",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "radioValue",
@@ -1803,6 +3646,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the selected radio value for Menu.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-value for initial state and listen for starwind:value-change.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -1814,10 +3712,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "MenuOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when Menu opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
             callbackTiming: "after-state-commit",
@@ -1840,10 +3769,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "MenuCheckedChangeDetails",
             domEvent: "starwind:checked-change",
             emitsFrom: "checkboxItem",
+            stateModel: "checked",
             valueProperty: "checked",
             valueType: "boolean",
             description: "Fires when the checked state changes for Menu.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
             callbackTiming: "before-state-commit",
@@ -1853,10 +3813,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "MenuValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "radioGroup",
+            stateModel: "radioValue",
             valueProperty: "value",
             valueType: "string",
             description: "Fires when the value changes for Menu.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -1909,6 +3900,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current NavigationMenu value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -1920,10 +3974,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "NavigationMenuValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "string | null",
             description: "Fires when the value changes for NavigationMenu.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -1978,6 +4063,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Popover is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -1989,10 +4137,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "PopoverOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when Popover opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
             callbackTiming: "after-state-commit",
@@ -2060,6 +4239,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether PreviewCard is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -2071,10 +4313,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "PreviewCardOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when PreviewCard opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -2124,6 +4397,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current Progress value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value for initial state and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-value for initial state and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-value",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [],
@@ -2181,6 +4497,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Radio is checked.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "checked",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultChecked",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onCheckedChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "checked",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultChecked",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:checked-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setChecked",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-checked",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:checked-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setChecked",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -2192,10 +4571,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "RadioCheckedChangeDetails",
             domEvent: "starwind:checked-change",
             emitsFrom: "root",
+            stateModel: "checked",
             valueProperty: "checked",
             valueType: "boolean",
             description: "Fires when the checked state changes for Radio.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -2263,6 +4673,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current RadioGroup value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -2274,10 +4747,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "RadioGroupValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "string",
             description: "Fires when the value changes for RadioGroup.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -2393,6 +4897,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Select is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "value",
@@ -2405,6 +4972,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current Select value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -2416,10 +5046,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "SelectOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when Select opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
             callbackTiming: "before-state-commit",
@@ -2429,10 +5090,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "SelectValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "string | null",
             description: "Fires when the value changes for Select.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -2499,6 +5191,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Sidebar is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for state changes.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:sidebar-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:sidebar-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
           {
             name: "mobileOpen",
@@ -2511,6 +5266,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether the mobile Sidebar panel is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use mobileOpen for controlled state and defaultMobileOpen for default state, and onMobileOpenChange for state changes.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "mobileOpen",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultMobileOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onMobileOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use mobileOpen or defaultMobileOpen for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "mobileOpen",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultMobileOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:sidebar-mobile-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setMobileOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-mobile-open for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-mobile-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:sidebar-mobile-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setMobileOpen",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -2520,6 +5338,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "SidebarOpenChangeDetails",
             domEvent: "starwind:sidebar-change",
             emitsFrom: "provider",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when Sidebar opens or closes.",
@@ -2531,6 +5350,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "SidebarMobileOpenChangeDetails",
             domEvent: "starwind:sidebar-mobile-change",
             emitsFrom: "provider",
+            stateModel: "mobileOpen",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when the mobile panel opens or closes for Sidebar.",
@@ -2604,6 +5424,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current Slider value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -2615,10 +5498,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "SliderValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "SliderValue",
             description: "Fires when the value changes for Slider.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
           {
             name: "valueCommitted",
@@ -2702,19 +5616,115 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Switch is checked.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "checked",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultChecked",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onCheckedChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "checked",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultChecked",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:checked-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setChecked",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-checked",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:checked-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setChecked",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
           {
+            callbackTiming: "before-state-commit",
+            cancelable: true,
             name: "checkedChange",
             callbackProp: "onCheckedChange",
             detailsType: "SwitchCheckedChangeDetails",
             domEvent: "starwind:checked-change",
             emitsFrom: "root",
+            stateModel: "checked",
             valueProperty: "checked",
             valueType: "boolean",
             description: "Fires when the checked state changes for Switch.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -2773,6 +5783,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current Tabs value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -2784,10 +5857,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "TabsValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "TabsValue",
             description: "Fires when the value changes for Tabs.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -2843,18 +5947,115 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Toggle is pressed.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use pressed for controlled state and defaultPressed for default state, and onPressedChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "pressed",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultPressed",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onPressedChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use pressed or defaultPressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "pressed",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultPressed",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:pressed-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setPressed",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-pressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-pressed",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:pressed-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setPressed",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
           {
+            callbackTiming: "before-state-commit",
+            cancelable: true,
             name: "pressedChange",
             callbackProp: "onPressedChange",
             detailsType: "TogglePressedChangeDetails",
             domEvent: "starwind:pressed-change",
             emitsFrom: "root",
+            stateModel: "pressed",
             valueProperty: "pressed",
+            valueType: "boolean",
             description: "Fires when the pressed state changes for Toggle.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -2904,19 +6105,115 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks the current ToggleGroup value.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onValueChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "value",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultValue",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-value",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:value-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setValue",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
           {
+            callbackTiming: "before-state-commit",
+            cancelable: true,
             name: "valueChange",
             callbackProp: "onValueChange",
             detailsType: "ToggleGroupValueChangeDetails",
             domEvent: "starwind:value-change",
             emitsFrom: "root",
+            stateModel: "value",
             valueProperty: "value",
             valueType: "ToggleGroupValue",
             description: "Fires when the value changes for ToggleGroup.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -2997,6 +6294,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             controlledStateSync: "unsupported",
             description: "Tracks whether Tooltip is open.",
             descriptionSource: "authored",
+            frameworkBehavior: [
+              {
+                target: "react",
+                label: "React",
+                summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                apis: [
+                  {
+                    kind: "controlled-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "callback",
+                    name: "onOpenChange",
+                  },
+                ],
+              },
+              {
+                target: "astro",
+                label: "Astro",
+                summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-prop",
+                    name: "open",
+                  },
+                  {
+                    kind: "default-prop",
+                    name: "defaultOpen",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+              {
+                target: "raw-html",
+                label: "Runtime / HTML",
+                summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                apis: [
+                  {
+                    kind: "initial-attribute",
+                    name: "data-default-open",
+                  },
+                  {
+                    kind: "dom-event",
+                    name: "starwind:open-change",
+                  },
+                  {
+                    kind: "runtime-method",
+                    name: "setOpen",
+                  },
+                ],
+              },
+            ],
           },
         ],
         events: [
@@ -3008,10 +6368,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             detailsType: "TooltipOpenChangeDetails",
             domEvent: "starwind:open-change",
             emitsFrom: "root",
+            stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
             description: "Fires when Tooltip opens or closes.",
             descriptionSource: "authored",
+            cancellationSequence: [
+              {
+                step: 1,
+                action: "Check internal eligibility and intent.",
+              },
+              {
+                step: 2,
+                action: "Create one details object for the proposal.",
+              },
+              {
+                step: 3,
+                action: "Call the Runtime callback with the details object when the controller exposes one.",
+              },
+              {
+                step: 4,
+                action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+              },
+              {
+                step: 5,
+                action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+              },
+              {
+                step: 6,
+                action: "Apply the accepted state.",
+              },
+              {
+                step: 7,
+                action: "Notify Runtime subscribers and other accepted-only observers.",
+              },
+            ],
           },
         ],
         setters: [
@@ -33255,6 +36646,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current Accordion value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -33266,10 +36720,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "AccordionValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "AccordionValue",
           description: "Fires when the value changes for Accordion.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -33366,6 +36851,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Accordion is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -33452,6 +36938,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "AccordionValue",
                   description: "Controls the current Accordion value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -33459,6 +37008,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "AccordionValue",
                   description: "Sets the initial Accordion value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "\"single\"",
@@ -33483,6 +37095,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: AccordionValue, details: AccordionValueChangeDetails) => void",
                   description: "Runs when the Accordion value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -33529,6 +37204,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current Accordion value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -33540,10 +37278,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "AccordionValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "AccordionValue",
                   description: "Fires when the value changes for Accordion.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -33600,6 +37369,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the current Accordion value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -34095,6 +37927,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether AlertDialog is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -34119,10 +38014,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "AlertDialogOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when AlertDialog opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -34244,6 +38170,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "AlertDialog is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -34334,6 +38261,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether AlertDialog is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -34345,6 +38335,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether AlertDialog starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "true",
@@ -34385,6 +38438,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: AlertDialogOpenChangeDetails) => void",
                   description: "Runs when AlertDialog opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -34437,6 +38553,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether AlertDialog is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -34461,10 +38640,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "AlertDialogOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when AlertDialog opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -35034,6 +39244,53 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether the Avatar image is loading, loaded, or failed.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "The adapter coordinates this state without a dedicated state prop, and onLoadingStatusChange for state changes.",
+              apis: [
+                {
+                  kind: "callback",
+                  name: "onLoadingStatusChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "listen for starwind:loading-status-change and call setImageLoadingStatus for later updates.",
+              apis: [
+                {
+                  kind: "dom-event",
+                  name: "starwind:loading-status-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setImageLoadingStatus",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-image-loading-status for initial state, listen for starwind:loading-status-change, and call setImageLoadingStatus for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-image-loading-status",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:loading-status-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setImageLoadingStatus",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -35045,6 +39302,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "AvatarLoadingStatusChangeDetails",
           domEvent: "starwind:loading-status-change",
           emitsFrom: "root",
+          stateModel: "imageLoadingStatus",
           valueProperty: "status",
           valueType: "AvatarImageLoadingStatus",
           description: "Fires when the image loading status changes for Avatar.",
@@ -35142,6 +39400,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Avatar is a Starwind Runtime primitive in the static-semantic contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -35241,6 +39500,53 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether the Avatar image is loading, loaded, or failed.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "The adapter coordinates this state without a dedicated state prop, and onLoadingStatusChange for state changes.",
+                      apis: [
+                        {
+                          kind: "callback",
+                          name: "onLoadingStatusChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "listen for starwind:loading-status-change and call setImageLoadingStatus for later updates.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind:loading-status-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setImageLoadingStatus",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-image-loading-status for initial state, listen for starwind:loading-status-change, and call setImageLoadingStatus for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-image-loading-status",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:loading-status-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setImageLoadingStatus",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -35252,6 +39558,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "AvatarLoadingStatusChangeDetails",
                   domEvent: "starwind:loading-status-change",
                   emitsFrom: "root",
+                  stateModel: "imageLoadingStatus",
                   valueProperty: "status",
                   valueType: "AvatarImageLoadingStatus",
                   description: "Fires when the image loading status changes for Avatar.",
@@ -35330,6 +39637,53 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(status: AvatarImageLoadingStatus, details: AvatarLoadingStatusChangeDetails) => void",
                   description: "Runs when on loading status change changes for Avatar.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "The adapter coordinates this state without a dedicated state prop, and onLoadingStatusChange for state changes.",
+                      apis: [
+                        {
+                          kind: "callback",
+                          name: "onLoadingStatusChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "listen for starwind:loading-status-change and call setImageLoadingStatus for later updates.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind:loading-status-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setImageLoadingStatus",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-image-loading-status for initial state, listen for starwind:loading-status-change, and call setImageLoadingStatus for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-image-loading-status",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:loading-status-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setImageLoadingStatus",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -35356,6 +39710,53 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether the Avatar image is loading, loaded, or failed.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "The adapter coordinates this state without a dedicated state prop, and onLoadingStatusChange for state changes.",
+                      apis: [
+                        {
+                          kind: "callback",
+                          name: "onLoadingStatusChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "listen for starwind:loading-status-change and call setImageLoadingStatus for later updates.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind:loading-status-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setImageLoadingStatus",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-image-loading-status for initial state, listen for starwind:loading-status-change, and call setImageLoadingStatus for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-image-loading-status",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:loading-status-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setImageLoadingStatus",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [],
@@ -35431,6 +39832,53 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether the Avatar image is loading, loaded, or failed.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "The adapter coordinates this state without a dedicated state prop, and onLoadingStatusChange for state changes.",
+                      apis: [
+                        {
+                          kind: "callback",
+                          name: "onLoadingStatusChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "listen for starwind:loading-status-change and call setImageLoadingStatus for later updates.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind:loading-status-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setImageLoadingStatus",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-image-loading-status for initial state, listen for starwind:loading-status-change, and call setImageLoadingStatus for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-image-loading-status",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:loading-status-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setImageLoadingStatus",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [],
@@ -35640,6 +40088,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Button uses native button semantics by default and adds Runtime behavior only for focusable-disabled state.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -36140,6 +40589,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Carousel is a Starwind Runtime primitive in the viewport-measurement contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -36871,6 +41321,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Checkbox is checked.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "checked",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultChecked",
+                },
+                {
+                  kind: "callback",
+                  name: "onCheckedChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "checked",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultChecked",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:checked-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setChecked",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-checked",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:checked-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setChecked",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "indeterminate",
@@ -36881,6 +41394,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Checkbox is in a mixed state.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use indeterminate for controlled state.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "indeterminate",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use indeterminate for initial state and call setIndeterminate for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "indeterminate",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setIndeterminate",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-indeterminate for initial state and call setIndeterminate for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-indeterminate",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setIndeterminate",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -36892,10 +41448,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "CheckboxCheckedChangeDetails",
           domEvent: "starwind:checked-change",
           emitsFrom: "root",
+          stateModel: "checked",
           valueProperty: "checked",
           valueType: "boolean",
           description: "Fires when the checked state changes for Checkbox.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -37002,6 +41589,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Checkbox coordinates a visible boolean control, indicator presence, and hidden form inputs for boolean form state.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -37097,6 +41685,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls the checked state when a framework adapter owns it.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -37105,6 +41756,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets the initial uncontrolled checked state.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -37135,6 +41849,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets the mixed visual state independently from checked state.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use indeterminate for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "indeterminate",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use indeterminate for initial state and call setIndeterminate for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "indeterminate",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setIndeterminate",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-indeterminate for initial state and call setIndeterminate for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-indeterminate",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setIndeterminate",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "name",
@@ -37191,6 +41948,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(checked: boolean, details: CheckboxCheckedChangeDetails) => void",
                   description: "Receives checked-change details before state commits.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -37285,6 +42105,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Checkbox is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "indeterminate",
@@ -37295,6 +42178,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Checkbox is in a mixed state.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use indeterminate for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "indeterminate",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use indeterminate for initial state and call setIndeterminate for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "indeterminate",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setIndeterminate",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-indeterminate for initial state and call setIndeterminate for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-indeterminate",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setIndeterminate",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -37306,10 +42232,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "CheckboxCheckedChangeDetails",
                   domEvent: "starwind:checked-change",
                   emitsFrom: "root",
+                  stateModel: "checked",
                   valueProperty: "checked",
                   valueType: "boolean",
                   description: "Fires when the checked state changes for Checkbox.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -37656,6 +42613,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current CheckboxGroup value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -37667,10 +42687,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "CheckboxGroupValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "CheckboxGroupValue",
           description: "Fires when the value changes for CheckboxGroup.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -37731,6 +42782,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "CheckboxGroup is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -37811,6 +42863,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "CheckboxGroupValue",
                   description: "Controls the current CheckboxGroup value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -37818,6 +42933,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "CheckboxGroupValue",
                   description: "Sets the initial CheckboxGroup value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -37834,6 +43012,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: CheckboxGroupValue, details: CheckboxGroupValueChangeDetails) => void",
                   description: "Runs when the CheckboxGroup value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -37874,6 +43115,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current CheckboxGroup value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -37885,10 +43189,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "CheckboxGroupValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "CheckboxGroupValue",
                   description: "Fires when the value changes for CheckboxGroup.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -38132,6 +43467,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Collapsible is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -38143,10 +43541,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "CollapsibleOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when Collapsible opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -38234,6 +43663,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Collapsible is a Starwind Runtime primitive in the presence-disclosure-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -38315,6 +43745,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Collapsible is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -38323,6 +43816,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Collapsible starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -38339,6 +43895,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: CollapsibleOpenChangeDetails) => void",
                   description: "Runs when Collapsible opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -38379,6 +43998,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Collapsible is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -38390,10 +44072,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "CollapsibleOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when Collapsible opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -39323,6 +45036,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "imperative",
           description: "The accepted immutable color value, or null when empty values are allowed.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "format",
@@ -39334,6 +45110,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "imperative",
           description: "The accepted color string format used by editable and display parts.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use format for controlled state, and onFormatChange for state changes.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "format",
+                },
+                {
+                  kind: "callback",
+                  name: "onFormatChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "format",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:format-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setFormat",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-format",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:format-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setFormat",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -39345,10 +45176,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "ColorPickerValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "ColorPickerColor | null",
           description: "Cancelable continuous change emitted before a proposed value commits.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
           callbackTiming: "after-state-commit",
@@ -39369,6 +45231,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "ColorPickerFormatChangeDetails",
           domEvent: "starwind:format-change",
           emitsFrom: "root",
+          stateModel: "format",
           valueProperty: "format",
           valueType: "ColorPickerFormat",
           description: "Emitted after the accepted string format changes.",
@@ -39749,6 +45612,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Color Picker coordinates color parsing, two-dimensional area input, channel controls, editable values, presets, and native form submission.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -39945,6 +45809,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "ColorPickerValue",
                   description: "Controls the accepted color value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "\"#000000\"",
@@ -39953,6 +45880,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "ColorPickerValue",
                   description: "Sets the initial uncontrolled color value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "\"hex\"",
@@ -39961,6 +45951,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "ColorPickerFormat",
                   description: "Controls the color string format.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use format for controlled state, and onFormatChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "format",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onFormatChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "format",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:format-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setFormat",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-format",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:format-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setFormat",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "true",
@@ -40058,6 +46103,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: ColorPickerColor | null, details: ColorPickerValueChangeDetails) => void",
                   description: "Receives cancellable continuous value-change details before commit.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "onValueCommitted",
@@ -40074,6 +46182,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(format: ColorPickerFormat, details: ColorPickerFormatChangeDetails) => void",
                   description: "Receives the accepted format after it changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use format for controlled state, and onFormatChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "format",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onFormatChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "format",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:format-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setFormat",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-format",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:format-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setFormat",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -40162,6 +46325,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "imperative",
                   description: "The accepted immutable color value, or null when empty values are allowed.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "format",
@@ -40173,6 +46399,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "imperative",
                   description: "The accepted color string format used by editable and display parts.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use format for controlled state, and onFormatChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "format",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onFormatChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "format",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:format-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setFormat",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-format",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:format-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setFormat",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -40184,10 +46465,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "ColorPickerValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "ColorPickerColor | null",
                   description: "Cancelable continuous change emitted before a proposed value commits.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
                 {
                   callbackTiming: "after-state-commit",
@@ -40208,6 +46520,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "ColorPickerFormatChangeDetails",
                   domEvent: "starwind:format-change",
                   emitsFrom: "root",
+                  stateModel: "format",
                   valueProperty: "format",
                   valueType: "ColorPickerFormat",
                   description: "Emitted after the accepted string format changes.",
@@ -41049,6 +47362,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "imperative",
                   description: "The accepted color string format used by editable and display parts.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use format for controlled state, and onFormatChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "format",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onFormatChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "format",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:format-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setFormat",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-format for initial state, listen for starwind:format-change, and call setFormat for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-format",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:format-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setFormat",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [],
@@ -41186,6 +47554,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "imperative",
                   description: "The accepted immutable color value, or null when empty values are allowed.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [],
@@ -42120,6 +48551,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current text input value for Combobox.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use inputValue for controlled state and defaultInputValue for default state, and onInputValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "inputValue",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultInputValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onInputValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use inputValue or defaultInputValue for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "inputValue",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultInputValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:input-value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setInputValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-input-value for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-input-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:input-value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setInputValue",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "open",
@@ -42132,6 +48626,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Combobox is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "value",
@@ -42144,44 +48701,203 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current Combobox value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
         {
+          callbackTiming: "before-state-commit",
           cancelable: true,
           name: "inputValueChange",
           callbackProp: "onInputValueChange",
           detailsType: "ComboboxInputValueChangeDetails",
           domEvent: "starwind:input-value-change",
           emitsFrom: "root",
+          stateModel: "inputValue",
           valueProperty: "inputValue",
           valueType: "string",
           description: "Fires when the text input value changes for Combobox.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
+          callbackTiming: "before-state-commit",
           cancelable: true,
           name: "openChange",
           callbackProp: "onOpenChange",
           detailsType: "ComboboxOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when Combobox opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
+          callbackTiming: "before-state-commit",
           cancelable: true,
           name: "valueChange",
           callbackProp: "onValueChange",
           detailsType: "ComboboxValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "string | null",
           description: "Fires when the value changes for Combobox.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -42342,6 +49058,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Combobox is a Starwind Runtime primitive in the floating-value-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -42440,6 +49157,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Combobox is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultOpen",
@@ -42447,6 +49227,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Combobox starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "value",
@@ -42454,6 +49297,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string | null",
                   description: "Controls the current Combobox value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -42461,6 +49367,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string | null",
                   description: "Sets the initial Combobox value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "inputValue",
@@ -42468,6 +49437,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the input value for Combobox.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use inputValue for controlled state and defaultInputValue for default state, and onInputValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "inputValue",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultInputValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onInputValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use inputValue or defaultInputValue for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "inputValue",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultInputValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:input-value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setInputValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-input-value for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-input-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:input-value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setInputValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultInputValue",
@@ -42475,6 +49507,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the default input value for Combobox.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use inputValue for controlled state and defaultInputValue for default state, and onInputValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "inputValue",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultInputValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onInputValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use inputValue or defaultInputValue for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "inputValue",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultInputValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:input-value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setInputValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-input-value for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-input-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:input-value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setInputValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "autoComplete",
@@ -42557,6 +49652,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(inputValue: string, details: ComboboxInputValueChangeDetails) => void",
                   description: "Runs when on input value change changes for Combobox.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use inputValue for controlled state and defaultInputValue for default state, and onInputValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "inputValue",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultInputValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onInputValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use inputValue or defaultInputValue for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "inputValue",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultInputValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:input-value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setInputValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-input-value for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-input-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:input-value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setInputValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "onOpenChange",
@@ -42565,6 +49723,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: ComboboxOpenChangeDetails) => void",
                   description: "Runs when Combobox opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "onValueChange",
@@ -42573,6 +49794,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: string | null, details: ComboboxValueChangeDetails) => void",
                   description: "Runs when the Combobox value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -42685,6 +49969,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current text input value for Combobox.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use inputValue for controlled state and defaultInputValue for default state, and onInputValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "inputValue",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultInputValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onInputValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use inputValue or defaultInputValue for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "inputValue",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultInputValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:input-value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setInputValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-input-value for initial state, listen for starwind:input-value-change, and call setInputValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-input-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:input-value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setInputValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "open",
@@ -42697,6 +50044,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Combobox is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "value",
@@ -42709,44 +50119,203 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current Combobox value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
                 {
+                  callbackTiming: "before-state-commit",
                   cancelable: true,
                   name: "inputValueChange",
                   callbackProp: "onInputValueChange",
                   detailsType: "ComboboxInputValueChangeDetails",
                   domEvent: "starwind:input-value-change",
                   emitsFrom: "root",
+                  stateModel: "inputValue",
                   valueProperty: "inputValue",
                   valueType: "string",
                   description: "Fires when the text input value changes for Combobox.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
                 {
+                  callbackTiming: "before-state-commit",
                   cancelable: true,
                   name: "openChange",
                   callbackProp: "onOpenChange",
                   detailsType: "ComboboxOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when Combobox opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
                 {
+                  callbackTiming: "before-state-commit",
                   cancelable: true,
                   name: "valueChange",
                   callbackProp: "onValueChange",
                   detailsType: "ComboboxValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "string | null",
                   description: "Fires when the value changes for Combobox.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -44477,6 +52046,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether ContextMenu is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "checked",
@@ -44487,6 +52119,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether ContextMenu is checked.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "checked",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultChecked",
+                },
+                {
+                  kind: "callback",
+                  name: "onCheckedChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "checked",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultChecked",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:checked-change",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-checked",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:checked-change",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "radioValue",
@@ -44497,6 +52184,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the selected radio value for ContextMenu.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-value for initial state and listen for starwind:value-change.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -44508,10 +52250,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "ContextMenuOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when ContextMenu opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
           callbackTiming: "after-state-commit",
@@ -44534,10 +52307,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "MenuCheckedChangeDetails",
           domEvent: "starwind:checked-change",
           emitsFrom: "checkboxItem",
+          stateModel: "checked",
           valueProperty: "checked",
           valueType: "boolean",
           description: "Fires when the checked state changes for ContextMenu.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
           callbackTiming: "before-state-commit",
@@ -44547,10 +52351,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "MenuValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "radioGroup",
+          stateModel: "radioValue",
           valueProperty: "value",
           valueType: "string",
           description: "Fires when the value changes for ContextMenu.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -44742,6 +52577,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "ContextMenu is a Starwind Runtime primitive in the composite-menu-overlay contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -44842,6 +52678,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether ContextMenu is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -44853,6 +52752,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether ContextMenu starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -44915,6 +52877,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: ContextMenuOpenChangeDetails) => void",
                   description: "Runs when ContextMenu opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -44974,6 +52999,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether ContextMenu is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "checked",
@@ -44984,6 +53072,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether ContextMenu is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "radioValue",
@@ -44994,6 +53137,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the selected radio value for ContextMenu.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -45005,10 +53203,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "ContextMenuOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when ContextMenu opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
                 {
                   callbackTiming: "after-state-commit",
@@ -45636,6 +53865,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether ContextMenu is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -45648,6 +53932,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether ContextMenu starts checked for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -45671,6 +54010,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(checked: boolean, details: MenuCheckedChangeDetails) => void",
                   description: "Runs when the ContextMenu checked state changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -45721,6 +54115,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether ContextMenu is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -45732,10 +54181,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "MenuCheckedChangeDetails",
                   domEvent: "starwind:checked-change",
                   emitsFrom: "checkboxItem",
+                  stateModel: "checked",
                   valueProperty: "checked",
                   valueType: "boolean",
                   description: "Fires when the checked state changes for ContextMenu.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [],
@@ -45800,6 +54280,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the current ContextMenu value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -45810,6 +54345,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Sets the initial ContextMenu value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "onValueChange",
@@ -45821,6 +54411,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: string, details: MenuValueChangeDetails) => void",
                   description: "Runs when the ContextMenu value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -45847,6 +54492,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the selected radio value for ContextMenu.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -45858,10 +54558,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "MenuValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "radioGroup",
+                  stateModel: "radioValue",
                   valueProperty: "value",
                   valueType: "string",
                   description: "Fires when the value changes for ContextMenu.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [],
@@ -45910,6 +54641,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether ContextMenu is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -45922,6 +54708,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether ContextMenu starts checked for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -45945,6 +54786,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the current ContextMenu value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -46001,6 +54897,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether ContextMenu is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "radioValue",
@@ -46011,6 +54962,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the selected radio value for ContextMenu.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [],
@@ -46657,6 +55663,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Dialog is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -46668,10 +55737,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "DialogOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when Dialog opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
           callbackTiming: "after-state-commit",
@@ -46797,6 +55897,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Dialog is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -46885,6 +55986,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Dialog is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -46896,6 +56060,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Dialog starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "true",
@@ -46936,6 +56163,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: DialogOpenChangeDetails) => void",
                   description: "Runs when Dialog opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -46988,6 +56278,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Dialog is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -46999,10 +56352,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "DialogOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when Dialog opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
                 {
                   callbackTiming: "after-state-commit",
@@ -47635,6 +57019,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Drawer is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -47646,10 +57093,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "DrawerOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when Drawer opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
           callbackTiming: "after-state-commit",
@@ -47784,6 +57262,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Drawer is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -47874,6 +57353,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Drawer is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -47885,6 +57427,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Drawer starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "true",
@@ -47925,6 +57530,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: DrawerOpenChangeDetails) => void",
                   description: "Runs when Drawer opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -47977,6 +57645,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Drawer is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -47988,10 +57719,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "DrawerOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when Drawer opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
                 {
                   callbackTiming: "after-state-commit",
@@ -48679,6 +58441,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "custom-event",
           description: "Tracks whether Dropzone is uploading files.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use isUploading for controlled state.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "isUploading",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use isUploading for initial state and call setUploading for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "isUploading",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setUploading",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-is-uploading for initial state and call setUploading for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-is-uploading",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setUploading",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -48807,6 +58612,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Dropzone is a Starwind Runtime primitive in the form-value-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -48905,6 +58711,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Dropzone is uploading.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use isUploading for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "isUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use isUploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "isUploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-is-uploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-is-uploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "onFilesChange",
@@ -48958,6 +58807,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "custom-event",
                   description: "Tracks whether Dropzone is uploading files.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use isUploading for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "isUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use isUploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "isUploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-is-uploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-is-uploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -49143,6 +59035,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Dropzone is uploading.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use isUploading for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "isUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use isUploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "isUploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-is-uploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-is-uploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -49170,6 +59105,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "custom-event",
                   description: "Tracks whether Dropzone is uploading files.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use isUploading for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "isUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use isUploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "isUploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-is-uploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-is-uploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [],
@@ -49212,6 +59190,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Dropzone is uploading.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use isUploading for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "isUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use isUploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "isUploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-is-uploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-is-uploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -49239,6 +59260,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "custom-event",
                   description: "Tracks whether Dropzone is uploading files.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use isUploading for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "isUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use isUploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "isUploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-is-uploading for initial state and call setUploading for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-is-uploading",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setUploading",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [],
@@ -49633,6 +59697,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether the Field value has changed.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use dirty for controlled state.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "dirty",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use dirty for initial state and call setDirty for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "dirty",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setDirty",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "call setDirty for later updates.",
+              apis: [
+                {
+                  kind: "runtime-method",
+                  name: "setDirty",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "touched",
@@ -49642,6 +59745,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Field has been visited.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use touched for controlled state.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "touched",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use touched for initial state and call setTouched for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "touched",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setTouched",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "call setTouched for later updates.",
+              apis: [
+                {
+                  kind: "runtime-method",
+                  name: "setTouched",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [],
@@ -49763,6 +59905,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Field is a Starwind Runtime primitive in the field-control-coordinator contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -49855,6 +59998,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Marks whether the field value has changed.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use dirty for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "dirty",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use dirty for initial state and call setDirty for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "dirty",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setDirty",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "call setDirty for later updates.",
+                      apis: [
+                        {
+                          kind: "runtime-method",
+                          name: "setDirty",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -49941,6 +60123,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Marks whether the field has been visited.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use touched for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "touched",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use touched for initial state and call setTouched for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "touched",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setTouched",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "call setTouched for later updates.",
+                      apis: [
+                        {
+                          kind: "runtime-method",
+                          name: "setTouched",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "submit",
@@ -50020,6 +60241,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether the Field value has changed.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use dirty for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "dirty",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use dirty for initial state and call setDirty for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "dirty",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setDirty",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "call setDirty for later updates.",
+                      apis: [
+                        {
+                          kind: "runtime-method",
+                          name: "setDirty",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "touched",
@@ -50029,6 +60289,45 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Field has been visited.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use touched for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "touched",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use touched for initial state and call setTouched for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "touched",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setTouched",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "call setTouched for later updates.",
+                      apis: [
+                        {
+                          kind: "runtime-method",
+                          name: "setTouched",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [],
@@ -50539,6 +60838,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Fieldset is a Starwind Runtime primitive in the field-control-coordinator contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -50946,6 +61246,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Form coordinates native constraints, custom and asynchronous validators, schema results, error visibility, and submission across its Fields.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -51364,6 +61665,65 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current Input value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for state changes.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "listen for starwind:value-change and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -51373,6 +61733,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "InputValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "string",
           description: "Fires when the value changes for Input.",
@@ -51435,6 +61796,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Input is a Starwind Runtime primitive in the form-value-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -51514,6 +61876,65 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "InputValue",
                   description: "Controls the current Input value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "listen for starwind:value-change and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -51521,6 +61942,65 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "InputValue",
                   description: "Sets the initial Input value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "listen for starwind:value-change and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -51557,6 +62037,65 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: string, details: InputValueChangeDetails) => void",
                   description: "Runs when the Input value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "listen for starwind:value-change and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -51584,6 +62123,65 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current Input value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "listen for starwind:value-change and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -51593,6 +62191,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "InputValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "string",
                   description: "Fires when the value changes for Input.",
@@ -52042,6 +62641,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current InputOtp value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -52053,10 +62715,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "InputOtpValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "string",
           description: "Fires when the value changes for InputOtp.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -52197,6 +62890,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "InputOtp is a Starwind Runtime primitive in the form-value-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -52282,6 +62976,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the current InputOtp value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -52289,6 +63046,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Sets the initial InputOtp value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -52357,6 +63177,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: string, details: InputOtpValueChangeDetails) => void",
                   description: "Runs when the InputOtp value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -52439,6 +63322,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current InputOtp value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -52450,10 +63396,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "InputOtpValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "string",
                   description: "Fires when the value changes for InputOtp.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -53562,6 +64539,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Menu is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "checked",
@@ -53572,6 +64612,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Menu is checked.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "checked",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultChecked",
+                },
+                {
+                  kind: "callback",
+                  name: "onCheckedChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "checked",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultChecked",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:checked-change",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-checked",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:checked-change",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "radioValue",
@@ -53582,6 +64677,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the selected radio value for Menu.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-value for initial state and listen for starwind:value-change.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -53593,10 +64743,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "MenuOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when Menu opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
           callbackTiming: "after-state-commit",
@@ -53619,10 +64800,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "MenuCheckedChangeDetails",
           domEvent: "starwind:checked-change",
           emitsFrom: "checkboxItem",
+          stateModel: "checked",
           valueProperty: "checked",
           valueType: "boolean",
           description: "Fires when the checked state changes for Menu.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
           callbackTiming: "before-state-commit",
@@ -53632,10 +64844,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "MenuValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "radioGroup",
+          stateModel: "radioValue",
           valueProperty: "value",
           valueType: "string",
           description: "Fires when the value changes for Menu.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -53914,6 +65157,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Menu is a Starwind Runtime primitive in the composite-menu-overlay contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -54018,6 +65262,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Menu is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -54029,6 +65336,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Menu starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -54101,6 +65471,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: MenuOpenChangeDetails) => void",
                   description: "Runs when Menu opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -54159,6 +65592,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Menu is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "checked",
@@ -54169,6 +65665,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Menu is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "radioValue",
@@ -54179,6 +65730,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the selected radio value for Menu.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -54190,10 +65796,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "MenuOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when Menu opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
                 {
                   callbackTiming: "after-state-commit",
@@ -54808,6 +66445,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Menu is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -54820,6 +66512,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Menu starts checked for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -54843,6 +66590,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(checked: boolean, details: MenuCheckedChangeDetails) => void",
                   description: "Runs when the Menu checked state changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -54893,6 +66695,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Menu is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -54904,10 +66761,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "MenuCheckedChangeDetails",
                   domEvent: "starwind:checked-change",
                   emitsFrom: "checkboxItem",
+                  stateModel: "checked",
                   valueProperty: "checked",
                   valueType: "boolean",
                   description: "Fires when the checked state changes for Menu.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [],
@@ -54989,6 +66877,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the current Menu value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -54999,6 +66942,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Sets the initial Menu value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "onValueChange",
@@ -55010,6 +67008,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: string, details: MenuValueChangeDetails) => void",
                   description: "Runs when the Menu value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -55036,6 +67089,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the selected radio value for Menu.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -55047,10 +67155,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "MenuValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "radioGroup",
+                  stateModel: "radioValue",
                   valueProperty: "value",
                   valueType: "string",
                   description: "Fires when the value changes for Menu.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [],
@@ -55108,6 +67247,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Menu is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -55120,6 +67314,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Menu starts checked for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -55143,6 +67392,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the current Menu value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -55199,6 +67503,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Menu is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state and listen for starwind:checked-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "radioValue",
@@ -55209,6 +67568,61 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the selected radio value for Menu.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and listen for starwind:value-change.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [],
@@ -56155,6 +68569,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current NavigationMenu value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -56166,10 +68643,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "NavigationMenuValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "string | null",
           description: "Fires when the value changes for NavigationMenu.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -56355,6 +68863,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Navigation Menu coordinates a single active top-level item, shared viewport content, hover timing, keyboard movement, and link close behavior for site navigation.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -56466,6 +68975,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string | null",
                   description: "Controls the active item value when a framework adapter owns state.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "null",
@@ -56477,6 +69049,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string | null",
                   description: "Sets the initial uncontrolled active item value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "50",
@@ -56525,6 +69160,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: string | null, details: NavigationMenuValueChangeDetails) => void",
                   description: "Runs when the NavigationMenu value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "\"horizontal\"",
@@ -56612,6 +69310,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current NavigationMenu value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -56623,10 +69384,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "NavigationMenuValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "string | null",
                   description: "Fires when the value changes for NavigationMenu.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -56714,6 +69506,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the current NavigationMenu value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -57888,6 +70743,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Popover is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -57899,10 +70817,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "PopoverOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when Popover opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
           callbackTiming: "after-state-commit",
@@ -58091,6 +71040,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Popover is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -58183,6 +71133,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Popover is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -58194,6 +71207,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Popover starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "true",
@@ -58253,6 +71329,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: PopoverOpenChangeDetails) => void",
                   description: "Runs when Popover opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -58317,6 +71456,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Popover is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -58328,10 +71530,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "PopoverOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when Popover opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
                 {
                   callbackTiming: "after-state-commit",
@@ -59443,6 +72676,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether PreviewCard is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -59454,10 +72750,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "PreviewCardOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when PreviewCard opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -59629,6 +72956,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "PreviewCard is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -59718,6 +73046,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether PreviewCard is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -59729,6 +73120,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether PreviewCard starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "300",
@@ -59780,6 +73234,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: PreviewCardOpenChangeDetails) => void",
                   description: "Runs when PreviewCard opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -59844,6 +73361,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether PreviewCard is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -59855,10 +73435,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "PreviewCardOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when PreviewCard opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -60674,6 +74285,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current Progress value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value for initial state and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-value for initial state and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-value",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [],
@@ -60779,6 +74433,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Progress is a Starwind Runtime primitive in the static-semantic contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -60864,6 +74519,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "number | null",
                   description: "Controls the current Progress value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value for initial state and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "100",
@@ -60955,6 +74653,49 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current Progress value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value for initial state and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-value for initial state and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-value",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [],
@@ -61446,6 +75187,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Radio is checked.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "checked",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultChecked",
+                },
+                {
+                  kind: "callback",
+                  name: "onCheckedChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "checked",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultChecked",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:checked-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setChecked",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-checked",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:checked-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setChecked",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -61457,10 +75261,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "RadioCheckedChangeDetails",
           domEvent: "starwind:checked-change",
           emitsFrom: "root",
+          stateModel: "checked",
           valueProperty: "checked",
           valueType: "boolean",
           description: "Fires when the checked state changes for Radio.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -61576,6 +75411,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Radio is a Starwind Runtime primitive in the single-boolean-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -61658,6 +75494,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Radio is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -61666,6 +75565,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Radio starts checked for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -61738,6 +75700,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(checked: boolean, details: RadioCheckedChangeDetails) => void",
                   description: "Runs when the Radio checked state changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -61820,6 +75845,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Radio is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -61831,10 +75919,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "RadioCheckedChangeDetails",
                   domEvent: "starwind:checked-change",
                   emitsFrom: "root",
+                  stateModel: "checked",
                   valueProperty: "checked",
                   valueType: "boolean",
                   description: "Fires when the checked state changes for Radio.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -62235,6 +76354,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current RadioGroup value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -62246,10 +76428,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "RadioGroupValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "string",
           description: "Fires when the value changes for RadioGroup.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -62366,6 +76579,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "RadioGroup is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -62446,6 +76660,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "RadioGroupValue",
                   description: "Controls the current RadioGroup value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -62453,6 +76730,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "RadioGroupValue",
                   description: "Sets the initial RadioGroup value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -62507,6 +76847,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: string, details: RadioGroupValueChangeDetails) => void",
                   description: "Runs when the RadioGroup value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -62577,6 +76980,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current RadioGroup value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -62588,10 +77054,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "RadioGroupValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "string",
                   description: "Fires when the value changes for RadioGroup.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -62993,6 +77490,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "ScrollArea is a Starwind Runtime primitive in the viewport-measurement contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -63963,6 +78461,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Select is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "value",
@@ -63975,6 +78536,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current Select value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -63986,10 +78610,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "SelectOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when Select opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
           callbackTiming: "before-state-commit",
@@ -63999,10 +78654,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "SelectValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "string | null",
           description: "Fires when the value changes for Select.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -64120,6 +78806,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Select is a Starwind Runtime primitive in the floating-value-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -64251,6 +78938,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Select is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultOpen",
@@ -64258,6 +79008,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Select starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "value",
@@ -64265,6 +79078,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string | null",
                   description: "Controls the current Select value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -64272,6 +79148,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string | null",
                   description: "Sets the initial Select value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "autoComplete",
@@ -64342,6 +79281,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: SelectOpenChangeDetails) => void",
                   description: "Runs when Select opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "onValueChange",
@@ -64350,6 +79352,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: string | null, details: SelectValueChangeDetails) => void",
                   description: "Runs when the Select value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -64438,6 +79503,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Select is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "value",
@@ -64450,6 +79578,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current Select value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -64461,10 +79652,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "SelectOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when Select opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
                 {
                   callbackTiming: "before-state-commit",
@@ -64474,10 +79696,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "SelectValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "string | null",
                   description: "Fires when the value changes for Select.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -65745,6 +80998,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Sidebar is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for state changes.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:sidebar-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:sidebar-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
         {
           name: "mobileOpen",
@@ -65757,6 +81073,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether the mobile Sidebar panel is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use mobileOpen for controlled state and defaultMobileOpen for default state, and onMobileOpenChange for state changes.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "mobileOpen",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultMobileOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onMobileOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use mobileOpen or defaultMobileOpen for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "mobileOpen",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultMobileOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:sidebar-mobile-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setMobileOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-mobile-open for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-mobile-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:sidebar-mobile-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setMobileOpen",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -65766,6 +81145,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "SidebarOpenChangeDetails",
           domEvent: "starwind:sidebar-change",
           emitsFrom: "provider",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when Sidebar opens or closes.",
@@ -65777,6 +81157,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "SidebarMobileOpenChangeDetails",
           domEvent: "starwind:sidebar-mobile-change",
           emitsFrom: "provider",
+          stateModel: "mobileOpen",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when the mobile panel opens or closes for Sidebar.",
@@ -65919,6 +81300,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Sidebar is a Starwind Runtime primitive in the presence-disclosure-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -66005,6 +81387,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Sidebar is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "true",
@@ -66016,6 +81461,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Sidebar starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "mobileOpen",
@@ -66026,6 +81534,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls the mobile open state for Sidebar.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use mobileOpen for controlled state and defaultMobileOpen for default state, and onMobileOpenChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "mobileOpen",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultMobileOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onMobileOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use mobileOpen or defaultMobileOpen for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "mobileOpen",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultMobileOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-mobile-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setMobileOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-mobile-open for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-mobile-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-mobile-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setMobileOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -66037,6 +81608,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls the default mobile open state for Sidebar.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use mobileOpen for controlled state and defaultMobileOpen for default state, and onMobileOpenChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "mobileOpen",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultMobileOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onMobileOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use mobileOpen or defaultMobileOpen for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "mobileOpen",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultMobileOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-mobile-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setMobileOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-mobile-open for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-mobile-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-mobile-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setMobileOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "\"b\"",
@@ -66114,6 +81748,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: SidebarOpenChangeDetails) => void",
                   description: "Runs when Sidebar opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "onMobileOpenChange",
@@ -66125,6 +81822,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: SidebarMobileOpenChangeDetails) => void",
                   description: "Runs when on mobile open change changes for Sidebar.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use mobileOpen for controlled state and defaultMobileOpen for default state, and onMobileOpenChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "mobileOpen",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultMobileOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onMobileOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use mobileOpen or defaultMobileOpen for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "mobileOpen",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultMobileOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-mobile-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setMobileOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-mobile-open for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-mobile-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-mobile-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setMobileOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -66207,6 +81967,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Sidebar is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:sidebar-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "mobileOpen",
@@ -66219,6 +82042,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether the mobile Sidebar panel is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use mobileOpen for controlled state and defaultMobileOpen for default state, and onMobileOpenChange for state changes.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "mobileOpen",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultMobileOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onMobileOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use mobileOpen or defaultMobileOpen for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "mobileOpen",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultMobileOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-mobile-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setMobileOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-mobile-open for initial state, listen for starwind:sidebar-mobile-change, and call setMobileOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-mobile-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:sidebar-mobile-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setMobileOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -66228,6 +82114,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "SidebarOpenChangeDetails",
                   domEvent: "starwind:sidebar-change",
                   emitsFrom: "provider",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when Sidebar opens or closes.",
@@ -66239,6 +82126,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "SidebarMobileOpenChangeDetails",
                   domEvent: "starwind:sidebar-mobile-change",
                   emitsFrom: "provider",
+                  stateModel: "mobileOpen",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when the mobile panel opens or closes for Sidebar.",
@@ -66912,6 +82800,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current Slider value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -66923,10 +82874,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "SliderValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "SliderValue",
           description: "Fires when the value changes for Slider.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
         {
           name: "valueCommitted",
@@ -67065,6 +83047,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Slider is a Starwind Runtime primitive in the form-value-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -67151,6 +83134,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "SliderValue",
                   description: "Controls the current Slider value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "0",
@@ -67159,6 +83205,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "SliderValue",
                   description: "Sets the initial Slider value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -67237,6 +83346,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: SliderValue, details: SliderValueChangeDetails) => void",
                   description: "Runs when the Slider value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "onValueCommitted",
@@ -67333,6 +83505,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current Slider value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -67344,10 +83579,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "SliderValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "SliderValue",
                   description: "Fires when the value changes for Slider.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
                 {
                   name: "valueCommitted",
@@ -67956,19 +84222,115 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Switch is checked.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "checked",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultChecked",
+                },
+                {
+                  kind: "callback",
+                  name: "onCheckedChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "checked",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultChecked",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:checked-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setChecked",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-checked",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:checked-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setChecked",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
         {
+          callbackTiming: "before-state-commit",
+          cancelable: true,
           name: "checkedChange",
           callbackProp: "onCheckedChange",
           detailsType: "SwitchCheckedChangeDetails",
           domEvent: "starwind:checked-change",
           emitsFrom: "root",
+          stateModel: "checked",
           valueProperty: "checked",
           valueType: "boolean",
           description: "Fires when the checked state changes for Switch.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -68064,6 +84426,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Switch is a Starwind Runtime primitive in the single-boolean-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -68147,6 +84510,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Switch is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -68155,6 +84581,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Switch starts checked for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -68233,6 +84722,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(checked: boolean, details: SwitchCheckedChangeDetails) => void",
                   description: "Runs when the Switch checked state changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -68327,19 +84879,115 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Switch is checked.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use checked for controlled state and defaultChecked for default state, and onCheckedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onCheckedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use checked or defaultChecked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "checked",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultChecked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-checked for initial state, listen for starwind:checked-change, and call setChecked for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-checked",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:checked-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setChecked",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
                 {
+                  callbackTiming: "before-state-commit",
+                  cancelable: true,
                   name: "checkedChange",
                   callbackProp: "onCheckedChange",
                   detailsType: "SwitchCheckedChangeDetails",
                   domEvent: "starwind:checked-change",
                   emitsFrom: "root",
+                  stateModel: "checked",
                   valueProperty: "checked",
                   valueType: "boolean",
                   description: "Fires when the checked state changes for Switch.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -68833,6 +85481,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current Tabs value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -68844,10 +85555,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "TabsValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "TabsValue",
           description: "Fires when the value changes for Tabs.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -68961,6 +85703,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Tabs is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -69047,6 +85790,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "TabsValue",
                   description: "Controls the current Tabs value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -69054,6 +85860,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "TabsValue",
                   description: "Sets the initial Tabs value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "\"horizontal\"",
@@ -69077,6 +85946,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: TabsValue, details: TabsValueChangeDetails) => void",
                   description: "Runs when the Tabs value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -69123,6 +86055,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current Tabs value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -69134,10 +86129,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "TabsValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "TabsValue",
                   description: "Fires when the value changes for Tabs.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -69293,6 +86319,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the current Tabs value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -69386,6 +86475,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "string",
                   description: "Controls the current Tabs value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -69841,6 +86993,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Toast is a Starwind Runtime primitive in the notification-system contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -70524,18 +87677,115 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Toggle is pressed.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use pressed for controlled state and defaultPressed for default state, and onPressedChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "pressed",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultPressed",
+                },
+                {
+                  kind: "callback",
+                  name: "onPressedChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use pressed or defaultPressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "pressed",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultPressed",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:pressed-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setPressed",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-pressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-pressed",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:pressed-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setPressed",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
         {
+          callbackTiming: "before-state-commit",
+          cancelable: true,
           name: "pressedChange",
           callbackProp: "onPressedChange",
           detailsType: "TogglePressedChangeDetails",
           domEvent: "starwind:pressed-change",
           emitsFrom: "root",
+          stateModel: "pressed",
           valueProperty: "pressed",
+          valueType: "boolean",
           description: "Fires when the pressed state changes for Toggle.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -70597,6 +87847,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Toggle is a Starwind Runtime primitive in the single-boolean-control contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -70676,6 +87927,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls the pressed state for Toggle.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use pressed for controlled state and defaultPressed for default state, and onPressedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "pressed",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultPressed",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onPressedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use pressed or defaultPressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "pressed",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultPressed",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:pressed-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setPressed",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-pressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-pressed",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:pressed-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setPressed",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -70684,6 +87998,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls the default pressed state for Toggle.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use pressed for controlled state and defaultPressed for default state, and onPressedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "pressed",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultPressed",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onPressedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use pressed or defaultPressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "pressed",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultPressed",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:pressed-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setPressed",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-pressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-pressed",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:pressed-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setPressed",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -70722,9 +88099,72 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "onPressedChange",
                   kind: "callback",
                   type: "TogglePressedChangeDetails",
-                  displayType: "(pressed: unknown, details: TogglePressedChangeDetails) => void",
+                  displayType: "(pressed: boolean, details: TogglePressedChangeDetails) => void",
                   description: "Runs when on pressed change changes for Toggle.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use pressed for controlled state and defaultPressed for default state, and onPressedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "pressed",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultPressed",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onPressedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use pressed or defaultPressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "pressed",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultPressed",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:pressed-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setPressed",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-pressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-pressed",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:pressed-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setPressed",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -70795,18 +88235,115 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Toggle is pressed.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use pressed for controlled state and defaultPressed for default state, and onPressedChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "pressed",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultPressed",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onPressedChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use pressed or defaultPressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "pressed",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultPressed",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:pressed-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setPressed",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-pressed for initial state, listen for starwind:pressed-change, and call setPressed for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-pressed",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:pressed-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setPressed",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
                 {
+                  callbackTiming: "before-state-commit",
+                  cancelable: true,
                   name: "pressedChange",
                   callbackProp: "onPressedChange",
                   detailsType: "TogglePressedChangeDetails",
                   domEvent: "starwind:pressed-change",
                   emitsFrom: "root",
+                  stateModel: "pressed",
                   valueProperty: "pressed",
+                  valueType: "boolean",
                   description: "Fires when the pressed state changes for Toggle.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -71035,19 +88572,115 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks the current ToggleGroup value.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "callback",
+                  name: "onValueChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "value",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultValue",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-value",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:value-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setValue",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
         {
+          callbackTiming: "before-state-commit",
+          cancelable: true,
           name: "valueChange",
           callbackProp: "onValueChange",
           detailsType: "ToggleGroupValueChangeDetails",
           domEvent: "starwind:value-change",
           emitsFrom: "root",
+          stateModel: "value",
           valueProperty: "value",
           valueType: "ToggleGroupValue",
           description: "Fires when the value changes for ToggleGroup.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -71132,6 +88765,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "ToggleGroup is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -71212,6 +88846,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "ToggleGroupValue",
                   description: "Controls the current ToggleGroup value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   name: "defaultValue",
@@ -71219,6 +88916,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "ToggleGroupValue",
                   description: "Sets the initial ToggleGroup value for uncontrolled usage.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -71259,6 +89019,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(value: ToggleGroupValue, details: ToggleGroupValueChangeDetails) => void",
                   description: "Runs when the ToggleGroup value changes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -71317,19 +89140,115 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks the current ToggleGroup value.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use value for controlled state and defaultValue for default state, and onValueChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onValueChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use value or defaultValue for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "value",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultValue",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-value for initial state, listen for starwind:value-change, and call setValue for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-value",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:value-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setValue",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
                 {
+                  callbackTiming: "before-state-commit",
+                  cancelable: true,
                   name: "valueChange",
                   callbackProp: "onValueChange",
                   detailsType: "ToggleGroupValueChangeDetails",
                   domEvent: "starwind:value-change",
                   emitsFrom: "root",
+                  stateModel: "value",
                   valueProperty: "value",
                   valueType: "ToggleGroupValue",
                   description: "Fires when the value changes for ToggleGroup.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [
@@ -71784,6 +89703,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           controlledStateSync: "unsupported",
           description: "Tracks whether Tooltip is open.",
           descriptionSource: "authored",
+          frameworkBehavior: [
+            {
+              target: "react",
+              label: "React",
+              summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+              apis: [
+                {
+                  kind: "controlled-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "callback",
+                  name: "onOpenChange",
+                },
+              ],
+            },
+            {
+              target: "astro",
+              label: "Astro",
+              summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-prop",
+                  name: "open",
+                },
+                {
+                  kind: "default-prop",
+                  name: "defaultOpen",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+            {
+              target: "raw-html",
+              label: "Runtime / HTML",
+              summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+              apis: [
+                {
+                  kind: "initial-attribute",
+                  name: "data-default-open",
+                },
+                {
+                  kind: "dom-event",
+                  name: "starwind:open-change",
+                },
+                {
+                  kind: "runtime-method",
+                  name: "setOpen",
+                },
+              ],
+            },
+          ],
         },
       ],
       events: [
@@ -71795,10 +89777,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           detailsType: "TooltipOpenChangeDetails",
           domEvent: "starwind:open-change",
           emitsFrom: "root",
+          stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
           description: "Fires when Tooltip opens or closes.",
           descriptionSource: "authored",
+          cancellationSequence: [
+            {
+              step: 1,
+              action: "Check internal eligibility and intent.",
+            },
+            {
+              step: 2,
+              action: "Create one details object for the proposal.",
+            },
+            {
+              step: 3,
+              action: "Call the Runtime callback with the details object when the controller exposes one.",
+            },
+            {
+              step: 4,
+              action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+            },
+            {
+              step: 5,
+              action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+            },
+            {
+              step: 6,
+              action: "Apply the accepted state.",
+            },
+            {
+              step: 7,
+              action: "Notify Runtime subscribers and other accepted-only observers.",
+            },
+          ],
         },
       ],
       setters: [
@@ -71947,6 +89960,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       },
       docsReference: {
         summary: "Tooltip is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
+        frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
           "astro",
@@ -72034,6 +90048,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Controls whether Tooltip is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "false",
@@ -72045,6 +90122,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "boolean",
                   description: "Sets whether Tooltip starts open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
                 {
                   defaultValue: "200",
@@ -72104,6 +90244,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   displayType: "(open: boolean, details: TooltipOpenChangeDetails) => void",
                   description: "Runs when Tooltip opens or closes.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               dataAttributes: [
@@ -72174,6 +90377,69 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   controlledStateSync: "unsupported",
                   description: "Tracks whether Tooltip is open.",
                   descriptionSource: "authored",
+                  frameworkBehavior: [
+                    {
+                      target: "react",
+                      label: "React",
+                      summary: "Use open for controlled state and defaultOpen for default state, and onOpenChange for change proposals.",
+                      apis: [
+                        {
+                          kind: "controlled-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "callback",
+                          name: "onOpenChange",
+                        },
+                      ],
+                    },
+                    {
+                      target: "astro",
+                      label: "Astro",
+                      summary: "Use open or defaultOpen for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-prop",
+                          name: "open",
+                        },
+                        {
+                          kind: "default-prop",
+                          name: "defaultOpen",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                    {
+                      target: "raw-html",
+                      label: "Runtime / HTML",
+                      summary: "Use data-default-open for initial state, listen for starwind:open-change, and call setOpen for later updates.",
+                      apis: [
+                        {
+                          kind: "initial-attribute",
+                          name: "data-default-open",
+                        },
+                        {
+                          kind: "dom-event",
+                          name: "starwind:open-change",
+                        },
+                        {
+                          kind: "runtime-method",
+                          name: "setOpen",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
               events: [
@@ -72185,10 +90451,41 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   detailsType: "TooltipOpenChangeDetails",
                   domEvent: "starwind:open-change",
                   emitsFrom: "root",
+                  stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
                   description: "Fires when Tooltip opens or closes.",
                   descriptionSource: "authored",
+                  cancellationSequence: [
+                    {
+                      step: 1,
+                      action: "Check internal eligibility and intent.",
+                    },
+                    {
+                      step: 2,
+                      action: "Create one details object for the proposal.",
+                    },
+                    {
+                      step: 3,
+                      action: "Call the Runtime callback with the details object when the controller exposes one.",
+                    },
+                    {
+                      step: 4,
+                      action: "Dispatch the cancelable DOM event with the same details object, including when the callback canceled it.",
+                    },
+                    {
+                      step: 5,
+                      action: "Read details.isCanceled, including cancellation caused by preventDefault().",
+                    },
+                    {
+                      step: 6,
+                      action: "Apply the accepted state.",
+                    },
+                    {
+                      step: 7,
+                      action: "Notify Runtime subscribers and other accepted-only observers.",
+                    },
+                  ],
                 },
               ],
               setters: [

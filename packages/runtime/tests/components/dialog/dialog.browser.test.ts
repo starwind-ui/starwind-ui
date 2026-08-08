@@ -74,6 +74,35 @@ describe("createDialog", () => {
     );
   });
 
+  it("runs emitting setters through the cancelable proposal before applying state", () => {
+    const root = renderDialog();
+    const order: string[] = [];
+    let callbackDetails: unknown;
+    let eventDetails: unknown;
+    let dialog: ReturnType<typeof createDialog>;
+    dialog = createDialog(root, {
+      open: false,
+      onOpenChange: (open, details) => {
+        order.push("callback");
+        callbackDetails = details;
+        dialog.setOpen(open, { emit: false });
+      },
+    });
+    dialog.subscribe("openChange", () => order.push("subscriber"));
+    root.addEventListener("starwind:open-change", (event) => {
+      order.push("dom-event");
+      eventDetails = (event as CustomEvent).detail;
+      event.preventDefault();
+    });
+
+    dialog.setOpen(true);
+
+    expect(eventDetails).toBe(callbackDetails);
+    expect(order).toEqual(["callback", "dom-event"]);
+    expect(dialog.getOpen()).toBe(false);
+    expect(getContent().open).toBe(false);
+  });
+
   it("applies coherent open state before native presentation", () => {
     const root = renderDialog();
     const dialog = createDialog(root);

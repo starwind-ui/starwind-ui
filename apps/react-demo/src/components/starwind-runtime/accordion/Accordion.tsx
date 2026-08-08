@@ -1,3 +1,5 @@
+"use client";
+
 import AccordionPrimitive from "@starwind-ui/react/accordion";
 import type * as React from "react";
 import { accordion } from "./variants";

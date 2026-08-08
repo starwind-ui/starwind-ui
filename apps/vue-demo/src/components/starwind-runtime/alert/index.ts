@@ -9,6 +9,8 @@ export type { AlertTitleProps } from "./AlertTitle.vue";
 
 const AlertVariants = { alert, alertDescription, alertTitle };
 
+const AlertParts = { Root: Alert, Description: AlertDescription, Title: AlertTitle };
+
 export { Alert, AlertDescription, AlertTitle, AlertVariants };
 
-export default { Root: Alert, Description: AlertDescription, Title: AlertTitle };
+export default AlertParts;

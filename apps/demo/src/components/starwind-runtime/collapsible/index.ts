@@ -9,10 +9,12 @@ const CollapsibleVariants = {
   collapsibleTrigger,
 };
 
-export { Collapsible, CollapsibleContent, CollapsibleTrigger, CollapsibleVariants };
-
-export default {
+const CollapsibleParts = {
   Root: Collapsible,
   Content: CollapsibleContent,
   Trigger: CollapsibleTrigger,
 };
+
+export { Collapsible, CollapsibleContent, CollapsibleTrigger, CollapsibleVariants };
+
+export default CollapsibleParts;

@@ -139,7 +139,11 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
     });
 
     const outputRoot = path.join(tempRoot, "apps/react-demo/src/components/starwind-runtime");
+    const alert = await readGeneratedFile(outputRoot, "alert/Alert.tsx");
+    const alertIndex = await readGeneratedFile(outputRoot, "alert/index.ts");
+    const badgeIndex = await readGeneratedFile(outputRoot, "badge/index.ts");
     const button = await readGeneratedFile(outputRoot, "button/Button.tsx");
+    const buttonIndex = await readGeneratedFile(outputRoot, "button/index.ts");
     const carousel = await readGeneratedFile(outputRoot, "carousel/Carousel.tsx");
     const carouselNext = await readGeneratedFile(outputRoot, "carousel/CarouselNext.tsx");
     const carouselPrevious = await readGeneratedFile(outputRoot, "carousel/CarouselPrevious.tsx");
@@ -154,8 +158,17 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
     const themeToggle = await readGeneratedFile(outputRoot, "theme-toggle/ThemeToggle.tsx");
     const toaster = await readGeneratedFile(outputRoot, "toast/Toaster.tsx");
 
+    expect(button).toMatch(/^"use client";/);
+    expect(buttonIndex).toMatch(/^"use client";/);
+    expect(alert).not.toMatch(/^"use client";/);
+    expect(alertIndex).not.toMatch(/^"use client";/);
     expect(button).toContain('import ButtonPrimitive from "@starwind-ui/react/button";');
     expect(button).not.toContain("primitives/react");
+    expect(buttonIndex).toContain("const ButtonParts = {");
+    expect(buttonIndex).toContain("export default ButtonParts;");
+    expect(buttonIndex).not.toMatch(/export default\s*{/);
+    expect(buttonIndex).not.toMatch(/export\s*{[^}]*\bButtonParts\b/);
+    expect(badgeIndex).toContain("export default Badge;");
     expect(carousel).toContain('import CarouselPrimitive from "@starwind-ui/react/carousel";');
     expect(carousel).toContain('opts?: import("@starwind-ui/react/carousel").CarouselOptions');
     expect(carouselVariants).toContain(

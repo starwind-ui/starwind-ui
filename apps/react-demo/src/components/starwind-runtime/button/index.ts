@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "./Button";
 import { button } from "./variants";
 
@@ -5,8 +7,10 @@ const ButtonVariants = {
   button,
 };
 
-export { Button, ButtonVariants };
-
-export default {
+const ButtonParts = {
   Root: Button,
 };
+
+export { Button, ButtonVariants };
+
+export default ButtonParts;

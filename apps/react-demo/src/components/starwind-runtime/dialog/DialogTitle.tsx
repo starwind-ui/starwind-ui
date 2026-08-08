@@ -1,3 +1,5 @@
+"use client";
+
 import DialogPrimitive from "@starwind-ui/react/dialog";
 import type * as React from "react";
 import { dialogTitle } from "./variants";

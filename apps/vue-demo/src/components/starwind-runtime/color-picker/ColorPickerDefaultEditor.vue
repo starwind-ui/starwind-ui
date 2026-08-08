@@ -50,11 +50,18 @@ const {
   swatches = [],
 } = defineProps<ColorPickerDefaultEditorDeclaredProps>();
 defineSlots<{}>();
+const isSwatchDescriptor = computed(
+  () =>
+    (
+      swatch: (typeof swatches)[number],
+    ): swatch is Extract<(typeof swatches)[number], { value: unknown }> =>
+      typeof swatch === "object" && swatch !== null && "value" in swatch && "label" in swatch,
+);
 const normalizedSwatches = computed(() =>
   swatches.map((swatch) =>
-    typeof swatch === "object" && swatch !== null && "value" in swatch
+    isSwatchDescriptor.value(swatch)
       ? swatch
-      : { value: swatch, label: String(swatch) },
+      : { value: swatch, label: String(swatch), disabled: undefined },
   ),
 );
 const hasSwatchesAttribute = computed(() =>

@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import { createField } from "@starwind-ui/runtime/field";
 import type { FormValidationTiming } from "@starwind-ui/runtime/form";
 import * as React from "react";

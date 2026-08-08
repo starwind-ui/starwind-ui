@@ -130,14 +130,13 @@ const renderedChecked = computed(() =>
   isGroupOwned ? (groupChecked.value ?? false) : (props.${state} ?? uncontrolledChecked.value),
 );
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-let unsubscribeCheckedChange: (() => void) | undefined;
 let unsubscribeStateSync: (() => void) | undefined;
 let instanceGeneration = 0;
 let mounted = false;
 
 defineExpose({ element: rootRef, input: inputRef });
 
-function handleCheckedChange(detail: ${detailType}): void {
+function handleCheckedChange(_checked: boolean, detail: ${detailType}): void {
   const eventInstance = instance;
   const eventGeneration = instanceGeneration;
   const eventWasGroupOwned = isGroupOwned;
@@ -164,8 +163,6 @@ function destroyOwnedInstance(): void {
   instanceGeneration += 1;
   unsubscribeStateSync?.();
   unsubscribeStateSync = undefined;
-  unsubscribeCheckedChange?.();
-  unsubscribeCheckedChange = undefined;
   const ownedInstance = instance;
   if (!ownedInstance) return;
   instance = undefined;
@@ -186,6 +183,7 @@ function setupRuntime(): void {
     ${readOnly}: effectiveReadOnly.value,
     ${required}: effectiveRequired.value,
     ${value}: props.${value},
+    ${facts.event.callbackProp}: handleCheckedChange,
     ...(isGroupOwned
       ? { ${state}: groupChecked.value ?? false }
       : props.${state} !== undefined
@@ -193,7 +191,6 @@ function setupRuntime(): void {
         : {}),
   });
   instance = createdInstance;
-  unsubscribeCheckedChange = createdInstance.subscribe("${facts.event.name}", handleCheckedChange);
   unsubscribeStateSync = createdInstance.subscribe("${facts.state.syncEvent}", handleStateSync);
 }
 

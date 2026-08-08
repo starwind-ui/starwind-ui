@@ -1,3 +1,5 @@
+"use client";
+
 import ContextMenu from "./ContextMenu";
 import ContextMenuCheckboxItem from "./ContextMenuCheckboxItem";
 import ContextMenuCheckboxItemIndicator from "./ContextMenuCheckboxItemIndicator";
@@ -44,6 +46,25 @@ const ContextMenuVariants = {
   contextMenuTrigger,
 };
 
+const ContextMenuParts = {
+  Root: ContextMenu,
+  Trigger: ContextMenuTrigger,
+  Content: ContextMenuContent,
+  CheckboxItem: ContextMenuCheckboxItem,
+  CheckboxItemIndicator: ContextMenuCheckboxItemIndicator,
+  RadioGroup: ContextMenuRadioGroup,
+  RadioItem: ContextMenuRadioItem,
+  RadioItemIndicator: ContextMenuRadioItemIndicator,
+  Item: ContextMenuItem,
+  Group: ContextMenuGroup,
+  Label: ContextMenuLabel,
+  Separator: ContextMenuSeparator,
+  Shortcut: ContextMenuShortcut,
+  Sub: ContextMenuSub,
+  SubTrigger: ContextMenuSubTrigger,
+  SubContent: ContextMenuSubContent,
+};
+
 export {
   ContextMenu,
   ContextMenuCheckboxItem,
@@ -64,21 +85,4 @@ export {
   ContextMenuVariants,
 };
 
-export default {
-  Root: ContextMenu,
-  Trigger: ContextMenuTrigger,
-  Content: ContextMenuContent,
-  CheckboxItem: ContextMenuCheckboxItem,
-  CheckboxItemIndicator: ContextMenuCheckboxItemIndicator,
-  RadioGroup: ContextMenuRadioGroup,
-  RadioItem: ContextMenuRadioItem,
-  RadioItemIndicator: ContextMenuRadioItemIndicator,
-  Item: ContextMenuItem,
-  Group: ContextMenuGroup,
-  Label: ContextMenuLabel,
-  Separator: ContextMenuSeparator,
-  Shortcut: ContextMenuShortcut,
-  Sub: ContextMenuSub,
-  SubTrigger: ContextMenuSubTrigger,
-  SubContent: ContextMenuSubContent,
-};
+export default ContextMenuParts;

@@ -320,6 +320,31 @@ describe.sequential("remove command", () => {
       component("card", "react"),
     ]);
   });
+
+  it("sorts interactive choices and confirmation labels while removing in config order", async () => {
+    await writeConfig(
+      runtimeConfig({
+        components: [component("zebra", "astro"), component("Alpha", "astro")],
+      }),
+    );
+    await writeComponent("src/components/starwind", "zebra", "Zebra.astro");
+    await writeComponent("src/components/starwind", "Alpha", "Alpha.astro");
+    mockMultiselect.mockResolvedValue(["astro:zebra", "astro:Alpha"]);
+
+    await remove(undefined);
+
+    expect(mockMultiselect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: [
+          { value: "astro:Alpha", label: "Alpha" },
+          { value: "astro:zebra", label: "zebra" },
+        ],
+      }),
+    );
+    expect(String(mockConfirm.mock.calls[0]?.[0].message).indexOf("Alpha")).toBeLessThan(
+      String(mockConfirm.mock.calls[0]?.[0].message).indexOf("zebra"),
+    );
+  });
 });
 
 async function writeConfig(config: StarwindConfig): Promise<void> {

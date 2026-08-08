@@ -1,3 +1,5 @@
+"use client";
+
 import Select from "./Select";
 import SelectContent from "./SelectContent";
 import SelectGroup from "./SelectGroup";
@@ -40,6 +42,21 @@ const SelectVariants = {
   selectValue,
 };
 
+const SelectParts = {
+  Root: Select,
+  Trigger: SelectTrigger,
+  Value: SelectValue,
+  Content: SelectContent,
+  Group: SelectGroup,
+  Label: SelectLabel,
+  Item: SelectItem,
+  ItemText: SelectItemText,
+  ItemIndicator: SelectItemIndicator,
+  Separator: SelectSeparator,
+  ScrollUpButton: SelectScrollUpButton,
+  ScrollDownButton: SelectScrollDownButton,
+};
+
 export {
   Select,
   SelectContent,
@@ -56,17 +73,4 @@ export {
   SelectVariants,
 };
 
-export default {
-  Root: Select,
-  Trigger: SelectTrigger,
-  Value: SelectValue,
-  Content: SelectContent,
-  Group: SelectGroup,
-  Label: SelectLabel,
-  Item: SelectItem,
-  ItemText: SelectItemText,
-  ItemIndicator: SelectItemIndicator,
-  Separator: SelectSeparator,
-  ScrollUpButton: SelectScrollUpButton,
-  ScrollDownButton: SelectScrollDownButton,
-};
+export default SelectParts;

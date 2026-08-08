@@ -16,8 +16,15 @@ import { getStyledComponentDir, getStyledComponentDirConfigUpdate } from "./conf
 import { updateConfig } from "./config.js";
 import { PATHS } from "./constants.js";
 import { filterUninstalledDependencies } from "./dependency-resolver.js";
-import { installDependencies, type PackageManager } from "./package-manager.js";
+import { ensureAstroReactIntegration } from "./astro-react-integration.js";
+import { installDependenciesWithProgress, type PackageManager } from "./package-manager.js";
 import { resolveProjectMutationPath, resolveProjectPathLexically } from "./project-path.js";
+import {
+  detectReactProjectPlan,
+  prepareReactComponentFile,
+  type ReactHostKind,
+  syncNextPagesComponentStyles,
+} from "./react-project.js";
 import {
   type Component,
   loadRegistry,
@@ -39,6 +46,7 @@ export type RuntimeInstallSummary = {
   failed: RuntimeInstallStatus[];
   installed: RuntimeInstallStatus[];
   skipped: RuntimeInstallStatus[];
+  setupOutcome?: "cancelled" | "declined";
 };
 
 type RuntimeUpdateStatus = {
@@ -165,6 +173,32 @@ export async function installRuntimeComponents(
     };
   }
 
+  if (options.config.framework === "astro" && targetFramework === "react") {
+    try {
+      const setupOutcome = await ensureAstroReactIntegration({
+        packageManager: options.packageManager,
+        skipPrompts: options.skipPrompts,
+      });
+      if (setupOutcome.status === "cancelled" || setupOutcome.status === "declined") {
+        return {
+          ...summary,
+          setupOutcome: setupOutcome.status,
+        };
+      }
+    } catch (error) {
+      return {
+        ...summary,
+        failed: componentNames.map((name) => ({
+          name,
+          status: "failed" as const,
+          error: error instanceof Error ? error.message : String(error),
+        })),
+      };
+    }
+  }
+
+  const reactHostKind = await getConfiguredReactHostKind(options.config);
+
   const registry = options.registry ?? (await loadRegistry(options.registrySource));
   const registryReference = resolveInstallRegistryReference({
     config: options.config,
@@ -229,6 +263,7 @@ export async function installRuntimeComponents(
               componentDir: getStyledComponentDir(options.config, targetFramework),
               componentName: component.name,
               files: target.files,
+              reactHostKind: targetFramework === "react" ? reactHostKind : undefined,
             }),
           ),
           options.overwrite ?? false,
@@ -292,7 +327,7 @@ export async function installRuntimeComponents(
   );
 
   if (packagesToInstall.length > 0) {
-    await installDependencies(packagesToInstall, options.packageManager);
+    await installDependenciesWithProgress(packagesToInstall, options.packageManager);
   }
 
   const installedComponents: PlannedComponent[] = [];
@@ -356,6 +391,10 @@ export async function installRuntimeComponents(
         error: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+
+  if (summary.installed.length > 0) {
+    await syncReactProjectComponentStyles(options.config, reactHostKind);
   }
 
   if (summary.installed.length > 0 && options.writeConfig !== false) {
@@ -570,6 +609,7 @@ export async function updateRuntimeComponents(
     updated: [],
   };
   const plan = await planRuntimeComponentUpdates(componentNames, options);
+  const reactHostKind = await getConfiguredReactHostKind(options.config);
 
   summary.failed.push(...plan.failed);
   summary.skipped.push(...plan.skipped);
@@ -598,7 +638,7 @@ export async function updateRuntimeComponents(
     }
 
     if (!skipPackageDependentUpdates) {
-      await installDependencies(plan.packagesToInstall, options.packageManager);
+      await installDependenciesWithProgress(plan.packagesToInstall, options.packageManager);
     }
   }
 
@@ -638,6 +678,7 @@ export async function updateRuntimeComponents(
   }
 
   if (summary.updated.length > 0) {
+    await syncReactProjectComponentStyles(options.config, reactHostKind);
     const registries = mergeRegistryReferences(plan.updates);
     await updateConfig(
       {
@@ -674,6 +715,8 @@ export async function planRuntimeComponentUpdates(
       })),
     };
   }
+
+  const reactHostKind = await getConfiguredReactHostKind(options.config);
 
   const explicitRegistry =
     options.registry ??
@@ -777,6 +820,7 @@ export async function planRuntimeComponentUpdates(
             componentDir: getStyledComponentDir(options.config, framework),
             componentName,
             files: registryTarget.files,
+            reactHostKind: framework === "react" ? reactHostKind : undefined,
           }),
         );
         const packageRequirements = dedupePackageRequirements(registryTarget.packageRequirements);
@@ -1193,6 +1237,7 @@ function prepareRegistryFiles(options: {
   componentDir: string;
   componentName: string;
   files: RegistryTarget["files"];
+  reactHostKind?: ReactHostKind;
 }): PreparedRegistryFile[] {
   return options.files.map((file) => {
     if (file.content === undefined) {
@@ -1206,11 +1251,38 @@ function prepareRegistryFiles(options: {
     });
 
     return {
-      content: file.content,
+      content: options.reactHostKind
+        ? prepareReactComponentFile(file.content, options.reactHostKind)
+        : file.content,
       destination,
       path: toPortablePath(path.relative(process.cwd(), destination)),
     };
   });
+}
+
+async function getConfiguredReactHostKind(
+  config: StarwindConfig,
+): Promise<ReactHostKind | undefined> {
+  if (config.framework !== "react") return undefined;
+
+  try {
+    const projectPackage = (await fs.readJson("package.json")) as Parameters<
+      typeof detectReactProjectPlan
+    >[0];
+    return (await detectReactProjectPlan(projectPackage)).kind;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function syncReactProjectComponentStyles(
+  config: StarwindConfig,
+  detectedHostKind?: ReactHostKind,
+): Promise<void> {
+  const hostKind = detectedHostKind ?? (await getConfiguredReactHostKind(config));
+  if (hostKind !== "next-pages") return;
+
+  await syncNextPagesComponentStyles(config.tailwind.css, getStyledComponentDir(config, "react"));
 }
 
 function resolveSafeProjectPath(options: {

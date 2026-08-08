@@ -1,3 +1,5 @@
+"use client";
+
 import Slider from "./Slider";
 import { slider, sliderControl, sliderRange, sliderThumb, sliderTrack } from "./variants";
 

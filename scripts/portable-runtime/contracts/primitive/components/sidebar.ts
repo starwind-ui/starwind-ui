@@ -234,6 +234,7 @@ export const sidebarRuntimeAdapterContract = {
   events: [
     {
       name: "openChange",
+      stateModel: "open",
       callbackProp: "onOpenChange",
       detailsType: "SidebarOpenChangeDetails",
       domEvent: "starwind:sidebar-change",
@@ -243,6 +244,7 @@ export const sidebarRuntimeAdapterContract = {
     },
     {
       name: "mobileOpenChange",
+      stateModel: "mobileOpen",
       callbackProp: "onMobileOpenChange",
       detailsType: "SidebarMobileOpenChangeDetails",
       domEvent: "starwind:sidebar-mobile-change",

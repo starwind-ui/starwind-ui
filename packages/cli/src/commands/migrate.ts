@@ -10,6 +10,10 @@ import {
   type StarwindConfig,
   updateConfig,
 } from "@/utils/config.js";
+import {
+  sortComponentNames,
+  sortComponentPresentationByName,
+} from "@/utils/component-presentation.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { detectPackageManager, type PackageManager } from "@/utils/package-manager.js";
 import { resolveProjectMutationPath } from "@/utils/project-path.js";
@@ -102,7 +106,9 @@ export async function migrate(options?: MigrateOptions): Promise<void> {
     const legacyComponentNames = new Set(
       legacyConfig.components.map((component) => component.name),
     );
-    report.custom = existingFolders.filter((folder) => !legacyComponentNames.has(folder)).sort();
+    report.custom = sortComponentNames(
+      existingFolders.filter((folder) => !legacyComponentNames.has(folder)),
+    );
 
     const shouldBackup = options?.yes
       ? true
@@ -353,7 +359,13 @@ async function promptForBulkOverwrite(options: {
   if (options.conflicts.length === 0) return undefined;
   if (options.skipPrompts) return true;
 
-  const componentList = options.conflicts.map((item) => item.component.name).join(", ");
+  const componentList = sortComponentPresentationByName(
+    options.conflicts,
+    (conflict) => conflict.component.name,
+    (conflict) => conflict.component.version,
+  )
+    .map((item) => item.component.name)
+    .join(", ");
   const shouldOverwriteAll = await p.confirm({
     message: `Overwrite all existing Starwind registry components in ${formatProjectPath(options.componentDir)}? ${highlighter.info(componentList)}`,
     initialValue: false,
@@ -577,7 +589,9 @@ ${formatIndentedList(report.custom)}`,
 }
 
 function formatIndentedList(items: string[]): string {
-  return items.map((item) => `  ${item}`).join("\n");
+  return sortComponentNames(items)
+    .map((item) => `  ${item}`)
+    .join("\n");
 }
 
 function formatProjectPath(filePath: string): string {

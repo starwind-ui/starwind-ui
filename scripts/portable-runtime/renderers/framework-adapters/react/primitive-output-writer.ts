@@ -42,11 +42,7 @@ export async function writeReactPrimitiveFile(
   fileName: string,
   contents: string,
 ): Promise<void> {
-  await writeGeneratedFile(
-    dir,
-    fileName,
-    applyReactRefCleanup(applyReactEffectTiming(contents)),
-  );
+  await writeGeneratedFile(dir, fileName, applyReactRefCleanup(applyReactEffectTiming(contents)));
 }
 
 export function renderUseIsomorphicLayoutEffectFile(tsHeader: string): string {
@@ -408,7 +404,9 @@ const LOCAL_SET_REF_FUNCTION = `function setRef<T>(ref: React.Ref<T> | undefined
 export function applyReactRefCleanup(contents: string): string {
   if (!contents.includes(LOCAL_SET_REF_FUNCTION)) return contents;
 
-  const importAnchor = contents.includes(LAYOUT_EFFECT_IMPORT) ? LAYOUT_EFFECT_IMPORT : REACT_IMPORT;
+  const importAnchor = contents.includes(LAYOUT_EFFECT_IMPORT)
+    ? LAYOUT_EFFECT_IMPORT
+    : REACT_IMPORT;
   const imports =
     importAnchor === LAYOUT_EFFECT_IMPORT
       ? `${SET_REF_IMPORT}\n${LAYOUT_EFFECT_IMPORT}`
@@ -417,10 +415,7 @@ export function applyReactRefCleanup(contents: string): string {
   return contents
     .replace(importAnchor, imports)
     .replaceAll(LOCAL_SET_REF_FUNCTION, "")
-    .replace(
-      /^(\s*)setRef\(([^\n;]+)\);(?=\r?\n\s*},)/gm,
-      "$1return setRef($2);",
-    );
+    .replace(/^(\s*)setRef\(([^\n;]+)\);(?=\r?\n\s*},)/gm, "$1return setRef($2);");
 }
 
 export function applyReactEffectTiming(contents: string): string {

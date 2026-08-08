@@ -29,6 +29,14 @@ const CarouselVariants = {
   carouselPrevious,
 };
 
+const CarouselParts = {
+  Root: Carousel,
+  Content: CarouselContent,
+  Item: CarouselItem,
+  Next: CarouselNext,
+  Previous: CarouselPrevious,
+};
+
 export {
   Carousel,
   CarouselContent,
@@ -38,10 +46,4 @@ export {
   CarouselVariants,
 };
 
-export default {
-  Root: Carousel,
-  Content: CarouselContent,
-  Item: CarouselItem,
-  Next: CarouselNext,
-  Previous: CarouselPrevious,
-};
+export default CarouselParts;

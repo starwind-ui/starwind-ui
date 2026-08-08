@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { add } from "../../src/commands/add.js";
+import { ensureAstroReactIntegration } from "../../src/utils/astro-react-integration.js";
 
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
@@ -30,6 +31,10 @@ vi.mock("../../src/utils/sleep.js", () => ({
   sleep: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../../src/utils/astro-react-integration.js", () => ({
+  ensureAstroReactIntegration: vi.fn().mockResolvedValue({ status: "ready" }),
+}));
+
 vi.mock("../../src/utils/registry.js", () => ({
   getConfiguredRegistrySource: vi.fn(() => ({ type: "bundled" })),
   loadRegistry: vi.fn(),
@@ -45,14 +50,16 @@ vi.mock("../../src/utils/validate.js", () => ({
 vi.mock("../../src/utils/package-manager.js", () => ({
   detectPackageManager: vi.fn(() => ({ name: "npm" })),
   installDependencies: vi.fn(),
+  installDependenciesWithProgress: vi.fn(),
 }));
 
-import { installDependencies } from "../../src/utils/package-manager.js";
+import { installDependenciesWithProgress } from "../../src/utils/package-manager.js";
 import { loadRegistry, parseRegistrySource } from "../../src/utils/registry.js";
 import { isValidComponent } from "../../src/utils/validate.js";
 import * as clackPrompts from "@clack/prompts";
 
-const mockInstallDependencies = vi.mocked(installDependencies);
+const mockInstallDependencies = vi.mocked(installDependenciesWithProgress);
+const mockEnsureAstroReactIntegration = vi.mocked(ensureAstroReactIntegration);
 const mockLoadRegistry = vi.mocked(loadRegistry);
 const mockParseRegistrySource = vi.mocked(parseRegistrySource);
 const mockIsValidComponent = vi.mocked(isValidComponent);
@@ -209,6 +216,7 @@ describe.sequential("add command integration", () => {
     );
     mockIsValidComponent.mockResolvedValue(true);
     mockInstallDependencies.mockResolvedValue(undefined);
+    mockEnsureAstroReactIntegration.mockResolvedValue({ status: "ready" });
     mockMultiselect.mockResolvedValue(["card"]);
   });
 
@@ -343,7 +351,40 @@ describe.sequential("add command integration", () => {
       ),
     ).resolves.toContain("default");
     expect(mockInstallDependencies).toHaveBeenCalledWith(["@starwind-ui/react@^1.0.0"], "pnpm");
+    expect(mockEnsureAstroReactIntegration).toHaveBeenCalledWith({
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
   });
+
+  it.each(["cancelled", "declined"] as const)(
+    "ends configured React add without component records when setup is %s",
+    async (status) => {
+      await writeFile(
+        "starwind.config.json",
+        JSON.stringify({
+          $schema: "https://starwind.dev/config-schema.v2.json",
+          version: 2,
+          framework: "astro",
+          registry: { source: "bundled", version: "0.1.0" },
+          tailwind: { css: "src/styles/starwind.css", baseColor: "neutral", cssVariables: true },
+          componentDir: "src/components/starwind",
+          components: [],
+        }),
+        "utf-8",
+      );
+      mockEnsureAstroReactIntegration.mockResolvedValue({ status });
+
+      await add(["button"], { framework: "react", packageManager: "pnpm" });
+
+      const updatedConfig = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+      expect(updatedConfig.components).toEqual([]);
+      expect(mockPromptLog.message).not.toHaveBeenCalledWith(
+        expect.stringContaining("Installation Summary"),
+      );
+      expect(clackPrompts.outro).not.toHaveBeenCalled();
+    },
+  );
 
   it("installs Astro styled components in a React-primary project when requested", async () => {
     await add(["button"], { yes: true, framework: "astro", packageManager: "pnpm" });
@@ -623,8 +664,8 @@ describe.sequential("add command integration", () => {
       expect.objectContaining({
         options: [
           { label: "button", value: "button" },
-          { label: "custom-card", value: "custom-card" },
           { label: "card", value: "card" },
+          { label: "custom-card", value: "custom-card" },
         ],
       }),
     );

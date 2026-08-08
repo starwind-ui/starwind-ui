@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import type { InputValue, InputValueChangeDetails } from "@starwind-ui/runtime/input";
 import * as React from "react";
 

@@ -1,3 +1,5 @@
+"use client";
+
 import Toggle from "./Toggle";
 import { toggle } from "./variants";
 

@@ -1,3 +1,5 @@
+"use client";
+
 import CheckboxGroup from "./CheckboxGroup";
 import { checkboxGroup } from "./variants";
 

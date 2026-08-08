@@ -9,10 +9,12 @@ const AvatarVariants = {
   avatarImage,
 };
 
-export { Avatar, AvatarFallback, AvatarImage, AvatarVariants };
-
-export default {
+const AvatarParts = {
   Root: Avatar,
   Image: AvatarImage,
   Fallback: AvatarFallback,
 };
+
+export { Avatar, AvatarFallback, AvatarImage, AvatarVariants };
+
+export default AvatarParts;

@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import TooltipArrow from "./TooltipArrow";
 import TooltipPopup from "./TooltipPopup";
 import TooltipPortal from "./TooltipPortal";

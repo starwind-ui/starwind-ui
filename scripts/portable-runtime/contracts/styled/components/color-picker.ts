@@ -1078,10 +1078,17 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       },
       variables: [
         {
+          name: "isSwatchDescriptor",
+          value: {
+            type: "raw",
+            code: '(swatch: (typeof swatches)[number]): swatch is Extract<(typeof swatches)[number], { value: unknown }> => typeof swatch === "object" && swatch !== null && "value" in swatch && "label" in swatch',
+          },
+        },
+        {
           name: "normalizedSwatches",
           value: {
             type: "raw",
-            code: 'swatches.map((swatch) => typeof swatch === "object" && swatch !== null && "value" in swatch ? swatch : { value: swatch, label: String(swatch) })',
+            code: "swatches.map((swatch) => isSwatchDescriptor(swatch) ? swatch : { value: swatch, label: String(swatch), disabled: undefined })",
           },
         },
         {

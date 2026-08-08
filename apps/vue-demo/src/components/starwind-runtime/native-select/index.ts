@@ -9,6 +9,12 @@ export type { NativeSelectOptionProps } from "./NativeSelectOption.vue";
 
 const NativeSelectVariants = { nativeSelect, nativeSelectIcon, nativeSelectWrapper };
 
+const NativeSelectParts = {
+  Root: NativeSelect,
+  Option: NativeSelectOption,
+  OptGroup: NativeSelectOptGroup,
+};
+
 export { NativeSelect, NativeSelectOptGroup, NativeSelectOption, NativeSelectVariants };
 
-export default { Root: NativeSelect, Option: NativeSelectOption, OptGroup: NativeSelectOptGroup };
+export default NativeSelectParts;

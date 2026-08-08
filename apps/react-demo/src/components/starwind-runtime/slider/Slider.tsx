@@ -1,3 +1,5 @@
+"use client";
+
 import SliderPrimitive from "@starwind-ui/react/slider";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";

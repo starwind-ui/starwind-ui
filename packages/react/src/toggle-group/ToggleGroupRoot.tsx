@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import {
   createToggleGroup,
   type ToggleGroupValue,
@@ -96,11 +98,13 @@ const ToggleGroupRoot = React.forwardRef<HTMLDivElement, ToggleGroupRootProps>(
         loopFocus: loopFocusRef.current,
         multiple: multipleRef.current,
         orientation: orientationRef.current,
+        onValueChange: (value, details) => {
+          onValueChangeRef.current?.(value, details);
+        },
         ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
       });
       instanceRef.current = instance;
       const unsubscribe = instance.subscribe("valueChange", (details) => {
-        onValueChangeRef.current?.(details.value, details);
         if (details.isCanceled) return;
 
         if (valueRef.current === undefined) {

@@ -37,6 +37,17 @@ const TableVariants = {
   tableRow,
 };
 
+const TableParts = {
+  Root: Table,
+  Body: TableBody,
+  Caption: TableCaption,
+  Cell: TableCell,
+  Foot: TableFoot,
+  Head: TableHead,
+  Header: TableHeader,
+  Row: TableRow,
+};
+
 export {
   Table,
   TableBody,
@@ -49,13 +60,4 @@ export {
   TableVariants,
 };
 
-export default {
-  Root: Table,
-  Body: TableBody,
-  Caption: TableCaption,
-  Cell: TableCell,
-  Foot: TableFoot,
-  Head: TableHead,
-  Header: TableHeader,
-  Row: TableRow,
-};
+export default TableParts;

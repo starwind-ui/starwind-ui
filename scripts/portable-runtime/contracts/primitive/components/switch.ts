@@ -106,12 +106,15 @@ export const switchRuntimeAdapterContract = {
   events: [
     {
       name: "checkedChange",
+      stateModel: "checked",
       callbackProp: "onCheckedChange",
       detailsType: "SwitchCheckedChangeDetails",
       domEvent: "starwind:checked-change",
       emitsFrom: "root",
       valueProperty: "checked",
       valueType: "boolean",
+      callbackTiming: "before-state-commit",
+      cancelable: true,
     },
   ],
   setters: [

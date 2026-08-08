@@ -95,6 +95,8 @@ export function defineAstroStyledOutputTests(getTempRoot: GetTempRoot): void {
 
     const outputRoot = path.join(tempRoot, "apps/demo/src/components/starwind-runtime");
     const button = await readGeneratedFile(outputRoot, "button/Button.astro");
+    const buttonIndex = await readGeneratedFile(outputRoot, "button/index.ts");
+    const badgeIndex = await readGeneratedFile(outputRoot, "badge/index.ts");
     const carousel = await readGeneratedFile(outputRoot, "carousel/Carousel.astro");
     const carouselNext = await readGeneratedFile(outputRoot, "carousel/CarouselNext.astro");
     const carouselPrevious = await readGeneratedFile(outputRoot, "carousel/CarouselPrevious.astro");
@@ -110,6 +112,11 @@ export function defineAstroStyledOutputTests(getTempRoot: GetTempRoot): void {
 
     expect(button).toContain('import ButtonPrimitive from "@starwind-ui/astro/button";');
     expect(button).not.toContain("primitives/astro");
+    expect(buttonIndex).toContain("const ButtonParts = {");
+    expect(buttonIndex).toContain("export default ButtonParts;");
+    expect(buttonIndex).not.toMatch(/export default\s*{/);
+    expect(buttonIndex).not.toMatch(/export\s*{[^}]*\bButtonParts\b/);
+    expect(badgeIndex).toContain("export default Badge;");
     expect(carousel).toContain('import CarouselPrimitive from "@starwind-ui/astro/carousel";');
     expect(carousel).toContain('opts?: import("@starwind-ui/astro/carousel").CarouselOptions');
     expect(carouselVariants).toContain(

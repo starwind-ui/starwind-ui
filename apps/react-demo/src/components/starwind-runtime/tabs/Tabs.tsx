@@ -1,3 +1,5 @@
+"use client";
+
 import TabsPrimitive from "@starwind-ui/react/tabs";
 import type * as React from "react";
 import { tabs } from "./variants";

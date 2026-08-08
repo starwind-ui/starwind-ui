@@ -1,3 +1,5 @@
+"use client";
+
 import CarouselPrimitive from "@starwind-ui/react/carousel";
 import { IconChevronLeft as ChevronLeft } from "@tabler/icons-react";
 import type * as React from "react";

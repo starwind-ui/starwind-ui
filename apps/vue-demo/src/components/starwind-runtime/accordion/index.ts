@@ -11,11 +11,13 @@ export type { AccordionTriggerProps } from "./AccordionTrigger.vue";
 
 const AccordionVariants = { accordion, accordionContent, accordionItem, accordionTrigger };
 
-export { Accordion, AccordionContent, AccordionItem, AccordionTrigger, AccordionVariants };
-
-export default {
+const AccordionParts = {
   Root: Accordion,
   Content: AccordionContent,
   Item: AccordionItem,
   Trigger: AccordionTrigger,
 };
+
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger, AccordionVariants };
+
+export default AccordionParts;

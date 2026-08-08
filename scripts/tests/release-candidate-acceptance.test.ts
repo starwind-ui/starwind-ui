@@ -6,10 +6,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   createCandidatePlan,
+  createCandidateVerificationPlan,
+  getCandidateManifestScriptCommand,
+  getCandidateFixtureFiles,
   getCandidateMatrix,
   startCandidateRegistry,
   getCandidateWorkspacePackage,
   getCandidateWorkspacePolicy,
+  parseArgs,
 } from "../release-candidate-acceptance.mjs";
 
 const root = path.resolve("candidate-root");
@@ -21,13 +25,47 @@ const packages = {
 };
 
 describe("release candidate acceptance", () => {
-  it("covers supported Astro and React majors plus npm on the critical React path", () => {
+  it("covers supported Astro and React majors plus each supported React host", () => {
     expect(getCandidateMatrix()).toEqual([
       expect.objectContaining({ framework: "astro", id: "astro-5", packageManager: "pnpm" }),
       expect.objectContaining({ framework: "astro", id: "astro-7", packageManager: "pnpm" }),
-      expect.objectContaining({ framework: "react", id: "react-18", packageManager: "pnpm" }),
-      expect.objectContaining({ framework: "react", id: "react-19", packageManager: "pnpm" }),
-      expect.objectContaining({ framework: "react", id: "react-19-npm", packageManager: "npm" }),
+      expect.objectContaining({
+        framework: "react",
+        host: "vite",
+        id: "react-18",
+        packageManager: "pnpm",
+      }),
+      expect.objectContaining({
+        framework: "react",
+        host: "vite",
+        id: "react-19",
+        packageManager: "pnpm",
+      }),
+      expect.objectContaining({
+        framework: "react",
+        host: "vite",
+        id: "react-19-js",
+        language: "javascript",
+        packageManager: "pnpm",
+      }),
+      expect.objectContaining({
+        framework: "react",
+        host: "vite",
+        id: "react-19-npm",
+        packageManager: "npm",
+      }),
+      expect.objectContaining({ framework: "react", host: "next-app", id: "next-app" }),
+      expect.objectContaining({ framework: "react", host: "next-pages", id: "next-pages" }),
+      expect.objectContaining({
+        framework: "react",
+        host: "tanstack-start",
+        id: "tanstack-start",
+      }),
+      expect.objectContaining({
+        framework: "react",
+        host: "react-router",
+        id: "react-router",
+      }),
     ]);
   });
 
@@ -48,6 +86,7 @@ describe("release candidate acceptance", () => {
     expect(workspace).toContain(
       `"@starwind-ui/runtime": "file:${packages.runtime.replaceAll("\\", "/")}"`,
     );
+    expect(workspace).toContain("unrs-resolver: true");
   });
 
   it("serves packed scoped packages through npm-compatible metadata", async () => {
@@ -98,12 +137,133 @@ describe("release candidate acceptance", () => {
       expect(project.init.args).toEqual([plan.cliEntrypoint, "init", "--defaults"]);
       expect(project.add.args).toEqual([plan.cliEntrypoint, "add", "--all", "--yes"]);
       expect(project.update.args).toContain("update");
-      expect(project.remove.args).toEqual([plan.cliEntrypoint, "remove", "button", "--yes"]);
+      expect(project.remove.args).toEqual([
+        plan.cliEntrypoint,
+        "remove",
+        project.host === "next-pages" ? "dialog" : "button",
+        "--yes",
+      ]);
+      expect(project.readd.args).toEqual([
+        plan.cliEntrypoint,
+        "add",
+        project.host === "next-pages" ? "dialog" : "button",
+        "--yes",
+      ]);
       expect(project.check).toBeDefined();
       expect(project.build.args).toEqual(["build"]);
       expect(project.browser).toBe(true);
-      if (project.framework === "react") expect(project.ssr).toBeDefined();
+      if (project.host === "vite") expect(project.ssr).toBeDefined();
     }
+  });
+
+  it("uses each host's official noninteractive scaffold and production server", () => {
+    const projects = createCandidatePlan({ packages, root }).projects;
+    const getProject = (id: string) => projects.find((project) => project.id === id)!;
+
+    expect(getProject("next-app").scaffold.args).toEqual(
+      expect.arrayContaining([
+        "dlx",
+        "create-next-app@16.3.0",
+        "--app",
+        "--src-dir",
+        "--skip-install",
+      ]),
+    );
+    expect(getProject("next-app").preview).toMatchObject({ script: "start" });
+    expect(getProject("next-app").typegen.args).toEqual(["exec", "next", "typegen"]);
+    expect(getProject("next-app").lint).toEqual({
+      cwd: path.join(root, "next-app"),
+      manifestScript: "lint",
+    });
+
+    expect(getProject("next-pages").scaffold.args).toEqual(
+      expect.arrayContaining(["dlx", "create-next-app@16.3.0", "--no-app", "--skip-install"]),
+    );
+    expect(getProject("next-pages").preview).toMatchObject({ script: "start" });
+    expect(getProject("next-pages").typegen.args).toEqual(["exec", "next", "typegen"]);
+    expect(getProject("next-pages").lint).toEqual({
+      cwd: path.join(root, "next-pages"),
+      manifestScript: "lint",
+    });
+
+    const nextManifest = { scripts: { lint: "eslint" } };
+    expect(getCandidateManifestScriptCommand(getProject("next-app").lint, nextManifest)).toEqual({
+      args: ["run", "lint"],
+      cwd: path.join(root, "next-app"),
+    });
+    expect(
+      createCandidateVerificationPlan(getProject("next-app"), nextManifest).map(
+        (phase) => phase.name,
+      ),
+    ).toEqual(["lint", "typegen", "check", "build"]);
+    expect(
+      createCandidateVerificationPlan(getProject("next-pages"), nextManifest).map(
+        (phase) => phase.name,
+      ),
+    ).toEqual(["lint", "typegen", "check", "build"]);
+
+    expect(getProject("tanstack-start").scaffold.args).toEqual(
+      expect.arrayContaining(["dlx", "@tanstack/cli@0.70.1", "create", "--no-install"]),
+    );
+    expect(getProject("tanstack-start").preview).toMatchObject({ script: "preview" });
+    expect(getProject("tanstack-start").typegen.args).toEqual(["generate-routes"]);
+
+    expect(getProject("react-router").scaffold.args).toEqual(
+      expect.arrayContaining(["dlx", "create-react-router@8.3.0", "--no-install", "--yes"]),
+    );
+    expect(getProject("react-router").check.args).toEqual(["typecheck"]);
+    expect(getProject("react-router").preview).toMatchObject({ script: "start" });
+
+    expect(getProject("react-19-js").scaffold.args).toEqual(
+      expect.arrayContaining(["create", "vite@9.1.1", "react-19-js", "--template", "react"]),
+    );
+    expect(getProject("react-19-js").check.args).toEqual([
+      "exec",
+      "tsc",
+      "--noEmit",
+      "--project",
+      "tsconfig.json",
+    ]);
+    expect(getProject("react-19-js").ssr.args).toContain("src/acceptance-ssr.jsx");
+  });
+
+  it("writes framework-native fixtures that render the critical interactive cohort", () => {
+    const projects = createCandidatePlan({ packages, root }).projects;
+    const fixturePaths = Object.fromEntries(
+      projects.map((project) => [
+        project.id,
+        getCandidateFixtureFiles(project).map((file) => file.path),
+      ]),
+    );
+
+    expect(fixturePaths["next-app"]).toEqual(["src/app/page.tsx"]);
+    expect(fixturePaths["next-pages"]).toEqual(["pages/index.tsx"]);
+    expect(fixturePaths["tanstack-start"]).toEqual(["src/routes/index.tsx"]);
+    expect(fixturePaths["react-router"]).toEqual(["app/routes/home.tsx"]);
+    expect(fixturePaths["react-19-js"]).toEqual(["src/App.jsx"]);
+
+    for (const id of ["next-app", "next-pages", "tanstack-start", "react-router"]) {
+      const content = getCandidateFixtureFiles(projects.find((project) => project.id === id)!)[0]
+        .content;
+      expect(content).toContain("<Dialog");
+      expect(content).toContain("<ContextMenu");
+      expect(content).toContain("<ColorPicker");
+    }
+  });
+
+  it("can select projects for focused diagnostics without changing the default gate", () => {
+    expect(parseArgs(["--project", "next-pages", "--project=react-router"]).projectIds).toEqual([
+      "next-pages",
+      "react-router",
+    ]);
+    expect(
+      createCandidatePlan({ packages, projectIds: ["next-pages"], root }).projects.map(
+        (project) => project.id,
+      ),
+    ).toEqual(["next-pages"]);
+    expect(() => createCandidatePlan({ packages, projectIds: ["missing"], root })).toThrow(
+      /Unknown candidate project: missing/,
+    );
   });
 
   it("runs once in the release gate and stays out of the public sync and publish commands", async () => {
@@ -114,5 +274,8 @@ describe("release candidate acceptance", () => {
       "release:candidate:acceptance",
     );
     expect(manifest.scripts["publish:release"]).not.toContain("release:candidate:acceptance");
+    expect(manifest.scripts["publish:release:dry-run"]).not.toContain(
+      "release:candidate:acceptance",
+    );
   });
 });

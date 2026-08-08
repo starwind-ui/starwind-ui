@@ -9,6 +9,8 @@ export type { AvatarImageProps } from "./AvatarImage.vue";
 
 const AvatarVariants = { avatar, avatarFallback, avatarImage };
 
+const AvatarParts = { Root: Avatar, Image: AvatarImage, Fallback: AvatarFallback };
+
 export { Avatar, AvatarFallback, AvatarImage, AvatarVariants };
 
-export default { Root: Avatar, Image: AvatarImage, Fallback: AvatarFallback };
+export default AvatarParts;

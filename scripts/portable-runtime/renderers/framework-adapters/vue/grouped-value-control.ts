@@ -209,22 +209,16 @@ function setUncontrolledValue(nextValue: ${facts.state.type}): void {
   uncontrolledValue.value = normalizedValue;
 }
 
-function handleValueChange(detail: ${facts.event.detailsType}): void {
-  const eventInstance = instance;
-  const eventGeneration = instanceGeneration;
-  const eventWasControlled = props.${model.modelProp} !== undefined;
+function handleValueChangeProposal(
+  _value: ${facts.event.valueType},
+  detail: ${facts.event.detailsType},
+): void {
   emit("${facts.event.name}", detail.${facts.event.valueProperty}, detail);
-  if (
-    detail.isCanceled ||
-    !mounted ||
-    instance !== eventInstance ||
-    instanceGeneration !== eventGeneration
-  ) {
-    return;
-  }
+}
 
+function handleAcceptedValueChange(detail: ${facts.event.detailsType}): void {
   const nextValue = normalizeValue(detail.${facts.event.valueProperty}, props.${multiple.name});
-  if (!eventWasControlled) setUncontrolledValue(nextValue);
+  if (props.${model.modelProp} === undefined) setUncontrolledValue(nextValue);
   emit("${model.updateEvent}", nextValue);
 }
 
@@ -251,10 +245,11 @@ function setupRuntime(): void {
     ${loopFocus.name}: props.${loopFocus.name},
     ${multiple.name}: props.${multiple.name},
     ${orientation.name}: props.${orientation.name},
+    ${facts.event.callbackProp}: handleValueChangeProposal,
     ...(props.${model.modelProp} === undefined ? {} : { ${facts.props.value.name}: renderedValue.value }),
   });
   instance = createdInstance;
-  unsubscribeValueChange = createdInstance.subscribe("${facts.event.name}", handleValueChange);
+  unsubscribeValueChange = createdInstance.subscribe("${facts.event.name}", handleAcceptedValueChange);
 
   observer = new MutationObserver(() => {
     if (props.${model.modelProp} !== undefined || instance !== createdInstance) return;
@@ -428,10 +423,11 @@ function setUncontrolledValue(nextValue: ${facts.state.type}): void {
   uncontrolledValue.value = nextValue;
 }
 
-function handleValueChange(detail: ${facts.event.detailsType}): void {
+function handleValueChangeProposal(detail: ${facts.event.detailsType}): void {
   emit("${facts.event.name}", detail.${facts.event.valueProperty}, detail);
-  if (detail.isCanceled) return;
+}
 
+function handleAcceptedValueChange(detail: ${facts.event.detailsType}): void {
   if (props.${model.modelProp} === undefined) {
     setUncontrolledValue(detail.${facts.event.valueProperty});
   }
@@ -454,9 +450,10 @@ onMounted(() => {
   instance = ${facts.runtime.factory}(element, {
     ${facts.props.defaultValue.name}: initialDefaultValue,
     ${facts.props.disabled.name}: props.${facts.props.disabled.name},
+    ${facts.event.callbackProp}: handleValueChangeProposal,
     ...(props.${model.modelProp} === undefined ? {} : { ${facts.props.value.name}: props.${model.modelProp} }),
   });
-  instance.subscribe("${facts.event.name}", handleValueChange);
+  instance.subscribe("${facts.event.name}", handleAcceptedValueChange);
 
   observer = new MutationObserver(() => {
     if (props.${model.modelProp} !== undefined) return;
@@ -646,7 +643,6 @@ const renderedName = computed(() => props.${name.name});
 const renderedReadOnly = computed(() => props.${readOnly.name});
 const renderedRequired = computed(() => props.${required.name});
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-let unsubscribeValueChange: (() => void) | undefined;
 let unsubscribeStateSync: (() => void) | undefined;
 let instanceGeneration = 0;
 let mounted = false;
@@ -662,7 +658,7 @@ provide(${context.componentName}, {
 
 defineExpose({ element: rootRef });
 
-function handleValueChange(detail: ${facts.event.detailsType}): void {
+function handleValueChange(_value: ${facts.event.valueType}, detail: ${facts.event.detailsType}): void {
   const eventInstance = instance;
   const eventGeneration = instanceGeneration;
   const eventWasControlled = props.${model.modelProp} !== undefined;
@@ -688,8 +684,6 @@ function destroyOwnedInstance(): void {
   instanceGeneration += 1;
   unsubscribeStateSync?.();
   unsubscribeStateSync = undefined;
-  unsubscribeValueChange?.();
-  unsubscribeValueChange = undefined;
   const ownedInstance = instance;
   if (!ownedInstance) return;
   instance = undefined;
@@ -708,10 +702,10 @@ function setupRuntime(): void {
     ${orientation.name}: props.${orientation.name},
     ${readOnly.name}: props.${readOnly.name},
     ${required.name}: props.${required.name},
+    ${facts.event.callbackProp}: handleValueChange,
     ...(props.${model.modelProp} === undefined ? {} : { ${facts.props.value.name}: props.${model.modelProp} }),
   });
   instance = createdInstance;
-  unsubscribeValueChange = createdInstance.subscribe("${facts.event.name}", handleValueChange);
   unsubscribeStateSync = createdInstance.subscribe("${syncEvent}", handleStateSync);
 }
 

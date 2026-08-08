@@ -1,3 +1,5 @@
+"use client";
+
 import ColorPickerPrimitive from "@starwind-ui/react/color-picker";
 import type * as React from "react";
 import { colorPickerChannelInput, colorPickerChannelInputLayout } from "./variants";

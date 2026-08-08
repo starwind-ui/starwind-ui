@@ -1,3 +1,5 @@
+"use client";
+
 import CollapsiblePrimitive from "@starwind-ui/react/collapsible";
 import type * as React from "react";
 import { collapsibleTrigger } from "./variants";

@@ -398,7 +398,10 @@ describe("Svelte Slider proof generation", () => {
       "index.ts",
     ]);
     expect(tree.get("SliderRoot.svelte")).toMatch(
-      /onValueChange\?\.\(nextValue, detail\)[\s\S]*detail\.isCanceled[\s\S]*value = nextValue/,
+      /function handleValueChangeProposal[\s\S]*onValueChange\?\.\(nextValue, detail\)[\s\S]*onValueChange: handleValueChangeProposal/,
+    );
+    expect(tree.get("SliderRoot.svelte")).toMatch(
+      /function handleAcceptedValueChange[\s\S]*value = nextValue[\s\S]*subscribe\("valueChange", handleAcceptedValueChange\)/,
     );
     expect(tree.get("SliderRoot.svelte")).toMatch(
       /instance\.refresh\(\)[\s\S]*instance\.setValue\(nextValue, \{"emit":false\}\)/,

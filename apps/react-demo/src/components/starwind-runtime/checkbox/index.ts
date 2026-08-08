@@ -1,3 +1,5 @@
+"use client";
+
 import Checkbox from "./Checkbox";
 import { checkbox, checkboxIndicator, checkboxLabel, checkboxWrapper } from "./variants";
 

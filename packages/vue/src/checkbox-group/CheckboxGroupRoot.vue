@@ -49,10 +49,11 @@ function setUncontrolledValue(nextValue: CheckboxGroupValue): void {
   uncontrolledValue.value = nextValue;
 }
 
-function handleValueChange(detail: CheckboxGroupValueChangeDetails): void {
+function handleValueChangeProposal(detail: CheckboxGroupValueChangeDetails): void {
   emit("valueChange", detail.value, detail);
-  if (detail.isCanceled) return;
+}
 
+function handleAcceptedValueChange(detail: CheckboxGroupValueChangeDetails): void {
   if (props.modelValue === undefined) {
     setUncontrolledValue(detail.value);
   }
@@ -75,9 +76,10 @@ onMounted(() => {
   instance = createCheckboxGroup(element, {
     defaultValue: initialDefaultValue,
     disabled: props.disabled,
+    onValueChange: handleValueChangeProposal,
     ...(props.modelValue === undefined ? {} : { value: props.modelValue }),
   });
-  instance.subscribe("valueChange", handleValueChange);
+  instance.subscribe("valueChange", handleAcceptedValueChange);
 
   observer = new MutationObserver(() => {
     if (props.modelValue !== undefined) return;

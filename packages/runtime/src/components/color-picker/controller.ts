@@ -1015,6 +1015,7 @@ class ColorPickerController implements ColorPickerInstance {
     }
     const proposalAmbientRevision = this.ambientRevision;
     let canceled = false,
+      accepted = false,
       propagate = false;
     const details: ColorPickerValueChangeDetails = {
       value: next,
@@ -1032,19 +1033,18 @@ class ColorPickerController implements ColorPickerInstance {
         return propagate;
       },
       cancel() {
-        canceled = true;
+        if (!accepted) canceled = true;
       },
       allowPropagation() {
         propagate = true;
       },
     };
     attachFormValueRevision(details, request.event);
+    this.options.onValueChange?.(next, details);
     const domEvent = dispatchCustomEvent(this.root, "starwind:value-change", details, {
       cancelable: true,
     });
     if (domEvent.defaultPrevented) canceled = true;
-    this.options.onValueChange?.(next, details);
-    this.subscribers.valueChange.forEach((fn) => fn(details));
     if (proposalId !== this.proposalSequence) {
       this.render();
       return { status: "superseded" };
@@ -1066,6 +1066,9 @@ class ColorPickerController implements ColorPickerInstance {
       this.replaceAmbient(next);
     }
     this.render();
+    accepted = true;
+    this.subscribers.valueChange.forEach((fn) => fn(details));
+    if (proposalId !== this.proposalSequence) return { status: "superseded" };
     const outcome: ProposalOutcome = {
       status: "accepted",
       value: next,

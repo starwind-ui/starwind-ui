@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import CheckboxIndicator from "./CheckboxIndicator";
 import CheckboxRoot from "./CheckboxRoot";
 

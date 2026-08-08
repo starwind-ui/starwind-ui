@@ -26,6 +26,17 @@ const SheetVariants = {
   sheetTitle,
 };
 
+const SheetParts = {
+  Root: Sheet,
+  Trigger: SheetTrigger,
+  Content: SheetContent,
+  Header: SheetHeader,
+  Footer: SheetFooter,
+  Title: SheetTitle,
+  Description: SheetDescription,
+  Close: SheetClose,
+};
+
 export {
   Sheet,
   SheetClose,
@@ -38,13 +49,4 @@ export {
   SheetVariants,
 };
 
-export default {
-  Root: Sheet,
-  Trigger: SheetTrigger,
-  Content: SheetContent,
-  Header: SheetHeader,
-  Footer: SheetFooter,
-  Title: SheetTitle,
-  Description: SheetDescription,
-  Close: SheetClose,
-};
+export default SheetParts;

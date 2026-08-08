@@ -1,3 +1,5 @@
+import * as ts from "typescript";
+
 import { colorPickerRuntimeAdapterContract } from "../../contracts/primitive/color-picker.js";
 import { reactFrameworkAdapterTarget } from "../../renderers/framework-adapters/react/index.js";
 import {
@@ -19,9 +21,71 @@ import {
   readGeneratedFile,
   readFormattedGeneratedTree,
   readGeneratedTree,
+  writeFile,
 } from "./shared.js";
 
 export function defineReactColorPickerOutputTests(getTempRoot: GetTempRoot): void {
+  it("typechecks normalized styled swatches in the public React consumer environment", async () => {
+    const tempRoot = getTempRoot();
+    const outputDir = "generated/styled/react";
+    await generateStarwindReactWrappers({
+      outputDir,
+      primitiveOutputDir: "generated/primitives/react",
+      repoRoot: tempRoot,
+    });
+    const editor = await readGeneratedFile(
+      path.join(tempRoot, outputDir, "color-picker"),
+      "ColorPickerDefaultEditor.tsx",
+    );
+    const normalization = editor.slice(
+      editor.indexOf("const isSwatchDescriptor"),
+      editor.indexOf("const hasSwatchesAttribute"),
+    );
+    const compileNormalization = async (source: string) => {
+      const entry = path.join(tempRoot, "color-picker-public-consumer.ts");
+      await writeFile(
+        entry,
+        `import type { ColorPickerValue } from "@starwind-ui/react/color-picker";
+type Props = { swatches?: readonly (ColorPickerValue | { value: ColorPickerValue; label: string; disabled?: boolean })[] };
+declare const props: Props;
+const { swatches = [] } = props;
+${source}
+normalizedSwatches.forEach((swatch) => {
+  const value: ColorPickerValue = swatch.value;
+  const disabled: boolean | undefined = swatch.disabled;
+  void value;
+  void disabled;
+});
+`,
+      );
+      const program = ts.createProgram([entry], {
+        baseUrl: process.cwd(),
+        jsx: ts.JsxEmit.ReactJSX,
+        module: ts.ModuleKind.ESNext,
+        moduleResolution: ts.ModuleResolutionKind.Bundler,
+        noEmit: true,
+        paths: {
+          "@starwind-ui/react/*": ["packages/react/src/*/index.ts"],
+          "@starwind-ui/runtime/*": ["packages/runtime/src/components/*/index.ts"],
+        },
+        skipLibCheck: true,
+        strict: false,
+        target: ts.ScriptTarget.ES2022,
+      });
+      return ts
+        .getPreEmitDiagnostics(program)
+        .filter((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error)
+        .map((diagnostic) => diagnostic.code);
+    };
+
+    expect(
+      await compileNormalization(
+        'const normalizedSwatches = swatches.map((swatch) => typeof swatch === "object" && swatch !== null && "value" in swatch ? swatch : { value: swatch, label: String(swatch) });',
+      ),
+    ).toEqual(expect.arrayContaining([2322, 2339]));
+    expect(await compileNormalization(normalization)).toEqual([]);
+  });
+
   it("generates the simplified styled Color Picker composition deterministically", async () => {
     const tempRoot = getTempRoot();
     const outputDir = "generated/styled/react";
@@ -58,6 +122,10 @@ export function defineReactColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(editor).not.toContain('from "react";');
     expect(editor).not.toContain("...rest");
     expect(editor).toContain("formatContentSize={size}");
+    expect(editor).toContain("const isSwatchDescriptor = (");
+    expect(editor).toContain("swatch is Extract<(typeof swatches)[number], { value: unknown }>");
+    expect(editor).toContain("isSwatchDescriptor(swatch)");
+    expect(editor).toContain("disabled: undefined");
     expect(editor).not.toContain("inputSize");
     expect(editor).toContain("normalizedSwatches.length > 0");
     expect(editor).toMatch(/<ColorPicker\s+className="size-4"\s+aria-hidden="true"/);
@@ -191,7 +259,9 @@ export function defineReactColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     );
     expect(root).toContain("onValueChangeRef.current = onValueChange;");
     expect(root).toContain("onFormatChangeRef.current = onFormatChange;");
-    expect(root).toContain("if (!details.isCanceled && !isValueControlledRef.current)");
+    expect(root).toContain("onValueChange: (nextValue, details) => {");
+    expect(root).toContain('instance.subscribe("valueChange", (details) => {');
+    expect(root).toContain("if (!isValueControlledRef.current) {");
     expect(root).toContain("instanceRef.current?.setValue(value, { emit: false });");
     expect(root).toContain("instanceRef.current?.setFormat(format, { emit: false });");
     expect(root).toContain("instanceRef.current?.refresh({ preserveState: true });");

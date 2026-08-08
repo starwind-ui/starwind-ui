@@ -83,6 +83,7 @@ type TooltipTriggerElement = {
 };
 
 type OpenRequest = {
+  forceApply?: boolean;
   event?: Event;
   reason: TooltipOpenChangeReason;
   trigger?: TooltipTriggerElement;
@@ -240,23 +241,17 @@ class TooltipController implements TooltipInstance {
 
   setOpen(open: boolean, options: TooltipSetOpenOptions = {}): void {
     const nextOpen = open && !this.disabled;
+    if (options.emit !== false) {
+      this.requestOpen(nextOpen, { forceApply: true, reason: "imperative-action" });
+      return;
+    }
+
     const previousOpen = this.openState;
     this.openState = nextOpen;
     if (nextOpen && !this.activeTrigger) {
       this.activeTrigger = this.elements.triggers[0] ?? null;
     }
     this.applyOpenState(nextOpen);
-
-    if (options.emit !== false && previousOpen !== nextOpen) {
-      this.notify(
-        createOpenChangeDetails({
-          open: nextOpen,
-          previousOpen,
-          reason: "imperative-action",
-          trigger: this.activeTrigger?.target,
-        }),
-      );
-    }
   }
 
   setDisabled(disabled: boolean): void {
@@ -441,12 +436,12 @@ class TooltipController implements TooltipInstance {
     }
 
     if (this.disabled && open) return;
-    if (open === this.openState && !this.controlled) return;
+    if (open === this.openState && !this.controlled && !request.forceApply) return;
 
     const previousOpen = this.openState;
     runOverlayOpenChangeShell({
       root: this.root,
-      controlled: this.controlled,
+      controlled: this.controlled && !request.forceApply,
       createDetails: createOpenChangeDetails,
       getTrigger: (request) => request.trigger?.target ?? this.activeTrigger?.target,
       open,
@@ -457,6 +452,11 @@ class TooltipController implements TooltipInstance {
         this.applyOpenState(open);
       },
       onBeforeOpenChange: () => this.dispatchOpenChangeIntent(open, request),
+      onCanceledOpenChange: () => {
+        if (this.openState === open && previousOpen !== open) {
+          this.setOpen(previousOpen, { emit: false });
+        }
+      },
       onNotifyOpenChangeSubscribers: (details) => this.notify(details),
       onOpenChange: (nextOpen, details) => {
         this.onOpenChange?.(nextOpen, details);

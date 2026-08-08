@@ -1,3 +1,5 @@
+"use client";
+
 import Accordion from "./Accordion";
 import AccordionContent from "./AccordionContent";
 import AccordionItem from "./AccordionItem";
@@ -11,11 +13,13 @@ const AccordionVariants = {
   accordionTrigger,
 };
 
-export { Accordion, AccordionContent, AccordionItem, AccordionTrigger, AccordionVariants };
-
-export default {
+const AccordionParts = {
   Root: Accordion,
   Content: AccordionContent,
   Item: AccordionItem,
   Trigger: AccordionTrigger,
 };
+
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger, AccordionVariants };
+
+export default AccordionParts;

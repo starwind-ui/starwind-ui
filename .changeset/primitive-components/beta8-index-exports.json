@@ -1,0 +1,18 @@
+{
+  "primitives": {
+    "avatar": "patch",
+    "button": "patch",
+    "carousel": "patch",
+    "dropzone": "patch",
+    "field": "patch",
+    "fieldset": "patch",
+    "form": "patch",
+    "input": "patch",
+    "navigation-menu": "patch",
+    "progress": "patch",
+    "scroll-area": "patch",
+    "sidebar": "patch",
+    "tabs": "patch",
+    "toast": "patch"
+  }
+}

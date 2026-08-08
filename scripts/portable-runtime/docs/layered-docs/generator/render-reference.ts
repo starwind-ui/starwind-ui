@@ -3,6 +3,7 @@ import {
   type PrimitiveDocsAuthoredExampleMetadata,
   type PrimitiveDocsFrameworkTarget,
   type PrimitiveDocsMetadata,
+  type PrimitiveFrameworkBehaviorMetadata,
   type PrimitivePartApiReferenceMetadata,
   type PrimitiveSetterMetadata,
   type PrimitiveStateModelMetadata,
@@ -91,6 +92,8 @@ ${renderBaseUiStylePrimitiveReferenceMarkdown(primitive)}
 const renderBaseUiStylePrimitiveReferenceMarkdown = (primitive: PrimitiveDocsMetadata) =>
   joinMarkdownSections([
     primitive.docsReference.summary,
+    "",
+    primitive.docsReference.frameworkCoordination,
     "",
     renderPrimitiveUsageGuidelines(primitive),
     "",
@@ -305,7 +308,7 @@ const _renderPrimitivePartApiReferenceMarkdown = (
     "",
     renderPrimitivePartDataAttributesReference(part),
     "",
-    renderPrimitivePartStateReference(part, primitive.events),
+    renderPrimitivePartStateReference(part),
     "",
     renderPrimitivePartEventsReference(part),
     "",
@@ -330,13 +333,14 @@ const renderPrimitivePartPropsReference = (part: PrimitivePartApiReferenceMetada
         "#### Props",
         "",
         renderMarkdownTable(
-          ["Prop", "Type", "Default", "Kind", "Description"],
+          ["Prop", "Type", "Default", "Kind", "Description", "Framework Behavior"],
           part.props.map((prop) => [
             prop.name,
             `\`${prop.displayType ?? prop.type}\``,
             prop.defaultValue ?? "",
             prop.kind,
             prop.description ?? "",
+            formatPrimitiveFrameworkBehavior(prop.frameworkBehavior),
           ]),
         ),
       ])
@@ -359,10 +363,7 @@ const renderPrimitivePartDataAttributesReference = (part: PrimitivePartApiRefere
       ])
     : undefined;
 
-const renderPrimitivePartStateReference = (
-  part: PrimitivePartApiReferenceMetadata,
-  events: readonly PrimitiveDocsMetadata["events"][number][] = part.events,
-) =>
+const renderPrimitivePartStateReference = (part: PrimitivePartApiReferenceMetadata) =>
   part.stateModels.length > 0
     ? joinMarkdownSections([
         "#### State",
@@ -388,7 +389,7 @@ const renderPrimitivePartStateReference = (
             state.runtimeGetter ? `\`${state.runtimeGetter}\`` : "",
             state.runtimeSetter ? `\`${state.runtimeSetter}\`` : "",
             state.description ?? "",
-            formatPrimitiveStateControlSupport(part, state, events),
+            formatPrimitiveFrameworkBehavior(state.frameworkBehavior),
           ]),
         ),
       ])
@@ -409,6 +410,7 @@ const renderPrimitivePartEventsReference = (part: PrimitivePartApiReferenceMetad
             "Timing",
             "Cancelable",
             "Description",
+            "Cancellation Sequence",
           ],
           part.events.map((event) => [
             event.name,
@@ -419,6 +421,7 @@ const renderPrimitivePartEventsReference = (part: PrimitivePartApiReferenceMetad
             event.callbackTiming ?? "",
             formatOptionalBoolean(event.cancelable),
             event.description ?? "",
+            formatPrimitiveEventCancellationSequence(event.cancellationSequence),
           ]),
         ),
       ])
@@ -807,71 +810,18 @@ const formatPrimitiveEventValue = (
     .join(": ");
 };
 
-const formatReactStateControlSupport = (state: PrimitiveStateModelMetadata) => {
-  if (state.controlledProp && state.defaultProp) {
-    return `React supports controlled and default state with ${state.controlledProp} and ${state.defaultProp} props.`;
-  }
-
-  if (state.controlledProp) {
-    return `React supports controlled state with the ${state.controlledProp} prop.`;
-  }
-
-  if (state.defaultProp) {
-    return `React supports default state with the ${state.defaultProp} prop.`;
-  }
-
-  return "React coordinates this state through the primitive adapter instead of a dedicated state prop.";
-};
-
-const eventControlsState = (
-  event: PrimitiveDocsMetadata["events"][number],
-  state: PrimitiveStateModelMetadata,
-) =>
-  event.valueProperty === state.name ||
-  (state.controlledProp !== undefined && event.valueProperty === state.controlledProp);
-
-const formatRuntimeHtmlStateControlSupport = (
-  part: PrimitivePartApiReferenceMetadata,
-  state: PrimitiveStateModelMetadata,
-  events: readonly PrimitiveDocsMetadata["events"][number][] = part.events,
-) => {
-  const relatedEvents = events
-    .filter((event) => eventControlsState(event, state) && event.domEvent)
-    .map((event) => event.domEvent as string);
-  const actions = [
-    state.initialAttribute ? `reads initial state from ${state.initialAttribute}` : undefined,
-    relatedEvents.length > 0 ? `emits ${formatNaturalList(relatedEvents)}` : undefined,
-    state.runtimeSetter ? `updates with ${state.runtimeSetter}` : undefined,
-  ].filter((action): action is string => action !== undefined);
-
-  return actions.length > 0
-    ? `Runtime/HTML ${formatNaturalList(actions)}.`
-    : "Runtime/HTML coordinates this state through the primitive controller.";
-};
-
-const formatAstroStateControlSupport = (state: PrimitiveStateModelMetadata) => {
-  switch (state.controlledStateSync) {
-    case "unsupported":
-      return "Astro adapters render initial/default state, but do not expose reactive controlled-state props for this state.";
-    case "custom-event":
-      return "Astro adapters render initial/default state and report changes through Runtime DOM events.";
-    case "imperative":
-      return "Astro adapters render initial/default state and apply changes through Runtime setter methods after load.";
-    default:
-      return "Astro adapters render initial/default state from props when the page loads.";
-  }
-};
+const formatPrimitiveFrameworkBehavior = (
+  entries: readonly PrimitiveFrameworkBehaviorMetadata[] | undefined,
+) => entries?.map((entry) => `**${entry.label}:** ${entry.summary}`).join("<br>") ?? "";
 
 export const formatPrimitiveStateControlSupport = (
-  part: PrimitivePartApiReferenceMetadata,
+  _part: PrimitivePartApiReferenceMetadata,
   state: PrimitiveStateModelMetadata,
-  events: readonly PrimitiveDocsMetadata["events"][number][] = part.events,
-) =>
-  [
-    formatReactStateControlSupport(state),
-    formatRuntimeHtmlStateControlSupport(part, state, events),
-    formatAstroStateControlSupport(state),
-  ].join(" ");
+) => formatPrimitiveFrameworkBehavior(state.frameworkBehavior);
+
+const formatPrimitiveEventCancellationSequence = (
+  sequence: PrimitivePartApiReferenceMetadata["events"][number]["cancellationSequence"],
+) => sequence?.map((step) => `${step.step}. ${step.action}`).join("<br>") ?? "";
 
 const formatOptionalBoolean = (value: boolean | undefined) =>
   value === undefined ? "" : formatBoolean(value);

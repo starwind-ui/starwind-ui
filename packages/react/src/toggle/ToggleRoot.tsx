@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import { createToggle, type TogglePressedChangeDetails } from "@starwind-ui/runtime/toggle";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
@@ -78,11 +80,13 @@ const ToggleRoot = React.forwardRef<HTMLButtonElement | HTMLSpanElement, ToggleR
         nativeButton,
         syncGroup,
         value,
+        onPressedChange: (pressed, details) => {
+          onPressedChangeRef.current?.(pressed, details);
+        },
         ...(pressedRef.current !== undefined ? { pressed: pressedRef.current } : {}),
       });
       instanceRef.current = instance;
       const unsubscribe = instance.subscribe("pressedChange", (details) => {
-        onPressedChangeRef.current?.(details.pressed, details);
         queueMicrotask(() => {
           if (details.isCanceled) return;
 

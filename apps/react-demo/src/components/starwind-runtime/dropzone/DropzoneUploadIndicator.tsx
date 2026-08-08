@@ -1,3 +1,5 @@
+"use client";
+
 import DropzonePrimitive from "@starwind-ui/react/dropzone";
 import { IconCloudUpload as CloudUpload } from "@tabler/icons-react";
 import type * as React from "react";

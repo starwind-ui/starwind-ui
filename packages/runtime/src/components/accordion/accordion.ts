@@ -12,7 +12,7 @@ import {
 import {
   type CancelableDetails,
   createCancelableDetails,
-  dispatchCancelableDetailsEvent,
+  runCancelableDetailsTransaction,
 } from "../../internal/cancelable-details";
 import { renderCollapsiblePanel } from "../collapsible/collapsible-panel";
 import {
@@ -277,12 +277,26 @@ class AccordionController implements AccordionInstance {
       value: normalizedValue,
       previousValue,
     });
-    this.notify(details);
-
-    if (details.isCanceled || this.controlled) return;
-
-    this.value = normalizedValue;
-    this.render();
+    runCancelableDetailsTransaction({
+      apply: this.controlled
+        ? undefined
+        : () => {
+            this.value = normalizedValue;
+            this.render();
+          },
+      details,
+      eventType: "starwind:value-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.subscribers.forEach((subscriber) => subscriber(acceptedDetails));
+      },
+      notifyCallback: (proposalDetails) => this.onValueChange?.(proposalDetails),
+      rollbackCanceled: () => {
+        if (accordionValuesEqual(this.value, normalizedValue)) {
+          this.setValue(previousValue, { emit: false });
+        }
+      },
+      target: this.root,
+    });
   }
 
   private render(): void {
@@ -357,12 +371,6 @@ class AccordionController implements AccordionInstance {
     this.refresh();
     item = this.items.find((candidate) => candidate.trigger === trigger);
     return item;
-  }
-
-  private notify(details: AccordionValueChangeDetails): void {
-    dispatchCancelableDetailsEvent(this.root, "starwind:value-change", details);
-    this.onValueChange?.(details);
-    this.subscribers.forEach((subscriber) => subscriber(details));
   }
 }
 

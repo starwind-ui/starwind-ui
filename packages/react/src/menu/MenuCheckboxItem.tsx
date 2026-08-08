@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import type { MenuCheckedChangeDetails } from "@starwind-ui/runtime/menu";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
@@ -61,14 +63,14 @@ const MenuCheckboxItem = React.forwardRef<HTMLDivElement, MenuCheckboxItemProps>
       const handleCheckedChange = (event: Event) => {
         const details = (event as CustomEvent<MenuCheckedChangeDetails>).detail;
         onCheckedChangeRef.current?.(details.checked, details);
-        if (details.isCanceled) return;
-
-        if (checkedRef.current === undefined) {
-          setUncontrolledChecked(details.checked);
-          return;
-        }
-
         queueMicrotask(() => {
+          if (details.isCanceled) return;
+
+          if (checkedRef.current === undefined) {
+            setUncontrolledChecked(details.checked);
+            return;
+          }
+
           const controlledChecked = checkedRef.current;
           if (controlledChecked !== undefined && item.isConnected) {
             syncCheckboxItemState(item, controlledChecked);

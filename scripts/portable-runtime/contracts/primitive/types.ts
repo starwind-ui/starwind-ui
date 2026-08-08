@@ -120,6 +120,7 @@ export type PrimitiveEventContract = {
   detailsType?: string;
   domEvent?: string;
   emitsFrom: string;
+  stateModel?: string;
   valueProperty?: string;
   valueType?: string;
 };

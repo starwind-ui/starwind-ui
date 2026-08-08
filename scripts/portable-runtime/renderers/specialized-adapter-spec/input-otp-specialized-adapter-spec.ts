@@ -49,6 +49,7 @@ type InputOtpCallbackLifecycleRecipe = {
   domEvent: string;
   emitsFrom: string;
   lifecycle: "constructor-callback-ref";
+  runtimeEvent: string;
   valueProperty: string;
   valueType: string;
 };
@@ -601,6 +602,7 @@ function getInputOtpHiddenInputVisualSlotFacts(
       cancelable: valueControl.callbackLifecycle.cancelable,
       detailsType: valueControl.callbackLifecycle.detailsType,
       name: valueControl.callbackLifecycle.domEvent,
+      runtimeEvent: valueControl.callbackLifecycle.runtimeEvent,
       valueProperty: valueControl.callbackLifecycle.valueProperty,
       valueType: valueControl.callbackLifecycle.valueType,
     },
@@ -912,6 +914,7 @@ function buildValueControlRecipe(spec: SpecializedAdapterSpec): InputOtpValueCon
       domEvent: valueChangeEvent.domEvent,
       emitsFrom: valueChangeEvent.emitsFrom,
       lifecycle: "constructor-callback-ref",
+      runtimeEvent: valueChangeEvent.name,
       valueProperty: valueChangeEvent.valueProperty,
       valueType: valueChangeEvent.valueType,
     },

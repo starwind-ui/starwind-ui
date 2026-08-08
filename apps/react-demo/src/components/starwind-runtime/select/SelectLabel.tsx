@@ -1,3 +1,5 @@
+"use client";
+
 import SelectPrimitive from "@starwind-ui/react/select";
 import type * as React from "react";
 import { selectLabel } from "./variants";

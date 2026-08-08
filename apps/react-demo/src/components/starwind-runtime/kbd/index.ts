@@ -7,9 +7,11 @@ const KbdVariants = {
   kbdGroup,
 };
 
-export { Kbd, KbdGroup, KbdVariants };
-
-export default {
+const KbdParts = {
   Root: Kbd,
   Group: KbdGroup,
 };
+
+export { Kbd, KbdGroup, KbdVariants };
+
+export default KbdParts;

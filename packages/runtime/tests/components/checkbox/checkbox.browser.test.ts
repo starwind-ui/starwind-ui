@@ -115,6 +115,37 @@ describe("createCheckbox", () => {
     expect(getIndicator().hidden).toBe(true);
   });
 
+  it("rolls back matching controlled synchronization when the later DOM event cancels", () => {
+    const root = renderCheckbox();
+    let checkbox: ReturnType<typeof createCheckbox>;
+    checkbox = createCheckbox(root, {
+      checked: false,
+      onCheckedChange: (checked) => checkbox.setChecked(checked, { emit: false }),
+    });
+    root.addEventListener("starwind:checked-change", (event) => event.preventDefault());
+
+    checkbox.setChecked(true);
+
+    expect(checkbox.getChecked()).toBe(false);
+    expect(root.getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("locks accepted details before subscribers run", () => {
+    const root = renderCheckbox();
+    const checkbox = createCheckbox(root);
+    const observed: boolean[] = [];
+    checkbox.subscribe("checkedChange", (details) => {
+      details.cancel();
+      observed.push(details.isCanceled);
+    });
+    checkbox.subscribe("checkedChange", (details) => observed.push(details.isCanceled));
+
+    checkbox.setChecked(true);
+
+    expect(checkbox.getChecked()).toBe(true);
+    expect(observed).toEqual([false, false]);
+  });
+
   it("syncs state from the hidden native input change path", () => {
     const root = renderCheckbox();
     const input = getInput(root);

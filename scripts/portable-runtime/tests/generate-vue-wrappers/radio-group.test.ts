@@ -63,10 +63,11 @@ describe("generated Vue Radio Group Primitive", () => {
     expect(first).toEqual(second);
     expect(() => assertVueSfcCompiles(first.root, "RadioGroupRoot.vue")).not.toThrow();
     expect(first.root).toContain("provide(RadioGroupContext");
-    expect(first.root).toContain('createdInstance.subscribe("valueChange", handleValueChange)');
+    expect(first.root).toContain("onValueChange: handleValueChange");
+    expect(first.root).not.toContain('createdInstance.subscribe("valueChange"');
     expect(first.root).toContain('createdInstance.subscribe("stateSync", handleStateSync)');
     expect(first.root).toMatch(
-      /emit\("valueChange", detail\.value, detail\);[\s\S]*detail\.onAccepted\(\(\) => \{[\s\S]*emit\("update:modelValue", detail\.value\);/,
+      /function handleValueChange\(_value: string, detail: RadioGroupValueChangeDetails\)[\s\S]*emit\("valueChange", detail\.value, detail\);[\s\S]*detail\.onAccepted\(\(\) => \{[\s\S]*emit\("update:modelValue", detail\.value\);/,
     );
     expect(first.root).toContain("instance?.setFormOptions");
     expect(first.root).toContain("instance?.setOrientation");

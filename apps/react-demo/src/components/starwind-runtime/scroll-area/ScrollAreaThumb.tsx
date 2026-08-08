@@ -1,3 +1,5 @@
+"use client";
+
 import ScrollAreaPrimitive from "@starwind-ui/react/scroll-area";
 import type * as React from "react";
 import { scrollAreaThumb } from "./variants";

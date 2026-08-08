@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import {
   createSelect,
   type SelectOpenChangeDetails,
@@ -119,24 +121,9 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
       modal,
       onOpenChange: (nextOpen, details) => {
         onOpenChangeRef.current?.(nextOpen, details);
-        if (details.isCanceled) return;
-
-        if (openRef.current === undefined) {
-          setUncontrolledOpen(nextOpen);
-        }
       },
       onValueChange: (nextValue, details) => {
         onValueChangeRef.current?.(nextValue, details);
-        if (details.isCanceled) return;
-
-        const nextSelectedLabel = getTextFromSelectItem(details.item);
-        if (nextSelectedLabel !== null || nextValue === null) {
-          setSelectedLabel({ label: nextSelectedLabel, value: nextValue });
-        }
-
-        if (valueRef.current === undefined) {
-          setUncontrolledValue(nextValue);
-        }
       },
       name,
       readOnly,
@@ -145,6 +132,24 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
       ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
     });
     instanceRef.current = instance;
+    instance.subscribe("openChange", (details) => {
+      if (openRef.current === undefined) {
+        setUncontrolledOpen(details.open);
+      }
+    });
+    instance.subscribe("valueChange", (details) => {
+      const nextSelectedLabel = getTextFromSelectItem(details.item);
+      if (nextSelectedLabel !== null || details.value === null) {
+        setSelectedLabel({
+          label: nextSelectedLabel,
+          value: details.value,
+        });
+      }
+
+      if (valueRef.current === undefined) {
+        setUncontrolledValue(details.value);
+      }
+    });
     return instance;
   }, [
     autoComplete,
@@ -158,6 +163,46 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
     setUncontrolledOpen,
     setUncontrolledValue,
   ]);
+
+  useIsomorphicLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const handleProgrammaticValueCommand = (event: Event) => {
+      if (!(event instanceof CustomEvent) || !event.detail || typeof event.detail !== "object")
+        return;
+
+      const detail = event.detail as { emit?: unknown; value?: unknown };
+      if (!Object.hasOwn(detail, "value")) return;
+      if (detail.value !== null && typeof detail.value !== "string") return;
+
+      event.stopImmediatePropagation();
+
+      const instance = ensureInstance();
+      if (!instance) return;
+
+      const nextValue = detail.value === "" ? null : detail.value;
+      const emit = typeof detail.emit === "boolean" ? detail.emit : undefined;
+      instance.setValue(nextValue, { emit });
+      if (emit !== false || valueRef.current !== undefined) return;
+
+      setSelectedLabel({
+        label: findSelectedOptionText(children, nextValue),
+        value: nextValue,
+      });
+      setUncontrolledValue(nextValue);
+    };
+
+    root.addEventListener("starwind:set-value", handleProgrammaticValueCommand, {
+      capture: true,
+    });
+
+    return () => {
+      root.removeEventListener("starwind:set-value", handleProgrammaticValueCommand, {
+        capture: true,
+      });
+    };
+  }, [children, ensureInstance, setUncontrolledValue]);
 
   useIsomorphicLayoutEffect(() => {
     return () => {

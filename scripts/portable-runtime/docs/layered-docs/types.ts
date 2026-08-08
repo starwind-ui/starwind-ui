@@ -273,6 +273,31 @@ export type PrimitiveStateModelMetadata = {
   readonly controlledStateSync?: "unsupported" | "custom-event" | "imperative";
   readonly description?: string;
   readonly descriptionSource?: "authored" | "generated";
+  readonly frameworkBehavior: readonly PrimitiveFrameworkBehaviorMetadata[];
+};
+
+export type PrimitiveFrameworkBehaviorApiMetadata = {
+  readonly kind:
+    | "callback"
+    | "controlled-prop"
+    | "default-prop"
+    | "dom-event"
+    | "initial-attribute"
+    | "initial-prop"
+    | "runtime-method";
+  readonly name: string;
+};
+
+export type PrimitiveFrameworkBehaviorMetadata = {
+  readonly target: Extract<PrimitiveDocsFrameworkTarget, "astro" | "react" | "raw-html">;
+  readonly label: "Astro" | "React" | "Runtime / HTML";
+  readonly summary: string;
+  readonly apis: readonly PrimitiveFrameworkBehaviorApiMetadata[];
+};
+
+export type PrimitiveEventCancellationStepMetadata = {
+  readonly step: number;
+  readonly action: string;
 };
 
 export type PrimitiveEventMetadata = {
@@ -283,10 +308,12 @@ export type PrimitiveEventMetadata = {
   readonly detailsType?: string;
   readonly domEvent?: string;
   readonly emitsFrom: string;
+  readonly stateModel?: string;
   readonly valueProperty?: string;
   readonly valueType?: string;
   readonly description?: string;
   readonly descriptionSource?: "authored" | "generated";
+  readonly cancellationSequence?: readonly PrimitiveEventCancellationStepMetadata[];
 };
 
 export type PrimitiveSetterMetadata =
@@ -486,6 +513,7 @@ export type PrimitivePropReferenceMetadata = PrimitivePropMetadata & {
   readonly description?: string;
   readonly descriptionSource?: "authored" | "generated";
   readonly displayType?: string;
+  readonly frameworkBehavior?: readonly PrimitiveFrameworkBehaviorMetadata[];
 };
 
 export type PrimitiveDataAttributeReferenceMetadata = PrimitiveAttributeMetadata & {
@@ -540,6 +568,7 @@ export type PrimitiveRelatedStyledComponentMetadata = {
 
 export type PrimitiveDocsReferenceMetadata = {
   readonly summary: string;
+  readonly frameworkCoordination: string;
   readonly frameworkTargets: readonly PrimitiveDocsFrameworkTarget[];
   readonly behaviorNotes: readonly string[];
   readonly usageGuidelines: readonly PrimitiveDocsUsageGuidelineMetadata[];

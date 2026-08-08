@@ -127,6 +127,7 @@ export const checkboxRuntimeAdapterContract = {
   events: [
     {
       name: "checkedChange",
+      stateModel: "checked",
       callbackProp: "onCheckedChange",
       detailsType: "CheckboxCheckedChangeDetails",
       domEvent: "starwind:checked-change",

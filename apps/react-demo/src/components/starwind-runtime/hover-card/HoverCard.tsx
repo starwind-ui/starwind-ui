@@ -1,3 +1,5 @@
+"use client";
+
 import PreviewCardPrimitive from "@starwind-ui/react/preview-card";
 import type * as React from "react";
 import { hoverCard } from "./variants";

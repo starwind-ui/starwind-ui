@@ -1,3 +1,5 @@
+"use client";
+
 import Input from "./Input";
 import { input } from "./variants";
 

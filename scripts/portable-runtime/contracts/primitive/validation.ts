@@ -163,6 +163,18 @@ function validateContract(
   for (const event of contract.events ?? []) {
     requireProp(contract, props, event.callbackProp, `events.${event.name}.callbackProp`, issues);
     requirePart(contract, parts, event.emitsFrom, `events.${event.name}.emitsFrom`, issues);
+    if (
+      event.stateModel &&
+      !contract.stateModels?.some((stateModel) => stateModel.name === event.stateModel)
+    ) {
+      issues.push(
+        issue(
+          contract,
+          `events.${event.name}.stateModel`,
+          `Event "${event.name}" references missing state model "${event.stateModel}".`,
+        ),
+      );
+    }
   }
 
   for (const setter of contract.setters ?? []) {

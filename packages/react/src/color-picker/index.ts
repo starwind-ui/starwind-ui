@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import ColorPickerArea from "./ColorPickerArea";
 import ColorPickerAreaBackground from "./ColorPickerAreaBackground";
 import ColorPickerAreaInput from "./ColorPickerAreaInput";

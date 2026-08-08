@@ -54,14 +54,13 @@ const renderedChecked = computed(() =>
   isGroupOwned ? (groupChecked.value ?? false) : (props.checked ?? uncontrolledChecked.value),
 );
 let instance: ReturnType<typeof createRadio> | undefined;
-let unsubscribeCheckedChange: (() => void) | undefined;
 let unsubscribeStateSync: (() => void) | undefined;
 let instanceGeneration = 0;
 let mounted = false;
 
 defineExpose({ element: rootRef, input: inputRef });
 
-function handleCheckedChange(detail: RadioCheckedChangeDetails): void {
+function handleCheckedChange(_checked: boolean, detail: RadioCheckedChangeDetails): void {
   const eventInstance = instance;
   const eventGeneration = instanceGeneration;
   const eventWasGroupOwned = isGroupOwned;
@@ -88,8 +87,6 @@ function destroyOwnedInstance(): void {
   instanceGeneration += 1;
   unsubscribeStateSync?.();
   unsubscribeStateSync = undefined;
-  unsubscribeCheckedChange?.();
-  unsubscribeCheckedChange = undefined;
   const ownedInstance = instance;
   if (!ownedInstance) return;
   instance = undefined;
@@ -110,6 +107,7 @@ function setupRuntime(): void {
     readOnly: effectiveReadOnly.value,
     required: effectiveRequired.value,
     value: props.value,
+    onCheckedChange: handleCheckedChange,
     ...(isGroupOwned
       ? { checked: groupChecked.value ?? false }
       : props.checked !== undefined
@@ -117,7 +115,6 @@ function setupRuntime(): void {
         : {}),
   });
   instance = createdInstance;
-  unsubscribeCheckedChange = createdInstance.subscribe("checkedChange", handleCheckedChange);
   unsubscribeStateSync = createdInstance.subscribe("stateSync", handleStateSync);
 }
 

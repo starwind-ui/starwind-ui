@@ -1,3 +1,5 @@
+"use client";
+
 import type * as React from "react";
 import "./styles.css";
 import ScrollAreaPrimitive from "@starwind-ui/react/scroll-area";

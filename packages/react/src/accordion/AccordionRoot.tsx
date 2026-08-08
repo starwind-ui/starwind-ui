@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import {
   type AccordionValue,
   type AccordionValueChangeDetails,
@@ -58,11 +60,13 @@ const AccordionRoot = React.forwardRef<HTMLDivElement, AccordionRootProps>(funct
       type,
       defaultValue: uncontrolledValueRef.current,
       collapsible,
+      onValueChange: (details) => {
+        onValueChangeRef.current?.(details);
+      },
       ...(valueRef.current !== undefined ? { value: valueRef.current } : {}),
     });
     instanceRef.current = instance;
     const unsubscribe = instance.subscribe("valueChange", (details) => {
-      onValueChangeRef.current?.(details);
       if (details.isCanceled) return;
 
       if (valueRef.current === undefined) {

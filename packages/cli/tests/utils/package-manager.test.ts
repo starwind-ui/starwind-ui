@@ -9,6 +9,7 @@ import {
   buildInstallDependencyArgs,
   detectPackageManager,
   installDependencies,
+  installDependenciesWithProgress,
 } from "../../src/utils/package-manager.js";
 import { parsePackageSpec } from "../../src/utils/package-spec.js";
 
@@ -100,7 +101,7 @@ describe("package manager dependency arguments", () => {
   });
 
   it("shows installation progress for the selected package manager", async () => {
-    await installDependencies(["react@^18.0.0"], "pnpm");
+    await installDependenciesWithProgress(["react@^18.0.0"], "pnpm");
 
     expect(mockSpinner.start).toHaveBeenCalledWith("Installing dependencies with pnpm...");
     expect(mockSpinner.stop).toHaveBeenCalledWith("Dependencies installed with pnpm.");
@@ -110,7 +111,9 @@ describe("package manager dependency arguments", () => {
     const installError = new Error("pnpm failed with detailed output");
     mockExeca.mockRejectedValueOnce(installError);
 
-    await expect(installDependencies(["react@^18.0.0"], "pnpm")).rejects.toBe(installError);
+    await expect(installDependenciesWithProgress(["react@^18.0.0"], "pnpm")).rejects.toBe(
+      installError,
+    );
 
     expect(mockSpinner.stop).toHaveBeenCalledWith("Failed to install dependencies with pnpm.", 1);
   });

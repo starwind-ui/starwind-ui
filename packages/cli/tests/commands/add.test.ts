@@ -133,6 +133,28 @@ describe("add command", () => {
     mockExit.mockRestore();
   });
 
+  it("sorts installation summaries without changing the installer request order", async () => {
+    mockInstallRuntimeComponents.mockResolvedValue({
+      installed: [
+        { name: "zebra", status: "installed", version: "2.0.0" },
+        { name: "Alpha", status: "installed", version: "2.0.0" },
+      ],
+      skipped: [],
+      failed: [],
+    });
+
+    await add(["zebra", "Alpha"], { yes: true });
+
+    expect(mockInstallRuntimeComponents).toHaveBeenCalledWith(
+      ["zebra", "Alpha"],
+      expect.any(Object),
+    );
+    const summary = mockLog.success.mock.calls.find(([message]) =>
+      String(message).includes("Successfully installed components:"),
+    )?.[0] as string;
+    expect(summary.indexOf("Alpha")).toBeLessThan(summary.indexOf("zebra"));
+  });
+
   it("exits when config is missing and user declines init", async () => {
     mockFileExists.mockResolvedValue(false);
     mockConfirm.mockResolvedValue(false);
@@ -179,6 +201,39 @@ describe("add command", () => {
         packageManager: "pnpm",
         skipPrompts: true,
       }),
+    );
+  });
+
+  it("continues add-driven init into one picker, summary, and outro", async () => {
+    mockFileExists.mockResolvedValue(false);
+    mockConfirm.mockResolvedValue(true);
+    mockMultiselect.mockResolvedValue(["button"]);
+
+    await add(undefined, { packageManager: "pnpm" });
+
+    expect(mockInit).toHaveBeenCalledTimes(1);
+    expect(mockMultiselect).toHaveBeenCalledTimes(1);
+    expect(mockInstallRuntimeComponents).toHaveBeenCalledTimes(1);
+    expect(mockLog.message).toHaveBeenCalledTimes(1);
+    expect(mockLog.message).toHaveBeenCalledWith(expect.stringContaining("Installation Summary"));
+    expect(clackPrompts.intro).toHaveBeenCalledTimes(1);
+    expect(clackPrompts.outro).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses interactive host planning when add initializes a missing config", async () => {
+    mockFileExists.mockResolvedValue(false);
+    mockConfirm.mockResolvedValue(true);
+
+    await add(["button"], { packageManager: "pnpm" });
+
+    expect(mockInit).toHaveBeenCalledWith(true, {
+      defaults: undefined,
+      framework: undefined,
+      packageManager: "pnpm",
+    });
+    expect(mockInstallRuntimeComponents).toHaveBeenCalledWith(
+      ["button"],
+      expect.objectContaining({ packageManager: "pnpm" }),
     );
   });
 

@@ -9,10 +9,12 @@ const HoverCardVariants = {
   hoverCardTrigger,
 };
 
-export { HoverCard, HoverCardContent, HoverCardTrigger, HoverCardVariants };
-
-export default {
+const HoverCardParts = {
   Root: HoverCard,
   Trigger: HoverCardTrigger,
   Content: HoverCardContent,
 };
+
+export { HoverCard, HoverCardContent, HoverCardTrigger, HoverCardVariants };
+
+export default HoverCardParts;

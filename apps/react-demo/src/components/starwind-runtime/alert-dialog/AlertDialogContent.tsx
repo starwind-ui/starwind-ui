@@ -1,3 +1,5 @@
+"use client";
+
 import AlertDialogPrimitive from "@starwind-ui/react/alert-dialog";
 import type * as React from "react";
 import { alertDialogBackdrop, alertDialogContent } from "./variants";

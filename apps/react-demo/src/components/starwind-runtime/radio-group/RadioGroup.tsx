@@ -1,3 +1,5 @@
+"use client";
+
 import RadioGroupPrimitive from "@starwind-ui/react/radio-group";
 import type * as React from "react";
 import type { VariantProps } from "tailwind-variants";

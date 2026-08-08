@@ -8,7 +8,10 @@ import {
   resolveAsChildControl,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { createCancelableDetails } from "../../internal/cancelable-details";
+import {
+  createCancelableDetails,
+  runCancelableDetailsTransaction,
+} from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
 import {
@@ -130,6 +133,7 @@ type SelectElements = {
 type SelectFocusTarget = "first" | "last" | "selected";
 
 type OpenRequest = {
+  forceApply?: boolean;
   event?: Event;
   focus?: SelectFocusTarget;
   reason: SelectOpenChangeReason;
@@ -138,6 +142,7 @@ type OpenRequest = {
 
 type ValueRequest = {
   event?: Event;
+  forceApply?: boolean;
   item?: HTMLElement;
   reason: SelectValueChangeReason;
   value: string | null;
@@ -332,6 +337,11 @@ class SelectController implements SelectInstance {
   }
 
   setOpen(open: boolean, options: SelectSetOpenOptions = {}): void {
+    if (options.emit !== false) {
+      this.requestOpen(open, { forceApply: true, reason: "imperative-action" });
+      return;
+    }
+
     const previousOpen = this.openState;
     this.openState = open;
     this.applyOpenState(open, { reason: "imperative-action" });
@@ -341,34 +351,19 @@ class SelectController implements SelectInstance {
     } else if (open) {
       this.pendingRestoreFocus = false;
     }
-
-    if (options.emit !== false) {
-      this.notifyOpen(
-        createOpenChangeDetails({
-          open,
-          previousOpen,
-          reason: "imperative-action",
-        }),
-      );
-    }
   }
 
   setValue(value: string | null, options: SelectSetValueOptions = {}): void {
     const normalizedValue = normalizeValue(value) ?? null;
+    if (options.emit !== false) {
+      this.requestValue({ forceApply: true, reason: "imperative-action", value: normalizedValue });
+      return;
+    }
+
     const previousValue = this.valueState;
 
     this.valueState = normalizedValue;
     this.applyValueState(normalizedValue);
-
-    if (options.emit !== false) {
-      this.notifyValue(
-        createValueChangeDetails({
-          previousValue,
-          reason: "imperative-action",
-          value: normalizedValue,
-        }),
-      );
-    }
   }
 
   getOpen(): boolean {
@@ -727,7 +722,7 @@ class SelectController implements SelectInstance {
   }
 
   private requestOpen(open: boolean, request: OpenRequest): void {
-    if (open === this.openState && !this.controlledOpen) {
+    if (open === this.openState && !this.controlledOpen && !request.forceApply) {
       if (open && request.focus) {
         this.pendingFocus = request.focus;
         this.queuePendingFocus();
@@ -738,7 +733,7 @@ class SelectController implements SelectInstance {
     const previousOpen = this.openState;
     runOverlayOpenChangeShell({
       root: this.root,
-      controlled: this.controlledOpen,
+      controlled: this.controlledOpen && !request.forceApply,
       createDetails: createOpenChangeDetails,
       open,
       previousOpen,
@@ -754,6 +749,11 @@ class SelectController implements SelectInstance {
         this.completeOpenChangeApplication(open, request);
       },
       onNotifyOpenChangeSubscribers: (details) => this.notifyOpen(details),
+      onCanceledOpenChange: () => {
+        if (this.openState === open && previousOpen !== open) {
+          this.setOpen(previousOpen, { emit: false });
+        }
+      },
       onOpenChange: (nextOpen, details) => {
         this.onOpenChange?.(nextOpen, details);
       },
@@ -799,27 +799,33 @@ class SelectController implements SelectInstance {
     });
     attachFormValueRevision(details, request.event);
 
-    this.onValueChange?.(request.value, details);
-
-    const valueChangeEvent = dispatchCustomEvent(this.root, "starwind:value-change", details, {
-      cancelable: true,
-    });
-    if (valueChangeEvent.defaultPrevented) {
-      details.cancel();
-    }
-
-    if (details.isCanceled) return;
-
-    if (!this.controlledValue) {
-      this.valueState = request.value;
-      this.applyValueState(request.value);
-    }
-
-    this.notifyValue(details);
-    this.requestOpen(false, {
-      event: request.event,
-      reason: "item-press",
-      trigger: request.item,
+    runCancelableDetailsTransaction({
+      apply:
+        this.controlledValue && !request.forceApply
+          ? undefined
+          : () => {
+              this.valueState = request.value;
+              this.applyValueState(request.value);
+            },
+      details,
+      eventType: "starwind:value-change",
+      notifyAccepted: (acceptedDetails) => {
+        this.notifyValue(acceptedDetails);
+        if (request.reason === "item-press") {
+          this.requestOpen(false, {
+            event: request.event,
+            reason: "item-press",
+            trigger: request.item,
+          });
+        }
+      },
+      notifyCallback: (proposalDetails) => this.onValueChange?.(request.value, proposalDetails),
+      rollbackCanceled: () => {
+        if (this.valueState === request.value && details.previousValue !== request.value) {
+          this.setValue(details.previousValue, { emit: false });
+        }
+      },
+      target: this.root,
     });
   }
 

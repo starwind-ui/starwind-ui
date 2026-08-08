@@ -1,3 +1,5 @@
+"use client";
+
 import Tooltip from "./Tooltip";
 import TooltipContent from "./TooltipContent";
 import TooltipTrigger from "./TooltipTrigger";
@@ -9,10 +11,12 @@ const TooltipVariants = {
   tooltipContent,
 };
 
-export { Tooltip, TooltipContent, TooltipTrigger, TooltipVariants };
-
-export default {
+const TooltipParts = {
   Root: Tooltip,
   Trigger: TooltipTrigger,
   Content: TooltipContent,
 };
+
+export { Tooltip, TooltipContent, TooltipTrigger, TooltipVariants };
+
+export default TooltipParts;

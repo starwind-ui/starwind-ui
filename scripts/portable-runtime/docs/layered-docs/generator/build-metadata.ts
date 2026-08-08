@@ -58,6 +58,7 @@ import {
   renderPrimitiveAnatomyCode,
   toPrimitiveEventMetadata,
 } from "./descriptions/primitive-reference.js";
+import { frameworkCoordinationSummary } from "./descriptions/framework-behavior.js";
 import { toPrimitiveSetterMetadata } from "./descriptions/setters.js";
 import type { BuildLayeredDocsMetadataOptions } from "./options.js";
 import { PRIMITIVE_AUTHORED_USAGE_ROOT, primitiveVersionsPath, repoRoot } from "./paths.js";
@@ -506,6 +507,7 @@ const buildPrimitiveDocsReference = (
     summary:
       enrichment.summary ??
       `${contract.displayName} is a Starwind Runtime primitive in the ${contract.category} contract family.`,
+    frameworkCoordination: frameworkCoordinationSummary,
     frameworkTargets: [...PRIMITIVE_DOCS_FRAMEWORK_TARGETS],
     behaviorNotes: [...(enrichment.behaviorNotes ?? [])],
     usageGuidelines: (enrichment.usageGuidelines ?? []).map((guideline) => ({ ...guideline })),

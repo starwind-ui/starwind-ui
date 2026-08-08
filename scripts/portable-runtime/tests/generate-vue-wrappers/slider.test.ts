@@ -37,8 +37,12 @@ describe("generated Vue Slider", () => {
       expect(() => assertVueSfcCompiles(source, name)).not.toThrow();
     }
     expect(first["SliderRoot.vue"]).toContain("defineModel<SliderValue>()");
+    expect(first["SliderRoot.vue"]).toContain("onValueChange: handleValueChangeProposal");
+    expect(first["SliderRoot.vue"]).toContain(
+      'createdInstance.subscribe("valueChange", handleAcceptedValueChange)',
+    );
     expect(first["SliderRoot.vue"]).toMatch(
-      /emit\("valueChange", detail\.value, detail\);[\s\S]*detail\.isCanceled[\s\S]*modelValue\.value = detail\.value/,
+      /function handleValueChangeProposal\([\s\S]*emit\("valueChange", value, detail\);[\s\S]*function handleAcceptedValueChange\(detail: SliderValueChangeDetails\)[\s\S]*modelValue\.value = detail\.value/,
     );
     expect(first["SliderRoot.vue"]).toContain('emit("valueCommitted", detail.value, detail)');
     expect(first["SliderRoot.vue"]).toContain(

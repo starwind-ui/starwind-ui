@@ -67,22 +67,16 @@ function setUncontrolledValue(nextValue: ToggleGroupValue): void {
   uncontrolledValue.value = normalizedValue;
 }
 
-function handleValueChange(detail: ToggleGroupValueChangeDetails): void {
-  const eventInstance = instance;
-  const eventGeneration = instanceGeneration;
-  const eventWasControlled = props.modelValue !== undefined;
+function handleValueChangeProposal(
+  _value: ToggleGroupValue,
+  detail: ToggleGroupValueChangeDetails,
+): void {
   emit("valueChange", detail.value, detail);
-  if (
-    detail.isCanceled ||
-    !mounted ||
-    instance !== eventInstance ||
-    instanceGeneration !== eventGeneration
-  ) {
-    return;
-  }
+}
 
+function handleAcceptedValueChange(detail: ToggleGroupValueChangeDetails): void {
   const nextValue = normalizeValue(detail.value, props.multiple);
-  if (!eventWasControlled) setUncontrolledValue(nextValue);
+  if (props.modelValue === undefined) setUncontrolledValue(nextValue);
   emit("update:modelValue", nextValue);
 }
 
@@ -109,10 +103,11 @@ function setupRuntime(): void {
     loopFocus: props.loopFocus,
     multiple: props.multiple,
     orientation: props.orientation,
+    onValueChange: handleValueChangeProposal,
     ...(props.modelValue === undefined ? {} : { value: renderedValue.value }),
   });
   instance = createdInstance;
-  unsubscribeValueChange = createdInstance.subscribe("valueChange", handleValueChange);
+  unsubscribeValueChange = createdInstance.subscribe("valueChange", handleAcceptedValueChange);
 
   observer = new MutationObserver(() => {
     if (props.modelValue !== undefined || instance !== createdInstance) return;

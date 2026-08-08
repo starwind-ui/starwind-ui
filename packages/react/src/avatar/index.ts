@@ -3,6 +3,8 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
+"use client";
+
 import AvatarFallback from "./AvatarFallback";
 import AvatarImage from "./AvatarImage";
 import AvatarRoot from "./AvatarRoot";

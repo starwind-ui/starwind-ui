@@ -86,6 +86,15 @@ function handleStateSync(): void {
   modelValue.value = nextValue;
 }
 
+function handleValueChangeProposal(value: SliderValue, detail: SliderValueChangeDetails): void {
+  emit("valueChange", value, detail);
+}
+
+function handleAcceptedValueChange(detail: SliderValueChangeDetails): void {
+  if (!controlled) uncontrolledValue.value = detail.value;
+  modelValue.value = detail.value;
+}
+
 async function refreshAfterVueFlush(): Promise<void> {
   const revision = ++refreshRevision;
   await nextTick();
@@ -114,16 +123,11 @@ onMounted(() => {
     name: props.name,
     orientation: props.orientation,
     step: props.step,
+    onValueChange: handleValueChangeProposal,
     ...(controlled && modelValue.value !== undefined ? { value: modelValue.value } : {}),
   });
   instance = createdInstance;
-  unsubscribeChange = createdInstance.subscribe("valueChange", (detail) => {
-    emit("valueChange", detail.value, detail);
-    if (detail.isCanceled) return;
-
-    if (!controlled) uncontrolledValue.value = detail.value;
-    modelValue.value = detail.value;
-  });
+  unsubscribeChange = createdInstance.subscribe("valueChange", handleAcceptedValueChange);
   unsubscribeCommitted = createdInstance.subscribe("valueCommitted", (detail) => {
     emit("valueCommitted", detail.value, detail);
   });

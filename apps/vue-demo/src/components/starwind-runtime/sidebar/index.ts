@@ -105,6 +105,32 @@ const SidebarVariants = {
   sidebarTrigger,
 };
 
+const SidebarParts = {
+  Root: SidebarProvider,
+  Sidebar,
+  Content: SidebarContent,
+  Footer: SidebarFooter,
+  Group: SidebarGroup,
+  GroupAction: SidebarGroupAction,
+  GroupContent: SidebarGroupContent,
+  GroupLabel: SidebarGroupLabel,
+  Header: SidebarHeader,
+  Input: SidebarInput,
+  Inset: SidebarInset,
+  Menu: SidebarMenu,
+  MenuAction: SidebarMenuAction,
+  MenuBadge: SidebarMenuBadge,
+  MenuButton: SidebarMenuButton,
+  MenuItem: SidebarMenuItem,
+  MenuSkeleton: SidebarMenuSkeleton,
+  MenuSub: SidebarMenuSub,
+  MenuSubButton: SidebarMenuSubButton,
+  MenuSubItem: SidebarMenuSubItem,
+  Rail: SidebarRail,
+  Separator: SidebarSeparator,
+  Trigger: SidebarTrigger,
+};
+
 export {
   Sidebar,
   SidebarContent,
@@ -132,28 +158,4 @@ export {
   SidebarVariants,
 };
 
-export default {
-  Root: SidebarProvider,
-  Sidebar,
-  Content: SidebarContent,
-  Footer: SidebarFooter,
-  Group: SidebarGroup,
-  GroupAction: SidebarGroupAction,
-  GroupContent: SidebarGroupContent,
-  GroupLabel: SidebarGroupLabel,
-  Header: SidebarHeader,
-  Input: SidebarInput,
-  Inset: SidebarInset,
-  Menu: SidebarMenu,
-  MenuAction: SidebarMenuAction,
-  MenuBadge: SidebarMenuBadge,
-  MenuButton: SidebarMenuButton,
-  MenuItem: SidebarMenuItem,
-  MenuSkeleton: SidebarMenuSkeleton,
-  MenuSub: SidebarMenuSub,
-  MenuSubButton: SidebarMenuSubButton,
-  MenuSubItem: SidebarMenuSubItem,
-  Rail: SidebarRail,
-  Separator: SidebarSeparator,
-  Trigger: SidebarTrigger,
-};
+export default SidebarParts;

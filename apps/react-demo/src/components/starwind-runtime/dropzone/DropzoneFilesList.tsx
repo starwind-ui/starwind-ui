@@ -1,3 +1,5 @@
+"use client";
+
 import DropzonePrimitive from "@starwind-ui/react/dropzone";
 import type * as React from "react";
 import { dropzoneFilesList } from "./variants";

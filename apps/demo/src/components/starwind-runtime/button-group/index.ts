@@ -9,10 +9,12 @@ const ButtonGroupVariants = {
   buttonGroupText,
 };
 
-export { ButtonGroup, ButtonGroupSeparator, ButtonGroupText, ButtonGroupVariants };
-
-export default {
+const ButtonGroupParts = {
   Root: ButtonGroup,
   Separator: ButtonGroupSeparator,
   Text: ButtonGroupText,
 };
+
+export { ButtonGroup, ButtonGroupSeparator, ButtonGroupText, ButtonGroupVariants };
+
+export default ButtonGroupParts;
