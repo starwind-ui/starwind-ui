@@ -52,7 +52,10 @@ describe("generated Vue Checkbox Group Primitive", () => {
     expect(first).toEqual(second);
     expect(() => assertVueSfcCompiles(first.root, "CheckboxGroupRoot.vue")).not.toThrow();
     expect(first.root).toMatch(
-      /emit\("valueChange", detail\.value, detail\);[\s\S]*if \(detail\.isCanceled\) return;[\s\S]*emit\("update:modelValue", detail\.value\);/,
+      /function handleValueChangeProposal[\s\S]*emit\("valueChange", detail\.value, detail\);[\s\S]*onValueChange: handleValueChangeProposal/,
+    );
+    expect(first.root).toMatch(
+      /function handleAcceptedValueChange[\s\S]*emit\("update:modelValue", detail\.value\);[\s\S]*subscribe\("valueChange", handleAcceptedValueChange\)/,
     );
     expect(first.root).toContain("modelValue?: CheckboxGroupValue");
     expect(first.root).toContain("props.modelValue");

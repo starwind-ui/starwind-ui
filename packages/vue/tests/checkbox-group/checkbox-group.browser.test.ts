@@ -50,7 +50,7 @@ describe("Vue Checkbox Group public behavior", () => {
     expect(children[0]?.getAttribute("aria-checked")).toBe("true");
     children[0]?.click();
     await nextTick();
-    expect(events).toEqual(["group-detail", "group-update", "child-detail", "child-update"]);
+    expect(events).toEqual(["child-detail", "child-update", "group-detail", "group-update"]);
     expect(group.getAttribute("data-value")).toBe("[]");
 
     cancelNext.value = true;
