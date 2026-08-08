@@ -1,5 +1,15 @@
 # @starwind-ui/react
 
+## 0.1.0-beta.8
+
+### Patch Changes
+
+- Initialize React Select state from silent programmatic value commands so Color Picker format controls show their configured format with selected-value styling before interaction. Synchronize the corrected Select Primitive source in the CLI registry.
+- Add framework-aware initialization for Vite React, Next.js App Router, and TanStack Start. Preserve React client boundaries and add server-rendered theme bootstrap support.
+- Normalize cancelable Runtime state proposals so callbacks and DOM events share one details object before accepted state commits. Update React Primitive adapters to preserve pre-commit cancellation, accepted-only synchronization, Combobox command cancellation, and Switch native form association. Synchronize the affected vendored React Primitive sources in the CLI.
+- Updated dependencies
+  - @starwind-ui/runtime@0.1.0-beta.8
+
 ## 0.1.0-beta.7
 
 ### Patch Changes

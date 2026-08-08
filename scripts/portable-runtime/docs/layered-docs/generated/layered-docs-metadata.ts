@@ -36480,7 +36480,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "accordion",
       displayName: "Accordion",
       category: "controlled-value-group",
-      registryVersion: "0.1.2",
+      registryVersion: "0.1.3",
       runtime: {
         primitiveId: "accordion",
         factory: "createAccordion",
@@ -37706,7 +37706,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "alert-dialog",
       displayName: "AlertDialog",
       category: "dialog-native-overlay",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "alert-dialog",
         factory: "createAlertDialog",
@@ -39135,7 +39135,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "avatar",
       displayName: "Avatar",
       category: "static-semantic",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "avatar",
         factory: "createAvatar",
@@ -39984,7 +39984,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "button",
       displayName: "Button",
       category: "static-semantic",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "button",
         factory: "createButton",
@@ -40310,7 +40310,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "carousel",
       displayName: "Carousel",
       category: "viewport-measurement",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "carousel",
         factory: "createCarousel",
@@ -41081,7 +41081,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "checkbox",
       displayName: "Checkbox",
       category: "single-boolean-control",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "checkbox",
         factory: "createCheckbox",
@@ -42541,7 +42541,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "checkbox-group",
       displayName: "CheckboxGroup",
       category: "controlled-value-group",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "checkbox-group",
         factory: "createCheckboxGroup",
@@ -43341,7 +43341,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "collapsible",
       displayName: "Collapsible",
       category: "presence-disclosure-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "collapsible",
         factory: "createCollapsible",
@@ -44356,7 +44356,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "color-picker",
       displayName: "Color Picker",
       category: "form-value-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "color-picker",
         factory: "createColorPicker",
@@ -47958,7 +47958,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "combobox",
       displayName: "Combobox",
       category: "floating-value-control",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "combobox",
         factory: "createCombobox",
@@ -51332,7 +51332,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "context-menu",
       displayName: "ContextMenu",
       category: "composite-menu-overlay",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "context-menu",
         factory: "createContextMenu",
@@ -55459,7 +55459,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "dialog",
       displayName: "Dialog",
       category: "dialog-native-overlay",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "dialog",
         factory: "createDialog",
@@ -56790,7 +56790,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "drawer",
       displayName: "Drawer",
       category: "dialog-native-overlay",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "drawer",
         factory: "createDrawer",
@@ -58244,7 +58244,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "dropzone",
       displayName: "Dropzone",
       category: "form-value-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "dropzone",
         factory: "createDropzone",
@@ -59459,7 +59459,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "field",
       displayName: "Field",
       category: "field-control-coordinator",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "field",
         factory: "createField",
@@ -60746,7 +60746,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "fieldset",
       displayName: "Fieldset",
       category: "field-control-coordinator",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "fieldset",
         factory: "createFieldset",
@@ -61072,7 +61072,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "form",
       displayName: "Form",
       category: "field-control-coordinator",
-      registryVersion: "0.2.0",
+      registryVersion: "0.2.1",
       runtime: {
         primitiveId: "form",
         factory: "createForm",
@@ -61578,7 +61578,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "input",
       displayName: "Input",
       category: "form-value-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "input",
         factory: "createInput",
@@ -62309,7 +62309,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "input-otp",
       displayName: "InputOtp",
       category: "form-value-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "input-otp",
         factory: "createInputOtp",
@@ -63834,7 +63834,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "menu",
       displayName: "Menu",
       category: "composite-menu-overlay",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "menu",
         factory: "createMenu",
@@ -68096,7 +68096,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "navigation-menu",
       displayName: "NavigationMenu",
       category: "floating-value-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "navigation-menu",
         factory: "createNavigationMenu",
@@ -70371,7 +70371,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "popover",
       displayName: "Popover",
       category: "presence-floating-overlay",
-      registryVersion: "0.1.2",
+      registryVersion: "0.1.3",
       runtime: {
         primitiveId: "popover",
         factory: "createPopover",
@@ -72330,7 +72330,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "preview-card",
       displayName: "PreviewCard",
       category: "presence-floating-overlay",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "preview-card",
         factory: "createPreviewCard",
@@ -74136,7 +74136,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "progress",
       displayName: "Progress",
       category: "static-semantic",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "progress",
         factory: "createProgress",
@@ -74987,7 +74987,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "radio",
       displayName: "Radio",
       category: "single-boolean-control",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "radio",
         factory: "createRadio",
@@ -76213,7 +76213,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "radio-group",
       displayName: "RadioGroup",
       category: "controlled-value-group",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "radio-group",
         factory: "createRadioGroup",
@@ -77261,7 +77261,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "scroll-area",
       displayName: "ScrollArea",
       category: "viewport-measurement",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "scroll-area",
         factory: "createScrollArea",
@@ -77944,7 +77944,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "select",
       displayName: "Select",
       category: "floating-value-control",
-      registryVersion: "0.1.3",
+      registryVersion: "0.1.4",
       runtime: {
         primitiveId: "select",
         factory: "createSelect",
@@ -80649,7 +80649,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "sidebar",
       displayName: "Sidebar",
       category: "presence-disclosure-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "sidebar",
         factory: "createSidebarController",
@@ -82558,7 +82558,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "slider",
       displayName: "Slider",
       category: "form-value-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "slider",
         factory: "createSlider",
@@ -84008,7 +84008,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "switch",
       displayName: "Switch",
       category: "single-boolean-control",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "switch",
         factory: "createSwitch",
@@ -85230,7 +85230,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "tabs",
       displayName: "Tabs",
       category: "controlled-value-group",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "tabs",
         factory: "createTabs",
@@ -86738,7 +86738,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "toast",
       displayName: "Toast",
       category: "notification-system",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "toast",
         factory: "createToastManager",
@@ -87555,7 +87555,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "toggle",
       displayName: "Toggle",
       category: "single-boolean-control",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "toggle",
         factory: "createToggle",
@@ -88467,7 +88467,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "toggle-group",
       displayName: "ToggleGroup",
       category: "controlled-value-group",
-      registryVersion: "0.1.1",
+      registryVersion: "0.1.2",
       runtime: {
         primitiveId: "toggle-group",
         factory: "createToggleGroup",
@@ -89390,7 +89390,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "tooltip",
       displayName: "Tooltip",
       category: "presence-floating-overlay",
-      registryVersion: "0.1.0",
+      registryVersion: "0.1.1",
       runtime: {
         primitiveId: "tooltip",
         factory: "createTooltip",
