@@ -85,8 +85,12 @@ describe("generated Vue Toggle Group Primitive", () => {
     expect(first.root).toContain("new MutationObserver");
     expect(first.root).toContain("instance?.setMultiple(value)");
     expect(first.root).toContain("instance?.setOrientation(value)");
+    expect(first.root).toContain("onValueChange: handleValueChangeProposal");
+    expect(first.root).toContain(
+      'createdInstance.subscribe("valueChange", handleAcceptedValueChange)',
+    );
     expect(first.root).toMatch(
-      /emit\("valueChange", detail\.value, detail\);[\s\S]*detail\.isCanceled[\s\S]*emit\("update:modelValue", nextValue\);/,
+      /function handleValueChangeProposal\([\s\S]*emit\("valueChange", detail\.value, detail\);[\s\S]*function handleAcceptedValueChange\(detail: ToggleGroupValueChangeDetails\)[\s\S]*emit\("update:modelValue", nextValue\);/,
     );
     expect(first.context).toContain("InjectionKey<ToggleGroupContextValue>");
     expect(first.context).toContain("function useToggleGroupContext()");

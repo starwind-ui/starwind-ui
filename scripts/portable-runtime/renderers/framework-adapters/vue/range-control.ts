@@ -131,6 +131,18 @@ function handleStateSync(): void {
   modelValue.value = nextValue;
 }
 
+function handleValueChangeProposal(
+  value: ${valueChange.valueType},
+  detail: ${valueChange.detailsType},
+): void {
+  emit("valueChange", value, detail);
+}
+
+function handleAcceptedValueChange(detail: ${valueChange.detailsType}): void {
+  if (!controlled) uncontrolledValue.value = detail.${valueChange.valueProperty};
+  modelValue.value = detail.${valueChange.valueProperty};
+}
+
 async function refreshAfterVueFlush(): Promise<void> {
   const revision = ++refreshRevision;
   await nextTick();
@@ -159,18 +171,13 @@ onMounted(() => {
     ${props.name.name}: props.${props.name.name},
     ${props.orientation.name}: props.${props.orientation.name},
     ${props.step.name}: props.${props.step.name},
+    ${valueChange.callbackProp}: handleValueChangeProposal,
     ...(controlled && modelValue.value !== undefined
       ? { ${props.value.name}: modelValue.value }
       : {}),
   });
   instance = createdInstance;
-  unsubscribeChange = createdInstance.subscribe("${valueChange.name}", (detail) => {
-    emit("valueChange", detail.${valueChange.valueProperty}, detail);
-    if (detail.isCanceled) return;
-
-    if (!controlled) uncontrolledValue.value = detail.${valueChange.valueProperty};
-    modelValue.value = detail.${valueChange.valueProperty};
-  });
+  unsubscribeChange = createdInstance.subscribe("${valueChange.name}", handleAcceptedValueChange);
   unsubscribeCommitted = createdInstance.subscribe("${valueCommitted.name}", (detail) => {
     emit("valueCommitted", detail.${valueCommitted.valueProperty}, detail);
   });
