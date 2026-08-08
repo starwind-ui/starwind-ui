@@ -65,8 +65,8 @@ normalizedSwatches.forEach((swatch) => {
         moduleResolution: ts.ModuleResolutionKind.Bundler,
         noEmit: true,
         paths: {
-          "@starwind-ui/react/*": ["packages/react/dist/*/index.d.ts"],
-          "@starwind-ui/runtime/*": ["packages/runtime/dist/components/*/index.d.ts"],
+          "@starwind-ui/react/*": ["packages/react/src/*/index.ts"],
+          "@starwind-ui/runtime/*": ["packages/runtime/src/components/*/index.ts"],
         },
         skipLibCheck: true,
         strict: false,
