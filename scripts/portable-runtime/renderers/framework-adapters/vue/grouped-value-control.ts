@@ -648,7 +648,6 @@ const renderedName = computed(() => props.${name.name});
 const renderedReadOnly = computed(() => props.${readOnly.name});
 const renderedRequired = computed(() => props.${required.name});
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
-let unsubscribeValueChange: (() => void) | undefined;
 let unsubscribeStateSync: (() => void) | undefined;
 let instanceGeneration = 0;
 let mounted = false;
@@ -664,7 +663,7 @@ provide(${context.componentName}, {
 
 defineExpose({ element: rootRef });
 
-function handleValueChange(detail: ${facts.event.detailsType}): void {
+function handleValueChange(_value: ${facts.event.valueType}, detail: ${facts.event.detailsType}): void {
   const eventInstance = instance;
   const eventGeneration = instanceGeneration;
   const eventWasControlled = props.${model.modelProp} !== undefined;
@@ -690,8 +689,6 @@ function destroyOwnedInstance(): void {
   instanceGeneration += 1;
   unsubscribeStateSync?.();
   unsubscribeStateSync = undefined;
-  unsubscribeValueChange?.();
-  unsubscribeValueChange = undefined;
   const ownedInstance = instance;
   if (!ownedInstance) return;
   instance = undefined;
@@ -710,10 +707,10 @@ function setupRuntime(): void {
     ${orientation.name}: props.${orientation.name},
     ${readOnly.name}: props.${readOnly.name},
     ${required.name}: props.${required.name},
+    ${facts.event.callbackProp}: handleValueChange,
     ...(props.${model.modelProp} === undefined ? {} : { ${facts.props.value.name}: props.${model.modelProp} }),
   });
   instance = createdInstance;
-  unsubscribeValueChange = createdInstance.subscribe("${facts.event.name}", handleValueChange);
   unsubscribeStateSync = createdInstance.subscribe("${syncEvent}", handleStateSync);
 }
 

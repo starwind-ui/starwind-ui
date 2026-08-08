@@ -47,7 +47,6 @@ const renderedName = computed(() => props.name);
 const renderedReadOnly = computed(() => props.readOnly);
 const renderedRequired = computed(() => props.required);
 let instance: ReturnType<typeof createRadioGroup> | undefined;
-let unsubscribeValueChange: (() => void) | undefined;
 let unsubscribeStateSync: (() => void) | undefined;
 let instanceGeneration = 0;
 let mounted = false;
@@ -63,7 +62,7 @@ provide(RadioGroupContext, {
 
 defineExpose({ element: rootRef });
 
-function handleValueChange(detail: RadioGroupValueChangeDetails): void {
+function handleValueChange(_value: string, detail: RadioGroupValueChangeDetails): void {
   const eventInstance = instance;
   const eventGeneration = instanceGeneration;
   const eventWasControlled = props.modelValue !== undefined;
@@ -89,8 +88,6 @@ function destroyOwnedInstance(): void {
   instanceGeneration += 1;
   unsubscribeStateSync?.();
   unsubscribeStateSync = undefined;
-  unsubscribeValueChange?.();
-  unsubscribeValueChange = undefined;
   const ownedInstance = instance;
   if (!ownedInstance) return;
   instance = undefined;
@@ -109,10 +106,10 @@ function setupRuntime(): void {
     orientation: props.orientation,
     readOnly: props.readOnly,
     required: props.required,
+    onValueChange: handleValueChange,
     ...(props.modelValue === undefined ? {} : { value: props.modelValue }),
   });
   instance = createdInstance;
-  unsubscribeValueChange = createdInstance.subscribe("valueChange", handleValueChange);
   unsubscribeStateSync = createdInstance.subscribe("stateSync", handleStateSync);
 }
 
