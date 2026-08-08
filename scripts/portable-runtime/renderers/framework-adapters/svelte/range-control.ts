@@ -108,10 +108,12 @@ function printRoot(facts: AdapterRangeControlFacts): string {
     return Array.isArray(nextValue) ? JSON.stringify(nextValue) : String(nextValue);
   }
 
-  function handleValueChange(detail: ${change.detailsType}): void {
-    const nextValue = detail.${change.valueProperty};
+  function handleValueChangeProposal(nextValue: ${change.valueType}, detail: ${change.detailsType}): void {
     ${change.callbackProp}?.(nextValue, detail);
-    if (detail.isCanceled) return;
+  }
+
+  function handleAcceptedValueChange(detail: ${change.detailsType}): void {
+    const nextValue = detail.${change.valueProperty};
     if (!externallyControlled) uncontrolledValue = nextValue;
     ${props.value.name} = nextValue;
   }
@@ -132,9 +134,10 @@ function printRoot(facts: AdapterRangeControlFacts): string {
       ${props.name.name},
       ${props.orientation.name},
       ${props.step.name},
+      ${change.callbackProp}: handleValueChangeProposal,
       ...(externallyControlled && ${props.value.name} !== undefined ? { ${props.value.name} } : {}),
     }));
-    const unsubscribeChange = instance.subscribe("${change.name}", handleValueChange);
+    const unsubscribeChange = instance.subscribe("${change.name}", handleAcceptedValueChange);
     const unsubscribeCommitted = instance.subscribe("${committed.name}", handleValueCommitted);
     const unsubscribeStateSync = instance.subscribe("${facts.state.syncEvent}", () => {
       if (externallyControlled) return;
