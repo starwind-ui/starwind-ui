@@ -1,0 +1,11 @@
+{
+  "components": {
+    "checkbox": "patch",
+    "checkbox-group": "patch",
+    "input": "patch",
+    "progress": "patch",
+    "slider": "patch",
+    "switch": "patch",
+    "toggle": "patch"
+  }
+}

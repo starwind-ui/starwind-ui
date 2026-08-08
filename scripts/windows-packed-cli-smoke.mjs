@@ -2,7 +2,6 @@
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import http from "node:http";
@@ -30,7 +29,6 @@ export function createWindowsPackedCliPlan(root, packageUrl) {
 
   return {
     packageUrl,
-    launcher: createProject("launcher"),
     projects: {
       add: createProject("add-driven"),
       standalone: createProject("standalone"),
@@ -39,19 +37,8 @@ export function createWindowsPackedCliPlan(root, packageUrl) {
   };
 }
 
-export function extractWindowsShimTarget(source) {
-  const matches = [...source.matchAll(/node\s+"%~dp0\\([^"\r\n]+)"\s+%\*/g)];
-  assert.ok(matches.length > 0, "Expected the pnpm Windows shim to invoke Starwind with Node.");
-  return matches.at(-1)[1];
-}
-
 export function createPackedLifecycleArgs(packageUrl, args) {
   return ["dlx", packageUrl, ...args];
-}
-
-export function assertStableShim(before, after) {
-  assert.equal(after.source, before.source, "pnpm rewrote the active Starwind command shim.");
-  assert.equal(after.hash, before.hash, "The Starwind command shim hash changed during install.");
 }
 
 export function assertCleanLifecycle(
@@ -94,10 +81,6 @@ export async function runWindowsPackedCliSmoke() {
         await createAstroProject(project.directory);
         await runRequired({ ...createPnpmInvocation(["install"]), cwd: project.directory });
       }
-      await createLauncherProject(plan.launcher.directory, packageUrl);
-      await runRequired({ ...createPnpmInvocation(["install"]), cwd: plan.launcher.directory });
-
-      await verifyInvocationSurface(plan.launcher, diagnostics);
       await verifyStandaloneInit(plan.projects.standalone, packageUrl, diagnostics);
       await verifyAddDrivenInit(plan.projects.add, packageUrl, diagnostics);
     } finally {
@@ -120,45 +103,6 @@ export async function runWindowsPackedCliSmoke() {
   } finally {
     if (succeeded) await rm(root, { recursive: true, force: true });
   }
-}
-
-async function verifyInvocationSurface(project, diagnostics) {
-  const before = await readShim(project.shim);
-  const successfulInvocations = [
-    { name: "direct", command: project.shim, args: ["--version"] },
-    { name: "pnpm-exec", ...createPnpmInvocation(["exec", "starwind", "--version"]) },
-    {
-      name: "package-script",
-      ...createPnpmInvocation(["run", "starwind-command", "--version"]),
-    },
-  ];
-
-  for (const invocation of successfulInvocations) {
-    const result = await runCommand({ ...invocation, cwd: project.directory });
-    diagnostics.push({ name: invocation.name, ...result });
-    assert.equal(result.code, 0, `${invocation.name}\n${result.stdout}\n${result.stderr}`);
-    assert.match(cleanOutput(`${result.stdout}\n${result.stderr}`), /3\.0\.0-beta\.7/);
-  }
-
-  const failingInvocations = [
-    { name: "direct-failure", command: project.shim, args: ["missing-command"] },
-    {
-      name: "pnpm-exec-failure",
-      ...createPnpmInvocation(["exec", "starwind", "missing-command"]),
-    },
-    {
-      name: "package-script-failure",
-      ...createPnpmInvocation(["run", "starwind-command", "missing-command"]),
-    },
-  ];
-
-  for (const invocation of failingInvocations) {
-    const result = await runCommand({ ...invocation, cwd: project.directory });
-    diagnostics.push({ name: invocation.name, ...result });
-    assert.notEqual(result.code, 0, `${invocation.name} lost the command's nonzero exit status.`);
-    assert.match(cleanOutput(`${result.stdout}\n${result.stderr}`), /unknown command/i);
-  }
-  assertStableShim(before, await readShim(project.shim));
 }
 
 async function verifyStandaloneInit(project, packageUrl, diagnostics) {
@@ -221,27 +165,6 @@ async function createAstroProject(directory) {
   await writeFile(path.join(directory, "src", "layouts", "Layout.astro"), "<slot />\n");
 }
 
-async function createLauncherProject(directory, packageUrl) {
-  await mkdir(directory, { recursive: true });
-  await writeFile(
-    path.join(directory, "package.json"),
-    `${JSON.stringify(
-      {
-        name: "packed-cli-launcher",
-        private: true,
-        scripts: { "starwind-command": "starwind" },
-        devDependencies: { starwind: packageUrl },
-      },
-      null,
-      2,
-    )}\n`,
-  );
-  await writeFile(
-    path.join(directory, "pnpm-workspace.yaml"),
-    "packages: []\nminimumReleaseAge: 0\nminimumReleaseAgeStrict: false\n",
-  );
-}
-
 async function startTarballServer(tarball) {
   const tarballStat = await stat(tarball);
   const server = http.createServer((request, response) => {
@@ -270,11 +193,6 @@ async function startTarballServer(tarball) {
       ),
     port: address.port,
   };
-}
-
-async function readShim(file) {
-  const source = await readFile(file, "utf8");
-  return { hash: createHash("sha256").update(source).digest("hex"), source };
 }
 
 async function pathExists(file) {

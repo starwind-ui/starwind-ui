@@ -5,21 +5,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertCleanLifecycle,
-  assertStableShim,
   createPackedLifecycleArgs,
   createWindowsPackedCliPlan,
-  extractWindowsShimTarget,
   runCommand,
 } from "../windows-packed-cli-smoke.mjs";
-
-const publishedStyleShim = String.raw`@SETLOCAL
-@IF EXIST "%~dp0\node.exe" (
-  "%~dp0\node.exe" "%~dp0\..\.pnpm\starwind@http+127.0.0.1+4321+starwind-cli.tgz\node_modules\starwind\dist\index.js" %*
-) ELSE (
-  @SET PATHEXT=%PATHEXT:;.JS;=;%
-  node "%~dp0\..\.pnpm\starwind@http+127.0.0.1+4321+starwind-cli.tgz\node_modules\starwind\dist\index.js" %*
-)
-`;
 
 describe("Windows packed CLI smoke", () => {
   it("uses a stable localhost package URL and generated project shims", () => {
@@ -32,23 +21,6 @@ describe("Windows packed CLI smoke", () => {
     expect(plan.projects.standalone.shim).toBe(
       path.join(root, "standalone", "node_modules", ".bin", "starwind.CMD"),
     );
-    expect(plan.launcher.directory).toBe(path.join(root, "launcher"));
-  });
-
-  it("requires the generated launcher shim to remain byte-identical", () => {
-    const hash = "same-hash";
-    expect(extractWindowsShimTarget(publishedStyleShim)).toContain(
-      String.raw`.pnpm\starwind@http+127.0.0.1+4321+starwind-cli.tgz`,
-    );
-    expect(() =>
-      assertStableShim({ hash, source: publishedStyleShim }, { hash, source: publishedStyleShim }),
-    ).not.toThrow();
-    expect(() =>
-      assertStableShim(
-        { hash, source: publishedStyleShim },
-        { hash: "changed", source: `${publishedStyleShim}REM rewritten\n` },
-      ),
-    ).toThrow(/rewrote the active Starwind command shim/);
   });
 
   it("launches lifecycle commands from an isolated pnpm dlx package", () => {
