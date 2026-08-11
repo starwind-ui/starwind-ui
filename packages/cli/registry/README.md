@@ -52,15 +52,20 @@ For every existing primitive whose installable Astro or React vendoring artifact
 
 - Add a strict intent file at `.changeset/primitive-components/<slug>.json` containing a
   `primitives` object and add the normal `starwind` package Changeset.
-- Use `patch` for compatible changes and `minor` for breaking API or behavior changes. Primitive
-  intents reject `major`; do not advance a primitive to `1.0.0` until Starwind v3 and Runtime leave
-  beta.
+- Use `patch` for compatible fixes, `minor` for backward-compatible capabilities, and `major` for
+  breaking API or behavior changes.
 - Do not edit the existing entry in `primitive-versions.json`. Regenerate registry artifacts so the
   new source is current while its version remains at the last released value.
 - `pnpm release:version` groups pending intents, applies the highest requested bump once, consumes
   the intents, and regenerates the primitive artifacts in the Version Packages PR.
 
-New primitives receive an explicit initial manifest entry and no deferred intent.
+The stable baseline promotion uses one full-inventory `major` intent while every Primitive remains
+below `1.0.0`. `pnpm release:version` promotes every existing Primitive and
+`defaultPrimitiveVersion` to `1.0.0` together. Partial or repeated metadata-only promotion intents
+are rejected.
+
+New primitives receive an explicit initial manifest entry and no deferred intent. Stable new
+primitives start at `1.0.0`.
 
 Continue to bump `registryVersion` only when the registry schema or artifact distribution changes.
 Package Changesets and changelog history do not substitute for styled or primitive version intent.

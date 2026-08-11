@@ -65,6 +65,7 @@ function artifacts(versions: Record<string, string>): PrimitiveVendoringArtifact
 function snapshot(
   options: {
     artifacts?: PrimitiveVendoringArtifacts;
+    defaultPrimitiveVersion?: string;
     fragments?: PrimitiveReleaseSnapshot["fragments"];
     manifest?: Record<string, string>;
     starwindChangesets?: string[];
@@ -74,27 +75,30 @@ function snapshot(
   return {
     artifacts: options.artifacts ?? artifacts(versions),
     fragments: options.fragments ?? {},
-    manifest: { defaultPrimitiveVersion: "0.1.0", primitives: versions },
+    manifest: {
+      defaultPrimitiveVersion: options.defaultPrimitiveVersion ?? "0.1.0",
+      primitives: versions,
+    },
     starwindChangesets: options.starwindChangesets ?? [],
   };
 }
 
 describe("primitive component release intents", () => {
-  it("parses strict patch and minor intents and rejects invalid input", () => {
+  it("parses strict SemVer intents and rejects invalid input", () => {
     const known = new Set(["avatar", "select"]);
     expect(
       parsePrimitiveVersionIntent(
-        { primitives: { avatar: "patch", select: "minor" } },
+        { primitives: { avatar: "major", select: "minor" } },
         "intent.json",
         known,
       ),
-    ).toEqual({ primitives: { avatar: "patch", select: "minor" } });
+    ).toEqual({ primitives: { avatar: "major", select: "minor" } });
     expect(() => parsePrimitiveVersionIntent({ primitives: {} }, "empty.json", known)).toThrow(
       /at least one primitive/i,
     );
     expect(() =>
-      parsePrimitiveVersionIntent({ primitives: { avatar: "major" } }, "major.json", known),
-    ).toThrow(/patch or minor/i);
+      parsePrimitiveVersionIntent({ primitives: { avatar: "none" } }, "none.json", known),
+    ).toThrow(/patch, minor, or major/i);
     expect(() =>
       parsePrimitiveVersionIntent({ primitives: { missing: "patch" } }, "unknown.json", known),
     ).toThrow(/unknown primitive/i);
@@ -107,20 +111,35 @@ describe("primitive component release intents", () => {
     ).toThrow(/only a primitives object/i);
   });
 
-  it("aggregates each primitive to one highest-severity pre-1.0 bump", () => {
+  it("aggregates each primitive to one highest-severity SemVer bump", () => {
     const aggregate = aggregatePrimitiveVersionIntents({
       "avatar-a.json": { primitives: { avatar: "patch" } },
       "avatar-b.json": { primitives: { avatar: "minor" } },
+      "avatar-c.json": { primitives: { avatar: "major" } },
       "select.json": { primitives: { select: "patch" } },
     });
-    expect(aggregate).toEqual({ avatar: "minor", select: "patch" });
+    expect(aggregate).toEqual({ avatar: "major", select: "patch" });
     expect(applyPrimitiveVersionIntents({ avatar: "0.1.0", select: "0.1.2" }, aggregate)).toEqual({
-      avatar: "0.2.0",
+      avatar: "1.0.0",
       select: "0.1.3",
     });
     expect(() => applyPrimitiveVersionIntents({ avatar: "bad" }, { avatar: "patch" })).toThrow(
       /invalid semver/i,
     );
+  });
+
+  it("accepts one full-inventory stable promotion intent without source churn", () => {
+    const base = snapshot();
+    const head = snapshot({
+      fragments: {
+        "stable-baseline.json": { primitives: { avatar: "major", select: "major" } },
+      },
+      starwindChangesets: ["stable-baseline.md"],
+    });
+    expect(validatePrimitiveVersionPullRequest({ base, head })).toMatchObject({
+      mode: "intent",
+      promotedPrimitives: ["avatar", "select"],
+    });
   });
 
   it("fingerprints Astro, React, and shared vendored source but ignores release metadata", () => {
@@ -242,6 +261,29 @@ describe("primitive component release intents", () => {
     ).toThrow(/expected avatar@0\.1\.1/i);
   });
 
+  it("validates the Version Packages PR for the stable Primitive baseline", () => {
+    const base = snapshot({
+      fragments: {
+        "stable-baseline.json": { primitives: { avatar: "major", select: "major" } },
+      },
+    });
+    const expected = { avatar: "1.0.0", select: "1.0.0" };
+    expect(
+      validatePrimitiveVersionPullRequest({
+        base,
+        head: snapshot({
+          artifacts: artifacts(expected),
+          defaultPrimitiveVersion: "1.0.0",
+          manifest: expected,
+        }),
+      }),
+    ).toMatchObject({
+      mode: "version",
+      promotedPrimitives: ["avatar", "select"],
+      versionedPrimitives: ["avatar", "select"],
+    });
+  });
+
   it("stages, versions, consumes, and remains idempotent", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "primitive-component-release-"));
     temporaryRoots.push(root);
@@ -265,6 +307,31 @@ describe("primitive component release intents", () => {
       readFile(path.join(root, ".primitive-component-intents/avatar.json"), "utf8"),
     ).rejects.toMatchObject({ code: "ENOENT" });
     expect(await versionPrimitiveComponents({ repoRoot: root })).toMatchObject({ versions: {} });
+  });
+
+  it("promotes the complete Primitive inventory and default baseline to 1.0.0", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "primitive-component-stable-"));
+    temporaryRoots.push(root);
+    const fragmentRoot = path.join(root, ".changeset/primitive-components");
+    const manifestPath = path.join(root, "packages/cli/registry/primitive-versions.json");
+    await mkdir(fragmentRoot, { recursive: true });
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    await writeFile(manifestPath, `${JSON.stringify(snapshot().manifest, null, 2)}\n`);
+    await writeFile(
+      path.join(fragmentRoot, "stable-baseline.json"),
+      `${JSON.stringify({ primitives: { avatar: "major", select: "major" } }, null, 2)}\n`,
+    );
+    expect(await stagePrimitiveVersionIntents({ repoRoot: root })).toEqual({ staged: true });
+    expect(await versionPrimitiveComponents({ repoRoot: root })).toMatchObject({
+      versions: {
+        avatar: { bump: "major", from: "0.1.0", to: "1.0.0" },
+        select: { bump: "major", from: "0.1.2", to: "1.0.0" },
+      },
+    });
+    expect(JSON.parse(await readFile(manifestPath, "utf8"))).toEqual({
+      defaultPrimitiveVersion: "1.0.0",
+      primitives: { avatar: "1.0.0", select: "1.0.0" },
+    });
   });
 
   it("rejects unsafe names and simultaneous pending and staged directories", async () => {
