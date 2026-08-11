@@ -350,7 +350,7 @@ describe("release package tooling", () => {
     expect(root.scripts?.["publish:beta:dry-run"]).toBe("pnpm publish:release:dry-run");
     expect(root.scripts?.["publish:beta"]).toBe("pnpm publish:release");
     expect(commandPhases(root.scripts?.["release:gate"])).toEqual([
-      "pnpm verify",
+      "pnpm verify:public",
       "pnpm --filter=starwind package:check",
       "pnpm audit:prod",
       "pnpm demo:smoke",

@@ -1335,10 +1335,52 @@ function createSourceHash(content: string): string {
   return `sha256:${createHash("sha256").update(content).digest("hex")}`;
 }
 
+const RELEASE_MANAGED_PRIMITIVE_PACKAGES = new Set([
+  "@starwind-ui/astro",
+  "@starwind-ui/react",
+  "@starwind-ui/runtime",
+  "@starwind-ui/svelte",
+  "@starwind-ui/vue",
+]);
+
 function createPrimitiveArtifactIntegrityFingerprint(
   artifactSet: PrimitiveVendoringArtifacts,
 ): string {
-  return `sha256:${createHash("sha256").update(toCanonicalJson(artifactSet)).digest("hex")}`;
+  const document = {
+    ...artifactSet,
+    primitives: artifactSet.primitives.map((artifact) => ({
+      ...artifact,
+      packageRequirements: normalizeIntegrityPackageRequirements(artifact.packageRequirements),
+      version: "<release-managed>",
+    })),
+    validation: artifactSet.validation
+      ? Object.fromEntries(
+          Object.entries(artifactSet.validation).map(([target, descriptor]) => [
+            target,
+            descriptor
+              ? {
+                  ...descriptor,
+                  packageRequirements: normalizeIntegrityPackageRequirements(
+                    descriptor.packageRequirements,
+                  ),
+                }
+              : descriptor,
+          ]),
+        )
+      : undefined,
+  };
+
+  return `sha256:${createHash("sha256").update(toCanonicalJson(document)).digest("hex")}`;
+}
+
+function normalizeIntegrityPackageRequirements(
+  requirements: RegistryPackageRequirement[],
+): RegistryPackageRequirement[] {
+  return requirements.map((requirement) =>
+    RELEASE_MANAGED_PRIMITIVE_PACKAGES.has(requirement.name)
+      ? { ...requirement, range: "<release-managed>" }
+      : requirement,
+  );
 }
 
 function toCanonicalJson(value: unknown): string {

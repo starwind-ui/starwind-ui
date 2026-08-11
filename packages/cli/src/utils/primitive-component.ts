@@ -876,7 +876,8 @@ function validatePrimitiveArtifactIntegrity<TFramework extends CliFrameworkTarge
     );
   }
 
-  const { integrity: _integrity, ...document } = artifactSet;
+  const { integrity: _integrity, ...rawDocument } = artifactSet;
+  const document = normalizePrimitiveArtifactIntegrityDocument(rawDocument);
   const computedFingerprint = `sha256:${createHash("sha256")
     .update(toCanonicalPrimitiveArtifactJson(document))
     .digest("hex")}`;
@@ -885,6 +886,56 @@ function validatePrimitiveArtifactIntegrity<TFramework extends CliFrameworkTarge
       `Primitive artifact target "${target}" does not match its trusted integrity fingerprint.`,
     );
   }
+}
+
+const RELEASE_MANAGED_PRIMITIVE_PACKAGES = new Set([
+  "@starwind-ui/astro",
+  "@starwind-ui/react",
+  "@starwind-ui/runtime",
+  "@starwind-ui/svelte",
+  "@starwind-ui/vue",
+]);
+
+function normalizePrimitiveArtifactIntegrityDocument<TFramework extends CliFrameworkTarget>(
+  artifactSet: Omit<PrimitiveVendoringArtifactSet<TFramework>, "integrity">,
+) {
+  return {
+    ...artifactSet,
+    primitives: artifactSet.primitives.map((artifact) => ({
+      ...artifact,
+      packageRequirements: normalizeIntegrityPackageRequirements(artifact.packageRequirements),
+      version: "<release-managed>",
+    })),
+    validation: artifactSet.validation
+      ? Object.fromEntries(
+          (
+            Object.entries(artifactSet.validation) as Array<
+              [string, PrimitiveVendoringTargetDescriptor | undefined]
+            >
+          ).map(([target, descriptor]) => [
+            target,
+            descriptor
+              ? {
+                  ...descriptor,
+                  packageRequirements: normalizeIntegrityPackageRequirements(
+                    descriptor.packageRequirements,
+                  ),
+                }
+              : descriptor,
+          ]),
+        )
+      : undefined,
+  };
+}
+
+function normalizeIntegrityPackageRequirements(
+  requirements: readonly { name: string; range: string }[],
+) {
+  return requirements.map((requirement) =>
+    RELEASE_MANAGED_PRIMITIVE_PACKAGES.has(requirement.name)
+      ? { ...requirement, range: "<release-managed>" }
+      : requirement,
+  );
 }
 
 function toCanonicalPrimitiveArtifactJson(value: unknown): string {

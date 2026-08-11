@@ -8,6 +8,10 @@ type PackageJson = {
 };
 
 type Workflow = {
+  concurrency?: {
+    "cancel-in-progress"?: boolean | string;
+    group?: string;
+  };
   jobs: Record<
     string,
     {
@@ -16,6 +20,7 @@ type Workflow = {
       needs?: string | string[];
       steps?: Array<{ if?: string; name?: string; run?: string }>;
       uses?: string;
+      with?: Record<string, unknown>;
     }
   >;
   on?: Record<string, unknown>;
@@ -95,6 +100,18 @@ describe("root verification scripts", () => {
       "pnpm runtime:docs:metadata:check",
       "pnpm build",
     ]);
+    expect(commandPhases(pkg.scripts?.["verify:public"])).toEqual([
+      "pnpm check:public",
+      "pnpm styled:versions:check",
+      "pnpm primitive:versions:check",
+      "pnpm test:homes",
+      "pnpm test:all",
+      "pnpm runtime:generate:typecheck",
+      "pnpm runtime:docs:metadata:check",
+      "pnpm build:public",
+    ]);
+    expect(pkg.scripts?.["build:public"]).not.toMatch(/vue|svelte/);
+    expect(pkg.scripts?.["typecheck:public"]).not.toMatch(/vue|svelte/);
     expect(phases.some((phase) => /audit/i.test(phase))).toBe(false);
     expect(phases).not.toContain("pnpm runtime:generate:test");
     expect(new Set(phases).size).toBe(phases.length);
@@ -113,7 +130,7 @@ describe("root verification scripts", () => {
     const pkg = await readRootPackage();
 
     expect(commandPhases(pkg.scripts?.["release:gate"])).toEqual([
-      "pnpm verify",
+      "pnpm verify:public",
       "pnpm --filter=starwind package:check",
       "pnpm audit:prod",
       "pnpm demo:smoke",
@@ -128,7 +145,7 @@ describe("root verification scripts", () => {
     expect(pkg.scripts?.["publish:release"]).toBe("node scripts/release-packages.mjs --publish");
   });
 
-  it("gates release automation on parallel read-only verification jobs", async () => {
+  it("runs private adapters only for relevant development PRs", async () => {
     const [verifyWorkflowSource, releaseWorkflowSource] = await Promise.all([
       readFile(".github/workflows/verify.yml", "utf8"),
       readFile(".github/workflows/release.yml", "utf8"),
@@ -139,7 +156,10 @@ describe("root verification scripts", () => {
       ({ steps = [] }) => steps.map(({ run }) => run).filter(Boolean) as string[],
     );
 
-    expect(verifyWorkflow.on).toMatchObject({ pull_request: null, workflow_call: null });
+    expect(verifyWorkflow.on).toMatchObject({
+      pull_request: null,
+      workflow_call: { inputs: { private_adapters: { default: false, type: "boolean" } } },
+    });
     expect(verifyWorkflow.permissions).toEqual({ contents: "read" });
     expect(Object.keys(verifyWorkflow.jobs)).toEqual(
       expect.arrayContaining([
@@ -155,18 +175,36 @@ describe("root verification scripts", () => {
       ]),
     );
     expect(verifyWorkflow.jobs["vue-tests"]).toMatchObject({
-      if: "needs.scope.outputs.vue == 'true'",
+      if: expect.stringContaining("inputs.private_adapters"),
       needs: "scope",
     });
+    expect(verifyWorkflow.jobs["vue-tests"].if).toContain("needs.scope.outputs.vue == 'true'");
     expect(verifyWorkflow.jobs["svelte-tests"]).toMatchObject({
-      if: "needs.scope.outputs.svelte == 'true'",
+      if: expect.stringContaining("inputs.private_adapters"),
+      needs: "scope",
+    });
+    expect(verifyWorkflow.jobs["svelte-tests"].if).toContain(
+      "needs.scope.outputs.svelte == 'true'",
+    );
+    expect(verifyWorkflowSource).not.toMatch(/packages\/\(cli\|runtime\|vue\)/u);
+    expect(verifyWorkflowSource).not.toMatch(/packages\/\(runtime\|svelte\)/u);
+    expect(verifyWorkflowSource).toContain("packages/vue/");
+    expect(verifyWorkflowSource).toContain("packages/svelte/");
+    expect(verifyWorkflow.jobs["windows-packed-cli"]).toMatchObject({
+      if: "needs.scope.outputs.windows == 'true'",
+      needs: "scope",
+    });
+    expect(verifyWorkflow.jobs["node22-public-consumer"]).toMatchObject({
+      if: "needs.scope.outputs.node22 == 'true'",
       needs: "scope",
     });
     expect(verifyWorkflow.jobs["generator-tests"].steps).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           name: "Install Playwright Chromium",
-          run: expect.stringContaining("pnpm exec playwright install chromium"),
+          run: expect.stringContaining(
+            "pnpm --filter=react-demo exec playwright install --with-deps chromium",
+          ),
         }),
       ]),
     );
@@ -214,9 +252,23 @@ describe("root verification scripts", () => {
     expect(
       verifyRuns.filter((command) => /(?:^|[\s;&])pnpm\s+audit(?::prod)?(?:\s|$)/u.test(command)),
     ).toEqual([]);
+    expect(verifyWorkflowSource).toContain(`needs.windows-packed-cli.result }}" != "skipped"`);
+    expect(verifyWorkflowSource).toContain(`needs.node22-public-consumer.result }}" != "skipped"`);
 
-    expect(releaseWorkflow.jobs.verify.uses).toBe("./.github/workflows/verify.yml");
-    expect(releaseWorkflow.jobs.release).toMatchObject({ name: "Release", needs: "verify" });
+    expect(verifyWorkflow.concurrency).toMatchObject({
+      "cancel-in-progress": "${{ github.event_name == 'pull_request' }}",
+    });
+    expect(releaseWorkflow.concurrency).toMatchObject({ "cancel-in-progress": true });
+    expect(releaseWorkflow.jobs.verify).toMatchObject({
+      if: "needs.scope.outputs.versioned == 'true'",
+      needs: "scope",
+      uses: "./.github/workflows/verify.yml",
+      with: { private_adapters: false },
+    });
+    expect(releaseWorkflow.jobs.release).toMatchObject({
+      name: "Release",
+      needs: ["scope", "verify"],
+    });
     expect(releaseWorkflow.jobs.release.steps).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

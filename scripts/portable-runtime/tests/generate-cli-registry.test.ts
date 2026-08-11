@@ -88,6 +88,35 @@ describe("generateCliRegistry", () => {
     );
   });
 
+  it("keeps private artifact integrity stable across release-only version changes", async () => {
+    const targetPolicy = createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]);
+    const beforeManifestPath = path.join(tempRoot, "primitive-versions-before.json");
+    const afterManifestPath = path.join(tempRoot, "primitive-versions-after.json");
+    await Promise.all([
+      writePrimitiveVersionManifest(beforeManifestPath, { primitives: { button: "0.9.0" } }),
+      writePrimitiveVersionManifest(afterManifestPath, { primitives: { button: "1.0.0" } }),
+    ]);
+
+    const [before, after] = await Promise.all([
+      buildPrimitiveVendoringArtifacts({
+        contracts: [buttonRuntimeAdapterContract],
+        primitiveVersionManifestPath: beforeManifestPath,
+        targetPolicy,
+        tempRoot: path.join(tempRoot, "vue-integrity-before"),
+      }),
+      buildPrimitiveVendoringArtifacts({
+        contracts: [buttonRuntimeAdapterContract],
+        primitiveVersionManifestPath: afterManifestPath,
+        targetPolicy,
+        tempRoot: path.join(tempRoot, "vue-integrity-after"),
+      }),
+    ]);
+
+    expect(before.primitives[0]?.version).toBe("0.9.0");
+    expect(after.primitives[0]?.version).toBe("1.0.0");
+    expect(before.integrity?.fingerprint).toBe(after.integrity?.fingerprint);
+  });
+
   it("generates exact deterministic private Vue registry documents from registered facts", async () => {
     const targetPolicy = createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]);
     const [styledVersionManifest, primitiveVersionManifest] = await Promise.all([

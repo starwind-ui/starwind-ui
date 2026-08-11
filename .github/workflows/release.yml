@@ -5,16 +5,48 @@ on:
     branches:
       - main
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  scope:
+    name: Detect version materialization
+    runs-on: ubuntu-latest
+    outputs:
+      versioned: ${{ steps.changes.outputs.versioned }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 2
+
+      - name: Detect merged Version Packages candidate
+        id: changes
+        shell: bash
+        run: |
+          git diff --name-status "${GITHUB_SHA}^" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
+          if grep -Eq '^D[[:space:]]+\.changeset/[^/]+\.md$' "$RUNNER_TEMP/changed-files.txt" &&
+             grep -Eq '^M[[:space:]]+packages/(astro|cli|react|runtime)/package\.json$' "$RUNNER_TEMP/changed-files.txt"; then
+            echo "versioned=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "versioned=false" >> "$GITHUB_OUTPUT"
+          fi
+
   verify:
     name: Verify
+    needs: scope
+    if: needs.scope.outputs.versioned == 'true'
     uses: ./.github/workflows/verify.yml
+    with:
+      private_adapters: false
 
   release:
     name: Release
-    needs: verify
+    needs:
+      - scope
+      - verify
+    if: always() && needs.scope.result == 'success' && (needs.verify.result == 'success' || needs.verify.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -3,9 +3,17 @@ name: Verify
 on:
   pull_request:
   workflow_call:
+    inputs:
+      private_adapters:
+        type: boolean
+        default: false
 
 permissions:
   contents: read
+
+concurrency:
+  group: verify-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   scope:
@@ -14,6 +22,8 @@ jobs:
     outputs:
       svelte: ${{ steps.changes.outputs.svelte }}
       vue: ${{ steps.changes.outputs.vue }}
+      windows: ${{ steps.changes.outputs.windows }}
+      node22: ${{ steps.changes.outputs.node22 }}
     steps:
       - name: Checkout Repo
         # checkout@6.0.2
@@ -30,20 +40,34 @@ jobs:
           if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "$BASE_SHA^{commit}"; then
             echo "svelte=true" >> "$GITHUB_OUTPUT"
             echo "vue=true" >> "$GITHUB_OUTPUT"
+            echo "windows=true" >> "$GITHUB_OUTPUT"
+            echo "node22=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           git diff --name-only "$BASE_SHA" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
-          if grep -Eq '^(apps/vue-demo/|packages/(cli|runtime|vue)/|scripts/(cli-host-acceptance|release-candidate-acceptance|vue-cli-host-acceptance)\.mjs$|scripts/portable-runtime/|scripts/tests/(local-link-scripts|vue-cli-host-acceptance)\.test\.ts$|\.github/workflows/verify\.yml$|package\.json$|pnpm-lock\.yaml$)' "$RUNNER_TEMP/changed-files.txt"; then
+          if grep -Eq '^(apps/vue-demo/|packages/vue/|scripts/vue-cli-host-acceptance[.]mjs$|scripts/tests/vue-cli-host-acceptance[.]test[.]ts$|scripts/portable-runtime/renderers/framework-adapters/vue/)' "$RUNNER_TEMP/changed-files.txt"; then
             echo "vue=true" >> "$GITHUB_OUTPUT"
           else
             echo "vue=false" >> "$GITHUB_OUTPUT"
           fi
 
-          if grep -Eq '^(packages/(runtime|svelte)/|scripts/portable-runtime/(contracts/|renderers/|generate-svelte-wrappers|check-svelte)|package\.json$|pnpm-lock\.yaml$)' "$RUNNER_TEMP/changed-files.txt"; then
+          if grep -Eq '^(packages/svelte/|scripts/portable-runtime/(renderers/framework-adapters/svelte/|generate-svelte-wrappers|check-svelte)|scripts/portable-runtime/tests/generate-svelte-proof/)' "$RUNNER_TEMP/changed-files.txt"; then
             echo "svelte=true" >> "$GITHUB_OUTPUT"
           else
             echo "svelte=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if grep -Eq '^(packages/(astro|cli|runtime)/|scripts/(pack-public-release-artifacts|windows-packed-cli-smoke)\.mjs$|scripts/tests/windows-packed-cli-smoke\.test\.ts$|\.github/workflows/verify\.yml$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$)' "$RUNNER_TEMP/changed-files.txt"; then
+            echo "windows=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "windows=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if grep -Eq '^(packages/(astro|cli|react|runtime)/|scripts/(node22-public-consumer-smoke|pack-public-release-artifacts)\.mjs$|scripts/tests/node22-public-consumer-smoke\.test\.ts$|\.github/workflows/verify\.yml$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$)' "$RUNNER_TEMP/changed-files.txt"; then
+            echo "node22=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "node22=false" >> "$GITHUB_OUTPUT"
           fi
 
   static:
@@ -146,7 +170,7 @@ jobs:
   vue-tests:
     name: Vue verification
     needs: scope
-    if: needs.scope.outputs.vue == 'true'
+    if: (github.event_name == 'pull_request' || inputs.private_adapters) && github.head_ref != 'changeset-release/main' && needs.scope.outputs.vue == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -174,7 +198,7 @@ jobs:
   svelte-tests:
     name: Svelte verification
     needs: scope
-    if: needs.scope.outputs.svelte == 'true'
+    if: (github.event_name == 'pull_request' || inputs.private_adapters) && github.head_ref != 'changeset-release/main' && needs.scope.outputs.svelte == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -223,6 +247,8 @@ jobs:
 
   node22-public-consumer:
     name: Node 22.12 public consumer
+    needs: scope
+    if: needs.scope.outputs.node22 == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -251,6 +277,8 @@ jobs:
 
   windows-packed-cli:
     name: Windows packed CLI
+    needs: scope
+    if: needs.scope.outputs.windows == 'true'
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -294,9 +322,17 @@ jobs:
                 "${{ needs.node-tests.result }}" != "success" ||
                 "${{ needs.generator-tests.result }}" != "success" ||
                 "${{ needs.browser-adapter-tests.result }}" != "success" ||
-                "${{ needs.build-drift.result }}" != "success" ||
-                "${{ needs.node22-public-consumer.result }}" != "success" ||
-                "${{ needs.windows-packed-cli.result }}" != "success" ]]; then
+                "${{ needs.build-drift.result }}" != "success" ]]; then
+            exit 1
+          fi
+
+          if [[ "${{ needs.node22-public-consumer.result }}" != "success" &&
+                "${{ needs.node22-public-consumer.result }}" != "skipped" ]]; then
+            exit 1
+          fi
+
+          if [[ "${{ needs.windows-packed-cli.result }}" != "success" &&
+                "${{ needs.windows-packed-cli.result }}" != "skipped" ]]; then
             exit 1
           fi
 
