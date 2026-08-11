@@ -5,7 +5,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertCleanLifecycle,
+  createPackedAstroProjectManifest,
   createPackedLifecycleArgs,
+  createPackedPnpmWorkspace,
   createWindowsPackedCliPlan,
   runCommand,
 } from "../windows-packed-cli-smoke.mjs";
@@ -15,9 +17,26 @@ describe("Windows packed CLI smoke", () => {
     const root = path.resolve("windows-packed-cli");
     const packageUrl = "http://127.0.0.1:4321/starwind-cli.tgz";
     const plan = createWindowsPackedCliPlan(root, packageUrl);
+    const projectManifest = createPackedAstroProjectManifest(
+      plan.projects.standalone.directory,
+      plan.artifacts,
+    );
+    const runtimeSpecifier = `file:${plan.artifacts.runtime.replaceAll("\\", "/")}`;
+    const pnpmWorkspace = createPackedPnpmWorkspace(plan.artifacts);
 
     expect(plan.packageUrl).toBe(packageUrl);
     expect(plan.tarball).toBe(path.join(root, "artifacts", "starwind-cli.tgz"));
+    expect(plan.artifacts).toEqual({
+      astro: path.join(root, "artifacts", "starwind-astro.tgz"),
+      cli: path.join(root, "artifacts", "starwind-cli.tgz"),
+      runtime: path.join(root, "artifacts", "starwind-runtime.tgz"),
+    });
+    expect(plan.tarball).toBe(plan.artifacts.cli);
+    expect(projectManifest.dependencies["@starwind-ui/runtime"]).toBe(runtimeSpecifier);
+    expect(projectManifest).not.toHaveProperty("pnpm");
+    expect(pnpmWorkspace).toContain(
+      `overrides:\n  "@starwind-ui/runtime": "${runtimeSpecifier}"\n`,
+    );
     expect(plan.projects.standalone.shim).toBe(
       path.join(root, "standalone", "node_modules", ".bin", "starwind.CMD"),
     );

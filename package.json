@@ -31,7 +31,7 @@
     "test:homes": "node scripts/check-test-homes.mjs",
     "test:published-release": "node scripts/published-release-acceptance.mjs",
     "test:published-beta": "pnpm test:published-release",
-    "test:windows-packed-cli": "pnpm cli:build && node scripts/windows-packed-cli-smoke.mjs",
+    "test:windows-packed-cli": "pnpm runtime:build && pnpm cli:build && node scripts/windows-packed-cli-smoke.mjs",
     "test:cli-host-acceptance": "pnpm cli:build && pnpm runtime:build && pnpm react:build && node scripts/cli-host-acceptance.mjs",
     "cli:dev": "pnpm --filter=starwind dev",
     "cli:build": "pnpm --filter=starwind build",

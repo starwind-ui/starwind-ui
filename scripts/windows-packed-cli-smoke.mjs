@@ -28,6 +28,11 @@ export function createWindowsPackedCliPlan(root, packageUrl) {
   };
 
   return {
+    artifacts: {
+      astro: path.join(root, "artifacts", "starwind-astro.tgz"),
+      cli: path.join(root, "artifacts", "starwind-cli.tgz"),
+      runtime: path.join(root, "artifacts", "starwind-runtime.tgz"),
+    },
     packageUrl,
     projects: {
       add: createProject("add-driven"),
@@ -65,20 +70,26 @@ export async function runWindowsPackedCliSmoke() {
   const diagnostics = [];
 
   try {
-    const tarball = path.join(root, "artifacts", "starwind-cli.tgz");
-    await mkdir(path.dirname(tarball), { recursive: true });
-    await runRequired({
-      ...createPnpmInvocation(["pack", "--out", tarball]),
-      cwd: path.join(REPO_ROOT, "packages", "cli"),
-    });
+    const artifacts = createWindowsPackedCliPlan(root, "").artifacts;
+    await mkdir(path.dirname(artifacts.cli), { recursive: true });
+    for (const [packageDirectory, tarball] of [
+      ["runtime", artifacts.runtime],
+      ["astro", artifacts.astro],
+      ["cli", artifacts.cli],
+    ]) {
+      await runRequired({
+        ...createPnpmInvocation(["pack", "--out", tarball]),
+        cwd: path.join(REPO_ROOT, "packages", packageDirectory),
+      });
+    }
 
-    const server = await startTarballServer(tarball);
+    const server = await startTarballServer(artifacts.cli);
     const packageUrl = `http://127.0.0.1:${server.port}/starwind-cli.tgz`;
     const plan = createWindowsPackedCliPlan(root, packageUrl);
 
     try {
       for (const project of Object.values(plan.projects)) {
-        await createAstroProject(project.directory);
+        await createAstroProject(project.directory, plan.artifacts);
         await runRequired({ ...createPnpmInvocation(["install"]), cwd: project.directory });
       }
       await verifyStandaloneInit(plan.projects.standalone, packageUrl, diagnostics);
@@ -133,26 +144,50 @@ async function verifyAddDrivenInit(project, packageUrl, diagnostics) {
   assert.equal(await pathExists(project.shim), false, "The packed CLI became project-local.");
 }
 
-async function createAstroProject(directory) {
-  // Keep the packed CLI outside the target project. pnpm can relink a project-local URL dependency
-  // while init installs Runtime packages, which does not model a published registry dependency.
+function fileSpecifier(file) {
+  return `file:${file.replaceAll("\\", "/")}`;
+}
+
+export function createPackedAstroProjectManifest(directory, artifacts) {
+  const runtime = fileSpecifier(artifacts.runtime);
+  return {
+    dependencies: {
+      "@starwind-ui/astro": fileSpecifier(artifacts.astro),
+      "@starwind-ui/runtime": runtime,
+      astro: "7.0.0",
+    },
+    name: path.basename(directory),
+    private: true,
+    type: "module",
+  };
+}
+
+export function createPackedPnpmWorkspace(artifacts) {
+  return [
+    "packages: []",
+    "minimumReleaseAge: 0",
+    "minimumReleaseAgeStrict: false",
+    "overrides:",
+    `  "@starwind-ui/runtime": "${fileSpecifier(artifacts.runtime)}"`,
+    "allowBuilds:",
+    "  esbuild: true",
+    "  sharp: true",
+    "  unrs-resolver: true",
+    "",
+  ].join("\n");
+}
+
+async function createAstroProject(directory, artifacts) {
+  // Keep the packed CLI outside the target project so nested installs cannot relink its active shim.
+  // Packed Runtime and adapter tarballs stay project-local for prepublish verification.
   await mkdir(path.join(directory, "src", "layouts"), { recursive: true });
   await writeFile(
     path.join(directory, "package.json"),
-    `${JSON.stringify(
-      {
-        name: path.basename(directory),
-        private: true,
-        type: "module",
-        dependencies: { astro: "7.0.0" },
-      },
-      null,
-      2,
-    )}\n`,
+    `${JSON.stringify(createPackedAstroProjectManifest(directory, artifacts), null, 2)}\n`,
   );
   await writeFile(
     path.join(directory, "pnpm-workspace.yaml"),
-    "packages: []\nminimumReleaseAge: 0\nminimumReleaseAgeStrict: false\nallowBuilds:\n  esbuild: true\n  sharp: true\n  unrs-resolver: true\n",
+    createPackedPnpmWorkspace(artifacts),
   );
   await writeFile(
     path.join(directory, "astro.config.mjs"),

@@ -15,6 +15,7 @@ import {
   updateConfig,
 } from "@/utils/config.js";
 import { ASTRO_PACKAGES, MIN_ASTRO_VERSION, PATHS } from "@/utils/constants.js";
+import { filterUninstalledDependencies } from "@/utils/dependency-resolver.js";
 import { checkStarwindProEnv, setupStarwindProEnv } from "@/utils/env.js";
 import {
   type FrameworkTargetPolicy,
@@ -736,8 +737,11 @@ export async function init(
     installTasks.push({
       title: "Installing Starwind Runtime packages",
       task: async () => {
-        await installDependencies([runtimeSetupPlan.adapterPackage], pm);
-        return "Installed Starwind Runtime packages successfully";
+        const missingPackages = await filterUninstalledDependencies([
+          runtimeSetupPlan.adapterPackage,
+        ]);
+        if (missingPackages.length > 0) await installDependencies(missingPackages, pm);
+        return "Starwind Runtime packages are ready";
       },
     });
 
