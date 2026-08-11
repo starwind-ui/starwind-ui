@@ -148,26 +148,32 @@ function fileSpecifier(file) {
   return `file:${file.replaceAll("\\", "/")}`;
 }
 
+export function createPackedAstroProjectManifest(directory, artifacts) {
+  const runtime = fileSpecifier(artifacts.runtime);
+  return {
+    dependencies: {
+      "@starwind-ui/astro": fileSpecifier(artifacts.astro),
+      "@starwind-ui/runtime": runtime,
+      astro: "7.0.0",
+    },
+    name: path.basename(directory),
+    pnpm: {
+      overrides: {
+        "@starwind-ui/runtime": runtime,
+      },
+    },
+    private: true,
+    type: "module",
+  };
+}
+
 async function createAstroProject(directory, artifacts) {
   // Keep the packed CLI outside the target project so nested installs cannot relink its active shim.
   // Packed Runtime and adapter tarballs stay project-local for prepublish verification.
   await mkdir(path.join(directory, "src", "layouts"), { recursive: true });
   await writeFile(
     path.join(directory, "package.json"),
-    `${JSON.stringify(
-      {
-        name: path.basename(directory),
-        private: true,
-        type: "module",
-        dependencies: {
-          "@starwind-ui/astro": fileSpecifier(artifacts.astro),
-          "@starwind-ui/runtime": fileSpecifier(artifacts.runtime),
-          astro: "7.0.0",
-        },
-      },
-      null,
-      2,
-    )}\n`,
+    `${JSON.stringify(createPackedAstroProjectManifest(directory, artifacts), null, 2)}\n`,
   );
   await writeFile(
     path.join(directory, "pnpm-workspace.yaml"),

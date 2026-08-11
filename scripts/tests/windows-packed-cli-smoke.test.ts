@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertCleanLifecycle,
+  createPackedAstroProjectManifest,
   createPackedLifecycleArgs,
   createWindowsPackedCliPlan,
   runCommand,
@@ -15,6 +16,11 @@ describe("Windows packed CLI smoke", () => {
     const root = path.resolve("windows-packed-cli");
     const packageUrl = "http://127.0.0.1:4321/starwind-cli.tgz";
     const plan = createWindowsPackedCliPlan(root, packageUrl);
+    const projectManifest = createPackedAstroProjectManifest(
+      plan.projects.standalone.directory,
+      plan.artifacts,
+    );
+    const runtimeSpecifier = `file:${plan.artifacts.runtime.replaceAll("\\", "/")}`;
 
     expect(plan.packageUrl).toBe(packageUrl);
     expect(plan.tarball).toBe(path.join(root, "artifacts", "starwind-cli.tgz"));
@@ -24,6 +30,10 @@ describe("Windows packed CLI smoke", () => {
       runtime: path.join(root, "artifacts", "starwind-runtime.tgz"),
     });
     expect(plan.tarball).toBe(plan.artifacts.cli);
+    expect(projectManifest.dependencies["@starwind-ui/runtime"]).toBe(runtimeSpecifier);
+    expect(projectManifest.pnpm.overrides).toEqual({
+      "@starwind-ui/runtime": runtimeSpecifier,
+    });
     expect(plan.projects.standalone.shim).toBe(
       path.join(root, "standalone", "node_modules", ".bin", "starwind.CMD"),
     );
