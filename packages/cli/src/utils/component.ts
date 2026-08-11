@@ -3,18 +3,19 @@ import * as path from "node:path";
 import fs from "fs-extra";
 
 import type { StarwindFramework } from "./config.js";
+import type { CliFrameworkTarget } from "./framework-target-policy.js";
 import { assertSafePathSegment, resolveProjectMutationPath } from "./project-path.js";
 
-export interface RemoveTarget {
+export interface RemoveTarget<TFramework extends CliFrameworkTarget = StarwindFramework> {
   name: string;
-  framework: StarwindFramework;
+  framework: TFramework;
   componentDir: string;
 }
 
-export interface RemoveResult {
+export interface RemoveResult<TFramework extends CliFrameworkTarget = StarwindFramework> {
   componentDir: string;
   name: string;
-  framework: StarwindFramework;
+  framework: TFramework;
   status: "removed" | "failed";
   error?: string;
 }
@@ -30,7 +31,9 @@ function resolveConfigPath(directory: string): string {
 /**
  * Removes a component from the project's component directory.
  */
-export async function removeComponent(target: RemoveTarget): Promise<RemoveResult> {
+export async function removeComponent<TFramework extends CliFrameworkTarget>(
+  target: RemoveTarget<TFramework>,
+): Promise<RemoveResult<TFramework>> {
   const { componentDir, framework, name } = target;
 
   try {

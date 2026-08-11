@@ -6,6 +6,7 @@ import {
   inspectAstroReactConfig,
   setupAstroConfig,
   setupAstroReactConfig,
+  updateAstroTailwindConfig,
 } from "../../src/utils/astro-config.js";
 import * as fsUtils from "../../src/utils/fs.js";
 
@@ -680,12 +681,47 @@ describe("astro-config", () => {
     });
 
     it.each([
+      `export default defineConfig({ note: "integrations: [react()]" });`,
+      "export default defineConfig({ note: `integrations: [react()]` });",
+      `export default defineConfig({ // integrations: [react()]\n output: "static" });`,
+    ])("ignores integrations text in non-code source regions", (content) => {
+      expect(inspectAstroReactConfig(content)).toEqual({ status: "configurable" });
+    });
+    it.each([
       `import react from "@astrojs/react";\nexport default defineConfig({ integrations: [[react()]] });`,
       `import react from "@astrojs/react";\nexport default defineConfig({ integrations: [enabled && react()] });`,
       `import react from "@astrojs/react";\nexport default defineConfig({ integrations: ["react()"] });`,
       `import react from "@astrojs/react";\nreact();\nexport default defineConfig({ integrations: [] });`,
     ])("does not treat indirect or unrelated React calls as ready", (content) => {
       expect(inspectAstroReactConfig(content)).toEqual({ status: "configurable" });
+    });
+  });
+
+  describe("Astro Tailwind source updates", () => {
+    it("preserves unrelated source and is byte-stable on repeat", () => {
+      const source = `import { defineConfig } from "astro/config";
+
+export default defineConfig({
+  // preserve adapter configuration
+  output: "server",
+  vite: { resolve: { alias: { feature: "./src/feature" } } },
+});
+`;
+      const updated = updateAstroTailwindConfig(source, false);
+
+      expect(updated).not.toBeNull();
+      expect(updated).toContain("// preserve adapter configuration");
+      expect(updated).toContain('alias: { feature: "./src/feature" }');
+      expect(updated).toContain("plugins: [tailwindcss()]");
+      expect(updateAstroTailwindConfig(updated!, false)).toBe(updated);
+    });
+
+    it.each([
+      `export default defineConfig({ vite: {}, vite: {} });`,
+      `const vite = {}; export default defineConfig({ vite });`,
+      `export default defineConfig({ "vite": {} });`,
+    ])("rejects duplicate, shorthand, or quoted managed properties", (source) => {
+      expect(updateAstroTailwindConfig(source, false)).toBeNull();
     });
   });
 });

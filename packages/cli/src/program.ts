@@ -56,7 +56,7 @@ export function createProgram(): Command {
         "yarn",
       ]),
     )
-    .action(add);
+    .action((components, options) => add(components, options));
 
   program
     .command("docs")
@@ -65,7 +65,7 @@ export function createProgram(): Command {
     .allowExcessArguments()
     .option("--json", "Output as JSON")
     .option("--registry <registry>", "Remote registry URL or local registry file")
-    .action(docs);
+    .action((components, options) => docs(components, options));
 
   program
     .command("search")
@@ -139,7 +139,7 @@ export function createProgram(): Command {
         "yarn",
       ]),
     )
-    .action(update);
+    .action((components, options) => update(components, options));
 
   program
     .command("migrate")
@@ -181,7 +181,7 @@ export function createProgram(): Command {
         "yarn",
       ]),
     )
-    .action(primitivesAdd);
+    .action((primitives, options) => primitivesAdd(primitives, options));
 
   primitivesCommand
     .command("update")
@@ -206,7 +206,7 @@ export function createProgram(): Command {
         "yarn",
       ]),
     )
-    .action(primitivesUpdate);
+    .action((primitives, options) => primitivesUpdate(primitives, options));
 
   primitivesCommand
     .command("list")
@@ -219,7 +219,7 @@ export function createProgram(): Command {
         "all",
       ]),
     )
-    .action(primitivesList);
+    .action((options) => primitivesList(options));
 
   program
     .command("remove")
@@ -231,7 +231,7 @@ export function createProgram(): Command {
     .addOption(
       new Option("--framework <framework>", "Framework target").choices(["astro", "react", "all"]),
     )
-    .action(remove);
+    .action((components, options) => remove(components, options));
 
   program
     .command("setup")

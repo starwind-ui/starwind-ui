@@ -1,16 +1,27 @@
 import { mkdir, mkdtemp, readFile, rm, stat, symlink, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import * as clackPrompts from "@clack/prompts";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { StarwindConfig } from "../../src/utils/config.js";
+import {
+  buildRuntimeRegistry,
+  createCliRegistryBuildPolicy,
+} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
+import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
+
+import type { StarwindConfig, StarwindConfigFor } from "../../src/utils/config.js";
 import * as config from "../../src/utils/config.js";
 import * as astroReactIntegration from "../../src/utils/astro-react-integration.js";
 import * as dependencyResolver from "../../src/utils/dependency-resolver.js";
+import {
+  type PrivateVueCliFrameworkTarget,
+  PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+} from "../../src/utils/framework-target-policy.js";
 import * as packageManager from "../../src/utils/package-manager.js";
-import type { StarwindRegistry } from "../../src/utils/registry.js";
+import type { StarwindRegistry, StarwindRegistryFor } from "../../src/utils/registry.js";
 import * as registry from "../../src/utils/registry.js";
 import {
   installRuntimeComponents,
@@ -91,6 +102,35 @@ const registryFixture: StarwindRegistry = {
   ],
 };
 
+const vueRepresentativeNames = [
+  "button",
+  "input",
+  "dialog",
+  "select",
+  "toast",
+  "card",
+  "theme-toggle",
+  "popover",
+  "combobox",
+] as const;
+
+const vueClosureNames = [
+  "button",
+  "input",
+  "dialog",
+  "select",
+  "toast",
+  "card",
+  "theme-toggle",
+  "popover",
+  "textarea",
+  "input-group",
+  "combobox",
+] as const;
+
+const repoRoot = fileURLToPath(new URL("../../../..", import.meta.url));
+let vueRegistryFixture: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
+
 function createRegistryComponent(name: string, componentDependencies: string[] = []) {
   return {
     name,
@@ -132,6 +172,13 @@ async function createDirectoryLink(target: string, linkPath: string): Promise<Er
 describe.sequential("runtime component installs", () => {
   let tempDir = "";
   let previousCwd = "";
+
+  beforeAll(async () => {
+    vueRegistryFixture = await buildRuntimeRegistry({
+      repoRoot,
+      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
+    });
+  });
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -2205,5 +2252,223 @@ describe.sequential("runtime component installs", () => {
         destination: targetPath,
       }),
     );
+  });
+
+  it("installs the exact generated Vue representative payload and dependency closure", async () => {
+    const vueConfig: StarwindConfigFor<PrivateVueCliFrameworkTarget> = {
+      ...runtimeConfig,
+      framework: "astro",
+      componentDirs: { vue: "src/components/starwind-vue" },
+      components: [{ name: "button", version: "1.0.0", framework: "astro", registry: "default" }],
+    };
+    mockFilterUninstalledDependencies.mockImplementation(async (packages) => packages);
+
+    const result = await installRuntimeComponents([...vueRepresentativeNames], {
+      config: vueConfig,
+      framework: "vue",
+      packageManager: "pnpm",
+      registry: vueRegistryFixture,
+      skipPrompts: true,
+      targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+    });
+
+    expect(result.failed).toEqual([]);
+    expect(result.installed.map((item) => item.name)).toEqual(vueClosureNames);
+
+    const installedComponents = vueClosureNames.map((name) => {
+      const component = vueRegistryFixture.components.find((candidate) => candidate.name === name);
+      expect(component, "missing generated Vue component " + name).toBeDefined();
+      return component!;
+    });
+    for (const component of installedComponents) {
+      const target = component.targets!.vue!;
+      for (const file of target.files) {
+        const relativePath = file.path.replace(
+          "src/components/starwind",
+          "src/components/starwind-vue",
+        );
+        await expect(readFile(join(tempDir, relativePath), "utf8")).resolves.toBe(file.content);
+      }
+    }
+
+    const themeToggle = vueRegistryFixture.components.find(
+      (component) => component.name === "theme-toggle",
+    )!;
+    const themeToggleSource = themeToggle.targets!.vue!.files.find((file) =>
+      file.path.endsWith("/ThemeToggle.vue"),
+    )!.content!;
+    expect(themeToggle.targets!.vue!.packageRequirements).toEqual([
+      { name: "@starwind-ui/vue", range: "*" },
+      { name: "tailwind-variants", range: "^3.2.2" },
+      { name: "vue", range: ">=3.5" },
+    ]);
+    expect(themeToggleSource).toContain('from "@starwind-ui/vue/theme"');
+    expect(themeToggleSource).toContain(":data-slot=\"dataSlot || 'theme-toggle'\"");
+    expect(themeToggleSource).not.toContain("lucide");
+
+    const combobox = vueRegistryFixture.components.find(
+      (component) => component.name === "combobox",
+    )!;
+    expect(combobox.targets!.vue!.componentDependencies).toEqual(["input-group"]);
+    expect(
+      vueRegistryFixture.components.find((component) => component.name === "input-group")!.targets!
+        .vue!.componentDependencies,
+    ).toEqual(["button", "input", "textarea"]);
+    expect(
+      combobox.targets!.vue!.files.find((file) => file.path.endsWith("/Combobox.vue"))!.content,
+    ).toContain('from "@starwind-ui/vue/combobox"');
+
+    expect(mockInstallDependencies).toHaveBeenCalledWith(
+      ["@starwind-ui/vue", "tailwind-variants@^3.2.2", "vue@>=3.5"],
+      "pnpm",
+    );
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        components: installedComponents.map((component) => ({
+          framework: "vue",
+          name: component.name,
+          registry: "default",
+          version: component.version,
+        })),
+      }),
+      { appendComponents: true, targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
+    );
+
+    vi.clearAllMocks();
+    const repeated = await installRuntimeComponents(["combobox"], {
+      config: {
+        ...vueConfig,
+        components: [
+          ...vueConfig.components,
+          ...installedComponents.map((component) => ({
+            framework: "vue" as const,
+            name: component.name,
+            registry: "default",
+            version: component.version,
+          })),
+        ],
+      },
+      framework: "vue",
+      packageManager: "pnpm",
+      registry: vueRegistryFixture,
+      skipPrompts: true,
+      targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+    });
+
+    expect(repeated.installed).toEqual([]);
+    expect(repeated.skipped.map((item) => item.name)).toEqual([
+      "button",
+      "input",
+      "textarea",
+      "input-group",
+      "combobox",
+    ]);
+    expect(mockInstallDependencies).not.toHaveBeenCalled();
+    expect(mockUpdateConfig).not.toHaveBeenCalled();
+  });
+
+  it("plans and updates only the private Vue record in a mixed-framework project", async () => {
+    const vueConfig: StarwindConfigFor<PrivateVueCliFrameworkTarget> = {
+      ...runtimeConfig,
+      framework: "astro",
+      componentDirs: { vue: "src/components/starwind-vue" },
+      components: [
+        { name: "button", version: "1.0.0", framework: "astro", registry: "default" },
+        { name: "button", version: "1.0.0", framework: "vue", registry: "default" },
+      ],
+    };
+    const generatedButton = vueRegistryFixture.components.find(
+      (component) => component.name === "button",
+    )!;
+    const targetPath = join(tempDir, "src/components/starwind-vue/button/Button.vue");
+    await mkdir(dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, "old Vue payload\n", "utf8");
+    mockFilterUninstalledDependencies.mockResolvedValue([]);
+
+    const plan = await planRuntimeComponentUpdates(["button"], {
+      config: vueConfig,
+      framework: "vue",
+      registry: vueRegistryFixture,
+      skipPrompts: true,
+      targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+    });
+
+    expect(plan.failed).toEqual([]);
+    expect(plan.updates).toEqual([
+      expect.objectContaining({
+        componentIndex: 1,
+        framework: "vue",
+        oldVersion: "1.0.0",
+        newVersion: generatedButton.version,
+      }),
+    ]);
+    expect(plan.updates[0]!.files).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "src/components/starwind-vue/button/Button.vue",
+          currentContent: "old Vue payload\n",
+          changed: true,
+        }),
+      ]),
+    );
+    await expect(readFile(targetPath, "utf8")).resolves.toBe("old Vue payload\n");
+
+    const result = await updateRuntimeComponents(["button"], {
+      config: vueConfig,
+      framework: "vue",
+      registry: vueRegistryFixture,
+      skipPrompts: true,
+      targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+    });
+
+    expect(result.updated).toEqual([
+      {
+        name: "button",
+        framework: "vue",
+        status: "updated",
+        oldVersion: "1.0.0",
+        newVersion: generatedButton.version,
+      },
+    ]);
+    await expect(readFile(targetPath, "utf8")).resolves.toBe(
+      generatedButton.targets!.vue!.files.find((file) => file.path.endsWith("/Button.vue"))!
+        .content,
+    );
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      {
+        components: [
+          { name: "button", version: "1.0.0", framework: "astro", registry: "default" },
+          {
+            name: "button",
+            version: generatedButton.version,
+            framework: "vue",
+            registry: "default",
+          },
+        ],
+      },
+      { appendComponents: false, targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
+    );
+  });
+
+  it("keeps Vue unavailable when Runtime helpers use the public default policy", async () => {
+    const vueConfig: StarwindConfigFor<PrivateVueCliFrameworkTarget> = {
+      ...runtimeConfig,
+      framework: "vue",
+      components: [],
+    };
+
+    // @ts-expect-error A Vue lifecycle call requires an explicit private target policy.
+    const result = await installRuntimeComponents(["button"], {
+      config: vueConfig,
+      framework: "vue",
+      registry: vueRegistryFixture,
+      skipPrompts: true,
+    });
+
+    expect(result.failed).toEqual([
+      expect.objectContaining({ name: "button", error: expect.stringContaining("not supported") }),
+    ]);
+    expect(mockInstallDependencies).not.toHaveBeenCalled();
+    expect(mockUpdateConfig).not.toHaveBeenCalled();
   });
 });

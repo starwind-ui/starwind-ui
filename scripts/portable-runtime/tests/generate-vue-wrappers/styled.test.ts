@@ -1264,10 +1264,31 @@ describe("generated Vue Styled wrappers", () => {
     expect(firstTree["combobox/ComboboxContent.vue"]).not.toContain(
       '<ComboboxPrimitive.ComboboxPortal data-slot="combobox-portal">',
     );
+    expect(firstTree["combobox/variants.ts"]).toContain("fade-out zoom-out-95");
+    expect(firstTree["combobox/variants.ts"]).not.toContain("slide-out-to-");
     expect(firstTree["combobox/ComboboxClear.vue"]).toContain(
       `v-bind="{ ...attrs, disabled: disabled, &quot;aria-label&quot;: &quot;Clear selection&quot; }"`,
     );
     expect(firstTree["combobox/ComboboxInput.vue"]).toContain(`v-bind="{ disabled: disabled }"`);
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain(
+      'Omit<InputHTMLAttributes, "class" | "disabled" | "showClear" | "showTrigger" | "size">',
+    );
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain(
+      "VariantProps<typeof comboboxInputGroup>",
+    );
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain(
+      '"size"?: ComboboxInputProps["size"]',
+    );
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain('size = "md"');
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain(
+      "comboboxInputGroup({ size, class: className })",
+    );
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain(':data-size="size"');
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain(
+      "<ComboboxPrimitive.ComboboxTrigger",
+    );
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain("<InputGroupButton");
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain('<path d="M6 9l6 6l6 -6" />');
     expect(firstTree["combobox/ComboboxInput.vue"]).not.toContain(
       "/* @vue-ignore */ ComboboxInputProps",
     );

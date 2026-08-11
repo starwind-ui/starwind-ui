@@ -1,8 +1,18 @@
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import * as clackPrompts from "@clack/prompts";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+import {
+  buildRuntimeRegistry,
+  createCliRegistryBuildPolicy,
+} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
+import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
 
 import * as registry from "../../src/utils/registry.js";
 import { docs } from "../../src/commands/docs.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 
 vi.mock("@clack/prompts");
 vi.mock("../../src/utils/registry.js");
@@ -27,6 +37,14 @@ const mockParseRegistrySource = vi.mocked(registry.parseRegistrySource);
 describe("docs command", () => {
   let mockExit: ReturnType<typeof vi.spyOn>;
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+  let vueRegistry: Awaited<ReturnType<typeof buildRuntimeRegistry>>;
+
+  beforeAll(async () => {
+    vueRegistry = await buildRuntimeRegistry({
+      repoRoot: fileURLToPath(new URL("../../../..", import.meta.url)),
+      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
+    });
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -94,5 +112,24 @@ describe("docs command", () => {
       type: "remote",
       url: "https://starwind.dev/registry/0.1.0/registry.json",
     });
+  });
+
+  it("uses an injected private Vue registry without changing docs output", async () => {
+    await docs(
+      ["theme-toggle"],
+      { json: true },
+      {
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(mockLoadRegistry).not.toHaveBeenCalled();
+    expect(JSON.parse(consoleLogSpy.mock.calls[0]![0] as string)).toEqual([
+      {
+        component: "theme-toggle",
+        url: "https://starwind.dev/docs/components/theme-toggle/",
+      },
+    ]);
   });
 });

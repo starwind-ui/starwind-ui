@@ -4,6 +4,12 @@ import path from "node:path";
 import { projectStyledOutputModel } from "../../styled-output-model/index.js";
 import { defineFrameworkAdapterTarget } from "../target-definition.js";
 import { vueFrameworkAdapter, vueFrameworkAdapterReadiness } from "./adapter.js";
+import {
+  collectVueStyledPackageImportSources,
+  projectVuePrimitiveVendoringContent,
+  vuePrimitiveEditableContentMarkers,
+  vuePrimitiveQuarantineMarkers,
+} from "./cli-registry.js";
 import { generateVuePrimitivePackage } from "./primitive-package.js";
 import { writeVueAdapterOutput } from "./primitive-output-writer.js";
 import { vueManualPrimitiveGenerators } from "./manual-primitives.js";
@@ -43,11 +49,25 @@ const vueFrameworkAdapterTargetDefinition = {
   adapter: vueFrameworkAdapter,
   cliRegistry: {
     generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
+    packageMetadataSources: [
+      "packages/vue/package.json",
+      "packages/runtime/package.json",
+      "apps/vue-demo/package.json",
+    ],
+    primitiveArtifact: {
+      editableContentMarkers: vuePrimitiveEditableContentMarkers,
+      forbiddenContent: vuePrimitiveQuarantineMarkers,
+      includeLocalImportGraph: true,
+      outputDir: "vue-primitives",
+      projectContent: projectVuePrimitiveVendoringContent,
+      sourceRoot: "packages/vue/src",
+    },
     styledArtifact: {
+      collectPackageImportSources: collectVueStyledPackageImportSources,
       outputDir: "vue",
       primitiveOutputDir: "vue-primitives",
     },
-    setupPackageRequirements: [],
+    setupPackageRequirements: [{ name: "vue", range: ">=3.5" }],
   },
   displayName: "Vue",
   home: "scripts/portable-runtime/renderers/framework-adapters/vue",

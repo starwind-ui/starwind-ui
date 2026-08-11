@@ -6,8 +6,8 @@ import fs from "fs-extra";
 import semver from "semver";
 
 import type {
-  ComponentConfig,
-  StarwindConfig,
+  ComponentConfigFor,
+  StarwindConfigFor,
   StarwindFramework,
   StyledRegistryConfig,
 } from "./config.js";
@@ -17,6 +17,12 @@ import { updateConfig } from "./config.js";
 import { PATHS } from "./constants.js";
 import { filterUninstalledDependencies } from "./dependency-resolver.js";
 import { ensureAstroReactIntegration } from "./astro-react-integration.js";
+import {
+  type CliFrameworkTarget,
+  type FrameworkTargetPolicy,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+  type PublicCliFrameworkTarget,
+} from "./framework-target-policy.js";
 import { installDependenciesWithProgress, type PackageManager } from "./package-manager.js";
 import { resolveProjectMutationPath, resolveProjectPathLexically } from "./project-path.js";
 import {
@@ -26,12 +32,12 @@ import {
   syncNextPagesComponentStyles,
 } from "./react-project.js";
 import {
-  type Component,
+  type ComponentFor,
   loadRegistry,
   type RegistryPackageRequirement,
   type RegistrySource,
   type RegistryTarget,
-  type StarwindRegistry,
+  type StarwindRegistryFor,
   getStyledRegistrySource,
 } from "./registry.js";
 
@@ -49,19 +55,19 @@ export type RuntimeInstallSummary = {
   setupOutcome?: "cancelled" | "declined";
 };
 
-type RuntimeUpdateStatus = {
+type RuntimeUpdateStatus<TFramework extends CliFrameworkTarget = StarwindFramework> = {
   error?: string;
-  framework?: StarwindFramework;
+  framework?: TFramework;
   name: string;
   newVersion?: string;
   oldVersion?: string;
   status: "updated" | "skipped" | "failed";
 };
 
-export type RuntimeUpdateSummary = {
-  failed: RuntimeUpdateStatus[];
-  skipped: RuntimeUpdateStatus[];
-  updated: RuntimeUpdateStatus[];
+export type RuntimeUpdateSummary<TFramework extends CliFrameworkTarget = StarwindFramework> = {
+  failed: RuntimeUpdateStatus<TFramework>[];
+  skipped: RuntimeUpdateStatus<TFramework>[];
+  updated: RuntimeUpdateStatus<TFramework>[];
 };
 
 export type RuntimeUpdatePlanFile = {
@@ -73,11 +79,11 @@ export type RuntimeUpdatePlanFile = {
   changed: boolean;
 };
 
-export type RuntimeUpdatePlanItem = {
-  component: Component;
+export type RuntimeUpdatePlanItem<TFramework extends CliFrameworkTarget = CliFrameworkTarget> = {
+  component: ComponentFor<TFramework>;
   componentIndex: number;
   files: RuntimeUpdatePlanFile[];
-  framework: StarwindFramework;
+  framework: TFramework;
   newVersion: string;
   oldVersion: string;
   packageRequirements: RegistryPackageRequirement[];
@@ -86,52 +92,62 @@ export type RuntimeUpdatePlanItem = {
   target: RegistryTarget;
 };
 
-export type RuntimeUpdatePlan = {
-  failed: RuntimeUpdateStatus[];
+export type RuntimeUpdatePlan<TFramework extends CliFrameworkTarget = CliFrameworkTarget> = {
+  failed: RuntimeUpdateStatus<TFramework>[];
   packageRequirements: RegistryPackageRequirement[];
   packagesToInstall: string[];
-  skipped: RuntimeUpdateStatus[];
-  updates: RuntimeUpdatePlanItem[];
+  skipped: RuntimeUpdateStatus<TFramework>[];
+  updates: RuntimeUpdatePlanItem<TFramework>[];
 };
 
-export type InstallRuntimeComponentsOptions = {
-  config: StarwindConfig;
-  framework?: StarwindFramework;
+type RuntimeTargetPolicyOption<TFramework extends CliFrameworkTarget> =
+  Exclude<TFramework, PublicCliFrameworkTarget> extends never
+    ? { targetPolicy?: FrameworkTargetPolicy<TFramework> }
+    : { targetPolicy: FrameworkTargetPolicy<TFramework> };
+
+export type InstallRuntimeComponentsOptions<
+  TFramework extends CliFrameworkTarget = StarwindFramework,
+> = {
+  config: StarwindConfigFor<TFramework>;
+  framework?: TFramework;
   includeDependencies?: boolean;
   overwrite?: boolean;
   packageManager?: PackageManager;
-  registry?: StarwindRegistry;
+  registry?: StarwindRegistryFor<TFramework>;
   registryMode?: "custom" | "default";
   registryOverlay?: {
-    fallbackRegistry: StarwindRegistry;
+    fallbackRegistry: StarwindRegistryFor<TFramework>;
     fallbackRegistrySource?: RegistrySource;
   };
   registrySource?: RegistrySource;
   skipPrompts?: boolean;
   writeConfig?: boolean;
+} & RuntimeTargetPolicyOption<TFramework>;
+
+export type RuntimeUpdateFramework<TFramework extends CliFrameworkTarget = StarwindFramework> =
+  | TFramework
+  | "all";
+
+export type UpdateRuntimeComponentsOptions<
+  TFramework extends CliFrameworkTarget = StarwindFramework,
+> = Omit<InstallRuntimeComponentsOptions<TFramework>, "framework"> & {
+  framework?: RuntimeUpdateFramework<TFramework>;
 };
 
-export type RuntimeUpdateFramework = StarwindFramework | "all";
-
-export type UpdateRuntimeComponentsOptions = Omit<InstallRuntimeComponentsOptions, "framework"> & {
-  framework?: RuntimeUpdateFramework;
-};
-
-type RuntimeTarget = StarwindFramework;
 export type RegistryReference = {
   componentRegistry: string;
   registries?: Record<string, StyledRegistryConfig>;
 };
-type ResolvedInstallComponent = {
-  component: Component;
+type ResolvedInstallComponent<TFramework extends CliFrameworkTarget> = {
+  component: ComponentFor<TFramework>;
   registryReference: RegistryReference;
 };
 type ResolvingInstallComponent = {
   key: string;
   name: string;
 };
-type PlannedComponent = {
-  component: Component;
+type PlannedComponent<TFramework extends CliFrameworkTarget> = {
+  component: ComponentFor<TFramework>;
   files: ClassifiedRegistryFile[];
   registryReference: RegistryReference;
   registryTarget: RegistryTarget;
@@ -149,11 +165,9 @@ type ClassifiedRegistryFile = PreparedRegistryFile & {
   state: RuntimeInstallFileState;
 };
 
-const RUNTIME_TARGETS = new Set<RuntimeTarget>(["astro", "react"]);
-
-export async function installRuntimeComponents(
+export async function installRuntimeComponents<TFramework extends CliFrameworkTarget>(
   componentNames: string[],
-  options: InstallRuntimeComponentsOptions,
+  options: InstallRuntimeComponentsOptions<TFramework>,
 ): Promise<RuntimeInstallSummary> {
   const summary: RuntimeInstallSummary = {
     failed: [],
@@ -161,7 +175,12 @@ export async function installRuntimeComponents(
     skipped: [],
   };
 
-  const targetFramework = getRuntimeTarget(options.framework ?? options.config.framework);
+  const configTargets =
+    options.targetPolicy?.configTargets ?? PUBLIC_FRAMEWORK_TARGET_POLICY.configTargets;
+  const targetFramework = getRuntimeTarget(
+    options.framework ?? options.config.framework,
+    configTargets,
+  );
   if (!targetFramework) {
     return {
       ...summary,
@@ -199,7 +218,8 @@ export async function installRuntimeComponents(
 
   const reactHostKind = await getConfiguredReactHostKind(options.config);
 
-  const registry = options.registry ?? (await loadRegistry(options.registrySource));
+  const registry =
+    options.registry ?? (await loadRuntimeRegistry(options.registrySource, options.targetPolicy));
   const registryReference = resolveInstallRegistryReference({
     config: options.config,
     registry,
@@ -217,7 +237,7 @@ export async function installRuntimeComponents(
   const resolvingKeys = new Set<string>();
   const resolvingStack: ResolvingInstallComponent[] = [];
   const orderedComponents: Array<{
-    component: Component;
+    component: ComponentFor<TFramework>;
     registryReference: RegistryReference;
     target: RegistryTarget;
   }> = [];
@@ -229,7 +249,7 @@ export async function installRuntimeComponents(
     target: targetFramework,
   });
 
-  let plannedComponents: PlannedComponent[];
+  let plannedComponents: PlannedComponent<TFramework>[];
   let packageRequirements: RegistryPackageRequirement[];
 
   try {
@@ -270,7 +290,7 @@ export async function installRuntimeComponents(
         ),
       })),
     );
-    const installableComponents: PlannedComponent[] = [];
+    const installableComponents: PlannedComponent<TFramework>[] = [];
     const installOutcomes = new Map<string, { installable: boolean; reason?: string }>();
 
     for (const planned of plannedComponents) {
@@ -330,7 +350,7 @@ export async function installRuntimeComponents(
     await installDependenciesWithProgress(packagesToInstall, options.packageManager);
   }
 
-  const installedComponents: PlannedComponent[] = [];
+  const installedComponents: PlannedComponent<TFramework>[] = [];
   const applyOutcomes = new Map<string, { installed: boolean; reason?: string }>();
 
   for (const planned of plannedComponents) {
@@ -416,7 +436,9 @@ export async function installRuntimeComponents(
           version: planned.component.version,
         })),
       },
-      { appendComponents: true },
+      options.targetPolicy
+        ? { appendComponents: true, targetPolicy: options.targetPolicy }
+        : { appendComponents: true },
     );
   }
 
@@ -429,13 +451,13 @@ function formatInstallFileConflicts(conflictPaths: string[]): string {
   }.`;
 }
 
-function createInstallComponentResolver(options: {
-  fallbackRegistry?: StarwindRegistry;
+function createInstallComponentResolver<TFramework extends CliFrameworkTarget>(options: {
+  fallbackRegistry?: StarwindRegistryFor<TFramework>;
   fallbackRegistryReference: RegistryReference;
-  primaryRegistry: StarwindRegistry;
+  primaryRegistry: StarwindRegistryFor<TFramework>;
   primaryRegistryReference: RegistryReference;
-  target: RuntimeTarget;
-}): (componentName: string) => ResolvedInstallComponent | undefined {
+  target: TFramework;
+}): (componentName: string) => ResolvedInstallComponent<TFramework> | undefined {
   return (componentName) => {
     const primaryComponent = options.primaryRegistry.components.find(
       (component) => component.name === componentName,
@@ -489,9 +511,9 @@ function mergeRegistryReferences(
   return Object.keys(registries).length > 0 ? registries : undefined;
 }
 
-function resolveInstallRegistryReference(options: {
-  config: StarwindConfig;
-  registry: StarwindRegistry;
+function resolveInstallRegistryReference<TFramework extends CliFrameworkTarget>(options: {
+  config: StarwindConfigFor<TFramework>;
+  registry: StarwindRegistryFor<TFramework>;
   registryMode: "custom" | "default";
   registrySource: RegistrySource | undefined;
 }): {
@@ -542,7 +564,7 @@ function toStyledRegistryConfig(
 }
 
 function findMatchingStyledRegistry(
-  registries: StarwindConfig["registries"],
+  registries: StarwindConfigFor<CliFrameworkTarget>["registries"],
   registryConfig: StyledRegistryConfig,
 ): string | undefined {
   for (const [id, existing] of Object.entries(registries ?? {})) {
@@ -572,7 +594,7 @@ function isSameStyledRegistrySource(
 
 function createStyledRegistryId(
   registryConfig: StyledRegistryConfig,
-  config: StarwindConfig,
+  config: StarwindConfigFor<CliFrameworkTarget>,
 ): string {
   const sourceValue =
     registryConfig.source === "local"
@@ -599,11 +621,11 @@ function createStyledRegistryId(
   return registryId;
 }
 
-export async function updateRuntimeComponents(
+export async function updateRuntimeComponents<TFramework extends CliFrameworkTarget>(
   componentNames: string[],
-  options: UpdateRuntimeComponentsOptions,
-): Promise<RuntimeUpdateSummary> {
-  const summary: RuntimeUpdateSummary = {
+  options: UpdateRuntimeComponentsOptions<TFramework>,
+): Promise<RuntimeUpdateSummary<TFramework>> {
+  const summary: RuntimeUpdateSummary<TFramework> = {
     failed: [],
     skipped: [],
     updated: [],
@@ -646,7 +668,12 @@ export async function updateRuntimeComponents(
     if (skipPackageDependentUpdates && item.packagesToInstall.length > 0) {
       summary.skipped.push({
         name: item.component.name,
-        ...getFrameworkStatusMetadata(options.config, item.component.name, item.framework),
+        ...getFrameworkStatusMetadata(
+          options.config,
+          item.component.name,
+          item.framework,
+          getConfigTargets(options),
+        ),
         status: "skipped",
         oldVersion: item.oldVersion,
         newVersion: item.newVersion,
@@ -670,7 +697,12 @@ export async function updateRuntimeComponents(
     };
     summary.updated.push({
       name: item.component.name,
-      ...getFrameworkStatusMetadata(options.config, item.component.name, item.framework),
+      ...getFrameworkStatusMetadata(
+        options.config,
+        item.component.name,
+        item.framework,
+        getConfigTargets(options),
+      ),
       status: "updated",
       oldVersion: item.oldVersion,
       newVersion: item.newVersion,
@@ -685,18 +717,20 @@ export async function updateRuntimeComponents(
         ...(registries ? { registries } : {}),
         components: updatedComponents,
       },
-      { appendComponents: false },
+      options.targetPolicy
+        ? { appendComponents: false, targetPolicy: options.targetPolicy }
+        : { appendComponents: false },
     );
   }
 
   return summary;
 }
 
-export async function planRuntimeComponentUpdates(
+export async function planRuntimeComponentUpdates<TFramework extends CliFrameworkTarget>(
   componentNames: string[],
-  options: UpdateRuntimeComponentsOptions,
-): Promise<RuntimeUpdatePlan> {
-  const plan: RuntimeUpdatePlan = {
+  options: UpdateRuntimeComponentsOptions<TFramework>,
+): Promise<RuntimeUpdatePlan<TFramework>> {
+  const plan: RuntimeUpdatePlan<TFramework> = {
     failed: [],
     packageRequirements: [],
     packagesToInstall: [],
@@ -704,7 +738,12 @@ export async function planRuntimeComponentUpdates(
     updates: [],
   };
 
-  const targetFrameworks = getRuntimeUpdateFrameworks(options.config, options.framework);
+  const configTargets = getConfigTargets(options);
+  const targetFrameworks = getRuntimeUpdateFrameworks(
+    options.config,
+    options.framework,
+    configTargets,
+  );
   if (targetFrameworks.length === 0) {
     return {
       ...plan,
@@ -720,7 +759,9 @@ export async function planRuntimeComponentUpdates(
 
   const explicitRegistry =
     options.registry ??
-    (options.registrySource ? await loadRegistry(options.registrySource) : undefined);
+    (options.registrySource
+      ? await loadRuntimeRegistry(options.registrySource, options.targetPolicy)
+      : undefined);
   const explicitRegistryReference = explicitRegistry
     ? resolveInstallRegistryReference({
         config: options.config,
@@ -729,13 +770,14 @@ export async function planRuntimeComponentUpdates(
         registrySource: options.registrySource,
       })
     : undefined;
-  const registryCache = new Map<string, Promise<StarwindRegistry>>();
+  const registryCache = new Map<string, Promise<StarwindRegistryFor<TFramework>>>();
 
   for (const componentName of componentNames) {
     const currentComponents = getInstalledRuntimeComponentsForUpdate(
       options.config,
       componentName,
       targetFrameworks,
+      configTargets,
     );
 
     if (currentComponents.length === 0) {
@@ -748,7 +790,7 @@ export async function planRuntimeComponentUpdates(
     }
 
     for (const { componentIndex, currentComponent, framework } of currentComponents) {
-      let registry: StarwindRegistry;
+      let registry: StarwindRegistryFor<TFramework>;
       let registryReference: RegistryReference;
 
       try {
@@ -763,12 +805,13 @@ export async function planRuntimeComponentUpdates(
             config: options.config,
             registryCache,
             registryReference: registryReference.componentRegistry,
+            targetPolicy: options.targetPolicy,
           });
         }
       } catch (error) {
         plan.failed.push({
           name: componentName,
-          ...getFrameworkStatusMetadata(options.config, componentName, framework),
+          ...getFrameworkStatusMetadata(options.config, componentName, framework, configTargets),
           status: "failed",
           error: error instanceof Error ? error.message : String(error),
         });
@@ -782,7 +825,7 @@ export async function planRuntimeComponentUpdates(
       if (!registryComponent) {
         plan.failed.push({
           name: componentName,
-          ...getFrameworkStatusMetadata(options.config, componentName, framework),
+          ...getFrameworkStatusMetadata(options.config, componentName, framework, configTargets),
           status: "failed",
           error: `Component not found in registry "${registryReference.componentRegistry}"`,
         });
@@ -794,7 +837,7 @@ export async function planRuntimeComponentUpdates(
       if (!registryTarget) {
         plan.failed.push({
           name: componentName,
-          ...getFrameworkStatusMetadata(options.config, componentName, framework),
+          ...getFrameworkStatusMetadata(options.config, componentName, framework, configTargets),
           status: "failed",
           error: `Component "${componentName}" does not support the "${framework}" target.`,
         });
@@ -806,7 +849,7 @@ export async function planRuntimeComponentUpdates(
       if (!semver.gt(registryComponent.version, currentVersion)) {
         plan.skipped.push({
           name: componentName,
-          ...getFrameworkStatusMetadata(options.config, componentName, framework),
+          ...getFrameworkStatusMetadata(options.config, componentName, framework, configTargets),
           status: "skipped",
           oldVersion: currentVersion,
           newVersion: registryComponent.version,
@@ -853,7 +896,7 @@ export async function planRuntimeComponentUpdates(
       } catch (error) {
         plan.failed.push({
           name: componentName,
-          ...getFrameworkStatusMetadata(options.config, componentName, framework),
+          ...getFrameworkStatusMetadata(options.config, componentName, framework, configTargets),
           status: "failed",
           error: error instanceof Error ? error.message : String(error),
         });
@@ -866,11 +909,12 @@ export async function planRuntimeComponentUpdates(
   return plan;
 }
 
-async function loadComponentUpdateRegistry(options: {
-  config: StarwindConfig;
-  registryCache: Map<string, Promise<StarwindRegistry>>;
+async function loadComponentUpdateRegistry<TFramework extends CliFrameworkTarget>(options: {
+  config: StarwindConfigFor<TFramework>;
+  registryCache: Map<string, Promise<StarwindRegistryFor<TFramework>>>;
   registryReference: string;
-}): Promise<StarwindRegistry> {
+  targetPolicy?: FrameworkTargetPolicy<TFramework>;
+}): Promise<StarwindRegistryFor<TFramework>> {
   const source = getStyledRegistrySource(options.config, options.registryReference);
 
   if (!source) {
@@ -881,7 +925,7 @@ async function loadComponentUpdateRegistry(options: {
   let registryPromise = options.registryCache.get(cacheKey);
 
   if (!registryPromise) {
-    registryPromise = loadRegistry(source);
+    registryPromise = loadRuntimeRegistry(source, options.targetPolicy);
     options.registryCache.set(cacheKey, registryPromise);
   }
 
@@ -896,7 +940,9 @@ async function loadComponentUpdateRegistry(options: {
   }
 }
 
-async function finalizeRuntimeUpdatePackagePlan(plan: RuntimeUpdatePlan): Promise<void> {
+async function finalizeRuntimeUpdatePackagePlan<TFramework extends CliFrameworkTarget>(
+  plan: RuntimeUpdatePlan<TFramework>,
+): Promise<void> {
   if (plan.updates.length === 0) return;
 
   const rangesByPackage = new Map<string, Set<string>>();
@@ -915,7 +961,7 @@ async function finalizeRuntimeUpdatePackagePlan(plan: RuntimeUpdatePlan): Promis
   const duplicateUpdateNames = getDuplicateUpdateNames(plan.updates);
 
   if (conflictingPackages.size > 0) {
-    const retainedUpdates: RuntimeUpdatePlanItem[] = [];
+    const retainedUpdates: RuntimeUpdatePlanItem<TFramework>[] = [];
 
     for (const item of plan.updates) {
       const conflicts = item.packageRequirements.filter((requirement) =>
@@ -963,20 +1009,20 @@ async function finalizeRuntimeUpdatePackagePlan(plan: RuntimeUpdatePlan): Promis
   }
 }
 
-function collectInstallPlan(options: {
+function collectInstallPlan<TFramework extends CliFrameworkTarget>(options: {
   componentName: string;
   installedNames: Set<string>;
   orderedComponents: Array<{
-    component: Component;
+    component: ComponentFor<TFramework>;
     registryReference: RegistryReference;
     target: RegistryTarget;
   }>;
   plannedNames: Set<string>;
   resolvingKeys: Set<string>;
   resolvingStack: ResolvingInstallComponent[];
-  resolveComponent: (componentName: string) => ResolvedInstallComponent | undefined;
+  resolveComponent: (componentName: string) => ResolvedInstallComponent<TFramework> | undefined;
   summary: RuntimeInstallSummary;
-  target: RuntimeTarget;
+  target: TFramework;
   includeDependencies: boolean;
 }): void {
   if (options.plannedNames.has(options.componentName)) return;
@@ -1050,48 +1096,77 @@ function collectInstallPlan(options: {
   options.orderedComponents.push({ component, registryReference, target });
 }
 
-function getRuntimeTarget(framework: StarwindConfig["framework"]): RuntimeTarget | undefined {
-  return framework && RUNTIME_TARGETS.has(framework as RuntimeTarget)
-    ? (framework as RuntimeTarget)
-    : undefined;
+function loadRuntimeRegistry<TFramework extends CliFrameworkTarget>(
+  source: RegistrySource | undefined,
+  targetPolicy?: FrameworkTargetPolicy<TFramework>,
+): Promise<StarwindRegistryFor<TFramework>> {
+  return targetPolicy
+    ? loadRegistry(source, { targetPolicy })
+    : (loadRegistry(source) as Promise<StarwindRegistryFor<TFramework>>);
 }
 
-function getRuntimeUpdateFrameworks(
-  config: StarwindConfig,
-  framework?: RuntimeUpdateFramework,
-): RuntimeTarget[] {
+function getConfigTargets<TFramework extends CliFrameworkTarget>(
+  options: Pick<InstallRuntimeComponentsOptions<TFramework>, "targetPolicy">,
+): readonly CliFrameworkTarget[] {
+  return options.targetPolicy?.configTargets ?? PUBLIC_FRAMEWORK_TARGET_POLICY.configTargets;
+}
+
+function getRuntimeTarget<TFramework extends CliFrameworkTarget>(
+  framework: StarwindConfigFor<TFramework>["framework"],
+  configTargets: readonly CliFrameworkTarget[],
+): TFramework | undefined {
+  return framework && configTargets.includes(framework) ? framework : undefined;
+}
+
+function getRuntimeUpdateFrameworks<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+  framework: RuntimeUpdateFramework<TFramework> | undefined,
+  configTargets: readonly CliFrameworkTarget[],
+): TFramework[] {
   if (framework === "all") {
-    return [...RUNTIME_TARGETS];
+    const configuredFrameworks = [
+      config.framework,
+      ...config.components.map((component) => component.framework),
+    ];
+    return [
+      ...new Set(
+        configuredFrameworks.flatMap((candidate) => {
+          const target = getRuntimeTarget(candidate, configTargets);
+          return target ? [target] : [];
+        }),
+      ),
+    ];
   }
 
-  const target = getRuntimeTarget(framework ?? config.framework);
+  const target = getRuntimeTarget(framework ?? config.framework, configTargets);
   return target ? [target] : [];
 }
 
-function getInstalledRuntimeComponentsForUpdate(
-  config: StarwindConfig,
+function getInstalledRuntimeComponentsForUpdate<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
   componentName: string,
-  targetFrameworks: RuntimeTarget[],
+  targetFrameworks: TFramework[],
+  configTargets: readonly CliFrameworkTarget[],
 ): Array<{
   componentIndex: number;
-  currentComponent: ComponentConfig;
-  framework: RuntimeTarget;
+  currentComponent: ComponentConfigFor<TFramework>;
+  framework: TFramework;
 }> {
   const targetFrameworkSet = new Set(targetFrameworks);
 
   return config.components.flatMap((component, componentIndex) => {
     if (component.source === "legacy" || component.name !== componentName) return [];
 
-    const framework = getRuntimeTarget(component.framework ?? config.framework);
+    const framework = getRuntimeTarget(component.framework ?? config.framework, configTargets);
     if (!framework || !targetFrameworkSet.has(framework)) return [];
 
     return [{ componentIndex, currentComponent: component, framework }];
   });
 }
 
-function getMissingUpdateTargetMessage(
-  framework: RuntimeUpdateFramework | undefined,
-  targetFrameworks: RuntimeTarget[],
+function getMissingUpdateTargetMessage<TFramework extends CliFrameworkTarget>(
+  framework: RuntimeUpdateFramework<TFramework> | undefined,
+  targetFrameworks: TFramework[],
 ): string {
   if (framework === "all") {
     return "Component is not installed for any supported Runtime framework.";
@@ -1105,17 +1180,18 @@ function getMissingUpdateTargetMessage(
   return "Component is not installed in this project.";
 }
 
-function getFrameworkStatusMetadata(
-  config: StarwindConfig,
+function getFrameworkStatusMetadata<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
   componentName: string,
-  framework: StarwindFramework,
-): Pick<RuntimeUpdateStatus, "framework"> {
+  framework: TFramework,
+  configTargets: readonly CliFrameworkTarget[],
+): Pick<RuntimeUpdateStatus<TFramework>, "framework"> {
   const installedFrameworks = new Set(
     config.components
       .filter((component) => component.source !== "legacy")
       .filter((component) => component.name === componentName)
       .map((component) => component.framework ?? config.framework)
-      .filter((value): value is StarwindFramework => value === "astro" || value === "react"),
+      .filter((value): value is TFramework => value !== undefined && configTargets.includes(value)),
   );
 
   return installedFrameworks.size > 1 ? { framework } : {};
@@ -1152,7 +1228,9 @@ function formatPackageRequirementConflict(packageName: string, ranges: Set<strin
   return `${packageName}: ${[...ranges].join(" and ")}`;
 }
 
-function getDuplicateUpdateNames(updates: RuntimeUpdatePlanItem[]): Set<string> {
+function getDuplicateUpdateNames<TFramework extends CliFrameworkTarget>(
+  updates: RuntimeUpdatePlanItem<TFramework>[],
+): Set<string> {
   const counts = new Map<string, number>();
 
   for (const item of updates) {
@@ -1260,8 +1338,8 @@ function prepareRegistryFiles(options: {
   });
 }
 
-async function getConfiguredReactHostKind(
-  config: StarwindConfig,
+async function getConfiguredReactHostKind<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
 ): Promise<ReactHostKind | undefined> {
   if (config.framework !== "react") return undefined;
 
@@ -1275,14 +1353,17 @@ async function getConfiguredReactHostKind(
   }
 }
 
-export async function syncReactProjectComponentStyles(
-  config: StarwindConfig,
+export async function syncReactProjectComponentStyles<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
   detectedHostKind?: ReactHostKind,
 ): Promise<void> {
   const hostKind = detectedHostKind ?? (await getConfiguredReactHostKind(config));
   if (hostKind !== "next-pages") return;
 
-  await syncNextPagesComponentStyles(config.tailwind.css, getStyledComponentDir(config, "react"));
+  await syncNextPagesComponentStyles(
+    config.tailwind.css,
+    getStyledComponentDir(config, "react" as TFramework),
+  );
 }
 
 function resolveSafeProjectPath(options: {

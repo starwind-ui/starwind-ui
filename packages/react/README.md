@@ -8,7 +8,7 @@ The package supports React and React DOM 18 or newer.
 ## Install
 
 ```bash
-npm install @starwind-ui/react@beta
+npm install @starwind-ui/react@latest
 ```
 
 ## Use an adapter
@@ -36,16 +36,16 @@ For ready-to-use styled Starwind components, initialize the project and add comp
 Starwind CLI:
 
 ```bash
-npx starwind@beta init --framework react
-npx starwind@beta add button
+npx starwind@latest init --framework react
+npx starwind@latest add button
 ```
 
 The adapter package brings in the compatible Runtime version for normal application use.
 
 ## Documentation
 
-Read the [React installation guide](https://beta.starwind.dev/docs/getting-started/installation/)
-and [component documentation](https://beta.starwind.dev/docs/components/).
+Read the [React installation guide](https://starwind.dev/docs/getting-started/installation/)
+and [component documentation](https://starwind.dev/docs/components/).
 
 ## Contributing
 

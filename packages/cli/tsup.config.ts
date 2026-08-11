@@ -1,15 +1,16 @@
 import { defineConfig } from "tsup";
 
-export default defineConfig({
+export default defineConfig((options) => ({
   entry: ["src/index.ts"],
   format: ["esm"],
   dts: true,
   clean: true,
-  sourcemap: true,
-  // minify: true,
+  sourcemap: Boolean(options.watch),
+  minify: !options.watch,
+  keepNames: true,
   target: "esnext",
   outDir: "dist",
   // banner: {
   //   js: "#!/usr/bin/env node",
   // },
-});
+}));

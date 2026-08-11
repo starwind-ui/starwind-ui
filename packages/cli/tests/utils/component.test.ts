@@ -184,6 +184,26 @@ describe.sequential("removeComponent", () => {
     await expect(readFile(join(reactPath, "index.tsx"), "utf-8")).rejects.toThrow();
   });
 
+  it("removes a Vue component through the framework-neutral helper", async () => {
+    const vuePath = join(projectDir, "src", "components", "starwind-vue", "button");
+    await mkdir(vuePath, { recursive: true });
+    await writeFile(join(vuePath, "Button.vue"), "<template><button /></template>\n", "utf-8");
+
+    const result = await removeComponent({
+      name: "button",
+      framework: "vue",
+      componentDir: "src/components/starwind-vue",
+    });
+
+    expect(result).toEqual({
+      componentDir: "src/components/starwind-vue",
+      name: "button",
+      framework: "vue",
+      status: "removed",
+    });
+    await expect(readFile(join(vuePath, "Button.vue"), "utf-8")).rejects.toThrow();
+  });
+
   it("returns a failed result when the component directory is missing", async () => {
     const result = await removeComponent({
       name: "missing",

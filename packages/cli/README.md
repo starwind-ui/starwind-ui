@@ -16,8 +16,8 @@ backed by a portable Runtime that powers Astro and React adapters today.
 The Starwind CLI is the main way to get started. Initialize a project, add only the components you
 need, and keep the resulting source in your own codebase.
 
-**[Get Started →](https://beta.starwind.dev/docs/getting-started/installation/)** &nbsp;|&nbsp;
-**[Explore Components](https://beta.starwind.dev/docs/components/)**
+**[Get Started →](https://starwind.dev/docs/getting-started/installation/)** &nbsp;|&nbsp;
+**[Explore Components](https://starwind.dev/docs/components/)**
 
 ## Why Starwind?
 
@@ -32,15 +32,15 @@ need, and keep the resulting source in your own codebase.
 Initialize an Astro project and add a component:
 
 ```bash
-npx starwind@beta init --framework astro
-npx starwind@beta add button
+npx starwind@latest init --framework astro
+npx starwind@latest add button
 ```
 
 For React projects, use `--framework react`:
 
 ```bash
-npx starwind@beta init --framework react
-npx starwind@beta add button
+npx starwind@latest init --framework react
+npx starwind@latest add button
 ```
 
 You can omit the framework flag to select it interactively.
@@ -50,7 +50,7 @@ You can omit the framework flag to select it interactively.
 ### Add components
 
 ```bash
-npx starwind@beta add button dialog
+npx starwind@latest add button dialog
 ```
 
 Run `add` without component names to browse the available components. The CLI installs required
@@ -59,8 +59,8 @@ dependencies and records the installed components in your Starwind configuration
 ### Update and remove components
 
 ```bash
-npx starwind@beta update --all --dry-run
-npx starwind@beta remove button
+npx starwind@latest update --all --dry-run
+npx starwind@latest remove button
 ```
 
 Use `--dry-run`, `--diff`, and `--view` to inspect updates before changing files.
@@ -68,8 +68,8 @@ Use `--dry-run`, `--diff`, and `--view` to inspect updates before changing files
 ### Find components and documentation
 
 ```bash
-npx starwind@beta search button
-npx starwind@beta docs button
+npx starwind@latest search button
+npx starwind@latest docs button
 ```
 
 Search can also discover primitive source with `--primitives` and emit JSON with `--json`.
@@ -77,7 +77,7 @@ Search can also discover primitive source with `--primitives` and emit JSON with
 ### Migrate legacy projects
 
 ```bash
-npx starwind@beta migrate
+npx starwind@latest migrate
 ```
 
 This moves legacy Starwind projects to the current Runtime setup.
@@ -89,20 +89,20 @@ Primitive source is available through the advanced `primitives add`, `primitives
 
 ### Starwind Pro
 
-Use `npx starwind@beta setup` to configure Starwind Pro before adding Pro components or blocks.
+Use `npx starwind@latest setup` to configure Starwind Pro before adding Pro components or blocks.
 
 ## AI integration
 
 Resources for AI:
 
-- [Starwind Skills](https://beta.starwind.dev/docs/getting-started/skills/)
-- [MCP server](https://beta.starwind.dev/docs/getting-started/mcp/)
-- [llms.txt](https://beta.starwind.dev/llms.txt)
-- [llms-full.txt](https://beta.starwind.dev/llms-full.txt)
+- [Starwind Skills](https://starwind.dev/docs/getting-started/skills/)
+- [MCP server](https://starwind.dev/docs/getting-started/mcp/)
+- [llms.txt](https://starwind.dev/llms.txt)
+- [llms-full.txt](https://starwind.dev/llms-full.txt)
 
 ## Documentation
 
-Read the [Starwind documentation](https://beta.starwind.dev/docs/).
+Read the [Starwind documentation](https://starwind.dev/docs/).
 
 ## Contributing
 

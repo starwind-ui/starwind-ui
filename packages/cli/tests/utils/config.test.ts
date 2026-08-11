@@ -17,6 +17,7 @@ import {
   updateConfig,
 } from "../../src/utils/config.js";
 import { PATHS } from "../../src/utils/constants.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import * as fsUtils from "../../src/utils/fs.js";
 
 const DEFAULT_SCHEMA = "https://starwind.dev/config-schema.json";
@@ -1646,5 +1647,134 @@ describe.sequential("config utilsDir handling", () => {
     );
 
     await expect(getConfigState()).rejects.toThrow(/component "button" version/);
+  });
+
+  it("accepts complete Vue config data only through the private policy", () => {
+    const vueConfig = {
+      $schema: CONFIG_SCHEMA_V2_URL,
+      version: 2,
+      framework: "vue",
+      registry: { source: "local", version: "2.0.0", path: "registry.json" },
+      tailwind: {
+        css: "src/styles/starwind.css",
+        baseColor: "neutral",
+        cssVariables: true,
+      },
+      componentDir: "src/components/starwind",
+      componentDirs: { vue: "src/components/starwind-vue" },
+      primitiveDir: "src/components/starwind-primitives",
+      primitiveDirs: { vue: "src/components/starwind-vue-primitives" },
+      components: [
+        {
+          name: "button",
+          version: "2.4.0",
+          framework: "vue",
+          registry: "default",
+        },
+      ],
+      primitives: [{ name: "accordion", version: "1.0.0", framework: "vue" }],
+    };
+
+    expect(() => parseCurrentConfig(vueConfig)).toThrow(/componentDirs\.vue|framework "vue"/);
+    expect(parseCurrentConfig(vueConfig, PRIVATE_VUE_FRAMEWORK_TARGET_POLICY)).toMatchObject({
+      framework: "vue",
+      componentDirs: { vue: "src/components/starwind-vue" },
+      primitiveDirs: { vue: "src/components/starwind-vue-primitives" },
+      components: [{ name: "button", framework: "vue" }],
+      primitives: [{ name: "accordion", framework: "vue" }],
+    });
+  });
+
+  it("uses the private policy for Vue config reads and writes", async () => {
+    await writeFile(
+      "starwind.config.json",
+      JSON.stringify({
+        $schema: CONFIG_SCHEMA_V2_URL,
+        version: 2,
+        framework: "vue",
+        registry: { source: "local", version: "2.0.0", path: "registry.json" },
+        tailwind: {
+          css: "src/styles/starwind.css",
+          baseColor: "neutral",
+          cssVariables: true,
+        },
+        componentDir: "src/components/starwind",
+        components: [
+          {
+            name: "card",
+            version: "1.0.0",
+            framework: "vue",
+            registry: "default",
+          },
+        ],
+        primitives: [{ name: "dialog", version: "1.0.0", framework: "vue" }],
+      }),
+      "utf-8",
+    );
+
+    await expect(getConfig()).rejects.toThrow(/starwind\.config\.json/);
+    await expect(getConfig(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY)).resolves.toMatchObject({
+      framework: "vue",
+    });
+
+    await updateConfig(
+      {
+        componentDirs: { vue: "src/components/starwind-vue" },
+        primitiveDirs: { vue: "src/components/starwind-vue-primitives" },
+        components: [{ name: "button", version: "2.4.0", framework: "vue" }],
+        primitives: [{ name: "accordion", version: "1.0.0", framework: "vue" }],
+      },
+      { targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
+    );
+
+    const writtenConfig = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+    expect(writtenConfig).toMatchObject({
+      framework: "vue",
+      componentDirs: { vue: "src/components/starwind-vue" },
+      primitiveDirs: { vue: "src/components/starwind-vue-primitives" },
+      components: [
+        { name: "card", framework: "vue", registry: "default" },
+        { name: "button", framework: "vue", registry: "default" },
+      ],
+      primitives: [
+        { name: "dialog", framework: "vue" },
+        { name: "accordion", framework: "vue" },
+      ],
+    });
+  });
+
+  it("rejects nested Vue records under the public policy", () => {
+    const baseConfig = {
+      $schema: CONFIG_SCHEMA_V2_URL,
+      version: 2,
+      framework: "astro",
+      registry: { source: "bundled", version: "2.0.0" },
+      tailwind: {
+        css: "src/styles/starwind.css",
+        baseColor: "neutral",
+        cssVariables: true,
+      },
+      componentDir: "src/components/starwind",
+      components: [],
+    };
+
+    expect(() =>
+      parseCurrentConfig({
+        ...baseConfig,
+        components: [{ name: "button", version: "2.4.0", framework: "vue", registry: "default" }],
+      }),
+    ).toThrow(/framework "vue"/);
+    expect(() =>
+      parseCurrentConfig({
+        ...baseConfig,
+        primitives: [{ name: "accordion", version: "1.0.0", framework: "vue" }],
+      }),
+    ).toThrow(/framework "vue"/);
+  });
+
+  it("rejects Vue config writes under the public policy", async () => {
+    await expect(
+      updateConfig({ componentDirs: { vue: "src/components/starwind-vue" } } as never),
+    ).rejects.toThrow(/componentDirs\.vue/);
   });
 });

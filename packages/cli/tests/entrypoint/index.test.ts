@@ -18,6 +18,7 @@ vi.mock("../../src/commands/setup.js", () => ({ setup: vi.fn() }));
 vi.mock("../../src/commands/update.js", () => ({ update: vi.fn() }));
 
 import { add } from "../../src/commands/add.js";
+import { docs } from "../../src/commands/docs.js";
 import { init } from "../../src/commands/init.js";
 import { primitivesAdd, primitivesList, primitivesUpdate } from "../../src/commands/primitives.js";
 import { remove } from "../../src/commands/remove.js";
@@ -26,6 +27,7 @@ import { update } from "../../src/commands/update.js";
 import { createProgram } from "../../src/program.js";
 
 const mockAdd = vi.mocked(add);
+const mockDocs = vi.mocked(docs);
 const mockInit = vi.mocked(init);
 const mockPrimitivesAdd = vi.mocked(primitivesAdd);
 const mockPrimitivesList = vi.mocked(primitivesList);
@@ -136,7 +138,31 @@ describe("starwind CLI parser", () => {
     expect(mockSearch).not.toHaveBeenCalled();
   });
 
-  it("parses overwrite after a Pro registry component into add options", async () => {
+  it.each([
+    ["init", ["init", "--framework", "vue"]],
+    ["component add", ["add", "button", "--framework", "vue"]],
+    ["primitive add", ["primitives", "add", "button", "--framework", "vue"]],
+  ] as const)("rejects Vue from public %s", async (_command, args) => {
+    const program = createTestProgram();
+    let stderr = "";
+
+    configureCommandTree(program, {
+      writeErr: (message: string) => {
+        stderr += message;
+      },
+    });
+
+    await expect(program.parseAsync([...args], { from: "user" })).rejects.toMatchObject({
+      code: "commander.invalidArgument",
+    });
+
+    expect(stderr).toContain("argument 'vue' is invalid");
+    expect(stderr).toContain("Allowed choices are astro, react");
+    expect(mockInit).not.toHaveBeenCalled();
+    expect(mockAdd).not.toHaveBeenCalled();
+    expect(mockPrimitivesAdd).not.toHaveBeenCalled();
+  });
+  it("passes only public add arguments and keeps Commander context out of dependencies", async () => {
     const program = createTestProgram();
 
     await program.parseAsync(["add", "@starwind-pro/shader-glass-aurora", "--overwrite"], {
@@ -148,8 +174,15 @@ describe("starwind CLI parser", () => {
       expect.objectContaining({
         overwrite: true,
       }),
-      expect.anything(),
     );
+  });
+
+  it("keeps Commander context out of docs dependencies", async () => {
+    const program = createTestProgram();
+
+    await program.parseAsync(["docs", "button", "--json"], { from: "user" });
+
+    expect(mockDocs).toHaveBeenCalledWith(["button"], expect.objectContaining({ json: true }));
   });
 
   it("passes styled update framework choices through to the update command", async () => {
@@ -165,7 +198,6 @@ describe("starwind CLI parser", () => {
         all: true,
         framework: "all",
       }),
-      expect.anything(),
     );
   });
 
@@ -178,11 +210,7 @@ describe("starwind CLI parser", () => {
         from: "user",
       });
 
-      expect(mockRemove).toHaveBeenCalledWith(
-        ["button"],
-        expect.objectContaining({ framework }),
-        expect.anything(),
-      );
+      expect(mockRemove).toHaveBeenCalledWith(["button"], expect.objectContaining({ framework }));
     },
   );
 
@@ -191,11 +219,7 @@ describe("starwind CLI parser", () => {
 
     await program.parseAsync(["remove", "button", "--yes"], { from: "user" });
 
-    expect(mockRemove).toHaveBeenCalledWith(
-      ["button"],
-      expect.objectContaining({ yes: true }),
-      expect.anything(),
-    );
+    expect(mockRemove).toHaveBeenCalledWith(["button"], expect.objectContaining({ yes: true }));
   });
 
   it("rejects the removed init --component-layer option through Commander", async () => {
@@ -268,7 +292,6 @@ describe("starwind CLI parser", () => {
         yes: true,
         all: true,
       }),
-      expect.anything(),
     );
   });
 
@@ -288,7 +311,6 @@ describe("starwind CLI parser", () => {
         framework: "react",
         path: "src/react-primitives",
       }),
-      expect.anything(),
     );
   });
 
@@ -304,7 +326,6 @@ describe("starwind CLI parser", () => {
       expect.objectContaining({
         path: "src/react-primitives",
       }),
-      expect.anything(),
     );
   });
 
@@ -320,7 +341,6 @@ describe("starwind CLI parser", () => {
       expect.objectContaining({
         overwrite: true,
       }),
-      expect.anything(),
     );
   });
 
@@ -355,7 +375,6 @@ describe("starwind CLI parser", () => {
         framework: "react",
         diff: "src/file.ts",
       }),
-      expect.anything(),
     );
   });
 
@@ -371,7 +390,6 @@ describe("starwind CLI parser", () => {
       expect.objectContaining({
         view: "src/file.ts",
       }),
-      expect.anything(),
     );
   });
 
@@ -387,7 +405,6 @@ describe("starwind CLI parser", () => {
       expect.objectContaining({
         view: true,
       }),
-      expect.anything(),
     );
   });
 
@@ -403,8 +420,28 @@ describe("starwind CLI parser", () => {
         framework: "react",
         json: true,
       }),
-      expect.anything(),
     );
+  });
+
+  it("keeps Vue out of every public framework option", () => {
+    const program = createProgram();
+    const primitivesCommand = getCommand(program, "primitives");
+    const frameworkOptions: Array<[Command, string[]]> = [
+      [getCommand(program, "init"), ["astro", "react"]],
+      [getCommand(program, "add"), ["astro", "react"]],
+      [getCommand(program, "search"), ["astro", "react", "all"]],
+      [getCommand(program, "update"), ["astro", "react", "all"]],
+      [getCommand(program, "remove"), ["astro", "react", "all"]],
+      [getCommand(primitivesCommand, "add"), ["astro", "react"]],
+      [getCommand(primitivesCommand, "update"), ["astro", "react"]],
+      [getCommand(primitivesCommand, "list"), ["astro", "react", "all"]],
+    ];
+
+    for (const [command, expectedChoices] of frameworkOptions) {
+      const option = command.options.find((entry) => entry.long === "--framework");
+      expect(option?.argChoices).toEqual(expectedChoices);
+      expect(option?.argChoices).not.toContain("vue");
+    }
   });
 
   it("keeps command construction importable without running the bin entrypoint", () => {

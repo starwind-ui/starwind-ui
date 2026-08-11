@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import { getPrimitiveDiscoveryResults } from "../../src/utils/primitive-discovery.js";
 import * as primitives from "../../src/utils/primitive-component.js";
 
@@ -56,5 +57,38 @@ describe("primitive discovery", () => {
       ["button", "react"],
       ["zebra", "astro"],
     ]);
+  });
+
+  it("scopes all discovery to the private policy and preserves Vue provenance", () => {
+    vi.mocked(primitives.getPrimitiveComponents).mockImplementation(({ framework } = {}) => [
+      {
+        component: framework === "vue" ? "toast" : "button",
+        framework: framework ?? "astro",
+        version: "0.1.0",
+        files: [
+          {
+            content: "source",
+            path: `src/components/starwind-primitives/${framework}/index.ts`,
+            sourceHash: `sha256:${framework}`,
+            sourcePath: `packages/${framework}/src/index.ts`,
+          },
+        ],
+        packageRequirements: [],
+      },
+    ]);
+
+    const results = getPrimitiveDiscoveryResults({
+      artifacts: { primitives: [] },
+      framework: "all",
+      targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+    });
+
+    expect(results.map(({ framework }) => framework)).toEqual(["astro", "react", "vue"]);
+    expect(primitives.getPrimitiveComponents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        framework: "vue",
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      }),
+    );
   });
 });

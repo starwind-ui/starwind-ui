@@ -1,12 +1,24 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import * as clackPrompts from "@clack/prompts";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { primitivesAdd, primitivesUpdate } from "../../src/commands/primitives.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
+import {
+  getPrimitiveComponents,
+  type PrimitiveVendoringArtifactSet,
+} from "../../src/utils/primitive-component.js";
+import {
+  buildPrimitiveVendoringArtifacts,
+  createCliRegistryBuildPolicy,
+} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
+import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
 
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
@@ -54,6 +66,31 @@ const CURRENT_BETA_RUNTIME_SPEC = `@starwind-ui/runtime@^${runtimePackage.versio
 describe.sequential("primitives add integration", () => {
   let tempDir = "";
   let previousCwd = "";
+  let generatedArtifactRoot = "";
+  let authoritativeVueArtifacts: PrimitiveVendoringArtifactSet<"astro" | "react" | "vue">;
+
+  beforeAll(async () => {
+    const repositoryRoot = fileURLToPath(new URL("../../../..", import.meta.url));
+    generatedArtifactRoot = await mkdtemp(join(tmpdir(), "starwind-vue-primitive-artifacts-"));
+    const generated = await buildPrimitiveVendoringArtifacts({
+      repoRoot: repositoryRoot,
+      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
+      tempRoot: generatedArtifactRoot,
+    });
+    authoritativeVueArtifacts = {
+      ...generated,
+      primitives: generated.primitives.map((artifact) => {
+        if (artifact.framework !== "vue") {
+          throw new Error(`Expected a Vue artifact for ${artifact.component}.`);
+        }
+        return { ...artifact, framework: "vue" as const };
+      }),
+    };
+  });
+
+  afterAll(async () => {
+    await rm(generatedArtifactRoot, { recursive: true, force: true });
+  });
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -107,6 +144,99 @@ describe.sequential("primitives add integration", () => {
   afterEach(async () => {
     process.chdir(previousCwd);
     await rm(tempDir, { recursive: true, force: true });
+  });
+
+  it("rejects every internally consistent mutation before reading private target facts", () => {
+    type VueArtifactSet = PrimitiveVendoringArtifactSet<"astro" | "react" | "vue">;
+    const probes: Array<{ name: string; mutate(artifacts: VueArtifactSet): void }> = [
+      {
+        name: "source root",
+        mutate(artifacts) {
+          const descriptor = artifacts.validation!.vue!;
+          const previousRoot = descriptor.sourceRoot;
+          descriptor.sourceRoot = "packages/vue-private/src";
+          for (const primitive of artifacts.primitives) {
+            for (const file of primitive.files) {
+              file.sourcePath = file.sourcePath.replace(previousRoot, descriptor.sourceRoot);
+            }
+          }
+        },
+      },
+      {
+        name: "extension",
+        mutate(artifacts) {
+          const descriptor = artifacts.validation!.vue!;
+          descriptor.generatedImportCandidateExtensions =
+            descriptor.generatedImportCandidateExtensions.map((extension) =>
+              extension === ".vue" ? ".sfc" : extension,
+            );
+          for (const rule of descriptor.editableContentMarkers) {
+            rule.extensions = rule.extensions.map((extension) =>
+              extension === ".vue" ? ".sfc" : extension,
+            );
+          }
+          for (const primitive of artifacts.primitives) {
+            for (const file of primitive.files) {
+              file.path = file.path.replace(/\.vue$/, ".sfc");
+              file.sourcePath = file.sourcePath.replace(/\.vue$/, ".sfc");
+            }
+          }
+        },
+      },
+      {
+        name: "editable marker",
+        mutate(artifacts) {
+          artifacts.validation!.vue!.editableContentMarkers[0]!.markers[0] =
+            "<!-- Editable private artifact -->";
+        },
+      },
+      {
+        name: "forbidden marker",
+        mutate(artifacts) {
+          artifacts.validation!.vue!.forbiddenContent = ["Unrelated marker"];
+        },
+      },
+      {
+        name: "requirement",
+        mutate(artifacts) {
+          const changeRange = (requirement: { name: string; range: string }) => {
+            if (requirement.name === "vue") requirement.range = ">=3.6";
+          };
+          artifacts.validation!.vue!.packageRequirements.forEach(changeRange);
+          artifacts.primitives.forEach((primitive) =>
+            primitive.packageRequirements.forEach(changeRange),
+          );
+        },
+      },
+      {
+        name: "file content and source hash",
+        mutate(artifacts) {
+          const file = artifacts.primitives[0]!.files[0]!;
+          file.content += "\n<!-- attacker mutation -->\n";
+          file.sourceHash = `sha256:${createHash("sha256").update(file.content).digest("hex")}`;
+        },
+      },
+      {
+        name: "component",
+        mutate(artifacts) {
+          artifacts.primitives[0]!.component = "renamed-component";
+        },
+      },
+    ];
+
+    for (const probe of probes) {
+      const artifacts = structuredClone(authoritativeVueArtifacts);
+      probe.mutate(artifacts);
+      expect(
+        () =>
+          getPrimitiveComponents({
+            artifacts,
+            framework: "vue",
+            targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+          }),
+        probe.name,
+      ).toThrow(/trusted integrity fingerprint/);
+    }
   });
 
   it("writes primitive source, installs missing packages from package.json, and records primitive metadata", async () => {
@@ -350,5 +480,126 @@ describe.sequential("primitives add integration", () => {
         source: "bundled",
       },
     ]);
+  });
+
+  it("vendors and updates authoritative generated Vue primitive families with exact provenance", async () => {
+    await writeFile(
+      "package.json",
+      JSON.stringify({ dependencies: { vue: "^3.5.0" } }, null, 2),
+      "utf-8",
+    );
+    const config = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+    config.framework = "vue";
+    await writeFile("starwind.config.json", JSON.stringify(config, null, 2), "utf-8");
+
+    const representativeNames = [
+      "button",
+      "form",
+      "popover",
+      "select",
+      "toast",
+      "sidebar",
+    ] as const;
+    const representativeArtifacts = authoritativeVueArtifacts.primitives.filter(({ component }) =>
+      representativeNames.includes(component as (typeof representativeNames)[number]),
+    );
+    expect(representativeArtifacts.map(({ component }) => component).sort()).toEqual(
+      [...representativeNames].sort(),
+    );
+    expect(
+      authoritativeVueArtifacts.primitives.some(({ component }) => component === "theme"),
+    ).toBe(false);
+    const dependencies = {
+      artifacts: authoritativeVueArtifacts,
+      targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+    };
+
+    await primitivesAdd(
+      [...representativeNames],
+      { framework: "vue", packageManager: "pnpm", to: "src/private/vue", yes: true },
+      dependencies,
+    );
+
+    for (const artifact of representativeArtifacts) {
+      expect(artifact.version).toBe(primitiveVersions.primitives[artifact.component]);
+      expect(artifact.packageRequirements).toEqual(
+        expect.arrayContaining([
+          { name: "@starwind-ui/runtime", range: `^${runtimePackage.version}` },
+          { name: "vue", range: ">=3.5" },
+        ]),
+      );
+      for (const file of artifact.files) {
+        const relativePath = file.path.replace(
+          "src/components/starwind-primitives",
+          "src/private/vue",
+        );
+        await expect(readFile(join(tempDir, relativePath), "utf-8")).resolves.toBe(file.content);
+        const editableHeader = file.path.endsWith(".vue")
+          ? "<!-- Vendored by the Starwind CLI. You own this file in your project. -->"
+          : "/**\n * Vendored by the Starwind CLI.\n * You own this file in your project.\n */";
+        expect(file.content.startsWith(editableHeader), file.path).toBe(true);
+        expect(file.content, file.path).not.toContain("Do not edit by hand");
+        expect(file.content, file.path).not.toContain("Internal non-shipping Vue adapter output");
+        expect(file.sourcePath).toMatch(/^packages\/vue\/src\//);
+        expect(file.sourceHash).toBe(
+          `sha256:${createHash("sha256").update(file.content).digest("hex")}`,
+        );
+      }
+    }
+
+    const sidebar = representativeArtifacts.find(({ component }) => component === "sidebar")!;
+    expect(sidebar.files).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ sourcePath: "packages/vue/src/_internal/as-child.ts" }),
+      ]),
+    );
+    expect(sidebar.files.some(({ content }) => content.includes("../_internal/as-child.js"))).toBe(
+      true,
+    );
+
+    const installedConfig = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+    expect(installedConfig.primitiveDir).toBe("src/private/vue");
+    installedConfig.primitives = installedConfig.primitives.map(
+      (primitive: { name: string; version: string }) => ({ ...primitive, version: "0.0.0" }),
+    );
+    await writeFile("starwind.config.json", JSON.stringify(installedConfig, null, 2), "utf-8");
+    for (const artifact of representativeArtifacts) {
+      for (const file of artifact.files) {
+        const relativePath = file.path.replace(
+          "src/components/starwind-primitives",
+          "src/private/vue",
+        );
+        await writeFile(relativePath, "stale local source\n", "utf-8");
+      }
+    }
+
+    await primitivesUpdate(
+      undefined,
+      { all: true, framework: "vue", packageManager: "pnpm", yes: true },
+      dependencies,
+    );
+
+    for (const artifact of representativeArtifacts) {
+      for (const file of artifact.files) {
+        const relativePath = file.path.replace(
+          "src/components/starwind-primitives",
+          "src/private/vue",
+        );
+        await expect(readFile(join(tempDir, relativePath), "utf-8")).resolves.toBe(file.content);
+      }
+    }
+    const updatedConfig = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+    expect(
+      Object.fromEntries(
+        updatedConfig.primitives.map(({ name, version }: { name: string; version: string }) => [
+          name,
+          version,
+        ]),
+      ),
+    ).toEqual(
+      Object.fromEntries(
+        representativeArtifacts.map(({ component, version }) => [component, version]),
+      ),
+    );
   });
 });

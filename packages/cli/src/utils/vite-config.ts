@@ -6,6 +6,24 @@ import fs from "fs-extra";
 import { fileExists } from "./fs.js";
 import { highlighter } from "./highlighter.js";
 import { resolveProjectMutationPath } from "./project-path.js";
+import {
+  asAstArrayExpression,
+  asAstObjectExpression,
+  getAstDefaultExportCallObject,
+  getAstDefaultExportRange,
+  getAstDefaultImportBinding,
+  getAstNamedImportBinding,
+  getAstNodeRange,
+  getAstObjectProperty,
+  getAvailableIdentifier,
+  hasAstDirectCall,
+  hasAstTopLevelFunction,
+  isAstSourceAliasValue,
+  parseSourceModule,
+  type AstArrayExpression,
+  type AstObjectExpression,
+  type ParsedSourceModule,
+} from "./source-shape.js";
 
 const VITE_CONFIG_PATHS = [
   "vite.config.ts",
@@ -16,7 +34,240 @@ const VITE_CONFIG_PATHS = [
 
 const REACT_ENTRY_PATHS = ["src/main.tsx", "src/main.jsx", "src/main.ts", "src/main.js"] as const;
 
-const THEME_PLUGIN = `function starwindThemeInitPlugin() {
+type TextEdit = { end: number; start: number; text: string };
+
+export function updateViteConfigContent(content: string): string | null {
+  const module = parseSourceModule(content);
+  if (!module) return null;
+  const shape = getViteConfigShape(module);
+  if (!shape) return null;
+
+  const tailwindImport = getAstDefaultImportBinding(module, "@tailwindcss/vite");
+  const themeImport = getAstNamedImportBinding(
+    module,
+    "@starwind-ui/react/theme",
+    "getThemeInitScript",
+  );
+  const fileUrlImport = getAstNamedImportBinding(module, "node:url", "fileURLToPath");
+  if (
+    tailwindImport.status === "unsafe" ||
+    themeImport.status === "unsafe" ||
+    fileUrlImport.status === "unsafe"
+  ) {
+    return null;
+  }
+
+  const tailwindName =
+    tailwindImport.status === "found"
+      ? tailwindImport.localName
+      : getAvailableIdentifier(
+          content,
+          ["tailwindcss", "starwindTailwindcss"],
+          "starwindTailwindcss",
+        );
+  const themeInitName =
+    themeImport.status === "found"
+      ? themeImport.localName
+      : getAvailableIdentifier(
+          content,
+          ["getThemeInitScript", "starwindGetThemeInitScript"],
+          "starwindGetThemeInitScript",
+        );
+  const fileUrlName =
+    fileUrlImport.status === "found"
+      ? fileUrlImport.localName
+      : getAvailableIdentifier(
+          content,
+          ["fileURLToPath", "starwindFileURLToPath"],
+          "starwindFileURLToPath",
+        );
+  const existingThemePlugin = hasAstTopLevelFunction(module, "starwindThemeInitPlugin");
+  const themePluginName = existingThemePlugin
+    ? "starwindThemeInitPlugin"
+    : getAvailableIdentifier(
+        content,
+        ["starwindThemeInitPlugin", "starwindThemePlugin"],
+        "starwindThemePlugin",
+      );
+
+  const aliasState = getSourceAliasState(shape.alias, fileUrlImport, fileUrlName, false);
+  if (aliasState === "unsafe") return null;
+
+  const edits: TextEdit[] = [];
+  const imports: string[] = [];
+  if (tailwindImport.status === "missing") {
+    imports.push(`import ${tailwindName} from "@tailwindcss/vite";\n`);
+  }
+  if (themeImport.status === "missing") {
+    const binding =
+      themeInitName === "getThemeInitScript"
+        ? "getThemeInitScript"
+        : `getThemeInitScript as ${themeInitName}`;
+    imports.push(`import { ${binding} } from "@starwind-ui/react/theme";\n`);
+  }
+  if (fileUrlImport.status === "missing") {
+    const binding =
+      fileUrlName === "fileURLToPath" ? "fileURLToPath" : `fileURLToPath as ${fileUrlName}`;
+    imports.push(`import { ${binding} } from "node:url";\n`);
+  }
+  if (imports.length > 0) edits.push({ end: 0, start: 0, text: imports.join("") });
+
+  if (!existingThemePlugin) {
+    const exportRange = getAstDefaultExportRange(module);
+    if (!exportRange) return null;
+    edits.push({
+      end: exportRange.start,
+      start: exportRange.start,
+      text: `${getThemePluginSource(themePluginName, themeInitName)}\n\n`,
+    });
+  }
+
+  const pluginsToAdd = [
+    hasAstDirectCall(shape.plugins, themePluginName) ? undefined : `${themePluginName}()`,
+    hasAstDirectCall(shape.plugins, tailwindName) ? undefined : `${tailwindName}()`,
+  ].filter((value): value is string => value !== undefined);
+  if (pluginsToAdd.length > 0) {
+    const pluginsRange = getAstNodeRange(shape.plugins);
+    if (!pluginsRange) return null;
+    edits.push({
+      end: pluginsRange.start + 1,
+      start: pluginsRange.start + 1,
+      text: `${pluginsToAdd.join(", ")}, `,
+    });
+  }
+
+  if (aliasState === "missing") {
+    addAliasEdit(edits, shape, fileUrlName, false);
+  }
+  return applyTextEdits(content, edits);
+}
+
+/** Updates the object-style config emitted by the official Vite Vue starter. */
+export function updateVueViteConfigContent(content: string): string | null {
+  const module = parseSourceModule(content);
+  if (!module) return null;
+  const shape = getViteConfigShape(module, { rejectRegularExpression: true });
+  if (!shape) return null;
+
+  const vueImport = getAstDefaultImportBinding(module, "@vitejs/plugin-vue");
+  if (vueImport.status !== "found" || !hasAstDirectCall(shape.plugins, vueImport.localName)) {
+    return null;
+  }
+  const tailwindImport = getAstDefaultImportBinding(module, "@tailwindcss/vite");
+  const fileUrlImport = getAstNamedImportBinding(module, "node:url", "fileURLToPath");
+  if (tailwindImport.status === "unsafe" || fileUrlImport.status === "unsafe") return null;
+
+  const tailwindName =
+    tailwindImport.status === "found"
+      ? tailwindImport.localName
+      : getAvailableIdentifier(
+          content,
+          ["tailwindcss", "starwindTailwindcss"],
+          "starwindTailwindcss",
+        );
+  const fileUrlName =
+    fileUrlImport.status === "found"
+      ? fileUrlImport.localName
+      : getAvailableIdentifier(
+          content,
+          ["fileURLToPath", "starwindFileURLToPath"],
+          "starwindFileURLToPath",
+        );
+  const aliasState = getSourceAliasState(shape.alias, fileUrlImport, fileUrlName, true);
+  if (aliasState === "unsafe") return null;
+
+  const edits: TextEdit[] = [];
+  const imports: string[] = [];
+  if (tailwindImport.status === "missing") {
+    imports.push(`import ${tailwindName} from "@tailwindcss/vite";\n`);
+  }
+  if (fileUrlImport.status === "missing") {
+    const binding =
+      fileUrlName === "fileURLToPath" ? "fileURLToPath" : `fileURLToPath as ${fileUrlName}`;
+    imports.push(`import { ${binding} } from "node:url";\n`);
+  }
+  if (imports.length > 0) edits.push({ end: 0, start: 0, text: imports.join("") });
+
+  if (!hasAstDirectCall(shape.plugins, tailwindName)) {
+    const pluginsRange = getAstNodeRange(shape.plugins);
+    if (!pluginsRange) return null;
+    edits.push({
+      end: pluginsRange.start + 1,
+      start: pluginsRange.start + 1,
+      text: `${tailwindName}(), `,
+    });
+  }
+  if (aliasState === "missing") addAliasEdit(edits, shape, fileUrlName, true);
+  return applyTextEdits(content, edits);
+}
+
+type ViteConfigShape = {
+  alias?: AstObjectExpression;
+  config: AstObjectExpression;
+  plugins: AstArrayExpression;
+  resolve?: AstObjectExpression;
+};
+
+function getViteConfigShape(
+  module: ParsedSourceModule,
+  options: { rejectRegularExpression?: boolean } = {},
+): ViteConfigShape | undefined {
+  if (options.rejectRegularExpression && module.hasRegularExpression) return undefined;
+  const config = getAstDefaultExportCallObject(module, "defineConfig");
+  if (!config) return undefined;
+  const pluginsProperty = getAstObjectProperty(config, "plugins");
+  if (pluginsProperty.status !== "found") return undefined;
+  const plugins = asAstArrayExpression(pluginsProperty.value);
+  if (!plugins) return undefined;
+
+  const resolveProperty = getAstObjectProperty(config, "resolve");
+  if (resolveProperty.status === "unsafe") return undefined;
+  if (resolveProperty.status === "missing") return { config, plugins };
+  const resolve = asAstObjectExpression(resolveProperty.value);
+  if (!resolve) return undefined;
+
+  const aliasProperty = getAstObjectProperty(resolve, "alias");
+  if (aliasProperty.status === "unsafe") return undefined;
+  if (aliasProperty.status === "missing") return { config, plugins, resolve };
+  const alias = asAstObjectExpression(aliasProperty.value);
+  return alias ? { alias, config, plugins, resolve } : undefined;
+}
+
+function getSourceAliasState(
+  alias: AstObjectExpression | undefined,
+  fileUrlImport: ReturnType<typeof getAstNamedImportBinding>,
+  fileUrlName: string,
+  allowGlobalThisUrl: boolean,
+): "missing" | "ready" | "unsafe" {
+  if (!alias) return "missing";
+  const sourceAlias = getAstObjectProperty(alias, "@", { allowStringKey: true });
+  if (sourceAlias.status !== "found") return sourceAlias.status;
+  if (fileUrlImport.status !== "found") return "unsafe";
+  return isAstSourceAliasValue(sourceAlias.value, fileUrlName, { allowGlobalThisUrl })
+    ? "ready"
+    : "unsafe";
+}
+
+function addAliasEdit(
+  edits: TextEdit[],
+  shape: ViteConfigShape,
+  fileUrlName: string,
+  useGlobalThis: boolean,
+): void {
+  const urlName = useGlobalThis ? "globalThis.URL" : "URL";
+  const aliasValue = `${fileUrlName}(new ${urlName}("./src", import.meta.url))`;
+  const container = shape.alias ?? shape.resolve ?? shape.config;
+  const range = getAstNodeRange(container)!;
+  const text = shape.alias
+    ? `\n      "@": ${aliasValue},`
+    : shape.resolve
+      ? `\n    alias: { "@": ${aliasValue} },`
+      : `\n  resolve: { alias: { "@": ${aliasValue} } },`;
+  edits.push({ end: range.start + 1, start: range.start + 1, text });
+}
+
+function getThemePluginSource(pluginName: string, themeInitName: string): string {
+  return `function ${pluginName}() {
   return {
     name: "starwind-theme-init",
     transformIndexHtml() {
@@ -24,78 +275,32 @@ const THEME_PLUGIN = `function starwindThemeInitPlugin() {
         {
           tag: "script",
           attrs: { "data-starwind-theme-init": "" },
-          children: getThemeInitScript(),
+          children: ${themeInitName}(),
           injectTo: "head-prepend",
         },
       ];
     },
   };
 }`;
-
-export function updateViteConfigContent(content: string): string | null {
-  if (!/export\s+default\s+defineConfig\s*\(\s*\{/.test(content)) return null;
-
-  let next = content;
-
-  if (!next.includes('from "@tailwindcss/vite"') && !next.includes("from '@tailwindcss/vite'")) {
-    next = `import tailwindcss from "@tailwindcss/vite";\n${next}`;
-  }
-
-  if (
-    !next.includes('from "@starwind-ui/react/theme"') &&
-    !next.includes("from '@starwind-ui/react/theme'")
-  ) {
-    next = `import { getThemeInitScript } from "@starwind-ui/react/theme";\n${next}`;
-  }
-
-  if (!next.includes('from "node:url"') && !next.includes("from 'node:url'")) {
-    next = `import { fileURLToPath } from "node:url";\n${next}`;
-  } else if (!next.includes("fileURLToPath")) {
-    return null;
-  }
-
-  if (!next.includes("function starwindThemeInitPlugin()")) {
-    next = next.replace(
-      /export\s+default\s+defineConfig/,
-      `${THEME_PLUGIN}\n\nexport default defineConfig`,
-    );
-  }
-
-  const pluginsMatch = next.match(/plugins\s*:\s*\[/);
-  if (!pluginsMatch || pluginsMatch.index === undefined) return null;
-
-  const pluginInsertAt = pluginsMatch.index + pluginsMatch[0].length;
-  const pluginsToAdd = [
-    !next.includes("starwindThemeInitPlugin(),") ? "starwindThemeInitPlugin()" : null,
-    !next.includes("tailwindcss(),") ? "tailwindcss()" : null,
-  ].filter((plugin): plugin is string => Boolean(plugin));
-  if (pluginsToAdd.length > 0) {
-    next = `${next.slice(0, pluginInsertAt)}${pluginsToAdd.join(", ")}, ${next.slice(pluginInsertAt)}`;
-  }
-
-  if (!next.includes('"@": fileURLToPath(new URL("./src", import.meta.url))')) {
-    const aliasObject = next.match(/alias\s*:\s*\{/);
-    if (aliasObject?.index !== undefined) {
-      const insertAt = aliasObject.index + aliasObject[0].length;
-      next = `${next.slice(0, insertAt)}\n      "@": fileURLToPath(new URL("./src", import.meta.url)),${next.slice(insertAt)}`;
-    } else {
-      const resolveObject = next.match(/resolve\s*:\s*\{/);
-      if (resolveObject?.index !== undefined) {
-        const insertAt = resolveObject.index + resolveObject[0].length;
-        next = `${next.slice(0, insertAt)}\n    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },${next.slice(insertAt)}`;
-      } else {
-        next = next.replace(
-          /export\s+default\s+defineConfig\s*\(\s*\{/,
-          'export default defineConfig({\n  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },',
-        );
-      }
-    }
-  }
-
-  return next;
 }
 
+function applyTextEdits(source: string, edits: TextEdit[]): string {
+  return [...edits]
+    .sort((left, right) => right.start - left.start)
+    .reduce(
+      (result, edit) => result.slice(0, edit.start) + edit.text + result.slice(edit.end),
+      source,
+    );
+}
 export function addReactCssImport(content: string, entryPath: string, cssPath: string): string {
+  return addViteCssImport(content, entryPath, cssPath);
+}
+
+export function addVueCssImport(content: string, entryPath: string, cssPath: string): string {
+  return addViteCssImport(content, entryPath, cssPath);
+}
+
+function addViteCssImport(content: string, entryPath: string, cssPath: string): string {
   const relativePath = path.posix.relative(
     path.posix.dirname(entryPath.replace(/\\/g, "/")),
     cssPath.replace(/\\/g, "/"),

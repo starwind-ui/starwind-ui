@@ -114,6 +114,7 @@ describe("root verification scripts", () => {
 
     expect(commandPhases(pkg.scripts?.["release:gate"])).toEqual([
       "pnpm verify",
+      "pnpm --filter=starwind package:check",
       "pnpm audit:prod",
       "pnpm demo:smoke",
       "pnpm react-demo:smoke",
@@ -165,10 +166,20 @@ describe("root verification scripts", () => {
       expect.arrayContaining([
         expect.objectContaining({
           name: "Install Playwright Chromium",
-          run: "pnpm --filter=react-demo exec playwright install --with-deps chromium",
+          run: expect.stringContaining("pnpm exec playwright install chromium"),
         }),
       ]),
     );
+    const browserInstallSteps = Object.values(verifyWorkflow.jobs).flatMap(({ steps = [] }) =>
+      steps.filter(({ name }) => name === "Install Playwright Chromium"),
+    );
+    expect(browserInstallSteps).toHaveLength(4);
+    for (const step of browserInstallSteps) {
+      expect(step.run).toContain(
+        "pnpm --filter=react-demo exec playwright install --with-deps chromium",
+      );
+      expect(step.run).toContain("pnpm exec playwright install chromium");
+    }
     expect(verifyWorkflow.jobs.verify).toMatchObject({
       name: "Verify",
       needs: expect.arrayContaining([

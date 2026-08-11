@@ -1,8 +1,18 @@
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import * as clackPrompts from "@clack/prompts";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+import {
+  buildRuntimeRegistry,
+  createCliRegistryBuildPolicy,
+} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
+import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
 
 import * as config from "../../src/utils/config.js";
 import * as fs from "../../src/utils/fs.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import * as packageManager from "../../src/utils/package-manager.js";
 import * as proRegistry from "../../src/utils/pro-registry.js";
 import * as registry from "../../src/utils/registry.js";
@@ -85,6 +95,8 @@ function runtimeConfig(overrides: Partial<config.StarwindConfig> = {}): config.S
   };
 }
 
+let vueRegistryFixture: registry.StarwindRegistryFor<"astro" | "react" | "vue">;
+
 const registryFixture: registry.StarwindRegistry = {
   $schema: "https://starwind.dev/registry-schema.v2.json",
   version: "0.1.0",
@@ -96,6 +108,13 @@ const registryFixture: registry.StarwindRegistry = {
 
 describe("add command", () => {
   let mockExit: ReturnType<typeof vi.spyOn>;
+
+  beforeAll(async () => {
+    vueRegistryFixture = await buildRuntimeRegistry({
+      repoRoot: fileURLToPath(new URL("../../../..", import.meta.url)),
+      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
+    });
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -280,6 +299,43 @@ describe("add command", () => {
         packageManager: "pnpm",
       }),
     );
+  });
+
+  it("installs Vue styled components only with explicit private dependencies", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({ framework: "astro" }),
+    });
+
+    await add(
+      ["button"],
+      { framework: "vue", packageManager: "pnpm", yes: true },
+      {
+        registry: vueRegistryFixture,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(mockGetConfigState).toHaveBeenCalledWith(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY);
+    expect(mockLoadRegistry).not.toHaveBeenCalled();
+    expect(mockInstallRuntimeComponents).toHaveBeenCalledWith(
+      ["button"],
+      expect.objectContaining({
+        framework: "vue",
+        registry: vueRegistryFixture,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      }),
+    );
+  });
+
+  it("rejects Vue through the public add API default", async () => {
+    // @ts-expect-error Public add calls cannot select Vue without private dependencies.
+    await expect(add(["button"], { framework: "vue", yes: true })).rejects.toThrow(
+      "process.exit called",
+    );
+
+    expect(mockInstallRuntimeComponents).not.toHaveBeenCalled();
+    expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("public target policy"));
   });
 
   it("treats private-beta componentLayer as inert for styled component adds", async () => {

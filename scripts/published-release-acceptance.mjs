@@ -9,6 +9,8 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { getPackageManagerCommand } from "./command-process.mjs";
+
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 const HOST = "127.0.0.1";
@@ -287,7 +289,7 @@ export function getFixtureFiles(framework) {
 }
 
 function getPnpmCommand() {
-  return process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+  return getPackageManagerCommand("pnpm");
 }
 
 function quoteWindowsCommandArg(argument) {
@@ -420,7 +422,8 @@ async function getFreePort() {
 }
 
 function startPreview(project, port) {
-  const command = project.packageManager === "npm" ? "npm.cmd" : getPnpmCommand();
+  const command =
+    project.packageManager === "npm" ? getPackageManagerCommand("npm") : getPnpmCommand();
   const preview = project.preview ?? {
     args: ["--host", "{host}", "--port", "{port}"],
     script: "preview",
@@ -435,6 +438,7 @@ function startPreview(project, port) {
   const spawned = createSpawn(command, args);
   const child = spawn(spawned.command, spawned.args, {
     cwd: project.directory,
+    detached: process.platform !== "win32",
     env: { ...getPreviewEnvironment(), HOST, PORT: String(port) },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -470,23 +474,80 @@ async function waitForPreview(url, preview) {
   throw new Error(`Timed out waiting for ${url}.\n${preview.getOutput()}`);
 }
 
-async function stopPreview(preview) {
-  if (preview.child.exitCode !== null) return;
-  if (process.platform === "win32" && preview.child.pid) {
-    await new Promise((resolve) => {
-      const killer = spawn("taskkill.exe", ["/pid", String(preview.child.pid), "/t", "/f"], {
-        stdio: "ignore",
-      });
-      killer.once("error", resolve);
-      killer.once("exit", resolve);
+export function isPreviewTreeAlive(preview) {
+  if (!preview.child.pid) return false;
+  try {
+    process.kill(process.platform === "win32" ? preview.child.pid : -preview.child.pid, 0);
+    return true;
+  } catch (error) {
+    if (error?.code === "ESRCH") return false;
+    if (error?.code === "EPERM") return true;
+    throw error;
+  }
+}
+
+async function waitForPreviewTreeExit(preview, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (!isPreviewTreeAlive(preview)) return true;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  return !isPreviewTreeAlive(preview);
+}
+
+async function waitForPreviewChildClose(preview, timeoutMs) {
+  if (preview.child.exitCode !== null || preview.child.signalCode !== null) return;
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(
+      () => reject(new Error("Preview child did not report process exit.")),
+      timeoutMs,
+    );
+    preview.child.once("close", () => {
+      clearTimeout(timeout);
+      resolve();
     });
+  });
+}
+
+export async function stopPreviewTree(preview) {
+  if (!preview.child.pid) return;
+  if (process.platform === "win32") {
+    if (isPreviewTreeAlive(preview)) {
+      await new Promise((resolve, reject) => {
+        const killer = spawn("taskkill.exe", ["/PID", String(preview.child.pid), "/T", "/F"], {
+          stdio: "ignore",
+          windowsHide: true,
+        });
+        killer.once("error", reject);
+        killer.once("close", (code) =>
+          code === 0 ? resolve() : reject(new Error(`taskkill exited with code ${code}.`)),
+        );
+      });
+    }
+    await waitForPreviewChildClose(preview, 5_000);
     return;
   }
-  preview.child.kill();
-  await Promise.race([
-    new Promise((resolve) => preview.child.once("exit", resolve)),
-    new Promise((resolve) => setTimeout(resolve, 3_000)),
-  ]);
+
+  if (isPreviewTreeAlive(preview)) {
+    try {
+      process.kill(-preview.child.pid, "SIGTERM");
+    } catch (error) {
+      if (error?.code !== "ESRCH") throw error;
+    }
+  }
+  if (!(await waitForPreviewTreeExit(preview, 3_000))) {
+    try {
+      process.kill(-preview.child.pid, "SIGKILL");
+    } catch (error) {
+      if (error?.code !== "ESRCH") throw error;
+    }
+    assert.ok(
+      await waitForPreviewTreeExit(preview, 5_000),
+      `Preview process group ${preview.child.pid} survived SIGKILL.`,
+    );
+  }
+  await waitForPreviewChildClose(preview, 5_000);
+  assert.equal(isPreviewTreeAlive(preview), false, "Preview process group remains alive.");
 }
 
 export async function verifyBrowserProject({ artifacts, browser, project }) {
@@ -575,7 +636,7 @@ export async function verifyBrowserProject({ artifacts, browser, project }) {
       "utf8",
     );
     await page.close();
-    await stopPreview(preview);
+    await stopPreviewTree(preview);
   }
 }
 

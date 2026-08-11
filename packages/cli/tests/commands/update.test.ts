@@ -1,8 +1,18 @@
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import * as clackPrompts from "@clack/prompts";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+import {
+  buildRuntimeRegistry,
+  createCliRegistryBuildPolicy,
+} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
+import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
 
 import * as config from "../../src/utils/config.js";
 import * as fs from "../../src/utils/fs.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import * as registry from "../../src/utils/registry.js";
 import * as runtimeComponent from "../../src/utils/runtime-component.js";
 import { update } from "../../src/commands/update.js";
@@ -60,9 +70,18 @@ function runtimeConfig(overrides: Partial<config.StarwindConfig> = {}): config.S
   };
 }
 
+let vueRegistryFixture: registry.StarwindRegistryFor<"astro" | "react" | "vue">;
+
 describe("update command", () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
   let mockExit: ReturnType<typeof vi.spyOn>;
+
+  beforeAll(async () => {
+    vueRegistryFixture = await buildRuntimeRegistry({
+      repoRoot: fileURLToPath(new URL("../../../..", import.meta.url)),
+      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
+    });
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -356,6 +375,55 @@ describe("update command", () => {
         skipPrompts: true,
       }),
     );
+  });
+
+  it.each([
+    ["dry-run", { dryRun: true }],
+    ["diff", { diff: true }],
+    ["view", { view: true }],
+  ] as const)(
+    "previews Vue styled updates in %s mode under the private policy",
+    async (_label, mode) => {
+      mockGetConfigState.mockResolvedValue({
+        status: "current",
+        config: runtimeConfig({
+          framework: "astro",
+          components: [
+            { name: "button", version: "1.0.0", framework: "astro", registry: "default" },
+          ],
+        }),
+      });
+
+      await update(
+        ["button"],
+        { ...mode, framework: "vue" },
+        {
+          registry: vueRegistryFixture,
+          targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+        },
+      );
+
+      expect(mockGetConfigState).toHaveBeenCalledWith(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY);
+      expect(mockPlanRuntimeComponentUpdates).toHaveBeenCalledWith(
+        ["button"],
+        expect.objectContaining({
+          framework: "vue",
+          registry: vueRegistryFixture,
+          targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+        }),
+      );
+      expect(mockUpdateRuntimeComponents).not.toHaveBeenCalled();
+    },
+  );
+
+  it("rejects Vue through the public update API default", async () => {
+    // @ts-expect-error Public update calls cannot select Vue without private dependencies.
+    await expect(update(["button"], { framework: "vue", yes: true })).rejects.toThrow(
+      "process.exit called",
+    );
+
+    expect(mockUpdateRuntimeComponents).not.toHaveBeenCalled();
+    expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("public target policy"));
   });
 
   it("updates every installed framework target when --framework all is used", async () => {

@@ -1,12 +1,26 @@
 import * as p from "@clack/prompts";
 
-import { getConfigState, type StarwindConfig, type StarwindFramework } from "@/utils/config.js";
+import { getConfigState, type StarwindConfigFor, type StarwindFramework } from "@/utils/config.js";
 import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
 import { PATHS } from "@/utils/constants.js";
+import {
+  type FrameworkTargetPolicy,
+  isConfigTarget,
+  type PrivateVueCliFrameworkTarget,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
-import { parseRegistrySource, type RegistrySource } from "@/utils/registry.js";
-import { planRuntimeComponentUpdates, updateRuntimeComponents } from "@/utils/runtime-component.js";
+import {
+  parseRegistrySource,
+  type RegistrySource,
+  type StarwindRegistryFor,
+} from "@/utils/registry.js";
+import {
+  planRuntimeComponentUpdates,
+  updateRuntimeComponents,
+  type UpdateRuntimeComponentsOptions,
+} from "@/utils/runtime-component.js";
 import { sleep } from "@/utils/sleep.js";
 import { formatUpdatePreview, getPreviewMode } from "@/utils/update-preview.js";
 
@@ -21,18 +35,49 @@ interface UpdateOptions {
   view?: true | string;
 }
 
+export type PrivateVueUpdateOptions = Omit<UpdateOptions, "framework"> & {
+  framework?: PrivateVueCliFrameworkTarget | "all";
+};
+
+export type PrivateVueUpdateDependencies = {
+  registry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>;
+};
+
 type UpdateResult = {
   error?: string;
-  framework?: StarwindFramework;
+  framework?: PrivateVueCliFrameworkTarget;
   name: string;
   newVersion?: string;
   oldVersion?: string;
   status: "updated" | "skipped" | "failed";
 };
 
-export async function update(components?: string[], options?: UpdateOptions) {
+export function update(components?: string[], options?: UpdateOptions): Promise<void>;
+export function update(
+  components: string[] | undefined,
+  options: PrivateVueUpdateOptions,
+  dependencies: PrivateVueUpdateDependencies,
+): Promise<void>;
+export async function update(
+  components?: string[],
+  options?: PrivateVueUpdateOptions,
+  dependencies?: PrivateVueUpdateDependencies,
+): Promise<void> {
   try {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
+    const targetPolicy =
+      dependencies?.targetPolicy ??
+      (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>);
+    if (
+      options?.framework &&
+      options.framework !== "all" &&
+      !isConfigTarget(targetPolicy, options.framework)
+    ) {
+      throw new Error(
+        `Framework "${options.framework}" is not available under the ${targetPolicy.cacheKey} target policy.`,
+      );
+    }
 
     // Check if starwind.config.json exists
     const configExists = await fileExists(PATHS.LOCAL_CONFIG_FILE);
@@ -42,7 +87,7 @@ export async function update(components?: string[], options?: UpdateOptions) {
       process.exit(1);
     }
 
-    const configState = await getConfigState();
+    const configState = dependencies ? await getConfigState(targetPolicy) : await getConfigState();
 
     if (configState.status === "missing") {
       p.log.error("No Runtime Starwind configuration found. Please run starwind init first.");
@@ -59,8 +104,12 @@ export async function update(components?: string[], options?: UpdateOptions) {
     // Get current config and installed components
     const config = configState.config;
 
-    const installedComponents = getInstalledComponentsForUpdate(config, options?.framework);
-    const runtimeComponents = getInstalledComponentsForUpdate(config, "all");
+    const installedComponents = getInstalledComponentsForUpdate(
+      config,
+      options?.framework,
+      targetPolicy,
+    );
+    const runtimeComponents = getInstalledComponentsForUpdate(config, "all", targetPolicy);
     const runtimeRegistrySource: RegistrySource | undefined = parseRegistrySource(
       options?.registry,
     );
@@ -107,7 +156,8 @@ export async function update(components?: string[], options?: UpdateOptions) {
         (name) => ({
           value: name,
           label:
-            options?.framework === "all" && hasMultipleInstalledFrameworks(config, name)
+            options?.framework === "all" &&
+            hasMultipleInstalledFrameworks(config, name, targetPolicy)
               ? `${name} [all frameworks]`
               : name,
         }),
@@ -137,31 +187,53 @@ export async function update(components?: string[], options?: UpdateOptions) {
       failed: [] as UpdateResult[],
     };
     const previewMode = getPreviewMode(options);
-    const registryOverride = runtimeRegistrySource ? { registrySource: runtimeRegistrySource } : {};
+    const registryOverride = runtimeRegistrySource
+      ? { registrySource: runtimeRegistrySource }
+      : dependencies
+        ? { registry: dependencies.registry }
+        : {};
     const frameworkOverride = options?.framework ? { framework: options.framework } : {};
 
     // ================================================================
     //                     Update Components
     // ================================================================
     if (previewMode.enabled) {
-      const plan = await planRuntimeComponentUpdates(componentsToUpdate, {
+      const previewOptions = {
         config,
         ...frameworkOverride,
         packageManager: options?.packageManager,
         ...registryOverride,
         skipPrompts: true,
-      });
+      };
+      const plan = dependencies
+        ? await planRuntimeComponentUpdates(componentsToUpdate, {
+            ...previewOptions,
+            targetPolicy,
+          })
+        : await planRuntimeComponentUpdates(
+            componentsToUpdate,
+            previewOptions as UpdateRuntimeComponentsOptions,
+          );
       console.log(formatUpdatePreview(plan, previewMode));
       return;
     }
 
-    const runtimeResults = await updateRuntimeComponents(componentsToUpdate, {
+    const updateOptions = {
       config,
       ...frameworkOverride,
       packageManager: options?.packageManager,
       ...registryOverride,
       skipPrompts: options?.yes,
-    });
+    };
+    const runtimeResults = dependencies
+      ? await updateRuntimeComponents(componentsToUpdate, {
+          ...updateOptions,
+          targetPolicy,
+        })
+      : await updateRuntimeComponents(
+          componentsToUpdate,
+          updateOptions as UpdateRuntimeComponentsOptions,
+        );
     results.updated.push(...runtimeResults.updated);
     results.skipped.push(...runtimeResults.skipped);
     results.failed.push(...runtimeResults.failed);
@@ -219,14 +291,15 @@ export async function update(components?: string[], options?: UpdateOptions) {
 }
 
 function getInstalledComponentsForUpdate(
-  config: StarwindConfig,
-  frameworkScope?: StarwindFramework | "all",
-): StarwindConfig["components"] {
+  config: StarwindConfigFor<PrivateVueCliFrameworkTarget>,
+  frameworkScope: PrivateVueCliFrameworkTarget | "all" | undefined,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+): StarwindConfigFor<PrivateVueCliFrameworkTarget>["components"] {
   return config.components.filter((component) => {
     if (component.source === "legacy") return false;
 
     const componentFramework = component.framework ?? config.framework;
-    if (componentFramework !== "astro" && componentFramework !== "react") return false;
+    if (!isConfigTarget(targetPolicy, componentFramework)) return false;
 
     if (frameworkScope === "all") return true;
 
@@ -235,17 +308,23 @@ function getInstalledComponentsForUpdate(
   });
 }
 
-function getUniqueComponentNames(components: StarwindConfig["components"]): string[] {
+function getUniqueComponentNames(
+  components: StarwindConfigFor<PrivateVueCliFrameworkTarget>["components"],
+): string[] {
   return [...new Set(components.map((component) => component.name))];
 }
 
-function hasMultipleInstalledFrameworks(config: StarwindConfig, name: string): boolean {
+function hasMultipleInstalledFrameworks(
+  config: StarwindConfigFor<PrivateVueCliFrameworkTarget>,
+  name: string,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+): boolean {
   const frameworks = new Set(
     config.components
       .filter((component) => component.source !== "legacy")
       .filter((component) => component.name === name)
       .map((component) => component.framework ?? config.framework)
-      .filter((framework) => framework === "astro" || framework === "react"),
+      .filter((framework) => isConfigTarget(targetPolicy, framework)),
   );
 
   return frameworks.size > 1;

@@ -193,6 +193,9 @@ const FUTURE_FRAMEWORK_TRACER_SHIPPING_SURFACE_PATTERNS = [
     pattern: /@starwind-ui\/(?:solid|svelte|vue)/g,
   },
 ] as const;
+const PRIVATE_VUE_PACKAGE_SURFACE_PATHS = new Set([
+  "packages/cli/src/utils/framework-target-policy.ts",
+]);
 
 type FrameworkSpecificContainmentException = {
   path?: string;
@@ -595,7 +598,7 @@ describe("portable runtime generator structure", () => {
     expect(frameworkAdapterRegistry).toContain("vueFrameworkAdapterTarget");
     expect(frameworkAdapterRegistry).toContain("svelteFrameworkAdapterTarget");
     expect(frameworkAdapterRegistry).toContain(
-      "typeof vueFrameworkAdapterTarget.target | typeof svelteFrameworkAdapterTarget.target",
+      '(typeof primitiveFrameworkAdapterTargets)[number]["target"]',
     );
     const svelteTarget = primitiveFrameworkAdapterTargets.find(({ target }) => target === "svelte");
     expect(svelteTarget?.styled).toBeUndefined();
@@ -952,10 +955,15 @@ describe("portable runtime generator structure", () => {
       })),
     );
     const offenders = [...sourceFiles, ...generatorFiles]
-      .map((file) => ({
-        labels: getFutureFrameworkTracerShippingSurfaceLabels(file.source),
-        path: file.relativePath,
-      }))
+      .map((file) => {
+        const labels = getFutureFrameworkTracerShippingSurfaceLabels(file.source);
+        return {
+          labels: PRIVATE_VUE_PACKAGE_SURFACE_PATHS.has(file.relativePath)
+            ? labels.filter((label) => label !== "future package surface")
+            : labels,
+          path: file.relativePath,
+        };
+      })
       .filter((offender) => offender.labels.length > 0);
 
     expect(

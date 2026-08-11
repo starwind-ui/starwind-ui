@@ -20,10 +20,7 @@ export const frameworkAdapterTargets = primitiveFrameworkAdapterTargets;
 export type PrimitiveFrameworkAdapterTarget =
   (typeof primitiveFrameworkAdapterTargets)[number]["target"];
 
-export type FrameworkAdapterRegisteredTarget = Exclude<
-  PrimitiveFrameworkAdapterTarget,
-  typeof vueFrameworkAdapterTarget.target | typeof svelteFrameworkAdapterTarget.target
->;
+export type FrameworkAdapterRegisteredTarget = PrimitiveFrameworkAdapterTarget;
 
 type PrimitiveFrameworkAdapterTargetRegistration =
   (typeof primitiveFrameworkAdapterTargets)[number];

@@ -7,7 +7,9 @@ import { contextMenuStyledContract } from "../contracts/styled/components/contex
 import { dropdownStyledContract } from "../contracts/styled/components/dropdown.js";
 import { hoverCardStyledContract } from "../contracts/styled/components/hover-card.js";
 import { navigationMenuStyledContract } from "../contracts/styled/components/navigation-menu.js";
+import { progressStyledContract } from "../contracts/styled/components/progress.js";
 import { proseStyledContract } from "../contracts/styled/components/prose.js";
+import { radioGroupStyledContract } from "../contracts/styled/components/radio-group.js";
 import { tooltipStyledContract } from "../contracts/styled/components/tooltip.js";
 import { starwindStyledContracts } from "../contracts/styled/starwind.js";
 import type { StyledAdapterContract } from "../contracts/styled/types.js";
@@ -16,6 +18,15 @@ import { validateStyledAdapterContracts } from "../contracts/styled/validation.j
 describe("StyledAdapterContract inventory", () => {
   it("validates adapter-generation invariants for every styled contract", () => {
     expect(validateStyledAdapterContracts(starwindStyledContracts)).toEqual([]);
+  });
+
+  it("uses neutral defaults for color variants", () => {
+    expect(radioGroupStyledContract.variants?.radioControl?.defaultVariants).toMatchObject({
+      variant: "default",
+    });
+    expect(progressStyledContract.variants?.progressIndicator?.defaultVariants).toMatchObject({
+      color: "default",
+    });
   });
 
   it("accepts Vue as a Styled framework target while rejecting an empty filter", () => {

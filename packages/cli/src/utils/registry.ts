@@ -5,12 +5,23 @@ import { z } from "zod";
 
 import runtimeBundledRegistry from "../registry/bundled-registry.json" with { type: "json" };
 import { DEFAULT_STYLED_REGISTRY_REFERENCE } from "./config.js";
-import type { StarwindConfig } from "./config.js";
+import type { StarwindConfigFor } from "./config.js";
+import {
+  type CliFrameworkTarget,
+  type FrameworkTargetPolicy,
+  isRegistryTarget,
+  isSetupTarget,
+  type PublicCliFrameworkTarget,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+  type RegistryTargetFor,
+} from "./framework-target-policy.js";
 import { readJsonFile } from "./fs.js";
 import { parsePackageName } from "./package-spec.js";
 import { assertSafePathSegment } from "./project-path.js";
 
-export type RegistryImplementationTarget = "legacy-astro" | "astro" | "react";
+export type RegistryImplementationTarget = RegistryTargetFor<PublicCliFrameworkTarget>;
+export type RegistryImplementationTargetFor<TFramework extends CliFrameworkTarget> =
+  RegistryTargetFor<TFramework>;
 
 export interface RegistryFile {
   path: string;
@@ -48,7 +59,7 @@ export interface RegistrySetupTarget {
   packageRequirements: RegistryPackageRequirement[];
 }
 
-export interface Component {
+export interface ComponentFor<TFramework extends CliFrameworkTarget> {
   name: string;
   version: string;
   dependencies: string[];
@@ -56,23 +67,27 @@ export interface Component {
   fileDependencies?: string[];
   publicRenames?: ComponentPublicRenames;
   type: "component";
-  targets?: Partial<Record<RegistryImplementationTarget, RegistryTarget>>;
+  targets?: Partial<Record<RegistryImplementationTargetFor<TFramework>, RegistryTarget>>;
 }
 
-export interface RegistryComponentArtifact {
+export type Component = ComponentFor<PublicCliFrameworkTarget>;
+
+export interface RegistryComponentArtifactFor<TFramework extends CliFrameworkTarget> {
   $schema?: string;
   registryVersion: string;
-  component: Omit<Component, "artifact">;
+  component: Omit<ComponentFor<TFramework>, "artifact">;
 }
 
-export interface StarwindRegistry {
+export type RegistryComponentArtifact = RegistryComponentArtifactFor<PublicCliFrameworkTarget>;
+
+export interface StarwindRegistryFor<TFramework extends CliFrameworkTarget> {
   $schema?: string;
   version: string;
-  setup?: Partial<
-    Record<Extract<RegistryImplementationTarget, "astro" | "react">, RegistrySetupTarget>
-  >;
-  components: Component[];
+  setup?: Partial<Record<TFramework, RegistrySetupTarget>>;
+  components: ComponentFor<TFramework>[];
 }
+
+export type StarwindRegistry = StarwindRegistryFor<PublicCliFrameworkTarget>;
 
 export type RegistrySource =
   | { type: "bundled" }
@@ -89,8 +104,8 @@ export function parseRegistrySource(value: string | undefined): RegistrySource |
   return { type: "local", path: value };
 }
 
-export function getConfiguredRegistrySource(
-  config: Pick<StarwindConfig, "registry">,
+export function getConfiguredRegistrySource<TFramework extends CliFrameworkTarget>(
+  config: Pick<StarwindConfigFor<TFramework>, "registry">,
 ): RegistrySource | undefined {
   if (!config.registry) return undefined;
 
@@ -104,8 +119,8 @@ export function getConfiguredRegistrySource(
   }
 }
 
-export function getStyledRegistrySource(
-  config: Pick<StarwindConfig, "registry" | "registries">,
+export function getStyledRegistrySource<TFramework extends CliFrameworkTarget>(
+  config: Pick<StarwindConfigFor<TFramework>, "registry" | "registries">,
   registryReference: string | undefined,
 ): RegistrySource | undefined {
   if (!registryReference || registryReference === DEFAULT_STYLED_REGISTRY_REFERENCE) {
@@ -124,14 +139,6 @@ export function getStyledRegistrySource(
       return registry.url ? { type: "remote", url: registry.url } : undefined;
   }
 }
-
-const VALID_TARGETS = new Set<RegistryImplementationTarget>(["legacy-astro", "astro", "react"]);
-const VALID_SETUP_TARGETS = new Set<RegistryImplementationTarget>(["astro", "react"]);
-const REQUIRED_TARGET_PACKAGES: Record<RegistryImplementationTarget, string[]> = {
-  "legacy-astro": [],
-  astro: ["@starwind-ui/astro"],
-  react: ["@starwind-ui/react"],
-};
 
 const semverVersionSchema = z.string().refine((value) => semver.valid(value) !== null, {
   message: "Expected a semver version",
@@ -209,17 +216,21 @@ const registrySetupTargetSchema = z
     }
   });
 
-const registrySetupSchema = z.record(registrySetupTargetSchema).superRefine((setup, ctx) => {
-  for (const target of Object.keys(setup)) {
-    if (!VALID_SETUP_TARGETS.has(target as RegistryImplementationTarget)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [target],
-        message: `Unsupported registry setup target "${target}"`,
-      });
+function createRegistrySetupSchema<TFramework extends CliFrameworkTarget>(
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+) {
+  return z.record(registrySetupTargetSchema).superRefine((setup, ctx) => {
+    for (const target of Object.keys(setup)) {
+      if (!isSetupTarget(targetPolicy, target)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [target],
+          message: `Unsupported registry setup target "${target}"`,
+        });
+      }
     }
-  }
-});
+  });
+}
 
 const publicRenameSchema = z
   .object({
@@ -257,36 +268,38 @@ const registryTargetSchema = z
   })
   .strict();
 
-const registryTargetsSchema = z.record(registryTargetSchema).superRefine((targets, ctx) => {
-  for (const [target, targetMetadata] of Object.entries(targets)) {
-    const implementationTarget = target as RegistryImplementationTarget;
-
-    if (!VALID_TARGETS.has(implementationTarget)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [target],
-        message: `Unsupported registry target "${target}"`,
-      });
-      continue;
-    }
-
-    if (targetMetadata.files.length === 0) continue;
-
-    const packageNames = new Set(
-      targetMetadata.packageRequirements.map((requirement) => requirement.name),
-    );
-
-    for (const packageName of REQUIRED_TARGET_PACKAGES[implementationTarget]) {
-      if (!packageNames.has(packageName)) {
+function createRegistryTargetsSchema<TFramework extends CliFrameworkTarget>(
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+) {
+  return z.record(registryTargetSchema).superRefine((targets, ctx) => {
+    for (const [target, targetMetadata] of Object.entries(targets)) {
+      if (!isRegistryTarget(targetPolicy, target)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: [target, "packageRequirements"],
-          message: `Target "${target}" with prepared files requires ${packageName}`,
+          path: [target],
+          message: `Unsupported registry target "${target}"`,
         });
+        continue;
+      }
+
+      if (targetMetadata.files.length === 0) continue;
+
+      const packageNames = new Set(
+        targetMetadata.packageRequirements.map((requirement) => requirement.name),
+      );
+
+      for (const packageName of targetPolicy.requiredAdapterPackages[target]) {
+        if (!packageNames.has(packageName)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [target, "packageRequirements"],
+            message: `Target "${target}" with prepared files requires ${packageName}`,
+          });
+        }
       }
     }
-  }
-});
+  });
+}
 
 const safeComponentNameSchema = z
   .string()
@@ -311,57 +324,84 @@ const componentBaseFields = {
   type: z.literal("component"),
 };
 
-const componentSchema = z
-  .object({
-    ...componentBaseFields,
-    artifact: registryArtifactReferenceSchema.optional(),
-    targets: registryTargetsSchema.optional(),
-  })
-  .strict()
-  .superRefine((component, ctx) => {
-    if (!component.targets && !component.artifact) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Expected component targets or artifact",
-      });
-    }
+function createComponentSchema<TFramework extends CliFrameworkTarget>(
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+) {
+  return z
+    .object({
+      ...componentBaseFields,
+      artifact: registryArtifactReferenceSchema.optional(),
+      targets: createRegistryTargetsSchema(targetPolicy).optional(),
+    })
+    .strict()
+    .superRefine((component, ctx) => {
+      if (!component.targets && !component.artifact) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Expected component targets or artifact",
+        });
+      }
 
-    if (component.targets && component.artifact) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Expected either inline targets or artifact, not both",
-      });
-    }
-  });
+      if (component.targets && component.artifact) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Expected either inline targets or artifact, not both",
+        });
+      }
+    });
+}
 
-const registryArtifactComponentSchema = z
-  .object({
-    ...componentBaseFields,
-    targets: registryTargetsSchema,
-  })
-  .strict();
+function createRegistryComponentArtifactSchema<TFramework extends CliFrameworkTarget>(
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+) {
+  const registryArtifactComponentSchema = z
+    .object({
+      ...componentBaseFields,
+      targets: createRegistryTargetsSchema(targetPolicy),
+    })
+    .strict();
 
-const registryComponentArtifactSchema = z
-  .object({
-    $schema: z.string().optional(),
-    registryVersion: semverVersionSchema,
-    component: registryArtifactComponentSchema,
-  })
-  .strict();
+  return z
+    .object({
+      $schema: z.string().optional(),
+      registryVersion: semverVersionSchema,
+      component: registryArtifactComponentSchema,
+    })
+    .strict();
+}
 
-const registryRootSchema = z
-  .object({
-    $schema: z.string().optional(),
-    version: semverVersionSchema,
-    setup: registrySetupSchema.optional(),
-    components: z.array(componentSchema),
-  })
-  .strict();
+function createRegistryRootSchema<TFramework extends CliFrameworkTarget>(
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+) {
+  return z
+    .object({
+      $schema: z.string().optional(),
+      version: semverVersionSchema,
+      setup: createRegistrySetupSchema(targetPolicy).optional(),
+      components: z.array(createComponentSchema(targetPolicy)),
+    })
+    .strict();
+}
 
 let defaultRegistrySource: RegistrySource = { type: "bundled" };
 
-const registryCache = new Map<string, Promise<StarwindRegistry>>();
-const registryArtifactCache = new Map<string, Promise<RegistryComponentArtifact>>();
+type RegistryCache = Map<string, Promise<StarwindRegistryFor<CliFrameworkTarget>>>;
+type RegistryArtifactCache = Map<string, Promise<RegistryComponentArtifactFor<CliFrameworkTarget>>>;
+
+let registryCachesByPolicy = new WeakMap<object, RegistryCache>();
+let registryArtifactCachesByPolicy = new WeakMap<object, RegistryArtifactCache>();
+
+function getPolicyCache<TValue>(
+  cachesByPolicy: WeakMap<object, Map<string, TValue>>,
+  targetPolicy: object,
+): Map<string, TValue> {
+  const existingCache = cachesByPolicy.get(targetPolicy);
+  if (existingCache) return existingCache;
+
+  const cache = new Map<string, TValue>();
+  cachesByPolicy.set(targetPolicy, cache);
+  return cache;
+}
 
 function registrySourceKey(source: RegistrySource): string {
   switch (source.type) {
@@ -381,9 +421,14 @@ function formatRegistryError(error: z.ZodError): Error {
   return new Error(`Invalid Starwind registry at ${path}: ${message}`);
 }
 
-function parseRegistry(rawRegistry: unknown): StarwindRegistry {
+function parseRegistry<TFramework extends CliFrameworkTarget>(
+  rawRegistry: unknown,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): StarwindRegistryFor<TFramework> {
   try {
-    return registryRootSchema.parse(rawRegistry) as StarwindRegistry;
+    return createRegistryRootSchema(targetPolicy).parse(
+      rawRegistry,
+    ) as StarwindRegistryFor<TFramework>;
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw formatRegistryError(error);
@@ -393,12 +438,15 @@ function parseRegistry(rawRegistry: unknown): StarwindRegistry {
   }
 }
 
-function parseRegistryArtifact(
+function parseRegistryArtifact<TFramework extends CliFrameworkTarget>(
   rawArtifact: unknown,
   artifactPath: string,
-): RegistryComponentArtifact {
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): RegistryComponentArtifactFor<TFramework> {
   try {
-    return registryComponentArtifactSchema.parse(rawArtifact) as RegistryComponentArtifact;
+    return createRegistryComponentArtifactSchema(targetPolicy).parse(
+      rawArtifact,
+    ) as RegistryComponentArtifactFor<TFramework>;
   } catch (error) {
     if (error instanceof z.ZodError) {
       const firstIssue = error.issues[0];
@@ -431,11 +479,16 @@ async function readRegistrySource(source: RegistrySource): Promise<unknown> {
   }
 }
 
-async function hydrateRegistry(
-  registry: StarwindRegistry,
+interface RegistryPolicyOptions<TFramework extends CliFrameworkTarget> {
+  forceRefresh?: boolean;
+  targetPolicy: FrameworkTargetPolicy<TFramework>;
+}
+
+async function hydrateRegistry<TFramework extends CliFrameworkTarget>(
+  registry: StarwindRegistryFor<TFramework>,
   source: RegistrySource,
-  options: { forceRefresh?: boolean } = {},
-): Promise<StarwindRegistry> {
+  options: RegistryPolicyOptions<TFramework>,
+): Promise<StarwindRegistryFor<TFramework>> {
   const hasArtifacts = registry.components.some((component) => component.artifact);
 
   if (!hasArtifacts) {
@@ -454,12 +507,12 @@ async function hydrateRegistry(
   };
 }
 
-async function hydrateComponentArtifact(
-  indexComponent: Component,
-  registry: StarwindRegistry,
+async function hydrateComponentArtifact<TFramework extends CliFrameworkTarget>(
+  indexComponent: ComponentFor<TFramework>,
+  registry: StarwindRegistryFor<TFramework>,
   source: RegistrySource,
-  options: { forceRefresh?: boolean },
-): Promise<Component> {
+  options: RegistryPolicyOptions<TFramework>,
+): Promise<ComponentFor<TFramework>> {
   if (!indexComponent.artifact) return indexComponent;
 
   const artifact = await loadRegistryArtifact(indexComponent, source, options);
@@ -491,21 +544,31 @@ async function hydrateComponentArtifact(
   };
 }
 
-async function loadRegistryArtifact(
-  component: Component,
+async function loadRegistryArtifact<TFramework extends CliFrameworkTarget>(
+  component: ComponentFor<TFramework>,
   source: RegistrySource,
-  options: { forceRefresh?: boolean },
-): Promise<RegistryComponentArtifact> {
+  options: RegistryPolicyOptions<TFramework>,
+): Promise<RegistryComponentArtifactFor<TFramework>> {
   const artifactSource = resolveRegistryArtifactSource(component, source);
+  const registryArtifactCache = getPolicyCache(
+    registryArtifactCachesByPolicy,
+    options.targetPolicy,
+  );
+  const cacheKey = artifactSource.cacheKey;
 
-  if (!options.forceRefresh && registryArtifactCache.has(artifactSource.cacheKey)) {
-    return registryArtifactCache.get(artifactSource.cacheKey)!;
+  if (!options.forceRefresh && registryArtifactCache.has(cacheKey)) {
+    return registryArtifactCache.get(cacheKey)! as Promise<
+      RegistryComponentArtifactFor<TFramework>
+    >;
   }
 
   const artifactPromise = readRegistryArtifact(component, artifactSource).then((rawArtifact) =>
-    parseRegistryArtifact(rawArtifact, component.artifact!.path),
+    parseRegistryArtifact(rawArtifact, component.artifact!.path, options.targetPolicy),
   );
-  registryArtifactCache.set(artifactSource.cacheKey, artifactPromise);
+  registryArtifactCache.set(
+    cacheKey,
+    artifactPromise as Promise<RegistryComponentArtifactFor<CliFrameworkTarget>>,
+  );
 
   return artifactPromise;
 }
@@ -514,8 +577,8 @@ type ResolvedRegistryArtifactSource =
   | { type: "local"; path: string; cacheKey: string }
   | { type: "remote"; url: string; cacheKey: string };
 
-function resolveRegistryArtifactSource(
-  component: Component,
+function resolveRegistryArtifactSource<TFramework extends CliFrameworkTarget>(
+  component: ComponentFor<TFramework>,
   source: RegistrySource,
 ): ResolvedRegistryArtifactSource {
   const artifactPath = component.artifact?.path;
@@ -601,8 +664,8 @@ function isUrlInside(rootUrl: URL, childUrl: URL): boolean {
   );
 }
 
-async function readRegistryArtifact(
-  component: Component,
+async function readRegistryArtifact<TFramework extends CliFrameworkTarget>(
+  component: ComponentFor<TFramework>,
   source: ResolvedRegistryArtifactSource,
 ): Promise<unknown> {
   try {
@@ -628,29 +691,56 @@ async function readRegistryArtifact(
   }
 }
 
-async function loadRegistryFromSource(
+async function loadRegistryFromSource<TFramework extends CliFrameworkTarget>(
   source: RegistrySource,
-  options: { forceRefresh?: boolean } = {},
-): Promise<StarwindRegistry> {
+  options: RegistryPolicyOptions<TFramework>,
+): Promise<StarwindRegistryFor<TFramework>> {
+  const registryCache = getPolicyCache(registryCachesByPolicy, options.targetPolicy);
   const cacheKey = registrySourceKey(source);
 
   if (!options.forceRefresh && registryCache.has(cacheKey)) {
-    return registryCache.get(cacheKey)!;
+    return registryCache.get(cacheKey)! as Promise<StarwindRegistryFor<TFramework>>;
   }
 
   const registryPromise = readRegistrySource(source)
-    .then((rawRegistry) => parseRegistry(rawRegistry))
+    .then((rawRegistry) => parseRegistry(rawRegistry, options.targetPolicy))
     .then((registry) => hydrateRegistry(registry, source, options));
-  registryCache.set(cacheKey, registryPromise);
+  registryCache.set(cacheKey, registryPromise as Promise<StarwindRegistryFor<CliFrameworkTarget>>);
 
   return registryPromise;
 }
 
-export async function loadRegistry(
+export interface LoadRegistryOptions<
+  TFramework extends CliFrameworkTarget = PublicCliFrameworkTarget,
+> {
+  forceRefresh?: boolean;
+  targetPolicy?: FrameworkTargetPolicy<TFramework>;
+}
+
+export function loadRegistry(
   source?: RegistrySource,
-  options: { forceRefresh?: boolean } = {},
-): Promise<StarwindRegistry> {
-  return loadRegistryFromSource(source ?? defaultRegistrySource, options);
+  options?: LoadRegistryOptions,
+): Promise<StarwindRegistry>;
+export function loadRegistry<TFramework extends CliFrameworkTarget>(
+  source: RegistrySource | undefined,
+  options: LoadRegistryOptions<TFramework> & {
+    targetPolicy: FrameworkTargetPolicy<TFramework>;
+  },
+): Promise<StarwindRegistryFor<TFramework>>;
+export async function loadRegistry<
+  TFramework extends CliFrameworkTarget = PublicCliFrameworkTarget,
+>(
+  source?: RegistrySource,
+  options: LoadRegistryOptions<TFramework> = {},
+): Promise<StarwindRegistryFor<TFramework>> {
+  const targetPolicy =
+    options.targetPolicy ??
+    (PUBLIC_FRAMEWORK_TARGET_POLICY as unknown as FrameworkTargetPolicy<TFramework>);
+
+  return loadRegistryFromSource(source ?? defaultRegistrySource, {
+    forceRefresh: options.forceRefresh,
+    targetPolicy,
+  });
 }
 
 /**
@@ -659,7 +749,10 @@ export async function loadRegistry(
  * @returns A promise that resolves to an array of Components
  */
 export async function getRegistry(forceRefresh = false): Promise<Component[]> {
-  const registry = await loadRegistryFromSource(defaultRegistrySource, { forceRefresh });
+  const registry = await loadRegistryFromSource(defaultRegistrySource, {
+    forceRefresh,
+    targetPolicy: PUBLIC_FRAMEWORK_TARGET_POLICY,
+  });
   return registry.components;
 }
 
@@ -667,8 +760,8 @@ export async function getRegistry(forceRefresh = false): Promise<Component[]> {
  * Clear the registry cache
  */
 export function clearRegistryCache(): void {
-  registryCache.clear();
-  registryArtifactCache.clear();
+  registryCachesByPolicy = new WeakMap<object, RegistryCache>();
+  registryArtifactCachesByPolicy = new WeakMap<object, RegistryArtifactCache>();
 }
 
 /**

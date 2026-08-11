@@ -6,7 +6,16 @@ import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { remove } from "../../src/commands/remove.js";
-import type { ComponentConfig, StarwindConfig } from "../../src/utils/config.js";
+import type {
+  ComponentConfig,
+  ComponentConfigFor,
+  StarwindConfig,
+  StarwindConfigFor,
+} from "../../src/utils/config.js";
+import {
+  PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+  type PrivateVueCliFrameworkTarget,
+} from "../../src/utils/framework-target-policy.js";
 
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
@@ -40,6 +49,13 @@ function component(name: string, framework: "astro" | "react"): ComponentConfig 
     framework,
     registry: "default",
   };
+}
+
+function privateComponent(
+  name: string,
+  framework: PrivateVueCliFrameworkTarget,
+): ComponentConfigFor<PrivateVueCliFrameworkTarget> {
+  return { name, version: "1.0.0", framework, registry: "default" };
 }
 
 function runtimeConfig(overrides: Partial<StarwindConfig> = {}): StarwindConfig {
@@ -130,6 +146,30 @@ describe.sequential("remove command", () => {
     await expect(readFile(astroFile, "utf-8")).resolves.toBe("component\n");
     await expect(stat(reactFile)).rejects.toThrow();
     expect((await readConfig()).components).toEqual([component("button", "astro")]);
+  });
+
+  it("removes only the selected Vue files and record under the private policy", async () => {
+    const privateConfig: StarwindConfigFor<PrivateVueCliFrameworkTarget> = {
+      ...runtimeConfig(),
+      componentDirs: {
+        react: "src/components/starwind-react",
+        vue: "src/components/starwind-vue",
+      },
+      components: [privateComponent("button", "astro"), privateComponent("button", "vue")],
+    };
+    await writePrivateConfig(privateConfig);
+    const astroFile = await writeComponent("src/components/starwind", "button", "Button.astro");
+    const vueFile = await writeComponent("src/components/starwind-vue", "button", "Button.vue");
+
+    await remove(
+      ["button"],
+      { framework: "vue", yes: true },
+      { targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
+    );
+
+    await expect(readFile(astroFile, "utf-8")).resolves.toBe("component\n");
+    await expect(stat(vueFile)).rejects.toThrow();
+    expect((await readPrivateConfig()).components).toEqual([privateComponent("button", "astro")]);
   });
 
   it("removes every installed framework record for a selected name and disambiguates summaries", async () => {
@@ -353,6 +393,18 @@ async function writeConfig(config: StarwindConfig): Promise<void> {
 
 async function readConfig(): Promise<StarwindConfig> {
   return JSON.parse(await readFile("starwind.config.json", "utf-8")) as StarwindConfig;
+}
+
+async function writePrivateConfig(
+  config: StarwindConfigFor<PrivateVueCliFrameworkTarget>,
+): Promise<void> {
+  await writeFile("starwind.config.json", JSON.stringify(config, null, 2) + "\n", "utf-8");
+}
+
+async function readPrivateConfig(): Promise<StarwindConfigFor<PrivateVueCliFrameworkTarget>> {
+  return JSON.parse(
+    await readFile("starwind.config.json", "utf-8"),
+  ) as StarwindConfigFor<PrivateVueCliFrameworkTarget>;
 }
 
 async function writeComponent(

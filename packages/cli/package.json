@@ -40,6 +40,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "package:check": "node ./scripts/check-package.mjs",
     "cli:link": "pnpm add --global . --ignore-scripts",
     "cli:unlink": "pnpm rm --global starwind",
     "test": "vitest",
@@ -53,6 +54,7 @@
     "publish:release": "pnpm publish --access public"
   },
   "dependencies": {
+    "@babel/parser": "^7.29.7",
     "@clack/prompts": "^0.11.0",
     "chalk": "^5.6.2",
     "commander": "^14.0.2",

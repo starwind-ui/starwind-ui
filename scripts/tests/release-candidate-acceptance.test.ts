@@ -217,6 +217,13 @@ describe("release candidate acceptance", () => {
     expect(getProject("react-19-js").scaffold.args).toEqual(
       expect.arrayContaining(["create", "vite@9.1.1", "react-19-js", "--template", "react"]),
     );
+    expect(getProject("react-19-npm").build.command).toBe(
+      process.platform === "win32" ? "npm.cmd" : "npm",
+    );
+    expect(getProject("react-19-npm").check.command).toBe(
+      process.platform === "win32" ? "npm.cmd" : "npm",
+    );
+
     expect(getProject("react-19-js").check.args).toEqual([
       "exec",
       "tsc",

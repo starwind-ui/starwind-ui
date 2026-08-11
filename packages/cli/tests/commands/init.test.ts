@@ -28,6 +28,7 @@ vi.mock("@clack/prompts", () => ({
 
 vi.mock("../../src/utils/astro-config.js");
 vi.mock("../../src/utils/astro-react-integration.js");
+vi.mock("../../src/utils/astro-vue-integration.js");
 vi.mock("../../src/utils/config.js");
 vi.mock("../../src/utils/env.js");
 vi.mock("../../src/utils/fs.js");
@@ -41,6 +42,7 @@ vi.mock("../../src/utils/sleep.js", () => ({
 vi.mock("../../src/utils/snippets.js");
 vi.mock("../../src/utils/tsconfig.js");
 vi.mock("../../src/utils/vite-config.js");
+vi.mock("../../src/utils/vue-project.js");
 vi.mock("../../src/commands/migrate.js", () => ({
   migrate: vi.fn(),
 }));
@@ -50,10 +52,12 @@ import * as clackPrompts from "@clack/prompts";
 
 import * as astroConfig from "../../src/utils/astro-config.js";
 import * as astroReactIntegration from "../../src/utils/astro-react-integration.js";
+import * as astroVueIntegration from "../../src/utils/astro-vue-integration.js";
 import * as config from "../../src/utils/config.js";
 import { CONFIG_SCHEMA_V2_URL } from "../../src/utils/config.js";
 import * as env from "../../src/utils/env.js";
 import * as fsUtils from "../../src/utils/fs.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import * as hostPlanner from "../../src/utils/host-planner.js";
 import * as layout from "../../src/utils/layout.js";
 import * as packageManager from "../../src/utils/package-manager.js";
@@ -62,8 +66,13 @@ import * as snippets from "../../src/utils/snippets.js";
 import * as sleepUtils from "../../src/utils/sleep.js";
 import * as tsconfig from "../../src/utils/tsconfig.js";
 import * as viteConfig from "../../src/utils/vite-config.js";
+import * as vueProject from "../../src/utils/vue-project.js";
 import { init } from "../../src/commands/init.js";
 import { migrate } from "../../src/commands/migrate.js";
+
+const actualVueProject = await vi.importActual<typeof import("../../src/utils/vue-project.js")>(
+  "../../src/utils/vue-project.js",
+);
 
 const runtimePackage = JSON.parse(
   readFileSync(new URL("../../../runtime/package.json", import.meta.url), "utf8"),
@@ -73,6 +82,7 @@ const registryVersionManifest = JSON.parse(
 ) as { registryVersion: string };
 const CURRENT_ASTRO_SPEC = `@starwind-ui/astro@${runtimePackage.version}`;
 const CURRENT_REACT_SPEC = `@starwind-ui/react@${runtimePackage.version}`;
+const CURRENT_VUE_SPEC = "@starwind-ui/vue@0.0.0";
 const ASTRO_SETUP_REQUIREMENTS = [
   "@tabler/icons@^3",
   "@tailwindcss/forms@^0.5",
@@ -103,13 +113,18 @@ const mockEnsureDirectory = vi.mocked(fsUtils.ensureDirectory);
 const mockWriteCssFile = vi.mocked(fsUtils.writeCssFile);
 const mockDetectHostPlan = vi.mocked(hostPlanner.detectHostPlan);
 const mockFormatDetectedHost = vi.mocked(hostPlanner.formatDetectedHost);
+const mockFormatPrivateDetectedHost = vi.mocked(hostPlanner.formatPrivateDetectedHost);
 const mockValidateHostTarget = vi.mocked(hostPlanner.validateHostTarget);
+const mockValidatePrivateHostTarget = vi.mocked(hostPlanner.validatePrivateHostTarget);
 const mockSetupSnippets = vi.mocked(snippets.setupSnippets);
 const mockSetupAstroConfig = vi.mocked(astroConfig.setupAstroConfig);
 const mockEnsureAstroReactIntegration = vi.mocked(
   astroReactIntegration.ensureAstroReactIntegration,
 );
+const mockApplyAstroVueIntegration = vi.mocked(astroVueIntegration.applyAstroVueIntegration);
+const mockPrepareAstroVueIntegration = vi.mocked(astroVueIntegration.prepareAstroVueIntegration);
 const mockSetupTsConfig = vi.mocked(tsconfig.setupTsConfig);
+const mockSetupVueTsConfig = vi.mocked(tsconfig.setupVueTsConfig);
 const mockSetupLayoutCssImport = vi.mocked(layout.setupLayoutCssImport);
 const mockSetupReactViteConfig = vi.mocked(viteConfig.setupReactViteConfig);
 const mockSetupReactCssImport = vi.mocked(viteConfig.setupReactCssImport);
@@ -120,6 +135,10 @@ const mockDetectReactProjectPlan = vi.mocked(reactProject.detectReactProjectPlan
 const mockGetReactPackageRequirements = vi.mocked(reactProject.getReactPackageRequirements);
 const mockSetupReactProject = vi.mocked(reactProject.setupReactProject);
 const mockValidateReactProjectSetup = vi.mocked(reactProject.validateReactProjectSetup);
+const mockGetVuePackageRequirements = vi.mocked(vueProject.getVuePackageRequirements);
+const mockMeetsVueVersionFloor = vi.mocked(vueProject.meetsVueVersionFloor);
+const mockSetupVueProject = vi.mocked(vueProject.setupVueProject);
+const mockValidateVueProjectSetup = vi.mocked(vueProject.validateVueProjectSetup);
 const mockHasStarwindProAuthConfig = vi.mocked(config.hasStarwindProAuthConfig);
 const mockSetupStarwindProConfig = vi.mocked(config.setupStarwindProConfig);
 const mockSetupStarwindProEnv = vi.mocked(env.setupStarwindProEnv);
@@ -153,6 +172,7 @@ function createCurrentConfig(framework: "astro" | "react" = "astro") {
 }
 
 function mockDefaultProject() {
+  vi.mocked(clackPrompts.isCancel).mockReturnValue(false);
   mockTasks.mockImplementation(runTasksSequentially);
   mockFileExists.mockImplementation(async (filePath) => filePath === "package.json");
   mockReadJsonFile.mockResolvedValue({
@@ -166,7 +186,10 @@ function mockDefaultProject() {
   mockSetupSnippets.mockResolvedValue(true);
   mockSetupAstroConfig.mockResolvedValue(true);
   mockEnsureAstroReactIntegration.mockResolvedValue({ status: "ready" });
+  mockApplyAstroVueIntegration.mockResolvedValue({ status: "configured" });
+  mockPrepareAstroVueIntegration.mockResolvedValue({ status: "ready" });
   mockSetupTsConfig.mockResolvedValue(true);
+  mockSetupVueTsConfig.mockResolvedValue(true);
   mockSetupLayoutCssImport.mockResolvedValue(true);
   mockSetupReactViteConfig.mockResolvedValue(true);
   mockSetupReactCssImport.mockResolvedValue(true);
@@ -225,13 +248,31 @@ function mockDefaultProject() {
     (plan, framework) =>
       `Detected ${framework === "astro" ? "Astro" : "React"}${plan.host.kind === framework ? "" : ` (${plan.host.label})`}`,
   );
+  mockFormatPrivateDetectedHost.mockImplementation(
+    (plan, framework) =>
+      `Detected ${framework === "vue" ? "Vue" : framework === "astro" ? "Astro" : "React"}${plan.host.kind === framework ? "" : ` (${plan.host.label})`}`,
+  );
   mockValidateHostTarget.mockImplementation((plan, framework) => {
+    if (plan.targets.some((target) => target.framework === framework)) return framework;
+    throw new Error(`${framework} is not available for ${plan.host.label}`);
+  });
+  mockValidatePrivateHostTarget.mockImplementation((plan, framework) => {
     if (plan.targets.some((target) => target.framework === framework)) return framework;
     throw new Error(`${framework} is not available for ${plan.host.label}`);
   });
   mockGetReactPackageRequirements.mockImplementation((requirements) => requirements);
   mockSetupReactProject.mockResolvedValue(undefined);
   mockValidateReactProjectSetup.mockResolvedValue(undefined);
+  mockGetVuePackageRequirements.mockImplementation((requirements) => [
+    ...requirements,
+    "@tailwindcss/vite@^4",
+    "tailwindcss@^4",
+    "tw-animate-css@^1",
+    "@tailwindcss/forms@^0.5",
+  ]);
+  mockMeetsVueVersionFloor.mockImplementation((range) => range === ">=3.5");
+  mockSetupVueProject.mockResolvedValue(undefined);
+  mockValidateVueProjectSetup.mockResolvedValue(undefined);
   mockMigrate.mockResolvedValue(undefined);
 }
 
@@ -239,6 +280,603 @@ describe("init command", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDefaultProject();
+  });
+
+  const vueRegistry = {
+    version: "2.0.0",
+    setup: {
+      vue: {
+        adapterPackage: { name: "@starwind-ui/vue", range: "*" },
+        packageRequirements: [{ name: "vue", range: ">=3.5" }],
+      },
+    },
+    components: [],
+  };
+  const viteVueProject = {
+    componentDir: "src/components/starwind",
+    cssEntry: "src/main.ts",
+    cssFile: "src/styles/starwind.css",
+    kind: "vite" as const,
+    sourceRoot: "src" as const,
+    utilsDir: "src/lib/utils",
+    viteConfig: "vite.config.ts",
+    vueUpgradeRequired: false,
+  };
+  const vuePlan = {
+    host: { kind: "vite" as const, label: "Vite" },
+    targets: [{ framework: "vue" as const, readiness: "ready" as const }],
+    vueHostProject: {
+      componentDir: "src/components/starwind",
+      cssFile: "src/styles/starwind.css",
+      hostKind: "vite" as const,
+      hostLabel: "Vite",
+      isSecondaryTarget: false as const,
+      prepare: async () => ({ status: "prepared" as const }),
+      prepareStylesheet: (content: string) => content,
+      projectFramework: "vue" as const,
+      requirements: (requirements: string[]) => mockGetVuePackageRequirements(requirements),
+      setup: async (cssFile: string) => mockSetupVueProject(viteVueProject, cssFile),
+      setupLabel: "Setup Vite Vue project",
+      setupResult: "Vue project setup completed",
+      setupTypeScript: async () => mockSetupVueTsConfig(false),
+      utilsDir: "src/lib/utils",
+      validate: async () => mockValidateVueProjectSetup(viteVueProject),
+      vueUpgradeRequired: false,
+    },
+  };
+
+  function createVuePlanWithManifest(projectPackage: {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    optionalDependencies?: Record<string, string>;
+    peerDependencies?: Record<string, string>;
+  }) {
+    return {
+      ...vuePlan,
+      vueHostProject: {
+        ...vuePlan.vueHostProject,
+        requirements: actualVueProject.createVuePackageRequirementPlanner(projectPackage),
+      },
+    };
+  }
+
+  function createLaravelHostPlan(options: { cancelled?: boolean; validationError?: Error } = {}) {
+    const setup = vi.fn().mockResolvedValue(undefined);
+    const setupTypeScript = vi.fn().mockResolvedValue(true);
+    const validate = options.validationError
+      ? vi.fn().mockRejectedValue(options.validationError)
+      : vi.fn().mockResolvedValue(undefined);
+    return {
+      hostPlan: {
+        host: { kind: "laravel" as const, label: "Laravel with Inertia Vue" },
+        targets: [{ framework: "vue" as const, readiness: "ready" as const }],
+        vueHostProject: {
+          componentDir: "resources/js/components/starwind",
+          cssFile: "resources/css/starwind.css",
+          hostKind: "laravel" as const,
+          hostLabel: "Laravel with Inertia Vue",
+          isSecondaryTarget: false as const,
+          lockCssFile: true as const,
+          prepare: async () => {
+            if (options.cancelled) return { status: "cancelled" as const };
+            return { status: "prepared" as const };
+          },
+          prepareStylesheet: (content: string) =>
+            content
+              .replace(/^@import "tailwindcss";\n/m, "")
+              .replace(/^@import "tw-animate-css";\n/m, "")
+              .replace(/^@custom-variant dark [^;]+;\n/m, ""),
+          projectFramework: "vue" as const,
+          requirements: (requirements: string[]) => mockGetVuePackageRequirements(requirements),
+          setup,
+          setupLabel: "Setup Laravel Inertia Vue project",
+          setupResult: "Laravel Inertia Vue project setup completed",
+          setupTypeScript,
+          utilsDir: "resources/js/lib/utils",
+          validate,
+          vueUpgradeRequired: false,
+        },
+      },
+      setup,
+      setupTypeScript,
+      validate,
+    };
+  }
+
+  function createQuasarHostPlan(options: { cancelled?: boolean; validationError?: Error } = {}) {
+    const setup = vi.fn().mockResolvedValue(undefined);
+    const setupTypeScript = vi.fn().mockResolvedValue(true);
+    const validate = options.validationError
+      ? vi.fn().mockRejectedValue(options.validationError)
+      : vi.fn().mockResolvedValue(undefined);
+    return {
+      hostPlan: {
+        host: { kind: "quasar" as const, label: "Quasar SSR" },
+        targets: [{ framework: "vue" as const, readiness: "ready" as const }],
+        vueHostProject: {
+          componentDir: "src/components/starwind",
+          cssFile: "src/css/starwind.css",
+          hostKind: "quasar" as const,
+          hostLabel: "Quasar SSR",
+          isSecondaryTarget: false as const,
+          lockCssFile: true as const,
+          prepare: async () =>
+            options.cancelled ? { status: "cancelled" as const } : { status: "prepared" as const },
+          prepareStylesheet: (content: string) => content,
+          projectFramework: "vue" as const,
+          requirements: (requirements: string[]) => mockGetVuePackageRequirements(requirements),
+          setup,
+          setupLabel: "Setup Quasar project",
+          setupResult: "Quasar project setup completed",
+          setupTypeScript,
+          utilsDir: "src/lib/utils",
+          validate,
+          vueUpgradeRequired: false,
+        },
+      },
+      setup,
+      setupTypeScript,
+      validate,
+    };
+  }
+
+  function createAstroVueHostPlan(vueUpgradeRequired = false) {
+    return {
+      host: { kind: "astro" as const, label: "Astro" },
+      targets: [
+        { framework: "astro" as const, readiness: "ready" as const },
+        { framework: "vue" as const, readiness: "configurable" as const },
+      ],
+      vueHostProject: {
+        componentDir: "src/components/starwind-vue",
+        cssFile: "src/styles/starwind.css",
+        hostKind: "astro" as const,
+        hostLabel: "Astro",
+        isSecondaryTarget: true as const,
+        prepare: async (options: {
+          packageManager: packageManager.PackageManager;
+          projectPackage: hostPlanner.ProjectPackage;
+          skipPrompts?: boolean;
+        }) => {
+          const preparation = await mockPrepareAstroVueIntegration(options);
+          if (preparation.status === "cancelled" || preparation.status === "declined") {
+            return { status: preparation.status } as const;
+          }
+          if (preparation.status === "ready") return { status: "prepared" as const };
+          return {
+            applyIntegration: async () => {
+              await mockApplyAstroVueIntegration(preparation, options.packageManager);
+            },
+            integrationLabel: "Setup Astro Vue integration",
+            integrationResult: "Astro Vue integration configured",
+            status: "prepared" as const,
+          };
+        },
+        prepareStylesheet: (content: string) => content,
+        projectFramework: "astro" as const,
+        requirements: (requirements: string[]) => mockGetVuePackageRequirements(requirements),
+        setup: async () => {
+          if (!(await mockSetupAstroConfig())) throw new Error("Failed to setup Astro config");
+        },
+        setupCss: async (cssFile: string) => mockSetupLayoutCssImport(cssFile),
+        setupCssLabel: "Adding CSS import to layout",
+        setupCssResult: "CSS import added to layout",
+        setupLabel: "Setup Astro config file",
+        setupResult: "Astro config setup completed",
+        setupTypeScript: async () => mockSetupTsConfig("astro"),
+        utilsDir: "src/lib/utils",
+        validate: async () => {},
+        vueUpgradeRequired,
+      },
+    };
+  }
+
+  it("initializes Vite Vue only with explicit private dependencies", async () => {
+    const projectPackage = {
+      dependencies: { vue: "3.5.39" },
+      devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.2.0" },
+    };
+    mockReadJsonFile.mockResolvedValue(projectPackage);
+    mockGetVuePackageRequirements.mockReturnValue([
+      "@tailwindcss/vite@^4",
+      "tailwindcss@^4",
+      "tw-animate-css@^1",
+      "@tailwindcss/forms@^0.5",
+    ]);
+
+    await init(
+      true,
+      { defaults: true, framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan: vuePlan,
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(mockValidateVueProjectSetup).toHaveBeenCalledWith(viteVueProject);
+    expect(mockSetupVueProject).toHaveBeenCalledWith(viteVueProject, "src/styles/starwind.css");
+    expect(mockSetupVueTsConfig).toHaveBeenCalledWith(false);
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        framework: "vue",
+        componentDir: "src/components/starwind",
+      }),
+      {
+        appendComponents: false,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+    expect(mockInstallDependencies.mock.calls).toEqual([
+      [[CURRENT_VUE_SPEC], "pnpm"],
+      [
+        ["@tailwindcss/vite@^4", "tailwindcss@^4", "tw-animate-css@^1", "@tailwindcss/forms@^0.5"],
+        "pnpm",
+        false,
+        false,
+      ],
+    ]);
+    expect(mockGetVuePackageRequirements).toHaveBeenCalledWith(["vue@>=3.5"]);
+  });
+
+  it.each([
+    ["missing", {}],
+    ["incompatible", { dependencies: { vue: "^3.4.0" } }],
+    ["local", { dependencies: { vue: "file:../vue" } }],
+    ["workspace", { dependencies: { vue: "workspace:*" } }],
+  ] as const)(
+    "installs the canonical Vue requirement for a %s declaration",
+    async (_, projectPackage) => {
+      mockReadJsonFile.mockResolvedValue(projectPackage);
+
+      await init(
+        true,
+        { defaults: true, framework: "vue", packageManager: "pnpm" },
+        {
+          hostPlan: createVuePlanWithManifest(projectPackage),
+          registry: vueRegistry,
+          targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+        },
+      );
+
+      expect(mockInstallDependencies.mock.calls[1]).toEqual([
+        [
+          "vue@>=3.5",
+          "tailwindcss@^4",
+          "@tailwindcss/vite@^4",
+          "tw-animate-css@^1",
+          "@tailwindcss/forms@^0.5",
+        ],
+        "pnpm",
+        false,
+        false,
+      ]);
+    },
+  );
+
+  it("keeps satisfied installer requirements stable across repeat init", async () => {
+    const projectPackage = {
+      dependencies: { tailwindcss: "^4.1", vue: " 3.5.39 " },
+    };
+    const hostPlan = createVuePlanWithManifest(projectPackage);
+    mockReadJsonFile.mockResolvedValue(projectPackage);
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await init(
+        true,
+        { defaults: true, framework: "vue", packageManager: "pnpm" },
+        {
+          hostPlan,
+          registry: vueRegistry,
+          targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+        },
+      );
+    }
+
+    expect(
+      mockInstallDependencies.mock.calls.filter((call) => call.length === 4).map((call) => call[0]),
+    ).toEqual([
+      ["@tailwindcss/vite@^4", "tw-animate-css@^1", "@tailwindcss/forms@^0.5"],
+      ["@tailwindcss/vite@^4", "tw-animate-css@^1", "@tailwindcss/forms@^0.5"],
+    ]);
+  });
+
+  it("skips the secondary installer prompt and task when every requirement is satisfied", async () => {
+    const projectPackage = {
+      dependencies: {
+        "@starwind-ui/runtime": "^0.1.0",
+        "@starwind-ui/vue": "0.0.0",
+        "@tailwindcss/forms": "^0.5.1",
+        tailwindcss: "^4.1",
+        "tw-animate-css": "^1.2.0",
+        vue: "3.5.39",
+      },
+      devDependencies: {
+        "@tailwindcss/vite": "^4.1",
+        "@vitejs/plugin-vue": "^6.0.0",
+        vite: "^8.2.0",
+      },
+    };
+    const hostPlan = createVuePlanWithManifest(projectPackage);
+    mockReadJsonFile.mockResolvedValue(projectPackage);
+    mockGroup.mockImplementation(async (prompts) => {
+      const answers: Record<string, unknown> = {};
+      for (const [key, prompt] of Object.entries(prompts)) {
+        answers[key] = await (prompt as () => unknown | Promise<unknown>)();
+      }
+      return answers;
+    });
+    mockText.mockImplementation(async (options) => options.initialValue ?? "");
+    mockSelect.mockImplementation(async (options) => options.initialValue ?? "neutral");
+    mockConfirm.mockResolvedValue(true);
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await init(
+        true,
+        { framework: "vue", packageManager: "pnpm" },
+        {
+          hostPlan,
+          registry: vueRegistry,
+          targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+        },
+      );
+    }
+
+    expect(mockConfirm).not.toHaveBeenCalled();
+    expect(mockInstallDependencies.mock.calls).toEqual([
+      [[CURRENT_VUE_SPEC], "pnpm"],
+      [[CURRENT_VUE_SPEC], "pnpm"],
+    ]);
+    expect(
+      mockTasks.mock.calls.flatMap(([tasks]) => tasks.map((task) => task.title)),
+    ).not.toContain("Installing packages");
+    expect(mockUpdateConfig).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps Astro primary and records Vue in a separate component directory", async () => {
+    const hostPlan = createAstroVueHostPlan();
+    mockReadJsonFile.mockResolvedValue({ dependencies: { astro: "^7.0.0" } });
+    mockPrepareAstroVueIntegration.mockResolvedValue({
+      status: "prepared",
+      packages: ["@astrojs/vue"],
+    });
+
+    await init(
+      true,
+      { defaults: true, framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan,
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(mockPrepareAstroVueIntegration).toHaveBeenCalledWith({
+      packageManager: "pnpm",
+      projectPackage: { dependencies: { astro: "^7.0.0" } },
+      skipPrompts: true,
+    });
+    expect(mockApplyAstroVueIntegration).toHaveBeenCalledWith(
+      { status: "prepared", packages: ["@astrojs/vue"] },
+      "pnpm",
+    );
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        framework: "astro",
+        componentDir: PATHS.LOCAL_STARWIND_COMPONENTS_DIR,
+        componentDirs: { vue: "src/components/starwind-vue" },
+      }),
+      {
+        appendComponents: false,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+    expect(mockSetupAstroConfig).toHaveBeenCalled();
+    expect(mockSetupLayoutCssImport).toHaveBeenCalled();
+  });
+
+  it("validates Vue registry setup before Astro integration decisions or mutation", async () => {
+    const hostPlan = createAstroVueHostPlan();
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
+    try {
+      await expect(
+        init(
+          true,
+          { defaults: true, framework: "vue", packageManager: "pnpm" },
+          {
+            hostPlan,
+            registry: { version: "2.0.0", components: [] },
+            targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+          },
+        ),
+      ).rejects.toThrow("process.exit called");
+      expect(mockPrepareAstroVueIntegration).not.toHaveBeenCalled();
+      expect(mockApplyAstroVueIntegration).not.toHaveBeenCalled();
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+      expect(mockUpdateConfig).not.toHaveBeenCalled();
+    } finally {
+      exitSpy.mockRestore();
+    }
+  });
+
+  it("keeps Astro package and config state untouched when Vue integration is cancelled", async () => {
+    const hostPlan = createAstroVueHostPlan();
+    mockPrepareAstroVueIntegration.mockResolvedValue({ status: "cancelled" });
+
+    await init(
+      true,
+      { defaults: true, framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan,
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(mockApplyAstroVueIntegration).not.toHaveBeenCalled();
+    expect(mockInstallDependencies).not.toHaveBeenCalled();
+    expect(mockSetupAstroConfig).not.toHaveBeenCalled();
+    expect(mockUpdateConfig).not.toHaveBeenCalled();
+  });
+
+  it("defers Astro Vue mutation until later project preflight is complete", async () => {
+    const hostPlan = createAstroVueHostPlan();
+    mockReadJsonFile.mockResolvedValue({ dependencies: { astro: "workspace:*" } });
+    mockPrepareAstroVueIntegration.mockResolvedValue({
+      status: "prepared",
+      packages: ["@astrojs/vue"],
+    });
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
+    try {
+      await expect(
+        init(
+          true,
+          { defaults: true, framework: "vue", packageManager: "pnpm" },
+          {
+            hostPlan,
+            registry: vueRegistry,
+            targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+          },
+        ),
+      ).rejects.toThrow("process.exit called");
+      expect(mockPrepareAstroVueIntegration).toHaveBeenCalled();
+      expect(mockApplyAstroVueIntegration).not.toHaveBeenCalled();
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+      expect(mockSetupAstroConfig).not.toHaveBeenCalled();
+      expect(mockUpdateConfig).not.toHaveBeenCalled();
+    } finally {
+      exitSpy.mockRestore();
+    }
+  });
+
+  it("keeps prepared Astro Vue changes deferred when a later package prompt is cancelled", async () => {
+    const hostPlan = createAstroVueHostPlan();
+    mockReadJsonFile.mockResolvedValue({ dependencies: { astro: "^7.0.0" } });
+    mockPrepareAstroVueIntegration.mockResolvedValue({
+      status: "prepared",
+      packages: ["@astrojs/vue"],
+    });
+    mockGroup.mockResolvedValue({
+      framework: "vue",
+      componentDir: "src/components/starwind-vue",
+      cssFile: "src/styles/starwind.css",
+      twBaseColor: "neutral",
+    });
+    const cancellation = Symbol("cancel");
+    mockConfirm.mockResolvedValue(cancellation);
+    vi.mocked(clackPrompts.isCancel).mockImplementation((value) => value === cancellation);
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
+    try {
+      await expect(
+        init(
+          true,
+          { framework: "vue", packageManager: "pnpm" },
+          {
+            hostPlan,
+            registry: vueRegistry,
+            targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+          },
+        ),
+      ).rejects.toThrow("process.exit called");
+      expect(mockPrepareAstroVueIntegration).toHaveBeenCalled();
+      expect(mockApplyAstroVueIntegration).not.toHaveBeenCalled();
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+      expect(mockSetupAstroConfig).not.toHaveBeenCalled();
+      expect(mockUpdateConfig).not.toHaveBeenCalled();
+    } finally {
+      exitSpy.mockRestore();
+    }
+  });
+
+  it("requires corrective Vue installation before mutating a Vue 3.4 project", async () => {
+    const upgradePlan = {
+      ...vuePlan,
+      targets: [{ framework: "vue" as const, readiness: "configurable" as const }],
+      vueHostProject: { ...vuePlan.vueHostProject, vueUpgradeRequired: true },
+    };
+    mockGroup.mockResolvedValue({
+      framework: "vue",
+      componentDir: "src/components/starwind",
+      cssFile: "src/styles/starwind.css",
+      twBaseColor: "neutral",
+    });
+    mockConfirm.mockResolvedValue(false);
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
+    try {
+      await expect(
+        init(
+          true,
+          { framework: "vue", packageManager: "pnpm" },
+          {
+            hostPlan: upgradePlan,
+            registry: vueRegistry,
+            targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+          },
+        ),
+      ).rejects.toThrow("process.exit called");
+      expect(clackPrompts.cancel).toHaveBeenCalledWith(expect.stringContaining("Vue 3.5 or later"));
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+      expect(mockSetupVueProject).not.toHaveBeenCalled();
+      expect(mockUpdateConfig).not.toHaveBeenCalled();
+    } finally {
+      exitSpy.mockRestore();
+    }
+  });
+
+  it("rejects Vue through the public init call before host detection or mutation", async () => {
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
+    try {
+      await expect(
+        init(true, {
+          defaults: true,
+          framework: "vue",
+          packageManager: "pnpm",
+        } as never),
+      ).rejects.toThrow("process.exit called");
+      expect(clackPrompts.log.error).toHaveBeenCalledWith(
+        expect.stringContaining("public target policy"),
+      );
+      expect(mockDetectHostPlan).not.toHaveBeenCalled();
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+      expect(mockUpdateConfig).not.toHaveBeenCalled();
+    } finally {
+      exitSpy.mockRestore();
+    }
+  });
+
+  it("preserves a Vite Vue project when preflight fails", async () => {
+    mockValidateVueProjectSetup.mockRejectedValue(new Error("Unsupported Vite Vue config"));
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
+    try {
+      await expect(
+        init(
+          true,
+          { defaults: true, framework: "vue", packageManager: "pnpm" },
+          {
+            hostPlan: vuePlan,
+            registry: vueRegistry,
+            targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+          },
+        ),
+      ).rejects.toThrow("process.exit called");
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+      expect(mockSetupVueProject).not.toHaveBeenCalled();
+      expect(mockUpdateConfig).not.toHaveBeenCalled();
+    } finally {
+      exitSpy.mockRestore();
+    }
   });
 
   it("writes v2 runtime config and package plan for a React framework flag", async () => {
@@ -971,5 +1609,432 @@ describe("init command", () => {
 
     expect(clackPrompts.intro).toHaveBeenCalledTimes(1);
     expect(clackPrompts.outro).toHaveBeenCalledTimes(1);
+  });
+
+  it("initializes Quasar SSR through the common private host seam", async () => {
+    const { hostPlan, setup, setupTypeScript, validate } = createQuasarHostPlan();
+    mockReadJsonFile.mockResolvedValue({
+      dependencies: { quasar: "^2.18.0", vue: "^3.5.13" },
+      devDependencies: { "@quasar/app-vite": "^3.0.0" },
+    });
+
+    await init(
+      true,
+      { defaults: true, framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan,
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(validate).toHaveBeenCalledOnce();
+    expect(setup).toHaveBeenCalledWith("src/css/starwind.css");
+    expect(setupTypeScript).toHaveBeenCalledOnce();
+    expect(mockSetupTsConfig).not.toHaveBeenCalled();
+    expect(mockSetupVueTsConfig).not.toHaveBeenCalled();
+    expect(mockEnsureDirectory).toHaveBeenCalledWith("src/components/starwind");
+    expect(mockWriteCssFile).toHaveBeenCalledWith("src/css/starwind.css", expect.any(String));
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        componentDir: "src/components/starwind",
+        framework: "vue",
+        tailwind: expect.objectContaining({ css: "src/css/starwind.css" }),
+        utilsDir: "src/lib/utils",
+      }),
+      {
+        appendComponents: false,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+  });
+
+  it.each([
+    ["failed preflight", { validationError: new Error("Unsupported Quasar config shape") }],
+    ["cancelled preparation", { cancelled: true }],
+  ] as const)(
+    "stops Quasar initialization after %s before installs or writes",
+    async (_case, options) => {
+      const { hostPlan, setup } = createQuasarHostPlan(options);
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("process.exit called");
+      });
+
+      try {
+        const initialization = init(
+          true,
+          { defaults: true, framework: "vue", packageManager: "pnpm" },
+          {
+            hostPlan,
+            registry: vueRegistry,
+            targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+          },
+        );
+        if ("validationError" in options) {
+          await expect(initialization).rejects.toThrow("process.exit called");
+        } else {
+          await initialization;
+        }
+        expect(setup).not.toHaveBeenCalled();
+        expect(mockInstallDependencies).not.toHaveBeenCalled();
+        expect(mockEnsureDirectory).not.toHaveBeenCalled();
+        expect(mockWriteCssFile).not.toHaveBeenCalled();
+        expect(mockUpdateConfig).not.toHaveBeenCalled();
+      } finally {
+        exitSpy.mockRestore();
+      }
+    },
+  );
+
+  it("initializes Laravel Inertia Vue through the common private host seam", async () => {
+    const { hostPlan, setup, setupTypeScript, validate } = createLaravelHostPlan();
+    const projectPackage = {
+      dependencies: {
+        "@inertiajs/vue3": "^3.0.0",
+        tailwindcss: "^4.1",
+        vue: "3.5.39",
+      },
+    };
+    mockReadJsonFile.mockResolvedValue(projectPackage);
+    mockGetVuePackageRequirements.mockReturnValue([
+      "@tailwindcss/vite@^4",
+      "tw-animate-css@^1",
+      "@tailwindcss/forms@^0.5",
+    ]);
+
+    await init(
+      true,
+      { defaults: true, framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan,
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(validate).toHaveBeenCalledOnce();
+    expect(setup).toHaveBeenCalledWith("resources/css/starwind.css");
+    expect(setupTypeScript).toHaveBeenCalledOnce();
+    expect(mockSetupTsConfig).not.toHaveBeenCalled();
+    expect(mockSetupVueTsConfig).not.toHaveBeenCalled();
+    expect(mockGetVuePackageRequirements).toHaveBeenCalledWith(["vue@>=3.5"]);
+    expect(mockInstallDependencies).toHaveBeenCalledWith(
+      ["@tailwindcss/vite@^4", "tw-animate-css@^1", "@tailwindcss/forms@^0.5"],
+      "pnpm",
+      false,
+      false,
+    );
+    expect(mockEnsureDirectory).toHaveBeenCalledWith("resources/js/components/starwind");
+    expect(mockWriteCssFile).toHaveBeenCalledWith(
+      "resources/css/starwind.css",
+      expect.not.stringContaining('@import "tailwindcss"'),
+    );
+    expect(mockWriteCssFile).toHaveBeenCalledWith(
+      "resources/css/starwind.css",
+      expect.stringContaining('@plugin "@tailwindcss/forms"'),
+    );
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        componentDir: "resources/js/components/starwind",
+        framework: "vue",
+        tailwind: expect.objectContaining({ css: "resources/css/starwind.css" }),
+        utilsDir: "resources/js/lib/utils",
+      }),
+      {
+        appendComponents: false,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+  });
+
+  it("stops Laravel initialization when host preflight fails", async () => {
+    const { hostPlan, setup } = createLaravelHostPlan({
+      validationError: new Error("Unsupported Laravel starter shape"),
+    });
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
+
+    try {
+      await expect(
+        init(
+          true,
+          { defaults: true, framework: "vue", packageManager: "pnpm" },
+          {
+            hostPlan,
+            registry: vueRegistry,
+            targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+          },
+        ),
+      ).rejects.toThrow("process.exit called");
+      expect(setup).not.toHaveBeenCalled();
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+      expect(mockEnsureDirectory).not.toHaveBeenCalled();
+      expect(mockWriteCssFile).not.toHaveBeenCalled();
+      expect(mockUpdateConfig).not.toHaveBeenCalled();
+    } finally {
+      exitSpy.mockRestore();
+    }
+  });
+
+  it("stops Laravel initialization when common host preparation is cancelled", async () => {
+    const { hostPlan, setup } = createLaravelHostPlan({ cancelled: true });
+
+    await init(
+      true,
+      { defaults: true, framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan,
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(setup).not.toHaveBeenCalled();
+    expect(mockInstallDependencies).not.toHaveBeenCalled();
+    expect(mockEnsureDirectory).not.toHaveBeenCalled();
+    expect(mockWriteCssFile).not.toHaveBeenCalled();
+    expect(mockUpdateConfig).not.toHaveBeenCalled();
+  });
+
+  it("initializes Nuxt through the common private Vue host seam", async () => {
+    const validate = vi.fn().mockResolvedValue(undefined);
+    const setup = vi.fn().mockResolvedValue(undefined);
+    const setupTypeScript = vi.fn().mockResolvedValue(true);
+    const nuxtPlan = {
+      host: { kind: "nuxt" as const, label: "Nuxt 4" },
+      targets: [{ framework: "vue" as const, readiness: "ready" as const }],
+      vueHostProject: {
+        componentDir: "app/components/starwind",
+        cssFile: "app/assets/css/starwind.css",
+        hostKind: "nuxt" as const,
+        hostLabel: "Nuxt 4",
+        isSecondaryTarget: false as const,
+        lockCssFile: true as const,
+        prepare: async () => ({ status: "prepared" as const }),
+        prepareStylesheet: (content: string) => content,
+        projectFramework: "vue" as const,
+        requirements: (requirements: string[]) => mockGetVuePackageRequirements(requirements),
+        setup,
+        setupLabel: "Setup Nuxt project",
+        setupResult: "Nuxt project setup completed",
+        setupTypeScript,
+        utilsDir: "app/lib/utils",
+        validate,
+        vueUpgradeRequired: false,
+      },
+    };
+    mockReadJsonFile.mockResolvedValue({
+      dependencies: { nuxt: "^4.2.0", vue: "^3.5.0" },
+    });
+
+    await init(
+      true,
+      { defaults: true, framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan: nuxtPlan,
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(validate).toHaveBeenCalledOnce();
+    expect(setup).toHaveBeenCalledWith("app/assets/css/starwind.css");
+    expect(setupTypeScript).toHaveBeenCalledOnce();
+    expect(mockSetupTsConfig).not.toHaveBeenCalled();
+    expect(mockSetupVueTsConfig).not.toHaveBeenCalled();
+    expect(mockWriteCssFile).toHaveBeenCalledWith(
+      "app/assets/css/starwind.css",
+      expect.any(String),
+    );
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        componentDir: "app/components/starwind",
+        framework: "vue",
+        utilsDir: "app/lib/utils",
+      }),
+      {
+        appendComponents: false,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+  });
+
+  it("uses Nuxt plan destinations as accepted interactive prompt defaults", async () => {
+    const setup = vi.fn().mockResolvedValue(undefined);
+    const nuxtPlan = {
+      host: { kind: "nuxt" as const, label: "Nuxt 4" },
+      targets: [{ framework: "vue" as const, readiness: "ready" as const }],
+      vueHostProject: {
+        componentDir: "app/components/starwind",
+        cssFile: "app/assets/css/starwind.css",
+        hostKind: "nuxt" as const,
+        hostLabel: "Nuxt 4",
+        isSecondaryTarget: false as const,
+        lockCssFile: true as const,
+        prepare: async () => ({ status: "prepared" as const }),
+        prepareStylesheet: (content: string) => content,
+        projectFramework: "vue" as const,
+        requirements: (requirements: string[]) => mockGetVuePackageRequirements(requirements),
+        setup,
+        setupLabel: "Setup Nuxt project",
+        setupResult: "Nuxt project setup completed",
+        setupTypeScript: async () => true,
+        utilsDir: "app/lib/utils",
+        validate: async () => {},
+        vueUpgradeRequired: false,
+      },
+    };
+    mockReadJsonFile.mockResolvedValue({
+      dependencies: { nuxt: "^4.2.0", vue: "^3.5.0" },
+    });
+    mockGroup.mockImplementation(async (prompts) => {
+      const answers: Record<string, unknown> = {};
+      for (const [key, prompt] of Object.entries(prompts)) {
+        answers[key] = await (prompt as () => unknown | Promise<unknown>)();
+      }
+      return answers;
+    });
+    mockText.mockImplementation(async (options) => options.initialValue ?? "");
+    mockSelect.mockImplementation(async (options) => options.initialValue ?? "neutral");
+    mockConfirm.mockResolvedValue(true);
+
+    await init(
+      true,
+      { framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan: nuxtPlan,
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(mockText).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        initialValue: "app/components/starwind",
+        placeholder: "app/components/starwind",
+      }),
+    );
+    expect(mockText).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        initialValue: "app/assets/css/starwind.css",
+        placeholder: "app/assets/css/starwind.css",
+      }),
+    );
+    expect(setup).toHaveBeenCalledWith("app/assets/css/starwind.css");
+    expect(mockEnsureDirectory).toHaveBeenCalledWith("app/components/starwind");
+    expect(mockWriteCssFile).toHaveBeenCalledWith(
+      "app/assets/css/starwind.css",
+      expect.any(String),
+    );
+  });
+
+  it("stops Nuxt initialization when common host preparation is cancelled", async () => {
+    const setup = vi.fn();
+    const nuxtPlan = {
+      host: { kind: "nuxt" as const, label: "Nuxt 4" },
+      targets: [{ framework: "vue" as const, readiness: "ready" as const }],
+      vueHostProject: {
+        componentDir: "app/components/starwind",
+        cssFile: "app/assets/css/starwind.css",
+        hostKind: "nuxt" as const,
+        hostLabel: "Nuxt 4",
+        isSecondaryTarget: false as const,
+        lockCssFile: true as const,
+        prepare: async () => ({ status: "cancelled" as const }),
+        prepareStylesheet: (content: string) => content,
+        projectFramework: "vue" as const,
+        requirements: (requirements: string[]) => requirements,
+        setup,
+        setupLabel: "Setup Nuxt project",
+        setupResult: "Nuxt project setup completed",
+        setupTypeScript: async () => true,
+        utilsDir: "app/lib/utils",
+        validate: async () => {},
+        vueUpgradeRequired: false,
+      },
+    };
+
+    await init(
+      true,
+      { defaults: true, framework: "vue", packageManager: "pnpm" },
+      {
+        hostPlan: nuxtPlan,
+        registry: vueRegistry,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    expect(setup).not.toHaveBeenCalled();
+    expect(mockInstallDependencies).not.toHaveBeenCalled();
+    expect(mockEnsureDirectory).not.toHaveBeenCalled();
+    expect(mockWriteCssFile).not.toHaveBeenCalled();
+    expect(mockUpdateConfig).not.toHaveBeenCalled();
+  });
+  it("rejects a custom Nuxt CSS destination before installs or writes", async () => {
+    const setup = vi.fn();
+    const nuxtPlan = {
+      host: { kind: "nuxt" as const, label: "Nuxt 4" },
+      targets: [{ framework: "vue" as const, readiness: "ready" as const }],
+      vueHostProject: {
+        componentDir: "app/components/starwind",
+        cssFile: "app/assets/css/starwind.css",
+        hostKind: "nuxt" as const,
+        hostLabel: "Nuxt 4",
+        isSecondaryTarget: false as const,
+        lockCssFile: true as const,
+        prepare: async () => ({ status: "prepared" as const }),
+        prepareStylesheet: (content: string) => content,
+        projectFramework: "vue" as const,
+        requirements: (requirements: string[]) => requirements,
+        setup,
+        setupLabel: "Setup Nuxt project",
+        setupResult: "Nuxt project setup completed",
+        setupTypeScript: async () => true,
+        utilsDir: "app/lib/utils",
+        validate: async () => {},
+        vueUpgradeRequired: false,
+      },
+    };
+    mockReadJsonFile.mockResolvedValue({
+      dependencies: { nuxt: "^4.2.0", vue: "^3.5.0" },
+    });
+    mockGroup.mockResolvedValue({
+      framework: "vue",
+      componentDir: "app/components/starwind",
+      cssFile: "styles/custom.css",
+      twBaseColor: "neutral",
+    });
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
+
+    try {
+      await expect(
+        init(
+          true,
+          { framework: "vue", packageManager: "pnpm" },
+          {
+            hostPlan: nuxtPlan,
+            registry: vueRegistry,
+            targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+          },
+        ),
+      ).rejects.toThrow("process.exit called");
+
+      expect(clackPrompts.log.error).toHaveBeenCalledWith(
+        expect.stringContaining("plan-owned stylesheet path app/assets/css/starwind.css"),
+      );
+      expect(setup).not.toHaveBeenCalled();
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+      expect(mockEnsureDirectory).not.toHaveBeenCalled();
+      expect(mockSetupSnippets).not.toHaveBeenCalled();
+      expect(mockWriteCssFile).not.toHaveBeenCalled();
+      expect(mockUpdateConfig).not.toHaveBeenCalled();
+    } finally {
+      exitSpy.mockRestore();
+    }
   });
 });

@@ -1,3 +1,8 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock @clack/prompts with a factory so tasks is typed as a simple mock
@@ -17,7 +22,13 @@ vi.mock("@clack/prompts", () => ({
 
 import * as clackPrompts from "@clack/prompts";
 
+import {
+  buildRuntimeRegistry,
+  createCliRegistryBuildPolicy,
+} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
+import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
 import * as config from "../../src/utils/config.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import * as primitiveComponent from "../../src/utils/primitive-component.js";
 import * as proManifest from "../../src/utils/pro-manifest.js";
 import * as registry from "../../src/utils/registry.js";
@@ -472,6 +483,90 @@ describe("search command", () => {
         }),
       ]),
     );
+  });
+
+  it("searches private Vue primitives and core registry metadata only through injected policy", async () => {
+    const vueArtifact = {
+      component: "toast",
+      framework: "vue" as const,
+      version: "0.1.1",
+      files: [
+        {
+          content: "<!-- Vendored by the Starwind CLI -->",
+          path: "src/components/starwind-primitives/toast/ToastRoot.vue",
+          sourceHash: "sha256:vue-toast",
+          sourcePath: "packages/vue/src/toast/ToastRoot.vue",
+        },
+      ],
+      packageRequirements: [
+        { name: "@starwind-ui/runtime", range: "^1.0.0" },
+        { name: "vue", range: ">=3.5" },
+      ],
+    };
+    const dependencies = {
+      artifacts: { primitives: [vueArtifact] },
+      targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+    };
+    mockGetPrimitiveComponents.mockImplementation(({ framework } = {}) =>
+      framework === "vue" ? ([vueArtifact] as never) : [],
+    );
+
+    await search("toast", { primitives: true, framework: "all", json: true }, dependencies);
+
+    const output = JSON.parse(consoleLogSpy.mock.calls.at(-1)?.[0] as string);
+    expect(output.primitives.results).toEqual([
+      expect.objectContaining({
+        framework: "vue",
+        installCommand: "starwind primitives add toast --framework vue",
+        packageRequirements: expect.arrayContaining([expect.objectContaining({ name: "vue" })]),
+      }),
+    ]);
+    expect(output.primitives.results[0].files[0]).toMatchObject({
+      sourceHash: "sha256:vue-toast",
+      sourcePath: "packages/vue/src/toast/ToastRoot.vue",
+    });
+
+    const searchTempRoot = await mkdtemp(path.join(tmpdir(), "starwind-vue-search-"));
+    try {
+      const vueRegistry = await buildRuntimeRegistry({
+        targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
+        repoRoot: fileURLToPath(new URL("../../../../", import.meta.url)),
+        tempRoot: searchTempRoot,
+      });
+      const combobox = vueRegistry.components.find(({ name }) => name === "combobox");
+      if (!combobox?.targets?.vue) throw new Error("Generated Vue Combobox target is missing.");
+      const target = combobox.targets.vue;
+
+      mockLoadRegistry.mockResolvedValue(vueRegistry as never);
+      await search("combobox", { json: true }, dependencies);
+
+      const styledOutput = JSON.parse(consoleLogSpy.mock.calls.at(-1)?.[0] as string);
+      expect(styledOutput.coreComponents.results).toEqual([
+        expect.objectContaining({
+          dependencies: combobox.dependencies,
+          frameworkTargets: ["vue"],
+          name: "combobox",
+          version: combobox.version,
+        }),
+      ]);
+      expect(target.componentDependencies).toEqual(["input-group"]);
+      expect(target.files.length).toBeGreaterThan(0);
+      expect(target.packageRequirements).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "@starwind-ui/vue" }),
+          expect.objectContaining({ name: "vue", range: ">=3.5" }),
+        ]),
+      );
+      expect(mockLoadRegistry).toHaveBeenLastCalledWith(
+        { type: "bundled" },
+        { targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
+      );
+
+      await search("combobox", {}, dependencies);
+      expect(getLogOutput(mockLog.info)).toContain("starwind add combobox");
+    } finally {
+      await rm(searchTempRoot, { force: true, recursive: true });
+    }
   });
 });
 

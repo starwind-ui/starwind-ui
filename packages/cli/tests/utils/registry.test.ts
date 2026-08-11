@@ -6,6 +6,11 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  type FrameworkTargetPolicy,
+  PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "../../src/utils/framework-target-policy.js";
+import {
   clearRegistryCache,
   getComponent,
   getRegistry,
@@ -776,5 +781,154 @@ describe.sequential("runtime registry loading", () => {
     await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(
       /components\.0\.targets\.astro\.packageRequirements/,
     );
+  });
+
+  it("accepts Vue registry setup and prepared targets only through the private policy", async () => {
+    const registryPath = join(tempDir, "vue-registry.json");
+    const vueRegistry = {
+      $schema: "https://starwind.dev/registry-schema.v2.json",
+      version: "2.0.0",
+      setup: {
+        vue: {
+          adapterPackage: { name: "@starwind-ui/vue", range: "*" },
+          packageRequirements: [{ name: "vue", range: ">=3.5" }],
+        },
+      },
+      components: [
+        {
+          name: "button",
+          version: "2.4.0",
+          type: "component",
+          dependencies: [],
+          targets: {
+            vue: {
+              files: [{ path: "button/Button.vue", content: "<template><button /></template>\n" }],
+              componentDependencies: [],
+              packageRequirements: [{ name: "@starwind-ui/vue", range: "*" }],
+            },
+          },
+        },
+      ],
+    };
+    await writeFile(registryPath, JSON.stringify(vueRegistry, null, 2), "utf-8");
+
+    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(/setup\.vue/);
+    await expect(
+      loadRegistry(
+        { type: "local", path: registryPath },
+        { targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
+      ),
+    ).resolves.toMatchObject({
+      setup: { vue: { adapterPackage: { name: "@starwind-ui/vue" } } },
+      components: [
+        {
+          name: "button",
+          targets: {
+            vue: { packageRequirements: [{ name: "@starwind-ui/vue", range: "*" }] },
+          },
+        },
+      ],
+    });
+    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(/setup\.vue/);
+  });
+
+  it("applies the private policy to linked Vue component artifacts", async () => {
+    const registryPath = join(tempDir, "vue-split-registry.json");
+    const collidingPublicPolicy: FrameworkTargetPolicy<"astro" | "react"> = Object.freeze({
+      ...PUBLIC_FRAMEWORK_TARGET_POLICY,
+      cacheKey: "private-vue",
+    });
+    const artifactPath = join(tempDir, "artifacts", "vue-button.json");
+    await mkdir(join(tempDir, "artifacts"), { recursive: true });
+    await writeFile(
+      registryPath,
+      JSON.stringify({
+        $schema: "https://starwind.dev/registry-schema.v2.json",
+        version: "2.0.0",
+        components: [
+          {
+            name: "button",
+            version: "2.4.0",
+            type: "component",
+            dependencies: [],
+            artifact: { path: "artifacts/vue-button.json" },
+          },
+        ],
+      }),
+      "utf-8",
+    );
+    await writeFile(
+      artifactPath,
+      JSON.stringify({
+        $schema: "https://starwind.dev/registry-component-artifact-schema.v2.json",
+        registryVersion: "2.0.0",
+        component: {
+          name: "button",
+          version: "2.4.0",
+          type: "component",
+          dependencies: [],
+          targets: {
+            vue: {
+              files: [{ path: "button/Button.vue", content: "<template><button /></template>\n" }],
+              componentDependencies: [],
+              packageRequirements: [{ name: "@starwind-ui/vue", range: "*" }],
+            },
+          },
+        },
+      }),
+      "utf-8",
+    );
+
+    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(
+      /targets\.vue/,
+    );
+    await expect(
+      loadRegistry(
+        { type: "local", path: registryPath },
+        { targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
+      ),
+    ).resolves.toMatchObject({
+      components: [
+        { name: "button", targets: { vue: { files: [{ path: "button/Button.vue" }] } } },
+      ],
+    });
+    await expect(
+      loadRegistry({ type: "local", path: registryPath }, { targetPolicy: collidingPublicPolicy }),
+    ).rejects.toThrow(/targets\.vue/);
+  });
+
+  it("requires the Vue adapter for private prepared registry files", async () => {
+    const registryPath = join(tempDir, "vue-missing-adapter.json");
+    await writeFile(
+      registryPath,
+      JSON.stringify({
+        version: "2.0.0",
+        components: [
+          {
+            name: "button",
+            version: "2.4.0",
+            type: "component",
+            dependencies: [],
+            targets: {
+              vue: {
+                files: [
+                  { path: "button/Button.vue", content: "<template><button /></template>\n" },
+                ],
+                componentDependencies: [],
+                packageRequirements: [{ name: "vue", range: ">=3.5" }],
+              },
+            },
+          },
+        ],
+      }),
+      "utf-8",
+    );
+
+    await expect(
+      loadRegistry(
+        { type: "local", path: registryPath },
+        { targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
+      ),
+    ).rejects.toThrow(/requires @starwind-ui\/vue/);
   });
 });

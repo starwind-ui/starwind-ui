@@ -2,13 +2,20 @@ import semver from "semver";
 
 import { PATHS } from "./constants.js";
 import { fileExists, readJsonFile, writeJsonFile } from "./fs.js";
+import {
+  type CliFrameworkTarget,
+  type FrameworkTargetPolicy,
+  isConfigTarget,
+  type PublicCliFrameworkTarget,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "./framework-target-policy.js";
 import { assertProjectRelativePath, assertSafePathSegment } from "./project-path.js";
 
 export const CONFIG_SCHEMA_V1_URL = "https://starwind.dev/config-schema.json";
 export const CONFIG_SCHEMA_V2_URL = "https://starwind.dev/config-schema.v2.json";
 export const DEFAULT_STYLED_REGISTRY_REFERENCE = "default";
 
-export type StarwindFramework = "astro" | "react";
+export type StarwindFramework = PublicCliFrameworkTarget;
 export type StarwindRegistrySource = "bundled" | "local" | "remote";
 export type StarwindComponentSource = "legacy";
 export type StyledRegistryCatalog = Record<string, StyledRegistryConfig>;
@@ -36,20 +43,24 @@ export interface ResolvedStarwindProRegistryConfig {
   params: Record<string, string>;
 }
 
-export interface ComponentConfig {
-  framework?: StarwindFramework;
+export interface ComponentConfigFor<TFramework extends CliFrameworkTarget> {
+  framework?: TFramework;
   name: string;
   registry?: string;
   source?: StarwindComponentSource;
   version: string;
 }
 
-export interface PrimitiveConfig {
-  framework?: StarwindFramework;
+export type ComponentConfig = ComponentConfigFor<StarwindFramework>;
+
+export interface PrimitiveConfigFor<TFramework extends CliFrameworkTarget> {
+  framework?: TFramework;
   name: string;
   source?: StarwindRegistrySource;
   version: string;
 }
+
+export type PrimitiveConfig = PrimitiveConfigFor<StarwindFramework>;
 
 interface TailwindConfig {
   css: string;
@@ -61,10 +72,10 @@ interface TailwindConfig {
 // 	components: string;
 // }
 
-export interface StarwindConfig {
+export interface StarwindConfigFor<TFramework extends CliFrameworkTarget> {
   $schema: string;
   version?: 2;
-  framework?: StarwindFramework;
+  framework?: TFramework;
   /** @deprecated Private beta field. Read for compatibility, omitted from config writes. */
   componentLayer?: string;
   registry?: StyledRegistryConfig;
@@ -73,15 +84,17 @@ export interface StarwindConfig {
   tailwind: TailwindConfig;
   // aliases: AliasConfig;
   componentDir: string;
-  componentDirs?: Partial<Record<StarwindFramework, string>>;
+  componentDirs?: Partial<Record<TFramework, string>>;
   primitiveDir?: string;
-  primitiveDirs?: Partial<Record<StarwindFramework, string>>;
+  primitiveDirs?: Partial<Record<TFramework, string>>;
   utilsDir?: string;
-  components: ComponentConfig[];
-  primitives?: PrimitiveConfig[];
+  components: ComponentConfigFor<TFramework>[];
+  primitives?: PrimitiveConfigFor<TFramework>[];
   /** @deprecated Private beta field. Read for compatibility, omitted from config writes. */
   packageRequirements?: Record<string, string>;
 }
+
+export type StarwindConfig = StarwindConfigFor<StarwindFramework>;
 
 const STARWIND_CONFIG_KEY_ORDER = [
   "$schema",
@@ -171,10 +184,12 @@ export function hasStarwindProAuthConfig(config: Partial<StarwindConfig>): boole
   return typeof authorization === "string" && authorization.trim().length > 0;
 }
 
-export type StarwindConfigState =
-  | { status: "missing"; config: StarwindConfig }
-  | { status: "legacy"; config: StarwindConfig }
-  | { status: "current"; config: StarwindConfig };
+export type StarwindConfigStateFor<TFramework extends CliFrameworkTarget> =
+  | { status: "missing"; config: StarwindConfigFor<TFramework> }
+  | { status: "legacy"; config: StarwindConfigFor<TFramework> }
+  | { status: "current"; config: StarwindConfigFor<TFramework> };
+
+export type StarwindConfigState = StarwindConfigStateFor<StarwindFramework>;
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -199,8 +214,11 @@ function normalizeStringRecord(label: string, value: unknown): Record<string, st
   return normalized;
 }
 
-function validateFramework(value: unknown): asserts value is StarwindFramework {
-  if (value !== "astro" && value !== "react") {
+function validateFramework<TFramework extends CliFrameworkTarget>(
+  value: unknown,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): asserts value is TFramework {
+  if (!isConfigTarget(targetPolicy, value)) {
     throw new Error(`Invalid Starwind config framework "${String(value)}"`);
   }
 }
@@ -239,7 +257,10 @@ function validateStyledRegistryConfig(
   }
 }
 
-function normalizeComponent(component: unknown): ComponentConfig {
+function normalizeComponent<TFramework extends CliFrameworkTarget>(
+  component: unknown,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): ComponentConfigFor<TFramework> {
   if (!isObject(component)) {
     throw new Error("Invalid Starwind config component entry");
   }
@@ -254,13 +275,13 @@ function normalizeComponent(component: unknown): ComponentConfig {
     throw new Error(`Invalid Starwind config component version for "${component.name}"`);
   }
 
-  const normalized: ComponentConfig = {
+  const normalized: ComponentConfigFor<TFramework> = {
     name: component.name,
     version: component.version,
   };
 
   if (component.framework !== undefined) {
-    validateFramework(component.framework);
+    validateFramework(component.framework, targetPolicy);
     normalized.framework = component.framework;
   }
 
@@ -350,20 +371,21 @@ function normalizeStyledRegistryCatalog(value: unknown): StyledRegistryCatalog |
   return Object.keys(normalized).length > 0 ? normalized : undefined;
 }
 
-function normalizeFrameworkDirs(
+function normalizeFrameworkDirs<TFramework extends CliFrameworkTarget>(
   label: string,
   value: unknown,
-): Partial<Record<StarwindFramework, string>> | undefined {
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): Partial<Record<TFramework, string>> | undefined {
   if (value === undefined) return undefined;
 
   if (!isObject(value)) {
     throw new Error(`Invalid Starwind config ${label}`);
   }
 
-  const normalized: Partial<Record<StarwindFramework, string>> = {};
+  const normalized: Partial<Record<TFramework, string>> = {};
 
   for (const [framework, dir] of Object.entries(value)) {
-    if (framework !== "astro" && framework !== "react") {
+    if (!isConfigTarget(targetPolicy, framework)) {
       throw new Error(`Invalid Starwind config ${label}.${framework}`);
     }
 
@@ -377,19 +399,24 @@ function normalizeFrameworkDirs(
   return Object.keys(normalized).length > 0 ? normalized : undefined;
 }
 
-function normalizeComponentDirs(
+function normalizeComponentDirs<TFramework extends CliFrameworkTarget>(
   value: unknown,
-): Partial<Record<StarwindFramework, string>> | undefined {
-  return normalizeFrameworkDirs("componentDirs", value);
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): Partial<Record<TFramework, string>> | undefined {
+  return normalizeFrameworkDirs("componentDirs", value, targetPolicy);
 }
 
-function normalizePrimitiveDirs(
+function normalizePrimitiveDirs<TFramework extends CliFrameworkTarget>(
   value: unknown,
-): Partial<Record<StarwindFramework, string>> | undefined {
-  return normalizeFrameworkDirs("primitiveDirs", value);
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): Partial<Record<TFramework, string>> | undefined {
+  return normalizeFrameworkDirs("primitiveDirs", value, targetPolicy);
 }
 
-function normalizePrimitive(primitive: unknown): PrimitiveConfig {
+function normalizePrimitive<TFramework extends CliFrameworkTarget>(
+  primitive: unknown,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): PrimitiveConfigFor<TFramework> {
   if (!isObject(primitive)) {
     throw new Error("Invalid Starwind config primitive entry");
   }
@@ -404,13 +431,13 @@ function normalizePrimitive(primitive: unknown): PrimitiveConfig {
     throw new Error(`Invalid Starwind config primitive version for "${primitive.name}"`);
   }
 
-  const normalized: PrimitiveConfig = {
+  const normalized: PrimitiveConfigFor<TFramework> = {
     name: primitive.name,
     version: primitive.version,
   };
 
   if (primitive.framework !== undefined) {
-    validateFramework(primitive.framework);
+    validateFramework(primitive.framework, targetPolicy);
     normalized.framework = primitive.framework;
   }
 
@@ -454,8 +481,8 @@ function normalizeStarwindProConfig(rawPro: unknown): StarwindProConfig | undefi
   return { registry };
 }
 
-function validateCurrentComponentShape(
-  component: ComponentConfig,
+function validateCurrentComponentShape<TFramework extends CliFrameworkTarget>(
+  component: ComponentConfigFor<TFramework>,
   registries: StyledRegistryCatalog | undefined,
 ): void {
   const hasFramework = component.framework !== undefined;
@@ -489,7 +516,11 @@ function validateCurrentComponentShape(
   }
 }
 
-function normalizeConfig(rawConfig: unknown, fallback: StarwindConfig): StarwindConfig {
+function normalizeConfig<TFramework extends CliFrameworkTarget>(
+  rawConfig: unknown,
+  fallback: StarwindConfigFor<TFramework>,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): StarwindConfigFor<TFramework> {
   const raw = isObject(rawConfig) ? rawConfig : {};
   const rawWithoutImplementation = { ...raw };
   delete rawWithoutImplementation.implementation;
@@ -498,10 +529,10 @@ function normalizeConfig(rawConfig: unknown, fallback: StarwindConfig): Starwind
     normalizeStyledRegistryConfig("registry", raw.registry, { allowBundled: true }) ??
     fallback.registry;
   const registries = normalizeStyledRegistryCatalog(raw.registries);
-  const componentDirs = normalizeComponentDirs(raw.componentDirs);
-  const primitiveDirs = normalizePrimitiveDirs(raw.primitiveDirs);
+  const componentDirs = normalizeComponentDirs(raw.componentDirs, targetPolicy);
+  const primitiveDirs = normalizePrimitiveDirs(raw.primitiveDirs, targetPolicy);
   const primitives = Array.isArray(raw.primitives)
-    ? raw.primitives.map((primitive) => normalizePrimitive(primitive))
+    ? raw.primitives.map((primitive) => normalizePrimitive(primitive, targetPolicy))
     : undefined;
   const componentLayer = typeof raw.componentLayer === "string" ? raw.componentLayer : undefined;
   const packageRequirements =
@@ -536,7 +567,7 @@ function normalizeConfig(rawConfig: unknown, fallback: StarwindConfig): Starwind
         ? assertProjectRelativePath(raw.utilsDir, "Starwind config utilsDir")
         : fallback.utilsDir,
     components: Array.isArray(raw.components)
-      ? raw.components.map((component) => normalizeComponent(component))
+      ? raw.components.map((component) => normalizeComponent(component, targetPolicy))
       : [],
     primitives,
     packageRequirements,
@@ -584,10 +615,10 @@ function mergeStyledRegistryCatalog(
   return Object.keys(merged).length > 0 ? merged : undefined;
 }
 
-function mergeComponentDirs(
-  current: Partial<Record<StarwindFramework, string>> | undefined,
-  updates: Partial<Record<StarwindFramework, string>> | undefined,
-): Partial<Record<StarwindFramework, string>> | undefined {
+function mergeComponentDirs<TFramework extends CliFrameworkTarget>(
+  current: Partial<Record<TFramework, string>> | undefined,
+  updates: Partial<Record<TFramework, string>> | undefined,
+): Partial<Record<TFramework, string>> | undefined {
   if (updates === undefined) return current;
 
   const merged = {
@@ -598,10 +629,10 @@ function mergeComponentDirs(
   return Object.keys(merged).length > 0 ? merged : undefined;
 }
 
-function mergePrimitiveDirs(
-  current: Partial<Record<StarwindFramework, string>> | undefined,
-  updates: Partial<Record<StarwindFramework, string>> | undefined,
-): Partial<Record<StarwindFramework, string>> | undefined {
+function mergePrimitiveDirs<TFramework extends CliFrameworkTarget>(
+  current: Partial<Record<TFramework, string>> | undefined,
+  updates: Partial<Record<TFramework, string>> | undefined,
+): Partial<Record<TFramework, string>> | undefined {
   if (updates === undefined) return current;
 
   const merged = {
@@ -612,9 +643,9 @@ function mergePrimitiveDirs(
   return Object.keys(merged).length > 0 ? merged : undefined;
 }
 
-function getComponentConfigKey(
-  component: ComponentConfig,
-  fallbackFramework: StarwindFramework | undefined,
+function getComponentConfigKey<TFramework extends CliFrameworkTarget>(
+  component: ComponentConfigFor<TFramework>,
+  fallbackFramework: TFramework | undefined,
 ): string {
   if (component.source) {
     return `${component.source}:${component.name}`;
@@ -623,20 +654,20 @@ function getComponentConfigKey(
   return `${component.framework ?? fallbackFramework ?? "unknown"}:${component.name}`;
 }
 
-function getPrimitiveConfigKey(
-  primitive: PrimitiveConfig,
-  fallbackFramework: StarwindFramework | undefined,
+function getPrimitiveConfigKey<TFramework extends CliFrameworkTarget>(
+  primitive: PrimitiveConfigFor<TFramework>,
+  fallbackFramework: TFramework | undefined,
 ): string {
   return `${primitive.framework ?? fallbackFramework ?? "unknown"}:${primitive.name}`;
 }
 
-function getDefaultAlternativeComponentDir(framework: StarwindFramework): string {
+function getDefaultAlternativeComponentDir(framework: CliFrameworkTarget): string {
   return `src/components/starwind-${framework}`;
 }
 
-export function getStyledComponentDir(
-  config: StarwindConfig,
-  framework?: StarwindFramework,
+export function getStyledComponentDir<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+  framework?: TFramework,
 ): string {
   const targetFramework = framework ?? config.framework;
   const primaryFramework = config.framework;
@@ -650,11 +681,11 @@ export function getStyledComponentDir(
   return config.componentDir;
 }
 
-export function getStyledComponentDirConfigUpdate(
-  config: StarwindConfig,
-  framework: StarwindFramework,
+export function getStyledComponentDirConfigUpdate<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+  framework: TFramework,
   componentDir: string,
-): Partial<Pick<StarwindConfig, "componentDir" | "componentDirs">> {
+): Partial<Pick<StarwindConfigFor<TFramework>, "componentDir" | "componentDirs">> {
   const primaryFramework = config.framework;
 
   if (!primaryFramework || framework === primaryFramework) {
@@ -664,12 +695,14 @@ export function getStyledComponentDirConfigUpdate(
   return {
     componentDirs: {
       [framework]: componentDir,
-    },
+    } as Partial<Record<TFramework, string>>,
   };
 }
 
-function orderStarwindConfig(config: StarwindConfig): StarwindConfig {
-  const configRecord = config as StarwindConfig & Record<string, unknown>;
+function orderStarwindConfig<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+): StarwindConfigFor<TFramework> {
+  const configRecord = config as StarwindConfigFor<TFramework> & Record<string, unknown>;
   const orderedConfig: Record<string, unknown> = {};
   const orderedKeys = new Set<string>(STARWIND_CONFIG_KEY_ORDER);
 
@@ -685,7 +718,7 @@ function orderStarwindConfig(config: StarwindConfig): StarwindConfig {
     }
   }
 
-  return orderedConfig as unknown as StarwindConfig;
+  return orderedConfig as unknown as StarwindConfigFor<TFramework>;
 }
 
 const envPlaceholderPattern = /\${(\w+)}/g;
@@ -871,15 +904,27 @@ export function resolveStarwindProRegistryRequest(
   };
 }
 
-export function parseCurrentConfig(rawConfig: unknown): StarwindConfig {
+export function parseCurrentConfig(rawConfig: unknown): StarwindConfig;
+export function parseCurrentConfig<TFramework extends CliFrameworkTarget>(
+  rawConfig: unknown,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): StarwindConfigFor<TFramework>;
+export function parseCurrentConfig<TFramework extends CliFrameworkTarget = StarwindFramework>(
+  rawConfig: unknown,
+  targetPolicy: FrameworkTargetPolicy<TFramework> = PUBLIC_FRAMEWORK_TARGET_POLICY as unknown as FrameworkTargetPolicy<TFramework>,
+): StarwindConfigFor<TFramework> {
   const raw = isObject(rawConfig) ? rawConfig : {};
-  const normalized = normalizeConfig(rawConfig, defaultV2Config);
+  const normalized = normalizeConfig(
+    rawConfig,
+    defaultV2Config as StarwindConfigFor<TFramework>,
+    targetPolicy,
+  );
 
   if (normalized.version !== 2) {
     throw new Error("Invalid Starwind config version. Expected version 2.");
   }
 
-  validateFramework(raw.framework);
+  validateFramework(raw.framework, targetPolicy);
 
   if (!normalized.registry) {
     throw new Error("Invalid Starwind config registry");
@@ -906,14 +951,20 @@ export function parseCurrentConfig(rawConfig: unknown): StarwindConfig {
 /**
  * Get the current config, ensuring the file is fully read
  */
-export async function getConfig(): Promise<StarwindConfig> {
+export function getConfig(): Promise<StarwindConfig>;
+export function getConfig<TFramework extends CliFrameworkTarget>(
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): Promise<StarwindConfigFor<TFramework>>;
+export async function getConfig<TFramework extends CliFrameworkTarget = StarwindFramework>(
+  targetPolicy: FrameworkTargetPolicy<TFramework> = PUBLIC_FRAMEWORK_TARGET_POLICY as unknown as FrameworkTargetPolicy<TFramework>,
+): Promise<StarwindConfigFor<TFramework>> {
   let config: unknown;
 
   try {
     config = await readJsonFile(PATHS.LOCAL_CONFIG_FILE);
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return normalizeConfig({}, defaultConfig);
+      return normalizeConfig({}, defaultConfig as StarwindConfigFor<TFramework>, targetPolicy);
     }
 
     throw new Error(`Failed to load ${PATHS.LOCAL_CONFIG_FILE}`, { cause: error });
@@ -921,8 +972,8 @@ export async function getConfig(): Promise<StarwindConfig> {
 
   try {
     return isObject(config) && config.version === 2
-      ? parseCurrentConfig(config)
-      : normalizeConfig(config, defaultConfig);
+      ? parseCurrentConfig(config, targetPolicy)
+      : normalizeConfig(config, defaultConfig as StarwindConfigFor<TFramework>, targetPolicy);
   } catch (error) {
     throw new Error(`Failed to load ${PATHS.LOCAL_CONFIG_FILE}`, { cause: error });
   }
@@ -931,26 +982,44 @@ export async function getConfig(): Promise<StarwindConfig> {
 /**
  * Reads the config with enough metadata for migration-aware commands.
  */
-export async function getConfigState(): Promise<StarwindConfigState> {
+export function getConfigState(): Promise<StarwindConfigState>;
+export function getConfigState<TFramework extends CliFrameworkTarget>(
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): Promise<StarwindConfigStateFor<TFramework>>;
+export async function getConfigState<TFramework extends CliFrameworkTarget = StarwindFramework>(
+  targetPolicy: FrameworkTargetPolicy<TFramework> = PUBLIC_FRAMEWORK_TARGET_POLICY as unknown as FrameworkTargetPolicy<TFramework>,
+): Promise<StarwindConfigStateFor<TFramework>> {
   if (!(await fileExists(PATHS.LOCAL_CONFIG_FILE))) {
-    return { status: "missing", config: defaultV2Config };
+    return {
+      status: "missing",
+      config: defaultV2Config as StarwindConfigFor<TFramework>,
+    };
   }
 
   const rawConfig = await readJsonFile(PATHS.LOCAL_CONFIG_FILE);
 
   if (isObject(rawConfig) && rawConfig.version === 2) {
-    return { status: "current", config: parseCurrentConfig(rawConfig) };
+    return { status: "current", config: parseCurrentConfig(rawConfig, targetPolicy) };
   }
 
-  return { status: "legacy", config: normalizeConfig(rawConfig, defaultConfig) };
+  return {
+    status: "legacy",
+    config: normalizeConfig(
+      rawConfig,
+      defaultConfig as StarwindConfigFor<TFramework>,
+      targetPolicy,
+    ),
+  };
 }
 
 /**
  * Options for updating the config file
  */
-export interface UpdateConfigOptions {
+export interface UpdateConfigOptions<TFramework extends CliFrameworkTarget = StarwindFramework> {
   /** If true, append new components to existing array. If false, replace the components array. */
   appendComponents?: boolean;
+  /** Framework capability policy for repository-owned internal callers. */
+  targetPolicy?: FrameworkTargetPolicy<TFramework>;
 }
 
 /**
@@ -958,11 +1027,15 @@ export interface UpdateConfigOptions {
  * @param updates - Partial config object to update
  * @param options - Options for updating the config
  */
-export async function updateConfig(
-  updates: Partial<StarwindConfig>,
-  options: UpdateConfigOptions = { appendComponents: true },
+export async function updateConfig<TFramework extends CliFrameworkTarget = StarwindFramework>(
+  updates: Partial<StarwindConfigFor<NoInfer<TFramework>>>,
+  options: UpdateConfigOptions<TFramework> = { appendComponents: true },
 ): Promise<void> {
-  const currentConfig = await getConfig();
+  const targetPolicy =
+    options.targetPolicy ??
+    (PUBLIC_FRAMEWORK_TARGET_POLICY as unknown as FrameworkTargetPolicy<TFramework>);
+  const appendComponents = options.appendComponents ?? true;
+  const currentConfig = await getConfig(targetPolicy);
 
   // Ensure components array exists
   const currentComponents = Array.isArray(currentConfig.components) ? currentConfig.components : [];
@@ -1004,9 +1077,9 @@ export async function updateConfig(
   // When appending components, deduplicate by name (newer entries override older ones)
   let finalComponents = currentComponents;
   if (incomingComponents) {
-    if (options.appendComponents) {
+    if (appendComponents) {
       // Create a map to deduplicate by name, with newer entries taking precedence
-      const componentMap = new Map<string, ComponentConfig>();
+      const componentMap = new Map<string, ComponentConfigFor<TFramework>>();
       for (const comp of currentComponents) {
         componentMap.set(getComponentConfigKey(comp, currentConfig.framework), comp);
       }
@@ -1022,8 +1095,8 @@ export async function updateConfig(
   const currentPrimitives = Array.isArray(currentConfig.primitives) ? currentConfig.primitives : [];
   let finalPrimitives = currentPrimitives;
   if (updates.primitives) {
-    if (options.appendComponents) {
-      const primitiveMap = new Map<string, PrimitiveConfig>();
+    if (appendComponents) {
+      const primitiveMap = new Map<string, PrimitiveConfigFor<TFramework>>();
       for (const primitive of currentPrimitives) {
         primitiveMap.set(getPrimitiveConfigKey(primitive, currentConfig.framework), primitive);
       }
@@ -1061,9 +1134,14 @@ export async function updateConfig(
     packageRequirements: undefined,
   });
 
+  const validatedConfig =
+    newConfig.version === 2
+      ? parseCurrentConfig(newConfig, targetPolicy)
+      : normalizeConfig(newConfig, defaultConfig as StarwindConfigFor<TFramework>, targetPolicy);
+
   try {
     // Compile-time project-root filename; never derived from config, registry, or CLI options.
-    await writeJsonFile(PATHS.LOCAL_CONFIG_FILE, newConfig);
+    await writeJsonFile(PATHS.LOCAL_CONFIG_FILE, orderStarwindConfig(validatedConfig));
   } catch (error) {
     throw new Error(
       `Failed to update config: ${error instanceof Error ? error.message : "Unknown error"}`,

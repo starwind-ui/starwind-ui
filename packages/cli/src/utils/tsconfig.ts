@@ -256,6 +256,61 @@ export async function setupTsConfig(
   }
 }
 
+export function mergeVueTsConfig(existingConfig: TsConfig, includeJavaScript = false): TsConfig {
+  const compilerOptions = {
+    ...(existingConfig.compilerOptions ?? {}),
+    baseUrl: existingConfig.compilerOptions?.baseUrl ?? ".",
+    ...(includeJavaScript
+      ? {
+          allowJs: true,
+          checkJs:
+            typeof existingConfig.compilerOptions?.checkJs === "boolean"
+              ? existingConfig.compilerOptions.checkJs
+              : false,
+        }
+      : {}),
+    paths: {
+      ...(existingConfig.compilerOptions?.paths ?? {}),
+      "@/*": [
+        "./src/*",
+        ...(existingConfig.compilerOptions?.paths?.["@/*"] ?? []).filter(
+          (target) => target !== "./src/*",
+        ),
+      ],
+    },
+  };
+  const include = existingConfig.include ?? [];
+  const hasVueSources = include.some(
+    (entry) => entry === "src/**/*" || entry === "src/**/*.vue" || entry === "src",
+  );
+
+  return {
+    ...existingConfig,
+    compilerOptions,
+    ...(!hasVueSources ? { include: [...include, "src/**/*.vue"] } : {}),
+  };
+}
+
+export async function setupVueTsConfig(includeJavaScript = false): Promise<boolean> {
+  try {
+    const configPath = (await fileExists("tsconfig.app.json"))
+      ? "tsconfig.app.json"
+      : "tsconfig.json";
+    const existingConfig = (await fileExists(configPath))
+      ? ((await readJsoncFile(configPath)) as TsConfig)
+      : {};
+    const mergedConfig = mergeVueTsConfig(existingConfig, includeJavaScript);
+    if (JSON.stringify(mergedConfig) !== JSON.stringify(existingConfig)) {
+      await writeJsonFile(configPath, mergedConfig);
+    }
+    return true;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    p.log.error(highlighter.error(`Failed to setup Vue tsconfig: ${errorMessage}`));
+    return false;
+  }
+}
+
 /** Adds the JSX settings required by Astro's official React integration. */
 export async function setupAstroReactTsConfig(): Promise<boolean> {
   try {

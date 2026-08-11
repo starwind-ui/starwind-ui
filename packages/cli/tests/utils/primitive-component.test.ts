@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
@@ -5,13 +7,16 @@ import { dirname, join, relative } from "node:path";
 import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { StarwindConfig } from "../../src/utils/config.js";
+import type { StarwindConfig, StarwindConfigFor } from "../../src/utils/config.js";
 import * as config from "../../src/utils/config.js";
 import * as dependencyResolver from "../../src/utils/dependency-resolver.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import * as packageManager from "../../src/utils/package-manager.js";
 import {
+  getPrimitiveComponents,
   installPrimitiveComponents,
   type PrimitiveVendoringArtifact,
+  type PrimitiveVendoringArtifactSet,
   updatePrimitiveComponents,
 } from "../../src/utils/primitive-component.js";
 
@@ -162,6 +167,78 @@ async function createDirectoryLink(target: string, linkPath: string): Promise<Er
 
     throw error;
   }
+}
+
+const vendoredVueHeader =
+  "<!-- Vendored by the Starwind CLI. You own this file in your project. -->";
+const primitiveVersionManifest = JSON.parse(
+  readFileSync(new URL("../../registry/primitive-versions.json", import.meta.url), "utf8"),
+) as { primitives: Record<string, string> };
+const runtimePackage = JSON.parse(
+  readFileSync(new URL("../../../runtime/package.json", import.meta.url), "utf8"),
+) as { version: string };
+
+function createValidVueArtifact(): PrimitiveVendoringArtifact<"astro" | "react" | "vue"> {
+  const file = withVueFileContent(
+    {
+      path: "src/components/starwind-primitives/button/ButtonRoot.vue",
+      sourcePath: "packages/vue/src/button/ButtonRoot.vue",
+      sourceHash: "",
+      content: "",
+    },
+    vendoredVueHeader + "\n<button data-sw-button />\n",
+  );
+
+  return {
+    component: "button",
+    framework: "vue",
+    version: primitiveVersionManifest.primitives.button!,
+    packageRequirements: [
+      { name: "@starwind-ui/runtime", range: `^${runtimePackage.version}` },
+      { name: "vue", range: ">=3.5" },
+    ],
+    files: [file],
+  };
+}
+
+function createValidVueArtifactSet(
+  artifact: PrimitiveVendoringArtifact<"astro" | "react" | "vue">,
+): PrimitiveVendoringArtifactSet<"astro" | "react" | "vue"> {
+  const generatedRequirements = createValidVueArtifact().packageRequirements;
+  return {
+    primitives: [artifact],
+    validation: {
+      vue: {
+        editableContentMarkers: [
+          {
+            extensions: [".vue"],
+            markers: [vendoredVueHeader],
+            position: "prefix",
+          },
+          {
+            extensions: [".ts", ".js"],
+            markers: ["// Vendored by the Starwind CLI.\n// You own this file in your project."],
+            position: "prefix",
+          },
+        ],
+        forbiddenContent: ["Internal non-shipping Vue adapter output"],
+        generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
+        packageRequirements: generatedRequirements,
+        sourceRoot: "packages/vue/src",
+      },
+    },
+  };
+}
+
+function withVueFileContent(
+  file: PrimitiveVendoringArtifact<"astro" | "react" | "vue">["files"][number],
+  content: string,
+) {
+  return {
+    ...file,
+    content,
+    sourceHash: `sha256:${createHash("sha256").update(content).digest("hex")}`,
+  };
 }
 
 describe.sequential("primitive component vendoring", () => {
@@ -639,5 +716,54 @@ describe.sequential("primitive component vendoring", () => {
       },
       { appendComponents: false },
     );
+  });
+  it("vendors and updates a valid Vue artifact only through the private policy", async () => {
+    const vueConfig: StarwindConfigFor<"astro" | "react" | "vue"> = {
+      ...primitiveConfig,
+      framework: "vue",
+      primitives: [],
+    };
+    const vueArtifact = createValidVueArtifact();
+
+    const publicResult = await installPrimitiveComponents(["button"], {
+      artifacts: createValidVueArtifactSet(vueArtifact),
+      config: vueConfig,
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+    expect(publicResult.failed[0]?.error).toContain("Astro and React");
+
+    await expect(
+      installPrimitiveComponents(["button"], {
+        artifacts: createValidVueArtifactSet(vueArtifact),
+        config: vueConfig,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      }),
+    ).rejects.toThrow(/trusted integrity fingerprint/);
+    expect(mockInstallDependencies).not.toHaveBeenCalled();
+  });
+
+  it("rejects a handcrafted private document before descriptor validation", () => {
+    const artifactSet = createValidVueArtifactSet(createValidVueArtifact());
+
+    expect(() =>
+      getPrimitiveComponents({
+        artifacts: artifactSet,
+        framework: "vue",
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      }),
+    ).toThrow(/trusted integrity fingerprint/);
+
+    artifactSet.integrity = {
+      algorithm: "sha256",
+      fingerprint: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY.primitiveArtifactIntegrity!.vue!,
+    };
+    expect(() =>
+      getPrimitiveComponents({
+        artifacts: artifactSet,
+        framework: "vue",
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      }),
+    ).toThrow(/trusted integrity fingerprint/);
   });
 });

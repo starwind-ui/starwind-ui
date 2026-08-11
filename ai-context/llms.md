@@ -1,114 +1,57 @@
-# Starwind UI - AI Reference Guide
+# Starwind UI
 
-> Starwind UI is an open-source component library for Astro projects, styled with Tailwind CSS v4. It provides accessible, customizable components that can be added directly to your projects.
+> Starwind UI provides Astro-first, framework-portable, accessible UI components with Starwind/shadcn-style ergonomics.
 
-Things to remember when using Starwind UI:
+## Public release
 
-- Starwind UI is designed for Astro projects using Tailwind CSS v4.
-- Starwind UI is designed to setup and add components with the CLI only and NOT for direct HTML injection.
-- Use the `init` command to setup a new project with Starwind UI.
-- Use the `add` command to add components to your project.
-- Use the `update` command to update components in your project.
-- Combobox is a documented Select pattern built with `Select` and `SelectSearch`. Install `select`, not `combobox`.
+Use the stable `latest` channel. The public framework targets are Astro and React.
 
-## Public AI Surfaces
-
-- `llms.txt`: This concise static overview for AI tools.
-- `llms-full.txt`: A full static reference for Starwind UI docs, components, theming, and CLI usage.
-- Per-page Markdown docs: append `.md` to the docs path, such as `/docs/components/button.md`.
-- Starwind Skills: Installable agent instructions from `starwind-ui/skills` for Starwind UI and Starwind Pro workflows.
-- MCP server: The published `@starwind-ui/mcp` package exposes the current live tools for docs lookup, init command generation, add command generation, and Starwind Pro block search.
-
-## Important Links for AI Tools
-
-- [Home](https://starwind.dev/): The main landing page for Starwind UI, providing an overview and access to documentation.
-- [Getting Started](https://starwind.dev/docs/getting-started/): A guide for newcomers to the Starwind UI framework, covering the basics.
-- [AI Integration](https://starwind.dev/docs/getting-started/ai/): Current AI-readable docs surfaces.
-- [Skills](https://starwind.dev/docs/getting-started/skills/): Install Starwind Skills for compatible AI agents.
-- [MCP Server](https://starwind.dev/docs/getting-started/mcp/): Configure the Starwind UI MCP server for compatible editors and AI tools.
-- [CLI](https://starwind.dev/docs/getting-started/cli/): Information on using the Command Line Interface for Starwind UI development.
-- [Installation](https://starwind.dev/docs/getting-started/installation/): Step-by-step instructions for installing the Starwind UI framework.
-- [Theming](https://starwind.dev/docs/getting-started/theming/): Guidance on customizing the look and feel of applications built with Starwind UI.
-- [Components](https://starwind.dev/docs/components/): A detailed list of UI components available in the Starwind UI framework.
-- [Full Reference](https://starwind.dev/llms-full.txt): A comprehensive LLM reference guide for all components and functionality provided by Starwind UI.
-
-## Installable Components and Documentation
-
-Starwind UI currently includes the following installable components:
-
-- [Accordion](https://starwind.dev/docs/components/accordion)
-- [Alert](https://starwind.dev/docs/components/alert)
-- [Alert Dialog](https://starwind.dev/docs/components/alert-dialog)
-- [Aspect Ratio](https://starwind.dev/docs/components/aspect-ratio)
-- [Avatar](https://starwind.dev/docs/components/avatar)
-- [Badge](https://starwind.dev/docs/components/badge)
-- [Breadcrumb](https://starwind.dev/docs/components/breadcrumb)
-- [Button](https://starwind.dev/docs/components/button)
-- [Button Group](https://starwind.dev/docs/components/button-group)
-- [Card](https://starwind.dev/docs/components/card)
-- [Carousel](https://starwind.dev/docs/components/carousel)
-- [Checkbox](https://starwind.dev/docs/components/checkbox)
-- [Collapsible](https://starwind.dev/docs/components/collapsible)
-- [Color Picker](https://starwind.dev/docs/components/color-picker)
-- [Context Menu](https://starwind.dev/docs/components/context-menu)
-- [Dialog](https://starwind.dev/docs/components/dialog)
-- [Dropdown](https://starwind.dev/docs/components/dropdown)
-- [Dropzone](https://starwind.dev/docs/components/dropzone)
-- [Hover Card](https://starwind.dev/docs/components/hover-card)
-- [Image](https://starwind.dev/docs/components/image)
-- [Input](https://starwind.dev/docs/components/input)
-- [Input Group](https://starwind.dev/docs/components/input-group)
-- [Input OTP](https://starwind.dev/docs/components/input-otp)
-- [Item](https://starwind.dev/docs/components/item)
-- [Kbd](https://starwind.dev/docs/components/kbd)
-- [Label](https://starwind.dev/docs/components/label)
-- [Native Select](https://starwind.dev/docs/components/native-select)
-- [Pagination](https://starwind.dev/docs/components/pagination)
-- [Popover](https://starwind.dev/docs/components/popover)
-- [Progress](https://starwind.dev/docs/components/progress)
-- [Prose](https://starwind.dev/docs/components/prose)
-- [Radio Group](https://starwind.dev/docs/components/radio-group)
-- [Select](https://starwind.dev/docs/components/select)
-- [Separator](https://starwind.dev/docs/components/separator)
-- [Sheet](https://starwind.dev/docs/components/sheet)
-- [Scroll Area](https://starwind.dev/docs/components/scroll-area)
-- [Sidebar](https://starwind.dev/docs/components/sidebar)
-- [Skeleton](https://starwind.dev/docs/components/skeleton)
-- [Slider](https://starwind.dev/docs/components/slider)
-- [Spinner](https://starwind.dev/docs/components/spinner)
-- [Switch](https://starwind.dev/docs/components/switch)
-- [Table](https://starwind.dev/docs/components/table)
-- [Tabs](https://starwind.dev/docs/components/tabs)
-- [Textarea](https://starwind.dev/docs/components/textarea)
-- [Theme Toggle](https://starwind.dev/docs/components/theme-toggle)
-- [Toast](https://starwind.dev/docs/components/toast)
-- [Toggle](https://starwind.dev/docs/components/toggle)
-- [Tooltip](https://starwind.dev/docs/components/tooltip)
-- [Video](https://starwind.dev/docs/components/video)
-
-## Documented Select Patterns
-
-- Combobox: Select plus `SelectSearch` pattern documented at https://starwind.dev/docs/components/combobox. Install with `starwind add select`; there is no separate `combobox` install target.
-
-## Markdown Docs URL
-
-- Per-page Markdown URL: append `.md` to the docs path.
-- Example URL: `https://starwind.dev/docs/components/button.md`
-- HTML docs pages include: `<link rel="alternate" type="text/markdown" href="...">` pointing to the `.md` URL.
-
-## Import Pattern
-
-All components follow a consistent import pattern:
-
-```astro
-import {ComponentName} from "@/components/starwind/component-name";
+```bash
+npx starwind@latest init --framework astro
+npx starwind@latest init --framework react
+npx starwind@latest add button
 ```
 
-## Starwind Pro - Premium Blocks
+Vue and Svelte adapters remain private verification surfaces. Do not recommend Vue or Svelte CLI commands. The public CLI rejects those framework values.
 
-Looking for complete, production-ready page sections? **Starwind Pro** offers 200+ expertly crafted blocks for Astro projects including heroes, pricing tables, testimonials, navigation, CTAs, and more. **45+ blocks are completely free** to use.
+## Choose a usage surface
 
-- [Browse All Components](https://pro.starwind.dev/components/)
-- [Free Components (50+)](https://pro.starwind.dev/components/free/)
+- Styled components: Use the `starwind` CLI. It copies Tailwind-styled framework source into the application.
+- Primitive adapters: Install `@starwind-ui/astro` or `@starwind-ui/react`, or vendor Primitive source with `starwind primitives add`.
+- Runtime: Install `@starwind-ui/runtime` for framework-neutral DOM controllers or raw HTML integration.
 
-Categories include: Authentication, Background, Bento, Blog, Blog Post, Contact, CTA, Effect, FAQ, Feature, Footer, Form, Hero, Legal Page, Logo Cloud, Navigation, Pricing, Service Page, Services, Specialized Components, Steps, Team, Testimonial, and Theme Switcher.
+Runtime owns shared behavior, state, events, focus, forms, overlays, and cleanup. Framework adapters render normal framework markup and connect it to Runtime. Styled components remain application-owned source.
+
+## CLI essentials
+
+- `starwind init`: Configure an Astro or React project.
+- `starwind add <name>`: Add styled components.
+- `starwind update <name>`: Update installed components.
+- `starwind remove <name>`: Remove installed components.
+- `starwind migrate`: Move a legacy Astro project to Runtime-backed components.
+- `starwind docs <name>` and `starwind search <query>`: Find component guidance.
+- `starwind primitives add|update|list`: Manage vendored Primitive adapter source.
+
+Combobox is its own styled and Primitive install target. Use `starwind add combobox` or `starwind primitives add combobox`.
+
+## Package surfaces
+
+- `@starwind-ui/runtime`: Framework-neutral DOM controllers.
+- `@starwind-ui/astro`: Generated Astro Primitive adapters.
+- `@starwind-ui/react`: Generated React Primitive adapters.
+- `starwind`: CLI for project setup and owned component source.
+
+The Runtime, Astro, and React packages require Node 22.12 or newer. React adapters support React 18 and newer. Astro adapters support Astro 5 and newer. The styled Image component is Astro-only.
+
+## Documentation
+
+- [Installation](https://starwind.dev/docs/getting-started/installation/)
+- [Components](https://starwind.dev/docs/components/)
+- [Primitive adapters](https://starwind.dev/docs/primitives/)
+- [Runtime and raw HTML](https://starwind.dev/docs/runtime/)
+- [AI integration](https://starwind.dev/docs/getting-started/ai/)
+- [Skills](https://starwind.dev/docs/getting-started/skills/)
+- [MCP server](https://starwind.dev/docs/getting-started/mcp/)
+- [Full AI reference](https://starwind.dev/llms-full.txt)
+
+Append `.md` to a documentation page URL for its Markdown form.

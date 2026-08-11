@@ -286,17 +286,13 @@ describe("placement-aware floating styled animations", () => {
     for (const variants of [astroVariants, reactVariants]) {
       const comboboxContentVariant = getVariantExport(variants, "comboboxContent");
       expect(comboboxContentVariant).toContain(
-        "data-[side=bottom]:slide-in-from-top-2 data-[side=bottom]:slide-out-to-top-2",
+        "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
       );
       expect(comboboxContentVariant).toContain(
-        "data-[side=top]:slide-in-from-bottom-2 data-[side=top]:slide-out-to-bottom-2",
+        "data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2",
       );
-      expect(comboboxContentVariant).toContain(
-        "data-[side=right]:slide-in-from-left-2 data-[side=right]:slide-out-to-left-2",
-      );
-      expect(comboboxContentVariant).toContain(
-        "data-[side=left]:slide-in-from-right-2 data-[side=left]:slide-out-to-right-2",
-      );
+      expect(comboboxContentVariant).not.toContain("slide-out-to-");
+      expect(comboboxContentVariant).toContain("fade-out zoom-out-95");
       expect(comboboxContentVariant).toContain("origin-(--transform-origin)");
       expect(comboboxContentVariant).toContain("variants:");
       expect(comboboxContentVariant).toContain("size:");
