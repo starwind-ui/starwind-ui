@@ -623,10 +623,7 @@ describe("init command", () => {
     }
 
     expect(mockConfirm).not.toHaveBeenCalled();
-    expect(mockInstallDependencies.mock.calls).toEqual([
-      [[CURRENT_VUE_SPEC], "pnpm"],
-      [[CURRENT_VUE_SPEC], "pnpm"],
-    ]);
+    expect(mockInstallDependencies).not.toHaveBeenCalled();
     expect(
       mockTasks.mock.calls.flatMap(([tasks]) => tasks.map((task) => task.title)),
     ).not.toContain("Installing packages");
@@ -1131,6 +1128,25 @@ describe("init command", () => {
       appendComponents: false,
     });
     expect(mockInstallDependencies.mock.calls[0]).toEqual([[CURRENT_ASTRO_SPEC], "pnpm"]);
+  });
+
+  it("preserves a packed local adapter during prepublish initialization", async () => {
+    mockReadJsonFile.mockResolvedValue({
+      dependencies: {
+        "@starwind-ui/astro": "file:/tmp/starwind-astro.tgz",
+        "@starwind-ui/runtime": "file:/tmp/starwind-runtime.tgz",
+        astro: "^7.0.0",
+      },
+    });
+
+    await init(true, { defaults: true, packageManager: "pnpm" });
+
+    expect(mockInstallDependencies.mock.calls).toEqual([
+      [ASTRO_SETUP_REQUIREMENTS, "pnpm", false, false],
+    ]);
+    expect(JSON.stringify(mockInstallDependencies.mock.calls)).not.toContain(
+      JSON.stringify(CURRENT_ASTRO_SPEC),
+    );
   });
 
   it("requires an explicit framework when defaults cannot identify the project", async () => {

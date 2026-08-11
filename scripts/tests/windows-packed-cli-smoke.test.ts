@@ -18,6 +18,12 @@ describe("Windows packed CLI smoke", () => {
 
     expect(plan.packageUrl).toBe(packageUrl);
     expect(plan.tarball).toBe(path.join(root, "artifacts", "starwind-cli.tgz"));
+    expect(plan.artifacts).toEqual({
+      astro: path.join(root, "artifacts", "starwind-astro.tgz"),
+      cli: path.join(root, "artifacts", "starwind-cli.tgz"),
+      runtime: path.join(root, "artifacts", "starwind-runtime.tgz"),
+    });
+    expect(plan.tarball).toBe(plan.artifacts.cli);
     expect(plan.projects.standalone.shim).toBe(
       path.join(root, "standalone", "node_modules", ".bin", "starwind.CMD"),
     );

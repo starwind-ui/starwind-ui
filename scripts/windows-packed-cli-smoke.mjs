@@ -28,6 +28,11 @@ export function createWindowsPackedCliPlan(root, packageUrl) {
   };
 
   return {
+    artifacts: {
+      astro: path.join(root, "artifacts", "starwind-astro.tgz"),
+      cli: path.join(root, "artifacts", "starwind-cli.tgz"),
+      runtime: path.join(root, "artifacts", "starwind-runtime.tgz"),
+    },
     packageUrl,
     projects: {
       add: createProject("add-driven"),
@@ -65,20 +70,26 @@ export async function runWindowsPackedCliSmoke() {
   const diagnostics = [];
 
   try {
-    const tarball = path.join(root, "artifacts", "starwind-cli.tgz");
-    await mkdir(path.dirname(tarball), { recursive: true });
-    await runRequired({
-      ...createPnpmInvocation(["pack", "--out", tarball]),
-      cwd: path.join(REPO_ROOT, "packages", "cli"),
-    });
+    const artifacts = createWindowsPackedCliPlan(root, "").artifacts;
+    await mkdir(path.dirname(artifacts.cli), { recursive: true });
+    for (const [packageDirectory, tarball] of [
+      ["runtime", artifacts.runtime],
+      ["astro", artifacts.astro],
+      ["cli", artifacts.cli],
+    ]) {
+      await runRequired({
+        ...createPnpmInvocation(["pack", "--out", tarball]),
+        cwd: path.join(REPO_ROOT, "packages", packageDirectory),
+      });
+    }
 
-    const server = await startTarballServer(tarball);
+    const server = await startTarballServer(artifacts.cli);
     const packageUrl = `http://127.0.0.1:${server.port}/starwind-cli.tgz`;
     const plan = createWindowsPackedCliPlan(root, packageUrl);
 
     try {
       for (const project of Object.values(plan.projects)) {
-        await createAstroProject(project.directory);
+        await createAstroProject(project.directory, plan.artifacts);
         await runRequired({ ...createPnpmInvocation(["install"]), cwd: project.directory });
       }
       await verifyStandaloneInit(plan.projects.standalone, packageUrl, diagnostics);
@@ -133,9 +144,13 @@ async function verifyAddDrivenInit(project, packageUrl, diagnostics) {
   assert.equal(await pathExists(project.shim), false, "The packed CLI became project-local.");
 }
 
-async function createAstroProject(directory) {
-  // Keep the packed CLI outside the target project. pnpm can relink a project-local URL dependency
-  // while init installs Runtime packages, which does not model a published registry dependency.
+function fileSpecifier(file) {
+  return `file:${file.replaceAll("\\", "/")}`;
+}
+
+async function createAstroProject(directory, artifacts) {
+  // Keep the packed CLI outside the target project so nested installs cannot relink its active shim.
+  // Packed Runtime and adapter tarballs stay project-local for prepublish verification.
   await mkdir(path.join(directory, "src", "layouts"), { recursive: true });
   await writeFile(
     path.join(directory, "package.json"),
@@ -144,7 +159,11 @@ async function createAstroProject(directory) {
         name: path.basename(directory),
         private: true,
         type: "module",
-        dependencies: { astro: "7.0.0" },
+        dependencies: {
+          "@starwind-ui/astro": fileSpecifier(artifacts.astro),
+          "@starwind-ui/runtime": fileSpecifier(artifacts.runtime),
+          astro: "7.0.0",
+        },
       },
       null,
       2,
