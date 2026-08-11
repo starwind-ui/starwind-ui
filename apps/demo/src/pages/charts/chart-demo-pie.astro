@@ -1,0 +1,183 @@
+---
+import "@/styles/global.css";
+import { Chart } from "@/components/starwind/chart";
+import type { ChartConfig } from "@/components/starwind/chart";
+import PieChart from "@/components/starwind/chart/PieChart.astro";
+
+// shadcn canonical browser dataset
+const browserData = [
+  { browser: "chrome", visitors: 275 },
+  { browser: "safari", visitors: 200 },
+  { browser: "firefox", visitors: 187 },
+  { browser: "edge", visitors: 173 },
+  { browser: "other", visitors: 90 },
+];
+
+const browserConfig: ChartConfig = {
+  chrome: { label: "Chrome", color: "var(--chart-1)" },
+  safari: { label: "Safari", color: "var(--chart-2)" },
+  firefox: { label: "Firefox", color: "var(--chart-3)" },
+  edge: { label: "Edge", color: "var(--chart-4)" },
+  other: { label: "Other", color: "var(--chart-5)" },
+};
+
+const total = browserData.reduce((s, d) => s + d.visitors, 0); // 925
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Pie Chart Demo — Starwind UI</title>
+    <!-- Theme init: eliminate FART -->
+    <script is:inline>
+      const t = localStorage.getItem("colorTheme");
+      if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
+  </head>
+
+  <body class="bg-background text-foreground min-h-screen p-8">
+    <h1 class="mb-2 text-2xl font-semibold">Pie Chart Demo</h1>
+    <p class="text-muted-foreground mb-10 text-sm">
+      Pie / Donut chart variants — Starwind UI (light + dark sections below)
+    </p>
+
+    <!-- Light mode section -->
+    <div class="mb-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+      <!-- 1. Simple pie -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">1. Simple pie</h2>
+        <Chart config={browserConfig} class="mx-auto aspect-square max-w-[300px]">
+          <PieChart
+            data={browserData}
+            config={browserConfig}
+            nameKey="browser"
+            dataKey="visitors"
+          />
+        </Chart>
+      </section>
+
+      <!-- 2. Donut -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">2. Donut</h2>
+        <Chart config={browserConfig} class="mx-auto aspect-square max-w-[300px]">
+          <PieChart
+            data={browserData}
+            config={browserConfig}
+            nameKey="browser"
+            dataKey="visitors"
+            donut
+          />
+        </Chart>
+      </section>
+
+      <!-- 3. Donut with center text (total) -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">3. Donut with center text</h2>
+        <Chart config={browserConfig} class="mx-auto aspect-square max-w-[300px]">
+          <PieChart
+            data={browserData}
+            config={browserConfig}
+            nameKey="browser"
+            dataKey="visitors"
+            donut
+            centerText={String(total)}
+            centerLabel="Visitors"
+          />
+        </Chart>
+      </section>
+
+      <!-- 4. Pie with value labels -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">4. Pie with labels</h2>
+        <Chart config={browserConfig} class="mx-auto aspect-square max-w-[300px]">
+          <PieChart
+            data={browserData}
+            config={browserConfig}
+            nameKey="browser"
+            dataKey="visitors"
+            showLabels
+          />
+        </Chart>
+      </section>
+
+      <!-- 5. Pie with gap between slices -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">5. Pie with pad angle</h2>
+        <Chart config={browserConfig} class="mx-auto aspect-square max-w-[300px]">
+          <PieChart
+            data={browserData}
+            config={browserConfig}
+            nameKey="browser"
+            dataKey="visitors"
+            padAngle={3}
+          />
+        </Chart>
+      </section>
+
+      <!-- 6. Donut — no legend -->
+      <section>
+        <h2 class="mb-3 text-sm font-medium">6. Donut — no legend</h2>
+        <Chart config={browserConfig} class="mx-auto aspect-square max-w-[300px]">
+          <PieChart
+            data={browserData}
+            config={browserConfig}
+            nameKey="browser"
+            dataKey="visitors"
+            donut
+            showLegend={false}
+          />
+        </Chart>
+      </section>
+    </div>
+
+    <!-- Dark mode mirror -->
+    <div class="dark rounded-xl bg-neutral-950 p-8">
+      <h2 class="mb-6 text-sm font-medium text-neutral-200">Dark mode</h2>
+      <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+        <section>
+          <h3 class="mb-3 text-sm font-medium text-neutral-400">Simple pie</h3>
+          <Chart config={browserConfig} class="mx-auto aspect-square max-w-[300px]">
+            <PieChart
+              data={browserData}
+              config={browserConfig}
+              nameKey="browser"
+              dataKey="visitors"
+            />
+          </Chart>
+        </section>
+
+        <section>
+          <h3 class="mb-3 text-sm font-medium text-neutral-400">Donut with center text</h3>
+          <Chart config={browserConfig} class="mx-auto aspect-square max-w-[300px]">
+            <PieChart
+              data={browserData}
+              config={browserConfig}
+              nameKey="browser"
+              dataKey="visitors"
+              donut
+              centerText={String(total)}
+              centerLabel="Visitors"
+            />
+          </Chart>
+        </section>
+
+        <section>
+          <h3 class="mb-3 text-sm font-medium text-neutral-400">Pie with labels</h3>
+          <Chart config={browserConfig} class="mx-auto aspect-square max-w-[300px]">
+            <PieChart
+              data={browserData}
+              config={browserConfig}
+              nameKey="browser"
+              dataKey="visitors"
+              showLabels
+            />
+          </Chart>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
