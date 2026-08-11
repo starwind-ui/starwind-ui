@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { createSpawnCommand } from "./command-process.mjs";
 import {
   CHANGESET_IGNORED_PACKAGES,
+  CHANGESET_PRIVATE_PACKAGE_POLICY,
   RUNTIME_RELEASE_PACKAGE_SET,
 } from "./runtime-release-policy.mjs";
 
@@ -161,6 +162,11 @@ export function validateReleaseChangesetConfig(config) {
   const errors = [];
   if (JSON.stringify(ignoredPackages) !== JSON.stringify(expectedIgnoredPackages)) {
     errors.push(`Changesets must ignore exactly: ${expectedIgnoredPackages.join(", ")}.`);
+  }
+  if (
+    JSON.stringify(config?.privatePackages) !== JSON.stringify(CHANGESET_PRIVATE_PACKAGE_POLICY)
+  ) {
+    errors.push("Changesets must disable private package versioning and tagging.");
   }
   return { errors, ok: errors.length === 0 };
 }

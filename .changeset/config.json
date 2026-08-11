@@ -14,5 +14,9 @@
     "@starwind-ui/core",
     "@starwind-ui/vue",
     "@starwind-ui/svelte"
-  ]
+  ],
+  "privatePackages": {
+    "version": false,
+    "tag": false
+  }
 }

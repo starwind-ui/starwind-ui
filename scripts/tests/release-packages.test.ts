@@ -1,4 +1,5 @@
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { EventEmitter } from "node:events";
@@ -33,6 +34,7 @@ import {
 import { createSpawnCommand, getPackageManagerCommand } from "../command-process.mjs";
 import {
   CHANGESET_IGNORED_PACKAGES,
+  CHANGESET_PRIVATE_PACKAGE_POLICY,
   RUNTIME_FIXED_GROUP,
   RUNTIME_RELEASE_PACKAGE_SET,
 } from "../runtime-release-policy.mjs";
@@ -177,6 +179,121 @@ describe("release package tooling", () => {
     for (const file of changesetFiles) {
       assertNoPrivateAdapterChangesetReleases(file, await readFile(`.changeset/${file}`, "utf8"));
     }
+  });
+
+  it("keeps ignored private packages out of the stable prerelease exit plan", () => {
+    const rootRequire = createRequire(import.meta.url);
+    const changesetsRequire = createRequire(rootRequire.resolve("@changesets/cli/package.json"));
+    const assembleReleasePlan = changesetsRequire("@changesets/assemble-release-plan").default as (
+      changesets: Array<{
+        id: string;
+        releases: Array<{ name: string; type: "major" }>;
+        summary: string;
+      }>,
+      packages: {
+        root: { dir: string; packageJson: PackageJson };
+        packages: Array<{ dir: string; packageJson: PackageJson }>;
+      },
+      config: Record<string, unknown>,
+      preState: {
+        changesets: string[];
+        initialVersions: Record<string, string>;
+        mode: "exit";
+        tag: string;
+      },
+    ) => { releases: Array<{ name: string; newVersion: string; type: string }> };
+    const makePackage = (name: string, version: string, extra: PackageJson = {}) => ({
+      dir: `/tmp/starwind-changesets-exit/${name.replaceAll("/", "-")}`,
+      packageJson: { name, version, ...extra },
+    });
+    const packages = {
+      root: {
+        dir: "/tmp/starwind-changesets-exit",
+        packageJson: { name: "root", private: true, version: "0.0.0" },
+      },
+      packages: [
+        makePackage("@starwind-ui/runtime", "0.1.0-beta.1"),
+        makePackage("@starwind-ui/astro", "0.1.0-beta.1", {
+          dependencies: { "@starwind-ui/runtime": "workspace:^" },
+        }),
+        makePackage("@starwind-ui/react", "0.1.0-beta.1", {
+          dependencies: { "@starwind-ui/runtime": "workspace:^" },
+        }),
+        makePackage("starwind", "3.0.0-beta.1"),
+        makePackage("@starwind-ui/core", "2.0.1", { private: true }),
+        makePackage("@starwind-ui/vue", "0.0.0", {
+          dependencies: { "@starwind-ui/runtime": "workspace:^" },
+          private: true,
+        }),
+        makePackage("@starwind-ui/svelte", "0.0.0", {
+          dependencies: { "@starwind-ui/runtime": "workspace:^" },
+          private: true,
+        }),
+      ],
+    };
+    const changesets = [
+      {
+        id: "runtime-stable",
+        releases: [{ name: "@starwind-ui/runtime", type: "major" as const }],
+        summary: "Release Runtime as stable.",
+      },
+      {
+        id: "cli-stable",
+        releases: [{ name: "starwind", type: "major" as const }],
+        summary: "Release the CLI as stable.",
+      },
+    ];
+    const initialVersions = Object.fromEntries(
+      packages.packages.map(({ packageJson }) => [packageJson.name, packageJson.version]),
+    ) as Record<string, string>;
+
+    const plan = assembleReleasePlan(
+      changesets,
+      packages,
+      {
+        ___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH: {
+          onlyUpdatePeerDependentsWhenOutOfRange: false,
+          updateInternalDependents: "out-of-range",
+        },
+        access: "public",
+        baseBranch: "main",
+        bumpVersionsWithWorkspaceProtocolOnly: false,
+        changedFilePatterns: ["**"],
+        changelog: false,
+        commit: false,
+        fixed: [["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"]],
+        ignore: ["@starwind-ui/core", "@starwind-ui/vue", "@starwind-ui/svelte"],
+        linked: [],
+        prettier: true,
+        privatePackages: CHANGESET_PRIVATE_PACKAGE_POLICY,
+        snapshot: { prereleaseTemplate: null, useCalculatedVersion: false },
+        updateInternalDependencies: "patch",
+      },
+      {
+        changesets: changesets.map(({ id }) => id),
+        initialVersions,
+        mode: "exit",
+        tag: "beta",
+      },
+    );
+    const versionedReleases = Object.fromEntries(
+      plan.releases
+        .filter(({ type }) => type !== "none")
+        .map(({ name, newVersion }) => [name, newVersion]),
+    );
+
+    expect(versionedReleases).toEqual({
+      "@starwind-ui/astro": "1.0.0",
+      "@starwind-ui/react": "1.0.0",
+      "@starwind-ui/runtime": "1.0.0",
+      starwind: "3.0.0",
+    });
+    expect(plan.releases.find(({ name }) => name === "@starwind-ui/core")).toBeUndefined();
+    expect(
+      plan.releases
+        .filter(({ name }) => PRIVATE_ADAPTER_PACKAGE_NAMES.has(name))
+        .every(({ newVersion, type }) => newVersion === "0.0.0" && type === "none"),
+    ).toBe(true);
   });
 
   it("rejects single-quoted private package releases in Changeset frontmatter", () => {
@@ -662,9 +779,21 @@ describe("release package tooling", () => {
         tag: "beta",
       }).ok,
     ).toBe(false);
+    expect(
+      validateReleaseChangesetConfig({
+        ignore: [...CHANGESET_IGNORED_PACKAGES],
+        privatePackages: CHANGESET_PRIVATE_PACKAGE_POLICY,
+      }).ok,
+    ).toBe(true);
     expect(validateReleaseChangesetConfig({ ignore: [...CHANGESET_IGNORED_PACKAGES] }).ok).toBe(
-      true,
+      false,
     );
+    expect(
+      validateReleaseChangesetConfig({
+        ignore: [...CHANGESET_IGNORED_PACKAGES],
+        privatePackages: { version: true, tag: false },
+      }).ok,
+    ).toBe(false);
     expect(validateReleaseChangesetConfig({ ignore: ["demo"] }).ok).toBe(false);
   });
 

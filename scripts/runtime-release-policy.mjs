@@ -7,6 +7,11 @@ export const CHANGESET_IGNORED_PACKAGES = Object.freeze([
   "@starwind-ui/svelte",
 ]);
 
+export const CHANGESET_PRIVATE_PACKAGE_POLICY = Object.freeze({
+  version: false,
+  tag: false,
+});
+
 export const RUNTIME_FIXED_GROUP = Object.freeze([
   "@starwind-ui/runtime",
   "@starwind-ui/astro",
