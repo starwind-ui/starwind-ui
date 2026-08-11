@@ -62,7 +62,7 @@ import { frameworkCoordinationSummary } from "./descriptions/framework-behavior.
 import { toPrimitiveSetterMetadata } from "./descriptions/setters.js";
 import type { BuildLayeredDocsMetadataOptions } from "./options.js";
 import { PRIMITIVE_AUTHORED_USAGE_ROOT, primitiveVersionsPath, repoRoot } from "./paths.js";
-import { dedupe, toKebabCase, toTitle } from "./shared.js";
+import { dedupe, toKebabCase, toPrimitiveDisplayName, toTitle } from "./shared.js";
 import { isBehaviorFoundationType, validateFoundation } from "./validate-metadata.js";
 import {
   buildStyledApiMetadata,
@@ -269,7 +269,7 @@ const buildPrimitiveMetadata = (
   exampleCoveragePolicy: PrimitiveDocsExampleCoveragePolicy,
 ): PrimitiveDocsMetadata => ({
   id: contract.component,
-  displayName: contract.displayName,
+  displayName: withPrimitiveDocsDisplayName(contract).displayName,
   category: contract.category,
   registryVersion,
   runtime: {
@@ -309,13 +309,13 @@ const buildPrimitiveMetadata = (
     type: prop.type,
   })),
   stateModels: (contract.stateModels ?? []).map((stateModel) =>
-    copyPrimitiveStateModel(contract, stateModel, enrichment),
+    copyPrimitiveStateModel(withPrimitiveDocsDisplayName(contract), stateModel, enrichment),
   ),
   events: (contract.events ?? []).map((event) =>
-    toPrimitiveEventMetadata(contract, event, enrichment),
+    toPrimitiveEventMetadata(withPrimitiveDocsDisplayName(contract), event, enrichment),
   ),
   setters: (contract.setters ?? []).map((setter) =>
-    toPrimitiveSetterMetadata(contract, setter, enrichment),
+    toPrimitiveSetterMetadata(withPrimitiveDocsDisplayName(contract), setter, enrichment),
   ),
   context: (contract.context ?? []).map((context) => ({
     name: context.name,
@@ -393,6 +393,7 @@ const buildPrimitiveMetadata = (
   ...toPrimitiveFrameworkNotesMetadata(contract.frameworkNotes, enrichment?.frameworkNotes),
   docsReference: buildPrimitiveDocsReference(
     contract,
+    withPrimitiveDocsDisplayName(contract),
     enrichment,
     styledComponents,
     exampleRegistry,
@@ -405,10 +406,18 @@ const buildPrimitiveMetadata = (
   aliases: dedupe([
     contract.component,
     contract.displayName,
+    withPrimitiveDocsDisplayName(contract).displayName,
     toTitle(contract.component),
     contract.runtime.factory,
     contract.category,
   ]),
+});
+
+const withPrimitiveDocsDisplayName = (
+  contract: RuntimeAdapterContract,
+): RuntimeAdapterContract => ({
+  ...contract,
+  displayName: toPrimitiveDisplayName(contract.component),
 });
 
 const loadPrimitiveVersions = (validationIssues: string[]): Readonly<Record<string, string>> => {
@@ -487,6 +496,7 @@ const toPrimitiveFrameworkNotesMetadata = (
 
 const buildPrimitiveDocsReference = (
   contract: RuntimeAdapterContract,
+  docsContract: RuntimeAdapterContract,
   enrichment: PrimitiveDocsEnrichment | undefined = {},
   styledComponents: readonly StyledComponentDocsMetadata[],
   exampleRegistry: PrimitiveDocsExampleRegistry,
@@ -506,7 +516,7 @@ const buildPrimitiveDocsReference = (
   return {
     summary:
       enrichment.summary ??
-      `${contract.displayName} is a Starwind Runtime primitive in the ${contract.category} contract family.`,
+      `${docsContract.displayName} is a Starwind Runtime primitive in the ${contract.category} contract family.`,
     frameworkCoordination: frameworkCoordinationSummary,
     frameworkTargets: [...PRIMITIVE_DOCS_FRAMEWORK_TARGETS],
     behaviorNotes: [...(enrichment.behaviorNotes ?? [])],
@@ -527,7 +537,7 @@ const buildPrimitiveDocsReference = (
         docsPath: `${RUNTIME_DOCS_PATH}#${toKebabCase(contract.runtime.factory)}`,
       },
       parts: contract.parts.map((part) =>
-        buildPrimitivePartApiReference(contract, part, enrichment),
+        buildPrimitivePartApiReference(docsContract, part, enrichment),
       ),
       exportGroups: buildPrimitiveExportGroups(contract, publicAdapterParts),
       canonicalNames: buildPrimitiveCanonicalNames(contract, publicAdapterParts),

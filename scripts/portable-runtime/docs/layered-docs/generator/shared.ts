@@ -11,6 +11,16 @@ export const toDisplayTitle = (value: string) =>
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join(" ");
 
+const PRIMITIVE_LABEL_ACRONYMS: Readonly<Record<string, string>> = {
+  otp: "OTP",
+};
+
+export const toPrimitiveDisplayName = (componentId: string) =>
+  toDisplayTitle(componentId)
+    .split(" ")
+    .map((part) => PRIMITIVE_LABEL_ACRONYMS[part.toLowerCase()] ?? part)
+    .join(" ");
+
 export const toPascalCase = (value: string) =>
   value
     .split("-")
