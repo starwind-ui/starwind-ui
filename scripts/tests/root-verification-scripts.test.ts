@@ -166,10 +166,11 @@ describe("root verification scripts", () => {
       expect.arrayContaining([
         expect.objectContaining({
           name: "Install Playwright Chromium",
-          run: "pnpm --filter=react-demo exec playwright install --with-deps chromium",
+          run: "pnpm exec playwright install --with-deps chromium",
         }),
       ]),
     );
+    expect(verifyWorkflowSource).not.toContain("pnpm --filter=react-demo exec playwright install");
     expect(verifyWorkflow.jobs.verify).toMatchObject({
       name: "Verify",
       needs: expect.arrayContaining([
