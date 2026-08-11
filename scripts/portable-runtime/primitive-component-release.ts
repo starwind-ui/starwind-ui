@@ -22,7 +22,7 @@ import {
   stageVersionIntents,
 } from "./release-intent-utils.js";
 
-export type PrimitiveVersionBump = "minor" | "patch";
+export type PrimitiveVersionBump = "major" | "minor" | "patch";
 
 export type PrimitiveVersionIntent = {
   primitives: Record<string, PrimitiveVersionBump>;
@@ -72,8 +72,8 @@ export function parsePrimitiveVersionIntent(
     if (!knownPrimitives.has(primitive)) {
       throw new Error(`${source} references unknown primitive "${primitive}".`);
     }
-    if (bump !== "patch" && bump !== "minor") {
-      throw new Error(`${source} primitive "${primitive}" bump must be patch or minor.`);
+    if (bump !== "patch" && bump !== "minor" && bump !== "major") {
+      throw new Error(`${source} primitive "${primitive}" bump must be patch, minor, or major.`);
     }
     primitives[primitive] = bump;
   }
@@ -94,16 +94,23 @@ export function applyPrimitiveVersionIntents(
   currentVersions: Record<string, string>,
   intents: Record<string, PrimitiveVersionBump>,
 ): Record<string, string> {
-  return applyVersionIntents({
-    currentVersions,
-    intents,
-    label: "Primitive",
-    validateNext(name, _current, next) {
-      if (semver.major(next) !== 0) {
-        throw new Error(`Primitive "${name}" must remain below 1.0.0 during Runtime beta.`);
-      }
-    },
-  });
+  return applyVersionIntents({ currentVersions, intents, label: "Primitive" });
+}
+
+export function isStablePrimitivePromotion(
+  manifest: PrimitiveVersionManifest,
+  intents: Record<string, PrimitiveVersionBump>,
+): boolean {
+  const primitives = Object.keys(manifest.primitives).sort();
+  return (
+    primitives.length > 0 &&
+    semver.major(manifest.defaultPrimitiveVersion) === 0 &&
+    Object.keys(intents).sort().join("\0") === primitives.join("\0") &&
+    primitives.every(
+      (primitive) =>
+        semver.major(manifest.primitives[primitive]) === 0 && intents[primitive] === "major",
+    )
+  );
 }
 
 export function createPrimitiveArtifactFingerprint(
@@ -131,6 +138,7 @@ export function validatePrimitiveVersionPullRequest(options: {
   addedPrimitives?: string[];
   changedPrimitives?: string[];
   mode: "intent" | "version";
+  promotedPrimitives?: string[];
   versionedPrimitives?: string[];
 } {
   validateSnapshot(options.base, "base");
@@ -172,7 +180,8 @@ export function validatePrimitiveVersionPullRequest(options: {
     assertArtifactSourcesEqual(options.base.artifacts, options.head.artifacts);
     const aggregated = aggregatePrimitiveVersionIntents(options.base.fragments);
     const expected = applyPrimitiveVersionIntents(options.base.manifest.primitives, aggregated);
-    assertManifestMetadataEqual(options.base.manifest, options.head.manifest);
+    const stablePromotion = isStablePrimitivePromotion(options.base.manifest, aggregated);
+    assertManifestMetadataEqual(options.base.manifest, options.head.manifest, stablePromotion);
     assertSameKeys(expected, options.head.manifest.primitives, "primitive version manifest");
     for (const [primitive, expectedVersion] of Object.entries(expected)) {
       const actual = options.head.manifest.primitives[primitive];
@@ -182,7 +191,11 @@ export function validatePrimitiveVersionPullRequest(options: {
         );
       }
     }
-    return { mode: "version", versionedPrimitives: Object.keys(aggregated).sort() };
+    return {
+      mode: "version",
+      promotedPrimitives: stablePromotion ? Object.keys(aggregated).sort() : undefined,
+      versionedPrimitives: Object.keys(aggregated).sort(),
+    };
   }
 
   if (removedFragments.length > 0 || modifiedFragments.length > 0) {
@@ -233,6 +246,17 @@ export function validatePrimitiveVersionPullRequest(options: {
       addedIntentPrimitives.add(primitive);
     }
   }
+  const addedIntents = Object.fromEntries(
+    addedFragments.map((file) => [file, options.head.fragments[file]]),
+  );
+  const stablePromotion =
+    baseFragmentNames.length === 0 &&
+    changedPrimitives.length === 0 &&
+    addedPrimitives.length === 0 &&
+    isStablePrimitivePromotion(
+      options.base.manifest,
+      aggregatePrimitiveVersionIntents(addedIntents),
+    );
   const changedSet = new Set(changedPrimitives);
   const missingIntents = changedPrimitives.filter(
     (primitive) => !addedIntentPrimitives.has(primitive),
@@ -243,18 +267,23 @@ export function validatePrimitiveVersionPullRequest(options: {
       `Missing primitive version intent for changed primitive(s): ${missingIntents.join(", ")}.`,
     );
   }
-  if (extraIntents.length > 0) {
+  if (extraIntents.length > 0 && !stablePromotion) {
     throw new Error(
       `Primitive version intent has no installable source change: ${extraIntents.join(", ")}.`,
     );
   }
   if (
-    (changedPrimitives.length > 0 || addedPrimitives.length > 0) &&
+    (changedPrimitives.length > 0 || addedPrimitives.length > 0 || stablePromotion) &&
     !options.head.starwindChangesets.some((file) => !options.base.starwindChangesets.includes(file))
   ) {
     throw new Error("Primitive source changes require a new starwind package Changeset.");
   }
-  return { addedPrimitives, changedPrimitives, mode: "intent" };
+  return {
+    addedPrimitives,
+    changedPrimitives,
+    mode: "intent",
+    promotedPrimitives: stablePromotion ? [...addedIntentPrimitives].sort() : undefined,
+  };
 }
 
 export async function versionPrimitiveComponents(
@@ -271,6 +300,7 @@ export async function versionPrimitiveComponents(
     fragmentDirectory,
   );
   const aggregated = aggregatePrimitiveVersionIntents(fragments);
+  const stablePromotion = isStablePrimitivePromotion(manifest, aggregated);
   const nextVersions = sortRecord(applyPrimitiveVersionIntents(manifest.primitives, aggregated));
   const versions: PrimitiveVersionPlan["versions"] = {};
   for (const [primitive, bump] of Object.entries(aggregated)) {
@@ -283,7 +313,15 @@ export async function versionPrimitiveComponents(
   if (Object.keys(versions).length === 0) return { fragments: [], versions };
   await writeFile(
     manifestPath,
-    `${JSON.stringify({ ...manifest, primitives: nextVersions }, null, 2)}\n`,
+    `${JSON.stringify(
+      {
+        ...manifest,
+        defaultPrimitiveVersion: stablePromotion ? "1.0.0" : manifest.defaultPrimitiveVersion,
+        primitives: nextVersions,
+      },
+      null,
+      2,
+    )}\n`,
   );
   await rm(path.join(repoRoot, fragmentDirectory), { force: true, recursive: true });
   return { fragments: Object.keys(fragments).sort(), versions };
@@ -420,19 +458,13 @@ function validateManifest(manifest: PrimitiveVersionManifest, label: string): vo
   if (
     !isPlainObject(manifest) ||
     !semver.valid(manifest.defaultPrimitiveVersion) ||
-    semver.major(manifest.defaultPrimitiveVersion) !== 0 ||
     !isPlainObject(manifest.primitives)
   ) {
-    throw new Error(`${label} contains invalid beta semver metadata or primitive inventory.`);
+    throw new Error(`${label} contains invalid semver metadata or primitive inventory.`);
   }
   for (const [primitive, version] of Object.entries(manifest.primitives)) {
-    if (
-      !primitive ||
-      typeof version !== "string" ||
-      !semver.valid(version) ||
-      semver.major(version) !== 0
-    ) {
-      throw new Error(`${label} has invalid pre-1.0 version for primitive "${primitive}".`);
+    if (!primitive || typeof version !== "string" || !semver.valid(version)) {
+      throw new Error(`${label} has invalid version for primitive "${primitive}".`);
     }
   }
 }
@@ -469,8 +501,10 @@ function assertArtifactSourcesEqual(
 function assertManifestMetadataEqual(
   base: PrimitiveVersionManifest,
   head: PrimitiveVersionManifest,
+  stablePromotion = false,
 ): void {
-  if (base.defaultPrimitiveVersion !== head.defaultPrimitiveVersion) {
+  const expectedDefault = stablePromotion ? "1.0.0" : base.defaultPrimitiveVersion;
+  if (head.defaultPrimitiveVersion !== expectedDefault) {
     throw new Error("Default primitive version must not change during primitive reconciliation.");
   }
 }
