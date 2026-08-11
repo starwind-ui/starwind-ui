@@ -69,7 +69,7 @@ export const PRIVATE_VUE_FRAMEWORK_TARGET_POLICY =
       vue: "Vue",
     },
     primitiveArtifactIntegrity: {
-      vue: "sha256:03dce278f309651253115caaa10816de12bd412d9fb751902194c275838d271f",
+      vue: "sha256:5ab2236d8a6f98ab2c289cf2bc01d589d13a94f77c4c3de850df97d5ce7c567d",
     },
     requiredAdapterPackages: {
       "legacy-astro": [],
