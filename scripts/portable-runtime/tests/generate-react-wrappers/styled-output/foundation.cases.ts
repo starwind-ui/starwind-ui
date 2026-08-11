@@ -1,4 +1,9 @@
-import { expect, path, readFile, readGeneratedFile, readGeneratedTree } from "../shared.js";
+import {
+  expect,
+  readGeneratedFile,
+  readGeneratedTree,
+  starwindStyledContracts,
+} from "../shared.js";
 
 export async function assertReactStyledFoundationOutput(outputRoot: string): Promise<void> {
   await expectNoStyledGeneratedHeader(outputRoot);
@@ -58,10 +63,7 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   const sidebarStyles = await readGeneratedFile(outputRoot, "sidebar/styles.css");
   const sidebarVariants = await readGeneratedFile(outputRoot, "sidebar/variants.ts");
   const sidebarIndex = await readGeneratedFile(outputRoot, "sidebar/index.ts");
-  const canonicalProse = await readFile(
-    path.join(process.cwd(), "packages/core/src/components/prose/Prose.astro"),
-    "utf8",
-  );
+  const proseContract = starwindStyledContracts.find((contract) => contract.component === "prose")!;
   const toastStyles = await readGeneratedFile(outputRoot, "toast/styles.css");
   const toastVariants = await readGeneratedFile(outputRoot, "toast/variants.ts");
   const card = await readGeneratedFile(outputRoot, "card/Card.tsx");
@@ -293,7 +295,9 @@ export async function assertReactStyledFoundationOutput(outputRoot: string): Pro
   expect(prose).toContain("prose({ class: className })");
   expect(prose).toContain("ref={ref}");
   expect(prose).toContain('data-slot="prose"');
-  expect(proseStyles).toBe(`${extractGlobalStyle(canonicalProse).replace(/[ \t]+$/gm, "")}\n`);
+  expect(proseStyles).toBe(
+    `${proseContract.styles!.content.join("\n").replace(/[ \t]+$/gm, "")}\n`,
+  );
   expect(proseStyles).not.toMatch(/[ \t]+$/m);
   expect(proseVariants).toContain("sw-prose max-w-[65ch]");
   expect(proseIndex).toContain("export default Prose;");
@@ -631,17 +635,6 @@ export async function assertReactBadgeToneAppearanceFoundationOutput(
   expect(badgeVariants).toContain("border-primary-accent/40 text-primary-accent");
   expect(badgeIndex).toContain("export default Badge;");
   expect(badgeIndex).not.toContain("Root: Badge");
-}
-
-function extractGlobalStyle(source: string): string {
-  const match = source.match(/<style is:global>\r?\n([\s\S]*?)\r?\n<\/style>/);
-  expect(match).not.toBeNull();
-
-  return match![1]
-    .split(/\r?\n/)
-    .map((line) => (line.startsWith("  ") ? line.slice(2) : line))
-    .join("\n")
-    .trimEnd();
 }
 
 async function expectNoStyledGeneratedHeader(outputRoot: string): Promise<void> {

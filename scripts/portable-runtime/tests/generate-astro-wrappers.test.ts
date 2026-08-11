@@ -14,7 +14,7 @@ import { defineAstroRuntimeSubpathOutputTests } from "./generate-astro-wrappers/
 import { defineAstroScopedInitOutputTests } from "./generate-astro-wrappers/scoped-init-output.cases.js";
 import { defineAstroStabilityTests } from "./generate-astro-wrappers/stability.cases.js";
 import { defineAstroStyledOutputTests } from "./generate-astro-wrappers/styled-output.cases.js";
-import { defineAstroVariantParityTests } from "./generate-astro-wrappers/variant-parity.cases.js";
+import { defineAstroStyledVariantTests } from "./generate-astro-wrappers/styled-variants.cases.js";
 
 describe("generateAstroWrappers", () => {
   let tempRoot: string;
@@ -35,7 +35,7 @@ describe("generateAstroWrappers", () => {
   defineAstroDropzoneOutputTests(getTempRoot);
   defineAstroStyledOutputTests(getTempRoot);
   defineAstroCompositionOutputTests(getTempRoot);
-  defineAstroVariantParityTests(getTempRoot);
+  defineAstroStyledVariantTests(getTempRoot);
   defineAstroScopedInitOutputTests(getTempRoot);
   defineAstroRuntimeSubpathOutputTests(getTempRoot);
   defineAstroStabilityTests(getTempRoot);

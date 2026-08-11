@@ -5,8 +5,6 @@
 Starwind UI is a pnpm/Turbo monorepo for Astro and React components, framework-neutral Runtime
 controllers, generated Primitive adapters, and the `starwind` CLI.
 
-- `packages/core`: private, source-only canonical styled component source and shared utilities; it
-  is permanently retired from package publication.
 - `packages/runtime`: behavior-only DOM controllers and component subpath exports.
 - `packages/astro` and `packages/react`: generated first-party Primitive adapters.
 - `packages/vue`: private, non-shipping Vue adapter verification output; it is not an npm or CLI
@@ -53,8 +51,8 @@ pnpm runtime:size:check
 - Add deferred primitive version intent under `.changeset/primitive-components/` for changed
   existing vendored primitives. Use normal SemVer: `patch` for compatible fixes, `minor` for
   backward-compatible capabilities, and `major` for breaking changes.
-- Add a Changeset for package-facing changes. Never add Changesets for retired `@starwind-ui/core`,
-  or for `@starwind-ui/vue`, `@starwind-ui/svelte`, and `vue-demo` while they remain quarantined.
+- Add a Changeset for package-facing changes. Never add Changesets for `@starwind-ui/vue`,
+  `@starwind-ui/svelte`, and `vue-demo` while they remain quarantined.
 - Use conventional commits such as `feat(runtime): ...`, `fix(cli): ...`, or `docs: ...`.
 
 Before handoff, run the narrowest relevant tests and report any checks that were not run.

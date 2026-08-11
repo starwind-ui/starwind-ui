@@ -139,7 +139,6 @@ const approvedChangesetIgnore = [
   "demo",
   "react-demo",
   "vue-demo",
-  "@starwind-ui/core",
   "@starwind-ui/vue",
   "@starwind-ui/svelte",
 ];

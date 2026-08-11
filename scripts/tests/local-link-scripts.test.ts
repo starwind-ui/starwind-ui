@@ -65,10 +65,16 @@ describe("local runtime link scripts", () => {
     expect(pkg.scripts?.["test:vue-cli-local-link"]).toContain("--local-link-only");
   });
 
-  it("does not advertise retired yalc or dead Core helper workflows", async () => {
+  it("does not advertise retired yalc or Core helper workflows", async () => {
     const root = await readPackage("package.json");
-    const core = await readPackage("packages/core/package.json");
-    const retiredCoreScripts = ["core:link", "core:unlink", "core:yalc:link", "core:yalc:unlink"];
+    const retiredCoreScripts = [
+      "core:build",
+      "core:dev",
+      "core:link",
+      "core:unlink",
+      "core:yalc:link",
+      "core:yalc:unlink",
+    ];
     const retiredRootScripts = [
       "cli:yalc:link",
       "cli:yalc:unlink",
@@ -80,9 +86,6 @@ describe("local runtime link scripts", () => {
 
     for (const script of retiredRootScripts) {
       expect(root.scripts).not.toHaveProperty(script);
-    }
-    for (const script of retiredCoreScripts) {
-      expect(core.scripts).not.toHaveProperty(script);
     }
     expect(root.scripts).toHaveProperty("l");
     expect(root.scripts).toHaveProperty("ul");

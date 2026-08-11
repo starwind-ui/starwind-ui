@@ -125,7 +125,6 @@ describe("release package tooling", () => {
       "demo",
       "react-demo",
       "vue-demo",
-      "@starwind-ui/core",
       "@starwind-ui/vue",
       "@starwind-ui/svelte",
     ]);
@@ -220,7 +219,6 @@ describe("release package tooling", () => {
           dependencies: { "@starwind-ui/runtime": "workspace:^" },
         }),
         makePackage("starwind", "3.0.0-beta.1"),
-        makePackage("@starwind-ui/core", "2.0.1", { private: true }),
         makePackage("@starwind-ui/vue", "0.0.0", {
           dependencies: { "@starwind-ui/runtime": "workspace:^" },
           private: true,
@@ -262,7 +260,7 @@ describe("release package tooling", () => {
         changelog: false,
         commit: false,
         fixed: [["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"]],
-        ignore: ["@starwind-ui/core", "@starwind-ui/vue", "@starwind-ui/svelte"],
+        ignore: ["@starwind-ui/vue", "@starwind-ui/svelte"],
         linked: [],
         prettier: true,
         privatePackages: CHANGESET_PRIVATE_PACKAGE_POLICY,
@@ -288,7 +286,6 @@ describe("release package tooling", () => {
       "@starwind-ui/runtime": "1.0.0",
       starwind: "3.0.0",
     });
-    expect(plan.releases.find(({ name }) => name === "@starwind-ui/core")).toBeUndefined();
     expect(
       plan.releases
         .filter(({ name }) => PRIVATE_ADAPTER_PACKAGE_NAMES.has(name))
@@ -303,23 +300,6 @@ describe("release package tooling", () => {
         "---\n'@starwind-ui/vue': patch\n---\n\nPrivate Vue release.\n",
       ),
     ).toThrow(/@starwind-ui\/vue/);
-  });
-
-  it("keeps the retired Core package permanently source-only", async () => {
-    expect(CHANGESET_IGNORED_PACKAGES).toContain("@starwind-ui/core");
-    expect(RELEASE_PACKAGE_SET.map((entry) => entry.name)).not.toContain("@starwind-ui/core");
-
-    const [root, corePackage] = await Promise.all([
-      readJson<PackageJson>("package.json"),
-      readJson<PackageJson>("packages/core/package.json"),
-    ]);
-    expect(corePackage).toMatchObject({ name: "@starwind-ui/core", private: true });
-    expect(
-      Object.keys(root.scripts ?? {}).filter((name) => name.startsWith("core:publish")),
-    ).toEqual([]);
-    expect(
-      Object.keys(corePackage.scripts ?? {}).filter((name) => name.startsWith("publish:")),
-    ).toEqual([]);
   });
 
   it("exposes generic release commands and beta compatibility aliases", async () => {

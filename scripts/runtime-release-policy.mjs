@@ -2,7 +2,6 @@ export const CHANGESET_IGNORED_PACKAGES = Object.freeze([
   "demo",
   "react-demo",
   "vue-demo",
-  "@starwind-ui/core",
   "@starwind-ui/vue",
   "@starwind-ui/svelte",
 ]);

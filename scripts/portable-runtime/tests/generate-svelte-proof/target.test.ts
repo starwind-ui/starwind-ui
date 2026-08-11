@@ -266,7 +266,6 @@ describe("private Svelte proof target", () => {
       "apps/vue-demo/package.json",
       "packages/astro/package.json",
       "packages/cli/package.json",
-      "packages/core/package.json",
       "packages/react/package.json",
       "packages/runtime/package.json",
       "packages/vue/package.json",
