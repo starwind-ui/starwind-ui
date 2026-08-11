@@ -157,14 +157,24 @@ export function createPackedAstroProjectManifest(directory, artifacts) {
       astro: "7.0.0",
     },
     name: path.basename(directory),
-    pnpm: {
-      overrides: {
-        "@starwind-ui/runtime": runtime,
-      },
-    },
     private: true,
     type: "module",
   };
+}
+
+export function createPackedPnpmWorkspace(artifacts) {
+  return [
+    "packages: []",
+    "minimumReleaseAge: 0",
+    "minimumReleaseAgeStrict: false",
+    "overrides:",
+    `  "@starwind-ui/runtime": "${fileSpecifier(artifacts.runtime)}"`,
+    "allowBuilds:",
+    "  esbuild: true",
+    "  sharp: true",
+    "  unrs-resolver: true",
+    "",
+  ].join("\n");
 }
 
 async function createAstroProject(directory, artifacts) {
@@ -177,7 +187,7 @@ async function createAstroProject(directory, artifacts) {
   );
   await writeFile(
     path.join(directory, "pnpm-workspace.yaml"),
-    "packages: []\nminimumReleaseAge: 0\nminimumReleaseAgeStrict: false\nallowBuilds:\n  esbuild: true\n  sharp: true\n  unrs-resolver: true\n",
+    createPackedPnpmWorkspace(artifacts),
   );
   await writeFile(
     path.join(directory, "astro.config.mjs"),
