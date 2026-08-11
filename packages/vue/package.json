@@ -186,6 +186,8 @@
   },
   "devDependencies": {
     "@types/node": "^24.12.4",
+    "@vitest/browser-playwright": "^4.1.8",
+    "playwright": "1.60.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vue": "3.5.39",

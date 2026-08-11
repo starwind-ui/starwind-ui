@@ -42,7 +42,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright Chromium
-        run: pnpm --filter=react-demo exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Test Published Release
         run: pnpm test:published-release -- --version "${{ inputs.version }}" --artifacts .artifacts/published-release

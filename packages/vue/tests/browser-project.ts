@@ -1,5 +1,5 @@
 import ts from "typescript";
-import { playwright } from "../../runtime/node_modules/@vitest/browser-playwright/dist/index.js";
+import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "../../runtime/node_modules/vitest/dist/config.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

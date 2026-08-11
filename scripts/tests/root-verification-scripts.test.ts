@@ -15,10 +15,21 @@ type Workflow = {
   jobs: Record<
     string,
     {
+      env?: Record<string, string>;
       if?: string;
+      id?: string;
       name?: string;
       needs?: string | string[];
-      steps?: Array<{ if?: string; name?: string; run?: string }>;
+      permissions?: Record<string, string>;
+      steps?: Array<{
+        env?: Record<string, string>;
+        id?: string;
+        if?: string;
+        name?: string;
+        run?: string;
+        uses?: string;
+        with?: Record<string, unknown>;
+      }>;
       uses?: string;
       with?: Record<string, unknown>;
     }
@@ -159,6 +170,12 @@ describe("root verification scripts", () => {
     expect(verifyWorkflow.on).toMatchObject({
       pull_request: null,
       workflow_call: { inputs: { private_adapters: { default: false, type: "boolean" } } },
+      workflow_dispatch: {
+        inputs: {
+          base_sha: { required: true, type: "string" },
+          expected_head_sha: { required: true, type: "string" },
+        },
+      },
     });
     expect(verifyWorkflow.permissions).toEqual({ contents: "read" });
     expect(Object.keys(verifyWorkflow.jobs)).toEqual(
@@ -202,9 +219,7 @@ describe("root verification scripts", () => {
       expect.arrayContaining([
         expect.objectContaining({
           name: "Install Playwright Chromium",
-          run: expect.stringContaining(
-            "pnpm --filter=react-demo exec playwright install --with-deps chromium",
-          ),
+          run: "pnpm exec playwright install --with-deps chromium",
         }),
       ]),
     );
@@ -213,10 +228,7 @@ describe("root verification scripts", () => {
     );
     expect(browserInstallSteps).toHaveLength(4);
     for (const step of browserInstallSteps) {
-      expect(step.run).toContain(
-        "pnpm --filter=react-demo exec playwright install --with-deps chromium",
-      );
-      expect(step.run).toContain("pnpm exec playwright install chromium");
+      expect(step.run).toBe("pnpm exec playwright install --with-deps chromium");
     }
     expect(verifyWorkflow.jobs.verify).toMatchObject({
       name: "Verify",
@@ -241,10 +253,10 @@ describe("root verification scripts", () => {
       ]),
     );
     expect(verifyRuns).toContain(
-      'pnpm styled:versions:check --base "${{ github.event.pull_request.base.sha }}"',
+      'pnpm styled:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',
     );
     expect(verifyRuns).toContain(
-      'pnpm primitive:versions:check --base "${{ github.event.pull_request.base.sha }}"',
+      'pnpm primitive:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',
     );
     expect(
       verifyRuns.filter((command) => command.includes("pnpm runtime:generate:test")),
@@ -274,9 +286,23 @@ describe("root verification scripts", () => {
         expect.objectContaining({
           run: "pnpm styled:versions:stage && pnpm primitive:versions:stage",
         }),
+        expect.objectContaining({
+          id: "changesets",
+          name: "Create Release Pull Request",
+        }),
+        expect.objectContaining({
+          if: "steps.changesets.outputs.pullRequestNumber != ''",
+          name: "Verify Release Pull Request",
+          run: expect.stringContaining("gh workflow run verify.yml"),
+        }),
       ]),
     );
     expect(releaseWorkflowSource).toContain("commitMode: github-api");
+    expect(releaseWorkflow.jobs.release.permissions).toEqual({
+      actions: "write",
+      contents: "write",
+      "pull-requests": "write",
+    });
     expect(releaseWorkflowSource).toContain("version: pnpm release:version");
   });
 });

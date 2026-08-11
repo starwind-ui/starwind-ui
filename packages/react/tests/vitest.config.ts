@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { defineConfig } from "vitest/config";
-import { playwright } from "../../runtime/node_modules/@vitest/browser-playwright/dist/index.js";
+import { playwright } from "@vitest/browser-playwright";
 
 import { createSourceBackedRuntimeAliases } from "./source-backed-runtime-aliases";
 
