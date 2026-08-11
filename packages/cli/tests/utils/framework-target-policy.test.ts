@@ -39,7 +39,7 @@ describe("CLI framework target policy", () => {
       setupTargets: ["astro", "react", "vue"],
       labels: { astro: "Astro", react: "React", vue: "Vue" },
       primitiveArtifactIntegrity: {
-        vue: "sha256:5ab2236d8a6f98ab2c289cf2bc01d589d13a94f77c4c3de850df97d5ce7c567d",
+        vue: "sha256:a08106d14c293396c65c8b67c5b2fae8023d6073d766b6489ad03b39c5aeb21e",
       },
       requiredAdapterPackages: {
         "legacy-astro": [],
@@ -56,7 +56,7 @@ describe("CLI framework target policy", () => {
   it("binds private Primitive artifacts to the exact immutable capability policy", () => {
     expect(
       getPrimitiveArtifactIntegrityFingerprint(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY, "vue"),
-    ).toBe("sha256:5ab2236d8a6f98ab2c289cf2bc01d589d13a94f77c4c3de850df97d5ce7c567d");
+    ).toBe("sha256:a08106d14c293396c65c8b67c5b2fae8023d6073d766b6489ad03b39c5aeb21e");
     expect(
       getPrimitiveArtifactIntegrityFingerprint(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY, "astro"),
     ).toBeUndefined();

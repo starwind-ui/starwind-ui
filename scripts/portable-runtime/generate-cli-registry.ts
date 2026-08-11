@@ -1335,10 +1335,46 @@ function createSourceHash(content: string): string {
   return `sha256:${createHash("sha256").update(content).digest("hex")}`;
 }
 
+const RELEASE_MANAGED_PRIMITIVE_PACKAGE_PREFIX = "@starwind-ui/";
+
 function createPrimitiveArtifactIntegrityFingerprint(
   artifactSet: PrimitiveVendoringArtifacts,
 ): string {
-  return `sha256:${createHash("sha256").update(toCanonicalJson(artifactSet)).digest("hex")}`;
+  const document = {
+    ...artifactSet,
+    primitives: artifactSet.primitives.map((artifact) => ({
+      ...artifact,
+      packageRequirements: normalizeIntegrityPackageRequirements(artifact.packageRequirements),
+      version: "<release-managed>",
+    })),
+    validation: artifactSet.validation
+      ? Object.fromEntries(
+          Object.entries(artifactSet.validation).map(([target, descriptor]) => [
+            target,
+            descriptor
+              ? {
+                  ...descriptor,
+                  packageRequirements: normalizeIntegrityPackageRequirements(
+                    descriptor.packageRequirements,
+                  ),
+                }
+              : descriptor,
+          ]),
+        )
+      : undefined,
+  };
+
+  return `sha256:${createHash("sha256").update(toCanonicalJson(document)).digest("hex")}`;
+}
+
+function normalizeIntegrityPackageRequirements(
+  requirements: RegistryPackageRequirement[],
+): RegistryPackageRequirement[] {
+  return requirements.map((requirement) =>
+    requirement.name.startsWith(RELEASE_MANAGED_PRIMITIVE_PACKAGE_PREFIX)
+      ? { ...requirement, range: "<release-managed>" }
+      : requirement,
+  );
 }
 
 function toCanonicalJson(value: unknown): string {

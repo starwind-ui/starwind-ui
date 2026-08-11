@@ -842,6 +842,43 @@ describe("generateLayeredDocsMetadata", () => {
     });
   });
 
+  it("uses human Primitive labels while preserving adapter namespaces", () => {
+    const metadata = buildLayeredDocsMetadata();
+    const expectedLabels = {
+      "alert-dialog": "Alert Dialog",
+      "checkbox-group": "Checkbox Group",
+      "color-picker": "Color Picker",
+      "context-menu": "Context Menu",
+      "input-otp": "Input OTP",
+      "navigation-menu": "Navigation Menu",
+      "preview-card": "Preview Card",
+      "radio-group": "Radio Group",
+      "scroll-area": "Scroll Area",
+      "toggle-group": "Toggle Group",
+    } as const;
+
+    for (const [primitiveId, expectedLabel] of Object.entries(expectedLabels)) {
+      const primitive = metadata.primitives.find((entry) => entry.id === primitiveId);
+
+      expect(primitive?.displayName).toBe(expectedLabel);
+      expect(primitive?.docsReference.summary).toContain(expectedLabel);
+    }
+
+    const alertDialog = metadata.primitives.find((primitive) => primitive.id === "alert-dialog");
+    const alertDialogRoot = alertDialog?.docsReference.apiReference.parts.find(
+      (part) => part.part === "root",
+    );
+
+    expect(alertDialogRoot?.description).toContain("Alert Dialog");
+    expect(alertDialog?.docsReference.anatomy.namespace).toBe("AlertDialog");
+    expect(alertDialog?.docsReference.apiReference.exportGroups).toContainEqual(
+      expect.objectContaining({
+        label: "React Primitive",
+        exports: expect.arrayContaining(["AlertDialog", "AlertDialogRoot"]),
+      }),
+    );
+  });
+
   it("writes the canonical metadata path without mutating the checked-in generated tree", async () => {
     const tempRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-layered-docs-bytes-"));
     const canonicalRelativePath =
@@ -3290,6 +3327,8 @@ describe("generateLayeredDocsMetadata", () => {
         );
 
         expect(primitiveSource).toContain(`title: ${primitive.displayName} Primitive`);
+        expect(primitiveSource).toContain(`  label: ${primitive.displayName}`);
+        expect(primitiveSource).not.toMatch(/^title: .*[a-z][A-Z].* Primitive$/m);
         expect(primitiveSource).not.toContain("## Demo");
         expect(primitiveSource).toContain("## Anatomy");
         expect(primitiveSource).toContain('<DocsTabs syncKey="framework" defaultValue="astro">');

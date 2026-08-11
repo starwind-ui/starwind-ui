@@ -588,7 +588,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             runtimeGetter: "getOpen",
             runtimeSetter: "setOpen",
             controlledStateSync: "unsupported",
-            description: "Tracks whether AlertDialog is open.",
+            description: "Tracks whether Alert Dialog is open.",
             descriptionSource: "authored",
             frameworkBehavior: [
               {
@@ -666,7 +666,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             emitsFrom: "root",
             valueProperty: "open",
             valueType: "boolean",
-            description: "Fires after AlertDialog has finished closing.",
+            description: "Fires after Alert Dialog has finished closing.",
             descriptionSource: "authored",
           },
           {
@@ -680,7 +680,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
-            description: "Fires when AlertDialog opens or closes.",
+            description: "Fires when Alert Dialog opens or closes.",
             descriptionSource: "authored",
             cancellationSequence: [
               {
@@ -721,7 +721,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               emit: false,
             },
             suppressesEmit: true,
-            description: "Opens or closes AlertDialog from Runtime code.",
+            description: "Opens or closes Alert Dialog from Runtime code.",
             descriptionSource: "authored",
             stateModel: "open",
           },
@@ -1106,7 +1106,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             runtimeGetter: "getValue",
             runtimeSetter: "setValue",
             controlledStateSync: "unsupported",
-            description: "Tracks the current CheckboxGroup value.",
+            description: "Tracks the current Checkbox Group value.",
             descriptionSource: "authored",
             frameworkBehavior: [
               {
@@ -1185,7 +1185,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             stateModel: "value",
             valueProperty: "value",
             valueType: "CheckboxGroupValue",
-            description: "Fires when the value changes for CheckboxGroup.",
+            description: "Fires when the value changes for Checkbox Group.",
             descriptionSource: "authored",
             cancellationSequence: [
               {
@@ -1226,13 +1226,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               emit: false,
             },
             suppressesEmit: true,
-            description: "Updates the current CheckboxGroup value from Runtime code.",
+            description: "Updates the current Checkbox Group value from Runtime code.",
             descriptionSource: "authored",
             stateModel: "value",
           },
           {
             method: "setDisabled",
-            description: "Updates whether CheckboxGroup is disabled from Runtime code.",
+            description: "Updates whether Checkbox Group is disabled from Runtime code.",
             descriptionSource: "authored",
             prop: "disabled",
           },
@@ -2177,7 +2177,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             runtimeGetter: "getOpen",
             runtimeSetter: "setOpen",
             controlledStateSync: "unsupported",
-            description: "Tracks whether ContextMenu is open.",
+            description: "Tracks whether Context Menu is open.",
             descriptionSource: "authored",
             frameworkBehavior: [
               {
@@ -2250,7 +2250,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             initialAttribute: "data-default-checked",
             valueType: "boolean",
             controlledStateSync: "unsupported",
-            description: "Tracks whether ContextMenu is checked.",
+            description: "Tracks whether Context Menu is checked.",
             descriptionSource: "authored",
             frameworkBehavior: [
               {
@@ -2315,7 +2315,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             initialAttribute: "data-value",
             valueType: "string",
             controlledStateSync: "unsupported",
-            description: "Tracks the selected radio value for ContextMenu.",
+            description: "Tracks the selected radio value for Context Menu.",
             descriptionSource: "authored",
             frameworkBehavior: [
               {
@@ -2386,7 +2386,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
-            description: "Fires when ContextMenu opens or closes.",
+            description: "Fires when Context Menu opens or closes.",
             descriptionSource: "authored",
             cancellationSequence: [
               {
@@ -2429,7 +2429,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             emitsFrom: "root",
             valueProperty: "open",
             valueType: "boolean",
-            description: "Fires after ContextMenu has finished closing.",
+            description: "Fires after Context Menu has finished closing.",
             descriptionSource: "authored",
           },
           {
@@ -2443,7 +2443,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             stateModel: "checked",
             valueProperty: "checked",
             valueType: "boolean",
-            description: "Fires when the checked state changes for ContextMenu.",
+            description: "Fires when the checked state changes for Context Menu.",
             descriptionSource: "authored",
             cancellationSequence: [
               {
@@ -2487,7 +2487,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             stateModel: "radioValue",
             valueProperty: "value",
             valueType: "string",
-            description: "Fires when the value changes for ContextMenu.",
+            description: "Fires when the value changes for Context Menu.",
             descriptionSource: "authored",
             cancellationSequence: [
               {
@@ -2528,7 +2528,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               emit: false,
             },
             suppressesEmit: true,
-            description: "Opens or closes ContextMenu from Runtime code.",
+            description: "Opens or closes Context Menu from Runtime code.",
             descriptionSource: "authored",
             stateModel: "open",
           },
@@ -3326,7 +3326,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             runtimeGetter: "getValue",
             runtimeSetter: "setValue",
             controlledStateSync: "unsupported",
-            description: "Tracks the current InputOtp value.",
+            description: "Tracks the current Input OTP value.",
             descriptionSource: "authored",
             frameworkBehavior: [
               {
@@ -3405,7 +3405,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             stateModel: "value",
             valueProperty: "value",
             valueType: "string",
-            description: "Fires when the value changes for InputOtp.",
+            description: "Fires when the value changes for Input OTP.",
             descriptionSource: "authored",
             cancellationSequence: [
               {
@@ -3446,19 +3446,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               emit: false,
             },
             suppressesEmit: true,
-            description: "Updates the current InputOtp value from Runtime code.",
+            description: "Updates the current Input OTP value from Runtime code.",
             descriptionSource: "authored",
             stateModel: "value",
           },
           {
             method: "setDisabled",
-            description: "Updates whether InputOtp is disabled from Runtime code.",
+            description: "Updates whether Input OTP is disabled from Runtime code.",
             descriptionSource: "authored",
             prop: "disabled",
           },
           {
             method: "setFormOptions",
-            description: "Updates InputOtp form-related options from Runtime code.",
+            description: "Updates Input OTP form-related options from Runtime code.",
             descriptionSource: "authored",
             props: [
               "form",
@@ -3898,7 +3898,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             runtimeGetter: "getValue",
             runtimeSetter: "setValue",
             controlledStateSync: "unsupported",
-            description: "Tracks the current NavigationMenu value.",
+            description: "Tracks the current Navigation Menu value.",
             descriptionSource: "authored",
             frameworkBehavior: [
               {
@@ -3977,7 +3977,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             stateModel: "value",
             valueProperty: "value",
             valueType: "string | null",
-            description: "Fires when the value changes for NavigationMenu.",
+            description: "Fires when the value changes for Navigation Menu.",
             descriptionSource: "authored",
             cancellationSequence: [
               {
@@ -4018,7 +4018,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               emit: false,
             },
             suppressesEmit: true,
-            description: "Updates the current NavigationMenu value from Runtime code.",
+            description: "Updates the current Navigation Menu value from Runtime code.",
             descriptionSource: "authored",
             stateModel: "value",
           },
@@ -4237,7 +4237,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             runtimeGetter: "getOpen",
             runtimeSetter: "setOpen",
             controlledStateSync: "unsupported",
-            description: "Tracks whether PreviewCard is open.",
+            description: "Tracks whether Preview Card is open.",
             descriptionSource: "authored",
             frameworkBehavior: [
               {
@@ -4316,7 +4316,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             stateModel: "open",
             valueProperty: "open",
             valueType: "boolean",
-            description: "Fires when PreviewCard opens or closes.",
+            description: "Fires when Preview Card opens or closes.",
             descriptionSource: "authored",
             cancellationSequence: [
               {
@@ -4357,7 +4357,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               emit: false,
             },
             suppressesEmit: true,
-            description: "Opens or closes PreviewCard from Runtime code.",
+            description: "Opens or closes Preview Card from Runtime code.",
             descriptionSource: "authored",
             stateModel: "open",
           },
@@ -4671,7 +4671,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             runtimeGetter: "getValue",
             runtimeSetter: "setValue",
             controlledStateSync: "unsupported",
-            description: "Tracks the current RadioGroup value.",
+            description: "Tracks the current Radio Group value.",
             descriptionSource: "authored",
             frameworkBehavior: [
               {
@@ -4750,7 +4750,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             stateModel: "value",
             valueProperty: "value",
             valueType: "string",
-            description: "Fires when the value changes for RadioGroup.",
+            description: "Fires when the value changes for Radio Group.",
             descriptionSource: "authored",
             cancellationSequence: [
               {
@@ -4791,19 +4791,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               emit: false,
             },
             suppressesEmit: true,
-            description: "Updates the current RadioGroup value from Runtime code.",
+            description: "Updates the current Radio Group value from Runtime code.",
             descriptionSource: "authored",
             stateModel: "value",
           },
           {
             method: "setDisabled",
-            description: "Updates whether RadioGroup is disabled from Runtime code.",
+            description: "Updates whether Radio Group is disabled from Runtime code.",
             descriptionSource: "authored",
             prop: "disabled",
           },
           {
             method: "setFormOptions",
-            description: "Updates RadioGroup form-related options from Runtime code.",
+            description: "Updates Radio Group form-related options from Runtime code.",
             descriptionSource: "authored",
             props: [
               "form",
@@ -4813,25 +4813,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             method: "setName",
-            description: "Updates the RadioGroup form field name from Runtime code.",
+            description: "Updates the Radio Group form field name from Runtime code.",
             descriptionSource: "authored",
             prop: "name",
           },
           {
             method: "setOrientation",
-            description: "Updates the RadioGroup orientation from Runtime code.",
+            description: "Updates the Radio Group orientation from Runtime code.",
             descriptionSource: "authored",
             prop: "orientation",
           },
           {
             method: "setReadOnly",
-            description: "Updates whether RadioGroup is read-only from Runtime code.",
+            description: "Updates whether Radio Group is read-only from Runtime code.",
             descriptionSource: "authored",
             prop: "readOnly",
           },
           {
             method: "setRequired",
-            description: "Updates whether RadioGroup is required from Runtime code.",
+            description: "Updates whether Radio Group is required from Runtime code.",
             descriptionSource: "authored",
             prop: "required",
           },
@@ -6103,7 +6103,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             runtimeGetter: "getValue",
             runtimeSetter: "setValue",
             controlledStateSync: "unsupported",
-            description: "Tracks the current ToggleGroup value.",
+            description: "Tracks the current Toggle Group value.",
             descriptionSource: "authored",
             frameworkBehavior: [
               {
@@ -6182,7 +6182,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             stateModel: "value",
             valueProperty: "value",
             valueType: "ToggleGroupValue",
-            description: "Fires when the value changes for ToggleGroup.",
+            description: "Fires when the value changes for Toggle Group.",
             descriptionSource: "authored",
             cancellationSequence: [
               {
@@ -6223,31 +6223,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               emit: false,
             },
             suppressesEmit: true,
-            description: "Updates the current ToggleGroup value from Runtime code.",
+            description: "Updates the current Toggle Group value from Runtime code.",
             descriptionSource: "authored",
             stateModel: "value",
           },
           {
             method: "setDisabled",
-            description: "Updates whether ToggleGroup is disabled from Runtime code.",
+            description: "Updates whether Toggle Group is disabled from Runtime code.",
             descriptionSource: "authored",
             prop: "disabled",
           },
           {
             method: "setLoopFocus",
-            description: "Updates ToggleGroup keyboard focus wrapping from Runtime code.",
+            description: "Updates Toggle Group keyboard focus wrapping from Runtime code.",
             descriptionSource: "authored",
             prop: "loopFocus",
           },
           {
             method: "setMultiple",
-            description: "Updates whether ToggleGroup allows multiple values from Runtime code.",
+            description: "Updates whether Toggle Group allows multiple values from Runtime code.",
             descriptionSource: "authored",
             prop: "multiple",
           },
           {
             method: "setOrientation",
-            description: "Updates the ToggleGroup orientation from Runtime code.",
+            description: "Updates the Toggle Group orientation from Runtime code.",
             descriptionSource: "authored",
             prop: "orientation",
           },
@@ -37712,7 +37712,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
     },
     {
       id: "alert-dialog",
-      displayName: "AlertDialog",
+      displayName: "Alert Dialog",
       category: "dialog-native-overlay",
       registryVersion: "1.0.0",
       runtime: {
@@ -37933,7 +37933,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           runtimeGetter: "getOpen",
           runtimeSetter: "setOpen",
           controlledStateSync: "unsupported",
-          description: "Tracks whether AlertDialog is open.",
+          description: "Tracks whether Alert Dialog is open.",
           descriptionSource: "authored",
           frameworkBehavior: [
             {
@@ -38011,7 +38011,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           emitsFrom: "root",
           valueProperty: "open",
           valueType: "boolean",
-          description: "Fires after AlertDialog has finished closing.",
+          description: "Fires after Alert Dialog has finished closing.",
           descriptionSource: "authored",
         },
         {
@@ -38025,7 +38025,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
-          description: "Fires when AlertDialog opens or closes.",
+          description: "Fires when Alert Dialog opens or closes.",
           descriptionSource: "authored",
           cancellationSequence: [
             {
@@ -38066,7 +38066,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             emit: false,
           },
           suppressesEmit: true,
-          description: "Opens or closes AlertDialog from Runtime code.",
+          description: "Opens or closes Alert Dialog from Runtime code.",
           descriptionSource: "authored",
           stateModel: "open",
         },
@@ -38177,7 +38177,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "AlertDialog is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
+        summary: "Alert Dialog is a Starwind Runtime primitive in the dialog-native-overlay contract family.",
         frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
@@ -38255,7 +38255,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           parts: [
             {
               part: "root",
-              description: "The main element that owns the AlertDialog Runtime instance.",
+              description: "The main element that owns the Alert Dialog Runtime instance.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-alert-dialog",
@@ -38267,7 +38267,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "boolean",
-                  description: "Controls whether AlertDialog is open.",
+                  description: "Controls whether Alert Dialog is open.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -38341,7 +38341,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "boolean",
-                  description: "Sets whether AlertDialog starts open.",
+                  description: "Sets whether Alert Dialog starts open.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -38412,7 +38412,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "closeOnEscape",
                   kind: "option",
                   type: "boolean",
-                  description: "Closes AlertDialog when Escape is pressed.",
+                  description: "Closes Alert Dialog when Escape is pressed.",
                   descriptionSource: "authored",
                 },
                 {
@@ -38420,7 +38420,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "closeOnOutsideInteract",
                   kind: "option",
                   type: "boolean",
-                  description: "Closes AlertDialog when the user interacts outside it.",
+                  description: "Closes Alert Dialog when the user interacts outside it.",
                   descriptionSource: "authored",
                 },
                 {
@@ -38428,7 +38428,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "modal",
                   kind: "option",
                   type: "boolean",
-                  description: "Makes AlertDialog behave as a modal overlay.",
+                  description: "Makes Alert Dialog behave as a modal overlay.",
                   descriptionSource: "authored",
                 },
                 {
@@ -38436,7 +38436,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "callback",
                   type: "AlertDialogCloseCompleteDetails",
                   displayType: "(open: boolean, details: AlertDialogCloseCompleteDetails) => void",
-                  description: "Runs after AlertDialog has finished closing.",
+                  description: "Runs after Alert Dialog has finished closing.",
                   descriptionSource: "authored",
                 },
                 {
@@ -38444,7 +38444,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "callback",
                   type: "AlertDialogOpenChangeDetails",
                   displayType: "(open: boolean, details: AlertDialogOpenChangeDetails) => void",
-                  description: "Runs when AlertDialog opens or closes.",
+                  description: "Runs when Alert Dialog opens or closes.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -38559,7 +38559,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   runtimeGetter: "getOpen",
                   runtimeSetter: "setOpen",
                   controlledStateSync: "unsupported",
-                  description: "Tracks whether AlertDialog is open.",
+                  description: "Tracks whether Alert Dialog is open.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -38637,7 +38637,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   emitsFrom: "root",
                   valueProperty: "open",
                   valueType: "boolean",
-                  description: "Fires after AlertDialog has finished closing.",
+                  description: "Fires after Alert Dialog has finished closing.",
                   descriptionSource: "authored",
                 },
                 {
@@ -38651,7 +38651,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
-                  description: "Fires when AlertDialog opens or closes.",
+                  description: "Fires when Alert Dialog opens or closes.",
                   descriptionSource: "authored",
                   cancellationSequence: [
                     {
@@ -38692,7 +38692,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     emit: false,
                   },
                   suppressesEmit: true,
-                  description: "Opens or closes AlertDialog from Runtime code.",
+                  description: "Opens or closes Alert Dialog from Runtime code.",
                   descriptionSource: "authored",
                   stateModel: "open",
                 },
@@ -38726,7 +38726,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "trigger",
-              description: "The control that opens, closes, or targets the AlertDialog content.",
+              description: "The control that opens, closes, or targets the Alert Dialog content.",
               descriptionSource: "authored",
               defaultElement: "button",
               discoveryAttribute: "data-sw-alert-dialog-trigger",
@@ -38789,7 +38789,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "portal",
-              description: "Moves AlertDialog overlay content to the document body when needed.",
+              description: "Moves Alert Dialog overlay content to the document body when needed.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-alert-dialog-portal",
@@ -38817,7 +38817,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "backdrop",
-              description: "The backdrop shown behind the AlertDialog overlay.",
+              description: "The backdrop shown behind the Alert Dialog overlay.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-alert-dialog-backdrop",
@@ -38865,7 +38865,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "viewport",
-              description: "The visible viewport for AlertDialog content.",
+              description: "The visible viewport for Alert Dialog content.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-alert-dialog-viewport",
@@ -38893,7 +38893,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "popup",
-              description: "The floating content container for AlertDialog.",
+              description: "The floating content container for Alert Dialog.",
               descriptionSource: "authored",
               defaultElement: "dialog",
               discoveryAttribute: "data-sw-alert-dialog-popup",
@@ -38938,7 +38938,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "title",
-              description: "The accessible title for AlertDialog.",
+              description: "The accessible title for Alert Dialog.",
               descriptionSource: "authored",
               defaultElement: "h2",
               discoveryAttribute: "data-sw-alert-dialog-title",
@@ -38966,7 +38966,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "description",
-              description: "Supporting description text for AlertDialog.",
+              description: "Supporting description text for Alert Dialog.",
               descriptionSource: "authored",
               defaultElement: "p",
               discoveryAttribute: "data-sw-alert-dialog-description",
@@ -38994,7 +38994,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "close",
-              description: "A control that closes AlertDialog.",
+              description: "A control that closes Alert Dialog.",
               descriptionSource: "authored",
               defaultElement: "button",
               discoveryAttribute: "data-sw-alert-dialog-close",
@@ -42547,7 +42547,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
     },
     {
       id: "checkbox-group",
-      displayName: "CheckboxGroup",
+      displayName: "Checkbox Group",
       category: "controlled-value-group",
       registryVersion: "1.0.0",
       runtime: {
@@ -42619,7 +42619,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           runtimeGetter: "getValue",
           runtimeSetter: "setValue",
           controlledStateSync: "unsupported",
-          description: "Tracks the current CheckboxGroup value.",
+          description: "Tracks the current Checkbox Group value.",
           descriptionSource: "authored",
           frameworkBehavior: [
             {
@@ -42698,7 +42698,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           stateModel: "value",
           valueProperty: "value",
           valueType: "CheckboxGroupValue",
-          description: "Fires when the value changes for CheckboxGroup.",
+          description: "Fires when the value changes for Checkbox Group.",
           descriptionSource: "authored",
           cancellationSequence: [
             {
@@ -42739,13 +42739,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             emit: false,
           },
           suppressesEmit: true,
-          description: "Updates the current CheckboxGroup value from Runtime code.",
+          description: "Updates the current Checkbox Group value from Runtime code.",
           descriptionSource: "authored",
           stateModel: "value",
         },
         {
           method: "setDisabled",
-          description: "Updates whether CheckboxGroup is disabled from Runtime code.",
+          description: "Updates whether Checkbox Group is disabled from Runtime code.",
           descriptionSource: "authored",
           prop: "disabled",
         },
@@ -42789,7 +42789,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "CheckboxGroup is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        summary: "Checkbox Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
         frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
@@ -42859,7 +42859,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           parts: [
             {
               part: "root",
-              description: "The main element that owns the CheckboxGroup Runtime instance.",
+              description: "The main element that owns the Checkbox Group Runtime instance.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-checkbox-group",
@@ -42869,7 +42869,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "value",
                   kind: "control",
                   type: "CheckboxGroupValue",
-                  description: "Controls the current CheckboxGroup value.",
+                  description: "Controls the current Checkbox Group value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -42939,7 +42939,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "defaultValue",
                   kind: "control",
                   type: "CheckboxGroupValue",
-                  description: "Sets the initial CheckboxGroup value for uncontrolled usage.",
+                  description: "Sets the initial Checkbox Group value for uncontrolled usage.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -43018,7 +43018,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "callback",
                   type: "CheckboxGroupValueChangeDetails",
                   displayType: "(value: CheckboxGroupValue, details: CheckboxGroupValueChangeDetails) => void",
-                  description: "Runs when the CheckboxGroup value changes.",
+                  description: "Runs when the Checkbox Group value changes.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -43121,7 +43121,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   runtimeGetter: "getValue",
                   runtimeSetter: "setValue",
                   controlledStateSync: "unsupported",
-                  description: "Tracks the current CheckboxGroup value.",
+                  description: "Tracks the current Checkbox Group value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -43200,7 +43200,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   stateModel: "value",
                   valueProperty: "value",
                   valueType: "CheckboxGroupValue",
-                  description: "Fires when the value changes for CheckboxGroup.",
+                  description: "Fires when the value changes for Checkbox Group.",
                   descriptionSource: "authored",
                   cancellationSequence: [
                     {
@@ -43241,13 +43241,13 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     emit: false,
                   },
                   suppressesEmit: true,
-                  description: "Updates the current CheckboxGroup value from Runtime code.",
+                  description: "Updates the current Checkbox Group value from Runtime code.",
                   descriptionSource: "authored",
                   stateModel: "value",
                 },
                 {
                   method: "setDisabled",
-                  description: "Updates whether CheckboxGroup is disabled from Runtime code.",
+                  description: "Updates whether Checkbox Group is disabled from Runtime code.",
                   descriptionSource: "authored",
                   prop: "disabled",
                 },
@@ -51338,7 +51338,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
     },
     {
       id: "context-menu",
-      displayName: "ContextMenu",
+      displayName: "Context Menu",
       category: "composite-menu-overlay",
       registryVersion: "1.0.0",
       runtime: {
@@ -52052,7 +52052,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           runtimeGetter: "getOpen",
           runtimeSetter: "setOpen",
           controlledStateSync: "unsupported",
-          description: "Tracks whether ContextMenu is open.",
+          description: "Tracks whether Context Menu is open.",
           descriptionSource: "authored",
           frameworkBehavior: [
             {
@@ -52125,7 +52125,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           initialAttribute: "data-default-checked",
           valueType: "boolean",
           controlledStateSync: "unsupported",
-          description: "Tracks whether ContextMenu is checked.",
+          description: "Tracks whether Context Menu is checked.",
           descriptionSource: "authored",
           frameworkBehavior: [
             {
@@ -52190,7 +52190,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           initialAttribute: "data-value",
           valueType: "string",
           controlledStateSync: "unsupported",
-          description: "Tracks the selected radio value for ContextMenu.",
+          description: "Tracks the selected radio value for Context Menu.",
           descriptionSource: "authored",
           frameworkBehavior: [
             {
@@ -52261,7 +52261,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
-          description: "Fires when ContextMenu opens or closes.",
+          description: "Fires when Context Menu opens or closes.",
           descriptionSource: "authored",
           cancellationSequence: [
             {
@@ -52304,7 +52304,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           emitsFrom: "root",
           valueProperty: "open",
           valueType: "boolean",
-          description: "Fires after ContextMenu has finished closing.",
+          description: "Fires after Context Menu has finished closing.",
           descriptionSource: "authored",
         },
         {
@@ -52318,7 +52318,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           stateModel: "checked",
           valueProperty: "checked",
           valueType: "boolean",
-          description: "Fires when the checked state changes for ContextMenu.",
+          description: "Fires when the checked state changes for Context Menu.",
           descriptionSource: "authored",
           cancellationSequence: [
             {
@@ -52362,7 +52362,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           stateModel: "radioValue",
           valueProperty: "value",
           valueType: "string",
-          description: "Fires when the value changes for ContextMenu.",
+          description: "Fires when the value changes for Context Menu.",
           descriptionSource: "authored",
           cancellationSequence: [
             {
@@ -52403,7 +52403,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             emit: false,
           },
           suppressesEmit: true,
-          description: "Opens or closes ContextMenu from Runtime code.",
+          description: "Opens or closes Context Menu from Runtime code.",
           descriptionSource: "authored",
           stateModel: "open",
         },
@@ -52584,7 +52584,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "ContextMenu is a Starwind Runtime primitive in the composite-menu-overlay contract family.",
+        summary: "Context Menu is a Starwind Runtime primitive in the composite-menu-overlay contract family.",
         frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
@@ -52672,7 +52672,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           parts: [
             {
               part: "root",
-              description: "The main element that owns the ContextMenu Runtime instance.",
+              description: "The main element that owns the Context Menu Runtime instance.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-context-menu",
@@ -52684,7 +52684,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "boolean",
-                  description: "Controls whether ContextMenu is open.",
+                  description: "Controls whether Context Menu is open.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -52758,7 +52758,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "boolean",
-                  description: "Sets whether ContextMenu starts open.",
+                  description: "Sets whether Context Menu starts open.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -52849,7 +52849,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "boolean",
-                  description: "Makes ContextMenu behave as a modal overlay.",
+                  description: "Makes Context Menu behave as a modal overlay.",
                   descriptionSource: "authored",
                 },
                 {
@@ -52861,7 +52861,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "submenuRoot",
                   ],
                   type: "number",
-                  description: "Sets how long ContextMenu waits before closing.",
+                  description: "Sets how long Context Menu waits before closing.",
                   descriptionSource: "authored",
                 },
                 {
@@ -52872,7 +52872,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   ],
                   type: "ContextMenuCloseCompleteDetails",
                   displayType: "(open: boolean, details: ContextMenuCloseCompleteDetails) => void",
-                  description: "Runs after ContextMenu has finished closing.",
+                  description: "Runs after Context Menu has finished closing.",
                   descriptionSource: "authored",
                 },
                 {
@@ -52883,7 +52883,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   ],
                   type: "ContextMenuOpenChangeDetails",
                   displayType: "(open: boolean, details: ContextMenuOpenChangeDetails) => void",
-                  description: "Runs when ContextMenu opens or closes.",
+                  description: "Runs when Context Menu opens or closes.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -53005,7 +53005,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   runtimeGetter: "getOpen",
                   runtimeSetter: "setOpen",
                   controlledStateSync: "unsupported",
-                  description: "Tracks whether ContextMenu is open.",
+                  description: "Tracks whether Context Menu is open.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -53078,7 +53078,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   initialAttribute: "data-default-checked",
                   valueType: "boolean",
                   controlledStateSync: "unsupported",
-                  description: "Tracks whether ContextMenu is checked.",
+                  description: "Tracks whether Context Menu is checked.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -53143,7 +53143,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   initialAttribute: "data-value",
                   valueType: "string",
                   controlledStateSync: "unsupported",
-                  description: "Tracks the selected radio value for ContextMenu.",
+                  description: "Tracks the selected radio value for Context Menu.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -53214,7 +53214,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
-                  description: "Fires when ContextMenu opens or closes.",
+                  description: "Fires when Context Menu opens or closes.",
                   descriptionSource: "authored",
                   cancellationSequence: [
                     {
@@ -53257,7 +53257,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   emitsFrom: "root",
                   valueProperty: "open",
                   valueType: "boolean",
-                  description: "Fires after ContextMenu has finished closing.",
+                  description: "Fires after Context Menu has finished closing.",
                   descriptionSource: "authored",
                 },
               ],
@@ -53268,7 +53268,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     emit: false,
                   },
                   suppressesEmit: true,
-                  description: "Opens or closes ContextMenu from Runtime code.",
+                  description: "Opens or closes Context Menu from Runtime code.",
                   descriptionSource: "authored",
                   stateModel: "open",
                 },
@@ -53320,7 +53320,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "trigger",
-              description: "The control that opens, closes, or targets the ContextMenu content.",
+              description: "The control that opens, closes, or targets the Context Menu content.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-context-menu-trigger",
@@ -53400,7 +53400,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "anchor",
-              description: "The virtual anchor used to position ContextMenu content.",
+              description: "The virtual anchor used to position Context Menu content.",
               descriptionSource: "authored",
               defaultElement: "span",
               discoveryAttribute: "data-sw-context-menu-anchor",
@@ -53437,7 +53437,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "portal",
-              description: "Moves ContextMenu overlay content to the document body when needed.",
+              description: "Moves Context Menu overlay content to the document body when needed.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-portal",
@@ -53465,7 +53465,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "positioner",
-              description: "Positions the ContextMenu content relative to its trigger.",
+              description: "Positions the Context Menu content relative to its trigger.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-positioner",
@@ -53479,7 +53479,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
-                  description: "Sets the preferred side for ContextMenu content.",
+                  description: "Sets the preferred side for Context Menu content.",
                   descriptionSource: "authored",
                 },
                 {
@@ -53491,7 +53491,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "\"start\" | \"center\" | \"end\"",
-                  description: "Sets how ContextMenu content aligns to its trigger.",
+                  description: "Sets how Context Menu content aligns to its trigger.",
                   descriptionSource: "authored",
                 },
                 {
@@ -53503,7 +53503,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "number",
-                  description: "Sets the distance between ContextMenu content and its trigger.",
+                  description: "Sets the distance between Context Menu content and its trigger.",
                   descriptionSource: "authored",
                 },
                 {
@@ -53515,7 +53515,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "boolean",
-                  description: "Allows ContextMenu content to shift or flip to stay visible.",
+                  description: "Allows Context Menu content to shift or flip to stay visible.",
                   descriptionSource: "authored",
                 },
               ],
@@ -53572,7 +53572,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "popup",
-              description: "The floating content container for ContextMenu.",
+              description: "The floating content container for Context Menu.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-popup",
@@ -53587,7 +53587,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
-                  description: "Sets the preferred side for ContextMenu content.",
+                  description: "Sets the preferred side for Context Menu content.",
                   descriptionSource: "authored",
                 },
                 {
@@ -53599,7 +53599,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "\"start\" | \"center\" | \"end\"",
-                  description: "Sets how ContextMenu content aligns to its trigger.",
+                  description: "Sets how Context Menu content aligns to its trigger.",
                   descriptionSource: "authored",
                 },
                 {
@@ -53611,7 +53611,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "number",
-                  description: "Sets the distance between ContextMenu content and its trigger.",
+                  description: "Sets the distance between Context Menu content and its trigger.",
                   descriptionSource: "authored",
                 },
                 {
@@ -53623,7 +53623,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "boolean",
-                  description: "Allows ContextMenu content to shift or flip to stay visible.",
+                  description: "Allows Context Menu content to shift or flip to stay visible.",
                   descriptionSource: "authored",
                 },
               ],
@@ -53700,7 +53700,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "item",
-              description: "An interactive item inside the ContextMenu collection.",
+              description: "An interactive item inside the Context Menu collection.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-item",
@@ -53731,7 +53731,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "item",
                   ],
                   type: "boolean",
-                  description: "Closes ContextMenu after the item is clicked.",
+                  description: "Closes Context Menu after the item is clicked.",
                   descriptionSource: "authored",
                 },
               ],
@@ -53770,7 +53770,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "linkItem",
-              description: "A link-style item inside the ContextMenu collection.",
+              description: "A link-style item inside the Context Menu collection.",
               descriptionSource: "authored",
               defaultElement: "a",
               discoveryAttribute: "data-sw-menu-link-item",
@@ -53801,7 +53801,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "linkItem",
                   ],
                   type: "boolean",
-                  description: "Closes ContextMenu after the item is clicked.",
+                  description: "Closes Context Menu after the item is clicked.",
                   descriptionSource: "authored",
                 },
               ],
@@ -53840,7 +53840,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "checkboxItem",
-              description: "A checkbox-style item inside the ContextMenu collection.",
+              description: "A checkbox-style item inside the Context Menu collection.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-checkbox-item",
@@ -53871,7 +53871,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "radioItem",
                   ],
                   type: "boolean",
-                  description: "Controls whether ContextMenu is checked.",
+                  description: "Controls whether Context Menu is checked.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -53938,7 +53938,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "radioItem",
                   ],
                   type: "boolean",
-                  description: "Sets whether ContextMenu starts checked for uncontrolled usage.",
+                  description: "Sets whether Context Menu starts checked for uncontrolled usage.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54005,7 +54005,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "radioItem",
                   ],
                   type: "boolean",
-                  description: "Closes ContextMenu after the item is clicked.",
+                  description: "Closes Context Menu after the item is clicked.",
                   descriptionSource: "authored",
                 },
                 {
@@ -54016,7 +54016,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   ],
                   type: "MenuCheckedChangeDetails",
                   displayType: "(checked: boolean, details: MenuCheckedChangeDetails) => void",
-                  description: "Runs when the ContextMenu checked state changes.",
+                  description: "Runs when the Context Menu checked state changes.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54121,7 +54121,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   initialAttribute: "data-default-checked",
                   valueType: "boolean",
                   controlledStateSync: "unsupported",
-                  description: "Tracks whether ContextMenu is checked.",
+                  description: "Tracks whether Context Menu is checked.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54192,7 +54192,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   stateModel: "checked",
                   valueProperty: "checked",
                   valueType: "boolean",
-                  description: "Fires when the checked state changes for ContextMenu.",
+                  description: "Fires when the checked state changes for Context Menu.",
                   descriptionSource: "authored",
                   cancellationSequence: [
                     {
@@ -54239,7 +54239,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "checkboxItemIndicator",
-              description: "Shows the checked state for a ContextMenu checkbox item.",
+              description: "Shows the checked state for a Context Menu checkbox item.",
               descriptionSource: "authored",
               defaultElement: "span",
               discoveryAttribute: "data-sw-menu-checkbox-item-indicator",
@@ -54273,7 +54273,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "radioGroup",
-              description: "Groups related radio items inside ContextMenu.",
+              description: "Groups related radio items inside Context Menu.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-radio-group",
@@ -54286,7 +54286,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "radioGroup",
                   ],
                   type: "string",
-                  description: "Controls the current ContextMenu value.",
+                  description: "Controls the current Context Menu value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54351,7 +54351,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "radioGroup",
                   ],
                   type: "string",
-                  description: "Sets the initial ContextMenu value for uncontrolled usage.",
+                  description: "Sets the initial Context Menu value for uncontrolled usage.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54417,7 +54417,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   ],
                   type: "MenuValueChangeDetails",
                   displayType: "(value: string, details: MenuValueChangeDetails) => void",
-                  description: "Runs when the ContextMenu value changes.",
+                  description: "Runs when the Context Menu value changes.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54498,7 +54498,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   initialAttribute: "data-value",
                   valueType: "string",
                   controlledStateSync: "unsupported",
-                  description: "Tracks the selected radio value for ContextMenu.",
+                  description: "Tracks the selected radio value for Context Menu.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54569,7 +54569,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   stateModel: "radioValue",
                   valueProperty: "value",
                   valueType: "string",
-                  description: "Fires when the value changes for ContextMenu.",
+                  description: "Fires when the value changes for Context Menu.",
                   descriptionSource: "authored",
                   cancellationSequence: [
                     {
@@ -54616,7 +54616,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "radioItem",
-              description: "A radio-style item inside the ContextMenu collection.",
+              description: "A radio-style item inside the Context Menu collection.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-radio-item",
@@ -54647,7 +54647,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "radioItem",
                   ],
                   type: "boolean",
-                  description: "Controls whether ContextMenu is checked.",
+                  description: "Controls whether Context Menu is checked.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54714,7 +54714,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "radioItem",
                   ],
                   type: "boolean",
-                  description: "Sets whether ContextMenu starts checked for uncontrolled usage.",
+                  description: "Sets whether Context Menu starts checked for uncontrolled usage.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54781,7 +54781,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "radioItem",
                   ],
                   type: "boolean",
-                  description: "Closes ContextMenu after the item is clicked.",
+                  description: "Closes Context Menu after the item is clicked.",
                   descriptionSource: "authored",
                 },
                 {
@@ -54792,7 +54792,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "radioItem",
                   ],
                   type: "string",
-                  description: "Controls the current ContextMenu value.",
+                  description: "Controls the current Context Menu value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54903,7 +54903,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   initialAttribute: "data-default-checked",
                   valueType: "boolean",
                   controlledStateSync: "unsupported",
-                  description: "Tracks whether ContextMenu is checked.",
+                  description: "Tracks whether Context Menu is checked.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -54968,7 +54968,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   initialAttribute: "data-value",
                   valueType: "string",
                   controlledStateSync: "unsupported",
-                  description: "Tracks the selected radio value for ContextMenu.",
+                  description: "Tracks the selected radio value for Context Menu.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -55041,7 +55041,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "radioItemIndicator",
-              description: "Shows the selected state for a ContextMenu radio item.",
+              description: "Shows the selected state for a Context Menu radio item.",
               descriptionSource: "authored",
               defaultElement: "span",
               discoveryAttribute: "data-sw-menu-radio-item-indicator",
@@ -55075,7 +55075,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "group",
-              description: "Groups related ContextMenu items.",
+              description: "Groups related Context Menu items.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-group",
@@ -55104,7 +55104,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "label",
-              description: "Text label associated with ContextMenu.",
+              description: "Text label associated with Context Menu.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-label",
@@ -55132,7 +55132,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "separator",
-              description: "Separates groups of ContextMenu items.",
+              description: "Separates groups of Context Menu items.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-separator",
@@ -55161,7 +55161,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "shortcut",
-              description: "Displays keyboard shortcut text for a ContextMenu item.",
+              description: "Displays keyboard shortcut text for a Context Menu item.",
               descriptionSource: "authored",
               defaultElement: "span",
               discoveryAttribute: "data-sw-menu-shortcut",
@@ -55189,7 +55189,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "submenuRoot",
-              description: "Owns a nested submenu inside ContextMenu.",
+              description: "Owns a nested submenu inside Context Menu.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-submenu-root",
@@ -55203,7 +55203,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "submenuRoot",
                   ],
                   type: "number",
-                  description: "Sets how long ContextMenu waits before closing.",
+                  description: "Sets how long Context Menu waits before closing.",
                   descriptionSource: "authored",
                 },
               ],
@@ -55242,7 +55242,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "submenuTrigger",
-              description: "Opens a nested submenu inside ContextMenu.",
+              description: "Opens a nested submenu inside Context Menu.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-menu-submenu-trigger",
@@ -62315,7 +62315,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
     },
     {
       id: "input-otp",
-      displayName: "InputOtp",
+      displayName: "Input OTP",
       category: "form-value-control",
       registryVersion: "1.0.0",
       runtime: {
@@ -62647,7 +62647,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           runtimeGetter: "getValue",
           runtimeSetter: "setValue",
           controlledStateSync: "unsupported",
-          description: "Tracks the current InputOtp value.",
+          description: "Tracks the current Input OTP value.",
           descriptionSource: "authored",
           frameworkBehavior: [
             {
@@ -62726,7 +62726,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           stateModel: "value",
           valueProperty: "value",
           valueType: "string",
-          description: "Fires when the value changes for InputOtp.",
+          description: "Fires when the value changes for Input OTP.",
           descriptionSource: "authored",
           cancellationSequence: [
             {
@@ -62767,19 +62767,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             emit: false,
           },
           suppressesEmit: true,
-          description: "Updates the current InputOtp value from Runtime code.",
+          description: "Updates the current Input OTP value from Runtime code.",
           descriptionSource: "authored",
           stateModel: "value",
         },
         {
           method: "setDisabled",
-          description: "Updates whether InputOtp is disabled from Runtime code.",
+          description: "Updates whether Input OTP is disabled from Runtime code.",
           descriptionSource: "authored",
           prop: "disabled",
         },
         {
           method: "setFormOptions",
-          description: "Updates InputOtp form-related options from Runtime code.",
+          description: "Updates Input OTP form-related options from Runtime code.",
           descriptionSource: "authored",
           props: [
             "form",
@@ -62897,7 +62897,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "InputOtp is a Starwind Runtime primitive in the form-value-control contract family.",
+        summary: "Input OTP is a Starwind Runtime primitive in the form-value-control contract family.",
         frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
@@ -62973,7 +62973,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           parts: [
             {
               part: "root",
-              description: "The main element that owns the InputOtp Runtime instance.",
+              description: "The main element that owns the Input OTP Runtime instance.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-input-otp",
@@ -62982,7 +62982,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "value",
                   kind: "control",
                   type: "string",
-                  description: "Controls the current InputOtp value.",
+                  description: "Controls the current Input OTP value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -63052,7 +63052,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "defaultValue",
                   kind: "control",
                   type: "string",
-                  description: "Sets the initial InputOtp value for uncontrolled usage.",
+                  description: "Sets the initial Input OTP value for uncontrolled usage.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -63183,7 +63183,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "callback",
                   type: "InputOtpValueChangeDetails",
                   displayType: "(value: string, details: InputOtpValueChangeDetails) => void",
-                  description: "Runs when the InputOtp value changes.",
+                  description: "Runs when the Input OTP value changes.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -63328,7 +63328,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   runtimeGetter: "getValue",
                   runtimeSetter: "setValue",
                   controlledStateSync: "unsupported",
-                  description: "Tracks the current InputOtp value.",
+                  description: "Tracks the current Input OTP value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -63407,7 +63407,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   stateModel: "value",
                   valueProperty: "value",
                   valueType: "string",
-                  description: "Fires when the value changes for InputOtp.",
+                  description: "Fires when the value changes for Input OTP.",
                   descriptionSource: "authored",
                   cancellationSequence: [
                     {
@@ -63448,19 +63448,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     emit: false,
                   },
                   suppressesEmit: true,
-                  description: "Updates the current InputOtp value from Runtime code.",
+                  description: "Updates the current Input OTP value from Runtime code.",
                   descriptionSource: "authored",
                   stateModel: "value",
                 },
                 {
                   method: "setDisabled",
-                  description: "Updates whether InputOtp is disabled from Runtime code.",
+                  description: "Updates whether Input OTP is disabled from Runtime code.",
                   descriptionSource: "authored",
                   prop: "disabled",
                 },
                 {
                   method: "setFormOptions",
-                  description: "Updates InputOtp form-related options from Runtime code.",
+                  description: "Updates Input OTP form-related options from Runtime code.",
                   descriptionSource: "authored",
                   props: [
                     "form",
@@ -63515,7 +63515,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "input",
-              description: "The native input synchronized by InputOtp.",
+              description: "The native input synchronized by Input OTP.",
               descriptionSource: "authored",
               defaultElement: "input",
               discoveryAttribute: "data-sw-input-otp-input",
@@ -63570,7 +63570,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "group",
-              description: "Groups related InputOtp items.",
+              description: "Groups related Input OTP items.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-input-otp-group",
@@ -63598,7 +63598,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "slot",
-              description: "A character slot inside InputOtp.",
+              description: "A character slot inside Input OTP.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-input-otp-slot",
@@ -63665,7 +63665,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "slotChar",
-              description: "The visible character rendered in a InputOtp slot.",
+              description: "The visible character rendered in a Input OTP slot.",
               descriptionSource: "authored",
               defaultElement: "span",
               discoveryAttribute: "data-sw-input-otp-char",
@@ -63688,7 +63688,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "slotCaret",
-              description: "The caret shown inside the active InputOtp slot.",
+              description: "The caret shown inside the active Input OTP slot.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-input-otp-caret",
@@ -63721,7 +63721,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "separator",
-              description: "Separates groups of InputOtp items.",
+              description: "Separates groups of Input OTP items.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-input-otp-separator",
@@ -63833,6 +63833,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       aliases: [
         "input-otp",
         "InputOtp",
+        "Input OTP",
         "Input Otp",
         "createInputOtp",
         "form-value-control",
@@ -68102,7 +68103,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
     },
     {
       id: "navigation-menu",
-      displayName: "NavigationMenu",
+      displayName: "Navigation Menu",
       category: "floating-value-control",
       registryVersion: "1.0.0",
       runtime: {
@@ -68575,7 +68576,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           runtimeGetter: "getValue",
           runtimeSetter: "setValue",
           controlledStateSync: "unsupported",
-          description: "Tracks the current NavigationMenu value.",
+          description: "Tracks the current Navigation Menu value.",
           descriptionSource: "authored",
           frameworkBehavior: [
             {
@@ -68654,7 +68655,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           stateModel: "value",
           valueProperty: "value",
           valueType: "string | null",
-          description: "Fires when the value changes for NavigationMenu.",
+          description: "Fires when the value changes for Navigation Menu.",
           descriptionSource: "authored",
           cancellationSequence: [
             {
@@ -68695,7 +68696,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             emit: false,
           },
           suppressesEmit: true,
-          description: "Updates the current NavigationMenu value from Runtime code.",
+          description: "Updates the current Navigation Menu value from Runtime code.",
           descriptionSource: "authored",
           stateModel: "value",
         },
@@ -69150,7 +69151,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "closeOnEscape",
                   kind: "option",
                   type: "boolean",
-                  description: "Closes NavigationMenu when Escape is pressed.",
+                  description: "Closes Navigation Menu when Escape is pressed.",
                   descriptionSource: "authored",
                 },
                 {
@@ -69158,7 +69159,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "closeOnOutsideInteract",
                   kind: "option",
                   type: "boolean",
-                  description: "Closes NavigationMenu when the user interacts outside it.",
+                  description: "Closes Navigation Menu when the user interacts outside it.",
                   descriptionSource: "authored",
                 },
                 {
@@ -69166,7 +69167,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "callback",
                   type: "NavigationMenuValueChangeDetails",
                   displayType: "(value: string | null, details: NavigationMenuValueChangeDetails) => void",
-                  description: "Runs when the NavigationMenu value changes.",
+                  description: "Runs when the Navigation Menu value changes.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -69316,7 +69317,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   runtimeGetter: "getValue",
                   runtimeSetter: "setValue",
                   controlledStateSync: "unsupported",
-                  description: "Tracks the current NavigationMenu value.",
+                  description: "Tracks the current Navigation Menu value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -69395,7 +69396,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   stateModel: "value",
                   valueProperty: "value",
                   valueType: "string | null",
-                  description: "Fires when the value changes for NavigationMenu.",
+                  description: "Fires when the value changes for Navigation Menu.",
                   descriptionSource: "authored",
                   cancellationSequence: [
                     {
@@ -69436,7 +69437,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     emit: false,
                   },
                   suppressesEmit: true,
-                  description: "Updates the current NavigationMenu value from Runtime code.",
+                  description: "Updates the current Navigation Menu value from Runtime code.",
                   descriptionSource: "authored",
                   stateModel: "value",
                 },
@@ -69472,7 +69473,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "list",
-              description: "The list of selectable NavigationMenu items.",
+              description: "The list of selectable Navigation Menu items.",
               descriptionSource: "authored",
               defaultElement: "ul",
               discoveryAttribute: "data-sw-nav-menu-list",
@@ -69500,7 +69501,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "item",
-              description: "An interactive item inside the NavigationMenu collection.",
+              description: "An interactive item inside the Navigation Menu collection.",
               descriptionSource: "authored",
               defaultElement: "li",
               discoveryAttribute: "data-sw-nav-menu-item",
@@ -69512,7 +69513,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "item",
                   ],
                   type: "string",
-                  description: "Controls the current NavigationMenu value.",
+                  description: "Controls the current Navigation Menu value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -69745,7 +69746,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "icon",
-              description: "Decorative icon rendered by NavigationMenu.",
+              description: "Decorative icon rendered by Navigation Menu.",
               descriptionSource: "authored",
               defaultElement: "span",
               discoveryAttribute: "data-sw-nav-menu-icon",
@@ -69900,7 +69901,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "portal",
-              description: "Moves NavigationMenu overlay content to the document body when needed.",
+              description: "Moves Navigation Menu overlay content to the document body when needed.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-nav-menu-portal",
@@ -69976,7 +69977,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "positioner",
                   ],
                   type: "number",
-                  description: "Adjusts the cross-axis alignment offset for NavigationMenu content.",
+                  description: "Adjusts the cross-axis alignment offset for Navigation Menu content.",
                   descriptionSource: "authored",
                 },
                 {
@@ -70082,7 +70083,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "popup",
-              description: "The floating content container for NavigationMenu.",
+              description: "The floating content container for Navigation Menu.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-nav-menu-popup",
@@ -70096,7 +70097,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
-                  description: "Sets the preferred side for NavigationMenu content.",
+                  description: "Sets the preferred side for Navigation Menu content.",
                   descriptionSource: "authored",
                 },
                 {
@@ -70108,7 +70109,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "\"start\" | \"center\" | \"end\"",
-                  description: "Sets how NavigationMenu content aligns to its trigger.",
+                  description: "Sets how Navigation Menu content aligns to its trigger.",
                   descriptionSource: "authored",
                 },
               ],
@@ -72336,7 +72337,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
     },
     {
       id: "preview-card",
-      displayName: "PreviewCard",
+      displayName: "Preview Card",
       category: "presence-floating-overlay",
       registryVersion: "1.0.0",
       runtime: {
@@ -72682,7 +72683,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           runtimeGetter: "getOpen",
           runtimeSetter: "setOpen",
           controlledStateSync: "unsupported",
-          description: "Tracks whether PreviewCard is open.",
+          description: "Tracks whether Preview Card is open.",
           descriptionSource: "authored",
           frameworkBehavior: [
             {
@@ -72761,7 +72762,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           stateModel: "open",
           valueProperty: "open",
           valueType: "boolean",
-          description: "Fires when PreviewCard opens or closes.",
+          description: "Fires when Preview Card opens or closes.",
           descriptionSource: "authored",
           cancellationSequence: [
             {
@@ -72802,7 +72803,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             emit: false,
           },
           suppressesEmit: true,
-          description: "Opens or closes PreviewCard from Runtime code.",
+          description: "Opens or closes Preview Card from Runtime code.",
           descriptionSource: "authored",
           stateModel: "open",
         },
@@ -72963,7 +72964,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "PreviewCard is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
+        summary: "Preview Card is a Starwind Runtime primitive in the presence-floating-overlay contract family.",
         frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
@@ -73040,7 +73041,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           parts: [
             {
               part: "root",
-              description: "The main element that owns the PreviewCard Runtime instance.",
+              description: "The main element that owns the Preview Card Runtime instance.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-preview-card",
@@ -73052,7 +73053,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "boolean",
-                  description: "Controls whether PreviewCard is open.",
+                  description: "Controls whether Preview Card is open.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -73126,7 +73127,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "root",
                   ],
                   type: "boolean",
-                  description: "Sets whether PreviewCard starts open.",
+                  description: "Sets whether Preview Card starts open.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -73197,7 +73198,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "closeDelay",
                   kind: "option",
                   type: "number",
-                  description: "Sets how long PreviewCard waits before closing.",
+                  description: "Sets how long Preview Card waits before closing.",
                   descriptionSource: "authored",
                 },
                 {
@@ -73205,7 +73206,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "closeOnEscape",
                   kind: "option",
                   type: "boolean",
-                  description: "Closes PreviewCard when Escape is pressed.",
+                  description: "Closes Preview Card when Escape is pressed.",
                   descriptionSource: "authored",
                 },
                 {
@@ -73213,7 +73214,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "closeOnOutsideInteract",
                   kind: "option",
                   type: "boolean",
-                  description: "Closes PreviewCard when the user interacts outside it.",
+                  description: "Closes Preview Card when the user interacts outside it.",
                   descriptionSource: "authored",
                 },
                 {
@@ -73232,7 +73233,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "openDelay",
                   kind: "option",
                   type: "number",
-                  description: "Sets how long PreviewCard waits before opening.",
+                  description: "Sets how long Preview Card waits before opening.",
                   descriptionSource: "authored",
                 },
                 {
@@ -73240,7 +73241,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "callback",
                   type: "PreviewCardOpenChangeDetails",
                   displayType: "(open: boolean, details: PreviewCardOpenChangeDetails) => void",
-                  description: "Runs when PreviewCard opens or closes.",
+                  description: "Runs when Preview Card opens or closes.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -73367,7 +73368,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   runtimeGetter: "getOpen",
                   runtimeSetter: "setOpen",
                   controlledStateSync: "unsupported",
-                  description: "Tracks whether PreviewCard is open.",
+                  description: "Tracks whether Preview Card is open.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -73446,7 +73447,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   stateModel: "open",
                   valueProperty: "open",
                   valueType: "boolean",
-                  description: "Fires when PreviewCard opens or closes.",
+                  description: "Fires when Preview Card opens or closes.",
                   descriptionSource: "authored",
                   cancellationSequence: [
                     {
@@ -73487,7 +73488,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     emit: false,
                   },
                   suppressesEmit: true,
-                  description: "Opens or closes PreviewCard from Runtime code.",
+                  description: "Opens or closes Preview Card from Runtime code.",
                   descriptionSource: "authored",
                   stateModel: "open",
                 },
@@ -73523,7 +73524,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "trigger",
-              description: "The control that opens, closes, or targets the PreviewCard content.",
+              description: "The control that opens, closes, or targets the Preview Card content.",
               descriptionSource: "authored",
               defaultElement: "button",
               discoveryAttribute: "data-sw-preview-card-trigger",
@@ -73629,7 +73630,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "portal",
-              description: "Moves PreviewCard overlay content to the document body when needed.",
+              description: "Moves Preview Card overlay content to the document body when needed.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-preview-card-portal",
@@ -73657,7 +73658,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "positioner",
-              description: "Positions the PreviewCard content relative to its trigger.",
+              description: "Positions the Preview Card content relative to its trigger.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-preview-card-positioner",
@@ -73671,7 +73672,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
-                  description: "Sets the preferred side for PreviewCard content.",
+                  description: "Sets the preferred side for Preview Card content.",
                   descriptionSource: "authored",
                 },
                 {
@@ -73683,7 +73684,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "\"start\" | \"center\" | \"end\"",
-                  description: "Sets how PreviewCard content aligns to its trigger.",
+                  description: "Sets how Preview Card content aligns to its trigger.",
                   descriptionSource: "authored",
                 },
                 {
@@ -73695,7 +73696,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "number",
-                  description: "Sets the distance between PreviewCard content and its trigger.",
+                  description: "Sets the distance between Preview Card content and its trigger.",
                   descriptionSource: "authored",
                 },
                 {
@@ -73707,7 +73708,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "boolean",
-                  description: "Allows PreviewCard content to shift or flip to stay visible.",
+                  description: "Allows Preview Card content to shift or flip to stay visible.",
                   descriptionSource: "authored",
                 },
               ],
@@ -73777,7 +73778,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "popup",
-              description: "The floating content container for PreviewCard.",
+              description: "The floating content container for Preview Card.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-preview-card-popup",
@@ -73792,7 +73793,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
-                  description: "Sets the preferred side for PreviewCard content.",
+                  description: "Sets the preferred side for Preview Card content.",
                   descriptionSource: "authored",
                 },
                 {
@@ -73804,7 +73805,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "\"start\" | \"center\" | \"end\"",
-                  description: "Sets how PreviewCard content aligns to its trigger.",
+                  description: "Sets how Preview Card content aligns to its trigger.",
                   descriptionSource: "authored",
                 },
                 {
@@ -73816,7 +73817,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "number",
-                  description: "Sets the distance between PreviewCard content and its trigger.",
+                  description: "Sets the distance between Preview Card content and its trigger.",
                   descriptionSource: "authored",
                 },
                 {
@@ -73828,7 +73829,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "popup",
                   ],
                   type: "boolean",
-                  description: "Allows PreviewCard content to shift or flip to stay visible.",
+                  description: "Allows Preview Card content to shift or flip to stay visible.",
                   descriptionSource: "authored",
                 },
               ],
@@ -73947,7 +73948,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "backdrop",
-              description: "The backdrop shown behind the PreviewCard overlay.",
+              description: "The backdrop shown behind the Preview Card overlay.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-preview-card-backdrop",
@@ -73995,7 +73996,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "viewport",
-              description: "The visible viewport for PreviewCard content.",
+              description: "The visible viewport for Preview Card content.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-preview-card-viewport",
@@ -76219,7 +76220,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
     },
     {
       id: "radio-group",
-      displayName: "RadioGroup",
+      displayName: "Radio Group",
       category: "controlled-value-group",
       registryVersion: "1.0.0",
       runtime: {
@@ -76360,7 +76361,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           runtimeGetter: "getValue",
           runtimeSetter: "setValue",
           controlledStateSync: "unsupported",
-          description: "Tracks the current RadioGroup value.",
+          description: "Tracks the current Radio Group value.",
           descriptionSource: "authored",
           frameworkBehavior: [
             {
@@ -76439,7 +76440,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           stateModel: "value",
           valueProperty: "value",
           valueType: "string",
-          description: "Fires when the value changes for RadioGroup.",
+          description: "Fires when the value changes for Radio Group.",
           descriptionSource: "authored",
           cancellationSequence: [
             {
@@ -76480,19 +76481,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             emit: false,
           },
           suppressesEmit: true,
-          description: "Updates the current RadioGroup value from Runtime code.",
+          description: "Updates the current Radio Group value from Runtime code.",
           descriptionSource: "authored",
           stateModel: "value",
         },
         {
           method: "setDisabled",
-          description: "Updates whether RadioGroup is disabled from Runtime code.",
+          description: "Updates whether Radio Group is disabled from Runtime code.",
           descriptionSource: "authored",
           prop: "disabled",
         },
         {
           method: "setFormOptions",
-          description: "Updates RadioGroup form-related options from Runtime code.",
+          description: "Updates Radio Group form-related options from Runtime code.",
           descriptionSource: "authored",
           props: [
             "form",
@@ -76502,25 +76503,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         },
         {
           method: "setName",
-          description: "Updates the RadioGroup form field name from Runtime code.",
+          description: "Updates the Radio Group form field name from Runtime code.",
           descriptionSource: "authored",
           prop: "name",
         },
         {
           method: "setOrientation",
-          description: "Updates the RadioGroup orientation from Runtime code.",
+          description: "Updates the Radio Group orientation from Runtime code.",
           descriptionSource: "authored",
           prop: "orientation",
         },
         {
           method: "setReadOnly",
-          description: "Updates whether RadioGroup is read-only from Runtime code.",
+          description: "Updates whether Radio Group is read-only from Runtime code.",
           descriptionSource: "authored",
           prop: "readOnly",
         },
         {
           method: "setRequired",
-          description: "Updates whether RadioGroup is required from Runtime code.",
+          description: "Updates whether Radio Group is required from Runtime code.",
           descriptionSource: "authored",
           prop: "required",
         },
@@ -76586,7 +76587,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "RadioGroup is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        summary: "Radio Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
         frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
@@ -76656,7 +76657,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           parts: [
             {
               part: "root",
-              description: "The main element that owns the RadioGroup Runtime instance.",
+              description: "The main element that owns the Radio Group Runtime instance.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-radio-group",
@@ -76666,7 +76667,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "value",
                   kind: "control",
                   type: "RadioGroupValue",
-                  description: "Controls the current RadioGroup value.",
+                  description: "Controls the current Radio Group value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -76736,7 +76737,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "defaultValue",
                   kind: "control",
                   type: "RadioGroupValue",
-                  description: "Sets the initial RadioGroup value for uncontrolled usage.",
+                  description: "Sets the initial Radio Group value for uncontrolled usage.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -76829,7 +76830,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "orientation",
                   kind: "option",
                   type: "\"horizontal\" | \"vertical\"",
-                  description: "Sets the RadioGroup orientation.",
+                  description: "Sets the Radio Group orientation.",
                   descriptionSource: "authored",
                 },
                 {
@@ -76853,7 +76854,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "callback",
                   type: "RadioGroupValueChangeDetails",
                   displayType: "(value: string, details: RadioGroupValueChangeDetails) => void",
-                  description: "Runs when the RadioGroup value changes.",
+                  description: "Runs when the Radio Group value changes.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -76986,7 +76987,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   runtimeGetter: "getValue",
                   runtimeSetter: "setValue",
                   controlledStateSync: "unsupported",
-                  description: "Tracks the current RadioGroup value.",
+                  description: "Tracks the current Radio Group value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -77065,7 +77066,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   stateModel: "value",
                   valueProperty: "value",
                   valueType: "string",
-                  description: "Fires when the value changes for RadioGroup.",
+                  description: "Fires when the value changes for Radio Group.",
                   descriptionSource: "authored",
                   cancellationSequence: [
                     {
@@ -77106,19 +77107,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     emit: false,
                   },
                   suppressesEmit: true,
-                  description: "Updates the current RadioGroup value from Runtime code.",
+                  description: "Updates the current Radio Group value from Runtime code.",
                   descriptionSource: "authored",
                   stateModel: "value",
                 },
                 {
                   method: "setDisabled",
-                  description: "Updates whether RadioGroup is disabled from Runtime code.",
+                  description: "Updates whether Radio Group is disabled from Runtime code.",
                   descriptionSource: "authored",
                   prop: "disabled",
                 },
                 {
                   method: "setFormOptions",
-                  description: "Updates RadioGroup form-related options from Runtime code.",
+                  description: "Updates Radio Group form-related options from Runtime code.",
                   descriptionSource: "authored",
                   props: [
                     "form",
@@ -77128,25 +77129,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                 },
                 {
                   method: "setName",
-                  description: "Updates the RadioGroup form field name from Runtime code.",
+                  description: "Updates the Radio Group form field name from Runtime code.",
                   descriptionSource: "authored",
                   prop: "name",
                 },
                 {
                   method: "setOrientation",
-                  description: "Updates the RadioGroup orientation from Runtime code.",
+                  description: "Updates the Radio Group orientation from Runtime code.",
                   descriptionSource: "authored",
                   prop: "orientation",
                 },
                 {
                   method: "setReadOnly",
-                  description: "Updates whether RadioGroup is read-only from Runtime code.",
+                  description: "Updates whether Radio Group is read-only from Runtime code.",
                   descriptionSource: "authored",
                   prop: "readOnly",
                 },
                 {
                   method: "setRequired",
-                  description: "Updates whether RadioGroup is required from Runtime code.",
+                  description: "Updates whether Radio Group is required from Runtime code.",
                   descriptionSource: "authored",
                   prop: "required",
                 },
@@ -77267,7 +77268,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
     },
     {
       id: "scroll-area",
-      displayName: "ScrollArea",
+      displayName: "Scroll Area",
       category: "viewport-measurement",
       registryVersion: "1.0.0",
       runtime: {
@@ -77497,7 +77498,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "ScrollArea is a Starwind Runtime primitive in the viewport-measurement contract family.",
+        summary: "Scroll Area is a Starwind Runtime primitive in the viewport-measurement contract family.",
         frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
@@ -77572,7 +77573,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           parts: [
             {
               part: "root",
-              description: "The main element that owns the ScrollArea Runtime instance.",
+              description: "The main element that owns the Scroll Area Runtime instance.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-scroll-area",
@@ -77628,7 +77629,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "viewport",
-              description: "The visible viewport for ScrollArea content.",
+              description: "The visible viewport for Scroll Area content.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-scroll-area-viewport",
@@ -77668,7 +77669,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "content",
-              description: "The content container rendered by ScrollArea.",
+              description: "The content container rendered by Scroll Area.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-scroll-area-content",
@@ -77706,7 +77707,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "scrollbar",
-              description: "A scrollbar used to scroll ScrollArea content.",
+              description: "A scrollbar used to scroll Scroll Area content.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-scroll-area-scrollbar",
@@ -77730,7 +77731,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "scrollbar",
                   ],
                   type: "\"horizontal\" | \"vertical\"",
-                  description: "Sets the ScrollArea orientation.",
+                  description: "Sets the Scroll Area orientation.",
                   descriptionSource: "authored",
                 },
               ],
@@ -77785,7 +77786,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "thumb",
-              description: "The draggable thumb for ScrollArea.",
+              description: "The draggable thumb for Scroll Area.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-scroll-area-thumb",
@@ -77821,7 +77822,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               part: "corner",
-              description: "The corner where ScrollArea scrollbars meet.",
+              description: "The corner where Scroll Area scrollbars meet.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-scroll-area-corner",
@@ -88473,7 +88474,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
     },
     {
       id: "toggle-group",
-      displayName: "ToggleGroup",
+      displayName: "Toggle Group",
       category: "controlled-value-group",
       registryVersion: "1.0.0",
       runtime: {
@@ -88578,7 +88579,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           runtimeGetter: "getValue",
           runtimeSetter: "setValue",
           controlledStateSync: "unsupported",
-          description: "Tracks the current ToggleGroup value.",
+          description: "Tracks the current Toggle Group value.",
           descriptionSource: "authored",
           frameworkBehavior: [
             {
@@ -88657,7 +88658,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           stateModel: "value",
           valueProperty: "value",
           valueType: "ToggleGroupValue",
-          description: "Fires when the value changes for ToggleGroup.",
+          description: "Fires when the value changes for Toggle Group.",
           descriptionSource: "authored",
           cancellationSequence: [
             {
@@ -88698,31 +88699,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             emit: false,
           },
           suppressesEmit: true,
-          description: "Updates the current ToggleGroup value from Runtime code.",
+          description: "Updates the current Toggle Group value from Runtime code.",
           descriptionSource: "authored",
           stateModel: "value",
         },
         {
           method: "setDisabled",
-          description: "Updates whether ToggleGroup is disabled from Runtime code.",
+          description: "Updates whether Toggle Group is disabled from Runtime code.",
           descriptionSource: "authored",
           prop: "disabled",
         },
         {
           method: "setLoopFocus",
-          description: "Updates ToggleGroup keyboard focus wrapping from Runtime code.",
+          description: "Updates Toggle Group keyboard focus wrapping from Runtime code.",
           descriptionSource: "authored",
           prop: "loopFocus",
         },
         {
           method: "setMultiple",
-          description: "Updates whether ToggleGroup allows multiple values from Runtime code.",
+          description: "Updates whether Toggle Group allows multiple values from Runtime code.",
           descriptionSource: "authored",
           prop: "multiple",
         },
         {
           method: "setOrientation",
-          description: "Updates the ToggleGroup orientation from Runtime code.",
+          description: "Updates the Toggle Group orientation from Runtime code.",
           descriptionSource: "authored",
           prop: "orientation",
         },
@@ -88772,7 +88773,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         ],
       },
       docsReference: {
-        summary: "ToggleGroup is a Starwind Runtime primitive in the controlled-value-group contract family.",
+        summary: "Toggle Group is a Starwind Runtime primitive in the controlled-value-group contract family.",
         frameworkCoordination: "Astro and React share one semantic component API. React coordinates reactive state through controlled and default props plus callbacks. Astro renders initial state and coordinates later changes through DOM events and Runtime methods. Raw HTML uses Runtime attributes, DOM events, and imperative methods.",
         frameworkTargets: [
           "raw-html",
@@ -88842,7 +88843,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           parts: [
             {
               part: "root",
-              description: "The main element that owns the ToggleGroup Runtime instance.",
+              description: "The main element that owns the Toggle Group Runtime instance.",
               descriptionSource: "authored",
               defaultElement: "div",
               discoveryAttribute: "data-sw-toggle-group",
@@ -88852,7 +88853,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "value",
                   kind: "control",
                   type: "ToggleGroupValue",
-                  description: "Controls the current ToggleGroup value.",
+                  description: "Controls the current Toggle Group value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -88922,7 +88923,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "defaultValue",
                   kind: "control",
                   type: "ToggleGroupValue",
-                  description: "Sets the initial ToggleGroup value for uncontrolled usage.",
+                  description: "Sets the initial Toggle Group value for uncontrolled usage.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -89001,7 +89002,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "loopFocus",
                   kind: "option",
                   type: "boolean",
-                  description: "Lets keyboard focus wrap around the ToggleGroup items.",
+                  description: "Lets keyboard focus wrap around the Toggle Group items.",
                   descriptionSource: "authored",
                 },
                 {
@@ -89009,7 +89010,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "multiple",
                   kind: "option",
                   type: "boolean",
-                  description: "Allows multiple ToggleGroup values to be selected.",
+                  description: "Allows multiple Toggle Group values to be selected.",
                   descriptionSource: "authored",
                 },
                 {
@@ -89017,7 +89018,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   name: "orientation",
                   kind: "option",
                   type: "\"horizontal\" | \"vertical\"",
-                  description: "Sets the ToggleGroup orientation.",
+                  description: "Sets the Toggle Group orientation.",
                   descriptionSource: "authored",
                 },
                 {
@@ -89025,7 +89026,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "callback",
                   type: "ToggleGroupValueChangeDetails",
                   displayType: "(value: ToggleGroupValue, details: ToggleGroupValueChangeDetails) => void",
-                  description: "Runs when the ToggleGroup value changes.",
+                  description: "Runs when the Toggle Group value changes.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -89146,7 +89147,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   runtimeGetter: "getValue",
                   runtimeSetter: "setValue",
                   controlledStateSync: "unsupported",
-                  description: "Tracks the current ToggleGroup value.",
+                  description: "Tracks the current Toggle Group value.",
                   descriptionSource: "authored",
                   frameworkBehavior: [
                     {
@@ -89225,7 +89226,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   stateModel: "value",
                   valueProperty: "value",
                   valueType: "ToggleGroupValue",
-                  description: "Fires when the value changes for ToggleGroup.",
+                  description: "Fires when the value changes for Toggle Group.",
                   descriptionSource: "authored",
                   cancellationSequence: [
                     {
@@ -89266,31 +89267,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     emit: false,
                   },
                   suppressesEmit: true,
-                  description: "Updates the current ToggleGroup value from Runtime code.",
+                  description: "Updates the current Toggle Group value from Runtime code.",
                   descriptionSource: "authored",
                   stateModel: "value",
                 },
                 {
                   method: "setDisabled",
-                  description: "Updates whether ToggleGroup is disabled from Runtime code.",
+                  description: "Updates whether Toggle Group is disabled from Runtime code.",
                   descriptionSource: "authored",
                   prop: "disabled",
                 },
                 {
                   method: "setLoopFocus",
-                  description: "Updates ToggleGroup keyboard focus wrapping from Runtime code.",
+                  description: "Updates Toggle Group keyboard focus wrapping from Runtime code.",
                   descriptionSource: "authored",
                   prop: "loopFocus",
                 },
                 {
                   method: "setMultiple",
-                  description: "Updates whether ToggleGroup allows multiple values from Runtime code.",
+                  description: "Updates whether Toggle Group allows multiple values from Runtime code.",
                   descriptionSource: "authored",
                   prop: "multiple",
                 },
                 {
                   method: "setOrientation",
-                  description: "Updates the ToggleGroup orientation from Runtime code.",
+                  description: "Updates the Toggle Group orientation from Runtime code.",
                   descriptionSource: "authored",
                   prop: "orientation",
                 },
