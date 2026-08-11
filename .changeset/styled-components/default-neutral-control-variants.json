@@ -1,6 +1,0 @@
-{
-  "components": {
-    "progress": "patch",
-    "radio-group": "patch"
-  }
-}
