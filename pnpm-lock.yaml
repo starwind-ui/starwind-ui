@@ -15,6 +15,9 @@ overrides:
 
 pnpmfileChecksum: sha256-KXAYsajFRu5/YyKQ1xdizvQd2rAWeo1KyrN3JMpI5h0=
 
+patchedDependencies:
+  '@changesets/assemble-release-plan@6.0.10': ca272eded02588ce0c2bc5f2a45edb4a8e320c6652be3f3ef08b5ac5c494a79e
+
 importers:
 
   .:
@@ -5193,7 +5196,7 @@ snapshots:
       resolve-from: 5.0.0
       semver: 7.8.1
 
-  '@changesets/assemble-release-plan@6.0.10':
+  '@changesets/assemble-release-plan@6.0.10(patch_hash=ca272eded02588ce0c2bc5f2a45edb4a8e320c6652be3f3ef08b5ac5c494a79e)':
     dependencies:
       '@changesets/errors': 0.2.0
       '@changesets/get-dependents-graph': 2.1.4
@@ -5209,7 +5212,7 @@ snapshots:
   '@changesets/cli@2.31.0(@types/node@24.12.4)':
     dependencies:
       '@changesets/apply-release-plan': 7.1.1
-      '@changesets/assemble-release-plan': 6.0.10
+      '@changesets/assemble-release-plan': 6.0.10(patch_hash=ca272eded02588ce0c2bc5f2a45edb4a8e320c6652be3f3ef08b5ac5c494a79e)
       '@changesets/changelog-git': 0.2.1
       '@changesets/config': 3.1.4
       '@changesets/errors': 0.2.0
@@ -5261,7 +5264,7 @@ snapshots:
 
   '@changesets/get-release-plan@4.0.16':
     dependencies:
-      '@changesets/assemble-release-plan': 6.0.10
+      '@changesets/assemble-release-plan': 6.0.10(patch_hash=ca272eded02588ce0c2bc5f2a45edb4a8e320c6652be3f3ef08b5ac5c494a79e)
       '@changesets/config': 3.1.4
       '@changesets/pre': 2.0.2
       '@changesets/read': 0.6.7
