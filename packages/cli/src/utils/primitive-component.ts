@@ -888,13 +888,7 @@ function validatePrimitiveArtifactIntegrity<TFramework extends CliFrameworkTarge
   }
 }
 
-const RELEASE_MANAGED_PRIMITIVE_PACKAGES = new Set([
-  "@starwind-ui/astro",
-  "@starwind-ui/react",
-  "@starwind-ui/runtime",
-  "@starwind-ui/svelte",
-  "@starwind-ui/vue",
-]);
+const RELEASE_MANAGED_PRIMITIVE_PACKAGE_PREFIX = "@starwind-ui/";
 
 function normalizePrimitiveArtifactIntegrityDocument<TFramework extends CliFrameworkTarget>(
   artifactSet: Omit<PrimitiveVendoringArtifactSet<TFramework>, "integrity">,
@@ -932,7 +926,7 @@ function normalizeIntegrityPackageRequirements(
   requirements: readonly { name: string; range: string }[],
 ) {
   return requirements.map((requirement) =>
-    RELEASE_MANAGED_PRIMITIVE_PACKAGES.has(requirement.name)
+    requirement.name.startsWith(RELEASE_MANAGED_PRIMITIVE_PACKAGE_PREFIX)
       ? { ...requirement, range: "<release-managed>" }
       : requirement,
   );

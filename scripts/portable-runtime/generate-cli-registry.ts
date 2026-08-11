@@ -1335,13 +1335,7 @@ function createSourceHash(content: string): string {
   return `sha256:${createHash("sha256").update(content).digest("hex")}`;
 }
 
-const RELEASE_MANAGED_PRIMITIVE_PACKAGES = new Set([
-  "@starwind-ui/astro",
-  "@starwind-ui/react",
-  "@starwind-ui/runtime",
-  "@starwind-ui/svelte",
-  "@starwind-ui/vue",
-]);
+const RELEASE_MANAGED_PRIMITIVE_PACKAGE_PREFIX = "@starwind-ui/";
 
 function createPrimitiveArtifactIntegrityFingerprint(
   artifactSet: PrimitiveVendoringArtifacts,
@@ -1377,7 +1371,7 @@ function normalizeIntegrityPackageRequirements(
   requirements: RegistryPackageRequirement[],
 ): RegistryPackageRequirement[] {
   return requirements.map((requirement) =>
-    RELEASE_MANAGED_PRIMITIVE_PACKAGES.has(requirement.name)
+    requirement.name.startsWith(RELEASE_MANAGED_PRIMITIVE_PACKAGE_PREFIX)
       ? { ...requirement, range: "<release-managed>" }
       : requirement,
   );
