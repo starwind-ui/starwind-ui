@@ -1,11 +1,20 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+import {
+  buildRuntimeRegistry,
+  createCliRegistryBuildPolicy,
+} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
+import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
 
 import { add } from "../../src/commands/add.js";
 import { ensureAstroReactIntegration } from "../../src/utils/astro-react-integration.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
+import type { StarwindRegistryFor } from "../../src/utils/registry.js";
 
 vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
@@ -129,6 +138,9 @@ const defaultRegistryFixture = {
   ],
 };
 
+const repoRoot = fileURLToPath(new URL("../../../..", import.meta.url));
+let vueRegistryFixture: StarwindRegistryFor<"astro" | "react" | "vue">;
+
 const customRegistryFixture = {
   $schema: "https://starwind.dev/registry-schema.v2.json",
   version: "0.2.0",
@@ -175,6 +187,13 @@ const customRegistryFixture = {
 describe.sequential("add command integration", () => {
   let tempDir = "";
   let previousCwd = "";
+
+  beforeAll(async () => {
+    vueRegistryFixture = await buildRuntimeRegistry({
+      repoRoot,
+      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
+    });
+  });
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "starwind-add-test-"));
@@ -245,6 +264,56 @@ describe.sequential("add command integration", () => {
       readFile(join(tempDir, "src", "components", "starwind", "button", "index.tsx"), "utf-8"),
     ).resolves.toContain("Button");
     expect(mockInstallDependencies).toHaveBeenCalledWith(["@starwind-ui/react@^1.0.0"], "npm");
+  });
+
+  it("installs the exact generated Vue payload while preserving mixed framework records", async () => {
+    const config = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+    config.framework = "astro";
+    config.components = [
+      { name: "button", version: "2.0.0", framework: "astro", registry: "default" },
+    ];
+    await writeFile("starwind.config.json", JSON.stringify(config, null, 2) + "\n", "utf-8");
+
+    const generatedButton = vueRegistryFixture.components.find(
+      (component) => component.name === "button",
+    )!;
+    const vueButton = generatedButton.targets!.vue!;
+
+    await add(
+      ["button"],
+      { framework: "vue", packageManager: "pnpm", yes: true },
+      {
+        registry: vueRegistryFixture,
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      },
+    );
+
+    const updatedConfig = JSON.parse(await readFile("starwind.config.json", "utf-8"));
+    expect(updatedConfig.componentDirs).toEqual({ vue: "src/components/starwind-vue" });
+    expect(updatedConfig.components).toEqual([
+      { name: "button", version: "2.0.0", framework: "astro", registry: "default" },
+      {
+        name: "button",
+        version: generatedButton.version,
+        framework: "vue",
+        registry: "default",
+      },
+    ]);
+    for (const file of vueButton.files) {
+      const destination = file.path.replace(
+        "src/components/starwind",
+        "src/components/starwind-vue",
+      );
+      await expect(readFile(destination, "utf-8")).resolves.toBe(file.content);
+    }
+    expect(vueButton.files.find((file) => file.path.endsWith("/Button.vue"))!.content).toContain(
+      'from "@starwind-ui/vue/button"',
+    );
+    expect(mockInstallDependencies).toHaveBeenCalledWith(
+      ["@starwind-ui/vue", "tailwind-variants@^3.2.2", "vue@>=3.5"],
+      "pnpm",
+    );
+    expect(mockLoadRegistry).not.toHaveBeenCalled();
   });
 
   it("reports styled file conflicts without recording installation metadata", async () => {

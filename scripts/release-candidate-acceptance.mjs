@@ -9,6 +9,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { getPackageManagerCommand } from "./command-process.mjs";
 import {
   getFixtureFiles,
   runCommand,
@@ -303,7 +304,7 @@ export function createCandidatePlan({ packages, projectIds, root }) {
     .filter((entry) => !selectedIds || selectedIds.has(entry.id))
     .map((entry) => {
       const directory = path.join(root, entry.id);
-      const command = entry.packageManager === "npm" ? "npm.cmd" : undefined;
+      const command = entry.packageManager === "npm" ? getPackageManagerCommand("npm") : undefined;
       const packageManagerArgs = entry.packageManager === "npm" ? ["--package-manager", "npm"] : [];
       const lifecycleComponent = entry.host === "next-pages" ? "dialog" : "button";
       const isJavaScript = entry.language === "javascript";
@@ -611,11 +612,12 @@ async function getCandidateRegistryPackages(packages) {
 }
 
 async function installNpmCandidatePackages(project, packages) {
-  await runCommand({ args: ["install"], command: "npm.cmd", cwd: project.directory });
+  const npmCommand = getPackageManagerCommand("npm");
+  await runCommand({ args: ["install"], command: npmCommand, cwd: project.directory });
   await runCommand(project.init);
   await runCommand({
     args: ["install", packages.runtime, project.localAdapter, "--save-exact"],
-    command: "npm.cmd",
+    command: npmCommand,
     cwd: project.directory,
   });
 }

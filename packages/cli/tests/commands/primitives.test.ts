@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as config from "../../src/utils/config.js";
 import * as fs from "../../src/utils/fs.js";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
 import * as primitiveComponent from "../../src/utils/primitive-component.js";
 import { primitivesAdd, primitivesList, primitivesUpdate } from "../../src/commands/primitives.js";
 import * as initModule from "../../src/commands/init.js";
@@ -1060,6 +1061,53 @@ describe("primitives command", () => {
     expect(output).toContain("### src/components/starwind-primitives/button/index.ts");
     expect(output).toContain("export const newButton = true;");
     expect(output).not.toContain("### src/components/starwind-primitives/button/ButtonRoot.astro");
+  });
+
+  it("routes Vue add and list through explicit private dependencies", async () => {
+    const vueConfig = runtimeConfig({ framework: "astro" }) as unknown as config.StarwindConfigFor<
+      "astro" | "react" | "vue"
+    >;
+    vueConfig.framework = "vue";
+    mockGetConfigState.mockResolvedValue({ status: "current", config: vueConfig } as never);
+    const vueArtifact = {
+      component: "button",
+      framework: "vue" as const,
+      version: "0.1.0",
+      files: [],
+      packageRequirements: [
+        { name: "@starwind-ui/runtime", range: "^1.0.0" },
+        { name: "vue", range: ">=3.5" },
+      ],
+    };
+    mockGetPrimitiveComponents.mockReturnValue([vueArtifact] as never);
+    const dependencies = {
+      artifacts: { primitives: [vueArtifact] },
+      targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+    };
+
+    await primitivesAdd(["button"], { framework: "vue", yes: true }, dependencies);
+
+    expect(mockGetConfigState).toHaveBeenCalledWith(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY);
+    expect(mockGetPrimitiveComponents).toHaveBeenCalledWith({
+      artifacts: dependencies.artifacts,
+      framework: "vue",
+      targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+    });
+    expect(mockInstallPrimitiveComponents).toHaveBeenCalledWith(
+      ["button"],
+      expect.objectContaining({
+        artifacts: dependencies.artifacts,
+        framework: "vue",
+        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+      }),
+    );
+
+    await primitivesList({ framework: "all", json: true }, dependencies);
+    const output = JSON.parse(consoleLogSpy.mock.calls.at(-1)?.[0] as string);
+    expect(output.primitives.results[0]).toMatchObject({
+      framework: "vue",
+      installCommand: "starwind primitives add button --framework vue",
+    });
   });
 });
 

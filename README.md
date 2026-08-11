@@ -27,23 +27,15 @@ backed by a portable Runtime that powers Astro and React adapters today.
 
 > Looking for the main package? See [starwind-ui/cli](/packages/cli/README.md).
 
-## Runtime Beta — Astro and React
+## Get Started
 
-The portable Runtime is currently available through the `beta` channel for Astro and React:
-
-```bash
-npx starwind@beta init
-```
-
-## Stable — Astro
-
-Initialize an Astro project with the current stable release:
+Initialize an Astro or React project with the stable release:
 
 ```bash
 npx starwind@latest init
 ```
 
-Then select components to add:
+Then add the components you need:
 
 ```bash
 npx starwind@latest add
@@ -90,7 +82,7 @@ Licensed under the [MIT license](/LICENSE).
 
 Starwind UI existed before OpenAI Build Week. During the submission period beginning July 13,
 2026, I used Codex with GPT-5.6 as my primary engineering collaborator to materially extend and
-harden the portable Runtime beta. GPT-5.6 is part of the development workflow through Codex; it is
+harden the portable Runtime. GPT-5.6 is part of the development workflow through Codex; it is
 not a runtime dependency of the components that Starwind users install.
 
 Codex accelerated work across the project:
@@ -114,7 +106,7 @@ Codex accelerated work across the project:
 
 The key decisions and results are visible in the
 [portable Runtime documentation](docs/portable-runtime/README.md),
-[architecture decisions](docs/portable-runtime/decisions.md),
+[framework readiness gate](docs/portable-runtime/framework-readiness-gate.md),
 [performance comparison](docs/portable-runtime/runtime-performance-comparison.md),
 [package-size comparison](docs/portable-runtime/package-size-comparison.md), and the repository's
 [commit history](https://github.com/starwind-ui/starwind-ui/commits/main/).

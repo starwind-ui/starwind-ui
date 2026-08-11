@@ -28,9 +28,10 @@ Navigation Menu, Combobox, and Toggle tracer artifacts remain historical, non-no
 fixtures. They do not define target support or package output. The legacy Collapsible printer
 fixture remains isolated printer-unit evidence.
 
-The target may create deterministic private package and Vue demo output. It must not create CLI
-registry entries, public demo dependencies, install docs, release configuration, or public Vue
-support claims.
+The target may create deterministic private package, Vue demo, and authenticated private CLI
+registry fixture output. It must not create public, production, or checked-in CLI registry entries,
+public demo dependencies, install docs, release configuration, or public Vue support claims. The
+target remains private and non-shipping.
 
 `public-contract.ts` is the typed, target-local source of truth for Vue 3.5 public naming,
 composition, lifecycle, SSR, hydration, and Teleport projection. It records how framework-neutral
@@ -56,6 +57,29 @@ parity, typechecking, SSR, hydration, browser smoke, visual review, private quar
 Astro and React output, bundle guard, and current size guard pass. No closure component adds
 Vue-local behavior, lifecycle, a component printer, or handwritten SFC input. Vue remains private
 and non-shipping while order 12 owns CLI and registry work.
+
+## Private CLI and Registry Closure
+
+Order 12 completed its expanded implementation and correction gates on 2026-08-10. Internal callers
+can generate an authenticated Vue registry fixture and initialize Vite Vue, Astro Vue, Nuxt 3/4,
+Laravel with Inertia Vue, and Quasar CLI with Vite SPA/SSR hosts. They can also manage Styled and
+Primitive source, search the generated inventory, and verify local-linked and packed clean consumers.
+The registry descriptor and vendoring artifacts come from the registered target. The exact private
+policy pins the complete artifact document with a canonical SHA-256 fingerprint.
+
+One immutable host evidence collector performs generic file reads. Target-owned adapters control
+host identity, evidence requests, paths, dependency requirements, and mutations. The packed
+seven-host matrix proves first and repeated init, exact compatible-range preservation, Styled
+lifecycle, Primitive vendoring, typecheck, production or SSR builds, hydration, browser behavior,
+and packed-package provenance.
+
+Production registry generation remains Astro and React only. Public Commander choices, config,
+registry parsing, documentation output, Changesets, release package lists, and checked-in registry
+artifacts exclude Vue. The package stays private at version `0.0.0`, and all four public-support
+flags remain false. Order 12 closure also reruns protected Astro and React generation, public packed
+consumers, Vue package and demo checks, and public demo builds. Independent Standards and Spec
+reviews approved the expanded closure. Order 13 Package Size Comparison is the current internal
+roadmap action.
 
 Before expanding this tracer, read `docs/portable-runtime/framework-renderer-authoring.md` for the
 target-local renderer fragment/helper pattern and public-support guardrails.

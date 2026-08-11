@@ -114,6 +114,7 @@ describe("root verification scripts", () => {
 
     expect(commandPhases(pkg.scripts?.["release:gate"])).toEqual([
       "pnpm verify",
+      "pnpm --filter=starwind package:check",
       "pnpm audit:prod",
       "pnpm demo:smoke",
       "pnpm react-demo:smoke",

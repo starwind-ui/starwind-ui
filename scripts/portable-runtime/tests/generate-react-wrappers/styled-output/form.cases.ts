@@ -158,13 +158,19 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(comboboxInput).toContain(
     'import { InputGroup, InputGroupAddon, InputGroupButton } from "../input-group";',
   );
+  expect(comboboxInput).toContain('Omit<React.ComponentPropsWithoutRef<"input">, "size">');
+  expect(comboboxInput).toContain("VariantProps<typeof comboboxInputGroup>");
   expect(comboboxInput).toContain("children?: React.ReactNode");
+  expect(comboboxInput).toContain('size = "md"');
+  expect(comboboxInput).toContain("comboboxInputGroup({ size, class: className })");
+  expect(comboboxInput).toContain("data-size={size}");
   expect(comboboxInput).toContain("<InputGroup");
   expect(comboboxInput).toContain("<ComboboxPrimitive.Input");
   expect(comboboxInput).toContain("<InputGroupAddon");
   expect(comboboxInput).toContain('align="inline-end"');
   expect(comboboxInput).toContain("<ComboboxPrimitive.Trigger");
   expect(comboboxInput).toContain("<InputGroupButton");
+  expect(comboboxInput).toContain("<ChevronDown");
   expect(comboboxInput).toContain("group-has-data-[slot=combobox-clear]/input-group:hidden");
   expect(comboboxInput).toContain("showTrigger");
   expect(comboboxInput).toContain("showClear");
@@ -197,16 +203,10 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(comboboxVariants).toContain("w-auto transition-[color,box-shadow]");
   expect(comboboxVariants).toContain("min-w-[8rem]");
   expect(comboboxVariants).toContain(
-    "data-[side=bottom]:slide-in-from-top-2 data-[side=bottom]:slide-out-to-top-2",
+    "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
   );
   expect(comboboxVariants).toContain(
-    "data-[side=top]:slide-in-from-bottom-2 data-[side=top]:slide-out-to-bottom-2",
-  );
-  expect(comboboxVariants).toContain(
-    "data-[side=right]:slide-in-from-left-2 data-[side=right]:slide-out-to-left-2",
-  );
-  expect(comboboxVariants).toContain(
-    "data-[side=left]:slide-in-from-right-2 data-[side=left]:slide-out-to-right-2",
+    "data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2",
   );
   expect(comboboxVariants).toContain("origin-(--transform-origin)");
   expect(comboboxVariants).toContain(

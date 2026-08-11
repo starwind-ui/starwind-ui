@@ -9507,7 +9507,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "comboboxContent",
             exportName: "ComboboxVariants",
-            baseClassCount: 30,
+            baseClassCount: 26,
             options: [
               {
                 name: "size",
@@ -9718,20 +9718,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-side",
-            value: "bottom",
-            selector: "data-[side=bottom]:slide-out-to-top-2",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-side",
             value: "left",
             selector: "data-[side=left]:slide-in-from-right-2",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-side",
-            value: "left",
-            selector: "data-[side=left]:slide-out-to-right-2",
             source: "variant-class",
           },
           {
@@ -9742,20 +9730,8 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-side",
-            value: "right",
-            selector: "data-[side=right]:slide-out-to-left-2",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-side",
             value: "top",
             selector: "data-[side=top]:slide-in-from-bottom-2",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-side",
-            value: "top",
-            selector: "data-[side=top]:slide-out-to-bottom-2",
             source: "variant-class",
           },
           {
@@ -12737,7 +12713,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   "warning",
                   "error",
                 ],
-                defaultValue: "primary",
+                defaultValue: "default",
               },
             ],
             compoundVariantCount: 0,
@@ -12859,7 +12835,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   "warning",
                   "error",
                 ],
-                defaultValue: "primary",
+                defaultValue: "default",
               },
             ],
             compoundVariantCount: 0,
@@ -21907,6 +21883,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Shows the generated popup trigger.",
                   descriptionSource: "catalog",
                 },
+                {
+                  name: "size",
+                  type: "\"sm\" | \"md\" | \"lg\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"md\"",
+                  values: [
+                    "sm",
+                    "md",
+                    "lg",
+                  ],
+                  description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
               ],
               inheritance: [
                 {
@@ -21914,7 +21904,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "element-attributes",
                   displayName: "input attributes",
                   element: "input",
-                  omittedProps: [],
+                  omittedProps: [
+                    "size",
+                  ],
                 },
               ],
             },
@@ -22368,6 +22360,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Shows the generated popup trigger.",
                   descriptionSource: "catalog",
                 },
+                {
+                  name: "size",
+                  type: "\"sm\" | \"md\" | \"lg\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"md\"",
+                  values: [
+                    "sm",
+                    "md",
+                    "lg",
+                  ],
+                  description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
               ],
               inheritance: [
                 {
@@ -22375,7 +22381,9 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   kind: "element-attributes",
                   displayName: "input attributes",
                   element: "input",
-                  omittedProps: [],
+                  omittedProps: [
+                    "size",
+                  ],
                 },
               ],
             },
@@ -30093,7 +30101,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "\"default\" | \"primary\" | \"secondary\" | \"info\" | \"success\" | \"warning\" | \"error\"",
                   required: false,
                   classification: "variant",
-                  defaultValue: "\"primary\"",
+                  defaultValue: "\"default\"",
                   values: [
                     "default",
                     "primary",
@@ -30253,7 +30261,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   type: "\"default\" | \"primary\" | \"secondary\" | \"info\" | \"success\" | \"warning\" | \"error\"",
                   required: false,
                   classification: "variant",
-                  defaultValue: "\"primary\"",
+                  defaultValue: "\"default\"",
                   values: [
                     "default",
                     "primary",

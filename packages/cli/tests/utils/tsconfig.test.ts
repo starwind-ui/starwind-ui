@@ -13,7 +13,9 @@ import {
   createDefaultTsConfig,
   isAstroReactTsConfigReady,
   mergeTsConfig,
+  mergeVueTsConfig,
   setupTsConfig,
+  setupVueTsConfig,
   setupAstroReactTsConfig,
   validateTsConfig,
 } from "../../src/utils/tsconfig.js";
@@ -162,6 +164,47 @@ describe("tsconfig", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(p.log).error = mockLogError;
+  });
+
+  it("adds Vue source aliases and preserves official create-vue settings", () => {
+    const existing = {
+      extends: "@vue/tsconfig/tsconfig.dom.json",
+      compilerOptions: {
+        paths: { "~/*": ["./src/*"] },
+        strict: true,
+      },
+      include: ["env.d.ts", "src/**/*", "src/**/*.vue"],
+    };
+    const merged = mergeVueTsConfig(existing);
+
+    expect(merged).toEqual({
+      ...existing,
+      compilerOptions: {
+        ...existing.compilerOptions,
+        baseUrl: ".",
+        paths: { "~/*": ["./src/*"], "@/*": ["./src/*"] },
+      },
+    });
+    expect(mergeVueTsConfig(merged)).toEqual(merged);
+  });
+
+  it("updates the official split Vue app config", async () => {
+    mockFileExists.mockImplementation(async (filePath) => filePath === "tsconfig.app.json");
+    mockReadJsonFile.mockResolvedValue({
+      extends: "@vue/tsconfig/tsconfig.dom.json",
+      include: ["src/**/*.vue"],
+    });
+
+    expect(await setupVueTsConfig()).toBe(true);
+    expect(mockWriteJsonFile).toHaveBeenCalledWith(
+      "tsconfig.app.json",
+      expect.objectContaining({
+        compilerOptions: expect.objectContaining({
+          baseUrl: ".",
+          paths: { "@/*": ["./src/*"] },
+        }),
+      }),
+    );
   });
 
   it("adds the official Astro React JSX settings and preserves existing compiler options", async () => {

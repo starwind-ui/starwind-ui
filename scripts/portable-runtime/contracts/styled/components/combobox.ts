@@ -52,8 +52,8 @@ export const comboboxStyledContract: StyledAdapterContract = {
         "bg-popover text-popover-foreground z-50 min-w-[8rem] overflow-hidden rounded-md border shadow-md",
         "data-[state=open]:animate-in fade-in zoom-in-95 outline-none",
         "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
-        "data-[side=bottom]:slide-in-from-top-2 data-[side=bottom]:slide-out-to-top-2 data-[side=top]:slide-in-from-bottom-2 data-[side=top]:slide-out-to-bottom-2",
-        "data-[side=right]:slide-in-from-left-2 data-[side=right]:slide-out-to-left-2 data-[side=left]:slide-in-from-right-2 data-[side=left]:slide-out-to-right-2",
+        "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
+        "data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2",
         "origin-(--transform-origin) pointer-events-auto fixed isolate w-(--anchor-width) will-change-transform",
       ],
       variants: {
@@ -339,7 +339,10 @@ export const comboboxStyledContract: StyledAdapterContract = {
         { importName: "X", source: "@tabler/icons/outline/x.svg", type: "default" },
       ],
       props: {
-        extends: [{ type: "htmlAttributes", element: "input" }],
+        extends: [
+          { type: "omitHtmlAttributes", element: "input", keys: ["size"] },
+          { type: "variantProps", variant: "comboboxInputGroup" },
+        ],
         fields: [
           { name: "children", optional: true, type: "React.ReactNode", frameworks: ["react"] },
           { name: "showClear", optional: true, type: "boolean" },
@@ -350,6 +353,7 @@ export const comboboxStyledContract: StyledAdapterContract = {
         props: [
           { name: "class", alias: "className" },
           { name: "disabled", defaultValue: "false" },
+          { name: "size", defaultValue: '"md"' },
           { name: "showClear", defaultValue: "false" },
           { name: "showTrigger", defaultValue: "true" },
         ],
@@ -366,9 +370,10 @@ export const comboboxStyledContract: StyledAdapterContract = {
               value: {
                 type: "classVariant",
                 variant: "comboboxInputGroup",
-                args: { class: "className" },
+                args: { size: "size", class: "className" },
               },
             },
+            { name: "data-size", value: { type: "variable", name: "size" } },
             { name: "data-sw-combobox-input-group", value: { type: "literal", value: "" } },
           ],
           children: [

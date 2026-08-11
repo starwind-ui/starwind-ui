@@ -727,6 +727,12 @@ describe("Framework Adapter seam", () => {
         adapterTarget: registration.adapter.target,
         cliRegistry: {
           ...registration.cliRegistry,
+          primitiveArtifact: registration.cliRegistry.primitiveArtifact
+            ? {
+                ...registration.cliRegistry.primitiveArtifact,
+                projectContent: typeof registration.cliRegistry.primitiveArtifact.projectContent,
+              }
+            : undefined,
           styledArtifact: {
             ...registration.cliRegistry.styledArtifact,
             collectPackageImportSources:
@@ -757,8 +763,16 @@ describe("Framework Adapter seam", () => {
         adapterTarget: "astro",
         cliRegistry: {
           generatedImportCandidateExtensions: [".astro", ".ts", ".js"],
+          packageMetadataSources: [
+            "packages/astro/package.json",
+            "packages/runtime/package.json",
+            "apps/demo/package.json",
+          ],
           primitiveArtifact: {
+            editableContentMarkers: expect.any(Array),
+            forbiddenContent: [],
             outputDir: "astro-primitives",
+            projectContent: "function",
             sourceRoot: "packages/astro/src",
           },
           styledArtifact: {
@@ -804,10 +818,18 @@ describe("Framework Adapter seam", () => {
         adapterTarget: "react",
         cliRegistry: {
           generatedImportCandidateExtensions: [".ts", ".tsx", ".js", ".jsx"],
+          packageMetadataSources: [
+            "packages/react/package.json",
+            "packages/runtime/package.json",
+            "apps/react-demo/package.json",
+          ],
           primitiveArtifact: {
+            editableContentMarkers: expect.any(Array),
             extraPackageRequirements: ["react", "react-dom"],
+            forbiddenContent: [],
             includeLocalImportGraph: true,
             outputDir: "react-primitives",
+            projectContent: "function",
             sourceRoot: "packages/react/src",
           },
           styledArtifact: {
@@ -853,12 +875,25 @@ describe("Framework Adapter seam", () => {
         adapterTarget: "vue",
         cliRegistry: {
           generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
+          packageMetadataSources: [
+            "packages/vue/package.json",
+            "packages/runtime/package.json",
+            "apps/vue-demo/package.json",
+          ],
+          primitiveArtifact: {
+            editableContentMarkers: expect.any(Array),
+            forbiddenContent: expect.any(Array),
+            includeLocalImportGraph: true,
+            outputDir: "vue-primitives",
+            projectContent: "function",
+            sourceRoot: "packages/vue/src",
+          },
           styledArtifact: {
-            collectPackageImportSources: "undefined",
+            collectPackageImportSources: "function",
             outputDir: "vue",
             primitiveOutputDir: "vue-primitives",
           },
-          setupPackageRequirements: [],
+          setupPackageRequirements: [{ name: "vue", range: ">=3.5" }],
         },
         fileExtension: ".vue",
         home: "scripts/portable-runtime/renderers/framework-adapters/vue",
@@ -1068,14 +1103,34 @@ describe("Framework Adapter seam", () => {
     ).toBe(primitiveFrameworkAdapterTargets.length);
   });
 
-  it("keeps CLI registry metadata complete and relative on public targets", () => {
-    const cliTargets = primitiveFrameworkAdapterTargets.filter(
+  it("keeps private target syntax and quarantine facts out of shared registry code", () => {
+    for (const relativePath of [
+      "scripts/portable-runtime/generate-cli-registry.ts",
+      "packages/cli/src/utils/primitive-component.ts",
+    ]) {
+      const source = readFileSync(join(process.cwd(), relativePath), "utf8");
+      expect(source, relativePath).not.toMatch(/\bvue\b/i);
+      expect(source, relativePath).not.toContain("Internal non-shipping Vue adapter output");
+      expect(source, relativePath).not.toContain("<script setup");
+    }
+  });
+
+  it("keeps CLI registry metadata complete and relative on artifact targets", () => {
+    const publicCliTargets = primitiveFrameworkAdapterTargets.filter(
       (registration) => registration.publicSupport.cliRegistry,
     );
+    const artifactTargets = primitiveFrameworkAdapterTargets.filter(
+      (registration) => registration.cliRegistry.primitiveArtifact,
+    );
 
-    expect(cliTargets.map((registration) => registration.target)).toEqual(["astro", "react"]);
+    expect(publicCliTargets.map((registration) => registration.target)).toEqual(["astro", "react"]);
+    expect(artifactTargets.map((registration) => registration.target)).toEqual([
+      "astro",
+      "react",
+      "vue",
+    ]);
 
-    for (const registration of cliTargets) {
+    for (const registration of artifactTargets) {
       const metadata = registration.cliRegistry;
 
       expect(metadata.generatedImportCandidateExtensions.length).toBeGreaterThan(0);
@@ -1087,12 +1142,37 @@ describe("Framework Adapter seam", () => {
         expect(extension, `${registration.target} generated extension`).toMatch(/^\.[\w-]+$/);
       }
 
+      expect(metadata.packageMetadataSources?.length).toBeGreaterThan(0);
+      expect(new Set(metadata.packageMetadataSources).size).toBe(
+        metadata.packageMetadataSources?.length,
+      );
+      for (const source of metadata.packageMetadataSources ?? []) {
+        expectSafeCliRegistryPath(registration.target, source);
+      }
+
       expectSafeCliRegistryPath(registration.target, metadata.styledArtifact.outputDir);
       expectSafeCliRegistryPath(registration.target, metadata.styledArtifact.primitiveOutputDir);
 
       if (metadata.primitiveArtifact) {
         expectSafeCliRegistryPath(registration.target, metadata.primitiveArtifact.outputDir);
         expectSafeCliRegistryPath(registration.target, metadata.primitiveArtifact.sourceRoot);
+        expect(typeof metadata.primitiveArtifact.projectContent).toBe("function");
+        expect(metadata.primitiveArtifact.editableContentMarkers.length).toBeGreaterThan(0);
+
+        const coveredExtensions = new Set(
+          metadata.primitiveArtifact.editableContentMarkers.flatMap((rule) => rule.extensions),
+        );
+        expect([...coveredExtensions].sort()).toEqual(
+          [...metadata.generatedImportCandidateExtensions].sort(),
+        );
+        for (const rule of metadata.primitiveArtifact.editableContentMarkers) {
+          expect(rule.extensions.length).toBeGreaterThan(0);
+          expect(rule.markers.length).toBeGreaterThan(0);
+          expect(["contains", "prefix"]).toContain(rule.position);
+        }
+        expect(new Set(metadata.primitiveArtifact.forbiddenContent).size).toBe(
+          metadata.primitiveArtifact.forbiddenContent.length,
+        );
       }
     }
   });
@@ -1748,12 +1828,20 @@ describe("Framework Adapter seam", () => {
       scripts?: Record<string, string>;
     };
     const approvedPrivateVueScripts = {
+      l: "pnpm runtime:build && pnpm react:build && pnpm vue:build && pnpm cli:build && pnpm runtime:link && pnpm astro:link && pnpm react:link && pnpm vue:link && pnpm cli:link",
       "runtime:generate:vue": "tsx scripts/portable-runtime/generate-vue-wrappers.ts",
       "runtime:generate:vue:check": "tsx scripts/portable-runtime/check-vue-tracer-fixtures.ts",
       "runtime:generate:vue:test": "vitest run --project=portable-vue",
+      "test:vue-cli-host-acceptance":
+        "pnpm exec tsx --tsconfig packages/cli/tsconfig.json scripts/vue-cli-host-acceptance.mjs",
+      "test:vue-cli-local-link":
+        "pnpm exec tsx --tsconfig packages/cli/tsconfig.json scripts/vue-cli-host-acceptance.mjs --local-link-only",
+      ul: 'node -e "const { spawnSync } = require(\\"node:child_process\\"); const command = process.platform === \\"win32\\" ? \\"pnpm.cmd\\" : \\"pnpm\\"; const scripts = [\\"astro:unlink\\", \\"react:unlink\\", \\"vue:unlink\\", \\"runtime:unlink\\", \\"cli:unlink\\"]; let failed = false; for (const script of scripts) { const result = spawnSync(command, [script], { stdio: \\"inherit\\" }); failed ||= result.status !== 0; } process.exitCode = failed ? 1 : 0;"',
       "vue:build": "pnpm --filter=@starwind-ui/vue build",
+      "vue:link": "pnpm --dir packages/vue add --global . --ignore-scripts",
       "vue:test": "pnpm --filter=@starwind-ui/vue test:all",
       "vue:typecheck": "pnpm --filter=@starwind-ui/vue typecheck",
+      "vue:unlink": "pnpm unlink:global @starwind-ui/vue",
       "vue:verify": "pnpm runtime:generate:vue:test && pnpm vue:typecheck && pnpm vue:test",
       "vue-demo:build": "pnpm --filter=vue-demo build",
       "vue-demo:dev": "pnpm --filter=vue-demo dev",

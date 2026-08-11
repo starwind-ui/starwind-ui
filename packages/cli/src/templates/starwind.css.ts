@@ -1,3 +1,10 @@
+export const starwindStylesheetPackageRequirements = Object.freeze([
+  "tailwindcss@^4",
+  "@tailwindcss/vite@^4",
+  "tw-animate-css@^1",
+  "@tailwindcss/forms@^0.5",
+] as const);
+
 export const tailwindConfig = `@import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/forms";

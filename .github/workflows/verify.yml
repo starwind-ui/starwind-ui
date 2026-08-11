@@ -34,7 +34,7 @@ jobs:
           fi
 
           git diff --name-only "$BASE_SHA" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
-          if grep -Eq '^(apps/vue-demo/|packages/(runtime|vue)/|scripts/portable-runtime/(contracts/|renderers/|generate-vue-wrappers|check-vue)|package\.json$|pnpm-lock\.yaml$)' "$RUNNER_TEMP/changed-files.txt"; then
+          if grep -Eq '^(apps/vue-demo/|packages/(cli|runtime|vue)/|scripts/(cli-host-acceptance|release-candidate-acceptance|vue-cli-host-acceptance)\.mjs$|scripts/portable-runtime/|scripts/tests/(local-link-scripts|vue-cli-host-acceptance)\.test\.ts$|\.github/workflows/verify\.yml$|package\.json$|pnpm-lock\.yaml$)' "$RUNNER_TEMP/changed-files.txt"; then
             echo "vue=true" >> "$GITHUB_OUTPUT"
           else
             echo "vue=false" >> "$GITHUB_OUTPUT"
@@ -162,6 +162,8 @@ jobs:
         run: pnpm --filter=react-demo exec playwright install --with-deps chromium
       - name: Run quarantined Vue verification
         run: pnpm vue:verify
+      - name: Run quarantined Vue CLI host acceptance
+        run: pnpm test:vue-cli-host-acceptance
 
   svelte-tests:
     name: Svelte verification

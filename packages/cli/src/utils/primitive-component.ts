@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import path from "node:path";
 
 import * as p from "@clack/prompts";
@@ -6,13 +7,20 @@ import semver from "semver";
 
 import primitiveVendoringArtifacts from "../registry/primitive-vendoring-artifacts.json" with { type: "json" };
 import {
-  type PrimitiveConfig,
-  type StarwindConfig,
+  type PrimitiveConfigFor,
+  type StarwindConfigFor,
   type StarwindFramework,
   updateConfig,
 } from "./config.js";
 import { PATHS } from "./constants.js";
 import { filterUninstalledDependencies } from "./dependency-resolver.js";
+import {
+  type CliFrameworkTarget,
+  type FrameworkTargetPolicy,
+  getPrimitiveArtifactIntegrityFingerprint,
+  isConfigTarget,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "./framework-target-policy.js";
 import { installDependenciesWithProgress, type PackageManager } from "./package-manager.js";
 import {
   assertProjectRelativePath,
@@ -20,7 +28,11 @@ import {
   resolveProjectPathLexically,
 } from "./project-path.js";
 import type { Component, RegistryPackageRequirement, RegistryTarget } from "./registry.js";
-import type { RuntimeUpdatePlan, RuntimeUpdatePlanFile } from "./runtime-component.js";
+import type {
+  RuntimeUpdatePlan,
+  RuntimeUpdatePlanFile,
+  RuntimeUpdatePlanItem,
+} from "./runtime-component.js";
 
 type PrimitiveVendoringFile = {
   content: string;
@@ -29,17 +41,37 @@ type PrimitiveVendoringFile = {
   sourcePath: string;
 };
 
-export type PrimitiveVendoringArtifact = {
-  component: string;
-  files: PrimitiveVendoringFile[];
-  framework: StarwindFramework;
+type PrimitiveVendoringTargetDescriptor = {
+  editableContentMarkers: Array<{
+    extensions: string[];
+    markers: string[];
+    position: "contains" | "prefix";
+  }>;
+  forbiddenContent: string[];
+  generatedImportCandidateExtensions: string[];
   packageRequirements: RegistryPackageRequirement[];
-  version: string;
+  sourceRoot: string;
 };
 
-type PrimitiveVendoringArtifactSet = {
+export type PrimitiveVendoringArtifact<TFramework extends CliFrameworkTarget = StarwindFramework> =
+  {
+    component: string;
+    files: PrimitiveVendoringFile[];
+    framework: TFramework;
+    packageRequirements: RegistryPackageRequirement[];
+    version: string;
+  };
+
+export type PrimitiveVendoringArtifactSet<
+  TFramework extends CliFrameworkTarget = StarwindFramework,
+> = {
   $schema?: string;
-  primitives: PrimitiveVendoringArtifact[];
+  primitives: PrimitiveVendoringArtifact<TFramework>[];
+  integrity?: {
+    algorithm: "sha256";
+    fingerprint: string;
+  };
+  validation?: Partial<Record<TFramework, PrimitiveVendoringTargetDescriptor>>;
 };
 
 type PrimitiveInstallStatus = {
@@ -69,41 +101,62 @@ export type PrimitiveUpdateSummary = {
   updated: PrimitiveUpdateStatus[];
 };
 
-type PrimitiveComponentOptions = {
-  artifacts?: PrimitiveVendoringArtifactSet;
-  config: StarwindConfig;
-  framework?: StarwindFramework;
+export type PrimitiveUpdatePlan<TFramework extends CliFrameworkTarget = StarwindFramework> = Omit<
+  RuntimeUpdatePlan,
+  "updates"
+> & {
+  updates: Array<Omit<RuntimeUpdatePlanItem, "framework"> & { framework: TFramework }>;
+};
+
+type PrimitiveComponentOptions<TFramework extends CliFrameworkTarget = StarwindFramework> = {
+  artifacts?: PrimitiveVendoringArtifactSet<TFramework>;
+  config: StarwindConfigFor<TFramework>;
+  framework?: TFramework;
   overwrite?: boolean;
   packageManager?: PackageManager;
   primitiveDir?: string;
   skipPrompts?: boolean;
+  targetPolicy?: FrameworkTargetPolicy<TFramework>;
 };
 
 const DEFAULT_PRIMITIVE_ROOT = PATHS.LOCAL_STARWIND_PRIMITIVES_DIR;
 
-export function getPrimitiveComponents(
-  options: { artifacts?: PrimitiveVendoringArtifactSet; framework?: StarwindFramework } = {},
-): PrimitiveVendoringArtifact[] {
-  const artifactSet =
-    options.artifacts ?? (primitiveVendoringArtifacts as PrimitiveVendoringArtifactSet);
-  const framework = options.framework ?? "astro";
+export function getPrimitiveComponents<TFramework extends CliFrameworkTarget = StarwindFramework>(
+  options: {
+    artifacts?: PrimitiveVendoringArtifactSet<TFramework>;
+    framework?: TFramework;
+    targetPolicy?: FrameworkTargetPolicy<TFramework>;
+  } = {},
+): PrimitiveVendoringArtifact<TFramework>[] {
+  const targetPolicy = getTargetPolicy(options.targetPolicy);
+  const artifactSet: PrimitiveVendoringArtifactSet<TFramework> =
+    options.artifacts ??
+    (primitiveVendoringArtifacts as unknown as PrimitiveVendoringArtifactSet<TFramework>);
+  const framework = options.framework ?? ("astro" as TFramework);
 
-  return artifactSet.primitives
+  if (!isConfigTarget(targetPolicy, framework)) return [];
+  if (!isPublicPrimitiveFramework(framework)) {
+    validatePrimitiveArtifactIntegrity(artifactSet, framework, targetPolicy);
+  }
+
+  return (artifactSet.primitives as PrimitiveVendoringArtifact<TFramework>[])
     .filter((primitive) => primitive.framework === framework)
+    .map((primitive) => validatePrimitiveArtifact(primitive, artifactSet))
     .sort((a, b) => a.component.localeCompare(b.component));
 }
 
-export async function installPrimitiveComponents(
+export async function installPrimitiveComponents<TFramework extends CliFrameworkTarget>(
   componentNames: string[],
-  options: PrimitiveComponentOptions,
+  options: PrimitiveComponentOptions<TFramework>,
 ): Promise<PrimitiveInstallSummary> {
   const summary: PrimitiveInstallSummary = {
     failed: [],
     installed: [],
     skipped: [],
   };
-  const framework = getPrimitiveVendoringFramework(options.config, options.framework);
-  const unsupportedError = getUnsupportedConfigError(options.config, framework);
+  const targetPolicy = getTargetPolicy(options.targetPolicy);
+  const framework = getPrimitiveVendoringFramework(options.config, options.framework, targetPolicy);
+  const unsupportedError = getUnsupportedConfigError(options.config, framework, targetPolicy);
 
   if (!framework || unsupportedError) {
     return {
@@ -119,13 +172,17 @@ export async function installPrimitiveComponents(
   const artifacts = getPrimitiveComponents({
     artifacts: options.artifacts,
     framework,
+    targetPolicy,
   });
   const installedNames = new Set(
     (options.config.primitives ?? [])
-      .filter((primitive) => getPrimitiveConfigFramework(options.config, primitive) === framework)
+      .filter(
+        (primitive) =>
+          getPrimitiveConfigFramework(options.config, primitive, targetPolicy) === framework,
+      )
       .map((item) => item.name),
   );
-  const plannedArtifacts: PrimitiveVendoringArtifact[] = [];
+  const plannedArtifacts: PrimitiveVendoringArtifact<TFramework>[] = [];
 
   for (const componentName of componentNames) {
     const artifact = artifacts.find((candidate) => candidate.component === componentName);
@@ -155,7 +212,7 @@ export async function installPrimitiveComponents(
     return summary;
   }
 
-  const plannedFiles = new Map<PrimitiveVendoringArtifact, PreparedPrimitiveFile[]>();
+  const plannedFiles = new Map<PrimitiveVendoringArtifact<TFramework>, PreparedPrimitiveFile[]>();
 
   try {
     for (const artifact of plannedArtifacts) {
@@ -164,6 +221,7 @@ export async function installPrimitiveComponents(
         artifact.files,
         framework,
         options.primitiveDir,
+        targetPolicy,
       );
       plannedFiles.set(artifact, await resolvePreparedPrimitiveFiles(files));
     }
@@ -178,7 +236,7 @@ export async function installPrimitiveComponents(
     };
   }
 
-  const writableArtifacts: PrimitiveVendoringArtifact[] = [];
+  const writableArtifacts: PrimitiveVendoringArtifact<TFramework>[] = [];
 
   for (const artifact of plannedArtifacts) {
     const files = plannedFiles.get(artifact)!;
@@ -227,7 +285,8 @@ export async function installPrimitiveComponents(
         ...getPrimitiveDirConfigUpdate(
           options.config,
           framework,
-          getPrimitiveDir(options.config, framework, options.primitiveDir),
+          getPrimitiveDir(options.config, framework, options.primitiveDir, targetPolicy),
+          targetPolicy,
         ),
         primitives: summary.installed.map((primitive) => ({
           name: primitive.name,
@@ -236,26 +295,30 @@ export async function installPrimitiveComponents(
           source: "bundled",
         })),
       },
-      { appendComponents: true },
+      {
+        appendComponents: true,
+        ...(options.targetPolicy ? { targetPolicy } : {}),
+      },
     );
   }
 
   return summary;
 }
 
-export async function planPrimitiveComponentUpdates(
+export async function planPrimitiveComponentUpdates<TFramework extends CliFrameworkTarget>(
   componentNames: string[],
-  options: PrimitiveComponentOptions,
-): Promise<RuntimeUpdatePlan> {
-  const plan: RuntimeUpdatePlan = {
+  options: PrimitiveComponentOptions<TFramework>,
+): Promise<PrimitiveUpdatePlan<TFramework>> {
+  const plan: PrimitiveUpdatePlan<TFramework> = {
     failed: [],
     packageRequirements: [],
     packagesToInstall: [],
     skipped: [],
     updates: [],
   };
-  const framework = getPrimitiveVendoringFramework(options.config, options.framework);
-  const unsupportedError = getUnsupportedConfigError(options.config, framework);
+  const targetPolicy = getTargetPolicy(options.targetPolicy);
+  const framework = getPrimitiveVendoringFramework(options.config, options.framework, targetPolicy);
+  const unsupportedError = getUnsupportedConfigError(options.config, framework, targetPolicy);
 
   if (!framework || unsupportedError) {
     return {
@@ -271,13 +334,14 @@ export async function planPrimitiveComponentUpdates(
   const artifacts = getPrimitiveComponents({
     artifacts: options.artifacts,
     framework,
+    targetPolicy,
   });
 
   for (const componentName of componentNames) {
     const currentPrimitiveIndex = (options.config.primitives ?? []).findIndex(
       (primitive) =>
         primitive.name === componentName &&
-        getPrimitiveConfigFramework(options.config, primitive) === framework,
+        getPrimitiveConfigFramework(options.config, primitive, targetPolicy) === framework,
     );
     const currentPrimitive =
       currentPrimitiveIndex >= 0 ? options.config.primitives![currentPrimitiveIndex] : undefined;
@@ -314,7 +378,13 @@ export async function planPrimitiveComponentUpdates(
 
     try {
       const preparedFiles = await resolvePreparedPrimitiveFiles(
-        preparePrimitiveFiles(options.config, artifact.files, framework, options.primitiveDir),
+        preparePrimitiveFiles(
+          options.config,
+          artifact.files,
+          framework,
+          options.primitiveDir,
+          targetPolicy,
+        ),
       );
       const files = await Promise.all(
         preparedFiles.map(async (file): Promise<RuntimeUpdatePlanFile> => {
@@ -355,9 +425,9 @@ export async function planPrimitiveComponentUpdates(
   return plan;
 }
 
-export async function updatePrimitiveComponents(
+export async function updatePrimitiveComponents<TFramework extends CliFrameworkTarget>(
   componentNames: string[],
-  options: PrimitiveComponentOptions,
+  options: PrimitiveComponentOptions<TFramework>,
 ): Promise<PrimitiveUpdateSummary> {
   const summary: PrimitiveUpdateSummary = {
     failed: [],
@@ -365,7 +435,12 @@ export async function updatePrimitiveComponents(
     updated: [],
   };
   const plan = await planPrimitiveComponentUpdates(componentNames, options);
-  const framework = getPrimitiveVendoringFramework(options.config, options.framework)!;
+  const targetPolicy = getTargetPolicy(options.targetPolicy);
+  const framework = getPrimitiveVendoringFramework(
+    options.config,
+    options.framework,
+    targetPolicy,
+  )!;
 
   summary.failed.push(...plan.failed);
   summary.skipped.push(...plan.skipped);
@@ -415,9 +490,9 @@ export async function updatePrimitiveComponents(
     const currentIndex = updatedPrimitives.findIndex(
       (primitive) =>
         primitive.name === item.component.name &&
-        getPrimitiveConfigFramework(options.config, primitive) === framework,
+        getPrimitiveConfigFramework(options.config, primitive, targetPolicy) === framework,
     );
-    const nextPrimitive: PrimitiveConfig = {
+    const nextPrimitive: PrimitiveConfigFor<TFramework> = {
       name: item.component.name,
       version: item.newVersion,
       framework,
@@ -447,11 +522,15 @@ export async function updatePrimitiveComponents(
         ...getPrimitiveDirConfigUpdate(
           options.config,
           framework,
-          getPrimitiveDir(options.config, framework, options.primitiveDir),
+          getPrimitiveDir(options.config, framework, options.primitiveDir, targetPolicy),
+          targetPolicy,
         ),
         primitives: updatedPrimitives,
       },
-      { appendComponents: false },
+      {
+        appendComponents: false,
+        ...(options.targetPolicy ? { targetPolicy } : {}),
+      },
     );
   }
 
@@ -464,57 +543,57 @@ type PreparedPrimitiveFile = {
   path: string;
 };
 
-function getUnsupportedConfigError(
-  config: StarwindConfig,
-  framework: StarwindFramework | undefined,
+function getUnsupportedConfigError<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+  framework: TFramework | undefined,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
 ): string | undefined {
-  if (!framework || !getPrimitiveVendoringFramework(config)) {
+  if (!framework || !getPrimitiveVendoringFramework(config, undefined, targetPolicy)) {
     return "Primitive vendoring currently supports Astro and React projects only.";
   }
 
   return undefined;
 }
 
-export function getPrimitiveVendoringFramework(
-  config: StarwindConfig,
-  framework?: StarwindFramework,
-): StarwindFramework | undefined {
-  if (framework) {
-    return framework;
+export function getPrimitiveVendoringFramework<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+  framework?: TFramework,
+  targetPolicy?: FrameworkTargetPolicy<TFramework>,
+): TFramework | undefined {
+  const policy = getTargetPolicy(targetPolicy);
+
+  if (framework !== undefined) {
+    return isConfigTarget(policy, framework) ? framework : undefined;
   }
 
-  if (config.framework === "astro") {
-    return "astro";
-  }
-
-  if (config.framework === "react") {
-    return "react";
-  }
+  if (isConfigTarget(policy, config.framework)) return config.framework;
 
   return undefined;
 }
 
-function getPrimitiveConfigFramework(
-  config: StarwindConfig,
-  primitive: PrimitiveConfig,
-): StarwindFramework | undefined {
-  return primitive.framework ?? getPrimitiveVendoringFramework(config);
+function getPrimitiveConfigFramework<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+  primitive: PrimitiveConfigFor<TFramework>,
+  targetPolicy?: FrameworkTargetPolicy<TFramework>,
+): TFramework | undefined {
+  return primitive.framework ?? getPrimitiveVendoringFramework(config, undefined, targetPolicy);
 }
 
-function getDefaultAlternativePrimitiveDir(framework: StarwindFramework): string {
+function getDefaultAlternativePrimitiveDir(framework: CliFrameworkTarget): string {
   return `src/components/starwind-${framework}-primitives`;
 }
 
-function getPrimitiveDir(
-  config: StarwindConfig,
-  framework: StarwindFramework,
+function getPrimitiveDir<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+  framework: TFramework,
   primitiveDirOverride?: string,
+  targetPolicy?: FrameworkTargetPolicy<TFramework>,
 ): string {
   if (primitiveDirOverride) {
     return primitiveDirOverride;
   }
 
-  const primaryFramework = getPrimitiveVendoringFramework(config);
+  const primaryFramework = getPrimitiveVendoringFramework(config, undefined, targetPolicy);
 
   if (primaryFramework && framework !== primaryFramework) {
     return config.primitiveDirs?.[framework] ?? getDefaultAlternativePrimitiveDir(framework);
@@ -523,12 +602,13 @@ function getPrimitiveDir(
   return config.primitiveDir ?? DEFAULT_PRIMITIVE_ROOT;
 }
 
-function getPrimitiveDirConfigUpdate(
-  config: StarwindConfig,
-  framework: StarwindFramework,
+function getPrimitiveDirConfigUpdate<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+  framework: TFramework,
   primitiveDir: string,
-): Pick<StarwindConfig, "primitiveDir" | "primitiveDirs"> {
-  const primaryFramework = getPrimitiveVendoringFramework(config);
+  targetPolicy?: FrameworkTargetPolicy<TFramework>,
+): Pick<StarwindConfigFor<TFramework>, "primitiveDir" | "primitiveDirs"> {
+  const primaryFramework = getPrimitiveVendoringFramework(config, undefined, targetPolicy);
 
   if (!primaryFramework || framework === primaryFramework) {
     return { primitiveDir };
@@ -537,18 +617,19 @@ function getPrimitiveDirConfigUpdate(
   return {
     primitiveDirs: {
       [framework]: primitiveDir,
-    },
+    } as Partial<Record<TFramework, string>>,
   };
 }
 
-function preparePrimitiveFiles(
-  config: StarwindConfig,
+function preparePrimitiveFiles<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
   files: PrimitiveVendoringFile[],
-  framework: StarwindFramework,
+  framework: TFramework,
   primitiveDirOverride?: string,
+  targetPolicy?: FrameworkTargetPolicy<TFramework>,
 ): PreparedPrimitiveFile[] {
   const primitiveDir = normalizeProjectRelativePath(
-    getPrimitiveDir(config, framework, primitiveDirOverride),
+    getPrimitiveDir(config, framework, primitiveDirOverride, targetPolicy),
     "primitive directory",
   );
   const defaultRoot = toPortablePath(DEFAULT_PRIMITIVE_ROOT);
@@ -573,9 +654,9 @@ function preparePrimitiveFiles(
   });
 }
 
-async function shouldWritePrimitiveFiles(
+async function shouldWritePrimitiveFiles<TFramework extends CliFrameworkTarget>(
   files: PreparedPrimitiveFile[],
-  options: PrimitiveComponentOptions,
+  options: PrimitiveComponentOptions<TFramework>,
 ): Promise<boolean> {
   if (options.overwrite) return true;
 
@@ -622,7 +703,9 @@ async function resolvePreparedPrimitiveFiles(
   );
 }
 
-async function finalizePrimitiveUpdatePackagePlan(plan: RuntimeUpdatePlan): Promise<void> {
+async function finalizePrimitiveUpdatePackagePlan<TFramework extends CliFrameworkTarget>(
+  plan: PrimitiveUpdatePlan<TFramework>,
+): Promise<void> {
   if (plan.updates.length === 0) return;
 
   plan.packageRequirements = dedupePackageRequirements(
@@ -668,7 +751,7 @@ function formatPackageRequirement(requirement: RegistryPackageRequirement): stri
   return requirement.range === "*" ? requirement.name : `${requirement.name}@${requirement.range}`;
 }
 
-function toRegistryComponent(artifact: PrimitiveVendoringArtifact): Component {
+function toRegistryComponent(artifact: PrimitiveVendoringArtifact<CliFrameworkTarget>): Component {
   return {
     name: artifact.component,
     version: artifact.version,
@@ -677,7 +760,9 @@ function toRegistryComponent(artifact: PrimitiveVendoringArtifact): Component {
   };
 }
 
-function toRegistryTarget(artifact: PrimitiveVendoringArtifact): RegistryTarget {
+function toRegistryTarget(
+  artifact: PrimitiveVendoringArtifact<CliFrameworkTarget>,
+): RegistryTarget {
   return {
     files: artifact.files,
     componentDependencies: [],
@@ -696,4 +781,321 @@ function normalizeProjectRelativePath(value: string, label: string): string {
 
 function toPortablePath(filePath: string): string {
   return filePath.replace(/\\/g, "/").replace(/\/+$/, "");
+}
+
+function getTargetPolicy<TFramework extends CliFrameworkTarget>(
+  targetPolicy?: FrameworkTargetPolicy<TFramework>,
+): FrameworkTargetPolicy<TFramework> {
+  return (
+    targetPolicy ?? (PUBLIC_FRAMEWORK_TARGET_POLICY as unknown as FrameworkTargetPolicy<TFramework>)
+  );
+}
+
+function validatePrimitiveArtifact<TFramework extends CliFrameworkTarget>(
+  artifact: PrimitiveVendoringArtifact<TFramework>,
+  artifactSet: PrimitiveVendoringArtifactSet<TFramework>,
+): PrimitiveVendoringArtifact<TFramework> {
+  const bundledArtifacts = getBundledPrimitiveArtifacts();
+  const isPublicFramework = isPublicPrimitiveFramework(artifact.framework);
+
+  if (artifact.component === "theme") {
+    throw new Error("Theme is a package facade and cannot be vendored as primitive source.");
+  }
+
+  const descriptor = artifactSet.validation?.[artifact.framework];
+
+  if (!descriptor) {
+    if (isPublicFramework) return artifact;
+    throw new Error(
+      `Primitive artifact target "${artifact.framework}" is missing its generated validation descriptor.`,
+    );
+  }
+
+  validatePrimitiveTargetDescriptor(artifact.framework, descriptor);
+
+  const bundledArtifact = bundledArtifacts.find(
+    (candidate) => candidate.component === artifact.component,
+  );
+  if (!bundledArtifact) {
+    throw new Error(
+      `Primitive artifact "${artifact.component}" is not in the bundled Primitive inventory.`,
+    );
+  }
+  if (artifact.version !== bundledArtifact.version) {
+    throw new Error(
+      `Primitive artifact "${artifact.component}" must use manifest version ${bundledArtifact.version}.`,
+    );
+  }
+  if (!hasExactPackageRequirements(artifact.packageRequirements, descriptor.packageRequirements)) {
+    throw new Error(
+      `Primitive artifact "${artifact.component}" must use its generated package requirements.`,
+    );
+  }
+  if (artifact.files.length === 0) {
+    throw new Error(`Primitive artifact "${artifact.component}" has no vendorable files.`);
+  }
+
+  const seenPaths = new Set<string>();
+  for (const file of artifact.files) {
+    validatePrimitiveArtifactFile(artifact.component, file, descriptor, seenPaths);
+  }
+  validatePrimitiveArtifactClosure(artifact, descriptor);
+
+  return artifact;
+}
+
+function getBundledPrimitiveArtifacts(): PrimitiveVendoringArtifact<StarwindFramework>[] {
+  return (primitiveVendoringArtifacts as PrimitiveVendoringArtifactSet<StarwindFramework>)
+    .primitives;
+}
+
+function isPublicPrimitiveFramework(framework: CliFrameworkTarget): boolean {
+  return new Set(getBundledPrimitiveArtifacts().map(({ framework: target }) => target)).has(
+    framework as StarwindFramework,
+  );
+}
+
+function validatePrimitiveArtifactIntegrity<TFramework extends CliFrameworkTarget>(
+  artifactSet: PrimitiveVendoringArtifactSet<TFramework>,
+  target: TFramework,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): void {
+  const trustedFingerprint = getPrimitiveArtifactIntegrityFingerprint(targetPolicy, target);
+  if (!trustedFingerprint) {
+    throw new Error(`Primitive artifact target "${target}" has no trusted integrity fingerprint.`);
+  }
+
+  const integrity = artifactSet.integrity;
+  if (
+    !integrity ||
+    integrity.algorithm !== "sha256" ||
+    integrity.fingerprint !== trustedFingerprint
+  ) {
+    throw new Error(
+      `Primitive artifact target "${target}" does not match its trusted integrity fingerprint.`,
+    );
+  }
+
+  const { integrity: _integrity, ...document } = artifactSet;
+  const computedFingerprint = `sha256:${createHash("sha256")
+    .update(toCanonicalPrimitiveArtifactJson(document))
+    .digest("hex")}`;
+  if (computedFingerprint !== trustedFingerprint) {
+    throw new Error(
+      `Primitive artifact target "${target}" does not match its trusted integrity fingerprint.`,
+    );
+  }
+}
+
+function toCanonicalPrimitiveArtifactJson(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) {
+    return `[${value.map(toCanonicalPrimitiveArtifactJson).join(",")}]`;
+  }
+
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .filter((key) => record[key] !== undefined)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${toCanonicalPrimitiveArtifactJson(record[key])}`)
+    .join(",")}}`;
+}
+function validatePrimitiveTargetDescriptor(
+  framework: string,
+  descriptor: PrimitiveVendoringTargetDescriptor,
+): void {
+  assertProjectRelativePath(descriptor.sourceRoot, `Primitive target "${framework}" source root`);
+  const sourceRoot = toPortablePath(descriptor.sourceRoot);
+  if (
+    sourceRoot !== descriptor.sourceRoot ||
+    path.posix.normalize(sourceRoot) !== sourceRoot ||
+    !sourceRoot.endsWith("/src")
+  ) {
+    throw new Error(`Primitive target "${framework}" has an unsafe generated source root.`);
+  }
+
+  const extensions = descriptor.generatedImportCandidateExtensions;
+  if (
+    extensions.length === 0 ||
+    new Set(extensions).size !== extensions.length ||
+    extensions.some((extension) => !/^\.[a-z0-9]+$/i.test(extension))
+  ) {
+    throw new Error(`Primitive target "${framework}" has invalid generated file extensions.`);
+  }
+
+  const coveredExtensions = new Set<string>();
+  if (descriptor.editableContentMarkers.length === 0) {
+    throw new Error(`Primitive target "${framework}" has no editable content rules.`);
+  }
+  for (const rule of descriptor.editableContentMarkers) {
+    if (
+      rule.extensions.length === 0 ||
+      rule.markers.length === 0 ||
+      !["contains", "prefix"].includes(rule.position) ||
+      rule.markers.some((marker) => marker.length === 0)
+    ) {
+      throw new Error(`Primitive target "${framework}" has an invalid editable content rule.`);
+    }
+    for (const extension of rule.extensions) {
+      if (!extensions.includes(extension) || coveredExtensions.has(extension)) {
+        throw new Error(`Primitive target "${framework}" has overlapping editable content rules.`);
+      }
+      coveredExtensions.add(extension);
+    }
+  }
+  if (coveredExtensions.size !== extensions.length) {
+    throw new Error(`Primitive target "${framework}" has incomplete editable content rules.`);
+  }
+  if (
+    descriptor.forbiddenContent.length === 0 ||
+    new Set(descriptor.forbiddenContent).size !== descriptor.forbiddenContent.length ||
+    descriptor.forbiddenContent.some((marker) => marker.length === 0)
+  ) {
+    throw new Error(`Primitive target "${framework}" has invalid forbidden content rules.`);
+  }
+  if (
+    descriptor.packageRequirements.length === 0 ||
+    new Set(descriptor.packageRequirements.map(({ name }) => name)).size !==
+      descriptor.packageRequirements.length ||
+    descriptor.packageRequirements.some(({ name, range }) => !name || !range)
+  ) {
+    throw new Error(`Primitive target "${framework}" has invalid package requirements.`);
+  }
+}
+
+function validatePrimitiveArtifactFile(
+  component: string,
+  file: PrimitiveVendoringFile,
+  descriptor: PrimitiveVendoringTargetDescriptor,
+  seenPaths: Set<string>,
+): void {
+  assertProjectRelativePath(file.path, `Primitive artifact "${component}" file`);
+  const portablePath = file.path.replace(/\\/g, "/");
+  const normalizedPath = path.posix.normalize(portablePath);
+  const primitiveRoot = toPortablePath(DEFAULT_PRIMITIVE_ROOT);
+  if (
+    portablePath !== file.path ||
+    normalizedPath !== portablePath ||
+    !normalizedPath.startsWith(`${primitiveRoot}/`) ||
+    seenPaths.has(normalizedPath)
+  ) {
+    throw new Error(
+      `Primitive artifact "${component}" has unsafe or duplicate file "${file.path}".`,
+    );
+  }
+  seenPaths.add(normalizedPath);
+
+  const portableSourcePath = file.sourcePath.replace(/\\/g, "/");
+  const normalizedSourcePath = path.posix.normalize(portableSourcePath);
+  if (
+    portableSourcePath !== file.sourcePath ||
+    normalizedSourcePath !== portableSourcePath ||
+    path.posix.isAbsolute(normalizedSourcePath) ||
+    !normalizedSourcePath.startsWith(`${descriptor.sourceRoot}/`)
+  ) {
+    throw new Error(`Primitive artifact "${component}" has unsafe source "${file.sourcePath}".`);
+  }
+
+  const extension = path.posix.extname(normalizedSourcePath);
+  if (!descriptor.generatedImportCandidateExtensions.includes(extension)) {
+    throw new Error(`Primitive artifact "${component}" has unsupported file "${file.path}".`);
+  }
+  const rule = descriptor.editableContentMarkers.find((candidate) =>
+    candidate.extensions.includes(extension),
+  )!;
+  const hasEditableHeader = rule.markers.some((marker) =>
+    rule.position === "prefix" ? file.content.startsWith(marker) : file.content.includes(marker),
+  );
+  if (!hasEditableHeader) {
+    throw new Error(
+      `Primitive artifact "${component}" file "${file.path}" is missing its generated vendoring header.`,
+    );
+  }
+  if (descriptor.forbiddenContent.some((marker) => file.content.includes(marker))) {
+    throw new Error(
+      `Primitive artifact "${component}" file "${file.path}" contains private package quarantine content.`,
+    );
+  }
+
+  const expectedHash = `sha256:${createHash("sha256").update(file.content).digest("hex")}`;
+  if (!/^sha256:[a-f0-9]{64}$/.test(file.sourceHash) || file.sourceHash !== expectedHash) {
+    throw new Error(
+      `Primitive artifact "${component}" file "${file.path}" has an invalid source hash.`,
+    );
+  }
+}
+
+function validatePrimitiveArtifactClosure<TFramework extends CliFrameworkTarget>(
+  artifact: PrimitiveVendoringArtifact<TFramework>,
+  descriptor: PrimitiveVendoringTargetDescriptor,
+): void {
+  const sourcePaths = new Set(artifact.files.map(({ sourcePath }) => sourcePath));
+  for (const file of artifact.files) {
+    const importerPath = file.sourcePath.slice(descriptor.sourceRoot.length + 1);
+    for (const importSource of collectLocalPrimitiveImportSources(file.content)) {
+      const normalizedBase = path.posix.normalize(
+        path.posix.join(path.posix.dirname(importerPath), importSource),
+      );
+      if (
+        normalizedBase === "." ||
+        normalizedBase === ".." ||
+        normalizedBase.startsWith("../") ||
+        path.posix.isAbsolute(normalizedBase)
+      ) {
+        throw new Error(
+          `Primitive artifact "${artifact.component}" import "${importSource}" escapes its generated source root.`,
+        );
+      }
+      const resolved = getLocalPrimitiveImportCandidates(
+        normalizedBase,
+        descriptor.generatedImportCandidateExtensions,
+      ).some((candidate) => sourcePaths.has(path.posix.join(descriptor.sourceRoot, candidate)));
+      if (!resolved) {
+        throw new Error(
+          `Primitive artifact "${artifact.component}" import "${importSource}" has no vendored file.`,
+        );
+      }
+    }
+  }
+}
+
+function collectLocalPrimitiveImportSources(content: string): string[] {
+  const sources = new Set<string>();
+  const pattern =
+    /(?:import|export)\s+(?:type\s+)?(?:[^"';]*?\s+from\s+)?["']([^"']+)["']|import\(["']([^"']+)["']\)/g;
+  for (const match of content.matchAll(pattern)) {
+    const source = match[1] ?? match[2];
+    if (source?.startsWith(".")) sources.add(source);
+  }
+  return [...sources];
+}
+
+function getLocalPrimitiveImportCandidates(importPath: string, extensions: string[]): string[] {
+  const importExtension = path.posix.extname(importPath);
+  if (importExtension) {
+    if (![".js", ".jsx", ".mjs", ".cjs"].includes(importExtension)) return [importPath];
+    const importBase = importPath.slice(0, -importExtension.length);
+    return [
+      importPath,
+      ...extensions
+        .filter((extension) => [".ts", ".tsx", ".mts", ".cts"].includes(extension))
+        .map((extension) => importBase + extension),
+    ];
+  }
+  return [
+    ...extensions.map((extension) => `${importPath}${extension}`),
+    ...extensions.map((extension) => path.posix.join(importPath, `index${extension}`)),
+  ];
+}
+
+function hasExactPackageRequirements(
+  actual: RegistryPackageRequirement[],
+  expected: RegistryPackageRequirement[],
+): boolean {
+  if (actual.length !== expected.length) return false;
+  const requirements = new Map(actual.map(({ name, range }) => [name, range]));
+  return (
+    requirements.size === actual.length &&
+    expected.every(({ name, range }) => requirements.get(name) === range)
+  );
 }

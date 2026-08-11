@@ -301,6 +301,18 @@ describe("internal Vue package foundation", () => {
 
   it("pins an internal package with exact ESM and declaration exports", async () => {
     const packageJson = JSON.parse(await readFile("packages/vue/package.json", "utf8"));
+    const packageMetadataSources =
+      vueFrameworkAdapterTarget.cliRegistry.packageMetadataSources ?? [];
+
+    expect(packageMetadataSources).toEqual([
+      "packages/vue/package.json",
+      "packages/runtime/package.json",
+      "apps/vue-demo/package.json",
+    ]);
+    expect(new Set(packageMetadataSources).size).toBe(packageMetadataSources.length);
+    await expect(
+      Promise.all(packageMetadataSources.map((source) => readFile(source, "utf8"))),
+    ).resolves.toHaveLength(3);
 
     expect(packageJson.name).toBe("@starwind-ui/vue");
     expect(packageJson.private).toBe(true);
@@ -331,11 +343,12 @@ describe("internal Vue package foundation", () => {
   });
 
   it("does not expose Vue through current public support or release generation", async () => {
-    expect(vueFrameworkAdapterTarget.publicSupport).toMatchObject({
+    expect(vueFrameworkAdapterTarget.publicSupport).toEqual({
       cliRegistry: false,
       demoIntegration: false,
       packageExports: false,
       publicDocsClaim: false,
+      status: "non-shipping-tracer",
     });
 
     const rootPackage = JSON.parse(await readFile("package.json", "utf8"));
@@ -352,5 +365,14 @@ describe("internal Vue package foundation", () => {
     expect(vueDemoPackage.private).toBe(true);
     const cliPackage = JSON.parse(await readFile("packages/cli/package.json", "utf8"));
     expect(JSON.stringify(cliPackage)).not.toContain("@starwind-ui/vue");
+
+    const publicRegistryFiles = (
+      await readdir("packages/cli/src/registry", { recursive: true, withFileTypes: true })
+    ).filter((entry) => entry.isFile());
+    for (const entry of publicRegistryFiles) {
+      const registryFile = `${entry.parentPath.replaceAll("\\", "/")}/${entry.name}`;
+      expect(registryFile).not.toMatch(/(?:^|\/)vue(?:\/|$)/);
+      expect(await readFile(registryFile, "utf8")).not.toContain("@starwind-ui/vue");
+    }
   });
 });

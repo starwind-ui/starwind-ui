@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
 import { vueFrameworkAdapterTarget } from "../../renderers/framework-adapters/vue/index.js";
 import { vuePrimitiveComponents } from "../../renderers/framework-adapters/vue/inventory.js";
 import {
@@ -23,12 +24,7 @@ describe("registered Vue Framework Adapter target", () => {
   });
 
   it("registers exactly the approved non-shipping Primitive subset", () => {
-    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual([
-      "astro",
-      "react",
-      "vue",
-      "svelte",
-    ]);
+    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(["astro", "react", "vue", "svelte"]);
     expect(resolvePrimitiveFrameworkAdapterTargetComponents("vue")).toEqual(vuePrimitiveComponents);
     expect(vueFrameworkAdapterTarget.primitive.support).toEqual({
       components: vuePrimitiveComponents,
@@ -41,7 +37,78 @@ describe("registered Vue Framework Adapter target", () => {
       publicDocsClaim: false,
       status: "non-shipping-tracer",
     });
-    expect(vueFrameworkAdapterTarget.cliRegistry.primitiveArtifact).toBeUndefined();
+    expect(vueFrameworkAdapterTarget.cliRegistry).toMatchObject({
+      generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
+      packageMetadataSources: [
+        "packages/vue/package.json",
+        "packages/runtime/package.json",
+        "apps/vue-demo/package.json",
+      ],
+      primitiveArtifact: {
+        includeLocalImportGraph: true,
+        outputDir: "vue-primitives",
+        sourceRoot: "packages/vue/src",
+      },
+      styledArtifact: {
+        collectPackageImportSources: expect.any(Function),
+        outputDir: "vue",
+        primitiveOutputDir: "vue-primitives",
+      },
+      setupPackageRequirements: [{ name: "vue", range: ">=3.5" }],
+    });
+  });
+
+  it("collects Styled package imports from Vue projection and output-model facts", () => {
+    const styled = vueFrameworkAdapterTarget.styled;
+    const collectPackageImportSources =
+      vueFrameworkAdapterTarget.cliRegistry.styledArtifact.collectPackageImportSources;
+    if (!styled || !collectPackageImportSources) {
+      throw new Error("The Vue target must provide Styled projection and package import metadata.");
+    }
+
+    const model = styled.project({
+      contracts: starwindStyledContracts,
+      outputRoot: "",
+      primitiveImportBase: "@starwind-ui/vue",
+      primitiveOutputRoot: "vue-primitives",
+    });
+    const sourcesByGroup = Object.fromEntries(
+      model.componentGroups.map((group) => [
+        group.component,
+        collectPackageImportSources({ group, primitiveImportBase: "@starwind-ui/vue" }),
+      ]),
+    );
+    const allSources = [...new Set(Object.values(sourcesByGroup).flat())].sort();
+
+    expect(sourcesByGroup["theme-toggle"]).toEqual([
+      "@starwind-ui/vue/theme",
+      "tailwind-variants",
+      "vue",
+    ]);
+    expect(sourcesByGroup["color-picker"]).toEqual(
+      expect.arrayContaining([
+        "@starwind-ui/runtime/color-picker",
+        "@starwind-ui/vue/color-picker",
+        "tailwind-variants",
+        "vue",
+      ]),
+    );
+    expect(allSources).toContain("@starwind-ui/runtime");
+    expect(allSources).toContain("@starwind-ui/vue/button");
+    expect(sourcesByGroup["navigation-menu"]).toContain("@starwind-ui/vue/navigation-menu");
+    expect(allSources).not.toContain("@tabler/icons");
+    expect(allSources.some((source) => source.startsWith("@tabler/icons/"))).toBe(false);
+    expect(allSources.some((source) => source.startsWith("."))).toBe(false);
+    expect(
+      allSources.filter((source) =>
+        ["@starwind-ui/astro", "@starwind-ui/react", "@starwind-ui/svelte"].some(
+          (packageName) => source === packageName || source.startsWith(`${packageName}/`),
+        ),
+      ),
+    ).toEqual([]);
+    for (const sources of Object.values(sourcesByGroup)) {
+      expect(new Set(sources).size).toBe(sources.length);
+    }
   });
 
   it("registers only the manual Theme helper in addition to the component subset", async () => {

@@ -3,11 +3,21 @@ import fs from "fs-extra";
 import { inspectAstroReactConfig } from "./astro-config.js";
 import type { StarwindFramework } from "./config.js";
 import {
+  type FrameworkTargetPolicy,
+  isConfigTarget,
+  type PrivateVueCliFrameworkTarget,
+} from "./framework-target-policy.js";
+import {
   detectReactProjectPaths,
   getReactProjectPlan,
   type ReactHostKind,
   type ReactProjectPlan,
 } from "./react-project.js";
+import {
+  detectVueHostProject,
+  getPrivateVueHostEvidenceRequests,
+  type VueHostProjectPlan,
+} from "./vue-host-project.js";
 
 export type ProjectPackage = {
   dependencies?: Record<string, string>;
@@ -16,7 +26,7 @@ export type ProjectPackage = {
   peerDependencies?: Record<string, string>;
 };
 
-export type HostKind = "astro" | ReactHostKind | "unknown";
+export type HostKind = "astro" | "laravel" | "nuxt" | "quasar" | ReactHostKind | "unknown";
 export type HostTargetReadiness = "configurable" | "ready";
 
 export type HostTarget<TFramework extends string = string> = {
@@ -32,9 +42,11 @@ export type HostPlan<TFramework extends string = string> = {
   };
   reactProject?: ReactProjectPlan;
   targets: HostTarget<TFramework>[];
+  vueHostProject?: VueHostProjectPlan;
 };
 
 export type HostEvidence = {
+  projectFiles?: Readonly<Record<string, string>>;
   astroConfig?: {
     content: string;
     path: string;
@@ -84,6 +96,30 @@ export async function detectHostPlan(
   return getHostPlan(pkg, { astroConfig, existingPaths });
 }
 
+export async function detectPrivateVueHostPlan(
+  pkg: ProjectPackage,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+  reader: HostEvidenceReader = defaultEvidenceReader,
+): Promise<HostPlan<PrivateVueCliFrameworkTarget>> {
+  if (!isConfigTarget(targetPolicy, "vue")) {
+    throw new Error("Private Vue host planning requires a policy that admits Vue.");
+  }
+  const existingPaths = new Set(await detectReactProjectPaths(reader.pathExists));
+  const projectFiles: Record<string, string> = {};
+  await Promise.all(
+    getPrivateVueHostEvidenceRequests().map(async ({ path, readContent }) => {
+      if (!(await reader.pathExists(path))) return;
+      existingPaths.add(path);
+      if (readContent) projectFiles[path] = await reader.readFile(path);
+    }),
+  );
+  const astroConfigPath = ASTRO_CONFIG_PATHS.find((path) => existingPaths.has(path));
+  const astroConfig = astroConfigPath
+    ? { content: projectFiles[astroConfigPath]!, path: astroConfigPath }
+    : undefined;
+  return getPrivateVueHostPlan(pkg, { astroConfig, existingPaths, projectFiles }, targetPolicy);
+}
+
 export function getHostPlan(
   pkg: ProjectPackage,
   evidence: HostEvidence,
@@ -125,6 +161,68 @@ export function getHostPlan(
   return unsupportedPlan(getEvidenceHostKind(dependencies, evidence.existingPaths));
 }
 
+export function getPrivateVueHostPlan(
+  pkg: ProjectPackage,
+  evidence: HostEvidence,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+): HostPlan<PrivateVueCliFrameworkTarget> {
+  if (!isConfigTarget(targetPolicy, "vue")) {
+    throw new Error("Private Vue host planning requires a policy that admits Vue.");
+  }
+  const publicPlan = getHostPlan(pkg, evidence);
+  const vueDetection = detectVueHostProject(pkg, evidence, publicPlan.host.kind);
+  if (vueDetection?.status === "failed") {
+    return {
+      diagnostic: vueDetection.diagnostic,
+      host: vueDetection.host,
+      targets: [{ framework: "astro", readiness: "configurable" }],
+    };
+  }
+
+  if (!vueDetection) return publicPlan;
+
+  if (publicPlan.host.kind === "astro") {
+    return {
+      ...publicPlan,
+      targets: [...publicPlan.targets, { framework: "vue", readiness: vueDetection.readiness }],
+      vueHostProject: vueDetection.plan,
+    };
+  }
+
+  return {
+    host: { kind: vueDetection.plan.hostKind, label: vueDetection.plan.hostLabel },
+    targets: [{ framework: "vue", readiness: vueDetection.readiness }],
+    vueHostProject: vueDetection.plan,
+  };
+}
+
+export function validatePrivateHostTarget(
+  plan: HostPlan<PrivateVueCliFrameworkTarget>,
+  framework: PrivateVueCliFrameworkTarget,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+): PrivateVueCliFrameworkTarget {
+  if (
+    isConfigTarget(targetPolicy, framework) &&
+    plan.targets.some((target) => target.framework === framework)
+  ) {
+    return framework;
+  }
+  throw new Error(
+    `${targetPolicy.labels[framework]} is not available for the detected ${plan.host.label} host. ${plan.diagnostic ?? "Choose one of the detected Starwind targets."}`,
+  );
+}
+
+export function formatPrivateDetectedHost(
+  plan: HostPlan<PrivateVueCliFrameworkTarget>,
+  framework: PrivateVueCliFrameworkTarget,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+): string {
+  const target = targetPolicy.labels[framework];
+  return plan.host.kind === framework
+    ? `Detected ${target}`
+    : `Detected ${target} (${plan.host.label})`;
+}
+
 export function validateHostTarget(
   plan: HostPlan<StarwindFramework>,
   framework: StarwindFramework,
@@ -146,8 +244,11 @@ export function formatDetectedHost(
     : `Detected ${target} (${plan.host.label})`;
 }
 
-function unsupportedPlan(kind: HostKind, cause?: unknown): HostPlan<StarwindFramework> {
-  const label = kind === "unknown" ? "Unknown" : getHostLabel(kind);
+function unsupportedPlan(
+  kind: ReactHostKind | "unknown",
+  cause?: unknown,
+): HostPlan<StarwindFramework> {
+  const label = kind === "unknown" ? "Unknown" : getReactHostLabel(kind);
   const causeMessage = cause instanceof Error ? ` ${cause.message}` : "";
   return {
     diagnostic: `No supported Starwind target was detected. Use --astro for an Astro project, or run Starwind in a supported React host: Vite React, Next.js, React Router, or TanStack Start with Vite.${causeMessage}`,
@@ -172,7 +273,7 @@ function hasAstroConfig(existingPaths: ReadonlySet<string>): boolean {
 function getEvidenceHostKind(
   dependencies: Record<string, string>,
   existingPaths: ReadonlySet<string>,
-): HostKind {
+): ReactHostKind | "unknown" {
   if (dependencies.next) {
     return [...existingPaths].some((filePath) => /(?:^|\/)app\/layout\./.test(filePath))
       ? "next-app"
@@ -189,10 +290,6 @@ function getEvidenceHostKind(
     return "vite";
   }
   return "unknown";
-}
-
-function getHostLabel(kind: HostKind): string {
-  return kind === "astro" ? "Astro" : kind === "unknown" ? "Unknown" : getReactHostLabel(kind);
 }
 
 function getReactHostLabel(kind: ReactHostKind): string {

@@ -1,5 +1,33 @@
 import { highlighter } from "./highlighter.js";
-import type { RuntimeUpdatePlan, RuntimeUpdatePlanFile } from "./runtime-component.js";
+
+export type UpdatePreviewFile = {
+  changed: boolean;
+  content: string;
+  currentContent: string;
+  destination: string;
+  exists: boolean;
+  path: string;
+};
+
+type UpdatePreviewStatus = {
+  error?: string;
+  name: string;
+  newVersion?: string;
+  oldVersion?: string;
+};
+
+export type UpdatePreviewPlan = {
+  failed: readonly UpdatePreviewStatus[];
+  packageRequirements: readonly {
+    name: string;
+    range: string;
+  }[];
+  packagesToInstall: readonly string[];
+  skipped: readonly UpdatePreviewStatus[];
+  updates: readonly {
+    files: readonly UpdatePreviewFile[];
+  }[];
+};
 
 export type UpdatePreviewOptions = {
   diff?: true | string;
@@ -37,7 +65,7 @@ export function getPreviewMode(options?: UpdatePreviewOptions): UpdatePreviewMod
   };
 }
 
-export function formatUpdatePreview(plan: RuntimeUpdatePlan, mode: UpdatePreviewMode): string {
+export function formatUpdatePreview(plan: UpdatePreviewPlan, mode: UpdatePreviewMode): string {
   const lines = [highlighter.underline("Update Preview")];
 
   lines.push("");
@@ -89,7 +117,7 @@ export function formatUpdatePreview(plan: RuntimeUpdatePlan, mode: UpdatePreview
   return lines.join("\n");
 }
 
-function filterPreviewFiles(files: RuntimeUpdatePlanFile[], pathFilter?: string) {
+function filterPreviewFiles(files: UpdatePreviewFile[], pathFilter?: string) {
   if (!pathFilter) return files;
 
   const normalizedFilter = normalizePreviewPath(pathFilter);
@@ -101,7 +129,7 @@ function filterPreviewFiles(files: RuntimeUpdatePlanFile[], pathFilter?: string)
   });
 }
 
-function formatFileDiff(file: RuntimeUpdatePlanFile): string {
+function formatFileDiff(file: UpdatePreviewFile): string {
   const oldLines = splitLines(file.currentContent);
   const newLines = splitLines(file.content);
 
@@ -115,11 +143,11 @@ function formatFileDiff(file: RuntimeUpdatePlanFile): string {
   ].join("\n");
 }
 
-function formatFileView(file: RuntimeUpdatePlanFile): string {
+function formatFileView(file: UpdatePreviewFile): string {
   return [`### ${file.path}`, file.content].join("\n");
 }
 
-function formatList(items: string[]): string[] {
+function formatList(items: readonly string[]): string[] {
   return items.length > 0 ? items.map((item) => `  - ${item}`) : ["  - none"];
 }
 

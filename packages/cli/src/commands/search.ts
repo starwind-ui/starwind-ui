@@ -1,10 +1,17 @@
 import * as p from "@clack/prompts";
 
+import type { StarwindFramework } from "@/utils/config.js";
+
 import { PATHS } from "@/utils/constants.js";
 import {
   sortComponentPresentation,
   sortComponentPresentationByName,
 } from "@/utils/component-presentation.js";
+import {
+  type CliFrameworkTarget,
+  type FrameworkTargetPolicy,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "@/utils/framework-target-policy.js";
 import { highlighter } from "@/utils/highlighter.js";
 import {
   getPrimitiveDiscoveryResults,
@@ -13,9 +20,17 @@ import {
   toPrimitiveDiscoveryMetadata,
   type PrimitiveDiscoveryFramework,
 } from "@/utils/primitive-discovery.js";
-import type { PrimitiveVendoringArtifact } from "@/utils/primitive-component.js";
+import type {
+  PrimitiveVendoringArtifact,
+  PrimitiveVendoringArtifactSet,
+} from "@/utils/primitive-component.js";
 import { type ManifestBlock, searchProBlocks } from "@/utils/pro-manifest.js";
-import { type Component, loadRegistry, parseRegistrySource } from "@/utils/registry.js";
+import {
+  type Component,
+  loadRegistry,
+  parseRegistrySource,
+  type RegistrySource,
+} from "@/utils/registry.js";
 import { hasStarwindProRegistry } from "@/utils/shadcn-config.js";
 
 interface SearchOptions {
@@ -26,8 +41,17 @@ interface SearchOptions {
   json?: boolean;
   registry?: string;
   primitives?: boolean;
-  framework?: PrimitiveDiscoveryFramework;
+  framework?: PrimitiveDiscoveryFramework<StarwindFramework>;
 }
+
+type PrivateSearchOptions = Omit<SearchOptions, "framework"> & {
+  framework?: PrimitiveDiscoveryFramework<CliFrameworkTarget>;
+};
+
+export type PrivateSearchDependencies = {
+  artifacts: PrimitiveVendoringArtifactSet<CliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
+};
 
 /**
  * Search Starwind components and Pro blocks.
@@ -35,14 +59,24 @@ interface SearchOptions {
  * @param query - Optional search query string.
  * @param options - CLI options.
  */
-export async function search(query?: string, options?: SearchOptions) {
+export function search(query?: string, options?: SearchOptions): Promise<void>;
+export function search(
+  query: string | undefined,
+  options: PrivateSearchOptions | undefined,
+  dependencies: PrivateSearchDependencies,
+): Promise<void>;
+export async function search(
+  query?: string,
+  options?: PrivateSearchOptions,
+  dependencies?: PrivateSearchDependencies,
+) {
   if (!options?.json) {
     p.intro(highlighter.title(" Starwind Search "));
   }
 
   try {
     if (options?.primitives) {
-      await searchPrimitives(query, options);
+      await searchPrimitives(query, options, dependencies);
       return;
     }
 
@@ -63,7 +97,8 @@ export async function search(query?: string, options?: SearchOptions) {
       });
 
       if (!proOnly) {
-        const coreComponents = (await loadRegistry(registrySource)).components;
+        const coreComponents = (await loadRegistryForSearch(registrySource, dependencies))
+          .components;
         if (query) {
           const q = query.toLowerCase();
           matchedComponents = coreComponents.filter(
@@ -96,7 +131,8 @@ export async function search(query?: string, options?: SearchOptions) {
         searchTasks.push({
           title: "Searching core components",
           task: async () => {
-            const coreComponents = (await loadRegistry(registrySource)).components;
+            const coreComponents = (await loadRegistryForSearch(registrySource, dependencies))
+              .components;
             if (query) {
               const q = query.toLowerCase();
               matchedComponents = coreComponents.filter(
@@ -226,9 +262,16 @@ export async function search(query?: string, options?: SearchOptions) {
   }
 }
 
-async function searchPrimitives(query: string | undefined, options: SearchOptions): Promise<void> {
-  const framework = await resolvePrimitiveDiscoveryFramework(options.framework);
-  let matchedPrimitives: PrimitiveVendoringArtifact[] = [];
+async function searchPrimitives(
+  query: string | undefined,
+  options: PrivateSearchOptions,
+  dependencies?: PrivateSearchDependencies,
+): Promise<void> {
+  const targetPolicy = getTargetPolicy(dependencies);
+  const framework = await resolvePrimitiveDiscoveryFramework(options.framework, {
+    targetPolicy: dependencies?.targetPolicy,
+  });
+  let matchedPrimitives: PrimitiveVendoringArtifact<CliFrameworkTarget>[] = [];
 
   if (!framework) {
     if (options.json) {
@@ -258,13 +301,25 @@ async function searchPrimitives(query: string | undefined, options: SearchOption
   }
 
   if (options.json) {
-    matchedPrimitives = getPrimitiveDiscoveryResults({ framework, query });
+    matchedPrimitives = getPrimitiveDiscoveryResults({
+      framework,
+      query,
+      ...(dependencies
+        ? { artifacts: dependencies.artifacts, targetPolicy: dependencies.targetPolicy }
+        : {}),
+    });
   } else {
     await p.tasks([
       {
         title: "Searching primitive source",
         task: async () => {
-          matchedPrimitives = getPrimitiveDiscoveryResults({ framework, query });
+          matchedPrimitives = getPrimitiveDiscoveryResults({
+            framework,
+            query,
+            ...(dependencies
+              ? { artifacts: dependencies.artifacts, targetPolicy: dependencies.targetPolicy }
+              : {}),
+          });
           return `Found ${matchedPrimitives.length} ${framework} primitive${matchedPrimitives.length === 1 ? "" : "s"}`;
         },
       },
@@ -302,7 +357,9 @@ async function searchPrimitives(query: string | undefined, options: SearchOption
     return;
   }
 
-  p.log.message(highlighter.underline(`${formatFrameworkLabel(framework)} Primitives`));
+  p.log.message(
+    highlighter.underline(`${formatFrameworkLabel(framework, targetPolicy)} Primitives`),
+  );
 
   const maxNameLen = Math.max(...matchedPrimitives.map((primitive) => primitive.component.length));
   const includeFrameworkFlag = options.framework !== undefined;
@@ -325,7 +382,25 @@ async function searchPrimitives(query: string | undefined, options: SearchOption
   );
 }
 
-function formatFrameworkLabel(framework: PrimitiveDiscoveryFramework): string {
+function formatFrameworkLabel(
+  framework: PrimitiveDiscoveryFramework<CliFrameworkTarget>,
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>,
+): string {
   if (framework === "all") return "All";
-  return framework === "react" ? "React" : "Astro";
+  return targetPolicy.labels[framework];
+}
+
+function getTargetPolicy(
+  dependencies?: PrivateSearchDependencies,
+): FrameworkTargetPolicy<CliFrameworkTarget> {
+  return (
+    dependencies?.targetPolicy ??
+    (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<CliFrameworkTarget>)
+  );
+}
+
+function loadRegistryForSearch(source: RegistrySource, dependencies?: PrivateSearchDependencies) {
+  return dependencies
+    ? loadRegistry(source, { targetPolicy: dependencies.targetPolicy })
+    : loadRegistry(source);
 }

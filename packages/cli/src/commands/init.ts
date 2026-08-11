@@ -16,12 +16,21 @@ import {
 } from "@/utils/config.js";
 import { ASTRO_PACKAGES, MIN_ASTRO_VERSION, PATHS } from "@/utils/constants.js";
 import { checkStarwindProEnv, setupStarwindProEnv } from "@/utils/env.js";
+import {
+  type FrameworkTargetPolicy,
+  isConfigTarget,
+  type PrivateVueCliFrameworkTarget,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "@/utils/framework-target-policy.js";
 import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import {
   detectHostPlan,
+  detectPrivateVueHostPlan,
   formatDetectedHost,
+  formatPrivateDetectedHost,
   validateHostTarget,
+  validatePrivateHostTarget,
   type HostPlan,
 } from "@/utils/host-planner.js";
 import { setupLayoutCssImport } from "@/utils/layout.js";
@@ -30,7 +39,7 @@ import {
   installDependencies,
   type PackageManager,
 } from "@/utils/package-manager.js";
-import { loadRegistry } from "@/utils/registry.js";
+import { loadRegistry, type StarwindRegistryFor } from "@/utils/registry.js";
 import {
   getReactPackageRequirements,
   setupReactProject,
@@ -41,6 +50,7 @@ import { getRuntimeSetupPlan } from "@/utils/runtime-setup.js";
 import { sleep } from "@/utils/sleep.js";
 import { setupSnippets } from "@/utils/snippets.js";
 import { setupTsConfig } from "@/utils/tsconfig.js";
+import type { VueHostProjectPreparation } from "@/utils/vue-host-project.js";
 
 import { migrate } from "./migrate.js";
 
@@ -53,27 +63,57 @@ type InitOptions = {
   react?: boolean;
 };
 
-function resolveFrameworkOption(options?: InitOptions): StarwindFramework | undefined {
+export type PrivateVueInitOptions = Omit<InitOptions, "framework"> & {
+  framework?: PrivateVueCliFrameworkTarget;
+};
+
+export type PrivateVueInitDependencies = {
+  hostPlan?: HostPlan<PrivateVueCliFrameworkTarget>;
+  registry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>;
+};
+
+function resolveFrameworkOption<TFramework extends PrivateVueCliFrameworkTarget>(
+  options: PrivateVueInitOptions | undefined,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): TFramework | undefined {
   const selected = [
     options?.framework,
     options?.astro ? "astro" : undefined,
     options?.react ? "react" : undefined,
-  ].filter(Boolean) as StarwindFramework[];
+  ].filter(Boolean);
 
   if (new Set(selected).size > 1) {
     throw new Error("Choose only one Starwind framework target.");
   }
 
-  return selected[0];
+  const framework = selected[0];
+  if (framework !== undefined && !isConfigTarget(targetPolicy, framework)) {
+    throw new Error(
+      `Framework "${framework}" is not available under the ${targetPolicy.cacheKey} target policy.`,
+    );
+  }
+  return framework;
 }
 
 async function selectHostTarget(
-  plan: HostPlan<StarwindFramework>,
-  explicitFramework: StarwindFramework | undefined,
-): Promise<StarwindFramework> {
+  plan: HostPlan<PrivateVueCliFrameworkTarget>,
+  explicitFramework: PrivateVueCliFrameworkTarget | undefined,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+  privateVue: boolean,
+): Promise<PrivateVueCliFrameworkTarget> {
   if (explicitFramework) {
-    const framework = validateHostTarget(plan, explicitFramework);
-    p.log.info(formatDetectedHost(plan, framework));
+    const framework = privateVue
+      ? validatePrivateHostTarget(plan, explicitFramework, targetPolicy)
+      : (validateHostTarget(
+          plan as HostPlan<StarwindFramework>,
+          explicitFramework as StarwindFramework,
+        ) as PrivateVueCliFrameworkTarget);
+    p.log.info(
+      privateVue
+        ? formatPrivateDetectedHost(plan, framework, targetPolicy)
+        : formatDetectedHost(plan as HostPlan<StarwindFramework>, framework as StarwindFramework),
+    );
     return framework;
   }
 
@@ -87,7 +127,11 @@ async function selectHostTarget(
 
   if (readyTargets.length === 1) {
     const framework = readyTargets[0]!.framework;
-    p.log.info(formatDetectedHost(plan, framework));
+    p.log.info(
+      privateVue
+        ? formatPrivateDetectedHost(plan, framework, targetPolicy)
+        : formatDetectedHost(plan as HostPlan<StarwindFramework>, framework as StarwindFramework),
+    );
     return framework;
   }
 
@@ -95,17 +139,21 @@ async function selectHostTarget(
     message: "Which detected framework target would you like to use?",
     initialValue: readyTargets[0]!.framework,
     options: readyTargets.map((target) => ({
-      label: target.framework === "astro" ? "Astro" : "React",
+      label: targetPolicy.labels[target.framework],
       value: target.framework,
     })),
-  })) as StarwindFramework | symbol;
+  })) as PrivateVueCliFrameworkTarget | symbol;
 
   if (p.isCancel(framework)) {
     p.cancel("Operation cancelled.");
     return process.exit(0);
   }
 
-  p.log.info(formatDetectedHost(plan, framework));
+  p.log.info(
+    privateVue
+      ? formatPrivateDetectedHost(plan, framework, targetPolicy)
+      : formatDetectedHost(plan as HostPlan<StarwindFramework>, framework as StarwindFramework),
+  );
   return framework;
 }
 
@@ -163,7 +211,17 @@ async function setupProForExistingRuntime(options: { withinAdd: boolean }): Prom
   }
 }
 
-export async function init(withinAdd: boolean = false, options?: InitOptions) {
+export function init(withinAdd?: boolean, options?: InitOptions): Promise<void>;
+export function init(
+  withinAdd: boolean,
+  options: PrivateVueInitOptions,
+  dependencies: PrivateVueInitDependencies,
+): Promise<void>;
+export async function init(
+  withinAdd: boolean = false,
+  options?: PrivateVueInitOptions,
+  dependencies?: PrivateVueInitDependencies,
+): Promise<void> {
   if (!withinAdd) {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
   }
@@ -178,8 +236,11 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
 
     const pkg = await readJsonFile("package.json");
     const pm: PackageManager = options?.packageManager ?? detectPackageManager().name;
-    const selectedFramework = resolveFrameworkOption(options);
-    const configState = await getConfigState();
+    const targetPolicy =
+      dependencies?.targetPolicy ??
+      (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>);
+    const selectedFramework = resolveFrameworkOption(options, targetPolicy);
+    const configState = dependencies ? await getConfigState(targetPolicy) : await getConfigState();
 
     if (configState.status === "legacy") {
       const shouldMigrate = options?.defaults
@@ -227,10 +288,27 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       return;
     }
 
-    const hostPlan = await detectHostPlan(pkg);
-    const defaultFramework = await selectHostTarget(hostPlan, selectedFramework);
+    const hostPlan =
+      dependencies?.hostPlan ??
+      (dependencies
+        ? await detectPrivateVueHostPlan(pkg, dependencies.targetPolicy)
+        : await detectHostPlan(pkg));
+    const defaultFramework = await selectHostTarget(
+      hostPlan as HostPlan<PrivateVueCliFrameworkTarget>,
+      selectedFramework,
+      targetPolicy,
+      dependencies !== undefined,
+    );
     const isAstroReactTarget = hostPlan.host.kind === "astro" && defaultFramework === "react";
-    const projectFramework: StarwindFramework = isAstroReactTarget ? "astro" : defaultFramework;
+    const vueHostProject = defaultFramework === "vue" ? hostPlan.vueHostProject : undefined;
+    if (defaultFramework === "vue" && !vueHostProject) {
+      throw new Error(
+        "The Vue target requires a supported host before initialization can continue.",
+      );
+    }
+    const isAstroSecondaryTarget = isAstroReactTarget || vueHostProject?.isSecondaryTarget === true;
+    const projectFramework: PrivateVueCliFrameworkTarget =
+      vueHostProject?.projectFramework ?? (isAstroReactTarget ? "astro" : defaultFramework);
     const reactProjectPlan: ReactProjectPlan | undefined = hostPlan.reactProject;
     if (isAstroReactTarget) {
       const setupOutcome = await ensureAstroReactIntegration({
@@ -246,27 +324,57 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       }
       await validateReactProjectSetup(reactProjectPlan);
     }
-    const bundledRegistry = await loadRegistry({ type: "bundled" });
+    await vueHostProject?.validate();
+    const bundledRegistry =
+      dependencies?.registry ?? (await loadRegistry({ type: "bundled" }, { targetPolicy }));
+    const runtimeSetupPlan = dependencies
+      ? getRuntimeSetupPlan(defaultFramework, bundledRegistry, targetPolicy)
+      : getRuntimeSetupPlan(defaultFramework as StarwindFramework, bundledRegistry);
+    let vueHostPreparation: VueHostProjectPreparation | undefined;
+    if (vueHostProject) {
+      vueHostPreparation = await vueHostProject.prepare({
+        packageManager: pm,
+        projectPackage: pkg,
+        skipPrompts: options?.defaults,
+      });
+      if (vueHostPreparation.status === "cancelled" || vueHostPreparation.status === "declined") {
+        return;
+      }
+    }
 
     // Check Astro version compatibility
     const installTasks = [];
     const configTasks = [];
+    if (vueHostPreparation?.status === "prepared" && vueHostPreparation.applyIntegration) {
+      configTasks.push({
+        title: vueHostPreparation.integrationLabel,
+        task: async () => {
+          await vueHostPreparation.applyIntegration();
+          await sleep(250);
+          return vueHostPreparation.integrationResult;
+        },
+      });
+    }
 
     // ================================================================
     //         Prepare project structure and configuration tasks
     // ================================================================
     let configChoices;
+    const defaultComponentDir =
+      reactProjectPlan?.componentDir ??
+      vueHostProject?.componentDir ??
+      (isAstroSecondaryTarget
+        ? "src/components/starwind-" + defaultFramework
+        : PATHS.LOCAL_STARWIND_COMPONENTS_DIR);
+    const defaultCssFile =
+      reactProjectPlan?.cssFile ?? vueHostProject?.cssFile ?? PATHS.LOCAL_CSS_FILE;
 
     // Use defaults if specified, otherwise prompt user for choices
     if (options?.defaults) {
       configChoices = {
         framework: defaultFramework!,
-        componentDir:
-          reactProjectPlan?.componentDir ??
-          (isAstroReactTarget
-            ? "src/components/starwind-react"
-            : PATHS.LOCAL_STARWIND_COMPONENTS_DIR),
-        cssFile: reactProjectPlan?.cssFile ?? PATHS.LOCAL_CSS_FILE,
+        componentDir: defaultComponentDir,
+        cssFile: defaultCssFile,
         twBaseColor: "neutral",
       };
 
@@ -281,12 +389,8 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
           componentDir: () =>
             p.text({
               message: "What is your components directory?",
-              placeholder: isAstroReactTarget
-                ? "src/components/starwind-react"
-                : PATHS.LOCAL_STARWIND_COMPONENTS_DIR,
-              initialValue: isAstroReactTarget
-                ? "src/components/starwind-react"
-                : PATHS.LOCAL_STARWIND_COMPONENTS_DIR,
+              placeholder: defaultComponentDir,
+              initialValue: defaultComponentDir,
               validate(value) {
                 // Check for empty value
                 if (value.length === 0) return `Value is required!`;
@@ -312,8 +416,8 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
           cssFile: () =>
             p.text({
               message: `Where would you like to add the Tailwind ${highlighter.info(".css")} file?`,
-              placeholder: PATHS.LOCAL_CSS_FILE,
-              initialValue: PATHS.LOCAL_CSS_FILE,
+              placeholder: defaultCssFile,
+              initialValue: defaultCssFile,
               validate(value) {
                 // Check for empty value
                 if (value.length === 0) return `Value is required!`;
@@ -369,7 +473,18 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       );
     }
 
-    const utilsDir = reactProjectPlan?.utilsDir ?? PATHS.LOCAL_UTILS_DIR;
+    if (vueHostProject?.lockCssFile && configChoices.cssFile !== vueHostProject.cssFile) {
+      throw new Error(
+        "The detected " +
+          vueHostProject.hostLabel +
+          " host requires the plan-owned stylesheet path " +
+          vueHostProject.cssFile +
+          ".",
+      );
+    }
+
+    const utilsDir =
+      reactProjectPlan?.utilsDir ?? vueHostProject?.utilsDir ?? PATHS.LOCAL_UTILS_DIR;
 
     // ================================================================
     //            Make sure appropriate directories exist
@@ -398,7 +513,16 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       },
     });
 
-    if (projectFramework === "astro") {
+    if (vueHostProject) {
+      configTasks.push({
+        title: vueHostProject.setupLabel,
+        task: async () => {
+          await vueHostProject.setup(configChoices.cssFile);
+          await sleep(250);
+          return vueHostProject.setupResult;
+        },
+      });
+    } else if (projectFramework === "astro") {
       // ================================================================
       //                Prepare Astro config file setup
       // ================================================================
@@ -413,7 +537,7 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
           return "Astro config setup completed";
         },
       });
-    } else {
+    } else if (projectFramework === "react") {
       configTasks.push({
         title: `Setup ${reactProjectPlan!.kind} React project`,
         task: async () => {
@@ -430,8 +554,9 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     configTasks.push({
       title: "Setup TypeScript path aliases",
       task: async () => {
-        const success =
-          projectFramework === "react"
+        const success = vueHostProject
+          ? await vueHostProject.setupTypeScript()
+          : projectFramework === "react"
             ? await setupTsConfig(
                 "react",
                 reactProjectPlan!.sourceRoot,
@@ -461,6 +586,8 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
         `--color-${configChoices.twBaseColor}-`,
       );
     }
+    updatedTailwindConfig =
+      vueHostProject?.prepareStylesheet(updatedTailwindConfig) ?? updatedTailwindConfig;
 
     if (cssFileExists) {
       const shouldOverride = options?.defaults
@@ -497,7 +624,19 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
       });
     }
 
-    if (projectFramework === "astro") {
+    if (vueHostProject?.setupCss) {
+      configTasks.push({
+        title: vueHostProject.setupCssLabel,
+        task: async () => {
+          const success = await vueHostProject.setupCss(configChoices.cssFile);
+          if (!success) {
+            throw new Error("Failed to configure the host CSS entry");
+          }
+          await sleep(250);
+          return vueHostProject.setupCssResult;
+        },
+      });
+    } else if (!vueHostProject && projectFramework === "astro") {
       // ================================================================
       //                 Add CSS import to layout file
       // ================================================================
@@ -542,14 +681,16 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
             // aliases: {
             // 	components: "@/components",
             // },
-            componentDir: isAstroReactTarget
+            componentDir: isAstroSecondaryTarget
               ? PATHS.LOCAL_STARWIND_COMPONENTS_DIR
               : configChoices.componentDir,
-            ...(isAstroReactTarget ? { componentDirs: { react: configChoices.componentDir } } : {}),
+            ...(isAstroSecondaryTarget
+              ? { componentDirs: { [defaultFramework]: configChoices.componentDir } }
+              : {}),
             utilsDir,
             components: [],
           },
-          { appendComponents: false },
+          dependencies ? { appendComponents: false, targetPolicy } : { appendComponents: false },
         );
         await sleep(250);
         return "Updated project starwind configuration";
@@ -592,8 +733,6 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     //                Prepare astro installation
     // ================================================================
     // Determine package manager: use provided option or auto-detect
-    const runtimeSetupPlan = getRuntimeSetupPlan(defaultFramework, bundledRegistry);
-
     installTasks.push({
       title: "Installing Starwind Runtime packages",
       task: async () => {
@@ -664,31 +803,39 @@ export async function init(withinAdd: boolean = false, options?: InitOptions) {
     // ================================================================
     const otherPackages = reactProjectPlan
       ? getReactPackageRequirements(runtimeSetupPlan.packageRequirements, reactProjectPlan.kind)
-      : runtimeSetupPlan.packageRequirements;
+      : vueHostProject
+        ? vueHostProject.requirements(runtimeSetupPlan.packageRequirements)
+        : runtimeSetupPlan.packageRequirements;
+    const vueUpgradeRequired = vueHostProject?.vueUpgradeRequired ?? false;
 
-    const shouldInstall = options?.defaults
-      ? true
-      : await p.confirm({
-          message: `Install ${highlighter.info(otherPackages.join(", "))} using ${highlighter.info(pm)}?`,
+    if (otherPackages.length > 0) {
+      const shouldInstall = options?.defaults
+        ? true
+        : await p.confirm({
+            message: `Install ${highlighter.info(otherPackages.join(", "))} using ${highlighter.info(pm)}?`,
+          });
+
+      if (p.isCancel(shouldInstall)) {
+        p.cancel("Operation cancelled");
+        return process.exit(0);
+      }
+
+      if (shouldInstall) {
+        installTasks.push({
+          title: `Installing packages`,
+          task: async () => {
+            await installDependencies(otherPackages, pm, false, false);
+            return `${highlighter.info("Packages installed successfully")}`;
+          },
         });
-
-    if (p.isCancel(shouldInstall)) {
-      p.cancel("Operation cancelled");
-      return process.exit(0);
-    }
-
-    if (shouldInstall) {
-      installTasks.push({
-        title: `Installing packages`,
-        task: async () => {
-          await installDependencies(otherPackages, pm, false, false);
-          return `${highlighter.info("Packages installed successfully")}`;
-        },
-      });
-    } else {
-      p.log.warn(
-        highlighter.warn(`Skipped installation of packages. Make sure to install them manually`),
-      );
+      } else if (vueUpgradeRequired) {
+        p.cancel("Vue 3.5 or later is required before Starwind can configure this project.");
+        return process.exit(1);
+      } else {
+        p.log.warn(
+          highlighter.warn(`Skipped installation of packages. Make sure to install them manually`),
+        );
+      }
     }
 
     // ================================================================

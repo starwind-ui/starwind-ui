@@ -1,7 +1,8 @@
-import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
-import { basename, join } from "node:path";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join as joinPath } from "node:path";
 import { format, resolveConfig } from "prettier";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 import {
   accordionRuntimeAdapterContract,
@@ -123,6 +124,17 @@ import {
   validateToastSpecializedAdapterSpec,
   validateTooltipSpecializedAdapterSpec,
 } from "../renderers/specialized-adapter-spec/index.js";
+
+const temporaryOutputRoot = mkdtempSync(joinPath(tmpdir(), "starwind-specialized-adapter-spec-"));
+
+afterAll(() => {
+  rmSync(temporaryOutputRoot, { force: true, recursive: true });
+});
+
+function join(root: string, ...rest: string[]): string {
+  // Route legacy Windows-style fixture roots through the host operating system's temp directory.
+  return joinPath(root === "C:/tmp" ? temporaryOutputRoot : root, ...rest);
+}
 
 const astroPrimitiveTarget = getPrimitiveFrameworkAdapterTarget("astro");
 const reactPrimitiveTarget = getPrimitiveFrameworkAdapterTarget("react");
@@ -1288,7 +1300,7 @@ describe("SpecializedAdapterSpec", () => {
 
     await expect(
       writeAstroSelectSpecializedAdapterSpec(
-        "C:/tmp/starwind-select-spec-drift",
+        join("C:/tmp", "starwind-select-spec-drift"),
         specWithoutHiddenInput,
         "",
         "",
@@ -1296,14 +1308,14 @@ describe("SpecializedAdapterSpec", () => {
     ).rejects.toThrow("Select specialized adapter spec hidden input must target the input part.");
     await expect(
       writeReactSelectSpecializedAdapterSpec(
-        "C:/tmp/starwind-select-spec-drift",
+        join("C:/tmp", "starwind-select-spec-drift"),
         specWithoutHiddenInput,
         "",
       ),
     ).rejects.toThrow("Select specialized adapter spec hidden input must target the input part.");
     await expect(
       writeReactSelectSpecializedAdapterSpec(
-        "C:/tmp/starwind-select-spec-drift",
+        join("C:/tmp", "starwind-select-spec-drift"),
         specWithoutTriggerAsChild,
         "",
       ),
@@ -5669,7 +5681,7 @@ describe("SpecializedAdapterSpec", () => {
 
     await expect(
       writeAstroInputOtpSpecializedAdapterSpec(
-        "C:/tmp/starwind-input-otp-astro-spec-drift",
+        join("C:/tmp", "starwind-input-otp-astro-spec-drift"),
         withValueControlDrift,
         "---\n",
         "",
@@ -5679,7 +5691,7 @@ describe("SpecializedAdapterSpec", () => {
     );
     await expect(
       writeReactInputOtpSpecializedAdapterSpec(
-        "C:/tmp/starwind-input-otp-react-spec-drift",
+        join("C:/tmp", "starwind-input-otp-react-spec-drift"),
         withNativeInputDrift,
         "",
       ),
@@ -9104,7 +9116,7 @@ describe("SpecializedAdapterSpec", () => {
 
     await expect(
       writeAstroNavigationMenuSpecializedAdapterSpec(
-        "C:/tmp/starwind-navigation-menu-spec-drift",
+        join("C:/tmp", "starwind-navigation-menu-spec-drift"),
         withoutSharedViewportKind,
         "",
         "",
@@ -9152,7 +9164,7 @@ describe("SpecializedAdapterSpec", () => {
 
     await expect(
       writeReactNavigationMenuSpecializedAdapterSpec(
-        "C:/tmp/starwind-navigation-menu-react-spec-drift",
+        join("C:/tmp", "starwind-navigation-menu-react-spec-drift"),
         withoutSharedViewportKind,
         "",
       ),

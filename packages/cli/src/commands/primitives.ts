@@ -1,11 +1,17 @@
 import * as p from "@clack/prompts";
 
-import { getConfigState, type StarwindConfig, type StarwindFramework } from "@/utils/config.js";
+import { getConfigState, type StarwindConfigFor, type StarwindFramework } from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
 import {
   sortComponentNames,
   sortComponentPresentationByName,
 } from "@/utils/component-presentation.js";
+import {
+  type CliFrameworkTarget,
+  type FrameworkTargetPolicy,
+  isConfigTarget,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import {
@@ -15,6 +21,7 @@ import {
   type PrimitiveInstallSummary,
   updatePrimitiveComponents,
   type PrimitiveVendoringArtifact,
+  type PrimitiveVendoringArtifactSet,
   type PrimitiveUpdateSummary,
 } from "@/utils/primitive-component.js";
 import {
@@ -29,6 +36,11 @@ import { formatUpdatePreview, getPreviewMode } from "@/utils/update-preview.js";
 
 import { init } from "./init.js";
 import { migrate } from "./migrate.js";
+
+export type PrivatePrimitiveCommandDependencies = {
+  artifacts: PrimitiveVendoringArtifactSet<CliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>;
+};
 
 interface PrimitiveAddOptions {
   all?: boolean;
@@ -55,6 +67,18 @@ interface PrimitiveListOptions {
   json?: boolean;
 }
 
+type PrivatePrimitiveAddOptions = Omit<PrimitiveAddOptions, "framework"> & {
+  framework?: CliFrameworkTarget;
+};
+
+type PrivatePrimitiveUpdateOptions = Omit<PrimitiveUpdateOptions, "framework"> & {
+  framework?: CliFrameworkTarget;
+};
+
+type PrivatePrimitiveListOptions = Omit<PrimitiveListOptions, "framework"> & {
+  framework?: PrimitiveDiscoveryFramework<CliFrameworkTarget>;
+};
+
 type PrimitiveCommandOptions = {
   packageManager?: "npm" | "pnpm" | "yarn";
   yes?: boolean;
@@ -67,7 +91,17 @@ type PrimitiveAddResult = {
   version?: string;
 };
 
-export async function primitivesAdd(primitives?: string[], options?: PrimitiveAddOptions) {
+export function primitivesAdd(primitives?: string[], options?: PrimitiveAddOptions): Promise<void>;
+export function primitivesAdd(
+  primitives: string[] | undefined,
+  options: PrivatePrimitiveAddOptions | undefined,
+  dependencies: PrivatePrimitiveCommandDependencies,
+): Promise<void>;
+export async function primitivesAdd(
+  primitives?: string[],
+  options?: PrivatePrimitiveAddOptions,
+  dependencies?: PrivatePrimitiveCommandDependencies,
+) {
   try {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
 
@@ -76,14 +110,19 @@ export async function primitivesAdd(primitives?: string[], options?: PrimitiveAd
       process.exit(1);
     }
 
-    const runtimeConfig = await getCurrentConfigForPrimitiveCommand(options);
+    const runtimeConfig = await getCurrentConfigForPrimitiveCommand(options, dependencies);
 
     if (!runtimeConfig) {
       return;
     }
 
-    const primitiveFramework = getPrimitiveVendoringFramework(runtimeConfig, options?.framework);
-    const availablePrimitives = getAvailablePrimitives(primitiveFramework);
+    const targetPolicy = getTargetPolicy(dependencies);
+    const primitiveFramework = getPrimitiveVendoringFramework(
+      runtimeConfig,
+      options?.framework,
+      targetPolicy,
+    );
+    const availablePrimitives = getAvailablePrimitives(primitiveFramework, dependencies);
     const primitiveDir = options?.to ?? options?.path;
     const primitivesToInstall = await getPrimitivesToInstall(
       primitives,
@@ -107,6 +146,7 @@ export async function primitivesAdd(primitives?: string[], options?: PrimitiveAd
       packageManager: options?.packageManager,
       primitiveDir,
       skipPrompts: options?.yes,
+      ...(dependencies ? { artifacts: dependencies.artifacts, targetPolicy } : {}),
     });
 
     logPrimitiveInstallSummary(results);
@@ -136,7 +176,20 @@ type PrimitiveUpdateResult = {
   status: "updated" | "skipped" | "failed";
 };
 
-export async function primitivesUpdate(primitives?: string[], options?: PrimitiveUpdateOptions) {
+export function primitivesUpdate(
+  primitives?: string[],
+  options?: PrimitiveUpdateOptions,
+): Promise<void>;
+export function primitivesUpdate(
+  primitives: string[] | undefined,
+  options: PrivatePrimitiveUpdateOptions | undefined,
+  dependencies: PrivatePrimitiveCommandDependencies,
+): Promise<void>;
+export async function primitivesUpdate(
+  primitives?: string[],
+  options?: PrivatePrimitiveUpdateOptions,
+  dependencies?: PrivatePrimitiveCommandDependencies,
+) {
   try {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
     const previewMode = getPreviewMode(options);
@@ -147,14 +200,19 @@ export async function primitivesUpdate(primitives?: string[], options?: Primitiv
     }
 
     const runtimeConfig = previewMode.enabled
-      ? await getCurrentConfigForPrimitivePreview()
-      : await getCurrentConfigForPrimitiveCommand(options);
+      ? await getCurrentConfigForPrimitivePreview(dependencies)
+      : await getCurrentConfigForPrimitiveCommand(options, dependencies);
 
     if (!runtimeConfig) {
       return;
     }
 
-    const primitiveFramework = getPrimitiveVendoringFramework(runtimeConfig, options?.framework);
+    const targetPolicy = getTargetPolicy(dependencies);
+    const primitiveFramework = getPrimitiveVendoringFramework(
+      runtimeConfig,
+      options?.framework,
+      targetPolicy,
+    );
     const installedPrimitives = runtimeConfig.primitives ?? [];
 
     if (installedPrimitives.length === 0) {
@@ -188,6 +246,7 @@ export async function primitivesUpdate(primitives?: string[], options?: Primitiv
         framework: primitiveFramework,
         packageManager: options?.packageManager,
         skipPrompts: true,
+        ...(dependencies ? { artifacts: dependencies.artifacts, targetPolicy } : {}),
       });
       console.log(formatUpdatePreview(plan, previewMode));
       return;
@@ -198,6 +257,7 @@ export async function primitivesUpdate(primitives?: string[], options?: Primitiv
       framework: primitiveFramework,
       packageManager: options?.packageManager,
       skipPrompts: options?.yes,
+      ...(dependencies ? { artifacts: dependencies.artifacts, targetPolicy } : {}),
     });
 
     logPrimitiveUpdateSummary(results);
@@ -222,13 +282,24 @@ export async function primitivesUpdate(primitives?: string[], options?: Primitiv
   }
 }
 
-export async function primitivesList(options?: PrimitiveListOptions) {
+export function primitivesList(options?: PrimitiveListOptions): Promise<void>;
+export function primitivesList(
+  options: PrivatePrimitiveListOptions | undefined,
+  dependencies: PrivatePrimitiveCommandDependencies,
+): Promise<void>;
+export async function primitivesList(
+  options?: PrivatePrimitiveListOptions,
+  dependencies?: PrivatePrimitiveCommandDependencies,
+) {
   try {
     if (!options?.json) {
       p.intro(highlighter.title(" Starwind Primitives "));
     }
 
-    const framework = await resolvePrimitiveDiscoveryFramework(options?.framework);
+    const targetPolicy = getTargetPolicy(dependencies);
+    const framework = await resolvePrimitiveDiscoveryFramework(options?.framework, {
+      targetPolicy: dependencies?.targetPolicy,
+    });
 
     if (!framework) {
       if (options?.json) {
@@ -256,7 +327,12 @@ export async function primitivesList(options?: PrimitiveListOptions) {
       return;
     }
 
-    const primitives = getPrimitiveDiscoveryResults({ framework });
+    const primitives = getPrimitiveDiscoveryResults({
+      framework,
+      ...(dependencies
+        ? { artifacts: dependencies.artifacts, targetPolicy: dependencies.targetPolicy }
+        : {}),
+    });
 
     if (options?.json) {
       const includeFrameworkFlag = options.framework !== undefined;
@@ -288,7 +364,9 @@ export async function primitivesList(options?: PrimitiveListOptions) {
       return;
     }
 
-    p.log.message(highlighter.underline(`${formatFrameworkLabel(framework)} Primitives`));
+    p.log.message(
+      highlighter.underline(`${formatFrameworkLabel(framework, targetPolicy)} Primitives`),
+    );
 
     const maxNameLen = Math.max(...primitives.map((primitive) => primitive.component.length));
     const includeFrameworkFlag = options?.framework !== undefined;
@@ -316,10 +394,10 @@ export async function primitivesList(options?: PrimitiveListOptions) {
 
 function getPrimitivesToUpdate(
   primitives: string[] | undefined,
-  options: PrimitiveUpdateOptions | undefined,
-  installedPrimitives: NonNullable<StarwindConfig["primitives"]>,
-  config: StarwindConfig,
-  framework: StarwindFramework,
+  options: PrivatePrimitiveUpdateOptions | undefined,
+  installedPrimitives: NonNullable<StarwindConfigFor<CliFrameworkTarget>["primitives"]>,
+  config: StarwindConfigFor<CliFrameworkTarget>,
+  framework: CliFrameworkTarget,
 ): string[] {
   const targetFrameworkPrimitives = installedPrimitives.filter(
     (primitive) => (primitive.framework ?? config.framework) === framework,
@@ -343,10 +421,10 @@ function getPrimitivesToUpdate(
 
 async function getPrimitivesToInstall(
   primitives: string[] | undefined,
-  options: PrimitiveAddOptions | undefined,
-  config: StarwindConfig,
-  framework: StarwindFramework | undefined,
-  availablePrimitives: PrimitiveVendoringArtifact[] | undefined,
+  options: PrivatePrimitiveAddOptions | undefined,
+  config: StarwindConfigFor<CliFrameworkTarget>,
+  framework: CliFrameworkTarget | undefined,
+  availablePrimitives: PrimitiveVendoringArtifact<CliFrameworkTarget>[] | undefined,
 ): Promise<string[]> {
   if (options?.all) {
     if (!availablePrimitives) {
@@ -425,35 +503,37 @@ async function getPrimitivesToInstall(
 }
 
 function getAvailablePrimitives(
-  framework: StarwindFramework | undefined,
-): PrimitiveVendoringArtifact[] | undefined {
+  framework: CliFrameworkTarget | undefined,
+  dependencies?: PrivatePrimitiveCommandDependencies,
+): PrimitiveVendoringArtifact<CliFrameworkTarget>[] | undefined {
   if (!framework) return undefined;
 
-  return getPrimitiveComponents({ framework });
+  return dependencies
+    ? getPrimitiveComponents({
+        artifacts: dependencies.artifacts,
+        framework,
+        targetPolicy: dependencies.targetPolicy,
+      })
+    : getPrimitiveComponents({ framework });
 }
 
 function getPrimitiveVendoringFramework(
-  config: StarwindConfig,
-  framework?: StarwindFramework,
-): StarwindFramework | undefined {
-  if (framework) return framework;
-
-  if (config.framework === "astro") {
-    return "astro";
+  config: StarwindConfigFor<CliFrameworkTarget>,
+  framework: CliFrameworkTarget | undefined,
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>,
+): CliFrameworkTarget | undefined {
+  if (framework !== undefined) {
+    return isConfigTarget(targetPolicy, framework) ? framework : undefined;
   }
 
-  if (config.framework === "react") {
-    return "react";
-  }
-
-  return undefined;
+  return isConfigTarget(targetPolicy, config.framework) ? config.framework : undefined;
 }
 
 function filterUninstalledPrimitives(
-  availablePrimitives: PrimitiveVendoringArtifact[],
-  config: StarwindConfig,
-  framework: StarwindFramework | undefined,
-): PrimitiveVendoringArtifact[] {
+  availablePrimitives: PrimitiveVendoringArtifact<CliFrameworkTarget>[],
+  config: StarwindConfigFor<CliFrameworkTarget>,
+  framework: CliFrameworkTarget | undefined,
+): PrimitiveVendoringArtifact<CliFrameworkTarget>[] {
   const installedNames = new Set(
     (config.primitives ?? [])
       .filter((primitive) => (primitive.framework ?? config.framework) === framework)
@@ -464,7 +544,7 @@ function filterUninstalledPrimitives(
 
 function partitionPrimitiveNames(
   names: string[],
-  availablePrimitives: PrimitiveVendoringArtifact[],
+  availablePrimitives: PrimitiveVendoringArtifact<CliFrameworkTarget>[],
 ): { invalid: string[]; valid: string[] } {
   const availableNames = new Set(availablePrimitives.map((primitive) => primitive.component));
   const valid: string[] = [];
@@ -481,8 +561,12 @@ function partitionPrimitiveNames(
   return { invalid, valid };
 }
 
-async function getCurrentConfigForPrimitivePreview(): Promise<StarwindConfig | undefined> {
-  const configState = await getConfigState();
+async function getCurrentConfigForPrimitivePreview(
+  dependencies?: PrivatePrimitiveCommandDependencies,
+): Promise<StarwindConfigFor<CliFrameworkTarget> | undefined> {
+  const configState = dependencies
+    ? await getConfigState(dependencies.targetPolicy)
+    : await getConfigState();
 
   if (configState.status === "missing") {
     p.log.error(
@@ -503,7 +587,8 @@ async function getCurrentConfigForPrimitivePreview(): Promise<StarwindConfig | u
 
 async function getCurrentConfigForPrimitiveCommand(
   options: PrimitiveCommandOptions | undefined,
-): Promise<StarwindConfig | undefined> {
+  dependencies?: PrivatePrimitiveCommandDependencies,
+): Promise<StarwindConfigFor<CliFrameworkTarget> | undefined> {
   const configExists = await fileExists(PATHS.LOCAL_CONFIG_FILE);
 
   if (!configExists) {
@@ -529,7 +614,9 @@ async function getCurrentConfigForPrimitiveCommand(
     }
   }
 
-  let detectedConfigState = await getConfigState();
+  let detectedConfigState = dependencies
+    ? await getConfigState(dependencies.targetPolicy)
+    : await getConfigState();
   let configState = detectedConfigState.status === "missing" ? undefined : detectedConfigState;
 
   if (!configState) {
@@ -566,7 +653,9 @@ async function getCurrentConfigForPrimitiveCommand(
       yes: options?.yes,
     });
 
-    detectedConfigState = await getConfigState();
+    detectedConfigState = dependencies
+      ? await getConfigState(dependencies.targetPolicy)
+      : await getConfigState();
     configState = detectedConfigState.status === "missing" ? undefined : detectedConfigState;
 
     if (!configState || configState.status !== "current") {
@@ -660,7 +749,19 @@ function formatPrimitiveUpdateResults(results: PrimitiveUpdateResult[]): string 
     .join("\n");
 }
 
-function formatFrameworkLabel(framework: PrimitiveDiscoveryFramework): string {
+function formatFrameworkLabel(
+  framework: PrimitiveDiscoveryFramework<CliFrameworkTarget>,
+  targetPolicy: FrameworkTargetPolicy<CliFrameworkTarget>,
+): string {
   if (framework === "all") return "All";
-  return framework === "react" ? "React" : "Astro";
+  return targetPolicy.labels[framework];
+}
+
+function getTargetPolicy(
+  dependencies?: PrivatePrimitiveCommandDependencies,
+): FrameworkTargetPolicy<CliFrameworkTarget> {
+  return (
+    dependencies?.targetPolicy ??
+    (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<CliFrameworkTarget>)
+  );
 }

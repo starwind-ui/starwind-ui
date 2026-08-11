@@ -33,6 +33,6 @@ export const progressIndicator = tv({
     },
   },
   defaultVariants: {
-    color: "primary",
+    color: "default",
   },
 });

@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -10,7 +11,9 @@ import {
   getAcceptanceWorkspacePolicy,
   getFixtureFiles,
   getPreviewEnvironment,
+  isPreviewTreeAlive,
   parseArgs,
+  stopPreviewTree,
 } from "../published-release-acceptance.mjs";
 
 describe("published release acceptance", () => {
@@ -48,6 +51,20 @@ allowBuilds:
       recursive: true,
       retryDelay: 500,
     });
+  });
+
+  it.skipIf(process.platform === "win32")("stops a detached preview process group", async () => {
+    const child = spawn(
+      process.execPath,
+      ["-e", "process.on('SIGTERM', () => {}); setInterval(() => {}, 1000)"],
+      { detached: true, stdio: "ignore" },
+    );
+    const preview = { child, getOutput: () => "" };
+
+    await stopPreviewTree(preview);
+
+    expect(child.exitCode ?? child.signalCode).not.toBeNull();
+    expect(isPreviewTreeAlive(preview)).toBe(false);
   });
 
   it("requires an exact prerelease or stable CLI version", () => {

@@ -56,7 +56,7 @@ export const radioGroupStyledContract: StyledAdapterContract = {
             "group-data-checked/radio:border-error [&>span>svg]:fill-error group-focus-visible/radio:ring-error/50",
         },
       },
-      defaultVariants: { variant: "primary" },
+      defaultVariants: { variant: "default" },
     },
     radioIndicator: {
       base: [

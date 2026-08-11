@@ -30,39 +30,9 @@ export const DEFAULT_COMPONENT_INSTALL_ROOT = "src/components/starwind";
 export const DEFAULT_PRIMITIVE_INSTALL_ROOT = "src/components/starwind-primitives";
 export const DEFAULT_CLI_REGISTRY_OUTPUT = "packages/cli/src/registry/bundled-registry.json";
 
-type RegistryImplementationTarget = FrameworkAdapterRegisteredTarget;
-type PrimitiveVendoringFramework = FrameworkAdapterRegisteredTarget;
-type PrimitiveTargetRegistration = (typeof primitiveFrameworkAdapterTargets)[number];
-type CliRegisteredPrimitiveTarget = PrimitiveTargetRegistration & {
-  target: FrameworkAdapterRegisteredTarget;
-};
-type PrimitiveVendoringTarget = CliRegisteredPrimitiveTarget & {
-  cliRegistry: PrimitiveTargetRegistration["cliRegistry"] & {
-    primitiveArtifact: NonNullable<PrimitiveTargetRegistration["cliRegistry"]["primitiveArtifact"]>;
-  };
-};
-
-type StyledCapabilityEntry = ReturnType<
-  typeof getFrameworkAdapterTargetsWithStyledCapability
->[number];
-type CliRegisteredStyledCapabilityEntry = StyledCapabilityEntry & {
-  target: FrameworkAdapterRegisteredTarget;
-};
-
-function isCliRegisteredStyledCapabilityEntry(
-  entry: StyledCapabilityEntry,
-): entry is CliRegisteredStyledCapabilityEntry {
-  return getPrimitiveFrameworkAdapterTarget(entry.target).publicSupport.cliRegistry;
-}
-
-function isPrimitiveVendoringTarget(
-  registration: PrimitiveTargetRegistration,
-): registration is PrimitiveVendoringTarget {
-  return Boolean(
-    registration.publicSupport.cliRegistry && registration.cliRegistry.primitiveArtifact,
-  );
-}
-
+type RegistryImplementationTarget = FrameworkTarget;
+type PrimitiveVendoringFramework = FrameworkTarget;
+export type CliRegistryTargetRegistration = (typeof primitiveFrameworkAdapterTargets)[number];
 type RegistryFile = {
   content: string;
   path: string;
@@ -87,7 +57,7 @@ type RegistrySetupTarget = {
 type RegistryComponent = {
   dependencies: string[];
   name: string;
-  targets: Record<RegistryImplementationTarget, RegistryTarget>;
+  targets: Partial<Record<RegistryImplementationTarget, RegistryTarget>>;
   type: "component";
   version: string;
 };
@@ -96,7 +66,7 @@ type RegistryComponentIndex = Omit<RegistryComponent, "targets"> & {
   artifact?: {
     path: string;
   };
-  targets?: Record<RegistryImplementationTarget, RegistryTarget>;
+  targets?: RegistryComponent["targets"];
 };
 
 export type RuntimeRegistry = {
@@ -146,10 +116,31 @@ export type PrimitiveVendoringArtifact = {
   version: string;
 };
 
+export type PrimitiveVendoringTargetDescriptor = {
+  editableContentMarkers: Array<{
+    extensions: string[];
+    markers: string[];
+    position: "contains" | "prefix";
+  }>;
+  forbiddenContent: string[];
+  generatedImportCandidateExtensions: string[];
+  packageRequirements: RegistryPackageRequirement[];
+  sourceRoot: string;
+};
+
 export type PrimitiveVendoringArtifacts = {
   $schema: string;
+  integrity?: {
+    algorithm: "sha256";
+    fingerprint: string;
+  };
   primitives: PrimitiveVendoringArtifact[];
+  validation?: Partial<Record<PrimitiveVendoringFramework, PrimitiveVendoringTargetDescriptor>>;
 };
+
+export type CliRegistryBuildPolicy = Readonly<{
+  targetRegistrations: readonly CliRegistryTargetRegistration[];
+}>;
 
 type BuildRuntimeRegistryOptions = {
   artifactDir?: string;
@@ -159,6 +150,7 @@ type BuildRuntimeRegistryOptions = {
   repoRoot?: string;
   registryVersion?: string;
   tempRoot?: string;
+  targetPolicy?: CliRegistryBuildPolicy;
   versionManifestPath?: string;
 };
 
@@ -168,6 +160,7 @@ type BuildPrimitiveVendoringArtifactsOptions = {
   primitiveVersionManifestPath?: string;
   repoRoot?: string;
   tempRoot?: string;
+  targetPolicy?: CliRegistryBuildPolicy;
 };
 
 type WriteRuntimeRegistryOptions = BuildRuntimeRegistryOptions & {
@@ -199,11 +192,15 @@ type TargetDefinition = {
 };
 
 type PrimitiveVendoringTargetDefinition = {
+  editableContentMarkers: PrimitiveVendoringTargetDescriptor["editableContentMarkers"];
   extraPackageRequirements?: readonly string[];
+  forbiddenContent: string[];
   framework: PrimitiveVendoringFramework;
   generatedImportCandidateExtensions: readonly string[];
   includeLocalImportGraph?: boolean;
   outputDir: string;
+  projectContent(content: string): string;
+  publicRegistry: boolean;
   sourceRoot: string;
 };
 
@@ -214,13 +211,23 @@ type PackageMetadata = {
   version?: string;
 };
 
-const TARGETS: TargetDefinition[] = getFrameworkAdapterTargetsWithStyledCapability()
-  .filter(isCliRegisteredStyledCapabilityEntry)
-  .map(({ capability, target }) => ({
-    capability,
-    registration: getPrimitiveFrameworkAdapterTarget(target),
-  }))
-  .map(({ capability, registration }) => {
+function createTargetDefinitions(
+  registrations: readonly CliRegistryTargetRegistration[],
+): TargetDefinition[] {
+  const capabilities = new Map(
+    getFrameworkAdapterTargetsWithStyledCapability().map(({ capability, target }) => [
+      target,
+      capability,
+    ]),
+  );
+
+  return registrations.map((registration) => {
+    const capability = capabilities.get(registration.target);
+    if (!capability) {
+      throw new Error(
+        `CLI registry target "${registration.target}" is missing Styled adapter capability.`,
+      );
+    }
     const adapterPackage = getCliRegistryAdapterPackage(registration.target);
 
     return {
@@ -234,23 +241,78 @@ const TARGETS: TargetDefinition[] = getFrameworkAdapterTargetsWithStyledCapabili
       primitiveOutputDir: registration.cliRegistry.styledArtifact.primitiveOutputDir,
       project: capability.project,
       setupPackageRequirements: registration.cliRegistry.setupPackageRequirements,
-      target: registration.target,
+      target: registration.target as RegistryImplementationTarget,
     };
   });
+}
 
-const PRIMITIVE_VENDORED_TARGETS: PrimitiveVendoringTargetDefinition[] =
-  primitiveFrameworkAdapterTargets.filter(isPrimitiveVendoringTarget).map((target) => {
-    const primitiveArtifact = target.cliRegistry.primitiveArtifact;
+function createPrimitiveVendoringTargetDefinitions(
+  registrations: readonly CliRegistryTargetRegistration[],
+): PrimitiveVendoringTargetDefinition[] {
+  return registrations.map((registration) => {
+    const primitiveArtifact = registration.cliRegistry.primitiveArtifact;
+    if (!primitiveArtifact) {
+      throw new Error(
+        `CLI registry target "${registration.target}" is missing Primitive artifact metadata.`,
+      );
+    }
 
     return {
+      editableContentMarkers: primitiveArtifact.editableContentMarkers.map((rule) => ({
+        extensions: [...rule.extensions],
+        markers: [...rule.markers],
+        position: rule.position,
+      })),
       extraPackageRequirements: primitiveArtifact.extraPackageRequirements,
-      framework: target.target,
-      generatedImportCandidateExtensions: target.cliRegistry.generatedImportCandidateExtensions,
+      forbiddenContent: [...primitiveArtifact.forbiddenContent],
+      framework: registration.target as PrimitiveVendoringFramework,
+      generatedImportCandidateExtensions:
+        registration.cliRegistry.generatedImportCandidateExtensions,
       includeLocalImportGraph: primitiveArtifact.includeLocalImportGraph,
       outputDir: primitiveArtifact.outputDir,
+      projectContent: primitiveArtifact.projectContent,
+      publicRegistry: registration.publicSupport.cliRegistry,
       sourceRoot: primitiveArtifact.sourceRoot,
     };
   });
+}
+
+export function createCliRegistryBuildPolicy(
+  targetRegistrations: readonly CliRegistryTargetRegistration[],
+): CliRegistryBuildPolicy {
+  const seenTargets = new Set<FrameworkAdapterRegisteredTarget>();
+
+  for (const registration of targetRegistrations) {
+    const authoritativeRegistration = getPrimitiveFrameworkAdapterTarget(registration.target);
+    if (registration !== authoritativeRegistration) {
+      throw new Error(
+        `CLI registry target "${registration.target}" must use its registered target metadata.`,
+      );
+    }
+    if (seenTargets.has(registration.target)) {
+      throw new Error(`Duplicate CLI registry target "${registration.target}".`);
+    }
+    seenTargets.add(registration.target);
+  }
+
+  createTargetDefinitions(targetRegistrations);
+  createPrimitiveVendoringTargetDefinitions(targetRegistrations);
+
+  return Object.freeze({
+    targetRegistrations: Object.freeze([...targetRegistrations]),
+  });
+}
+
+function resolveCliRegistryBuildPolicy(
+  targetPolicy?: CliRegistryBuildPolicy,
+): CliRegistryBuildPolicy {
+  return createCliRegistryBuildPolicy(
+    targetPolicy?.targetRegistrations ??
+      primitiveFrameworkAdapterTargets.filter(
+        (registration) => registration.publicSupport.cliRegistry,
+      ),
+  );
+}
 
 export type StyledArtifactTargetPlanningFacts = {
   component: string;
@@ -266,12 +328,15 @@ export type StyledArtifactPlanningFacts = {
 };
 
 export function buildStyledArtifactPlanningFacts(
-  options: { contracts?: StyledAdapterContract[] } = {},
+  options: { contracts?: StyledAdapterContract[]; targetPolicy?: CliRegistryBuildPolicy } = {},
 ): StyledArtifactPlanningFacts {
   const contracts = options.contracts ?? starwindStyledContracts;
   const targets: StyledArtifactPlanningFacts["targets"] = {};
+  const targetDefinitions = createTargetDefinitions(
+    resolveCliRegistryBuildPolicy(options.targetPolicy).targetRegistrations,
+  );
 
-  for (const target of TARGETS) {
+  for (const target of targetDefinitions) {
     const targetContracts = contracts.filter((contract) => isForFramework(contract, target.target));
     if (targetContracts.length === 0) continue;
 
@@ -311,7 +376,9 @@ export async function buildRuntimeRegistry(
   const contracts = options.contracts ?? starwindStyledContracts;
   const componentInstallRoot = options.componentInstallRoot ?? DEFAULT_COMPONENT_INSTALL_ROOT;
   const repoRoot = options.repoRoot ?? process.cwd();
-  const packageRanges = await loadPackageRanges(repoRoot);
+  const targetPolicy = resolveCliRegistryBuildPolicy(options.targetPolicy);
+  const targetDefinitions = createTargetDefinitions(targetPolicy.targetRegistrations);
+  const packageRanges = await loadPackageRanges(repoRoot, targetPolicy.targetRegistrations);
   const versionManifest = await loadRegistryVersionManifest({
     repoRoot,
     versionManifestPath: options.versionManifestPath,
@@ -321,12 +388,15 @@ export async function buildRuntimeRegistry(
     manifestPath: options.versionManifestPath ?? DEFAULT_REGISTRY_VERSION_MANIFEST,
     requireComponentVersions: options.componentVersion === undefined,
   });
-  const styledArtifactPlanningFacts = buildStyledArtifactPlanningFacts({ contracts });
+  const styledArtifactPlanningFacts = buildStyledArtifactPlanningFacts({
+    contracts,
+    targetPolicy,
+  });
 
   try {
     const targetOutputs = new Map<RegistryImplementationTarget, string>();
 
-    for (const target of TARGETS) {
+    for (const target of targetDefinitions) {
       const targetContracts = contracts.filter((contract) =>
         isForFramework(contract, target.target),
       );
@@ -346,7 +416,7 @@ export async function buildRuntimeRegistry(
     return {
       $schema: "https://starwind.dev/registry-schema.v2.json",
       version: options.registryVersion ?? versionManifest.registryVersion,
-      setup: buildRegistrySetup(packageRanges),
+      setup: buildRegistrySetup(packageRanges, targetDefinitions),
       components: await Promise.all(
         contracts.map(async (contract) => ({
           name: contract.component,
@@ -361,6 +431,7 @@ export async function buildRuntimeRegistry(
             contract,
             packageRanges,
             styledArtifactPlanningFacts,
+            targetDefinitions,
             targetOutputs,
           }),
         })),
@@ -373,10 +444,13 @@ export async function buildRuntimeRegistry(
   }
 }
 
-function buildRegistrySetup(packageRanges: Map<string, string>): RuntimeRegistry["setup"] {
+function buildRegistrySetup(
+  packageRanges: Map<string, string>,
+  targetDefinitions: readonly TargetDefinition[],
+): RuntimeRegistry["setup"] {
   const setup: RuntimeRegistry["setup"] = {};
 
-  for (const target of TARGETS) {
+  for (const target of targetDefinitions) {
     if (setup[target.target]) {
       throw new Error(`Duplicate CLI registry setup target "${target.target}".`);
     }
@@ -501,10 +575,17 @@ export async function buildPrimitiveVendoringArtifacts(
   });
 
   try {
-    const packageRanges = await loadPackageRanges(repoRoot);
+    const targetPolicy = resolveCliRegistryBuildPolicy(options.targetPolicy);
+    const packageRanges = await loadPackageRanges(repoRoot, targetPolicy.targetRegistrations);
+    const primitiveTargets = createPrimitiveVendoringTargetDefinitions(
+      targetPolicy.targetRegistrations,
+    );
     const primitives: PrimitiveVendoringArtifact[] = [];
+    const validation: Partial<
+      Record<PrimitiveVendoringFramework, PrimitiveVendoringTargetDescriptor>
+    > = {};
 
-    for (const target of PRIMITIVE_VENDORED_TARGETS) {
+    for (const target of primitiveTargets) {
       const outputRoot = path.join(tempRoot, target.outputDir);
 
       await generateFrameworkPrimitiveWrappers(target.framework, {
@@ -512,40 +593,72 @@ export async function buildPrimitiveVendoringArtifacts(
         outputRoot,
       });
 
-      primitives.push(
-        ...(await Promise.all(
-          contracts.map(async (contract) => {
-            const files = await readGeneratedPrimitiveFiles({
-              component: contract.component,
-              generatedImportCandidateExtensions: target.generatedImportCandidateExtensions,
-              framework: target.framework,
-              includeLocalImportGraph: target.includeLocalImportGraph,
-              outputRoot,
-              primitiveInstallRoot,
-              repoRoot,
-              sourceRoot: target.sourceRoot,
-            });
+      const targetArtifacts = await Promise.all(
+        contracts.map(async (contract) => {
+          const files = await readGeneratedPrimitiveFiles({
+            component: contract.component,
+            generatedImportCandidateExtensions: target.generatedImportCandidateExtensions,
+            includeLocalImportGraph: target.includeLocalImportGraph,
+            outputRoot,
+            primitiveInstallRoot,
+            projectContent: target.projectContent,
+            repoRoot,
+            sourceRoot: target.sourceRoot,
+          });
 
-            return {
-              component: contract.component,
-              framework: target.framework,
-              version: primitiveVersionManifest.primitives[contract.component],
+          return {
+            component: contract.component,
+            framework: target.framework,
+            version: primitiveVersionManifest.primitives[contract.component],
+            files,
+            packageRequirements: collectPrimitivePackageRequirements({
+              extraPackageNames: target.extraPackageRequirements,
               files,
-              packageRequirements: collectPrimitivePackageRequirements({
-                extraPackageNames: target.extraPackageRequirements,
-                files,
-                packageRanges,
-              }),
-            };
-          }),
-        )),
+              packageRanges,
+            }),
+          };
+        }),
       );
+      primitives.push(...targetArtifacts);
+
+      if (!target.publicRegistry) {
+        const packageRequirements = targetArtifacts[0]?.packageRequirements;
+        if (
+          !packageRequirements ||
+          targetArtifacts.some(
+            (artifact) =>
+              JSON.stringify(artifact.packageRequirements) !== JSON.stringify(packageRequirements),
+          )
+        ) {
+          throw new Error(
+            `Primitive artifacts for "${target.framework}" must use one package requirement set.`,
+          );
+        }
+        validation[target.framework] = {
+          editableContentMarkers: target.editableContentMarkers,
+          forbiddenContent: target.forbiddenContent,
+          generatedImportCandidateExtensions: [...target.generatedImportCandidateExtensions],
+          packageRequirements,
+          sourceRoot: target.sourceRoot,
+        };
+      }
     }
 
-    return {
+    const artifactSet: PrimitiveVendoringArtifacts = {
       $schema: "https://starwind.dev/primitive-vendoring-artifacts-schema.v1.json",
       primitives,
+      ...(Object.keys(validation).length > 0 ? { validation } : {}),
     };
+
+    return artifactSet.validation
+      ? {
+          ...artifactSet,
+          integrity: {
+            algorithm: "sha256",
+            fingerprint: createPrimitiveArtifactIntegrityFingerprint(artifactSet),
+          },
+        }
+      : artifactSet;
   } finally {
     if (shouldRemoveTempRoot) {
       await rm(tempRoot, { force: true, recursive: true });
@@ -587,11 +700,12 @@ async function buildTargetsForContract(options: {
   contract: StyledAdapterContract;
   packageRanges: Map<string, string>;
   styledArtifactPlanningFacts: StyledArtifactPlanningFacts;
+  targetDefinitions: readonly TargetDefinition[];
   targetOutputs: Map<RegistryImplementationTarget, string>;
-}): Promise<Record<RegistryImplementationTarget, RegistryTarget>> {
-  const targets = {} as Record<RegistryImplementationTarget, RegistryTarget>;
+}): Promise<Partial<Record<RegistryImplementationTarget, RegistryTarget>>> {
+  const targets: Partial<Record<RegistryImplementationTarget, RegistryTarget>> = {};
 
-  for (const target of TARGETS) {
+  for (const target of options.targetDefinitions) {
     if (!isForFramework(options.contract, target.target)) continue;
 
     const outputRoot = options.targetOutputs.get(target.target);
@@ -639,16 +753,23 @@ async function readGeneratedComponentFiles(options: {
   );
 }
 
-async function loadPackageRanges(repoRoot: string): Promise<Map<string, string>> {
+async function loadPackageRanges(
+  repoRoot: string,
+  targetRegistrations: readonly CliRegistryTargetRegistration[],
+): Promise<Map<string, string>> {
   const ranges = new Map<string, string>();
+  const packageMetadataSources = [
+    ...new Set(
+      targetRegistrations.flatMap(
+        (registration) => registration.cliRegistry.packageMetadataSources ?? [],
+      ),
+    ),
+  ];
 
-  await addPackageVersionRange(ranges, repoRoot, "packages/astro/package.json");
-  await addPackageVersionRange(ranges, repoRoot, "packages/react/package.json");
-  await addPackageVersionRange(ranges, repoRoot, "packages/runtime/package.json");
-  await addPackageDependencyRanges(ranges, repoRoot, "packages/astro/package.json");
-  await addPackageDependencyRanges(ranges, repoRoot, "packages/react/package.json");
-  await addPackageDependencyRanges(ranges, repoRoot, "apps/demo/package.json");
-  await addPackageDependencyRanges(ranges, repoRoot, "apps/react-demo/package.json");
+  for (const packageMetadataSource of packageMetadataSources) {
+    await addPackageVersionRange(ranges, repoRoot, packageMetadataSource);
+    await addPackageDependencyRanges(ranges, repoRoot, packageMetadataSource);
+  }
 
   return ranges;
 }
@@ -962,7 +1083,7 @@ function normalizePackageRange(range: string): string {
   return range === "workspace:*" ? "*" : range;
 }
 
-function getCliRegistryAdapterPackage(target: RegistryImplementationTarget): string {
+function getCliRegistryAdapterPackage(target: FrameworkAdapterRegisteredTarget): string {
   const packageName = getPrimitiveFrameworkAdapterTarget(target).packageName;
 
   if (!packageName) {
@@ -1052,11 +1173,11 @@ function assertSafePrimitiveComponentName(component: string): void {
 
 async function readGeneratedPrimitiveFiles(options: {
   component: string;
-  framework: PrimitiveVendoringArtifact["framework"];
   generatedImportCandidateExtensions: readonly string[];
   includeLocalImportGraph?: boolean;
   outputRoot: string;
   primitiveInstallRoot: string;
+  projectContent(content: string): string;
   repoRoot: string;
   sourceRoot: string;
 }): Promise<PrimitiveVendoringFile[]> {
@@ -1071,7 +1192,7 @@ async function readGeneratedPrimitiveFiles(options: {
     relativeFiles.map(async (relativePath) => {
       const sourcePath = path.join(options.repoRoot, options.sourceRoot, relativePath);
       const generatedContent = await readFile(path.join(options.outputRoot, relativePath), "utf8");
-      const content = formatPrimitiveVendoringContent(
+      const content = options.projectContent(
         await formatWithPrettier(generatedContent, {
           ...((await resolvePrettierConfig(sourcePath)) ?? {}),
           filepath: sourcePath,
@@ -1173,11 +1294,19 @@ export function getLocalGeneratedImportCandidates(
   importPath: string,
   generatedImportCandidateExtensions: readonly string[],
 ): string[] {
-  if (path.posix.extname(importPath)) {
-    return [importPath];
-  }
-
+  const importExtension = path.posix.extname(importPath);
   const candidateExtensions = [...new Set(generatedImportCandidateExtensions)];
+
+  if (importExtension) {
+    if (![".js", ".jsx", ".mjs", ".cjs"].includes(importExtension)) return [importPath];
+
+    const importBase = importPath.slice(0, -importExtension.length);
+    const sourceExtensions = candidateExtensions.filter((extension) =>
+      [".ts", ".tsx", ".mts", ".cts"].includes(extension),
+    );
+
+    return [importPath, ...sourceExtensions.map((extension) => importBase + extension)];
+  }
 
   return [
     ...candidateExtensions.map((extension) => `${importPath}${extension}`),
@@ -1206,19 +1335,30 @@ function createSourceHash(content: string): string {
   return `sha256:${createHash("sha256").update(content).digest("hex")}`;
 }
 
+function createPrimitiveArtifactIntegrityFingerprint(
+  artifactSet: PrimitiveVendoringArtifacts,
+): string {
+  return `sha256:${createHash("sha256").update(toCanonicalJson(artifactSet)).digest("hex")}`;
+}
+
+function toCanonicalJson(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(toCanonicalJson).join(",")}]`;
+
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .filter((key) => record[key] !== undefined)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${toCanonicalJson(record[key])}`)
+    .join(",")}}`;
+}
+
 async function formatJsonDocument(value: unknown, filepath: string): Promise<string> {
   return formatWithPrettier(JSON.stringify(value), {
     ...((await resolvePrettierConfig(filepath)) ?? {}),
     filepath,
     parser: "json",
   });
-}
-
-function formatPrimitiveVendoringContent(content: string): string {
-  return content.replace(
-    /\/\*\*\n \* Generated by scripts\/portable-runtime\/generate-cli-registry\.ts\.\n \* Do not edit by hand; update the contract\/template instead\.\n \*\//g,
-    "/**\n * Vendored by the Starwind CLI.\n * You own this file in your project.\n */",
-  );
 }
 
 async function readFilesRecursively(dir: string, root: string = dir): Promise<string[]> {

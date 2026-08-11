@@ -159,12 +159,12 @@ describe("styled component release intents", () => {
     const before = registryComponent("accordion", "2.0.1");
     const releaseOnly = structuredClone(before);
     releaseOnly.version = "2.0.2";
-    releaseOnly.targets!.astro.packageRequirements[0].range = "^0.1.0-beta.3";
+    releaseOnly.targets!.astro!.packageRequirements[0].range = "^0.1.0-beta.3";
     expect(createStyledRegistryFingerprint(before)).toBe(
       createStyledRegistryFingerprint(releaseOnly),
     );
 
-    releaseOnly.targets!.astro.files[0].content = "changed source";
+    releaseOnly.targets!.astro!.files[0].content = "changed source";
     expect(createStyledRegistryFingerprint(before)).not.toBe(
       createStyledRegistryFingerprint(releaseOnly),
     );

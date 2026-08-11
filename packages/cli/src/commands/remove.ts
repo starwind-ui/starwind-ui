@@ -2,15 +2,21 @@ import * as p from "@clack/prompts";
 
 import { type RemoveResult, type RemoveTarget, removeComponent } from "@/utils/component.js";
 import {
-  type ComponentConfig,
+  type ComponentConfigFor,
   getConfig,
   getStyledComponentDir,
-  type StarwindConfig,
+  type StarwindConfigFor,
   type StarwindFramework,
   updateConfig,
 } from "@/utils/config.js";
 import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
 import { PATHS } from "@/utils/constants.js";
+import {
+  type FrameworkTargetPolicy,
+  isConfigTarget,
+  type PrivateVueCliFrameworkTarget,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { syncReactProjectComponentStyles } from "@/utils/runtime-component.js";
@@ -22,9 +28,42 @@ interface RemoveOptions {
   yes?: boolean;
 }
 
-export async function remove(components?: string[], options?: RemoveOptions) {
+export type PrivateVueRemoveOptions = Omit<RemoveOptions, "framework"> & {
+  framework?: PrivateVueCliFrameworkTarget | "all";
+};
+
+export type PrivateVueRemoveDependencies = {
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>;
+};
+
+type LifecycleRemoveTarget = RemoveTarget<PrivateVueCliFrameworkTarget>;
+type LifecycleRemoveResult = RemoveResult<PrivateVueCliFrameworkTarget>;
+
+export function remove(components?: string[], options?: RemoveOptions): Promise<void>;
+export function remove(
+  components: string[] | undefined,
+  options: PrivateVueRemoveOptions,
+  dependencies: PrivateVueRemoveDependencies,
+): Promise<void>;
+export async function remove(
+  components?: string[],
+  options?: PrivateVueRemoveOptions,
+  dependencies?: PrivateVueRemoveDependencies,
+): Promise<void> {
   try {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
+    const targetPolicy =
+      dependencies?.targetPolicy ??
+      (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>);
+    if (
+      options?.framework &&
+      options.framework !== "all" &&
+      !isConfigTarget(targetPolicy, options.framework)
+    ) {
+      throw new Error(
+        `Framework "${options.framework}" is not available under the ${targetPolicy.cacheKey} target policy.`,
+      );
+    }
 
     // Check if starwind.config.json exists
     const configExists = await fileExists(PATHS.LOCAL_CONFIG_FILE);
@@ -35,19 +74,19 @@ export async function remove(components?: string[], options?: RemoveOptions) {
     }
 
     // Read and validate config before planning any filesystem mutations.
-    const config = await getConfig();
-    const installedTargets = getInstalledRemovalTargets(config);
+    const config = dependencies ? await getConfig(targetPolicy) : await getConfig();
+    const installedTargets = getInstalledRemovalTargets(config, targetPolicy);
 
     if (installedTargets.length === 0) {
       p.log.warn("No components are currently installed.");
       process.exit(0);
     }
 
-    const frameworkScope = options?.framework ?? getPrimaryFramework(config);
+    const frameworkScope = options?.framework ?? getPrimaryFramework(config, targetPolicy);
     const scopedTargets = installedTargets.filter(
       (target) => frameworkScope === "all" || target.framework === frameworkScope,
     );
-    let targetsToRemove: RemoveTarget[] = [];
+    let targetsToRemove: LifecycleRemoveTarget[] = [];
 
     // ================================================================
     //                     Get components to remove
@@ -120,8 +159,8 @@ export async function remove(components?: string[], options?: RemoveOptions) {
     }
 
     const results = {
-      removed: [] as RemoveResult[],
-      failed: [] as RemoveResult[],
+      removed: [] as LifecycleRemoveResult[],
+      failed: [] as LifecycleRemoveResult[],
     };
 
     // ================================================================
@@ -142,10 +181,13 @@ export async function remove(components?: string[], options?: RemoveOptions) {
     if (results.removed.length > 0) {
       const successfulKeys = new Set(results.removed.map(getRemovalTargetKey));
       const updatedComponents = config.components.filter(
-        (component) => !successfulKeys.has(getComponentConfigKey(config, component)),
+        (component) => !successfulKeys.has(getComponentConfigKey(config, component, targetPolicy)),
       );
 
-      await updateConfig({ components: updatedComponents }, { appendComponents: false });
+      await updateConfig(
+        { components: updatedComponents },
+        dependencies ? { appendComponents: false, targetPolicy } : { appendComponents: false },
+      );
       await syncReactProjectComponentStyles(config);
     }
 
@@ -189,11 +231,14 @@ export async function remove(components?: string[], options?: RemoveOptions) {
   }
 }
 
-function getInstalledRemovalTargets(config: StarwindConfig): RemoveTarget[] {
-  const targets = new Map<string, RemoveTarget>();
+function getInstalledRemovalTargets(
+  config: StarwindConfigFor<PrivateVueCliFrameworkTarget>,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+): LifecycleRemoveTarget[] {
+  const targets = new Map<string, LifecycleRemoveTarget>();
 
   for (const component of config.components) {
-    const framework = getComponentFramework(config, component);
+    const framework = getComponentFramework(config, component, targetPolicy);
     const configuredComponentDir = getStyledComponentDir(config, framework);
     const componentDir = isLegacyComponent(config, component)
       ? getLegacyStarwindComponentDir(configuredComponentDir)
@@ -210,8 +255,11 @@ function getInstalledRemovalTargets(config: StarwindConfig): RemoveTarget[] {
   return [...targets.values()];
 }
 
-function getPrimaryFramework(config: StarwindConfig): StarwindFramework {
-  if (config.framework === "astro" || config.framework === "react") {
+function getPrimaryFramework(
+  config: StarwindConfigFor<PrivateVueCliFrameworkTarget>,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+): PrivateVueCliFrameworkTarget {
+  if (isConfigTarget(targetPolicy, config.framework)) {
     return config.framework;
   }
 
@@ -223,21 +271,25 @@ function getPrimaryFramework(config: StarwindConfig): StarwindFramework {
 }
 
 function getComponentFramework(
-  config: StarwindConfig,
-  component: ComponentConfig,
-): StarwindFramework {
-  if (component.framework === "astro" || component.framework === "react") {
+  config: StarwindConfigFor<PrivateVueCliFrameworkTarget>,
+  component: ComponentConfigFor<PrivateVueCliFrameworkTarget>,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+): PrivateVueCliFrameworkTarget {
+  if (isConfigTarget(targetPolicy, component.framework)) {
     return component.framework;
   }
 
   if (component.source === "legacy" || config.version !== 2) {
-    return getPrimaryFramework(config);
+    return getPrimaryFramework(config, targetPolicy);
   }
 
   throw new Error(`Unable to resolve the framework for component "${component.name}".`);
 }
 
-function isLegacyComponent(config: StarwindConfig, component: ComponentConfig): boolean {
+function isLegacyComponent(
+  config: StarwindConfigFor<PrivateVueCliFrameworkTarget>,
+  component: ComponentConfigFor<PrivateVueCliFrameworkTarget>,
+): boolean {
   return component.source === "legacy" || config.version !== 2;
 }
 
@@ -249,18 +301,22 @@ function getLegacyStarwindComponentDir(componentDir: string): string {
     : `${normalized}/starwind`;
 }
 
-function getComponentConfigKey(config: StarwindConfig, component: ComponentConfig): string {
-  return `${getComponentFramework(config, component)}:${component.name}`;
+function getComponentConfigKey(
+  config: StarwindConfigFor<PrivateVueCliFrameworkTarget>,
+  component: ComponentConfigFor<PrivateVueCliFrameworkTarget>,
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
+): string {
+  return `${getComponentFramework(config, component, targetPolicy)}:${component.name}`;
 }
 
-function getRemovalTargetKey(target: Pick<RemoveTarget, "framework" | "name">): string {
+function getRemovalTargetKey(target: Pick<LifecycleRemoveTarget, "framework" | "name">): string {
   return `${target.framework}:${target.name}`;
 }
 
-function hasDuplicateName(targets: RemoveTarget[], name: string): boolean {
+function hasDuplicateName(targets: LifecycleRemoveTarget[], name: string): boolean {
   return targets.filter((target) => target.name === name).length > 1;
 }
 
-function formatRemovalTarget(target: Pick<RemoveTarget, "framework" | "name">): string {
+function formatRemovalTarget(target: Pick<LifecycleRemoveTarget, "framework" | "name">): string {
   return `${target.name} [${target.framework}]`;
 }

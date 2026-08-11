@@ -3,19 +3,22 @@
 import ComboboxPrimitive from "@starwind-ui/react/combobox";
 import { IconChevronDown as ChevronDown, IconX as X } from "@tabler/icons-react";
 import type * as React from "react";
+import type { VariantProps } from "tailwind-variants";
 import { InputGroup, InputGroupAddon, InputGroupButton } from "../input-group";
 import { comboboxInput, comboboxInputGroup } from "./variants";
 
-export type ComboboxInputProps = React.ComponentPropsWithoutRef<"input"> & {
-  children?: React.ReactNode;
-  showClear?: boolean;
-  showTrigger?: boolean;
-};
+export type ComboboxInputProps = Omit<React.ComponentPropsWithoutRef<"input">, "size"> &
+  VariantProps<typeof comboboxInputGroup> & {
+    children?: React.ReactNode;
+    showClear?: boolean;
+    showTrigger?: boolean;
+  };
 
 function ComboboxInput(props: ComboboxInputProps) {
   const {
     className,
     disabled = false,
+    size = "md",
     showClear = false,
     showTrigger = true,
     children,
@@ -24,7 +27,8 @@ function ComboboxInput(props: ComboboxInputProps) {
 
   return (
     <InputGroup
-      className={comboboxInputGroup({ class: className })}
+      className={comboboxInputGroup({ size, class: className })}
+      data-size={size}
       data-sw-combobox-input-group=""
     >
       <ComboboxPrimitive.Input

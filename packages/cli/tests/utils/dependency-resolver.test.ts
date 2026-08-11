@@ -70,6 +70,25 @@ describe("dependency resolver", () => {
       expect(result).toEqual(["zod@^3.0.0"]);
     });
 
+    it("resolves Vue adapter and peer requirements from normal and local package specs", async () => {
+      mockReadJsonFile.mockResolvedValue({
+        dependencies: {
+          "@starwind-ui/vue": "workspace:*",
+          vue: "^3.5.13",
+          "tailwind-variants": "^1.0.0",
+        },
+      });
+
+      const result = await filterUninstalledDependencies([
+        "@starwind-ui/vue@*",
+        "vue@>=3.5",
+        "tailwind-variants@^1.0.0",
+        "lucide-vue-next@^0.468.0",
+      ]);
+
+      expect(result).toEqual(["lucide-vue-next@^0.468.0"]);
+    });
+
     it("treats missing package.json as requiring all requested dependencies", async () => {
       mockReadJsonFile.mockRejectedValue(new Error("missing"));
 

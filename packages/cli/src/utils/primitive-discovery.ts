@@ -1,12 +1,31 @@
-import { getConfigState, type StarwindConfig, type StarwindFramework } from "./config.js";
+import {
+  getConfigState,
+  type StarwindConfigFor,
+  type StarwindConfigStateFor,
+  type StarwindFramework,
+} from "./config.js";
 import { sortComponentPresentationByName } from "./component-presentation.js";
-import { getPrimitiveComponents, type PrimitiveVendoringArtifact } from "./primitive-component.js";
+import {
+  type CliFrameworkTarget,
+  type FrameworkTargetPolicy,
+  isConfigTarget,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "./framework-target-policy.js";
+import {
+  getPrimitiveComponents,
+  type PrimitiveVendoringArtifact,
+  type PrimitiveVendoringArtifactSet,
+} from "./primitive-component.js";
 
-export type PrimitiveDiscoveryFramework = StarwindFramework | "all";
+export type PrimitiveDiscoveryFramework<TFramework extends CliFrameworkTarget = StarwindFramework> =
+  | TFramework
+  | "all";
 
-type PrimitiveDiscoveryOptions = {
-  framework?: PrimitiveDiscoveryFramework;
+type PrimitiveDiscoveryOptions<TFramework extends CliFrameworkTarget = StarwindFramework> = {
+  artifacts?: PrimitiveVendoringArtifactSet<TFramework>;
+  framework?: PrimitiveDiscoveryFramework<TFramework>;
   query?: string;
+  targetPolicy?: FrameworkTargetPolicy<TFramework>;
 };
 
 export type PrimitiveDiscoveryMetadata = {
@@ -16,34 +35,53 @@ export type PrimitiveDiscoveryMetadata = {
     sourceHash: string;
     sourcePath: string;
   }>;
-  framework: StarwindFramework;
+  framework: CliFrameworkTarget;
   installCommand: string;
   name: string;
-  packageRequirements: PrimitiveVendoringArtifact["packageRequirements"];
+  packageRequirements: PrimitiveVendoringArtifact<CliFrameworkTarget>["packageRequirements"];
   version: string;
 };
 
-export async function resolvePrimitiveDiscoveryFramework(
-  framework?: PrimitiveDiscoveryFramework,
-): Promise<PrimitiveDiscoveryFramework | undefined> {
-  if (framework) return framework;
-
-  const configState = await getConfigState();
-
-  if (configState.status !== "current") {
-    return "astro";
+export async function resolvePrimitiveDiscoveryFramework<
+  TFramework extends CliFrameworkTarget = StarwindFramework,
+>(
+  framework?: PrimitiveDiscoveryFramework<TFramework>,
+  options: { targetPolicy?: FrameworkTargetPolicy<TFramework> } = {},
+): Promise<PrimitiveDiscoveryFramework<TFramework> | undefined> {
+  const targetPolicy = getTargetPolicy(options.targetPolicy);
+  if (framework !== undefined) {
+    if (framework === "all") return framework;
+    return isConfigTarget(targetPolicy, framework) ? framework : undefined;
   }
 
-  return getConfigFramework(configState.config);
+  const configState = (
+    options.targetPolicy ? await getConfigState(targetPolicy) : await getConfigState()
+  ) as StarwindConfigStateFor<TFramework>;
+
+  if (configState.status !== "current") {
+    return targetPolicy.configTargets[0];
+  }
+
+  return getConfigFramework(configState.config, targetPolicy);
 }
 
-export function getPrimitiveDiscoveryResults(
-  options: PrimitiveDiscoveryOptions,
-): PrimitiveVendoringArtifact[] {
-  const primitives =
+export function getPrimitiveDiscoveryResults<
+  TFramework extends CliFrameworkTarget = StarwindFramework,
+>(options: PrimitiveDiscoveryOptions<TFramework>): PrimitiveVendoringArtifact<TFramework>[] {
+  const targetPolicy = getTargetPolicy(options.targetPolicy);
+  const frameworks =
     options.framework === "all"
-      ? (["astro", "react"] as const).flatMap((framework) => getPrimitiveComponents({ framework }))
-      : getPrimitiveComponents({ framework: options.framework ?? "astro" });
+      ? targetPolicy.configTargets
+      : [options.framework ?? targetPolicy.configTargets[0]];
+  const primitives = frameworks.flatMap((framework) =>
+    options.targetPolicy || options.artifacts
+      ? getPrimitiveComponents({
+          artifacts: options.artifacts,
+          framework,
+          targetPolicy,
+        })
+      : getPrimitiveComponents({ framework }),
+  );
   const query = options.query?.trim().toLowerCase();
 
   const sortedPrimitives = sortComponentPresentationByName(
@@ -58,7 +96,7 @@ export function getPrimitiveDiscoveryResults(
 }
 
 export function toPrimitiveDiscoveryMetadata(
-  primitive: PrimitiveVendoringArtifact,
+  primitive: PrimitiveVendoringArtifact<CliFrameworkTarget>,
   options: { includeFrameworkFlag?: boolean } = {},
 ): PrimitiveDiscoveryMetadata {
   return {
@@ -79,13 +117,21 @@ export function toPrimitiveDiscoveryMetadata(
   };
 }
 
-export function getPrimitiveInstallCommand(name: string, framework?: StarwindFramework): string {
+export function getPrimitiveInstallCommand(name: string, framework?: CliFrameworkTarget): string {
   return `starwind primitives add ${name}${framework ? ` --framework ${framework}` : ""}`;
 }
 
-function getConfigFramework(config: StarwindConfig): StarwindFramework | undefined {
-  if (config.framework === "astro") return "astro";
-  if (config.framework === "react") return "react";
+function getConfigFramework<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): TFramework | undefined {
+  return isConfigTarget(targetPolicy, config.framework) ? config.framework : undefined;
+}
 
-  return undefined;
+function getTargetPolicy<TFramework extends CliFrameworkTarget>(
+  targetPolicy?: FrameworkTargetPolicy<TFramework>,
+): FrameworkTargetPolicy<TFramework> {
+  return (
+    targetPolicy ?? (PUBLIC_FRAMEWORK_TARGET_POLICY as unknown as FrameworkTargetPolicy<TFramework>)
+  );
 }

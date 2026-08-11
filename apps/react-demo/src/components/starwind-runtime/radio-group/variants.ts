@@ -56,7 +56,7 @@ export const radioControl = tv({
     },
   },
   defaultVariants: {
-    variant: "primary",
+    variant: "default",
   },
 });
 

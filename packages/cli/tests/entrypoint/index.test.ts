@@ -136,6 +136,30 @@ describe("starwind CLI parser", () => {
     expect(mockSearch).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["init", ["init", "--framework", "vue"]],
+    ["component add", ["add", "button", "--framework", "vue"]],
+    ["primitive add", ["primitives", "add", "button", "--framework", "vue"]],
+  ] as const)("rejects Vue from public %s", async (_command, args) => {
+    const program = createTestProgram();
+    let stderr = "";
+
+    configureCommandTree(program, {
+      writeErr: (message: string) => {
+        stderr += message;
+      },
+    });
+
+    await expect(program.parseAsync([...args], { from: "user" })).rejects.toMatchObject({
+      code: "commander.invalidArgument",
+    });
+
+    expect(stderr).toContain("argument 'vue' is invalid");
+    expect(stderr).toContain("Allowed choices are astro, react");
+    expect(mockInit).not.toHaveBeenCalled();
+    expect(mockAdd).not.toHaveBeenCalled();
+    expect(mockPrimitivesAdd).not.toHaveBeenCalled();
+  });
   it("parses overwrite after a Pro registry component into add options", async () => {
     const program = createTestProgram();
 
@@ -405,6 +429,27 @@ describe("starwind CLI parser", () => {
       }),
       expect.anything(),
     );
+  });
+
+  it("keeps Vue out of every public framework option", () => {
+    const program = createProgram();
+    const primitivesCommand = getCommand(program, "primitives");
+    const frameworkOptions: Array<[Command, string[]]> = [
+      [getCommand(program, "init"), ["astro", "react"]],
+      [getCommand(program, "add"), ["astro", "react"]],
+      [getCommand(program, "search"), ["astro", "react", "all"]],
+      [getCommand(program, "update"), ["astro", "react", "all"]],
+      [getCommand(program, "remove"), ["astro", "react", "all"]],
+      [getCommand(primitivesCommand, "add"), ["astro", "react"]],
+      [getCommand(primitivesCommand, "update"), ["astro", "react"]],
+      [getCommand(primitivesCommand, "list"), ["astro", "react", "all"]],
+    ];
+
+    for (const [command, expectedChoices] of frameworkOptions) {
+      const option = command.options.find((entry) => entry.long === "--framework");
+      expect(option?.argChoices).toEqual(expectedChoices);
+      expect(option?.argChoices).not.toContain("vue");
+    }
   });
 
   it("keeps command construction importable without running the bin entrypoint", () => {

@@ -44,7 +44,7 @@ Astro and React currently expose the same 36 Runtime-backed Primitive families, 
 Picker. Vue has a private non-shipping verification package and demo, Svelte has a private
 three-component verification package, and Solid remains an architecture fixture.
 
-## Beta Packages
+## Stable Packages
 
 The Runtime, Astro adapter, and React adapter packages are versioned in lockstep. The CLI is released
 alongside them so generated styled components and vendored Primitive sources request compatible
@@ -53,7 +53,7 @@ package versions.
 The legacy Core workspace is retained only as canonical source. It is private, ignored by
 Changesets, and permanently excluded from package publication.
 
-The beta supports Astro and React across the current 36-family Primitive surface. Future-framework
+The stable release supports Astro and React across the current 36-family Primitive surface. Future-framework
 fixtures in generator tests are non-shipping architecture checks and are not public framework
 support.
 
@@ -70,5 +70,5 @@ pnpm react-demo:smoke
 pnpm runtime:size:check
 ```
 
-See `beta-release.md` for the release gate, `adapter-vocabulary.md` for generator terminology, and
+See `beta-release.md` for the release lifecycle, `adapter-vocabulary.md` for generator terminology, and
 the package source and tests for the current public behavior contracts.

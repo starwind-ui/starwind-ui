@@ -6,6 +6,13 @@ export function quoteWindowsCommandArg(arg) {
   return `"${arg}"`;
 }
 
+export function getPackageManagerCommand(packageManager, platform = process.platform) {
+  if (!new Set(["npm", "pnpm"]).has(packageManager)) {
+    throw new Error(`Unsupported package manager command: ${packageManager}`);
+  }
+  return platform === "win32" ? `${packageManager}.cmd` : packageManager;
+}
+
 export function createSpawnCommand(command, args, platform = process.platform) {
   if (platform === "win32" && command.endsWith(".cmd")) {
     return {

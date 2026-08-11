@@ -3,24 +3,31 @@ import ComboboxPrimitive from "@starwind-ui/astro/combobox";
 import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
 import X from "@tabler/icons/outline/x.svg";
 import type { HTMLAttributes } from "astro/types";
+import type { VariantProps } from "tailwind-variants";
 import { InputGroup, InputGroupAddon, InputGroupButton } from "../input-group";
 import { comboboxInput, comboboxInputGroup } from "./variants";
 
-type Props = HTMLAttributes<"input"> & {
-  showClear?: boolean;
-  showTrigger?: boolean;
-};
+type Props = Omit<HTMLAttributes<"input">, "size"> &
+  VariantProps<typeof comboboxInputGroup> & {
+    showClear?: boolean;
+    showTrigger?: boolean;
+  };
 
 const {
   class: className,
   disabled = false,
+  size = "md",
   showClear = false,
   showTrigger = true,
   ...rest
 } = Astro.props;
 ---
 
-<InputGroup class={comboboxInputGroup({ class: className })} data-sw-combobox-input-group="">
+<InputGroup
+  class={comboboxInputGroup({ size, class: className })}
+  data-size={size}
+  data-sw-combobox-input-group=""
+>
   <ComboboxPrimitive.Input
     class={comboboxInput()}
     disabled={disabled}

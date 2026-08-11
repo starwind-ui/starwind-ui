@@ -1,8 +1,19 @@
 import * as p from "@clack/prompts";
 
-import { getConfigState, type StarwindConfig, type StarwindFramework } from "@/utils/config.js";
+import {
+  getConfigState,
+  type StarwindConfig,
+  type StarwindConfigFor,
+  type StarwindFramework,
+} from "@/utils/config.js";
 import { PATHS } from "@/utils/constants.js";
 import { sortComponentNames, sortComponentPresentation } from "@/utils/component-presentation.js";
+import {
+  type FrameworkTargetPolicy,
+  isConfigTarget,
+  type PrivateVueCliFrameworkTarget,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
+} from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
 import { detectPackageManager } from "@/utils/package-manager.js";
@@ -12,11 +23,14 @@ import {
   getConfiguredRegistrySource,
   loadRegistry,
   parseRegistrySource,
-  type Component,
+  type ComponentFor,
   type RegistrySource,
-  type StarwindRegistry,
+  type StarwindRegistryFor,
 } from "@/utils/registry.js";
-import { installRuntimeComponents } from "@/utils/runtime-component.js";
+import {
+  installRuntimeComponents,
+  type InstallRuntimeComponentsOptions,
+} from "@/utils/runtime-component.js";
 import { importStarwindProRegistryFromComponentsJson } from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
 import { isValidComponent } from "@/utils/validate.js";
@@ -33,6 +47,15 @@ interface AddOptions {
   framework?: StarwindFramework;
 }
 
+export type PrivateVueAddOptions = Omit<AddOptions, "framework"> & {
+  framework?: PrivateVueCliFrameworkTarget;
+};
+
+export type PrivateVueAddDependencies = {
+  registry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
+  targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>;
+};
+
 type AddResult = {
   name: string;
   status: "installed" | "skipped" | "failed";
@@ -42,24 +65,46 @@ type AddResult = {
 
 type RuntimeRegistrySelection =
   | {
-      availableComponents: Component[];
+      availableComponents: ComponentFor<PrivateVueCliFrameworkTarget>[];
       mode: "single";
-      registry: StarwindRegistry;
+      registry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
       source?: RegistrySource;
     }
   | {
-      availableComponents: Component[];
-      customRegistry: StarwindRegistry;
+      availableComponents: ComponentFor<PrivateVueCliFrameworkTarget>[];
+      customRegistry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
       customSource: RegistrySource;
-      defaultRegistry: StarwindRegistry;
+      defaultRegistry: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
       defaultSource?: RegistrySource;
       mode: "overlay";
     };
 
-export async function add(components?: string[], options?: AddOptions) {
+export function add(components?: string[], options?: AddOptions): Promise<void>;
+export function add(
+  components: string[] | undefined,
+  options: PrivateVueAddOptions,
+  dependencies: PrivateVueAddDependencies,
+): Promise<void>;
+export async function add(
+  components?: string[],
+  options?: PrivateVueAddOptions,
+  dependencies?: PrivateVueAddDependencies,
+): Promise<void> {
   try {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
     const packageManager = options?.packageManager ?? detectPackageManager().name;
+    const targetPolicy =
+      dependencies?.targetPolicy ??
+      (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>);
+    if (options?.framework && !isConfigTarget(targetPolicy, options.framework)) {
+      throw new Error(
+        `Framework "${options.framework}" is not available under the ${targetPolicy.cacheKey} target policy.`,
+      );
+    }
+    const loadRuntimeRegistry = (source: RegistrySource | undefined) =>
+      dependencies
+        ? loadRegistry(source, { targetPolicy })
+        : (loadRegistry(source) as Promise<StarwindRegistryFor<PrivateVueCliFrameworkTarget>>);
 
     // Check if starwind.config.json exists
     const configExists = await fileExists(PATHS.LOCAL_CONFIG_FILE);
@@ -78,11 +123,19 @@ export async function add(components?: string[], options?: AddOptions) {
       }
 
       if (shouldInit) {
-        await init(true, {
+        const initOptions = {
           defaults: options?.yes,
           framework: options?.framework,
           packageManager,
-        });
+        };
+        if (dependencies) {
+          await init(true, initOptions, dependencies);
+        } else {
+          await init(true, {
+            ...initOptions,
+            framework: initOptions.framework as StarwindFramework | undefined,
+          });
+        }
       } else {
         p.log.error(
           `Please initialize starwind with ${highlighter.info("starwind init")} before adding components`,
@@ -91,7 +144,9 @@ export async function add(components?: string[], options?: AddOptions) {
       }
     }
 
-    let detectedConfigState = await getConfigState();
+    let detectedConfigState = dependencies
+      ? await getConfigState(targetPolicy)
+      : await getConfigState();
     let configState = detectedConfigState.status === "missing" ? undefined : detectedConfigState;
 
     if (!configState) {
@@ -128,7 +183,9 @@ export async function add(components?: string[], options?: AddOptions) {
         yes: options?.yes,
       });
 
-      detectedConfigState = await getConfigState();
+      detectedConfigState = dependencies
+        ? await getConfigState(targetPolicy)
+        : await getConfigState();
       configState = detectedConfigState.status === "missing" ? undefined : detectedConfigState;
 
       if (!configState || configState.status !== "current") {
@@ -139,7 +196,7 @@ export async function add(components?: string[], options?: AddOptions) {
       }
     }
 
-    const runtimeConfig: StarwindConfig | undefined =
+    const runtimeConfig: StarwindConfigFor<PrivateVueCliFrameworkTarget> | undefined =
       configState.status === "current" ? configState.config : undefined;
     const explicitRuntimeRegistrySource = parseRegistrySource(options?.registry);
     const configuredRuntimeRegistrySource = runtimeConfig
@@ -154,8 +211,8 @@ export async function add(components?: string[], options?: AddOptions) {
 
       if (explicitRuntimeRegistrySource) {
         const [customRegistry, defaultRegistry] = await Promise.all([
-          loadRegistry(explicitRuntimeRegistrySource),
-          loadRegistry(configuredRuntimeRegistrySource),
+          loadRuntimeRegistry(explicitRuntimeRegistrySource),
+          dependencies?.registry ?? loadRuntimeRegistry(configuredRuntimeRegistrySource),
         ]);
 
         runtimeRegistrySelection = {
@@ -173,7 +230,7 @@ export async function add(components?: string[], options?: AddOptions) {
         return runtimeRegistrySelection;
       }
 
-      const registry = await loadRegistry(runtimeRegistrySource);
+      const registry = dependencies?.registry ?? (await loadRuntimeRegistry(runtimeRegistrySource));
       runtimeRegistrySelection = {
         availableComponents: registry.components,
         mode: "single",
@@ -223,7 +280,7 @@ export async function add(components?: string[], options?: AddOptions) {
 
         if (runtimeConfig) {
           const proRegistryImport = await importStarwindProRegistryFromComponentsJson(
-            runtimeConfig,
+            runtimeConfig as StarwindConfig,
             {
               warn: (message) => p.log.warn(message),
             },
@@ -248,7 +305,7 @@ export async function add(components?: string[], options?: AddOptions) {
           `Installing Pro registry components: ${sortComponentNames(registryComponents).join(", ")}`,
         );
         registryResults = await installProRegistryItems(registryComponents, {
-          config: proInstallConfig,
+          config: proInstallConfig as StarwindConfig,
           overwrite: options?.overwrite,
           packageManager,
         });
@@ -368,7 +425,7 @@ export async function add(components?: string[], options?: AddOptions) {
 
     if (componentsToInstall.length > 0) {
       const registrySelection = await getRuntimeRegistrySelection();
-      const runtimeResults = await installRuntimeComponents(componentsToInstall, {
+      const installOptions = {
         config: runtimeConfig,
         framework: options?.framework,
         skipPrompts: options?.yes,
@@ -378,7 +435,8 @@ export async function add(components?: string[], options?: AddOptions) {
           registrySelection.mode === "overlay"
             ? registrySelection.customRegistry
             : registrySelection.registry,
-        registryMode: registrySelection.mode === "overlay" ? "custom" : "default",
+        registryMode:
+          registrySelection.mode === "overlay" ? ("custom" as const) : ("default" as const),
         registryOverlay:
           registrySelection.mode === "overlay"
             ? {
@@ -390,7 +448,16 @@ export async function add(components?: string[], options?: AddOptions) {
           registrySelection.mode === "overlay"
             ? registrySelection.customSource
             : registrySelection.source,
-      });
+      };
+      const runtimeResults = dependencies
+        ? await installRuntimeComponents(componentsToInstall, {
+            ...installOptions,
+            targetPolicy,
+          })
+        : await installRuntimeComponents(
+            componentsToInstall,
+            installOptions as InstallRuntimeComponentsOptions,
+          );
 
       if (runtimeResults.setupOutcome) return;
 
@@ -484,10 +551,10 @@ ${sortComponentPresentation(registryResults.installed)
 }
 
 function filterUninstalledComponents(
-  availableComponents: Component[],
-  config: StarwindConfig | undefined,
-  framework?: StarwindFramework,
-): Component[] {
+  availableComponents: ComponentFor<PrivateVueCliFrameworkTarget>[],
+  config: StarwindConfigFor<PrivateVueCliFrameworkTarget> | undefined,
+  framework?: PrivateVueCliFrameworkTarget,
+): ComponentFor<PrivateVueCliFrameworkTarget>[] {
   const targetFramework = framework ?? config?.framework;
   const installedNames = new Set(
     (config?.components ?? [])
@@ -503,11 +570,11 @@ function filterUninstalledComponents(
 }
 
 function mergeOverlayComponents(
-  customComponents: Component[],
-  defaultComponents: Component[],
-  framework?: StarwindFramework,
-): Component[] {
-  const mergedComponents: Component[] = [];
+  customComponents: ComponentFor<PrivateVueCliFrameworkTarget>[],
+  defaultComponents: ComponentFor<PrivateVueCliFrameworkTarget>[],
+  framework?: PrivateVueCliFrameworkTarget,
+): ComponentFor<PrivateVueCliFrameworkTarget>[] {
+  const mergedComponents: ComponentFor<PrivateVueCliFrameworkTarget>[] = [];
   const seenNames = new Set<string>();
 
   const componentNames = new Set([

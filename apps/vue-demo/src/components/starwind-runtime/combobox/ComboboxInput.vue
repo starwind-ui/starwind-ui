@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as ComboboxPrimitive from "@starwind-ui/vue/combobox";
-import type { ClassValue } from "tailwind-variants";
+import type { ClassValue, VariantProps } from "tailwind-variants";
 import { type InputHTMLAttributes, useAttrs } from "vue";
 import { InputGroup, InputGroupAddon, InputGroupButton } from "../input-group";
 import { comboboxInput, comboboxInputGroup } from "./variants";
@@ -9,22 +9,25 @@ defineOptions({ inheritAttrs: false });
 
 export type ComboboxInputProps = Omit<
   InputHTMLAttributes,
-  "class" | "disabled" | "showClear" | "showTrigger"
-> & {
-  showClear?: boolean;
-  showTrigger?: boolean;
-  class?: ClassValue;
-  disabled?: boolean;
-};
+  "class" | "disabled" | "showClear" | "showTrigger" | "size"
+> &
+  VariantProps<typeof comboboxInputGroup> & {
+    showClear?: boolean;
+    showTrigger?: boolean;
+    class?: ClassValue;
+    disabled?: boolean;
+  };
 type ComboboxInputDeclaredProps = {
   showClear?: boolean;
   showTrigger?: boolean;
   class?: ClassValue;
   disabled?: boolean;
+  size?: ComboboxInputProps["size"];
 };
 const {
   class: className,
   disabled = false,
+  size = "md",
   showClear = false,
   showTrigger = true,
 } = defineProps<ComboboxInputDeclaredProps>();
@@ -35,7 +38,11 @@ const attrs = useAttrs();
 </script>
 
 <template>
-  <InputGroup :class="comboboxInputGroup({ class: className })" data-sw-combobox-input-group="">
+  <InputGroup
+    :class="comboboxInputGroup({ size, class: className })"
+    :data-size="size"
+    data-sw-combobox-input-group=""
+  >
     <ComboboxPrimitive.ComboboxInput
       :class="comboboxInput()"
       v-bind="{ ...attrs, disabled: disabled }"

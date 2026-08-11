@@ -38,7 +38,7 @@ export const progressStyledContract: StyledAdapterContract = {
         },
       },
       defaultVariants: {
-        color: "primary",
+        color: "default",
       },
     },
   },

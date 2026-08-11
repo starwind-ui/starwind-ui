@@ -10,9 +10,9 @@ Install a first-party adapter for Astro or React. The adapter brings in the comp
 version:
 
 ```bash
-npm install @starwind-ui/astro@beta
+npm install @starwind-ui/astro@latest
 # or
-npm install @starwind-ui/react@beta
+npm install @starwind-ui/react@latest
 ```
 
 Then use the adapter package to render your framework components.
@@ -23,7 +23,7 @@ Install Runtime directly when you are building an adapter, a custom component, o
 integration:
 
 ```bash
-npm install @starwind-ui/runtime@beta
+npm install @starwind-ui/runtime@latest
 ```
 
 Runtime exposes per-component controller factories from subpaths:
@@ -62,8 +62,8 @@ The package requires Node 22.12 or newer.
 
 ## Documentation
 
-Read the [installation guide](https://beta.starwind.dev/docs/getting-started/installation/) and
-[component documentation](https://beta.starwind.dev/docs/components/).
+Read the [installation guide](https://starwind.dev/docs/getting-started/installation/) and
+[component documentation](https://starwind.dev/docs/components/).
 
 ## Contributing
 

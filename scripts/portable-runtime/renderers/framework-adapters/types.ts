@@ -88,12 +88,22 @@ export type FrameworkAdapterTargetPackageRequirement = {
   range: string;
 };
 
+export type FrameworkAdapterTargetPrimitiveEditableContentMarker = {
+  extensions: readonly string[];
+  markers: readonly string[];
+  position: "contains" | "prefix";
+};
+
 export type FrameworkAdapterTargetCliRegistryMetadata = {
   generatedImportCandidateExtensions: readonly string[];
+  packageMetadataSources?: readonly string[];
   primitiveArtifact?: {
+    editableContentMarkers: readonly FrameworkAdapterTargetPrimitiveEditableContentMarker[];
     extraPackageRequirements?: readonly string[];
+    forbiddenContent: readonly string[];
     includeLocalImportGraph?: boolean;
     outputDir: string;
+    projectContent(content: string): string;
     sourceRoot: string;
   };
   styledArtifact: {

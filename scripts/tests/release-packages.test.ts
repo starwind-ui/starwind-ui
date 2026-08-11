@@ -5,6 +5,7 @@ import { EventEmitter } from "node:events";
 import { PassThrough } from "node:stream";
 
 import { describe, expect, it } from "vitest";
+import { parse as parseYaml } from "yaml";
 
 import {
   RELEASE_PACKAGE_SET,
@@ -29,7 +30,7 @@ import {
   runReleaseFinalization,
   verifyPublishedPackages,
 } from "../release-finalization.mjs";
-import { createSpawnCommand } from "../command-process.mjs";
+import { createSpawnCommand, getPackageManagerCommand } from "../command-process.mjs";
 import {
   CHANGESET_IGNORED_PACKAGES,
   RUNTIME_FIXED_GROUP,
@@ -73,6 +74,35 @@ function manifests(versions: { cli: string; runtime: string }) {
       version: entry.name === "starwind" ? versions.cli : versions.runtime,
     },
   }));
+}
+
+const CHANGESET_BUMPS = new Set<unknown>(["major", "minor", "patch"]);
+const PRIVATE_ADAPTER_PACKAGE_NAMES = new Set(["@starwind-ui/vue", "@starwind-ui/svelte"]);
+
+function parseChangesetReleasePackageNames(file: string, source: string): string[] {
+  const frontmatter = source.match(/^---[ \t]*\r?\n([\s\S]*?)^---[ \t]*$/m);
+  if (!frontmatter) throw new Error(`Invalid Changeset frontmatter: ${file}`);
+
+  const parsed: unknown = parseYaml(frontmatter[1]);
+  if (parsed === null) return [];
+  if (typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error(`Invalid Changeset release entries: ${file}`);
+  }
+
+  return Object.entries(parsed).map(([packageName, bump]) => {
+    if (!CHANGESET_BUMPS.has(bump)) {
+      throw new Error(`Invalid Changeset bump for ${packageName} in ${file}.`);
+    }
+    return packageName;
+  });
+}
+
+function assertNoPrivateAdapterChangesetReleases(file: string, source: string): void {
+  for (const packageName of parseChangesetReleasePackageNames(file, source)) {
+    if (PRIVATE_ADAPTER_PACKAGE_NAMES.has(packageName)) {
+      throw new Error(`Private package ${packageName} appears in ${file}.`);
+    }
+  }
 }
 
 describe("release package tooling", () => {
@@ -142,13 +172,20 @@ describe("release package tooling", () => {
     ).toEqual([]);
 
     const changesetFiles = (await readdir(".changeset", { withFileTypes: true }))
-      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md") && entry.name !== "README.md")
       .map((entry) => entry.name);
     for (const file of changesetFiles) {
-      expect(await readFile(`.changeset/${file}`, "utf8"), file).not.toContain(
-        '"@starwind-ui/svelte"',
-      );
+      assertNoPrivateAdapterChangesetReleases(file, await readFile(`.changeset/${file}`, "utf8"));
     }
+  });
+
+  it("rejects single-quoted private package releases in Changeset frontmatter", () => {
+    expect(() =>
+      assertNoPrivateAdapterChangesetReleases(
+        "private-vue.md",
+        "---\n'@starwind-ui/vue': patch\n---\n\nPrivate Vue release.\n",
+      ),
+    ).toThrow(/@starwind-ui\/vue/);
   });
 
   it("keeps the retired Core package permanently source-only", async () => {
@@ -197,6 +234,7 @@ describe("release package tooling", () => {
     expect(root.scripts?.["publish:beta"]).toBe("pnpm publish:release");
     expect(commandPhases(root.scripts?.["release:gate"])).toEqual([
       "pnpm verify",
+      "pnpm --filter=starwind package:check",
       "pnpm audit:prod",
       "pnpm demo:smoke",
       "pnpm react-demo:smoke",
@@ -521,6 +559,14 @@ describe("release package tooling", () => {
     child.emit("close", 0);
     child.emit("error", new Error("late error"));
     await expect(resultPromise).resolves.toMatchObject({ code: 0, stdout: "before close" });
+  });
+
+  it("resolves package-manager executables for Linux and Windows", () => {
+    expect(getPackageManagerCommand("npm", "linux")).toBe("npm");
+    expect(getPackageManagerCommand("pnpm", "linux")).toBe("pnpm");
+    expect(getPackageManagerCommand("npm", "win32")).toBe("npm.cmd");
+    expect(getPackageManagerCommand("pnpm", "win32")).toBe("pnpm.cmd");
+    expect(() => getPackageManagerCommand("yarn", "linux")).toThrow("Unsupported package manager");
   });
 
   it("uses one Windows command wrapper and rejects cmd metacharacters", () => {

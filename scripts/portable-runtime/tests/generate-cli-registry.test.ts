@@ -1,8 +1,11 @@
+import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../../packages/cli/src/utils/framework-target-policy.js";
+import { format as formatWithPrettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import {
   buttonRuntimeAdapterContract,
   checkboxRuntimeAdapterContract,
@@ -18,6 +21,7 @@ import {
   buildRuntimeRegistry,
   buildSplitRuntimeRegistry,
   buildStyledArtifactPlanningFacts,
+  createCliRegistryBuildPolicy,
   DEFAULT_COMPONENT_INSTALL_ROOT,
   DEFAULT_PRIMITIVE_INSTALL_ROOT,
   DEFAULT_PRIMITIVE_VERSION_MANIFEST,
@@ -29,7 +33,15 @@ import {
   type RuntimeRegistry,
   writeRuntimeRegistry,
 } from "../generate-cli-registry.js";
-import { getPrimitiveFrameworkAdapterTarget } from "../renderers/framework-adapters/index.js";
+import {
+  getPrimitiveFrameworkAdapterTarget,
+  svelteFrameworkAdapterTarget,
+} from "../renderers/framework-adapters/index.js";
+import { vueFrameworkAdapterTarget } from "../renderers/framework-adapters/vue/index.js";
+import {
+  vueRuntimePrimitiveComponents,
+  vueStyledComponents,
+} from "../renderers/framework-adapters/vue/inventory.js";
 
 const runtimePackage = JSON.parse(
   await readFile(new URL("../../../packages/runtime/package.json", import.meta.url), "utf8"),
@@ -53,6 +65,267 @@ describe("generateCliRegistry", () => {
     expect(isValidRegistryPackageName("bad package")).toBe(false);
     expect(isValidRegistryPackageName("foo@1")).toBe(false);
     expect(isValidRegistryPackageName("@scope/BadName")).toBe(false);
+  });
+
+  it("requires an immutable explicit policy for private targets", () => {
+    const vuePolicy = createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]);
+
+    expect(Object.isFrozen(vuePolicy)).toBe(true);
+    expect(Object.isFrozen(vuePolicy.targetRegistrations)).toBe(true);
+    expect(vuePolicy.targetRegistrations).toEqual([vueFrameworkAdapterTarget]);
+    expect(vueFrameworkAdapterTarget.publicSupport).toEqual({
+      cliRegistry: false,
+      demoIntegration: false,
+      packageExports: false,
+      publicDocsClaim: false,
+      status: "non-shipping-tracer",
+    });
+    expect(() =>
+      createCliRegistryBuildPolicy([vueFrameworkAdapterTarget, vueFrameworkAdapterTarget]),
+    ).toThrow(/Duplicate CLI registry target "vue"/);
+    expect(() => createCliRegistryBuildPolicy([svelteFrameworkAdapterTarget])).toThrow(
+      /svelte.*missing Styled adapter capability/,
+    );
+  });
+
+  it("generates exact deterministic private Vue registry documents from registered facts", async () => {
+    const targetPolicy = createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]);
+    const [styledVersionManifest, primitiveVersionManifest] = await Promise.all([
+      loadRegistryVersionManifest(),
+      loadPrimitiveVersionManifest(),
+    ]);
+    const [firstRegistry, secondRegistry, firstPrimitiveSet, secondPrimitiveSet] =
+      await Promise.all([
+        buildRuntimeRegistry({
+          targetPolicy,
+          tempRoot: path.join(tempRoot, "vue-styled-first"),
+        }),
+        buildRuntimeRegistry({
+          targetPolicy,
+          tempRoot: path.join(tempRoot, "vue-styled-second"),
+        }),
+        buildPrimitiveVendoringArtifacts({
+          targetPolicy,
+          tempRoot: path.join(tempRoot, "vue-primitives-first"),
+        }),
+        buildPrimitiveVendoringArtifacts({
+          targetPolicy,
+          tempRoot: path.join(tempRoot, "vue-primitives-second"),
+        }),
+      ]);
+
+    expect(JSON.stringify(firstRegistry, null, 2)).toBe(JSON.stringify(secondRegistry, null, 2));
+    expect(JSON.stringify(firstPrimitiveSet, null, 2)).toBe(
+      JSON.stringify(secondPrimitiveSet, null, 2),
+    );
+    expect(firstRegistry.setup).toEqual({
+      vue: {
+        adapterPackage: { name: "@starwind-ui/vue", range: "*" },
+        packageRequirements: [{ name: "vue", range: ">=3.5" }],
+      },
+    });
+
+    const vueComponents = firstRegistry.components
+      .filter((component) => component.targets?.vue)
+      .map((component) => component.name)
+      .sort();
+    expect(vueStyledComponents).toHaveLength(54);
+    expect(vueComponents).toEqual([...vueStyledComponents].sort());
+    expect(vueComponents).not.toContain("image");
+    expect(
+      firstRegistry.components.find((component) => component.name === "image")?.targets?.vue,
+    ).toBeUndefined();
+
+    const styledPackageNames = new Set<string>();
+    for (const componentName of vueComponents) {
+      const component = getRegistryComponentWithTargets(firstRegistry, componentName, "vue");
+      const target = component.targets.vue;
+      const packageNames = target.packageRequirements.map(({ name }) => name);
+      const combinedSource = target.files.map(({ content }) => content).join("\n");
+
+      expect(component.version, componentName).toBe(
+        styledVersionManifest.components[componentName],
+      );
+      expect(target.files.length, componentName).toBeGreaterThan(0);
+      expect(packageNames, componentName).toContain("@starwind-ui/vue");
+      expect(packageNames, componentName).toContain("vue");
+      expect(packageNames, componentName).not.toEqual(
+        expect.arrayContaining([
+          "@starwind-ui/astro",
+          "@starwind-ui/react",
+          "@starwind-ui/svelte",
+          "astro",
+          "react",
+          "react-dom",
+        ]),
+      );
+      packageNames.forEach((name) => styledPackageNames.add(name));
+      assertSafeInstallPaths(target.files, DEFAULT_COMPONENT_INSTALL_ROOT);
+      assertInstallGraphSourceClosure({
+        componentDependencies: target.componentDependencies,
+        files: target.files,
+        generatedImportCandidateExtensions:
+          vueFrameworkAdapterTarget.cliRegistry.generatedImportCandidateExtensions,
+        installRoot: DEFAULT_COMPONENT_INSTALL_ROOT,
+      });
+      assertNoMonorepoOnlyImports(target.files);
+      expect(combinedSource, componentName).toContain("data-slot");
+      expect(
+        target.files.some(
+          (file) => file.path.endsWith("/index.ts") && file.content.includes("export default"),
+        ),
+        componentName,
+      ).toBe(true);
+    }
+
+    expect([...styledPackageNames].sort()).toEqual(
+      expect.arrayContaining(["@starwind-ui/vue", "tailwind-variants", "vue"]),
+    );
+    expect([...styledPackageNames].some((name) => /astro|react|svelte/.test(name))).toBe(false);
+
+    const themeToggle = getRegistryComponentWithTargets(firstRegistry, "theme-toggle", "vue")
+      .targets.vue;
+    const themeToggleSource = themeToggle.files.map(({ content }) => content).join("\n");
+    expect(themeToggle.packageRequirements.map(({ name }) => name)).toEqual([
+      "@starwind-ui/vue",
+      "tailwind-variants",
+      "vue",
+    ]);
+    expect(themeToggleSource).toContain('from "@starwind-ui/vue/theme"');
+    expect(themeToggleSource).toContain('dataSlot = "theme-toggle"');
+    expect(themeToggleSource).toContain(':data-slot="dataSlot');
+    expect(themeToggleSource).toContain("<svg");
+    expect(themeToggleSource).not.toContain("@tabler/icons");
+
+    const colorPicker = getRegistryComponentWithTargets(firstRegistry, "color-picker", "vue")
+      .targets.vue;
+    expect(colorPicker.files.map(({ path: filePath }) => filePath)).toEqual(
+      expect.arrayContaining([
+        path.posix.join(DEFAULT_COMPONENT_INSTALL_ROOT, "color-picker/ColorPicker.vue"),
+        path.posix.join(DEFAULT_COMPONENT_INSTALL_ROOT, "color-picker/index.ts"),
+        path.posix.join(DEFAULT_COMPONENT_INSTALL_ROOT, "color-picker/styles.css"),
+        path.posix.join(DEFAULT_COMPONENT_INSTALL_ROOT, "color-picker/variants.ts"),
+      ]),
+    );
+    expect(
+      colorPicker.files.find(({ path: filePath }) => filePath.endsWith("/styles.css"))?.content,
+    ).toContain('[data-slot="color-picker"]');
+
+    expect(vueRuntimePrimitiveComponents).toHaveLength(36);
+    expect(firstPrimitiveSet.primitives.map(({ component }) => component).sort()).toEqual(
+      [...vueRuntimePrimitiveComponents].sort(),
+    );
+    expect(firstPrimitiveSet.primitives.every(({ framework }) => framework === "vue")).toBe(true);
+    expect(firstPrimitiveSet.primitives.map(({ component }) => component)).not.toContain("theme");
+    expect(firstPrimitiveSet.integrity).toEqual({
+      algorithm: "sha256",
+      fingerprint: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY.primitiveArtifactIntegrity?.vue,
+    });
+
+    expect(firstPrimitiveSet.validation).toEqual({
+      vue: {
+        editableContentMarkers:
+          vueFrameworkAdapterTarget.cliRegistry.primitiveArtifact?.editableContentMarkers.map(
+            (rule) => ({
+              extensions: [...rule.extensions],
+              markers: [...rule.markers],
+              position: rule.position,
+            }),
+          ),
+        forbiddenContent: [
+          ...(vueFrameworkAdapterTarget.cliRegistry.primitiveArtifact?.forbiddenContent ?? []),
+        ],
+        generatedImportCandidateExtensions: [
+          ...vueFrameworkAdapterTarget.cliRegistry.generatedImportCandidateExtensions,
+        ],
+        packageRequirements: firstPrimitiveSet.primitives[0]?.packageRequirements,
+        sourceRoot: vueFrameworkAdapterTarget.cliRegistry.primitiveArtifact?.sourceRoot,
+      },
+    });
+
+    const primitivePackageNames = new Set<string>();
+    for (const primitive of firstPrimitiveSet.primitives) {
+      const packageNames = primitive.packageRequirements.map(({ name }) => name);
+      expect(primitive.version, primitive.component).toBe(
+        primitiveVersionManifest.primitives[primitive.component],
+      );
+      expect(primitive.files.length, primitive.component).toBeGreaterThan(0);
+      expect(packageNames, primitive.component).toContain("@starwind-ui/runtime");
+      expect(packageNames.every((name) => ["@starwind-ui/runtime", "vue"].includes(name))).toBe(
+        true,
+      );
+      packageNames.forEach((name) => primitivePackageNames.add(name));
+      assertSafeInstallPaths(primitive.files, DEFAULT_PRIMITIVE_INSTALL_ROOT);
+      assertInstallGraphSourceClosure({
+        files: primitive.files,
+        generatedImportCandidateExtensions:
+          vueFrameworkAdapterTarget.cliRegistry.generatedImportCandidateExtensions,
+        installRoot: DEFAULT_PRIMITIVE_INSTALL_ROOT,
+      });
+      assertNoMonorepoOnlyImports(primitive.files);
+
+      for (const file of primitive.files) {
+        expect(file.sourcePath, file.path).toMatch(/^packages\/vue\/src\//);
+        expect(file.sourceHash, file.path).toBe(
+          "sha256:" + createHash("sha256").update(file.content).digest("hex"),
+        );
+        const expectedHeader = file.path.endsWith(".vue")
+          ? PRIMITIVE_VENDORED_VUE_HEADER
+          : PRIMITIVE_VENDORED_HEADER;
+        expect(file.content.startsWith(expectedHeader), file.path).toBe(true);
+        expect(file.content, file.path).not.toContain("Do not edit by hand");
+        expect(file.content, file.path).not.toContain(VUE_PACKAGE_QUARANTINE);
+      }
+    }
+
+    expect([...primitivePackageNames].sort()).toEqual(["@starwind-ui/runtime", "vue"]);
+    const toggleGroup = firstPrimitiveSet.primitives.find(
+      ({ component }) => component === "toggle-group",
+    );
+    expect(toggleGroup?.files.map(({ sourcePath }) => sourcePath)).toEqual(
+      expect.arrayContaining([
+        "packages/vue/src/toggle-group/ToggleGroupContext.ts",
+        "packages/vue/src/toggle-group/ToggleGroupRoot.vue",
+        "packages/vue/src/toggle-group/index.ts",
+      ]),
+    );
+
+    const projectionCases = [
+      { component: "button", sourcePath: "packages/vue/src/button/ButtonRoot.vue" },
+      { component: "button", sourcePath: "packages/vue/src/button/index.ts" },
+      { component: "sidebar", sourcePath: "packages/vue/src/_internal/as-child.ts" },
+    ] as const;
+    for (const comparison of projectionCases) {
+      const primitive = firstPrimitiveSet.primitives.find(
+        ({ component }) => component === comparison.component,
+      );
+      const file = primitive?.files.find(({ sourcePath }) => sourcePath === comparison.sourcePath);
+      const sourcePath = path.join(process.cwd(), comparison.sourcePath);
+      const generatedSource = await readFile(
+        path.join(
+          tempRoot,
+          "vue-primitives-first/vue-primitives",
+          path.posix.relative("packages/vue/src", comparison.sourcePath),
+        ),
+        "utf8",
+      );
+      const formattedGeneratedSource = await formatWithPrettier(generatedSource, {
+        ...((await resolvePrettierConfig(sourcePath)) ?? {}),
+        filepath: sourcePath,
+      });
+
+      expect(file, comparison.sourcePath).toBeDefined();
+      expect(file?.content, comparison.sourcePath).toBe(
+        normalizeGeneratedVuePackageContentForVendoring(formattedGeneratedSource),
+      );
+    }
+
+    const allVueSources = JSON.stringify({
+      registry: firstRegistry,
+      primitives: firstPrimitiveSet,
+    });
+    expect(allVueSources).not.toMatch(/@starwind-ui\/(?:astro|react|svelte)/);
+    expect(allVueSources).not.toMatch(/"(?:astro|react|react-dom|svelte)"/);
   });
 
   it("generates target-specific styled artifacts and separated dependency metadata", async () => {
@@ -102,7 +375,7 @@ describe("generateCliRegistry", () => {
     );
     expect(JSON.stringify(registry)).not.toContain("dropdown-menu");
 
-    const button = getRegistryComponentWithTargets(registry, "button");
+    const button = getRegistryComponentWithTargets(registry, "button", "astro", "react");
     expect(button).toMatchObject({
       name: "button",
       version: "2.0.0",
@@ -163,7 +436,7 @@ describe("generateCliRegistry", () => {
       expect.arrayContaining(["@starwind-ui/runtime"]),
     );
 
-    const carousel = getRegistryComponentWithTargets(registry, "carousel");
+    const carousel = getRegistryComponentWithTargets(registry, "carousel", "astro", "react");
     expect(carousel.targets.astro.componentDependencies).toEqual(["button"]);
     expect(carousel.targets.react.componentDependencies).toEqual(["button"]);
   });
@@ -178,8 +451,8 @@ describe("generateCliRegistry", () => {
       tempRoot,
     });
 
-    const image = getRegistryComponentWithTargets(registry, "image");
-    const spinner = getRegistryComponentWithTargets(registry, "spinner");
+    const image = getRegistryComponentWithTargets(registry, "image", "astro");
+    const spinner = getRegistryComponentWithTargets(registry, "spinner", "astro", "react");
     expect(image.targets.astro.packageRequirements).toEqual(
       expect.arrayContaining([{ name: "astro", range: ">=5" }]),
     );
@@ -223,7 +496,7 @@ describe("generateCliRegistry", () => {
       registryVersion: "2.0.0",
       tempRoot,
     });
-    const button = getRegistryComponentWithTargets(registry, "button");
+    const button = getRegistryComponentWithTargets(registry, "button", "astro", "react");
 
     expect(button.targets.astro.packageRequirements).toEqual(
       expect.arrayContaining([
@@ -290,7 +563,12 @@ describe("generateCliRegistry", () => {
       tempRoot,
     });
 
-    const parent = getRegistryComponentWithTargets(registry, "target-scoped-parent");
+    const parent = getRegistryComponentWithTargets(
+      registry,
+      "target-scoped-parent",
+      "astro",
+      "react",
+    );
     expect(parent.targets.astro.componentDependencies).toEqual(["shared-child"]);
     expect(parent.targets.react.componentDependencies).toEqual([]);
   });
@@ -431,7 +709,8 @@ describe("generateCliRegistry", () => {
     const fallbackOnlyPackageAllowlist = new Map<string, string[]>();
 
     for (const component of registry.components) {
-      const componentTargets = getRegistryComponentWithTargets(registry, component.name).targets;
+      expect(component.targets, component.name + " target map").toBeDefined();
+      const componentTargets = component.targets!;
 
       for (const [target, registryTarget] of Object.entries(componentTargets)) {
         const targetName = target as keyof typeof planningFacts.targets;
@@ -542,7 +821,8 @@ describe("generateCliRegistry", () => {
       "2.2.0",
     );
     expect(
-      getRegistryComponentWithTargets(registry, "button").targets.astro.packageRequirements,
+      getRegistryComponentWithTargets(registry, "button", "astro").targets.astro
+        .packageRequirements,
     ).toEqual(
       expect.arrayContaining([{ name: "@starwind-ui/astro", range: CURRENT_BETA_PACKAGE_RANGE }]),
     );
@@ -771,7 +1051,12 @@ describe("generateCliRegistry", () => {
     expect(registryNames).toContain("navigation-menu");
     expect(registryNames).not.toContain("dropdown-menu");
 
-    const badge = getRegistryComponentWithTargets(runtimeBundledRegistry, "badge");
+    const badge = getRegistryComponentWithTargets(
+      runtimeBundledRegistry,
+      "badge",
+      "astro",
+      "react",
+    );
     const badgeAstroRoot = badge.targets.astro.files.find((file) =>
       file.path.endsWith("/badge/Badge.astro"),
     );
@@ -805,12 +1090,13 @@ describe("generateCliRegistry", () => {
       expect(badgeVariants?.content).not.toContain("announcement");
     }
 
-    const navigationMenu = runtimeBundledRegistry.components.find(
-      (component) => component.name === "navigation-menu",
+    const navigationMenu = getRegistryComponentWithTargets(
+      runtimeBundledRegistry,
+      "navigation-menu",
+      "astro",
+      "react",
     );
-    expect(navigationMenu).toBeDefined();
-    expect(navigationMenu?.targets).toBeDefined();
-    const navigationMenuTargets = navigationMenu!.targets!;
+    const navigationMenuTargets = navigationMenu.targets;
     expect(navigationMenuTargets.astro.packageRequirements).toEqual(
       expect.arrayContaining([expect.objectContaining({ name: "@starwind-ui/astro" })]),
     );
@@ -918,7 +1204,12 @@ describe("generateCliRegistry", () => {
     expect(registrySource).not.toContain("alignItemsWithTrigger");
     expect(registrySource).not.toContain("data-align-items-with-trigger");
 
-    const themeToggle = getRegistryComponentWithTargets(runtimeBundledRegistry, "theme-toggle");
+    const themeToggle = getRegistryComponentWithTargets(
+      runtimeBundledRegistry,
+      "theme-toggle",
+      "astro",
+      "react",
+    );
     const themeToggleAstro = themeToggle.targets.astro.files.find((file) =>
       file.path.endsWith("/theme-toggle/ThemeToggle.astro"),
     );
@@ -1397,12 +1688,14 @@ describe("generateCliRegistry", () => {
 
     expect(firstRegistry).toEqual(secondRegistry);
     expect(firstPrimitiveArtifacts).toEqual(secondPrimitiveArtifacts);
+    expect(firstPrimitiveArtifacts.validation).toBeUndefined();
+    expect(firstPrimitiveArtifacts.integrity).toBeUndefined();
     expect(firstRegistry.$schema).toBe("https://starwind.dev/registry-schema.v2.json");
     expect(firstPrimitiveArtifacts.$schema).toBe(
       "https://starwind.dev/primitive-vendoring-artifacts-schema.v1.json",
     );
 
-    const styled = getRegistryComponentWithTargets(firstRegistry, "color-picker");
+    const styled = getRegistryComponentWithTargets(firstRegistry, "color-picker", "astro", "react");
     expect(styled.version).toBe(styledColorPickerVersion);
 
     for (const framework of ["astro", "react"] as const) {
@@ -1580,6 +1873,9 @@ const PRIMITIVE_VENDORED_HEADER = `/**
  * Vendored by the Starwind CLI.
  * You own this file in your project.
  */`;
+const PRIMITIVE_VENDORED_VUE_HEADER =
+  "<!-- Vendored by the Starwind CLI. You own this file in your project. -->";
+const VUE_PACKAGE_QUARANTINE = "Internal non-shipping Vue adapter output";
 
 function getPrimitiveVendoringFileBySourcePath(
   artifactSet: Awaited<ReturnType<typeof buildPrimitiveVendoringArtifacts>>,
@@ -1610,6 +1906,26 @@ function normalizeGeneratedPackageContentForVendoring(content: string): string {
   expect(normalized).not.toContain("Do not edit by hand; update the contract/template instead.");
 
   return normalized;
+}
+
+function normalizeGeneratedVuePackageContentForVendoring(content: string): string {
+  return content
+    .replace(
+      /<!-- Generated by scripts\/portable-runtime\/generate-(?:cli-registry|vue-wrappers)\.ts\. Do not edit by hand\. -->/,
+      PRIMITIVE_VENDORED_VUE_HEADER,
+    )
+    .replace(
+      /\/\*\*\n \* Generated by scripts\/portable-runtime\/generate-(?:cli-registry|vue-wrappers)\.ts\.\n \* Do not edit by hand; update the contract\/template instead\.\n \*\//,
+      PRIMITIVE_VENDORED_HEADER,
+    )
+    .replace(
+      /<!-- Internal non-shipping Vue adapter output\. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies\. -->\n?/,
+      "",
+    )
+    .replace(
+      /\/\/ Internal non-shipping Vue adapter output\. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies\.\n?/,
+      "",
+    );
 }
 
 type InstallGraphFile = {
@@ -1765,23 +2081,43 @@ function extractFunctionBody(source: string, functionName: string): string {
   throw new Error(`Could not extract ${functionName} body.`);
 }
 
-type RuntimeRegistryComponentWithTargets = RuntimeRegistry["components"][number] & {
-  targets: NonNullable<RuntimeRegistry["components"][number]["targets"]>;
+type RuntimeRegistryComponentTargetMap = NonNullable<
+  RuntimeRegistry["components"][number]["targets"]
+>;
+type RuntimeRegistryComponentTargetName = keyof RuntimeRegistryComponentTargetMap;
+type RuntimeRegistryComponentTarget = NonNullable<
+  RuntimeRegistryComponentTargetMap[RuntimeRegistryComponentTargetName]
+>;
+type RuntimeRegistryComponentWithTargets<
+  TTargetNames extends readonly RuntimeRegistryComponentTargetName[],
+> = RuntimeRegistry["components"][number] & {
+  targets: RuntimeRegistryComponentTargetMap & {
+    [TTargetName in TTargetNames[number]]-?: RuntimeRegistryComponentTarget;
+  };
 };
 
-function getRegistryComponentWithTargets(
+function getRegistryComponentWithTargets<
+  const TTargetNames extends readonly [
+    RuntimeRegistryComponentTargetName,
+    ...RuntimeRegistryComponentTargetName[],
+  ],
+>(
   registry: RuntimeRegistry,
   componentName: string,
-): RuntimeRegistryComponentWithTargets {
+  ...targetNames: TTargetNames
+): RuntimeRegistryComponentWithTargets<TTargetNames> {
   const component = registry.components.find((item) => item.name === componentName);
 
-  expect(component, `${componentName} registry component should exist`).toBeDefined();
-  expect(
-    component?.targets,
-    `${componentName} registry component should include targets`,
-  ).toBeDefined();
+  expect(component, componentName + " registry component should exist").toBeDefined();
 
-  return component as RuntimeRegistryComponentWithTargets;
+  for (const targetName of targetNames) {
+    expect(
+      component?.targets?.[targetName],
+      componentName + " registry component should include target " + targetName,
+    ).toBeDefined();
+  }
+
+  return component as RuntimeRegistryComponentWithTargets<TTargetNames>;
 }
 
 async function writeRegistryVersionManifest(

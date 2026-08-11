@@ -28,7 +28,7 @@ props when they should match, or set them differently on purpose:
 <SelectTrigger size="sm" />
 <SelectContent size="lg">...</SelectContent>
 
-<ComboboxInputGroup size="sm">...</ComboboxInputGroup>
+<ComboboxInput size="sm" />
 <ComboboxContent size="lg">...</ComboboxContent>
 ```
 

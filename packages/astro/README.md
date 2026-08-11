@@ -9,7 +9,7 @@ The package is source-published and supports Astro 5 or newer.
 ## Install
 
 ```bash
-npm install @starwind-ui/astro@beta
+npm install @starwind-ui/astro@latest
 ```
 
 ## Use an adapter
@@ -46,16 +46,16 @@ For ready-to-use styled Starwind components, initialize the project and add comp
 Starwind CLI:
 
 ```bash
-npx starwind@beta init --framework astro
-npx starwind@beta add button
+npx starwind@latest init --framework astro
+npx starwind@latest add button
 ```
 
 The adapter package brings in the compatible Runtime version for normal application use.
 
 ## Documentation
 
-Read the [Astro installation guide](https://beta.starwind.dev/docs/getting-started/installation/)
-and [component documentation](https://beta.starwind.dev/docs/components/).
+Read the [Astro installation guide](https://starwind.dev/docs/getting-started/installation/)
+and [component documentation](https://starwind.dev/docs/components/).
 
 ## Contributing
 
