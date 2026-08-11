@@ -113,7 +113,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: |
+          pnpm --filter=react-demo exec playwright install --with-deps chromium
+          pnpm exec playwright install chromium
       - name: Run portable Runtime generator tests
         run: pnpm runtime:generate:test && pnpm runtime:generate:typecheck
 
@@ -135,7 +137,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: |
+          pnpm --filter=react-demo exec playwright install --with-deps chromium
+          pnpm exec playwright install chromium
       - name: Run browser suites
         run: pnpm runtime:test:browser && pnpm react:test:browser
 
@@ -159,7 +163,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: |
+          pnpm --filter=react-demo exec playwright install --with-deps chromium
+          pnpm exec playwright install chromium
       - name: Run quarantined Vue verification
         run: pnpm vue:verify
       - name: Run quarantined Vue CLI host acceptance
@@ -185,7 +191,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: |
+          pnpm --filter=react-demo exec playwright install --with-deps chromium
+          pnpm exec playwright install chromium
       - name: Run quarantined Svelte verification
         run: pnpm svelte:verify
 
