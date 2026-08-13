@@ -47,6 +47,14 @@ export function createProgram(): Command {
     .option("-o, --overwrite", "Overwrite existing files")
     .option("--registry <registry>", "Remote registry URL or local registry file")
     .addOption(
+      new Option(
+        "--starwind-ui-version <major>",
+        "Starwind UI compatibility line for Starwind Pro blocks",
+      )
+        .choices(["2", "3"])
+        .default("3"),
+    )
+    .addOption(
       new Option("--framework <framework>", "Framework target").choices(["astro", "react"]),
     )
     .addOption(

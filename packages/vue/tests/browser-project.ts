@@ -369,7 +369,7 @@ export function createVueBrowserProjectConfig(component: string) {
               enabled: true,
               headless: true,
               instances: [{ browser: "chromium" }],
-              provider: playwright(),
+              provider: playwright({ launchOptions: { channel: "chromium" } }),
             },
             include: [`packages/vue/tests/${component}/**/*.browser.test.ts`],
             name: "browser",

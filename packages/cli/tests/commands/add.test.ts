@@ -61,14 +61,22 @@ vi.mocked(clackPrompts).log = mockLog as typeof clackPrompts.log;
 
 const mockFileExists = vi.mocked(fs.fileExists);
 const mockGetConfigState = vi.mocked(config.getConfigState);
+const mockHasLegacyStarwindUiV2ConfigShape = vi.mocked(config.hasLegacyStarwindUiV2ConfigShape);
 const mockGetShadcnCommand = vi.mocked(packageManager.getShadcnCommand);
 const mockLoadRegistry = vi.mocked(registry.loadRegistry);
 const mockParseRegistrySource = vi.mocked(registry.parseRegistrySource);
 const mockGetConfiguredRegistrySource = vi.mocked(registry.getConfiguredRegistrySource);
 const mockInstallProRegistryItems = vi.mocked(proRegistry.installProRegistryItems);
+const mockIsStarwindProRegistryItem = vi.mocked(proRegistry.isStarwindProRegistryItem);
 const mockInstallRuntimeComponents = vi.mocked(runtimeComponent.installRuntimeComponents);
 const mockImportStarwindProRegistryFromComponentsJson = vi.mocked(
   shadcnConfig.importStarwindProRegistryFromComponentsJson,
+);
+const mockReadStarwindProRegistryFromComponentsJson = vi.mocked(
+  shadcnConfig.readStarwindProRegistryFromComponentsJson,
+);
+const mockResolveStarwindProRegistryImport = vi.mocked(
+  shadcnConfig.resolveStarwindProRegistryImport,
 );
 const mockIsValidComponent = vi.mocked(validate.isValidComponent);
 const mockInit = vi.mocked(initModule.init);
@@ -93,6 +101,17 @@ function runtimeConfig(overrides: Partial<config.StarwindConfig> = {}): config.S
     components: [],
     ...overrides,
   };
+}
+
+function legacyConfig(overrides: Partial<config.StarwindConfig> = {}): config.StarwindConfig {
+  return runtimeConfig({
+    $schema: "https://starwind.dev/config-schema.json",
+    version: undefined,
+    framework: undefined,
+    registry: undefined,
+    componentDir: "src/components/starwind",
+    ...overrides,
+  });
 }
 
 let vueRegistryFixture: registry.StarwindRegistryFor<"astro" | "react" | "vue">;
@@ -124,10 +143,22 @@ describe("add command", () => {
 
     mockFileExists.mockResolvedValue(true);
     mockGetConfigState.mockResolvedValue({ status: "current", config: runtimeConfig() });
+    mockHasLegacyStarwindUiV2ConfigShape.mockImplementation(
+      (configState) =>
+        configState.status === "legacy" &&
+        configState.config.$schema === "https://starwind.dev/config-schema.json" &&
+        typeof configState.config.version !== "number" &&
+        configState.config.framework === undefined,
+    );
     mockIsCancel.mockReturnValue(false);
     mockImportStarwindProRegistryFromComponentsJson.mockResolvedValue({
       status: "missing",
     });
+    mockReadStarwindProRegistryFromComponentsJson.mockResolvedValue(undefined);
+    mockResolveStarwindProRegistryImport.mockImplementation((starwindConfig) => ({
+      status: "missing",
+      pro: starwindConfig.pro,
+    }));
     mockInit.mockResolvedValue(undefined);
     mockInstallRuntimeComponents.mockResolvedValue({
       installed: [],
@@ -139,6 +170,9 @@ describe("add command", () => {
       skipped: [],
       failed: [],
     });
+    mockIsStarwindProRegistryItem.mockImplementation(
+      (value) => value.startsWith("@starwind-pro/") && value.length > "@starwind-pro/".length,
+    );
     mockLoadRegistry.mockResolvedValue(registryFixture);
     mockGetConfiguredRegistrySource.mockReturnValue({ type: "bundled" });
     mockParseRegistrySource.mockImplementation((value) =>
@@ -200,6 +234,25 @@ describe("add command", () => {
     });
     expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("starwind init"));
     expect(mockInstallRuntimeComponents).not.toHaveBeenCalled();
+  });
+
+  it("rejects the V2 Pro escape hatch when no legacy config exists", async () => {
+    mockFileExists.mockResolvedValue(false);
+
+    await expect(
+      add(["@starwind-pro/hero-01"], {
+        packageManager: "pnpm",
+        starwindUiVersion: "2",
+        yes: true,
+      }),
+    ).rejects.toThrow("process.exit called");
+
+    expect(mockInit).not.toHaveBeenCalled();
+    expect(mockInstallProRegistryItems).not.toHaveBeenCalled();
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("detected no starwind.config.json"),
+    );
+    expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("starwind@2"));
   });
 
   it("forwards an explicit React target through missing-config init and component install", async () => {
@@ -473,6 +526,100 @@ describe("add command", () => {
     );
     expect(mockMigrate).not.toHaveBeenCalled();
     expect(mockLog.warn).toHaveBeenCalledWith(expect.stringContaining("starwind migrate"));
+    expect(mockInstallRuntimeComponents).not.toHaveBeenCalled();
+  });
+
+  it("installs V2 Pro blocks in a legacy project without migration or config writes", async () => {
+    mockGetConfigState.mockResolvedValue({ status: "legacy", config: legacyConfig() });
+    mockInstallProRegistryItems.mockResolvedValue({
+      installed: [{ name: "@starwind-pro/hero-01", status: "installed", version: "1.0.0" }],
+      skipped: [],
+      failed: [],
+    });
+
+    await add(["@starwind-pro/hero-01"], {
+      packageManager: "pnpm",
+      starwindUiVersion: "2",
+      yes: true,
+    });
+
+    expect(mockMigrate).not.toHaveBeenCalled();
+    expect(mockImportStarwindProRegistryFromComponentsJson).not.toHaveBeenCalled();
+    expect(mockInstallProRegistryItems).toHaveBeenCalledWith(
+      ["@starwind-pro/hero-01"],
+      expect.objectContaining({
+        config: expect.objectContaining({
+          $schema: "https://starwind.dev/config-schema.json",
+          version: undefined,
+        }),
+        packageManager: "pnpm",
+        starwindUiMajor: 2,
+      }),
+    );
+  });
+
+  it("rejects V2 Pro blocks in a Runtime V3 project before registry work", async () => {
+    await expect(
+      add(["@starwind-pro/hero-01"], {
+        packageManager: "pnpm",
+        starwindUiVersion: "2",
+        yes: true,
+      }),
+    ).rejects.toThrow("process.exit called");
+
+    expect(mockInstallProRegistryItems).not.toHaveBeenCalled();
+    expect(mockLoadRegistry).not.toHaveBeenCalled();
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("Selected Starwind UI major 2"),
+    );
+    expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("Runtime V3 project"));
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("pnpm dlx starwind@latest add @starwind-pro/hero-01"),
+    );
+  });
+
+  it("rejects a base component from the V2 Pro flag with the V2 CLI command", async () => {
+    mockGetConfigState.mockResolvedValue({ status: "legacy", config: legacyConfig() });
+
+    await expect(
+      add(["button"], {
+        packageManager: "pnpm",
+        starwindUiVersion: "2",
+        yes: true,
+      }),
+    ).rejects.toThrow("process.exit called");
+
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("legacy pre-Runtime V2 project"),
+    );
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("only to @starwind-pro/* blocks"),
+    );
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("pnpm dlx starwind@2 add button"),
+    );
+    expect(mockInstallProRegistryItems).not.toHaveBeenCalled();
+    expect(mockInstallRuntimeComponents).not.toHaveBeenCalled();
+  });
+
+  it("rejects mixed V2 Pro and base component names as one atomic request", async () => {
+    mockGetConfigState.mockResolvedValue({ status: "legacy", config: legacyConfig() });
+
+    await expect(
+      add(["@starwind-pro/hero-01", "button"], {
+        packageManager: "yarn",
+        starwindUiVersion: "2",
+        yes: true,
+      }),
+    ).rejects.toThrow("process.exit called");
+
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("separate Pro and base-component commands"),
+    );
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("yarn dlx starwind@2 add button"),
+    );
+    expect(mockInstallProRegistryItems).not.toHaveBeenCalled();
     expect(mockInstallRuntimeComponents).not.toHaveBeenCalled();
   });
 

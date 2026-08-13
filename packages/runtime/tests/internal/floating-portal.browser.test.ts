@@ -430,17 +430,19 @@ describe("floating portal session", () => {
     fixture.dialog.remove();
   });
 
-  it("preserves one interactive wrapper when promote re-enters demotion", () => {
+  it("cleans up a promotion rejected during native demotion and remains reusable", () => {
     const fixture = createDialogFixture();
     fixture.session.mount();
     const firstWrapper = fixture.portalTarget.querySelector<HTMLElement>(
       ":scope > [data-sw-floating-portal]",
     );
     expect(firstWrapper?.matches(":popover-open")).toBe(true);
+    let closingToggleCount = 0;
     firstWrapper?.addEventListener(
       "beforetoggle",
       (event) => {
         if ((event as ToggleEvent).newState === "closed") {
+          closingToggleCount += 1;
           fixture.session.promote();
         }
       },
@@ -449,12 +451,20 @@ describe("floating portal session", () => {
 
     fixture.session.demote();
 
-    const wrappers = fixture.portalTarget.querySelectorAll<HTMLElement>(
+    expect(closingToggleCount).toBe(1);
+    expect(
+      fixture.portalTarget.querySelectorAll(":scope > [data-sw-floating-portal]"),
+    ).toHaveLength(0);
+    expect(fixture.portalElement.parentElement).toBe(fixture.portalTarget);
+    expect(fixture.portalElement.style.pointerEvents).toBe("");
+
+    fixture.session.promote();
+
+    const wrapper = fixture.portalTarget.querySelector<HTMLElement>(
       ":scope > [data-sw-floating-portal]",
     );
-    expect(wrappers).toHaveLength(1);
-    expect(wrappers[0]?.matches(":popover-open")).toBe(true);
-    expect(fixture.portalElement.parentElement).toBe(wrappers[0]);
+    expect(wrapper?.matches(":popover-open")).toBe(true);
+    expect(fixture.portalElement.parentElement).toBe(wrapper);
     expect(fixture.portalElement.style.pointerEvents).toBe("auto");
     expect(document.elementFromPoint(260, 60)).toBe(fixture.focusTarget);
 

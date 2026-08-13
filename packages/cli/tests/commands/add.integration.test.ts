@@ -187,6 +187,8 @@ const customRegistryFixture = {
 describe.sequential("add command integration", () => {
   let tempDir = "";
   let previousCwd = "";
+  let previousFetch: typeof globalThis.fetch;
+  let mockExit: ReturnType<typeof vi.spyOn>;
 
   beforeAll(async () => {
     vueRegistryFixture = await buildRuntimeRegistry({
@@ -198,7 +200,11 @@ describe.sequential("add command integration", () => {
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "starwind-add-test-"));
     previousCwd = process.cwd();
+    previousFetch = globalThis.fetch;
     process.chdir(tempDir);
+    mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit called");
+    });
 
     await writeFile(
       "starwind.config.json",
@@ -241,9 +247,87 @@ describe.sequential("add command integration", () => {
 
   afterEach(async () => {
     process.chdir(previousCwd);
+    globalThis.fetch = previousFetch;
+    mockExit.mockRestore();
     await rm(tempDir, { recursive: true, force: true });
     vi.clearAllMocks();
   });
+
+  async function writeLegacyConfig(
+    options: {
+      components?: { name: string; version: string }[];
+      pro?: Record<string, unknown>;
+    } = {},
+  ) {
+    await writeFile(
+      "starwind.config.json",
+      JSON.stringify(
+        {
+          $schema: "https://starwind.dev/config-schema.json",
+          tailwind: {
+            css: "src/styles/starwind.css",
+            baseColor: "neutral",
+            cssVariables: true,
+          },
+          componentDir: "src/components/starwind",
+          components: options.components ?? [],
+          ...(options.pro ? { pro: options.pro } : {}),
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+  }
+
+  function archivedProItem(
+    options: {
+      dependencies?: string[];
+      major?: number;
+      name?: string;
+      plan?: "free" | "pro";
+    } = {},
+  ) {
+    const name = options.name ?? "hero-01";
+    return {
+      name,
+      type: "registry:block",
+      dependencies: [],
+      registryDependencies: [],
+      files: [
+        {
+          path: "blocks/Hero1.astro",
+          type: "registry:block",
+          target: `components/starwind-pro/${name}/Hero1.astro`,
+          content: "---\n---\n<section>Archived hero</section>\n",
+        },
+      ],
+      meta: {
+        plan: options.plan ?? "free",
+        version: "1.0.0",
+        framework: "astro",
+        starwindUiMajor: options.major ?? 2,
+        starwindUiDependencies: options.dependencies ?? ["button"],
+      },
+    };
+  }
+
+  function mockProResponse(body: unknown, status = 200) {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: status >= 200 && status < 300,
+      status,
+      statusText:
+        status === 200
+          ? "OK"
+          : status === 401
+            ? "Unauthorized"
+            : status === 404
+              ? "Not Found"
+              : "Error",
+      headers: new Headers(),
+      json: async () => body,
+    })) as unknown as typeof fetch;
+  }
 
   it("updates starwind.config.json with installed component using real config utils", async () => {
     await add(["button"], { yes: true });
@@ -746,5 +830,220 @@ describe.sequential("add command integration", () => {
       "button",
       "card",
     ]);
+  });
+
+  it("installs a free archived Pro block when its V2 dependency is present", async () => {
+    await writeLegacyConfig({ components: [{ name: "button", version: "2.1.0" }] });
+    mockProResponse(archivedProItem());
+
+    await add(["@starwind-pro/hero-01"], {
+      packageManager: "pnpm",
+      starwindUiVersion: "2",
+      yes: true,
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://pro.starwind.dev/r/starwind-ui-v2/hero-01",
+      expect.objectContaining({ headers: {} }),
+    );
+    await expect(
+      readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
+    ).resolves.toContain("Archived hero");
+  });
+
+  it("writes no archived block when a V2 dependency is missing", async () => {
+    await writeLegacyConfig();
+    mockProResponse(archivedProItem());
+
+    await add(["@starwind-pro/hero-01"], {
+      packageManager: "pnpm",
+      starwindUiVersion: "2",
+      yes: true,
+    });
+
+    expect(mockPromptLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("pnpm dlx starwind@2 add button"),
+    );
+    await expect(
+      readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("keeps the configured bearer authorization for a paid archived block", async () => {
+    await writeLegacyConfig({ components: [{ name: "button", version: "2.1.0" }] });
+    const savedConfig = await readFile("starwind.config.json", "utf-8");
+    await writeFile(
+      "components.json",
+      JSON.stringify({
+        registries: {
+          "@starwind-pro": {
+            url: "https://pro.starwind.dev/r/{name}",
+            headers: { Authorization: "Bearer ${STARWIND_LICENSE_KEY}" },
+          },
+        },
+      }),
+      "utf-8",
+    );
+    await writeFile(".env.local", "STARWIND_LICENSE_KEY=sw_v2_paid\n", "utf-8");
+    mockProResponse(archivedProItem({ plan: "pro" }));
+
+    await add(["@starwind-pro/hero-01"], {
+      packageManager: "pnpm",
+      starwindUiVersion: "2",
+      yes: true,
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://pro.starwind.dev/r/starwind-ui-v2/hero-01",
+      expect.objectContaining({
+        headers: { Authorization: "Bearer sw_v2_paid" },
+      }),
+    );
+    await expect(
+      readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
+    ).resolves.toContain("Archived hero");
+    await expect(readFile("starwind.config.json", "utf-8")).resolves.toBe(savedConfig);
+  });
+
+  it("preserves the Pro access error for an unauthorized archived block", async () => {
+    await writeLegacyConfig({ components: [{ name: "button", version: "2.1.0" }] });
+    mockProResponse({ message: "Unable to validate license key." }, 401);
+
+    await add(["@starwind-pro/hero-01"], {
+      packageManager: "pnpm",
+      starwindUiVersion: "2",
+      yes: true,
+    });
+
+    expect(mockPromptLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("401 Unauthorized - Unable to validate license key."),
+    );
+    expect(clackPrompts.note).toHaveBeenCalledWith(
+      expect.stringContaining("STARWIND_LICENSE_KEY"),
+      "Starwind Pro authorization",
+    );
+  });
+
+  it("rejects the V2 flag in a Runtime V3 project before fetches and writes", async () => {
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+
+    await expect(
+      add(["@starwind-pro/hero-01"], {
+        packageManager: "pnpm",
+        starwindUiVersion: "2",
+        yes: true,
+      }),
+    ).rejects.toThrow("process.exit called");
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(mockPromptLog.error).toHaveBeenCalledWith(expect.stringContaining("Runtime V3 project"));
+    await expect(
+      readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("rejects mixed V2 Pro and base names before fetches and writes", async () => {
+    await writeLegacyConfig({ components: [{ name: "button", version: "2.1.0" }] });
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+
+    await expect(
+      add(["@starwind-pro/hero-01", "button"], {
+        packageManager: "pnpm",
+        starwindUiVersion: "2",
+        yes: true,
+      }),
+    ).rejects.toThrow("process.exit called");
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(mockPromptLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("separate Pro and base-component commands"),
+    );
+  });
+
+  it("rejects a custom Pro URL before archived fetches and writes", async () => {
+    await writeLegacyConfig({
+      components: [{ name: "button", version: "2.1.0" }],
+      pro: {
+        registry: {
+          url: "https://pro.starwind.dev/custom/{name}",
+        },
+      },
+    });
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+
+    await add(["@starwind-pro/hero-01"], {
+      packageManager: "pnpm",
+      starwindUiVersion: "2",
+      yes: true,
+    });
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(mockPromptLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("immutable V2 archive"),
+    );
+    await expect(
+      readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("reports a missing archived block with its frozen V2 route", async () => {
+    await writeLegacyConfig({ components: [{ name: "button", version: "2.1.0" }] });
+    mockProResponse({ message: "Block not found" }, 404);
+
+    await add(["@starwind-pro/missing-card"], {
+      packageManager: "pnpm",
+      starwindUiVersion: "2",
+      yes: true,
+    });
+
+    expect(mockPromptLog.error).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "frozen Starwind UI V2 route: https://pro.starwind.dev/r/starwind-ui-v2/missing-card",
+      ),
+    );
+    await expect(
+      readFile("src/components/starwind-pro/missing-card/Hero1.astro", "utf-8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("keeps explicit and default V3 Pro installs on the same fetch plan and output", async () => {
+    mockProResponse(archivedProItem({ dependencies: [], major: 3 }));
+
+    await add(["@starwind-pro/hero-01"], { packageManager: "pnpm", yes: true });
+    const defaultFetchCall = vi.mocked(globalThis.fetch).mock.calls[0];
+    const defaultOutput = await readFile(
+      "src/components/starwind-pro/hero-01/Hero1.astro",
+      "utf-8",
+    );
+    await rm("src/components/starwind-pro/hero-01", { recursive: true, force: true });
+    vi.mocked(globalThis.fetch).mockClear();
+
+    await add(["@starwind-pro/hero-01"], {
+      packageManager: "pnpm",
+      starwindUiVersion: "3",
+      yes: true,
+    });
+
+    expect(vi.mocked(globalThis.fetch).mock.calls[0]).toEqual(defaultFetchCall);
+    await expect(
+      readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
+    ).resolves.toBe(defaultOutput);
+  });
+
+  it("rejects wrong-major Pro metadata before writing files", async () => {
+    mockProResponse(archivedProItem({ dependencies: [], major: 2 }));
+
+    await add(["@starwind-pro/hero-01"], {
+      packageManager: "pnpm",
+      starwindUiVersion: "3",
+      yes: true,
+    });
+
+    expect(mockPromptLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("requested Starwind UI major 3"),
+    );
+    await expect(
+      readFile("src/components/starwind-pro/hero-01/Hero1.astro", "utf-8"),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 });

@@ -185,9 +185,9 @@ export function hasStarwindProAuthConfig(config: Partial<StarwindConfig>): boole
 }
 
 export type StarwindConfigStateFor<TFramework extends CliFrameworkTarget> =
-  | { status: "missing"; config: StarwindConfigFor<TFramework> }
-  | { status: "legacy"; config: StarwindConfigFor<TFramework> }
-  | { status: "current"; config: StarwindConfigFor<TFramework> };
+  | { status: "missing"; config: StarwindConfigFor<TFramework>; rawConfig?: unknown }
+  | { status: "legacy"; config: StarwindConfigFor<TFramework>; rawConfig?: unknown }
+  | { status: "current"; config: StarwindConfigFor<TFramework>; rawConfig?: unknown };
 
 export type StarwindConfigState = StarwindConfigStateFor<StarwindFramework>;
 
@@ -999,7 +999,11 @@ export async function getConfigState<TFramework extends CliFrameworkTarget = Sta
   const rawConfig = await readJsonFile(PATHS.LOCAL_CONFIG_FILE);
 
   if (isObject(rawConfig) && rawConfig.version === 2) {
-    return { status: "current", config: parseCurrentConfig(rawConfig, targetPolicy) };
+    return {
+      status: "current",
+      config: parseCurrentConfig(rawConfig, targetPolicy),
+      rawConfig,
+    };
   }
 
   return {
@@ -1009,7 +1013,21 @@ export async function getConfigState<TFramework extends CliFrameworkTarget = Sta
       defaultConfig as StarwindConfigFor<TFramework>,
       targetPolicy,
     ),
+    rawConfig,
   };
+}
+
+export function hasLegacyStarwindUiV2ConfigShape<TFramework extends CliFrameworkTarget>(
+  configState: StarwindConfigStateFor<TFramework>,
+): boolean {
+  if (configState.status !== "legacy") return false;
+
+  const config = isObject(configState.rawConfig) ? configState.rawConfig : configState.config;
+  return (
+    config.$schema === CONFIG_SCHEMA_V1_URL &&
+    typeof config.version !== "number" &&
+    config.framework === undefined
+  );
 }
 
 /**

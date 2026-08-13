@@ -602,6 +602,45 @@ describe("createAccordion", () => {
     replacementOuter.destroy();
   });
 
+  it("preserves nested state when an ancestor closes and reopens", () => {
+    document.body.innerHTML = `
+      <div data-sw-accordion data-default-value="outer" data-collapsible>
+        <div data-sw-accordion-item data-value="outer">
+          <button id="outer-trigger" data-sw-accordion-trigger>Outer</button>
+          <div data-sw-accordion-content>
+            <div data-sw-accordion data-default-value="inner-a" data-collapsible>
+              ${renderItem("inner-a", "Inner A")}
+              ${renderItem("inner-b", "Inner B")}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    const roots = document.querySelectorAll<HTMLElement>("[data-sw-accordion]");
+    const outerRoot = roots[0]!;
+    const innerRoot = roots[1]!;
+    const outerTrigger = document.querySelector<HTMLButtonElement>("#outer-trigger")!;
+    const innerTrigger = innerRoot.querySelector<HTMLButtonElement>(
+      '[data-sw-accordion-item][data-value="inner-b"] > [data-sw-accordion-trigger]',
+    )!;
+    const outerChange = vi.fn();
+    const innerChange = vi.fn();
+    const outerAccordion = createAccordion(outerRoot, { onValueChange: outerChange });
+    const innerAccordion = createAccordion(innerRoot, { onValueChange: innerChange });
+
+    innerTrigger.click();
+    outerTrigger.click();
+    outerTrigger.click();
+
+    expect(outerAccordion.getValue()).toBe("outer");
+    expect(outerTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(innerAccordion.getValue()).toBe("inner-b");
+    expect(innerTrigger.getAttribute("data-state")).toBe("open");
+    expect(innerTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(innerChange).toHaveBeenCalledTimes(1);
+    expect(outerChange).toHaveBeenCalledTimes(2);
+  });
+
   it("refreshes dynamic items for insertion, removal, disablement, and reorder", async () => {
     const root = renderAccordion({ collapsible: true });
     const accordion = createAccordion(root);

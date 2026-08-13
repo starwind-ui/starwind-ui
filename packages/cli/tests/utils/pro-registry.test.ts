@@ -38,6 +38,20 @@ function runtimeConfig(overrides: Partial<StarwindConfig> = {}): StarwindConfig 
   };
 }
 
+function legacyConfig(overrides: Partial<StarwindConfig> = {}): StarwindConfig {
+  return {
+    $schema: "https://starwind.dev/config-schema.json",
+    tailwind: {
+      css: "src/styles/starwind.css",
+      baseColor: "neutral",
+      cssVariables: true,
+    },
+    componentDir: "src/components/starwind",
+    components: [{ name: "button", version: "2.1.0" }],
+    ...overrides,
+  };
+}
+
 function registryItem(overrides: Record<string, unknown> = {}) {
   return {
     $schema: "https://ui.shadcn.com/schema/registry-item.json",
@@ -169,6 +183,364 @@ describe("Pro registry installer", () => {
       }),
     );
   });
+
+  it("installs a compatible V2 Pro item from the frozen route with the existing header", async () => {
+    mockFetchJson(
+      registryItem({
+        meta: {
+          plan: "pro",
+          version: "1.0.0",
+          framework: "astro",
+          starwindUiMajor: 2,
+          starwindUiDependencies: ["button"],
+        },
+      }),
+    );
+
+    const result = await installProRegistryItems(["@starwind-pro/free-card"], {
+      config: legacyConfig(),
+      env: { STARWIND_LICENSE_KEY: "sw_v2_archive" },
+      starwindUiMajor: 2,
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://pro.starwind.dev/r/starwind-ui-v2/free-card",
+      expect.objectContaining({
+        headers: {
+          Authorization: "Bearer sw_v2_archive",
+        },
+      }),
+    );
+    expect(result.failed).toEqual([]);
+    await expect(
+      readFile(
+        join(tempDir, "src", "components", "starwind-pro", "free-card", "FreeCard.astro"),
+        "utf-8",
+      ),
+    ).resolves.toContain("<div>free</div>");
+  });
+
+  it.each([
+    ["pnpm", "pnpm dlx starwind@2 add avatar card"],
+    ["npm", "npx starwind@2 add avatar card"],
+    ["yarn", "yarn dlx starwind@2 add avatar card"],
+  ] as const)(
+    "stops before writes and formats the V2 dependency command for %s",
+    async (selectedPackageManager, expectedCommand) => {
+      mockFetchJson(
+        registryItem({
+          meta: {
+            plan: "free",
+            version: "1.0.0",
+            framework: "astro",
+            starwindUiMajor: 2,
+            starwindUiDependencies: ["card", "button", "avatar", "card"],
+          },
+        }),
+      );
+
+      const result = await installProRegistryItems(["@starwind-pro/free-card"], {
+        config: legacyConfig(),
+        env: {},
+        packageManager: selectedPackageManager,
+        starwindUiMajor: 2,
+      });
+
+      expect(result.failed[0]?.error).toContain(expectedCommand);
+      expect(mockInstallDependencies).not.toHaveBeenCalled();
+      await expect(
+        readFile(
+          join(tempDir, "src", "components", "starwind-pro", "free-card", "FreeCard.astro"),
+          "utf-8",
+        ),
+      ).rejects.toMatchObject({ code: "ENOENT" });
+    },
+  );
+
+  it("uses the matching V2 manifest block when item compatibility metadata is absent", async () => {
+    globalThis.fetch = vi.fn(async (input) => {
+      const url = String(input);
+      const body = url.endsWith("/manifest.json")
+        ? {
+            name: "starwind-pro",
+            compatibility: {
+              status: "frozen",
+              starwindUiMajor: 2,
+              registryPath: "/r/starwind-ui-v2/{name}",
+              sourceCommit: "7246b5b22d3196cd668d8ddec3d0424608f56191",
+              cliSupport: "requires-version-aware-client",
+            },
+            totalBlocks: 1,
+            blocks: [
+              {
+                id: "free-card",
+                plan: "free",
+                installCommand: null,
+                installCommandStatus: "requires-version-aware-client",
+                starwindUiMajor: 2,
+                starwindUiDependencies: ["button", "card"],
+              },
+            ],
+          }
+        : registryItem();
+
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        json: async () => body,
+      } as Response;
+    }) as typeof fetch;
+
+    const result = await installProRegistryItems(["@starwind-pro/free-card"], {
+      config: legacyConfig(),
+      env: {},
+      packageManager: "pnpm",
+      starwindUiMajor: 2,
+    });
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://pro.starwind.dev/r/starwind-ui-v2/manifest.json",
+      expect.objectContaining({ headers: {} }),
+    );
+    expect(result.failed[0]?.error).toContain("pnpm dlx starwind@2 add card");
+    await expect(
+      readFile(
+        join(tempDir, "src", "components", "starwind-pro", "free-card", "FreeCard.astro"),
+        "utf-8",
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("rejects a generated install command from the frozen version-aware V2 manifest", async () => {
+    globalThis.fetch = vi.fn(async (input) => {
+      const body = String(input).endsWith("/manifest.json")
+        ? {
+            name: "starwind-pro",
+            compatibility: {
+              status: "frozen",
+              starwindUiMajor: 2,
+              registryPath: "/r/starwind-ui-v2/{name}",
+              sourceCommit: "7246b5b22d3196cd668d8ddec3d0424608f56191",
+              cliSupport: "requires-version-aware-client",
+            },
+            blocks: [
+              {
+                id: "free-card",
+                installCommand:
+                  "pnpm dlx starwind@latest add @starwind-pro/free-card --starwind-ui-version 2",
+                installCommandStatus: "requires-version-aware-client",
+                starwindUiMajor: 2,
+                starwindUiDependencies: ["button"],
+              },
+            ],
+          }
+        : registryItem();
+
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        json: async () => body,
+      } as Response;
+    }) as typeof fetch;
+
+    const result = await installProRegistryItems(["@starwind-pro/free-card"], {
+      config: legacyConfig(),
+      env: {},
+      packageManager: "pnpm",
+      starwindUiMajor: 2,
+    });
+
+    expect(result.failed[0]?.error).toContain("Invalid frozen Starwind Pro V2 manifest contract");
+    expect(result.failed[0]?.error).toContain("null installCommand");
+    await expect(
+      readFile(
+        join(tempDir, "src", "components", "starwind-pro", "free-card", "FreeCard.astro"),
+        "utf-8",
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("derives the explicit V2 command when partial V3 metadata reaches a version-aware manifest", async () => {
+    globalThis.fetch = vi.fn(async (input) => {
+      const body = String(input).endsWith("/manifest.json")
+        ? {
+            name: "starwind-pro",
+            compatibility: {
+              status: "frozen",
+              starwindUiMajor: 2,
+              registryPath: "/r/starwind-ui-v2/{name}",
+              sourceCommit: "7246b5b22d3196cd668d8ddec3d0424608f56191",
+              cliSupport: "requires-version-aware-client",
+            },
+            blocks: [
+              {
+                id: "free-card",
+                installCommand: null,
+                installCommandStatus: "requires-version-aware-client",
+                starwindUiMajor: 2,
+                starwindUiDependencies: ["button"],
+              },
+            ],
+          }
+        : registryItem({
+            meta: {
+              plan: "free",
+              version: "1.0.0",
+              framework: "astro",
+              starwindUiMajor: 3,
+            },
+          });
+
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        json: async () => body,
+      } as Response;
+    }) as typeof fetch;
+
+    const result = await installProRegistryItems(["@starwind-pro/free-card"], {
+      config: runtimeConfig(),
+      env: {},
+      packageManager: "yarn",
+    });
+
+    expect(result.failed[0]?.error).toContain("requires explicit Starwind UI major 2 selection");
+    expect(result.failed[0]?.error).toContain(
+      "yarn dlx starwind@latest add @starwind-pro/free-card --starwind-ui-version 2",
+    );
+    await expect(
+      readFile(
+        join(tempDir, "src", "components", "starwind-pro", "free-card", "FreeCard.astro"),
+        "utf-8",
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("rejects wrong-major V2 manifest compatibility before writes", async () => {
+    globalThis.fetch = vi.fn(async (input) => {
+      const body = String(input).endsWith("/manifest.json")
+        ? {
+            name: "starwind-pro",
+            compatibility: {
+              starwindUiMajor: 3,
+              registryPath: "/r/starwind-ui-v2/{name}",
+            },
+            blocks: [{ id: "free-card", starwindUiDependencies: [] }],
+          }
+        : registryItem();
+
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        json: async () => body,
+      } as Response;
+    }) as typeof fetch;
+
+    const result = await installProRegistryItems(["@starwind-pro/free-card"], {
+      config: legacyConfig(),
+      env: {},
+      starwindUiMajor: 2,
+    });
+
+    expect(result.failed[0]?.error).toContain("requested Starwind UI major 2");
+    expect(result.failed[0]?.error).toContain("manifest");
+    expect(result.failed[0]?.error).toContain("declares major 3");
+    await expect(
+      readFile(
+        join(tempDir, "src", "components", "starwind-pro", "free-card", "FreeCard.astro"),
+        "utf-8",
+      ),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it.each(["https://registry.example.com/r/{name}", "https://pro.starwind.dev/custom/{name}"])(
+    "rejects the custom V2 Pro registry URL %s before fetching",
+    async (url) => {
+      globalThis.fetch = vi.fn() as unknown as typeof fetch;
+      const result = await installProRegistryItems(["@starwind-pro/free-card"], {
+        config: legacyConfig({
+          pro: {
+            registry: {
+              url,
+              headers: { Authorization: "Bearer configured-secret" },
+            },
+          },
+        }),
+        env: {},
+        starwindUiMajor: 2,
+      });
+
+      expect(result.failed[0]?.error).toContain("Selected Starwind UI major 2");
+      expect(result.failed[0]?.error).toContain("legacy pre-Runtime V2 project");
+      expect(result.failed[0]?.error).toContain("immutable V2 archive");
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    },
+  );
+
+  it("reports a missing archived block with frozen V2 route context", async () => {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      headers: new Headers(),
+      json: async () => ({ message: "Block not found" }),
+    })) as unknown as typeof fetch;
+
+    const result = await installProRegistryItems(["@starwind-pro/missing-card"], {
+      config: legacyConfig(),
+      env: {},
+      starwindUiMajor: 2,
+    });
+
+    expect(result.failed[0]?.error).toContain("404 Not Found");
+    expect(result.failed[0]?.error).toContain("frozen Starwind UI V2 route");
+    expect(result.failed[0]?.error).toContain(
+      "https://pro.starwind.dev/r/starwind-ui-v2/missing-card",
+    );
+  });
+
+  it.each([
+    [2, 3],
+    [3, 2],
+  ] as const)(
+    "rejects a registry item for UI major %s when its payload declares major %s",
+    async (requestedMajor, payloadMajor) => {
+      mockFetchJson(
+        registryItem({
+          meta: {
+            plan: "free",
+            version: "1.0.0",
+            framework: "astro",
+            starwindUiMajor: payloadMajor,
+            starwindUiDependencies: [],
+          },
+        }),
+      );
+
+      const result = await installProRegistryItems(["@starwind-pro/free-card"], {
+        config: requestedMajor === 2 ? legacyConfig() : runtimeConfig(),
+        env: {},
+        starwindUiMajor: requestedMajor,
+      });
+
+      expect(result.failed[0]?.error).toContain(`requested Starwind UI major ${requestedMajor}`);
+      expect(result.failed[0]?.error).toContain(`declares major ${payloadMajor}`);
+      await expect(
+        readFile(
+          join(tempDir, "src", "components", "starwind-pro", "free-card", "FreeCard.astro"),
+          "utf-8",
+        ),
+      ).rejects.toMatchObject({ code: "ENOENT" });
+    },
+  );
 
   it("uses default Pro authorization for a custom path on the official origin", async () => {
     mockFetchJson(registryItem());

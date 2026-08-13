@@ -177,6 +177,59 @@ describe("starwind CLI parser", () => {
     );
   });
 
+  it.each(["2", "3"] as const)(
+    "passes Starwind UI major %s through to the add command",
+    async (starwindUiVersion) => {
+      const program = createTestProgram();
+
+      await program.parseAsync(
+        ["add", "@starwind-pro/hero-01", "--starwind-ui-version", starwindUiVersion],
+        { from: "user" },
+      );
+
+      expect(mockAdd).toHaveBeenCalledWith(
+        ["@starwind-pro/hero-01"],
+        expect.objectContaining({ starwindUiVersion }),
+      );
+    },
+  );
+
+  it("defaults the Pro registry compatibility line to Starwind UI V3", async () => {
+    const program = createTestProgram();
+
+    await program.parseAsync(["add", "@starwind-pro/hero-01"], { from: "user" });
+
+    expect(mockAdd).toHaveBeenCalledWith(
+      ["@starwind-pro/hero-01"],
+      expect.objectContaining({ starwindUiVersion: "3" }),
+    );
+  });
+
+  it.each([
+    ["missing value", ["add", "@starwind-pro/hero-01", "--starwind-ui-version"]],
+    ["unsupported integer", ["add", "@starwind-pro/hero-01", "--starwind-ui-version", "4"]],
+    ["arbitrary string", ["add", "@starwind-pro/hero-01", "--starwind-ui-version", "legacy"]],
+  ] as const)("rejects a %s for --starwind-ui-version", async (_case, args) => {
+    const program = createTestProgram();
+    let stderr = "";
+
+    configureCommandTree(program, {
+      writeErr: (message: string) => {
+        stderr += message;
+      },
+    });
+
+    await expect(program.parseAsync([...args], { from: "user" })).rejects.toMatchObject({
+      code: expect.stringMatching(/^commander\./),
+    });
+
+    expect(stderr).toContain("--starwind-ui-version");
+    if (_case !== "missing value") {
+      expect(stderr).toContain("Allowed choices are 2, 3");
+    }
+    expect(mockAdd).not.toHaveBeenCalled();
+  });
+
   it("keeps Commander context out of docs dependencies", async () => {
     const program = createTestProgram();
 
