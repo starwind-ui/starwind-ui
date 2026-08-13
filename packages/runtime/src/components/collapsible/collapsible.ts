@@ -392,24 +392,30 @@ class CollapsibleOpenChangeDetailsImpl implements CollapsibleOpenChangeDetails {
 }
 
 function getCollapsibleElements(root: HTMLElement): CollapsibleElements {
-  const panel = root.querySelector<HTMLElement>(COLLAPSIBLE_PANEL_SELECTOR);
+  const panel = Array.from(root.querySelectorAll<HTMLElement>(COLLAPSIBLE_PANEL_SELECTOR)).find(
+    (element) => isOwnedByRoot(element, root),
+  );
   if (!panel) {
     throw new Error("Collapsible requires a panel element.");
   }
 
   return {
     panel,
-    triggers: Array.from(root.querySelectorAll<HTMLElement>(COLLAPSIBLE_TRIGGER_SELECTOR)).map(
-      (element) => {
+    triggers: Array.from(root.querySelectorAll<HTMLElement>(COLLAPSIBLE_TRIGGER_SELECTOR))
+      .filter((element) => isOwnedByRoot(element, root))
+      .map((element) => {
         const trigger = resolveAsChildControlTree(element);
 
         return {
           disabled: isDisabledTrigger(trigger),
           element: trigger,
         };
-      },
-    ),
+      }),
   };
+}
+
+function isOwnedByRoot(element: Element, root: HTMLElement): boolean {
+  return element.closest(`[${COLLAPSIBLE_ROOT_ATTRIBUTE}]`) === root;
 }
 
 function resolveAsChildControlTree(element: HTMLElement): HTMLElement {

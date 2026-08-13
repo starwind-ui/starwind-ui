@@ -146,6 +146,127 @@ describe("createCollapsible", () => {
     expect(panel.hidden).toBe(true);
   });
 
+  it("keeps nested roots isolated when initialized ancestor first", () => {
+    document.body.innerHTML = `
+      <div data-sw-collapsible data-default-open>
+        <button id="outer-trigger" data-sw-collapsible-trigger>Outer</button>
+        <div id="outer-panel" data-sw-collapsible-panel>
+          <div data-sw-collapsible data-default-open>
+            <button id="inner-trigger" data-sw-collapsible-trigger>Inner</button>
+            <div id="inner-panel" data-sw-collapsible-panel>Inner content</div>
+          </div>
+        </div>
+      </div>
+    `;
+    const roots = document.querySelectorAll<HTMLElement>("[data-sw-collapsible]");
+    const outerRoot = roots[0]!;
+    const innerRoot = roots[1]!;
+    const outerTrigger = document.querySelector<HTMLButtonElement>("#outer-trigger")!;
+    const innerTrigger = document.querySelector<HTMLButtonElement>("#inner-trigger")!;
+    const outerChange = vi.fn();
+    const innerChange = vi.fn();
+    const outerCollapsible = createCollapsible(outerRoot, { onOpenChange: outerChange });
+    const innerCollapsible = createCollapsible(innerRoot, { onOpenChange: innerChange });
+
+    innerTrigger.click();
+
+    expect(outerCollapsible.getOpen()).toBe(true);
+    expect(outerRoot.getAttribute("data-state")).toBe("open");
+    expect(outerTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(innerCollapsible.getOpen()).toBe(false);
+    expect(innerRoot.getAttribute("data-state")).toBe("closed");
+    expect(innerTrigger.getAttribute("data-state")).toBe("closed");
+    expect(innerTrigger.getAttribute("aria-expanded")).toBe("false");
+    expect(innerChange).toHaveBeenCalledTimes(1);
+    expect(outerChange).not.toHaveBeenCalled();
+
+    outerTrigger.click();
+    outerTrigger.click();
+
+    expect(outerCollapsible.getOpen()).toBe(true);
+    expect(outerTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(innerCollapsible.getOpen()).toBe(false);
+    expect(innerRoot.getAttribute("data-state")).toBe("closed");
+    expect(innerTrigger.getAttribute("data-state")).toBe("closed");
+    expect(innerTrigger.getAttribute("aria-expanded")).toBe("false");
+    expect(innerChange).toHaveBeenCalledTimes(1);
+    expect(outerChange).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps nested asChild trigger hooks owned by their nearest root", () => {
+    document.body.innerHTML = `
+      <div data-sw-collapsible data-default-open>
+        <div id="outer-wrapper" data-as-child data-sw-collapsible-trigger>
+          <button id="outer-trigger">Outer</button>
+        </div>
+        <div data-sw-collapsible-panel>
+          <div data-sw-collapsible data-default-open>
+            <div id="inner-wrapper" data-as-child data-sw-collapsible-trigger>
+              <button id="inner-trigger">Inner</button>
+            </div>
+            <div data-sw-collapsible-panel>Inner content</div>
+          </div>
+        </div>
+      </div>
+    `;
+    const roots = document.querySelectorAll<HTMLElement>("[data-sw-collapsible]");
+    const outerRoot = roots[0]!;
+    const innerRoot = roots[1]!;
+    const innerWrapper = document.querySelector<HTMLElement>("#inner-wrapper")!;
+    const innerTrigger = document.querySelector<HTMLButtonElement>("#inner-trigger")!;
+    const outerCollapsible = createCollapsible(outerRoot);
+
+    expect(innerWrapper.hasAttribute("data-sw-collapsible-trigger")).toBe(true);
+
+    const innerCollapsible = createCollapsible(innerRoot);
+    innerTrigger.click();
+
+    expect(outerCollapsible.getOpen()).toBe(true);
+    expect(innerCollapsible.getOpen()).toBe(false);
+    expect(innerTrigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("supports multiple triggers owned by one root", () => {
+    document.body.innerHTML = `
+      <div data-sw-collapsible>
+        <button id="first-trigger" data-sw-collapsible-trigger>First</button>
+        <button id="second-trigger" data-sw-collapsible-trigger>Second</button>
+        <div data-sw-collapsible-panel>Content</div>
+      </div>
+    `;
+    const root = document.querySelector<HTMLElement>("[data-sw-collapsible]")!;
+    const firstTrigger = document.querySelector<HTMLButtonElement>("#first-trigger")!;
+    const secondTrigger = document.querySelector<HTMLButtonElement>("#second-trigger")!;
+    const collapsible = createCollapsible(root);
+
+    secondTrigger.click();
+
+    expect(collapsible.getOpen()).toBe(true);
+    expect(firstTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(secondTrigger.getAttribute("aria-expanded")).toBe("true");
+
+    firstTrigger.click();
+
+    expect(collapsible.getOpen()).toBe(false);
+    expect(firstTrigger.getAttribute("aria-expanded")).toBe("false");
+    expect(secondTrigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("does not use a nested root panel as the outer panel", () => {
+    document.body.innerHTML = `
+      <div data-sw-collapsible>
+        <button data-sw-collapsible-trigger>Outer</button>
+        <div data-sw-collapsible>
+          <button data-sw-collapsible-trigger>Inner</button>
+          <div data-sw-collapsible-panel>Inner content</div>
+        </div>
+      </div>
+    `;
+    const outerRoot = document.querySelector<HTMLElement>("[data-sw-collapsible]")!;
+
+    expect(() => createCollapsible(outerRoot)).toThrow("Collapsible requires a panel element.");
+  });
+
   it("resolves asChild trigger wrappers to the child control", () => {
     const root = renderCollapsibleWithAsChildTrigger();
     const listener = vi.fn();

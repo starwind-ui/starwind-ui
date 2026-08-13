@@ -6,6 +6,7 @@ export const MIN_ASTRO_VERSION = "5.0.0";
 export const PATHS = {
   STARWIND_DOCS_BASE_URL: "https://starwind.dev/docs/components",
   STARWIND_PRO_REGISTRY: "https://pro.starwind.dev/r/{name}",
+  STARWIND_PRO_V2_REGISTRY: "https://pro.starwind.dev/r/starwind-ui-v2/{name}",
   LOCAL_CSS_FILE: "src/styles/starwind.css",
   LOCAL_CONFIG_FILE: "starwind.config.json",
   LOCAL_STYLES_DIR: "src/styles",

@@ -2,6 +2,7 @@ import * as p from "@clack/prompts";
 
 import {
   getConfigState,
+  hasLegacyStarwindUiV2ConfigShape,
   type StarwindConfig,
   type StarwindConfigFor,
   type StarwindFramework,
@@ -16,8 +17,12 @@ import {
 } from "@/utils/framework-target-policy.js";
 import { fileExists } from "@/utils/fs.js";
 import { highlighter } from "@/utils/highlighter.js";
-import { detectPackageManager } from "@/utils/package-manager.js";
-import { installProRegistryItems, type ProRegistryInstallSummary } from "@/utils/pro-registry.js";
+import { detectPackageManager, type PackageManager } from "@/utils/package-manager.js";
+import {
+  installProRegistryItems,
+  isStarwindProRegistryItem,
+  type ProRegistryInstallSummary,
+} from "@/utils/pro-registry.js";
 import { selectComponents } from "@/utils/prompts.js";
 import {
   getConfiguredRegistrySource,
@@ -31,7 +36,11 @@ import {
   installRuntimeComponents,
   type InstallRuntimeComponentsOptions,
 } from "@/utils/runtime-component.js";
-import { importStarwindProRegistryFromComponentsJson } from "@/utils/shadcn-config.js";
+import {
+  importStarwindProRegistryFromComponentsJson,
+  readStarwindProRegistryFromComponentsJson,
+  resolveStarwindProRegistryImport,
+} from "@/utils/shadcn-config.js";
 import { sleep } from "@/utils/sleep.js";
 import { isValidComponent } from "@/utils/validate.js";
 
@@ -45,6 +54,7 @@ interface AddOptions {
   packageManager?: "npm" | "pnpm" | "yarn";
   registry?: string;
   framework?: StarwindFramework;
+  starwindUiVersion?: "2" | "3";
 }
 
 export type PrivateVueAddOptions = Omit<AddOptions, "framework"> & {
@@ -93,6 +103,7 @@ export async function add(
   try {
     p.intro(highlighter.title(" Welcome to the Starwind CLI "));
     const packageManager = options?.packageManager ?? detectPackageManager().name;
+    const selectedStarwindUiMajor = options?.starwindUiVersion === "2" ? 2 : 3;
     const targetPolicy =
       dependencies?.targetPolicy ??
       (PUBLIC_FRAMEWORK_TARGET_POLICY as FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>);
@@ -110,6 +121,12 @@ export async function add(
     const configExists = await fileExists(PATHS.LOCAL_CONFIG_FILE);
 
     if (!configExists) {
+      if (selectedStarwindUiMajor === 2) {
+        throw new Error(
+          "Selected Starwind UI major 2, but detected no starwind.config.json. This escape hatch requires an existing legacy pre-Runtime V2 project. Restore or initialize that V2 project with starwind@2, then retry the Pro block command.",
+        );
+      }
+
       const shouldInit = options?.yes
         ? true
         : await p.confirm({
@@ -156,7 +173,11 @@ export async function add(
       process.exit(1);
     }
 
-    if (configState?.status === "legacy") {
+    if (selectedStarwindUiMajor === 2) {
+      assertV2ProAddRequest(configState, components, options, packageManager);
+    }
+
+    if (configState?.status === "legacy" && selectedStarwindUiMajor === 3) {
       const shouldMigrate = options?.yes
         ? true
         : await p.confirm({
@@ -276,9 +297,28 @@ export async function add(
 
       // Handle registry components (e.g., @starwind-pro/login1)
       if (registryComponents.length > 0) {
-        let proInstallConfig = runtimeConfig;
+        let proInstallConfig = selectedStarwindUiMajor === 2 ? configState.config : runtimeConfig;
 
-        if (runtimeConfig) {
+        if (selectedStarwindUiMajor === 2) {
+          if (!proInstallConfig) {
+            throw new Error(
+              "Selected Starwind UI major 2, but no legacy pre-Runtime V2 config is available.",
+            );
+          }
+
+          const proRegistryImport = resolveStarwindProRegistryImport(
+            proInstallConfig as StarwindConfig,
+            await readStarwindProRegistryFromComponentsJson(),
+            (message) => p.log.warn(message),
+          );
+
+          if (proRegistryImport.pro) {
+            proInstallConfig = {
+              ...proInstallConfig,
+              pro: proRegistryImport.pro,
+            };
+          }
+        } else if (runtimeConfig) {
           const proRegistryImport = await importStarwindProRegistryFromComponentsJson(
             runtimeConfig as StarwindConfig,
             {
@@ -308,6 +348,7 @@ export async function add(
           config: proInstallConfig as StarwindConfig,
           overwrite: options?.overwrite,
           packageManager,
+          starwindUiMajor: selectedStarwindUiMajor,
         });
       }
 
@@ -416,14 +457,14 @@ export async function add(
     // ================================================================
     //                      Install components
     // ================================================================
-    if (!runtimeConfig) {
-      p.log.error(
-        "No Runtime Starwind configuration found. Run `starwind init` before adding components.",
-      );
-      process.exit(1);
-    }
-
     if (componentsToInstall.length > 0) {
+      if (!runtimeConfig) {
+        p.log.error(
+          "No Runtime Starwind configuration found. Run `starwind init` before adding components.",
+        );
+        process.exit(1);
+      }
+
       const registrySelection = await getRuntimeRegistrySelection();
       const installOptions = {
         config: runtimeConfig,
@@ -548,6 +589,83 @@ ${sortComponentPresentation(registryResults.installed)
     p.cancel("Operation cancelled");
     process.exit(1);
   }
+}
+
+function assertV2ProAddRequest(
+  configState: Exclude<Awaited<ReturnType<typeof getConfigState>>, { status: "missing" }>,
+  components: string[] | undefined,
+  options: PrivateVueAddOptions | undefined,
+  packageManager: PackageManager,
+): void {
+  const detectedShape = describeProjectShape(configState);
+  const requestedComponents = components ?? [];
+  const normalV3Command = formatStarwindCommand(
+    packageManager,
+    "latest",
+    requestedComponents.length > 0 ? requestedComponents : ["@starwind-pro/<block>"],
+  );
+
+  if (!hasLegacyStarwindUiV2ConfigShape(configState)) {
+    throw new Error(
+      `Selected Starwind UI major 2, but detected ${detectedShape}. V2 blocks cannot be installed into a Runtime V3 project. Run the normal V3 command without the flag: ${normalV3Command}`,
+    );
+  }
+
+  if (options?.registry) {
+    throw new Error(
+      `Selected Starwind UI major 2 for a ${detectedShape}, but received the custom registry URL "${options.registry}". The immutable V2 archive is available only through the official Starwind Pro route. Remove --registry and retry.`,
+    );
+  }
+
+  const proComponents = requestedComponents.filter(isStarwindProRegistryItem);
+  const baseComponents = requestedComponents.filter(
+    (component) => !isStarwindProRegistryItem(component),
+  );
+
+  if (proComponents.length > 0 && baseComponents.length > 0) {
+    const proCommand = `${formatStarwindCommand(packageManager, "latest", proComponents)} --starwind-ui-version 2`;
+    const baseCommand = formatStarwindCommand(packageManager, "2", baseComponents);
+    throw new Error(
+      `Selected Starwind UI major 2 for a ${detectedShape}. Mixed Pro and base-component names cannot be installed together with this flag. Run separate Pro and base-component commands:\n${proCommand}\n${baseCommand}`,
+    );
+  }
+
+  if (baseComponents.length > 0 || proComponents.length === 0) {
+    const componentNames = baseComponents.length > 0 ? baseComponents : ["<component>"];
+    throw new Error(
+      `Selected Starwind UI major 2 for a ${detectedShape}. --starwind-ui-version 2 applies only to @starwind-pro/* blocks. Install a V2 base component with: ${formatStarwindCommand(packageManager, "2", componentNames)}`,
+    );
+  }
+}
+
+function describeProjectShape(
+  configState: Exclude<Awaited<ReturnType<typeof getConfigState>>, { status: "missing" }>,
+): string {
+  if (configState.status === "current") {
+    return "Runtime V3 project using config-schema.v2.json, top-level version: 2, framework, and Runtime registry metadata";
+  }
+
+  if (hasLegacyStarwindUiV2ConfigShape(configState)) {
+    return "legacy pre-Runtime V2 project using config-schema.json without a numeric version field";
+  }
+
+  return `unsupported Starwind project config using schema "${configState.config.$schema}"`;
+}
+
+function formatStarwindCommand(
+  packageManager: PackageManager,
+  version: "2" | "latest",
+  components: string[],
+): string {
+  const runner =
+    packageManager === "pnpm"
+      ? "pnpm dlx"
+      : packageManager === "yarn"
+        ? "yarn dlx"
+        : packageManager === "bun"
+          ? "bunx"
+          : "npx";
+  return `${runner} starwind@${version} add ${components.join(" ")}`;
 }
 
 function filterUninstalledComponents(

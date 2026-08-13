@@ -10,6 +10,7 @@ import {
   getConfigState,
   getStyledComponentDir,
   getStyledComponentDirConfigUpdate,
+  hasLegacyStarwindUiV2ConfigShape,
   parseCurrentConfig,
   resolveStarwindProRegistryConfig,
   resolveStarwindProRegistryRequest,
@@ -340,6 +341,49 @@ describe.sequential("config utilsDir handling", () => {
         ],
       },
     });
+  });
+
+  it("distinguishes the legacy V2 project shape from the Runtime config schema version", () => {
+    const legacyConfig = {
+      $schema: DEFAULT_SCHEMA,
+      tailwind: {
+        css: "src/styles/starwind.css",
+        baseColor: "neutral" as const,
+        cssVariables: true,
+      },
+      componentDir: "src/components/starwind",
+      components: [],
+    };
+
+    expect(
+      hasLegacyStarwindUiV2ConfigShape({
+        status: "legacy",
+        config: legacyConfig,
+        rawConfig: legacyConfig,
+      }),
+    ).toBe(true);
+    expect(
+      hasLegacyStarwindUiV2ConfigShape({
+        status: "legacy",
+        config: legacyConfig,
+        rawConfig: {
+          ...legacyConfig,
+          $schema: CONFIG_SCHEMA_V2_URL,
+        },
+      }),
+    ).toBe(false);
+    expect(
+      hasLegacyStarwindUiV2ConfigShape({
+        status: "current",
+        config: {
+          ...legacyConfig,
+          $schema: CONFIG_SCHEMA_V2_URL,
+          version: 2,
+          framework: "astro",
+          registry: { source: "bundled", version: "0.1.0" },
+        },
+      }),
+    ).toBe(false);
   });
 
   it("preserves v2 registry metadata while updating styled component versions", async () => {

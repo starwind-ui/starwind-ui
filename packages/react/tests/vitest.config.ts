@@ -48,7 +48,7 @@ export default defineConfig({
             enabled: true,
             headless: true,
             instances: [{ browser: "chromium" }],
-            provider: playwright(),
+            provider: playwright({ launchOptions: { channel: "chromium" } }),
           },
           include: ["packages/react/tests/**/*.browser.test.tsx"],
           name: "browser",
