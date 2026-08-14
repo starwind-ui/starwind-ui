@@ -288,6 +288,8 @@ export async function assertAstroStyledFoundationOutput(outputRoot: string): Pro
   expect(proseStyles).toBe(
     `${proseContract.styles!.content.join("\n").replace(/[ \t]+$/gm, "")}\n`,
   );
+  expect(proseStyles).toContain("var(--foreground)");
+  expect(proseStyles).not.toContain("var(--color-");
   expect(proseStyles).not.toMatch(/[ \t]+$/m);
   expect(proseVariants).toContain("sw-prose max-w-[65ch]");
   expect(proseIndex).toContain("export default Prose;");
