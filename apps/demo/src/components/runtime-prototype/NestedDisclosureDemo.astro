@@ -1,0 +1,142 @@
+---
+import Folder from "@tabler/icons/outline/folder.svg";
+import FolderOpen from "@tabler/icons/outline/folder-open.svg";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/starwind-runtime/accordion";
+import { Button } from "@/components/starwind-runtime/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/starwind-runtime/collapsible";
+---
+
+<section id="nested-disclosure-regression" class="mb-12 scroll-mt-6">
+  <div class="mb-5 space-y-2">
+    <h2 class="font-heading text-2xl font-semibold">Nested disclosure regression checks</h2>
+    <p class="text-muted-foreground max-w-3xl text-sm">
+      Toggle an inner row, then close and reopen its outer row. The outer row must stay open during
+      the inner toggle, and the inner state must survive the outer round trip.
+    </p>
+  </div>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <div class="rounded-lg border p-4">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <h3 class="font-heading font-semibold">Nested Collapsible</h3>
+        <span class="text-muted-foreground text-xs">Exercises asChild triggers</span>
+      </div>
+
+      <Collapsible
+        id="runtime-nested-collapsible-outer"
+        class="group/outer-collapsible rounded-md border"
+        defaultOpen
+      >
+        <CollapsibleTrigger asChild>
+          <Button
+            id="runtime-nested-collapsible-outer-trigger"
+            variant="ghost"
+            size="sm"
+            class="group/outer-collapsible-trigger w-full justify-start rounded-none"
+          >
+            <Folder class="size-4 group-data-[state=open]/outer-collapsible-trigger:hidden" />
+            <FolderOpen
+              class="hidden size-4 group-data-[state=open]/outer-collapsible-trigger:block"
+            />
+            Project
+            <span class="text-muted-foreground ml-auto font-mono text-xs">
+              <span class="group-data-[state=open]/outer-collapsible-trigger:hidden">closed</span>
+              <span class="hidden group-data-[state=open]/outer-collapsible-trigger:inline"
+                >open</span
+              >
+            </span>
+          </Button>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent id="runtime-nested-collapsible-outer-content" class="px-3 pb-3 pl-7">
+          <Collapsible
+            id="runtime-nested-collapsible-inner"
+            class="group/inner-collapsible rounded-md border"
+            defaultOpen
+          >
+            <CollapsibleTrigger asChild>
+              <Button
+                id="runtime-nested-collapsible-inner-trigger"
+                variant="ghost"
+                size="sm"
+                class="group/inner-collapsible-trigger w-full justify-start rounded-none"
+              >
+                <Folder class="size-4 group-data-[state=open]/inner-collapsible-trigger:hidden" />
+                <FolderOpen
+                  class="hidden size-4 group-data-[state=open]/inner-collapsible-trigger:block"
+                />
+                src
+                <span class="text-muted-foreground ml-auto font-mono text-xs">
+                  <span class="group-data-[state=open]/inner-collapsible-trigger:hidden"
+                    >closed</span
+                  >
+                  <span class="hidden group-data-[state=open]/inner-collapsible-trigger:inline"
+                    >open</span
+                  >
+                </span>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent
+              id="runtime-nested-collapsible-inner-content"
+              class="text-muted-foreground space-y-1 px-4 pb-3 font-mono text-xs"
+            >
+              <div>components/</div>
+              <div>pages/</div>
+            </CollapsibleContent>
+          </Collapsible>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+
+    <div class="rounded-lg border p-4">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <h3 class="font-heading font-semibold">Nested Accordion</h3>
+        <span class="text-muted-foreground text-xs">Exercises ancestor rendering</span>
+      </div>
+
+      <Accordion id="runtime-nested-accordion-outer" defaultValue="workspace">
+        <AccordionItem value="workspace">
+          <AccordionTrigger id="runtime-nested-accordion-outer-trigger">
+            Workspace
+          </AccordionTrigger>
+          <AccordionContent id="runtime-nested-accordion-outer-content">
+            <Accordion id="runtime-nested-accordion-inner" defaultValue="runtime">
+              <AccordionItem value="runtime">
+                <AccordionTrigger id="runtime-nested-accordion-runtime-trigger">
+                  Runtime package
+                </AccordionTrigger>
+                <AccordionContent id="runtime-nested-accordion-runtime-content">
+                  Runtime owns portable behavior and controller state.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="astro">
+                <AccordionTrigger id="runtime-nested-accordion-astro-trigger">
+                  Astro adapter
+                </AccordionTrigger>
+                <AccordionContent id="runtime-nested-accordion-astro-content">
+                  Astro renders the parts and initializes each root in document order.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  </div>
+
+  <ol class="text-muted-foreground mt-4 list-decimal space-y-1 pl-5 text-xs">
+    <li>Close the inner Collapsible or select “Astro adapter” in the inner Accordion.</li>
+    <li>Confirm the matching outer disclosure remains open.</li>
+    <li>Close and reopen the outer disclosure, then confirm the inner state is unchanged.</li>
+  </ol>
+</section>

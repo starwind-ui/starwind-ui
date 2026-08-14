@@ -4,9 +4,13 @@ export const tooltip = tv({
   base: "inline-block",
 });
 
+export const tooltipPositioner = tv({
+  base: "z-50",
+});
+
 export const tooltipContent = tv({
   base: [
-    "group z-50 hidden w-fit px-3 py-1.5",
+    "group hidden w-fit px-3 py-1.5",
     "bg-foreground text-background rounded-md",
     "animate-in fade-in zoom-in-95 duration-150",
     "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",

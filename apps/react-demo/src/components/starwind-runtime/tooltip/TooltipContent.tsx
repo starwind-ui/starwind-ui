@@ -3,7 +3,7 @@
 import TooltipPrimitive from "@starwind-ui/react/tooltip";
 import { IconCaretUpFilled as CaretUp } from "@tabler/icons-react";
 import type * as React from "react";
-import { tooltipCaret, tooltipContent } from "./variants";
+import { tooltipCaret, tooltipContent, tooltipPositioner } from "./variants";
 
 export type TooltipContentProps = Omit<
   React.ComponentPropsWithoutRef<"div">,
@@ -13,12 +13,14 @@ export type TooltipContentProps = Omit<
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  positionerClassName?: string;
   icon?: React.ReactNode;
 };
 
 function TooltipContent(props: TooltipContentProps) {
   const {
     className,
+    positionerClassName,
     side = "top",
     align = "center",
     sideOffset = 8,
@@ -35,7 +37,7 @@ function TooltipContent(props: TooltipContentProps) {
         align={align}
         sideOffset={sideOffset}
         avoidCollisions={avoidCollisions}
-        className="isolate z-50"
+        className={tooltipPositioner({ class: positionerClassName })}
         data-slot="tooltip-positioner"
       >
         <TooltipPrimitive.Popup

@@ -500,13 +500,19 @@ export async function assertAstroStyledOverlayOutput(outputRoot: string): Promis
   expect(tooltipTrigger).not.toContain("data-close-delay");
   expect(tooltipContent).toContain('Omit<HTMLAttributes<"div">');
   expect(tooltipContent).toContain('"tabindex" | "tabIndex"');
+  expect(tooltipContent).toContain("positionerClass?: string;");
+  expect(tooltipContent).toContain("positionerClass,");
   expect(tooltipContent).toContain("<TooltipPrimitive.Popup");
   expect(tooltipContent).toContain('data-slot="tooltip-content"');
-  expect(tooltipContent).toContain('class="isolate z-50"');
+  expect(tooltipContent).toContain("class={tooltipPositioner({ class: positionerClass })}");
+  expect(tooltipContent).not.toContain("isolate");
   expect(tooltipContent).not.toContain("tabindex=");
   expect(tooltipContent).not.toContain("animationDuration");
   expect(tooltipVariants).not.toContain("starwind-tooltip");
-  expect(tooltipVariants).toContain("group z-50 hidden");
+  expect(tooltipVariants).toContain("export const tooltipPositioner");
+  expect(tooltipVariants).toContain('base: "z-50"');
+  expect(tooltipVariants).toContain("group hidden");
+  expect(tooltipVariants).not.toContain("group z-50 hidden");
   expect(tooltipVariants).toContain("duration-150");
   expect(tooltipVariants).toContain(
     "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",

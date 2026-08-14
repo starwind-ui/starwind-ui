@@ -11041,9 +11041,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             compoundVariantCount: 0,
           },
           {
+            name: "hoverCardPositioner",
+            exportName: "HoverCardVariants",
+            baseClassCount: 1,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
             name: "hoverCardContent",
             exportName: "HoverCardVariants",
-            baseClassCount: 23,
+            baseClassCount: 22,
             options: [],
             compoundVariantCount: 0,
           },
@@ -16240,9 +16247,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             compoundVariantCount: 0,
           },
           {
+            name: "tooltipPositioner",
+            exportName: "TooltipVariants",
+            baseClassCount: 1,
+            options: [],
+            compoundVariantCount: 0,
+          },
+          {
             name: "tooltipContent",
             exportName: "TooltipVariants",
-            baseClassCount: 22,
+            baseClassCount: 21,
             options: [],
             compoundVariantCount: 0,
           },
@@ -26275,6 +26289,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       variantNames: [
         "hoverCard",
         "hoverCardContent",
+        "hoverCardPositioner",
         "hoverCardTrigger",
       ],
       slots: [
@@ -26380,6 +26395,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "HoverCardContent",
               props: [
+                {
+                  name: "positionerClass",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Adds classes to the generated floating positioner element.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "sideOffset",
                   type: "number",
@@ -26496,6 +26519,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "HoverCardContent",
               props: [
+                {
+                  name: "positionerClassName",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Adds React classes to the generated floating positioner element.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "sideOffset",
                   type: "number",
@@ -36088,6 +36119,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         "tooltip",
         "tooltipCaret",
         "tooltipContent",
+        "tooltipPositioner",
       ],
       slots: [
         "tooltip",
@@ -36162,7 +36194,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "TooltipContent",
-              props: [],
+              props: [
+                {
+                  name: "positionerClass",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Adds classes to the generated floating positioner element.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:div",
@@ -36240,7 +36281,16 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "TooltipContent",
-              props: [],
+              props: [
+                {
+                  name: "positionerClassName",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Adds React classes to the generated floating positioner element.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:div",

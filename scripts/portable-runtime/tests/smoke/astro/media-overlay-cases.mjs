@@ -476,7 +476,7 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     }
   }
 
-  const collapsibleContent = page.locator('[data-slot="collapsible-content"]').first();
+  const collapsibleContent = page.locator("#runtime-collapsible-default-content");
   const initialCollapsibleState = await collapsibleContent.evaluate((content) => ({
     animations: content instanceof HTMLElement ? content.getAnimations().length : null,
     hidden: content instanceof HTMLElement ? content.hidden : null,
@@ -496,7 +496,7 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     );
   }
 
-  await page.getByRole("button", { name: "Runtime notes" }).click();
+  await page.locator("#runtime-collapsible-default-trigger").click();
   const closingCollapsibleState = await collapsibleContent.evaluate((content) => ({
     hidden: content instanceof HTMLElement ? content.hidden : null,
     inlineAnimationName: content instanceof HTMLElement ? content.style.animationName : null,
@@ -513,7 +513,7 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     );
   }
   await page.waitForFunction(() => {
-    const content = document.querySelector('[data-slot="collapsible-content"]');
+    const content = document.querySelector("#runtime-collapsible-default-content");
     return content instanceof HTMLElement && content.hidden;
   });
 

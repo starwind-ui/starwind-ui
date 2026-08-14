@@ -1259,6 +1259,18 @@ describe("generated Vue Styled wrappers", () => {
       '"update:modelValue": [value: string | null]',
     );
     expect(firstTree["tooltip/TooltipContent.vue"]).toContain('data-slot="tooltip-content"');
+    expect(firstTree["tooltip/TooltipContent.vue"]).toContain('"positionerClass"?: string;');
+    expect(firstTree["tooltip/TooltipContent.vue"]).toContain(
+      ':class="tooltipPositioner({ class: positionerClass })"',
+    );
+    expect(firstTree["tooltip/TooltipContent.vue"]).not.toContain("isolate");
+    expect(firstTree["tooltip/variants.ts"]).toContain("export const tooltipPositioner");
+    expect(firstTree["hover-card/HoverCardContent.vue"]).toContain('"positionerClass"?: string;');
+    expect(firstTree["hover-card/HoverCardContent.vue"]).toContain(
+      ':class="hoverCardPositioner({ class: positionerClass })"',
+    );
+    expect(firstTree["hover-card/HoverCardContent.vue"]).not.toContain("isolate");
+    expect(firstTree["hover-card/variants.ts"]).toContain("export const hoverCardPositioner");
     expect(firstTree["dropdown/DropdownContent.vue"]).toContain('data-slot="dropdown-content"');
     expect(firstTree["combobox/ComboboxContent.vue"]).toContain('data-slot="combobox-content"');
     expect(firstTree["combobox/ComboboxContent.vue"]).not.toContain(
@@ -1284,9 +1296,7 @@ describe("generated Vue Styled wrappers", () => {
       "comboboxInputGroup({ size, class: className })",
     );
     expect(firstTree["combobox/ComboboxInput.vue"]).toContain(':data-size="size"');
-    expect(firstTree["combobox/ComboboxInput.vue"]).toContain(
-      "<ComboboxPrimitive.ComboboxTrigger",
-    );
+    expect(firstTree["combobox/ComboboxInput.vue"]).toContain("<ComboboxPrimitive.ComboboxTrigger");
     expect(firstTree["combobox/ComboboxInput.vue"]).toContain("<InputGroupButton");
     expect(firstTree["combobox/ComboboxInput.vue"]).toContain('<path d="M6 9l6 6l6 -6" />');
     expect(firstTree["combobox/ComboboxInput.vue"]).not.toContain(

@@ -10,7 +10,7 @@ describe("Astro smoke dev-server readiness", () => {
       .mockRejectedValueOnce(new Error("connection refused"))
       .mockResolvedValueOnce({ status: 200 });
 
-    await waitForAstroSmokePage(page, "http://127.0.0.1:4325/runtime-prototype/", {
+    await waitForAstroSmokePage(page, "http://127.0.0.1:4325/", {
       fetchImpl,
       now: createIncrementingClock(),
       retryDelayMs: 1,
@@ -22,7 +22,7 @@ describe("Astro smoke dev-server readiness", () => {
 
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(page.goto).toHaveBeenCalledTimes(1);
-    expect(page.goto).toHaveBeenCalledWith("http://127.0.0.1:4325/runtime-prototype/", {
+    expect(page.goto).toHaveBeenCalledWith("http://127.0.0.1:4325/", {
       timeout: 30000,
       waitUntil: "domcontentloaded",
     });
@@ -31,7 +31,7 @@ describe("Astro smoke dev-server readiness", () => {
   it("keeps preview mode on networkidle navigation", async () => {
     const page = { goto: vi.fn(async () => undefined) };
 
-    await waitForAstroSmokePage(page, "http://127.0.0.1:4325/runtime-prototype/", {
+    await waitForAstroSmokePage(page, "http://127.0.0.1:4325/", {
       fetchImpl: vi.fn(async () => ({ status: 200 })),
       now: createIncrementingClock(),
       serverCommand: "preview",
@@ -40,7 +40,7 @@ describe("Astro smoke dev-server readiness", () => {
       startupTimeoutMs: 100,
     });
 
-    expect(page.goto).toHaveBeenCalledWith("http://127.0.0.1:4325/runtime-prototype/", {
+    expect(page.goto).toHaveBeenCalledWith("http://127.0.0.1:4325/", {
       timeout: 15000,
       waitUntil: "networkidle",
     });
@@ -52,7 +52,7 @@ describe("Astro smoke dev-server readiness", () => {
       status: 200,
     });
 
-    await waitForAstroSmokePage(page, "http://127.0.0.1:4325/runtime-prototype/", {
+    await waitForAstroSmokePage(page, "http://127.0.0.1:4325/", {
       fetchImpl,
       now: createIncrementingClock(),
       retryDelayMs: 1,
@@ -70,7 +70,7 @@ describe("Astro smoke dev-server readiness", () => {
     const page = { goto: vi.fn(async () => undefined) };
 
     await expect(
-      waitForAstroSmokePage(page, "http://127.0.0.1:4325/runtime-prototype/", {
+      waitForAstroSmokePage(page, "http://127.0.0.1:4325/", {
         fetchImpl: vi.fn(async () => ({ status: 503 })),
         getServerOutput: () => "Astro ready text never appeared",
         now: createIncrementingClock(),
@@ -93,7 +93,7 @@ describe("Astro smoke dev-server readiness", () => {
     };
 
     await expect(
-      waitForAstroSmokePage(page, "http://127.0.0.1:4325/runtime-prototype/", {
+      waitForAstroSmokePage(page, "http://127.0.0.1:4325/", {
         fetchImpl: vi.fn(async () => ({ status: 200 })),
         now: createIncrementingClock(),
         serverCommand: "dev",
@@ -108,7 +108,7 @@ describe("Astro smoke dev-server readiness", () => {
     const page = { goto: vi.fn(async () => undefined) };
 
     await expect(
-      waitForAstroSmokePage(page, "http://127.0.0.1:4325/runtime-prototype/", {
+      waitForAstroSmokePage(page, "http://127.0.0.1:4325/", {
         fetchImpl: vi.fn(async () => ({ status: 200 })),
         getServerExitCode: () => 1,
         getServerOutput: () => "Astro failed to start",

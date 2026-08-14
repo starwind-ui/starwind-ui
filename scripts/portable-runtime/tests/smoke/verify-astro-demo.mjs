@@ -21,7 +21,7 @@ const DEMO_ROOT = path.join(REPO_ROOT, "apps/demo");
 const REACT_DEMO_ROOT = path.join(REPO_ROOT, "apps/react-demo");
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.STARWIND_ASTRO_SMOKE_PORT ?? "4325");
-const RUNTIME_PROTOTYPE_PATH = "/runtime-prototype/";
+const COMPONENT_DEMO_PATH = "/";
 const CAROUSEL_CLIENT_ROUTER_START_PATH = "/smoke/carousel-client-router-start/";
 const SERVER_MODE = process.env.STARWIND_ASTRO_SMOKE_SERVER_MODE ?? "preview";
 const SERVER_COMMAND = SERVER_MODE === "dev" ? "dev" : "preview";
@@ -62,7 +62,7 @@ preview?.stderr?.on("data", (chunk) => {
 
 try {
   const baseUrl = `http://${HOST}:${PORT}`;
-  const url = `${baseUrl}${RUNTIME_PROTOTYPE_PATH}`;
+  const url = `${baseUrl}${COMPONENT_DEMO_PATH}`;
   const carouselClientRouterStartUrl = `${baseUrl}${CAROUSEL_CLIENT_ROUTER_START_PATH}`;
   browser = await chromium.launch({ headless: true });
 
@@ -118,7 +118,7 @@ try {
   await page.goto(url, {
     waitUntil: SERVER_MODE === "dev" ? "domcontentloaded" : "networkidle",
   });
-  await page.getByRole("heading", { name: "Portable runtime prototype" }).waitFor();
+  await page.getByRole("heading", { name: "Starwind UI components" }).waitFor();
   await verifyAstroAppNav({ page });
   await verifyAstroColorPickerCases({ page });
 
@@ -137,7 +137,7 @@ try {
   await verifyAstroSidebarInsetNav({
     page,
     expectedLinks: [
-      { href: "/runtime-prototype/", label: "Prototype" },
+      { href: "/", label: "Components" },
       { href: "/pages/runtime-nested-sidebar", label: "Nested" },
     ],
   });
@@ -165,7 +165,7 @@ try {
   await verifyAstroSidebarInsetNav({
     page,
     expectedLinks: [
-      { href: "/runtime-prototype/", label: "Prototype" },
+      { href: "/", label: "Components" },
       { href: "/pages/runtime-sidebar-demo", label: "Basic" },
     ],
   });

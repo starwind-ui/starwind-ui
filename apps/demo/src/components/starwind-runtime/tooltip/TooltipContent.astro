@@ -2,17 +2,19 @@
 import TooltipPrimitive from "@starwind-ui/astro/tooltip";
 import CaretUp from "@tabler/icons/filled/caret-up.svg";
 import type { HTMLAttributes } from "astro/types";
-import { tooltipCaret, tooltipContent } from "./variants";
+import { tooltipCaret, tooltipContent, tooltipPositioner } from "./variants";
 
 type Props = Omit<HTMLAttributes<"div">, "tabindex" | "tabIndex"> & {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  positionerClass?: string;
 };
 
 const {
   class: className,
+  positionerClass,
   side = "top",
   align = "center",
   sideOffset = 8,
@@ -27,7 +29,7 @@ const {
     align={align}
     sideOffset={sideOffset}
     avoidCollisions={avoidCollisions}
-    class="isolate z-50"
+    class={tooltipPositioner({ class: positionerClass })}
     data-slot="tooltip-positioner"
   >
     <TooltipPrimitive.Popup
