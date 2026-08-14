@@ -76,6 +76,9 @@ describe("generated Vue portable Styled content and media groups", () => {
     const files = await listGeneratedFiles(outputRoot);
 
     expect(files).toEqual(EXPECTED_FILES);
+    const proseStyles = await readFile(path.join(outputRoot, "prose/styles.css"), "utf8");
+    expect(proseStyles).toContain("var(--foreground)");
+    expect(proseStyles).not.toContain("var(--color-");
     for (const file of files.filter((candidate) => candidate.endsWith(".vue"))) {
       const source = await readFile(path.join(outputRoot, file), "utf8");
       expect(() => assertVueSfcCompiles(source, file)).not.toThrow();
