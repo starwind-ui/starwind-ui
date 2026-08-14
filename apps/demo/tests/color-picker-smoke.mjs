@@ -382,9 +382,9 @@ try {
   await page.keyboard.press("Escape");
   await expectFocused(dialogPickerTrigger);
 
-  // The runtime prototype keeps the labeled canonical specimen first and no-Clear, while the
-  // advanced fixture explicitly enables an eligible footer Clear action.
-  await page.goto(`http://${host}:${port}/runtime-prototype/`, { waitUntil: "domcontentloaded" });
+  // The component page keeps the labeled canonical specimen first and no-Clear, while the advanced
+  // fixture explicitly enables an eligible footer Clear action.
+  await page.goto(`http://${host}:${port}/`, { waitUntil: "domcontentloaded" });
   const canonical = page.getByTestId("canonical-docs-color-picker");
   await canonical.getByText("Canonical docs example", { exact: true }).waitFor();
   const canonicalTrigger = canonical.getByRole("button", { name: "Open brand color picker" });

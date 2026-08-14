@@ -536,13 +536,19 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(tooltipContent).toContain("import { IconCaretUpFilled as CaretUp }");
   expect(tooltipContent).toContain('Omit<React.ComponentPropsWithoutRef<"div">');
   expect(tooltipContent).toContain('"tabindex" | "tabIndex"');
+  expect(tooltipContent).toContain("positionerClassName?: string;");
+  expect(tooltipContent).toContain("positionerClassName,");
   expect(tooltipContent).toContain("<TooltipPrimitive.Popup");
   expect(tooltipContent).toContain('data-slot="tooltip-content"');
-  expect(tooltipContent).toContain('className="isolate z-50"');
+  expect(tooltipContent).toContain("className={tooltipPositioner({ class: positionerClassName })}");
+  expect(tooltipContent).not.toContain("isolate");
   expect(tooltipContent).not.toContain("tabIndex=");
   expect(tooltipContent).not.toContain("animationDuration");
   expect(tooltipVariants).not.toContain("starwind-tooltip");
-  expect(tooltipVariants).toContain("group z-50 hidden");
+  expect(tooltipVariants).toContain("export const tooltipPositioner");
+  expect(tooltipVariants).toContain('base: "z-50"');
+  expect(tooltipVariants).toContain("group hidden");
+  expect(tooltipVariants).not.toContain("group z-50 hidden");
   expect(tooltipVariants).toContain("duration-150");
   expect(tooltipVariants).toContain(
     "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",

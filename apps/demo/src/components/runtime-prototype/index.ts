@@ -28,6 +28,7 @@ export { default as KbdDemo } from "./KbdDemo.astro";
 export { default as LabelDemo } from "./LabelDemo.astro";
 export { default as NativeSelectDemo } from "./NativeSelectDemo.astro";
 export { default as NavigationMenuDemo } from "./NavigationMenuDemo.astro";
+export { default as NestedDisclosureDemo } from "./NestedDisclosureDemo.astro";
 export { default as PaginationDemo } from "./PaginationDemo.astro";
 export { default as PopoverDemo } from "./PopoverDemo.astro";
 export { default as ProgressDemo } from "./ProgressDemo.astro";

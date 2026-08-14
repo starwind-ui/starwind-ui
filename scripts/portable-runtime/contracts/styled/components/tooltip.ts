@@ -11,9 +11,10 @@ export const tooltipStyledContract: StyledAdapterContract = {
   variantCollectionName: "TooltipVariants",
   variants: {
     tooltip: { base: "inline-block" },
+    tooltipPositioner: { base: "z-50" },
     tooltipContent: {
       base: [
-        "group z-50 hidden w-fit px-3 py-1.5",
+        "group hidden w-fit px-3 py-1.5",
         "bg-foreground text-background rounded-md",
         "animate-in fade-in zoom-in-95 duration-150",
         "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards fade-out zoom-out-95",
@@ -192,11 +193,22 @@ export const tooltipStyledContract: StyledAdapterContract = {
           { name: "align", optional: true, type: '"start" | "center" | "end"' },
           { name: "sideOffset", optional: true, type: "number" },
           { name: "avoidCollisions", optional: true, type: "boolean" },
+          { name: "positionerClass", optional: true, type: "string", frameworks: ["astro"] },
+          { name: "positionerClass", optional: true, type: "string", frameworks: ["vue"] },
+          {
+            name: "positionerClassName",
+            optional: true,
+            type: "string",
+            frameworks: ["react"],
+          },
         ],
       },
       destructure: {
         props: [
           { name: "class", alias: "className" },
+          { name: "positionerClass", frameworks: ["astro"] },
+          { name: "positionerClass", frameworks: ["vue"] },
+          { name: "positionerClassName", frameworks: ["react"] },
           { name: "side", defaultValue: '"top"' },
           { name: "align", defaultValue: '"center"' },
           { name: "sideOffset", defaultValue: "8" },
@@ -220,7 +232,24 @@ export const tooltipStyledContract: StyledAdapterContract = {
                 { name: "align", value: { type: "variable", name: "align" } },
                 { name: "sideOffset", value: { type: "variable", name: "sideOffset" } },
                 { name: "avoidCollisions", value: { type: "variable", name: "avoidCollisions" } },
-                { name: "class", value: { type: "literal", value: "isolate z-50" } },
+                {
+                  name: "class",
+                  value: {
+                    type: "classVariant",
+                    variant: "tooltipPositioner",
+                    args: { class: "positionerClass" },
+                  },
+                  frameworks: ["astro", "vue"],
+                },
+                {
+                  name: "class",
+                  value: {
+                    type: "classVariant",
+                    variant: "tooltipPositioner",
+                    args: { class: "positionerClassName" },
+                  },
+                  frameworks: ["react"],
+                },
                 { name: "data-slot", value: { type: "literal", value: "tooltip-positioner" } },
               ],
               children: [

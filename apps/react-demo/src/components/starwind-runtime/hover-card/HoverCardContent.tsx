@@ -2,18 +2,20 @@
 
 import PreviewCardPrimitive from "@starwind-ui/react/preview-card";
 import type * as React from "react";
-import { hoverCardContent } from "./variants";
+import { hoverCardContent, hoverCardPositioner } from "./variants";
 
 export type HoverCardContentProps = React.ComponentPropsWithoutRef<"div"> & {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  positionerClassName?: string;
 };
 
 function HoverCardContent(props: HoverCardContentProps) {
   const {
     className,
+    positionerClassName,
     side = "bottom",
     align = "center",
     sideOffset = 4,
@@ -29,7 +31,7 @@ function HoverCardContent(props: HoverCardContentProps) {
         align={align}
         sideOffset={sideOffset}
         avoidCollisions={avoidCollisions}
-        className="isolate z-50"
+        className={hoverCardPositioner({ class: positionerClassName })}
         data-slot="hover-card-positioner"
       >
         <PreviewCardPrimitive.Popup

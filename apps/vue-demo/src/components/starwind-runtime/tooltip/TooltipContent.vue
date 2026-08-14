@@ -2,18 +2,26 @@
 import * as TooltipPrimitive from "@starwind-ui/vue/tooltip";
 import type { ClassValue } from "tailwind-variants";
 import { type HTMLAttributes, useAttrs } from "vue";
-import { tooltipCaret, tooltipContent } from "./variants";
+import { tooltipCaret, tooltipContent, tooltipPositioner } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
 export type TooltipContentProps = Omit<
   HTMLAttributes,
-  "align" | "avoidCollisions" | "class" | "side" | "sideOffset" | "tabIndex" | "tabindex"
+  | "align"
+  | "avoidCollisions"
+  | "class"
+  | "positionerClass"
+  | "side"
+  | "sideOffset"
+  | "tabIndex"
+  | "tabindex"
 > & {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  positionerClass?: string;
   class?: ClassValue;
 };
 type TooltipContentDeclaredProps = {
@@ -21,10 +29,12 @@ type TooltipContentDeclaredProps = {
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  positionerClass?: string;
   class?: ClassValue;
 } & /* @vue-ignore */ TooltipContentProps;
 const {
   class: className,
+  positionerClass,
   side = "top",
   align = "center",
   sideOffset = 8,
@@ -44,7 +54,7 @@ const attrs = useAttrs();
       :align="align"
       :side-offset="sideOffset"
       :avoid-collisions="avoidCollisions"
-      class="isolate z-50"
+      :class="tooltipPositioner({ class: positionerClass })"
       data-slot="tooltip-positioner"
     >
       <TooltipPrimitive.TooltipPopup

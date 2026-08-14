@@ -11,9 +11,10 @@ export const hoverCardStyledContract: StyledAdapterContract = {
   variantCollectionName: "HoverCardVariants",
   variants: {
     hoverCard: { base: "inline-block" },
+    hoverCardPositioner: { base: "z-50" },
     hoverCardContent: {
       base: [
-        "bg-popover text-popover-foreground z-50 hidden w-64 rounded-lg border p-3 shadow-md outline-hidden duration-100",
+        "bg-popover text-popover-foreground hidden w-64 rounded-lg border p-3 shadow-md outline-hidden duration-100",
         "animate-in fade-in-0 zoom-in-95",
         "data-[state=closed]:animate-out data-[state=closed]:fill-mode-forwards data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
         "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
@@ -175,11 +176,22 @@ export const hoverCardStyledContract: StyledAdapterContract = {
           { name: "align", optional: true, type: '"start" | "center" | "end"' },
           { name: "sideOffset", optional: true, type: "number" },
           { name: "avoidCollisions", optional: true, type: "boolean" },
+          { name: "positionerClass", optional: true, type: "string", frameworks: ["astro"] },
+          { name: "positionerClass", optional: true, type: "string", frameworks: ["vue"] },
+          {
+            name: "positionerClassName",
+            optional: true,
+            type: "string",
+            frameworks: ["react"],
+          },
         ],
       },
       destructure: {
         props: [
           { name: "class", alias: "className" },
+          { name: "positionerClass", frameworks: ["astro"] },
+          { name: "positionerClass", frameworks: ["vue"] },
+          { name: "positionerClassName", frameworks: ["react"] },
           { name: "side", defaultValue: '"bottom"' },
           { name: "align", defaultValue: '"center"' },
           { name: "sideOffset", defaultValue: "4" },
@@ -203,7 +215,24 @@ export const hoverCardStyledContract: StyledAdapterContract = {
                 { name: "align", value: { type: "variable", name: "align" } },
                 { name: "sideOffset", value: { type: "variable", name: "sideOffset" } },
                 { name: "avoidCollisions", value: { type: "variable", name: "avoidCollisions" } },
-                { name: "class", value: { type: "literal", value: "isolate z-50" } },
+                {
+                  name: "class",
+                  value: {
+                    type: "classVariant",
+                    variant: "hoverCardPositioner",
+                    args: { class: "positionerClass" },
+                  },
+                  frameworks: ["astro", "vue"],
+                },
+                {
+                  name: "class",
+                  value: {
+                    type: "classVariant",
+                    variant: "hoverCardPositioner",
+                    args: { class: "positionerClassName" },
+                  },
+                  frameworks: ["react"],
+                },
                 { name: "data-slot", value: { type: "literal", value: "hover-card-positioner" } },
               ],
               children: [

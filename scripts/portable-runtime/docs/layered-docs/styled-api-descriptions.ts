@@ -96,6 +96,8 @@ export const commonStyledPropDescriptions: Readonly<Record<string, string>> = {
   onValueCommitted: "Runs when an interaction commits its final value.",
   open: "Controls the open state.",
   openDelay: "Sets the delay in milliseconds before opening.",
+  positionerClass: "Adds classes to the generated floating positioner element.",
+  positionerClassName: "Adds React classes to the generated floating positioner element.",
   openOnHover: "Allows pointer hover to open the surface.",
   opts: "Provides options to the underlying carousel engine.",
   orientation: "Selects the horizontal or vertical layout direction.",

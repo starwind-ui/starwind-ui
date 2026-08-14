@@ -1,11 +1,12 @@
 import HoverCard from "./HoverCard.astro";
 import HoverCardContent from "./HoverCardContent.astro";
 import HoverCardTrigger from "./HoverCardTrigger.astro";
-import { hoverCard, hoverCardContent, hoverCardTrigger } from "./variants";
+import { hoverCard, hoverCardContent, hoverCardPositioner, hoverCardTrigger } from "./variants";
 
 const HoverCardVariants = {
   hoverCard,
   hoverCardContent,
+  hoverCardPositioner,
   hoverCardTrigger,
 };
 

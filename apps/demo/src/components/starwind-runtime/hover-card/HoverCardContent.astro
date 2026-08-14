@@ -1,17 +1,19 @@
 ---
 import PreviewCardPrimitive from "@starwind-ui/astro/preview-card";
 import type { HTMLAttributes } from "astro/types";
-import { hoverCardContent } from "./variants";
+import { hoverCardContent, hoverCardPositioner } from "./variants";
 
 type Props = HTMLAttributes<"div"> & {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  positionerClass?: string;
 };
 
 const {
   class: className,
+  positionerClass,
   side = "bottom",
   align = "center",
   sideOffset = 4,
@@ -26,7 +28,7 @@ const {
     align={align}
     sideOffset={sideOffset}
     avoidCollisions={avoidCollisions}
-    class="isolate z-50"
+    class={hoverCardPositioner({ class: positionerClass })}
     data-slot="hover-card-positioner"
   >
     <PreviewCardPrimitive.Popup

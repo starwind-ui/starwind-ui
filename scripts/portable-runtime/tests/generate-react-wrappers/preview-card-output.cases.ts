@@ -126,10 +126,16 @@ export function defineReactPreviewCardOutputTests(getTempRoot: GetTempRoot): voi
     expect(content).toContain('side = "bottom"');
     expect(content).toContain('align = "center"');
     expect(content).toContain("sideOffset = 4");
+    expect(content).toContain("positionerClassName?: string;");
+    expect(content).toContain("className={hoverCardPositioner({ class: positionerClassName })}");
+    expect(content).not.toContain("isolate");
     expect(content).not.toContain("animationDuration");
     expect(content).toContain('data-slot="hover-card-content"');
     expect(variants).not.toContain("starwind-hover-card");
     expect(variants).toContain("bg-popover text-popover-foreground");
+    expect(variants).toContain("export const hoverCardPositioner");
+    expect(variants).toContain('base: "z-50"');
+    expect(variants).not.toContain("text-popover-foreground z-50 hidden");
     expect(variants).toContain("duration-100");
     expect(variants).toContain("data-[state=closed]:animate-out");
     expect(index).toContain("Root: HoverCard");

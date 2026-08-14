@@ -1,8 +1,5 @@
 ---
-import CarouselDemos from "@/components/carousel-demos/CarouselDemos.astro";
-import CarouselPluginDemo from "@/components/carousel-demos/CarouselPluginDemo.astro";
 import {
-  AccordionDemo,
   AlertDemo,
   AlertDialogDemo,
   AspectRatioDemo,
@@ -12,94 +9,174 @@ import {
   ButtonDemo,
   ButtonGroupDemo,
   CardDemo,
+  CarouselDemo,
   CheckboxDemo,
+  CheckboxGroupDemo,
   CollapsibleDemo,
   ColorPickerDemo,
+  ComboboxDemo,
   ContextMenuDemo,
   DialogDemo,
   DropdownDemo,
   DropzoneDemo,
-  FormDemo,
+  FieldDemo,
   HoverCardDemo,
   ImageDemo,
+  InputDemo,
   InputGroupDemo,
-  InputOtpDemo,
+  InputOTPDemo,
   ItemDemo,
   KbdDemo,
+  LabelDemo,
   NativeSelectDemo,
+  NavigationMenuDemo,
+  NestedDisclosureDemo,
   PaginationDemo,
   PopoverDemo,
   ProgressDemo,
+  ProseDemo,
   RadioGroupDemo,
   ScrollAreaDemo,
   SelectDemo,
   SeparatorDemo,
   SheetDemo,
+  SingleAccordionDemo,
   SkeletonDemo,
   SliderDemo,
   SpinnerDemo,
   SwitchDemo,
   TableDemo,
   TabsDemo,
+  TextareaDemo,
   ThemeToggleDemo,
   ToastDemo,
   ToggleDemo,
+  ToggleGroupDemo,
   TooltipDemo,
   VideoDemo,
-} from "@/components/demos";
+} from "@/components/runtime-prototype";
 import Layout from "@/layouts/Layout.astro";
 ---
 
 <Layout
-  title="Starwind UI components demo"
-  description="A collection of accessible UI components built with Astro"
+  title="Starwind UI Astro Components"
+  description="Starwind UI components for Astro backed by the portable Runtime"
 >
-  <div class="container mx-auto px-4 pb-20">
-    <HoverCardDemo />
-    <TooltipDemo />
-    <PopoverDemo />
-    <DropdownDemo />
-    <ContextMenuDemo />
-    <CardDemo />
-    <CollapsibleDemo />
-    <ThemeToggleDemo />
-    <BadgeDemo />
-    <ButtonDemo />
-    <ButtonGroupDemo />
-    <InputOtpDemo />
-    <InputGroupDemo />
-    <DialogDemo />
-    <ToastDemo />
-    <VideoDemo />
-    <SliderDemo />
-    <ImageDemo />
-    <AccordionDemo />
-    <SheetDemo />
-    <AspectRatioDemo />
-    <SpinnerDemo />
-    <SeparatorDemo />
-    <ItemDemo />
-    <CarouselDemos />
-    <CarouselPluginDemo />
-    <DropzoneDemo />
-    <ProgressDemo />
-    <ScrollAreaDemo />
-    <SkeletonDemo />
-    <RadioGroupDemo />
-    <BreadcrumbDemo />
-    <AlertDialogDemo />
-    <TabsDemo />
-    <FormDemo />
-    <SelectDemo />
-    <NativeSelectDemo />
-    <PaginationDemo />
-    <SwitchDemo />
-    <ToggleDemo />
-    <AvatarDemo />
-    <CheckboxDemo />
-    <AlertDemo />
-    <TableDemo />
-    <KbdDemo />
+  <main class="container mx-auto max-w-4xl px-4 py-12">
+    <div class="mb-10 space-y-3">
+      <h1 class="font-heading text-4xl font-semibold tracking-tight">Starwind UI components</h1>
+      <p class="text-muted-foreground max-w-2xl">
+        Generated styled Astro components backed by Starwind Runtime. Use this page to review and
+        test the current component set.
+      </p>
+    </div>
+
+    <NestedDisclosureDemo />
+
     <ColorPickerDemo />
-  </div>
+
+    <SheetDemo />
+
+    <DropdownDemo />
+
+    <NavigationMenuDemo />
+
+    <ContextMenuDemo />
+
+    <PopoverDemo />
+
+    <DialogDemo />
+
+    <ButtonGroupDemo />
+
+    <ItemDemo />
+
+    <NativeSelectDemo />
+
+    <PaginationDemo />
+
+    <TableDemo />
+
+    <AspectRatioDemo />
+
+    <ImageDemo />
+
+    <VideoDemo />
+
+    <CarouselDemo />
+
+    <ButtonDemo />
+
+    <BadgeDemo />
+
+    <LabelDemo />
+
+    <InputDemo />
+
+    <DropzoneDemo />
+
+    <InputGroupDemo />
+
+    <SpinnerDemo />
+
+    <FieldDemo />
+
+    <InputOTPDemo />
+
+    <SliderDemo />
+
+    <SwitchDemo />
+
+    <ToggleDemo />
+
+    <ThemeToggleDemo />
+
+    <ToggleGroupDemo />
+
+    <TabsDemo />
+
+    <TextareaDemo />
+
+    <SkeletonDemo />
+
+    <CardDemo />
+
+    <BreadcrumbDemo />
+
+    <SeparatorDemo />
+
+    <ScrollAreaDemo />
+
+    <SelectDemo />
+
+    <ComboboxDemo />
+
+    <ToastDemo />
+
+    <AlertDemo />
+
+    <CheckboxDemo />
+
+    <CheckboxGroupDemo />
+
+    <RadioGroupDemo />
+
+    <AvatarDemo />
+
+    <KbdDemo />
+
+    <TooltipDemo />
+
+    <HoverCardDemo />
+
+    <ProgressDemo />
+
+    <ProseDemo />
+
+    <CollapsibleDemo />
+
+    <SingleAccordionDemo />
+
+    <AlertDialogDemo />
+  </main>
 </Layout>
