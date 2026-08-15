@@ -1,5 +1,16 @@
 # starwind
 
+## 3.1.0
+
+### Minor Changes
+
+- Add Positioner class overrides to Tooltip and Hover Card, and place their default stacking level on the Positioner.
+- Add `--starwind-ui-version` to select and validate the frozen Starwind Pro V2 registry for legacy Astro projects.
+
+### Patch Changes
+
+- Use Starwind semantic color tokens directly in Prose styles.
+
 ## 3.0.1
 
 ### Patch Changes
