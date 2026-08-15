@@ -1,8 +1,9 @@
 {
   "name": "@starwind-ui/runtime",
   "version": "1.0.0",
-  "description": "Framework-agnostic Runtime controllers for Starwind UI primitives",
+  "description": "Framework-neutral accessible DOM behavior for Starwind UI components across Astro, React, and plain HTML.",
   "license": "MIT",
+  "homepage": "https://starwind.dev/",
   "author": {
     "name": "boston343",
     "url": "https://x.com/boston343builds"
@@ -12,6 +13,24 @@
     "url": "https://github.com/starwind-ui/starwind-ui.git",
     "directory": "packages/runtime"
   },
+  "bugs": {
+    "url": "https://github.com/starwind-ui/starwind-ui/issues"
+  },
+  "keywords": [
+    "starwind",
+    "starwind-ui",
+    "ui",
+    "components",
+    "accessibility",
+    "accessible",
+    "runtime",
+    "dom",
+    "headless-ui",
+    "tailwindcss",
+    "astro",
+    "react",
+    "typescript"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
