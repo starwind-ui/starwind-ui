@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createPopover } from "../../../src/components/popover/popover";
 import { createSelect } from "../../../src/components/select/select";
 
 describe("createSelect", () => {
@@ -82,6 +83,39 @@ describe("createSelect", () => {
     external.setOpen(false, { emit: false });
 
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
+  });
+
+  it("keeps controlled popup and modal lock coherent until settled departure sync", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const onOpenChange = vi.fn();
+    const select = createSelect(root, { onOpenChange, open: true });
+    const subscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+
+    getItem("system").focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(getPopup().hidden).toBe(false);
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
+    expect(document.activeElement).toBe(outside);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "focus-out" }),
+    );
+    expect(subscriber).toHaveBeenCalledOnce();
+
+    select.setOpen(false, { emit: false });
+
+    expect(select.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+    expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
+    expect(document.activeElement).toBe(outside);
+    expect(onOpenChange).toHaveBeenCalledOnce();
   });
 
   it("initializes an uncontrolled select with default value and hidden form value", () => {
@@ -473,6 +507,708 @@ describe("createSelect", () => {
 
     expect(document.activeElement).toBe(getItem("light"));
     expect(getItem("light")).toHaveAttribute("data-highlighted");
+  });
+
+  it("closes in transaction order and hands forward Tab past the logical Select root", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const rootRemainder = document.createElement("button");
+    rootRemainder.textContent = "Root remainder";
+    root.append(rootRemainder);
+    const portalControl = document.createElement("button");
+    portalControl.textContent = "Portal control";
+    getPositioner().append(portalControl);
+    const nextControl = document.createElement("button");
+    nextControl.textContent = "Next control";
+    document.body.append(nextControl);
+    const order: string[] = [];
+    const onOpenChange = vi.fn((open: boolean) => {
+      if (!open) order.push("callback");
+    });
+    const onValueChange = vi.fn();
+    root.addEventListener("starwind:open-change", (event) => {
+      if (!(event as CustomEvent<{ open: boolean }>).detail.open) order.push("dom");
+    });
+    const select = createSelect(root, { onOpenChange, onValueChange });
+    select.subscribe("openChange", (details) => {
+      if (!details.open) order.push("subscriber");
+    });
+
+    getTrigger().click();
+    await waitForFloatingPosition();
+    const activeItem = getItem("system");
+    activeItem.focus();
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+    });
+
+    expect(getPopup().dispatchEvent(tabEvent)).toBe(false);
+
+    expect(select.getOpen()).toBe(false);
+    expect(select.getValue()).toBe("system");
+    expect(document.activeElement).toBe(nextControl);
+    expect(activeItem.hasAttribute("data-highlighted")).toBe(false);
+    expect(order).toEqual(["callback", "dom", "subscriber"]);
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ event: tabEvent, reason: "focus-out" }),
+    );
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it("returns reverse Tab to the trigger through an accepted focus-out close", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const onOpenChange = vi.fn();
+    const select = createSelect(root, { onOpenChange });
+
+    getTrigger().click();
+    await waitForFloatingPosition();
+    const activeItem = getItem("dark");
+    activeItem.focus();
+    onOpenChange.mockClear();
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+      shiftKey: true,
+    });
+
+    expect(getPopup().dispatchEvent(tabEvent)).toBe(false);
+
+    expect(select.getOpen()).toBe(false);
+    expect(select.getValue()).toBe("system");
+    expect(document.activeElement).toBe(getTrigger());
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ event: tabEvent, reason: "focus-out" }),
+    );
+  });
+
+  it("keeps option focus when the callback cancels a Tab close", () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const onOpenChange = vi.fn((open, details) => {
+      if (!open && details.reason === "focus-out") details.cancel();
+    });
+    const select = createSelect(root, { onOpenChange });
+    const subscriber = vi.fn();
+    const valueSubscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+    select.subscribe("valueChange", valueSubscriber);
+
+    select.setOpen(true, { emit: false });
+    const activeItem = getItem("dark");
+    activeItem.focus();
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+    });
+    getPopup().dispatchEvent(tabEvent);
+
+    expect(tabEvent.defaultPrevented).toBe(true);
+    expect(select.getOpen()).toBe(true);
+    expect(select.getValue()).toBe("system");
+    expect(document.activeElement).toBe(activeItem);
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ isCanceled: true, reason: "focus-out" }),
+    );
+    expect(subscriber).not.toHaveBeenCalled();
+
+    select.destroy();
+    expect(valueSubscriber).not.toHaveBeenCalled();
+  });
+
+  it("does not restore a canceled Tab to an option disabled during the callback", () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const activeItem = getItem("dark");
+    const select = createSelect(root, {
+      onOpenChange: (open, details) => {
+        if (open || details.reason !== "focus-out") return;
+
+        details.cancel();
+        activeItem.setAttribute("data-disabled", "");
+        outside.focus();
+      },
+    });
+
+    select.setOpen(true, { emit: false });
+    activeItem.focus();
+    getPopup().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+    );
+
+    expect(select.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(outside);
+    expect(document.activeElement).not.toBe(activeItem);
+
+    select.destroy();
+  });
+
+  it("keeps option focus when the DOM event cancels a reverse Tab close", () => {
+    const root = renderSelect({ defaultValue: "system" });
+    root.addEventListener("starwind:open-change", (event) => {
+      const details = (event as CustomEvent<{ open: boolean; reason: string }>).detail;
+      if (!details.open && details.reason === "focus-out") event.preventDefault();
+    });
+    const select = createSelect(root);
+    const subscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+
+    select.setOpen(true, { emit: false });
+    const activeItem = getItem("light");
+    activeItem.focus();
+    getPopup().dispatchEvent(
+      new KeyboardEvent("keydown", {
+        bubbles: true,
+        cancelable: true,
+        key: "Tab",
+        shiftKey: true,
+      }),
+    );
+
+    expect(select.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(activeItem);
+    expect(subscriber).not.toHaveBeenCalled();
+
+    select.destroy();
+  });
+
+  it("hands off accepted controlled Tab intent before owner synchronization", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const nextControl = document.createElement("button");
+    document.body.append(nextControl);
+    const onOpenChange = vi.fn();
+    const select = createSelect(root, { onOpenChange, open: true });
+    const subscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+
+    const activeItem = getItem("auto");
+    activeItem.focus();
+    getPopup().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+    );
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(getPopup().hidden).toBe(false);
+    expect(select.getValue()).toBe("system");
+    expect(document.activeElement).toBe(nextControl);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "focus-out" }),
+    );
+    expect(subscriber).toHaveBeenCalledOnce();
+    expect(subscriber).toHaveBeenCalledWith(expect.objectContaining({ reason: "focus-out" }));
+
+    select.setOpen(false, { emit: false });
+
+    expect(select.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+    expect(activeItem.hasAttribute("data-highlighted")).toBe(false);
+    expect(document.activeElement).toBe(nextControl);
+  });
+
+  it("closes safely when Tab destinations are missing or disconnected", () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const select = createSelect(root);
+
+    select.setOpen(true, { emit: false });
+    getItem("system").focus();
+    expect(() => {
+      getPopup().dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+      );
+    }).not.toThrow();
+    expect(select.getOpen()).toBe(false);
+
+    select.setOpen(true, { emit: false });
+    getItem("dark").focus();
+    getTrigger().remove();
+    expect(() => {
+      getPopup().dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          key: "Tab",
+          shiftKey: true,
+        }),
+      );
+    }).not.toThrow();
+    expect(select.getOpen()).toBe(false);
+  });
+
+  it("stops accepted Tab work when the open-change callback destroys the Select", () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const nextControl = document.createElement("button");
+    document.body.append(nextControl);
+    let select: ReturnType<typeof createSelect>;
+    select = createSelect(root, {
+      onOpenChange: (open, details) => {
+        if (!open && details.reason === "focus-out") select.destroy();
+      },
+    });
+    const subscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+
+    select.setOpen(true, { emit: false });
+    getItem("system").focus();
+    getPopup().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+    );
+
+    expect(select.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+    expect(document.activeElement).not.toBe(nextControl);
+    expect(subscriber).not.toHaveBeenCalled();
+  });
+
+  it("stops accepted Tab work when the DOM open-change listener destroys the Select", () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const nextControl = document.createElement("button");
+    document.body.append(nextControl);
+    let select: ReturnType<typeof createSelect>;
+    root.addEventListener("starwind:open-change", (event) => {
+      const details = (event as CustomEvent<{ open: boolean; reason: string }>).detail;
+      if (!details.open && details.reason === "focus-out") select.destroy();
+    });
+    select = createSelect(root);
+    const subscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+
+    select.setOpen(true, { emit: false });
+    getItem("system").focus();
+    getPopup().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+    );
+
+    expect(select.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+    expect(document.activeElement).not.toBe(nextControl);
+    expect(subscriber).not.toHaveBeenCalled();
+  });
+
+  it("closes once after programmatic focus leaves the portaled Select tree", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const onOpenChange = vi.fn();
+    const select = createSelect(root, { onOpenChange });
+    const subscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+
+    select.setOpen(true, { emit: false });
+    getItem("system").focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(false);
+    expect(select.getValue()).toBe("system");
+    expect(document.activeElement).toBe(outside);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "focus-out" }),
+    );
+    expect(subscriber).toHaveBeenCalledOnce();
+    expect(subscriber).toHaveBeenCalledWith(expect.objectContaining({ reason: "focus-out" }));
+  });
+
+  it("restores the last eligible option when a settled departure is canceled by callback", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const onOpenChange = vi.fn((open, details) => {
+      if (!open && details.reason === "focus-out") details.cancel();
+    });
+    const select = createSelect(root, { onOpenChange });
+    const subscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+
+    select.setOpen(true, { emit: false });
+    const activeItem = getItem("auto");
+    activeItem.focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(activeItem);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ isCanceled: true, reason: "focus-out" }),
+    );
+    expect(subscriber).not.toHaveBeenCalled();
+
+    select.destroy();
+  });
+
+  it("keeps outside pointer dismissal as the only controlled departure proposal", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const reasons: string[] = [];
+    const select = createSelect(root, {
+      onOpenChange: (open, details) => {
+        if (!open) reasons.push(details.reason);
+      },
+      open: true,
+    });
+
+    getItem("system").focus();
+    outside.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(reasons).toEqual(["outside-press"]);
+
+    select.destroy();
+  });
+
+  it("keeps open while focus moves through trigger and authored portal surfaces", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const positioner = getPositioner();
+    const portal = document.createElement("div");
+    portal.setAttribute("data-sw-select-portal", "");
+    positioner.replaceWith(portal);
+    portal.append(positioner);
+    const onOpenChange = vi.fn();
+    const select = createSelect(root, { onOpenChange });
+
+    select.setOpen(true, { emit: false });
+    getItem("system").focus();
+    getTrigger().focus();
+    await waitForMicrotasks();
+
+    positioner.tabIndex = 0;
+    positioner.focus();
+    await waitForMicrotasks();
+
+    portal.tabIndex = 0;
+    portal.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    select.destroy();
+  });
+
+  it("restores the prior option when callback cancellation follows structural portal focus", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const positioner = getPositioner();
+    const portal = document.createElement("div");
+    portal.setAttribute("data-sw-select-portal", "");
+    positioner.replaceWith(portal);
+    portal.append(positioner);
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const select = createSelect(root, {
+      onOpenChange: (open, details) => {
+        if (!open && details.reason === "focus-out") details.cancel();
+      },
+    });
+    const subscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+
+    select.setOpen(true, { emit: false });
+    const activeItem = getItem("system");
+    activeItem.focus();
+    positioner.tabIndex = 0;
+    positioner.focus();
+    portal.tabIndex = 0;
+    portal.focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(activeItem);
+    expect(subscriber).not.toHaveBeenCalled();
+
+    select.destroy();
+  });
+
+  it("restores the prior trigger when DOM cancellation follows structural popup focus", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    root.addEventListener("starwind:open-change", (event) => {
+      const details = (event as CustomEvent<{ open: boolean; reason: string }>).detail;
+      if (!details.open && details.reason === "focus-out") event.preventDefault();
+    });
+    const select = createSelect(root);
+    const subscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+
+    select.setOpen(true, { emit: false });
+    getTrigger().focus();
+    getPopup().focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(getTrigger());
+    expect(subscriber).not.toHaveBeenCalled();
+
+    select.destroy();
+  });
+
+  it("restores the trigger when DOM cancellation rejects settled departure", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    root.addEventListener("starwind:open-change", (event) => {
+      const details = (event as CustomEvent<{ open: boolean; reason: string }>).detail;
+      if (!details.open && details.reason === "focus-out") event.preventDefault();
+    });
+    const select = createSelect(root);
+    const subscriber = vi.fn();
+    select.subscribe("openChange", subscriber);
+
+    select.setOpen(true, { emit: false });
+    getTrigger().focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(getTrigger());
+    expect(subscriber).not.toHaveBeenCalled();
+
+    select.destroy();
+  });
+
+  it("skips restoration when a canceled departure owner disconnects", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const activeItem = getItem("dark");
+    const select = createSelect(root, {
+      onOpenChange: (open, details) => {
+        if (open || details.reason !== "focus-out") return;
+
+        details.cancel();
+        activeItem.remove();
+      },
+    });
+
+    select.setOpen(true, { emit: false });
+    activeItem.focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(outside);
+
+    select.destroy();
+  });
+
+  it("stops canceled settled-departure work when the callback destroys Select", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    let select: ReturnType<typeof createSelect>;
+    select = createSelect(root, {
+      onOpenChange: (open, details) => {
+        if (open || details.reason !== "focus-out") return;
+
+        details.cancel();
+        select.destroy();
+      },
+    });
+
+    select.setOpen(true, { emit: false });
+    getItem("system").focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+    expect(document.activeElement).toBe(outside);
+  });
+
+  it("cancels a pending settled departure when Select is destroyed", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const onOpenChange = vi.fn();
+    const select = createSelect(root, { onOpenChange });
+
+    select.setOpen(true, { emit: false });
+    getItem("system").focus();
+    outside.focus();
+    select.destroy();
+    await waitForMicrotasks();
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(select.getOpen()).toBe(false);
+    expect(document.activeElement).toBe(outside);
+  });
+
+  it("closes only a nested Select when focus moves to another parent Popover control", async () => {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div data-sw-popover>
+        <button data-sw-popover-trigger type="button">Open parent</button>
+        <div data-sw-popover-positioner>
+          <div data-sw-popover-popup hidden>
+            <button id="parent-control" type="button">Parent action</button>
+          </div>
+        </div>
+      </div>
+    `;
+    const popoverRoot = wrapper.firstElementChild as HTMLElement;
+    document.body.append(popoverRoot);
+    const popoverPopup = popoverRoot.querySelector<HTMLElement>("[data-sw-popover-popup]")!;
+    const parentControl = popoverRoot.querySelector<HTMLButtonElement>("#parent-control")!;
+    const selectRoot = renderSelect({ defaultValue: "system" });
+    popoverPopup.append(selectRoot);
+    const popover = createPopover(popoverRoot);
+    const onOpenChange = vi.fn();
+    const select = createSelect(selectRoot, { onOpenChange });
+
+    popover.setOpen(true, { emit: false });
+    select.setOpen(true, { emit: false });
+    getItem("system").focus();
+    parentControl.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(false);
+    expect(popover.getOpen()).toBe(true);
+    expect(popoverPopup.hidden).toBe(false);
+    expect(document.activeElement).toBe(parentControl);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "focus-out" }),
+    );
+
+    popover.destroy();
+    select.destroy();
+  });
+
+  it("observes focus departure from a custom portal target", async () => {
+    const portalTarget = document.createElement("div");
+    const portalReference = document.createElement("span");
+    portalTarget.setAttribute("data-floating-root", "");
+    portalTarget.append(portalReference);
+    document.body.append(portalTarget);
+    const root = renderSelect({
+      alignItemWithTrigger: false,
+      defaultValue: "system",
+      modal: false,
+    });
+    const onOpenChange = vi.fn();
+    const select = createSelect(root, { onOpenChange, portalReference });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+
+    select.setOpen(true, { emit: false });
+    expect(getPositioner().parentElement).toBe(portalTarget);
+    getItem("system").focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(false);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "focus-out" }),
+    );
+  });
+
+  it("keeps a focus-out close portaled until its animation finishes", async () => {
+    const root = renderSelect({
+      alignItemWithTrigger: false,
+      defaultValue: "system",
+      modal: false,
+    });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const onOpenChange = vi.fn();
+    const select = createSelect(root, { onOpenChange });
+
+    select.setOpen(true, { emit: false });
+    const animationFinished = createDeferred<void>();
+    vi.spyOn(getPopup(), "getAnimations").mockReturnValue([
+      { finished: animationFinished.promise } as unknown as Animation,
+    ]);
+    getItem("system").focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(false);
+    expect(getPopup()).toHaveAttribute("data-state", "closed");
+    expect(getPopup().hidden).toBe(false);
+    expect(getPositioner().parentElement).toBe(document.body);
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "focus-out" }),
+    );
+
+    animationFinished.resolve();
+    await animationFinished.promise;
+    await waitForMicrotasks();
+
+    expect(getPopup().hidden).toBe(true);
+    expect(getPositioner().parentElement).toBe(root);
+  });
+
+  it("skips restoration when a canceled departure owner becomes disabled", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const activeItem = getItem("dark");
+    const select = createSelect(root, {
+      onOpenChange: (open, details) => {
+        if (open || details.reason !== "focus-out") return;
+
+        details.cancel();
+        activeItem.setAttribute("data-disabled", "");
+      },
+    });
+
+    select.setOpen(true, { emit: false });
+    activeItem.focus();
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(outside);
+
+    select.destroy();
+  });
+
+  it("expires pointer suppression when pointer default action does not move focus", async () => {
+    const root = renderSelect({ defaultValue: "system" });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const reasons: string[] = [];
+    const select = createSelect(root, {
+      onOpenChange: (open, details) => {
+        if (!open) reasons.push(details.reason);
+      },
+      open: true,
+    });
+
+    getItem("system").focus();
+    outside.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    await waitForMacrotask();
+
+    expect(reasons).toEqual(["outside-press"]);
+
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(select.getOpen()).toBe(true);
+    expect(reasons).toEqual(["outside-press", "focus-out"]);
+
+    select.destroy();
   });
 
   it("registers global dismissal listeners only while select instances are open", () => {

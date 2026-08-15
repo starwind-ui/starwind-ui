@@ -9,6 +9,11 @@ import {
 import { createCancelableDetails } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
 import {
+  createFocusBoundary,
+  type FocusBoundaryHandle,
+  getNextDocumentTabStop,
+} from "../../internal/focus-boundary";
+import {
   createFloatingPositioner,
   type FloatingAlign,
   type FloatingPositioner,
@@ -19,12 +24,16 @@ import {
   createFloatingListLifecycle,
   type FloatingListLifecycle,
 } from "../../internal/floating-list-lifecycle";
-import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
+import {
+  type OverlayOpenChangeShellResult,
+  runOverlayOpenChangeShell,
+} from "../../internal/overlay-open-change";
 import { showElement } from "../../internal/presence";
 import { lockDocumentScroll } from "../../internal/scroll-lock";
 
 export type MenuOpenChangeReason =
   | "escape-key"
+  | "focus-out"
   | "imperative-action"
   | "item-press"
   | "outside-press"
@@ -200,6 +209,7 @@ class MenuController implements MenuInstance {
   private readonly abortController = new AbortController();
   private readonly controlled: boolean;
   private readonly elements: MenuElements;
+  private readonly focusBoundary: FocusBoundaryHandle;
   private readonly closeDelay: number;
   private readonly onCloseComplete?: (details: MenuCloseCompleteDetails) => void;
   private readonly onOpenChange?: (open: boolean, details: MenuOpenChangeDetails) => void;
@@ -254,6 +264,14 @@ class MenuController implements MenuInstance {
       options.defaultOpen ??
       readBooleanAttribute(root, MENU_DEFAULT_OPEN_ATTRIBUTE, false);
     this.lifecycle = this.createLifecycle();
+    this.focusBoundary = createFocusBoundary({
+      containsTarget: (target) => this.containsTarget(target),
+      onFocusDeparture: ({ lastFocusOwner }) => {
+        this.handleSettledFocusDeparture(lastFocusOwner);
+      },
+      ownerDocument: root.ownerDocument,
+      surfaces: this.getFocusBoundarySurfaces(),
+    });
 
     this.setupAccessibility();
     this.bindEvents();
@@ -346,6 +364,7 @@ class MenuController implements MenuInstance {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.focusBoundary.destroy();
     this.clearHoverCloseTimer();
     this.clearTypeaheadTimer();
     this.submenus.forEach((submenu) => submenu.destroy());
@@ -501,6 +520,9 @@ class MenuController implements MenuInstance {
         if (!this.openState) return;
 
         switch (event.key) {
+          case "Tab":
+            this.handleRootTabKeyDown(event);
+            break;
           case "ArrowDown":
             event.preventDefault();
             this.focusItem(this.activeIndex < 0 ? 0 : this.activeIndex + 1);
@@ -571,17 +593,20 @@ class MenuController implements MenuInstance {
     }
   }
 
-  private requestOpen(open: boolean, request: OpenRequest): void {
+  private requestOpen(
+    open: boolean,
+    request: OpenRequest,
+  ): OverlayOpenChangeShellResult<MenuOpenChangeDetails> | null {
     if (open === this.openState && !this.controlled && !request.forceApply) {
       if (open && request.focusItem) {
         this.pendingFocusItem = request.focusItem;
         this.queuePendingFocusItem();
       }
-      return;
+      return null;
     }
 
     const previousOpen = this.openState;
-    runOverlayOpenChangeShell({
+    return runOverlayOpenChangeShell({
       root: this.root,
       controlled: this.controlled && !request.forceApply,
       createDetails: createOpenChangeDetails,
@@ -589,6 +614,8 @@ class MenuController implements MenuInstance {
       previousOpen,
       request,
       onApplyControlledOpenState: () => {
+        if (this.destroyed) return;
+
         this.prepareOpenChangeApplication(open, request);
 
         if (open) {
@@ -602,12 +629,16 @@ class MenuController implements MenuInstance {
         this.completeOpenChangeApplication(open, request);
       },
       onApplyUncontrolledOpenState: () => {
+        if (this.destroyed) return;
+
         this.prepareOpenChangeApplication(open, request);
         this.openState = open;
         this.applyOpenState(open, request);
         this.completeOpenChangeApplication(open, request);
       },
       onCanceledOpenChange: () => {
+        if (this.destroyed) return;
+
         if (this.openState === open && previousOpen !== open) {
           this.setOpen(previousOpen, { emit: false, reason: request.reason });
         }
@@ -666,6 +697,7 @@ class MenuController implements MenuInstance {
           this.requestOpen(false, { event, reason: "escape-key" });
         },
         onOutsidePointerDown: (event) => {
+          this.focusBoundary.suppressNextDeparture();
           this.requestOpen(false, { event, reason: "outside-press" });
         },
       },
@@ -747,6 +779,15 @@ class MenuController implements MenuInstance {
     return this.elements.positioner ?? this.elements.popup;
   }
 
+  private getFocusBoundarySurfaces(): HTMLElement[] {
+    return uniqueElements([
+      this.root,
+      this.getPortalElement(),
+      ...(this.elements.portal ? [this.elements.portal] : []),
+      ...this.submenus.flatMap((submenu) => submenu.getFocusBoundarySurfaces()),
+    ]);
+  }
+
   private containsTarget(target: Node): boolean {
     const portalElement = this.getPortalElement();
 
@@ -756,6 +797,51 @@ class MenuController implements MenuInstance {
       this.submenus.some((submenu) => submenu.containsTarget(target)) ||
       Boolean(this.elements.portal?.contains(target))
     );
+  }
+
+  private handleRootTabKeyDown(event: KeyboardEvent): void {
+    if (event.defaultPrevented) return;
+
+    const activeElement = this.root.ownerDocument.activeElement;
+    if (!(activeElement instanceof HTMLElement) || !this.containsTarget(activeElement)) return;
+
+    const focusTarget = event.shiftKey
+      ? this.getOpeningTrigger()
+      : getNextDocumentTabStop(this.root, this.getFocusBoundarySurfaces());
+
+    event.preventDefault();
+    const result = this.requestOpen(false, { event, reason: "focus-out" });
+    if (this.destroyed) return;
+
+    if (result?.status === "applied") {
+      if (focusTarget?.isConnected) {
+        this.focusBoundary.suppressNextDeparture();
+        focusTarget.focus();
+      }
+      return;
+    }
+
+    if (activeElement.isConnected) {
+      this.focusBoundary.suppressNextDeparture();
+      activeElement.focus();
+    }
+  }
+
+  private handleSettledFocusDeparture(lastFocusOwner: HTMLElement | null): void {
+    if (!this.openState || this.destroyed) return;
+
+    const result = this.requestOpen(false, { reason: "focus-out" });
+    if (this.destroyed) return;
+    if (result?.status === "applied" || !lastFocusOwner?.isConnected) return;
+
+    this.focusBoundary.suppressNextDeparture();
+    lastFocusOwner.focus();
+  }
+
+  private getOpeningTrigger(): HTMLElement | null {
+    if (this.restoreFocusTrigger?.isConnected) return this.restoreFocusTrigger;
+
+    return this.elements.triggers.find((trigger) => trigger.isConnected) ?? null;
   }
 
   private clearFloatingStyles(): void {
@@ -988,6 +1074,22 @@ class MenuController implements MenuInstance {
     this.requestOpen(false, { event, reason: "item-press", trigger: item });
   }
 
+  handleOwnedPopupForwardTab(event: KeyboardEvent): void {
+    this.handleRootTabKeyDown(event);
+  }
+
+  getFocusBoundaryFallback(): HTMLElement | null {
+    return this.elements.popup.isConnected ? this.elements.popup : null;
+  }
+
+  containsOwnedTarget(target: Node): boolean {
+    return this.containsTarget(target);
+  }
+
+  suppressFocusDeparture(): void {
+    this.focusBoundary.suppressNextDeparture();
+  }
+
   private closeSubmenus(): void {
     this.submenus.forEach((submenu) => submenu.close());
   }
@@ -1020,6 +1122,7 @@ class MenuSubmenuController {
 
   private readonly abortController = new AbortController();
   private readonly elements: MenuSubmenuElements;
+  private readonly focusBoundary: FocusBoundaryHandle;
   private readonly lifecycle: FloatingListLifecycle<undefined>;
   private readonly itemCollection: MenuItemCollection;
   private readonly owner: MenuController;
@@ -1050,6 +1153,14 @@ class MenuSubmenuController {
       `[${MENU_SUBMENU_ROOT_ATTRIBUTE}]`,
     ).map((submenuRoot) => new MenuSubmenuController(submenuRoot, owner, this));
     this.lifecycle = this.createLifecycle();
+    this.focusBoundary = createFocusBoundary({
+      containsTarget: (target) => this.containsTarget(target),
+      onFocusDeparture: ({ activeElement }) => {
+        this.handleSettledFocusDeparture(activeElement);
+      },
+      ownerDocument: root.ownerDocument,
+      surfaces: this.getFocusBoundarySurfaces(),
+    });
 
     this.setupAccessibility();
     this.bindEvents();
@@ -1098,6 +1209,7 @@ class MenuSubmenuController {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.focusBoundary.destroy();
     this.clearHoverCloseTimer();
     this.clearTypeaheadTimer();
     this.submenus.forEach((submenu) => submenu.destroy());
@@ -1118,6 +1230,19 @@ class MenuSubmenuController {
       this.submenus.some((submenu) => submenu.containsTarget(target)) ||
       Boolean(this.elements.portal?.contains(target))
     );
+  }
+
+  getFocusBoundarySurfaces(): HTMLElement[] {
+    return uniqueElements([
+      this.root,
+      this.getPortalElement(),
+      ...(this.elements.portal ? [this.elements.portal] : []),
+      ...this.submenus.flatMap((submenu) => submenu.getFocusBoundarySurfaces()),
+    ]);
+  }
+
+  getFocusBoundaryFallback(): HTMLElement | null {
+    return this.elements.popup.isConnected ? this.elements.popup : null;
   }
 
   closeSiblingSubmenus(activeSubmenu: MenuSubmenuController): void {
@@ -1247,6 +1372,9 @@ class MenuSubmenuController {
         if (!this.openState) return;
 
         switch (event.key) {
+          case "Tab":
+            this.handleTabKeyDown(event);
+            break;
           case "ArrowDown":
             event.preventDefault();
             this.focusItem(this.activeIndex < 0 ? 0 : this.activeIndex + 1);
@@ -1370,6 +1498,35 @@ class MenuSubmenuController {
 
   private getPortalElement(): HTMLElement {
     return this.elements.positioner ?? this.elements.popup;
+  }
+
+  private handleTabKeyDown(event: KeyboardEvent): void {
+    if (event.defaultPrevented) return;
+
+    const activeElement = this.root.ownerDocument.activeElement;
+    if (!(activeElement instanceof HTMLElement) || !this.containsTarget(activeElement)) return;
+
+    if (!event.shiftKey) {
+      this.owner.handleOwnedPopupForwardTab(event);
+      return;
+    }
+
+    event.preventDefault();
+    const focusTarget = this.elements.trigger.isConnected
+      ? this.elements.trigger
+      : this.parent.getFocusBoundaryFallback();
+    this.focusBoundary.suppressNextDeparture();
+    this.owner.suppressFocusDeparture();
+    this.close();
+    if (focusTarget?.isConnected) {
+      focusTarget.focus();
+    }
+  }
+
+  private handleSettledFocusDeparture(activeElement: Element | null): void {
+    if (!this.openState || this.destroyed) return;
+    if (!activeElement || !this.owner.containsOwnedTarget(activeElement)) return;
+    this.close();
   }
 
   private clearFloatingStyles(): void {
