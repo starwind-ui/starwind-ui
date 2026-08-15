@@ -1,8 +1,9 @@
 {
   "name": "@starwind-ui/astro",
   "version": "1.0.0",
-  "description": "Astro primitive adapters for Starwind UI Runtime components",
+  "description": "Accessible Astro primitives for Starwind UI, powered by the shared framework-neutral Runtime.",
   "license": "MIT",
+  "homepage": "https://starwind.dev/",
   "author": {
     "name": "boston343",
     "url": "https://x.com/boston343builds"
@@ -12,6 +13,24 @@
     "url": "https://github.com/starwind-ui/starwind-ui.git",
     "directory": "packages/astro"
   },
+  "bugs": {
+    "url": "https://github.com/starwind-ui/starwind-ui/issues"
+  },
+  "keywords": [
+    "starwind",
+    "starwind-ui",
+    "ui",
+    "components",
+    "accessibility",
+    "accessible",
+    "astro",
+    "astro-components",
+    "primitives",
+    "runtime",
+    "tailwindcss",
+    "design-system",
+    "typescript"
+  ],
   "type": "module",
   "exports": {
     ".": {
