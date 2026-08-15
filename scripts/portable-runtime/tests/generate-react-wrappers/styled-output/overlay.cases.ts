@@ -546,7 +546,7 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(tooltipContent).not.toContain("animationDuration");
   expect(tooltipVariants).not.toContain("starwind-tooltip");
   expect(tooltipVariants).toContain("export const tooltipPositioner");
-  expect(tooltipVariants).toContain('base: "z-50"');
+  expect(tooltipVariants).toContain('base: "isolate z-50"');
   expect(tooltipVariants).toContain("group hidden");
   expect(tooltipVariants).not.toContain("group z-50 hidden");
   expect(tooltipVariants).toContain("duration-150");
