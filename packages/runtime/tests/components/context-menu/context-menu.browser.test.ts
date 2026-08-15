@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createContextMenu } from "../../../src/components/context-menu/context-menu";
+import {
+  createContextMenu,
+  type ContextMenuOpenChangeReason,
+} from "../../../src/components/context-menu/context-menu";
 
 describe("createContextMenu", () => {
   beforeEach(() => {
@@ -572,6 +575,80 @@ describe("createContextMenu", () => {
 
     expect(contextMenu.getOpen()).toBe(false);
     expect(getPopup().hidden).toBe(true);
+  });
+
+  it("inherits keyboard Tab handoff and focus-out details from Menu", async () => {
+    const inheritedReason: ContextMenuOpenChangeReason = "focus-out";
+    const root = renderContextMenu({ modal: false });
+    const nextControl = document.createElement("button");
+    nextControl.textContent = "Next control";
+    document.body.append(nextControl);
+    const order: string[] = [];
+    const onOpenChange = vi.fn((open: boolean) => {
+      if (!open) order.push("callback");
+    });
+    const onCloseComplete = vi.fn();
+    root.addEventListener("starwind:open-change", (event) => {
+      if (!(event as CustomEvent<{ open: boolean }>).detail.open) order.push("dom");
+    });
+    const closeCompleteListener = vi.fn();
+    root.addEventListener("starwind:close-complete", closeCompleteListener);
+    const contextMenu = createContextMenu(root, { onCloseComplete, onOpenChange });
+    contextMenu.subscribe("openChange", (details) => {
+      if (!details.open) order.push("subscriber");
+    });
+    const closeCompleteSubscriber = vi.fn();
+    contextMenu.subscribe("closeComplete", closeCompleteSubscriber);
+
+    getTrigger().dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ContextMenu" }));
+    await waitForFloatingPosition();
+
+    expect(contextMenu.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(getItem());
+
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+    });
+    expect(getItem().dispatchEvent(tabEvent)).toBe(false);
+
+    const expectedDetails = expect.objectContaining({
+      event: tabEvent,
+      open: false,
+      reason: inheritedReason,
+    });
+    expect(contextMenu.getOpen()).toBe(false);
+    expect(document.activeElement).toBe(nextControl);
+    expect(order).toEqual(["callback", "dom", "subscriber"]);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expectedDetails);
+    expect(onCloseComplete).toHaveBeenCalledWith(expectedDetails);
+    expect(closeCompleteListener).toHaveBeenCalledWith(
+      expect.objectContaining({ detail: expectedDetails }),
+    );
+    expect(closeCompleteSubscriber).toHaveBeenCalledWith(expectedDetails);
+  });
+
+  it("keeps outside pointer focus movement on the sole outside-press reason", async () => {
+    const root = renderContextMenu({ modal: false });
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const reasons: ContextMenuOpenChangeReason[] = [];
+    const contextMenu = createContextMenu(root, {
+      modal: false,
+      onOpenChange: (open, details) => {
+        if (!open) reasons.push(details.reason);
+      },
+      open: true,
+    });
+
+    getItem().focus();
+    outside.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    outside.focus();
+    await waitForMicrotasks();
+
+    expect(contextMenu.getOpen()).toBe(true);
+    expect(reasons).toEqual(["outside-press"]);
   });
 
   it("opens from a touch long press", () => {

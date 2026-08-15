@@ -1234,6 +1234,341 @@ describe("createMenu", () => {
     expect(document.activeElement).toBe(getTrigger());
   });
 
+  it("closes in transaction order and hands forward Tab to the next document control", async () => {
+    const root = renderMenu();
+    const nextControl = document.createElement("button");
+    nextControl.textContent = "Next control";
+    document.body.append(nextControl);
+    const order: string[] = [];
+    const onOpenChange = vi.fn((open: boolean) => {
+      if (!open) order.push("callback");
+    });
+    root.addEventListener("starwind:open-change", (event) => {
+      if (!(event as CustomEvent<{ open: boolean }>).detail.open) order.push("dom");
+    });
+    const closeCompleteListener = vi.fn();
+    root.addEventListener("starwind:close-complete", closeCompleteListener);
+    const menu = createMenu(root, { onOpenChange });
+    menu.subscribe("openChange", (details) => {
+      if (!details.open) order.push("subscriber");
+    });
+
+    getTrigger().click();
+    await waitForFloatingPosition();
+    getItems()[0].focus();
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+    });
+
+    expect(getPopup().dispatchEvent(tabEvent)).toBe(false);
+
+    expect(menu.getOpen()).toBe(false);
+    expect(document.activeElement).toBe(nextControl);
+    expect(order).toEqual(["callback", "dom", "subscriber"]);
+    expect(closeCompleteListener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        detail: expect.objectContaining({ open: false, reason: "focus-out" }),
+      }),
+    );
+  });
+
+  it("returns reverse Tab to the opening trigger after an accepted focus-out close", async () => {
+    const root = renderMenu();
+    const onOpenChange = vi.fn();
+    const menu = createMenu(root, { onOpenChange });
+
+    getTrigger().click();
+    await waitForFloatingPosition();
+    getItems()[0].focus();
+    onOpenChange.mockClear();
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+      shiftKey: true,
+    });
+
+    expect(getPopup().dispatchEvent(tabEvent)).toBe(false);
+
+    expect(menu.getOpen()).toBe(false);
+    expect(document.activeElement).toBe(getTrigger());
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ event: tabEvent, reason: "focus-out" }),
+    );
+  });
+
+  it("keeps keyboard focus inside when the callback cancels a Tab close", async () => {
+    const root = renderMenu();
+    const nextControl = document.createElement("button");
+    document.body.append(nextControl);
+    const onOpenChange = vi.fn((open, details) => {
+      if (!open && details.reason === "focus-out") details.cancel();
+    });
+    const menu = createMenu(root, { onOpenChange });
+    const subscriber = vi.fn();
+    menu.subscribe("openChange", subscriber);
+
+    menu.setOpen(true, { emit: false });
+    getItems()[0].focus();
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+    });
+    getPopup().dispatchEvent(tabEvent);
+
+    expect(tabEvent.defaultPrevented).toBe(true);
+    expect(menu.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(getItems()[0]);
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ isCanceled: true, reason: "focus-out" }),
+    );
+    expect(subscriber).not.toHaveBeenCalled();
+  });
+
+  it("restores the last Menu focus owner when a settled departure is canceled by DOM", async () => {
+    const root = renderMenu();
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const menu = createMenu(root);
+    const subscriber = vi.fn();
+    menu.subscribe("openChange", subscriber);
+    root.addEventListener("starwind:open-change", (event) => {
+      const details = (event as CustomEvent<{ open: boolean; reason: string }>).detail;
+      if (!details.open && details.reason === "focus-out") event.preventDefault();
+    });
+
+    menu.setOpen(true, { emit: false });
+    getItems()[1].focus();
+    outside.focus();
+    await settleFocusBoundary();
+
+    expect(menu.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(getItems()[1]);
+    expect(subscriber).not.toHaveBeenCalled();
+  });
+
+  it("keeps the root open across submenu portals and closes once after focus leaves the tree", async () => {
+    const root = renderMenuWithSubmenu();
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const onOpenChange = vi.fn();
+    const menu = createMenu(root, { onOpenChange });
+
+    menu.setOpen(true, { emit: false });
+    getSubmenuTrigger().click();
+    getSubmenuPopup().querySelector<HTMLElement>("[data-sw-menu-item]")!.focus();
+    await settleFocusBoundary();
+
+    expect(menu.getOpen()).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    outside.focus();
+    await settleFocusBoundary();
+
+    expect(menu.getOpen()).toBe(false);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "focus-out" }),
+    );
+  });
+
+  it("moves focus after accepted controlled Tab intent and preserves focus-out completion", async () => {
+    vi.useFakeTimers();
+    const root = renderMenuWithAnimatedPopup();
+    const nextControl = document.createElement("button");
+    document.body.append(nextControl);
+    const onOpenChange = vi.fn();
+    const closeCompleteListener = vi.fn();
+    root.addEventListener("starwind:close-complete", closeCompleteListener);
+    const menu = createMenu(root, { onOpenChange, open: true });
+    const subscriber = vi.fn();
+    menu.subscribe("openChange", subscriber);
+
+    getItems()[0].focus();
+    getPopup().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+    );
+
+    expect(menu.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(nextControl);
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "focus-out" }),
+    );
+    expect(subscriber).toHaveBeenCalledWith(expect.objectContaining({ reason: "focus-out" }));
+
+    menu.setOpen(false, { emit: false });
+    expect(closeCompleteListener).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(200);
+
+    expect(closeCompleteListener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        detail: expect.objectContaining({ open: false, reason: "focus-out" }),
+      }),
+    );
+  });
+
+  it("keeps outside pointer dismissal as the only proposal when focus also leaves", async () => {
+    const root = renderMenu();
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const reasons: string[] = [];
+    const menu = createMenu(root, {
+      onOpenChange: (open, details) => {
+        if (!open) reasons.push(details.reason);
+      },
+      open: true,
+    });
+
+    getItems()[0].focus();
+    outside.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    outside.focus();
+    await settleFocusBoundary();
+
+    expect(menu.getOpen()).toBe(true);
+    expect(reasons).toEqual(["outside-press"]);
+  });
+
+  it("handles missing focus destinations and cancels pending departure work on destroy", async () => {
+    const root = renderMenu();
+    const onOpenChange = vi.fn();
+    const menu = createMenu(root, { onOpenChange });
+
+    menu.setOpen(true, { emit: false });
+    getItems()[0].focus();
+    expect(() => {
+      getPopup().dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+      );
+    }).not.toThrow();
+    expect(menu.getOpen()).toBe(false);
+
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    menu.setOpen(true, { emit: false });
+    getItems()[0].focus();
+    onOpenChange.mockClear();
+    outside.focus();
+    menu.destroy();
+    await settleFocusBoundary();
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    document.body.innerHTML = "";
+    const disconnectedRoot = renderMenu();
+    const disconnectedMenu = createMenu(disconnectedRoot);
+    const disconnectedTrigger = getTrigger();
+    disconnectedTrigger.click();
+    await waitForFloatingPosition();
+    getItems()[0].focus();
+    disconnectedTrigger.remove();
+
+    expect(() => {
+      getPopup().dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          key: "Tab",
+          shiftKey: true,
+        }),
+      );
+    }).not.toThrow();
+    expect(disconnectedMenu.getOpen()).toBe(false);
+  });
+
+  it("stops accepted Tab work when the open-change callback destroys the Menu", async () => {
+    vi.useFakeTimers();
+    const root = renderMenuWithAnimatedPopup();
+    const nextControl = document.createElement("button");
+    document.body.append(nextControl);
+    const closeCompleteListener = vi.fn();
+    root.addEventListener("starwind:close-complete", closeCompleteListener);
+    let menu: ReturnType<typeof createMenu>;
+    menu = createMenu(root, {
+      onOpenChange: (open, details) => {
+        if (!open && details.reason === "focus-out") menu.destroy();
+      },
+    });
+
+    menu.setOpen(true, { emit: false });
+    const item = getItems()[0];
+    item.focus();
+
+    getPopup().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+    );
+
+    expect(getPopup().hidden).toBe(true);
+    expect(document.activeElement).toBe(document.body);
+    expect(document.activeElement).not.toBe(nextControl);
+    expect(closeCompleteListener).not.toHaveBeenCalled();
+
+    await vi.runAllTimersAsync();
+    expect(closeCompleteListener).not.toHaveBeenCalled();
+  });
+
+  it("stops canceled settled-departure work when the callback destroys the Menu", async () => {
+    const root = renderMenu();
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    let menu: ReturnType<typeof createMenu>;
+    menu = createMenu(root, {
+      onOpenChange: (open, details) => {
+        if (open || details.reason !== "focus-out") return;
+
+        details.cancel();
+        menu.destroy();
+      },
+    });
+
+    menu.setOpen(true, { emit: false });
+    getItems()[0].focus();
+    outside.focus();
+    await settleFocusBoundary();
+
+    expect(menu.getOpen()).toBe(false);
+    expect(getPopup().hidden).toBe(true);
+    expect(document.activeElement).toBe(outside);
+  });
+
+  it("stops accepted Tab work when the DOM open-change listener destroys the Menu", async () => {
+    vi.useFakeTimers();
+    const root = renderMenuWithAnimatedPopup();
+    const nextControl = document.createElement("button");
+    document.body.append(nextControl);
+    const closeCompleteListener = vi.fn();
+    root.addEventListener("starwind:close-complete", closeCompleteListener);
+    let menu: ReturnType<typeof createMenu>;
+    root.addEventListener("starwind:open-change", (event) => {
+      const details = (event as CustomEvent<{ open: boolean; reason: string }>).detail;
+      if (!details.open && details.reason === "focus-out") menu.destroy();
+    });
+    menu = createMenu(root);
+
+    menu.setOpen(true, { emit: false });
+    const item = getItems()[0];
+    item.focus();
+
+    getPopup().dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+    );
+
+    expect(getPopup().hidden).toBe(true);
+    expect(document.activeElement).toBe(document.body);
+    expect(document.activeElement).not.toBe(nextControl);
+    expect(closeCompleteListener).not.toHaveBeenCalled();
+
+    await vi.runAllTimersAsync();
+    expect(closeCompleteListener).not.toHaveBeenCalled();
+  });
+
   it("supports controlled mode and cancelable open changes", async () => {
     const root = renderMenu();
     const onOpenChange = vi.fn();
@@ -1662,6 +1997,358 @@ describe("createMenu", () => {
     expect(getSubmenuPopup().hidden).toBe(true);
     expect(getSubmenuTrigger().getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(getSubmenuTrigger());
+  });
+
+  it("closes one submenu on Shift+Tab and returns focus without closing the root", () => {
+    const root = renderMenuWithSubmenu();
+    const submenuRoot = root.querySelector<HTMLElement>("[data-sw-menu-submenu-root]")!;
+    const onOpenChange = vi.fn();
+    const menu = createMenu(root, { onOpenChange });
+
+    menu.setOpen(true, { emit: false });
+    getSubmenuTrigger().click();
+    const submenuItem = getSubmenuPopup().querySelector<HTMLElement>("[data-sw-menu-item]")!;
+    submenuItem.focus();
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+      shiftKey: true,
+    });
+
+    expect(getSubmenuPopup().dispatchEvent(tabEvent)).toBe(false);
+
+    expect(menu.getOpen()).toBe(true);
+    expect(submenuRoot.getAttribute("data-state")).toBe("closed");
+    expect(getSubmenuPopup().hidden).toBe(true);
+    expect(document.activeElement).toBe(getSubmenuTrigger());
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("closes only the deepest nested submenu on reverse Tab", () => {
+    const root = renderMenuWithNestedSubmenus();
+    const submenuRoots = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-root]"),
+    );
+    const submenuTriggers = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-trigger]"),
+    );
+    const submenuPopups = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-popup]"),
+    ).slice(1);
+    const menu = createMenu(root);
+
+    menu.setOpen(true, { emit: false });
+    submenuTriggers[0]!.click();
+    submenuTriggers[1]!.click();
+    submenuPopups[1]!.querySelector<HTMLElement>("[data-sw-menu-item]")!.focus();
+    submenuPopups[1]!.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        bubbles: true,
+        cancelable: true,
+        key: "Tab",
+        shiftKey: true,
+      }),
+    );
+
+    expect(menu.getOpen()).toBe(true);
+    expect(submenuRoots[0]!.getAttribute("data-state")).toBe("open");
+    expect(submenuRoots[1]!.getAttribute("data-state")).toBe("closed");
+    expect(submenuPopups[0]!.hidden).toBe(false);
+    expect(submenuPopups[1]!.hidden).toBe(true);
+    expect(document.activeElement).toBe(submenuTriggers[1]);
+  });
+
+  it("routes forward Tab from a nested portal through one root focus-out handoff", () => {
+    const root = renderMenuWithNestedSubmenus();
+    const nextControl = document.createElement("button");
+    document.body.append(nextControl);
+    const submenuTriggers = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-trigger]"),
+    );
+    const submenuPopups = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-popup]"),
+    ).slice(1);
+    const onOpenChange = vi.fn();
+    const menu = createMenu(root, { onOpenChange });
+
+    menu.setOpen(true, { emit: false });
+    submenuTriggers[0]!.click();
+    submenuTriggers[1]!.click();
+    submenuPopups[1]!.querySelector<HTMLElement>("[data-sw-menu-item]")!.focus();
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+    });
+
+    expect(submenuPopups[1]!.dispatchEvent(tabEvent)).toBe(false);
+
+    expect(menu.getOpen()).toBe(false);
+    expect(document.activeElement).toBe(nextControl);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ event: tabEvent, reason: "focus-out" }),
+    );
+  });
+
+  it("keeps nested branches open when the root forward handoff is canceled", () => {
+    const root = renderMenuWithNestedSubmenus();
+    const nextControl = document.createElement("button");
+    document.body.append(nextControl);
+    const submenuRoots = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-root]"),
+    );
+    const submenuTriggers = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-trigger]"),
+    );
+    const submenuPopups = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-popup]"),
+    ).slice(1);
+    const onOpenChange = vi.fn((open, details) => {
+      if (!open && details.reason === "focus-out") details.cancel();
+    });
+    const menu = createMenu(root, { onOpenChange });
+    const subscriber = vi.fn();
+    menu.subscribe("openChange", subscriber);
+
+    menu.setOpen(true, { emit: false });
+    submenuTriggers[0]!.click();
+    submenuTriggers[1]!.click();
+    const deepestItem = submenuPopups[1]!.querySelector<HTMLElement>("[data-sw-menu-item]")!;
+    deepestItem.focus();
+    submenuPopups[1]!.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+    );
+
+    expect(menu.getOpen()).toBe(true);
+    expect(submenuRoots[0]!.getAttribute("data-state")).toBe("open");
+    expect(submenuRoots[1]!.getAttribute("data-state")).toBe("open");
+    expect(document.activeElement).toBe(deepestItem);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(subscriber).not.toHaveBeenCalled();
+  });
+
+  it("closes the smallest departed submenu branch after focus settles", async () => {
+    const root = renderMenuWithNestedSubmenus();
+    const rootItem = document.createElement("div");
+    rootItem.setAttribute("data-sw-menu-item", "");
+    rootItem.textContent = "Root item";
+    getPopup().prepend(rootItem);
+    const submenuRoots = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-root]"),
+    );
+    const submenuTriggers = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-trigger]"),
+    );
+    const submenuPopups = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-popup]"),
+    ).slice(1);
+    const onOpenChange = vi.fn();
+    const menu = createMenu(root, { onOpenChange });
+
+    menu.setOpen(true, { emit: false });
+    submenuTriggers[0]!.click();
+    submenuTriggers[1]!.click();
+    const deepestItem = submenuPopups[1]!.querySelector<HTMLElement>("[data-sw-menu-item]")!;
+    deepestItem.focus();
+    submenuTriggers[1]!.focus();
+    await settleFocusBoundary();
+
+    expect(submenuRoots[1]!.getAttribute("data-state")).toBe("open");
+
+    submenuTriggers[0]!.focus();
+    await settleFocusBoundary();
+
+    expect(menu.getOpen()).toBe(true);
+    expect(submenuRoots[0]!.getAttribute("data-state")).toBe("open");
+    expect(submenuRoots[1]!.getAttribute("data-state")).toBe("closed");
+
+    submenuTriggers[1]!.click();
+    expect(submenuRoots[1]!.getAttribute("data-state")).toBe("open");
+
+    rootItem.focus();
+    await settleFocusBoundary();
+
+    expect(menu.getOpen()).toBe(true);
+    expect(submenuRoots[0]!.getAttribute("data-state")).toBe("closed");
+    expect(submenuRoots[1]!.getAttribute("data-state")).toBe("closed");
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("emits one root focus-out proposal after focus leaves nested open branches", async () => {
+    const root = renderMenuWithNestedSubmenus();
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const submenuRoots = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-root]"),
+    );
+    const submenuTriggers = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-trigger]"),
+    );
+    const submenuPopups = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-popup]"),
+    ).slice(1);
+    const onOpenChange = vi.fn();
+    const menu = createMenu(root, { onOpenChange });
+
+    menu.setOpen(true, { emit: false });
+    submenuTriggers[0]!.click();
+    submenuTriggers[1]!.click();
+    submenuPopups[1]!.querySelector<HTMLElement>("[data-sw-menu-item]")!.focus();
+    outside.focus();
+    await settleFocusBoundary();
+
+    expect(menu.getOpen()).toBe(false);
+    expect(submenuRoots[0]!.getAttribute("data-state")).toBe("closed");
+    expect(submenuRoots[1]!.getAttribute("data-state")).toBe("closed");
+    expect(onOpenChange).toHaveBeenCalledOnce();
+    expect(onOpenChange).toHaveBeenCalledWith(
+      false,
+      expect.objectContaining({ reason: "focus-out" }),
+    );
+  });
+
+  it("preserves every nested branch when complete-tree focus-out is canceled", async () => {
+    const root = renderMenuWithNestedSubmenus();
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const submenuRoots = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-root]"),
+    );
+    const submenuTriggers = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-trigger]"),
+    );
+    const submenuPopups = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-popup]"),
+    ).slice(1);
+    const onOpenChange = vi.fn((open, details) => {
+      if (!open && details.reason === "focus-out") details.cancel();
+    });
+    const menu = createMenu(root, { onOpenChange });
+
+    menu.setOpen(true, { emit: false });
+    submenuTriggers[0]!.click();
+    submenuTriggers[1]!.click();
+    const deepestItem = submenuPopups[1]!.querySelector<HTMLElement>("[data-sw-menu-item]")!;
+    deepestItem.focus();
+    outside.focus();
+    await settleFocusBoundary();
+
+    expect(menu.getOpen()).toBe(true);
+    expect(submenuRoots[0]!.getAttribute("data-state")).toBe("open");
+    expect(submenuRoots[1]!.getAttribute("data-state")).toBe("open");
+    expect(submenuPopups[0]!.hidden).toBe(false);
+    expect(submenuPopups[1]!.hidden).toBe(false);
+    expect(document.activeElement).toBe(deepestItem);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+  });
+
+  it("does not start animated branch closes before a canceled root decision", async () => {
+    vi.useFakeTimers();
+    const root = renderMenuWithNestedSubmenus();
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const submenuRoots = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-root]"),
+    );
+    const submenuTriggers = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-submenu-trigger]"),
+    );
+    const submenuPopups = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-sw-menu-popup]"),
+    ).slice(1);
+    submenuPopups.forEach(setAnimatedClose);
+    const onOpenChange = vi.fn((open, details) => {
+      if (!open && details.reason === "focus-out") details.cancel();
+    });
+    const menu = createMenu(root, { onOpenChange });
+
+    menu.setOpen(true, { emit: false });
+    submenuTriggers[0]!.click();
+    submenuTriggers[1]!.click();
+    const deepestItem = submenuPopups[1]!.querySelector<HTMLElement>("[data-sw-menu-item]")!;
+    deepestItem.focus();
+    outside.focus();
+    await settleFocusBoundary();
+
+    submenuRoots.forEach((submenuRoot) => {
+      expect(submenuRoot.getAttribute("data-state")).toBe("open");
+    });
+    submenuPopups.forEach((submenuPopup) => {
+      expect(submenuPopup.hidden).toBe(false);
+      expect(submenuPopup.hasAttribute("data-ending-style")).toBe(false);
+    });
+    expect(menu.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(deepestItem);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(200);
+
+    submenuRoots.forEach((submenuRoot) => {
+      expect(submenuRoot.getAttribute("data-state")).toBe("open");
+    });
+    submenuPopups.forEach((submenuPopup) => {
+      expect(submenuPopup.hidden).toBe(false);
+    });
+  });
+
+  it("handles animated reverse close, disconnected triggers, and pending destroy work", async () => {
+    vi.useFakeTimers();
+    const root = renderMenuWithSubmenu();
+    const submenuRoot = root.querySelector<HTMLElement>("[data-sw-menu-submenu-root]")!;
+    const submenuTrigger = getSubmenuTrigger();
+    const submenuPopup = getSubmenuPopup();
+    setAnimatedClose(submenuPopup);
+    const onOpenChange = vi.fn();
+    const menu = createMenu(root, { onOpenChange });
+
+    menu.setOpen(true, { emit: false });
+    submenuTrigger.click();
+    submenuPopup.querySelector<HTMLElement>("[data-sw-menu-item]")!.focus();
+    submenuTrigger.remove();
+
+    expect(() => {
+      submenuPopup.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          key: "Tab",
+          shiftKey: true,
+        }),
+      );
+    }).not.toThrow();
+    expect(menu.getOpen()).toBe(true);
+    expect(submenuRoot.getAttribute("data-state")).toBe("closed");
+    expect(submenuPopup.hidden).toBe(false);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(200);
+    expect(submenuPopup.hidden).toBe(true);
+    expect(menu.getOpen()).toBe(true);
+    expect(document.activeElement).toBe(getPopup());
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    menu.destroy();
+    await settleFocusBoundary();
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    document.body.innerHTML = "";
+    const cleanupRoot = renderMenuWithSubmenu();
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    const cleanupOnOpenChange = vi.fn();
+    const cleanupMenu = createMenu(cleanupRoot, { onOpenChange: cleanupOnOpenChange });
+    cleanupMenu.setOpen(true, { emit: false });
+    getSubmenuTrigger().click();
+    getSubmenuPopup().querySelector<HTMLElement>("[data-sw-menu-item]")!.focus();
+    outside.focus();
+    cleanupMenu.destroy();
+    await settleFocusBoundary();
+
+    expect(cleanupOnOpenChange).not.toHaveBeenCalled();
+    expect(getSubmenuPopup().hidden).toBe(true);
   });
 
   it("keeps submenu popups mounted while close animations finish and cleans them up on destroy", async () => {
@@ -2535,6 +3222,11 @@ function dispatchScrollUpdate(): void {
 
 function dispatchMousePointer(element: HTMLElement, type: "pointerenter" | "pointerleave"): void {
   element.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerType: "mouse" }));
+}
+
+async function settleFocusBoundary(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 function mockRect(

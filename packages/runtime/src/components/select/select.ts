@@ -7,6 +7,7 @@ import {
   readNumberAttribute,
   resolveAsChildControl,
   setBooleanAttribute,
+  uniqueElements,
 } from "../../internal/dom";
 import {
   createCancelableDetails,
@@ -14,6 +15,11 @@ import {
 } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
 import { attachFormValueRevision } from "../../internal/form-value-revision";
+import {
+  createFocusBoundary,
+  type FocusBoundaryHandle,
+  getNextDocumentTabStop,
+} from "../../internal/focus-boundary";
 import {
   createFloatingPositioner,
   type FloatingPositioner,
@@ -26,13 +32,17 @@ import {
   createFloatingListLifecycle,
   type FloatingListLifecycle,
 } from "../../internal/floating-list-lifecycle";
-import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
+import {
+  type OverlayOpenChangeShellResult,
+  runOverlayOpenChangeShell,
+} from "../../internal/overlay-open-change";
 import { showElement } from "../../internal/presence";
 import { lockDocumentScroll } from "../../internal/scroll-lock";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
 export type SelectOpenChangeReason =
   | "escape-key"
+  | "focus-out"
   | "imperative-action"
   | "item-press"
   | "outside-press"
@@ -233,6 +243,7 @@ class SelectController implements SelectInstance {
   private readonly controlledOpen: boolean;
   private readonly controlledValue: boolean;
   private readonly elements: SelectElements;
+  private readonly focusBoundary: FocusBoundaryHandle;
   private readonly onOpenChange?: (open: boolean, details: SelectOpenChangeDetails) => void;
   private readonly onValueChange?: (
     value: string | null,
@@ -260,6 +271,7 @@ class SelectController implements SelectInstance {
   private itemCache: HTMLElement[] | null = null;
   private itemIndexCache: Map<HTMLElement, number> | null = null;
   private itemObserver: MutationObserver | null = null;
+  private lastEligibleFocusOwner: HTMLElement | null = null;
   private alignedPositionRetryFrame: number | null = null;
   private readonly boundScrollArrows = new WeakSet<HTMLElement>();
   private readonly boundScrollContainers = new WeakSet<HTMLElement>();
@@ -308,6 +320,14 @@ class SelectController implements SelectInstance {
     this.initialValue = readInitialResetValue(options, root, this.elements.input);
     this.valueState = readInitialValue(options, root);
     this.lifecycle = this.createLifecycle();
+    this.focusBoundary = createFocusBoundary({
+      containsTarget: (target) => this.containsTarget(target),
+      onFocusDeparture: ({ lastFocusOwner }) => {
+        this.handleSettledFocusDeparture(lastFocusOwner);
+      },
+      ownerDocument: root.ownerDocument,
+      surfaces: this.getFocusBoundarySurfaces(),
+    });
 
     this.setupAccessibility();
     this.bindEvents();
@@ -458,6 +478,7 @@ class SelectController implements SelectInstance {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.focusBoundary.destroy();
     this.detachFormResetListener();
     this.clearResetTimer();
     this.stopScrollArrow();
@@ -472,6 +493,7 @@ class SelectController implements SelectInstance {
     this.stopItemObserver();
     this.renderOpenState(false);
     this.activeItem = null;
+    this.lastEligibleFocusOwner = null;
     this.lifecycle.destroy();
     this.elements.popup.hidden = true;
     instances.delete(this.root);
@@ -518,6 +540,17 @@ class SelectController implements SelectInstance {
   private bindEvents(): void {
     const { signal } = this.abortController;
     const { popup, trigger } = this.elements;
+
+    this.root.ownerDocument.addEventListener(
+      "focusin",
+      (event) => {
+        if (!(event.target instanceof HTMLElement)) return;
+
+        const focusOwner = this.getEligibleFocusBoundaryOwner(event.target);
+        if (focusOwner) this.lastEligibleFocusOwner = focusOwner;
+      },
+      { signal },
+    );
 
     this.root.addEventListener(
       "starwind:set-value",
@@ -670,7 +703,7 @@ class SelectController implements SelectInstance {
             this.selectItem(this.getItems()[this.activeIndex]!, event);
             break;
           case "Tab":
-            event.preventDefault();
+            this.handleTabKeyDown(event);
             break;
           default:
             if (isTypeaheadKey(event)) {
@@ -721,17 +754,20 @@ class SelectController implements SelectInstance {
     arrow.addEventListener("pointercancel", stop, { signal });
   }
 
-  private requestOpen(open: boolean, request: OpenRequest): void {
+  private requestOpen(
+    open: boolean,
+    request: OpenRequest,
+  ): OverlayOpenChangeShellResult<SelectOpenChangeDetails> | null {
     if (open === this.openState && !this.controlledOpen && !request.forceApply) {
       if (open && request.focus) {
         this.pendingFocus = request.focus;
         this.queuePendingFocus();
       }
-      return;
+      return null;
     }
 
     const previousOpen = this.openState;
-    runOverlayOpenChangeShell({
+    return runOverlayOpenChangeShell({
       root: this.root,
       controlled: this.controlledOpen && !request.forceApply,
       createDetails: createOpenChangeDetails,
@@ -739,10 +775,14 @@ class SelectController implements SelectInstance {
       previousOpen,
       request,
       onApplyControlledOpenState: () => {
+        if (this.destroyed) return;
+
         this.prepareOpenChangeApplication(open, request);
         this.completeOpenChangeApplication(open, request);
       },
       onApplyUncontrolledOpenState: () => {
+        if (this.destroyed) return;
+
         this.prepareOpenChangeApplication(open, request);
         this.openState = open;
         this.applyOpenState(open, request);
@@ -750,6 +790,8 @@ class SelectController implements SelectInstance {
       },
       onNotifyOpenChangeSubscribers: (details) => this.notifyOpen(details),
       onCanceledOpenChange: () => {
+        if (this.destroyed) return;
+
         if (this.openState === open && previousOpen !== open) {
           this.setOpen(previousOpen, { emit: false });
         }
@@ -758,6 +800,59 @@ class SelectController implements SelectInstance {
         this.onOpenChange?.(nextOpen, details);
       },
     });
+  }
+
+  private handleTabKeyDown(event: KeyboardEvent): void {
+    if (event.defaultPrevented) return;
+
+    const activeElement = this.root.ownerDocument.activeElement;
+    if (!(activeElement instanceof HTMLElement)) return;
+
+    const activeItem = this.getItemByTarget(activeElement);
+    if (activeItem !== activeElement || isDisabledElement(activeItem)) return;
+
+    const focusTarget = event.shiftKey
+      ? this.elements.trigger
+      : getNextDocumentTabStop(this.root, [
+          this.elements.portal,
+          this.elements.positioner,
+          this.elements.popup,
+        ]);
+
+    event.preventDefault();
+    const result = this.requestOpen(false, { event, reason: "focus-out" });
+    if (this.destroyed) return;
+
+    if (result?.status === "applied") {
+      if (focusTarget?.isConnected) {
+        this.focusBoundary.suppressNextDeparture();
+        focusTarget.focus();
+      }
+      return;
+    }
+
+    if (
+      activeItem.isConnected &&
+      this.getItemByTarget(activeItem) === activeItem &&
+      !isDisabledElement(activeItem)
+    ) {
+      activeItem.focus();
+    }
+  }
+
+  private handleSettledFocusDeparture(lastFocusOwner: HTMLElement | null): void {
+    if (!this.openState || this.destroyed) return;
+
+    const result = this.requestOpen(false, { reason: "focus-out" });
+    if (this.destroyed || result?.status === "applied") return;
+
+    const focusOwner =
+      this.getEligibleFocusBoundaryOwner(lastFocusOwner) ??
+      this.getEligibleFocusBoundaryOwner(this.lastEligibleFocusOwner);
+    if (!focusOwner) return;
+
+    this.focusBoundary.suppressNextDeparture();
+    focusOwner.focus();
   }
 
   private prepareOpenChangeApplication(open: boolean, request: OpenRequest): void {
@@ -985,6 +1080,7 @@ class SelectController implements SelectInstance {
           this.requestOpen(false, { event, reason: "escape-key" });
         },
         onOutsidePointerDown: (event) => {
+          this.focusBoundary.suppressNextDeparture();
           this.requestOpen(false, { event, reason: "outside-press" });
         },
       },
@@ -1060,6 +1156,14 @@ class SelectController implements SelectInstance {
     return this.elements.positioner ?? this.elements.popup;
   }
 
+  private getFocusBoundarySurfaces(): HTMLElement[] {
+    return uniqueElements([
+      this.elements.trigger,
+      this.getPortalElement(),
+      ...(this.elements.portal ? [this.elements.portal] : []),
+    ]);
+  }
+
   private containsTarget(target: Node): boolean {
     const portalElement = this.getPortalElement();
 
@@ -1068,6 +1172,13 @@ class SelectController implements SelectInstance {
       portalElement.contains(target) ||
       Boolean(this.elements.portal?.contains(target))
     );
+  }
+
+  private getEligibleFocusBoundaryOwner(element: HTMLElement | null): HTMLElement | null {
+    if (!element?.isConnected || isDisabledElement(element)) return null;
+    if (element === this.elements.trigger) return element;
+
+    return this.getItemByTarget(element) === element ? element : null;
   }
 
   private readonly handleFormReset = (): void => {

@@ -983,6 +983,41 @@ describe("createNavigationMenu", () => {
     expect(reasons).toEqual(["trigger-press", "focus-out"]);
   });
 
+  it("retains controlled value and popup focus when final Tab is canceled by DOM", () => {
+    const root = renderNavigationMenuWithPopupFocusControls();
+    const onValueChange = vi.fn();
+    const menu = createNavigationMenu(root, { onValueChange, value: "last" });
+    const subscriber = vi.fn();
+    menu.subscribe("valueChange", subscriber);
+    const popupControl = getLink("last-primary");
+    let eventDetails: NavigationMenuValueChangeDetails | null = null;
+    root.addEventListener("starwind:value-change", (event) => {
+      const details = (event as CustomEvent<NavigationMenuValueChangeDetails>).detail;
+      if (details.reason !== "focus-out") return;
+
+      eventDetails = details;
+      event.preventDefault();
+    });
+    popupControl.focus();
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+    });
+
+    expect(popupControl.dispatchEvent(tabEvent)).toBe(false);
+
+    expect(menu.getValue()).toBe("last");
+    expect(getPopup().hidden).toBe(false);
+    expect(document.activeElement).toBe(popupControl);
+    expect(onValueChange).toHaveBeenCalledWith(
+      null,
+      expect.objectContaining({ event: tabEvent, reason: "focus-out", value: null }),
+    );
+    expect(eventDetails).toEqual(expect.objectContaining({ isCanceled: true }));
+    expect(subscriber).not.toHaveBeenCalled();
+  });
+
   it("respects closeOnEscape false when Escape is pressed from focused content", () => {
     const root = renderNavigationMenuWithKeyboard();
     const menu = createNavigationMenu(root, { closeOnEscape: false, defaultValue: "first" });
