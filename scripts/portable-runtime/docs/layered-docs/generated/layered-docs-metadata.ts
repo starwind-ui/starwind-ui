@@ -16249,7 +16249,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "tooltipPositioner",
             exportName: "TooltipVariants",
-            baseClassCount: 1,
+            baseClassCount: 2,
             options: [],
             compoundVariantCount: 0,
           },
