@@ -24,7 +24,7 @@
     "dropzone": "2.0.1",
     "field": "1.0.1",
     "form": "1.0.1",
-    "hover-card": "2.0.2",
+    "hover-card": "2.1.0",
     "image": "1.1.0",
     "input": "2.0.1",
     "input-group": "1.1.2",
@@ -37,7 +37,7 @@
     "pagination": "4.0.1",
     "popover": "2.0.3",
     "progress": "2.0.3",
-    "prose": "1.1.0",
+    "prose": "1.1.1",
     "radio-group": "3.0.2",
     "scroll-area": "2.0.1",
     "select": "2.0.2",
@@ -55,7 +55,7 @@
     "toast": "2.0.1",
     "toggle": "2.0.1",
     "toggle-group": "2.0.1",
-    "tooltip": "2.0.2",
+    "tooltip": "2.1.0",
     "video": "1.1.0"
   }
 }

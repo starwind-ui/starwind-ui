@@ -1,5 +1,17 @@
 # @starwind-ui/runtime
 
+## 1.1.0
+
+### Minor Changes
+
+- Add Menu-backed focus handoff for Menu, Dropdown, and Context Menu, including `focus-out` close details.
+- Fix Select Tab handoff and add public `focus-out` close details.
+
+### Patch Changes
+
+- Improve npm metadata and clarify package roles in the public READMEs.
+- Keep nested Collapsible triggers and panels scoped to their nearest Runtime root.
+
 ## 1.0.0
 
 ### Major Changes

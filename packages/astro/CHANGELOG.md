@@ -1,5 +1,13 @@
 # @starwind-ui/astro
 
+## 1.1.0
+
+### Patch Changes
+
+- Improve npm metadata and clarify package roles in the public READMEs.
+- Updated dependencies
+  - @starwind-ui/runtime@1.1.0
+
 ## 1.0.0
 
 ### Major Changes
