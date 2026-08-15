@@ -283,10 +283,10 @@ function runCommand(command, args, options = {}) {
   });
 }
 
-async function readGitOutput(args) {
+export async function readGitOutput(args, spawnGit = spawn) {
   let output = "";
   await new Promise((resolve, reject) => {
-    const child = spawn("git", args, {
+    const child = spawnGit("git", args, {
       cwd: ROOT_DIR,
       stdio: ["ignore", "pipe", "inherit"],
     });
@@ -294,7 +294,7 @@ async function readGitOutput(args) {
       output += chunk;
     });
     child.on("error", reject);
-    child.on("exit", (code) => {
+    child.on("close", (code) => {
       if (code === 0) resolve();
       else reject(new Error(`git ${args.join(" ")} failed with exit code ${code}.`));
     });

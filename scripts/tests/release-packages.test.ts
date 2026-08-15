@@ -17,6 +17,7 @@ import {
   isDirtyGitStatusOutput,
   parseArgs,
   parsePublishOutput,
+  readGitOutput,
   redactCommandArgs,
   validatePublishGitState,
   validatePublishedPrefix,
@@ -926,6 +927,19 @@ describe("release package tooling", () => {
         originUrl: "git@github.com:starwind-ui/starwind-ui.git",
       }).ok,
     ).toBe(true);
+  });
+
+  it("waits for Git stdout to close before validating publish state", async () => {
+    const child = new EventEmitter() as EventEmitter & { stdout: PassThrough };
+    child.stdout = new PassThrough();
+    const outputPromise = readGitOutput(["rev-parse", "HEAD"], () => child);
+
+    child.emit("exit", 0);
+    await Promise.resolve();
+    child.stdout.end("abc123\n");
+    child.emit("close", 0);
+
+    await expect(outputPromise).resolves.toBe("abc123");
   });
 
   it("keeps generated Runtime package requirements publishable", async () => {
