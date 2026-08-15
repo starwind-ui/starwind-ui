@@ -348,7 +348,6 @@ function assertTooltipBaseState(state) {
     state.styleLeft === "" ||
     state.styleTop === "" ||
     state.rootContains !== false ||
-    state.parentClassName?.includes("isolate") !== true ||
     state.parentClassName?.includes("z-50") !== true ||
     state.dataSlot !== "tooltip-content"
   ) {
