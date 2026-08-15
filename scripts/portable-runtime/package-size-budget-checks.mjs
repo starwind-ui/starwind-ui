@@ -3,24 +3,35 @@ const aggregateGrowthPolicy = Object.freeze({
   maxGrowthPercent: 10,
 });
 
+export const aggregateBaselineProvenance = Object.freeze({
+  date: "2026-08-15",
+  publicCommit: "6d497055479ca56bad8463f3fc38bedc231d0174",
+  release: Object.freeze({
+    astro: "1.1.0",
+    cli: "3.1.0",
+    react: "1.1.0",
+    runtime: "1.1.0",
+  }),
+});
+
 const headlinePackageBudgets = [
   createAggregateBudget(
     {
-      baselineGzipBytes: 126_295,
+      baselineGzipBytes: 139_964,
       label: "@starwind-ui/runtime",
     },
     "maxGzipBytes",
   ),
   createAggregateBudget(
     {
-      baselineGzipBytes: 35_194,
+      baselineGzipBytes: 36_486,
       label: "@starwind-ui/react (adapter only)",
     },
     "maxGzipBytes",
   ),
   createAggregateBudget(
     {
-      baselineGzipBytes: 164_250,
+      baselineGzipBytes: 179_332,
       label: "@starwind-ui/react + runtime",
     },
     "maxGzipBytes",
@@ -30,7 +41,7 @@ const headlinePackageBudgets = [
 const matchedSupportBudgets = [
   createAggregateBudget(
     {
-      baselineGzipBytes: 107_231,
+      baselineGzipBytes: 117_191,
       comparisonSet: "all-three-overlap",
       compareProviders: ["zag", "base"],
       label: "All-three overlap",
@@ -39,7 +50,7 @@ const matchedSupportBudgets = [
   ),
   createAggregateBudget(
     {
-      baselineGzipBytes: 118_786,
+      baselineGzipBytes: 129_328,
       comparisonSet: "starwind-zag-overlap",
       compareProviders: ["zag"],
       label: "Starwind/Zag overlap",
@@ -48,9 +59,7 @@ const matchedSupportBudgets = [
   ),
   createAggregateBudget(
     {
-      // This set predated exact raw-gzip diagnostics. Its former committed ceiling
-      // is the retained baseline until the next explicit size-report refresh.
-      baselineGzipBytes: 115 * 1024,
+      baselineGzipBytes: 125_239,
       comparisonSet: "starwind-base-overlap",
       compareProviders: ["base"],
       label: "Starwind/Base UI overlap",

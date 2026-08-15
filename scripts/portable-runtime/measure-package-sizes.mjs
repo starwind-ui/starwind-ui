@@ -6,7 +6,10 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { gzipSync } from "node:zlib";
 
-import { evaluatePackageSizeBudgets } from "./package-size-budget-checks.mjs";
+import {
+  aggregateBaselineProvenance,
+  evaluatePackageSizeBudgets,
+} from "./package-size-budget-checks.mjs";
 import {
   buildRawGzipDiagnostics,
   formatRawGzipDiagnosticsMarkdown,
@@ -1125,6 +1128,7 @@ export function formatDiagnosticPackageSizeReport({
     "## Budget Checks",
     "",
     "`pnpm runtime:size` treats aggregate package and support-set sizes as regression guards: they fail only after more than 10% or 15 KiB of gzip growth from the committed baseline, whichever comes first. Targeted cold imports retain strict absolute budgets. Competitor comparisons are informational.",
+    `The aggregate baselines were refreshed from public commit \`${aggregateBaselineProvenance.publicCommit}\` on ${aggregateBaselineProvenance.date} for Runtime ${aggregateBaselineProvenance.release.runtime}, Astro ${aggregateBaselineProvenance.release.astro}, React ${aggregateBaselineProvenance.release.react}, and CLI ${aggregateBaselineProvenance.release.cli}. Targeted cold-import budgets were not rebaselined.`,
     "",
     ...formatColorPickerRebaselineMarkdown(),
     "",
