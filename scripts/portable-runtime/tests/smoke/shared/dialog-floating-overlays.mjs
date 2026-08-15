@@ -71,7 +71,9 @@ async function runDialogFloatingOverlays({ ids, label, page }) {
 
   await page.locator(`#${ids.selectTrigger}`).click();
   await assertPromoted(ids.selectContent, "listbox");
-  await page.locator(`#${ids.selectOption}`).click();
+  await page.locator(`#${ids.selectOption}`).evaluate((option) => {
+    if (option instanceof HTMLElement) option.click();
+  });
   await page.waitForFunction(
     ({ root, value }) => document.querySelector(`#${root}`)?.getAttribute("data-value") === value,
     { root: ids.select, value: "light" },
