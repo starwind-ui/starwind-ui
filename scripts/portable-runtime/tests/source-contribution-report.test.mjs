@@ -270,12 +270,12 @@ describe("source contribution report", () => {
 
     expect(historicalHeadlineCeilings).not.toEqual(ceilings.headline);
     expect(ceilings.headline).toEqual({
-      "@starwind-ui/react (adapter only)": 38_713,
-      "@starwind-ui/react + runtime": 179_610,
-      "@starwind-ui/runtime": 138_924,
+      "@starwind-ui/react (adapter only)": 40_134,
+      "@starwind-ui/react + runtime": 194_692,
+      "@starwind-ui/runtime": 153_960,
     });
     expect(summary.overlapBudgetRow.newCeilingBytes).toBe(120_020);
-    expect(ceilings.matchedSupport["starwind-zag-overlap"]).toBe(130_664);
+    expect(ceilings.matchedSupport["starwind-zag-overlap"]).toBe(142_260);
     expect(Object.isFrozen(ceilings)).toBe(true);
     expect(Object.isFrozen(ceilings.headline)).toBe(true);
     expect(Object.isFrozen(ceilings.matchedSupport)).toBe(true);
