@@ -5,7 +5,7 @@ export const tooltip = tv({
 });
 
 export const tooltipPositioner = tv({
-  base: "z-50",
+  base: "isolate z-50",
 });
 
 export const tooltipContent = tv({

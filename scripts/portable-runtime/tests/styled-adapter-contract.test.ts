@@ -29,6 +29,10 @@ describe("StyledAdapterContract inventory", () => {
     });
   });
 
+  it("keeps the Tooltip positioner in an isolated stacking context", () => {
+    expect(tooltipStyledContract.variants?.tooltipPositioner?.base).toContain("isolate");
+  });
+
   it("accepts Vue as a Styled framework target while rejecting an empty filter", () => {
     const vueOnlyButton = cloneStyledContract(buttonStyledContract);
     vueOnlyButton.frameworks = ["vue"];

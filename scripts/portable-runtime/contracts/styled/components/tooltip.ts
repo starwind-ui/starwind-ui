@@ -11,7 +11,7 @@ export const tooltipStyledContract: StyledAdapterContract = {
   variantCollectionName: "TooltipVariants",
   variants: {
     tooltip: { base: "inline-block" },
-    tooltipPositioner: { base: "z-50" },
+    tooltipPositioner: { base: "isolate z-50" },
     tooltipContent: {
       base: [
         "group hidden w-fit px-3 py-1.5",
