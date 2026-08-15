@@ -839,9 +839,8 @@ class MenuController implements MenuInstance {
   }
 
   private getOpeningTrigger(): HTMLElement | null {
-    if (this.restoreFocusTrigger) {
-      return this.restoreFocusTrigger.isConnected ? this.restoreFocusTrigger : null;
-    }
+    if (this.restoreFocusTrigger?.isConnected) return this.restoreFocusTrigger;
+
     return this.elements.triggers.find((trigger) => trigger.isConnected) ?? null;
   }
 

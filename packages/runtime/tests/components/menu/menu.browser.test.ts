@@ -1301,6 +1301,32 @@ describe("createMenu", () => {
     );
   });
 
+  it("falls back to a connected trigger when the opening trigger disconnects", async () => {
+    const root = renderMenu();
+    const openingTrigger = getTrigger();
+    const fallbackTrigger = document.createElement("button");
+    fallbackTrigger.setAttribute("data-sw-menu-trigger", "");
+    fallbackTrigger.textContent = "Fallback trigger";
+    root.append(fallbackTrigger);
+    const menu = createMenu(root);
+
+    openingTrigger.click();
+    await waitForFloatingPosition();
+    getItems()[0].focus();
+    openingTrigger.remove();
+    const tabEvent = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Tab",
+      shiftKey: true,
+    });
+
+    expect(getPopup().dispatchEvent(tabEvent)).toBe(false);
+
+    expect(menu.getOpen()).toBe(false);
+    expect(document.activeElement).toBe(fallbackTrigger);
+  });
+
   it("keeps keyboard focus inside when the callback cancels a Tab close", async () => {
     const root = renderMenu();
     const nextControl = document.createElement("button");
