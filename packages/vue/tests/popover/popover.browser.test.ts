@@ -130,6 +130,174 @@ describe("Vue Popover browser contract", () => {
     expect(inlineHost.querySelector("[data-sw-popover-portal]")).not.toBeNull();
   });
 
+  it("keeps the public wrapper as the sole placement owner across live targets", async () => {
+    const first = document.createElement("section");
+    const second = document.createElement("section");
+    document.body.append(first, second);
+    const portal = reactive<{ container: string | HTMLElement; disabled: boolean }>({
+      container: first,
+      disabled: false,
+    });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp({
+      render: () => tree({ defaultOpen: true }, portal),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+
+    await waitForFloating();
+    const wrapper = () => document.querySelector<HTMLElement>("[data-sw-popover-portal]")!;
+    const positioner = () => document.querySelector<HTMLElement>("[data-sw-popover-positioner]")!;
+    expect(wrapper().parentElement).toBe(first);
+    expect(wrapper().contains(positioner())).toBe(true);
+    expect(wrapper().dataset.swPortalPlacement).toBe("framework");
+    expect(wrapper().dataset.placement).toBe("ready");
+
+    portal.container = second;
+    await waitForFloating();
+    expect(wrapper().parentElement).toBe(second);
+    expect(wrapper().contains(positioner())).toBe(true);
+
+    portal.container = "[invalid";
+    await waitForFloating();
+    expect(wrapper().parentElement).toBe(document.body);
+    expect(wrapper().contains(positioner())).toBe(true);
+
+    portal.container = "#late-portal-target";
+    await waitForFloating();
+    expect(wrapper().parentElement).toBe(document.body);
+    const lateTarget = document.createElement("section");
+    lateTarget.id = "late-portal-target";
+    document.body.append(lateTarget);
+    await waitForFloating();
+    expect(wrapper().parentElement).toBe(lateTarget);
+    lateTarget.remove();
+    await waitForFloating();
+    expect(wrapper().parentElement).toBe(document.body);
+
+    portal.disabled = true;
+    await waitForFloating();
+    expect(host.querySelector("[data-sw-popover-portal]")).toBe(wrapper());
+    expect(wrapper().contains(positioner())).toBe(true);
+  });
+
+  it("teleports directly to the nearest ancestor floating root on first placement", async () => {
+    const overlays = document.createElement("section");
+    document.body.append(overlays);
+    const host = mount(
+      h(
+        PopoverRoot,
+        { defaultOpen: true },
+        {
+          default: () => [
+            h(PopoverTrigger, { id: "nested-parent-trigger" }, { default: () => "Parent" }),
+            h(
+              PopoverPortal,
+              { container: overlays, id: "nested-parent-portal" },
+              {
+                default: () =>
+                  h(PopoverPositioner, null, {
+                    default: () =>
+                      h(
+                        PopoverPopup,
+                        { id: "nested-parent-popup" },
+                        {
+                          default: () =>
+                            h(PopoverRoot, null, {
+                              default: () => [
+                                h(
+                                  PopoverTrigger,
+                                  { id: "nested-child-trigger" },
+                                  { default: () => "Child" },
+                                ),
+                                h(
+                                  PopoverPortal,
+                                  { id: "nested-child-portal" },
+                                  {
+                                    default: () =>
+                                      h(PopoverPositioner, null, {
+                                        default: () =>
+                                          h(PopoverPopup, { id: "nested-child-popup" }),
+                                      }),
+                                  },
+                                ),
+                              ],
+                            }),
+                        },
+                      ),
+                  }),
+              },
+            ),
+          ],
+        },
+      ),
+    );
+    await waitForFloating();
+
+    const parentPortal = overlays.querySelector<HTMLElement>("#nested-parent-portal")!;
+    const childPortal = document.querySelector<HTMLElement>("#nested-child-portal")!;
+    const childPositioner = childPortal.querySelector<HTMLElement>("[data-sw-popover-positioner]")!;
+    expect(childPortal.parentElement).toBe(parentPortal);
+    expect(childPortal.dataset.container).toBeUndefined();
+    expect(childPortal.dataset.placement).toBe("ready");
+    expect(childPortal.contains(childPositioner)).toBe(true);
+
+    host.ownerDocument.querySelector<HTMLButtonElement>("#nested-child-trigger")!.click();
+    await waitForFloating();
+    expect(childPositioner.style.left).not.toBe("");
+    expect(childPositioner.style.top).not.toBe("");
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+    await nextTick();
+    expect(document.querySelector<HTMLElement>("#nested-child-popup")!.hidden).toBe(true);
+    expect(overlays.querySelector<HTMLElement>("#nested-parent-popup")!.hidden).toBe(false);
+  });
+
+  it("completes inline readiness and resumes placement across live disabled toggles", async () => {
+    const state = reactive({ disabled: false });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp({
+      render: () => tree({ defaultOpen: true }, { disabled: state.disabled }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await waitForFloating();
+
+    const wrapper = () => document.querySelector<HTMLElement>("[data-sw-popover-portal]")!;
+    const popup = () => document.querySelector<HTMLElement>("[data-sw-popover-popup]")!;
+    const positioner = () => document.querySelector<HTMLElement>("[data-sw-popover-positioner]")!;
+    expect(wrapper().dataset.placement).toBe("ready");
+    expect(wrapper().parentElement).toBe(document.body);
+    expect(positioner().style.left).not.toBe("");
+
+    state.disabled = true;
+    await waitForFloating();
+    expect(wrapper().dataset.placement).toBe("ready");
+    expect(host.contains(wrapper())).toBe(true);
+    expect(wrapper().contains(positioner())).toBe(true);
+    expect(positioner().style.left).not.toBe("");
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+    await nextTick();
+    expect(popup().hidden).toBe(true);
+    host.querySelector<HTMLButtonElement>("[data-sw-popover-trigger]")!.click();
+    await waitForFloating();
+    expect(popup().hidden).toBe(false);
+    expect(wrapper().dataset.placement).toBe("ready");
+
+    state.disabled = false;
+    await waitForFloating();
+    expect(wrapper().parentElement).toBe(document.body);
+    expect(wrapper().dataset.placement).toBe("ready");
+    expect(positioner().style.left).not.toBe("");
+  });
+
   it("strict Trigger asChild preserves one native semantic element, attrs, listeners, and refs", async () => {
     const triggerRef = ref<{ element: HTMLElement | null } | null>(null);
     let clicks = 0;
@@ -262,7 +430,7 @@ function tree(
     align?: "start" | "center" | "end";
     avoidCollisions?: boolean;
     collisionStrategy?: "initial-placement" | "best-fit";
-    container?: HTMLElement;
+    container?: string | HTMLElement;
     disabled?: boolean;
     side?: "top" | "right" | "bottom" | "left";
     sideOffset?: number;

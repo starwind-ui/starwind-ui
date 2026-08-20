@@ -2,16 +2,7 @@
 <!-- Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies. -->
 <script setup lang="ts">
 import { createScrollArea } from "@starwind-ui/runtime/scroll-area";
-import {
-  computed,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  onUpdated,
-  ref,
-  useAttrs,
-  watch,
-} from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -36,7 +27,6 @@ const props = defineProps<{
   overflowEdgeThreshold?: ScrollAreaOverflowEdgeThreshold;
 }>();
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLDivElement | null>(null);
 const thresholdAttributes = computed(() =>
   getOverflowEdgeThresholdAttributes(props.overflowEdgeThreshold),
@@ -122,7 +112,7 @@ function normalizeOverflowEdgeThresholdValue(value: number | undefined): number 
 <template>
   <div
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-sw-scroll-area
     :data-overflow-edge-threshold="thresholdAttributes.shared"
     :data-overflow-edge-threshold-x-end="thresholdAttributes.xEnd"

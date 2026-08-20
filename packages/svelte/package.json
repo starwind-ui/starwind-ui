@@ -79,7 +79,7 @@
     "svelte-check": "4.4.8",
     "typescript": "^5.9.3",
     "vite": "7.3.5",
-    "vitest": "^4.0.16"
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=22.12.0"

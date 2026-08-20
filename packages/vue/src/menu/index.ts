@@ -73,24 +73,3 @@ export type {
   MenuOpenChangeDetails,
   MenuValueChangeDetails,
 } from "@starwind-ui/runtime";
-export type {
-  MenuCheckedContextValue,
-  MenuOwnerContextValue,
-  MenuRadioGroupContextValue,
-  MenuRootContextValue,
-  MenuSubmenuContextValue,
-} from "./MenuContext";
-export {
-  MenuCheckboxItemContext,
-  MenuOwnerContext,
-  MenuRadioGroupContext,
-  MenuRadioItemContext,
-  MenuRootContext,
-  MenuSubmenuContext,
-  useMenuCheckboxItemContext,
-  useMenuOwnerContext,
-  useMenuRadioGroupContext,
-  useMenuRadioItemContext,
-  useMenuRootContext,
-  useMenuSubmenuContext,
-} from "./MenuContext";

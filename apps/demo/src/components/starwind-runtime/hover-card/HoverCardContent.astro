@@ -9,6 +9,8 @@ type Props = HTMLAttributes<"div"> & {
   sideOffset?: number;
   avoidCollisions?: boolean;
   positionerClass?: string;
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 const {
@@ -18,11 +20,17 @@ const {
   align = "center",
   sideOffset = 4,
   avoidCollisions = true,
+  portalContainer,
+  disablePortal = false,
   ...rest
 } = Astro.props;
 ---
 
-<PreviewCardPrimitive.Portal data-slot="hover-card-portal">
+<PreviewCardPrimitive.Portal
+  container={portalContainer}
+  disabled={disablePortal}
+  data-slot="hover-card-portal"
+>
   <PreviewCardPrimitive.Positioner
     side={side}
     align={align}

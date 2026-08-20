@@ -13,6 +13,8 @@ export type SelectContentProps = React.ComponentPropsWithoutRef<"div"> & {
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
   size?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 function SelectContent(props: SelectContentProps) {
@@ -26,12 +28,18 @@ function SelectContent(props: SelectContentProps) {
     side = "bottom",
     sideOffset = 4,
     size = "md",
+    portalContainer,
+    disablePortal = false,
     children,
     ...rest
   } = props;
 
   return (
-    <SelectPrimitive.Portal data-slot="select-portal">
+    <SelectPrimitive.Portal
+      container={portalContainer}
+      disabled={disablePortal}
+      data-slot="select-portal"
+    >
       <SelectPrimitive.Positioner
         align={align}
         alignOffset={alignOffset}

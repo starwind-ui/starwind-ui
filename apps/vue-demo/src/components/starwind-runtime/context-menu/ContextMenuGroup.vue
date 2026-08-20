@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ContextMenuPrimitive from "@starwind-ui/vue/context-menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -15,13 +15,12 @@ const { class: className } = defineProps<ContextMenuGroupDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ContextMenuPrimitive.ContextMenuGroup
     :class="className"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="context-menu-group"
   >
     <slot />

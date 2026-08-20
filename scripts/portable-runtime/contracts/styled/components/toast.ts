@@ -247,6 +247,11 @@ export const toastStyledContract: StyledAdapterContract = {
     Action: "ToastAction",
     Close: "ToastClose",
   },
+  primitiveFacadeExports: {
+    component: "toast",
+    types: ["ToastApi", "ToastOptions", "ToastPromiseOptions"],
+    values: ["toast"],
+  },
   variantCollectionName: "ToastVariants",
   styles: {
     importFrom: ["Toaster"],

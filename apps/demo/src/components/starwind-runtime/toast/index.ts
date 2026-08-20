@@ -37,6 +37,9 @@ const ToastParts = {
   Close: ToastClose,
 };
 
+export type { ToastApi, ToastOptions, ToastPromiseOptions } from "@starwind-ui/astro/toast";
+export { toast } from "@starwind-ui/astro/toast";
+
 export {
   ToastAction,
   ToastClose,

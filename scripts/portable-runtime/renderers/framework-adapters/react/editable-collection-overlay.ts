@@ -10,13 +10,16 @@ import {
   renderReactAsChildImports,
   renderReactAsChildSetup,
 } from "./as-child-trigger-fragments.js";
+import { addReactPortalScope, printReactPortalComponent } from "./portal.js";
 
 export function printReactEditableCollectionOverlayComponent(
   family: AdapterEditableCollectionOverlayComponentProjection,
 ): string {
   const facts = family.facts;
 
-  if (family.part === "root") return printRootWithClosedContentFixes(facts);
+  if (family.part === "root") {
+    return addReactPortalScope(printRootWithClosedContentFixes(facts), facts.runtime.factory);
+  }
   if (family.part === "input") return printInputWithContext(facts);
   if (family.part === "trigger") return printAsChildButtonWithContext(facts, "trigger");
   if (family.part === "clear") return printAsChildButtonWithContext(facts, "clear");
@@ -31,6 +34,15 @@ export function printReactEditableCollectionOverlayComponent(
   if (family.part === "itemIndicator") return printItemIndicatorWithContext(facts);
   if (family.part === "separator") return printSeparator(facts);
   if (family.part === "icon") return printSimplePart(facts, "icon", 'aria-hidden="true"');
+  if (family.part === "portal") {
+    return printReactPortalComponent({
+      componentName: facts.exports.portal,
+      discoveryAttribute: facts.attrs.portal,
+      displayName: facts.displayName,
+      rootDiscoveryAttribute: facts.attrs.root,
+      runtimeImportSource: facts.runtime.importSource,
+    });
+  }
 
   return printSimplePart(facts, family.part);
 }
@@ -173,6 +185,10 @@ function printRootWithClosedContentFixes(facts: AdapterEditableCollectionOverlay
       ${props.modal.name},
       ${props.readOnly.name},
     });
+    const pendingProgrammaticValueRef = React.useRef<{
+      emit?: boolean;
+      value: string | null;
+    } | null>(null);
     const [uncontrolledInputValue, setUncontrolledInputValueState] = React.useState(${props.defaultInputValue.name}Ref.current);`,
   );
 
@@ -246,11 +262,22 @@ ${openEffect}`,
 
         event.stopImmediatePropagation();
 
-        const instance = ensureInstance();
-        if (!instance) return;
-
         const nextValue = detail.value === "" ? null : detail.value;
         const emit = typeof detail.emit === "boolean" ? detail.emit : undefined;
+        const instance = ensureInstance();
+        if (!instance) {
+          pendingProgrammaticValueRef.current = { emit, value: nextValue };
+          if (emit !== false || ${props.value.name}Ref.current !== undefined) return;
+          setUncontrolledValue(nextValue);
+          if (${props.inputValue.name}Ref.current === undefined) {
+            const nextInputValue =
+              nextValue === null ? "" : (findSelectedComboboxItemText(children, nextValue) ?? "");
+            setUncontrolledInputValue(nextInputValue);
+            setSelectedInputValue({ inputValue: nextInputValue || null, value: nextValue });
+          }
+          return;
+        }
+
         instance.${facts.setters.value.method}(nextValue, { emit });
         if (emit !== false) return;
 
@@ -282,6 +309,15 @@ ${openEffect}`,
         });
       };
     }, [children, ensureInstance, setUncontrolledInputValue, setUncontrolledValue]);
+
+    React.useEffect(() => {
+      const pending = pendingProgrammaticValueRef.current;
+      if (!pending) return;
+      const instance = ensureInstance();
+      if (!instance) return;
+      pendingProgrammaticValueRef.current = null;
+      instance.${facts.setters.value.method}(pending.value, { emit: pending.emit });
+    }, [ensureInstance]);
 
     React.useEffect(() => {
       return () => {

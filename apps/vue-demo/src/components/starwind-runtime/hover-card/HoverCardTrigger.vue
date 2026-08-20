@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as PreviewCardPrimitive from "@starwind-ui/vue/preview-card";
 import type { ClassValue } from "tailwind-variants";
-import { type AnchorHTMLAttributes, computed, useAttrs } from "vue";
+import { type AnchorHTMLAttributes, computed } from "vue";
 import { hoverCardTrigger } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -33,7 +33,6 @@ const {
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const triggerBaseClassName = computed(() => hoverCardTrigger({ class: className }));
 const triggerClassName = computed(() => (asChild ? className : triggerBaseClassName.value));
 </script>
@@ -45,7 +44,7 @@ const triggerClassName = computed(() => (asChild ? className : triggerBaseClassN
     :close-delay="closeDelay"
     :disabled="disabled"
     :open-delay="openDelay"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="hover-card-trigger"
   >
     <slot />

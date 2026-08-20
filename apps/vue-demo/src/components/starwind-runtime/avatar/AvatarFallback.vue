@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as AvatarPrimitive from "@starwind-ui/vue/avatar";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { avatarFallback } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,7 +18,6 @@ const { delay, class: className } = defineProps<AvatarFallbackDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLSpanElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLSpanElement | null } & ComponentPublicInstance) | null =
   null;
@@ -47,7 +46,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :ref="setElement"
     :class="avatarFallback({ class: className })"
     :delay="delay"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="avatar-fallback"
   >
     <slot />

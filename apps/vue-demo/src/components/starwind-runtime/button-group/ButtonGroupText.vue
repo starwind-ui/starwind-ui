@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { buttonGroupText } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,11 +15,10 @@ const { class: className } = defineProps<ButtonGroupTextDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <div :class="buttonGroupText({ class: className })" v-bind="attrs" data-slot="button-group-text">
+  <div :class="buttonGroupText({ class: className })" v-bind="$attrs" data-slot="button-group-text">
     <slot />
   </div>
 </template>

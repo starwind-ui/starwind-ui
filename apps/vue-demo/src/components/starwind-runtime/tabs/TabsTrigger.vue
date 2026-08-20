@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import * as TabsPrimitive from "@starwind-ui/vue/tabs";
 import type { ClassValue } from "tailwind-variants";
-import {
-  type ButtonHTMLAttributes,
-  type ComponentPublicInstance,
-  nextTick,
-  ref,
-  useAttrs,
-} from "vue";
+import { type ButtonHTMLAttributes, type ComponentPublicInstance, nextTick, ref } from "vue";
 import { tabsTrigger } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -29,7 +23,6 @@ const { disabled = false, value, class: className } = defineProps<TabsTriggerDec
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLButtonElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLButtonElement | null } & ComponentPublicInstance) | null =
   null;
@@ -61,7 +54,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :class="tabsTrigger({ class: className })"
     :disabled="disabled"
     :value="value"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="tabs-trigger"
   >
     <slot />

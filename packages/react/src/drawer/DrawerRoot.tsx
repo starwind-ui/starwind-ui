@@ -7,11 +7,18 @@
 
 import {
   createDrawer,
+  createPortalBinding,
   type DrawerCloseCompleteDetails,
   type DrawerOpenChangeDetails,
+  refreshDrawerPortalSurface,
 } from "@starwind-ui/runtime/drawer";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import {
+  ReactPortalScopeProvider,
+  useReactPortalRuntimeLifecycle,
+  useReactPortalScope,
+} from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 export type DrawerRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
@@ -38,6 +45,8 @@ const DrawerRoot = React.forwardRef<HTMLDivElement, DrawerRootProps>(function Dr
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+  const portalRuntimeActivation = portalScope.activation;
   const instanceRef = React.useRef<ReturnType<typeof createDrawer> | undefined>(undefined);
   const onCloseCompleteRef = React.useRef(onCloseComplete);
   const onOpenChangeRef = React.useRef(onOpenChange);
@@ -71,7 +80,7 @@ const DrawerRoot = React.forwardRef<HTMLDivElement, DrawerRootProps>(function Dr
     [forwardedRef],
   );
 
-  useIsomorphicLayoutEffect(() => {
+  const initializePortalRuntime = React.useCallback(() => {
     const root = rootRef.current;
     if (!root) return;
 
@@ -104,6 +113,15 @@ const DrawerRoot = React.forwardRef<HTMLDivElement, DrawerRootProps>(function Dr
     };
   }, [closeOnEscape, closeOnOutsideInteract, modal]);
 
+  useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
+
+  useIsomorphicLayoutEffect(() => {
+    if (!portalScope.isReady()) return;
+    const root = rootRef.current;
+    if (!root) return;
+    refreshDrawerPortalSurface(root);
+  }, [portalRuntimeActivation]);
+
   useIsomorphicLayoutEffect(() => {
     if (open === undefined) return;
     const instance = instanceRef.current;
@@ -116,16 +134,18 @@ const DrawerRoot = React.forwardRef<HTMLDivElement, DrawerRootProps>(function Dr
   const renderedOpen = open ?? uncontrolledOpen;
 
   return (
-    <div
-      data-sw-drawer
-      data-default-open={defaultOpenRef.current ? "true" : undefined}
-      data-close-on-escape={closeOnEscape ? "true" : "false"}
-      data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
-      data-modal={modal ? "true" : "false"}
-      data-state={renderedOpen ? "open" : "closed"}
-      ref={composedRef}
-      {...props}
-    />
+    <ReactPortalScopeProvider scope={portalScope}>
+      <div
+        data-sw-drawer
+        data-default-open={defaultOpenRef.current ? "true" : undefined}
+        data-close-on-escape={closeOnEscape ? "true" : "false"}
+        data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
+        data-modal={modal ? "true" : "false"}
+        data-state={renderedOpen ? "open" : "closed"}
+        ref={composedRef}
+        {...props}
+      />
+    </ReactPortalScopeProvider>
   );
 });
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as AlertDialogPrimitive from "@starwind-ui/vue/alert-dialog";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { alertDialogDescription } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,7 +16,6 @@ const { class: className } = defineProps<AlertDialogDescriptionDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLParagraphElement | null>(null);
 let pendingPrimitiveRef:
   | ({ element?: HTMLParagraphElement | null } & ComponentPublicInstance)
@@ -47,7 +46,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
   <AlertDialogPrimitive.AlertDialogDescription
     :ref="setElement"
     :class="alertDialogDescription({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="alert-dialog-description"
   >
     <slot />

@@ -1,3 +1,47 @@
+import { assertPublicPortalTopology } from "../../shared/public-portal-topology.mjs";
+
+export async function verifyAstroMobileSelectCases({ browser, url }) {
+  const context = await browser.newContext({
+    hasTouch: true,
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+
+  try {
+    const page = await context.newPage();
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    await page.getByRole("heading", { name: "Starwind UI components" }).waitFor();
+
+    const root = page.locator("#runtime-select-aligned");
+    const trigger = page.locator("#runtime-select-aligned-trigger");
+    const popup = page.locator("#runtime-select-aligned-content");
+    await trigger.scrollIntoViewIfNeeded();
+
+    await trigger.tap();
+    await popup.waitFor({ state: "visible" });
+    const touchOpenSide = await popup.getAttribute("data-side");
+    if (touchOpenSide === "none") {
+      throw new Error("Expected an Astro Select touch open to use standard floating placement.");
+    }
+
+    await trigger.tap();
+    await popup.waitFor({ state: "hidden" });
+    if ((await trigger.getAttribute("aria-expanded")) !== "false") {
+      throw new Error("Expected a second Astro Select trigger tap to close the popup.");
+    }
+
+    await trigger.tap();
+    await popup.waitFor({ state: "visible" });
+    await page.locator("#runtime-select-aligned-viewer").tap();
+    await popup.waitFor({ state: "hidden" });
+    if ((await root.getAttribute("data-value")) !== "viewer") {
+      throw new Error("Expected an Astro Select item tap to commit the selected value.");
+    }
+  } finally {
+    await context.close();
+  }
+}
+
 export async function verifyAstroSelectComboboxCases({ page }) {
   const selectState = await page.evaluate(async () => {
     const waitFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -150,6 +194,9 @@ export async function verifyAstroSelectComboboxCases({ page }) {
   await page.locator("#runtime-select-theme-trigger").focus();
   await page.keyboard.press("Enter");
   await page.locator("#runtime-select-theme-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#runtime-select-theme-content"), {
+    portalSlot: "select-portal",
+  });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => {
     const content = document.querySelector("#runtime-select-theme-content");
@@ -551,6 +598,9 @@ export async function verifyAstroSelectComboboxCases({ page }) {
 
   await page.locator("#runtime-combobox-fruit-input").fill("ap");
   await page.locator("#runtime-combobox-fruit-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#runtime-combobox-fruit-content"), {
+    portalSlot: "combobox-portal",
+  });
   const astroComboboxAppleBox = await page.locator("#runtime-combobox-fruit-apple").boundingBox();
   if (!astroComboboxAppleBox) {
     throw new Error("Expected Astro Combobox apple item to have a bounding box.");

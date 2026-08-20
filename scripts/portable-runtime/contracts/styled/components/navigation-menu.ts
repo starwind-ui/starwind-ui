@@ -116,6 +116,8 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
           { name: "avoidCollisions", optional: true, type: "boolean" },
           { name: "collisionPadding", optional: true, type: "number" },
           { name: "size", optional: true, type: '"sm" | "md"' },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
           { name: "contentSize", optional: true, type: '"sm" | "md"' },
           {
             name: "onValueChange",
@@ -144,6 +146,8 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
           { name: "contentSize", defaultValue: "size" },
           { name: "onValueChange", frameworks: ["react", "vue"] },
           { name: "class", alias: "className" },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
         ],
         rest: "rest",
       },
@@ -197,6 +201,8 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
                   value: { type: "variable", name: "collisionPadding" },
                 },
                 { name: "size", value: { type: "variable", name: "contentSize" } },
+                { name: "portalContainer", value: { type: "variable", name: "portalContainer" } },
+                { name: "disablePortal", value: { type: "variable", name: "disablePortal" } },
               ],
             },
           ],
@@ -518,6 +524,8 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
           { name: "avoidCollisions", optional: true, type: "boolean" },
           { name: "collisionPadding", optional: true, type: "number" },
           { name: "size", optional: true, type: '"sm" | "md"' },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
         ],
       },
       destructure: {
@@ -530,6 +538,8 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
           { name: "collisionPadding", defaultValue: "8" },
           { name: "size", defaultValue: '"md"' },
           { name: "class", alias: "className" },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
         ],
         rest: "rest",
       },
@@ -539,6 +549,8 @@ export const navigationMenuStyledContract: StyledAdapterContract = {
           component: "navigation-menu",
           part: "Portal",
           attrs: [
+            { name: "container", value: { type: "variable", name: "portalContainer" } },
+            { name: "disabled", value: { type: "variable", name: "disablePortal" } },
             { name: "data-slot", value: { type: "literal", value: "navigation-menu-portal" } },
           ],
           children: [

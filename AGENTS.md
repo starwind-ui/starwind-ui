@@ -53,6 +53,11 @@ pnpm runtime:size:check
   backward-compatible capabilities, and `major` for breaking changes.
 - Add a Changeset for package-facing changes. Never add Changesets for `@starwind-ui/vue`,
   `@starwind-ui/svelte`, and `vue-demo` while they remain quarantined.
+- Follow `docs/release/versioning.md`. Existing component changes schedule a `starwind` patch
+  independently from their component bump. A brand-new stable component schedules a `starwind`
+  minor.
+- Never create, modify, or approve a `starwind` major Changeset without express user consent for
+  that CLI major in the current task.
 - Use conventional commits such as `feat(runtime): ...`, `fix(cli): ...`, or `docs: ...`.
 
 Before handoff, run the narrowest relevant tests and report any checks that were not run.

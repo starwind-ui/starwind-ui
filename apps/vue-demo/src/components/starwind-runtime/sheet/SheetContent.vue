@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as SheetPrimitive from "@starwind-ui/vue/drawer";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { Button } from "../button";
 import { sheetBackdrop, sheetCloseButton, sheetContent } from "./variants";
 
@@ -21,7 +21,6 @@ defineSlots<{
   backdrop?: () => unknown;
   icon?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDialogElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDialogElement | null } & ComponentPublicInstance) | null =
   null;
@@ -61,7 +60,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :class="sheetContent({ side, class: className })"
     data-state="closed"
     :side="side"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="sheet-content"
   >
     <slot />

@@ -1,0 +1,13 @@
+{
+  "components": {
+    "color-picker": "minor",
+    "combobox": "minor",
+    "context-menu": "minor",
+    "dropdown": "minor",
+    "hover-card": "minor",
+    "navigation-menu": "minor",
+    "popover": "minor",
+    "select": "minor",
+    "tooltip": "minor"
+  }
+}

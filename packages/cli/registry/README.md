@@ -15,7 +15,8 @@ pnpm runtime:registry:generate
 pnpm exec vitest run scripts/portable-runtime/tests/generate-cli-registry.test.ts
 ```
 
-Use semver for all registry and component versions.
+Use semver for all registry and component versions. Follow `docs/release/versioning.md` for the
+independent CLI package and component release rules.
 
 ## Deferred registry component versions
 
@@ -27,7 +28,7 @@ implementation PR.
 For every existing component whose installable generated source changes:
 
 - Add a strict intent file at `.changeset/styled-components/<slug>.json` with a `patch`, `minor`, or
-  `major` bump and add the normal `starwind` package Changeset.
+  `major` bump and add a `starwind` patch Changeset for component delivery.
 - Do not edit the existing entry in `styled-component-versions.json` in the implementation PR.
 - Regenerate the bundled registry so its source remains current. The component version stays at the
   last release value until the generated Version Packages PR is built.
@@ -42,16 +43,16 @@ For every existing component whose installable generated source changes:
   Changesets action runs because Changesets interprets nested directories as legacy v1 changesets.
   The staging directory is ignored and must never be committed.
 
-Every new styled component still receives an explicit initial manifest entry in its implementation
-PR; it has no previous release version to bump. `defaultComponentVersion` remains only a scaffolding
-hint.
+Every new stable styled component receives an explicit initial manifest entry and a `starwind`
+minor Changeset because it expands the installable catalog. It has no previous component release
+version to bump. `defaultComponentVersion` remains only a scaffolding hint.
 
 ### Primitive components
 
 For every existing primitive whose installable Astro or React vendoring artifact changes:
 
 - Add a strict intent file at `.changeset/primitive-components/<slug>.json` containing a
-  `primitives` object and add the normal `starwind` package Changeset.
+  `primitives` object and add a `starwind` patch Changeset for component delivery.
 - Use `patch` for compatible fixes, `minor` for backward-compatible capabilities, and `major` for
   breaking API or behavior changes.
 - Do not edit the existing entry in `primitive-versions.json`. Regenerate registry artifacts so the
@@ -65,10 +66,16 @@ below `1.0.0`. `pnpm release:version` promotes every existing Primitive and
 are rejected.
 
 New primitives receive an explicit initial manifest entry and no deferred intent. Stable new
-primitives start at `1.0.0`.
+primitives start at `1.0.0` and schedule a `starwind` minor because they expand the installable
+catalog.
 
 Continue to bump `registryVersion` only when the registry schema or artifact distribution changes.
 Package Changesets and changelog history do not substitute for styled or primitive version intent.
+
+The component bump never sets the CLI package bump. An existing component major still schedules a
+`starwind` patch unless the same work contains an independent CLI contract change. An agent must
+never create or modify a `starwind` major Changeset without express user consent for that CLI major
+in the current task.
 
 When replacing a component that was already published through the legacy core registry, continue
 from that component's published version history. A Runtime-backed rewrite is a breaking change and

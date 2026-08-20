@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterControlledValuePresenceComponentProjection,
   AdapterControlledValuePresenceFacts,
@@ -231,7 +235,7 @@ function printList(facts: AdapterControlledValuePresenceFacts): string {
   const part = facts.parts.list;
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 import { ${facts.context.hookName} } from "./${facts.context.componentName}";
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ activateOnFocus?: boolean; loopFocus?: boolean }>(), {
@@ -239,7 +243,6 @@ const props = withDefaults(defineProps<{ activateOnFocus?: boolean; loopFocus?: 
   loopFocus: ${facts.props.loopFocus.defaultValue},
 });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 const { orientation } = ${facts.context.hookName}("${facts.exports.list}");
 defineExpose({ element });
@@ -248,7 +251,7 @@ defineExpose({ element });
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.list}
     data-sw-part="${part.name}"
     :${facts.attrs.activateOnFocus}="props.activateOnFocus ? '' : undefined"
@@ -267,14 +270,13 @@ function printTab(facts: AdapterControlledValuePresenceFacts): string {
   const part = facts.parts.tab;
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { computed, ref, useAttrs } from "vue";
+import { computed, ref } from "vue";
 import { ${facts.context.hookName} } from "./${facts.context.componentName}";
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ disabled?: boolean; value: string }>(), {
   disabled: ${facts.props.disabled.defaultValue},
 });
 defineSlots<{ default?: (props: { active: boolean }) => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLButtonElement | null>(null);
 const { orientation, value: selectedValue } = ${facts.context.hookName}("${facts.exports.tab}");
 const active = computed(() => props.value === selectedValue.value);
@@ -284,7 +286,7 @@ defineExpose({ element });
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.tab}
     data-sw-part="${part.name}"
     :${facts.attrs.disabled}="props.disabled ? '' : undefined"
@@ -308,14 +310,13 @@ function printPanel(facts: AdapterControlledValuePresenceFacts): string {
   const part = facts.parts.panel;
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { computed, ref, useAttrs } from "vue";
+import { computed, ref } from "vue";
 import { ${facts.context.hookName} } from "./${facts.context.componentName}";
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ keepMounted?: boolean; value: string }>(), {
   keepMounted: ${facts.props.keepMounted.defaultValue},
 });
 defineSlots<{ default?: (props: { active: boolean }) => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 const { orientation, value: selectedValue } = ${facts.context.hookName}("${facts.exports.panel}");
 const active = computed(() => props.value === selectedValue.value);
@@ -325,7 +326,7 @@ defineExpose({ element });
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.panel}
     data-sw-part="${part.name}"
     :${facts.attrs.keepMounted}="props.keepMounted ? '' : undefined"
@@ -347,11 +348,10 @@ function printIndicator(facts: AdapterControlledValuePresenceFacts): string {
   const part = facts.parts.indicator;
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 import { ${facts.context.hookName} } from "./${facts.context.componentName}";
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLSpanElement | null>(null);
 const { orientation } = ${facts.context.hookName}("${facts.exports.indicator}");
 defineExpose({ element });
@@ -360,7 +360,7 @@ defineExpose({ element });
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.indicator}
     data-sw-part="${part.name}"
     :${facts.attrs.indicatorOrientation}="orientation"

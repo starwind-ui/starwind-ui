@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterComponentFile,
   AdapterGroupedValueControlFacts,

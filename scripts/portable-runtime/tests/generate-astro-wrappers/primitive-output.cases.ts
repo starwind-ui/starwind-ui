@@ -147,6 +147,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const drawerTrigger = await readGeneratedFile(outputRoot, "drawer/DrawerTrigger.astro");
     const drawerPopup = await readGeneratedFile(outputRoot, "drawer/DrawerPopup.astro");
     const drawerClose = await readGeneratedFile(outputRoot, "drawer/DrawerClose.astro");
+    const drawerPortal = await readGeneratedFile(outputRoot, "drawer/DrawerPortal.astro");
     const drawerIndex = await readGeneratedFile(outputRoot, "drawer/index.ts");
     const dropzoneRoot = await readGeneratedFile(outputRoot, "dropzone/DropzoneRoot.astro");
     const fieldRoot = await readGeneratedFile(outputRoot, "field/FieldRoot.astro");
@@ -177,6 +178,10 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       outputRoot,
       "preview-card/PreviewCardTrigger.astro",
     );
+    const previewCardPortal = await readGeneratedFile(
+      outputRoot,
+      "preview-card/PreviewCardPortal.astro",
+    );
     const alertDialogRoot = await readGeneratedFile(
       outputRoot,
       "alert-dialog/AlertDialogRoot.astro",
@@ -192,6 +197,10 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const alertDialogClose = await readGeneratedFile(
       outputRoot,
       "alert-dialog/AlertDialogClose.astro",
+    );
+    const alertDialogPortal = await readGeneratedFile(
+      outputRoot,
+      "alert-dialog/AlertDialogPortal.astro",
     );
     const alertDialogIndex = await readGeneratedFile(outputRoot, "alert-dialog/index.ts");
     const avatarRoot = await readGeneratedFile(outputRoot, "avatar/AvatarRoot.astro");
@@ -239,6 +248,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const menuLinkItem = await readGeneratedFile(outputRoot, "menu/MenuLinkItem.astro");
     const menuCheckboxItem = await readGeneratedFile(outputRoot, "menu/MenuCheckboxItem.astro");
     const menuSubmenuTrigger = await readGeneratedFile(outputRoot, "menu/MenuSubmenuTrigger.astro");
+    const menuPortal = await readGeneratedFile(outputRoot, "menu/MenuPortal.astro");
     const navigationMenuRoot = await readGeneratedFile(
       outputRoot,
       "navigation-menu/NavigationMenuRoot.astro",
@@ -263,10 +273,15 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       outputRoot,
       "navigation-menu/NavigationMenuViewport.astro",
     );
+    const navigationMenuPortal = await readGeneratedFile(
+      outputRoot,
+      "navigation-menu/NavigationMenuPortal.astro",
+    );
     const navigationMenuIndex = await readGeneratedFile(outputRoot, "navigation-menu/index.ts");
     const tooltipRoot = await readGeneratedFile(outputRoot, "tooltip/TooltipRoot.astro");
     const tooltipTrigger = await readGeneratedFile(outputRoot, "tooltip/TooltipTrigger.astro");
     const tooltipPopup = await readGeneratedFile(outputRoot, "tooltip/TooltipPopup.astro");
+    const tooltipPortal = await readGeneratedFile(outputRoot, "tooltip/TooltipPortal.astro");
     const sliderRoot = await readGeneratedFile(outputRoot, "slider/SliderRoot.astro");
     const sliderControl = await readGeneratedFile(outputRoot, "slider/SliderControl.astro");
     const sliderTrack = await readGeneratedFile(outputRoot, "slider/SliderTrack.astro");
@@ -306,6 +321,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       outputRoot,
       "select/SelectItemIndicator.astro",
     );
+    const selectPortal = await readGeneratedFile(outputRoot, "select/SelectPortal.astro");
     const selectIndex = await readGeneratedFile(outputRoot, "select/index.ts");
     const sidebarProvider = await readGeneratedFile(outputRoot, "sidebar/SidebarProvider.astro");
     const sidebar = await readGeneratedFile(outputRoot, "sidebar/Sidebar.astro");
@@ -323,6 +339,7 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const comboboxValue = await readGeneratedFile(outputRoot, "combobox/ComboboxValue.astro");
     const comboboxPopup = await readGeneratedFile(outputRoot, "combobox/ComboboxPopup.astro");
     const comboboxItem = await readGeneratedFile(outputRoot, "combobox/ComboboxItem.astro");
+    const comboboxPortal = await readGeneratedFile(outputRoot, "combobox/ComboboxPortal.astro");
     const comboboxIndex = await readGeneratedFile(outputRoot, "combobox/index.ts");
     const toastViewport = await readGeneratedFile(outputRoot, "toast/ToastViewport.astro");
     const toastTemplate = await readGeneratedFile(outputRoot, "toast/ToastTemplate.astro");
@@ -361,9 +378,19 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     const simpleSlottedRestPropsParts = [
       ["accordion header", accordionHeader, "data-sw-accordion-header"],
       ["dialog title", dialogTitle, "data-sw-dialog-title"],
-      ["popover portal", popoverPortal, "data-sw-popover-portal"],
       ["slider track", sliderTrack, "data-sw-slider-track"],
       ["switch thumb", switchThumb, "data-sw-switch-thumb"],
+    ] as const;
+    const runtimePortalParts = [
+      ["alert dialog portal", alertDialogPortal, "data-sw-alert-dialog-portal"],
+      ["combobox portal", comboboxPortal, "data-sw-combobox-portal"],
+      ["drawer portal", drawerPortal, "data-sw-drawer-portal"],
+      ["menu portal", menuPortal, "data-sw-menu-portal"],
+      ["navigation menu portal", navigationMenuPortal, "data-sw-nav-menu-portal"],
+      ["popover portal", popoverPortal, "data-sw-popover-portal"],
+      ["preview card portal", previewCardPortal, "data-sw-preview-card-portal"],
+      ["select portal", selectPortal, "data-sw-select-portal"],
+      ["tooltip portal", tooltipPortal, "data-sw-tooltip-portal"],
     ] as const;
 
     astroAsChildParts.forEach((source) => {
@@ -377,6 +404,21 @@ export function defineAstroPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       expect(source, label).toContain('import type { HTMLAttributes } from "astro/types";');
       expect(source, label).toContain("const { ...rest } = Astro.props;");
       expect(source, label).toContain(discoveryAttribute);
+      expect(source, label).toContain("{...rest}");
+      expect(source, label).toContain("<slot />");
+    });
+
+    runtimePortalParts.forEach(([label, source, discoveryAttribute]) => {
+      expect(source, label).toContain('import type { HTMLAttributes } from "astro/types";');
+      expect(source, label).toContain("container?: string;");
+      expect(source, label).toContain("disabled?: boolean;");
+      expect(source, label).toContain(
+        "const { container, disabled = false, ...rest } = Astro.props;",
+      );
+      expect(source, label).toContain(discoveryAttribute);
+      expect(source, label).toContain("data-container={container}");
+      expect(source, label).toContain('data-sw-portal-placement="runtime"');
+      expect(source, label).toContain('data-placement="pending"');
       expect(source, label).toContain("{...rest}");
       expect(source, label).toContain("<slot />");
     });

@@ -10,6 +10,8 @@ export type HoverCardContentProps = React.ComponentPropsWithoutRef<"div"> & {
   sideOffset?: number;
   avoidCollisions?: boolean;
   positionerClassName?: string;
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 function HoverCardContent(props: HoverCardContentProps) {
@@ -20,12 +22,18 @@ function HoverCardContent(props: HoverCardContentProps) {
     align = "center",
     sideOffset = 4,
     avoidCollisions = true,
+    portalContainer,
+    disablePortal = false,
     children,
     ...rest
   } = props;
 
   return (
-    <PreviewCardPrimitive.Portal data-slot="hover-card-portal">
+    <PreviewCardPrimitive.Portal
+      container={portalContainer}
+      disabled={disablePortal}
+      data-slot="hover-card-portal"
+    >
       <PreviewCardPrimitive.Positioner
         side={side}
         align={align}

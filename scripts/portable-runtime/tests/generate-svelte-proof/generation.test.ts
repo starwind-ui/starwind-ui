@@ -461,6 +461,44 @@ describe("Svelte Carousel proof generation", () => {
 });
 
 describe("Svelte Select proof generation", () => {
+  it("prints attachment-owned framework placement through the Runtime portal policy", async () => {
+    const outputRoot = await createTemporaryRoot();
+    const entry = getPrimitiveGeneratorEntries().find(
+      (candidate) => candidate.component === "select",
+    );
+    expect(entry).toBeDefined();
+
+    await entry!.generateTarget({
+      componentHeader: "<!-- select portal proof -->\n",
+      moduleHeader: "/** select portal proof */\n",
+      outputRoot,
+      target: "svelte",
+    });
+
+    const portal = await readFile(path.join(outputRoot, "select/SelectPortal.svelte"), "utf8");
+    expect(portal).toContain("resolvePortalPlacement");
+    expect(portal).toContain("reportPortalPlacement");
+    expect(portal).toContain('mode: "framework"');
+    expect(portal).toContain('data-sw-portal-placement="framework"');
+    expect(portal).toContain("const attachPortal: Attachment<HTMLDivElement>");
+    expect(portal).toContain("target.appendChild(element)");
+    expect(portal).toContain("restore();");
+    expect(portal).toMatch(
+      /reportPortalPlacement\(element, \{ ready: false, target \}\)[\s\S]*target\.appendChild\(element\)[\s\S]*reportPortalPlacement\(element, \{ ready: true, target \}\)/,
+    );
+    expect(portal).not.toContain("document.querySelector(container)");
+
+    for (const generate of ["client", "server"] as const) {
+      expect(
+        compile(portal, {
+          filename: "SelectPortal.svelte",
+          generate,
+          modernAst: true,
+        }).warnings,
+      ).toEqual([]);
+    }
+  });
+
   it("generates and compiles every option-collection-overlay part from one semantic projector", async () => {
     const outputRoot = await createTemporaryRoot();
     const entry = getPrimitiveGeneratorEntries().find(

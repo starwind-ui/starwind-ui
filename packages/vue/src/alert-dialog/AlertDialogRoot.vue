@@ -4,6 +4,7 @@
 import type { InjectionKey, Ref } from "vue";
 
 export type AlertDialogContextValue = {
+  element: Readonly<Ref<HTMLElement | null>>;
   mounted: Readonly<Ref<boolean>>;
   registerPortal: (owner: symbol, element: HTMLElement | null) => void;
 };
@@ -57,6 +58,7 @@ let portalOwner: symbol | undefined;
 let runtimeGeneration = 0;
 
 provide(AlertDialogContext, {
+  element: rootRef,
   mounted,
   registerPortal(owner, element) {
     if (element) {

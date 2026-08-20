@@ -5,13 +5,23 @@
 
 "use client";
 
+import { reportPortalPlacement, resolvePortalPlacement } from "@starwind-ui/runtime/combobox";
 import * as React from "react";
+import { ReactPortal, type ReactPortalProps } from "../internal/portal";
 
-export type ComboboxPortalProps = React.HTMLAttributes<HTMLDivElement>;
+export type ComboboxPortalProps = ReactPortalProps;
 
 const ComboboxPortal = React.forwardRef<HTMLDivElement, ComboboxPortalProps>(
   function ComboboxPortal(props, forwardedRef) {
-    return <div data-sw-combobox-portal ref={forwardedRef} {...props} />;
+    return (
+      <ReactPortal
+        discoveryAttribute="data-sw-combobox-portal"
+        reportPlacement={reportPortalPlacement}
+        resolvePlacement={resolvePortalPlacement}
+        ref={forwardedRef}
+        {...props}
+      />
+    );
   },
 );
 

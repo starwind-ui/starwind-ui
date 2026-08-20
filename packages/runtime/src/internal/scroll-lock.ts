@@ -29,11 +29,10 @@ export function lockDocumentScroll(ownerDocument: Document = document): Document
     return createReleaseHandle(ownerDocument);
   }
 
-  documentLocks.set(ownerDocument, {
-    count: 1,
-    snapshot: captureBodyLockSnapshot(body),
-  });
-  applyBodyScrollLock(ownerDocument);
+  const snapshot = captureBodyLockSnapshot(body);
+  const scrollbarWidth = getScrollbarWidth(ownerDocument);
+  documentLocks.set(ownerDocument, { count: 1, snapshot });
+  applyBodyScrollLock(ownerDocument, scrollbarWidth);
 
   return createReleaseHandle(ownerDocument);
 }
@@ -69,11 +68,11 @@ function captureBodyLockSnapshot(body: HTMLElement): BodyLockSnapshot {
   };
 }
 
-function applyBodyScrollLock(ownerDocument: Document): void {
+function applyBodyScrollLock(ownerDocument: Document, scrollbarWidth: number): void {
   const body = ownerDocument.body;
 
   body.style.overflow = "hidden";
-  body.style.setProperty(SCROLLBAR_WIDTH_PROPERTY, `${getScrollbarWidth(ownerDocument)}px`);
+  body.style.setProperty(SCROLLBAR_WIDTH_PROPERTY, `${scrollbarWidth}px`);
   body.setAttribute(SCROLL_LOCK_ATTRIBUTE, "");
 }
 

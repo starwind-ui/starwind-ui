@@ -186,13 +186,13 @@
   },
   "devDependencies": {
     "@types/node": "^24.12.4",
-    "@vitest/browser-playwright": "^4.1.8",
+    "@vitest/browser-playwright": "^4.1.10",
     "playwright": "1.62.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vue": "3.5.39",
     "vue-tsc": "3.3.6",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=22.12.0"

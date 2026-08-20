@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { kbd } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,13 +15,12 @@ const { class: className } = defineProps<KbdDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLElement | null>(null);
 defineExpose({ element });
 </script>
 
 <template>
-  <kbd ref="element" data-sw-kbd :class="kbd({ class: className })" v-bind="attrs" data-slot="kbd">
+  <kbd ref="element" data-sw-kbd :class="kbd({ class: className })" v-bind="$attrs" data-slot="kbd">
     <slot />
   </kbd>
 </template>

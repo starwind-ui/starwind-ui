@@ -201,6 +201,8 @@ export const tooltipStyledContract: StyledAdapterContract = {
             type: "string",
             frameworks: ["react"],
           },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
         ],
       },
       destructure: {
@@ -213,6 +215,8 @@ export const tooltipStyledContract: StyledAdapterContract = {
           { name: "align", defaultValue: '"center"' },
           { name: "sideOffset", defaultValue: "8" },
           { name: "avoidCollisions", defaultValue: "true" },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
         ],
         rest: "rest",
       },
@@ -221,7 +225,11 @@ export const tooltipStyledContract: StyledAdapterContract = {
           type: "primitive",
           component: "tooltip",
           part: "Portal",
-          attrs: [{ name: "data-slot", value: { type: "literal", value: "tooltip-portal" } }],
+          attrs: [
+            { name: "container", value: { type: "variable", name: "portalContainer" } },
+            { name: "disabled", value: { type: "variable", name: "disablePortal" } },
+            { name: "data-slot", value: { type: "literal", value: "tooltip-portal" } },
+          ],
           children: [
             {
               type: "primitive",

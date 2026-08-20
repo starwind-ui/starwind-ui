@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterFileDropControlComponentProjection,
   AdapterFileDropControlFacts,
@@ -187,19 +191,18 @@ function printStatusPart(
 
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
 ${hasUploading ? `const props = withDefaults(defineProps<{ ${facts.props.isUploading.name}?: ${facts.props.isUploading.type} }>(), { ${facts.props.isUploading.name}: ${facts.props.isUploading.defaultValue} });` : ""}
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 
 defineExpose({ element });
 </script>
 
 <template>
-  <${part.defaultElement} ref="element" ${discoveryAttribute}${stateAttributes} v-bind="attrs"><slot /></${part.defaultElement}>
+  <${part.defaultElement} ref="element" ${discoveryAttribute}${stateAttributes} v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"><slot /></${part.defaultElement}>
 </template>
 `;
 }

@@ -2,6 +2,7 @@ export const PRESENCE_STARTING_ATTRIBUTE = "data-starting-style";
 export const PRESENCE_ENDING_ATTRIBUTE = "data-ending-style";
 
 type HideElementOptions = {
+  animationDiscovery?: "immediate" | "next-frame";
   signal?: AbortSignal;
   onHidden?: () => void;
 };
@@ -60,14 +61,24 @@ export function hideElementAfterAnimations(
   element.removeAttribute(PRESENCE_STARTING_ATTRIBUTE);
   element.setAttribute(PRESENCE_ENDING_ATTRIBUTE, "");
 
-  waitForElementAnimations(element, () => {
+  const discoverAnimations = () => {
     if (options.signal?.aborted || presenceTokens.get(element) !== token) return;
 
-    element.hidden = true;
-    element.classList.add("hidden");
-    element.removeAttribute(PRESENCE_ENDING_ATTRIBUTE);
-    options.onHidden?.();
-  });
+    waitForElementAnimations(element, () => {
+      if (options.signal?.aborted || presenceTokens.get(element) !== token) return;
+
+      element.hidden = true;
+      element.classList.add("hidden");
+      element.removeAttribute(PRESENCE_ENDING_ATTRIBUTE);
+      options.onHidden?.();
+    });
+  };
+
+  if (options.animationDiscovery === "next-frame") {
+    requestAnimationFrame(discoverAnimations);
+  } else {
+    discoverAnimations();
+  }
 }
 
 function waitForElementAnimations(element: HTMLElement, onComplete: () => void): void {

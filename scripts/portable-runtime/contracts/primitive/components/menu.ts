@@ -63,6 +63,12 @@ export const menuRuntimeAdapterContract = {
       defaultElement: "div",
       discoveryAttribute: "data-sw-menu-portal",
       forwardsRef: true,
+      initialAttributes: [
+        { name: "data-container", source: "prop" },
+        { name: "data-disabled", source: "prop" },
+        { name: "data-sw-portal-placement", source: "constant", value: "runtime" },
+        { name: "data-placement", source: "runtime" },
+      ],
     },
     {
       name: "positioner",
@@ -473,6 +479,22 @@ export const menuRuntimeAdapterContract = {
     positionerPart: "positioner",
     popupPart: "popup",
     optionProps: ["side", "align", "sideOffset", "avoidCollisions"],
+  },
+  portal: {
+    container: { name: "container", type: "string" },
+    disabled: { defaultValue: "false", name: "disabled", type: "boolean" },
+    part: "portal",
+    placement: {
+      frameworkOwnedTargets: ["react", "solid", "svelte", "vue"],
+      readiness: "before-focus-dismissal-and-positioning",
+      runtimeOwnedTargets: ["raw-html", "astro"],
+    },
+    publicWrapper: true,
+    targetPolicy: {
+      containerType: "selector",
+      invalidTarget: "runtime-fallback",
+      resolution: "owning-document-after-mount",
+    },
   },
   refs: [
     { part: "root", public: true },

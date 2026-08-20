@@ -51,6 +51,44 @@ export type FrameworkAdapterTargetPrimitiveSupport =
   | { kind: "all" }
   | { components: readonly string[]; kind: "subset" };
 
+export type FrameworkAdapterTargetRenderedPortalFacts = {
+  defaultElement: string;
+  nativeHelper?: string;
+  placement: "framework" | "runtime";
+  placementWiring?: {
+    report: string;
+    resolve: string;
+  };
+  runtimeHooks: readonly string[];
+};
+
+export type FrameworkAdapterTargetRenderedPortalPolicy = {
+  defaultElement: string;
+  runtimeHooks: readonly string[];
+};
+
+export type FrameworkAdapterTargetRenderedPortalInspectionArgs = {
+  family: string;
+  policy: FrameworkAdapterTargetRenderedPortalPolicy;
+  readSource(relativePath: string): Promise<string>;
+  renderedComponent: string;
+};
+
+export type FrameworkAdapterTargetRenderedPortalCapability = {
+  assert(
+    facts: FrameworkAdapterTargetRenderedPortalFacts,
+    family: string,
+    policy: FrameworkAdapterTargetRenderedPortalPolicy,
+  ): void;
+  inspect(
+    args: FrameworkAdapterTargetRenderedPortalInspectionArgs,
+  ): Promise<FrameworkAdapterTargetRenderedPortalFacts>;
+};
+
+export const frameworkAdapterTargetRenderedPortal = Symbol(
+  "framework-adapter-target-rendered-portal",
+);
+
 export type FrameworkAdapterTargetGeneratePrimitiveEntries = (
   args: FrameworkAdapterTargetGeneratePrimitiveEntriesArgs,
 ) => Promise<void>;
@@ -130,6 +168,7 @@ export type FrameworkAdapterTargetPrimitiveOutputModel = {
 };
 
 export type FrameworkAdapterTargetPrimitiveCapability = {
+  [frameworkAdapterTargetRenderedPortal]?: FrameworkAdapterTargetRenderedPortalCapability;
   generatePackage: FrameworkAdapterTargetPrimitivePackageGenerator;
   manualPrimitives?: FrameworkAdapterTargetManualPrimitiveGenerators;
   outputModel: FrameworkAdapterTargetPrimitiveOutputModel;
@@ -529,6 +568,10 @@ export type AdapterAnchoredMenuOverlayFacts = {
     importSource: string;
     initEvents: string[];
     instancesName: string;
+    portalOwner: {
+      factory: string;
+      importSource: string;
+    };
     setupFunction: string;
     typeImportSource: string;
   };

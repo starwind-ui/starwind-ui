@@ -10,12 +10,19 @@ export type StyledAdapterContract = {
   defaultExportMode?: "component" | "parts";
   dependencies?: StyledComponentDependenciesContract;
   frameworks?: FrameworkTarget[];
+  primitiveFacadeExports?: StyledPrimitiveFacadeExportsContract;
   publicExports: string[];
   styles?: StyledComponentStylesContract;
   variantAliases?: Record<string, StyledVariantAliasContract>;
   variantCollectionName?: string;
   variants?: Record<string, ClassVariantDefinition>;
   components: StyledComponentContract[];
+};
+
+export type StyledPrimitiveFacadeExportsContract = {
+  component: string;
+  types: string[];
+  values: string[];
 };
 
 export type StyledAdapterContractAnnotations = {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   createFloatingPositioner,
@@ -46,6 +46,68 @@ describe("floating internals", () => {
     expect(floating.getAttribute("data-align")).toBe("start");
 
     positioner.destroy();
+  });
+
+  it.each(["stop", "destroy"] as const)(
+    "invalidates a deferred manual update after %s",
+    async (action) => {
+      const reference = document.createElement("button");
+      const floating = document.createElement("div");
+      reference.style.cssText =
+        "position: fixed; left: 80px; top: 100px; width: 60px; height: 30px";
+      floating.style.cssText = "width: 120px; height: 80px";
+      document.body.append(reference, floating);
+      const positioner = createFloatingPositioner({
+        floating,
+        getOptions: () => ({ align: "start", avoidCollisions: false, side: "bottom" }),
+        reference,
+      });
+
+      const pendingUpdate = positioner.update();
+      floating.style.left = "777px";
+      floating.style.top = "888px";
+      if (action === "stop") positioner.stopAutoUpdate();
+      else positioner.destroy();
+      await pendingUpdate;
+
+      expect(floating.style.left).toBe("777px");
+      expect(floating.style.top).toBe("888px");
+      expect(floating.getAttribute("data-side")).toBeNull();
+      expect(floating.getAttribute("data-align")).toBeNull();
+
+      positioner.destroy();
+      reference.remove();
+      floating.remove();
+    },
+  );
+
+  it("invalidates a deferred auto update when auto-update stops", async () => {
+    const reference = document.createElement("button");
+    const floating = document.createElement("div");
+    reference.style.cssText = "position: fixed; left: 80px; top: 100px; width: 60px; height: 30px";
+    floating.style.cssText = "width: 120px; height: 80px";
+    document.body.append(reference, floating);
+    const onUpdated = vi.fn();
+    const positioner = createFloatingPositioner({
+      floating,
+      getOptions: () => ({ align: "start", avoidCollisions: false, side: "bottom" }),
+      reference,
+    });
+
+    positioner.startAutoUpdate({ onUpdated });
+    floating.style.left = "777px";
+    floating.style.top = "888px";
+    positioner.stopAutoUpdate();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(floating.style.left).toBe("777px");
+    expect(floating.style.top).toBe("888px");
+    expect(onUpdated).not.toHaveBeenCalled();
+
+    positioner.destroy();
+    reference.remove();
+    floating.remove();
   });
 
   it("can preserve anchor attachment when viewport collision would otherwise shift the floating element", async () => {
@@ -183,7 +245,7 @@ describe("floating internals", () => {
     expect(resolveFloatingPortalTarget(reference)).toBe(document.body);
   });
 
-  it("creates and reuses one direct floating root for the nearest dialog", () => {
+  it("uses the nearest dialog as the fallback until a top-layer host is registered", () => {
     const parentDialog = document.createElement("dialog");
     const childDialog = document.createElement("dialog");
     const nestedComponent = document.createElement("div");
@@ -202,11 +264,10 @@ describe("floating internals", () => {
     const secondTarget = resolveFloatingPortalTarget(reference);
 
     expect(firstTarget).toBe(secondTarget);
-    expect(firstTarget.parentElement).toBe(childDialog);
+    expect(firstTarget).toBe(childDialog);
     expect(firstTarget).not.toBe(unrelatedRoot);
-    expect(firstTarget.getAttribute("data-floating-root")).toBe("");
-    expect(firstTarget.getAttribute("data-sw-floating-root")).toBe("dialog");
-    expect(childDialog.querySelectorAll(":scope > [data-floating-root]")).toHaveLength(1);
+    expect(firstTarget.hasAttribute("data-floating-root")).toBe(false);
+    expect(childDialog.querySelectorAll(":scope > [data-floating-root]")).toHaveLength(0);
     expect(parentDialog.querySelector(":scope > [data-floating-root]")).toBeNull();
 
     parentDialog.remove();
@@ -239,7 +300,7 @@ describe("floating internals", () => {
     const internalRoot = resolveFloatingPortalTarget(reference);
     dialog.append(authorRoot);
 
-    expect(internalRoot.getAttribute("data-sw-floating-root")).toBe("dialog");
+    expect(internalRoot).toBe(dialog);
     expect(resolveFloatingPortalTarget(reference)).toBe(authorRoot);
 
     dialog.remove();
@@ -285,6 +346,53 @@ describe("floating internals", () => {
 
     dialog.remove();
     outsideRoot.remove();
+  });
+
+  it("accepts a connected explicit target in the owning document", () => {
+    const reference = document.createElement("button");
+    const target = document.createElement("section");
+    document.body.append(reference, target);
+
+    expect(resolveFloatingPortalTarget(reference, { explicitTargets: [target] })).toBe(target);
+
+    reference.remove();
+    target.remove();
+  });
+
+  it("falls back when explicit targets are disconnected or owned by another document", () => {
+    const reference = document.createElement("button");
+    const disconnected = document.createElement("section");
+    const otherDocument = document.implementation.createHTMLDocument("portal target");
+    const crossDocument = otherDocument.createElement("section");
+    otherDocument.body.append(crossDocument);
+    document.body.append(reference);
+
+    expect(
+      resolveFloatingPortalTarget(reference, {
+        explicitTargets: [disconnected, crossDocument],
+      }),
+    ).toBe(document.body);
+
+    reference.remove();
+  });
+
+  it("rejects an explicit target outside the active dialog", () => {
+    const dialog = document.createElement("dialog");
+    const reference = document.createElement("button");
+    const outsideTarget = document.createElement("section");
+    dialog.setAttribute("data-slot", "dialog-content");
+    dialog.append(reference);
+    document.body.append(dialog, outsideTarget);
+
+    const target = resolveFloatingPortalTarget(reference, {
+      explicitTargets: [outsideTarget],
+    });
+
+    expect(dialog.contains(target)).toBe(true);
+    expect(target).not.toBe(outsideTarget);
+
+    dialog.remove();
+    outsideTarget.remove();
   });
 
   it("uses a later compatible explicit target when the first candidate is outside the reference dialog", () => {

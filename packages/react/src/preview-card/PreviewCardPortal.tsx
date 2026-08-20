@@ -5,13 +5,23 @@
 
 "use client";
 
+import { reportPortalPlacement, resolvePortalPlacement } from "@starwind-ui/runtime/preview-card";
 import * as React from "react";
+import { ReactPortal, type ReactPortalProps } from "../internal/portal";
 
-export type PreviewCardPortalProps = React.HTMLAttributes<HTMLDivElement>;
+export type PreviewCardPortalProps = ReactPortalProps;
 
 const PreviewCardPortal = React.forwardRef<HTMLDivElement, PreviewCardPortalProps>(
   function PreviewCardPortal(props, forwardedRef) {
-    return <div data-sw-preview-card-portal ref={forwardedRef} {...props} />;
+    return (
+      <ReactPortal
+        discoveryAttribute="data-sw-preview-card-portal"
+        reportPlacement={reportPortalPlacement}
+        resolvePlacement={resolvePortalPlacement}
+        ref={forwardedRef}
+        {...props}
+      />
+    );
   },
 );
 

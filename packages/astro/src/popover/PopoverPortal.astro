@@ -5,11 +5,21 @@
  */
 import type { HTMLAttributes } from "astro/types";
 
-type Props = HTMLAttributes<"div">;
+interface Props extends HTMLAttributes<"div"> {
+  container?: string;
+  disabled?: boolean;
+}
 
-const { ...rest } = Astro.props;
+const { container, disabled = false, ...rest } = Astro.props;
 ---
 
-<div data-sw-popover-portal {...rest}>
+<div
+  data-sw-popover-portal
+  data-container={container}
+  data-disabled={disabled ? "" : undefined}
+  data-sw-portal-placement="runtime"
+  data-placement="pending"
+  {...rest}
+>
   <slot />
 </div>

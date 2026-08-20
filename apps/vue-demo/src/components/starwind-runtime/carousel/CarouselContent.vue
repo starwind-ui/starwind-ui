@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as CarouselPrimitive from "@starwind-ui/vue/carousel";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { carouselContainer, carouselContent } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,13 +16,12 @@ const { class: className } = defineProps<CarouselContentDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <CarouselPrimitive.CarouselViewport
     :class="carouselContent()"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="carousel-content"
   >
     <CarouselPrimitive.CarouselContainer

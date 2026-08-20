@@ -1,6 +1,8 @@
 import { assertHTMLElement, readBooleanAttribute } from "../../internal/dom";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import {
   createDialog,
+  refreshDialogPortalSurface,
   type DialogCloseCompleteDetails,
   type DialogInstance,
   type DialogOpenChangeDetails,
@@ -16,6 +18,11 @@ export type DrawerSetOpenOptions = DialogSetOpenOptions;
 export type DrawerInstance = DialogInstance;
 
 export type DrawerOptions = Omit<DialogOptions, "role">;
+
+export function refreshDrawerPortalSurface(root: HTMLElement): void {
+  normalizeDrawerMarkup(root);
+  refreshDialogPortalSurface(root);
+}
 
 const DRAWER_ROOT_ATTRIBUTE = "data-sw-drawer";
 const DRAWER_POPUP_ATTRIBUTE = "data-sw-drawer-popup";
@@ -62,31 +69,37 @@ export function createDrawer(root: HTMLElement, options: DrawerOptions = {}): Dr
 function normalizeDrawerMarkup(root: HTMLElement): void {
   root.setAttribute(DRAWER_ROOT_ATTRIBUTE, "");
 
-  root.querySelectorAll<HTMLElement>(`[${DRAWER_TRIGGER_ATTRIBUTE}]`).forEach((trigger) => {
+  queryDrawerElements(root, `[${DRAWER_TRIGGER_ATTRIBUTE}]`).forEach((trigger) => {
     trigger.setAttribute(DIALOG_TRIGGER_ATTRIBUTE, "");
   });
   normalizeExternalDrawerTriggers(root);
 
-  root.querySelectorAll<HTMLElement>(`[${DRAWER_BACKDROP_ATTRIBUTE}]`).forEach((backdrop) => {
+  queryDrawerElements(root, `[${DRAWER_BACKDROP_ATTRIBUTE}]`).forEach((backdrop) => {
     backdrop.setAttribute(DIALOG_BACKDROP_ATTRIBUTE, "");
   });
 
-  root.querySelectorAll<HTMLElement>(`[${DRAWER_POPUP_ATTRIBUTE}]`).forEach((popup) => {
+  queryDrawerElements(root, `[${DRAWER_POPUP_ATTRIBUTE}]`).forEach((popup) => {
     popup.setAttribute(DIALOG_POPUP_ATTRIBUTE, "");
     popup.setAttribute("role", "dialog");
   });
 
-  root.querySelectorAll<HTMLElement>(`[${DRAWER_CLOSE_ATTRIBUTE}]`).forEach((close) => {
+  queryDrawerElements(root, `[${DRAWER_CLOSE_ATTRIBUTE}]`).forEach((close) => {
     close.setAttribute(DIALOG_CLOSE_ATTRIBUTE, "");
   });
 
-  root.querySelectorAll<HTMLElement>(`[${DRAWER_TITLE_ATTRIBUTE}]`).forEach((title) => {
+  queryDrawerElements(root, `[${DRAWER_TITLE_ATTRIBUTE}]`).forEach((title) => {
     title.setAttribute(DIALOG_TITLE_ATTRIBUTE, "");
   });
 
-  root.querySelectorAll<HTMLElement>(`[${DRAWER_DESCRIPTION_ATTRIBUTE}]`).forEach((description) => {
+  queryDrawerElements(root, `[${DRAWER_DESCRIPTION_ATTRIBUTE}]`).forEach((description) => {
     description.setAttribute(DIALOG_DESCRIPTION_ATTRIBUTE, "");
   });
+}
+
+function queryDrawerElements(root: HTMLElement, selector: string): HTMLElement[] {
+  return queryRuntimePartElements(root, selector).filter((element) =>
+    isRuntimePartOwned(root, element, `[${DRAWER_ROOT_ATTRIBUTE}]`),
+  );
 }
 
 function normalizeExternalDrawerTriggers(root: HTMLElement): void {

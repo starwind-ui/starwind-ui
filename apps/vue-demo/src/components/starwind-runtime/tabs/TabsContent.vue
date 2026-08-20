@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as TabsPrimitive from "@starwind-ui/vue/tabs";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { tabsContent } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -20,7 +20,6 @@ const { keepMounted, value, class: className } = defineProps<TabsContentDeclared
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLElement | null } & ComponentPublicInstance) | null = null;
 defineExpose({ element });
@@ -49,7 +48,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :class="tabsContent({ class: className })"
     :keep-mounted="keepMounted"
     :value="value"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="tabs-content"
   >
     <slot />

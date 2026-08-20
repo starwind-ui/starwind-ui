@@ -94,6 +94,7 @@ try {
     expectations: {
       badgeText: null,
       containerPosition: "fixed",
+      footerContentParentTagName: "DIV",
       minMenuActionCount: 0,
       minMenuButtonCount: 9,
       minSkeletonCount: 0,

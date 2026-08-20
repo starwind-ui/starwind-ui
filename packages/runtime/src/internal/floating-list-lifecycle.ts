@@ -1,4 +1,4 @@
-import { type FloatingPositioner } from "./floating";
+import type { FloatingPositioner } from "./floating";
 import { createFloatingPortalSession } from "./floating-portal";
 import { type OverlayDismissalHandle, registerOverlayDismissal } from "./overlay-dismissal";
 import {
@@ -10,11 +10,14 @@ import {
   runOverlayOpenChangeShell,
 } from "./overlay-open-change";
 import { hideElementAfterAnimations } from "./presence";
-import { type DocumentScrollLock } from "./scroll-lock";
+import type { DocumentScrollLock } from "./scroll-lock";
 
 export type FloatingListLifecycle<TRequest> = {
   applyOpenState(open: boolean, request: TRequest | undefined): void;
   destroy(): void;
+  isPlacementReady(): boolean;
+  refreshSurface(popup: HTMLElement, request?: TRequest): void;
+  suspendSurface(): void;
   startAutoUpdate(): void;
   stopAutoUpdate(): void;
   syncScrollLock(request: TRequest | undefined): void;
@@ -73,6 +76,7 @@ export type FloatingListLifecycleHooks<TRequest> = {
   onCloseComplete?: (context: FloatingListLifecycleContext<TRequest>) => void;
   onImmediateClose?: (context: FloatingListLifecycleContext<TRequest>) => void;
   onOpenFrame?: (context: FloatingListLifecycleContext<TRequest>) => void;
+  onPlacementPending?: (context: FloatingListLifecycleContext<TRequest>) => void;
 };
 
 export type FloatingListLifecycleContext<TRequest> = {
@@ -132,7 +136,7 @@ export function createFloatingListLifecycle<TRequest>(
   let floatingPositioner: FloatingPositioner | null = null;
   let floatingReference: HTMLElement | null = null;
   let openedOnce = false;
-
+  let placementReadyCleanup: (() => void) | null = null;
   const getPortalElement = () => options.portal.getElement?.() ?? options.popup;
   const portalSession = createFloatingPortalSession({
     canPromote: options.state.getOpen,
@@ -162,6 +166,11 @@ export function createFloatingListLifecycle<TRequest>(
     closeAbortController = null;
   };
 
+  const cancelPlacementReady = () => {
+    placementReadyCleanup?.();
+    placementReadyCleanup = null;
+  };
+
   const restorePortal = () => {
     portalSession.restore();
     options.portal.clearFloatingStyles?.();
@@ -186,7 +195,7 @@ export function createFloatingListLifecycle<TRequest>(
   };
 
   const updatePosition = () => {
-    if (!options.state.getOpen()) return;
+    if (!options.state.getOpen() || !portalSession.isReady()) return;
 
     void getFloatingPositioner()?.update();
   };
@@ -247,22 +256,49 @@ export function createFloatingListLifecycle<TRequest>(
     applyOpenState(open, request) {
       destroyed = false;
       abortPendingClose();
+      cancelPlacementReady();
 
       if (open) {
         acquireBodyScrollLock(request);
         options.hooks?.onBeforeOpen?.({ request });
         options.state.render(true);
-        portalSession.mount();
-        registerDismissal();
-        options.hooks?.onAfterOpen?.({ request });
-        updatePosition();
-        getFloatingPositioner()?.startAutoUpdate();
-        requestAnimationFrame(() => {
+        const activatePlacedOpen = () => {
           if (destroyed || !options.state.getOpen() || options.state.isDestroyed()) return;
 
+          registerDismissal();
+          options.hooks?.onAfterOpen?.({ request });
           updatePosition();
-          options.hooks?.onOpenFrame?.({ request });
+          getFloatingPositioner()?.startAutoUpdate();
+          requestAnimationFrame(() => {
+            if (
+              destroyed ||
+              !options.state.getOpen() ||
+              options.state.isDestroyed() ||
+              !portalSession.isReady()
+            ) {
+              return;
+            }
+
+            updatePosition();
+            options.hooks?.onOpenFrame?.({ request });
+          });
+        };
+        const deactivatePlacedOpen = () => {
+          unregisterDismissal();
+          stopAutoUpdate();
+          options.hooks?.onPlacementPending?.({ request });
+        };
+        const placementReady = portalSession.mount();
+        placementReadyCleanup = portalSession.onReadyChange((ready) => {
+          if (ready) {
+            activatePlacedOpen();
+          } else {
+            deactivatePlacedOpen();
+          }
         });
+        if (placementReady) {
+          activatePlacedOpen();
+        }
         openedOnce = true;
         return;
       }
@@ -298,6 +334,7 @@ export function createFloatingListLifecycle<TRequest>(
     destroy() {
       destroyed = true;
       abortPendingClose();
+      cancelPlacementReady();
       unregisterDismissal();
       releaseBodyScrollLock();
       stopAutoUpdate();
@@ -308,7 +345,32 @@ export function createFloatingListLifecycle<TRequest>(
       options.portal.clearFloatingStyles?.();
       openedOnce = false;
     },
+    isPlacementReady: portalSession.isReady,
+    refreshSurface(popup, request) {
+      if (destroyed) return;
+      options.popup = popup;
+      abortPendingClose();
+      cancelPlacementReady();
+      unregisterDismissal();
+      stopAutoUpdate();
+      floatingPositioner?.destroy();
+      floatingPositioner = null;
+      floatingReference = null;
+      portalSession.mount();
+      this.applyOpenState(options.state.getOpen(), request);
+    },
+    suspendSurface() {
+      abortPendingClose();
+      cancelPlacementReady();
+      unregisterDismissal();
+      stopAutoUpdate();
+      floatingPositioner?.destroy();
+      floatingPositioner = null;
+      floatingReference = null;
+      portalSession.restore();
+    },
     startAutoUpdate() {
+      if (!portalSession.isReady()) return;
       getFloatingPositioner()?.startAutoUpdate();
     },
     stopAutoUpdate,

@@ -5,13 +5,23 @@
 
 "use client";
 
+import { reportPortalPlacement, resolvePortalPlacement } from "@starwind-ui/runtime/popover";
 import * as React from "react";
+import { ReactPortal, type ReactPortalProps } from "../internal/portal";
 
-export type PopoverPortalProps = React.HTMLAttributes<HTMLDivElement>;
+export type PopoverPortalProps = ReactPortalProps;
 
 const PopoverPortal = React.forwardRef<HTMLDivElement, PopoverPortalProps>(
   function PopoverPortal(props, forwardedRef) {
-    return <div data-sw-popover-portal ref={forwardedRef} {...props} />;
+    return (
+      <ReactPortal
+        discoveryAttribute="data-sw-popover-portal"
+        reportPlacement={reportPortalPlacement}
+        resolvePlacement={resolvePortalPlacement}
+        ref={forwardedRef}
+        {...props}
+      />
+    );
   },
 );
 

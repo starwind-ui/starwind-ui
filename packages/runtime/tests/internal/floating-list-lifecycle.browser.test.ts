@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type FloatingPositioner } from "../../src/internal/floating";
+import type { FloatingPositioner } from "../../src/internal/floating";
 import {
   createFloatingListLifecycle,
   runFloatingListOpenChangeShell,
@@ -8,6 +8,7 @@ import {
 import {
   demoteDialogOwnedFloatingPortals,
   promoteDialogOwnedFloatingPortals,
+  reportPortalPlacement,
   requestDialogOwnedFloatingPortalClose,
 } from "../../src/internal/floating-portal";
 
@@ -65,6 +66,66 @@ describe("floating list lifecycle", () => {
     document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
 
     expect(harness.closeRequests).toEqual([expect.objectContaining({ reason: "outside-press" })]);
+  });
+
+  it("delays dismissal and positioning until framework placement reports ready", () => {
+    const harness = createHarness({ frameworkPlacement: true });
+
+    harness.open = true;
+    harness.lifecycle.applyOpenState(true, { reason: "trigger-press", trigger: harness.trigger });
+
+    expect(harness.portal.parentElement).toBe(harness.originalParent);
+    expect(harness.hasPositioner()).toBe(false);
+    document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    expect(harness.closeRequests).toEqual([]);
+
+    harness.portalTarget.append(harness.portal);
+    reportPortalPlacement(harness.portal, { ready: true, target: harness.portalTarget });
+
+    expect(harness.positioner.update).toHaveBeenCalledTimes(1);
+    expect(harness.positioner.startAutoUpdate).toHaveBeenCalledTimes(1);
+    document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    expect(harness.closeRequests).toEqual([expect.objectContaining({ reason: "outside-press" })]);
+
+    harness.lifecycle.destroy();
+    reportPortalPlacement(harness.portal, null);
+  });
+
+  it("pauses placed work while an open framework portal changes targets", () => {
+    const onPlacementPending = vi.fn();
+    const harness = createHarness({ frameworkPlacement: true, onPlacementPending });
+    const secondTarget = document.createElement("section");
+    document.body.append(secondTarget);
+    harness.open = true;
+    harness.portalTarget.append(harness.portal);
+    reportPortalPlacement(harness.portal, { ready: true, target: harness.portalTarget });
+
+    harness.lifecycle.applyOpenState(true, { reason: "trigger-press", trigger: harness.trigger });
+
+    expect(harness.positioner.update).toHaveBeenCalledTimes(1);
+    expect(harness.positioner.startAutoUpdate).toHaveBeenCalledTimes(1);
+
+    reportPortalPlacement(harness.portal, { ready: false, target: secondTarget });
+    reportPortalPlacement(harness.portal, { ready: false, target: secondTarget });
+    document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(harness.positioner.stopAutoUpdate).toHaveBeenCalledTimes(1);
+    expect(onPlacementPending).toHaveBeenCalledTimes(1);
+    expect(harness.closeRequests).toEqual([]);
+
+    secondTarget.append(harness.portal);
+    reportPortalPlacement(harness.portal, { ready: true, target: secondTarget });
+    reportPortalPlacement(harness.portal, { ready: true, target: secondTarget });
+
+    expect(harness.positioner.update).toHaveBeenCalledTimes(2);
+    expect(harness.positioner.startAutoUpdate).toHaveBeenCalledTimes(2);
+
+    document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    expect(harness.closeRequests).toEqual([expect.objectContaining({ reason: "outside-press" })]);
+
+    harness.lifecycle.destroy();
+    reportPortalPlacement(harness.portal, null);
+    secondTarget.remove();
   });
 
   it("keeps portaled content mounted until close animations finish", async () => {
@@ -233,7 +294,7 @@ describe("floating list lifecycle", () => {
     expect(harness.popup.parentElement).toBe(harness.portalTarget);
   });
 
-  it("keeps a dialog-owned wrapper promoted until owner-requested close animation completes", async () => {
+  it("keeps dialog-owned placement until owner-requested close animation completes", async () => {
     const dialog = document.createElement("dialog");
     const harness = createHarness({ owner: dialog });
     const animationFinished = createDeferred<void>();
@@ -247,30 +308,27 @@ describe("floating list lifecycle", () => {
       reason: "trigger-press",
       trigger: harness.trigger,
     });
-    expect(
-      harness.popup.closest<HTMLElement>("[data-sw-floating-portal]")?.matches(":popover-open"),
-    ).toBe(true);
+    expect(harness.popup.parentElement).toBe(harness.portalTarget);
+    expect(harness.popup.getAttribute("data-placement")).toBe("ready");
 
     requestDialogOwnedFloatingPortalClose(dialog);
 
     expect(harness.ownerCloseRequests).toEqual([{ reason: "imperative-action" }]);
     expect(harness.popup.getAttribute("data-state")).toBe("closed");
-    expect(
-      harness.popup.closest<HTMLElement>("[data-sw-floating-portal]")?.matches(":popover-open"),
-    ).toBe(true);
+    expect(harness.popup.parentElement).toBe(harness.portalTarget);
 
     demoteDialogOwnedFloatingPortals(dialog);
+    expect(harness.popup.getAttribute("data-placement")).toBe("pending");
     promoteDialogOwnedFloatingPortals(dialog);
 
-    expect(harness.popup.closest("[data-sw-floating-portal]")).toBeNull();
     expect(harness.popup.parentElement).toBe(harness.portalTarget);
+    expect(harness.popup.getAttribute("data-placement")).toBe("ready");
 
     animationFinished.resolve();
     await animationFinished.promise;
     await waitForMicrotasks();
 
     expect(harness.popup.parentElement).toBe(harness.originalParent);
-    expect(dialog.querySelector("[data-sw-floating-portal]")).toBeNull();
 
     harness.lifecycle.destroy();
     dialog.close();
@@ -280,18 +338,23 @@ describe("floating list lifecycle", () => {
 
 function createHarness({
   createFloatingPositioner,
+  frameworkPlacement = false,
   onOpenFrame,
+  onPlacementPending,
   owner,
   shouldUseFloating,
 }: {
   createFloatingPositioner?: () => FloatingPositioner;
+  frameworkPlacement?: boolean;
   onOpenFrame?: () => void;
+  onPlacementPending?: () => void;
   owner?: HTMLDialogElement;
   shouldUseFloating?: () => boolean;
 } = {}) {
   const root = document.createElement("div");
   const trigger = document.createElement("button");
   const popup = document.createElement("div");
+  const portal = document.createElement("div");
   const portalTarget = document.createElement("div");
   const originalParent = document.createElement("section");
   const closeCompleteRequests: TestRequest[] = [];
@@ -303,7 +366,13 @@ function createHarness({
   let open = false;
 
   root.append(trigger, originalParent);
-  originalParent.append(popup);
+  if (frameworkPlacement) {
+    portal.setAttribute("data-sw-portal-placement", "framework");
+    portal.append(popup);
+    originalParent.append(portal);
+  } else {
+    originalParent.append(popup);
+  }
   if (owner) {
     owner.setAttribute("data-slot", "dialog-content");
     portalTarget.setAttribute("data-floating-root", "");
@@ -338,10 +407,12 @@ function createHarness({
         if (request) closeCompleteRequests.push(request);
       },
       onOpenFrame,
+      onPlacementPending,
     },
     popup,
     portal: {
       containsTarget: (target) => root.contains(target) || popup.contains(target),
+      getElement: frameworkPlacement ? () => portal : undefined,
       getTarget: () => portalTarget,
       onOwnerCloseRequest: () => {
         const request = { reason: "imperative-action" as const };
@@ -376,10 +447,13 @@ function createHarness({
       open = value;
     },
     lifecycle,
+    hasPositioner: () => currentPositioner !== null,
     originalParent,
     ownerCloseRequests,
     popup,
+    portal,
     portalTarget,
+    trigger,
     get positioner() {
       if (!currentPositioner) {
         throw new Error("Harness floating positioner has not been created.");
@@ -389,7 +463,6 @@ function createHarness({
     },
     renderedStates,
     root,
-    trigger,
   };
 }
 

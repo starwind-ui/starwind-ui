@@ -1,4 +1,5 @@
 import { dispatchOutsidePointerDown } from "../../shared/pointer.mjs";
+import { assertPublicPortalTopology } from "../../shared/public-portal-topology.mjs";
 
 export async function verifyAstroMenuCases({ page }) {
   await page.locator("#runtime-dropdown-trigger").focus();
@@ -38,6 +39,9 @@ export async function verifyAstroMenuCases({ page }) {
 
   await page.getByRole("button", { name: "Open menu" }).click();
   await page.locator("#runtime-dropdown-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#runtime-dropdown-content"), {
+    portalSlot: "dropdown-portal",
+  });
   const openDropdownState = await page.locator("#runtime-dropdown-content").evaluate((content) => ({
     className: content.getAttribute("class"),
     dataAlign: content.getAttribute("data-align"),
@@ -58,7 +62,7 @@ export async function verifyAstroMenuCases({ page }) {
     openDropdownState.state !== "open" ||
     !["bottom", "top"].includes(openDropdownState.dataSide ?? "") ||
     openDropdownState.dataAlign !== "start" ||
-    openDropdownState.parentTagName !== "BODY" ||
+    openDropdownState.parentTagName !== "DIV" ||
     openDropdownState.rootContains !== false ||
     openDropdownState.position !== "fixed" ||
     openDropdownState.styleLeft === "" ||
@@ -173,6 +177,9 @@ export async function verifyAstroMenuCases({ page }) {
     trigger.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
   });
   await page.locator("#runtime-dropdown-sub-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#runtime-dropdown-sub-content"), {
+    portalSlot: "dropdown-sub-portal",
+  });
   const openDropdownSubmenuState = await page
     .locator("#runtime-dropdown-sub-content")
     .evaluate((content) => ({
@@ -186,7 +193,7 @@ export async function verifyAstroMenuCases({ page }) {
     }));
   if (
     openDropdownSubmenuState.hidden !== false ||
-    openDropdownSubmenuState.parentTagName !== "BODY" ||
+    openDropdownSubmenuState.parentTagName !== "DIV" ||
     openDropdownSubmenuState.position !== "fixed" ||
     openDropdownSubmenuState.state !== "open" ||
     openDropdownSubmenuState.triggerExpanded !== "true"
@@ -230,6 +237,9 @@ export async function verifyAstroMenuCases({ page }) {
     }));
   await page.getByRole("button", { name: "As child menu" }).click();
   await page.locator("#runtime-dropdown-as-child-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#runtime-dropdown-as-child-content"), {
+    portalSlot: "dropdown-portal",
+  });
   const dropdownAsChildOpen = await page.evaluate(() => {
     const trigger = document.querySelector("#runtime-dropdown-as-child-trigger");
     const content = document.querySelector("#runtime-dropdown-as-child-content");
@@ -253,7 +263,7 @@ export async function verifyAstroMenuCases({ page }) {
     dropdownAsChildOpen.contentHidden !== false ||
     dropdownAsChildOpen.contentRole !== "menu" ||
     dropdownAsChildOpen.contentState !== "open" ||
-    dropdownAsChildOpen.parentTagName !== "BODY"
+    dropdownAsChildOpen.parentTagName !== "DIV"
   ) {
     throw new Error(
       `Expected Astro Dropdown asChild trigger to transfer attributes and open, got ${JSON.stringify(
@@ -280,6 +290,9 @@ export async function verifyAstroMenuCases({ page }) {
   await page.locator("#runtime-context-menu-trigger").focus();
   await page.keyboard.press("Shift+F10");
   await page.locator("#runtime-context-menu-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#runtime-context-menu-content"), {
+    portalSlot: "context-menu-portal",
+  });
   const keyboardContextMenuFocusState = await page.evaluate(() => ({
     activeId: document.activeElement?.id,
     activeTabIndex: document.activeElement?.getAttribute("tabindex"),
@@ -333,7 +346,7 @@ export async function verifyAstroMenuCases({ page }) {
     openContextMenuState.state !== "open" ||
     !["bottom", "top"].includes(openContextMenuState.dataSide ?? "") ||
     openContextMenuState.dataAlign !== "start" ||
-    openContextMenuState.parentTagName !== "BODY" ||
+    openContextMenuState.parentTagName !== "DIV" ||
     openContextMenuState.rootContains !== false ||
     openContextMenuState.position !== "fixed" ||
     openContextMenuState.styleLeft === "" ||
@@ -450,6 +463,9 @@ export async function verifyAstroMenuCases({ page }) {
     trigger.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
   });
   await page.locator("#runtime-context-menu-sub-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#runtime-context-menu-sub-content"), {
+    portalSlot: "context-menu-sub-portal",
+  });
   const openContextSubmenuState = await page
     .locator("#runtime-context-menu-sub-content")
     .evaluate((content) => ({
@@ -463,7 +479,7 @@ export async function verifyAstroMenuCases({ page }) {
     }));
   if (
     openContextSubmenuState.hidden !== false ||
-    openContextSubmenuState.parentTagName !== "BODY" ||
+    openContextSubmenuState.parentTagName !== "DIV" ||
     openContextSubmenuState.position !== "fixed" ||
     openContextSubmenuState.state !== "open" ||
     openContextSubmenuState.triggerExpanded !== "true"

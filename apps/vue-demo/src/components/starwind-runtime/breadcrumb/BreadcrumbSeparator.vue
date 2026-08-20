@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { breadcrumbSeparator } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,7 +15,6 @@ const { class: className } = defineProps<BreadcrumbSeparatorDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLLIElement | null>(null);
 defineExpose({ element });
 </script>
@@ -27,7 +26,7 @@ defineExpose({ element });
     role="presentation"
     aria-hidden="true"
     :class="breadcrumbSeparator({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="breadcrumb-separator"
   >
     <slot>

@@ -6,6 +6,41 @@ import {
   printSpecializedFutureFrameworkTracerSpec,
 } from "./specialized-future-framework-tracer.js";
 
+export const solidPortalPlacementProof = {
+  nativePrimitive: "Portal",
+  placementOwner: "solid",
+  policyOwner: "runtime",
+  serverAndFirstHydrationPlacement: "inline",
+} as const;
+
+export const solidPortalWrapperException = {
+  element: "div",
+  owner: "solid-native-portal",
+  publicPart: false,
+  reason:
+    "Solid Portal creates one internal container for non-head mounts; the Starwind public Portal wrapper remains its child.",
+} as const;
+
+export type SolidPortalPlacementTraceInput = {
+  nativeContainer: string | null;
+  nativeContainerParent: string | null;
+  previousRequestedTarget: string | null;
+  requestedTarget: string;
+  wrapperParent: string | null;
+};
+
+export function projectSolidPortalPlacementTrace(input: SolidPortalPlacementTraceInput) {
+  return {
+    mountTarget: input.requestedTarget,
+    outerTargetChanged: input.previousRequestedTarget !== input.requestedTarget,
+    readinessTarget: input.nativeContainer,
+    ready:
+      input.nativeContainer !== null &&
+      input.nativeContainerParent === input.requestedTarget &&
+      input.wrapperParent === input.nativeContainer,
+  } as const;
+}
+
 const solidFutureFrameworkTracerClassifications = [
   {
     component: "button/solid",

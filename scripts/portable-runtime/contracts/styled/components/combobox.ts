@@ -752,6 +752,8 @@ export const comboboxStyledContract: StyledAdapterContract = {
           { name: "side", optional: true, type: '"top" | "right" | "bottom" | "left"' },
           { name: "sideOffset", optional: true, type: "number" },
           { name: "size", optional: true, type: '"sm" | "md" | "lg"' },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
         ],
       },
       destructure: {
@@ -764,6 +766,8 @@ export const comboboxStyledContract: StyledAdapterContract = {
           { name: "side", defaultValue: '"bottom"' },
           { name: "sideOffset", defaultValue: "4" },
           { name: "size", defaultValue: '"md"' },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
         ],
         rest: "rest",
       },
@@ -773,10 +777,11 @@ export const comboboxStyledContract: StyledAdapterContract = {
           component: "combobox",
           part: "Portal",
           attrs: [
+            { name: "container", value: { type: "variable", name: "portalContainer" } },
+            { name: "disabled", value: { type: "variable", name: "disablePortal" } },
             {
               name: "data-slot",
               value: { type: "literal", value: "combobox-portal" },
-              frameworks: ["astro", "react"],
             },
           ],
           children: [

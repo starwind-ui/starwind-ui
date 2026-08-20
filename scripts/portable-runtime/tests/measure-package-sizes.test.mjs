@@ -1,31 +1,300 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import {
+  addSourceContributionContexts,
   buildContractGenerationProofMeasurementRows,
   committedComparatorBaselines,
+  createMeasurementProvenance,
   evaluateColorPickerSizeComparison,
   formatColorPickerSizeComparisonMarkdown,
   formatPackageSizeReports,
+  createStarwindVueAlias,
+  getPackageSizeCommandMode,
   getPackageSizeMeasurementPlan,
+  measureBundle,
+  resolveStarwindVueBuiltPath,
+  summarizeDynamicBundleOutput,
+  validateInstalledZagVueComparator,
+  withVueSourceContribution,
   writePackageSizeReports,
 } from "../measure-package-sizes.mjs";
+import {
+  STARWIND_VUE_MEASUREMENT_LABELS,
+  starwindVueRuntimeComponents,
+  starwindZagVueOverlapMappings,
+  zagVueComparatorPackages,
+} from "../package-size-vue-plan.mjs";
+import { buildSourceContributionAnalyses } from "../source-contribution-report.mjs";
 
 describe("package-size command prerequisites", () => {
-  it("builds the Runtime and React packages before refresh and check measurements", () => {
+  it("builds Vue for full local measurements and preserves the prepared public check", () => {
     const rootPackage = JSON.parse(
       readFileSync(new URL("../../../package.json", import.meta.url), "utf8"),
     );
 
     expect(rootPackage.scripts["runtime:size"]).toBe(
-      "pnpm runtime:build && pnpm react:build && node scripts/portable-runtime/measure-package-sizes.mjs",
+      "pnpm runtime:build && pnpm react:build && pnpm vue:build && node scripts/portable-runtime/measure-package-sizes.mjs",
     );
     expect(rootPackage.scripts["runtime:size:check"]).toBe(
-      "pnpm runtime:build && pnpm react:build && node scripts/portable-runtime/measure-package-sizes.mjs --check",
+      "pnpm runtime:build && pnpm react:build && pnpm vue:build && node scripts/portable-runtime/measure-package-sizes.mjs --check --private-vue",
     );
+    expect(rootPackage.scripts["runtime:size:check:prepared"]).toBe(
+      "node scripts/portable-runtime/measure-package-sizes.mjs --check",
+    );
+    expect(rootPackage.scripts["runtime:size:check:prepared:private"]).toBe(
+      "node scripts/portable-runtime/measure-package-sizes.mjs --check --private-vue",
+    );
+    expect(rootPackage.scripts["runtime:size:baseline:vue"]).toBe(
+      "node scripts/portable-runtime/measure-package-sizes.mjs --baseline-vue",
+    );
+    expect(rootPackage.scripts["release:gate"]).toContain("pnpm runtime:size:check:prepared");
+    expect(rootPackage.scripts["release:gate"]).not.toContain(
+      "pnpm runtime:size:check:prepared:private",
+    );
+  });
+
+  it("routes offline evidence checks before baseline capture and normal measurement", () => {
+    expect(getPackageSizeCommandMode(["--baseline-vue", "--check-evidence"])).toBe(
+      "check-vue-evidence",
+    );
+    expect(getPackageSizeCommandMode(["--baseline-vue"])).toBe("capture-vue-baseline");
+    expect(getPackageSizeCommandMode(["--check", "--private-vue"])).toBe("measure");
+  });
+});
+
+describe("private Vue browser measurement plan", () => {
+  it("uses built root and subpath aliases", () => {
+    const root = "/repo";
+    expect(resolveStarwindVueBuiltPath("@starwind-ui/vue", { repoRoot: root })).toBe(
+      path.join(root, "packages/vue/dist/index.js"),
+    );
+    expect(resolveStarwindVueBuiltPath("@starwind-ui/vue/select", { repoRoot: root })).toBe(
+      path.join(root, "packages/vue/dist/select/index.js"),
+    );
+    expect(createStarwindVueAlias({ repoRoot: root }).name).toBe("starwind-vue-alias");
+  });
+
+  it("fails a required alias when built Vue output is missing", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "missing-built-vue-test-"));
+    const resolvers = [];
+    createStarwindVueAlias({ repoRoot: root }).setup({
+      onResolve(options, callback) {
+        resolvers.push({ callback, filter: options.filter });
+      },
+    });
+
+    expect(() =>
+      resolvers.find(({ filter }) => filter.test("@starwind-ui/vue")).callback(),
+    ).toThrow("Required built Vue package output is missing");
+    rmSync(root, { force: true, recursive: true });
+  });
+
+  it("keeps public checks unchanged and adds complete offline private checks", () => {
+    const publicCheck = getPackageSizeMeasurementPlan({ checkOnly: true });
+    const privateCheck = getPackageSizeMeasurementPlan({
+      checkOnly: true,
+      includePrivateVue: true,
+    });
+    const refresh = getPackageSizeMeasurementPlan();
+
+    expect(publicCheck.privateVueBundleRows).toEqual([]);
+    expect(publicCheck.privateVueMatchedBaselines).toEqual([]);
+    expect(privateCheck.installComparators).toBe(false);
+    expect(privateCheck.privateVueBundleRows.map(({ label }) => label)).toEqual([
+      STARWIND_VUE_MEASUREMENT_LABELS.adapterOnly,
+      STARWIND_VUE_MEASUREMENT_LABELS.combined,
+      STARWIND_VUE_MEASUREMENT_LABELS.completeCatalog,
+    ]);
+    expect(privateCheck.privateVueColdImportRows).toHaveLength(37);
+    expect(privateCheck.privateVueMatchedRows.map(({ provider }) => provider)).toEqual([
+      "starwind-vue",
+    ]);
+    expect(privateCheck.privateVueMatchedBaselines).toEqual([
+      {
+        componentCount: 30,
+        gzipBytes: 128_292,
+        minifiedBytes: null,
+        provider: "zag-vue",
+        version: "1.42.0",
+      },
+    ]);
+    expect(refresh.privateVueColdImportRows.map(({ component }) => component)).toEqual([
+      ...starwindVueRuntimeComponents,
+      "theme",
+    ]);
+    expect(refresh.privateVueMatchedRows.map(({ provider }) => provider)).toEqual([
+      "starwind-vue",
+      "zag-vue",
+    ]);
+    expect(refresh.privateVueMatchedRows.at(-1).comparatorInstall).toBe("zag-vue-exact");
+  });
+
+  it("externalizes Vue in every Starwind row and Runtime only in adapter-only", () => {
+    const plan = getPackageSizeMeasurementPlan();
+    const starwindRows = [
+      ...plan.privateVueBundleRows,
+      ...plan.privateVueColdImportRows,
+      ...plan.privateVueMatchedRows.filter(({ provider }) => provider === "starwind-vue"),
+    ];
+    for (const row of starwindRows) expect(row.external).toContain("vue");
+    expect(plan.privateVueBundleRows[0].external).toContain("@starwind-ui/runtime/*");
+    expect(plan.privateVueBundleRows[1].external).not.toContain("@starwind-ui/runtime/*");
+  });
+
+  it("requests and retains source metafiles for both Vue headlines", async () => {
+    const plan = getPackageSizeMeasurementPlan();
+    const buildOptions = [];
+    const results = await Promise.all(
+      plan.privateVueBundleRows.slice(0, 2).map((row) =>
+        measureBundle(row, undefined, {
+          build: async (options) => {
+            buildOptions.push(options);
+            return {
+              metafile: {
+                outputs: {
+                  "entry.js": {
+                    inputs: {
+                      "/repo/packages/vue/dist/index.js": { bytesInOutput: 275 },
+                    },
+                  },
+                },
+              },
+              outputFiles: [outputFile(path.join(options.outdir, "entry.js"), "export {};")],
+            };
+          },
+        }),
+      ),
+    );
+
+    expect(buildOptions.map(({ metafile }) => metafile)).toEqual([true, true]);
+    expect(results.map(({ sourceContribution }) => sourceContribution)).toEqual([
+      { label: "@starwind-ui/vue (adapter only) source attribution" },
+      { label: "@starwind-ui/vue + runtime source attribution" },
+    ]);
+    expect(results.map(({ metafile }) => metafile)).toEqual([
+      {
+        outputs: {
+          "entry.js": {
+            inputs: { "/repo/packages/vue/dist/index.js": { bytesInOutput: 275 } },
+          },
+        },
+      },
+      {
+        outputs: {
+          "entry.js": {
+            inputs: { "/repo/packages/vue/dist/index.js": { bytesInOutput: 275 } },
+          },
+        },
+      },
+    ]);
+
+    const [analysis] = buildSourceContributionAnalyses({
+      readFile: () => "// src/index.ts\nexport {};",
+      repoRoot: "/repo",
+      results: [results[0]],
+      tmpRoot: "/tmp/starwind-package-size-comparison",
+    });
+
+    expect(analysis.categories).toEqual([{ bytes: 275, label: "Vue adapter" }]);
+    expect(withVueSourceContribution({ label: "public row" })).toEqual({ label: "public row" });
+  });
+
+  it("builds Vue matched-support context from all 30 authoritative cold imports", () => {
+    const plan = getPackageSizeMeasurementPlan();
+    const matchedRow = withVueSourceContribution(
+      plan.privateVueMatchedRows.find(({ provider }) => provider === "starwind-vue"),
+    );
+    const coldImportRows = starwindZagVueOverlapMappings.map(({ starwind }, index) => ({
+      component: starwind,
+      gzipBytes: index + 1,
+      provider: "starwind-vue",
+    }));
+    const results = addSourceContributionContexts([
+      ...coldImportRows,
+      { ...matchedRow, gzipBytes: 100 },
+    ]);
+
+    expect(results.at(-1).sourceContribution.context).toEqual({
+      combinedGzipBytes: 100,
+      componentCount: 30,
+      interpretation:
+        "Use both columns: lower combined size is good, but higher savings can also come from higher isolated imports.",
+      isolatedGzipBytes: 465,
+      sharedSavingsGzipBytes: 365,
+    });
+  });
+
+  it("retains dynamic outputs separately from the static headline graph", () => {
+    const summary = summarizeDynamicBundleOutput({
+      initialOutputPaths: ["/tmp/out/entry.js", "/tmp/out/static.js"],
+      outputFiles: [
+        outputFile("/tmp/out/static.js", "export const staticValue = 1;"),
+        outputFile("/tmp/out/dynamic-b.js", "export const b = 2;"),
+        outputFile("/tmp/out/entry.js", 'import "./static.js"; import("./dynamic-b.js");'),
+        outputFile("/tmp/out/dynamic-a.js", "export const a = 1;"),
+      ],
+    });
+
+    expect(summary.paths).toEqual(["dynamic-a.js", "dynamic-b.js"]);
+    expect(summary.minifiedBytes).toBe(
+      Buffer.byteLength("export const a = 1;") + Buffer.byteLength("export const b = 2;"),
+    );
+    expect(summary.gzipBytes).toBeGreaterThan(0);
+  });
+
+  it("captures the complete private Vue provenance model", () => {
+    const provenance = createMeasurementProvenance({
+      command: { arguments: ["measure-package-sizes.mjs", "--private-vue"], executable: "/node" },
+      commit: "a".repeat(40),
+      comparatorPackages: { "@zag-js/vue": "1.42.0" },
+      environment: completeEnvironmentFixture(),
+      flags: { gzipLevel: 9, staticGraphHeadlines: true },
+      packageVersions: { "@starwind-ui/vue": "0.0.0" },
+    });
+
+    expect(provenance).toEqual({
+      command: {
+        arguments: ["measure-package-sizes.mjs", "--private-vue"],
+        executable: "/node",
+      },
+      commit: "a".repeat(40),
+      comparator: {
+        name: "zag-vue",
+        packages: { "@zag-js/vue": "1.42.0" },
+        version: "1.42.0",
+      },
+      environment: completeEnvironmentFixture(),
+      flags: { gzipLevel: 9, staticGraphHeadlines: true },
+      packageVersions: { "@starwind-ui/vue": "0.0.0" },
+    });
+    expect(Object.isFrozen(provenance)).toBe(true);
+    expect(Object.isFrozen(provenance.command.arguments)).toBe(true);
+  });
+
+  it("rejects an installed comparator package with the wrong exact version", () => {
+    const installRoot = mkdtempSync(path.join(os.tmpdir(), "zag-vue-comparator-test-"));
+    try {
+      for (const packageName of zagVueComparatorPackages) {
+        const packageDirectory = path.join(installRoot, "node_modules", packageName);
+        mkdirSync(packageDirectory, { recursive: true });
+        writeFileSync(
+          path.join(packageDirectory, "package.json"),
+          JSON.stringify({
+            name: packageName,
+            version: packageName === "@zag-js/vue" ? "1.43.0" : "1.42.0",
+          }),
+        );
+      }
+      expect(() => validateInstalledZagVueComparator(installRoot)).toThrow(
+        "@zag-js/vue: expected 1.42.0, received 1.43.0",
+      );
+    } finally {
+      rmSync(installRoot, { force: true, recursive: true });
+    }
   });
 });
 
@@ -126,8 +395,25 @@ describe("package-size public and diagnostic reports", () => {
     const publicHeadings = [...reports.publicReport.matchAll(/^## (.+)$/gm)].map(
       (match) => match[1],
     );
+    const diagnosticHeadings = [...reports.diagnosticReport.matchAll(/^(#{2,3}) (.+)$/gm)].map(
+      (match) => match[2],
+    );
     const privateHeadings = [
       "Budget Checks",
+      "Private Vue Measurement Method",
+      "Private Vue Accepted Baseline Provenance",
+      "Private Vue Accepted Raw Runs",
+      "Private Vue Accepted Cold-Import Sentinels",
+      "Private Vue Adopted Budgets",
+      "Private Vue Headlines",
+      "Private Vue Cold Imports",
+      "Private Vue Combined Catalog",
+      "Private Vue Matched Zag Support",
+      "Private Vue Package Payload",
+      "Private Vue Styled Copied-Source Payload",
+      "Private Vue Provenance",
+      "Private Vue Dynamic Chunks",
+      "Private Vue Measurement Limitations",
       "Raw Gzip Diagnostics",
       "Starwind Source Contribution Analysis",
       "Bundle Entry Sizes",
@@ -142,6 +428,21 @@ describe("package-size public and diagnostic reports", () => {
       "Starwind Published Source Payloads",
       "Reading The Numbers",
     ]);
+    expect(
+      [
+        "Budget Checks",
+        "Color Picker Rebaseline Evidence",
+        "Headline Aggregate Regression Guards",
+        "Targeted Cold-Import Budgets",
+        "Matched-Support Aggregate Regression Guards",
+        "Standalone Color Picker Comparison",
+        "Private Vue Accepted Baseline Provenance",
+        "Private Vue Accepted Raw Runs",
+        "Private Vue Accepted Cold-Import Sentinels",
+        "Private Vue Adopted Budgets",
+        "Private Vue Measurement Method",
+      ].map((heading) => diagnosticHeadings.indexOf(heading)),
+    ).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     expect(reports.publicReport).toContain("Generated: 2030-05-06");
     expect(reports.diagnosticReport).toContain("Generated: 2030-05-06");
     expect(reports.publicReport).toContain("| 1 | `@starwind-ui/runtime` | 2.0 KiB | 4.0 KiB |");
@@ -157,6 +458,40 @@ describe("package-size public and diagnostic reports", () => {
     expect(reports.diagnosticReport).toContain("### Color Picker Rebaseline Evidence");
     expect(reports.publicReport).not.toContain("Source-contribution rows use esbuild metafile");
     expect(reports.diagnosticReport).toContain("Source-contribution rows use esbuild metafile");
+    expect(reports.publicReport).not.toContain("@starwind-ui/vue");
+    expect(reports.publicReport).not.toContain("Private Vue");
+    expect(reports.publicReport).not.toContain("vue.adapter-only");
+    expect(reports.diagnosticReport).toContain(
+      ".scratch/vue-package-size-comparison/evidence/vue-package-size-baseline.json",
+    );
+    expect(reports.diagnosticReport).toContain(
+      "| `vue.adapter-only` | 51,807 B | 51,807 B | 51,807 B | 51,807 B | 2,591 B | 54,398 B | Pass |",
+    );
+    expect(reports.diagnosticReport).toContain(
+      "| Zag Vue 1.42.0 matched support | 128,292 B | Advisory snapshot |",
+    );
+    expect(reports.diagnosticReport).toContain(
+      "The accepted sentinels are the five Runtime-backed cold imports with the largest stable maximum. Ties are broken by component id. Theme is excluded.",
+    );
+    expect(
+      reports.diagnosticReport
+        .match(
+          /## Private Vue Accepted Cold-Import Sentinels\n\n[\s\S]+?\n\n## Private Vue Adopted Budgets/,
+        )?.[0]
+        .match(/^\| \d \| ([^|]+) \|/gm)
+        ?.map((row) => row.match(/^\| \d \| ([^|]+) \|/)?.[1].trim()),
+    ).toEqual(["select", "combobox", "context-menu", "menu", "navigation-menu"]);
+    expect(reports.diagnosticReport).toContain("| 54 | 1.0 KiB |");
+    expect(reports.diagnosticReport).toContain(
+      "| @starwind-ui/vue complete catalog | `chunks/vue-dynamic.js` | 21 B |",
+    );
+    expect(reports.diagnosticReport).toContain(`Commit: \`${"a".repeat(40)}\`.`);
+    expect(reports.diagnosticReport).toContain(
+      'Command: `"node" "measure-package-sizes.mjs" "--private-vue"`.',
+    );
+    expect(reports.diagnosticReport).toContain(
+      "Environment: Linux 6.8, kernel 6.8.1, linux x64, Node 24.0.0, npm 10.0.0, pnpm 10.0.0, esbuild 0.25.0, zlib 1.3.1.",
+    );
   });
 
   it("writes both reports normally and leaves both byte-unchanged in failed-budget check mode", () => {
@@ -185,8 +520,65 @@ describe("package-size public and diagnostic reports", () => {
       ).toBe(false);
       expect(readFileSync(publicPath, "utf8")).toBe("seeded public\n");
       expect(readFileSync(diagnosticPath, "utf8")).toBe("seeded diagnostic\n");
+
+      expect(
+        writePackageSizeReports(
+          {
+            ...reportFixture(),
+            packageBudgetResults: {
+              ...reportFixture().packageBudgetResults,
+              failures: ["fixture refresh budget failure"],
+            },
+          },
+          { diagnosticPath, publicPath },
+        ),
+      ).toBe(false);
+      expect(readFileSync(publicPath, "utf8")).toBe("seeded public\n");
+      expect(readFileSync(diagnosticPath, "utf8")).toBe("seeded diagnostic\n");
       expect(publicReport).toContain("Generated: 2030-05-06");
       expect(diagnosticReport).toContain("Generated: 2030-05-06");
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  it("rolls back both reports when the later transactional replacement fails", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "starwind-size-report-rollback-test-"));
+    const publicPath = path.join(root, "package-size-comparison.md");
+    const diagnosticPath = path.join(root, "diagnostics", "package-size-diagnostics.md");
+    mkdirSync(path.dirname(diagnosticPath), { recursive: true });
+    writeFileSync(publicPath, "accepted public\n");
+    writeFileSync(diagnosticPath, "accepted diagnostic\n");
+    let replacements = 0;
+    let publicationError;
+
+    try {
+      writePackageSizeReports(reportFixture(), {
+        diagnosticPath,
+        publicationOptions: {
+          replaceArtifact(source, destination) {
+            replacements += 1;
+            if (replacements === 2) throw new Error("simulated diagnostic replacement failure");
+            renameSync(source, destination);
+          },
+        },
+        publicPath,
+      });
+    } catch (error) {
+      publicationError = error;
+    }
+
+    try {
+      expect(publicationError).toMatchObject({
+        message: "simulated diagnostic replacement failure",
+      });
+      expect(readFileSync(publicPath, "utf8")).toBe("accepted public\n");
+      expect(readFileSync(diagnosticPath, "utf8")).toBe("accepted diagnostic\n");
+      expect(publicationError.packageSizePublication.rollback.complete).toBe(true);
+      expect(publicationError.packageSizePublication.staged).toEqual([
+        expect.objectContaining({ destination: publicPath, retained: true }),
+        expect.objectContaining({ destination: diagnosticPath, retained: true }),
+      ]);
     } finally {
       rmSync(root, { force: true, recursive: true });
     }
@@ -351,6 +743,23 @@ function reportFixture() {
       headlineChecks: [],
       matchedSupportChecks: [],
       standaloneComponentChecks: [],
+      vueAbsoluteChecks: [
+        {
+          baselineGzipBytes: 51_807,
+          gzipBytes: 51_807,
+          headroomBytes: 2_591,
+          id: "vue.adapter-only",
+          label: "vue.adapter-only",
+          maxGzipBytes: 54_398,
+          status: "Pass",
+        },
+      ],
+      vueMatchedSupportCheck: {
+        comparatorGzipBytes: 128_292,
+        comparisonStatus: "Above comparator",
+        starwindGzipBytes: 180_110,
+        status: "Pass",
+      },
     },
     sourceContributionAnalyses: [],
     sourcePayloadResults: [
@@ -364,5 +773,76 @@ function reportFixture() {
       },
     ],
     supportResults,
+    vueBundleResults: [
+      measurement("@starwind-ui/vue (adapter only)", 100, 10),
+      measurement("@starwind-ui/vue + runtime", 200, 20),
+      {
+        ...measurement("@starwind-ui/vue complete catalog", 300, 30),
+        dynamicOutput: {
+          gzipBytes: 19,
+          minifiedBytes: 21,
+          paths: ["chunks/vue-dynamic.js"],
+        },
+      },
+    ],
+    vueColdImportResults: [{ component: "accordion", gzipBytes: 11, minifiedBytes: 101 }],
+    vueMatchedSupportResults: [
+      { componentCount: 30, gzipBytes: 31, minifiedBytes: 301, provider: "starwind-vue" },
+      { componentCount: 30, gzipBytes: 32, minifiedBytes: 302, provider: "zag-vue" },
+    ],
+    vuePackagePayload: {
+      categories: [{ bytes: 10, fileCount: 1, label: "Runtime-bearing code" }],
+      declarationBytes: 12,
+      declarationGzipBytes: 13,
+      packageGzipBytes: 14,
+      packageUnpackedBytes: 15,
+      runtimeGzipBytes: 16,
+      runtimeMinifiedBytes: 17,
+      version: "0.0.0",
+    },
+    vueProvenance: {
+      command: {
+        arguments: ["measure-package-sizes.mjs", "--private-vue"],
+        executable: "/node",
+      },
+      commit: "a".repeat(40),
+      comparator: { packages: { "@zag-js/vue": "1.42.0" } },
+      environment: completeEnvironmentFixture(),
+      flags: { gzipLevel: 9, staticGraphHeadlines: true },
+      packageVersions: { "@starwind-ui/vue": "0.0.0" },
+    },
+    vueStyledExclusions: [{ component: "image", reason: "Astro-only Styled contract" }],
+    vueStyledPayload: {
+      aggregateBytes: 1_024,
+      aggregateGzipBytes: 10,
+      codeBytes: 1_024,
+      codeGzipBytes: 10,
+      rootCount: 54,
+      typeSourceBytes: 0,
+      typeSourceGzipBytes: 0,
+    },
+  };
+}
+
+function completeEnvironmentFixture() {
+  return {
+    architecture: "x64",
+    esbuildVersion: "0.25.0",
+    kernelRelease: "6.8.1",
+    nodeVersion: "24.0.0",
+    npmVersion: "10.0.0",
+    osName: "Linux",
+    osRelease: "6.8",
+    platform: "linux",
+    pnpmVersion: "10.0.0",
+    zlibVersion: "1.3.1",
+  };
+}
+
+function outputFile(filePath, text) {
+  return {
+    contents: Buffer.from(text),
+    path: filePath,
+    text,
   };
 }

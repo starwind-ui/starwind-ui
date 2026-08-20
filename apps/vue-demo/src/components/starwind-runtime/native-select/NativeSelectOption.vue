@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type OptionHTMLAttributes, ref, useAttrs } from "vue";
+import { type OptionHTMLAttributes, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -14,7 +14,6 @@ const { class: className } = defineProps<NativeSelectOptionDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLOptionElement | null>(null);
 defineExpose({ element });
 </script>
@@ -23,7 +22,7 @@ defineExpose({ element });
   <option
     ref="element"
     :class="['bg-[Canvas] text-[CanvasText]', className].filter(Boolean).join(' ')"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="native-select-option"
   >
     <slot />

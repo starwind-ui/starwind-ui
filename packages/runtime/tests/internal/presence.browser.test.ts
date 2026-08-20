@@ -74,6 +74,201 @@ describe("presence", () => {
     expect(element.hidden).toBe(false);
   });
 
+  it("discovers animations immediately by default", () => {
+    const element = document.createElement("div");
+    const getAnimations = vi.fn(() => []);
+    Object.defineProperty(element, "getAnimations", {
+      configurable: true,
+      value: getAnimations,
+    });
+    document.body.append(element);
+
+    hideElementAfterAnimations(element);
+
+    expect(getAnimations).toHaveBeenCalledTimes(1);
+    expect(element.hidden).toBe(true);
+  });
+
+  it("discovers only animations committed for the ending style on the next frame", async () => {
+    const element = document.createElement("div");
+    const closeAnimation = createDeferred();
+    const onHidden = vi.fn();
+    const getAnimations = vi.fn(() => {
+      expect(element.hasAttribute("data-ending-style")).toBe(true);
+      return [{ finished: closeAnimation.promise }] as unknown as Animation[];
+    });
+    Object.defineProperty(element, "getAnimations", {
+      configurable: true,
+      value: getAnimations,
+    });
+    document.body.append(element);
+
+    hideElementAfterAnimations(element, {
+      animationDiscovery: "next-frame",
+      onHidden,
+    });
+
+    expect(element.hasAttribute("data-ending-style")).toBe(true);
+    expect(getAnimations).not.toHaveBeenCalled();
+
+    await nextAnimationFrame();
+    expect(getAnimations).toHaveBeenCalledTimes(1);
+    expect(element.hidden).toBe(false);
+
+    closeAnimation.resolve();
+    await closeAnimation.promise;
+    await waitForMicrotasks();
+
+    expect(element.hidden).toBe(true);
+    expect(onHidden).toHaveBeenCalledTimes(1);
+
+    await nextAnimationFrame();
+    expect(onHidden).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels staged animation discovery when the element is shown again", async () => {
+    const element = document.createElement("div");
+    const getAnimations = vi.fn(() => []);
+    Object.defineProperty(element, "getAnimations", {
+      configurable: true,
+      value: getAnimations,
+    });
+    document.body.append(element);
+
+    hideElementAfterAnimations(element, { animationDiscovery: "next-frame" });
+    showElement(element);
+
+    await nextAnimationFrame();
+
+    expect(getAnimations).not.toHaveBeenCalled();
+    expect(element.hidden).toBe(false);
+    expect(element.hasAttribute("data-ending-style")).toBe(false);
+  });
+
+  it("does not let a quick close wait for stale entry motion", async () => {
+    const element = document.createElement("div");
+    const entryAnimation = createDeferred();
+    const closeAnimation = createDeferred();
+    const getAnimations = vi.fn(() =>
+      element.hasAttribute("data-ending-style")
+        ? ([{ finished: closeAnimation.promise }] as unknown as Animation[])
+        : ([{ finished: entryAnimation.promise }] as unknown as Animation[]),
+    );
+    Object.defineProperty(element, "getAnimations", {
+      configurable: true,
+      value: getAnimations,
+    });
+    element.hidden = true;
+    document.body.append(element);
+
+    showElement(element, { startingStyleRelease: "after-paint" });
+    hideElementAfterAnimations(element, { animationDiscovery: "next-frame" });
+
+    await nextAnimationFrame();
+    expect(getAnimations).toHaveBeenCalledTimes(1);
+
+    closeAnimation.resolve();
+    await closeAnimation.promise;
+    await waitForMicrotasks();
+
+    expect(element.hidden).toBe(true);
+  });
+
+  it("skips staged animation discovery after its signal is aborted", async () => {
+    const element = document.createElement("div");
+    const getAnimations = vi.fn(() => []);
+    const onHidden = vi.fn();
+    const abortController = new AbortController();
+    Object.defineProperty(element, "getAnimations", {
+      configurable: true,
+      value: getAnimations,
+    });
+    document.body.append(element);
+
+    hideElementAfterAnimations(element, {
+      animationDiscovery: "next-frame",
+      signal: abortController.signal,
+      onHidden,
+    });
+    abortController.abort();
+
+    await nextAnimationFrame();
+
+    expect(getAnimations).not.toHaveBeenCalled();
+    expect(element.hidden).toBe(false);
+    expect(onHidden).not.toHaveBeenCalled();
+  });
+
+  it("lets only the latest animation wait complete a replacement hide", async () => {
+    const element = document.createElement("div");
+    const firstAnimation = createDeferred();
+    const secondAnimation = createDeferred();
+    const firstHidden = vi.fn();
+    const secondHidden = vi.fn();
+    const getAnimations = vi
+      .fn<() => Animation[]>()
+      .mockReturnValueOnce([{ finished: firstAnimation.promise }] as unknown as Animation[])
+      .mockReturnValueOnce([{ finished: secondAnimation.promise }] as unknown as Animation[]);
+    Object.defineProperty(element, "getAnimations", {
+      configurable: true,
+      value: getAnimations,
+    });
+    document.body.append(element);
+
+    hideElementAfterAnimations(element, {
+      animationDiscovery: "next-frame",
+      onHidden: firstHidden,
+    });
+    await nextAnimationFrame();
+    hideElementAfterAnimations(element, {
+      animationDiscovery: "next-frame",
+      onHidden: secondHidden,
+    });
+    await nextAnimationFrame();
+
+    firstAnimation.resolve();
+    await firstAnimation.promise;
+    await waitForMicrotasks();
+
+    expect(element.hidden).toBe(false);
+    expect(firstHidden).not.toHaveBeenCalled();
+    expect(secondHidden).not.toHaveBeenCalled();
+
+    secondAnimation.resolve();
+    await secondAnimation.promise;
+    await waitForMicrotasks();
+
+    expect(element.hidden).toBe(true);
+    expect(firstHidden).not.toHaveBeenCalled();
+    expect(secondHidden).toHaveBeenCalledTimes(1);
+  });
+
+  it("defers computed-style fallback discovery and completes zero motion once", async () => {
+    const element = document.createElement("div");
+    const onHidden = vi.fn();
+    const getComputedStyle = vi.spyOn(window, "getComputedStyle");
+    Object.defineProperty(element, "getAnimations", {
+      configurable: true,
+      value: undefined,
+    });
+    document.body.append(element);
+
+    hideElementAfterAnimations(element, {
+      animationDiscovery: "next-frame",
+      onHidden,
+    });
+
+    expect(getComputedStyle).not.toHaveBeenCalled();
+    expect(element.hidden).toBe(false);
+
+    await nextAnimationFrame();
+
+    expect(getComputedStyle).toHaveBeenCalledTimes(1);
+    expect(element.hidden).toBe(true);
+    expect(onHidden).toHaveBeenCalledTimes(1);
+    getComputedStyle.mockRestore();
+  });
+
   it("keeps the starting style through one committed frame when requested", async () => {
     const element = renderElementWithAnimationDuration("200ms");
     element.hidden = true;
@@ -196,4 +391,17 @@ function renderHiddenUtilityStyle(): void {
 
 function nextAnimationFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+function createDeferred(): { promise: Promise<void>; resolve(): void } {
+  let resolve!: () => void;
+  const promise = new Promise<void>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
+async function waitForMicrotasks(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
 }

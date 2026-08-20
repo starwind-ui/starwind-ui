@@ -5,13 +5,23 @@
 
 "use client";
 
+import { reportPortalPlacement, resolvePortalPlacement } from "@starwind-ui/runtime/select";
 import * as React from "react";
+import { ReactPortal, type ReactPortalProps } from "../internal/portal";
 
-export type SelectPortalProps = React.HTMLAttributes<HTMLDivElement>;
+export type SelectPortalProps = ReactPortalProps;
 
 const SelectPortal = React.forwardRef<HTMLDivElement, SelectPortalProps>(
   function SelectPortal(props, forwardedRef) {
-    return <div data-sw-select-portal ref={forwardedRef} {...props} />;
+    return (
+      <ReactPortal
+        discoveryAttribute="data-sw-select-portal"
+        reportPlacement={reportPortalPlacement}
+        resolvePlacement={resolvePortalPlacement}
+        ref={forwardedRef}
+        {...props}
+      />
+    );
   },
 );
 

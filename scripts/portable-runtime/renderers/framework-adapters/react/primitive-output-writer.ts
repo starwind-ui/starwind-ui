@@ -9,6 +9,7 @@ const REACT_IMPORT = 'import * as React from "react";';
 const SET_REF_IMPORT = 'import { setRef } from "../internal/compose-refs";';
 const LAYOUT_EFFECT_IMPORT =
   'import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";';
+const PORTAL_SCOPE_IMPORT_PATTERN = /^import \{(?:[^;]|\n)*?\} from "\.\.\/internal\/portal";$/m;
 const PASSIVE_EFFECT_PLACEHOLDER = "__STARWIND_PASSIVE_REACT_EFFECT__";
 
 export type ReactAdapterOutputWriterOptions = FrameworkAdapterPrimitiveOutputWriterOptions & {
@@ -42,7 +43,13 @@ export async function writeReactPrimitiveFile(
   fileName: string,
   contents: string,
 ): Promise<void> {
-  await writeGeneratedFile(dir, fileName, applyReactRefCleanup(applyReactEffectTiming(contents)));
+  await writeGeneratedFile(
+    dir,
+    fileName,
+    applyReactPortalImportCanonicalization(
+      applyReactRefCleanup(applyReactEffectTiming(contents)),
+    ),
+  );
 }
 
 export function renderUseIsomorphicLayoutEffectFile(tsHeader: string): string {
@@ -418,6 +425,10 @@ export function applyReactRefCleanup(contents: string): string {
     .replace(/^(\s*)setRef\(([^\n;]+)\);(?=\r?\n\s*},)/gm, "$1return setRef($2);");
 }
 
+export function applyReactPortalImportCanonicalization(contents: string): string {
+  return normalizeReactRuntimeImports(normalizeReactInternalHelperImports(contents));
+}
+
 export function applyReactEffectTiming(contents: string): string {
   if (!contents.includes(REACT_IMPORT)) return contents;
 
@@ -440,6 +451,40 @@ function ensureIsomorphicLayoutEffectImport(contents: string): string {
   return contents.includes(LAYOUT_EFFECT_IMPORT)
     ? contents
     : contents.replace(REACT_IMPORT, `${REACT_IMPORT}\n${LAYOUT_EFFECT_IMPORT}`);
+}
+
+function normalizeReactInternalHelperImports(contents: string): string {
+  const portalScopeImport = contents.match(PORTAL_SCOPE_IMPORT_PATTERN)?.[0];
+  if (!portalScopeImport) return contents;
+  const helperImports = [SET_REF_IMPORT, portalScopeImport, LAYOUT_EFFECT_IMPORT].filter(
+    (value): value is string => Boolean(value && contents.includes(value)),
+  );
+  if (helperImports.length === 0) return contents;
+
+  let next = contents;
+  for (const helperImport of helperImports) {
+    next = next.replace(`${helperImport}\n`, "").replace(helperImport, "");
+  }
+  return next.replace(REACT_IMPORT, [REACT_IMPORT, ...helperImports].join("\n"));
+}
+
+function normalizeReactRuntimeImports(contents: string): string {
+  if (!PORTAL_SCOPE_IMPORT_PATTERN.test(contents)) return contents;
+  return contents.replace(
+    /import \{([^;]+)\} from "(@starwind-ui\/runtime\/[^\"]+)";/g,
+    (_match, rawSpecifiers: string, source: string) => {
+      const specifiers = rawSpecifiers
+        .split(",")
+        .map((specifier) => specifier.trim())
+        .filter(Boolean)
+        .sort((left, right) =>
+          left
+            .replace(/^type\s+/, "")
+            .localeCompare(right.replace(/^type\s+/, ""), "en", { sensitivity: "base" }),
+        );
+      return `import {\n  ${specifiers.join(",\n  ")},\n} from "${source}";`;
+    },
+  );
 }
 
 function usesRuntimeControllerEffect(contents: string): boolean {

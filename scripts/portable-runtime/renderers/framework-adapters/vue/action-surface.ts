@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
 import {
   printVueFamilyIndex,
@@ -28,7 +32,7 @@ export function printVueActionSurfaceComponent(file: AdapterComponentFile): Adap
     contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
-import { onBeforeUnmount, onMounted, useAttrs, useTemplateRef, watch } from "vue";
+import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -47,7 +51,6 @@ const props = withDefaults(
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const rootRef = useTemplateRef<${rootElementType}>("rootRef");
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
 
@@ -83,7 +86,7 @@ onBeforeUnmount(destroyOwnedInstance);
 <template>
   <${rootElement}
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     :${facts.attrs.type}="props.${type}"
     ${facts.attrs.root}
     data-sw-part="${facts.parts.root.name}"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { ref, type TextareaHTMLAttributes, useAttrs } from "vue";
+import { ref, type TextareaHTMLAttributes } from "vue";
 import { textarea } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -17,7 +17,6 @@ type TextareaDeclaredProps = {
 } & /* @vue-ignore */ Omit<TextareaProps, "data-slot">;
 const { size, dataSlot = "textarea", class: className } = defineProps<TextareaDeclaredProps>();
 defineSlots<{}>();
-const attrs = useAttrs();
 const element = ref<HTMLTextAreaElement | null>(null);
 defineExpose({ element });
 </script>
@@ -28,6 +27,6 @@ defineExpose({ element });
     data-sw-textarea
     :class="textarea({ size, class: className })"
     :data-slot="dataSlot"
-    v-bind="attrs"
+    v-bind="$attrs"
   />
 </template>

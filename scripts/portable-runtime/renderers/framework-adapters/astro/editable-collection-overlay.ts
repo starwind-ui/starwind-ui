@@ -4,6 +4,7 @@ import type {
   AdapterEditableCollectionOverlayIndexProjection,
   AdapterEditableCollectionOverlayPartName,
 } from "../types.js";
+import { printAstroRuntimePortal } from "./portal.js";
 
 export function printAstroEditableCollectionOverlayComponent(
   family: AdapterEditableCollectionOverlayComponentProjection,
@@ -18,10 +19,14 @@ export function printAstroEditableCollectionOverlayComponent(
   if (family.part === "positioner") return printFloatingPart(facts, "positioner");
   if (family.part === "popup") return printFloatingPart(facts, "popup");
   if (family.part === "empty") return printEmpty(facts);
-  if (family.part === "group") return printSimplePart(facts, "group", `role="${facts.collection.group.role}"`);
+  if (family.part === "group")
+    return printSimplePart(facts, "group", `role="${facts.collection.group.role}"`);
   if (family.part === "item") return printItem(facts);
   if (family.part === "itemIndicator") return printItemIndicator(facts);
   if (family.part === "separator") return printSeparator(facts);
+  if (family.part === "portal") {
+    return printAstroRuntimePortal(facts.parts.portal, facts.attrs.portal);
+  }
   if (family.part === "icon") return printSimplePart(facts, "icon", 'aria-hidden="true"');
 
   return printSimplePart(facts, family.part);
@@ -37,7 +42,10 @@ export function printAstroEditableCollectionOverlayIndex(
   const namespaceEntries = facts.index.namespaceMembers
     .map((member) => `  ${member.key}: ${member.name},`)
     .join("\n");
-  const namedExports = [facts.exports.namespace, ...facts.index.importMembers.map((member) => member.name)]
+  const namedExports = [
+    facts.exports.namespace,
+    ...facts.index.importMembers.map((member) => member.name),
+  ]
     .map((name) => `  ${name},`)
     .join("\n");
   const typeExport = printRuntimeTypeExport(facts);
@@ -110,10 +118,26 @@ function printSeparator(facts: AdapterEditableCollectionOverlayFacts): string {
 
 function printSimplePart(
   facts: AdapterEditableCollectionOverlayFacts,
-  partName: Exclude<
-    AdapterEditableCollectionOverlayPartName,
-    "clear" | "empty" | "group" | "icon" | "input" | "item" | "itemIndicator" | "popup" | "positioner" | "root" | "separator" | "trigger" | "value"
-  > | "empty" | "group" | "icon",
+  partName:
+    | Exclude<
+        AdapterEditableCollectionOverlayPartName,
+        | "clear"
+        | "empty"
+        | "group"
+        | "icon"
+        | "input"
+        | "item"
+        | "itemIndicator"
+        | "popup"
+        | "positioner"
+        | "root"
+        | "separator"
+        | "trigger"
+        | "value"
+      >
+    | "empty"
+    | "group"
+    | "icon",
   extraAttributes = "",
 ): string {
   const part = facts.parts[partName];

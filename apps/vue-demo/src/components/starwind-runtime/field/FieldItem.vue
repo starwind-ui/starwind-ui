@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as FieldPrimitive from "@starwind-ui/vue/field";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { fieldItem } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,7 +16,6 @@ const { class: className } = defineProps<FieldItemDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDivElement | null } & ComponentPublicInstance) | null =
   null;
@@ -44,7 +43,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
   <FieldPrimitive.FieldItem
     :ref="setElement"
     :class="fieldItem({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="field-item"
   >
     <slot />

@@ -77,15 +77,23 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(tree["ColorPicker.astro"]).toContain("Array.from(new Set(formats))");
     expect(tree["ColorPicker.astro"]).toContain("requestedFormats.includes(resolvedFormat)");
     expect(tree["ColorPicker.astro"]).toContain("defaultOpen={defaultOpen}");
+    expect(tree["ColorPicker.astro"]).toContain("portalContainer?: string;");
+    expect(tree["ColorPicker.astro"]).toContain("disablePortal?: boolean;");
+    expect(tree["ColorPicker.astro"]).toContain("portalContainer={portalContainer}");
+    expect(tree["ColorPicker.astro"]).toContain("disablePortal={disablePortal}");
     expect(tree["ColorPicker.astro"]).toMatch(
       /<ColorPickerPrimitive\.Root[\s\S]*?\{\.\.\.rest\}[\s\S]*?data-floating-root/,
     );
     expect(tree["ColorPickerContent.astro"]).toContain("<PopoverContent");
     expect(tree["ColorPickerContent.astro"]).toContain('collisionStrategy="best-fit"');
     expect(tree["ColorPickerContent.astro"]).toContain("<ColorPickerDefaultEditor");
+    expect(tree["ColorPickerContent.astro"]).toContain("portalContainer={portalContainer}");
+    expect(tree["ColorPickerContent.astro"]).toContain("disablePortal={disablePortal}");
     expect(tree["ColorPickerContent.astro"]).toContain('size = "md"');
     expect(tree["ColorPickerContent.astro"]).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
     expect(tree["ColorPickerDefaultEditor.astro"]).toContain("<ColorPickerArea");
+    expect(tree["ColorPickerDefaultEditor.astro"]).toContain("portalContainer={portalContainer}");
+    expect(tree["ColorPickerDefaultEditor.astro"]).toContain("disablePortal={disablePortal}");
     expect(tree["ColorPickerDefaultEditor.astro"].match(/<ColorPickerChannelSlider/g)).toHaveLength(
       2,
     );
@@ -103,7 +111,9 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     );
     expect(tree["ColorPickerInput.astro"]).toContain('formatContentSize?: "sm" | "md" | "lg"');
     expect(tree["ColorPickerInput.astro"]).toContain('formatContentSize = "md"');
-    expect(tree["ColorPickerInput.astro"]).toContain("<SelectContent size={formatContentSize}");
+    expect(tree["ColorPickerInput.astro"]).toMatch(/<SelectContent\s+size=\{formatContentSize\}/);
+    expect(tree["ColorPickerInput.astro"]).toContain("portalContainer={portalContainer}");
+    expect(tree["ColorPickerInput.astro"]).toContain("disablePortal={disablePortal}");
     expect(tree["ColorPickerInput.astro"]).toContain("normalizedFormats.map");
     expect(tree["ColorPickerInput.astro"]).not.toContain("formatIndex");
     expect(tree["variants.ts"]).toContain("min-h-32 w-full shrink-0");
@@ -111,7 +121,11 @@ export function defineAstroColorPickerOutputTests(getTempRoot: GetTempRoot): voi
     expect(tree["ColorPickerArea.astro"]).toContain("<ColorPickerPrimitive.AreaThumb");
     expect(tree["ColorPickerInput.astro"]).toContain('data-sw-color-picker-format-options=""');
     expect(tree["styles.css"]).toContain(
-      '[data-sw-color-picker][data-floating-root] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
+      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
+    );
+    expect(tree["styles.css"]).toContain("{ position: fixed; z-index: 60; }");
+    expect(tree["styles.css"]).toContain(
+      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] { display: contents; }',
     );
     expect(tree["styles.css"]).toContain("--sw-color-picker-channel-gradient");
     expect(tree["styles.css"]).toContain('data-has-swatches="false"');

@@ -127,6 +127,8 @@ normalizedSwatches.forEach((swatch) => {
     expect(editor).toContain("isSwatchDescriptor(swatch)");
     expect(editor).toContain("disabled: undefined");
     expect(editor).not.toContain("inputSize");
+    expect(editor).toContain("portalContainer={portalContainer}");
+    expect(editor).toContain("disablePortal={disablePortal}");
     expect(editor).toContain("normalizedSwatches.length > 0");
     expect(editor).toMatch(/<ColorPicker\s+className="size-4"\s+aria-hidden="true"/);
     expect(editor).not.toContain(">Pick<");
@@ -134,9 +136,15 @@ normalizedSwatches.forEach((swatch) => {
     expect(editor).toContain("<ColorPickerClear");
     expect(content).toContain('collisionStrategy="best-fit"');
     expect(content).toContain("<ColorPickerDefaultEditor");
+    expect(content).toContain("portalContainer={portalContainer}");
+    expect(content).toContain("disablePortal={disablePortal}");
     expect(content).toContain('size = "md"');
     expect(content).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
     expect(root).toContain("inline = false");
+    expect(root).toContain("portalContainer?: string;");
+    expect(root).toContain("disablePortal?: boolean;");
+    expect(root).toContain("portalContainer={portalContainer}");
+    expect(root).toContain("disablePortal={disablePortal}");
     expect(root).toContain("alpha = true");
     expect(root).toContain("allowEmpty={clearable}");
     expect(root).toContain('format ?? formats[0] ?? "hex"');
@@ -149,6 +157,8 @@ normalizedSwatches.forEach((swatch) => {
     expect(tree["ColorPickerInput.tsx"]).toContain('formatContentSize?: "sm" | "md" | "lg"');
     expect(tree["ColorPickerInput.tsx"]).toContain('formatContentSize = "md"');
     expect(tree["ColorPickerInput.tsx"]).toMatch(/<SelectContent\s+size=\{formatContentSize\}/);
+    expect(tree["ColorPickerInput.tsx"]).toContain("portalContainer={portalContainer}");
+    expect(tree["ColorPickerInput.tsx"]).toContain("disablePortal={disablePortal}");
     expect(tree["ColorPickerInput.tsx"]).toContain("normalizedFormats.map");
     expect(tree["ColorPickerArea.tsx"]).toContain("<ColorPickerPrimitive.AreaThumb");
     expect(tree["index.ts"]).not.toContain("ColorPickerDefaultEditor");

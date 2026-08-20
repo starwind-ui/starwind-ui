@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ComboboxPrimitive from "@starwind-ui/vue/combobox";
 import type { ClassValue } from "tailwind-variants";
-import { type ButtonHTMLAttributes, useAttrs } from "vue";
+import { type ButtonHTMLAttributes } from "vue";
 import { comboboxTrigger } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -31,14 +31,13 @@ defineSlots<{
   default?: () => unknown;
   icon?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ComboboxPrimitive.ComboboxTrigger
     :class="comboboxTrigger({ class: className })"
     :as-child="asChild"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="combobox-trigger"
   >
     <slot />

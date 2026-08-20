@@ -1,9 +1,53 @@
-import { resolveFloatingPortalTargetOwner } from "./floating";
+import {
+  registerDialogOwnedPortal,
+  requestDialogOwnedFloatingPortalClose,
+  resumeDialogOwnedFloatingPortals,
+  suspendDialogOwnedFloatingPortals,
+  type DialogOwnedPortal,
+} from "./dialog-portal-owner";
+import {
+  createPortalBinding,
+  getReportedPortalPlacement,
+  pendingPortalBindingSnapshot,
+  readyPortalBindingSnapshot,
+  reportPortalPlacement,
+  subscribeToReportedPortalPlacement,
+  type ReportPortalPlacementOptions,
+  type PortalBinding,
+  type PortalBindingSnapshot,
+  type RuntimePartScope,
+} from "./portal-binding";
+import { createRuntimePortalPlacement } from "./portal-runtime-placement";
+import {
+  resolveFloatingPortalOwner,
+  resolveFloatingPortalTarget,
+  resolveFloatingPortalTargetOwner,
+  type PortalPlacementFacts,
+  type PortalPlacementMode,
+  type ResolvePortalPlacementOptions,
+} from "./portal-target-policy";
+
+export {
+  createPortalBinding,
+  pendingPortalBindingSnapshot,
+  readyPortalBindingSnapshot,
+  reportPortalPlacement,
+  type PortalBinding,
+  type PortalBindingSnapshot,
+  type RuntimePartScope,
+  type ReportPortalPlacementOptions,
+  type PortalPlacementFacts,
+  type PortalPlacementMode,
+  type ResolvePortalPlacementOptions,
+};
 
 export type FloatingPortalSession = {
   demote(): void;
   destroy(): void;
-  mount(): void;
+  isReady(): boolean;
+  mount(): boolean;
+  onReady(callback: () => void): () => void;
+  onReadyChange(callback: (ready: boolean) => void): () => void;
   promote(): void;
   restore(): void;
 };
@@ -16,201 +60,217 @@ export type FloatingPortalSessionOptions = {
   root: HTMLElement;
 };
 
-type RegisteredFloatingPortalSession = FloatingPortalSession & {
-  requestOwnerClose(): void;
-};
+export function resolvePortalPlacement(
+  wrapper: HTMLElement,
+  options: ResolvePortalPlacementOptions = {},
+): PortalPlacementFacts {
+  const disabled = options.disabled ?? wrapper.hasAttribute("data-disabled");
+  const mode = options.mode ?? readPortalPlacementMode(wrapper);
+  const reference = options.reference ?? wrapper;
+  const attributeContainer = wrapper.getAttribute("data-container");
+  const container = options.container ?? attributeContainer;
+  const hasExplicitContainerIntent =
+    options.container != null
+      ? typeof options.container !== "string" || Boolean(options.container.trim())
+      : Boolean(attributeContainer?.trim());
+  const resolvedContainer = resolvePortalContainer(wrapper.ownerDocument, container);
+  const explicitTarget =
+    resolvedContainer && !wrapper.contains(resolvedContainer) ? resolvedContainer : null;
+  const fallbackTarget = options.fallbackTarget ?? resolveFloatingPortalTarget(reference);
+  const resolvedExplicitTarget = explicitTarget
+    ? resolveFloatingPortalTarget(reference, { explicitTargets: [explicitTarget] })
+    : null;
+  const runtimeTarget =
+    explicitTarget && resolvedExplicitTarget === explicitTarget
+      ? resolvedExplicitTarget
+      : fallbackTarget;
+  const report = mode === "framework" ? getReportedPortalPlacement(wrapper) : undefined;
+  const explicitContainerTarget = hasExplicitContainerIntent
+    ? explicitTarget && resolvedExplicitTarget === explicitTarget
+      ? resolvedExplicitTarget
+      : null
+    : undefined;
+  const reportedTarget = Object.hasOwn(options, "container")
+    ? null
+    : resolveFrameworkReportedTarget(wrapper, report, reference, explicitContainerTarget);
+  const target = reportedTarget ?? runtimeTarget;
+  const ready =
+    disabled ||
+    mode === "runtime" ||
+    Boolean(report?.ready && report.target === target && wrapper.parentElement === target);
 
-type DialogOwnedFloatingPortalSessions = {
-  closing: boolean;
-  requested: WeakSet<RegisteredFloatingPortalSession>;
-  sessions: Set<RegisteredFloatingPortalSession>;
-};
-
-type SavedInlineProperty = {
-  priority: string;
-  value: string;
-};
-
-const dialogOwnedSessions = new WeakMap<HTMLDialogElement, DialogOwnedFloatingPortalSessions>();
+  return { disabled, mode, ready, target, wrapper };
+}
 
 export function createFloatingPortalSession(
   options: FloatingPortalSessionOptions,
 ): FloatingPortalSession {
   let destroyed = false;
+  let frameworkPlacementCleanup: (() => void) | null = null;
+  let mounted = false;
   let owner: HTMLDialogElement | null = null;
-  let placeholder: Comment | null = null;
+  let ownerCleanup: (() => void) | null = null;
+  let ownerPlacementReady = true;
+  let physicalPlacementReady = false;
+  let placementReady = false;
   let portalTarget: HTMLElement | null = null;
-  let pointerEvents: SavedInlineProperty | null = null;
-  let wrapper: HTMLElement | null = null;
+  let mountedPortalElement: HTMLElement | null = null;
+  let pointerEvents: { element: HTMLElement; priority: string; value: string } | null = null;
+  const readyCallbacks = new Set<() => void>();
+  const readinessChangeCallbacks = new Set<(ready: boolean) => void>();
+  const initialPortalElement = options.getPortalElement();
+  const runtimePlacement = createRuntimePortalPlacement(
+    readPortalPlacementMode(initialPortalElement) === "runtime" ? initialPortalElement : undefined,
+  );
 
-  const session: RegisteredFloatingPortalSession = {
-    demote,
-    destroy,
-    mount,
-    promote,
+  const ownedPortal: DialogOwnedPortal = {
     requestOwnerClose() {
       if (options.canPromote?.() === false) return;
       options.onOwnerCloseRequest?.();
     },
+    resumeOwnerPlacement() {
+      if (ownerPlacementReady) return;
+      ownerPlacementReady = true;
+      physicalPlacementReady = false;
+      syncPlacementReady(options.getPortalElement());
+      mount();
+    },
+    suspendOwnerPlacement() {
+      if (!ownerPlacementReady) return;
+      ownerPlacementReady = false;
+      syncPlacementReady(options.getPortalElement());
+    },
+  };
+
+  const session: FloatingPortalSession = {
+    demote: () => undefined,
+    destroy,
+    isReady: () => placementReady,
+    mount,
+    onReady(callback) {
+      readyCallbacks.add(callback);
+      if (placementReady) callback();
+      return () => readyCallbacks.delete(callback);
+    },
+    onReadyChange(callback) {
+      readinessChangeCallbacks.add(callback);
+      return () => readinessChangeCallbacks.delete(callback);
+    },
+    promote: () => undefined,
     restore,
   };
 
-  function mount(): void {
-    if (destroyed) return;
+  function mount(): boolean {
+    if (destroyed) return false;
 
-    const nextPortalElement = options.getPortalElement();
-    const nextPortalTarget = options.getPortalTarget();
-    if (portalTarget && portalTarget !== nextPortalTarget) {
-      restore();
+    const wasMounted = mounted;
+    const portalElement = options.getPortalElement();
+    const requestedTarget = options.getPortalTarget();
+    const placement = resolvePortalPlacement(portalElement, {
+      disabled: portalElement.hasAttribute("data-disabled"),
+      fallbackTarget: resolveFloatingPortalTarget(options.root, {
+        explicitTargets: [requestedTarget],
+      }),
+      mode: readPortalPlacementMode(portalElement),
+      reference: options.root,
+    });
+    const nextOwner =
+      resolveFloatingPortalTargetOwner(placement.target) ??
+      resolveFloatingPortalOwner(placement.target) ??
+      resolveFloatingPortalTargetOwner(portalElement);
+    const changed =
+      wasMounted &&
+      (mountedPortalElement !== portalElement ||
+        portalTarget !== placement.target ||
+        owner !== nextOwner);
+    if (changed) {
+      runtimePlacement.restore();
+      frameworkPlacementCleanup?.();
+      frameworkPlacementCleanup = null;
+      restorePointerEvents();
     }
 
-    portalTarget = nextPortalTarget;
-    const nextOwner = resolveFloatingPortalTargetOwner(nextPortalTarget);
+    mountedPortalElement = portalElement;
+    portalTarget = placement.target;
+    mounted = true;
+    if (!wasMounted || changed) setPhysicalPlacementReady(false, portalElement);
     registerOwner(nextOwner);
-    if (destroyed || portalTarget !== nextPortalTarget || owner !== nextOwner) return;
+    if (destroyed || portalTarget !== placement.target || owner !== nextOwner) return false;
 
-    if (!placeholder && nextPortalElement.parentNode) {
-      placeholder = options.root.ownerDocument.createComment("floating-portal-placeholder");
-      nextPortalElement.parentNode.insertBefore(placeholder, nextPortalElement);
+    if (placement.disabled) {
+      setPhysicalPlacementReady(true, portalElement);
+      return true;
     }
 
-    if (nextPortalElement.parentElement !== nextPortalTarget && !wrapper) {
-      nextPortalTarget.append(nextPortalElement);
+    if (placement.mode === "framework") {
+      subscribeToFrameworkPlacement(portalElement);
+      syncFrameworkPlacement(portalElement, placement.target);
+      preservePointerEvents(portalElement);
+      return placementReady;
     }
 
-    promote();
+    runtimePlacement.move(portalElement, placement.target);
+    preservePointerEvents(portalElement);
+    setPhysicalPlacementReady(true, portalElement);
+    return true;
   }
 
-  function promote(): void {
-    if (
-      destroyed ||
-      wrapper ||
-      !portalTarget ||
-      options.canPromote?.() === false ||
-      !owner?.open ||
-      dialogOwnedSessions.get(owner)?.closing
-    ) {
-      return;
-    }
-
-    const portalElement = options.getPortalElement();
-    if (!supportsPopover(portalElement)) return;
-
-    const nextWrapper = createPopoverWrapper(portalElement.ownerDocument);
-    wrapper = nextWrapper;
-    saveAndPreservePointerEvents(portalElement);
-    portalTarget.append(nextWrapper);
-    nextWrapper.append(portalElement);
-
-    try {
-      nextWrapper.showPopover();
-    } catch {
-      // The same cleanup below handles native failures and synchronous beforetoggle re-entry.
-    }
-
-    if (destroyed || wrapper !== nextWrapper || !nextWrapper.matches(":popover-open")) {
-      if (wrapper === nextWrapper) wrapper = null;
-      cleanupWrapper(nextWrapper, portalElement);
-    }
+  function subscribeToFrameworkPlacement(portalElement: HTMLElement): void {
+    if (frameworkPlacementCleanup) return;
+    frameworkPlacementCleanup = subscribeToReportedPortalPlacement(portalElement, () => {
+      if (mounted) mount();
+    });
   }
 
-  function demote(): void {
-    if (!wrapper) return;
-
-    const currentWrapper = wrapper;
-    const portalElement = options.getPortalElement();
-    wrapper = null;
-
-    try {
-      currentWrapper.hidePopover();
-    } catch {
-      // Removing the wrapper below also removes any stale native top-layer entry.
-    }
-
-    cleanupWrapper(currentWrapper, portalElement);
+  function syncFrameworkPlacement(portalElement: HTMLElement, expectedTarget: HTMLElement): void {
+    const report = getReportedPortalPlacement(portalElement);
+    setPhysicalPlacementReady(
+      Boolean(
+        report?.ready &&
+        report.target === expectedTarget &&
+        portalElement.parentElement === expectedTarget,
+      ),
+      portalElement,
+    );
   }
 
-  function cleanupWrapper(currentWrapper: HTMLElement, portalElement: HTMLElement): void {
-    if (currentWrapper.matches(":popover-open")) {
-      try {
-        currentWrapper.hidePopover();
-      } catch {
-        // Removing the wrapper below also removes any stale native top-layer entry.
-      }
-    }
-
-    if (portalElement.parentElement === currentWrapper) {
-      if (portalTarget?.isConnected) {
-        portalTarget.append(portalElement);
-      } else if (placeholder?.parentNode) {
-        placeholder.parentNode.insertBefore(portalElement, placeholder.nextSibling);
-      }
-    }
-    currentWrapper.remove();
-
-    if (!wrapper) {
-      restorePointerEvents(portalElement);
-    }
+  function setPhysicalPlacementReady(ready: boolean, portalElement: HTMLElement): void {
+    physicalPlacementReady = ready;
+    syncPlacementReady(portalElement);
   }
 
-  function restore(): void {
-    demote();
-
-    const portalElement = options.getPortalElement();
-    if (placeholder?.parentNode) {
-      placeholder.parentNode.insertBefore(portalElement, placeholder);
-    }
-    placeholder?.remove();
-    placeholder = null;
-    portalTarget = null;
-    registerOwner(null);
-    restorePointerEvents(portalElement);
-  }
-
-  function destroy(): void {
-    if (destroyed) return;
-
-    restore();
-    destroyed = true;
+  function syncPlacementReady(portalElement: HTMLElement): void {
+    const ready = physicalPlacementReady && ownerPlacementReady;
+    portalElement.setAttribute("data-placement", ready ? "ready" : "pending");
+    if (placementReady === ready) return;
+    placementReady = ready;
+    readinessChangeCallbacks.forEach((callback) => callback(ready));
+    if (ready) readyCallbacks.forEach((callback) => callback());
   }
 
   function registerOwner(nextOwner: HTMLDialogElement | null): void {
     if (owner === nextOwner) return;
-
-    if (owner) {
-      const ownerSessions = dialogOwnedSessions.get(owner);
-      ownerSessions?.sessions.delete(session);
-      if (ownerSessions?.sessions.size === 0 && !ownerSessions.closing) {
-        dialogOwnedSessions.delete(owner);
-      }
-    }
-
+    ownerCleanup?.();
+    ownerCleanup = null;
     owner = nextOwner;
-    if (!owner) return;
-
-    const ownerSessions = getDialogOwnedSessions(owner);
-    ownerSessions.sessions.add(session);
-    if (ownerSessions.closing) requestSessionOwnerClose(ownerSessions, session);
+    ownerPlacementReady = true;
+    if (owner) ownerCleanup = registerDialogOwnedPortal(owner, ownedPortal);
+    syncPlacementReady(options.getPortalElement());
   }
 
-  function saveAndPreservePointerEvents(portalElement: HTMLElement): void {
-    if (pointerEvents) return;
-
+  function preservePointerEvents(portalElement: HTMLElement): void {
+    if (!owner || pointerEvents) return;
     pointerEvents = {
+      element: portalElement,
       priority: portalElement.style.getPropertyPriority("pointer-events"),
       value: portalElement.style.getPropertyValue("pointer-events"),
     };
-    if (
-      portalElement.ownerDocument.defaultView?.getComputedStyle(portalElement).pointerEvents ===
-      "auto"
-    ) {
-      portalElement.style.setProperty("pointer-events", "auto");
-    }
+    portalElement.style.setProperty("pointer-events", "auto");
   }
 
-  function restorePointerEvents(portalElement: HTMLElement): void {
+  function restorePointerEvents(): void {
     if (!pointerEvents) return;
-
+    const { element: portalElement } = pointerEvents;
     if (pointerEvents.value) {
       portalElement.style.setProperty(
         "pointer-events",
@@ -223,79 +283,77 @@ export function createFloatingPortalSession(
     pointerEvents = null;
   }
 
+  function restore(): void {
+    const portalElement = mountedPortalElement ?? options.getPortalElement();
+    runtimePlacement.restore();
+    portalTarget = null;
+    mountedPortalElement = null;
+    mounted = false;
+    frameworkPlacementCleanup?.();
+    frameworkPlacementCleanup = null;
+    setPhysicalPlacementReady(false, portalElement);
+    registerOwner(null);
+    restorePointerEvents();
+  }
+
+  function destroy(): void {
+    if (destroyed) return;
+    restore();
+    destroyed = true;
+  }
+
   return session;
 }
 
-export function requestDialogOwnedFloatingPortalClose(owner: HTMLDialogElement): void {
-  const ownerSessions = getDialogOwnedSessions(owner);
-  ownerSessions.closing = true;
-  for (const session of [...ownerSessions.sessions]) {
-    requestSessionOwnerClose(ownerSessions, session);
-  }
-}
-
 export function demoteDialogOwnedFloatingPortals(owner: HTMLDialogElement): void {
-  for (const session of [...(dialogOwnedSessions.get(owner)?.sessions ?? [])]) {
-    session.demote();
-  }
+  suspendDialogOwnedFloatingPortals(owner);
 }
 
 export function promoteDialogOwnedFloatingPortals(owner: HTMLDialogElement): void {
-  const ownerSessions = dialogOwnedSessions.get(owner);
-  if (!ownerSessions) return;
+  resumeDialogOwnedFloatingPortals(owner);
+}
 
-  ownerSessions.closing = false;
-  ownerSessions.requested = new WeakSet<RegisteredFloatingPortalSession>();
-  for (const session of [...ownerSessions.sessions]) {
-    session.promote();
+export { requestDialogOwnedFloatingPortalClose };
+
+function resolveFrameworkReportedTarget(
+  wrapper: HTMLElement,
+  report: ReportPortalPlacementOptions | undefined,
+  reference: Element | null,
+  explicitContainerTarget: HTMLElement | null | undefined,
+): HTMLElement | null {
+  if (!report || wrapper.contains(report.target)) return null;
+  if (explicitContainerTarget !== undefined && report.target !== explicitContainerTarget)
+    return null;
+  if (report.ready && wrapper.parentElement !== report.target) return null;
+
+  const resolvedTarget = resolveFloatingPortalTarget(reference, {
+    explicitTargets: [report.target],
+  });
+  if (resolvedTarget === report.target) return report.target;
+  if (report.ready && report.target === wrapper.parentElement && resolvedTarget.contains(wrapper)) {
+    return report.target;
   }
-  if (ownerSessions.sessions.size === 0) dialogOwnedSessions.delete(owner);
+  return null;
 }
 
-function getDialogOwnedSessions(owner: HTMLDialogElement): DialogOwnedFloatingPortalSessions {
-  const existing = dialogOwnedSessions.get(owner);
-  if (existing) return existing;
-
-  const ownerSessions: DialogOwnedFloatingPortalSessions = {
-    closing: false,
-    requested: new WeakSet<RegisteredFloatingPortalSession>(),
-    sessions: new Set<RegisteredFloatingPortalSession>(),
-  };
-  dialogOwnedSessions.set(owner, ownerSessions);
-  return ownerSessions;
+function resolvePortalContainer(
+  ownerDocument: Document,
+  container: Element | string | null | undefined,
+): Element | null {
+  if (typeof container !== "string") {
+    if (!container) return null;
+    const ElementConstructor = ownerDocument.defaultView?.Element;
+    if (ElementConstructor) return container instanceof ElementConstructor ? container : null;
+    return container.ownerDocument === ownerDocument && container.nodeType === 1 ? container : null;
+  }
+  if (!container) return null;
+  try {
+    return ownerDocument.querySelector(container);
+  } catch {
+    return null;
+  }
 }
 
-function requestSessionOwnerClose(
-  ownerSessions: DialogOwnedFloatingPortalSessions,
-  session: RegisteredFloatingPortalSession,
-): void {
-  if (ownerSessions.requested.has(session)) return;
-
-  ownerSessions.requested.add(session);
-  session.requestOwnerClose();
-}
-
-function supportsPopover(element: HTMLElement): boolean {
-  return typeof element.showPopover === "function" && typeof element.hidePopover === "function";
-}
-
-function createPopoverWrapper(ownerDocument: Document): HTMLElement {
-  const wrapper = ownerDocument.createElement("div");
-  wrapper.setAttribute("data-sw-floating-portal", "");
-  wrapper.setAttribute("popover", "manual");
-  wrapper.style.cssText = [
-    "position: fixed",
-    "inset: 0",
-    "width: 100vw",
-    "height: 100vh",
-    "max-width: none",
-    "max-height: none",
-    "margin: 0",
-    "padding: 0",
-    "border: 0",
-    "overflow: visible",
-    "background: transparent",
-    "pointer-events: none",
-  ].join(";");
-  return wrapper;
+function readPortalPlacementMode(wrapper: HTMLElement): PortalPlacementMode {
+  return wrapper.getAttribute("data-sw-portal-placement") === "framework" ? "framework" : "runtime";
 }

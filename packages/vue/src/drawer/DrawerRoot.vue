@@ -4,6 +4,7 @@
 import type { InjectionKey, Ref } from "vue";
 
 export type DrawerContextValue = {
+  element: Readonly<Ref<HTMLElement | null>>;
   mounted: Readonly<Ref<boolean>>;
   registerPortal: (owner: symbol, element: HTMLElement | null) => void;
 };
@@ -56,6 +57,7 @@ let portalOwner: symbol | undefined;
 let runtimeGeneration = 0;
 
 provide(DrawerContext, {
+  element: rootRef,
   mounted,
   registerPortal(owner, element) {
     if (element) {

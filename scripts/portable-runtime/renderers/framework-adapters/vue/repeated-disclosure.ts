@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterRepeatedDisclosureComponentProjection,
   AdapterRepeatedDisclosureFacts,
@@ -204,7 +208,7 @@ function printItem(facts: AdapterRepeatedDisclosureFacts): string {
   const context = getContextNames(facts);
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { provide, ref, useAttrs } from "vue";
+import { provide, ref } from "vue";
 import { ${context.key}, type ${context.type} } from "./${context.file}";
 
 defineOptions({ inheritAttrs: false });
@@ -213,7 +217,6 @@ const props = withDefaults(defineProps<{ value?: string; disabled?: boolean }>()
   disabled: false,
 });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 const itemContext: ${context.type} = {
   get value() { return props.value; },
@@ -226,7 +229,7 @@ defineExpose({ element });
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.item}
     data-sw-part="${part.name}"
     :${facts.attrs.itemValue}="props.value"
@@ -243,16 +246,15 @@ function printHeader(facts: AdapterRepeatedDisclosureFacts): string {
   const part = facts.parts.header;
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLElement | null>(null);
 defineExpose({ element });
 </script>
 
 <template>
-  <${part.defaultElement} ref="element" v-bind="attrs" ${facts.attrs.header} data-sw-part="${part.name}">
+  <${part.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.header} data-sw-part="${part.name}">
     <slot />
   </${part.defaultElement}>
 </template>
@@ -264,11 +266,10 @@ function printTrigger(facts: AdapterRepeatedDisclosureFacts): string {
   const context = getContextNames(facts);
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 import { ${context.hook} } from "./${context.file}";
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLButtonElement | null>(null);
 ${context.hook}("${facts.exports.trigger}");
 defineExpose({ element });
@@ -277,7 +278,7 @@ defineExpose({ element });
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.trigger}
     data-sw-part="${part.name}"
     ${facts.attrs.triggerType}="button"
@@ -295,11 +296,10 @@ function printPanel(facts: AdapterRepeatedDisclosureFacts): string {
   const context = getContextNames(facts);
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 import { ${context.hook} } from "./${context.file}";
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 ${context.hook}("${facts.exports.panel}");
 defineExpose({ element });
@@ -308,7 +308,7 @@ defineExpose({ element });
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.panel}
     data-sw-part="${part.name}"
     ${facts.panelVisibility.stateAttribute}="closed"

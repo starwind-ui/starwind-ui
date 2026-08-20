@@ -7,6 +7,7 @@ import {
 } from "../../../styled-output-model/index.js";
 
 import { computedExpressionUsesReference, projectVueComputedExpression } from "./expressions.js";
+import { projectVueAttributeAccess, type VueAttributeSetupReason } from "../public-contract.js";
 import { projectVueImports } from "./imports.js";
 import {
   applyVueStyledPublicContractBindings,
@@ -32,12 +33,14 @@ export function projectVueStyledComponent(
   options: RenderVueComponentOptions,
 ): VueStyledComponentProjection {
   const component = structuredClone(sourceComponent);
-  const manuallyForwardsAttrs = component.render.some(renderNodeUsesVueAttrs);
   const specialization = specializeVueStyledComponent(group.component, component);
   applyGenericNativeElementRef(component, specialization);
   const publicContract = getVueStyledPublicContract(group.component, component.exportName);
   applyVueStyledPublicContractBindings(component.render, publicContract);
   applyGenericNativeClassBindings(component);
+  const manuallyForwardsAttrs = component.render.some((node) =>
+    renderNodeUsesVueAttrs(node, component.destructure?.rest),
+  );
   const filtersComponentAttrs = applyGenericComponentAttrForwarding(component);
   const props = projectProps(component, publicContract);
   const vueVariables = component.variables.filter(isForVue);
@@ -62,22 +65,49 @@ export function projectVueStyledComponent(
     computedNames.push(variable.name);
     return projection;
   });
-  const usesAttrs =
-    manuallyForwardsAttrs ||
-    computed.some((variable) => computedExpressionUsesReference(variable.expression, "attrs"));
+  const emits = collectVueStyledPublicEmits(publicContract);
+  const usesDynamicComposition = component.render.some(renderNodeUsesDynamicComposition);
+  const usesMultipleAttrDestinations =
+    component.render.reduce(
+      (count, node) => count + countVueAttrDestinations(node, component.destructure?.rest),
+      0,
+    ) > 1;
+  const usesEventWork = component.render.some(renderNodeUsesEventWork);
+  const computedUsesAttrs = computed.some((variable) =>
+    computedExpressionUsesReference(variable.expression, "attrs"),
+  );
+  const templateRequiresSetupAttrs = component.render.some((node) =>
+    renderNodeRequiresSetupAttrs(node, component.destructure?.rest),
+  );
+  const usesAttrs = manuallyForwardsAttrs || computedUsesAttrs;
+  const setupReasons: VueAttributeSetupReason[] = [
+    ...(computedUsesAttrs ? (["setup-consumer"] as const) : []),
+    ...(specialization.specialization.kind !== "generic" ? (["projection-helper"] as const) : []),
+    ...(emits.length || usesEventWork ? (["event-work"] as const) : []),
+    ...(usesDynamicComposition || usesMultipleAttrDestinations
+      ? (["dynamic-composition"] as const)
+      : []),
+    ...(filtersComponentAttrs || templateRequiresSetupAttrs
+      ? (["projection-helper", "protected-merge"] as const)
+      : []),
+  ];
+  const attributeAccess = usesAttrs ? projectVueAttributeAccess(setupReasons) : null;
   const imports: VueImportName[] = [
     ...(vueVariables.length || hasVueDependentPropDefault(component.destructure?.props ?? [])
       ? [{ kind: "value" as const, name: "computed" }]
       : []),
-    ...(usesAttrs ? [{ kind: "value" as const, name: "useAttrs" }] : []),
+    ...(attributeAccess?.vueImport
+      ? [{ kind: "value" as const, name: attributeAccess.vueImport }]
+      : []),
     ...specialization.imports,
     ...collectVueNativeAttributesTypes((component.props?.extends ?? []).filter(isForVue)).map(
       (name) => ({ kind: "type" as const, name }),
     ),
   ];
   return {
+    attributeAccess,
     computed,
-    emits: collectVueStyledPublicEmits(publicContract),
+    emits,
     exposedRefs: specialization.exposedRefs,
     exportName: component.exportName,
     filtersComponentAttrs,
@@ -212,12 +242,17 @@ function dedupeImports(imports: VueImportName[]): VueImportName[] {
   });
 }
 
-function renderNodeUsesVueAttrs(node: StyledOutputRenderNode): boolean {
+function renderNodeUsesVueAttrs(
+  node: StyledOutputRenderNode,
+  restBinding: string | undefined,
+): boolean {
   if (
     "attrs" in node &&
-    node.attrs
-      .filter(isForVue)
-      .some((attribute) => attribute.name === "spread" && attribute.value !== undefined)
+    node.attrs.filter(isForVue).some((attribute) => {
+      if (attribute.name !== "spread" || attribute.value === undefined) return false;
+      if (attribute.value.type === "variable") return attribute.value.name === restBinding;
+      return attribute.value.type === "raw" && /\battrs\b/.test(attribute.value.code);
+    })
   ) {
     return true;
   }
@@ -227,14 +262,147 @@ function renderNodeUsesVueAttrs(node: StyledOutputRenderNode): boolean {
     case "fragment":
     case "primitive":
     case "repeat":
-      return node.children.some(renderNodeUsesVueAttrs);
+      return node.children.some((child) => renderNodeUsesVueAttrs(child, restBinding));
     case "condition":
-      return [...node.then, ...node.else].some(renderNodeUsesVueAttrs);
+      return [...node.then, ...node.else].some((child) =>
+        renderNodeUsesVueAttrs(child, restBinding),
+      );
     case "slot":
-      return node.fallback.some(renderNodeUsesVueAttrs);
+      return node.fallback.some((child) => renderNodeUsesVueAttrs(child, restBinding));
     case "icon":
     case "text":
       return false;
+  }
+}
+
+function renderNodeRequiresSetupAttrs(
+  node: StyledOutputRenderNode,
+  restBinding: string | undefined,
+): boolean {
+  if (
+    "attrs" in node &&
+    node.attrs.filter(isForVue).some((attribute) => {
+      if (
+        attribute.name !== "spread" ||
+        attribute.value?.type !== "raw" ||
+        !/\battrs\b/.test(attribute.value.code)
+      ) {
+        return false;
+      }
+      return true;
+    })
+  ) {
+    return true;
+  }
+  switch (node.type) {
+    case "component":
+    case "element":
+    case "fragment":
+    case "primitive":
+    case "repeat":
+      return node.children.some((child) => renderNodeRequiresSetupAttrs(child, restBinding));
+    case "condition":
+      return [...node.then, ...node.else].some((child) =>
+        renderNodeRequiresSetupAttrs(child, restBinding),
+      );
+    case "slot":
+      return node.fallback.some((child) => renderNodeRequiresSetupAttrs(child, restBinding));
+    case "icon":
+    case "text":
+      return false;
+  }
+}
+
+function renderNodeUsesDynamicComposition(node: StyledOutputRenderNode): boolean {
+  if (node.type === "element" && node.tagBinding) return true;
+  switch (node.type) {
+    case "component":
+    case "element":
+    case "fragment":
+    case "primitive":
+    case "repeat":
+      return node.children.some(renderNodeUsesDynamicComposition);
+    case "condition":
+      return [...node.then, ...node.else].some(renderNodeUsesDynamicComposition);
+    case "slot":
+      return node.fallback.some(renderNodeUsesDynamicComposition);
+    case "icon":
+    case "text":
+      return false;
+  }
+}
+
+function renderNodeUsesEventWork(node: StyledOutputRenderNode): boolean {
+  if (
+    "attrs" in node &&
+    node.attrs.some((attribute) => isForVue(attribute) && attribute.name.startsWith("@"))
+  ) {
+    return true;
+  }
+  switch (node.type) {
+    case "component":
+    case "element":
+    case "fragment":
+    case "primitive":
+    case "repeat":
+      return node.children.some(renderNodeUsesEventWork);
+    case "condition":
+      return [...node.then, ...node.else].some(renderNodeUsesEventWork);
+    case "slot":
+      return node.fallback.some(renderNodeUsesEventWork);
+    case "icon":
+    case "text":
+      return false;
+  }
+}
+
+function countVueAttrDestinations(
+  node: StyledOutputRenderNode,
+  restBinding: string | undefined,
+): number {
+  const ownCount =
+    "attrs" in node &&
+    node.attrs.some(
+      (attribute) =>
+        isForVue(attribute) &&
+        attribute.name === "spread" &&
+        attribute.value?.type === "variable" &&
+        attribute.value.name === restBinding,
+    )
+      ? 1
+      : 0;
+  switch (node.type) {
+    case "component":
+    case "element":
+    case "fragment":
+    case "primitive":
+    case "repeat":
+      return (
+        ownCount +
+        node.children.reduce(
+          (count, child) => count + countVueAttrDestinations(child, restBinding),
+          0,
+        )
+      );
+    case "condition":
+      return (
+        ownCount +
+        [...node.then, ...node.else].reduce(
+          (count, child) => count + countVueAttrDestinations(child, restBinding),
+          0,
+        )
+      );
+    case "slot":
+      return (
+        ownCount +
+        node.fallback.reduce(
+          (count, child) => count + countVueAttrDestinations(child, restBinding),
+          0,
+        )
+      );
+    case "icon":
+    case "text":
+      return ownCount;
   }
 }
 

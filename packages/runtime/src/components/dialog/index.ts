@@ -1,5 +1,6 @@
 export {
   createDialog,
+  refreshDialogPortalSurface,
   type DialogCloseCompleteDetails,
   type DialogInstance,
   type DialogOpenChangeDetails,

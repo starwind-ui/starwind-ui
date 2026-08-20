@@ -38,7 +38,7 @@ describe("generated Vue Styled Avatar", () => {
     for (const [file, source] of Object.entries(sources)) {
       expect(() => assertVueSfcCompiles(source, file)).not.toThrow();
       expect(source).toContain("defineExpose({ element });");
-      expect(source).toContain('v-bind="attrs"');
+      expect(source).toContain(file === "AvatarImage.vue" ? 'v-bind="attrs"' : 'v-bind="$attrs"');
       expect(source).not.toContain("createAvatar");
     }
 

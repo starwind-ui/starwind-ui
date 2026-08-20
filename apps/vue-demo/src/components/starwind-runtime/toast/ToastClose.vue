@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ToastPrimitive from "@starwind-ui/vue/toast";
 import type { ClassValue } from "tailwind-variants";
-import { type ButtonHTMLAttributes, useAttrs } from "vue";
+import { type ButtonHTMLAttributes } from "vue";
 import { toastClose } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,13 +18,12 @@ const { class: className, showIcon = true } = defineProps<ToastCloseDeclaredProp
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ToastPrimitive.ToastClose
     :class="toastClose({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="toast-close"
   >
     <slot />

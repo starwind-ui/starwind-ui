@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -8,6 +8,7 @@ import {
   collectHtmlJsAssets,
   collectStaticJsImports,
   findAttributedStaticChunk,
+  inspectPortalBundleBoundaries,
   writeMarkdownReport,
 } from "../assert-astro-demo-bundles.mjs";
 
@@ -115,6 +116,41 @@ describe("assert-astro-demo-bundles helpers", () => {
 
       expect(existsSync(reportPath)).toBe(true);
       expect(readFileSync(reportPath, "utf8")).toContain("# Astro Demo Bundle Report");
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  it("keeps reactive coordination and Dialog host construction out of ordinary Astro floating assets", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "starwind-astro-portal-boundaries-"));
+    const assetsRoot = path.join(root, "_astro");
+    mkdirSync(assetsRoot);
+    writeFileSync(
+      path.join(assetsRoot, "floating-portal.fixture.js"),
+      "export const move = (wrapper, target) => target.append(wrapper);",
+    );
+    writeFileSync(
+      path.join(assetsRoot, "floating-disclosure.fixture.js"),
+      'import "./floating-portal.fixture.js";',
+    );
+    writeFileSync(
+      path.join(assetsRoot, "PopoverRoot.astro_fixture.js"),
+      'import "./floating-disclosure.fixture.js";',
+    );
+    writeFileSync(
+      path.join(assetsRoot, "dialog.fixture.js"),
+      'const marker = "data-sw-dialog-top-layer-host";',
+    );
+
+    try {
+      expect(inspectPortalBundleBoundaries(root)).toEqual({
+        checks: [
+          "floating-portal.fixture.js contains Runtime movement and policy without a reactive coordinator or Dialog host construction.",
+          "2 ordinary floating assets exclude static Dialog host imports.",
+          "dialog.fixture.js owns the single native Dialog host implementation.",
+        ],
+        failures: [],
+      });
     } finally {
       rmSync(root, { force: true, recursive: true });
     }

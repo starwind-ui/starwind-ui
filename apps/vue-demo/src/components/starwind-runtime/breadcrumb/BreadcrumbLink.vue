@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type AnchorHTMLAttributes, ref, useAttrs } from "vue";
+import { type AnchorHTMLAttributes, ref } from "vue";
 import { breadcrumbLink } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -17,7 +17,6 @@ const { asChild = false, class: className } = defineProps<BreadcrumbLinkDeclared
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLAnchorElement | null>(null);
 defineExpose({ element });
 </script>
@@ -31,7 +30,7 @@ defineExpose({ element });
       ref="element"
       data-sw-breadcrumb-link
       :class="breadcrumbLink({ class: className })"
-      v-bind="attrs"
+      v-bind="$attrs"
       data-slot="breadcrumb-link"
     >
       <slot />

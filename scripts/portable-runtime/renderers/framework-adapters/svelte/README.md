@@ -5,6 +5,14 @@ components, typed `$props`, callback event properties, snippets, Svelte context,
 Attachments own DOM connection and exact cleanup; reactive setter effects update an existing
 Runtime controller without reconnecting it.
 
+Select is the one portal-placement proof in this private cohort. Its Svelte 5.29+ attachment moves
+one stable public Portal wrapper after hydration. Runtime resolves the accepted target and receives
+pending and ready placement reports before it starts floating work. The attachment restores the
+same wrapper during target changes and cleanup. This proof does not add Svelte support beyond the
+private verification target.
+See the current [Svelte attachment reference](https://svelte.dev/docs/svelte/%40attach) for the
+5.29+ mount, rerun, and cleanup lifecycle used by this proof.
+
 Generated output lives in the private `@starwind-ui/svelte` workspace package under
 `packages/svelte/src`. Do not add CLI registry entries, demo dependencies, install docs, public
 support claims, Changesets, or publication wiring from this folder. The target supports exactly

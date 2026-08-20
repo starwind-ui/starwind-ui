@@ -20,6 +20,8 @@ export type ColorPickerInputProps = React.ComponentPropsWithoutRef<"div"> & {
   formatControl?: "select" | "native" | "none";
   formats?: readonly import("@starwind-ui/react/color-picker").ColorPickerFormat[];
   formatContentSize?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 function ColorPickerInput(props: ColorPickerInputProps) {
@@ -27,6 +29,8 @@ function ColorPickerInput(props: ColorPickerInputProps) {
     formatControl = "select",
     formats = ["hex", "rgb", "hsl", "hsb"],
     formatContentSize = "md",
+    portalContainer,
+    disablePortal = false,
     className,
     ...rest
   } = props;
@@ -79,7 +83,12 @@ function ColorPickerInput(props: ColorPickerInputProps) {
           <Select>
             <SelectTrigger aria-label="Color format" className={colorPickerFormatSelectTrigger()} />
 
-            <SelectContent size={formatContentSize} data-sw-color-picker-format-options="">
+            <SelectContent
+              size={formatContentSize}
+              portalContainer={portalContainer}
+              disablePortal={disablePortal}
+              data-sw-color-picker-format-options=""
+            >
               {normalizedFormats.map((formatOption, formatIndex) => (
                 <SelectItem value={formatOption} key={`${formatOption}-${formatIndex}`}>
                   {formatOption.toUpperCase()}

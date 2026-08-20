@@ -1,3 +1,5 @@
+import { vuePackageSizeBaseline } from "./vue-package-size-baseline.mjs";
+
 const aggregateGrowthPolicy = Object.freeze({
   maxGrowthBytes: 15 * 1024,
   maxGrowthPercent: 10,
@@ -100,7 +102,15 @@ export function getPackageSizeBudgetCeilings() {
   });
 }
 
-export function evaluatePackageSizeBudgets({ bundleResults, supportResults }) {
+export function evaluatePackageSizeBudgets({
+  bundleResults,
+  includePrivateVue = false,
+  supportResults,
+  vueBundleResults = [],
+  vueColdImportResults = [],
+  vueMatchedSupportResults = [],
+  vuePackagePayload,
+}) {
   const advisories = [];
   const failures = [];
 
@@ -219,6 +229,21 @@ export function evaluatePackageSizeBudgets({ bundleResults, supportResults }) {
     });
   });
 
+  const vueAbsoluteChecks = includePrivateVue
+    ? createVueAbsoluteBudgetChecks({
+        vueBundleResults,
+        vueColdImportResults,
+        vuePackagePayload,
+      }).map((check) => {
+        if (check.failure) failures.push(check.failure);
+        return check;
+      })
+    : [];
+  const vueMatchedSupportCheck = includePrivateVue
+    ? evaluateVueMatchedSupportComparison(vueMatchedSupportResults)
+    : null;
+  if (vueMatchedSupportCheck?.advisory) advisories.push(vueMatchedSupportCheck.advisory);
+
   return {
     advisories: [...new Set(advisories)],
     fieldColdImportChecks,
@@ -226,6 +251,82 @@ export function evaluatePackageSizeBudgets({ bundleResults, supportResults }) {
     headlineChecks,
     matchedSupportChecks,
     standaloneComponentChecks,
+    vueAbsoluteChecks,
+    vueMatchedSupportCheck,
+  };
+}
+
+function createVueAbsoluteBudgetChecks({
+  vueBundleResults,
+  vueColdImportResults,
+  vuePackagePayload,
+}) {
+  const measurements = new Map([
+    [
+      "vue.adapter-only",
+      vueBundleResults.find((row) => row.label === "@starwind-ui/vue (adapter only)")?.gzipBytes,
+    ],
+    [
+      "vue.combined",
+      vueBundleResults.find((row) => row.label === "@starwind-ui/vue + runtime")?.gzipBytes,
+    ],
+    ["vue.packed-tarball", vuePackagePayload?.packageGzipBytes],
+    ...vuePackageSizeBaseline.sentinels.map((component) => [
+      `vue.cold.${component}`,
+      vueColdImportResults.find((row) => row.component === component)?.gzipBytes,
+    ]),
+  ]);
+
+  return Object.entries(vuePackageSizeBaseline.budgets).map(([id, budget]) =>
+    evaluateAbsoluteBudget({ id, measuredBytes: measurements.get(id), ...budget }),
+  );
+}
+
+function evaluateAbsoluteBudget({ ceilingBytes, headroomBytes, id, maximumBytes, measuredBytes }) {
+  let failure = null;
+  if (typeof measuredBytes !== "number" || !Number.isFinite(measuredBytes)) {
+    failure = `${id} budget could not be evaluated: missing min+gzip measurement.`;
+  } else if (measuredBytes > ceilingBytes) {
+    failure = `${id} budget exceeded: ${formatBudgetBytes(measuredBytes)} > budget ${formatBudgetBytes(ceilingBytes)}.`;
+  }
+  return {
+    baselineGzipBytes: maximumBytes,
+    failure,
+    gzipBytes: measuredBytes ?? null,
+    headroomBytes,
+    id,
+    label: id,
+    maxGzipBytes: ceilingBytes,
+    status: failure ? "Fail" : "Pass",
+  };
+}
+
+function evaluateVueMatchedSupportComparison(results) {
+  const starwindGzipBytes = results.find(({ provider }) => provider === "starwind-vue")?.gzipBytes;
+  const comparatorGzipBytes = results.find(({ provider }) => provider === "zag-vue")?.gzipBytes;
+  let advisory = null;
+  let comparisonStatus = "Below comparator";
+
+  if (starwindGzipBytes == null || comparatorGzipBytes == null) {
+    comparisonStatus = "Unavailable";
+    advisory =
+      "Private Vue matched-support comparison could not be evaluated from the committed comparator snapshot.";
+  } else if (starwindGzipBytes === comparatorGzipBytes) {
+    comparisonStatus = "Equal comparator";
+    advisory = `Private Vue matched-support comparison advisory: Starwind Vue ${formatBudgetBytes(starwindGzipBytes)} equals Zag Vue ${formatBudgetBytes(comparatorGzipBytes)}.`;
+  } else if (starwindGzipBytes > comparatorGzipBytes) {
+    comparisonStatus = "Above comparator";
+    advisory = `Private Vue matched-support comparison advisory: Starwind Vue ${formatBudgetBytes(starwindGzipBytes)} is above Zag Vue ${formatBudgetBytes(comparatorGzipBytes)}.`;
+  }
+
+  return {
+    advisory,
+    comparatorGzipBytes: comparatorGzipBytes ?? null,
+    comparisonStatus,
+    failure: null,
+    label: "Private Vue matched support vs Zag Vue",
+    starwindGzipBytes: starwindGzipBytes ?? null,
+    status: "Pass",
   };
 }
 

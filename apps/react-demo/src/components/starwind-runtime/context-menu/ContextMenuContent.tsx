@@ -9,6 +9,8 @@ export type ContextMenuContentProps = React.ComponentPropsWithoutRef<"div"> & {
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 function ContextMenuContent(props: ContextMenuContentProps) {
@@ -18,12 +20,18 @@ function ContextMenuContent(props: ContextMenuContentProps) {
     align = "start",
     sideOffset = 4,
     avoidCollisions = true,
+    portalContainer,
+    disablePortal = false,
     children,
     ...rest
   } = props;
 
   return (
-    <ContextMenuPrimitive.Portal data-slot="context-menu-portal">
+    <ContextMenuPrimitive.Portal
+      container={portalContainer}
+      disabled={disablePortal}
+      data-slot="context-menu-portal"
+    >
       <ContextMenuPrimitive.Popup
         className={contextMenuContent({ class: className })}
         side={side}

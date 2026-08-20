@@ -389,40 +389,87 @@ function printPortal(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.portal;
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script lang="ts">
+  import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
   import { untrack, type Snippet } from "svelte";
   import type { Attachment } from "svelte/attachments";
   import type { HTMLAttributes } from "svelte/elements";
   import { ${facts.context.useRootContext} } from "./${facts.exports.root}.svelte";
   type Props = Omit<HTMLAttributes<HTMLDivElement>, "children"> & { children?: Snippet; container?: string | HTMLElement; disabled?: boolean; ref?: (element: HTMLDivElement | null) => void };
-  let { children, container = "${facts.portal.defaultTarget}", disabled = false, ref, ...rest }: Props = $props();
+  let { children, container, disabled = false, ref, ...rest }: Props = $props();
   const select = ${facts.context.useRootContext}("Portal");
   const owner = Symbol("${facts.displayName}PortalOwner");
   const attachPortal: Attachment<HTMLDivElement> = (element) => {
     const authoredParent = element.parentNode;
     const authoredNextSibling = element.nextSibling;
+    const reference = element.closest<HTMLElement>("[${facts.attrs.root}]") ?? element;
+    let observer: MutationObserver | undefined;
+    let placedTarget: HTMLElement | null = null;
     const restore = () => {
       if (!authoredParent) return;
       if (authoredNextSibling?.parentNode === authoredParent) authoredParent.insertBefore(element, authoredNextSibling);
       else authoredParent.appendChild(element);
     };
+    const disconnectObserver = () => {
+      observer?.disconnect();
+      observer = undefined;
+    };
+    const resolveTarget = (requestedContainer: string | HTMLElement | undefined) =>
+      resolvePortalPlacement(element, {
+        container: requestedContainer,
+        disabled: false,
+        mode: "framework",
+        reference,
+      }).target;
+    const place = (requestedContainer: string | HTMLElement | undefined) => {
+      const target = resolveTarget(requestedContainer);
+      if (placedTarget === target && element.parentElement === target) return;
+
+      reportPortalPlacement(element, { ready: false, target });
+      target.appendChild(element);
+      placedTarget = target;
+      if (element.parentElement === target) {
+        reportPortalPlacement(element, { ready: true, target });
+      }
+    };
     select.registerPortal(owner, element);
     $effect(() => {
       const active = select.mounted && !disabled;
-      const target = active ? (typeof container === "string" ? document.querySelector(container) : container) : null;
-      let canceled = false;
-      const migrationTimer = window.setTimeout(() => {
-        if (canceled) return;
-        if (target instanceof HTMLElement && target !== element.parentElement) target.appendChild(element);
-        else if (!active) restore();
-      }, 0);
-      return () => { canceled = true; window.clearTimeout(migrationTimer); restore(); };
+      const requestedContainer = container;
+      disconnectObserver();
+      reportPortalPlacement(element, null);
+      placedTarget = null;
+      restore();
+      element.toggleAttribute("data-disabled", !active);
+      if (!active) return;
+
+      place(requestedContainer);
+      const MutationObserverConstructor = element.ownerDocument.defaultView?.MutationObserver;
+      if (MutationObserverConstructor) {
+        observer = new MutationObserverConstructor(() => {
+          const target = resolveTarget(requestedContainer);
+          if (target !== placedTarget || element.parentElement !== target) place(requestedContainer);
+        });
+        observer.observe(element.ownerDocument, { childList: true, subtree: true });
+      }
+      return () => {
+        disconnectObserver();
+        reportPortalPlacement(element, null);
+        placedTarget = null;
+        restore();
+      };
     });
     const callback = ref;
     untrack(() => callback?.(element));
-    return () => { select.registerPortal(owner, null); restore(); callback?.(null); };
+    return () => {
+      disconnectObserver();
+      reportPortalPlacement(element, null);
+      select.registerPortal(owner, null);
+      restore();
+      callback?.(null);
+    };
   };
 </script>
-<div {...rest} ${facts.attrs.portal}="" data-sw-part="${part.name}" data-floating-root {@attach attachPortal}>{@render children?.()}</div>
+<div {...rest} ${facts.attrs.portal}="" data-sw-part="${part.name}" data-floating-root data-placement="pending" data-sw-portal-placement="framework" data-disabled={disabled ? "" : undefined} {@attach attachPortal}>{@render children?.()}</div>
 `;
 }
 

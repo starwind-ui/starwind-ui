@@ -2,7 +2,7 @@
 <!-- Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies. -->
 <script setup lang="ts">
 import { createForm, type FormValidationTiming } from "@starwind-ui/runtime/form";
-import { onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -17,7 +17,6 @@ const props = defineProps<{
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLFormElement | null>(null);
 let instance: ReturnType<typeof createForm> | undefined;
 
@@ -46,7 +45,7 @@ onBeforeUnmount(destroyOwnedInstance);
 <template>
   <form
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-sw-form
     data-slot="form"
     :data-error-visibility="props.dataErrorVisibility ?? props.errorVisibility"

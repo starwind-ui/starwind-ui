@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import "./styles.css";
 import { prose } from "./variants";
 
@@ -16,7 +16,6 @@ const { class: className } = defineProps<ProseDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 </script>
@@ -26,7 +25,7 @@ defineExpose({ element });
     ref="element"
     data-sw-prose
     :class="prose({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="prose"
   >
     <slot />

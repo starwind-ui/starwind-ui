@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { paginationEllipsis } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,7 +16,6 @@ defineSlots<{
   default?: () => unknown;
   icon?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLSpanElement | null>(null);
 defineExpose({ element });
 </script>
@@ -26,7 +25,7 @@ defineExpose({ element });
     ref="element"
     aria-hidden
     :class="paginationEllipsis({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="pagination-ellipsis"
   >
     <slot name="icon">

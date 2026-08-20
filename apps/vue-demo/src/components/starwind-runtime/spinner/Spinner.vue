@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { spinner } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -13,7 +13,6 @@ type SpinnerDeclaredProps = {
 } & /* @vue-ignore */ SpinnerProps;
 const { class: className } = defineProps<SpinnerDeclaredProps>();
 defineSlots<{}>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -29,7 +28,7 @@ const attrs = useAttrs();
     role="status"
     aria-label="Loading"
     :class="spinner({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="spinner"
   >
     <path stroke="none" d="M0 0h24v24H0z" fill="none" />

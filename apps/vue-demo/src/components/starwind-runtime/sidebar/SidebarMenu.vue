@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { sidebarMenu } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -17,14 +17,13 @@ const { dataSlot = "sidebar-menu", class: className } = defineProps<SidebarMenuD
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ul
     :class="sidebarMenu({ class: className })"
     data-sidebar="menu"
-    v-bind="attrs"
+    v-bind="$attrs"
     :data-slot="dataSlot"
   >
     <slot />

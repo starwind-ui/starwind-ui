@@ -1,8 +1,8 @@
-import { type FloatingPositioner } from "./floating";
+import type { FloatingPositioner } from "./floating";
 import { createFloatingPortalSession } from "./floating-portal";
 import { type OverlayDismissalHandle, registerOverlayDismissal } from "./overlay-dismissal";
 import { hideElementAfterAnimations } from "./presence";
-import { type DocumentScrollLock } from "./scroll-lock";
+import type { DocumentScrollLock } from "./scroll-lock";
 
 export type FloatingDisclosureLifecycle<TRequest> = {
   applyOpenState(
@@ -11,6 +11,7 @@ export type FloatingDisclosureLifecycle<TRequest> = {
     options?: FloatingDisclosureApplyOptions,
   ): void;
   destroy(): void;
+  refreshSurface(popup: HTMLElement, request?: TRequest): void;
 };
 
 export type FloatingDisclosureApplyOptions = {
@@ -67,8 +68,8 @@ export function createFloatingDisclosureLifecycle<TRequest>(
   let dismissalHandle: OverlayDismissalHandle | null = null;
   let floatingPositioner: FloatingPositioner | null = null;
   let floatingReference: HTMLElement | null = null;
+  let placementReadyCleanup: (() => void) | null = null;
   let rendered = false;
-
   const getPortalElement = () => options.getPortalElement?.() ?? options.popup;
   const portalSession = createFloatingPortalSession({
     canPromote: options.getOpen,
@@ -120,12 +121,13 @@ export function createFloatingDisclosureLifecycle<TRequest>(
   };
 
   const position = (positionOptions: FloatingDisclosurePositionOptions = {}) => {
-    if (!options.getOpen()) return;
+    if (!options.getOpen() || !portalSession.isReady()) return;
 
     void getFloatingPositioner(positionOptions)?.update();
   };
 
   const setupAutoUpdate = () => {
+    if (!portalSession.isReady()) return;
     getFloatingPositioner()?.startAutoUpdate();
   };
 
@@ -167,23 +169,56 @@ export function createFloatingDisclosureLifecycle<TRequest>(
     closeAbortController = null;
   };
 
+  const cancelPlacementReady = () => {
+    placementReadyCleanup?.();
+    placementReadyCleanup = null;
+  };
+
+  const resetSurface = () => {
+    abortPendingClose();
+    cancelPlacementReady();
+    unregisterDismissal();
+    floatingPositioner?.destroy();
+    floatingPositioner = null;
+    floatingReference = null;
+  };
+
   return {
     applyOpenState(open, request, applyOptions = {}) {
       abortPendingClose();
+      cancelPlacementReady();
 
       if (open) {
         acquireBodyScrollLock(request);
         options.onBeforeOpen?.({ request, ...applyOptions });
         options.renderState(true);
-        portalSession.mount();
-        registerDismissal();
-        position();
-        setupAutoUpdate();
-        requestAnimationFrame(() => {
+        const activatePlacedOpen = () => {
           if (!options.getOpen() || options.isDestroyed()) return;
+
+          registerDismissal();
           position();
-          options.onOpenFrame?.({ request });
+          setupAutoUpdate();
+          requestAnimationFrame(() => {
+            if (!options.getOpen() || options.isDestroyed() || !portalSession.isReady()) return;
+            position();
+            options.onOpenFrame?.({ request });
+          });
+        };
+        const deactivatePlacedOpen = () => {
+          unregisterDismissal();
+          floatingPositioner?.stopAutoUpdate();
+        };
+        const placementReady = portalSession.mount();
+        placementReadyCleanup = portalSession.onReadyChange((ready) => {
+          if (ready) {
+            activatePlacedOpen();
+          } else {
+            deactivatePlacedOpen();
+          }
         });
+        if (placementReady) {
+          activatePlacedOpen();
+        }
       } else if (!rendered) {
         options.onBeforeClose?.({ request });
         unregisterDismissal();
@@ -216,15 +251,17 @@ export function createFloatingDisclosureLifecycle<TRequest>(
       rendered = true;
     },
     destroy() {
-      abortPendingClose();
-      unregisterDismissal();
+      resetSurface();
       releaseBodyScrollLock();
-      floatingPositioner?.destroy();
-      floatingPositioner = null;
-      floatingReference = null;
       portalSession.destroy();
       clearFloatingStyles();
       rendered = false;
+    },
+    refreshSurface(popup, request) {
+      options.popup = popup;
+      resetSurface();
+      portalSession.mount();
+      this.applyOpenState(options.getOpen(), request);
     },
   };
 }

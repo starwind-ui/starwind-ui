@@ -218,6 +218,14 @@ const MAIN_SOURCE = String.raw`import { flushSync, hydrate, unmount } from "svel
 import App from "./App.svelte";
 const query = (selector) => document.querySelector(selector);
 const tick = async () => { flushSync(); await new Promise((resolve) => setTimeout(resolve, 0)); flushSync(); };
+const waitForClosed = async (selector) => {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    flushSync();
+    if (!query(selector).open) return;
+  }
+  throw new Error("Dialog did not reach its closed state: " + selector);
+};
 const escape = () => document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
 void (async () => { try {
   const target = query("#app");
@@ -237,7 +245,7 @@ void (async () => { try {
   document.addEventListener("focusin", focusListener);
   const lockObserver = new MutationObserver(() => { if (document.body.hasAttribute("data-sw-scroll-locked")) stale.lock = true; });
   lockObserver.observe(document.body, { attributes: true, attributeFilter: ["data-sw-scroll-locked"] });
-  instance.closeAndMakeModal(); await tick();
+  instance.closeAndMakeModal(); await waitForClosed('[data-popup="controlled"]');
   lockObserver.disconnect(); document.removeEventListener("focusin", focusListener);
   snapshot = instance.snapshot();
   const simultaneous = { binding: snapshot.controlled, closeComplete: snapshot.closeComplete, focusedOutside: document.activeElement === query("#outside"), open: query('[data-popup="controlled"]').open, modal: query('[data-popup="controlled"]').getAttribute("aria-modal"), sawStaleFocus: stale.focus, sawStaleLock: stale.lock, scrollLocked: document.body.hasAttribute("data-sw-scroll-locked") };
@@ -245,18 +253,18 @@ void (async () => { try {
   instance.setControlled(true); await tick(); snapshot = instance.snapshot();
   const externalOpen = { binding: snapshot.controlled, callbackCountDelta: snapshot.openChangeCount - externalOpenBefore.callbacks, focused: document.activeElement === query('[data-input="controlled"]'), open: query('[data-popup="controlled"]').open, scrollLocked: document.body.hasAttribute("data-sw-scroll-locked"), setterDelta: globalThis.__dialogLifecycle.setOpenEmitFalse - externalOpenBefore.setters };
   const externalCloseBefore = { callbacks: snapshot.openChangeCount, setters: globalThis.__dialogLifecycle.setOpenEmitFalse };
-  instance.setControlled(false); await tick(); snapshot = instance.snapshot();
+  instance.setControlled(false); await waitForClosed('[data-popup="controlled"]'); snapshot = instance.snapshot();
   const externalClose = { binding: snapshot.controlled, callbackCountDelta: snapshot.openChangeCount - externalCloseBefore.callbacks, closeComplete: snapshot.closeComplete, closeCompleteSawCommitted: snapshot.closeCompleteSawCommitted, open: query('[data-popup="controlled"]').open, order: snapshot.closeCompleteOrder, setterDelta: globalThis.__dialogLifecycle.setOpenEmitFalse - externalCloseBefore.setters };
   query('[data-trigger="controlled"]').click(); await tick();
-  escape(); await tick();
+  escape(); await waitForClosed('[data-popup="controlled"]');
   snapshot = instance.snapshot();
   const escaped = { binding: snapshot.controlled, closeComplete: snapshot.closeComplete, focusReturned: document.activeElement === query("#outside"), open: query('[data-popup="controlled"]').open, scrollLocked: document.body.hasAttribute("data-sw-scroll-locked") };
   query('[data-trigger="uncontrolled"]').click(); await tick();
   const uncontrolledOpened = query('[data-popup="uncontrolled"]').open;
-  query('[data-backdrop="uncontrolled"]').click(); await tick();
+  query('[data-backdrop="uncontrolled"]').click(); await waitForClosed('[data-popup="uncontrolled"]');
   const uncontrolled = { opened: uncontrolledOpened, outsideClosed: !query('[data-popup="uncontrolled"]').open };
   query('[data-trigger="sibling"]').click(); await tick(); query('[data-trigger="controlled"]').click(); await tick(); query('[data-trigger="nested"]').click(); await tick();
-  escape(); await tick();
+  escape(); await waitForClosed('[data-popup="nested"]');
   const isolation = { nestedAfterEscape: query('[data-popup="nested"]').open, parentAfterEscape: query('[data-popup="controlled"]').open, siblingOpen: query('[data-popup="sibling"]').open };
   const conditionalBeforeRemoval = target.querySelectorAll('[data-conditional] [data-sw-dialog]').length;
   const nestedBeforeRemoval = target.querySelectorAll('[data-case="nested"]').length;

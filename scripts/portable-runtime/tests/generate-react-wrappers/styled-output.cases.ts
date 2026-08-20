@@ -2,6 +2,7 @@ import {
   assertNoStarwindClassHooksInStyledContracts,
   assertNoStarwindClassHooksInTree,
 } from "../../starwind-class-guard.js";
+import { toastStyledContract } from "../../contracts/styled/components/toast.js";
 import type { StyledAdapterContract } from "../../contracts/styled/types.js";
 import type { GetTempRoot } from "./shared.js";
 import {
@@ -23,6 +24,46 @@ import { assertReactStyledOverlayOutput } from "./styled-output/overlay.cases.js
 import { assertReactStyledStateOutput } from "./styled-output/state.cases.js";
 
 export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
+  it("exposes the styled Toast facade through package and local React Primitive sources", async () => {
+    const tempRoot = getTempRoot();
+    const packageOutputDir = "generated/package-backed";
+    const localOutputDir = "generated/local-backed";
+    const primitiveOutputDir = "generated/primitives/react";
+
+    await generateStarwindReactWrappers({
+      contracts: [toastStyledContract],
+      outputDir: packageOutputDir,
+      primitiveImportBase: "@starwind-ui/react",
+      repoRoot: tempRoot,
+    });
+    await generateStarwindReactWrappers({
+      contracts: [toastStyledContract],
+      outputDir: localOutputDir,
+      primitiveOutputDir,
+      repoRoot: tempRoot,
+    });
+
+    const packageIndex = await readGeneratedFile(
+      path.join(tempRoot, packageOutputDir),
+      "toast/index.ts",
+    );
+    const localIndex = await readGeneratedFile(
+      path.join(tempRoot, localOutputDir),
+      "toast/index.ts",
+    );
+    const primitiveIndex = await readGeneratedFile(
+      path.join(process.cwd(), "packages/react/src"),
+      "toast/index.ts",
+    );
+
+    assertReactToastFacade(packageIndex, "@starwind-ui/react/toast");
+    assertReactToastFacade(localIndex, "../../primitives/react/toast");
+    expect(primitiveIndex).toContain(
+      'export type { ToastApi, ToastOptions, ToastPromiseOptions } from "@starwind-ui/runtime";',
+    );
+    expect(primitiveIndex).toContain('export { toast } from "@starwind-ui/runtime/toast";');
+  });
+
   it("renders declared forward refs generically without changing plain components", async () => {
     const tempRoot = getTempRoot();
     const outputDir = "generated/starwind-runtime";
@@ -310,7 +351,11 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
     expect(styles).toContain('[data-slot="color-picker-transparency-grid"]');
     expect(styles).toContain('[data-slot="color-picker-channel-slider"][data-channel="hue"]');
     expect(styles).toContain(
-      '[data-sw-color-picker][data-floating-root] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
+      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
+    );
+    expect(styles).toContain("{ position: fixed; z-index: 60; }");
+    expect(styles).toContain(
+      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] { display: contents; }',
     );
     expect(variants).toContain("--sw-color-picker-area-thumb-color");
     expect(channelSlider).toContain("--sw-color-picker-channel-thumb-color");
@@ -329,4 +374,22 @@ export function defineReactStyledOutputTests(getTempRoot: GetTempRoot): void {
     await formatGeneratedOutput([colorPickerOutputRoot]);
     expect(await readGeneratedTree(colorPickerOutputRoot)).toEqual(firstFormattedTree);
   });
+}
+
+function assertReactToastFacade(source: string, primitiveSource: string): void {
+  expect(source).toContain(`export { toast } from "${primitiveSource}";`);
+  expect(source).toContain(
+    `export type { ToastApi, ToastOptions, ToastPromiseOptions } from "${primitiveSource}";`,
+  );
+  expect(source).toContain(`const ToastParts = {
+  Viewport: Toaster,
+  Template: ToastTemplate,
+  Item: ToastItem,
+  Content: ToastContent,
+  Title: ToastTitle,
+  Description: ToastDescription,
+  Action: ToastAction,
+  Close: ToastClose,
+};`);
+  expect(source).not.toMatch(/const ToastParts = \{[^}]*\b(?:Manager|toast)\b/);
 }

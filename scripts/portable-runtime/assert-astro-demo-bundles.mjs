@@ -78,9 +78,9 @@ const routeExpectations = [
   },
   {
     budget: {
-      maxInitialExternalGzipBytes: 34_000,
-      maxInitialExternalRawBytes: 100_000,
-      maxInitialJsGzipBytes: 36_000,
+      maxInitialExternalGzipBytes: 36_750,
+      maxInitialExternalRawBytes: 104_500,
+      maxInitialJsGzipBytes: 37_000,
       maxStaticChunkCount: 21,
     },
     attributedStaticChunks: [
@@ -92,7 +92,7 @@ const routeExpectations = [
       {
         assetPattern: /^floating-portal\./,
         importerPattern: /^floating-disclosure\./,
-        note: "dialog-aware floating portal ownership split the shared portal/session code from overlay dismissal; the unchanged raw and gzip byte budgets still bound its initial cost",
+        note: "framework-owned placement readiness, wrapper-identity reconciliation, lifecycle reset, listener refresh, nested-owner suspension, and stale-write guards increased the shared portal lifecycle chunk; category refresh bodies remain outside Astro and the refreshed budgets closely bound the accepted 21-chunk graph",
       },
       {
         assetPattern: /^cancelable-details\./,
@@ -117,6 +117,8 @@ function main() {
 
   const failures = [];
   const routeReports = routeExpectations.map((expectation) => analyzeRoute(expectation));
+  const portalBoundaries = inspectPortalBundleBoundaries();
+  failures.push(...portalBoundaries.failures);
 
   for (const report of routeReports) {
     const routeFailures = validateRouteReport(report);
@@ -134,12 +136,73 @@ function main() {
     );
   }
 
-  writeMarkdownReport(routeReports);
+  writeMarkdownReport(routeReports, reportPath, portalBoundaries);
 
   if (failures.length > 0) {
     console.error(`\nBundle regression check failed:\n\n${failures.join("\n\n")}`);
     process.exitCode = 1;
   }
+}
+
+export function inspectPortalBundleBoundaries(root = distRoot) {
+  const assetsRoot = path.join(root, "_astro");
+  const assetNames = fs.existsSync(assetsRoot) ? fs.readdirSync(assetsRoot) : [];
+  const failures = [];
+  const checks = [];
+  const portalAsset = assetNames.find((asset) => /^floating-portal\..+\.js$/.test(asset));
+
+  if (!portalAsset) {
+    failures.push("The Astro bundle has no floating-portal chunk for boundary inspection.");
+  } else {
+    const source = fs.readFileSync(path.join(assetsRoot, portalAsset), "utf8");
+    const forbiddenCoordinatorTokens = ["MutationObserver", "createContext", "useReactPortalScope"];
+    const forbiddenHostTokens = ["data-sw-dialog-top-layer-host", "showPopover"];
+    for (const token of [...forbiddenCoordinatorTokens, ...forbiddenHostTokens]) {
+      if (source.includes(token)) {
+        failures.push(`${portalAsset} contains forbidden Portal boundary token ${token}.`);
+      }
+    }
+    checks.push(
+      `${portalAsset} contains Runtime movement and policy without a reactive coordinator or Dialog host construction.`,
+    );
+  }
+
+  const ordinaryFloatingAssets = assetNames.filter((asset) =>
+    /^(floating-disclosure\.|PopoverRoot\.astro_|PreviewCardRoot\.astro_|TooltipRoot\.astro_).+\.js$/.test(
+      asset,
+    ),
+  );
+  if (ordinaryFloatingAssets.length === 0) {
+    failures.push(
+      "The Astro bundle has no ordinary floating assets for Dialog boundary inspection.",
+    );
+  }
+  for (const asset of ordinaryFloatingAssets) {
+    const assetPath = path.join(assetsRoot, asset);
+    const imports = collectStaticJsImports(fs.readFileSync(assetPath, "utf8"), assetPath);
+    const dialogImport = imports.find((imported) =>
+      /^dialog\./.test(path.posix.basename(imported)),
+    );
+    if (dialogImport) {
+      failures.push(`${asset} statically imports Dialog host code through ${dialogImport}.`);
+    }
+  }
+  checks.push(
+    `${ordinaryFloatingAssets.length} ordinary floating assets exclude static Dialog host imports.`,
+  );
+
+  const dialogAsset = assetNames.find((asset) => /^dialog\..+\.js$/.test(asset));
+  if (!dialogAsset) {
+    failures.push("The Astro bundle has no Dialog chunk for host ownership inspection.");
+  } else {
+    const source = fs.readFileSync(path.join(assetsRoot, dialogAsset), "utf8");
+    if (!source.includes("data-sw-dialog-top-layer-host")) {
+      failures.push(`${dialogAsset} does not contain the Dialog-owned top-layer host.`);
+    }
+    checks.push(`${dialogAsset} owns the single native Dialog host implementation.`);
+  }
+
+  return { checks, failures };
 }
 
 function analyzeRoute(expectation) {
@@ -483,7 +546,7 @@ function resolveDistAsset(asset) {
   return path.join(distRoot, asset.replace(/^\//, ""));
 }
 
-export function writeMarkdownReport(reports, outputPath = reportPath) {
+export function writeMarkdownReport(reports, outputPath = reportPath, portalBoundaries) {
   const lines = [
     "# Astro Demo Bundle Report",
     "",
@@ -496,6 +559,7 @@ export function writeMarkdownReport(reports, outputPath = reportPath) {
     "- Inline scripts are counted separately so JavaScript embedded in HTML is not hidden from comparisons.",
     "- Dynamic imports are reported separately and are not counted as initial JavaScript.",
     "- Attributed static chunks record the exact generated importer edge that justifies a route-specific chunk budget.",
+    "- Portal boundary checks inspect emitted chunk source and static imports.",
     "- Gzip uses Node zlib default gzip settings on each asset or inline script.",
     "",
     "## Route Summary",
@@ -533,6 +597,14 @@ export function writeMarkdownReport(reports, outputPath = reportPath) {
       ].join(" | "),
     ),
     "",
+    ...(portalBoundaries
+      ? [
+          "## Portal Boundary Evidence",
+          "",
+          ...portalBoundaries.checks.map((check) => `- ${check}`),
+          "",
+        ]
+      : []),
   ];
 
   for (const report of reports) {

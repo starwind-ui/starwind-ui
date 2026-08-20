@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createAlertDialog } from "../../../src/components/alert-dialog/alert-dialog";
 import { createDialog } from "../../../src/components/dialog/dialog";
+import { createDrawer } from "../../../src/components/drawer/drawer";
 import { createPopover } from "../../../src/components/popover/popover";
 import { registerOverlayDismissal } from "../../../src/internal/overlay-dismissal";
 import {
@@ -36,7 +38,7 @@ describe("createDialog", () => {
     expect(content.getAttribute("data-state")).toBe("closed");
   });
 
-  it("opens on trigger click and closes on close button click", () => {
+  it("opens on trigger click and closes on close button click", async () => {
     const root = renderDialog();
     const outsideButton = document.createElement("button");
     outsideButton.textContent = "Outside";
@@ -56,6 +58,7 @@ describe("createDialog", () => {
     expect(document.activeElement).toBe(getInput());
 
     getCloseButton().click();
+    await waitForPresenceFrame();
 
     expect(getContent().open).toBe(false);
     expect(getOverlay().hidden).toBe(true);
@@ -74,7 +77,7 @@ describe("createDialog", () => {
     );
   });
 
-  it("runs emitting setters through the cancelable proposal before applying state", () => {
+  it("runs emitting setters through the cancelable proposal before applying state", async () => {
     const root = renderDialog();
     const order: string[] = [];
     let callbackDetails: unknown;
@@ -96,6 +99,7 @@ describe("createDialog", () => {
     });
 
     dialog.setOpen(true);
+    await waitForPresenceFrame();
 
     expect(eventDetails).toBe(callbackDetails);
     expect(order).toEqual(["callback", "dom-event"]);
@@ -110,6 +114,16 @@ describe("createDialog", () => {
     const trigger = getTrigger();
     const content = getContent();
     const overlay = getOverlay();
+    const setRootAttribute = root.setAttribute.bind(root);
+    let openStateRenderObservedLock = false;
+    vi.spyOn(root, "setAttribute").mockImplementation((attribute, value) => {
+      if (attribute === "data-state" && value === "open") {
+        openStateRenderObservedLock =
+          document.body.hasAttribute("data-sw-scroll-locked") &&
+          document.body.style.overflow === "hidden";
+      }
+      setRootAttribute(attribute, value);
+    });
     const presentationState = vi.fn(() => {
       content.setAttribute("open", "");
       return {
@@ -118,6 +132,8 @@ describe("createDialog", () => {
         overlayHidden: overlay.hidden,
         overlayState: overlay.getAttribute("data-state"),
         rootState: root.getAttribute("data-state"),
+        scrollLockMarker: document.body.hasAttribute("data-sw-scroll-locked"),
+        scrollLockOverflow: document.body.style.overflow,
         triggerExpanded: trigger.getAttribute("aria-expanded"),
         triggerState: trigger.getAttribute("data-state"),
       };
@@ -136,9 +152,12 @@ describe("createDialog", () => {
       overlayHidden: false,
       overlayState: "open",
       rootState: "open",
+      scrollLockMarker: true,
+      scrollLockOverflow: "hidden",
       triggerExpanded: "true",
       triggerState: "open",
     });
+    expect(openStateRenderObservedLock).toBe(true);
   });
 
   it("keeps popup and backdrop starting styles through the first presented frame", async () => {
@@ -174,6 +193,8 @@ describe("createDialog", () => {
     const dialog = createDialog(root);
     const content = getContent();
     const showModal = vi.spyOn(content, "showModal").mockImplementation(() => {
+      expect(document.body.style.overflow).toBe("hidden");
+      expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
       expect(root.getAttribute("data-state")).toBe("open");
       expect(content.getAttribute("data-state")).toBe("open");
       expect(getOverlay().getAttribute("data-state")).toBe("open");
@@ -227,6 +248,190 @@ describe("createDialog", () => {
 
     replacementDialog.destroy();
   });
+
+  it.each([
+    {
+      family: "alert dialog",
+      markup: `
+        <div data-sw-alert-dialog>
+          <button data-sw-alert-dialog-trigger>Open nested alert</button>
+          <div data-sw-alert-dialog-portal data-sw-portal-placement="runtime" data-placement="pending">
+            <div data-sw-alert-dialog-backdrop hidden></div>
+            <dialog data-sw-alert-dialog-popup>
+              <button data-sw-alert-dialog-close>Close nested alert</button>
+            </dialog>
+          </div>
+        </div>
+      `,
+      portalSelector: "[data-sw-alert-dialog-portal]",
+    },
+    {
+      family: "drawer",
+      markup: `
+        <div data-sw-drawer>
+          <button data-sw-drawer-trigger>Open nested drawer</button>
+          <div data-sw-drawer-portal data-sw-portal-placement="runtime" data-placement="pending">
+            <div data-sw-drawer-backdrop hidden></div>
+            <dialog data-sw-drawer-popup>
+              <button data-sw-drawer-close>Close nested drawer</button>
+            </dialog>
+          </div>
+        </div>
+      `,
+      portalSelector: "[data-sw-drawer-portal]",
+    },
+  ])("does not adopt a nested $family portal across reinitialization and cleanup", (fixture) => {
+    const root = renderDialog();
+    const content = getContent();
+    content.insertAdjacentHTML("beforeend", fixture.markup);
+    const nestedRoot = content.querySelector<HTMLElement>(
+      fixture.family === "drawer" ? "[data-sw-drawer]" : "[data-sw-alert-dialog]",
+    )!;
+    const nestedPortal = nestedRoot.querySelector<HTMLElement>(fixture.portalSelector)!;
+    const firstDialog = createDialog(root);
+
+    firstDialog.open();
+
+    expect(nestedPortal.parentElement).toBe(nestedRoot);
+    expect(nestedPortal.getAttribute("data-placement")).toBe("pending");
+
+    firstDialog.close();
+    firstDialog.destroy();
+    const replacementDialog = createDialog(root);
+    replacementDialog.open();
+
+    expect(nestedPortal.parentElement).toBe(nestedRoot);
+    expect(nestedPortal.getAttribute("data-placement")).toBe("pending");
+
+    replacementDialog.destroy();
+
+    expect(nestedPortal.parentElement).toBe(nestedRoot);
+    expect(root.querySelector("[data-sw-floating-portal]")).toBeNull();
+  });
+
+  it.each([
+    {
+      action: "closes",
+      createChild: (root: HTMLElement) => createAlertDialog(root),
+      family: "alert dialog",
+      markup: `
+        <div data-sw-alert-dialog>
+          <button data-sw-alert-dialog-trigger>Open nested alert</button>
+          <div data-sw-alert-dialog-portal data-sw-portal-placement="runtime">
+            <div data-sw-alert-dialog-backdrop hidden></div>
+            <dialog data-sw-alert-dialog-popup>
+              <button data-sw-alert-dialog-close>Close nested alert</button>
+            </dialog>
+          </div>
+        </div>
+      `,
+      parentAction: (parent: ReturnType<typeof createDialog>) => parent.close(),
+      portalSelector: "[data-sw-alert-dialog-portal]",
+      rootSelector: "[data-sw-alert-dialog]",
+    },
+    {
+      action: "destroys",
+      createChild: (root: HTMLElement) => createAlertDialog(root),
+      family: "alert dialog",
+      markup: `
+        <div data-sw-alert-dialog>
+          <button data-sw-alert-dialog-trigger>Open nested alert</button>
+          <div data-sw-alert-dialog-portal data-sw-portal-placement="runtime">
+            <div data-sw-alert-dialog-backdrop hidden></div>
+            <dialog data-sw-alert-dialog-popup>
+              <button data-sw-alert-dialog-close>Close nested alert</button>
+            </dialog>
+          </div>
+        </div>
+      `,
+      parentAction: (parent: ReturnType<typeof createDialog>) => parent.destroy(),
+      portalSelector: "[data-sw-alert-dialog-portal]",
+      rootSelector: "[data-sw-alert-dialog]",
+    },
+    {
+      action: "closes",
+      createChild: (root: HTMLElement) => createDrawer(root),
+      family: "drawer",
+      markup: `
+        <div data-sw-drawer>
+          <button data-sw-drawer-trigger>Open nested drawer</button>
+          <div data-sw-drawer-portal data-sw-portal-placement="runtime">
+            <div data-sw-drawer-backdrop hidden></div>
+            <dialog data-sw-drawer-popup>
+              <button data-sw-drawer-close>Close nested drawer</button>
+            </dialog>
+          </div>
+        </div>
+      `,
+      parentAction: (parent: ReturnType<typeof createDialog>) => parent.close(),
+      portalSelector: "[data-sw-drawer-portal]",
+      rootSelector: "[data-sw-drawer]",
+    },
+    {
+      action: "destroys",
+      createChild: (root: HTMLElement) => createDrawer(root),
+      family: "drawer",
+      markup: `
+        <div data-sw-drawer>
+          <button data-sw-drawer-trigger>Open nested drawer</button>
+          <div data-sw-drawer-portal data-sw-portal-placement="runtime">
+            <div data-sw-drawer-backdrop hidden></div>
+            <dialog data-sw-drawer-popup>
+              <button data-sw-drawer-close>Close nested drawer</button>
+            </dialog>
+          </div>
+        </div>
+      `,
+      parentAction: (parent: ReturnType<typeof createDialog>) => parent.destroy(),
+      portalSelector: "[data-sw-drawer-portal]",
+      rootSelector: "[data-sw-drawer]",
+    },
+  ])(
+    "$action a nested $family once and restores its selector-owned portal inline",
+    async ({ createChild, markup, parentAction, portalSelector, rootSelector }) => {
+      const parentRoot = renderDialog();
+      const parentContent = getContent();
+      const selectorTarget = document.createElement("section");
+      selectorTarget.id = `nested-dialog-selector-${rootSelector.replaceAll(/\W/g, "")}`;
+      parentContent.dataset.slot = "dialog-content";
+      parentContent.insertAdjacentHTML("beforeend", markup);
+      parentContent.append(selectorTarget);
+      const childRoot = parentContent.querySelector<HTMLElement>(rootSelector)!;
+      const childPortal = childRoot.querySelector<HTMLElement>(portalSelector)!;
+      childPortal.dataset.container = `#${selectorTarget.id}`;
+      const parent = createDialog(parentRoot);
+      parent.open();
+      const child = createChild(childRoot);
+      const childCloseRequest = vi.fn();
+      childRoot.addEventListener("starwind:open-change", childCloseRequest);
+      child.open();
+      childCloseRequest.mockClear();
+
+      expect(child.getOpen()).toBe(true);
+      expect(childPortal.parentElement).toHaveAttribute("data-sw-floating-root", "dialog");
+      expect(
+        childPortal
+          .closest<HTMLElement>("[data-sw-dialog-top-layer-host]")
+          ?.matches(":popover-open"),
+      ).toBe(true);
+
+      parentAction(parent);
+      await waitForPresenceFrame();
+
+      expect(childCloseRequest).toHaveBeenCalledTimes(1);
+      expect(childCloseRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: expect.objectContaining({ open: false, reason: "imperative-action" }),
+        }),
+      );
+      expect(child.getOpen()).toBe(false);
+      expect(selectorTarget.querySelector("[data-sw-floating-portal]")).toBeNull();
+      expect(childPortal.parentElement).toBe(childRoot);
+
+      child.destroy();
+      parent.destroy();
+    },
+  );
 
   it("initializes nested overlays after dialog portal movement without duplicate controllers", async () => {
     const root = renderDialog();
@@ -441,7 +646,7 @@ describe("createDialog", () => {
     dialog.destroy();
   });
 
-  it("responds to imperative dialog events on the root", () => {
+  it("responds to imperative dialog events on the root", async () => {
     const root = renderDialog();
     const listener = vi.fn();
     root.addEventListener("starwind:open-change", listener);
@@ -460,6 +665,7 @@ describe("createDialog", () => {
     );
 
     root.dispatchEvent(new CustomEvent("dialog:close"));
+    await waitForPresenceFrame();
 
     expect(getContent().open).toBe(false);
     expect(root.getAttribute("data-state")).toBe("closed");
@@ -472,7 +678,7 @@ describe("createDialog", () => {
     dialog.destroy();
   });
 
-  it("resolves asChild trigger and close wrappers to their child control", () => {
+  it("resolves asChild trigger and close wrappers to their child control", async () => {
     const wrapper = document.createElement("div");
     wrapper.innerHTML = `
       <div data-sw-dialog>
@@ -536,6 +742,7 @@ describe("createDialog", () => {
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
 
     close.click();
+    await waitForPresenceFrame();
 
     expect(getContent().open).toBe(false);
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
@@ -602,6 +809,7 @@ describe("createDialog", () => {
     expect(getContent().open).toBe(true);
     expect(getOverlay().hidden).toBe(false);
 
+    await nextAnimationFrame();
     closeAnimation.resolve();
     await closeAnimation.promise;
     await waitForMicrotasks();
@@ -609,6 +817,49 @@ describe("createDialog", () => {
     expect(getContent().open).toBe(false);
     expect(getContent().hidden).toBe(true);
     expect(getOverlay().hidden).toBe(true);
+  });
+
+  it("completes zero-motion cleanup once after the discovery frame", async () => {
+    const root = renderDialog();
+    const outsideButton = document.createElement("button");
+    const onCloseComplete = vi.fn();
+    outsideButton.textContent = "Outside";
+    document.body.prepend(outsideButton);
+    outsideButton.focus();
+    const dialog = createDialog(root, { onCloseComplete });
+    const closeCompleteSubscriber = vi.fn();
+    dialog.subscribe("closeComplete", closeCompleteSubscriber);
+    const contentAnimations = vi.spyOn(getContent(), "getAnimations").mockReturnValue([]);
+    const overlayAnimations = vi.spyOn(getOverlay(), "getAnimations").mockReturnValue([]);
+
+    getTrigger().click();
+    getCloseButton().click();
+
+    expect(contentAnimations).not.toHaveBeenCalled();
+    expect(overlayAnimations).not.toHaveBeenCalled();
+    expect(getContent().open).toBe(true);
+    expect(getOverlay().hidden).toBe(false);
+    expect(document.body.style.overflow).toBe("hidden");
+    expect(document.activeElement).toBe(getInput());
+    expect(onCloseComplete).not.toHaveBeenCalled();
+    expect(closeCompleteSubscriber).not.toHaveBeenCalled();
+
+    await nextAnimationFrame();
+
+    expect(contentAnimations).toHaveBeenCalledTimes(1);
+    expect(overlayAnimations).toHaveBeenCalledTimes(1);
+    expect(getContent().open).toBe(false);
+    expect(getContent().hidden).toBe(true);
+    expect(getOverlay().hidden).toBe(true);
+    expect(document.body.style.overflow).toBe("");
+    expect(document.activeElement).toBe(outsideButton);
+    expect(onCloseComplete).toHaveBeenCalledTimes(1);
+    expect(closeCompleteSubscriber).toHaveBeenCalledTimes(1);
+
+    await nextAnimationFrame();
+
+    expect(onCloseComplete).toHaveBeenCalledTimes(1);
+    expect(closeCompleteSubscriber).toHaveBeenCalledTimes(1);
   });
 
   it("closes owned floating layers before native dialog teardown and restores focus", async () => {
@@ -634,6 +885,7 @@ describe("createDialog", () => {
     expect(layer.closeRequests).toEqual(["owner-close"]);
     expect(getContent().open).toBe(true);
 
+    await nextAnimationFrame();
     closeAnimation.resolve();
     await closeAnimation.promise;
     await waitForMicrotasks();
@@ -650,7 +902,7 @@ describe("createDialog", () => {
     dialog.destroy();
   });
 
-  it("suppresses controlled owned layers while closed and restores only current open state", () => {
+  it("suppresses controlled owned layers while closed and restores only current open state", async () => {
     const root = renderDialog();
     const dialog = createDialog(root);
     dialog.open();
@@ -661,6 +913,7 @@ describe("createDialog", () => {
     expect(getPromotedFloatingPortal()?.matches(":popover-open")).toBe(true);
 
     dialog.close();
+    await waitForPresenceFrame();
 
     expect(layer.element.getAttribute("data-state")).toBe("open");
     expect(closeEvents).toEqual(["requested"]);
@@ -673,19 +926,20 @@ describe("createDialog", () => {
     expect(layer.element.getAttribute("data-state")).toBe("open");
 
     dialog.close();
+    await waitForPresenceFrame();
     expect(closeEvents).toEqual(["requested", "requested"]);
     layer.element.setAttribute("data-state", "closed");
     layer.session.restore();
     dialog.open();
 
     expect(layer.element.getAttribute("data-state")).toBe("closed");
-    expect(getPromotedFloatingPortal()).toBeNull();
+    expect(getPromotedFloatingPortal()).not.toBeNull();
 
     layer.destroy();
     dialog.destroy();
   });
 
-  it("closes only the nearest nested dialog layers and preserves parent layer focus", () => {
+  it("closes only the nearest nested dialog layers and preserves parent layer focus", async () => {
     const nested = renderNestedDialogs();
     const parentDialog = createDialog(nested.parentRoot);
     const childDialog = createDialog(nested.childRoot);
@@ -697,19 +951,21 @@ describe("createDialog", () => {
     childLayer.focusTarget.focus();
 
     childDialog.close();
+    await waitForPresenceFrame();
 
     expect(childLayer.element.getAttribute("data-state")).toBe("closed");
     expect(childLayer.closeRequests).toEqual(["owner-close"]);
     expect(parentLayer.element.getAttribute("data-state")).toBe("open");
     expect(parentLayer.closeRequests).toEqual([]);
-    expect(parentLayer.element.closest("[data-sw-floating-portal]")?.matches(":popover-open")).toBe(
-      true,
-    );
+    expect(
+      parentLayer.element.closest("[data-sw-dialog-top-layer-host]")?.matches(":popover-open"),
+    ).toBe(true);
     expect(nested.parentContent.open).toBe(true);
     expect(nested.childContent.open).toBe(false);
     expect(document.activeElement).toBe(parentLayer.focusTarget);
 
     parentDialog.close();
+    await waitForPresenceFrame();
     expect(parentLayer.closeRequests).toEqual(["owner-close"]);
     expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
 
@@ -956,6 +1212,7 @@ describe("createDialog", () => {
     expect(getContent().open).toBe(true);
     expect(document.body.style.overflow).toBe("hidden");
 
+    await nextAnimationFrame();
     closeAnimation.resolve();
     await closeAnimation.promise;
     await waitForMicrotasks();
@@ -1008,6 +1265,7 @@ describe("createDialog", () => {
     expect(getContent().open).toBe(true);
     expect(getContent().getAttribute("data-state")).toBe("closed");
 
+    await nextAnimationFrame();
     closeAnimation.resolve();
     await closeAnimation.promise;
     await waitForMicrotasks();
@@ -1057,6 +1315,7 @@ describe("createDialog", () => {
 
     expect(document.body.style.overflow).toBe("hidden");
 
+    await nextAnimationFrame();
     closeAnimation.resolve();
     await closeAnimation.promise;
     await waitForMicrotasks();
@@ -1072,7 +1331,7 @@ describe("createDialog", () => {
     );
   });
 
-  it("routes form method dialog submissions through the close path", () => {
+  it("routes form method dialog submissions through the close path", async () => {
     const root = renderDialog();
     const listener = vi.fn();
     root.addEventListener("starwind:open-change", listener);
@@ -1096,6 +1355,7 @@ describe("createDialog", () => {
     });
 
     form.dispatchEvent(submitEvent);
+    await waitForPresenceFrame();
 
     expect(submitEvent.defaultPrevented).toBe(true);
     expect(getContent().open).toBe(false);
@@ -1137,7 +1397,7 @@ describe("createDialog", () => {
     dialog.destroy();
   });
 
-  it("closes on Escape and dispatches a cancelable intent event", () => {
+  it("closes on Escape and dispatches a cancelable intent event", async () => {
     const root = renderDialog();
     const escapeListener = vi.fn();
     root.addEventListener("starwind:escape-key-down", escapeListener);
@@ -1146,6 +1406,7 @@ describe("createDialog", () => {
     getTrigger().click();
 
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+    await waitForPresenceFrame();
 
     expect(escapeListener).toHaveBeenCalledTimes(1);
     expect(getContent().open).toBe(false);
@@ -1294,13 +1555,14 @@ describe("createDialog", () => {
     dialog.destroy();
   });
 
-  it("handles native cancel events and respects closeOnEscape", () => {
+  it("handles native cancel events and respects closeOnEscape", async () => {
     const root = renderDialog();
     const dialog = createDialog(root);
     getTrigger().click();
 
     const cancelEvent = new Event("cancel", { cancelable: true });
     getContent().dispatchEvent(cancelEvent);
+    await waitForPresenceFrame();
 
     expect(cancelEvent.defaultPrevented).toBe(true);
     expect(getContent().open).toBe(false);
@@ -1406,13 +1668,14 @@ describe("createDialog", () => {
     dialog.destroy();
   });
 
-  it("closes on overlay click and allows it to be canceled", () => {
+  it("closes on overlay click and allows it to be canceled", async () => {
     const root = renderDialog();
     root.addEventListener("starwind:outside-interact", (event) => event.preventDefault());
 
     const dialog = createDialog(root);
     getTrigger().click();
     getOverlay().click();
+    await waitForPresenceFrame();
 
     expect(getContent().open).toBe(true);
 
@@ -1422,11 +1685,12 @@ describe("createDialog", () => {
     createDialog(nextRoot);
     getTrigger().click();
     getOverlay().click();
+    await waitForPresenceFrame();
 
     expect(getContent().open).toBe(false);
   });
 
-  it("closes when the native dialog receives an outside click", () => {
+  it("closes when the native dialog receives an outside click", async () => {
     const root = renderDialog();
     createDialog(root);
     getTrigger().click();
@@ -1454,11 +1718,12 @@ describe("createDialog", () => {
         clientY: 20,
       }),
     );
+    await waitForPresenceFrame();
 
     expect(getContent().open).toBe(false);
   });
 
-  it("only lets the topmost nested dialog handle Escape", () => {
+  it("only lets the topmost nested dialog handle Escape", async () => {
     const nested = renderNestedDialogs();
     const parentEscapeListener = vi.fn();
     const childEscapeListener = vi.fn();
@@ -1481,6 +1746,7 @@ describe("createDialog", () => {
     expect(nested.childOverlay.hidden).toBe(true);
 
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+    await waitForPresenceFrame();
 
     expect(childEscapeListener).toHaveBeenCalledTimes(1);
     expect(parentEscapeListener).not.toHaveBeenCalled();
@@ -1631,7 +1897,7 @@ describe("createDialog", () => {
     parentDialog.destroy();
   });
 
-  it("registers closed intermediate dialogs before default-open descendants", () => {
+  it("registers closed intermediate dialogs before default-open descendants", async () => {
     const wrapper = document.createElement("div");
     wrapper.innerHTML = `
       <div data-sw-dialog data-default-open id="parent-dialog">
@@ -1682,12 +1948,14 @@ describe("createDialog", () => {
     expect(parentContent.open).toBe(true);
 
     grandchildClose.click();
+    await waitForPresenceFrame();
     expect(grandchildContent.open).toBe(false);
     expect(parentContent.hasAttribute("data-nested-dialog-open")).toBe(false);
     expect(middleContent.hasAttribute("data-nested-dialog-open")).toBe(false);
     expect(middleContent.hidden).toBe(true);
 
     parentClose.click();
+    await waitForPresenceFrame();
     expect(parentContent.open).toBe(false);
 
     createDialog(grandchildRoot).destroy();
@@ -1695,7 +1963,7 @@ describe("createDialog", () => {
     parentDialog.destroy();
   });
 
-  it("rolls back nested controllers when a later pre-pass root is incomplete", () => {
+  it("rolls back nested controllers when a later pre-pass root is incomplete", async () => {
     const unrelatedWrapper = document.createElement("div");
     unrelatedWrapper.innerHTML = `
       <div data-sw-dialog id="reentrant-unrelated-dialog">
@@ -1777,11 +2045,13 @@ describe("createDialog", () => {
     unrelatedTrigger.click();
     expect(unrelatedContent.open).toBe(true);
     unrelatedClose.click();
+    await waitForPresenceFrame();
     expect(unrelatedContent.open).toBe(false);
 
     preexistingChildTrigger.click();
     expect(preexistingChildContent.open).toBe(true);
     preexistingChildClose.click();
+    await waitForPresenceFrame();
     expect(preexistingChildContent.open).toBe(false);
 
     incompleteChild.innerHTML = `<dialog data-sw-dialog-content></dialog>`;
@@ -1808,7 +2078,7 @@ describe("createDialog", () => {
     parentDialog.destroy();
   });
 
-  it("starts a fresh transaction when an existing closed child opens", () => {
+  it("starts a fresh transaction when an existing closed child opens", async () => {
     const unrelatedWrapper = document.createElement("div");
     unrelatedWrapper.innerHTML = `
       <div data-sw-dialog id="later-open-unrelated">
@@ -1907,11 +2177,13 @@ describe("createDialog", () => {
     stableDialog.open();
     expect(stableContent.open).toBe(true);
     stableDialog.close();
+    await waitForPresenceFrame();
     expect(stableContent.open).toBe(false);
 
     expect(unrelatedContent.open).toBe(true);
     expect(document.activeElement).toBe(unrelatedClose);
     unrelatedClose.click();
+    await waitForPresenceFrame();
     expect(unrelatedContent.open).toBe(false);
     validFocus.mockRestore();
 
@@ -2318,7 +2590,7 @@ describe("createDialog", () => {
     iframe.remove();
   });
 
-  it("ignores parent close, outside, and dialog form submissions while a child is topmost", () => {
+  it("ignores parent close, outside, and dialog form submissions while a child is topmost", async () => {
     const nested = renderNestedDialogs();
 
     const parentDialog = createDialog(nested.parentRoot);
@@ -2348,11 +2620,13 @@ describe("createDialog", () => {
     expect(nested.childContent.open).toBe(true);
 
     nested.childClose.click();
+    await waitForPresenceFrame();
 
     expect(nested.parentContent.open).toBe(true);
     expect(nested.childContent.open).toBe(false);
 
     nested.parentClose.click();
+    await waitForPresenceFrame();
 
     expect(nested.parentContent.open).toBe(false);
 
@@ -2395,6 +2669,7 @@ describe("createDialog", () => {
     expect(nested.parentContent.open).toBe(true);
     expect(nested.childContent.open).toBe(true);
 
+    await nextAnimationFrame();
     closeAnimation.resolve();
     await closeAnimation.promise;
     await waitForMicrotasks();
@@ -2408,7 +2683,7 @@ describe("createDialog", () => {
     parentDialog.destroy();
   });
 
-  it("keeps body scroll locked while another non-nested modal dialog remains open", () => {
+  it("keeps body scroll locked while another non-nested modal dialog remains open", async () => {
     const firstRoot = renderDialog();
     const secondRoot = renderDialog();
     const firstDialog = createDialog(firstRoot);
@@ -2424,6 +2699,7 @@ describe("createDialog", () => {
     expect(document.body.style.getPropertyValue("--sw-scrollbar-width")).toBe("0px");
 
     firstDialog.setOpen(false);
+    await waitForPresenceFrame();
 
     expect(firstContent.open).toBe(false);
     expect(secondContent.open).toBe(true);
@@ -2431,6 +2707,7 @@ describe("createDialog", () => {
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
 
     secondDialog.setOpen(false);
+    await waitForPresenceFrame();
 
     expect(document.body.style.overflow).toBe("");
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
@@ -2460,7 +2737,7 @@ describe("createDialog", () => {
     expect(document.body.style.getPropertyValue("--sw-scrollbar-width")).toBe("");
   });
 
-  it("honors raw HTML attributes that disable Escape and outside-interact closing", () => {
+  it("honors raw HTML attributes that disable Escape and outside-interact closing", async () => {
     const root = renderDialog({
       closeOnEscape: false,
       closeOnOutsideInteract: false,
@@ -2476,6 +2753,7 @@ describe("createDialog", () => {
     expect(getContent().open).toBe(true);
 
     getCloseButton().click();
+    await waitForPresenceFrame();
     expect(getContent().open).toBe(false);
   });
 
@@ -2679,7 +2957,7 @@ function getCloseButton(): HTMLButtonElement {
 }
 
 function getPromotedFloatingPortal(): HTMLElement | null {
-  return document.querySelector<HTMLElement>("[data-sw-floating-portal]");
+  return document.querySelector<HTMLElement>("[data-sw-dialog-top-layer-host]:popover-open");
 }
 
 function createDeferred(): { promise: Promise<void>; resolve: () => void } {
@@ -2698,6 +2976,11 @@ async function waitForMicrotasks(): Promise<void> {
 
 function nextAnimationFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+async function waitForPresenceFrame(): Promise<void> {
+  await nextAnimationFrame();
+  await waitForMicrotasks();
 }
 
 function mountDialogOwnedLayer(

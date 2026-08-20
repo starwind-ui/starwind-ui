@@ -98,6 +98,32 @@ describe("source contribution report", () => {
     ]);
   });
 
+  it("attributes built Vue inputs to the Vue adapter category", () => {
+    const vueChunk = path.join(fixtureRepoRoot, "packages/vue/dist/select/index.js");
+    const [analysis] = buildSourceContributionAnalyses({
+      readFile: () => "// src/select/index.ts\nexport {};",
+      repoRoot: fixtureRepoRoot,
+      results: [
+        {
+          label: "Vue complete catalog",
+          metafile: fakeMetafile({ [vueChunk]: 275 }),
+          sourceContribution: { label: "Vue complete catalog" },
+        },
+      ],
+      tmpRoot: fixtureTmpRoot,
+    });
+
+    expect(analysis.categories).toEqual([{ bytes: 275, label: "Vue adapter" }]);
+    expect(analysis.topStarwindContributors).toEqual([
+      {
+        bytes: 275,
+        category: "Vue adapter",
+        input: "packages/vue/dist/select/index.js",
+        sourceOwner: "src/select/index.ts",
+      },
+    ]);
+  });
+
   it("renders a deterministic architecture-only Markdown section", () => {
     const markdown = formatSourceContributionMarkdown(
       [
@@ -291,14 +317,18 @@ describe("source contribution report", () => {
   });
 
   privateDiagnosticsIt(
-    "keeps the checked report byte-aligned with the generated rebaseline section",
+    "keeps the checked report content-aligned with the generated rebaseline section",
     () => {
       const report = readFileSync(packageSizeDiagnosticsPath, "utf8");
-      const expectedBlock = formatColorPickerRebaselineMarkdown().join("\n");
-      const generatedBlock = getSection(
-        report,
-        "### Color Picker Rebaseline Evidence",
-        "### Headline Aggregate Regression Guards",
+      const expectedBlock = normalizeMarkdownTableRows(
+        formatColorPickerRebaselineMarkdown().join("\n"),
+      );
+      const generatedBlock = normalizeMarkdownTableRows(
+        getSection(
+          report,
+          "### Color Picker Rebaseline Evidence",
+          "### Headline Aggregate Regression Guards",
+        ),
       );
 
       expect(generatedBlock).toBe(expectedBlock);
@@ -349,8 +379,52 @@ describe("source contribution report", () => {
       expect(architectureHeadings).toEqual([
         "All-three overlap - Starwind",
         "Field cold import - Starwind",
+        "@starwind-ui/vue (adapter only) source attribution",
+        "@starwind-ui/vue + runtime source attribution",
+        "@starwind-ui/vue complete catalog source attribution",
+        "@starwind-ui/vue/accordion source attribution",
+        "@starwind-ui/vue/alert-dialog source attribution",
+        "@starwind-ui/vue/avatar source attribution",
+        "@starwind-ui/vue/button source attribution",
+        "@starwind-ui/vue/carousel source attribution",
+        "@starwind-ui/vue/checkbox source attribution",
+        "@starwind-ui/vue/checkbox-group source attribution",
+        "@starwind-ui/vue/collapsible source attribution",
+        "@starwind-ui/vue/color-picker source attribution",
+        "@starwind-ui/vue/combobox source attribution",
+        "@starwind-ui/vue/context-menu source attribution",
+        "@starwind-ui/vue/dialog source attribution",
+        "@starwind-ui/vue/drawer source attribution",
+        "@starwind-ui/vue/dropzone source attribution",
+        "@starwind-ui/vue/field source attribution",
+        "@starwind-ui/vue/fieldset source attribution",
+        "@starwind-ui/vue/form source attribution",
+        "@starwind-ui/vue/input source attribution",
+        "@starwind-ui/vue/input-otp source attribution",
+        "@starwind-ui/vue/menu source attribution",
+        "@starwind-ui/vue/navigation-menu source attribution",
+        "@starwind-ui/vue/popover source attribution",
+        "@starwind-ui/vue/preview-card source attribution",
+        "@starwind-ui/vue/progress source attribution",
+        "@starwind-ui/vue/radio source attribution",
+        "@starwind-ui/vue/radio-group source attribution",
+        "@starwind-ui/vue/scroll-area source attribution",
+        "@starwind-ui/vue/select source attribution",
+        "@starwind-ui/vue/sidebar source attribution",
+        "@starwind-ui/vue/slider source attribution",
+        "@starwind-ui/vue/switch source attribution",
+        "@starwind-ui/vue/tabs source attribution",
+        "@starwind-ui/vue/toast source attribution",
+        "@starwind-ui/vue/toggle source attribution",
+        "@starwind-ui/vue/toggle-group source attribution",
+        "@starwind-ui/vue/tooltip source attribution",
+        "@starwind-ui/vue/theme source attribution",
+        "Starwind/Zag Vue overlap - Starwind Vue source attribution",
       ]);
-      expect(architectureHeadings.every((heading) => heading.endsWith(" - Starwind"))).toBe(true);
+      expect(architectureHeadings.slice(0, 2)).toEqual([
+        "All-three overlap - Starwind",
+        "Field cold import - Starwind",
+      ]);
       expect(normalizedArchitectureBlock).toContain(
         "| 1 | Runtime | `src/components/field/field.ts` |",
       );

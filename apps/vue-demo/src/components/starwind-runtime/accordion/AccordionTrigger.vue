@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import * as AccordionPrimitive from "@starwind-ui/vue/accordion";
 import type { ClassValue } from "tailwind-variants";
-import {
-  type ButtonHTMLAttributes,
-  type ComponentPublicInstance,
-  nextTick,
-  ref,
-  useAttrs,
-} from "vue";
+import { type ButtonHTMLAttributes, type ComponentPublicInstance, nextTick, ref } from "vue";
 import { accordionTrigger } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -23,7 +17,6 @@ defineSlots<{
   default?: () => unknown;
   icon?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLButtonElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLButtonElement | null } & ComponentPublicInstance) | null =
   null;
@@ -53,7 +46,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
   <AccordionPrimitive.AccordionTrigger
     :ref="setElement"
     :class="accordionTrigger({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="accordion-trigger"
   >
     <slot />

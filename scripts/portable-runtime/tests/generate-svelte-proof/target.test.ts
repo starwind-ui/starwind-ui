@@ -67,6 +67,7 @@ describe("private Svelte proof target", () => {
     expect(svelteFrameworkAdapterReadiness.publicSupport).toBe(
       svelteAdapterPublicContract.publicSupport,
     );
+    expect(svelteFrameworkAdapterReadiness.portalStrategy).toBe("svelte-attachment");
     expect(svelteAdapterPublicContract.framework.minimumVersion).toBe("5.29.0");
   });
 

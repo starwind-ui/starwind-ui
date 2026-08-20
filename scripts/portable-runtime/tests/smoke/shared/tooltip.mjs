@@ -63,6 +63,7 @@ export async function verifyTooltipCompositionCases(page, prefix, options = {}) 
   await openTooltipAndAssert(page, {
     contentId: ids.nativeContent,
     expectedText: "Native tooltip content",
+    positionerParentTagName: options.positionerParentTagName,
     triggerId: ids.nativeTrigger,
   });
   await closeTooltip(page, ids.nativeContent);
@@ -70,6 +71,7 @@ export async function verifyTooltipCompositionCases(page, prefix, options = {}) 
   await openTooltipAndAssert(page, {
     contentId: ids.rawContent,
     expectedText: "Raw child tooltip content",
+    positionerParentTagName: options.positionerParentTagName,
     triggerId: ids.rawTrigger,
   });
   await closeTooltip(page, ids.rawContent);
@@ -116,6 +118,7 @@ export async function verifyTooltipCompositionCases(page, prefix, options = {}) 
   await openTooltipAndAssert(page, {
     contentId: ids.styledContent,
     expectedText: "Styled child tooltip content",
+    positionerParentTagName: options.positionerParentTagName,
     triggerId: ids.styledTrigger,
   });
   await closeTooltip(page, ids.styledContent);
@@ -150,7 +153,10 @@ function readTooltipCompositionState(ids) {
   };
 }
 
-async function openTooltipAndAssert(page, { contentId, expectedText, triggerId }) {
+async function openTooltipAndAssert(
+  page,
+  { contentId, expectedText, positionerParentTagName = "BODY", triggerId },
+) {
   await page.locator(`#${triggerId}`).hover();
   await page.locator(`#${contentId}`).waitFor({ state: "visible" });
   const state = await page.evaluate(readOpenTooltipState, { contentId, triggerId });
@@ -160,7 +166,7 @@ async function openTooltipAndAssert(page, { contentId, expectedText, triggerId }
     state.triggerState !== "open" ||
     state.describedBy !== contentId ||
     state.contentRole !== "tooltip" ||
-    state.positionerParentTag !== "BODY" ||
+    state.positionerParentTag !== positionerParentTagName ||
     state.text !== expectedText
   ) {
     throw new Error(

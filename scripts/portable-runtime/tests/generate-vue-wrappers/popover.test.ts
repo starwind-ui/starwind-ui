@@ -74,7 +74,11 @@ describe("generated Vue Popover", () => {
     expect(trigger).toContain('import { createVueAsChild } from "../_internal/as-child";');
     expect(trigger).toContain("asChild.render({");
     expect(portal).toContain("container?: string | HTMLElement");
-    expect(portal).toContain(':disabled="props.disabled || !root.mounted.value"');
+    expect(portal).toContain('import { useVuePortalPlacement } from "../_internal/portal";');
+    expect(portal).toContain('data-sw-portal-placement="framework"');
+    expect(portal).toContain(':to="placement.target.value"');
+    expect(portal).toContain(':disabled="placement.disabled.value"');
+    expect(portal).toContain(":data-disabled=\"props.disabled ? '' : undefined\"");
     expect(portal).toContain("root.registerPortal(owner, null)");
     expect(popup).toContain(':data-side="props.side"');
     expect(popup).toContain(':data-align="props.align"');

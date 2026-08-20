@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { initThemeController } from "@starwind-ui/vue/theme";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type ButtonHTMLAttributes, computed, onMounted, ref, useAttrs } from "vue";
+import { type ButtonHTMLAttributes, computed, onMounted, ref } from "vue";
 import { themeToggle } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -59,7 +59,6 @@ defineSlots<{
   "dark-icon"?: () => unknown;
   "light-icon"?: () => unknown;
 }>();
-const attrs = useAttrs();
 const initialPressed = computed(() => pressed ?? defaultPressed ?? false);
 const element = ref<HTMLButtonElement | null>(null);
 defineExpose({ element });
@@ -87,7 +86,7 @@ onMounted(() => {
     :data-pressed="initialPressed ? '' : undefined"
     :data-unpressed="initialPressed ? undefined : ''"
     :data-disabled="disabled ? '' : undefined"
-    v-bind="attrs"
+    v-bind="$attrs"
     type="button"
     :data-slot="dataSlot || 'theme-toggle'"
   >

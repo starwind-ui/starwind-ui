@@ -151,6 +151,7 @@ try {
     expectations: {
       badgeText: null,
       containerPosition: "fixed",
+      footerContentParentTagName: "DIV",
       minMenuActionCount: 0,
       minMenuButtonCount: 9,
       minSkeletonCount: 0,
@@ -184,7 +185,7 @@ try {
   });
   await page.goto(url, { waitUntil: SERVER_MODE === "dev" ? "domcontentloaded" : "networkidle" });
   await verifyAstroAppNav({ page });
-  await verifyAstroFormControlCases({ page });
+  await verifyAstroFormControlCases({ browser, page, url });
   await verifyAstroMediaOverlayCases({ page, serverMode: SERVER_MODE });
   await verifyAstroSheetMenuCases({ page });
   await verifyAstroAvatarLazyImageCase({ page, baseUrl, serverMode: SERVER_MODE });
@@ -431,7 +432,7 @@ async function verifyAstroColorPickerCases({ page }) {
 
   await content.getByRole("combobox", { name: "Color format" }).click();
   const formatPositioner = page.locator(
-    '#canonical-color-picker-root > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
+    '#canonical-color-picker-root > [data-slot="select-portal"] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
   );
   if (
     (await formatPositioner.count()) !== 1 ||

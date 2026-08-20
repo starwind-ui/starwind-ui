@@ -496,6 +496,11 @@ describe("Vue Combobox public behavior", () => {
     expect(document.querySelector("[data-sw-combobox-portal]")?.parentElement?.id).toBe(
       "first-overlays",
     );
+    const portalElement = () => document.querySelector<HTMLElement>("[data-sw-combobox-portal]")!;
+    expect(portalElement().dataset.placement).toBe("ready");
+    expect(portalElement().contains(first.querySelector("[data-sw-combobox-positioner]"))).toBe(
+      true,
+    );
     expect(first.querySelector<HTMLElement>("[data-sw-combobox-popup]")!.hidden).toBe(false);
 
     portal.container = second;
@@ -504,9 +509,12 @@ describe("Vue Combobox public behavior", () => {
     expect(second.querySelector<HTMLElement>("[data-sw-combobox-popup]")!.hidden).toBe(false);
     portal.disabled = true;
     await frame();
+    expect(portalElement().dataset.placement).toBe("ready");
+    expect(host.contains(portalElement())).toBe(true);
     expect(host.querySelector<HTMLElement>("[data-sw-combobox-popup]")!.hidden).toBe(false);
     portal.disabled = false;
     await frame();
+    expect(portalElement().dataset.placement).toBe("ready");
     expect(second.querySelector<HTMLElement>("[data-sw-combobox-popup]")!.hidden).toBe(false);
 
     model.open = false;

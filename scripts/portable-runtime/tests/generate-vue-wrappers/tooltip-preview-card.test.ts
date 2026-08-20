@@ -53,7 +53,8 @@ describe("generated Vue timed floating overlays", () => {
       expect(root).toContain("await nextTick()");
       expect(root).toContain("generation !== runtimeGeneration");
       expect(trigger).toContain("const AsChildTrigger = defineComponent");
-      expect(portal).toContain(':disabled="props.disabled || !root.mounted.value"');
+      expect(portal).toContain(':disabled="placement.disabled.value"');
+      expect(portal).toContain('data-sw-portal-placement="framework"');
       expect(popup).toContain(':data-side="props.side"');
       expect(popup).toContain(':data-align="props.align"');
       expect(popup).toContain("hidden");

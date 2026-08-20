@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import "./styles.css";
 import * as ColorPickerPrimitive from "@starwind-ui/vue/color-picker";
 import { colorPickerArea, colorPickerAreaThumb } from "./variants";
@@ -15,13 +15,12 @@ type ColorPickerAreaDeclaredProps = {
 } & /* @vue-ignore */ ColorPickerAreaProps;
 const { class: className } = defineProps<ColorPickerAreaDeclaredProps>();
 defineSlots<{}>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ColorPickerPrimitive.ColorPickerArea
     :class="colorPickerArea({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="color-picker-area"
   >
     <ColorPickerPrimitive.ColorPickerAreaBackground

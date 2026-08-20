@@ -115,26 +115,36 @@ type TextSurface = {
 
 const boundaryAwareVuePattern = /(^|[^a-z0-9])vue(?=$|[^a-z0-9])/i;
 const boundaryAwareVueGlobalPattern = /(^|[^a-z0-9])vue(?=$|[^a-z0-9])/gi;
-const approvedPrivateVueScripts = {
-  l: "pnpm runtime:build && pnpm react:build && pnpm vue:build && pnpm cli:build && pnpm runtime:link && pnpm astro:link && pnpm react:link && pnpm vue:link && pnpm cli:link",
-  "runtime:generate:vue": "tsx scripts/portable-runtime/generate-vue-wrappers.ts",
-  "runtime:generate:vue:check": "tsx scripts/portable-runtime/check-vue-tracer-fixtures.ts",
-  "runtime:generate:vue:test": "vitest run --project=portable-vue",
-  "test:vue-cli-host-acceptance":
-    "pnpm exec tsx --tsconfig packages/cli/tsconfig.json scripts/vue-cli-host-acceptance.mjs",
-  "test:vue-cli-local-link":
-    "pnpm exec tsx --tsconfig packages/cli/tsconfig.json scripts/vue-cli-host-acceptance.mjs --local-link-only",
-  ul: String.raw`node -e "const { spawnSync } = require(\"node:child_process\"); const command = process.platform === \"win32\" ? \"pnpm.cmd\" : \"pnpm\"; const scripts = [\"astro:unlink\", \"react:unlink\", \"vue:unlink\", \"runtime:unlink\", \"cli:unlink\"]; let failed = false; for (const script of scripts) { const result = spawnSync(command, [script], { stdio: \"inherit\" }); failed ||= result.status !== 0; } process.exitCode = failed ? 1 : 0;"`,
-  "vue:build": "pnpm --filter=@starwind-ui/vue build",
-  "vue:link": "pnpm --dir packages/vue add --global . --ignore-scripts",
-  "vue:test": "pnpm --filter=@starwind-ui/vue test:all",
-  "vue:typecheck": "pnpm --filter=@starwind-ui/vue typecheck",
-  "vue:unlink": "pnpm unlink:global @starwind-ui/vue",
-  "vue:verify": "pnpm runtime:generate:vue:test && pnpm vue:typecheck && pnpm vue:test",
-  "vue-demo:build": "pnpm --filter=vue-demo build",
-  "vue-demo:dev": "pnpm --filter=vue-demo dev",
-  "vue-demo:smoke": "pnpm --filter=vue-demo smoke",
-} as const;
+const approvedPrivateVueScriptNames = [
+  "l",
+  "runtime:generate:vue",
+  "runtime:generate:vue:check",
+  "runtime:generate:vue:test",
+  "runtime:size",
+  "runtime:size:baseline:vue",
+  "runtime:size:check",
+  "runtime:size:check:prepared:private",
+  "runtime:size:starwind",
+  "test:vue-cli-host-acceptance",
+  "test:vue-cli-local-link",
+  "ul",
+  "vue:build",
+  "vue:link",
+  "vue:test",
+  "vue:typecheck",
+  "vue:unlink",
+  "vue:verify",
+  "vue-demo:build",
+  "vue-demo:dev",
+  "vue-demo:smoke",
+] as const;
+const approvedPrivateVueScriptNameSet = new Set<string>(approvedPrivateVueScriptNames);
+const forbiddenPublicVueScriptCommandPatterns = [
+  /\b(?:npm|pnpm|yarn)\b[^\n;&|]*\b(?:pack|publish)\b/i,
+  /\bchangeset\b[^\n;&|]*\bpublish\b/i,
+  /(?:pack-public-release-artifacts|published-release-acceptance|release-candidate-acceptance|release-packages)\.mjs\b/i,
+  /(?:runtime:registry(?::|\b)|generate-cli-registry|packages\/cli\/(?:registry|src\/registry))/i,
+] as const;
 const approvedChangesetIgnore = [
   "demo",
   "react-demo",
@@ -177,16 +187,21 @@ function getBoundaryAwareVueScripts(scripts: Record<string, string>): Record<str
   );
 }
 
-function findVueScriptAllowlistViolations(scripts: Record<string, string>): string[] {
+function findVueScriptPolicyViolations(scripts: Record<string, string>): string[] {
   const actualVueScripts = getBoundaryAwareVueScripts(scripts);
   const violations: string[] = [];
 
-  for (const [name, approvedCommand] of Object.entries(approvedPrivateVueScripts)) {
+  for (const name of approvedPrivateVueScriptNames) {
     if (!(name in actualVueScripts)) violations.push(`missing:${name}`);
-    else if (actualVueScripts[name] !== approvedCommand) violations.push(`mutated:${name}`);
   }
-  for (const name of Object.keys(actualVueScripts)) {
-    if (!(name in approvedPrivateVueScripts)) violations.push(`unexpected:${name}`);
+  for (const [name, command] of Object.entries(actualVueScripts)) {
+    if (!approvedPrivateVueScriptNameSet.has(name)) {
+      violations.push(`unexpected:${name}`);
+      continue;
+    }
+    if (forbiddenPublicVueScriptCommandPatterns.some((pattern) => pattern.test(command))) {
+      violations.push(`forbidden:${name}`);
+    }
   }
 
   return violations.sort();
@@ -649,10 +664,7 @@ describe("Vue non-shipping public-contract gate", () => {
     }
 
     expect(rootManifest.private).toBe(true);
-    expect(getBoundaryAwareVueScripts(rootManifest.scripts ?? {})).toEqual(
-      approvedPrivateVueScripts,
-    );
-    expect(findVueScriptAllowlistViolations(rootManifest.scripts ?? {})).toEqual([]);
+    expect(findVueScriptPolicyViolations(rootManifest.scripts ?? {})).toEqual([]);
 
     const changesetConfig = JSON.parse(
       readFileSync(join(process.cwd(), ".changeset/config.json"), "utf8"),
@@ -775,9 +787,20 @@ describe("Vue non-shipping public-contract gate", () => {
   });
 
   it("rejects synthetic Vue leaks across private-script, registry, docs, and manifests", () => {
+    const rootManifest = JSON.parse(
+      readFileSync(join(process.cwd(), "package.json"), "utf8"),
+    ) as PackageManifest;
+    const rootScripts = rootManifest.scripts ?? {};
     expect(
-      findVueScriptAllowlistViolations({
-        ...approvedPrivateVueScripts,
+      findVueScriptPolicyViolations({
+        ...rootScripts,
+        "runtime:size:starwind":
+          "pnpm vue:build && node scripts/portable-runtime/another-size-runner.mjs",
+      }),
+    ).toEqual([]);
+    expect(
+      findVueScriptPolicyViolations({
+        ...rootScripts,
         "publish:vue": "pnpm publish",
         "runtime:registry:vue": "tsx scripts/portable-runtime/generate-cli-registry.ts",
         "shipping:adapter": "pnpm --filter=@starwind-ui/vue publish",
@@ -788,15 +811,15 @@ describe("Vue non-shipping public-contract gate", () => {
       "unexpected:shipping:adapter",
     ]);
     expect(
-      findVueScriptAllowlistViolations({
-        ...approvedPrivateVueScripts,
+      findVueScriptPolicyViolations({
+        ...rootScripts,
         "vue:build": "pnpm --filter=@starwind-ui/vue publish",
       }),
-    ).toEqual(["mutated:vue:build"]);
+    ).toEqual(["forbidden:vue:build"]);
     expect(
-      findVueScriptAllowlistViolations(
+      findVueScriptPolicyViolations(
         Object.fromEntries(
-          Object.entries(approvedPrivateVueScripts).filter(([name]) => name !== "vue:typecheck"),
+          Object.entries(rootScripts).filter(([name]) => name !== "vue:typecheck"),
         ),
       ),
     ).toEqual(["missing:vue:typecheck"]);

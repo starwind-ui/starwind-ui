@@ -1,3 +1,5 @@
+import { assertPublicPortalTopology } from "../../shared/public-portal-topology.mjs";
+
 export async function verifyReactSelectComboboxCases({ page }) {
   const selectState = await page.evaluate(async () => {
     const waitFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -170,6 +172,9 @@ export async function verifyReactSelectComboboxCases({ page }) {
   await page.locator("#react-runtime-select-theme-trigger").focus();
   await page.keyboard.press("Enter");
   await page.locator("#react-runtime-select-theme-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#react-runtime-select-theme-content"), {
+    portalSlot: "select-portal",
+  });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => {
     const content = document.querySelector("#react-runtime-select-theme-content");
@@ -695,6 +700,9 @@ export async function verifyReactSelectComboboxCases({ page }) {
 
   await page.locator("#react-runtime-combobox-fruit-input").fill("ap");
   await page.locator("#react-runtime-combobox-fruit-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#react-runtime-combobox-fruit-content"), {
+    portalSlot: "combobox-portal",
+  });
   const reactComboboxAppleBox = await page
     .locator("#react-runtime-combobox-fruit-apple")
     .boundingBox();

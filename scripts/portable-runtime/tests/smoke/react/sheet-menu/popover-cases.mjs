@@ -1,4 +1,5 @@
 import { expectText } from "../../shared/text.mjs";
+import { assertPublicPortalTopology } from "../../shared/public-portal-topology.mjs";
 
 export async function verifyReactPopoverCases({ page }) {
   const nativeRecipeClasses = [
@@ -41,6 +42,9 @@ export async function verifyReactPopoverCases({ page }) {
 
   await page.getByRole("button", { name: "Open React popover" }).click();
   await page.getByRole("heading", { name: "React runtime popover" }).waitFor();
+  await assertPublicPortalTopology(page.locator("#react-runtime-popover-content"), {
+    portalSlot: "popover-portal",
+  });
 
   const openPopoverState = await page
     .locator("#react-runtime-popover-content")
@@ -73,7 +77,7 @@ export async function verifyReactPopoverCases({ page }) {
     openPopoverState.state !== "open" ||
     !["bottom", "top"].includes(openPopoverState.dataSide ?? "") ||
     openPopoverState.dataAlign !== "start" ||
-    openPopoverState.parentTagName !== "BODY" ||
+    openPopoverState.parentTagName !== "DIV" ||
     openPopoverState.rootContains !== false ||
     openPopoverState.position !== "fixed" ||
     openPopoverState.styleLeft === "" ||
@@ -97,18 +101,16 @@ export async function verifyReactPopoverCases({ page }) {
     .locator("#react-runtime-popover-content")
     .evaluate((content) => ({
       hidden: content instanceof HTMLElement ? content.hidden : null,
-      parentTagName: content.parentElement?.tagName,
+      contentInsidePortal:
+        content.closest('[data-slot="popover-portal"]')?.contains(content) ?? false,
+      portalParentTagName: content.closest('[data-slot="popover-portal"]')?.parentElement?.tagName,
       state: content.getAttribute("data-state"),
     }));
-  const isClosingInPortal =
+  const isClosingOrClosedInPortal =
     closingPopoverState.state === "closed" &&
-    closingPopoverState.hidden === false &&
-    closingPopoverState.parentTagName === "BODY";
-  const isClosedInRoot =
-    closingPopoverState.state === "closed" &&
-    closingPopoverState.hidden === true &&
-    closingPopoverState.parentTagName !== "BODY";
-  if (!isClosingInPortal && !isClosedInRoot) {
+    closingPopoverState.contentInsidePortal === true &&
+    closingPopoverState.portalParentTagName === "BODY";
+  if (!isClosingOrClosedInPortal) {
     throw new Error(
       `Expected outside click to close React Popover with either exit-animation presence or final hidden state, got ${JSON.stringify(
         closingPopoverState,
@@ -117,14 +119,10 @@ export async function verifyReactPopoverCases({ page }) {
   }
   await page.waitForFunction(() => {
     const content = document.querySelector("#react-runtime-popover-content");
-    const root = document.querySelector("#react-runtime-popover-default");
-
-    return (
-      content instanceof HTMLElement &&
-      root instanceof HTMLElement &&
-      content.hidden &&
-      root.contains(content)
-    );
+    return content instanceof HTMLElement && content.hidden;
+  });
+  await assertPublicPortalTopology(page.locator("#react-runtime-popover-content"), {
+    portalSlot: "popover-portal",
   });
 
   await expectText(page.locator("#react-popover-count"), "0");
@@ -155,14 +153,10 @@ export async function verifyReactPopoverCases({ page }) {
   await expectText(page.locator("#react-popover-count"), "2");
   await page.waitForFunction(() => {
     const content = document.querySelector("#react-runtime-popover-controlled-content");
-    const root = document.querySelector("#react-runtime-popover-controlled");
-
-    return (
-      content instanceof HTMLElement &&
-      root instanceof HTMLElement &&
-      content.hidden &&
-      root.contains(content)
-    );
+    return content instanceof HTMLElement && content.hidden;
+  });
+  await assertPublicPortalTopology(page.locator("#react-runtime-popover-controlled-content"), {
+    portalSlot: "popover-portal",
   });
 
   await page.getByRole("button", { name: "Open canceled popover" }).click();
@@ -171,7 +165,9 @@ export async function verifyReactPopoverCases({ page }) {
     .locator("#react-runtime-popover-canceled-content")
     .evaluate((content) => ({
       hidden: content instanceof HTMLElement ? content.hidden : null,
-      rootState: content.closest("[data-sw-popover]")?.getAttribute("data-state"),
+      rootState: document
+        .querySelector("#react-runtime-popover-canceled")
+        ?.getAttribute("data-state"),
       state: content.getAttribute("data-state"),
     }));
   if (
@@ -204,6 +200,9 @@ export async function verifyReactPopoverCases({ page }) {
     }));
   await page.locator("#react-runtime-popover-as-child-trigger").click();
   await page.locator("#react-runtime-popover-as-child-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#react-runtime-popover-as-child-content"), {
+    portalSlot: "popover-portal",
+  });
   const popoverAsChildOpen = await page.evaluate(() => {
     const trigger = document.querySelector("#react-runtime-popover-as-child-trigger");
     const content = document.querySelector("#react-runtime-popover-as-child-content");
@@ -237,7 +236,7 @@ export async function verifyReactPopoverCases({ page }) {
     popoverAsChildOpen.contentHidden !== false ||
     popoverAsChildOpen.contentRole !== "dialog" ||
     popoverAsChildOpen.contentState !== "open" ||
-    popoverAsChildOpen.parentTagName !== "BODY" ||
+    popoverAsChildOpen.parentTagName !== "DIV" ||
     popoverAsChildOpen.listenerCount !== "1" ||
     popoverAsChildOpen.listenerText !== "1" ||
     popoverAsChildOpen.text?.includes("As child popover") !== true
@@ -273,6 +272,9 @@ export async function verifyReactPopoverCases({ page }) {
     }));
   await page.locator("#react-runtime-popover-styled-child-trigger").click();
   await page.locator("#react-runtime-popover-styled-child-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#react-runtime-popover-styled-child-content"), {
+    portalSlot: "popover-portal",
+  });
   const styledContentOpen = await page
     .locator("#react-runtime-popover-styled-child-content")
     .evaluate((content) => ({
@@ -293,7 +295,7 @@ export async function verifyReactPopoverCases({ page }) {
     styledTriggerInitial.letterSpacing !== "0.234px" ||
     styledTriggerInitial.textTransform !== "uppercase" ||
     styledContentOpen.hidden !== false ||
-    styledContentOpen.parentTagName !== "BODY" ||
+    styledContentOpen.parentTagName !== "DIV" ||
     styledContentOpen.role !== "dialog" ||
     styledContentOpen.state !== "open" ||
     styledContentOpen.text !== "Styled child content"

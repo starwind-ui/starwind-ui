@@ -2,11 +2,10 @@
 <!-- Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies. -->
 <script setup lang="ts">
 import { createAvatar } from "@starwind-ui/runtime/avatar";
-import { onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLSpanElement | null>(null);
 let instance: ReturnType<typeof createAvatar> | undefined;
 
@@ -33,7 +32,7 @@ onBeforeUnmount(destroyOwnedInstance);
 </script>
 
 <template>
-  <span ref="rootRef" v-bind="attrs" data-sw-avatar data-image-loading-status="idle">
+  <span ref="rootRef" v-bind="$attrs" data-sw-avatar data-image-loading-status="idle">
     <slot />
   </span>
 </template>

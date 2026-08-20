@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as MenuPrimitive from "@starwind-ui/vue/menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { dropdownCheckboxItem, dropdownCheckboxItemIndicator } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -52,7 +52,6 @@ defineSlots<{
   default?: () => unknown;
   indicator?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -62,7 +61,7 @@ const attrs = useAttrs();
     :default-checked="defaultChecked"
     :close-on-click="closeOnClick"
     :disabled="disabled"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="dropdown-checkbox-item"
   >
     <template v-if="showIndicator">

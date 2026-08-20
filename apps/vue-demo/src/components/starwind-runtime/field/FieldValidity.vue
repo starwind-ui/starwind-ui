@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as FieldPrimitive from "@starwind-ui/vue/field";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { fieldValidity } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -43,7 +43,6 @@ const { match, class: className } = defineProps<FieldValidityDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDivElement | null } & ComponentPublicInstance) | null =
   null;
@@ -72,7 +71,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :ref="setElement"
     :class="fieldValidity({ class: className })"
     :match="match"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="field-validity"
   >
     <slot />

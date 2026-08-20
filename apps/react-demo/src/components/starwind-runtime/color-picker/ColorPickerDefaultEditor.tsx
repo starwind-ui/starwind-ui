@@ -16,6 +16,8 @@ import {
 export type ColorPickerDefaultEditorProps = {
   size?: "sm" | "md" | "lg";
   showEyeDropper?: boolean;
+  portalContainer?: string;
+  disablePortal?: boolean;
   formatControl?: "select" | "native" | "none";
   formats?: readonly import("@starwind-ui/react/color-picker").ColorPickerFormat[];
   swatches?: readonly (
@@ -32,6 +34,8 @@ function ColorPickerDefaultEditor(props: ColorPickerDefaultEditorProps) {
   const {
     size = "md",
     showEyeDropper = true,
+    portalContainer,
+    disablePortal = false,
     formatControl = "select",
     formats = ["hex", "rgb", "hsl", "hsb"],
     swatches = [],
@@ -74,6 +78,8 @@ function ColorPickerDefaultEditor(props: ColorPickerDefaultEditorProps) {
           formatContentSize={size}
           formatControl={formatControl}
           formats={formats}
+          portalContainer={portalContainer}
+          disablePortal={disablePortal}
           className="min-w-0 flex-1"
         />
       </div>

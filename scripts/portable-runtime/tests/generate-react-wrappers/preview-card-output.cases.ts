@@ -32,9 +32,10 @@ export function defineReactPreviewCardOutputTests(getTempRoot: GetTempRoot): voi
     const index = await readGeneratedFile(outputRoot, "preview-card/index.ts");
 
     expect(generatedPrimitiveEntries).toContain("preview-card");
-    expect(root).toContain(
-      'import { createPreviewCard, type PreviewCardOpenChangeDetails } from "@starwind-ui/runtime/preview-card";',
-    );
+    expect(root).toContain("createPortalBinding,");
+    expect(root).toContain("createPreviewCard,");
+    expect(root).toContain("type PreviewCardOpenChangeDetails");
+    expect(root).toContain('} from "@starwind-ui/runtime/preview-card";');
     expect(root).toContain("open?: boolean;");
     expect(root).toContain("onOpenChange?:");
     expect(root).toContain("openDelay = 600");

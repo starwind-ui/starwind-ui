@@ -5,13 +5,26 @@
 
 "use client";
 
+import {
+  reportPortalPlacement,
+  resolvePortalPlacement,
+} from "@starwind-ui/runtime/navigation-menu";
 import * as React from "react";
+import { ReactPortal, type ReactPortalProps } from "../internal/portal";
 
-export type NavigationMenuPortalProps = React.HTMLAttributes<HTMLDivElement>;
+export type NavigationMenuPortalProps = ReactPortalProps;
 
 const NavigationMenuPortal = React.forwardRef<HTMLDivElement, NavigationMenuPortalProps>(
   function NavigationMenuPortal(props, forwardedRef) {
-    return <div data-sw-nav-menu-portal="" ref={forwardedRef} {...props} />;
+    return (
+      <ReactPortal
+        discoveryAttribute="data-sw-nav-menu-portal"
+        reportPlacement={reportPortalPlacement}
+        resolvePlacement={resolvePortalPlacement}
+        ref={forwardedRef}
+        {...props}
+      />
+    );
   },
 );
 

@@ -231,6 +231,10 @@ function validateContract(
     }
   }
 
+  if (contract.portal) {
+    requirePart(contract, parts, contract.portal.part, "portal.part", issues);
+  }
+
   for (const ref of contract.refs ?? []) {
     requirePart(contract, parts, ref.part, "refs.part", issues);
   }

@@ -126,6 +126,11 @@ async function verifyContentCase({
       `Expected ${label} ${expectedSize} Positioner metadata, got ${JSON.stringify(state)}.`,
     );
   }
+  if (state.contentInsidePortal !== true || state.portalParentTagName !== "BODY") {
+    throw new Error(
+      `Expected ${label} ${expectedSize} Navigation Menu content inside its public Portal wrapper, got ${JSON.stringify(state)}.`,
+    );
+  }
   assertApprox(state.contentPadding, 4, `${label} ${expectedSize} Content padding`);
   assertApprox(state.fontSize, fontSize, `${label} ${expectedSize} popup-link typography`);
   assertApprox(state.gap, gap, `${label} ${expectedSize} popup-link gap`);
@@ -254,6 +259,7 @@ function readOpenContentSizing(link) {
   const linkStyle = getComputedStyle(link);
   const content = link.closest('[data-slot="navigation-menu-content"]');
   const positioner = link.closest('[data-slot="navigation-menu-positioner"]');
+  const portal = link.closest('[data-slot="navigation-menu-portal"]');
   const icon = link.querySelector("svg");
   const iconRect = icon instanceof SVGElement ? icon.getBoundingClientRect() : null;
   const explicitIcon = content?.querySelector('a[href="#small-explicit-icon"] svg');
@@ -272,6 +278,8 @@ function readOpenContentSizing(link) {
     paddingLeft: Number.parseFloat(linkStyle.paddingLeft),
     paddingTop: Number.parseFloat(linkStyle.paddingTop),
     positionerSize: positioner?.getAttribute("data-size") ?? null,
+    contentInsidePortal: portal?.contains(link) ?? false,
+    portalParentTagName: portal?.parentElement?.tagName ?? null,
   };
 }
 

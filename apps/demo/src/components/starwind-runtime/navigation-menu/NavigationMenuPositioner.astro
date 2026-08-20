@@ -11,6 +11,8 @@ type Props = HTMLAttributes<"div"> & {
   avoidCollisions?: boolean;
   collisionPadding?: number;
   size?: "sm" | "md";
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 const {
@@ -22,11 +24,17 @@ const {
   collisionPadding = 8,
   size = "md",
   class: className,
+  portalContainer,
+  disablePortal = false,
   ...rest
 } = Astro.props;
 ---
 
-<NavigationMenuPrimitive.Portal data-slot="navigation-menu-portal">
+<NavigationMenuPrimitive.Portal
+  container={portalContainer}
+  disabled={disablePortal}
+  data-slot="navigation-menu-portal"
+>
   <NavigationMenuPrimitive.Positioner
     class={navigationMenuPositioner({ class: className })}
     side={side}

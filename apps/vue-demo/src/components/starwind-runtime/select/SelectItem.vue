@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as SelectPrimitive from "@starwind-ui/vue/select";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { selectItem, selectItemIndicator, selectItemText } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -38,7 +38,6 @@ defineSlots<{
   default?: () => unknown;
   indicator?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -46,7 +45,7 @@ const attrs = useAttrs();
     :class="selectItem({ inset, disabled, class: className })"
     :disabled="disabled"
     :value="value"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="select-item"
   >
     <SelectPrimitive.SelectItemText :class="selectItemText()" data-slot="select-item-text">

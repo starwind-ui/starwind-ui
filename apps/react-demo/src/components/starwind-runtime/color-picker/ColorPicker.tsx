@@ -56,6 +56,8 @@ export type ColorPickerProps = Omit<
     align?: "start" | "center" | "end";
     sideOffset?: number;
     avoidCollisions?: boolean;
+    portalContainer?: string;
+    disablePortal?: boolean;
     onValueChange?: (
       value: import("@starwind-ui/react/color-picker").ColorPickerColor | null,
       details: import("@starwind-ui/react/color-picker").ColorPickerValueChangeDetails,
@@ -106,6 +108,8 @@ const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
       align = "start",
       sideOffset = 4,
       avoidCollisions = true,
+      portalContainer,
+      disablePortal = false,
       onValueChange,
       onValueCommitted,
       onFormatChange,
@@ -173,6 +177,8 @@ const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
                 formats={normalizedFormats}
                 showEyeDropper={showEyeDropper}
                 swatches={swatches}
+                portalContainer={portalContainer}
+                disablePortal={disablePortal}
               />
             </>
           )}
@@ -252,6 +258,8 @@ const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
                   align={align}
                   sideOffset={sideOffset}
                   avoidCollisions={avoidCollisions}
+                  portalContainer={portalContainer}
+                  disablePortal={disablePortal}
                   aria-label={label ? `${label} editor` : "Color editor"}
                 />
               </>

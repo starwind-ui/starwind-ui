@@ -81,6 +81,30 @@ consumers, Vue package and demo checks, and public demo builds. Independent Stan
 reviews approved the expanded closure. Order 13 Package Size Comparison is the current internal
 roadmap action.
 
+## Private Package Size Comparison
+
+Order 13 measures fresh built `packages/vue/dist` output through the shared esbuild browser ESM,
+minification, static-import graph, and Node zlib level-9 gzip method. Vue stays external for browser
+rows. The adapter-only headline also externalizes every Runtime entry, while the combined headline
+bundles the built Runtime alias. Dynamic chunks are reported separately from headline static rows.
+
+The private inventory includes 36 Runtime-backed cold imports and one Theme helper row. It also
+measures the complete package root, the 30-family matched Zag Vue support set, the npm-pack-equivalent
+Primitive payload, and the separate 54-root Styled copied-source tree. The comparator set pins the
+Vue adapter, infrastructure, and 26 deduplicated machines to exact version `1.42.0`.
+
+The accepted baseline uses three serialized runs from one Linux x64 environment with Node 24.19.0,
+npm 11.17.0, pnpm 11.8.0, esbuild 0.28.1, and zlib 1.3.2.1-motley-3246f1b. Absolute private budgets
+come from each stable maximum plus the larger of 5% or 1 KiB. Comparator ordering stays advisory.
+The committed evidence supports offline validation without comparator installation or report writes.
+
+All Vue size rows, raw evidence, package attribution, and budgets stay in the private diagnostic
+report. The public package-size report and prepared public release check keep their Astro, Runtime,
+and React scope. This work does not publish Vue or create a comparative marketing claim. The package
+remains private at `0.0.0`, and `cliRegistry`, `demoIntegration`, `packageExports`, and
+`publicDocsClaim` remain false. Order 13 passed independent review and its full closure checkpoint.
+Order 14 Runtime Performance Comparison is the next internal roadmap action.
+
 Before expanding this tracer, read `docs/portable-runtime/framework-renderer-authoring.md` for the
 target-local renderer fragment/helper pattern and public-support guardrails.
 

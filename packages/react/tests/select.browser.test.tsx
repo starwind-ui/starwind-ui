@@ -1,9 +1,8 @@
+import { Select } from "@starwind-ui/react/select";
 import * as React from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
-
-import { Select } from "@starwind-ui/react/select";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -13,6 +12,7 @@ let container: HTMLDivElement | undefined;
 afterEach(async () => {
   if (reactRoot) await act(() => reactRoot?.unmount());
   container?.remove();
+  document.querySelectorAll("[data-select-portal-target]").forEach((node) => node.remove());
   reactRoot = undefined;
   container = undefined;
 });
@@ -38,6 +38,7 @@ describe("React Select portal lifecycle", () => {
         </Select.Root>
       </React.StrictMode>,
     );
+    await waitForMacrotask();
 
     const rootElement = document.querySelector<HTMLDivElement>("[data-sw-select]");
     const portalElement = document.querySelector<HTMLDivElement>("[data-sw-select-portal]");
@@ -52,8 +53,10 @@ describe("React Select portal lifecycle", () => {
     expect(document.querySelectorAll("[data-sw-select-positioner]")).toHaveLength(1);
     expect(document.querySelectorAll("[data-sw-select-popup]")).toHaveLength(1);
     expect(rootElement?.parentElement).toBe(container);
-    expect(portalElement?.parentElement).toBe(rootElement);
-    expect(positionerElement?.parentElement).toBe(document.body);
+    expect(portalElement?.parentElement).toBe(document.body);
+    expect(positionerElement?.parentElement).toBe(portalElement);
+    expect(popupElement?.parentElement).toBe(positionerElement);
+    expect(portalElement).toHaveAttribute("data-placement", "ready");
 
     await act(() => reactRoot?.unmount());
     reactRoot = undefined;
@@ -67,7 +70,82 @@ describe("React Select portal lifecycle", () => {
     expect(document.querySelectorAll("[data-sw-select-popup]")).toHaveLength(0);
     expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
   });
+
+  it("removes a conditional Portal during a target transition under a persistent Root", async () => {
+    const firstTarget = document.createElement("section");
+    firstTarget.id = "select-portal-stable-target";
+    firstTarget.dataset.selectPortalTarget = "first";
+    document.body.append(firstTarget);
+    let setPortalVisible: React.Dispatch<React.SetStateAction<boolean>> = () => undefined;
+
+    function Harness() {
+      const [showPortal, setShowPortal] = React.useState(true);
+      const didUnmountForMoveRef = React.useRef(false);
+      setPortalVisible = setShowPortal;
+      return (
+        <Select.Root defaultOpen modal={false}>
+          <Select.Trigger>Select theme</Select.Trigger>
+          {showPortal ? (
+            <Select.Portal container="#select-portal-stable-target">
+              <Select.Positioner alignItemWithTrigger={false}>
+                <Select.Popup keepMounted>
+                  Theme options
+                  <UnmountPortalAfterMove
+                    didUnmountForMoveRef={didUnmountForMoveRef}
+                    setPortalVisible={setShowPortal}
+                  />
+                </Select.Popup>
+              </Select.Positioner>
+            </Select.Portal>
+          ) : null}
+        </Select.Root>
+      );
+    }
+
+    await mount(<Harness />);
+    const persistentRoot = document.querySelector<HTMLElement>("[data-sw-select]")!;
+    const originalPortal = document.querySelector<HTMLElement>("[data-sw-select-portal]")!;
+    expect(originalPortal.parentElement).toBe(firstTarget);
+
+    firstTarget.remove();
+    const secondTarget = document.createElement("section");
+    secondTarget.id = "select-portal-stable-target";
+    secondTarget.dataset.selectPortalTarget = "second";
+    document.body.append(secondTarget);
+    await waitForMacrotask();
+
+    expect(document.querySelector("[data-sw-select]")).toBe(persistentRoot);
+    expect(document.querySelectorAll("[data-sw-select-portal]")).toHaveLength(0);
+    expect(document.querySelectorAll("[data-sw-select-positioner]")).toHaveLength(0);
+    expect(document.querySelectorAll("[data-sw-select-popup]")).toHaveLength(0);
+    expect(originalPortal.isConnected).toBe(false);
+
+    await act(() => setPortalVisible(true));
+    await waitForMacrotask();
+    const remountedPortal = document.querySelector<HTMLElement>("[data-sw-select-portal]")!;
+    expect(remountedPortal).not.toBe(originalPortal);
+    expect(remountedPortal.parentElement).toBe(secondTarget);
+    expect(remountedPortal).toHaveAttribute("data-placement", "ready");
+    expect(document.querySelectorAll("[data-sw-select-portal]")).toHaveLength(1);
+  });
 });
+
+function UnmountPortalAfterMove({
+  didUnmountForMoveRef,
+  setPortalVisible,
+}: {
+  didUnmountForMoveRef: React.RefObject<boolean>;
+  setPortalVisible: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const markerRef = React.useRef<HTMLSpanElement>(null);
+  React.useLayoutEffect(() => {
+    const target = markerRef.current?.closest<HTMLElement>("[data-select-portal-target]");
+    if (target?.dataset.selectPortalTarget !== "second" || didUnmountForMoveRef.current) return;
+    didUnmountForMoveRef.current = true;
+    setPortalVisible(false);
+  });
+  return <span data-select-portal-marker ref={markerRef} />;
+}
 
 describe("React Select lazy selected labels", () => {
   it("preserves an intentionally empty item label and hidden form value while closed", async () => {

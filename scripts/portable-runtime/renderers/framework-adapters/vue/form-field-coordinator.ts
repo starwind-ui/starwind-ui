@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterComponentFile,
   AdapterFormFieldCoordinatorFacts,
@@ -62,7 +66,7 @@ function printRoot(
     contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
 import { ${facts.runtime.factory}, type ${facts.runtime.validationTimingType} } from "${facts.runtime.importSource}";
-import { onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -77,7 +81,6 @@ const props = defineProps<{
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLFormElement | null>(null);
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
 
@@ -100,7 +103,7 @@ onBeforeUnmount(destroyOwnedInstance);
 <template>
   <${part.defaultElement}
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.root}
     ${facts.attrs.rootSlot}="${part.slotValue}"
     :${facts.attrs.errorVisibility}="props.${dataErrorVisibility} ?? props.${errorVisibility}"
@@ -128,7 +131,7 @@ function printErrorSummary(
   return {
     contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -149,7 +152,6 @@ const props = withDefaults(
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLDivElement | null>(null);
 
 defineExpose({
@@ -160,7 +162,7 @@ defineExpose({
 <template>
   <${part.defaultElement}
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     :${facts.attrs.errorSummaryRole}="props.role"
     :${facts.attrs.errorSummaryAriaLive}="props.ariaLive"
     :${facts.attrs.errorSummaryAriaAtomic}="props.ariaAtomic"

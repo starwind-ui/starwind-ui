@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ToastPrimitive from "@starwind-ui/vue/toast";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { toastTitle } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -19,13 +19,12 @@ defineSlots<{
   default?: () => unknown;
   icon?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ToastPrimitive.ToastTitle
     :class="toastTitle({ variant, class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="toast-title"
   >
     <slot name="icon">

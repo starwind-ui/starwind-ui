@@ -31,6 +31,8 @@ function ColorPickerContent(props: ColorPickerContentProps) {
     side = "bottom",
     align = "start",
     exitMotion = "fade",
+    portalContainer,
+    disablePortal = false,
     children,
     ...rest
   } = props;
@@ -42,6 +44,8 @@ function ColorPickerContent(props: ColorPickerContentProps) {
       align={align}
       collisionStrategy="best-fit"
       exitMotion={exitMotion}
+      portalContainer={portalContainer}
+      disablePortal={disablePortal}
       {...rest}
       data-sw-color-picker-content=""
       data-size={size}
@@ -51,6 +55,8 @@ function ColorPickerContent(props: ColorPickerContentProps) {
         <ColorPickerDefaultEditor
           size={size}
           showEyeDropper={showEyeDropper}
+          portalContainer={portalContainer}
+          disablePortal={disablePortal}
           formatControl={formatControl}
           formats={formats}
           swatches={swatches}

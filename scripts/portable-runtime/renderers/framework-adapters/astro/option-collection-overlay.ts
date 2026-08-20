@@ -4,6 +4,7 @@ import type {
   AdapterOptionCollectionOverlayIndexProjection,
   AdapterOptionCollectionOverlayPartName,
 } from "../types.js";
+import { printAstroRuntimePortal } from "./portal.js";
 
 export function printAstroOptionCollectionOverlayComponent(
   family: AdapterOptionCollectionOverlayComponentProjection,
@@ -18,6 +19,9 @@ export function printAstroOptionCollectionOverlayComponent(
   if (family.part === "item") return printItem(facts);
   if (family.part === "itemIndicator") return printItemIndicator(facts);
   if (family.part === "separator") return printSeparator(facts);
+  if (family.part === "portal") {
+    return printAstroRuntimePortal(facts.parts.portal, facts.attrs.portal);
+  }
   if (family.part === "icon") return printSimpleSlotPart(facts, family.part, 'aria-hidden="true"');
   if (family.part === "group") return printSimpleSlotPart(facts, family.part, 'role="group"');
   if (family.part === "scrollUpArrow" || family.part === "scrollDownArrow") {
@@ -37,7 +41,10 @@ export function printAstroOptionCollectionOverlayIndex(
   const namespaceEntries = facts.index.namespaceMembers
     .map((member) => `  ${member.key}: ${member.name},`)
     .join("\n");
-  const namedExports = [facts.exports.namespace, ...facts.index.importMembers.map((member) => member.name)];
+  const namedExports = [
+    facts.exports.namespace,
+    ...facts.index.importMembers.map((member) => member.name),
+  ];
   const typeExports = `export type { ${facts.index.typeExports.join(", ")} } from "${facts.runtime.typeImportSource}";`;
 
   return `${imports}\n\nconst ${facts.exports.namespace} = {\n${namespaceEntries}\n};\n\nexport {\n  ${namedExports.join(",\n  ")},\n};\n\nexport default ${facts.exports.namespace};\n\n${typeExports}\n`;

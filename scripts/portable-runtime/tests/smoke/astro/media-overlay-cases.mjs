@@ -6,6 +6,7 @@ import {
 import { verifyHoverCardCases } from "../shared/hover-card.mjs";
 import { verifyVideoCases } from "../shared/video.mjs";
 import { verifyDialogEntryAnimationGestures } from "../shared/dialog-entry-animation.mjs";
+import { assertPublicPortalTopology } from "../shared/public-portal-topology.mjs";
 
 export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview" }) {
   await verifyVideoCases({
@@ -44,6 +45,7 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
       wrapperDisplay: "contents",
     },
     label: "Astro",
+    positionerParentTagName: "DIV",
   });
 
   const avatarState = await page.evaluate(() => {
@@ -266,6 +268,9 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
 
   await page.getByRole("button", { name: "Shortcut help" }).hover();
   await page.locator("#runtime-tooltip-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#runtime-tooltip-content"), {
+    portalSlot: "tooltip-portal",
+  });
   const openTooltipState = await page.locator("#runtime-tooltip-content").evaluate((content) => {
     const positioner = content.parentElement;
 
@@ -322,7 +327,7 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     openTooltipState.dataAlign !== "center" ||
     openTooltipState.parentDataSlot !== "tooltip-positioner" ||
     openTooltipState.parentTagName !== "DIV" ||
-    openTooltipState.positionerParentTagName !== "BODY" ||
+    openTooltipState.positionerParentTagName !== "DIV" ||
     openTooltipState.rootContains !== false ||
     openTooltipState.position !== "fixed" ||
     openTooltipState.popupPosition === "fixed" ||
@@ -352,7 +357,10 @@ export async function verifyAstroMediaOverlayCases({ page, serverMode = "preview
     );
   });
 
-  await verifyTooltipCompositionCases(page, "runtime", { styledSlot: "breadcrumb-link" });
+  await verifyTooltipCompositionCases(page, "runtime", {
+    positionerParentTagName: "DIV",
+    styledSlot: "breadcrumb-link",
+  });
   await verifyTooltipPropExamples(page, "runtime");
   await verifyTooltipPlacements(page, "runtime");
 

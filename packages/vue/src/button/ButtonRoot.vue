@@ -2,7 +2,7 @@
 <!-- Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies. -->
 <script setup lang="ts">
 import { createButton } from "@starwind-ui/runtime/button";
-import { onBeforeUnmount, onMounted, useAttrs, useTemplateRef, watch } from "vue";
+import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -21,7 +21,6 @@ const props = withDefaults(
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const rootRef = useTemplateRef<HTMLButtonElement>("rootRef");
 let instance: ReturnType<typeof createButton> | undefined;
 
@@ -63,7 +62,7 @@ onBeforeUnmount(destroyOwnedInstance);
 <template>
   <button
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="$attrs"
     :type="props.type"
     data-sw-button
     data-sw-part="root"

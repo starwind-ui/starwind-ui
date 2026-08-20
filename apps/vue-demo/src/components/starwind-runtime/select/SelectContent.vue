@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as SelectPrimitive from "@starwind-ui/vue/select";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { selectContent, selectList } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -13,6 +13,8 @@ export type SelectContentProps = Omit<
   | "alignOffset"
   | "avoidCollisions"
   | "class"
+  | "disablePortal"
+  | "portalContainer"
   | "side"
   | "sideOffset"
   | "size"
@@ -24,6 +26,8 @@ export type SelectContentProps = Omit<
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
   size?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 };
 type SelectContentDeclaredProps = {
@@ -34,6 +38,8 @@ type SelectContentDeclaredProps = {
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
   size?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 } & /* @vue-ignore */ SelectContentProps;
 const {
@@ -45,15 +51,20 @@ const {
   side = "bottom",
   sideOffset = 4,
   size = "md",
+  portalContainer,
+  disablePortal = false,
 } = defineProps<SelectContentDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <SelectPrimitive.SelectPortal data-slot="select-portal">
+  <SelectPrimitive.SelectPortal
+    :container="portalContainer"
+    :disabled="disablePortal"
+    data-slot="select-portal"
+  >
     <SelectPrimitive.SelectPositioner
       :align="align"
       :align-offset="alignOffset"
@@ -71,7 +82,7 @@ const attrs = useAttrs();
         :side="side"
         :side-offset="sideOffset"
         :data-align-trigger="alignItemWithTrigger ? 'true' : 'false'"
-        v-bind="attrs"
+        v-bind="$attrs"
         :data-size="size"
         data-slot="select-content"
       >

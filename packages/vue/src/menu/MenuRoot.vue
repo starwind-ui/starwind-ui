@@ -47,6 +47,7 @@ let portalReference: HTMLElement | null = null;
 let generation = 0;
 
 provide(MenuRootContext, {
+  element: rootRef,
   mounted,
   open: renderedOpen,
   registerPortal(owner, element) {

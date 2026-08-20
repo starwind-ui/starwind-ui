@@ -1,3 +1,4 @@
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { badgeStyledContract } from "../../contracts/styled/components/badge.js";
@@ -35,4 +36,37 @@ describe("Vue Styled index output", () => {
     expect(source).toContain("export default ButtonParts2;");
     expect(source).not.toMatch(/export\s*{[^}]*\bButtonParts2\b/);
   });
+
+  it.each([
+    ["package", "@starwind-ui/vue", "@starwind-ui/vue/toast"],
+    ["local", undefined, "../../primitives/vue/toast"],
+  ])(
+    "renders deterministic %s-backed Primitive facade exports",
+    (_label, primitiveImportBase, source) => {
+      const contract: StyledAdapterContract = {
+        ...structuredClone(buttonStyledContract),
+        component: "facade-probe",
+        primitiveFacadeExports: {
+          component: "toast",
+          types: ["ToastOptions", "SharedName", "ToastApi"],
+          values: ["toast", "SharedName", "createToast"],
+        },
+      };
+      const group = projectStyledOutputComponentGroup(contract);
+      const options = {
+        directory: path.join("/workspace/components", group.component),
+        primitiveImportBase,
+        primitiveOutputRoot: "/workspace/primitives/vue",
+      };
+
+      const first = renderIndex(group, options);
+
+      expect(first).toBe(renderIndex(group, options));
+      expect(first).toContain(`export { SharedName, createToast, toast } from "${source}";`);
+      expect(first).toContain(`export type { ToastApi, ToastOptions } from "${source}";`);
+      expect(first).not.toContain("export type { SharedName");
+      expect(first).toContain("const FacadeProbeParts = { Root: Button };");
+      expect(first).not.toContain("FacadeProbeParts = { Root: Button, toast");
+    },
+  );
 });

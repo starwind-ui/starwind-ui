@@ -10,6 +10,8 @@ type Props = Omit<HTMLAttributes<"div">, "tabindex" | "tabIndex"> & {
   sideOffset?: number;
   avoidCollisions?: boolean;
   positionerClass?: string;
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 const {
@@ -19,11 +21,17 @@ const {
   align = "center",
   sideOffset = 8,
   avoidCollisions = true,
+  portalContainer,
+  disablePortal = false,
   ...rest
 } = Astro.props;
 ---
 
-<TooltipPrimitive.Portal data-slot="tooltip-portal">
+<TooltipPrimitive.Portal
+  container={portalContainer}
+  disabled={disablePortal}
+  data-slot="tooltip-portal"
+>
   <TooltipPrimitive.Positioner
     side={side}
     align={align}

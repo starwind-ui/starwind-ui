@@ -1,7 +1,9 @@
 import { projectStyledOutputModel } from "../../styled-output-model/index.js";
 import { defineFrameworkAdapterTarget } from "../target-definition.js";
+import { frameworkAdapterTargetRenderedPortal } from "../types.js";
 import { reactFrameworkAdapter } from "./adapter.js";
 import { reactManualPrimitiveGenerators } from "./manual-primitives.js";
+import { reactRenderedPortalCapability } from "./portal.js";
 import { writeReactAdapterOutput } from "./primitive-output-writer.js";
 import { generateReactPrimitivePackage } from "./primitive-package.js";
 import { projectSpecializedAdapterOutputModel } from "./specialized-adapter-spec.js";
@@ -58,6 +60,7 @@ export const reactFrameworkAdapterTarget = defineFrameworkAdapterTarget({
   home: "scripts/portable-runtime/renderers/framework-adapters/react",
   packageName: "@starwind-ui/react",
   primitive: {
+    [frameworkAdapterTargetRenderedPortal]: reactRenderedPortalCapability,
     generatePackage: generateReactPrimitivePackage,
     manualPrimitives: reactManualPrimitiveGenerators,
     outputModel: {

@@ -109,7 +109,10 @@ describe("Vue Drawer browser contract", () => {
     app.mount(host);
     cleanups.push(() => app.unmount());
     await nextTick();
-    expect(target.querySelector("[data-sw-drawer-portal]")).not.toBeNull();
+    const remotePortal = target.querySelector<HTMLElement>("[data-sw-drawer-portal]")!;
+    expect(remotePortal.dataset.placement).toBe("ready");
+    expect(remotePortal.hasAttribute("data-floating-root")).toBe(true);
+    expect(remotePortal.contains(remotePortal.querySelector("[data-sw-drawer-popup]"))).toBe(true);
     show.value = false;
     await nextTick();
     expect(target.querySelector("[data-sw-drawer-portal]")).toBeNull();
@@ -118,7 +121,10 @@ describe("Vue Drawer browser contract", () => {
     expect(target.querySelector("[data-sw-drawer-portal]")).not.toBeNull();
 
     const inlineHost = mount(tree({}, { disabled: true }));
-    expect(inlineHost.querySelector("[data-sw-drawer-portal]")).not.toBeNull();
+    await nextTick();
+    expect(
+      inlineHost.querySelector<HTMLElement>("[data-sw-drawer-portal]")!.dataset.placement,
+    ).toBe("ready");
   });
 
   it("isolates multiple owners and closes only the nested topmost Drawer", async () => {
@@ -193,6 +199,7 @@ describe("Vue Drawer browser contract", () => {
     await nextTick();
     proposals.length = 0;
     state.modal = false;
+    await nextTick();
     await nextTick();
     await nextTick();
     expect(document.body.querySelector<HTMLDialogElement>("dialog")!.open).toBe(true);

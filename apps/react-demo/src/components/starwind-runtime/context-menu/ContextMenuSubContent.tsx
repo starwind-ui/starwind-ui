@@ -9,6 +9,8 @@ export type ContextMenuSubContentProps = React.ComponentPropsWithoutRef<"div"> &
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 function ContextMenuSubContent(props: ContextMenuSubContentProps) {
@@ -18,6 +20,8 @@ function ContextMenuSubContent(props: ContextMenuSubContentProps) {
     align = "start",
     sideOffset = 0,
     avoidCollisions = true,
+    portalContainer,
+    disablePortal = false,
     children,
     ...rest
   } = props;
@@ -25,7 +29,11 @@ function ContextMenuSubContent(props: ContextMenuSubContentProps) {
   const subContentClassName = className;
 
   return (
-    <ContextMenuPrimitive.Portal data-slot="context-menu-sub-portal">
+    <ContextMenuPrimitive.Portal
+      container={portalContainer}
+      disabled={disablePortal}
+      data-slot="context-menu-sub-portal"
+    >
       <ContextMenuPrimitive.Popup
         className={contextMenuContent({ class: subContentClassName })}
         side={side}

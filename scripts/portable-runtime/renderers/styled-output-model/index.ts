@@ -93,6 +93,13 @@ export function projectStyledOutputComponentGroup(
     dependencies: {
       styledComponents: [...(contract.dependencies?.styledComponents ?? [])],
     },
+    primitiveFacadeExports: contract.primitiveFacadeExports
+      ? {
+          component: contract.primitiveFacadeExports.component,
+          types: [...contract.primitiveFacadeExports.types].sort(),
+          values: [...contract.primitiveFacadeExports.values].sort(),
+        }
+      : undefined,
     publicExports: [...contract.publicExports],
     styles: contract.styles
       ? {
@@ -152,6 +159,13 @@ export function toStyledAdapterContract(group: StyledOutputComponentGroup): Styl
         ? { styledComponents: [...(group.dependencies?.styledComponents ?? [])] }
         : undefined,
     frameworks: toFrameworkTargets(group.targetScopes),
+    primitiveFacadeExports: group.primitiveFacadeExports
+      ? {
+          component: group.primitiveFacadeExports.component,
+          types: [...group.primitiveFacadeExports.types],
+          values: [...group.primitiveFacadeExports.values],
+        }
+      : undefined,
     publicExports: [...group.publicExports],
     styles: group.styles
       ? {

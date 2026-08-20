@@ -58,7 +58,7 @@ describe("generated Vue Progress Primitive", () => {
     for (const [name, source] of Object.entries(first.sources)) {
       expect(() => assertVueSfcCompiles(source, name)).not.toThrow();
       expect(source).toContain("defineExpose({ element:");
-      expect(source).toContain('v-bind="attrs"');
+      expect(source).toContain(name === "ProgressRoot.vue" ? 'v-bind="attrs"' : 'v-bind="$attrs"');
     }
 
     const root = first.sources["ProgressRoot.vue"];

@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterHiddenInputVisualSlotComponentProjection,
   AdapterHiddenInputVisualSlotFacts,
@@ -303,18 +307,16 @@ function printSimplePart(
 
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
-
-const attrs = useAttrs();
 const element = ref<${elementType} | null>(null);
 
 defineExpose({ element });
 </script>
 
 <template>
-  <${part.defaultElement} ref="element" ${part.discoveryAttribute}${separatorAttrs} v-bind="attrs"><slot /></${part.defaultElement}>
+  <${part.defaultElement} ref="element" ${part.discoveryAttribute}${separatorAttrs} v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"><slot /></${part.defaultElement}>
 </template>
 `;
 }
@@ -325,7 +327,7 @@ function printSlot(facts: AdapterHiddenInputVisualSlotFacts): string {
 
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -335,7 +337,6 @@ defineProps<{
 defineSlots<{
   ${facts.visualSlots.caretRendering.outletName}?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 
 defineExpose({ element });
@@ -346,7 +347,7 @@ defineExpose({ element });
     ref="element"
     ${facts.attrs.slot}
     :${facts.attrs.slotIndex}="${props.index.name}"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
   >
     <${facts.parts.slotChar.defaultElement} ${facts.attrs.slotChar} />
     <${facts.parts.slotCaret.defaultElement}

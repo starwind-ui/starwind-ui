@@ -4,6 +4,7 @@ import type {
   AdapterCompositeMenuOverlayIndexProjection,
   AdapterCompositeMenuOverlayPartName,
 } from "../types.js";
+import { printAstroRuntimePortal } from "./portal.js";
 
 export function printAstroCompositeMenuOverlayComponent(
   family: AdapterCompositeMenuOverlayComponentProjection,
@@ -28,6 +29,9 @@ export function printAstroCompositeMenuOverlayComponent(
   if (family.part === "separator") return printSeparator(facts);
   if (family.part === "submenuRoot") return printSubmenuRoot(facts);
   if (family.part === "submenuTrigger") return printSubmenuTrigger(facts);
+  if (family.part === "portal") {
+    return printAstroRuntimePortal(facts.parts.portal, facts.attrs.portal);
+  }
 
   return printSimplePart(facts, family.part);
 }
@@ -42,7 +46,10 @@ export function printAstroCompositeMenuOverlayIndex(
   const namespaceEntries = facts.index.namespaceMembers
     .map((member) => `  ${member.key}: ${member.name},`)
     .join("\n");
-  const namedExports = [facts.exports.namespace, ...facts.index.importMembers.map((member) => member.name)]
+  const namedExports = [
+    facts.exports.namespace,
+    ...facts.index.importMembers.map((member) => member.name),
+  ]
     .map((name) => `  ${name},`)
     .join("\n");
   const typeExports = facts.index.typeExports.length
@@ -75,8 +82,7 @@ function printFloatingPart(
   const props = facts.props;
   const part = facts.parts[partName];
   const type = `HTMLAttributes<"${part.defaultElement}">`;
-  const roleAttributes =
-    partName === "popup" ? `\n  role="${part.role}"\n  tabindex="-1"` : "";
+  const roleAttributes = partName === "popup" ? `\n  role="${part.role}"\n  tabindex="-1"` : "";
   const hiddenAttribute = partName === "popup" ? "\n  hidden" : "";
 
   return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = ${type} & {\n  ${props.side.name}?: ${props.side.type};\n  ${props.align.name}?: ${props.align.type};\n  ${props.sideOffset.name}?: ${props.sideOffset.type};\n  ${props.avoidCollisions.name}?: ${props.avoidCollisions.type};\n};\n\nconst {\n  ${props.side.name} = ${facts.floating.sideDefault},\n  ${props.align.name} = ${facts.floating.alignDefault},\n  ${props.sideOffset.name} = ${facts.floating.sideOffsetDefault},\n  ${props.avoidCollisions.name} = ${facts.floating.avoidCollisionsDefault},\n  ...rest\n} = Astro.props;\n---\n\n<${part.defaultElement}\n  ${facts.attrs[partName]}${roleAttributes}\n  data-state="closed"\n  ${facts.attrs.side}={${props.side.name}}\n  ${facts.attrs.align}={${props.align.name}}\n  ${facts.attrs.sideOffset}={${props.sideOffset.name}}\n  ${facts.attrs.avoidCollisions}={${props.avoidCollisions.name} ? "true" : "false"}${hiddenAttribute}\n  {...rest}\n>\n  <slot />\n</${part.defaultElement}>\n`;

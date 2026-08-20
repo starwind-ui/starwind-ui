@@ -2,7 +2,11 @@ import { readdir, readFile } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
 
-import { createVueEntryPoints, vueEntryPoints } from "../../../../packages/vue/tsup.config.js";
+import {
+  compileVueSfc,
+  createVueEntryPoints,
+  vueEntryPoints,
+} from "../../../../packages/vue/tsup.config.js";
 import {
   formatVueInventoryDiagnostics,
   validateVueInventorySnapshot,
@@ -342,6 +346,22 @@ describe("internal Vue package foundation", () => {
     expect(config).not.toContain("vue/dist/vue.esm-bundler");
   });
 
+  it("compiles production render ownership inline with compact runtime props", () => {
+    const output = compileVueSfc(representativeCompilerFixture, "/fixture/Representative.vue");
+
+    expect(output).toContain("const __sfc__ = /*@__PURE__*/_defineComponent({");
+    expect(output).toContain("return (_ctx: any,_cache: any) => {");
+    expect(output).not.toContain("function render(");
+    expect(output).not.toContain("__sfc__.render = render");
+    expect(output).toContain('label: { default: "Save" }');
+    expect(output).toContain("count: { default: 1 }");
+    expect(output).toContain("active: { type: Boolean }");
+    expect(output).not.toContain("type: String");
+    expect(output).not.toContain("type: Number");
+    expect(output).toMatch(/from ["']vue["']/);
+    expect(output).not.toMatch(/vue\/compiler-sfc|vue\.esm-bundler|\bcompile\s*\(/);
+  });
+
   it("does not expose Vue through current public support or release generation", async () => {
     expect(vueFrameworkAdapterTarget.publicSupport).toEqual({
       cliRegistry: false,
@@ -376,3 +396,29 @@ describe("internal Vue package foundation", () => {
     }
   });
 });
+
+const representativeCompilerFixture = `<script setup lang="ts">
+import { ref, useAttrs } from "vue";
+
+interface Props {
+  label?: string;
+  count?: number;
+  active?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  label: "Save",
+  count: 1,
+});
+const attrs = useAttrs();
+const element = ref<HTMLButtonElement>();
+defineExpose({ element });
+</script>
+
+<template>
+  <button ref="element" v-bind="attrs" :data-count="props.count" :data-active="props.active">
+    <slot>{{ props.label }}</slot>
+    <slot name="suffix" />
+  </button>
+</template>
+`;

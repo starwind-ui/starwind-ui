@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { computed, type HTMLAttributes, useAttrs } from "vue";
+import { computed, type HTMLAttributes } from "vue";
 import { Skeleton } from "../skeleton";
 import { sidebarMenuSkeleton } from "./variants";
 
@@ -22,7 +22,6 @@ const {
   class: className,
 } = defineProps<SidebarMenuSkeletonDeclaredProps>();
 defineSlots<{}>();
-const attrs = useAttrs();
 const skeletonWidth = computed(() => width ?? "70%");
 const skeletonStyle = computed(() => ({ "--skeleton-width": skeletonWidth.value }));
 </script>
@@ -31,7 +30,7 @@ const skeletonStyle = computed(() => ({ "--skeleton-width": skeletonWidth.value 
   <div
     :class="sidebarMenuSkeleton({ class: className })"
     data-sidebar="menu-skeleton"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="sidebar-menu-skeleton"
   >
     <template v-if="showIcon">

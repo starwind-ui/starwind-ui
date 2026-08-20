@@ -5,13 +5,23 @@
 
 "use client";
 
+import { reportPortalPlacement, resolvePortalPlacement } from "@starwind-ui/runtime/tooltip";
 import * as React from "react";
+import { ReactPortal, type ReactPortalProps } from "../internal/portal";
 
-export type TooltipPortalProps = React.HTMLAttributes<HTMLDivElement>;
+export type TooltipPortalProps = ReactPortalProps;
 
 const TooltipPortal = React.forwardRef<HTMLDivElement, TooltipPortalProps>(
   function TooltipPortal(props, forwardedRef) {
-    return <div data-sw-tooltip-portal ref={forwardedRef} {...props} />;
+    return (
+      <ReactPortal
+        discoveryAttribute="data-sw-tooltip-portal"
+        reportPlacement={reportPortalPlacement}
+        resolvePlacement={resolvePortalPlacement}
+        ref={forwardedRef}
+        {...props}
+      />
+    );
   },
 );
 

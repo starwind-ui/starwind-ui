@@ -1,6 +1,8 @@
 import { assertHTMLElement, readBooleanAttribute } from "../../internal/dom";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import {
   createDialog,
+  refreshDialogPortalSurface,
   type DialogCloseCompleteDetails,
   type DialogInstance,
   type DialogOpenChangeDetails,
@@ -16,6 +18,11 @@ export type AlertDialogSetOpenOptions = DialogSetOpenOptions;
 export type AlertDialogInstance = DialogInstance;
 
 export type AlertDialogOptions = Omit<DialogOptions, "role">;
+
+export function refreshAlertDialogPortalSurface(root: HTMLElement): void {
+  normalizeAlertDialogMarkup(root);
+  refreshDialogPortalSurface(root);
+}
 
 const ALERT_DIALOG_ROOT_ATTRIBUTE = "data-sw-alert-dialog";
 const ALERT_DIALOG_POPUP_ATTRIBUTE = "data-sw-alert-dialog-popup";
@@ -65,33 +72,39 @@ export function createAlertDialog(
 function normalizeAlertDialogMarkup(root: HTMLElement): void {
   root.setAttribute(ALERT_DIALOG_ROOT_ATTRIBUTE, "");
 
-  root.querySelectorAll<HTMLElement>(`[${ALERT_DIALOG_TRIGGER_ATTRIBUTE}]`).forEach((trigger) => {
+  queryAlertDialogElements(root, `[${ALERT_DIALOG_TRIGGER_ATTRIBUTE}]`).forEach((trigger) => {
     trigger.setAttribute(DIALOG_TRIGGER_ATTRIBUTE, "");
   });
   normalizeExternalAlertDialogTriggers(root);
 
-  root.querySelectorAll<HTMLElement>(`[${ALERT_DIALOG_BACKDROP_ATTRIBUTE}]`).forEach((backdrop) => {
+  queryAlertDialogElements(root, `[${ALERT_DIALOG_BACKDROP_ATTRIBUTE}]`).forEach((backdrop) => {
     backdrop.setAttribute(DIALOG_BACKDROP_ATTRIBUTE, "");
   });
 
-  root.querySelectorAll<HTMLElement>(`[${ALERT_DIALOG_POPUP_ATTRIBUTE}]`).forEach((popup) => {
+  queryAlertDialogElements(root, `[${ALERT_DIALOG_POPUP_ATTRIBUTE}]`).forEach((popup) => {
     popup.setAttribute(DIALOG_POPUP_ATTRIBUTE, "");
     popup.setAttribute("role", "alertdialog");
   });
 
-  root.querySelectorAll<HTMLElement>(`[${ALERT_DIALOG_CLOSE_ATTRIBUTE}]`).forEach((close) => {
+  queryAlertDialogElements(root, `[${ALERT_DIALOG_CLOSE_ATTRIBUTE}]`).forEach((close) => {
     close.setAttribute(DIALOG_CLOSE_ATTRIBUTE, "");
   });
 
-  root.querySelectorAll<HTMLElement>(`[${ALERT_DIALOG_TITLE_ATTRIBUTE}]`).forEach((title) => {
+  queryAlertDialogElements(root, `[${ALERT_DIALOG_TITLE_ATTRIBUTE}]`).forEach((title) => {
     title.setAttribute(DIALOG_TITLE_ATTRIBUTE, "");
   });
 
-  root
-    .querySelectorAll<HTMLElement>(`[${ALERT_DIALOG_DESCRIPTION_ATTRIBUTE}]`)
-    .forEach((description) => {
+  queryAlertDialogElements(root, `[${ALERT_DIALOG_DESCRIPTION_ATTRIBUTE}]`).forEach(
+    (description) => {
       description.setAttribute(DIALOG_DESCRIPTION_ATTRIBUTE, "");
-    });
+    },
+  );
+}
+
+function queryAlertDialogElements(root: HTMLElement, selector: string): HTMLElement[] {
+  return queryRuntimePartElements(root, selector).filter((element) =>
+    isRuntimePartOwned(root, element, `[${ALERT_DIALOG_ROOT_ATTRIBUTE}]`),
+  );
 }
 
 function normalizeExternalAlertDialogTriggers(root: HTMLElement): void {

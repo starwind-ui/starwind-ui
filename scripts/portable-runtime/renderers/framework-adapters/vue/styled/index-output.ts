@@ -1,10 +1,22 @@
+import path from "node:path";
+
 import {
   assertStyledPartsIdentifier,
   getStyledPartsIdentifier,
   type StyledOutputComponentGroup,
 } from "../../../styled-output-model/index.js";
+import { getRelativeImportPath } from "../../../shared.js";
 
-export function renderIndex(group: StyledOutputComponentGroup): string {
+export type RenderVueStyledIndexOptions = {
+  directory: string;
+  primitiveImportBase?: string;
+  primitiveOutputRoot: string;
+};
+
+export function renderIndex(
+  group: StyledOutputComponentGroup,
+  options?: RenderVueStyledIndexOptions,
+): string {
   assertStyledPartsIdentifier(group);
   const imports = [...group.components]
     .sort((left, right) => left.exportName.localeCompare(right.exportName))
@@ -51,6 +63,7 @@ export function renderIndex(group: StyledOutputComponentGroup): string {
     group.defaultExport.mode === "component"
       ? group.defaultExport.members[0]?.localName
       : getStyledPartsIdentifier(group);
+  const primitiveFacadeExports = renderPrimitiveFacadeExports(group, options);
 
   return `${[imports, variantImport].filter(Boolean).join("\n")}\n\n${typeExports}\n\n${[
     constants,
@@ -58,5 +71,35 @@ export function renderIndex(group: StyledOutputComponentGroup): string {
     partsDeclaration,
   ]
     .filter(Boolean)
-    .join("\n\n")}\n\nexport { ${namedExports.join(", ")} };\n\nexport default ${defaultExport};\n`;
+    .join(
+      "\n\n",
+    )}\n\n${primitiveFacadeExports ? `${primitiveFacadeExports}\n\n` : ""}export { ${namedExports.join(", ")} };\n\nexport default ${defaultExport};\n`;
+}
+
+function renderPrimitiveFacadeExports(
+  group: StyledOutputComponentGroup,
+  options: RenderVueStyledIndexOptions | undefined,
+): string {
+  const facade = group.primitiveFacadeExports;
+  if (!facade) return "";
+  if (!options) throw new Error("Primitive facade exports require styled index source options.");
+
+  const source = options.primitiveImportBase
+    ? `${options.primitiveImportBase}/${facade.component}`
+    : getRelativeImportPath(
+        options.directory,
+        path.join(options.primitiveOutputRoot, facade.component),
+      );
+  const valueNames = [...facade.values].sort();
+  const valueNameSet = new Set(valueNames);
+  const typeNames = [...facade.types].filter((name) => !valueNameSet.has(name)).sort();
+
+  return [
+    valueNames.length ? `export { ${valueNames.join(", ")} } from ${JSON.stringify(source)};` : "",
+    typeNames.length
+      ? `export type { ${typeNames.join(", ")} } from ${JSON.stringify(source)};`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }

@@ -9109,7 +9109,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-floating-root",
-            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
             source: "local-style",
           },
           {
@@ -9414,13 +9414,19 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-slot",
+            value: "select-portal",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
+            source: "local-style",
+          },
+          {
+            attribute: "data-slot",
             value: "select-positioner",
-            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
             source: "local-style",
           },
           {
             attribute: "data-sw-color-picker",
-            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
             source: "local-style",
           },
           {
@@ -9440,7 +9446,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-sw-color-picker-format-options",
-            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
             source: "local-style",
           },
         ],
@@ -20464,6 +20470,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "annotation",
                 },
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "format",
                   type: "import(\"@starwind-ui/runtime/color-picker\").ColorPickerFormat",
                   required: false,
@@ -20536,6 +20551,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   classification: "wrapper",
                   defaultValue: "false",
                   description: "Allows pointer hover to open the surface.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
                   descriptionSource: "catalog",
                 },
                 {
@@ -20624,6 +20647,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "ColorPickerInput",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "formatContentSize",
                   type: "\"sm\" | \"md\" | \"lg\"",
                   required: false,
@@ -20655,6 +20687,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     },
                   ],
                   description: "Restricts and orders the available color formats.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
                   descriptionSource: "catalog",
                 },
               ],
@@ -21057,6 +21097,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "annotation",
                 },
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "format",
                   type: "import(\"@starwind-ui/runtime/color-picker\").ColorPickerFormat",
                   required: false,
@@ -21199,6 +21248,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "catalog",
                 },
                 {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "showEyeDropper",
                   type: "boolean",
                   required: false,
@@ -21304,6 +21361,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "ColorPickerInput",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "formatContentSize",
                   type: "\"sm\" | \"md\" | \"lg\"",
                   required: false,
@@ -21335,6 +21401,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     },
                   ],
                   description: "Restricts and orders the available color formats.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
                   descriptionSource: "catalog",
                 },
               ],
@@ -22034,6 +22108,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "ComboboxContent",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "size",
                   type: "\"sm\" | \"md\" | \"lg\"",
                   required: false,
@@ -22511,12 +22602,29 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "ComboboxContent",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "keepMounted",
                   type: "boolean",
                   required: false,
                   classification: "wrapper",
                   defaultValue: "false",
                   description: "Keeps hidden content mounted in the DOM.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
                   descriptionSource: "catalog",
                 },
                 {
@@ -22873,7 +22981,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ContextMenuContent",
-              props: [],
+              props: [
+                {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:div",
@@ -23160,6 +23286,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "ContextMenuSubContent",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "side",
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
                   required: false,
@@ -23260,7 +23403,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "ContextMenuContent",
-              props: [],
+              props: [
+                {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:div",
@@ -23561,6 +23722,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "ContextMenuSubContent",
               props: [
+                {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "side",
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
@@ -24195,7 +24373,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "DropdownContent",
-              props: [],
+              props: [
+                {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:div",
@@ -24514,6 +24710,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "DropdownSubContent",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "side",
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
                   required: false,
@@ -24630,7 +24843,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "DropdownContent",
-              props: [],
+              props: [
+                {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:div",
@@ -24963,6 +25194,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "DropdownSubContent",
               props: [
+                {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "side",
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
@@ -26396,6 +26644,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "HoverCardContent",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "positionerClass",
                   type: "string",
                   required: false,
@@ -26519,6 +26784,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "HoverCardContent",
               props: [
+                {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "positionerClassName",
                   type: "string",
@@ -28477,6 +28759,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "annotation",
                 },
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "side",
                   type: "\"top\" | \"right\" | \"bottom\" | \"left\"",
                   required: false,
@@ -28667,6 +28966,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "NavigationMenuPositioner",
               props: [
+                {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "sideOffset",
                   type: "number",
@@ -28755,6 +29071,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   descriptionSource: "annotation",
                 },
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "onValueChange",
                   type: "(value: string | null, details: import(\"@starwind-ui/react/navigation-menu\").NavigationMenuValueChangeDetails) => void",
                   required: false,
@@ -28766,6 +29091,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   },
                   displayType: "(value: string | null, details: NavigationMenuValueChangeDetails) => void",
                   description: "Runs when the component value changes.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
                   descriptionSource: "catalog",
                 },
                 {
@@ -28959,6 +29292,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "NavigationMenuPositioner",
               props: [
+                {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "sideOffset",
                   type: "number",
@@ -29463,6 +29813,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "PopoverContent",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "exitMotion",
                   type: "\"popover\" | \"fade\"",
                   required: false,
@@ -29473,6 +29832,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "fade",
                   ],
                   description: "Selects the motion treatment used while floating content closes.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
                   descriptionSource: "catalog",
                 },
               ],
@@ -29605,6 +29972,15 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "PopoverContent",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "exitMotion",
                   type: "\"popover\" | \"fade\"",
                   required: false,
@@ -29615,6 +29991,14 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                     "fade",
                   ],
                   description: "Selects the motion treatment used while floating content closes.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
                   descriptionSource: "catalog",
                 },
               ],
@@ -30913,6 +31297,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "SelectContent",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "size",
                   type: "\"sm\" | \"md\" | \"lg\"",
                   required: false,
@@ -31292,12 +31693,29 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "SelectContent",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "keepMounted",
                   type: "boolean",
                   required: false,
                   classification: "wrapper",
                   defaultValue: "false",
                   description: "Keeps hidden content mounted in the DOM.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
                   descriptionSource: "catalog",
                 },
                 {
@@ -36196,6 +36614,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               exportName: "TooltipContent",
               props: [
                 {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
+                {
                   name: "positionerClass",
                   type: "string",
                   required: false,
@@ -36282,6 +36717,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             {
               exportName: "TooltipContent",
               props: [
+                {
+                  name: "disablePortal",
+                  type: "boolean",
+                  required: false,
+                  classification: "wrapper",
+                  defaultValue: "false",
+                  description: "Keeps the public Portal wrapper inline instead of moving it to a target.",
+                  descriptionSource: "catalog",
+                },
+                {
+                  name: "portalContainer",
+                  type: "string",
+                  required: false,
+                  classification: "wrapper",
+                  description: "Sets the CSS selector for the public Portal wrapper target.",
+                  descriptionSource: "catalog",
+                },
                 {
                   name: "positionerClassName",
                   type: "string",
@@ -37851,6 +38303,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           discoveryAttribute: "data-sw-alert-dialog-portal",
           defaultElement: "div",
           forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-container",
+              source: "prop",
+            },
+            {
+              name: "data-disabled",
+              source: "prop",
+            },
+            {
+              name: "data-sw-portal-placement",
+              source: "constant",
+              value: "runtime",
+            },
+            {
+              name: "data-placement",
+              source: "runtime",
+            },
+          ],
         },
         {
           name: "backdrop",
@@ -38847,6 +39318,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               dataAttributes: [
                 {
                   name: "data-sw-alert-dialog-portal",
+                  source: "runtime",
+                  description: "Marks the Portal part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-container",
+                  source: "prop",
+                  description: "Reflects the container prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-disabled",
+                  source: "prop",
+                  description: "Reflects the disabled prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-sw-portal-placement",
+                  source: "constant",
+                  value: "runtime",
+                  description: "Identifies Portal metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-placement",
                   source: "runtime",
                   description: "Marks the Portal part so Starwind Runtime can find it.",
                   descriptionSource: "authored",
@@ -48265,6 +48761,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           discoveryAttribute: "data-sw-combobox-portal",
           defaultElement: "div",
           forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-container",
+              source: "prop",
+            },
+            {
+              name: "data-disabled",
+              source: "prop",
+            },
+            {
+              name: "data-sw-portal-placement",
+              source: "constant",
+              value: "runtime",
+            },
+            {
+              name: "data-placement",
+              source: "runtime",
+            },
+          ],
         },
         {
           name: "positioner",
@@ -50734,6 +51249,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Marks the Portal part so Starwind Runtime can find it.",
                   descriptionSource: "authored",
                 },
+                {
+                  name: "data-container",
+                  source: "prop",
+                  description: "Reflects the container prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-disabled",
+                  source: "prop",
+                  description: "Reflects the disabled prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-sw-portal-placement",
+                  source: "constant",
+                  value: "runtime",
+                  description: "Identifies Portal metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-placement",
+                  source: "runtime",
+                  description: "Marks the Portal part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
               ],
               stateModels: [],
               events: [],
@@ -51509,6 +52049,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           discoveryAttribute: "data-sw-menu-portal",
           defaultElement: "div",
           forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-container",
+              source: "prop",
+            },
+            {
+              name: "data-disabled",
+              source: "prop",
+            },
+            {
+              name: "data-sw-portal-placement",
+              source: "constant",
+              value: "runtime",
+            },
+            {
+              name: "data-placement",
+              source: "runtime",
+            },
+          ],
         },
         {
           name: "positioner",
@@ -53495,6 +54054,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               dataAttributes: [
                 {
                   name: "data-sw-menu-portal",
+                  source: "runtime",
+                  description: "Marks the Portal part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-container",
+                  source: "prop",
+                  description: "Reflects the container prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-disabled",
+                  source: "prop",
+                  description: "Reflects the disabled prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-sw-portal-placement",
+                  source: "constant",
+                  value: "runtime",
+                  description: "Identifies Portal metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-placement",
                   source: "runtime",
                   description: "Marks the Portal part so Starwind Runtime can find it.",
                   descriptionSource: "authored",
@@ -56935,6 +57519,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           discoveryAttribute: "data-sw-drawer-portal",
           defaultElement: "div",
           forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-container",
+              source: "prop",
+            },
+            {
+              name: "data-disabled",
+              source: "prop",
+            },
+            {
+              name: "data-sw-portal-placement",
+              source: "constant",
+              value: "runtime",
+            },
+            {
+              name: "data-placement",
+              source: "runtime",
+            },
+          ],
         },
         {
           name: "backdrop",
@@ -57939,6 +58542,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               dataAttributes: [
                 {
                   name: "data-sw-drawer-portal",
+                  source: "runtime",
+                  description: "Marks the Portal part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-container",
+                  source: "prop",
+                  description: "Reflects the container prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-disabled",
+                  source: "prop",
+                  description: "Reflects the disabled prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-sw-portal-placement",
+                  source: "constant",
+                  value: "runtime",
+                  description: "Identifies Portal metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-placement",
                   source: "runtime",
                   description: "Marks the Portal part so Starwind Runtime can find it.",
                   descriptionSource: "authored",
@@ -63986,6 +64614,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           discoveryAttribute: "data-sw-menu-portal",
           defaultElement: "div",
           forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-container",
+              source: "prop",
+            },
+            {
+              name: "data-disabled",
+              source: "prop",
+            },
+            {
+              name: "data-sw-portal-placement",
+              source: "constant",
+              value: "runtime",
+            },
+            {
+              name: "data-placement",
+              source: "runtime",
+            },
+          ],
         },
         {
           name: "positioner",
@@ -66040,6 +66687,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               dataAttributes: [
                 {
                   name: "data-sw-menu-portal",
+                  source: "runtime",
+                  description: "Marks the Portal part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-container",
+                  source: "prop",
+                  description: "Reflects the container prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-disabled",
+                  source: "prop",
+                  description: "Reflects the disabled prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-sw-portal-placement",
+                  source: "constant",
+                  value: "runtime",
+                  description: "Identifies Portal metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-placement",
                   source: "runtime",
                   description: "Marks the Portal part so Starwind Runtime can find it.",
                   descriptionSource: "authored",
@@ -68349,6 +69021,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           discoveryAttribute: "data-sw-nav-menu-portal",
           defaultElement: "div",
           forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-container",
+              source: "prop",
+            },
+            {
+              name: "data-disabled",
+              source: "prop",
+            },
+            {
+              name: "data-sw-portal-placement",
+              source: "constant",
+              value: "runtime",
+            },
+            {
+              name: "data-placement",
+              source: "runtime",
+            },
+          ],
         },
         {
           name: "positioner",
@@ -68959,7 +69650,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             title: "Raw HTML",
             summary: "Render the NavigationMenu data-sw-* contract yourself, then initialize createNavigationMenu.",
             language: "html",
-            code: "<nav data-sw-nav-menu>\n  <ul data-sw-nav-menu-list>\n    <li data-sw-nav-menu-item data-value=\"products\">\n      <button data-sw-nav-menu-trigger type=\"button\" aria-haspopup=\"menu\">\n        <span data-sw-nav-menu-icon aria-hidden=\"true\">v</span>\n      </button>\n      <div data-sw-nav-menu-content hidden>\n        <a data-sw-nav-menu-link href=\"/docs\">Docs</a>\n      </div>\n    </li>\n  </ul>\n  <div data-sw-nav-menu-portal>\n    <div data-sw-nav-menu-positioner>\n      <div data-sw-nav-menu-popup hidden>\n        <div data-sw-nav-menu-viewport hidden></div>\n        <div data-sw-nav-menu-arrow aria-hidden=\"true\"></div>\n      </div>\n    </div>\n  </div>\n</nav>\n\n<script type=\"module\">\n  import { createNavigationMenu } from \"@starwind-ui/runtime/navigation-menu\";\n\n  const root = document.querySelector(\"[data-sw-nav-menu]\");\n  if (root) {\n    createNavigationMenu(root);\n  }\n</script>",
+            code: "<nav data-sw-nav-menu>\n  <ul data-sw-nav-menu-list>\n    <li data-sw-nav-menu-item data-value=\"products\">\n      <button data-sw-nav-menu-trigger type=\"button\" aria-haspopup=\"menu\">\n        <span data-sw-nav-menu-icon aria-hidden=\"true\">v</span>\n      </button>\n      <div data-sw-nav-menu-content hidden>\n        <a data-sw-nav-menu-link href=\"/docs\">Docs</a>\n      </div>\n    </li>\n  </ul>\n  <div data-sw-nav-menu-portal data-sw-portal-placement=\"runtime\">\n    <div data-sw-nav-menu-positioner>\n      <div data-sw-nav-menu-popup hidden>\n        <div data-sw-nav-menu-viewport hidden></div>\n        <div data-sw-nav-menu-arrow aria-hidden=\"true\"></div>\n      </div>\n    </div>\n  </div>\n</nav>\n\n<script type=\"module\">\n  import { createNavigationMenu } from \"@starwind-ui/runtime/navigation-menu\";\n\n  const root = document.querySelector(\"[data-sw-nav-menu]\");\n  if (root) {\n    createNavigationMenu(root);\n  }\n</script>",
             source: "scripts/portable-runtime/docs/layered-docs/examples.ts#navigation-menu-basic-raw-html",
           },
           {
@@ -69963,6 +70654,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Marks the Portal part so Starwind Runtime can find it.",
                   descriptionSource: "authored",
                 },
+                {
+                  name: "data-container",
+                  source: "prop",
+                  description: "Reflects the container prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-disabled",
+                  source: "prop",
+                  description: "Reflects the disabled prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-sw-portal-placement",
+                  source: "constant",
+                  value: "runtime",
+                  description: "Identifies Portal metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-placement",
+                  source: "runtime",
+                  description: "Marks the Portal part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
               ],
               stateModels: [],
               events: [],
@@ -70531,6 +71247,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           discoveryAttribute: "data-sw-popover-portal",
           defaultElement: "div",
           forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-container",
+              source: "prop",
+            },
+            {
+              name: "data-disabled",
+              source: "prop",
+            },
+            {
+              name: "data-sw-portal-placement",
+              source: "constant",
+              value: "runtime",
+            },
+            {
+              name: "data-placement",
+              source: "runtime",
+            },
+          ],
         },
         {
           name: "positioner",
@@ -71767,6 +72502,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Marks the Portal part so Starwind Runtime can find it.",
                   descriptionSource: "authored",
                 },
+                {
+                  name: "data-container",
+                  source: "prop",
+                  description: "Reflects the container prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-disabled",
+                  source: "prop",
+                  description: "Reflects the disabled prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-sw-portal-placement",
+                  source: "constant",
+                  value: "runtime",
+                  description: "Identifies Portal metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-placement",
+                  source: "runtime",
+                  description: "Marks the Portal part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
               ],
               stateModels: [],
               events: [],
@@ -72501,6 +73261,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           discoveryAttribute: "data-sw-preview-card-portal",
           defaultElement: "div",
           forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-container",
+              source: "prop",
+            },
+            {
+              name: "data-disabled",
+              source: "prop",
+            },
+            {
+              name: "data-sw-portal-placement",
+              source: "constant",
+              value: "runtime",
+            },
+            {
+              name: "data-placement",
+              source: "runtime",
+            },
+          ],
         },
         {
           name: "positioner",
@@ -73688,6 +74467,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               dataAttributes: [
                 {
                   name: "data-sw-preview-card-portal",
+                  source: "runtime",
+                  description: "Marks the Portal part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-container",
+                  source: "prop",
+                  description: "Reflects the container prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-disabled",
+                  source: "prop",
+                  description: "Reflects the disabled prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-sw-portal-placement",
+                  source: "constant",
+                  value: "runtime",
+                  description: "Identifies Portal metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-placement",
                   source: "runtime",
                   description: "Marks the Portal part so Starwind Runtime can find it.",
                   descriptionSource: "authored",
@@ -78173,6 +78977,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           discoveryAttribute: "data-sw-select-portal",
           defaultElement: "div",
           forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-container",
+              source: "prop",
+            },
+            {
+              name: "data-disabled",
+              source: "prop",
+            },
+            {
+              name: "data-sw-portal-placement",
+              source: "constant",
+              value: "runtime",
+            },
+            {
+              name: "data-placement",
+              source: "runtime",
+            },
+          ],
         },
         {
           name: "positioner",
@@ -80024,6 +80847,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               dataAttributes: [
                 {
                   name: "data-sw-select-portal",
+                  source: "runtime",
+                  description: "Marks the Portal part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-container",
+                  source: "prop",
+                  description: "Reflects the container prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-disabled",
+                  source: "prop",
+                  description: "Reflects the disabled prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-sw-portal-placement",
+                  source: "constant",
+                  value: "runtime",
+                  description: "Identifies Portal metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-placement",
                   source: "runtime",
                   description: "Marks the Portal part so Starwind Runtime can find it.",
                   descriptionSource: "authored",
@@ -89559,6 +90407,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           discoveryAttribute: "data-sw-tooltip-portal",
           defaultElement: "div",
           forwardsRef: true,
+          initialAttributes: [
+            {
+              name: "data-container",
+              source: "prop",
+            },
+            {
+              name: "data-disabled",
+              source: "prop",
+            },
+            {
+              name: "data-sw-portal-placement",
+              source: "constant",
+              value: "runtime",
+            },
+            {
+              name: "data-placement",
+              source: "runtime",
+            },
+          ],
         },
         {
           name: "positioner",
@@ -90684,6 +91551,31 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
               dataAttributes: [
                 {
                   name: "data-sw-tooltip-portal",
+                  source: "runtime",
+                  description: "Marks the Portal part so Starwind Runtime can find it.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-container",
+                  source: "prop",
+                  description: "Reflects the container prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-disabled",
+                  source: "prop",
+                  description: "Reflects the disabled prop on the Portal part.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-sw-portal-placement",
+                  source: "constant",
+                  value: "runtime",
+                  description: "Identifies Portal metadata for styling and selectors.",
+                  descriptionSource: "authored",
+                },
+                {
+                  name: "data-placement",
                   source: "runtime",
                   description: "Marks the Portal part so Starwind Runtime can find it.",
                   descriptionSource: "authored",

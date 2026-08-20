@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type ButtonHTMLAttributes, useAttrs } from "vue";
+import { type ButtonHTMLAttributes } from "vue";
 import "./styles.css";
 import * as ColorPickerPrimitive from "@starwind-ui/vue/color-picker";
 import { colorPickerSwatch } from "./variants";
@@ -21,7 +21,6 @@ const { value, disabled = false, class: className } = defineProps<ColorPickerSwa
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -29,7 +28,7 @@ const attrs = useAttrs();
     :swatch-value="value"
     :swatch-disabled="disabled"
     :class="colorPickerSwatch({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="color-picker-swatch"
   >
     <ColorPickerPrimitive.ColorPickerTransparencyGrid

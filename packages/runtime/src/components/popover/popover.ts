@@ -1,3 +1,4 @@
+import { createCancelableDetails } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
   ensureId,
@@ -5,7 +6,6 @@ import {
   resolveAsChildControl,
   uniqueElements,
 } from "../../internal/dom";
-import { createCancelableDetails } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
 import {
   createFloatingPositioner,
@@ -22,6 +22,7 @@ import {
 } from "../../internal/floating-disclosure";
 import { focusFirstElement } from "../../internal/focus";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { lockDocumentScroll } from "../../internal/scroll-lock";
 
@@ -122,6 +123,23 @@ const POPOVER_SIDE_OFFSET_ATTRIBUTE = "data-side-offset";
 const POPOVER_AVOID_COLLISIONS_ATTRIBUTE = "data-avoid-collisions";
 const POPOVER_COLLISION_STRATEGY_ATTRIBUTE = "data-collision-strategy";
 const instances = new WeakMap<HTMLElement, PopoverController>();
+
+export function refreshPopoverPortalSurface(root: HTMLElement): void {
+  const controller = instances.get(root);
+  if (!controller) return;
+  const nextElements = getPopoverElements(controller.root);
+  if (nextElements.popup === controller["elements"].popup) return;
+
+  popupOwners.delete(controller["elements"].popup);
+  controller["portalSurfaceAbortController"]?.abort();
+  controller["portalSurfaceAbortController"] = new AbortController();
+  Object.assign(controller["elements"], nextElements);
+  popupOwners.set(controller["elements"].popup, controller);
+  controller["setupAccessibility"]();
+  controller["bindPortalEvents"]();
+  controller["lifecycle"].refreshSurface(controller["elements"].popup);
+  controller["reconcileOpenChildRegistrations"]();
+}
 const popupOwners = new WeakMap<HTMLElement, PopoverController>();
 
 export function createPopover(root: HTMLElement, options: PopoverOptions = {}): PopoverInstance {
@@ -160,6 +178,7 @@ class PopoverController implements PopoverInstance {
   private pendingControlledCloseRequest: OpenRequest | null = null;
   private pendingControlledOpenRequest: OpenRequest | null = null;
   private previousActiveElement: HTMLElement | null = null;
+  private portalSurfaceAbortController: AbortController | null = null;
   private registeredOpenParent: PopoverController | null = null;
 
   constructor(root: HTMLElement, options: PopoverOptions) {
@@ -310,6 +329,7 @@ class PopoverController implements PopoverInstance {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.portalSurfaceAbortController?.abort();
     this.clearHoverCloseTimer();
     this.lifecycle.destroy();
     this.openChangeSubscribers.clear();
@@ -429,6 +449,12 @@ class PopoverController implements PopoverInstance {
         );
       }
     });
+
+    this.bindPortalEvents();
+  }
+
+  private bindPortalEvents(): void {
+    const signal = this.portalSurfaceAbortController?.signal ?? this.abortController.signal;
 
     this.elements.closeButtons.forEach((button) => {
       button.addEventListener(
@@ -618,7 +644,7 @@ class PopoverController implements PopoverInstance {
   }
 
   private getPortalElement(): HTMLElement {
-    return this.elements.positioner ?? this.elements.popup;
+    return this.elements.portal ?? this.elements.positioner ?? this.elements.popup;
   }
 
   private createPopoverPositioner(
@@ -903,10 +929,9 @@ function queryOwnElement(root: HTMLElement, selector: string): HTMLElement | nul
 }
 
 function queryOwnElements(root: HTMLElement, selector: string): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((element) => {
-    const owner = element.closest<HTMLElement>(`[${POPOVER_ROOT_ATTRIBUTE}]`);
-    return owner === root;
-  });
+  return queryRuntimePartElements(root, selector).filter((element) =>
+    isRuntimePartOwned(root, element, `[${POPOVER_ROOT_ATTRIBUTE}]`),
+  );
 }
 
 function createOpenChangeDetails(

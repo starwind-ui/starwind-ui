@@ -1,3 +1,15 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+const VUE_SCROLL_AREA_NAMESPACE_MEMBERS = [
+  { key: "Root", name: "ScrollAreaRoot" },
+  { key: "Viewport", name: "ScrollAreaViewport" },
+  { key: "Content", name: "ScrollAreaContent" },
+  { key: "Scrollbar", name: "ScrollAreaScrollbar" },
+  { key: "Thumb", name: "ScrollAreaThumb" },
+  { key: "Corner", name: "ScrollAreaCorner" },
+] as const;
+
 import type {
   AdapterComponentFile,
   AdapterIndexFile,
@@ -7,7 +19,9 @@ import type {
 import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
 
 export function printVueViewportMeasurementIndex(file: AdapterIndexFile): AdapterPrintedFile {
-  return printVueFamilyIndex(file, "viewport-measurement");
+  return printVueFamilyIndex(file, "viewport-measurement", {
+    namespaceMembers: VUE_SCROLL_AREA_NAMESPACE_MEMBERS,
+  });
 }
 
 type PassivePartName = "content" | "corner" | "scrollbar" | "thumb" | "viewport";
@@ -36,7 +50,7 @@ function printRoot(facts: AdapterViewportMeasurementFacts): string {
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
-import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, ref, useAttrs, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -61,7 +75,6 @@ const props = defineProps<{
   ${threshold.name}?: ${facts.threshold.typeName};
 }>();
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const rootRef = ref<${elementType} | null>(null);
 const thresholdAttributes = computed(() => ${facts.threshold.helperName}(props.${threshold.name}));
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
@@ -145,7 +158,7 @@ function ${facts.threshold.normalizeHelperName}(value: number | undefined): numb
 <template>
   <${root.defaultElement}
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.root}
     :${facts.attrs.overflowEdgeThreshold}="thresholdAttributes.shared"
     :${facts.attrs.overflowEdgeThresholdEdges.xEnd}="thresholdAttributes.xEnd"
@@ -167,6 +180,9 @@ function printPassivePart(
   const part = facts.parts[partName];
   const refName = `${partName}Ref`;
   const elementType = getElementType(part.defaultElement);
+  const attributeAccess = projectVueAttributeAccess(
+    partName === "viewport" ? ["style-read", "setup-consumer"] : [],
+  );
   const props =
     partName === "scrollbar"
       ? `
@@ -211,11 +227,11 @@ function getViewportTabIndex(): number | string {
 
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref${attributeAccess.vueImport ? `, ${attributeAccess.vueImport}` : ""} } from "vue";
 
 defineOptions({ inheritAttrs: false });${props}
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
+${attributeAccess.setupBinding ?? ""}
 const ${refName} = ref<${elementType} | null>(null);
 
 defineExpose({ element: ${refName} });${helpers}
@@ -224,7 +240,7 @@ defineExpose({ element: ${refName} });${helpers}
 <template>
   <${part.defaultElement}
     ref="${refName}"
-    v-bind="attrs"
+    v-bind="${attributeAccess.templateBinding}"
     ${part.discoveryAttribute}${protectedAttributes}
   >
     <slot />

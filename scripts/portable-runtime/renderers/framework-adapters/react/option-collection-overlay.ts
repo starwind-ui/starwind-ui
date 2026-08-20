@@ -10,13 +10,16 @@ import {
   renderReactAsChildImports,
   renderReactAsChildSetup,
 } from "./as-child-trigger-fragments.js";
+import { addReactPortalScope, printReactPortalComponent } from "./portal.js";
 
 export function printReactOptionCollectionOverlayComponent(
   family: AdapterOptionCollectionOverlayComponentProjection,
 ): string {
   const facts = family.facts;
 
-  if (family.part === "root") return printRootWithLazyClosedContentSupport(facts);
+  if (family.part === "root") {
+    return addReactPortalScope(printRootWithLazyClosedContentSupport(facts), facts.runtime.factory);
+  }
   if (family.part === "trigger") return printTrigger(facts);
   if (family.part === "value") return printValueWithSelectedLabel(facts);
   if (family.part === "positioner") return printPositioner(facts);
@@ -28,6 +31,15 @@ export function printReactOptionCollectionOverlayComponent(
   if (family.part === "group") return printSimplePart(facts, family.part, 'role="group"');
   if (family.part === "scrollUpArrow" || family.part === "scrollDownArrow") {
     return printSimplePart(facts, family.part, 'aria-hidden="true"');
+  }
+  if (family.part === "portal") {
+    return printReactPortalComponent({
+      componentName: facts.exports.portal,
+      discoveryAttribute: facts.attrs.portal,
+      displayName: facts.displayName,
+      rootDiscoveryAttribute: facts.attrs.root,
+      runtimeImportSource: facts.runtime.importSource,
+    });
   }
 
   return printSimplePart(facts, family.part);
@@ -133,6 +145,10 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
   const [uncontrolledValue, setUncontrolledValueState] = React.useState(${props.defaultValue.name}Ref.current);
   const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
   const uncontrolledValueRef = React.useRef(uncontrolledValue);
+  const pendingProgrammaticValueRef = React.useRef<{
+    emit?: boolean;
+    value: ${props.value.type};
+  } | null>(null);
 
   const setUncontrolledOpen = React.useCallback((nextOpen: ${props.open.type}) => {
     uncontrolledOpenRef.current = nextOpen;
@@ -242,11 +258,20 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
 
       event.stopImmediatePropagation();
 
-      const instance = ensureInstance();
-      if (!instance) return;
-
       const nextValue = detail.value === "" ? null : detail.value;
       const emit = typeof detail.emit === "boolean" ? detail.emit : undefined;
+      const instance = ensureInstance();
+      if (!instance) {
+        pendingProgrammaticValueRef.current = { emit, value: nextValue };
+        if (emit !== false || ${props.value.name}Ref.current !== undefined) return;
+        setSelectedLabel({
+          label: findSelectedOptionText(children, nextValue),
+          value: nextValue,
+        });
+        setUncontrolledValue(nextValue);
+        return;
+      }
+
       instance.${facts.state.value.setter}(nextValue, { emit });
       if (emit !== false || ${props.value.name}Ref.current !== undefined) return;
 
@@ -267,6 +292,15 @@ const ${root} = React.forwardRef<HTMLDivElement, ${root}Props>(function ${root}(
       });
     };
   }, [children, ensureInstance, setUncontrolledValue]);
+
+  useIsomorphicLayoutEffect(() => {
+    const pending = pendingProgrammaticValueRef.current;
+    if (!pending) return;
+    const instance = ensureInstance();
+    if (!instance) return;
+    pendingProgrammaticValueRef.current = null;
+    instance.${facts.state.value.setter}(pending.value, { emit: pending.emit });
+  }, [ensureInstance]);
 
   useIsomorphicLayoutEffect(() => {
     return () => {

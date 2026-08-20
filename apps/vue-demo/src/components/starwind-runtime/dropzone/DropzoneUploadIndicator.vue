@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as DropzonePrimitive from "@starwind-ui/vue/dropzone";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { dropzoneUploadIndicator } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -19,7 +19,6 @@ const { isUploading = false, class: className } =
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDivElement | null } & ComponentPublicInstance) | null =
   null;
@@ -48,7 +47,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :ref="setElement"
     :class="dropzoneUploadIndicator({ class: className })"
     :is-uploading="isUploading"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="dropzone-upload-indicator"
   >
     <slot>

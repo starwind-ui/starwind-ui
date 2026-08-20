@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as DialogPrimitive from "@starwind-ui/vue/dialog";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { dialogDescription } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,7 +16,6 @@ const { class: className } = defineProps<DialogDescriptionDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLParagraphElement | null>(null);
 let pendingPrimitiveRef:
   | ({ element?: HTMLParagraphElement | null } & ComponentPublicInstance)
@@ -47,7 +46,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
   <DialogPrimitive.DialogDescription
     :ref="setElement"
     :class="dialogDescription({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="dialog-description"
   >
     <slot />

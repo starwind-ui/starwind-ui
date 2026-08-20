@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type AnchorHTMLAttributes, useAttrs } from "vue";
+import { type AnchorHTMLAttributes } from "vue";
 import { sidebarMenuSubButton } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -23,7 +23,6 @@ const {
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -32,7 +31,7 @@ const attrs = useAttrs();
     data-sidebar="menu-sub-button"
     :data-size="size"
     :data-active="isActive"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="sidebar-menu-sub-button"
   >
     <slot />

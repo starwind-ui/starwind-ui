@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ContextMenuPrimitive from "@starwind-ui/vue/context-menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { contextMenuRadioItemIndicator } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,13 +16,12 @@ const { class: className } = defineProps<ContextMenuRadioItemIndicatorDeclaredPr
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ContextMenuPrimitive.ContextMenuRadioItemIndicator
     :class="contextMenuRadioItemIndicator({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="context-menu-radio-item-indicator"
   >
     <slot />

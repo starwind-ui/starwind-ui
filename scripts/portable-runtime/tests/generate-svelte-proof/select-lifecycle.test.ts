@@ -98,14 +98,21 @@ describe("generated Svelte Select lifecycle", () => {
         externalSuppressed: { callbackCount: 3, open: false },
         reset: { after: "alpha", before: "empty" },
       },
-      portal: { initialParent: "portal-a", retargetedParent: "portal-b" },
+      portal: {
+        crossDocumentParent: "BODY",
+        disconnectedParent: "BODY",
+        initialParent: "portal-a",
+        nestedParent: "controlled-portal",
+        retargetedParent: "portal-b",
+      },
+      portalEvents: { delegatedClicks: 2, readyAfterMove: true },
       reset: { afterReset: "alpha", beforeReset: "empty" },
       rootCountAfterUnmount: 0,
     });
     expect(result.refs).toEqual({ cleanups: 10, connects: 10 });
     expect(result.lifecycle.byCase.ownership).toEqual({ connects: 5, destroys: 5 });
-    expect(result.lifecycle.connects).toBe(9);
-    expect(result.lifecycle.destroys).toBe(9);
+    expect(result.lifecycle.connects).toBe(11);
+    expect(result.lifecycle.destroys).toBe(11);
     expect(result.lifecycle.setOpen).toBeGreaterThanOrEqual(2);
     expect(result.lifecycle.setValue).toBeGreaterThanOrEqual(2);
   }, 120_000);
@@ -121,18 +128,35 @@ async function createHarness(): Promise<string> {
     await copyFile(path.join(fixtureRoot, file), path.join(selectRoot, file));
   }
   const actualRuntime = path
-    .join(process.cwd(), "packages/runtime/src/components/select/select.ts")
+    .join(process.cwd(), "packages/runtime/src/components/select/index.ts")
     .replaceAll("\\", "/");
   await writeFile(
     path.join(root, "runtime.ts"),
-    `import { createSelect as createActualSelect } from "${actualRuntime}";
+    `import {
+  createSelect as createActualSelect,
+  reportPortalPlacement as reportActualPortalPlacement,
+  resolvePortalPlacement as resolveActualPortalPlacement,
+} from "${actualRuntime}";
 
 const proof = globalThis.__selectLifecycle ??= {
   connects: 0,
   destroys: 0,
+  portalReports: [],
   setOpen: 0,
   setValue: 0,
 };
+
+export function resolvePortalPlacement(wrapper, options) {
+  return resolveActualPortalPlacement(wrapper, options);
+}
+
+export function reportPortalPlacement(wrapper, placement) {
+  proof.portalReports.push({
+    parentMatches: placement ? wrapper.parentElement === placement.target : null,
+    ready: placement?.ready ?? null,
+  });
+  return reportActualPortalPlacement(wrapper, placement);
+}
 
 export function createSelect(root, options) {
   proof.connects += 1;
@@ -202,7 +226,7 @@ const APP_SOURCE = String.raw`<script lang="ts">
   let cancelValue = $state(true);
   let openCallbackCount = $state(0);
   let valueCallbackCount = $state(0);
-  let portalTarget = $state("#portal-a");
+  let portalTarget = $state<string | HTMLElement>("#portal-a");
   let mounted = $state(true);
   let items = $state([
     { id: "stable-alpha", value: "alpha", label: "Alpha", explicit: true },
@@ -211,6 +235,7 @@ const APP_SOURCE = String.raw`<script lang="ts">
   ]);
   let refConnects = $state(0);
   let refCleanups = $state(0);
+  let delegatedClicks = $state(0);
   let ownershipHarness: {
     acceptOpen(): void;
     controlOpen(value: boolean): void;
@@ -238,9 +263,10 @@ const APP_SOURCE = String.raw`<script lang="ts">
   export function setValue(next: string | null) { value = next; }
   export function reorder() { items = [items[2]!, items[1]!, items[0]!]; }
   export function retarget() { portalTarget = "#portal-b"; }
+  export function retargetElement(next: HTMLElement) { portalTarget = next; }
   export function setMounted(next: boolean) { mounted = next; }
   export function snapshot() {
-    return { open, openCallbackCount, ownership: ownershipHarness?.snapshot(), refCleanups, refConnects, value, valueCallbackCount };
+    return { delegatedClicks, open, openCallbackCount, ownership: ownershipHarness?.snapshot(), refCleanups, refConnects, value, valueCallbackCount };
   }
   export function ownershipAcceptOpen() { ownershipHarness?.acceptOpen(); }
   export function ownershipControlOpen(next: boolean) { ownershipHarness?.controlOpen(next); }
@@ -258,7 +284,7 @@ const APP_SOURCE = String.raw`<script lang="ts">
           <SelectPopup>
             <SelectList>
               {#each items as item (item.id)}
-                <SelectItem value={item.value} data-item-id={item.id} ref={item.id === "stable-alpha" ? trackRef : undefined}>
+                <SelectItem value={item.value} data-item-id={item.id} ref={item.id === "stable-alpha" ? trackRef : undefined} onclick={item.id === "stable-empty" ? () => delegatedClicks += 1 : undefined}>
                   {#if item.explicit}<SelectItemText>{item.label}</SelectItemText>{/if}
                   <SelectItemIndicator>Selected</SelectItemIndicator>
                 </SelectItem>
@@ -266,6 +292,14 @@ const APP_SOURCE = String.raw`<script lang="ts">
             </SelectList>
           </SelectPopup>
         </SelectPositioner>
+        <SelectRoot defaultValue="nested" modal={false} data-case="nested">
+          <SelectTrigger>Nested trigger</SelectTrigger>
+          <SelectPortal data-case="nested-portal">
+            <SelectPositioner>
+              <SelectPopup><SelectItem value="nested"><SelectItemText>Nested</SelectItemText></SelectItem></SelectPopup>
+            </SelectPositioner>
+          </SelectPortal>
+        </SelectRoot>
       </SelectPortal>
     </SelectRoot>
   {/if}
@@ -414,9 +448,21 @@ try {
   const keyedIdentityPreserved = alphaBefore?.isSameNode(query('[data-item-id="stable-alpha"]')) ?? false;
 
   const initialParent = query('[data-case="controlled-portal"]')?.parentElement?.id;
+  const nestedParent = query('[data-case="nested-portal"]')?.parentElement?.dataset.case;
   instance.retarget();
   await tick();
   const retargetedParent = query('[data-case="controlled-portal"]')?.parentElement?.id;
+  query("#portal-b")?.remove();
+  await tick();
+  const disconnectedParent = query('[data-case="controlled-portal"]')?.parentElement?.tagName;
+  const foreignFrame = document.createElement("iframe");
+  document.body.append(foreignFrame);
+  const foreignTarget = foreignFrame.contentDocument?.body;
+  if (!foreignTarget) throw new Error("Missing cross-document portal target.");
+  instance.retargetElement(foreignTarget);
+  await tick();
+  const crossDocumentParent = query('[data-case="controlled-portal"]')?.parentElement?.tagName;
+  foreignFrame.remove();
 
   query('[data-case="reset-trigger"]')?.click();
   await tick();
@@ -497,7 +543,13 @@ try {
     isolation,
     keyedIdentityPreserved,
     lifecycle: globalThis.__selectLifecycle,
-    portal: { initialParent, retargetedParent },
+    portal: { crossDocumentParent, disconnectedParent, initialParent, nestedParent, retargetedParent },
+    portalEvents: {
+      delegatedClicks: snapshot.delegatedClicks,
+      readyAfterMove: (globalThis.__selectLifecycle?.portalReports ?? [])
+        .filter((report) => report.ready === true)
+        .every((report) => report.parentMatches === true),
+    },
     ownership: {
       afterOpenGain,
       afterOpenRemoval,

@@ -224,6 +224,12 @@ describe("Vue Menu", () => {
 
     expect(overlays.querySelectorAll(":scope > [data-sw-menu-portal]")).toHaveLength(1);
     expect(overlays.querySelectorAll("[data-sw-menu-portal]")).toHaveLength(2);
+    const portals = overlays.querySelectorAll<HTMLElement>("[data-sw-menu-portal]");
+    const rootPortal = portals[0]!;
+    const submenuPortal = portals[1]!;
+    expect(rootPortal.dataset.placement).toBe("ready");
+    expect(submenuPortal.dataset.placement).toBe("ready");
+    expect(rootPortal.contains(submenuPortal)).toBe(true);
     const trigger = host.querySelector<HTMLButtonElement>("[data-sw-menu-trigger]")!;
     trigger.click();
     await frame();
@@ -235,6 +241,25 @@ describe("Vue Menu", () => {
     await frame();
     expect(submenuTrigger.getAttribute("aria-expanded")).toBe("true");
     expect(overlays.querySelectorAll("[data-sw-menu-popup]:not([hidden])")).toHaveLength(2);
+    const submenuPositioner = submenuPortal.querySelector<HTMLElement>(
+      "[data-sw-menu-positioner]",
+    )!;
+    expect(submenuPortal.dataset.placement).toBe("ready");
+    expect(submenuPositioner.style.left).not.toBe("");
+    expect(submenuPositioner.style.top).not.toBe("");
+
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+    await frame();
+    expect(submenuTrigger.getAttribute("aria-expanded")).toBe("false");
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    submenuTrigger.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }),
+    );
+    await frame();
+    expect(submenuTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(submenuPortal.dataset.placement).toBe("ready");
 
     app.unmount();
     expect(abort).toHaveBeenCalledTimes(2);

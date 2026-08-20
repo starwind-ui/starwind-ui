@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { sidebarInset } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -17,11 +17,10 @@ const { dataSlot = "sidebar-inset", class: className } = defineProps<SidebarInse
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <main :class="sidebarInset({ class: className })" v-bind="attrs" :data-slot="dataSlot">
+  <main :class="sidebarInset({ class: className })" v-bind="$attrs" :data-slot="dataSlot">
     <slot />
   </main>
 </template>

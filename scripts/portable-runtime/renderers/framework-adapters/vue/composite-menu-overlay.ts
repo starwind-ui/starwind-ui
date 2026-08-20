@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterComponentFile,
   AdapterCompositeMenuOverlayFacts,
@@ -89,6 +93,7 @@ function printContext(facts: AdapterCompositeMenuOverlayFacts): string {
 import { type ComputedRef, type InjectionKey, inject, type Ref } from "vue";
 
 export type ${facts.displayName}RootContextValue = Readonly<{
+  element: Readonly<Ref<HTMLElement | null>>;
   mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   registerPortal(owner: symbol, element: HTMLElement | null): void;
@@ -161,6 +166,7 @@ let portalReference: HTMLElement | null = null;
 let generation = 0;
 
 provide(${facts.displayName}RootContext, {
+  element: rootRef,
   mounted,
   open: renderedOpen,
   registerPortal(owner, element) {
@@ -276,21 +282,30 @@ const AsChildTrigger = defineComponent({ inheritAttrs: false, setup() { return (
 function printPortal(facts: AdapterCompositeMenuOverlayFacts): string {
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
+import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { useVuePortalPlacement } from "../_internal/portal";
 import { use${facts.displayName}OwnerContext, use${facts.displayName}RootContext } from "./${facts.displayName}Context";
 defineOptions({ inheritAttrs: false });
-const props = withDefaults(defineProps<{ container?: string | HTMLElement; disabled?: boolean }>(), { container: "body", disabled: false });
+const props = withDefaults(defineProps<{ container?: string | HTMLElement; disabled?: boolean }>(), { disabled: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const menu = use${facts.displayName}RootContext("Portal");
 const ownerContext = use${facts.displayName}OwnerContext("Portal");
 const portalRef = ref<HTMLDivElement | null>(null);
 const owner = Symbol("${facts.displayName}PortalOwner");
+const placement = useVuePortalPlacement({
+  active: () => menu.mounted.value && ownerContext.kind === "root",
+  container: () => props.container,
+  disabled: () => props.disabled,
+  element: portalRef,
+  reference: () => menu.element.value,
+  runtime: { reportPortalPlacement, resolvePortalPlacement },
+});
 onMounted(() => { if (ownerContext.kind === "root") menu.registerPortal(owner, portalRef.value); });
 onBeforeUnmount(() => { if (ownerContext.kind === "root") menu.registerPortal(owner, null); });
 defineExpose({ element: portalRef });
 </script>
-<template><Teleport :to="props.container" :disabled="props.disabled || !menu.mounted.value || ownerContext.kind === 'submenu'"><${facts.parts.portal.defaultElement} ref="portalRef" v-bind="attrs" ${facts.attrs.portal} data-sw-part="${facts.parts.portal.name}" data-floating-root><slot /></${facts.parts.portal.defaultElement}></Teleport></template>
+<template><Teleport :to="placement.target.value" :disabled="placement.disabled.value"><${facts.parts.portal.defaultElement} ref="portalRef" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.portal} :data-container="typeof props.container === 'string' ? props.container : undefined" :data-disabled="props.disabled ? '' : undefined" :data-placement="placement.ready.value ? 'ready' : 'pending'" data-sw-portal-placement="framework" data-sw-part="${facts.parts.portal.name}" data-floating-root><slot /></${facts.parts.portal.defaultElement}></Teleport></template>
 `;
 }
 
@@ -303,12 +318,13 @@ function printFloating(
   const popup = partName === "popup";
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ ${facts.props.side.name}?: ${facts.props.side.type}; ${facts.props.align.name}?: ${facts.props.align.type}; ${facts.props.sideOffset.name}?: ${facts.props.sideOffset.type}; ${facts.props.avoidCollisions.name}?: ${facts.props.avoidCollisions.type} }>(), { ${facts.props.side.name}: ${facts.floating.sideDefault}, ${facts.props.align.name}: ${facts.floating.alignDefault}, ${facts.props.sideOffset.name}: ${facts.floating.sideOffsetDefault}, ${facts.props.avoidCollisions.name}: ${facts.floating.avoidCollisionsDefault} });
-defineSlots<{ default?: () => unknown }>(); const attrs = useAttrs(); const element = ref<HTMLDivElement | null>(null); defineExpose({ element });
+defineSlots<{ default?: () => unknown }>();
+const element = ref<HTMLDivElement | null>(null); defineExpose({ element });
 </script>
-<template><${part.defaultElement} ref="element" v-bind="attrs" ${attr} data-sw-part="${part.name}"${popup ? ' role="menu" tabindex="-1" hidden' : ""} data-state="closed" :${facts.attrs.side}="props.${facts.props.side.name}" :${facts.attrs.align}="props.${facts.props.align.name}" :${facts.attrs.sideOffset}="props.${facts.props.sideOffset.name}" :${facts.attrs.avoidCollisions}="props.${facts.props.avoidCollisions.name} ? 'true' : 'false'"><slot /></${part.defaultElement}></template>
+<template><${part.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${attr} data-sw-part="${part.name}"${popup ? ' role="menu" tabindex="-1" hidden' : ""} data-state="closed" :${facts.attrs.side}="props.${facts.props.side.name}" :${facts.attrs.align}="props.${facts.props.align.name}" :${facts.attrs.sideOffset}="props.${facts.props.sideOffset.name}" :${facts.attrs.avoidCollisions}="props.${facts.props.avoidCollisions.name} ? 'true' : 'false'"><slot /></${part.defaultElement}></template>
 `;
 }
 
@@ -320,8 +336,9 @@ function printItem(facts: AdapterCompositeMenuOverlayFacts): string {
 function printLinkItem(facts: AdapterCompositeMenuOverlayFacts): string {
   const branch = facts.staticBranches.linkItem;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { ref, useAttrs } from "vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ href?: string; ${branch.closeOnClick.prop.name}?: boolean; ${branch.disabled.prop.name}?: boolean }>(), { ${branch.closeOnClick.prop.name}: ${branch.closeOnClick.defaultValue}, ${branch.disabled.prop.name}: false }); defineSlots<{ default?: () => unknown }>(); const attrs = useAttrs(); const element = ref<HTMLAnchorElement | null>(null); defineExpose({ element });</script>
-<template><${facts.parts.linkItem.defaultElement} ref="element" v-bind="attrs" ${facts.attrs.linkItem} data-sw-part="${facts.parts.linkItem.name}" role="${branch.role}" tabindex="0" :href="props.${branch.disabled.prop.name} ? undefined : props.href" :${branch.closeOnClick.attribute}="props.${branch.closeOnClick.prop.name} ? 'true' : undefined" :${branch.disabled.ariaAttribute}="props.${branch.disabled.prop.name} ? 'true' : undefined" :${branch.disabled.dataAttribute}="props.${branch.disabled.prop.name} ? '' : undefined"><slot /></${facts.parts.linkItem.defaultElement}></template>
+<script setup lang="ts">import { ref } from "vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ href?: string; ${branch.closeOnClick.prop.name}?: boolean; ${branch.disabled.prop.name}?: boolean }>(), { ${branch.closeOnClick.prop.name}: ${branch.closeOnClick.defaultValue}, ${branch.disabled.prop.name}: false }); defineSlots<{ default?: () => unknown }>();
+const element = ref<HTMLAnchorElement | null>(null); defineExpose({ element });</script>
+<template><${facts.parts.linkItem.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.linkItem} data-sw-part="${facts.parts.linkItem.name}" role="${branch.role}" tabindex="0" :href="props.${branch.disabled.prop.name} ? undefined : props.href" :${branch.closeOnClick.attribute}="props.${branch.closeOnClick.prop.name} ? 'true' : undefined" :${branch.disabled.ariaAttribute}="props.${branch.disabled.prop.name} ? 'true' : undefined" :${branch.disabled.dataAttribute}="props.${branch.disabled.prop.name} ? '' : undefined"><slot /></${facts.parts.linkItem.defaultElement}></template>
 `;
 }
 
@@ -333,8 +350,9 @@ function printInteractiveStatic(
   role?: string,
 ): string {
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { ref, useAttrs } from "vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${close.prop.name}?: boolean; ${disabled.prop.name}?: boolean }>(), { ${close.prop.name}: ${close.defaultValue}, ${disabled.prop.name}: false }); defineSlots<{ default?: () => unknown }>(); const attrs = useAttrs(); const element = ref<HTMLDivElement | null>(null); defineExpose({ element });</script>
-<template><${facts.parts[partName].defaultElement} ref="element" v-bind="attrs" ${facts.attrs[partName]} data-sw-part="${facts.parts[partName].name}" role="${role}" tabindex="0" :${close.attribute}="props.${close.prop.name} ? undefined : 'false'" :${disabled.ariaAttribute}="props.${disabled.prop.name} ? 'true' : undefined" :${disabled.dataAttribute}="props.${disabled.prop.name} ? '' : undefined"><slot /></${facts.parts[partName].defaultElement}></template>
+<script setup lang="ts">import { ref } from "vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${close.prop.name}?: boolean; ${disabled.prop.name}?: boolean }>(), { ${close.prop.name}: ${close.defaultValue}, ${disabled.prop.name}: false }); defineSlots<{ default?: () => unknown }>();
+const element = ref<HTMLDivElement | null>(null); defineExpose({ element });</script>
+<template><${facts.parts[partName].defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs[partName]} data-sw-part="${facts.parts[partName].name}" role="${role}" tabindex="0" :${close.attribute}="props.${close.prop.name} ? undefined : 'false'" :${disabled.ariaAttribute}="props.${disabled.prop.name} ? 'true' : undefined" :${disabled.dataAttribute}="props.${disabled.prop.name} ? '' : undefined"><slot /></${facts.parts[partName].defaultElement}></template>
 `;
 }
 
@@ -415,11 +433,12 @@ function printRadioItem(facts: AdapterCompositeMenuOverlayFacts): string {
   const recipe = facts.radioItem;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { computed, provide, ref, useAttrs } from "vue";
+import { computed, provide, ref } from "vue";
 import { ${facts.displayName}RadioItemContext, use${facts.displayName}RadioGroupContext } from "./${facts.displayName}Context";
-defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${recipe.valueProp.name}: string; ${recipe.checkedState.controlledProp.name}?: boolean; ${recipe.checkedState.defaultProp.name}?: boolean; ${recipe.closeOnClick.prop.name}?: boolean; ${recipe.disabled.prop.name}?: boolean }>(), { ${recipe.checkedState.controlledProp.name}: undefined, ${recipe.checkedState.defaultProp.name}: false, ${recipe.closeOnClick.prop.name}: ${recipe.closeOnClick.defaultValue}, ${recipe.disabled.prop.name}: false }); defineSlots<{ default?: () => unknown }>(); const attrs = useAttrs(); const element = ref<HTMLDivElement | null>(null); const group = use${facts.displayName}RadioGroupContext("RadioItem"); const checked = computed(() => group.value.value === undefined ? (props.${recipe.checkedState.controlledProp.name} ?? props.${recipe.checkedState.defaultProp.name}) : group.value.value === props.${recipe.valueProp.name}); provide(${facts.displayName}RadioItemContext, { checked }); defineExpose({ element });
+defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${recipe.valueProp.name}: string; ${recipe.checkedState.controlledProp.name}?: boolean; ${recipe.checkedState.defaultProp.name}?: boolean; ${recipe.closeOnClick.prop.name}?: boolean; ${recipe.disabled.prop.name}?: boolean }>(), { ${recipe.checkedState.controlledProp.name}: undefined, ${recipe.checkedState.defaultProp.name}: false, ${recipe.closeOnClick.prop.name}: ${recipe.closeOnClick.defaultValue}, ${recipe.disabled.prop.name}: false }); defineSlots<{ default?: () => unknown }>();
+const element = ref<HTMLDivElement | null>(null); const group = use${facts.displayName}RadioGroupContext("RadioItem"); const checked = computed(() => group.value.value === undefined ? (props.${recipe.checkedState.controlledProp.name} ?? props.${recipe.checkedState.defaultProp.name}) : group.value.value === props.${recipe.valueProp.name}); provide(${facts.displayName}RadioItemContext, { checked }); defineExpose({ element });
 </script>
-<template><${facts.parts.radioItem.defaultElement} ref="element" v-bind="attrs" ${facts.attrs.radioItem} data-sw-part="${facts.parts.radioItem.name}" role="${recipe.role}" tabindex="0" :${recipe.valueProp.attribute}="props.${recipe.valueProp.name}" :${recipe.checkedState.initialAttribute}="props.${recipe.checkedState.defaultProp.name} ? 'true' : undefined" :${recipe.closeOnClick.attribute}="props.${recipe.closeOnClick.prop.name} ? 'true' : undefined" :${recipe.stateAttributes.ariaChecked}="checked" :${recipe.stateAttributes.checked}="checked ? '' : undefined" :${recipe.stateAttributes.unchecked}="checked ? undefined : ''" :${recipe.disabled.ariaAttribute}="props.${recipe.disabled.prop.name} ? 'true' : undefined" :${recipe.disabled.dataAttribute}="props.${recipe.disabled.prop.name} ? '' : undefined"><slot /></${facts.parts.radioItem.defaultElement}></template>
+<template><${facts.parts.radioItem.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.radioItem} data-sw-part="${facts.parts.radioItem.name}" role="${recipe.role}" tabindex="0" :${recipe.valueProp.attribute}="props.${recipe.valueProp.name}" :${recipe.checkedState.initialAttribute}="props.${recipe.checkedState.defaultProp.name} ? 'true' : undefined" :${recipe.closeOnClick.attribute}="props.${recipe.closeOnClick.prop.name} ? 'true' : undefined" :${recipe.stateAttributes.ariaChecked}="checked" :${recipe.stateAttributes.checked}="checked ? '' : undefined" :${recipe.stateAttributes.unchecked}="checked ? undefined : ''" :${recipe.disabled.ariaAttribute}="props.${recipe.disabled.prop.name} ? 'true' : undefined" :${recipe.disabled.dataAttribute}="props.${recipe.disabled.prop.name} ? '' : undefined"><slot /></${facts.parts.radioItem.defaultElement}></template>
 `;
 }
 
@@ -434,8 +453,9 @@ function printIndicator(
   projection: AdapterCompositeMenuOverlayFacts["checkboxItem"]["indicator"],
 ): string {
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { ref, useAttrs } from "vue"; import { use${facts.displayName}${context}Context } from "./${facts.displayName}Context"; defineOptions({ inheritAttrs: false }); defineSlots<{ default?: () => unknown }>(); const attrs = useAttrs(); const item = use${facts.displayName}${context}Context("${facts.parts[partName].namespaceKey}"); const element = ref<HTMLElement | null>(null); defineExpose({ element });</script>
-<template><${facts.parts[partName].defaultElement} ref="element" v-bind="attrs" ${facts.attrs[partName]} data-sw-part="${facts.parts[partName].name}" aria-hidden="${projection.ariaHidden}" :${projection.stateAttribute}="item.checked.value ? '${projection.checkedStateValue}' : '${projection.uncheckedStateValue}'" :${projection.visibleAttribute}="item.checked.value ? '' : undefined" :${projection.hiddenAttribute}="item.checked.value ? undefined : ''"><slot /></${facts.parts[partName].defaultElement}></template>
+<script setup lang="ts">import { ref } from "vue"; import { use${facts.displayName}${context}Context } from "./${facts.displayName}Context"; defineOptions({ inheritAttrs: false }); defineSlots<{ default?: () => unknown }>();
+const item = use${facts.displayName}${context}Context("${facts.parts[partName].namespaceKey}"); const element = ref<HTMLElement | null>(null); defineExpose({ element });</script>
+<template><${facts.parts[partName].defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs[partName]} data-sw-part="${facts.parts[partName].name}" aria-hidden="${projection.ariaHidden}" :${projection.stateAttribute}="item.checked.value ? '${projection.checkedStateValue}' : '${projection.uncheckedStateValue}'" :${projection.visibleAttribute}="item.checked.value ? '' : undefined" :${projection.hiddenAttribute}="item.checked.value ? undefined : ''"><slot /></${facts.parts[partName].defaultElement}></template>
 `;
 }
 
@@ -464,16 +484,18 @@ function printStatic(
 function printSubmenuRoot(facts: AdapterCompositeMenuOverlayFacts): string {
   const recipe = facts.submenu.root;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { provide, ref, useAttrs } from "vue"; import { ${facts.displayName}OwnerContext, ${facts.displayName}SubmenuContext } from "./${facts.displayName}Context"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${recipe.closeDelay.name}?: ${recipe.closeDelay.type} }>(), { ${recipe.closeDelay.name}: 200 }); defineSlots<{ default?: () => unknown }>(); const attrs = useAttrs(); const element = ref<HTMLDivElement | null>(null); provide(${facts.displayName}SubmenuContext, { root: element }); provide(${facts.displayName}OwnerContext, { kind: "submenu" }); defineExpose({ element });</script>
-<template><${facts.parts.submenuRoot.defaultElement} ref="element" v-bind="attrs" ${facts.attrs.submenuRoot} data-sw-part="${facts.parts.submenuRoot.name}" :${recipe.closeDelay.attribute}="props.${recipe.closeDelay.name}" ${recipe.stateAttributes.state}="${recipe.stateAttributes.closedValue}"><slot /></${facts.parts.submenuRoot.defaultElement}></template>
+<script setup lang="ts">import { provide, ref } from "vue"; import { ${facts.displayName}OwnerContext, ${facts.displayName}SubmenuContext } from "./${facts.displayName}Context"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${recipe.closeDelay.name}?: ${recipe.closeDelay.type} }>(), { ${recipe.closeDelay.name}: 200 }); defineSlots<{ default?: () => unknown }>();
+const element = ref<HTMLDivElement | null>(null); provide(${facts.displayName}SubmenuContext, { root: element }); provide(${facts.displayName}OwnerContext, { kind: "submenu" }); defineExpose({ element });</script>
+<template><${facts.parts.submenuRoot.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.submenuRoot} data-sw-part="${facts.parts.submenuRoot.name}" :${recipe.closeDelay.attribute}="props.${recipe.closeDelay.name}" ${recipe.stateAttributes.state}="${recipe.stateAttributes.closedValue}"><slot /></${facts.parts.submenuRoot.defaultElement}></template>
 `;
 }
 
 function printSubmenuTrigger(facts: AdapterCompositeMenuOverlayFacts): string {
   const recipe = facts.submenu.trigger;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { ref, useAttrs } from "vue"; import { use${facts.displayName}SubmenuContext } from "./${facts.displayName}Context"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${recipe.disabled.prop.name}?: boolean }>(), { ${recipe.disabled.prop.name}: false }); defineSlots<{ default?: () => unknown }>(); const attrs = useAttrs(); use${facts.displayName}SubmenuContext("SubmenuTrigger"); const element = ref<HTMLDivElement | null>(null); defineExpose({ element });</script>
-<template><${facts.parts.submenuTrigger.defaultElement} ref="element" v-bind="attrs" ${facts.attrs.submenuTrigger} data-sw-part="${facts.parts.submenuTrigger.name}" role="${recipe.role}" tabindex="${recipe.tabIndex.value}" ${recipe.disclosure.ariaHaspopup.attribute}="${recipe.disclosure.ariaHaspopup.value}" ${recipe.disclosure.ariaExpanded}="false" ${recipe.disclosure.stateAttribute}="${recipe.disclosure.closedStateValue}" :${recipe.disabled.ariaAttribute}="props.${recipe.disabled.prop.name} ? 'true' : undefined" :${recipe.disabled.dataAttribute}="props.${recipe.disabled.prop.name} ? '' : undefined"><slot /></${facts.parts.submenuTrigger.defaultElement}></template>
+<script setup lang="ts">import { ref } from "vue"; import { use${facts.displayName}SubmenuContext } from "./${facts.displayName}Context"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${recipe.disabled.prop.name}?: boolean }>(), { ${recipe.disabled.prop.name}: false }); defineSlots<{ default?: () => unknown }>();
+use${facts.displayName}SubmenuContext("SubmenuTrigger"); const element = ref<HTMLDivElement | null>(null); defineExpose({ element });</script>
+<template><${facts.parts.submenuTrigger.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.submenuTrigger} data-sw-part="${facts.parts.submenuTrigger.name}" role="${recipe.role}" tabindex="${recipe.tabIndex.value}" ${recipe.disclosure.ariaHaspopup.attribute}="${recipe.disclosure.ariaHaspopup.value}" ${recipe.disclosure.ariaExpanded}="false" ${recipe.disclosure.stateAttribute}="${recipe.disclosure.closedStateValue}" :${recipe.disabled.ariaAttribute}="props.${recipe.disabled.prop.name} ? 'true' : undefined" :${recipe.disabled.dataAttribute}="props.${recipe.disabled.prop.name} ? '' : undefined"><slot /></${facts.parts.submenuTrigger.defaultElement}></template>
 `;
 }
 
@@ -481,7 +503,5 @@ function printIndex(file: AdapterIndexFile, facts: AdapterCompositeMenuOverlayFa
   return `${printVueIndexFile(file)}
 
 export type { ${facts.index.typeExports.join(", ")} } from "${facts.runtime.typeImportSource}";
-export type { ${facts.displayName}CheckedContextValue, ${facts.displayName}OwnerContextValue, ${facts.displayName}RadioGroupContextValue, ${facts.displayName}RootContextValue, ${facts.displayName}SubmenuContextValue } from "./${facts.displayName}Context";
-export { ${facts.displayName}CheckboxItemContext, ${facts.displayName}OwnerContext, ${facts.displayName}RadioGroupContext, ${facts.displayName}RadioItemContext, ${facts.displayName}RootContext, ${facts.displayName}SubmenuContext, use${facts.displayName}CheckboxItemContext, use${facts.displayName}OwnerContext, use${facts.displayName}RadioGroupContext, use${facts.displayName}RadioItemContext, use${facts.displayName}RootContext, use${facts.displayName}SubmenuContext } from "./${facts.displayName}Context";
 `;
 }

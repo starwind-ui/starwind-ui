@@ -3,6 +3,7 @@ import {
   assertNoStarwindClassHooksInStyledContracts,
   assertNoStarwindClassHooksInTree,
 } from "../../starwind-class-guard.js";
+import { toastStyledContract } from "../../contracts/styled/components/toast.js";
 import type { GetTempRoot } from "./shared.js";
 import {
   expect,
@@ -22,6 +23,46 @@ import { assertAstroStyledOverlayOutput } from "./styled-output/overlay.cases.js
 import { assertAstroStyledStateOutput } from "./styled-output/state.cases.js";
 
 export function defineAstroStyledOutputTests(getTempRoot: GetTempRoot): void {
+  it("exposes the styled Toast facade through package and local Astro Primitive sources", async () => {
+    const tempRoot = getTempRoot();
+    const packageOutputDir = "generated/package-backed";
+    const localOutputDir = "generated/local-backed";
+    const primitiveOutputDir = "generated/primitives/astro";
+
+    await generateStarwindAstroWrappers({
+      contracts: [toastStyledContract],
+      outputDir: packageOutputDir,
+      primitiveImportBase: "@starwind-ui/astro",
+      repoRoot: tempRoot,
+    });
+    await generateStarwindAstroWrappers({
+      contracts: [toastStyledContract],
+      outputDir: localOutputDir,
+      primitiveOutputDir,
+      repoRoot: tempRoot,
+    });
+
+    const packageIndex = await readGeneratedFile(
+      path.join(tempRoot, packageOutputDir),
+      "toast/index.ts",
+    );
+    const localIndex = await readGeneratedFile(
+      path.join(tempRoot, localOutputDir),
+      "toast/index.ts",
+    );
+    const primitiveIndex = await readGeneratedFile(
+      path.join(process.cwd(), "packages/astro/src"),
+      "toast/index.ts",
+    );
+
+    assertAstroToastFacade(packageIndex, "@starwind-ui/astro/toast");
+    assertAstroToastFacade(localIndex, "../../primitives/astro/toast");
+    expect(primitiveIndex).toContain(
+      'export type { ToastApi, ToastOptions, ToastPromiseOptions } from "@starwind-ui/runtime";',
+    );
+    expect(primitiveIndex).toContain('export { toast } from "@starwind-ui/runtime/toast";');
+  });
+
   it("generates Badge tone and appearance styled Astro output", async () => {
     const tempRoot = getTempRoot();
     await generateStarwindAstroWrappers({
@@ -155,4 +196,22 @@ export function defineAstroStyledOutputTests(getTempRoot: GetTempRoot): void {
 
     expect(directRuntimeRefs).toEqual([]);
   });
+}
+
+function assertAstroToastFacade(source: string, primitiveSource: string): void {
+  expect(source).toContain(`export { toast } from "${primitiveSource}";`);
+  expect(source).toContain(
+    `export type { ToastApi, ToastOptions, ToastPromiseOptions } from "${primitiveSource}";`,
+  );
+  expect(source).toContain(`const ToastParts = {
+  Viewport: Toaster,
+  Template: ToastTemplate,
+  Item: ToastItem,
+  Content: ToastContent,
+  Title: ToastTitle,
+  Description: ToastDescription,
+  Action: ToastAction,
+  Close: ToastClose,
+};`);
+  expect(source).not.toMatch(/const ToastParts = \{[^}]*\b(?:Manager|toast)\b/);
 }

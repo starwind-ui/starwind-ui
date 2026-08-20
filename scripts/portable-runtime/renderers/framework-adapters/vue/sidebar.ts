@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterSidebarComponentProjection,
   AdapterSidebarFacts,
@@ -241,18 +245,17 @@ onBeforeUnmount(() => {
 function printSidebar(facts: AdapterSidebarFacts): string {
   const props = facts.props;
   return `<script setup lang="ts">
-import { computed, ref, useAttrs } from "vue";
+import { computed, ref } from "vue";
 import { ${facts.context.hook} } from "./${facts.context.name}.js";
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ ${props.side.name}?: ${props.side.type}; ${props.variant.name}?: ${props.variant.type}; ${props.collapsible.name}?: ${props.collapsible.type} }>(), { ${props.side.name}: ${props.side.defaultValue}, ${props.variant.name}: ${props.variant.defaultValue}, ${props.collapsible.name}: ${props.collapsible.defaultValue} });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 const context = ${facts.context.hook}();
 const collapsedMode = computed(() => context.state.value === "collapsed" ? props.${props.collapsible.name} : "");
 defineExpose({ element });
 </script>
-<template><${facts.parts.sidebar.defaultElement} ref="element" v-bind="attrs" ${facts.attrs.sidebar} :${facts.attrs.sidebarState}="context.state.value" :${facts.attrs.sidebarCollapsible}="collapsedMode" :${facts.attrs.sidebarCollapsibleMode}="props.${props.collapsible.name}" :${facts.attrs.sidebarVariant}="props.${props.variant.name}" :${facts.attrs.sidebarSide}="props.${props.side.name}"><slot /></${facts.parts.sidebar.defaultElement}></template>
+<template><${facts.parts.sidebar.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.sidebar} :${facts.attrs.sidebarState}="context.state.value" :${facts.attrs.sidebarCollapsible}="collapsedMode" :${facts.attrs.sidebarCollapsibleMode}="props.${props.collapsible.name}" :${facts.attrs.sidebarVariant}="props.${props.variant.name}" :${facts.attrs.sidebarSide}="props.${props.side.name}"><slot /></${facts.parts.sidebar.defaultElement}></template>
 `;
 }
 
@@ -309,15 +312,14 @@ defineExpose({ element });
 
 function printRail(facts: AdapterSidebarFacts): string {
   return `<script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 import { ${facts.context.hook} } from "./${facts.context.name}.js";
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLButtonElement | null>(null);
 const context = ${facts.context.hook}();
 defineExpose({ element });
 </script>
-<template><${facts.parts.rail.defaultElement} ref="element" v-bind="attrs" ${facts.attrs.rail} ${facts.attrs.railType}="button" :${facts.attrs.railExpanded}="context.expanded.value" :${facts.attrs.railState}="context.state.value" :${facts.attrs.railTabindex}="${facts.rail.tabIndexValue}"><slot /></${facts.parts.rail.defaultElement}></template>
+<template><${facts.parts.rail.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.rail} ${facts.attrs.railType}="button" :${facts.attrs.railExpanded}="context.expanded.value" :${facts.attrs.railState}="context.state.value" :${facts.attrs.railTabindex}="${facts.rail.tabIndexValue}"><slot /></${facts.parts.rail.defaultElement}></template>
 `;
 }

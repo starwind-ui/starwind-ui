@@ -67,9 +67,9 @@ describe("generated Vue Toast Primitive", () => {
     expect(template).toContain("template.removeAttribute(attributeName)");
     expect(root).toContain('role="dialog"');
     expect(close.indexOf('aria-label="Close notification"')).toBeLessThan(
-      close.indexOf('v-bind="attrs"'),
+      close.indexOf('v-bind="$attrs"'),
     );
-    expect(close.indexOf('v-bind="attrs"')).toBeLessThan(close.indexOf('type="button"'));
+    expect(close.indexOf('v-bind="$attrs"')).toBeLessThan(close.indexOf('type="button"'));
     expect(index).toContain('export { toast } from "@starwind-ui/runtime/toast"');
     expect(index).toContain("ToastPromiseOptions");
     expect(all).not.toMatch(/queue|setTimeout|pointermove\s*=>|componentName[^\n]*toast/i);

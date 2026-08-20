@@ -1,19 +1,27 @@
 <script setup lang="ts">
 import * as ContextMenuPrimitive from "@starwind-ui/vue/context-menu";
 import type { ClassValue } from "tailwind-variants";
-import { computed, type HTMLAttributes, useAttrs } from "vue";
+import { computed, type HTMLAttributes } from "vue";
 import { contextMenuContent } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
 export type ContextMenuSubContentProps = Omit<
   HTMLAttributes,
-  "align" | "avoidCollisions" | "class" | "side" | "sideOffset"
+  | "align"
+  | "avoidCollisions"
+  | "class"
+  | "disablePortal"
+  | "portalContainer"
+  | "side"
+  | "sideOffset"
 > & {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 };
 type ContextMenuSubContentDeclaredProps = {
@@ -21,6 +29,8 @@ type ContextMenuSubContentDeclaredProps = {
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 } & /* @vue-ignore */ ContextMenuSubContentProps;
 const {
@@ -29,23 +39,28 @@ const {
   align = "start",
   sideOffset = 0,
   avoidCollisions = true,
+  portalContainer,
+  disablePortal = false,
 } = defineProps<ContextMenuSubContentDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const subContentClassName = computed(() => className);
 </script>
 
 <template>
-  <ContextMenuPrimitive.ContextMenuPortal data-slot="context-menu-sub-portal">
+  <ContextMenuPrimitive.ContextMenuPortal
+    :container="portalContainer"
+    :disabled="disablePortal"
+    data-slot="context-menu-sub-portal"
+  >
     <ContextMenuPrimitive.ContextMenuPopup
       :class="contextMenuContent({ class: subContentClassName })"
       :side="side"
       :align="align"
       :side-offset="sideOffset"
       :avoid-collisions="avoidCollisions"
-      v-bind="attrs"
+      v-bind="$attrs"
       data-slot="context-menu-sub-content"
     >
       <slot />

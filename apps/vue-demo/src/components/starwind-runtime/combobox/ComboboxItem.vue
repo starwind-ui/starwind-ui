@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ComboboxPrimitive from "@starwind-ui/vue/combobox";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { comboboxItem, comboboxItemIndicator, comboboxItemText } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -38,7 +38,6 @@ defineSlots<{
   default?: () => unknown;
   indicator?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -46,7 +45,7 @@ const attrs = useAttrs();
     :class="comboboxItem({ inset, disabled, class: className })"
     :disabled="disabled"
     :value="value"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="combobox-item"
   >
     <ComboboxPrimitive.ComboboxItemText :class="comboboxItemText()" data-slot="combobox-item-text">

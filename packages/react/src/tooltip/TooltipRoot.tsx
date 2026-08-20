@@ -5,9 +5,19 @@
 
 "use client";
 
-import { createTooltip, type TooltipOpenChangeDetails } from "@starwind-ui/runtime/tooltip";
+import {
+  createPortalBinding,
+  createTooltip,
+  refreshTooltipPortalSurface,
+  type TooltipOpenChangeDetails,
+} from "@starwind-ui/runtime/tooltip";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import {
+  ReactPortalScopeProvider,
+  useReactPortalRuntimeLifecycle,
+  useReactPortalScope,
+} from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 export type TooltipRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
@@ -38,6 +48,8 @@ const TooltipRoot = React.forwardRef<HTMLDivElement, TooltipRootProps>(function 
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+  const portalRuntimeActivation = portalScope.activation;
   const instanceRef = React.useRef<ReturnType<typeof createTooltip> | undefined>(undefined);
   const onOpenChangeRef = React.useRef(onOpenChange);
   const openRef = React.useRef(open);
@@ -66,7 +78,7 @@ const TooltipRoot = React.forwardRef<HTMLDivElement, TooltipRootProps>(function 
     [forwardedRef],
   );
 
-  useIsomorphicLayoutEffect(() => {
+  const initializePortalRuntime = React.useCallback(() => {
     const root = rootRef.current;
     if (!root) return;
 
@@ -99,6 +111,15 @@ const TooltipRoot = React.forwardRef<HTMLDivElement, TooltipRootProps>(function 
     };
   }, [closeDelay, closeOnEscape, closeOnOutsideInteract, disableHoverableContent, openDelay]);
 
+  useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
+
+  useIsomorphicLayoutEffect(() => {
+    if (!portalScope.isReady()) return;
+    const root = rootRef.current;
+    if (!root) return;
+    refreshTooltipPortalSurface(root);
+  }, [portalRuntimeActivation]);
+
   useIsomorphicLayoutEffect(() => {
     const instance = instanceRef.current;
     if (!instance) return;
@@ -121,19 +142,21 @@ const TooltipRoot = React.forwardRef<HTMLDivElement, TooltipRootProps>(function 
   const renderedOpen = !disabled && (open ?? uncontrolledOpen);
 
   return (
-    <div
-      data-sw-tooltip
-      data-default-open={defaultOpenRef.current ? "true" : undefined}
-      data-close-delay={closeDelay}
-      data-close-on-escape={closeOnEscape ? "true" : "false"}
-      data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
-      data-content-hoverable={!disableHoverableContent ? "true" : "false"}
-      data-disabled={disabled ? "" : undefined}
-      data-open-delay={openDelay}
-      data-state={renderedOpen ? "open" : "closed"}
-      ref={composedRef}
-      {...props}
-    />
+    <ReactPortalScopeProvider scope={portalScope}>
+      <div
+        data-sw-tooltip
+        data-default-open={defaultOpenRef.current ? "true" : undefined}
+        data-close-delay={closeDelay}
+        data-close-on-escape={closeOnEscape ? "true" : "false"}
+        data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
+        data-content-hoverable={!disableHoverableContent ? "true" : "false"}
+        data-disabled={disabled ? "" : undefined}
+        data-open-delay={openDelay}
+        data-state={renderedOpen ? "open" : "closed"}
+        ref={composedRef}
+        {...props}
+      />
+    </ReactPortalScopeProvider>
   );
 });
 

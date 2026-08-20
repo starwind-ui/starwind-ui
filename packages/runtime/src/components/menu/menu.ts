@@ -1,3 +1,4 @@
+import { createCancelableDetails } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
   ensureId,
@@ -6,13 +7,7 @@ import {
   setBooleanAttribute,
   uniqueElements,
 } from "../../internal/dom";
-import { createCancelableDetails } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
-import {
-  createFocusBoundary,
-  type FocusBoundaryHandle,
-  getNextDocumentTabStop,
-} from "../../internal/focus-boundary";
 import {
   createFloatingPositioner,
   type FloatingAlign,
@@ -25,11 +20,22 @@ import {
   type FloatingListLifecycle,
 } from "../../internal/floating-list-lifecycle";
 import {
+  createFocusBoundary,
+  type FocusBoundaryHandle,
+  getNextDocumentTabStop,
+} from "../../internal/focus-boundary";
+import {
   type OverlayOpenChangeShellResult,
   runOverlayOpenChangeShell,
 } from "../../internal/overlay-open-change";
 import { showElement } from "../../internal/presence";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { lockDocumentScroll } from "../../internal/scroll-lock";
+import {
+  createOwnedListNavigation,
+  createRovingFocusNavigationAdapter,
+  type OwnedListNavigation,
+} from "../../internal/owned-list-navigation";
 
 export type MenuOpenChangeReason =
   | "escape-key"
@@ -192,6 +198,30 @@ const MENU_ITEM_COLLECTION_ATTRIBUTES = [
 
 const instances = new WeakMap<HTMLElement, MenuController>();
 
+export function refreshMenuPortalSurface(root: HTMLElement): void {
+  const controller = instances.get(root);
+  if (!controller) return;
+  const nextElements = getMenuElements(root);
+  if (nextElements.popup === controller["elements"].popup) return;
+
+  controller["ownedList"].stop();
+  controller["submenus"].forEach((submenu) => submenu.destroy());
+  controller["floatingPositioner"]?.destroy();
+  controller["floatingPositioner"] = null;
+  Object.assign(controller["elements"], nextElements);
+  controller["ownedList"].setRoot(nextElements.popup);
+  controller["ownedList"].clear();
+  controller["ownedList"].start();
+  controller["submenus"] = queryOwnPopupElements(
+    controller["elements"].popup,
+    `[${MENU_SUBMENU_ROOT_ATTRIBUTE}]`,
+  ).map((submenuRoot) => new MenuSubmenuController(submenuRoot, controller, controller));
+  controller["focusBoundary"].setSurfaces(controller["getFocusBoundarySurfaces"]());
+  controller["setupAccessibility"]();
+  controller["bindEvents"]();
+  controller["lifecycle"].refreshSurface(controller["elements"].popup);
+}
+
 export function createMenu(root: HTMLElement, options: MenuOptions = {}): MenuInstance {
   assertHTMLElement(root, "createMenu root");
 
@@ -217,15 +247,16 @@ class MenuController implements MenuInstance {
   private readonly openOnHover: boolean;
   private readonly portalReference: Element | null;
   private readonly reference: Element | null;
-  private readonly submenus: MenuSubmenuController[];
-  private readonly lifecycle: FloatingListLifecycle<OpenRequest>;
+  private submenus: MenuSubmenuController[];
+  private lifecycle: FloatingListLifecycle<OpenRequest>;
   private readonly openChangeSubscribers = new Set<(details: MenuOpenChangeDetails) => void>();
   private readonly closeCompleteSubscribers = new Set<
     (details: MenuCloseCompleteDetails) => void
   >();
-  private readonly itemCollection: MenuItemCollection;
+  private readonly ownedList: OwnedListNavigation;
+  private readonly boundPopups = new WeakSet<HTMLElement>();
+  private readonly boundTriggers = new WeakSet<HTMLElement>();
   private readonly triggerEvents: boolean;
-  private activeIndex = -1;
   private destroyed = false;
   private disabled: boolean;
   private floatingPositioner: FloatingPositioner | null = null;
@@ -236,13 +267,12 @@ class MenuController implements MenuInstance {
   private pendingFocusItem: MenuFocusTarget | null = null;
   private pendingRestoreFocus = false;
   private restoreFocusTrigger: HTMLElement | null = null;
-  private typeaheadBuffer = "";
-  private typeaheadTimer: number | null = null;
 
   constructor(root: HTMLElement, options: MenuOptions) {
     this.root = root;
     this.elements = getMenuElements(root);
-    this.itemCollection = new MenuItemCollection(this.elements.popup, () => this.activeIndex);
+    this.ownedList = createMenuOwnedListNavigation(this.elements.popup);
+    this.ownedList.start();
     this.submenus = queryOwnPopupElements(
       this.elements.popup,
       `[${MENU_SUBMENU_ROOT_ATTRIBUTE}]`,
@@ -276,6 +306,11 @@ class MenuController implements MenuInstance {
     this.setupAccessibility();
     this.bindEvents();
     this.applyOpenState(this.openState);
+  }
+
+  private get activeIndex(): number {
+    if (this.ownedList.activeItem) this.ownedList.reconcile();
+    return this.ownedList.activeIndex;
   }
 
   open(options: MenuOpenOptions = {}): void {
@@ -372,7 +407,7 @@ class MenuController implements MenuInstance {
     this.closeCompleteSubscribers.clear();
     this.openState = false;
     this.renderState(false);
-    this.itemCollection.destroy();
+    this.ownedList.destroy();
     this.lifecycle.destroy();
     this.elements.popup.hidden = true;
     instances.delete(this.root);
@@ -403,6 +438,8 @@ class MenuController implements MenuInstance {
     const { signal } = this.abortController;
 
     this.elements.triggers.forEach((trigger) => {
+      if (this.boundTriggers.has(trigger)) return;
+      this.boundTriggers.add(trigger);
       if (!this.triggerEvents) return;
 
       trigger.addEventListener(
@@ -469,6 +506,9 @@ class MenuController implements MenuInstance {
         );
       }
     });
+
+    if (this.boundPopups.has(this.elements.popup)) return;
+    this.boundPopups.add(this.elements.popup);
 
     this.elements.popup.addEventListener(
       "click",
@@ -559,7 +599,7 @@ class MenuController implements MenuInstance {
           case " ":
             if (this.activeIndex < 0) return;
             event.preventDefault();
-            this.elements.items[this.activeIndex]?.click();
+            this.ownedList.activeItem?.click();
             break;
           default:
             if (isTypeaheadKey(event)) {
@@ -776,7 +816,7 @@ class MenuController implements MenuInstance {
   }
 
   private getPortalElement(): HTMLElement {
-    return this.elements.positioner ?? this.elements.popup;
+    return this.elements.portal ?? this.elements.positioner ?? this.elements.popup;
   }
 
   private getFocusBoundarySurfaces(): HTMLElement[] {
@@ -902,7 +942,8 @@ class MenuController implements MenuInstance {
   }
 
   private updateItems(options: { force?: boolean } = {}): void {
-    this.elements.items = this.itemCollection.refresh(options);
+    this.elements.items = options.force ? this.ownedList.refresh() : this.ownedList.getItems();
+    this.ownedList.reconcile();
   }
 
   private focusItem(index: number): void {
@@ -921,26 +962,8 @@ class MenuController implements MenuInstance {
   }
 
   private focusTypeaheadMatch(key: string): void {
-    this.updateItems({ force: true });
-    if (this.elements.items.length === 0) return;
-
-    this.typeaheadBuffer += key.toLocaleLowerCase();
-    this.clearTypeaheadTimer();
-    this.typeaheadTimer = window.setTimeout(() => {
-      this.typeaheadTimer = null;
-      this.typeaheadBuffer = "";
-    }, 500);
-
-    const search = getTypeaheadSearch(this.typeaheadBuffer);
-    const startIndex = Math.max(0, this.activeIndex + 1);
-    const orderedItems = [
-      ...this.elements.items.slice(startIndex),
-      ...this.elements.items.slice(0, startIndex),
-    ];
-    const match = orderedItems.find((item) => getItemText(item).startsWith(search));
-    if (!match) return;
-
-    this.focusItem(this.elements.items.indexOf(match));
+    this.ownedList.typeahead(key, { focus: true, force: true });
+    this.elements.items = this.ownedList.getItems();
   }
 
   private isOwnItem(item: HTMLElement): boolean {
@@ -955,46 +978,19 @@ class MenuController implements MenuInstance {
   }
 
   private highlightItem(index: number, options: { focus: boolean }): void {
-    this.updateItems({ force: true });
-    if (this.elements.items.length === 0) return;
-
-    const normalizedIndex = (index + this.elements.items.length) % this.elements.items.length;
-    this.renderHighlightedItem(normalizedIndex, options);
+    this.ownedList.highlightIndex(index, { focus: options.focus, force: true });
+    this.elements.items = this.ownedList.getItems();
   }
 
   private highlightItemByElement(item: HTMLElement, options: { focus: boolean }): void {
-    let index = shouldRefreshBeforePointerHighlight(item)
-      ? -1
-      : this.itemCollection.getCachedIndex(item);
-    if (index < 0) {
-      this.updateItems({ force: true });
-      index = this.elements.items.indexOf(item);
-    }
-    if (index < 0) return;
-
-    this.renderHighlightedItem(index, options);
-  }
-
-  private renderHighlightedItem(index: number, options: { focus: boolean }): void {
-    const item = this.elements.items[index];
-    if (!item) return;
-
-    if (index === this.activeIndex) {
-      if (options.focus && document.activeElement !== item) item.focus();
-      return;
-    }
-
-    const previousItem = this.elements.items[this.activeIndex];
-    if (previousItem) renderItemHighlight(previousItem, false);
-
-    renderItemHighlight(item, true);
-    if (options.focus) item.focus();
-    this.activeIndex = index;
+    const force = shouldRefreshBeforePointerHighlight(item);
+    if (this.ownedList.highlightItem(item, { ...options, force })) return;
+    this.updateItems({ force: true });
+    this.ownedList.highlightItem(item, options);
   }
 
   private clearHighlightedItems(): void {
-    this.activeIndex = -1;
-    this.elements.items.forEach((item) => renderItemHighlight(item, false));
+    this.ownedList.clear();
   }
 
   private toggleCheckboxItem(item: HTMLElement, event?: Event): boolean {
@@ -1053,11 +1049,7 @@ class MenuController implements MenuInstance {
   }
 
   private clearTypeaheadTimer(): void {
-    if (this.typeaheadTimer === null) return;
-
-    window.clearTimeout(this.typeaheadTimer);
-    this.typeaheadTimer = null;
-    this.typeaheadBuffer = "";
+    this.ownedList.resetTypeahead();
   }
 
   closeSiblingSubmenus(activeSubmenu: MenuSubmenuController): void {
@@ -1124,18 +1116,15 @@ class MenuSubmenuController {
   private readonly elements: MenuSubmenuElements;
   private readonly focusBoundary: FocusBoundaryHandle;
   private readonly lifecycle: FloatingListLifecycle<undefined>;
-  private readonly itemCollection: MenuItemCollection;
+  private readonly ownedList: OwnedListNavigation;
   private readonly owner: MenuController;
   private readonly parent: MenuController | MenuSubmenuController;
   private readonly submenus: MenuSubmenuController[];
-  private activeIndex = -1;
   private closeDelay: number;
   private destroyed = false;
   private floatingPositioner: FloatingPositioner | null = null;
   private hoverCloseTimer: number | null = null;
   private openState = false;
-  private typeaheadBuffer = "";
-  private typeaheadTimer: number | null = null;
 
   constructor(
     root: HTMLElement,
@@ -1146,7 +1135,8 @@ class MenuSubmenuController {
     this.owner = owner;
     this.parent = parent;
     this.elements = getSubmenuElements(root);
-    this.itemCollection = new MenuItemCollection(this.elements.popup, () => this.activeIndex);
+    this.ownedList = createMenuOwnedListNavigation(this.elements.popup);
+    this.ownedList.start();
     this.closeDelay = readNumberAttribute(root, MENU_CLOSE_DELAY_ATTRIBUTE, 200);
     this.submenus = queryOwnPopupElements(
       this.elements.popup,
@@ -1165,6 +1155,11 @@ class MenuSubmenuController {
     this.setupAccessibility();
     this.bindEvents();
     this.applyOpenState(false);
+  }
+
+  private get activeIndex(): number {
+    if (this.ownedList.activeItem) this.ownedList.reconcile();
+    return this.ownedList.activeIndex;
   }
 
   get trigger(): HTMLElement {
@@ -1215,7 +1210,7 @@ class MenuSubmenuController {
     this.submenus.forEach((submenu) => submenu.destroy());
     this.openState = false;
     this.renderState(false);
-    this.itemCollection.destroy();
+    this.ownedList.destroy();
     this.lifecycle.destroy();
     this.elements.popup.hidden = true;
     this.destroyed = true;
@@ -1411,7 +1406,7 @@ class MenuSubmenuController {
           case " ":
             if (this.activeIndex < 0) return;
             event.preventDefault();
-            this.elements.items[this.activeIndex]?.click();
+            this.ownedList.activeItem?.click();
             break;
           default:
             if (isTypeaheadKey(event)) {
@@ -1497,7 +1492,7 @@ class MenuSubmenuController {
   }
 
   private getPortalElement(): HTMLElement {
-    return this.elements.positioner ?? this.elements.popup;
+    return this.elements.portal ?? this.elements.positioner ?? this.elements.popup;
   }
 
   private handleTabKeyDown(event: KeyboardEvent): void {
@@ -1585,7 +1580,8 @@ class MenuSubmenuController {
   }
 
   private updateItems(options: { force?: boolean } = {}): void {
-    this.elements.items = this.itemCollection.refresh(options);
+    this.elements.items = options.force ? this.ownedList.refresh() : this.ownedList.getItems();
+    this.ownedList.reconcile();
   }
 
   private focusItem(index: number): void {
@@ -1593,26 +1589,8 @@ class MenuSubmenuController {
   }
 
   private focusTypeaheadMatch(key: string): void {
-    this.updateItems({ force: true });
-    if (this.elements.items.length === 0) return;
-
-    this.typeaheadBuffer += key.toLocaleLowerCase();
-    this.clearTypeaheadTimer();
-    this.typeaheadTimer = window.setTimeout(() => {
-      this.typeaheadTimer = null;
-      this.typeaheadBuffer = "";
-    }, 500);
-
-    const search = getTypeaheadSearch(this.typeaheadBuffer);
-    const startIndex = Math.max(0, this.activeIndex + 1);
-    const orderedItems = [
-      ...this.elements.items.slice(startIndex),
-      ...this.elements.items.slice(0, startIndex),
-    ];
-    const match = orderedItems.find((item) => getItemText(item).startsWith(search));
-    if (!match) return;
-
-    this.focusItem(this.elements.items.indexOf(match));
+    this.ownedList.typeahead(key, { focus: true, force: true });
+    this.elements.items = this.ownedList.getItems();
   }
 
   private isOwnItem(item: HTMLElement): boolean {
@@ -1627,46 +1605,19 @@ class MenuSubmenuController {
   }
 
   private highlightItem(index: number, options: { focus: boolean }): void {
-    this.updateItems({ force: true });
-    if (this.elements.items.length === 0) return;
-
-    const normalizedIndex = (index + this.elements.items.length) % this.elements.items.length;
-    this.renderHighlightedItem(normalizedIndex, options);
+    this.ownedList.highlightIndex(index, { focus: options.focus, force: true });
+    this.elements.items = this.ownedList.getItems();
   }
 
   private highlightItemByElement(item: HTMLElement, options: { focus: boolean }): void {
-    let index = shouldRefreshBeforePointerHighlight(item)
-      ? -1
-      : this.itemCollection.getCachedIndex(item);
-    if (index < 0) {
-      this.updateItems({ force: true });
-      index = this.elements.items.indexOf(item);
-    }
-    if (index < 0) return;
-
-    this.renderHighlightedItem(index, options);
-  }
-
-  private renderHighlightedItem(index: number, options: { focus: boolean }): void {
-    const item = this.elements.items[index];
-    if (!item) return;
-
-    if (index === this.activeIndex) {
-      if (options.focus && document.activeElement !== item) item.focus();
-      return;
-    }
-
-    const previousItem = this.elements.items[this.activeIndex];
-    if (previousItem) renderItemHighlight(previousItem, false);
-
-    renderItemHighlight(item, true);
-    if (options.focus) item.focus();
-    this.activeIndex = index;
+    const force = shouldRefreshBeforePointerHighlight(item);
+    if (this.ownedList.highlightItem(item, { ...options, force })) return;
+    this.updateItems({ force: true });
+    this.ownedList.highlightItem(item, options);
   }
 
   private clearHighlightedItems(): void {
-    this.activeIndex = -1;
-    this.elements.items.forEach((item) => renderItemHighlight(item, false));
+    this.ownedList.clear();
   }
 
   private closeSubmenus(): void {
@@ -1703,66 +1654,29 @@ class MenuSubmenuController {
   }
 
   private clearTypeaheadTimer(): void {
-    if (this.typeaheadTimer === null) return;
-
-    window.clearTimeout(this.typeaheadTimer);
-    this.typeaheadTimer = null;
-    this.typeaheadBuffer = "";
+    this.ownedList.resetTypeahead();
   }
 }
 
-class MenuItemCollection {
-  private dirty = true;
-  private indexByItem = new Map<HTMLElement, number>();
-  private items: HTMLElement[] = [];
-  private readonly observer: MutationObserver | null;
-
-  constructor(
-    private readonly popup: HTMLElement,
-    private readonly getActiveIndex: () => number,
-  ) {
-    this.observer =
-      typeof MutationObserver === "undefined"
-        ? null
-        : new MutationObserver(() => {
-            this.dirty = true;
-          });
-
-    this.observer?.observe(popup, {
-      attributeFilter: MENU_ITEM_COLLECTION_ATTRIBUTES,
-      attributes: true,
-      childList: true,
-      subtree: true,
-    });
-  }
-
-  refresh(options: { force?: boolean } = {}): HTMLElement[] {
-    if (!options.force && !this.dirty) return this.items;
-
-    updateRadioGroups(this.popup);
-
-    this.items = queryOwnPopupElements(this.popup, MENU_ITEM_SELECTOR);
-    this.indexByItem = new Map(this.items.map((item, index) => [item, index] as const));
-    this.items.forEach((item, index) => {
-      setupItemAccessibility(item);
-      renderItemHighlight(item, index === this.getActiveIndex());
-    });
-    this.dirty = false;
-
-    return this.items;
-  }
-
-  getCachedIndex(item: HTMLElement): number {
-    if (this.dirty) return -1;
-    return this.indexByItem.get(item) ?? -1;
-  }
-
-  destroy(): void {
-    this.observer?.disconnect();
-    this.indexByItem.clear();
-    this.items = [];
-    this.dirty = true;
-  }
+function createMenuOwnedListNavigation(popup: HTMLElement): OwnedListNavigation {
+  return createOwnedListNavigation({
+    adapter: createRovingFocusNavigationAdapter({ renderHighlight: renderItemHighlight }),
+    attributeFilter: MENU_ITEM_COLLECTION_ATTRIBUTES,
+    beforeDiscover: updateRadioGroups,
+    getText: getItemText,
+    indexMode: "all",
+    isHighlighted: (item) => item.hasAttribute(MENU_HIGHLIGHTED_ATTRIBUTE),
+    itemSelector: MENU_ITEM_SELECTOR,
+    mutationMode: "dirty",
+    onRefresh: (items) => {
+      items.forEach((item) => {
+        setupItemAccessibility(item);
+        if (!item.hasAttribute(MENU_HIGHLIGHTED_ATTRIBUTE)) renderItemHighlight(item, false);
+      });
+    },
+    ownerSelector: `[${MENU_POPUP_ATTRIBUTE}]`,
+    root: popup,
+  });
 }
 
 function getMenuElements(root: HTMLElement): MenuElements {
@@ -1807,10 +1721,9 @@ function queryMenuRootElement(root: HTMLElement, selector: string): HTMLElement 
 }
 
 function queryMenuRootElements(root: HTMLElement, selector: string): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((element) => {
-    const owner = element.closest<HTMLElement>(`[${MENU_ROOT_ATTRIBUTE}]`);
+  return queryRuntimePartElements(root, selector).filter((element) => {
     const submenuOwner = element.closest<HTMLElement>(`[${MENU_SUBMENU_ROOT_ATTRIBUTE}]`);
-    return owner === root && submenuOwner === null;
+    return isRuntimePartOwned(root, element, `[${MENU_ROOT_ATTRIBUTE}]`) && submenuOwner === null;
   });
 }
 
@@ -1848,10 +1761,9 @@ function querySubmenuElement(root: HTMLElement, selector: string): HTMLElement |
 }
 
 function querySubmenuElements(root: HTMLElement, selector: string): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((element) => {
-    const owner = element.closest<HTMLElement>(`[${MENU_SUBMENU_ROOT_ATTRIBUTE}]`);
-    return owner === root;
-  });
+  return queryRuntimePartElements(root, selector).filter((element) =>
+    isRuntimePartOwned(root, element, `[${MENU_SUBMENU_ROOT_ATTRIBUTE}]`),
+  );
 }
 
 function resolveAsChildControlTree(element: HTMLElement): HTMLElement {

@@ -6,11 +6,18 @@
 "use client";
 
 import {
+  createPortalBinding,
   createPreviewCard,
   type PreviewCardOpenChangeDetails,
+  refreshPreviewCardPortalSurface,
 } from "@starwind-ui/runtime/preview-card";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import {
+  ReactPortalScopeProvider,
+  useReactPortalRuntimeLifecycle,
+  useReactPortalScope,
+} from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 export type PreviewCardRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
@@ -40,6 +47,8 @@ const PreviewCardRoot = React.forwardRef<HTMLDivElement, PreviewCardRootProps>(
     forwardedRef,
   ) {
     const rootRef = React.useRef<HTMLDivElement>(null);
+    const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+    const portalRuntimeActivation = portalScope.activation;
     const instanceRef = React.useRef<ReturnType<typeof createPreviewCard> | undefined>(undefined);
     const onOpenChangeRef = React.useRef(onOpenChange);
     const openRef = React.useRef(open);
@@ -68,7 +77,7 @@ const PreviewCardRoot = React.forwardRef<HTMLDivElement, PreviewCardRootProps>(
       [forwardedRef],
     );
 
-    useIsomorphicLayoutEffect(() => {
+    const initializePortalRuntime = React.useCallback(() => {
       const root = rootRef.current;
       if (!root) return;
 
@@ -100,6 +109,15 @@ const PreviewCardRoot = React.forwardRef<HTMLDivElement, PreviewCardRootProps>(
       };
     }, [closeDelay, closeOnEscape, closeOnOutsideInteract, disableHoverableContent, openDelay]);
 
+    useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
+
+    useIsomorphicLayoutEffect(() => {
+      if (!portalScope.isReady()) return;
+      const root = rootRef.current;
+      if (!root) return;
+      refreshPreviewCardPortalSurface(root);
+    }, [portalRuntimeActivation]);
+
     useIsomorphicLayoutEffect(() => {
       if (open === undefined) return;
       const instance = instanceRef.current;
@@ -112,18 +130,20 @@ const PreviewCardRoot = React.forwardRef<HTMLDivElement, PreviewCardRootProps>(
     const renderedOpen = open ?? uncontrolledOpen;
 
     return (
-      <div
-        data-sw-preview-card
-        data-default-open={defaultOpenRef.current ? "true" : undefined}
-        data-close-delay={closeDelay}
-        data-close-on-escape={closeOnEscape ? "true" : "false"}
-        data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
-        data-content-hoverable={!disableHoverableContent ? "true" : "false"}
-        data-open-delay={openDelay}
-        data-state={renderedOpen ? "open" : "closed"}
-        ref={composedRef}
-        {...props}
-      />
+      <ReactPortalScopeProvider scope={portalScope}>
+        <div
+          data-sw-preview-card
+          data-default-open={defaultOpenRef.current ? "true" : undefined}
+          data-close-delay={closeDelay}
+          data-close-on-escape={closeOnEscape ? "true" : "false"}
+          data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
+          data-content-hoverable={!disableHoverableContent ? "true" : "false"}
+          data-open-delay={openDelay}
+          data-state={renderedOpen ? "open" : "closed"}
+          ref={composedRef}
+          {...props}
+        />
+      </ReactPortalScopeProvider>
     );
   },
 );

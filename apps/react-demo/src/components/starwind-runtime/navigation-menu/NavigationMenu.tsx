@@ -23,6 +23,8 @@ export type NavigationMenuProps = Omit<
   avoidCollisions?: boolean;
   collisionPadding?: number;
   size?: "sm" | "md";
+  portalContainer?: string;
+  disablePortal?: boolean;
   contentSize?: "sm" | "md";
   onValueChange?: (
     value: string | null,
@@ -49,6 +51,8 @@ function NavigationMenu(props: NavigationMenuProps) {
     contentSize = size,
     onValueChange,
     className,
+    portalContainer,
+    disablePortal = false,
     children,
     ...rest
   } = props;
@@ -78,6 +82,8 @@ function NavigationMenu(props: NavigationMenuProps) {
         avoidCollisions={avoidCollisions}
         collisionPadding={collisionPadding}
         size={contentSize}
+        portalContainer={portalContainer}
+        disablePortal={disablePortal}
       />
     </NavigationMenuPrimitive.Root>
   );

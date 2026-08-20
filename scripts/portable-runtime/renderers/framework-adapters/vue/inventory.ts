@@ -587,6 +587,7 @@ export const vueBuildEntryPoints = Object.fromEntries(
 
 export const vueGeneratedSourceFiles = [
   "_internal/as-child.ts",
+  "_internal/portal.ts",
   "index.ts",
   ...vueAdapterInventory.runtimePrimitives.flatMap(({ sourceFiles }) => sourceFiles),
   ...vueAdapterInventory.manualFacades.flatMap(({ sourceFiles }) => sourceFiles),

@@ -40,6 +40,8 @@ type ColorPickerContentDeclaredProps = {
   side?: ColorPickerContentProps["side"];
   align?: ColorPickerContentProps["align"];
   exitMotion?: ColorPickerContentProps["exitMotion"];
+  portalContainer?: ColorPickerContentProps["portalContainer"];
+  disablePortal?: ColorPickerContentProps["disablePortal"];
 } & /* @vue-ignore */ ColorPickerContentProps;
 const {
   class: className,
@@ -51,6 +53,8 @@ const {
   side = "bottom",
   align = "start",
   exitMotion = "fade",
+  portalContainer,
+  disablePortal = false,
 } = defineProps<ColorPickerContentDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
@@ -65,6 +69,8 @@ const attrs = useAttrs();
     :align="align"
     collision-strategy="best-fit"
     :exit-motion="exitMotion"
+    :portal-container="portalContainer"
+    :disable-portal="disablePortal"
     v-bind="attrs as Omit<InstanceType<typeof PopoverContent>['$props'], 'class' | 'style'>"
     data-sw-color-picker-content=""
     :data-size="size"
@@ -74,6 +80,8 @@ const attrs = useAttrs();
       <ColorPickerDefaultEditor
         :size="size"
         :show-eye-dropper="showEyeDropper"
+        :portal-container="portalContainer"
+        :disable-portal="disablePortal"
         :format-control="formatControl"
         :formats="formats"
         :swatches="swatches"

@@ -9,6 +9,8 @@ export type DropdownContentProps = React.ComponentPropsWithoutRef<"div"> & {
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 function DropdownContent(props: DropdownContentProps) {
@@ -18,12 +20,18 @@ function DropdownContent(props: DropdownContentProps) {
     align = "start",
     sideOffset = 4,
     avoidCollisions = true,
+    portalContainer,
+    disablePortal = false,
     children,
     ...rest
   } = props;
 
   return (
-    <MenuPrimitive.Portal data-slot="dropdown-portal">
+    <MenuPrimitive.Portal
+      container={portalContainer}
+      disabled={disablePortal}
+      data-slot="dropdown-portal"
+    >
       <MenuPrimitive.Popup
         className={dropdownContent({ class: className })}
         side={side}

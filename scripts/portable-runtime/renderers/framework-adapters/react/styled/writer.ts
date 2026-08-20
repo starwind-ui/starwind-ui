@@ -78,7 +78,11 @@ async function generateStyledOutputComponentGroup(
     writeGeneratedFile(
       dir,
       "index.ts",
-      renderIndex(group, groupHasClientComponent ? clientHeader : ""),
+      renderIndex(group, groupHasClientComponent ? clientHeader : "", {
+        directory: dir,
+        primitiveImportBase,
+        primitiveOutputRoot,
+      }),
     ),
   ];
 

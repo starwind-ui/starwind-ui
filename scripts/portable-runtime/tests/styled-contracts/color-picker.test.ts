@@ -134,6 +134,8 @@ describe("styled Color Picker contract", () => {
       { name: "formatControl", optional: true, type: '"select" | "native" | "none"' },
       expect.objectContaining({ name: "formats", optional: true }),
       { name: "formatContentSize", optional: true, type: '"sm" | "md" | "lg"' },
+      { name: "portalContainer", optional: true, type: "string" },
+      { name: "disablePortal", optional: true, type: "boolean" },
     ]);
     const render = JSON.stringify(input.render);
     expect(render).toContain('"part":"ValueInput"');
@@ -209,6 +211,12 @@ describe("styled Color Picker contract", () => {
     );
     expect(colorPickerStyledContract.styles?.content.join(" ")).toContain(
       '[data-sw-color-picker-content][data-size="md"]',
+    );
+    expect(colorPickerStyledContract.styles?.content).toContain(
+      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] { display: contents; }',
+    );
+    expect(colorPickerStyledContract.styles?.content).toContain(
+      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options]) { position: fixed; z-index: 60; }',
     );
   });
 

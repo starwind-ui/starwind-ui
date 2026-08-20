@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as MenuPrimitive from "@starwind-ui/vue/menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -15,11 +15,10 @@ const { class: className } = defineProps<DropdownGroupDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <MenuPrimitive.MenuGroup :class="className" v-bind="attrs" data-slot="dropdown-group">
+  <MenuPrimitive.MenuGroup :class="className" v-bind="$attrs" data-slot="dropdown-group">
     <slot />
   </MenuPrimitive.MenuGroup>
 </template>

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { initStarwind } from "../../../src/init-starwind";
-import { createDialog } from "../../../src/components/dialog";
 import { createAlertDialog } from "../../../src/components/alert-dialog/alert-dialog";
+import { createDialog } from "../../../src/components/dialog";
+import { createPopover } from "../../../src/components/popover/popover";
+import { initStarwind } from "../../../src/init-starwind";
+import { reportPortalPlacement } from "../../../src/internal/floating-portal";
 
 describe("createAlertDialog", () => {
   beforeEach(() => {
@@ -10,7 +11,7 @@ describe("createAlertDialog", () => {
     document.body.style.overflow = "";
   });
 
-  it("opens through a trigger and requires an explicit close action by default", () => {
+  it("opens through a trigger and requires an explicit close action by default", async () => {
     const root = renderAlertDialog();
     const listener = vi.fn();
     root.addEventListener("starwind:open-change", listener);
@@ -37,6 +38,7 @@ describe("createAlertDialog", () => {
     expect(getPopup().open).toBe(true);
 
     getAction().click();
+    await waitForPresenceFrame();
 
     expect(alertDialog.getOpen()).toBe(false);
     expect(getPopup().open).toBe(false);
@@ -51,6 +53,263 @@ describe("createAlertDialog", () => {
         detail: expect.objectContaining({ open: false, reason: "close-press" }),
       }),
     );
+  });
+
+  it("locks document scroll before native presentation", () => {
+    const root = renderAlertDialog();
+    const popup = getPopup();
+    const presentationState = vi.fn(() => {
+      popup.setAttribute("open", "");
+      return {
+        locked: document.body.hasAttribute("data-sw-scroll-locked"),
+        overflow: document.body.style.overflow,
+        state: popup.getAttribute("data-state"),
+      };
+    });
+    vi.spyOn(popup, "showModal").mockImplementation(() => {
+      presentationState();
+    });
+    const alertDialog = createAlertDialog(root);
+
+    getTrigger().click();
+
+    expect(presentationState).toHaveReturnedWith({
+      locked: true,
+      overflow: "hidden",
+      state: "open",
+    });
+    alertDialog.destroy();
+  });
+
+  it("moves and restores the public portal wrapper around the native overlay", async () => {
+    const root = renderAlertDialog();
+    const target = document.createElement("section");
+    const portal = document.createElement("div");
+    target.id = "alert-dialog-portal-target";
+    portal.dataset.swAlertDialogPortal = "";
+    portal.dataset.container = "#alert-dialog-portal-target";
+    portal.dataset.swPortalPlacement = "runtime";
+    root.insertBefore(portal, getBackdrop());
+    portal.append(getBackdrop(), getPopup());
+    document.body.append(target);
+    const alertDialog = createAlertDialog(root);
+
+    getTrigger().click();
+
+    expect(portal.parentElement).toBe(target);
+    expect(portal.getAttribute("data-placement")).toBe("ready");
+    expect(portal.contains(getBackdrop())).toBe(true);
+    expect(portal.contains(getPopup())).toBe(true);
+    expect(getPopup().open).toBe(true);
+
+    getAction().click();
+    await waitForPresenceFrame();
+
+    expect(portal.parentElement).toBe(root);
+    expect(portal.getAttribute("data-placement")).toBe("pending");
+    alertDialog.destroy();
+    target.remove();
+  });
+
+  it("waits for direct framework portal placement before presentation and focus", () => {
+    const root = renderAlertDialog();
+    const target = document.createElement("section");
+    const secondTarget = document.createElement("section");
+    const portal = document.createElement("div");
+    const firstControl = getPopup().querySelector<HTMLButtonElement>("button")!;
+    const focus = vi.spyOn(firstControl, "focus");
+    target.id = "alert-dialog-framework-target";
+    secondTarget.id = "alert-dialog-framework-second-target";
+    portal.dataset.swAlertDialogPortal = "";
+    portal.dataset.container = `#${target.id}`;
+    portal.dataset.swPortalPlacement = "framework";
+    root.insertBefore(portal, getBackdrop());
+    portal.append(getBackdrop(), getPopup());
+    document.body.append(target, secondTarget);
+    const alertDialog = createAlertDialog(root);
+
+    getTrigger().click();
+
+    expect(alertDialog.getOpen()).toBe(true);
+    expect(getPopup().open).toBe(false);
+    expect(focus).not.toHaveBeenCalled();
+
+    reportPortalPlacement(portal, { ready: true, target });
+
+    expect(getPopup().open).toBe(false);
+    expect(focus).not.toHaveBeenCalled();
+
+    target.append(portal);
+    reportPortalPlacement(portal, { ready: true, target });
+
+    expect(getPopup().open).toBe(true);
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(firstControl);
+
+    portal.dataset.container = `#${secondTarget.id}`;
+    reportPortalPlacement(portal, { ready: false, target: secondTarget });
+
+    expect(getPopup().open).toBe(false);
+    expect(getBackdrop().hidden).toBe(true);
+    expect(focus).toHaveBeenCalledTimes(1);
+
+    document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+    expect(alertDialog.getOpen()).toBe(true);
+
+    secondTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+
+    expect(getPopup().open).toBe(true);
+    expect(focus).toHaveBeenCalledTimes(2);
+
+    document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+    expect(alertDialog.getOpen()).toBe(false);
+
+    alertDialog.destroy();
+    reportPortalPlacement(portal, null);
+    target.remove();
+    secondTarget.remove();
+  });
+
+  it("suspends and resumes a controlled native dialog across a framework target change", async () => {
+    const root = renderAlertDialog();
+    const firstTarget = document.createElement("section");
+    const secondTarget = document.createElement("section");
+    const portal = document.createElement("div");
+    const firstControl = getPopup().querySelector<HTMLButtonElement>("button")!;
+    const focus = vi.spyOn(firstControl, "focus");
+    let alertDialog!: ReturnType<typeof createAlertDialog>;
+    const onOpenChange = vi.fn((open: boolean) => {
+      alertDialog.setOpen(open, { emit: false });
+    });
+    portal.dataset.swAlertDialogPortal = "";
+    portal.dataset.swPortalPlacement = "framework";
+    root.insertBefore(portal, getBackdrop());
+    portal.append(getBackdrop(), getPopup());
+    document.body.append(firstTarget, secondTarget);
+    alertDialog = createAlertDialog(root, { onOpenChange, open: false });
+
+    firstTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: firstTarget });
+    getTrigger().focus();
+    getTrigger().click();
+
+    expect(alertDialog.getOpen()).toBe(true);
+    expect(getPopup().open).toBe(true);
+    expect(focus).toHaveBeenCalledTimes(1);
+    onOpenChange.mockClear();
+
+    reportPortalPlacement(portal, { ready: false, target: secondTarget });
+
+    expect(alertDialog.getOpen()).toBe(true);
+    expect(getPopup().open).toBe(false);
+
+    secondTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+
+    expect(alertDialog.getOpen()).toBe(true);
+    expect(getPopup().open).toBe(true);
+    expect(focus).toHaveBeenCalledTimes(2);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    getAction().click();
+    await waitForPresenceFrame();
+
+    expect(onOpenChange).toHaveBeenCalledTimes(1);
+    expect(alertDialog.getOpen()).toBe(false);
+    expect(document.activeElement).toBe(getTrigger());
+
+    alertDialog.destroy();
+    reportPortalPlacement(portal, null);
+    firstTarget.remove();
+    secondTarget.remove();
+  });
+
+  it("suspends and resumes an open nested floating child with its owning dialog", () => {
+    const root = renderAlertDialog();
+    const firstTarget = document.createElement("section");
+    const secondTarget = document.createElement("section");
+    const portal = document.createElement("div");
+    getPopup().dataset.slot = "dialog-content";
+    getPopup().insertAdjacentHTML(
+      "beforeend",
+      `
+        <div data-sw-popover>
+          <button data-sw-popover-trigger>Open nested popover</button>
+          <div data-sw-popover-portal>
+            <div data-sw-popover-popup>Nested floating content</div>
+          </div>
+        </div>
+      `,
+    );
+    portal.dataset.swAlertDialogPortal = "";
+    portal.dataset.swPortalPlacement = "framework";
+    root.insertBefore(portal, getBackdrop());
+    portal.append(getBackdrop(), getPopup());
+    document.body.append(firstTarget, secondTarget);
+    const alertDialog = createAlertDialog(root);
+    firstTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: firstTarget });
+    alertDialog.open();
+    const popoverRoot = getPopup().querySelector<HTMLElement>("[data-sw-popover]")!;
+    const popoverTrigger = popoverRoot.querySelector<HTMLButtonElement>(
+      "[data-sw-popover-trigger]",
+    )!;
+    const triggerRect = vi.spyOn(popoverTrigger, "getBoundingClientRect");
+    const addEventListener = vi.spyOn(window, "addEventListener");
+    const removeEventListener = vi.spyOn(window, "removeEventListener");
+    const popoverPortal = popoverRoot.querySelector<HTMLElement>("[data-sw-popover-portal]")!;
+    const popover = createPopover(popoverRoot);
+    popover.open();
+    const topLayerHost = getPopup().querySelector<HTMLElement>("[data-sw-dialog-top-layer-host]")!;
+
+    expect(popover.getOpen()).toBe(true);
+    expect(topLayerHost.matches(":popover-open")).toBe(true);
+    expect(topLayerHost.querySelector("[data-floating-root]")?.contains(popoverPortal)).toBe(true);
+    const initialResizeAdds = addEventListener.mock.calls.filter(
+      ([type]) => type === "resize",
+    ).length;
+    expect(initialResizeAdds).toBeGreaterThan(0);
+    addEventListener.mockClear();
+    removeEventListener.mockClear();
+    triggerRect.mockClear();
+
+    reportPortalPlacement(portal, { ready: false, target: secondTarget });
+    window.dispatchEvent(new Event("resize"));
+    document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(popover.getOpen()).toBe(true);
+    expect(topLayerHost.querySelector("[data-floating-root]")?.contains(popoverPortal)).toBe(true);
+    expect(popoverPortal.getAttribute("data-placement")).toBe("pending");
+    expect(topLayerHost.matches(":popover-open")).toBe(false);
+    expect(triggerRect).not.toHaveBeenCalled();
+    expect(removeEventListener.mock.calls.filter(([type]) => type === "resize")).toHaveLength(
+      initialResizeAdds,
+    );
+
+    addEventListener.mockClear();
+    secondTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+
+    expect(popover.getOpen()).toBe(true);
+    expect(topLayerHost.matches(":popover-open")).toBe(true);
+    expect(topLayerHost.querySelector("[data-floating-root]")?.contains(popoverPortal)).toBe(true);
+    expect(popoverPortal.getAttribute("data-placement")).toBe("ready");
+    expect(addEventListener.mock.calls.filter(([type]) => type === "resize")).toHaveLength(
+      initialResizeAdds,
+    );
+
+    document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    expect(popover.getOpen()).toBe(false);
+
+    popover.destroy();
+    alertDialog.destroy();
+    reportPortalPlacement(portal, null);
+    firstTarget.remove();
+    secondTarget.remove();
   });
 
   it("inherits deterministic destroy focus restoration from Dialog normalization", () => {
@@ -77,25 +336,27 @@ describe("createAlertDialog", () => {
     expect(document.body.style.overflow).toBe("");
   });
 
-  it("allows outside interaction closing when explicitly enabled", () => {
+  it("allows outside interaction closing when explicitly enabled", async () => {
     const root = renderAlertDialog();
 
     const alertDialog = createAlertDialog(root, { closeOnOutsideInteract: true });
 
     getTrigger().click();
     getBackdrop().click();
+    await waitForPresenceFrame();
 
     expect(alertDialog.getOpen()).toBe(false);
     expect(getPopup().open).toBe(false);
   });
 
-  it("allows outside interaction closing from root attributes", () => {
+  it("allows outside interaction closing from root attributes", async () => {
     const root = renderAlertDialog({ closeOnOutsideInteract: true });
 
     const alertDialog = createAlertDialog(root);
 
     getTrigger().click();
     getBackdrop().click();
+    await waitForPresenceFrame();
 
     expect(alertDialog.getOpen()).toBe(false);
     expect(getPopup().open).toBe(false);
@@ -130,7 +391,7 @@ describe("createAlertDialog", () => {
     rawAlertDialog.destroy();
   });
 
-  it("supports external asChild triggers and asChild close actions", () => {
+  it("supports external asChild triggers and asChild close actions", async () => {
     const triggerWrapper = document.createElement("div");
     triggerWrapper.dataset.swAlertDialogTrigger = "";
     triggerWrapper.dataset.swAlertDialogTargetId = "external-alert-dialog";
@@ -172,6 +433,7 @@ describe("createAlertDialog", () => {
     expect(getPopup().open).toBe(true);
 
     action.click();
+    await waitForPresenceFrame();
 
     expect(alertDialog.getOpen()).toBe(false);
     expect(getPopup().open).toBe(false);
@@ -182,7 +444,7 @@ describe("createAlertDialog", () => {
     expect(actionWrapper.getAttribute("aria-controls")).toBeNull();
   });
 
-  it("inherits topmost nested behavior when opened inside a dialog", () => {
+  it("inherits topmost nested behavior when opened inside a dialog", async () => {
     const wrapper = document.createElement("div");
     wrapper.innerHTML = `
       <div data-sw-dialog>
@@ -224,6 +486,7 @@ describe("createAlertDialog", () => {
     expect(nestedBackdrop.hidden).toBe(true);
 
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+    await waitForPresenceFrame();
 
     expect(nestedPopup.open).toBe(false);
     expect(parentContent.open).toBe(true);
@@ -232,7 +495,7 @@ describe("createAlertDialog", () => {
     parentDialog.destroy();
   });
 
-  it("keeps body scroll locked while a sibling dialog remains open", () => {
+  it("keeps body scroll locked while a sibling dialog remains open", async () => {
     const dialogRoot = renderBaseDialog();
     const alertDialogRoot = renderAlertDialog();
     const dialog = createDialog(dialogRoot);
@@ -244,11 +507,13 @@ describe("createAlertDialog", () => {
     expect(document.body.style.overflow).toBe("hidden");
 
     alertDialog.setOpen(false);
+    await waitForPresenceFrame();
 
     expect(dialog.getOpen()).toBe(true);
     expect(document.body.style.overflow).toBe("hidden");
 
     dialog.setOpen(false);
+    await waitForPresenceFrame();
 
     expect(document.body.style.overflow).toBe("");
   });
@@ -351,6 +616,7 @@ describe("createAlertDialog", () => {
     expect(closeCompleteListener).not.toHaveBeenCalled();
     expect(getPopup().open).toBe(true);
 
+    await nextAnimationFrame();
     closeAnimation.resolve();
     await closeAnimation.promise;
     await waitForMicrotasks();
@@ -461,4 +727,13 @@ function waitForMicrotasks(): Promise<void> {
   return new Promise((resolve) => {
     queueMicrotask(resolve);
   });
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+async function waitForPresenceFrame(): Promise<void> {
+  await nextAnimationFrame();
+  await waitForMicrotasks();
 }

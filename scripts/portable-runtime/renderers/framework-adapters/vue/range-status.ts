@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterComponentFile,
   AdapterIndexFile,
@@ -162,11 +166,10 @@ function printPassivePart(
 
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 const slots = defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const ${refName} = ref<${elementType} | null>(null);
 
 defineExpose({ element: ${refName} });
@@ -175,7 +178,7 @@ defineExpose({ element: ${refName} });
 <template>
   <${part.defaultElement}
     ref="${refName}"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${part.discoveryAttribute}${protectedAttributes}
   >
     <slot />

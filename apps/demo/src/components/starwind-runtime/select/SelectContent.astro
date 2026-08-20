@@ -11,6 +11,8 @@ type Props = HTMLAttributes<"div"> & {
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
   size?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 const {
@@ -22,11 +24,17 @@ const {
   side = "bottom",
   sideOffset = 4,
   size = "md",
+  portalContainer,
+  disablePortal = false,
   ...rest
 } = Astro.props;
 ---
 
-<SelectPrimitive.Portal data-slot="select-portal">
+<SelectPrimitive.Portal
+  container={portalContainer}
+  disabled={disablePortal}
+  data-slot="select-portal"
+>
   <SelectPrimitive.Positioner
     align={align}
     alignOffset={alignOffset}

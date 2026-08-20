@@ -220,8 +220,9 @@ describe("React styled Color Picker root", () => {
       (item) => item.textContent?.trim() === "RGB",
     )!;
 
-    expect(positioner.parentElement).toBe(root);
-    expect(getComputedStyle(positioner).zIndex).toBe("60");
+    expect(positioner.parentElement).toHaveAttribute("data-sw-select-portal");
+    expect(positioner.parentElement?.parentElement).toBe(root);
+    expect(positioner).toHaveAttribute("data-state", "open");
 
     await act(async () => userEvent.click(rgbItem));
     await settle();

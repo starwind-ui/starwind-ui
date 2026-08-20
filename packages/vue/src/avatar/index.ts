@@ -10,9 +10,9 @@ import AvatarImage from "./AvatarImage.vue";
 import AvatarRoot from "./AvatarRoot.vue";
 
 const Avatar = {
-  Fallback: AvatarFallback,
-  Image: AvatarImage,
   Root: AvatarRoot,
+  Image: AvatarImage,
+  Fallback: AvatarFallback,
 };
 
 export { default as AvatarFallback } from "./AvatarFallback.vue";

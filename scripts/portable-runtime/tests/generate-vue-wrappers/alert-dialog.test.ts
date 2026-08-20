@@ -74,7 +74,8 @@ describe("generated Vue Alert Dialog", () => {
     );
     expect(root).toContain("instance.setOpen(nextOpen, { emit: false });");
     expect(portal).toContain("container?: string | HTMLElement");
-    expect(portal).toContain(':disabled="props.disabled || !root.mounted.value"');
+    expect(portal).toContain(':disabled="placement.disabled.value"');
+    expect(portal).toContain('data-sw-portal-placement="framework"');
     expect(portal).toContain("root.registerPortal(owner, null)");
     expect(portal).toContain("data-sw-alert-dialog-portal");
     expect(files["AlertDialogPopup.vue"]).toContain('role="alertdialog"');

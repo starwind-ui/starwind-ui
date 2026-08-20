@@ -7,6 +7,7 @@
 import { type ComputedRef, type InjectionKey, inject, type Ref } from "vue";
 
 export type MenuRootContextValue = Readonly<{
+  element: Readonly<Ref<HTMLElement | null>>;
   mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   registerPortal(owner: symbol, element: HTMLElement | null): void;

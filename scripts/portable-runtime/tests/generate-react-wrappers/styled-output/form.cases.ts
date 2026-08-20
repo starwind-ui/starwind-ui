@@ -91,6 +91,10 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(selectTrigger).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
   expect(selectTrigger).toContain('data-slot="select-trigger"');
   expect(selectContent).toContain("<SelectPrimitive.Portal");
+  expect(selectContent).toContain("portalContainer?: string;");
+  expect(selectContent).toContain("disablePortal?: boolean;");
+  expect(selectContent).toContain("container={portalContainer}");
+  expect(selectContent).toContain("disabled={disablePortal}");
   expect(selectContent).toContain("<SelectPrimitive.Popup");
   expect(selectContent).toContain("<SelectPrimitive.List");
   expect(selectContent).toContain("alignItemWithTrigger?: boolean");
@@ -186,6 +190,11 @@ export async function assertReactStyledFormOutput(outputRoot: string): Promise<v
   expect(comboboxValue).toContain("placeholder?: string");
   expect(comboboxValue).toContain("placeholder={placeholder}");
   expect(comboboxContent).toContain("<ComboboxPrimitive.Portal");
+  expect(comboboxContent).toContain("portalContainer?: string;");
+  expect(comboboxContent).toContain("disablePortal?: boolean;");
+  expect(comboboxContent).toContain("container={portalContainer}");
+  expect(comboboxContent).toContain("disabled={disablePortal}");
+  expect(comboboxContent).toContain('data-slot="combobox-portal"');
   expect(comboboxContent).toContain("<ComboboxPrimitive.Popup");
   expect(comboboxContent).toContain("<ComboboxPrimitive.List");
   expect(comboboxContent).toContain("keepMounted?: boolean");

@@ -65,6 +65,7 @@ export default defineConfig({
         test: {
           environment: "node",
           include: [
+            "packages/vue/tests/package-foundation.test.ts",
             "packages/vue/tests/theme/**/*.test.ts",
             "packages/vue/tests/**/*.ssr.test.ts",
             "packages/vue/tests/integration/**/*.test.ts",

@@ -5,10 +5,17 @@ import {
   offset,
   type Placement,
   type ReferenceElement,
-  size,
   type Strategy,
   shift,
+  size,
 } from "@floating-ui/dom";
+
+export {
+  resolveFloatingPortalOwner,
+  resolveFloatingPortalTarget,
+  resolveFloatingPortalTargetOwner,
+  type ResolveFloatingPortalTargetOptions,
+} from "./portal-target-policy";
 
 export type FloatingAlign = "center" | "end" | "start";
 export type FloatingCollisionStrategy = "best-fit" | "initial-placement";
@@ -36,6 +43,7 @@ export type FloatingPlacementState = {
 export type FloatingPositionerOptions = {
   adaptiveOrigin?: boolean;
   floating: HTMLElement;
+  getApplyRevision?: () => unknown;
   getOptions: () => FloatingOptions;
   placementStateElements?: HTMLElement[];
   reference: ReferenceElement;
@@ -52,27 +60,25 @@ export type FloatingAutoUpdateOptions = {
   onUpdated?: (state: FloatingPlacementState) => void;
   onUpdate?: () => void;
 };
-
-type ResolveFloatingPortalTargetOptions = {
-  dialogFloatingHostSelector?: string;
-  explicitReferences?: readonly (Element | null)[];
-  floatingRootSelector?: string;
-};
-
-const DEFAULT_FLOATING_ROOT_SELECTOR = "[data-floating-root]";
-const DEFAULT_DIALOG_FLOATING_HOST_SELECTOR =
-  'dialog[data-slot="dialog-content"], dialog[data-slot="sheet-content"], dialog[data-slot="drawer-content"]';
 const FLOATING_AVAILABLE_HEIGHT_PROPERTY = "--sw-floating-available-height";
 const FLOATING_AVAILABLE_WIDTH_PROPERTY = "--sw-floating-available-width";
 
 export function createFloatingPositioner(options: FloatingPositionerOptions): FloatingPositioner {
+  let applyRevision = 0;
   let cleanupAutoUpdate: (() => void) | null = null;
   let destroyed = false;
   let requestedPlacement: Pick<FloatingOptions, "align" | "side"> | null = null;
 
-  const update = async () => {
+  const executeUpdate = async () => {
+    const stableApplyRevision = ++applyRevision;
+    const stableConsumerRevision = options.getApplyRevision?.();
+    const canApply = () =>
+      !destroyed &&
+      applyRevision === stableApplyRevision &&
+      (!options.getApplyRevision || Object.is(stableConsumerRevision, options.getApplyRevision()));
     const state = await updateFloatingPosition({
       ...options,
+      canApply,
       getOptions: () => {
         const nextOptions = options.getOptions();
         if (!requestedPlacement) {
@@ -90,12 +96,16 @@ export function createFloatingPositioner(options: FloatingPositionerOptions): Fl
         };
       },
     });
-    return state;
+    return { applied: canApply(), state };
   };
+  const update = async () => (await executeUpdate()).state;
 
   return {
     destroy() {
+      if (destroyed) return;
+
       destroyed = true;
+      applyRevision += 1;
       if (cleanupAutoUpdate) {
         cleanupAutoUpdate();
         cleanupAutoUpdate = null;
@@ -110,8 +120,8 @@ export function createFloatingPositioner(options: FloatingPositionerOptions): Fl
         if (autoUpdateStarted) {
           autoUpdateOptions.onUpdate?.();
         }
-        void update().then((state) => {
-          if (!destroyed && notify) {
+        void executeUpdate().then(({ applied, state }) => {
+          if (notify && applied) {
             autoUpdateOptions.onUpdated?.(state);
           }
         });
@@ -119,6 +129,7 @@ export function createFloatingPositioner(options: FloatingPositionerOptions): Fl
       autoUpdateStarted = true;
     },
     stopAutoUpdate() {
+      applyRevision += 1;
       if (!cleanupAutoUpdate) return;
 
       cleanupAutoUpdate();
@@ -126,100 +137,6 @@ export function createFloatingPositioner(options: FloatingPositionerOptions): Fl
     },
     update,
   };
-}
-
-export function resolveFloatingPortalTarget(
-  reference: Element | null,
-  options: ResolveFloatingPortalTargetOptions = {},
-): HTMLElement {
-  const {
-    dialogFloatingHostSelector = DEFAULT_DIALOG_FLOATING_HOST_SELECTOR,
-    explicitReferences = [],
-    floatingRootSelector = DEFAULT_FLOATING_ROOT_SELECTOR,
-  } = options;
-
-  const dialogOwner = resolveFloatingPortalOwner(reference, { dialogFloatingHostSelector });
-  const explicitTarget = explicitReferences
-    .map((explicitReference) =>
-      resolveExplicitFloatingPortalTarget(explicitReference, floatingRootSelector),
-    )
-    .find(
-      (target): target is HTMLElement =>
-        target !== null &&
-        (!dialogOwner ||
-          resolveFloatingPortalTargetOwner(target, {
-            dialogFloatingHostSelector,
-            floatingRootSelector,
-          }) === dialogOwner),
-    );
-  if (explicitTarget) return explicitTarget;
-
-  if (dialogOwner) {
-    const dialogFloatingRoots = Array.from(dialogOwner.children).filter(
-      (child): child is HTMLElement =>
-        child instanceof HTMLElement && child.matches(floatingRootSelector),
-    );
-    const dialogFloatingRoot =
-      dialogFloatingRoots.find((root) => !root.hasAttribute("data-sw-floating-root")) ??
-      dialogFloatingRoots[0];
-    if (dialogFloatingRoot) return dialogFloatingRoot;
-
-    const internalFloatingRoot = dialogOwner.ownerDocument.createElement("div");
-    internalFloatingRoot.setAttribute("data-floating-root", "");
-    internalFloatingRoot.setAttribute("data-sw-floating-root", "dialog");
-    dialogOwner.append(internalFloatingRoot);
-    return internalFloatingRoot;
-  }
-
-  const currentFloatingRoot = reference?.closest(floatingRootSelector);
-  if (currentFloatingRoot instanceof HTMLElement) return currentFloatingRoot;
-
-  return reference?.ownerDocument.body ?? document.body;
-}
-
-function resolveExplicitFloatingPortalTarget(
-  reference: Element | null,
-  floatingRootSelector: string,
-): HTMLElement | null {
-  if (!reference?.isConnected) return null;
-
-  let current: Element | null = reference;
-  while (current) {
-    const target: Element | null = current.closest(floatingRootSelector);
-    if (!target) return null;
-    if (target instanceof HTMLElement && !target.hasAttribute("data-sw-floating-root")) {
-      return target;
-    }
-    current = target.parentElement;
-  }
-
-  return null;
-}
-
-export function resolveFloatingPortalOwner(
-  reference: Element | null,
-  options: Pick<ResolveFloatingPortalTargetOptions, "dialogFloatingHostSelector"> = {},
-): HTMLDialogElement | null {
-  const { dialogFloatingHostSelector = DEFAULT_DIALOG_FLOATING_HOST_SELECTOR } = options;
-  const dialogOwner = reference?.closest(dialogFloatingHostSelector);
-
-  return dialogOwner instanceof HTMLDialogElement ? dialogOwner : null;
-}
-
-export function resolveFloatingPortalTargetOwner(
-  portalTarget: HTMLElement,
-  options: ResolveFloatingPortalTargetOptions = {},
-): HTMLDialogElement | null {
-  const {
-    dialogFloatingHostSelector = DEFAULT_DIALOG_FLOATING_HOST_SELECTOR,
-    floatingRootSelector = DEFAULT_FLOATING_ROOT_SELECTOR,
-  } = options;
-  if (!portalTarget.matches(floatingRootSelector)) return null;
-
-  const dialogOwner = portalTarget.closest(dialogFloatingHostSelector);
-  if (dialogOwner instanceof HTMLDialogElement) return dialogOwner;
-
-  return null;
 }
 
 export function getTransformOrigin(side: FloatingSide, align: FloatingAlign): string {
@@ -257,11 +174,12 @@ export function readFloatingSideAttribute(
 
 async function updateFloatingPosition({
   adaptiveOrigin = false,
+  canApply = () => true,
   floating,
   getOptions,
   placementStateElements = [],
   reference,
-}: FloatingPositionerOptions): Promise<FloatingPlacementState> {
+}: FloatingPositionerOptions & { canApply?: () => boolean }): Promise<FloatingPlacementState> {
   const {
     align,
     alignOffset = 0,
@@ -273,12 +191,14 @@ async function updateFloatingPosition({
     strategy = "fixed",
     viewportPadding = 8,
   } = getOptions();
-  if (collisionStrategy === "best-fit") {
+  if (collisionStrategy === "best-fit" && canApply()) {
     floating.style.removeProperty(FLOATING_AVAILABLE_HEIGHT_PROPERTY);
     floating.style.removeProperty(FLOATING_AVAILABLE_WIDTH_PROPERTY);
   }
   const sizeMiddleware = size({
     apply({ availableHeight, availableWidth, elements }) {
+      if (!canApply()) return;
+
       elements.floating.style.setProperty(
         FLOATING_AVAILABLE_HEIGHT_PROPERTY,
         `${Math.max(0, availableHeight)}px`,
@@ -308,7 +228,7 @@ async function updateFloatingPosition({
       : null,
   ].filter(Boolean);
 
-  floating.style.position = strategy;
+  if (canApply()) floating.style.position = strategy;
 
   const result = await computePosition(reference, floating, {
     middleware,
@@ -317,6 +237,15 @@ async function updateFloatingPosition({
   });
   const placement = fromFloatingPlacement(result.placement);
   const transformOrigin = getTransformOrigin(placement.side, placement.align);
+
+  if (!canApply()) {
+    return {
+      align: placement.align,
+      left: result.x,
+      side: placement.side,
+      top: result.y,
+    };
+  }
 
   applyFloatingCoordinates({
     adaptiveOrigin,
