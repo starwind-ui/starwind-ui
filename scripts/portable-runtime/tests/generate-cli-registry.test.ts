@@ -2094,10 +2094,12 @@ describe("generateCliRegistry", () => {
 
     expect({
       ...committedArtifacts,
-      primitives: committedArtifacts.primitives.map((primitive: { version: string }) => ({
-        ...primitive,
-        sourceVersion: primitive.version,
-      })),
+      primitives: committedArtifacts.primitives.map(
+        (primitive: { sourceVersion?: string; version: string }) => ({
+          ...primitive,
+          sourceVersion: primitive.sourceVersion ?? primitive.version,
+        }),
+      ),
     }).toEqual(generatedArtifacts);
     expect(navigationMenu).toBeDefined();
     expect(JSON.stringify(navigationMenu)).toContain("data-sw-nav-menu");

@@ -858,6 +858,13 @@ function validatePrimitiveArtifact<TFramework extends CliFrameworkTarget>(
       `Primitive artifact "${artifact.component}" must use manifest version ${bundledArtifact.version}.`,
     );
   }
+  const artifactSourceVersion = artifact.sourceVersion ?? artifact.version;
+  const bundledSourceVersion = bundledArtifact.sourceVersion ?? bundledArtifact.version;
+  if (artifactSourceVersion !== bundledSourceVersion) {
+    throw new Error(
+      `Primitive artifact "${artifact.component}" must use manifest source version ${bundledSourceVersion}.`,
+    );
+  }
   if (!hasExactPackageRequirements(artifact.packageRequirements, descriptor.packageRequirements)) {
     throw new Error(
       `Primitive artifact "${artifact.component}" must use its generated package requirements.`,

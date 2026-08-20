@@ -923,7 +923,7 @@ describe.sequential("primitive component vendoring", () => {
     ).toThrow(/trusted integrity fingerprint/);
   });
 
-  it("keeps trusted private artifact integrity stable across source-version changes", async () => {
+  it("rejects source-version drift after private artifact integrity validation", async () => {
     const repositoryRoot = fileURLToPath(new URL("../../../..", import.meta.url));
     const generatedArtifactRoot = await mkdtemp(
       join(tmpdir(), "starwind-vue-primitive-integrity-test-"),
@@ -950,13 +950,13 @@ describe.sequential("primitive component vendoring", () => {
           targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
         }),
       ).not.toHaveLength(0);
-      expect(
+      expect(() =>
         getPrimitiveComponents({
           artifacts: changedSourceVersions,
           framework: "vue",
           targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
         }),
-      ).not.toHaveLength(0);
+      ).toThrow(/must use manifest source version/);
     } finally {
       process.chdir(projectRoot);
       await rm(generatedArtifactRoot, { force: true, recursive: true });
