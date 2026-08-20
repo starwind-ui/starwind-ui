@@ -113,8 +113,16 @@ describe("generated Vue Combobox Primitive", () => {
     expect(input).toContain('role="combobox"');
     expect(input).toContain('autocomplete="off"');
     expect(portal).toContain("container?: string | HTMLElement");
-    expect(portal).toContain(':disabled="props.disabled || !combobox.mounted.value"');
-    expect(portal).toContain("combobox.refreshPortalTarget");
+    expect(portal).toContain("defineOptions({ inheritAttrs: false });");
+    expect(portal).toContain(':disabled="placement.disabled.value"');
+    expect(portal).toContain(
+      `<div
+      ref="portalRef"
+      v-bind="$attrs"
+      data-sw-combobox-portal`,
+    );
+    expect(portal).toContain("useVuePortalPlacement");
+    expect(root).not.toContain("refreshPortalTarget");
     expect(value).toContain("const initialPlaceholder = props.placeholder;");
     expect(value).toContain("const slots = defineSlots");
     expect(value).toContain(":data-sw-combobox-value=\"slots.default ? undefined : ''\"");

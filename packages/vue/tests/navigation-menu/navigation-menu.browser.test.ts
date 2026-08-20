@@ -24,7 +24,6 @@ import {
   NavigationMenuRoot,
   NavigationMenuTrigger,
   NavigationMenuViewport,
-  useNavigationMenuRootContext,
 } from "@starwind-ui/vue/navigation-menu";
 
 const cleanups: Array<() => void> = [];
@@ -237,12 +236,16 @@ describe("Vue Navigation Menu", () => {
 
     await frame();
     const positioner = document.querySelector<HTMLElement>("[data-sw-nav-menu-positioner]")!;
+    const portal = fixture.content.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!;
     expect(fixture.content.contains(positioner)).toBe(true);
-    expect(fixture.content.querySelector("[data-sw-floating-portal]")).toBeTruthy();
+    expect(portal.contains(positioner)).toBe(true);
+    expect(portal.getAttribute("data-placement")).toBe("ready");
+    expect(fixture.content.querySelector("[data-sw-floating-portal]")).toBeNull();
 
     fixture.dialog.close();
     await frame();
     expect(rootApi?.getValue()).toBeNull();
+    expect(fixture.content.querySelector("[data-sw-nav-menu-portal]")).toBe(portal);
     expect(fixture.content.querySelector("[data-sw-floating-portal]")).toBeNull();
   });
 
@@ -273,11 +276,16 @@ describe("Vue Navigation Menu", () => {
 
     state.portalDisabled = true;
     await frame();
-    expect(host.querySelector("[data-sw-nav-menu-portal]")?.contains(positioner())).toBe(true);
+    const inlinePortal = host.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!;
+    expect(inlinePortal.contains(positioner())).toBe(true);
+    expect(inlinePortal.dataset.placement).toBe("ready");
 
     state.portalDisabled = false;
     await frame();
     expect(second.querySelector("[data-sw-nav-menu-positioner]")).toBeTruthy();
+    expect(second.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!.dataset.placement).toBe(
+      "ready",
+    );
   });
 
   it("reads back a silent uncontrolled close after a later Vue render", async () => {
@@ -301,9 +309,6 @@ describe("Vue Navigation Menu", () => {
     state.revision += 1;
     await frame();
 
-    expect(host.querySelector("[data-projected-value]")?.getAttribute("data-projected-value")).toBe(
-      "",
-    );
     expect(host.querySelector("nav")?.getAttribute("data-state")).toBe("closed");
     expect(trigger(host, "company").getAttribute("data-state")).toBe("closed");
     expect(trigger(host, "company").getAttribute("aria-expanded")).toBe("false");
@@ -417,17 +422,6 @@ type MenuState = {
   showCompany: boolean;
 };
 type NavigationMenuPublic = { getValue(): string | null | undefined };
-const NavigationMenuValueProbe = defineComponent({
-  props: { revision: Number },
-  setup(props) {
-    const root = useNavigationMenuRootContext("NavigationMenuValueProbe");
-    return () =>
-      h("span", {
-        "data-projected-value": root.value.value ?? "",
-        "data-revision": props.revision,
-      });
-  },
-});
 const PublicRootButton = defineComponent({
   inheritAttrs: false,
   props: { as: { default: "button", type: String } },
@@ -501,9 +495,6 @@ function renderMenu(state: MenuState, options: Options) {
     },
     {
       default: () => [
-        ...(state.revision === undefined
-          ? []
-          : [h(NavigationMenuValueProbe, { revision: state.revision })]),
         h(NavigationMenuList, null, {
           default: () => [
             item("products", "Products"),

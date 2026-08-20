@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { inputGroup } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,7 +15,6 @@ const { class: className } = defineProps<InputGroupDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -23,7 +22,7 @@ const attrs = useAttrs();
     role="group"
     :class="inputGroup({ class: className })"
     data-slot="input-group"
-    v-bind="attrs"
+    v-bind="$attrs"
   >
     <slot />
   </div>

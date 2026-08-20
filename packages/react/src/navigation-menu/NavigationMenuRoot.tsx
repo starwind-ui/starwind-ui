@@ -7,10 +7,17 @@
 
 import {
   createNavigationMenu,
+  createPortalBinding,
   type NavigationMenuValueChangeDetails,
+  refreshNavigationMenuPortalSurface,
 } from "@starwind-ui/runtime/navigation-menu";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import {
+  ReactPortalScopeProvider,
+  useReactPortalRuntimeLifecycle,
+  useReactPortalScope,
+} from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 export type NavigationMenuRootProps = Omit<
@@ -43,6 +50,8 @@ const NavigationMenuRoot = React.forwardRef<HTMLElement, NavigationMenuRootProps
     forwardedRef,
   ) {
     const rootRef = React.useRef<HTMLElement>(null);
+    const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+    const portalRuntimeActivation = portalScope.activation;
     const instanceRef = React.useRef<ReturnType<typeof createNavigationMenu> | undefined>(
       undefined,
     );
@@ -55,6 +64,7 @@ const NavigationMenuRoot = React.forwardRef<HTMLElement, NavigationMenuRootProps
     const [uncontrolledValue, setUncontrolledValue] = React.useState<string | null>(
       defaultValueRef.current,
     );
+    const uncontrolledValueRef = React.useRef(uncontrolledValue);
 
     useIsomorphicLayoutEffect(() => {
       onValueChangeRef.current = onValueChange;
@@ -87,12 +97,12 @@ const NavigationMenuRoot = React.forwardRef<HTMLElement, NavigationMenuRootProps
       [forwardedRef],
     );
 
-    useIsomorphicLayoutEffect(() => {
+    const initializePortalRuntime = React.useCallback(() => {
       const root = rootRef.current;
       if (!root) return;
 
       const instance = createNavigationMenu(root, {
-        defaultValue: defaultValueRef.current,
+        defaultValue: uncontrolledValueRef.current,
         openDelay,
         closeDelay,
         closeOnEscape,
@@ -113,7 +123,9 @@ const NavigationMenuRoot = React.forwardRef<HTMLElement, NavigationMenuRootProps
         queueMicrotask(() => {
           if (details.isCanceled) return;
           if (valueRef.current === undefined) {
-            setUncontrolledValue(instance.getValue());
+            const nextValue = instance.getValue();
+            uncontrolledValueRef.current = nextValue;
+            setUncontrolledValue(nextValue);
           }
         });
       });
@@ -127,23 +139,34 @@ const NavigationMenuRoot = React.forwardRef<HTMLElement, NavigationMenuRootProps
       };
     }, [openDelay, closeDelay, closeOnEscape, closeOnOutsideInteract]);
 
+    useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
+
+    useIsomorphicLayoutEffect(() => {
+      if (!portalScope.isReady()) return;
+      const root = rootRef.current;
+      if (!root) return;
+      refreshNavigationMenuPortalSurface(root);
+    }, [portalRuntimeActivation]);
+
     const initialValue = value !== undefined ? value : uncontrolledValue;
 
     return (
-      <nav
-        data-sw-nav-menu=""
-        data-default-value={
-          value === undefined ? (defaultValueRef.current ?? undefined) : undefined
-        }
-        data-open-delay={String(openDelay)}
-        data-close-delay={String(closeDelay)}
-        data-close-on-escape={closeOnEscape ? "true" : "false"}
-        data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
-        data-orientation={orientation}
-        data-state={initialValue !== null ? "open" : "closed"}
-        ref={composedRef}
-        {...props}
-      />
+      <ReactPortalScopeProvider scope={portalScope}>
+        <nav
+          data-sw-nav-menu=""
+          data-default-value={
+            value === undefined ? (defaultValueRef.current ?? undefined) : undefined
+          }
+          data-open-delay={String(openDelay)}
+          data-close-delay={String(closeDelay)}
+          data-close-on-escape={closeOnEscape ? "true" : "false"}
+          data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
+          data-orientation={orientation}
+          data-state={initialValue !== null ? "open" : "closed"}
+          ref={composedRef}
+          {...props}
+        />
+      </ReactPortalScopeProvider>
     );
   },
 );

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { computed, type HTMLAttributes, useAttrs } from "vue";
+import { computed, type HTMLAttributes } from "vue";
 import "./styles.css";
 import * as ColorPickerPrimitive from "@starwind-ui/vue/color-picker";
 import { NativeSelectOption } from "../native-select";
@@ -19,34 +19,39 @@ defineOptions({ inheritAttrs: false });
 
 export type ColorPickerInputProps = Omit<
   HTMLAttributes,
-  "class" | "formatContentSize" | "formatControl" | "formats"
+  "class" | "disablePortal" | "formatContentSize" | "formatControl" | "formats" | "portalContainer"
 > & {
   formatControl?: "select" | "native" | "none";
   formats?: readonly import("@starwind-ui/runtime/color-picker").ColorPickerFormat[];
   formatContentSize?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 };
 type ColorPickerInputDeclaredProps = {
   formatControl?: "select" | "native" | "none";
   formats?: readonly import("@starwind-ui/runtime/color-picker").ColorPickerFormat[];
   formatContentSize?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 } & /* @vue-ignore */ ColorPickerInputProps;
 const {
   formatControl = "select",
   formats = ["hex", "rgb", "hsl", "hsb"],
   formatContentSize = "md",
+  portalContainer,
+  disablePortal = false,
   class: className,
 } = defineProps<ColorPickerInputDeclaredProps>();
 defineSlots<{}>();
-const attrs = useAttrs();
 const normalizedFormats = computed(() => Array.from(new Set(formats)));
 </script>
 
 <template>
   <div
     :class="colorPickerInput({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="color-picker-input"
   >
     <ColorPickerPrimitive.ColorPickerValueInput
@@ -93,7 +98,12 @@ const normalizedFormats = computed(() => Array.from(new Set(formats)));
       >
         <Select>
           <SelectTrigger aria-label="Color format" :class="colorPickerFormatSelectTrigger()" />
-          <SelectContent :size="formatContentSize" data-sw-color-picker-format-options="">
+          <SelectContent
+            :size="formatContentSize"
+            :portal-container="portalContainer"
+            :disable-portal="disablePortal"
+            data-sw-color-picker-format-options=""
+          >
             <template v-for="(formatOption, formatIndex) in normalizedFormats">
               <SelectItem :value="formatOption">
                 {{ formatOption.toUpperCase() }}

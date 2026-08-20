@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ContextMenuPrimitive from "@starwind-ui/vue/context-menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { contextMenuTrigger } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,14 +18,13 @@ const { disabled = false, class: className } = defineProps<ContextMenuTriggerDec
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ContextMenuPrimitive.ContextMenuTrigger
     :class="contextMenuTrigger({ class: className })"
     :disabled="disabled"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="context-menu-trigger"
   >
     <slot />

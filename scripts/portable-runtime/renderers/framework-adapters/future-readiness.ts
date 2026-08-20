@@ -26,7 +26,12 @@ export type FrameworkAdapterReadiness = {
     | "svelte-attachment-cleanup"
     | "vue-mounted-watch-cleanup";
   normalizeAttributeName: (name: string) => string;
-  portalStrategy: "react-portal" | "runtime-owned" | "solid-portal" | "vue-teleport";
+  portalStrategy:
+    | "react-portal"
+    | "runtime-owned"
+    | "solid-portal"
+    | "svelte-attachment"
+    | "vue-teleport";
   propStrategy:
     | "astro-attributes"
     | "jsx-props"

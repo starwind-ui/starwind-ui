@@ -1,0 +1,436 @@
+{
+  "schema": "starwind.product-package-size-comparator",
+  "schemaVersion": 2,
+  "capturedAt": "2026-08-18T14:49:59.325Z",
+  "catalog": {
+    "brotliBytes": 242842,
+    "gzipBytes": 314045,
+    "minifiedBytes": 1185805
+  },
+  "comparatorId": "ark-vue",
+  "components": {
+    "accordion": {
+      "brotliBytes": 11413,
+      "gzipBytes": 12720,
+      "minifiedBytes": 37384
+    },
+    "alert-dialog": {
+      "brotliBytes": 18544,
+      "gzipBytes": 20626,
+      "minifiedBytes": 63058
+    },
+    "avatar": {
+      "brotliBytes": 6708,
+      "gzipBytes": 7399,
+      "minifiedBytes": 19445
+    },
+    "carousel": {
+      "brotliBytes": 13927,
+      "gzipBytes": 15516,
+      "minifiedBytes": 46244
+    },
+    "checkbox": {
+      "brotliBytes": 10394,
+      "gzipBytes": 11533,
+      "minifiedBytes": 32170
+    },
+    "checkbox-group": {
+      "brotliBytes": 10394,
+      "gzipBytes": 11533,
+      "minifiedBytes": 32170
+    },
+    "collapsible": {
+      "brotliBytes": 8710,
+      "gzipBytes": 9622,
+      "minifiedBytes": 26308
+    },
+    "combobox": {
+      "brotliBytes": 31236,
+      "gzipBytes": 35209,
+      "minifiedBytes": 110885
+    },
+    "context-menu": {
+      "brotliBytes": 30352,
+      "gzipBytes": 34148,
+      "minifiedBytes": 105512
+    },
+    "dialog": {
+      "brotliBytes": 18544,
+      "gzipBytes": 20626,
+      "minifiedBytes": 63058
+    },
+    "drawer": {
+      "brotliBytes": 27291,
+      "gzipBytes": 30800,
+      "minifiedBytes": 97732
+    },
+    "dropzone": {
+      "brotliBytes": 13303,
+      "gzipBytes": 14936,
+      "minifiedBytes": 42176
+    },
+    "field": {
+      "brotliBytes": 4350,
+      "gzipBytes": 4902,
+      "minifiedBytes": 14079
+    },
+    "input-otp": {
+      "brotliBytes": 10106,
+      "gzipBytes": 11186,
+      "minifiedBytes": 31478
+    },
+    "menu": {
+      "brotliBytes": 30352,
+      "gzipBytes": 34148,
+      "minifiedBytes": 105512
+    },
+    "navigation-menu": {
+      "brotliBytes": 17148,
+      "gzipBytes": 19087,
+      "minifiedBytes": 57735
+    },
+    "popover": {
+      "brotliBytes": 27948,
+      "gzipBytes": 31413,
+      "minifiedBytes": 93098
+    },
+    "preview-card": {
+      "brotliBytes": 21762,
+      "gzipBytes": 24155,
+      "minifiedBytes": 68960
+    },
+    "progress": {
+      "brotliBytes": 7698,
+      "gzipBytes": 8519,
+      "minifiedBytes": 23694
+    },
+    "radio": {
+      "brotliBytes": 10503,
+      "gzipBytes": 11710,
+      "minifiedBytes": 33217
+    },
+    "radio-group": {
+      "brotliBytes": 10503,
+      "gzipBytes": 11710,
+      "minifiedBytes": 33217
+    },
+    "scroll-area": {
+      "brotliBytes": 11241,
+      "gzipBytes": 12540,
+      "minifiedBytes": 35805
+    },
+    "select": {
+      "brotliBytes": 30781,
+      "gzipBytes": 34606,
+      "minifiedBytes": 107512
+    },
+    "slider": {
+      "brotliBytes": 13805,
+      "gzipBytes": 15377,
+      "minifiedBytes": 44683
+    },
+    "switch": {
+      "brotliBytes": 9538,
+      "gzipBytes": 10594,
+      "minifiedBytes": 28952
+    },
+    "tabs": {
+      "brotliBytes": 11619,
+      "gzipBytes": 12907,
+      "minifiedBytes": 36179
+    },
+    "toast": {
+      "brotliBytes": 13271,
+      "gzipBytes": 14691,
+      "minifiedBytes": 42013
+    },
+    "toggle": {
+      "brotliBytes": 5826,
+      "gzipBytes": 6383,
+      "minifiedBytes": 16294
+    },
+    "toggle-group": {
+      "brotliBytes": 8164,
+      "gzipBytes": 9028,
+      "minifiedBytes": 23918
+    },
+    "tooltip": {
+      "brotliBytes": 20521,
+      "gzipBytes": 22701,
+      "minifiedBytes": 65085
+    }
+  },
+  "environment": {
+    "esbuild": "0.27.7",
+    "node": "24.19.0"
+  },
+  "fixtureRevision": 2,
+  "measurementEntries": {
+    "catalog": [
+      {
+        "exports": ["*"],
+        "specifier": "@ark-ui/vue"
+      }
+    ],
+    "components": {
+      "accordion": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/accordion"
+        }
+      ],
+      "alert-dialog": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/dialog"
+        }
+      ],
+      "avatar": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/avatar"
+        }
+      ],
+      "carousel": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/carousel"
+        }
+      ],
+      "checkbox": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/checkbox"
+        }
+      ],
+      "checkbox-group": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/checkbox"
+        }
+      ],
+      "collapsible": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/collapsible"
+        }
+      ],
+      "combobox": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/combobox"
+        }
+      ],
+      "context-menu": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/menu"
+        }
+      ],
+      "dialog": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/dialog"
+        }
+      ],
+      "drawer": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/drawer"
+        }
+      ],
+      "dropzone": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/file-upload"
+        }
+      ],
+      "field": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/field"
+        }
+      ],
+      "input-otp": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/pin-input"
+        }
+      ],
+      "menu": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/menu"
+        }
+      ],
+      "navigation-menu": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/navigation-menu"
+        }
+      ],
+      "popover": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/popover"
+        }
+      ],
+      "preview-card": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/hover-card"
+        }
+      ],
+      "progress": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/progress"
+        }
+      ],
+      "radio": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/radio-group"
+        }
+      ],
+      "radio-group": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/radio-group"
+        }
+      ],
+      "scroll-area": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/scroll-area"
+        }
+      ],
+      "select": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/select"
+        }
+      ],
+      "slider": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/slider"
+        }
+      ],
+      "switch": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/switch"
+        }
+      ],
+      "tabs": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/tabs"
+        }
+      ],
+      "toast": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/toast"
+        }
+      ],
+      "toggle": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/toggle"
+        }
+      ],
+      "toggle-group": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/toggle-group"
+        }
+      ],
+      "tooltip": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/vue/tooltip"
+        }
+      ]
+    },
+    "overlaps": {
+      "vue-exact-three-way": [
+        "accordion",
+        "alert-dialog",
+        "avatar",
+        "checkbox",
+        "collapsible",
+        "combobox",
+        "context-menu",
+        "dialog",
+        "input-otp",
+        "menu",
+        "navigation-menu",
+        "popover",
+        "preview-card",
+        "progress",
+        "radio",
+        "radio-group",
+        "scroll-area",
+        "select",
+        "slider",
+        "switch",
+        "tabs",
+        "toast",
+        "toggle",
+        "toggle-group",
+        "tooltip"
+      ],
+      "vue-ark-vue-overlap": [
+        "accordion",
+        "alert-dialog",
+        "avatar",
+        "carousel",
+        "checkbox",
+        "checkbox-group",
+        "collapsible",
+        "combobox",
+        "context-menu",
+        "dialog",
+        "drawer",
+        "dropzone",
+        "field",
+        "input-otp",
+        "menu",
+        "navigation-menu",
+        "popover",
+        "preview-card",
+        "progress",
+        "radio",
+        "radio-group",
+        "scroll-area",
+        "select",
+        "slider",
+        "switch",
+        "tabs",
+        "toast",
+        "toggle",
+        "toggle-group",
+        "tooltip"
+      ]
+    }
+  },
+  "overlaps": {
+    "vue-exact-three-way": {
+      "brotliBytes": 96967,
+      "gzipBytes": 126997,
+      "minifiedBytes": 459924
+    },
+    "vue-ark-vue-overlap": {
+      "brotliBytes": 120577,
+      "gzipBytes": 157806,
+      "minifiedBytes": 568603
+    }
+  },
+  "package": {
+    "integrity": "sha512-ujs0YNuopXUlJB+0nOmrIWLXKydlEi6ufqCLDot/IFjxdN5dfGvyKWavzDxygzn1HfS/Ebnw5ug1BnGwL5wWdw==",
+    "name": "@ark-ui/vue",
+    "version": "5.38.2"
+  }
+}

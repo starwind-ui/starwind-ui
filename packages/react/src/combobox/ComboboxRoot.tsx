@@ -10,9 +10,12 @@ import {
   type ComboboxOpenChangeDetails,
   type ComboboxValueChangeDetails,
   createCombobox,
+  createPortalBinding,
+  refreshComboboxPortalSurface,
 } from "@starwind-ui/runtime/combobox";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import { ReactPortalScopeProvider, useReactPortalScope } from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 import { ComboboxContext } from "./ComboboxContext";
@@ -69,6 +72,8 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+  const portalRuntimeActivation = portalScope.activation;
   const instanceRef = React.useRef<ReturnType<typeof createCombobox> | undefined>(undefined);
   const inputValueRef = React.useRef(inputValue);
   const onInputValueChangeRef = React.useRef(onInputValueChange);
@@ -86,6 +91,10 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
     modal,
     readOnly,
   });
+  const pendingProgrammaticValueRef = React.useRef<{
+    emit?: boolean;
+    value: string | null;
+  } | null>(null);
   const [uncontrolledInputValue, setUncontrolledInputValueState] = React.useState(
     defaultInputValueRef.current,
   );
@@ -159,6 +168,8 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
     const defaultRuntimeInputValue =
       uncontrolledInputValueRef.current ?? selectedInitialInputValue ?? "";
     const defaultRuntimeFilterValue = uncontrolledInputValueRef.current ?? "";
+
+    if (!portalScope.isReady()) return;
 
     const instance = createCombobox(root, {
       autoComplete,
@@ -255,7 +266,15 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
     setUncontrolledInputValue,
     setUncontrolledOpen,
     setUncontrolledValue,
+    portalRuntimeActivation,
   ]);
+
+  useIsomorphicLayoutEffect(() => {
+    if (!portalScope.isReady()) return;
+    const root = rootRef.current;
+    if (!root) return;
+    refreshComboboxPortalSurface(root);
+  }, [portalRuntimeActivation]);
 
   useIsomorphicLayoutEffect(() => {
     const root = rootRef.current;
@@ -271,11 +290,22 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
 
       event.stopImmediatePropagation();
 
-      const instance = ensureInstance();
-      if (!instance) return;
-
       const nextValue = detail.value === "" ? null : detail.value;
       const emit = typeof detail.emit === "boolean" ? detail.emit : undefined;
+      const instance = ensureInstance();
+      if (!instance) {
+        pendingProgrammaticValueRef.current = { emit, value: nextValue };
+        if (emit !== false || valueRef.current !== undefined) return;
+        setUncontrolledValue(nextValue);
+        if (inputValueRef.current === undefined) {
+          const nextInputValue =
+            nextValue === null ? "" : (findSelectedComboboxItemText(children, nextValue) ?? "");
+          setUncontrolledInputValue(nextInputValue);
+          setSelectedInputValue({ inputValue: nextInputValue || null, value: nextValue });
+        }
+        return;
+      }
+
       instance.setValue(nextValue, { emit });
       if (emit !== false) return;
 
@@ -307,6 +337,15 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
       });
     };
   }, [children, ensureInstance, setUncontrolledInputValue, setUncontrolledValue]);
+
+  useIsomorphicLayoutEffect(() => {
+    const pending = pendingProgrammaticValueRef.current;
+    if (!pending) return;
+    const instance = ensureInstance();
+    if (!instance) return;
+    pendingProgrammaticValueRef.current = null;
+    instance.setValue(pending.value, { emit: pending.emit });
+  }, [ensureInstance]);
 
   useIsomorphicLayoutEffect(() => {
     return () => {
@@ -450,64 +489,66 @@ const ComboboxRoot = React.forwardRef<HTMLDivElement, ComboboxRootProps>(functio
   );
 
   return (
-    <ComboboxContext.Provider value={contextValue}>
-      <div
-        data-sw-combobox
-        data-autocomplete={autoComplete}
-        data-default-input-value={defaultInputValueRef.current}
-        data-default-open={defaultOpenRef.current ? "true" : undefined}
-        data-default-value={defaultValueRef.current ?? undefined}
-        data-disabled={disabled ? "" : undefined}
-        data-filter-mode={filterMode}
-        data-form={form}
-        data-highlight-item-on-hover={highlightItemOnHover ? "true" : "false"}
-        data-input-value={renderedInputValue}
-        data-locale={locale}
-        data-modal={modal ? "true" : "false"}
-        data-name={name}
-        data-readonly={readOnly ? "" : undefined}
-        data-required={required ? "" : undefined}
-        data-value={selectedValue ?? undefined}
-        data-state={renderedOpen ? "open" : "closed"}
-        ref={composedRef}
-        {...props}
-        onClickCapture={(event) => {
-          props.onClickCapture?.(event);
-          if (!event.defaultPrevented) initializeFromInteractiveEvent(event);
-        }}
-        onFocusCapture={(event) => {
-          props.onFocusCapture?.(event);
-          if (!event.defaultPrevented) initializeFromInteractiveEvent(event);
-        }}
-        onInputCapture={(event) => {
-          props.onInputCapture?.(event);
-          if (!event.defaultPrevented) initializeFromInteractiveEvent(event);
-        }}
-        onKeyDownCapture={(event) => {
-          props.onKeyDownCapture?.(event);
-          if (!event.defaultPrevented) initializeFromInteractiveEvent(event);
-        }}
-        onPointerDownCapture={(event) => {
-          props.onPointerDownCapture?.(event);
-          if (!event.defaultPrevented) initializeFromInteractiveEvent(event);
-        }}
-      >
-        <input
-          data-sw-combobox-hidden-input
-          type="hidden"
-          autoComplete={autoComplete}
-          form={form}
-          name={name}
-          disabled={disabled}
-          required={required}
-          value={renderedValue}
-          aria-hidden="true"
-          tabIndex={-1}
-          readOnly
-        />
-        {children}
-      </div>
-    </ComboboxContext.Provider>
+    <ReactPortalScopeProvider scope={portalScope}>
+      <ComboboxContext.Provider value={contextValue}>
+        <div
+          data-sw-combobox
+          data-autocomplete={autoComplete}
+          data-default-input-value={defaultInputValueRef.current}
+          data-default-open={defaultOpenRef.current ? "true" : undefined}
+          data-default-value={defaultValueRef.current ?? undefined}
+          data-disabled={disabled ? "" : undefined}
+          data-filter-mode={filterMode}
+          data-form={form}
+          data-highlight-item-on-hover={highlightItemOnHover ? "true" : "false"}
+          data-input-value={renderedInputValue}
+          data-locale={locale}
+          data-modal={modal ? "true" : "false"}
+          data-name={name}
+          data-readonly={readOnly ? "" : undefined}
+          data-required={required ? "" : undefined}
+          data-value={selectedValue ?? undefined}
+          data-state={renderedOpen ? "open" : "closed"}
+          ref={composedRef}
+          {...props}
+          onClickCapture={(event) => {
+            props.onClickCapture?.(event);
+            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);
+          }}
+          onFocusCapture={(event) => {
+            props.onFocusCapture?.(event);
+            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);
+          }}
+          onInputCapture={(event) => {
+            props.onInputCapture?.(event);
+            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);
+          }}
+          onKeyDownCapture={(event) => {
+            props.onKeyDownCapture?.(event);
+            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);
+          }}
+          onPointerDownCapture={(event) => {
+            props.onPointerDownCapture?.(event);
+            if (!event.defaultPrevented) initializeFromInteractiveEvent(event);
+          }}
+        >
+          <input
+            data-sw-combobox-hidden-input
+            type="hidden"
+            autoComplete={autoComplete}
+            form={form}
+            name={name}
+            disabled={disabled}
+            required={required}
+            value={renderedValue}
+            aria-hidden="true"
+            tabIndex={-1}
+            readOnly
+          />
+          {children}
+        </div>
+      </ComboboxContext.Provider>
+    </ReactPortalScopeProvider>
   );
 });
 

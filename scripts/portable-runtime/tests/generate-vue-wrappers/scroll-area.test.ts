@@ -61,7 +61,9 @@ describe("generated Vue Scroll Area Primitive", () => {
     for (const [name, source] of Object.entries(first.sources)) {
       expect(() => assertVueSfcCompiles(source, name)).not.toThrow();
       expect(source).toContain("defineExpose({ element:");
-      expect(source).toContain('v-bind="attrs"');
+      expect(source).toContain(
+        name === "ScrollAreaViewport.vue" ? 'v-bind="attrs"' : 'v-bind="$attrs"',
+      );
       expect(source).toContain("<slot />");
     }
 
@@ -118,6 +120,14 @@ describe("generated Vue Scroll Area Primitive", () => {
         `export { default as ${exportName} } from "./${exportName}.vue";`,
       );
     }
+    expect(first.index).toContain(`const ScrollArea = {
+  Root: ScrollAreaRoot,
+  Viewport: ScrollAreaViewport,
+  Content: ScrollAreaContent,
+  Scrollbar: ScrollAreaScrollbar,
+  Thumb: ScrollAreaThumb,
+  Corner: ScrollAreaCorner,
+};`);
   });
 
   async function generateScrollArea(): Promise<{

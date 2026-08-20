@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { breadcrumbEllipsis } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,7 +16,6 @@ defineSlots<{
   default?: () => unknown;
   icon?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLSpanElement | null>(null);
 defineExpose({ element });
 </script>
@@ -28,7 +27,7 @@ defineExpose({ element });
     role="presentation"
     aria-hidden="true"
     :class="breadcrumbEllipsis({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="breadcrumb-ellipsis"
   >
     <slot name="icon">

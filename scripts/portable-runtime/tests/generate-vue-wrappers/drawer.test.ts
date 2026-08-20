@@ -60,9 +60,8 @@ describe("generated Vue Drawer and Styled Sheet", () => {
     expect(files["DrawerRoot.vue"]).toContain("provide(DrawerContext");
     expect(files["DrawerRoot.vue"]).toContain("await nextTick()");
     expect(files["DrawerRoot.vue"]).not.toContain("document.activeElement");
-    expect(files["DrawerPortal.vue"]).toContain(
-      ':disabled="props.disabled || !root.mounted.value"',
-    );
+    expect(files["DrawerPortal.vue"]).toContain(':disabled="placement.disabled.value"');
+    expect(files["DrawerPortal.vue"]).toContain('data-sw-portal-placement="framework"');
     expect(files["DrawerViewport.vue"]).toContain("data-sw-drawer-viewport");
     expect(files["DrawerPopup.vue"]).toContain('side?: "top" | "right" | "bottom" | "left"');
     expect(files["DrawerPopup.vue"]).toContain(`:data-side='props.side ?? "right"'`);

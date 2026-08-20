@@ -50,6 +50,8 @@ type Props = Omit<HTMLAttributes<"div">, "value" | "defaultValue" | "onChange" |
     align?: "start" | "center" | "end";
     sideOffset?: number;
     avoidCollisions?: boolean;
+    portalContainer?: string;
+    disablePortal?: boolean;
   };
 
 const {
@@ -81,6 +83,8 @@ const {
   align = "start",
   sideOffset = 4,
   avoidCollisions = true,
+  portalContainer,
+  disablePortal = false,
   class: className,
   size = "md",
   ...rest
@@ -135,6 +139,8 @@ const normalizedFormats = requestedFormats.includes(resolvedFormat)
                 formats={normalizedFormats}
                 showEyeDropper={showEyeDropper}
                 swatches={swatches}
+                portalContainer={portalContainer}
+                disablePortal={disablePortal}
               />
             </>
           )}
@@ -215,6 +221,8 @@ const normalizedFormats = requestedFormats.includes(resolvedFormat)
                     align={align}
                     sideOffset={sideOffset}
                     avoidCollisions={avoidCollisions}
+                    portalContainer={portalContainer}
+                    disablePortal={disablePortal}
                     aria-label={label ? `${label} editor` : "Color editor"}
                   />
                 </>

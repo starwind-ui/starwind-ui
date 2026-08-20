@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -14,7 +14,6 @@ const { class: className } = defineProps<PaginationItemDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLLIElement | null>(null);
 defineExpose({ element });
 </script>
@@ -23,7 +22,7 @@ defineExpose({ element });
   <li
     ref="element"
     :class="className as import('vue').ClassValue"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="pagination-item"
   >
     <slot />

@@ -4,6 +4,7 @@
 import type { InjectionKey, Ref } from "vue";
 
 export type PreviewCardContextValue = {
+  element: Readonly<Ref<HTMLElement | null>>;
   mounted: Readonly<Ref<boolean>>;
   registerPortal: (owner: symbol, element: HTMLElement | null) => void;
 };
@@ -59,6 +60,7 @@ let runtimeGeneration = 0;
 let disposed = false;
 
 provide(PreviewCardContext, {
+  element: rootRef,
   mounted,
   registerPortal(owner, element) {
     if (element) portalOwner = owner;

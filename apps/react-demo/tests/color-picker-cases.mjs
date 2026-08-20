@@ -286,13 +286,26 @@ async function assertNestedCompositeFormatSelect(page, root) {
     initialPopoverBox.y >= triggerBox.y + triggerBox.height,
     "Color Picker content is geometrically below its trigger",
   );
+  const portal = root.locator(':scope > [data-slot="select-portal"]');
+  await portal.waitFor({ state: "attached" });
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  assert.equal(await portal.evaluate((element) => getComputedStyle(element).display), "contents");
   const formatTrigger = popover.getByRole("combobox", { name: "Color format" });
+  const closedSelectGeometry = await readColorPickerGeometry(root);
   await formatTrigger.click();
 
   const options = root.locator("[data-sw-color-picker-format-options]:visible");
   await options.waitFor();
   const positioner = options.locator("xpath=..");
+  assert.equal(await positioner.evaluate((element) => getComputedStyle(element).position), "fixed");
   assert.equal(await positioner.evaluate((element) => getComputedStyle(element).zIndex), "60");
+  assertColorPickerGeometryStable(
+    closedSelectGeometry,
+    await readColorPickerGeometry(root),
+    "while the React format Select is open",
+  );
 
   await options.getByRole("option", { name: "RGB" }).click();
   await page.waitForFunction(
@@ -307,6 +320,11 @@ async function assertNestedCompositeFormatSelect(page, root) {
     "nested Select click keeps the parent Popover open",
   );
   assert.equal(await trigger.getAttribute("aria-expanded"), "true");
+  assertColorPickerGeometryStable(
+    closedSelectGeometry,
+    await readColorPickerGeometry(root),
+    "after the React format Select closes",
+  );
   const changedPopoverBox = await popover.boundingBox();
   assert.ok(initialPopoverBox && changedPopoverBox);
   assert.ok(
@@ -316,6 +334,24 @@ async function assertNestedCompositeFormatSelect(page, root) {
 
   await page.getByRole("heading", { name: "Focused QA fixtures" }).click();
   await popover.waitFor({ state: "hidden" });
+}
+
+async function readColorPickerGeometry(root) {
+  const fixture = root.locator("xpath=..");
+  const [rootBox, fixtureBox] = await Promise.all([root.boundingBox(), fixture.boundingBox()]);
+  assert.ok(rootBox && fixtureBox, "Color Picker geometry must be measurable");
+  return { fixture: fixtureBox, root: rootBox };
+}
+
+function assertColorPickerGeometryStable(expected, actual, phase) {
+  for (const target of ["root", "fixture"]) {
+    for (const dimension of ["x", "y", "width", "height"]) {
+      assert.ok(
+        Math.abs(expected[target][dimension] - actual[target][dimension]) <= 1,
+        `${target} ${dimension} must stay within 1 CSS pixel ${phase}: expected ${expected[target][dimension]}, received ${actual[target][dimension]}`,
+      );
+    }
+  }
 }
 
 async function assertConstrainedColorPickerPlacement(page) {

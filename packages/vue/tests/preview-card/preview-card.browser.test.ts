@@ -37,6 +37,13 @@ describe("Vue Preview Card browser contract", () => {
     expect(popup().hidden).toBe(false);
     expect(popup().dataset.side).toBe("top");
     expect(popup().dataset.align).toBe("start");
+    const portal = document.body.querySelector<HTMLElement>("[data-sw-preview-card-portal]")!;
+    expect(portal.dataset.placement).toBe("ready");
+    expect(portal.hasAttribute("data-floating-root")).toBe(true);
+    expect(portal.contains(popup())).toBe(true);
+    expect(portal.contains(document.body.querySelector("[data-sw-preview-card-positioner]"))).toBe(
+      true,
+    );
     pointer(trigger, "pointerleave");
     pointer(popup(), "pointerenter");
     await wait(100);

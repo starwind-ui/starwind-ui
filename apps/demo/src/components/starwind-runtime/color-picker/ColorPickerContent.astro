@@ -34,6 +34,8 @@ const {
   side = "bottom",
   align = "start",
   exitMotion = "fade",
+  portalContainer,
+  disablePortal = false,
   ...rest
 } = Astro.props;
 ---
@@ -44,6 +46,8 @@ const {
   align={align}
   collisionStrategy="best-fit"
   exitMotion={exitMotion}
+  portalContainer={portalContainer}
+  disablePortal={disablePortal}
   {...rest}
   data-sw-color-picker-content=""
   data-size={size}
@@ -54,6 +58,8 @@ const {
       initial={initial}
       size={size}
       showEyeDropper={showEyeDropper}
+      portalContainer={portalContainer}
+      disablePortal={disablePortal}
       formatControl={formatControl}
       formats={formats}
       swatches={swatches}

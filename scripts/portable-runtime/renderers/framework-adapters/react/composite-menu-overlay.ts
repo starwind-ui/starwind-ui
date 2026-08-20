@@ -10,6 +10,7 @@ import {
   renderReactAsChildImports,
   renderReactAsChildSetup,
 } from "./as-child-trigger-fragments.js";
+import { printReactPortalComponent } from "./portal.js";
 
 export function printReactCompositeMenuOverlayComponent(
   family: AdapterCompositeMenuOverlayComponentProjection,
@@ -34,6 +35,15 @@ export function printReactCompositeMenuOverlayComponent(
   if (family.part === "separator") return printSeparator(facts);
   if (family.part === "submenuRoot") return printSubmenuRoot(facts);
   if (family.part === "submenuTrigger") return printSubmenuTrigger(facts);
+  if (family.part === "portal") {
+    return printReactPortalComponent({
+      componentName: facts.exports.portal,
+      discoveryAttribute: facts.attrs.portal,
+      displayName: facts.displayName,
+      rootDiscoveryAttribute: facts.attrs.root,
+      runtimeImportSource: facts.runtime.importSource,
+    });
+  }
 
   return printSimplePart(facts, family.part);
 }

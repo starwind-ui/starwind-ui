@@ -4,6 +4,7 @@ import {
   aggregateBaselineProvenance,
   evaluatePackageSizeBudgets,
 } from "../package-size-budget-checks.mjs";
+import { vuePackageSizeBaseline } from "../vue-package-size-baseline.mjs";
 
 describe("package size budget checks", () => {
   it("records the stable release candidate used for the aggregate rebaseline", () => {
@@ -305,7 +306,90 @@ describe("package size budget checks", () => {
       "Field cold import budget could not be evaluated: missing Field cold import min+gzip measurement.",
     );
   });
+
+  it("passes every adopted Vue absolute budget at equality and fails one byte above", () => {
+    const atCeiling = evaluatePackageSizeBudgets({
+      bundleResults: passingBundleResults(),
+      includePrivateVue: true,
+      supportResults: passingSupportResults(),
+      ...privateVueBudgetResults(),
+    });
+    const oneByteAbove = evaluatePackageSizeBudgets({
+      bundleResults: passingBundleResults(),
+      includePrivateVue: true,
+      supportResults: passingSupportResults(),
+      ...privateVueBudgetResults({ offset: 1 }),
+    });
+
+    expect(atCeiling.vueAbsoluteChecks).toHaveLength(8);
+    expect(atCeiling.vueAbsoluteChecks.every(({ status }) => status === "Pass")).toBe(true);
+    expect(oneByteAbove.vueAbsoluteChecks.every(({ status }) => status === "Fail")).toBe(true);
+    for (const id of Object.keys(vuePackageSizeBaseline.budgets)) {
+      expect(oneByteAbove.failures.join("\n")).toContain(`${id} budget exceeded`);
+    }
+  });
+
+  it("fails every missing adopted Vue measurement", () => {
+    const result = evaluatePackageSizeBudgets({
+      bundleResults: passingBundleResults(),
+      includePrivateVue: true,
+      supportResults: passingSupportResults(),
+      vueBundleResults: [],
+      vueColdImportResults: [],
+      vueMatchedSupportResults: [],
+    });
+
+    expect(result.vueAbsoluteChecks).toHaveLength(8);
+    expect(result.vueAbsoluteChecks.every(({ status }) => status === "Fail")).toBe(true);
+    expect(result.failures).toHaveLength(8);
+    expect(result.failures).toContain(
+      "vue.packed-tarball budget could not be evaluated: missing min+gzip measurement.",
+    );
+  });
+
+  it.each([
+    [128_291, "Above comparator"],
+    [180_110, "Equal comparator"],
+    [180_111, "Below comparator"],
+    [null, "Unavailable"],
+  ])("keeps the Vue comparator snapshot advisory at %s", (comparatorBytes, status) => {
+    const input = privateVueBudgetResults();
+    input.vueMatchedSupportResults = [
+      { gzipBytes: 180_110, provider: "starwind-vue" },
+      ...(comparatorBytes == null ? [] : [{ gzipBytes: comparatorBytes, provider: "zag-vue" }]),
+    ];
+    const result = evaluatePackageSizeBudgets({
+      bundleResults: passingBundleResults(),
+      includePrivateVue: true,
+      supportResults: passingSupportResults(),
+      ...input,
+    });
+
+    expect(result.failures).toEqual([]);
+    expect(result.vueMatchedSupportCheck).toEqual(
+      expect.objectContaining({ comparisonStatus: status, failure: null, status: "Pass" }),
+    );
+  });
 });
+
+function privateVueBudgetResults({ offset = 0 } = {}) {
+  const ceiling = (id) => vuePackageSizeBaseline.budgets[id].ceilingBytes + offset;
+  return {
+    vueBundleResults: [
+      { gzipBytes: ceiling("vue.adapter-only"), label: "@starwind-ui/vue (adapter only)" },
+      { gzipBytes: ceiling("vue.combined"), label: "@starwind-ui/vue + runtime" },
+    ],
+    vueColdImportResults: vuePackageSizeBaseline.sentinels.map((component) => ({
+      component,
+      gzipBytes: ceiling(`vue.cold.${component}`),
+    })),
+    vueMatchedSupportResults: [
+      { gzipBytes: 180_110, provider: "starwind-vue" },
+      { gzipBytes: 128_292, provider: "zag-vue" },
+    ],
+    vuePackagePayload: { packageGzipBytes: ceiling("vue.packed-tarball") },
+  };
+}
 
 function passingBundleResults() {
   return [

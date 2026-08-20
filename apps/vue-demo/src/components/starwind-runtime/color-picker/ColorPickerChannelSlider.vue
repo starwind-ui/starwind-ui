@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import "./styles.css";
 import * as ColorPickerPrimitive from "@starwind-ui/vue/color-picker";
 import { colorPickerChannelSlider, colorPickerChannelSliderThumb } from "./variants";
@@ -26,7 +26,6 @@ const {
   class: className,
 } = defineProps<ColorPickerChannelSliderDeclaredProps>();
 defineSlots<{}>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -34,7 +33,7 @@ const attrs = useAttrs();
     :channel="channel"
     :orientation="orientation"
     :class="colorPickerChannelSlider({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="color-picker-channel-slider"
   >
     <ColorPickerPrimitive.ColorPickerTransparencyGrid

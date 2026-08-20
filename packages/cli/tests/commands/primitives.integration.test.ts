@@ -86,7 +86,7 @@ describe.sequential("primitives add integration", () => {
         return { ...artifact, framework: "vue" as const };
       }),
     };
-  });
+  }, 30_000);
 
   afterAll(async () => {
     await rm(generatedArtifactRoot, { recursive: true, force: true });

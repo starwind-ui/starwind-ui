@@ -93,16 +93,16 @@ import {
   requireGroupFacts,
 } from "./boolean-form-control-fragments.js";
 import {
-  printReactCompositeMenuOverlayComponent,
-  printReactCompositeMenuOverlayHelper,
-  printReactCompositeMenuOverlayIndex,
-} from "./composite-menu-overlay.js";
-import {
   printReactColorPickerComponent,
   printReactColorPickerIndex,
   type ReactColorPickerComponentProjection,
   type ReactColorPickerIndexProjection,
 } from "./color-picker.js";
+import {
+  printReactCompositeMenuOverlayComponent,
+  printReactCompositeMenuOverlayHelper,
+  printReactCompositeMenuOverlayIndex,
+} from "./composite-menu-overlay.js";
 import {
   printReactEditableCollectionOverlayComponent,
   printReactEditableCollectionOverlayHelper,
@@ -126,18 +126,18 @@ import {
   printReactNotificationSystemIndex,
 } from "./notification-system.js";
 import {
-  printReactPresenceFloatingOverlayPositioner,
-  printReactPresenceFloatingOverlayPopup,
-  printReactPresenceFloatingOverlaySimplePart,
-  printReactTimedFloatingOverlayPositioner,
-  printReactTimedFloatingOverlayPopup,
-  printReactTimedFloatingOverlaySimplePart,
-} from "./overlay-presence-fragments.js";
-import {
   printReactOptionCollectionOverlayComponent,
   printReactOptionCollectionOverlayHelper,
   printReactOptionCollectionOverlayIndex,
 } from "./option-collection-overlay.js";
+import {
+  printReactPresenceFloatingOverlayPopup,
+  printReactPresenceFloatingOverlayPositioner,
+  printReactPresenceFloatingOverlaySimplePart,
+  printReactTimedFloatingOverlayPopup,
+  printReactTimedFloatingOverlayPositioner,
+} from "./overlay-presence-fragments.js";
+import { addReactPortalScope, printReactPortalComponent } from "./portal.js";
 import { printReactRangeStatusComponent, printReactRangeStatusIndex } from "./range-status.js";
 import {
   printReactSharedViewportNavigationComponent,
@@ -653,39 +653,51 @@ function applyReactFamilyPrintNormalizations(file: AdapterComponentFile, content
   }
 
   if (family?.kind === "native-overlay" && family.part === "root") {
-    return normalizeReactCancelableSingleStateRoot(contents, {
+    const normalizedRoot = normalizeReactCancelableSingleStateRoot(contents, {
       callbackProp: family.facts.events.openChange.callbackProp,
       controlledProp: family.facts.props.open.name,
       eventName: family.facts.events.openChange.name,
       valueProperty: family.facts.events.openChange.valueProperty,
     });
+    return family.facts.parts.portal
+      ? addReactPortalScope(normalizedRoot, family.facts.runtime.factory)
+      : normalizedRoot;
   }
 
   if (family?.kind === "presence-floating-overlay" && family.part === "root") {
-    return normalizeReactCancelableSingleStateRoot(contents, {
-      callbackProp: family.facts.events.openChange.callbackProp,
-      controlledProp: family.facts.props.open.name,
-      eventName: family.facts.events.openChange.name,
-      valueProperty: family.facts.events.openChange.valueProperty,
-    });
+    return addReactPortalScope(
+      normalizeReactCancelableSingleStateRoot(contents, {
+        callbackProp: family.facts.events.openChange.callbackProp,
+        controlledProp: family.facts.props.open.name,
+        eventName: family.facts.events.openChange.name,
+        valueProperty: family.facts.events.openChange.valueProperty,
+      }),
+      family.facts.runtime.factory,
+    );
   }
 
   if (family?.kind === "timed-floating-overlay" && family.part === "root") {
-    return normalizeReactCancelableSingleStateRoot(contents, {
-      callbackProp: family.facts.event.callbackProp,
-      controlledProp: family.facts.props.open.name,
-      eventName: family.facts.event.name,
-      valueProperty: family.facts.event.valueProperty,
-    });
+    return addReactPortalScope(
+      normalizeReactCancelableSingleStateRoot(contents, {
+        callbackProp: family.facts.event.callbackProp,
+        controlledProp: family.facts.props.open.name,
+        eventName: family.facts.event.name,
+        valueProperty: family.facts.event.valueProperty,
+      }),
+      family.facts.runtime.factory,
+    );
   }
 
   if (family?.kind === "composite-menu-overlay" && family.part === "root") {
-    return normalizeReactCancelableSingleStateRoot(contents, {
-      callbackProp: family.facts.events.openChange.callbackProp,
-      controlledProp: family.facts.props.open.name,
-      eventName: family.facts.events.openChange.name,
-      valueProperty: family.facts.events.openChange.valueProperty,
-    });
+    return addReactPortalScope(
+      normalizeReactCancelableSingleStateRoot(contents, {
+        callbackProp: family.facts.events.openChange.callbackProp,
+        controlledProp: family.facts.props.open.name,
+        eventName: family.facts.events.openChange.name,
+        valueProperty: family.facts.events.openChange.valueProperty,
+      }),
+      family.facts.runtime.factory,
+    );
   }
 
   if (family?.kind === "composite-menu-overlay" && family.part === "checkboxItem") {
@@ -697,12 +709,16 @@ function applyReactFamilyPrintNormalizations(file: AdapterComponentFile, content
   }
 
   if (family?.kind === "anchored-menu-overlay" && family.part === "root") {
-    return normalizeReactCancelableSingleStateRoot(contents, {
-      callbackProp: family.facts.events.openChange.callbackProp,
-      controlledProp: family.facts.props.open.name,
-      eventName: family.facts.events.openChange.name,
-      valueProperty: family.facts.events.openChange.valueProperty,
-    });
+    return addReactPortalScope(
+      normalizeReactCancelableSingleStateRoot(contents, {
+        callbackProp: family.facts.events.openChange.callbackProp,
+        controlledProp: family.facts.props.open.name,
+        eventName: family.facts.events.openChange.name,
+        valueProperty: family.facts.events.openChange.valueProperty,
+      }),
+      family.facts.runtime.factory,
+      family.facts.runtime.portalOwner,
+    );
   }
 
   if (family?.kind === "hidden-input-visual-slot" && family.part === "root") {
@@ -1798,7 +1814,13 @@ function printReactNativeOverlayComponent(family: AdapterNativeOverlayComponentP
   }
   if (family.part === "close") return printReactNativeOverlayClose(facts);
   if (family.part === "portal" && facts.parts.portal) {
-    return printReactNativeOverlaySimplePart(facts, facts.parts.portal, facts.attrs.portal);
+    return printReactPortalComponent({
+      componentName: getNativeOverlayExportName(facts, facts.parts.portal.name),
+      discoveryAttribute: facts.attrs.portal as string,
+      displayName: facts.displayName,
+      rootDiscoveryAttribute: facts.attrs.root,
+      runtimeImportSource: facts.runtime.importSource,
+    });
   }
   if (family.part === "viewport" && facts.parts.viewport) {
     return printReactNativeOverlaySimplePart(facts, facts.parts.viewport, facts.attrs.viewport);
@@ -1913,12 +1935,13 @@ function printReactPresenceFloatingOverlayComponent(
   if (family.part === "backdrop") return printReactPresenceFloatingOverlayBackdrop(facts);
   if (family.part === "close") return printReactPresenceFloatingOverlayClose(facts);
   if (family.part === "portal") {
-    return printReactPresenceFloatingOverlaySimplePart(
-      facts,
-      facts.parts.portal,
-      facts.exports.portal,
-      facts.attrs.portal,
-    );
+    return printReactPortalComponent({
+      componentName: facts.exports.portal,
+      discoveryAttribute: facts.attrs.portal,
+      displayName: facts.displayName,
+      rootDiscoveryAttribute: facts.attrs.root,
+      runtimeImportSource: facts.runtime.importSource,
+    });
   }
   if (family.part === "arrow") {
     return printReactPresenceFloatingOverlaySimplePart(
@@ -2017,12 +2040,13 @@ function printReactTimedFloatingOverlayComponent(
   if (family.part === "positioner") return printReactTimedFloatingOverlayPositioner(facts);
   if (family.part === "popup") return printReactTimedFloatingOverlayPopup(facts);
   if (family.part === "portal") {
-    return printReactTimedFloatingOverlaySimplePart(
-      facts,
-      facts.parts.portal,
-      facts.exports.portal,
-      facts.attrs.portal,
-    );
+    return printReactPortalComponent({
+      componentName: facts.exports.portal,
+      discoveryAttribute: facts.attrs.portal,
+      displayName: facts.displayName,
+      rootDiscoveryAttribute: facts.attrs.root,
+      runtimeImportSource: facts.runtime.importSource,
+    });
   }
   if (family.part === "arrow") return printReactTimedFloatingOverlayArrow(facts);
   if (family.part === "backdrop") return printReactTimedFloatingOverlayBackdrop(facts);

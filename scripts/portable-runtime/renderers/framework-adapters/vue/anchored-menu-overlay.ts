@@ -89,6 +89,7 @@ let instance: ReturnType<typeof ${runtime.factory}> | undefined;
 let generation = 0;
 
 provide(MenuRootContext, {
+  element: rootRef,
   mounted,
   open: renderedOpen,
   registerPortal() {},

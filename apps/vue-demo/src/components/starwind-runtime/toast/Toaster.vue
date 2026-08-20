@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import {
-  type ComponentPublicInstance,
-  computed,
-  type HTMLAttributes,
-  nextTick,
-  ref,
-  useAttrs,
-} from "vue";
+import { type ComponentPublicInstance, computed, type HTMLAttributes, nextTick, ref } from "vue";
 import "./styles.css";
 import * as ToastPrimitive from "@starwind-ui/vue/toast";
 import {
@@ -66,7 +59,6 @@ const {
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const viewportStyle = computed(() => [{ "--gap": gap, "--peek": peek }, style]);
 const element = ref<HTMLDivElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDivElement | null } & ComponentPublicInstance) | null =
@@ -99,7 +91,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :limit="limit"
     :position="position"
     :style="viewportStyle"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="toast-viewport"
   >
     <slot>

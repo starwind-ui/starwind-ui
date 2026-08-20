@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as MenuPrimitive from "@starwind-ui/vue/menu";
 import type { ClassValue } from "tailwind-variants";
-import { type AnchorHTMLAttributes, useAttrs } from "vue";
+import { type AnchorHTMLAttributes } from "vue";
 import { dropdownItem } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -30,7 +30,6 @@ const {
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -38,7 +37,7 @@ const attrs = useAttrs();
     :class="dropdownItem({ inset, disabled, class: className })"
     :close-on-click="closeOnClick"
     :disabled="disabled"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="dropdown-link-item"
   >
     <slot />

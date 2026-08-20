@@ -5,13 +5,23 @@
 
 "use client";
 
+import { reportPortalPlacement, resolvePortalPlacement } from "@starwind-ui/runtime/alert-dialog";
 import * as React from "react";
+import { ReactPortal, type ReactPortalProps } from "../internal/portal";
 
-export type AlertDialogPortalProps = React.HTMLAttributes<HTMLDivElement>;
+export type AlertDialogPortalProps = ReactPortalProps;
 
 const AlertDialogPortal = React.forwardRef<HTMLDivElement, AlertDialogPortalProps>(
   function AlertDialogPortal(props, forwardedRef) {
-    return <div data-sw-alert-dialog-portal ref={forwardedRef} {...props} />;
+    return (
+      <ReactPortal
+        discoveryAttribute="data-sw-alert-dialog-portal"
+        reportPlacement={reportPortalPlacement}
+        resolvePlacement={resolvePortalPlacement}
+        ref={forwardedRef}
+        {...props}
+      />
+    );
   },
 );
 

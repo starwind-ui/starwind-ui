@@ -7,11 +7,18 @@
 
 import {
   createMenu,
+  createPortalBinding,
   type MenuCloseCompleteDetails,
   type MenuOpenChangeDetails,
+  refreshMenuPortalSurface,
 } from "@starwind-ui/runtime/menu";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import {
+  ReactPortalScopeProvider,
+  useReactPortalRuntimeLifecycle,
+  useReactPortalScope,
+} from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 export type MenuRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
@@ -40,6 +47,8 @@ const MenuRoot = React.forwardRef<HTMLDivElement, MenuRootProps>(function MenuRo
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+  const portalRuntimeActivation = portalScope.activation;
   const instanceRef = React.useRef<ReturnType<typeof createMenu> | undefined>(undefined);
   const onCloseCompleteRef = React.useRef(onCloseComplete);
   const onOpenChangeRef = React.useRef(onOpenChange);
@@ -73,7 +82,7 @@ const MenuRoot = React.forwardRef<HTMLDivElement, MenuRootProps>(function MenuRo
     [forwardedRef],
   );
 
-  useIsomorphicLayoutEffect(() => {
+  const initializePortalRuntime = React.useCallback(() => {
     const root = rootRef.current;
     if (!root) return;
 
@@ -107,6 +116,15 @@ const MenuRoot = React.forwardRef<HTMLDivElement, MenuRootProps>(function MenuRo
     };
   }, [disabled, modal, openOnHover, closeDelay]);
 
+  useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
+
+  useIsomorphicLayoutEffect(() => {
+    if (!portalScope.isReady()) return;
+    const root = rootRef.current;
+    if (!root) return;
+    refreshMenuPortalSurface(root);
+  }, [portalRuntimeActivation]);
+
   useIsomorphicLayoutEffect(() => {
     if (open === undefined) return;
     const instance = instanceRef.current;
@@ -119,17 +137,19 @@ const MenuRoot = React.forwardRef<HTMLDivElement, MenuRootProps>(function MenuRo
   const renderedOpen = open ?? uncontrolledOpen;
 
   return (
-    <div
-      data-sw-menu
-      data-default-open={defaultOpenRef.current ? "true" : undefined}
-      data-disabled={disabled ? "" : undefined}
-      data-modal={modal ? "true" : "false"}
-      data-open-on-hover={openOnHover ? "true" : undefined}
-      data-close-delay={closeDelay}
-      data-state={renderedOpen ? "open" : "closed"}
-      ref={composedRef}
-      {...props}
-    />
+    <ReactPortalScopeProvider scope={portalScope}>
+      <div
+        data-sw-menu
+        data-default-open={defaultOpenRef.current ? "true" : undefined}
+        data-disabled={disabled ? "" : undefined}
+        data-modal={modal ? "true" : "false"}
+        data-open-on-hover={openOnHover ? "true" : undefined}
+        data-close-delay={closeDelay}
+        data-state={renderedOpen ? "open" : "closed"}
+        ref={composedRef}
+        {...props}
+      />
+    </ReactPortalScopeProvider>
   );
 });
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as PopoverPrimitive from "@starwind-ui/vue/popover";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { popoverDescription } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,13 +16,12 @@ const { class: className } = defineProps<PopoverDescriptionDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <PopoverPrimitive.PopoverDescription
     :class="popoverDescription({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="popover-description"
   >
     <slot />

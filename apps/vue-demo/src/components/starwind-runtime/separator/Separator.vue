@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { separator } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -24,7 +24,6 @@ const {
   class: className,
 } = defineProps<SeparatorDeclaredProps>();
 defineSlots<{}>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 </script>
@@ -37,7 +36,7 @@ defineExpose({ element });
     :aria-orientation="orientation"
     :data-orientation="orientation"
     :class="separator({ orientation, class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     :data-slot="dataSlot"
   />
 </template>

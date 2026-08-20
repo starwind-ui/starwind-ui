@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { pagination } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -17,7 +17,6 @@ const { size = "md", class: className } = defineProps<PaginationDeclaredProps>()
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLElement | null>(null);
 defineExpose({ element });
 </script>
@@ -28,7 +27,7 @@ defineExpose({ element });
     role="navigation"
     aria-label="pagination"
     :class="pagination({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     :data-size="size"
     data-slot="pagination"
   >

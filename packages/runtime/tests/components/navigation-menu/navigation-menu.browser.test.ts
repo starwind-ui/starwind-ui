@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { initStarwind } from "../../../src/init-starwind";
 import { createDialog } from "../../../src/components/dialog/dialog";
 import {
   createNavigationMenu,
   type NavigationMenuValueChangeDetails,
 } from "../../../src/components/navigation-menu/navigation-menu";
+import { initStarwind } from "../../../src/init-starwind";
+import { reportPortalPlacement } from "../../../src/internal/floating-portal";
+import { createDialogTopLayerHost } from "../../../src/internal/dialog-top-layer-host";
 
 describe("createNavigationMenu", () => {
   beforeEach(() => {
@@ -40,26 +41,31 @@ describe("createNavigationMenu", () => {
   it("keeps a connected explicit portal owner across open, close, recreation, and destroy", () => {
     const root = renderNavigationMenu();
     const explicitTarget = document.createElement("div");
+    explicitTarget.id = "navigation-menu-explicit-target";
     explicitTarget.setAttribute("data-floating-root", "");
     document.body.append(explicitTarget);
     const authoredPortal = root.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!;
     const positioner = getPositioner();
+    authoredPortal.dataset.container = `#${explicitTarget.id}`;
     let menu = createNavigationMenu(root);
 
     explicitTarget.append(authoredPortal);
     menu.setValue("products", { emit: false });
 
-    expect(positioner.parentElement).toBe(explicitTarget);
+    expect(positioner.parentElement).toBe(authoredPortal);
+    expect(authoredPortal.parentElement).toBe(explicitTarget);
     expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
 
     menu.close();
 
     expect(positioner.parentElement).toBe(authoredPortal);
-    expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+    expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(0);
+    expect(root.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
 
     menu.setValue("products", { emit: false });
 
-    expect(positioner.parentElement).toBe(explicitTarget);
+    expect(positioner.parentElement).toBe(authoredPortal);
+    expect(authoredPortal.parentElement).toBe(explicitTarget);
     expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
 
     root.append(authoredPortal);
@@ -68,13 +74,15 @@ describe("createNavigationMenu", () => {
     explicitTarget.append(authoredPortal);
     menu.setValue("products", { emit: false });
 
-    expect(positioner.parentElement).toBe(explicitTarget);
+    expect(positioner.parentElement).toBe(authoredPortal);
+    expect(authoredPortal.parentElement).toBe(explicitTarget);
     expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
 
     menu.destroy();
 
     expect(positioner.parentElement).toBe(authoredPortal);
-    expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+    expect(explicitTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(0);
+    expect(root.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
     expect(explicitTarget.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
   });
 
@@ -94,7 +102,8 @@ describe("createNavigationMenu", () => {
     secondTarget.append(authoredPortal);
     menu.setValue("company", { emit: false });
 
-    expect(positioner.parentElement).toBe(secondTarget);
+    expect(positioner.parentElement).toBe(authoredPortal);
+    expect(authoredPortal.parentElement).toBe(secondTarget);
     expect(firstTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(0);
     expect(secondTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
     expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
@@ -103,7 +112,113 @@ describe("createNavigationMenu", () => {
 
     expect(positioner.parentElement).toBe(authoredPortal);
     expect(firstTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(0);
-    expect(secondTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+    expect(secondTarget.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(0);
+    expect(root.querySelectorAll("[data-sw-nav-menu-positioner]")).toHaveLength(1);
+  });
+
+  it("waits for framework placement before measuring or focusing keyboard-open content", async () => {
+    const root = renderNavigationMenu();
+    const portal = root.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!;
+    const positioner = getPositioner();
+    const content = getContent("products");
+    const contentLink = content.querySelector<HTMLAnchorElement>("a")!;
+    const trigger = getTrigger("products");
+    const target = document.createElement("section");
+    const secondTarget = document.createElement("section");
+    target.id = "navigation-menu-framework-target";
+    secondTarget.id = "navigation-menu-framework-second-target";
+    portal.dataset.swPortalPlacement = "framework";
+    portal.dataset.container = `#${target.id}`;
+    contentLink.style.cssText = "display: block; height: 120px; width: 240px";
+    document.body.append(target, secondTarget);
+    const menu = createNavigationMenu(root);
+
+    trigger.focus();
+    trigger.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowDown" }));
+
+    expect(menu.getValue()).toBe("products");
+    expect(positioner.style.width).toBe("");
+    expect(positioner.style.height).toBe("");
+    expect(document.activeElement).toBe(trigger);
+
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+
+    expect(positioner.style.width).toBe("");
+    expect(positioner.style.height).toBe("");
+    expect(document.activeElement).toBe(trigger);
+
+    target.append(portal);
+    reportPortalPlacement(portal, { ready: true, target });
+
+    expect(positioner.style.width).toBe("240px");
+    expect(positioner.style.height).toBe("120px");
+    expect(document.activeElement).toBe(contentLink);
+
+    portal.dataset.container = `#${secondTarget.id}`;
+    reportPortalPlacement(portal, { ready: false, target: secondTarget });
+    document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(menu.getValue()).toBe("products");
+
+    secondTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+    document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(menu.getValue()).toBeNull();
+
+    menu.destroy();
+    reportPortalPlacement(portal, null);
+    target.remove();
+    secondTarget.remove();
+  });
+
+  it("preserves popup anchor styles when a deferred update becomes placement-pending", async () => {
+    const root = renderNavigationMenu();
+    const portal = root.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!;
+    const popup = getPopup();
+    const firstTarget = document.createElement("section");
+    const secondTarget = document.createElement("section");
+    firstTarget.id = "navigation-menu-deferred-first-target";
+    secondTarget.id = "navigation-menu-deferred-second-target";
+    portal.dataset.swPortalPlacement = "framework";
+    portal.dataset.container = `#${firstTarget.id}`;
+    document.body.append(firstTarget, secondTarget);
+    const menu = createNavigationMenu(root);
+    firstTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: firstTarget });
+
+    getTrigger("products").click();
+    popup.style.cssText =
+      "position: relative; inset: auto 23px 25px 17px; transform-origin: center";
+    portal.dataset.container = `#${secondTarget.id}`;
+    reportPortalPlacement(portal, { ready: false, target: secondTarget });
+    await waitForFloatingPosition();
+
+    expect(popup.style.position).toBe("relative");
+    expect(popup.style.left).toBe("17px");
+    expect(popup.style.right).toBe("23px");
+    expect(popup.style.top).toBe("auto");
+    expect(popup.style.bottom).toBe("25px");
+
+    menu.destroy();
+    reportPortalPlacement(portal, null);
+    firstTarget.remove();
+    secondTarget.remove();
+  });
+
+  it("keeps popup anchor styles cleared after destroy invalidates a deferred update", async () => {
+    const root = renderNavigationMenu();
+    const menu = createNavigationMenu(root);
+
+    getTrigger("products").click();
+    menu.destroy();
+    await waitForFloatingPosition();
+
+    expect(getPopup().style.position).toBe("");
+    expect(getPopup().style.left).toBe("");
+    expect(getPopup().style.right).toBe("");
+    expect(getPopup().style.top).toBe("");
+    expect(getPopup().style.bottom).toBe("");
   });
 
   it("coordinates dialog close when its explicit portal owner is nested", () => {
@@ -133,7 +248,7 @@ describe("createNavigationMenu", () => {
     menu.setValue("products", { emit: false });
 
     expect(authoredPortal.contains(positioner)).toBe(true);
-    expect(authoredPortal.querySelector("[data-sw-floating-portal]")).not.toBeNull();
+    expect(authoredPortal.closest("[data-sw-dialog-top-layer-host]:popover-open")).not.toBeNull();
 
     dialog.close();
 
@@ -159,7 +274,8 @@ describe("createNavigationMenu", () => {
     menu.setValue("products", { emit: false });
 
     expect(fixture.dialogContent.contains(positioner)).toBe(true);
-    expect(authoredPortal.contains(positioner)).toBe(false);
+    expect(fixture.dialogContent.contains(authoredPortal)).toBe(true);
+    expect(authoredPortal.contains(positioner)).toBe(true);
 
     dialog.close();
 
@@ -171,7 +287,7 @@ describe("createNavigationMenu", () => {
     dialog.destroy();
   });
 
-  it("promotes dialog-owned content and closes it through the owner lifecycle", () => {
+  it("places dialog-owned content in its one host and closes it through the owner lifecycle", async () => {
     const fixture = renderNavigationMenuInDialog();
     const floatingAction = document.createElement("button");
     floatingAction.textContent = "Floating navigation action";
@@ -191,12 +307,13 @@ describe("createNavigationMenu", () => {
     expect(menu.getValue()).toBe("products");
     expect(
       fixture.dialogContent
-        .querySelector<HTMLElement>("[data-sw-floating-portal]")
+        .querySelector<HTMLElement>("[data-sw-dialog-top-layer-host]")
         ?.matches(":popover-open"),
     ).toBe(true);
     expect(document.activeElement).toBe(floatingAction);
 
     dialog.close();
+    await nextAnimationFrame();
 
     expect(menu.getValue()).toBe(null);
     expect(getPopup().hidden).toBe(true);
@@ -255,7 +372,7 @@ describe("createNavigationMenu", () => {
 
     expect(
       fixture.dialogContent
-        .querySelector<HTMLElement>("[data-sw-floating-portal]")
+        .querySelector<HTMLElement>("[data-sw-dialog-top-layer-host]")
         ?.matches(":popover-open"),
     ).toBe(true);
 
@@ -268,7 +385,7 @@ describe("createNavigationMenu", () => {
     dialog.open();
     expect(
       fixture.dialogContent
-        .querySelector<HTMLElement>("[data-sw-floating-portal]")
+        .querySelector<HTMLElement>("[data-sw-dialog-top-layer-host]")
         ?.matches(":popover-open"),
     ).toBe(true);
 
@@ -349,7 +466,7 @@ describe("createNavigationMenu", () => {
     dialog.destroy();
   });
 
-  it("closes the dialog-owned menu before its dialog on successive Escape keys", () => {
+  it("closes the dialog-owned menu before its dialog on successive Escape keys", async () => {
     const fixture = renderNavigationMenuInDialog();
     const dialog = createDialog(fixture.dialogRoot);
     fixture.dialogTrigger.focus();
@@ -370,6 +487,7 @@ describe("createNavigationMenu", () => {
     document.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
     );
+    await nextAnimationFrame();
 
     expect(fixture.dialogContent.open).toBe(false);
     expect(document.activeElement).toBe(fixture.dialogTrigger);
@@ -380,42 +498,36 @@ describe("createNavigationMenu", () => {
 
   it("moves the shared session when the active trigger crosses dialog owners", () => {
     const fixture = renderNavigationMenuAcrossDialogOwners();
+    const productsHost = createDialogTopLayerHost(fixture.productsOwner);
+    const companyHost = createDialogTopLayerHost(fixture.companyOwner);
+    productsHost.show();
+    companyHost.show();
     const menu = createNavigationMenu(fixture.menuRoot);
 
     getTrigger("products").click();
 
-    expect(
-      fixture.productsOwner
-        .querySelector<HTMLElement>("[data-sw-floating-portal]")
-        ?.matches(":popover-open"),
-    ).toBe(true);
-    expect(fixture.companyOwner.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(fixture.authoredPortal.parentElement === productsHost.floatingRoot).toBe(true);
 
     getTrigger("company").click();
 
     expect(menu.getValue()).toBe("company");
-    expect(fixture.productsOwner.querySelector("[data-sw-floating-portal]")).toBeNull();
-    expect(
-      fixture.companyOwner
-        .querySelector<HTMLElement>("[data-sw-floating-portal]")
-        ?.matches(":popover-open"),
-    ).toBe(true);
+    expect(fixture.authoredPortal.parentElement).toBe(companyHost.floatingRoot);
     expect(getTrigger("products").getAttribute("aria-expanded")).toBe("false");
     expect(getTrigger("company").getAttribute("aria-expanded")).toBe("true");
 
     menu.close();
 
-    expect(fixture.productsOwner.querySelector("[data-sw-floating-portal]")).toBeNull();
-    expect(fixture.companyOwner.querySelector("[data-sw-floating-portal]")).toBeNull();
     expect(fixture.authoredPortal.contains(getPositioner())).toBe(true);
 
     menu.destroy();
+    productsHost.destroy();
+    companyHost.destroy();
     fixture.productsOwner.close();
     fixture.companyOwner.close();
     fixture.menuRoot.remove();
   });
 
-  it("destroys a promoted menu without stale owner registration or portal state", () => {
+  it("destroys a hosted menu without stale owner registration or portal state", () => {
     const fixture = renderNavigationMenuInDialog();
     const dialog = createDialog(fixture.dialogRoot);
     dialog.open();
@@ -424,7 +536,7 @@ describe("createNavigationMenu", () => {
 
     expect(
       fixture.dialogContent
-        .querySelector<HTMLElement>("[data-sw-floating-portal]")
+        .querySelector<HTMLElement>("[data-sw-dialog-top-layer-host]")
         ?.matches(":popover-open"),
     ).toBe(true);
 
@@ -2080,12 +2192,14 @@ describe("createNavigationMenu", () => {
 
   it("clears measured surface dimensions after closing to avoid reserving popup layout space", async () => {
     const root = renderNavigationMenuWithSizedContent();
+    const portal = root.querySelector<HTMLElement>("[data-sw-nav-menu-portal]")!;
     createNavigationMenu(root);
 
     getTrigger("enterprise").click();
     await wait(0);
 
-    expect(getPositioner().parentElement).toBe(document.body);
+    expect(getPositioner().parentElement).toBe(portal);
+    expect(getPositioner().parentElement?.parentElement).toBe(document.body);
     expect(getPositioner().style.width).toBe("704px");
     expect(getPositioner().style.height).toBe("260px");
 
@@ -2114,7 +2228,8 @@ describe("createNavigationMenu", () => {
 
     getTrigger("enterprise").click();
 
-    expect(getPositioner().parentElement).toBe(document.body);
+    expect(getPositioner().parentElement).toBe(portal);
+    expect(getPositioner().parentElement?.parentElement).toBe(document.body);
     expect(getViewport().hasAttribute("data-instant")).toBe(true);
 
     await wait(0);
@@ -3263,6 +3378,10 @@ function wait(milliseconds: number): Promise<void> {
 async function waitForMicrotasks(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
 async function waitForFloatingPosition(): Promise<void> {

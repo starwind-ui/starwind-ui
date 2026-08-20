@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { normalizeAstroPrimitiveOutput } from "../renderers/framework-adapters/astro/primitive-output-writer.js";
 import {
   applyReactEffectTiming,
+  applyReactPortalImportCanonicalization,
   applyReactRefCleanup,
 } from "../renderers/framework-adapters/react/primitive-output-writer.js";
 
@@ -4758,7 +4759,7 @@ function expectPrintedFilesToMatchPackage(
   for (const file of files) {
     const contents = packageSourceDirectory.includes("/astro/")
       ? normalizeAstroPrimitiveOutput(file.path.split("/").at(-1)!, file.contents)
-      : applyReactRefCleanup(file.contents);
+      : applyReactPortalImportCanonicalization(applyReactRefCleanup(file.contents));
     expect(normalizePrintedComparison(contents)).toBe(
       normalizePrintedComparison(readGeneratedPackageBody(packageSourceDirectory, file.path)),
     );
@@ -4798,7 +4799,9 @@ async function formatGeneratedOutput(contents: string, filepath: string): Promis
   if (filepath.endsWith(".astro")) {
     contents = normalizeAstroPrimitiveOutput(basename(filepath), contents);
   } else if (filepath.endsWith(".tsx")) {
-    contents = applyReactRefCleanup(applyReactEffectTiming(contents));
+    contents = applyReactPortalImportCanonicalization(
+      applyReactRefCleanup(applyReactEffectTiming(contents)),
+    );
   }
   const config = await resolveConfig(filepath);
   return format(contents, { ...(config ?? {}), filepath });

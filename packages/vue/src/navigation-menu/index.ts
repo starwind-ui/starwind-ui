@@ -50,17 +50,3 @@ export {
 export default NavigationMenu;
 
 export type { NavigationMenuValue, NavigationMenuValueChangeDetails } from "@starwind-ui/runtime";
-export type {
-  NavigationMenuItemContextValue,
-  NavigationMenuOrientation,
-  NavigationMenuRootContextValue,
-  NavigationMenuViewportContextValue,
-} from "./NavigationMenuRoot.vue";
-export {
-  NavigationMenuItemContext,
-  NavigationMenuRootContext,
-  NavigationMenuViewportContext,
-  useNavigationMenuItemContext,
-  useNavigationMenuRootContext,
-  useNavigationMenuViewportContext,
-} from "./NavigationMenuRoot.vue";

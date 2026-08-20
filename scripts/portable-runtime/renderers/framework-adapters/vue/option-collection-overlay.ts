@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterComponentFile,
   AdapterIndexFile,
@@ -94,6 +98,7 @@ import {
 
 export type ${context.rootContextValueType} = Readonly<{
   disabled: ComputedRef<boolean>;
+  element: Readonly<Ref<HTMLElement | null>>;
   mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   readOnly: ComputedRef<boolean>;
@@ -226,6 +231,7 @@ let lifecycleGeneration = 0;
 
 provide(${facts.context.rootContext}, {
   disabled,
+  element: rootRef,
   mounted,
   open: renderedOpen,
   readOnly,
@@ -483,12 +489,11 @@ function printTrigger(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.trigger;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const triggerRef = ref<HTMLButtonElement | null>(null);
 const select = ${facts.context.useRootContext}("Trigger");
 defineExpose({ element: triggerRef });
@@ -497,7 +502,7 @@ defineExpose({ element: triggerRef });
 <template>
   <button
     ref="triggerRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.trigger}
     data-sw-part="${part.name}"
     type="button"
@@ -520,13 +525,12 @@ function printValue(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.value;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 const props = defineProps<{ placeholder?: string }>();
 defineSlots<{ default?: (props: { label: string | null; value: string | null }) => unknown }>();
-const attrs = useAttrs();
 const valueRef = ref<HTMLSpanElement | null>(null);
 const select = ${facts.context.useRootContext}("Value");
 defineExpose({ element: valueRef });
@@ -535,7 +539,7 @@ defineExpose({ element: valueRef });
 <template>
   <span
     ref="valueRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.value}
     data-sw-part="${part.name}"
     :data-placeholder="props.placeholder"
@@ -552,30 +556,42 @@ function printPortal(facts: AdapterOptionCollectionOverlayFacts): string {
   const part = facts.parts.portal;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
+import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { useVuePortalPlacement } from "../_internal/portal";
 import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ container?: string | HTMLElement; disabled?: boolean }>(), {
-  container: "${facts.portal.defaultTarget}",
   disabled: false,
 });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const portalRef = ref<HTMLDivElement | null>(null);
 const select = ${facts.context.useRootContext}("Portal");
 const owner = Symbol("SelectPortalOwner");
+const placement = useVuePortalPlacement({
+  active: () => select.mounted.value,
+  container: () => props.container,
+  disabled: () => props.disabled,
+  element: portalRef,
+  reference: () => select.element.value,
+  runtime: { reportPortalPlacement, resolvePortalPlacement },
+});
 onMounted(() => select.registerPortal(owner, portalRef.value));
 onBeforeUnmount(() => select.registerPortal(owner, null));
 defineExpose({ element: portalRef });
 </script>
 
 <template>
-  <Teleport :to="props.container" :disabled="props.disabled || !select.mounted.value">
+  <Teleport :to="placement.target.value" :disabled="placement.disabled.value">
     <div
       ref="portalRef"
-      v-bind="attrs"
+      v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
       ${facts.attrs.portal}
+      :data-container="typeof props.container === 'string' ? props.container : undefined"
+      :data-disabled="props.disabled ? '' : undefined"
+      :data-placement="placement.ready.value ? 'ready' : 'pending'"
+      data-sw-portal-placement="framework"
       data-sw-part="${part.name}"
       data-floating-root
     >
@@ -604,7 +620,7 @@ function printFloatingPart(
     : `\n    :${facts.attrs.alignItemWithTrigger}="props.${facts.props.alignItemWithTrigger.name} ? 'true' : 'false'"`;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 import { ${facts.context.useRootContext} } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
@@ -625,7 +641,6 @@ ${alignItemDefault}    ${facts.props.avoidCollisions.name}: ${facts.floating.avo
   },
 );
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const elementRef = ref<HTMLDivElement | null>(null);
 const select = ${facts.context.useRootContext}("${part.namespaceKey}");
 const initialOpen = select.open.value;
@@ -635,7 +650,7 @@ defineExpose({ element: elementRef });
 <template>
   <${part.defaultElement}
     ref="elementRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs[partName]}
     data-sw-part="${part.name}"${isPopup ? `\n    role="${part.role ?? "listbox"}"\n    tabindex="-1"\n    :hidden="!initialOpen"` : ""}
     :data-state="initialOpen ? 'open' : 'closed'"
@@ -656,7 +671,7 @@ function printItem(facts: AdapterOptionCollectionOverlayFacts): string {
   const identity = facts.collection.itemIdentity;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { computed, provide, ref, useAttrs } from "vue";
+import { computed, provide, ref } from "vue";
 import {
   ${facts.context.itemContext},
   ${facts.context.useRootContext},
@@ -665,7 +680,6 @@ import {
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{ disabled?: boolean; ${identity.prop}: string }>(), { disabled: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const itemRef = ref<HTMLDivElement | null>(null);
 const select = ${facts.context.useRootContext}("Item");
 const value = computed(() => props.${identity.prop});
@@ -678,7 +692,7 @@ defineExpose({ element: itemRef });
 <template>
   <${part.defaultElement}
     ref="itemRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.item}
     data-sw-part="${part.name}"
     :${identity.attribute}="props.${identity.prop}"
@@ -699,7 +713,7 @@ function printItemIndicator(facts: AdapterOptionCollectionOverlayFacts): string 
   const part = facts.parts.itemIndicator;
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { computed, ref, useAttrs } from "vue";
+import { computed, ref } from "vue";
 import {
   ${facts.context.useRootContext},
   ${facts.context.useItemContext},
@@ -707,7 +721,6 @@ import {
 
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const indicatorRef = ref<HTMLSpanElement | null>(null);
 const select = ${facts.context.useRootContext}("ItemIndicator");
 const item = ${facts.context.useItemContext}("ItemIndicator");
@@ -718,7 +731,7 @@ defineExpose({ element: indicatorRef });
 <template>
   <${part.defaultElement}
     ref="indicatorRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.itemIndicator}
     data-sw-part="${part.name}"
     aria-hidden="true"
@@ -759,11 +772,10 @@ function printSimplePart(
   const htmlType = getElementType(part.defaultElement);
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const elementRef = ref<${htmlType} | null>(null);
 defineExpose({ element: elementRef });
 </script>
@@ -771,7 +783,7 @@ defineExpose({ element: elementRef });
 <template>
   <${part.defaultElement}
     ref="elementRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs[partName]}
     data-sw-part="${part.name}"${extraAttributes ? `\n    ${extraAttributes}` : ""}
   >

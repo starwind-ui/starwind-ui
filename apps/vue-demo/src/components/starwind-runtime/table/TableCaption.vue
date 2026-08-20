@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { tableCaption } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,7 +15,6 @@ const { class: className } = defineProps<TableCaptionDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLTableCaptionElement | null>(null);
 defineExpose({ element });
 </script>
@@ -24,7 +23,7 @@ defineExpose({ element });
   <caption
     ref="element"
     :class="tableCaption({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="table-caption"
   >
     <slot />

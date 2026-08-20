@@ -84,7 +84,7 @@ describe("generated Vue Form Primitive", () => {
     expect(first.root).toContain("onBeforeUnmount(destroyOwnedInstance);");
     expect(first.errorSummary).toContain('ariaLive: "polite"');
     expect(first.errorSummary).toContain(':aria-live="props.ariaLive"');
-    expect(first.errorSummary).toContain('v-bind="attrs"');
+    expect(first.errorSummary).toContain('v-bind="$attrs"');
     expect(first.index).toContain("createFormSchemaValidator");
     await expect(first.root).toBe(
       await readFile(path.join(process.cwd(), "packages/vue/src/form/FormRoot.vue"), "utf8"),

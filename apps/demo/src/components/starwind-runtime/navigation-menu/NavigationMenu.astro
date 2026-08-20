@@ -19,6 +19,8 @@ type Props = Omit<HTMLAttributes<"nav">, "defaultValue" | "onChange" | "value"> 
   avoidCollisions?: boolean;
   collisionPadding?: number;
   size?: "sm" | "md";
+  portalContainer?: string;
+  disablePortal?: boolean;
   contentSize?: "sm" | "md";
 };
 
@@ -39,6 +41,8 @@ const {
   size = "md",
   contentSize = size,
   class: className,
+  portalContainer,
+  disablePortal = false,
   ...rest
 } = Astro.props;
 ---
@@ -66,5 +70,7 @@ const {
     avoidCollisions={avoidCollisions}
     collisionPadding={collisionPadding}
     size={contentSize}
+    portalContainer={portalContainer}
+    disablePortal={disablePortal}
   />
 </NavigationMenuPrimitive.Root>

@@ -6,12 +6,15 @@
 "use client";
 
 import {
+  createPortalBinding,
   createSelect,
+  refreshSelectPortalSurface,
   type SelectOpenChangeDetails,
   type SelectValueChangeDetails,
 } from "@starwind-ui/runtime/select";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import { ReactPortalScopeProvider, useReactPortalScope } from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 import { SelectContext } from "./SelectContext";
@@ -58,6 +61,8 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+  const portalRuntimeActivation = portalScope.activation;
   const instanceRef = React.useRef<ReturnType<typeof createSelect> | undefined>(undefined);
   const onOpenChangeRef = React.useRef(onOpenChange);
   const onValueChangeRef = React.useRef(onValueChange);
@@ -69,6 +74,10 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   const [uncontrolledValue, setUncontrolledValueState] = React.useState(defaultValueRef.current);
   const uncontrolledOpenRef = React.useRef(uncontrolledOpen);
   const uncontrolledValueRef = React.useRef(uncontrolledValue);
+  const pendingProgrammaticValueRef = React.useRef<{
+    emit?: boolean;
+    value: string | null;
+  } | null>(null);
 
   const setUncontrolledOpen = React.useCallback((nextOpen: boolean) => {
     uncontrolledOpenRef.current = nextOpen;
@@ -110,6 +119,8 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
 
     const root = rootRef.current;
     if (!root) return undefined;
+
+    if (!portalScope.isReady()) return;
 
     const instance = createSelect(root, {
       defaultOpen: uncontrolledOpenRef.current,
@@ -162,7 +173,15 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
     required,
     setUncontrolledOpen,
     setUncontrolledValue,
+    portalRuntimeActivation,
   ]);
+
+  useIsomorphicLayoutEffect(() => {
+    if (!portalScope.isReady()) return;
+    const root = rootRef.current;
+    if (!root) return;
+    refreshSelectPortalSurface(root);
+  }, [portalRuntimeActivation]);
 
   useIsomorphicLayoutEffect(() => {
     const root = rootRef.current;
@@ -178,11 +197,20 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
 
       event.stopImmediatePropagation();
 
-      const instance = ensureInstance();
-      if (!instance) return;
-
       const nextValue = detail.value === "" ? null : detail.value;
       const emit = typeof detail.emit === "boolean" ? detail.emit : undefined;
+      const instance = ensureInstance();
+      if (!instance) {
+        pendingProgrammaticValueRef.current = { emit, value: nextValue };
+        if (emit !== false || valueRef.current !== undefined) return;
+        setSelectedLabel({
+          label: findSelectedOptionText(children, nextValue),
+          value: nextValue,
+        });
+        setUncontrolledValue(nextValue);
+        return;
+      }
+
       instance.setValue(nextValue, { emit });
       if (emit !== false || valueRef.current !== undefined) return;
 
@@ -203,6 +231,15 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
       });
     };
   }, [children, ensureInstance, setUncontrolledValue]);
+
+  useIsomorphicLayoutEffect(() => {
+    const pending = pendingProgrammaticValueRef.current;
+    if (!pending) return;
+    const instance = ensureInstance();
+    if (!instance) return;
+    pendingProgrammaticValueRef.current = null;
+    instance.setValue(pending.value, { emit: pending.emit });
+  }, [ensureInstance]);
 
   useIsomorphicLayoutEffect(() => {
     return () => {
@@ -297,61 +334,63 @@ const SelectRoot = React.forwardRef<HTMLDivElement, SelectRootProps>(function Se
   );
 
   return (
-    <SelectContext.Provider value={contextValue}>
-      <div
-        data-sw-select
-        data-autocomplete={autoComplete}
-        data-default-open={defaultOpenRef.current ? "true" : undefined}
-        data-default-value={defaultValueRef.current ?? undefined}
-        data-disabled={disabled ? "" : undefined}
-        data-form={form}
-        data-highlight-item-on-hover={highlightItemOnHover ? "true" : "false"}
-        data-modal={modal ? "true" : "false"}
-        data-name={name}
-        data-readonly={readOnly ? "" : undefined}
-        data-required={required ? "" : undefined}
-        data-value={selectedValue ?? undefined}
-        data-placeholder={selectedValue === null ? "" : undefined}
-        data-selected-value={
-          renderedSelectedLabel !== null && selectedValue !== null ? selectedValue : undefined
-        }
-        data-selected-label={renderedSelectedLabel ?? undefined}
-        data-state={renderedOpen ? "open" : "closed"}
-        ref={composedRef}
-        {...props}
-        onClickCapture={(event) => {
-          props.onClickCapture?.(event);
-          if (!event.defaultPrevented) initializeFromTriggerEvent(event);
-        }}
-        onFocusCapture={(event) => {
-          props.onFocusCapture?.(event);
-          if (!event.defaultPrevented) initializeFromTriggerEvent(event);
-        }}
-        onKeyDownCapture={(event) => {
-          props.onKeyDownCapture?.(event);
-          if (!event.defaultPrevented) initializeFromTriggerEvent(event);
-        }}
-        onPointerDownCapture={(event) => {
-          props.onPointerDownCapture?.(event);
-          if (!event.defaultPrevented) initializeFromTriggerEvent(event);
-        }}
-      >
-        <input
-          data-sw-select-input
-          type="hidden"
-          autoComplete={autoComplete}
-          form={form}
-          name={name}
-          disabled={disabled}
-          required={required}
-          value={renderedValue}
-          aria-hidden="true"
-          tabIndex={-1}
-          readOnly
-        />
-        {children}
-      </div>
-    </SelectContext.Provider>
+    <ReactPortalScopeProvider scope={portalScope}>
+      <SelectContext.Provider value={contextValue}>
+        <div
+          data-sw-select
+          data-autocomplete={autoComplete}
+          data-default-open={defaultOpenRef.current ? "true" : undefined}
+          data-default-value={defaultValueRef.current ?? undefined}
+          data-disabled={disabled ? "" : undefined}
+          data-form={form}
+          data-highlight-item-on-hover={highlightItemOnHover ? "true" : "false"}
+          data-modal={modal ? "true" : "false"}
+          data-name={name}
+          data-readonly={readOnly ? "" : undefined}
+          data-required={required ? "" : undefined}
+          data-value={selectedValue ?? undefined}
+          data-placeholder={selectedValue === null ? "" : undefined}
+          data-selected-value={
+            renderedSelectedLabel !== null && selectedValue !== null ? selectedValue : undefined
+          }
+          data-selected-label={renderedSelectedLabel ?? undefined}
+          data-state={renderedOpen ? "open" : "closed"}
+          ref={composedRef}
+          {...props}
+          onClickCapture={(event) => {
+            props.onClickCapture?.(event);
+            if (!event.defaultPrevented) initializeFromTriggerEvent(event);
+          }}
+          onFocusCapture={(event) => {
+            props.onFocusCapture?.(event);
+            if (!event.defaultPrevented) initializeFromTriggerEvent(event);
+          }}
+          onKeyDownCapture={(event) => {
+            props.onKeyDownCapture?.(event);
+            if (!event.defaultPrevented) initializeFromTriggerEvent(event);
+          }}
+          onPointerDownCapture={(event) => {
+            props.onPointerDownCapture?.(event);
+            if (!event.defaultPrevented) initializeFromTriggerEvent(event);
+          }}
+        >
+          <input
+            data-sw-select-input
+            type="hidden"
+            autoComplete={autoComplete}
+            form={form}
+            name={name}
+            disabled={disabled}
+            required={required}
+            value={renderedValue}
+            aria-hidden="true"
+            tabIndex={-1}
+            readOnly
+          />
+          {children}
+        </div>
+      </SelectContext.Provider>
+    </ReactPortalScopeProvider>
   );
 });
 

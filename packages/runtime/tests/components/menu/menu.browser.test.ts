@@ -518,7 +518,7 @@ describe("createMenu", () => {
     );
   });
 
-  it("owns the first Dialog Escape and keeps the owner open through item selection", () => {
+  it("owns the first Dialog Escape and keeps the owner open through item selection", async () => {
     const dialogRoot = renderDialogOwner();
     const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
     const menuRoot = renderMenu();
@@ -532,7 +532,7 @@ describe("createMenu", () => {
 
     expect(dialogContent.open).toBe(true);
     expect(menu.getOpen()).toBe(true);
-    expect(menuPopup.closest("[data-sw-floating-portal]:popover-open")).not.toBeNull();
+    expect(menuPopup.closest("[data-sw-dialog-top-layer-host]:popover-open")).not.toBeNull();
 
     document.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
@@ -544,6 +544,7 @@ describe("createMenu", () => {
     document.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
     );
+    await nextAnimationFrame();
 
     expect(dialogContent.open).toBe(false);
 
@@ -558,7 +559,7 @@ describe("createMenu", () => {
     dialog.destroy();
   });
 
-  it("orders Dialog, root Menu, and submenu Escape ownership without duplicate callbacks", () => {
+  it("orders Dialog, root Menu, and submenu Escape ownership without duplicate callbacks", async () => {
     const dialogRoot = renderDialogOwner();
     const dialogTrigger = dialogRoot.querySelector<HTMLElement>("[data-sw-dialog-trigger]")!;
     const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
@@ -576,7 +577,9 @@ describe("createMenu", () => {
     submenuTrigger.click();
     rootOpenChanges.mockClear();
 
-    expect(dialogContent.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(2);
+    expect(
+      dialogContent.querySelectorAll("[data-sw-dialog-top-layer-host]:popover-open"),
+    ).toHaveLength(1);
     expect(submenuTrigger.getAttribute("aria-expanded")).toBe("true");
 
     document.dispatchEvent(
@@ -589,7 +592,9 @@ describe("createMenu", () => {
     expect(dialogContent.open).toBe(true);
     expect(document.activeElement).toBe(submenuTrigger);
     expect(rootOpenChanges).not.toHaveBeenCalled();
-    expect(dialogContent.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(1);
+    expect(
+      dialogContent.querySelectorAll("[data-sw-dialog-top-layer-host]:popover-open"),
+    ).toHaveLength(1);
 
     document.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
@@ -603,11 +608,14 @@ describe("createMenu", () => {
       false,
       expect.objectContaining({ reason: "escape-key" }),
     );
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(
+      dialogContent.querySelector("[data-sw-dialog-top-layer-host]:popover-open"),
+    ).not.toBeNull();
 
     document.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
     );
+    await nextAnimationFrame();
 
     expect(dialogContent.open).toBe(false);
     expect(document.activeElement).toBe(dialogTrigger);
@@ -619,6 +627,7 @@ describe("createMenu", () => {
     rootOpenChanges.mockClear();
 
     dialog.close();
+    await nextAnimationFrame();
 
     expect(menu.getOpen()).toBe(false);
     expect(submenuRoot.getAttribute("data-state")).toBe("closed");
@@ -628,14 +637,14 @@ describe("createMenu", () => {
       false,
       expect.objectContaining({ reason: "imperative-action" }),
     );
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(dialogContent.querySelector("[data-sw-dialog-top-layer-host]:popover-open")).toBeNull();
     expect(document.activeElement).toBe(dialogTrigger);
 
     menu.destroy();
     dialog.destroy();
   });
 
-  it("force-resets an uncontrolled Menu when its Dialog owner close intent is canceled", () => {
+  it("force-resets an uncontrolled Menu when its Dialog owner close intent is canceled", async () => {
     const dialogRoot = renderDialogOwner();
     const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
     const menuRoot = renderMenu();
@@ -651,13 +660,16 @@ describe("createMenu", () => {
     menu.open();
 
     dialog.close();
+    await nextAnimationFrame();
 
     expect(menu.getOpen()).toBe(false);
     expect(menuPopup.getAttribute("data-state")).toBe("closed");
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(dialogContent.querySelector("[data-sw-dialog-top-layer-host]:popover-open")).toBeNull();
 
     dialog.open();
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(
+      dialogContent.querySelector("[data-sw-dialog-top-layer-host]:popover-open"),
+    ).not.toBeNull();
 
     menu.destroy();
     dialog.destroy();
@@ -3273,6 +3285,10 @@ function mockRect(
 async function waitForMicrotasks(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
 async function collectHighlightAttributeTargets(

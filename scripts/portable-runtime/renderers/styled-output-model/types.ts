@@ -12,12 +12,19 @@ export type StyledOutputComponentGroup = {
   constants: StyledOutputConstant[];
   defaultExport: StyledOutputDefaultExport;
   dependencies?: StyledOutputComponentDependencies;
+  primitiveFacadeExports?: StyledOutputPrimitiveFacadeExports;
   publicExports: string[];
   styles?: StyledOutputStyleSideEffect;
   targetScopes?: StyledOutputTargetScope[];
   variantAliases?: StyledOutputVariantAlias[];
   variantCollectionName?: string;
   variants: StyledOutputVariant[];
+};
+
+export type StyledOutputPrimitiveFacadeExports = {
+  component: string;
+  types: string[];
+  values: string[];
 };
 
 export type StyledOutputComponentDependencies = {

@@ -35,6 +35,7 @@ export type ColorPickerProps = Omit<
   | "defaultOpen"
   | "defaultValue"
   | "dir"
+  | "disablePortal"
   | "disabled"
   | "form"
   | "format"
@@ -49,6 +50,7 @@ export type ColorPickerProps = Omit<
   | "onChange"
   | "open"
   | "openOnHover"
+  | "portalContainer"
   | "readOnly"
   | "required"
   | "showEyeDropper"
@@ -95,6 +97,8 @@ export type ColorPickerProps = Omit<
     align?: "start" | "center" | "end";
     sideOffset?: number;
     avoidCollisions?: boolean;
+    portalContainer?: string;
+    disablePortal?: boolean;
     class?: ClassValue;
     modelValue?: import("@starwind-ui/vue/color-picker").ColorPickerValue;
   };
@@ -135,6 +139,8 @@ type ColorPickerDeclaredProps = {
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
   modelValue?: import("@starwind-ui/vue/color-picker").ColorPickerValue;
   size?: ColorPickerProps["size"];
@@ -169,6 +175,8 @@ const {
   align = "start",
   sideOffset = 4,
   avoidCollisions = true,
+  portalContainer,
+  disablePortal = false,
   class: className,
   size = "md",
   modelValue,
@@ -300,6 +308,8 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
           :formats="normalizedFormats"
           :show-eye-dropper="showEyeDropper"
           :swatches="swatches"
+          :portal-container="portalContainer"
+          :disable-portal="disablePortal"
         />
       </slot>
       <ColorPickerPrimitive.ColorPickerHiddenInput
@@ -374,6 +384,8 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
             :align="align"
             :side-offset="sideOffset"
             :avoid-collisions="avoidCollisions"
+            :portal-container="portalContainer"
+            :disable-portal="disablePortal"
             :aria-label="label ? `${label} editor` : 'Color editor'"
           />
         </slot>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as AvatarPrimitive from "@starwind-ui/vue/avatar";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { avatar } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -19,7 +19,6 @@ const { variant, size, class: className } = defineProps<AvatarDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLSpanElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLSpanElement | null } & ComponentPublicInstance) | null =
   null;
@@ -47,7 +46,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
   <AvatarPrimitive.AvatarRoot
     :ref="setElement"
     :class="avatar({ variant, size, class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="avatar"
   >
     <slot />

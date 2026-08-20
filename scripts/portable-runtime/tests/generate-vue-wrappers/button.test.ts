@@ -62,8 +62,9 @@ describe("generated Vue Button Primitive", () => {
 
     expect(source).toContain('import { createButton } from "@starwind-ui/runtime/button";');
     expect(source).toContain("defineOptions({ inheritAttrs: false });");
-    expect(source).toContain('v-bind="attrs"');
-    expect(source.match(/v-bind="attrs"/g)).toHaveLength(1);
+    expect(source).toContain('v-bind="$attrs"');
+    expect(source.match(/v-bind="\$attrs"/g)).toHaveLength(1);
+    expect(source).not.toContain("useAttrs");
     expect(source).toContain(':type="props.type"');
     expect(source).toContain('type: "button"');
     expect(source).toContain('const rootRef = useTemplateRef<HTMLButtonElement>("rootRef");');

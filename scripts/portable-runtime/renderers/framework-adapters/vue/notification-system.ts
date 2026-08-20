@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterNotificationSystemComponentProjection,
   AdapterNotificationSystemFacts,
@@ -119,7 +123,7 @@ function printTemplate(facts: AdapterNotificationSystemFacts): string {
 
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, onUpdated, ref, useAttrs } from "vue";
+import { onBeforeUnmount, onMounted, onUpdated, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -129,7 +133,6 @@ const props = withDefaults(defineProps<{ ${variant.name}?: Variant }>(), {
   ${variant.name}: ${variant.defaultValue},
 });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const templateRef = ref<HTMLTemplateElement | null>(null);
 const sourceRef = ref<HTMLDivElement | null>(null);
 let forwardedAttributeNames = new Set<string>();
@@ -168,7 +171,7 @@ onBeforeUnmount(() => templateRef.value?.remove());
 <template>
   <div
     ref="sourceRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     hidden
     aria-hidden="true"
     data-sw-toast-template-source
@@ -186,7 +189,7 @@ function printRoot(facts: AdapterNotificationSystemFacts): string {
 
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -196,7 +199,6 @@ const props = withDefaults(defineProps<{ ${variant.name}?: Variant }>(), {
   ${variant.name}: ${variant.defaultValue},
 });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLDivElement | null>(null);
 
 defineExpose({ element: rootRef });
@@ -205,7 +207,7 @@ defineExpose({ element: rootRef });
 <template>
   <${facts.parts.root.defaultElement}
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.root}
     ${state.stateAttribute}="${state.stateOpenValue}"
     :${state.variantAttribute}="props.${variant.name}"
@@ -230,18 +232,17 @@ function printSimplePart(
 
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const elementRef = ref<${elementType} | null>(null);
 
 defineExpose({ element: elementRef });
 </script>
 
 <template>
-  <${part.defaultElement} ref="elementRef" v-bind="attrs" ${facts.attrs[partName]}>
+  <${part.defaultElement} ref="elementRef" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs[partName]}>
     <slot />
   </${part.defaultElement}>
 </template>
@@ -271,11 +272,10 @@ function printButton(
 ): string {
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const elementRef = ref<HTMLButtonElement | null>(null);
 
 defineExpose({ element: elementRef });
@@ -285,7 +285,7 @@ defineExpose({ element: elementRef });
   <button
     ref="elementRef"
     ${overridableAttributes}
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${protectedAttributes}
     ${facts.attrs[partName]}
   >

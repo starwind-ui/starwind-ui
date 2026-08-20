@@ -273,6 +273,8 @@ export const dropdownStyledContract: StyledAdapterContract = {
           { name: "align", optional: true, type: '"start" | "center" | "end"' },
           { name: "sideOffset", optional: true, type: "number" },
           { name: "avoidCollisions", optional: true, type: "boolean" },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
         ],
       },
       destructure: {
@@ -282,6 +284,8 @@ export const dropdownStyledContract: StyledAdapterContract = {
           { name: "align", defaultValue: '"start"' },
           { name: "sideOffset", defaultValue: "4" },
           { name: "avoidCollisions", defaultValue: "true" },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
         ],
         rest: "rest",
       },
@@ -290,7 +294,11 @@ export const dropdownStyledContract: StyledAdapterContract = {
           type: "primitive",
           component: "menu",
           part: "Portal",
-          attrs: [{ name: "data-slot", value: { type: "literal", value: "dropdown-portal" } }],
+          attrs: [
+            { name: "container", value: { type: "variable", name: "portalContainer" } },
+            { name: "disabled", value: { type: "variable", name: "disablePortal" } },
+            { name: "data-slot", value: { type: "literal", value: "dropdown-portal" } },
+          ],
           children: [
             {
               type: "primitive",
@@ -928,6 +936,8 @@ export const dropdownStyledContract: StyledAdapterContract = {
           { name: "align", optional: true, type: '"start" | "center" | "end"' },
           { name: "sideOffset", optional: true, type: "number" },
           { name: "avoidCollisions", optional: true, type: "boolean" },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
         ],
       },
       destructure: {
@@ -937,6 +947,8 @@ export const dropdownStyledContract: StyledAdapterContract = {
           { name: "align", defaultValue: '"start"' },
           { name: "sideOffset", defaultValue: "0" },
           { name: "avoidCollisions", defaultValue: "true" },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
         ],
         rest: "rest",
       },
@@ -954,7 +966,11 @@ export const dropdownStyledContract: StyledAdapterContract = {
           type: "primitive",
           component: "menu",
           part: "Portal",
-          attrs: [{ name: "data-slot", value: { type: "literal", value: "dropdown-sub-portal" } }],
+          attrs: [
+            { name: "container", value: { type: "variable", name: "portalContainer" } },
+            { name: "disabled", value: { type: "variable", name: "disablePortal" } },
+            { name: "data-slot", value: { type: "literal", value: "dropdown-sub-portal" } },
+          ],
           children: [
             {
               type: "primitive",

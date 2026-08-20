@@ -357,7 +357,11 @@ describe("generateLayeredDocsMetadata", () => {
     const selectContent = byId
       .get("select")
       ?.styledApi.astro.exports.find((entry) => entry.exportName === "SelectContent");
-    expect(selectContent?.props.map((prop) => prop.name)).toEqual(["size"]);
+    expect(selectContent?.props.map((prop) => prop.name)).toEqual([
+      "disablePortal",
+      "portalContainer",
+      "size",
+    ]);
 
     const selectTrigger = byId
       .get("select")

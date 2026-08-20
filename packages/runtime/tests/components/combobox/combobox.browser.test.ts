@@ -624,7 +624,7 @@ describe("createCombobox", () => {
     expect(document.querySelector("[data-sw-floating-portal]")).toBeNull();
   });
 
-  it("keeps a same-dialog nested target and closes it through dialog ownership", () => {
+  it("keeps a same-dialog nested target and closes it through dialog ownership", async () => {
     const dialogRoot = document.createElement("div");
     dialogRoot.setAttribute("data-sw-dialog", "");
     dialogRoot.innerHTML = `
@@ -647,28 +647,34 @@ describe("createCombobox", () => {
 
     const combobox = createCombobox(root, { defaultOpen: true, portalReference });
 
-    expect(nestedTarget.contains(positioner)).toBe(true);
-    expect(nestedTarget.querySelector("[data-sw-floating-portal]")).not.toBeNull();
+    const topLayerHost = dialogContent.querySelector<HTMLElement>(
+      "[data-sw-dialog-top-layer-host]",
+    )!;
+    expect(topLayerHost.matches(":popover-open")).toBe(true);
+    expect(topLayerHost.querySelector("[data-floating-root]")?.contains(positioner)).toBe(true);
+    expect(nestedTarget.contains(positioner)).toBe(false);
 
     dialog.close();
+    await nextAnimationFrame();
 
     expect(combobox.getOpen()).toBe(false);
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(topLayerHost.matches(":popover-open")).toBe(false);
     expect(positioner.parentElement).toBe(root);
 
     dialog.open();
     combobox.setOpen(true, { emit: false });
 
-    expect(nestedTarget.contains(positioner)).toBe(true);
+    expect(topLayerHost.matches(":popover-open")).toBe(true);
+    expect(topLayerHost.querySelector("[data-floating-root]")?.contains(positioner)).toBe(true);
 
     combobox.destroy();
     dialog.destroy();
 
     expect(positioner.parentElement).toBe(root);
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(topLayerHost.matches(":popover-open")).toBe(false);
   });
 
-  it("suppresses and restores a controlled same-dialog target with its owner", () => {
+  it("suppresses and restores a controlled same-dialog target with its owner", async () => {
     const dialogRoot = document.createElement("div");
     dialogRoot.setAttribute("data-sw-dialog", "");
     dialogRoot.innerHTML = `
@@ -693,18 +699,24 @@ describe("createCombobox", () => {
       portalReference,
     });
 
-    expect(nestedTarget.contains(positioner)).toBe(true);
+    const topLayerHost = dialogContent.querySelector<HTMLElement>(
+      "[data-sw-dialog-top-layer-host]",
+    )!;
+    expect(topLayerHost.matches(":popover-open")).toBe(true);
+    expect(topLayerHost.querySelector("[data-floating-root]")?.contains(positioner)).toBe(true);
+    expect(nestedTarget.contains(positioner)).toBe(false);
 
     dialog.close();
+    await nextAnimationFrame();
 
     expect(openIntents).toEqual([false]);
     expect(combobox.getOpen()).toBe(true);
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(topLayerHost.matches(":popover-open")).toBe(false);
 
     dialog.open();
 
-    expect(nestedTarget.contains(positioner)).toBe(true);
-    expect(nestedTarget.querySelector("[data-sw-floating-portal]")).not.toBeNull();
+    expect(topLayerHost.matches(":popover-open")).toBe(true);
+    expect(topLayerHost.querySelector("[data-floating-root]")?.contains(positioner)).toBe(true);
 
     combobox.setOpen(false, { emit: false });
     combobox.destroy();
@@ -1286,6 +1298,27 @@ describe("createCombobox", () => {
     expect(getInput().getAttribute("aria-activedescendant")).toBe(item.id);
     expect(item.hidden).toBe(false);
     expect(item.getAttribute("role")).toBe("option");
+  });
+
+  it("filters a same-task appended nonmatching option before keyboard navigation", async () => {
+    const root = renderCombobox();
+    createCombobox(root);
+
+    getInput().value = "ap";
+    getInput().dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await waitForFloatingPosition();
+
+    const item = document.createElement("div");
+    item.setAttribute("data-sw-combobox-item", "");
+    item.setAttribute("data-value", "zucchini");
+    item.innerHTML = `<span data-sw-combobox-item-text>Zucchini</span>`;
+    getList().append(item);
+
+    getInput().dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowUp" }));
+
+    expect(item.hidden).toBe(true);
+    expect(getInput().getAttribute("aria-activedescendant")).toBe(getItem("apricot").id);
+    expect(getInput().getAttribute("aria-activedescendant")).not.toBe(item.id);
   });
 
   it("refreshes lazy popup empty state when popup children mount after initialization", async () => {
@@ -2299,6 +2332,10 @@ function getDismissalListenerCalls(spy: { mock: { calls: unknown[][] } }) {
 async function waitForMicrotasks(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
 async function waitForMacrotask(): Promise<void> {

@@ -39,6 +39,9 @@ const ToastParts = {
   Close: ToastClose,
 };
 
+export type { ToastApi, ToastOptions, ToastPromiseOptions } from "@starwind-ui/react/toast";
+export { toast } from "@starwind-ui/react/toast";
+
 export {
   ToastAction,
   ToastClose,

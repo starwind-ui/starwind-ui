@@ -184,6 +184,8 @@ export const hoverCardStyledContract: StyledAdapterContract = {
             type: "string",
             frameworks: ["react"],
           },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
         ],
       },
       destructure: {
@@ -196,6 +198,8 @@ export const hoverCardStyledContract: StyledAdapterContract = {
           { name: "align", defaultValue: '"center"' },
           { name: "sideOffset", defaultValue: "4" },
           { name: "avoidCollisions", defaultValue: "true" },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
         ],
         rest: "rest",
       },
@@ -204,7 +208,11 @@ export const hoverCardStyledContract: StyledAdapterContract = {
           type: "primitive",
           component: "preview-card",
           part: "Portal",
-          attrs: [{ name: "data-slot", value: { type: "literal", value: "hover-card-portal" } }],
+          attrs: [
+            { name: "container", value: { type: "variable", name: "portalContainer" } },
+            { name: "disabled", value: { type: "variable", name: "disablePortal" } },
+            { name: "data-slot", value: { type: "literal", value: "hover-card-portal" } },
+          ],
           children: [
             {
               type: "primitive",

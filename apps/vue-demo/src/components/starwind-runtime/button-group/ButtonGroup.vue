@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { buttonGroup } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -17,7 +17,6 @@ const { orientation = "horizontal", class: className } = defineProps<ButtonGroup
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -25,7 +24,7 @@ const attrs = useAttrs();
     role="group"
     :data-orientation="orientation"
     :class="buttonGroup({ orientation, class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="button-group"
   >
     <slot />

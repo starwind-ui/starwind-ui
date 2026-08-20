@@ -1,4 +1,8 @@
 import {
+  createCancelableDetails,
+  runCancelableDetailsTransaction,
+} from "../../internal/cancelable-details";
+import {
   assertHTMLElement,
   ensureId,
   readBooleanAttribute,
@@ -6,12 +10,7 @@ import {
   resolveAsChildControl,
   setBooleanAttribute,
 } from "../../internal/dom";
-import {
-  createCancelableDetails,
-  runCancelableDetailsTransaction,
-} from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
-import { attachFormValueRevision } from "../../internal/form-value-revision";
 import {
   createFloatingPositioner,
   type FloatingPositioner,
@@ -23,9 +22,16 @@ import {
   createFloatingListLifecycle,
   type FloatingListLifecycle,
 } from "../../internal/floating-list-lifecycle";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { showElement } from "../../internal/presence";
 import { lockDocumentScroll } from "../../internal/scroll-lock";
+import {
+  createActiveDescendantNavigationAdapter,
+  createOwnedListNavigation,
+  type OwnedListNavigation,
+} from "../../internal/owned-list-navigation";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
 export type ComboboxOpenChangeReason =
@@ -229,6 +235,35 @@ const COMBOBOX_EMPTY_STATE_ATTRIBUTE = "data-empty";
 
 const instances = new WeakMap<HTMLElement, ComboboxController>();
 
+export function refreshComboboxPortalSurface(root: HTMLElement): void {
+  const controller = instances.get(root);
+  if (!controller) return;
+  if (!queryRootElement(root, `[${COMBOBOX_POPUP_ATTRIBUTE}]`)) {
+    controller["stopItemObserver"]();
+    controller["lifecycle"].suspendSurface();
+    return;
+  }
+  const nextElements = getComboboxElements(root);
+  if (nextElements.popup === controller["elements"].popup) return;
+
+  controller["stopItemObserver"]();
+  controller["floatingPositioner"]?.destroy();
+  controller["floatingPositioner"] = null;
+  controller["portalSurfaceAbortController"]?.abort();
+  controller["portalSurfaceAbortController"] = new AbortController();
+  Object.assign(controller["elements"], nextElements);
+  controller["ownedList"].setRoot(nextElements.popup);
+  controller["ownedList"].clear();
+  controller["invalidateItems"]();
+  controller["setupAccessibility"]();
+  controller["bindPortalEvents"]();
+  controller["applyValueState"](controller["valueState"]);
+  controller["applyInputValueState"](controller["inputValueState"]);
+  controller["lifecycle"].refreshSurface(controller["elements"].popup, {
+    reason: "imperative-action",
+  });
+}
+
 registerFieldControlBridge({
   kind: "combobox",
   connect(control, { disabled, name, shouldSyncName }) {
@@ -272,18 +307,17 @@ class ComboboxController implements ComboboxInstance {
     details: ComboboxValueChangeDetails,
   ) => void;
   private readonly openSubscribers = new Set<(details: ComboboxOpenChangeDetails) => void>();
+  private readonly ownedList: OwnedListNavigation;
   private readonly portalReference: Element | null;
   private readonly readOnly: boolean;
   private readonly reference: Element | null;
   private readonly initialValue: string | null;
   private readonly initialFilterValue: string;
   private readonly initialInputValue: string;
-  private readonly lifecycle: FloatingListLifecycle<OpenRequest>;
+  private lifecycle: FloatingListLifecycle<OpenRequest>;
   private readonly modal: boolean;
   private readonly defaultValueText: string | null;
   private readonly valueSubscribers = new Set<(details: ComboboxValueChangeDetails) => void>();
-  private activeIndex = -1;
-  private activeItem: HTMLElement | null = null;
   private autoComplete?: string;
   private destroyed = false;
   private disabled: boolean;
@@ -294,15 +328,12 @@ class ComboboxController implements ComboboxInstance {
   private form?: string;
   private readonly highlightItemOnHover: boolean;
   private inputValueState: string;
-  private itemCache: HTMLElement[] | null = null;
-  private visibleItemCache: HTMLElement[] | null = null;
-  private visibleItemIndexCache = new WeakMap<HTMLElement, number>();
-  private itemObserver: MutationObserver | null = null;
   private name?: string;
   private openCycleCommitted = false;
   private openCycleFilterValue: string | null = null;
   private openCycleInputValue: string | null = null;
   private openState: boolean;
+  private portalSurfaceAbortController: AbortController | null = null;
   private required: boolean;
   private resetForm: HTMLFormElement | null = null;
   private resetTimer: number | undefined;
@@ -350,6 +381,23 @@ class ComboboxController implements ComboboxInstance {
       readBooleanAttribute(root, COMBOBOX_DEFAULT_OPEN_ATTRIBUTE, false);
     this.initialValue = readInitialResetValue(options, root, this.elements.hiddenInput);
     this.valueState = readInitialValue(options, root);
+    this.lifecycle = this.createLifecycle();
+    this.ownedList = createOwnedListNavigation({
+      adapter: createActiveDescendantNavigationAdapter({
+        input: this.elements.input,
+        renderHighlight: renderItemHighlight,
+      }),
+      attributeFilter: [COMBOBOX_DISABLED_ATTRIBUTE, COMBOBOX_ITEM_ATTRIBUTE],
+      indexMode: "navigable",
+      isHighlighted: (item) => item.hasAttribute(COMBOBOX_HIGHLIGHTED_ATTRIBUTE),
+      isNavigable: (item) => this.isOwnedItem(item) && !item.hidden && !isDisabledElement(item),
+      itemSelector: `[${COMBOBOX_ITEM_ATTRIBUTE}]`,
+      mutationMode: "refresh",
+      onRefresh: (items) => this.updateItems(items),
+      onMutation: () => this.refreshItemsAfterMutation(),
+      ownerSelector: `[${COMBOBOX_POPUP_ATTRIBUTE}]`,
+      root: this.elements.popup,
+    });
     const selectedItem = this.valueState === null ? null : this.getSelectedItem();
     this.inputValueState = readInitialInputValue(options, root, selectedItem);
     this.filterValueState = readInitialFilterValue(
@@ -360,13 +408,20 @@ class ComboboxController implements ComboboxInstance {
     );
     this.initialInputValue = this.inputValueState;
     this.initialFilterValue = this.filterValueState;
-    this.lifecycle = this.createLifecycle();
-
     this.setupAccessibility();
     this.bindEvents();
     this.applyValueState(this.valueState);
     this.applyInputValueState(this.inputValueState);
     this.applyOpenState(this.openState, { reason: "imperative-action" });
+  }
+
+  private get activeIndex(): number {
+    if (this.ownedList.activeItem) this.ownedList.reconcile();
+    return this.ownedList.activeIndex;
+  }
+
+  private get activeItem(): HTMLElement | null {
+    return this.ownedList.activeItem;
   }
 
   open(): void {
@@ -533,6 +588,7 @@ class ComboboxController implements ComboboxInstance {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.portalSurfaceAbortController?.abort();
     this.detachFormResetListener();
     this.clearResetTimer();
     this.inputValueSubscribers.clear();
@@ -541,6 +597,7 @@ class ComboboxController implements ComboboxInstance {
     this.openState = false;
     this.stopItemObserver();
     this.renderOpenState(false);
+    this.ownedList.destroy();
     this.lifecycle.destroy();
     this.elements.popup.hidden = true;
     instances.delete(this.root);
@@ -603,7 +660,7 @@ class ComboboxController implements ComboboxInstance {
   }
 
   private bindEvents(): void {
-    const { clear, input, inputGroup, popup, trigger } = this.elements;
+    const { clear, input, inputGroup, trigger } = this.elements;
     const { signal } = this.abortController;
 
     this.root.addEventListener(
@@ -738,6 +795,13 @@ class ComboboxController implements ComboboxInstance {
       },
       { signal },
     );
+
+    this.bindPortalEvents();
+  }
+
+  private bindPortalEvents(): void {
+    const popup = this.elements.popup;
+    const signal = this.portalSurfaceAbortController?.signal ?? this.abortController.signal;
 
     popup.addEventListener(
       "pointerdown",
@@ -1177,7 +1241,7 @@ class ComboboxController implements ComboboxInstance {
   }
 
   private getPortalElement(): HTMLElement {
-    return this.elements.positioner ?? this.elements.popup;
+    return this.elements.portal ?? this.elements.positioner ?? this.elements.popup;
   }
 
   private containsTarget(target: Node): boolean {
@@ -1338,51 +1402,25 @@ class ComboboxController implements ComboboxInstance {
   }
 
   private getItems(): HTMLElement[] {
-    if (!this.openState) {
-      return queryPopupElements(this.elements.popup, `[${COMBOBOX_ITEM_ATTRIBUTE}]`);
-    }
-
-    this.itemCache ??= queryPopupElements(this.elements.popup, `[${COMBOBOX_ITEM_ATTRIBUTE}]`);
-    return this.itemCache;
+    return this.ownedList.getItems({ force: !this.openState });
   }
 
   private invalidateItems(): void {
-    this.itemCache = null;
-    this.invalidateVisibleItems();
+    this.ownedList.invalidate();
   }
 
   private invalidateVisibleItems(): void {
-    this.visibleItemCache = null;
-    this.visibleItemIndexCache = new WeakMap();
+    this.ownedList.invalidate();
   }
 
   private rebuildVisibleItemCache(items = this.getItems()): HTMLElement[] {
-    const visibleItems = items.filter(
-      (item) => this.isOwnedItem(item) && !item.hidden && !isDisabledElement(item),
-    );
-    const visibleItemIndexCache = new WeakMap<HTMLElement, number>();
-    visibleItems.forEach((item, index) => {
-      visibleItemIndexCache.set(item, index);
-    });
-
-    this.visibleItemCache = visibleItems;
-    this.visibleItemIndexCache = visibleItemIndexCache;
-
-    return visibleItems;
+    void items;
+    this.ownedList.invalidate();
+    return this.ownedList.getNavigableItems();
   }
 
   private startItemObserver(): void {
-    if (this.itemObserver) return;
-
-    this.itemObserver = new MutationObserver(() => {
-      this.refreshItemsAfterMutation();
-    });
-    this.itemObserver.observe(this.elements.popup, {
-      attributeFilter: [COMBOBOX_DISABLED_ATTRIBUTE, COMBOBOX_ITEM_ATTRIBUTE],
-      attributes: true,
-      childList: true,
-      subtree: true,
-    });
+    this.ownedList.start();
   }
 
   private refreshItemsAfterMutation(): void {
@@ -1401,29 +1439,21 @@ class ComboboxController implements ComboboxInstance {
   }
 
   private stopItemObserver(): void {
-    this.itemObserver?.disconnect();
-    this.itemObserver = null;
-    this.invalidateItems();
+    this.ownedList.stop();
   }
 
   private getVisibleItems(items = this.getItems()): HTMLElement[] {
-    if (this.openState && items === this.itemCache && this.visibleItemCache) {
-      return this.visibleItemCache;
-    }
-
-    return this.rebuildVisibleItemCache(items);
+    void items;
+    return this.ownedList.getNavigableItems();
   }
 
   private getFreshVisibleItems(items = this.getItems()): HTMLElement[] {
-    return this.rebuildVisibleItemCache(items);
+    void items;
+    return this.ownedList.getNavigableItems({ force: true });
   }
 
   private getVisibleItemIndex(item: HTMLElement): number {
-    if (!this.visibleItemCache) {
-      this.getVisibleItems();
-    }
-
-    return this.visibleItemIndexCache.get(item) ?? -1;
+    return this.ownedList.getNavigableItems().indexOf(item);
   }
 
   private getSelectedItem(items = this.getItems()): HTMLElement | null {
@@ -1443,59 +1473,24 @@ class ComboboxController implements ComboboxInstance {
   }
 
   private highlightItem(index: number): void {
-    const items = this.getFreshVisibleItems();
+    const items = this.ownedList.getNavigableItems({ force: true });
     if (items.length === 0) return;
-
-    const normalizedIndex = (index + items.length) % items.length;
-    const item = items[normalizedIndex]!;
-    this.highlightItemByElement(item);
+    const normalizedIndex = ((index % items.length) + items.length) % items.length;
+    this.ownedList.highlightItem(items[normalizedIndex]!);
   }
 
   private highlightRelativeItem(delta: 1 | -1): void {
-    const items = this.getFreshVisibleItems();
-    if (items.length === 0) return;
-
-    const currentIndex = this.activeItem ? items.indexOf(this.activeItem) : -1;
-    const nextIndex = currentIndex < 0 ? (delta > 0 ? 0 : items.length - 1) : currentIndex + delta;
-    const normalizedIndex = (nextIndex + items.length) % items.length;
-    const item = items[normalizedIndex]!;
-    this.highlightItemByElement(item);
+    this.ownedList.highlightRelative(delta);
   }
 
   private highlightItemByElement(item: HTMLElement): void {
-    let index = this.getVisibleItemIndex(item);
-    if (index < 0 && this.isOwnedItem(item) && !item.hidden && !isDisabledElement(item)) {
-      this.refreshItemsAfterMutation();
-      index = this.getVisibleItemIndex(item);
-    }
-    if (index < 0) return;
-
-    if (this.activeItem === item) {
-      this.activeIndex = index;
-      return;
-    }
-
-    if (this.activeItem) {
-      renderItemHighlight(this.activeItem, false);
-    }
-    renderItemHighlight(item, true);
-
-    this.activeIndex = index;
-    this.activeItem = item;
-    this.elements.input.setAttribute("aria-activedescendant", item.id);
+    if (this.ownedList.highlightItem(item)) return;
+    this.refreshItemsAfterMutation();
+    this.ownedList.highlightItem(item);
   }
 
   private clearHighlightedItems(): void {
-    const activeItem = this.activeItem;
-    const items = this.getItems();
-
-    this.activeIndex = -1;
-    this.activeItem = null;
-    this.elements.input.removeAttribute("aria-activedescendant");
-    items.forEach((item) => renderItemHighlight(item, false));
-    if (activeItem && !items.includes(activeItem)) {
-      renderItemHighlight(activeItem, false);
-    }
+    this.ownedList.clear();
   }
 
   private setFilterValue(filterValue: string): void {
@@ -1504,50 +1499,12 @@ class ComboboxController implements ComboboxInstance {
   }
 
   private getActiveItem(): HTMLElement | null {
-    if (this.activeItem) {
-      if (
-        this.isOwnedItem(this.activeItem) &&
-        !this.activeItem.hidden &&
-        !isDisabledElement(this.activeItem)
-      ) {
-        return this.activeItem;
-      }
-
-      this.refreshItemsAfterMutation();
-      return null;
-    }
-
-    const visibleItems = this.getVisibleItems();
-    const item = this.activeIndex >= 0 ? (visibleItems[this.activeIndex] ?? null) : null;
-    if (item) {
-      this.activeItem = item;
-      return item;
-    }
-
-    this.reconcileActiveItem(this.getItems());
-    return null;
+    return this.ownedList.reconcile({ force: true });
   }
 
   private reconcileActiveItem(items: HTMLElement[]): void {
-    const visibleItems = this.getVisibleItems(items);
-    const activeItem =
-      this.activeItem ??
-      visibleItems.find((item) => item.hasAttribute(COMBOBOX_HIGHLIGHTED_ATTRIBUTE)) ??
-      null;
-    const nextActiveIndex = activeItem ? visibleItems.indexOf(activeItem) : -1;
-
-    if (activeItem && nextActiveIndex < 0) {
-      renderItemHighlight(activeItem, false);
-    }
-
-    this.activeIndex = nextActiveIndex;
-    this.activeItem = nextActiveIndex >= 0 ? activeItem : null;
-
-    if (this.activeItem) {
-      this.elements.input.setAttribute("aria-activedescendant", this.activeItem.id);
-    } else {
-      this.elements.input.removeAttribute("aria-activedescendant");
-    }
+    void items;
+    this.ownedList.reconcile();
   }
 
   private getItemByTarget(target: Element): HTMLElement | null {
@@ -1712,10 +1669,9 @@ function queryRootElement(root: HTMLElement, selector: string): HTMLElement | nu
 }
 
 function queryRootElements(root: HTMLElement, selector: string): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((element) => {
-    const owner = element.closest<HTMLElement>(`[${COMBOBOX_ROOT_ATTRIBUTE}]`);
-    return owner === root;
-  });
+  return queryRuntimePartElements(root, selector).filter((element) =>
+    isRuntimePartOwned(root, element, `[${COMBOBOX_ROOT_ATTRIBUTE}]`),
+  );
 }
 
 function queryPopupElement(popup: HTMLElement, selector: string): HTMLElement | null {

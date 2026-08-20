@@ -56,7 +56,11 @@ async function writeGroup(
         }),
       ),
     ),
-    writeGeneratedFile(directory, "index.ts", renderIndex(group)),
+    writeGeneratedFile(
+      directory,
+      "index.ts",
+      renderIndex(group, { directory, primitiveImportBase, primitiveOutputRoot }),
+    ),
   ];
 
   if (group.variants.length > 0 || (group.variantAliases?.length ?? 0) > 0) {

@@ -28,6 +28,7 @@ export type RuntimeAdapterContract = {
   form?: PrimitiveFormContract;
   presence?: PrimitivePresenceContract;
   floating?: PrimitiveFloatingContract;
+  portal?: PrimitivePortalContract;
   refs?: PrimitiveRefContract[];
   asChild?: PrimitiveAsChildContract[];
   initialMarkup?: PrimitiveInitialMarkupContract[];
@@ -196,6 +197,30 @@ export type PrimitiveFloatingContract = {
   popupPart: string;
   portalPart?: string;
   optionProps: string[];
+};
+
+export type PrimitivePortalContract = {
+  container: {
+    name: "container";
+    type: "string";
+  };
+  disabled: {
+    defaultValue: "false";
+    name: "disabled";
+    type: "boolean";
+  };
+  part: string;
+  placement: {
+    frameworkOwnedTargets: readonly Exclude<FrameworkTarget, "astro">[];
+    readiness: "before-focus-dismissal-and-positioning";
+    runtimeOwnedTargets: readonly ["raw-html", "astro"];
+  };
+  publicWrapper: true;
+  targetPolicy: {
+    containerType: "selector";
+    invalidTarget: "runtime-fallback";
+    resolution: "owning-document-after-mount";
+  };
 };
 
 export type PrimitiveRefContract = {

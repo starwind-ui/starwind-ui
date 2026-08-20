@@ -6,6 +6,7 @@ import type {
 } from "../../../styled-output-model/index.js";
 
 import type { VueComputedExpression } from "./expressions.js";
+import type { VueAttributeAccessProjection } from "../public-contract.js";
 
 export type RenderVueComponentOptions = {
   directory: string;
@@ -156,6 +157,7 @@ export type VueStyledSpecialization =
     };
 
 export type VueStyledComponentProjection = {
+  attributeAccess: VueAttributeAccessProjection | null;
   computed: VueComputedProjection[];
   emits: ReadonlyArray<VueEmitProjection>;
   exposedRefs: VueExposedRefProjection[];

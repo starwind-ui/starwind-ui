@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
 import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
 
@@ -675,7 +679,7 @@ function printVueCheckboxIndicator(
   return {
     contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -690,7 +694,6 @@ const props = withDefaults(
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const indicatorRef = ref<HTMLElement | null>(null);
 
 defineExpose({
@@ -701,7 +704,7 @@ defineExpose({
 <template>
   <span
     ref="indicatorRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.stateIndicator}
     data-sw-part="${indicator.name}"
     :${facts.attrs.stateIndicatorKeepMounted}="props.${keepMounted} ? '' : undefined"
@@ -996,14 +999,13 @@ function printVueBooleanStateIndicator(
   return {
     contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const indicatorRef = ref<HTMLElement | null>(null);
 
 defineExpose({
@@ -1012,7 +1014,7 @@ defineExpose({
 </script>
 
 <template>
-  <span ref="indicatorRef" v-bind="attrs" ${facts.attrs.stateIndicator} data-sw-part="${indicator.name}">
+  <span ref="indicatorRef" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.stateIndicator} data-sw-part="${indicator.name}">
     <slot />
   </span>
 </template>

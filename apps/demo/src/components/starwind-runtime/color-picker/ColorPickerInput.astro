@@ -20,6 +20,8 @@ type Props = HTMLAttributes<"div"> & {
   formatControl?: "select" | "native" | "none";
   formats?: readonly import("@starwind-ui/astro/color-picker").ColorPickerFormat[];
   formatContentSize?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
   initial?: import("@starwind-ui/astro/color-picker").ColorPickerRenderProjection;
 };
 
@@ -28,6 +30,8 @@ const {
   formatControl = "select",
   formats = ["hex", "rgb", "hsl", "hsb"],
   formatContentSize = "md",
+  portalContainer,
+  disablePortal = false,
   class: className,
   ...rest
 } = Astro.props;
@@ -83,7 +87,12 @@ const normalizedFormats = Array.from(new Set(formats));
         <Select>
           <SelectTrigger aria-label="Color format" class={colorPickerFormatSelectTrigger()} />
 
-          <SelectContent size={formatContentSize} data-sw-color-picker-format-options="">
+          <SelectContent
+            size={formatContentSize}
+            portalContainer={portalContainer}
+            disablePortal={disablePortal}
+            data-sw-color-picker-format-options=""
+          >
             {normalizedFormats.map((formatOption) => (
               <SelectItem value={formatOption}>{formatOption.toUpperCase()}</SelectItem>
             ))}

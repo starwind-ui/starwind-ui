@@ -13,9 +13,13 @@ import {
 import { generateVuePrimitivePackage } from "./primitive-package.js";
 import { writeVueAdapterOutput } from "./primitive-output-writer.js";
 import { vueManualPrimitiveGenerators } from "./manual-primitives.js";
+import { vueRenderedPortalCapability } from "./portal.js";
 import { projectVueSpecializedAdapterOutputModel } from "./specialized-adapter-spec.js";
 import { vueAdapterPublicContract } from "./public-contract.js";
-import type { FrameworkAdapterTargetRegistration } from "../types.js";
+import {
+  frameworkAdapterTargetRenderedPortal,
+  type FrameworkAdapterTargetRegistration,
+} from "../types.js";
 import { generateStarwindVueWrappers, selectVueStyledContracts } from "./styled.js";
 import {
   assertVueInventorySnapshot,
@@ -73,6 +77,7 @@ const vueFrameworkAdapterTargetDefinition = {
   home: "scripts/portable-runtime/renderers/framework-adapters/vue",
   packageName: "@starwind-ui/vue",
   primitive: {
+    [frameworkAdapterTargetRenderedPortal]: vueRenderedPortalCapability,
     generatePackage: generateValidatedVuePrimitivePackage,
     manualPrimitives: vueManualPrimitiveGenerators,
     outputModel: {

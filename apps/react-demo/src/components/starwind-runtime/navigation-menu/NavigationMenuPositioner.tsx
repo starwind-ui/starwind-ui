@@ -12,6 +12,8 @@ export type NavigationMenuPositionerProps = React.ComponentPropsWithoutRef<"div"
   avoidCollisions?: boolean;
   collisionPadding?: number;
   size?: "sm" | "md";
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 function NavigationMenuPositioner(props: NavigationMenuPositionerProps) {
@@ -24,11 +26,17 @@ function NavigationMenuPositioner(props: NavigationMenuPositionerProps) {
     collisionPadding = 8,
     size = "md",
     className,
+    portalContainer,
+    disablePortal = false,
     ...rest
   } = props;
 
   return (
-    <NavigationMenuPrimitive.Portal data-slot="navigation-menu-portal">
+    <NavigationMenuPrimitive.Portal
+      container={portalContainer}
+      disabled={disablePortal}
+      data-slot="navigation-menu-portal"
+    >
       <NavigationMenuPrimitive.Positioner
         className={navigationMenuPositioner({ class: className })}
         side={side}

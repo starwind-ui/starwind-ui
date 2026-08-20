@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import "./styles.css";
 import * as DialogPrimitive from "@starwind-ui/vue/dialog";
 import { Button } from "../button";
@@ -20,7 +20,6 @@ defineSlots<{
   backdrop?: () => unknown;
   icon?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDialogElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDialogElement | null } & ComponentPublicInstance) | null =
   null;
@@ -59,7 +58,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :ref="setElement"
     :class="dialogContent({ class: className })"
     data-state="closed"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="dialog-content"
   >
     <slot />

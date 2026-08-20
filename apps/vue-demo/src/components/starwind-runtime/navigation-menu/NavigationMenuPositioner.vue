@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as NavigationMenuPrimitive from "@starwind-ui/vue/navigation-menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { navigationMenuPopup, navigationMenuPositioner, navigationMenuViewport } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -13,6 +13,8 @@ export type NavigationMenuPositionerProps = Omit<
   | "avoidCollisions"
   | "class"
   | "collisionPadding"
+  | "disablePortal"
+  | "portalContainer"
   | "side"
   | "sideOffset"
   | "size"
@@ -24,6 +26,8 @@ export type NavigationMenuPositionerProps = Omit<
   avoidCollisions?: boolean;
   collisionPadding?: number;
   size?: "sm" | "md";
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 };
 type NavigationMenuPositionerDeclaredProps = {
@@ -34,6 +38,8 @@ type NavigationMenuPositionerDeclaredProps = {
   avoidCollisions?: boolean;
   collisionPadding?: number;
   size?: "sm" | "md";
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 } & /* @vue-ignore */ NavigationMenuPositionerProps;
 const {
@@ -45,13 +51,18 @@ const {
   collisionPadding = 8,
   size = "md",
   class: className,
+  portalContainer,
+  disablePortal = false,
 } = defineProps<NavigationMenuPositionerDeclaredProps>();
 defineSlots<{}>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <NavigationMenuPrimitive.NavigationMenuPortal data-slot="navigation-menu-portal">
+  <NavigationMenuPrimitive.NavigationMenuPortal
+    :container="portalContainer"
+    :disabled="disablePortal"
+    data-slot="navigation-menu-portal"
+  >
     <NavigationMenuPrimitive.NavigationMenuPositioner
       :class="navigationMenuPositioner({ class: className })"
       :side="side"
@@ -60,7 +71,7 @@ const attrs = useAttrs();
       :align-offset="alignOffset"
       :avoid-collisions="avoidCollisions"
       :collision-padding="collisionPadding"
-      v-bind="attrs"
+      v-bind="$attrs"
       :data-size="size"
       data-slot="navigation-menu-positioner"
     >

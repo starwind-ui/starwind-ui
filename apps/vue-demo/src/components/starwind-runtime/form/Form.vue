@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as FormPrimitive from "@starwind-ui/vue/form";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type FormHTMLAttributes, useAttrs } from "vue";
+import { type FormHTMLAttributes } from "vue";
 import { form } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -31,7 +31,6 @@ const {
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -40,7 +39,7 @@ const attrs = useAttrs();
     :error-visibility="errorVisibility"
     :revalidation-timing="revalidationTiming"
     :validation-timing="validationTiming"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="form"
   >
     <slot />

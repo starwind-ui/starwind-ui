@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { inputGroupAddon } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -17,7 +17,6 @@ const { align, class: className } = defineProps<InputGroupAddonDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -25,7 +24,7 @@ const attrs = useAttrs();
     role="group"
     :data-align="align"
     :class="inputGroupAddon({ align, class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="input-group-addon"
   >
     <slot />

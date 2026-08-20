@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { itemMedia } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -17,7 +17,6 @@ const { variant = "default", class: className } = defineProps<ItemMediaDeclaredP
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 </script>
@@ -27,7 +26,7 @@ defineExpose({ element });
     ref="element"
     :class="itemMedia({ variant, class: className })"
     :data-variant="variant"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="item-media"
   >
     <slot />

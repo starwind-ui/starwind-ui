@@ -90,36 +90,24 @@ const EXPECTED_COMBOBOX_EXPORTS = [
 const EXPECTED_MENU_EXPORTS = [
   "Menu",
   "MenuCheckboxItem",
-  "MenuCheckboxItemContext",
   "MenuCheckboxItemIndicator",
   "MenuGroup",
   "MenuItem",
   "MenuLabel",
   "MenuLinkItem",
-  "MenuOwnerContext",
   "MenuPopup",
   "MenuPortal",
   "MenuPositioner",
   "MenuRadioGroup",
-  "MenuRadioGroupContext",
   "MenuRadioItem",
-  "MenuRadioItemContext",
   "MenuRadioItemIndicator",
   "MenuRoot",
-  "MenuRootContext",
   "MenuSeparator",
   "MenuShortcut",
-  "MenuSubmenuContext",
   "MenuSubmenuRoot",
   "MenuSubmenuTrigger",
   "MenuTrigger",
   "default",
-  "useMenuCheckboxItemContext",
-  "useMenuOwnerContext",
-  "useMenuRadioGroupContext",
-  "useMenuRadioItemContext",
-  "useMenuRootContext",
-  "useMenuSubmenuContext",
 ].sort();
 const EXPECTED_CONTEXT_MENU_EXPORTS = [
   "ContextMenu",
@@ -149,21 +137,15 @@ const EXPECTED_NAVIGATION_MENU_EXPORTS = [
   "NavigationMenuContent",
   "NavigationMenuIcon",
   "NavigationMenuItem",
-  "NavigationMenuItemContext",
   "NavigationMenuLink",
   "NavigationMenuList",
   "NavigationMenuPopup",
   "NavigationMenuPortal",
   "NavigationMenuPositioner",
   "NavigationMenuRoot",
-  "NavigationMenuRootContext",
   "NavigationMenuTrigger",
   "NavigationMenuViewport",
-  "NavigationMenuViewportContext",
   "default",
-  "useNavigationMenuItemContext",
-  "useNavigationMenuRootContext",
-  "useNavigationMenuViewportContext",
 ].sort();
 const EXPECTED_PREVIEW_CARD_EXPORTS = [
   "PreviewCard",
@@ -421,7 +403,7 @@ const EXPECTED_TOGGLE_GROUP_EXPORTS = [
 const EXPECTED_ENTRY_JAVA_SCRIPT = vuePackageSubpaths
   .map(({ exportTarget }) => exportTarget.import.replace("./dist/", ""))
   .sort();
-const EXPECTED_SHARED_JAVA_SCRIPT_CHUNKS = vuePackageSubpaths.length + 5;
+const EXPECTED_SHARED_JAVA_SCRIPT_CHUNKS = vuePackageSubpaths.length + 6;
 
 describe("release-like @starwind-ui/vue package", () => {
   it("imports the exact built root and component subpath values", async () => {
@@ -519,10 +501,11 @@ describe("release-like @starwind-ui/vue package", () => {
       Trigger: accordion.AccordionTrigger,
     });
     expect(avatar.default).toBe(avatar.Avatar);
+    expect(Object.keys(avatar.Avatar)).toEqual(["Root", "Image", "Fallback"]);
     expect(avatar.Avatar).toEqual({
-      Fallback: avatar.AvatarFallback,
-      Image: avatar.AvatarImage,
       Root: avatar.AvatarRoot,
+      Image: avatar.AvatarImage,
+      Fallback: avatar.AvatarFallback,
     });
     expect(button.default).toBe(button.Button);
     expect(button.Button).toEqual({ Root: button.ButtonRoot });
@@ -660,13 +643,21 @@ describe("release-like @starwind-ui/vue package", () => {
     expect(radioGroup.default).toBe(radioGroup.RadioGroup);
     expect(radioGroup.RadioGroup).toEqual({ Root: radioGroup.RadioGroupRoot });
     expect(scrollArea.default).toBe(scrollArea.ScrollArea);
+    expect(Object.keys(scrollArea.ScrollArea)).toEqual([
+      "Root",
+      "Viewport",
+      "Content",
+      "Scrollbar",
+      "Thumb",
+      "Corner",
+    ]);
     expect(scrollArea.ScrollArea).toEqual({
-      Content: scrollArea.ScrollAreaContent,
-      Corner: scrollArea.ScrollAreaCorner,
       Root: scrollArea.ScrollAreaRoot,
+      Viewport: scrollArea.ScrollAreaViewport,
+      Content: scrollArea.ScrollAreaContent,
       Scrollbar: scrollArea.ScrollAreaScrollbar,
       Thumb: scrollArea.ScrollAreaThumb,
-      Viewport: scrollArea.ScrollAreaViewport,
+      Corner: scrollArea.ScrollAreaCorner,
     });
     expect(select.default).toBe(select.Select);
     expect(select.Select).toEqual({
@@ -1232,46 +1223,26 @@ describe("release-like @starwind-ui/vue package", () => {
         ComboboxValue: "combobox-value",
       },
     );
-    expectComponentMarkerCoverage(
-      first,
-      EXPECTED_MENU_EXPORTS,
-      [
-        "Menu",
-        "MenuCheckboxItemContext",
-        "MenuOwnerContext",
-        "MenuRadioGroupContext",
-        "MenuRadioItemContext",
-        "MenuRootContext",
-        "MenuSubmenuContext",
-        "default",
-        "useMenuCheckboxItemContext",
-        "useMenuOwnerContext",
-        "useMenuRadioGroupContext",
-        "useMenuRadioItemContext",
-        "useMenuRootContext",
-        "useMenuSubmenuContext",
-      ],
-      {
-        MenuCheckboxItem: "menu-checkbox-item",
-        MenuCheckboxItemIndicator: "menu-checkbox-item-indicator",
-        MenuGroup: "menu-group",
-        MenuItem: "menu-item",
-        MenuLabel: "menu-label",
-        MenuLinkItem: "menu-link-item",
-        MenuPopup: "menu-popup",
-        MenuPortal: "menu-portal",
-        MenuPositioner: "menu-positioner",
-        MenuRadioGroup: "menu-radio-group",
-        MenuRadioItem: "menu-radio-item",
-        MenuRadioItemIndicator: "menu-radio-item-indicator",
-        MenuRoot: "menu",
-        MenuSeparator: "menu-separator",
-        MenuShortcut: "menu-shortcut",
-        MenuSubmenuRoot: "menu-submenu-root",
-        MenuSubmenuTrigger: "menu-submenu-trigger",
-        MenuTrigger: "menu-trigger",
-      },
-    );
+    expectComponentMarkerCoverage(first, EXPECTED_MENU_EXPORTS, ["Menu", "default"], {
+      MenuCheckboxItem: "menu-checkbox-item",
+      MenuCheckboxItemIndicator: "menu-checkbox-item-indicator",
+      MenuGroup: "menu-group",
+      MenuItem: "menu-item",
+      MenuLabel: "menu-label",
+      MenuLinkItem: "menu-link-item",
+      MenuPopup: "menu-popup",
+      MenuPortal: "menu-portal",
+      MenuPositioner: "menu-positioner",
+      MenuRadioGroup: "menu-radio-group",
+      MenuRadioItem: "menu-radio-item",
+      MenuRadioItemIndicator: "menu-radio-item-indicator",
+      MenuRoot: "menu",
+      MenuSeparator: "menu-separator",
+      MenuShortcut: "menu-shortcut",
+      MenuSubmenuRoot: "menu-submenu-root",
+      MenuSubmenuTrigger: "menu-submenu-trigger",
+      MenuTrigger: "menu-trigger",
+    });
     expectComponentMarkerCoverage(
       first,
       EXPECTED_CONTEXT_MENU_EXPORTS,
@@ -1300,16 +1271,7 @@ describe("release-like @starwind-ui/vue package", () => {
     expectComponentMarkerCoverage(
       first,
       EXPECTED_NAVIGATION_MENU_EXPORTS,
-      [
-        "NavigationMenu",
-        "NavigationMenuItemContext",
-        "NavigationMenuRootContext",
-        "NavigationMenuViewportContext",
-        "default",
-        "useNavigationMenuItemContext",
-        "useNavigationMenuRootContext",
-        "useNavigationMenuViewportContext",
-      ],
+      ["NavigationMenu", "default"],
       {
         NavigationMenuArrow: "nav-menu-arrow",
         NavigationMenuContent: "nav-menu-content",
@@ -1363,6 +1325,43 @@ describe("release-like @starwind-ui/vue package", () => {
     expect(javaScript).not.toContain("vue.runtime.esm");
     expect(javaScript).not.toContain("@vue/runtime-core");
     expect(javaScript).not.toContain("class ReactiveEffect");
+  });
+
+  it("keeps portal placement code outside non-portal cold imports", async () => {
+    const distRoot = path.join(repoRoot, "packages/vue/dist");
+    const portalSubpaths = new Set([
+      "alert-dialog",
+      "combobox",
+      "context-menu",
+      "drawer",
+      "menu",
+      "navigation-menu",
+      "popover",
+      "preview-card",
+      "select",
+      "tooltip",
+    ]);
+
+    for (const { subpath, exportTarget } of vuePackageSubpaths) {
+      if (subpath === "." || portalSubpaths.has(subpath.slice(2))) continue;
+      const entry = exportTarget.import.replace("./dist/", "");
+      const reachable = await findReachableJavaScript(distRoot, [entry]);
+      const source = (
+        await Promise.all([...reachable].map((file) => readFile(path.join(distRoot, file), "utf8")))
+      ).join("\n");
+      expect(source, subpath).not.toContain("reportPortalPlacement");
+      expect(source, subpath).not.toContain("data-sw-portal-placement");
+    }
+
+    const popoverEntry = vuePackageSubpaths.find(({ subpath }) => subpath === "./popover")!;
+    const reachable = await findReachableJavaScript(distRoot, [
+      popoverEntry.exportTarget.import.replace("./dist/", ""),
+    ]);
+    const source = (
+      await Promise.all([...reachable].map((file) => readFile(path.join(distRoot, file), "utf8")))
+    ).join("\n");
+    expect(source).toContain("reportPortalPlacement");
+    expect(source).toContain("data-sw-portal-placement");
   });
 });
 

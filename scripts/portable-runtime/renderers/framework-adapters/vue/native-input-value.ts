@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
 import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
 
@@ -5,9 +9,7 @@ export function printVueNativeInputValueIndex(file: AdapterIndexFile): AdapterPr
   return printVueFamilyIndex(file, "native-input-value");
 }
 
-export function printVueNativeInputValueComponent(
-  file: AdapterComponentFile,
-): AdapterPrintedFile {
+export function printVueNativeInputValueComponent(file: AdapterComponentFile): AdapterPrintedFile {
   const family = file.component.family;
   if (family?.kind !== "native-input-value") {
     throw new TypeError(

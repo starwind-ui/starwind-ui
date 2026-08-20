@@ -5,9 +5,9 @@ import { type ComputedRef, type InjectionKey, inject, type Ref } from "vue";
 
 export type NavigationMenuOrientation = "horizontal" | "vertical";
 export type NavigationMenuRootContextValue = {
+  element: Ref<HTMLElement | null>;
   mounted: Ref<boolean>;
   orientation: ComputedRef<NavigationMenuOrientation>;
-  refreshPortalTarget: () => Promise<void>;
   value: ComputedRef<string | null>;
 };
 export type NavigationMenuItemContextValue = {
@@ -97,7 +97,7 @@ let generation = 0;
 let pendingDetail: NavigationMenuValueChangeDetails | undefined;
 let acceptedDetail: NavigationMenuValueChangeDetails | undefined;
 let unsubscribeValueChange: (() => void) | undefined;
-provide(NavigationMenuRootContext, { mounted, orientation, refreshPortalTarget, value });
+provide(NavigationMenuRootContext, { element, mounted, orientation, value });
 defineExpose({
   element,
   getValue: () => instance?.getValue(),
@@ -131,15 +131,6 @@ function syncUncontrolledFromRuntime() {
   if (props.modelValue !== undefined || !instance) return;
   const current = instance.getValue();
   if (!Object.is(uncontrolledValue.value, current)) uncontrolledValue.value = current;
-}
-async function refreshPortalTarget() {
-  const owned = instance;
-  const ownGeneration = generation;
-  if (!mounted.value || !owned) return;
-  await nextTick();
-  if (!mounted.value || ownGeneration !== generation || instance !== owned) return;
-  const replayValue = props.modelValue !== undefined ? props.modelValue : owned.getValue();
-  owned.setValue(replayValue, { emit: false });
 }
 function destroyOwnedInstance() {
   const owned = instance;

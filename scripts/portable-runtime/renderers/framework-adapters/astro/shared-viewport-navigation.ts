@@ -4,6 +4,7 @@ import type {
   AdapterSharedViewportNavigationIndexProjection,
   AdapterSharedViewportNavigationPartName,
 } from "../types.js";
+import { printAstroRuntimePortal } from "./portal.js";
 
 export function printAstroSharedViewportNavigationComponent(
   family: AdapterSharedViewportNavigationComponentProjection,
@@ -16,6 +17,9 @@ export function printAstroSharedViewportNavigationComponent(
   if (family.part === "content") return printContent(facts);
   if (family.part === "link") return printLink(facts);
   if (family.part === "positioner") return printPositioner(facts);
+  if (family.part === "portal") {
+    return printAstroRuntimePortal(facts.parts.portal, facts.attrs.portal);
+  }
 
   return printSimplePart(facts, family.part);
 }
@@ -30,7 +34,10 @@ export function printAstroSharedViewportNavigationIndex(
   const namespaceEntries = facts.index.namespaceMembers
     .map((member) => `  ${member.key}: ${member.name},`)
     .join("\n");
-  const namedExports = [facts.exports.namespace, ...facts.index.importMembers.map((member) => member.name)]
+  const namedExports = [
+    facts.exports.namespace,
+    ...facts.index.importMembers.map((member) => member.name),
+  ]
     .map((name) => `  ${name},`)
     .join("\n");
 
@@ -94,7 +101,8 @@ function printSimplePart(
   >,
 ): string {
   const part = facts.parts[partName];
-  const state = part.stateAttribute && part.stateValue ? `${part.stateAttribute}="${part.stateValue}"` : "";
+  const state =
+    part.stateAttribute && part.stateValue ? `${part.stateAttribute}="${part.stateValue}"` : "";
 
   return `---\nimport type { HTMLAttributes } from "astro/types";\n\ntype Props = HTMLAttributes<"${part.defaultElement}">;\n\nconst { ...rest } = Astro.props;\n---\n\n<${part.defaultElement}\n  ${part.discoveryAttribute}\n  ${part.ariaHidden ? 'aria-hidden="true"' : ""}\n  ${state}\n  ${part.hidden ? part.hiddenAttribute : ""}\n  {...rest}\n>\n  <slot />\n</${part.defaultElement}>\n`;
 }

@@ -5,10 +5,21 @@ import {
   getStyledPartsIdentifier,
   type StyledOutputComponentGroup,
 } from "../../../styled-output-model/index.js";
+import { getRelativeImportPath } from "../../../shared.js";
 import { renderNamedExport, renderNamedImport } from "./formatting.js";
 import { renderIdentifierObject } from "./render-tree.js";
 
-export function renderIndex(group: StyledOutputComponentGroup, tsHeader: string): string {
+export type RenderReactStyledIndexOptions = {
+  directory: string;
+  primitiveImportBase?: string;
+  primitiveOutputRoot: string;
+};
+
+export function renderIndex(
+  group: StyledOutputComponentGroup,
+  tsHeader: string,
+  options?: RenderReactStyledIndexOptions,
+): string {
   assertStyledPartsIdentifier(group);
   const indexComponentNames = new Set([
     ...group.publicExports,
@@ -63,13 +74,42 @@ export function renderIndex(group: StyledOutputComponentGroup, tsHeader: string)
   const declarationBlock = [constants, variantCollection, partsDeclaration]
     .filter(Boolean)
     .join("\n\n");
+  const primitiveFacadeExports = renderPrimitiveFacadeExports(group, options);
 
   return `${tsHeader}${[importBlock, declarationBlock].filter(Boolean).join("\n\n")}
 
-${renderNamedExport(exports)}
+${primitiveFacadeExports ? `${primitiveFacadeExports}\n\n` : ""}${renderNamedExport(exports)}
 
 export default ${renderDefaultExport(group)};
 `;
+}
+
+function renderPrimitiveFacadeExports(
+  group: StyledOutputComponentGroup,
+  options: RenderReactStyledIndexOptions | undefined,
+): string {
+  const facade = group.primitiveFacadeExports;
+  if (!facade) return "";
+  if (!options) throw new Error("Primitive facade exports require styled index source options.");
+
+  const source = options.primitiveImportBase
+    ? `${options.primitiveImportBase}/${facade.component}`
+    : getRelativeImportPath(
+        options.directory,
+        path.join(options.primitiveOutputRoot, facade.component),
+      );
+  const valueNames = [...facade.values].sort();
+  const valueNameSet = new Set(valueNames);
+  const typeNames = [...facade.types].filter((name) => !valueNameSet.has(name)).sort();
+
+  return [
+    valueNames.length ? `export { ${valueNames.join(", ")} } from ${JSON.stringify(source)};` : "",
+    typeNames.length
+      ? `export type { ${typeNames.join(", ")} } from ${JSON.stringify(source)};`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function renderDefaultExport(group: StyledOutputComponentGroup): string {

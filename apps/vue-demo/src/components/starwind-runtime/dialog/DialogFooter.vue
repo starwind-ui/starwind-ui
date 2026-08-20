@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { dialogFooter } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,11 +15,10 @@ const { class: className } = defineProps<DialogFooterDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <div :class="dialogFooter({ class: className })" v-bind="attrs" data-slot="dialog-footer">
+  <div :class="dialogFooter({ class: className })" v-bind="$attrs" data-slot="dialog-footer">
     <slot />
   </div>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { sidebarMenuBadge } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,14 +18,13 @@ const { dataSlot = "sidebar-menu-badge", class: className } =
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <div
     :class="sidebarMenuBadge({ class: className })"
     data-sidebar="menu-badge"
-    v-bind="attrs"
+    v-bind="$attrs"
     :data-slot="dataSlot"
   >
     <slot />

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 
-import { compileScript, compileTemplate, parse } from "vue/compiler-sfc";
+import { compileScript, parse } from "vue/compiler-sfc";
 import { defineConfig, type Options } from "tsup";
 
 import { vueBuildEntryPoints } from "../../scripts/portable-runtime/renderers/framework-adapters/vue/inventory.js";
@@ -28,21 +28,14 @@ export function compileVueSfc(source: string, filename: string): string {
   }
   const { descriptor } = parsed;
   const id = createScopeId(filename);
-  const script = compileScript(descriptor, { genDefaultAs: "__sfc__", id });
-  const template = descriptor.template
-    ? compileTemplate({
-        compilerOptions: { bindingMetadata: script.bindings },
-        filename,
-        id,
-        source: descriptor.template.content,
-      })
-    : undefined;
-  if (template?.errors.length) {
-    throw new Error(template.errors.map(String).join("\n"));
-  }
-
-  const render = template?.code.replace("export function render", "function render") ?? "";
-  return `${script.content}\n${render}\n${template ? "__sfc__.render = render;" : ""}\nexport default __sfc__;\n`;
+  const script = compileScript(descriptor, {
+    genDefaultAs: "__sfc__",
+    id,
+    inlineTemplate: Boolean(descriptor.template),
+    isProd: true,
+    templateOptions: { filename, id },
+  });
+  return `${script.content}\nexport default __sfc__;\n`;
 }
 
 function createScopeId(filename: string): string {

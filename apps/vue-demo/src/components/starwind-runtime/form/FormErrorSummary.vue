@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as FormPrimitive from "@starwind-ui/vue/form";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { formErrorSummary } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -17,13 +17,12 @@ const { class: className } = defineProps<FormErrorSummaryDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <FormPrimitive.FormErrorSummary
     :class="formErrorSummary({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="form-error-summary"
   >
     <slot />

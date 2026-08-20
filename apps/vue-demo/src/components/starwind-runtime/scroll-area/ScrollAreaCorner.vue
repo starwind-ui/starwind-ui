@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ScrollAreaPrimitive from "@starwind-ui/vue/scroll-area";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { scrollAreaCorner } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,7 +16,6 @@ const { class: className } = defineProps<ScrollAreaCornerDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDivElement | null } & ComponentPublicInstance) | null =
   null;
@@ -44,7 +43,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
   <ScrollAreaPrimitive.ScrollAreaCorner
     :ref="setElement"
     :class="scrollAreaCorner({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="scroll-area-corner"
   >
     <slot />

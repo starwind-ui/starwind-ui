@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as TooltipPrimitive from "@starwind-ui/vue/tooltip";
 import type { ClassValue } from "tailwind-variants";
-import { computed, type HTMLAttributes, useAttrs } from "vue";
+import { computed, type HTMLAttributes } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -23,7 +23,6 @@ const {
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const triggerClassName = computed(() =>
   [asChild ? undefined : "inline-flex", className].filter(Boolean).join(" "),
 );
@@ -34,7 +33,7 @@ const triggerClassName = computed(() =>
     :class="triggerClassName"
     :as-child="asChild"
     :disabled="disabled"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="tooltip-trigger"
   >
     <slot />

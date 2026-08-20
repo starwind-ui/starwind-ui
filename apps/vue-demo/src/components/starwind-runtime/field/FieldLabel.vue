@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as FieldPrimitive from "@starwind-ui/vue/field";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { fieldLabel } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,7 +18,6 @@ const { size, class: className } = defineProps<FieldLabelDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLLabelElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLLabelElement | null } & ComponentPublicInstance) | null =
   null;
@@ -46,7 +45,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
   <FieldPrimitive.FieldLabel
     :ref="setElement"
     :class="fieldLabel({ size, class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="field-label"
   >
     <slot />

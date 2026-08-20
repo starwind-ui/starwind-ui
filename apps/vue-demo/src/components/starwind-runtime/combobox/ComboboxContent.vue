@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import * as ComboboxPrimitive from "@starwind-ui/vue/combobox";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { comboboxContent, comboboxList } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
 export type ComboboxContentProps = Omit<
   HTMLAttributes,
-  "align" | "alignOffset" | "avoidCollisions" | "class" | "side" | "sideOffset" | "size"
+  | "align"
+  | "alignOffset"
+  | "avoidCollisions"
+  | "class"
+  | "disablePortal"
+  | "portalContainer"
+  | "side"
+  | "sideOffset"
+  | "size"
 > & {
   align?: "start" | "center" | "end";
   alignOffset?: number;
@@ -16,6 +24,8 @@ export type ComboboxContentProps = Omit<
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
   size?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 };
 type ComboboxContentDeclaredProps = {
@@ -25,6 +35,8 @@ type ComboboxContentDeclaredProps = {
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
   size?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 } & /* @vue-ignore */ ComboboxContentProps;
 const {
@@ -35,15 +47,20 @@ const {
   side = "bottom",
   sideOffset = 4,
   size = "md",
+  portalContainer,
+  disablePortal = false,
 } = defineProps<ComboboxContentDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <ComboboxPrimitive.ComboboxPortal>
+  <ComboboxPrimitive.ComboboxPortal
+    :container="portalContainer"
+    :disabled="disablePortal"
+    data-slot="combobox-portal"
+  >
     <ComboboxPrimitive.ComboboxPositioner
       :align="align"
       :align-offset="alignOffset"
@@ -59,7 +76,7 @@ const attrs = useAttrs();
         :avoid-collisions="avoidCollisions"
         :side="side"
         :side-offset="sideOffset"
-        v-bind="attrs"
+        v-bind="$attrs"
         :data-size="size"
         data-slot="combobox-content"
       >

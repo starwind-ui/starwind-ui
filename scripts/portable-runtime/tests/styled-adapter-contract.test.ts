@@ -44,6 +44,82 @@ describe("StyledAdapterContract inventory", () => {
     ]);
   });
 
+  it("validates Primitive facade exports by TypeScript namespace", () => {
+    const valid = cloneStyledContract(buttonStyledContract);
+    valid.primitiveFacadeExports = {
+      component: "button",
+      types: ["SharedName", "ButtonOptions"],
+      values: ["SharedName", "createButton"],
+    };
+
+    expect(validateStyledAdapterContracts([valid])).toEqual([]);
+
+    const malformed = cloneStyledContract(buttonStyledContract);
+    malformed.component = "malformed-facade";
+    malformed.primitiveFacadeExports = {
+      component: " ",
+      types: ["", "DuplicateType", "DuplicateType", "Button", "ButtonProps", "not-valid"],
+      values: [" ", "duplicateValue", "duplicateValue", "Button"],
+    };
+
+    expect(validateStyledAdapterContracts([malformed])).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: "Primitive facade component id must be non-empty.",
+          path: "primitiveFacadeExports.component",
+        }),
+        expect.objectContaining({
+          message: "Primitive facade type export name must be non-empty.",
+          path: "primitiveFacadeExports.types.0",
+        }),
+        expect.objectContaining({
+          message: 'Duplicate Primitive facade type export "DuplicateType".',
+          path: "primitiveFacadeExports.types.2",
+        }),
+        expect.objectContaining({
+          message: 'Primitive facade type export "Button" collides with an index binding.',
+          path: "primitiveFacadeExports.types.3",
+        }),
+        expect.objectContaining({
+          message: 'Primitive facade type export "ButtonProps" collides with an index binding.',
+          path: "primitiveFacadeExports.types.4",
+        }),
+        expect.objectContaining({
+          message: 'Primitive facade type export "not-valid" must be a TypeScript identifier.',
+          path: "primitiveFacadeExports.types.5",
+        }),
+        expect.objectContaining({
+          message: "Primitive facade value export name must be non-empty.",
+          path: "primitiveFacadeExports.values.0",
+        }),
+        expect.objectContaining({
+          message: 'Duplicate Primitive facade value export "duplicateValue".',
+          path: "primitiveFacadeExports.values.2",
+        }),
+        expect.objectContaining({
+          message: 'Primitive facade value export "Button" collides with an index binding.',
+          path: "primitiveFacadeExports.values.3",
+        }),
+      ]),
+    );
+  });
+
+  it("rejects a non-kebab-case Primitive facade component id", () => {
+    const invalidPrimitiveId = cloneStyledContract(buttonStyledContract);
+    invalidPrimitiveId.primitiveFacadeExports = {
+      component: "Toast",
+      types: ["ToastOptions"],
+      values: ["toast"],
+    };
+
+    expect(validateStyledAdapterContracts([invalidPrimitiveId])).toEqual([
+      expect.objectContaining({
+        message: 'Primitive facade component id "Toast" must use kebab-case.',
+        path: "primitiveFacadeExports.component",
+      }),
+    ]);
+  });
+
   it("exposes the menus and floating model and detailed-event facts to Vue", () => {
     const cases = [
       [tooltipStyledContract, "Tooltip", ["open", "onOpenChange"]],

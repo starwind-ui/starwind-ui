@@ -15,6 +15,8 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   const sheetVariants = await readGeneratedFile(outputRoot, "sheet/variants.ts");
   const sheetIndex = await readGeneratedFile(outputRoot, "sheet/index.ts");
   const dropdown = await readGeneratedFile(outputRoot, "dropdown/Dropdown.tsx");
+  const dropdownContent = await readGeneratedFile(outputRoot, "dropdown/DropdownContent.tsx");
+  const dropdownSubContent = await readGeneratedFile(outputRoot, "dropdown/DropdownSubContent.tsx");
   const dropdownVariants = await readGeneratedFile(outputRoot, "dropdown/variants.ts");
   const dropdownTrigger = await readGeneratedFile(outputRoot, "dropdown/DropdownTrigger.tsx");
   const dropdownLinkItem = await readGeneratedFile(outputRoot, "dropdown/DropdownLinkItem.tsx");
@@ -34,6 +36,14 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   );
   const dropdownIndex = await readGeneratedFile(outputRoot, "dropdown/index.ts");
   const contextMenu = await readGeneratedFile(outputRoot, "context-menu/ContextMenu.tsx");
+  const contextMenuContent = await readGeneratedFile(
+    outputRoot,
+    "context-menu/ContextMenuContent.tsx",
+  );
+  const contextMenuSubContent = await readGeneratedFile(
+    outputRoot,
+    "context-menu/ContextMenuSubContent.tsx",
+  );
   const contextMenuVariants = await readGeneratedFile(outputRoot, "context-menu/variants.ts");
   const contextMenuCheckboxItem = await readGeneratedFile(
     outputRoot,
@@ -79,6 +89,7 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   const tooltip = await readGeneratedFile(outputRoot, "tooltip/Tooltip.tsx");
   const tooltipTrigger = await readGeneratedFile(outputRoot, "tooltip/TooltipTrigger.tsx");
   const tooltipContent = await readGeneratedFile(outputRoot, "tooltip/TooltipContent.tsx");
+  const hoverCardContent = await readGeneratedFile(outputRoot, "hover-card/HoverCardContent.tsx");
   const tooltipVariants = await readGeneratedFile(outputRoot, "tooltip/variants.ts");
   const tooltipIndex = await readGeneratedFile(outputRoot, "tooltip/index.ts");
   const alertDialog = await readGeneratedFile(outputRoot, "alert-dialog/AlertDialog.tsx");
@@ -230,6 +241,12 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   );
   expect(dropdownTrigger).toContain("className={triggerClassName}");
   expect(dropdownTrigger).not.toContain("data-as-child");
+  for (const portalOwner of [dropdownContent, dropdownSubContent]) {
+    expect(portalOwner).toContain("portalContainer?: string;");
+    expect(portalOwner).toContain("disablePortal?: boolean;");
+    expect(portalOwner).toContain("container={portalContainer}");
+    expect(portalOwner).toContain("disabled={disablePortal}");
+  }
   expect(dropdownLinkItem).toContain('React.ComponentPropsWithoutRef<"a">');
   expect(dropdownLinkItem).toContain("closeOnClick = false");
   expect(dropdownLinkItem).toContain("<MenuPrimitive.LinkItem");
@@ -279,6 +296,12 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(contextMenu).toContain("modal?: boolean;");
   expect(contextMenu).toContain("modal = true");
   expect(contextMenu).toContain("modal={modal}");
+  for (const portalOwner of [contextMenuContent, contextMenuSubContent]) {
+    expect(portalOwner).toContain("portalContainer?: string;");
+    expect(portalOwner).toContain("disablePortal?: boolean;");
+    expect(portalOwner).toContain("container={portalContainer}");
+    expect(portalOwner).toContain("disabled={disablePortal}");
+  }
   expect(contextMenuCheckboxItem).toContain("indicator,");
   expect(contextMenuCheckboxItem).toContain("showIndicator = true");
   expect(contextMenuCheckboxItemIndicator).toContain("<ContextMenuPrimitive.CheckboxItemIndicator");
@@ -319,6 +342,8 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(popoverTrigger).toContain('data-slot="popover-trigger"');
   expect(popoverTrigger).not.toContain("data-as-child");
   expect(popoverContent).toContain("<PopoverPrimitive.Portal");
+  expect(popoverContent).toContain("container={portalContainer}");
+  expect(popoverContent).toContain("disabled={disablePortal}");
   expect(popoverContent).toContain("<PopoverPrimitive.Popup");
   expect(popoverContent).toContain('side = "bottom"');
   expect(popoverContent).toContain('align = "center"');
@@ -413,6 +438,8 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(navigationMenuLink).toContain("closeOnClick={closeOnClick}");
   expect(navigationMenuLink).toContain('data-slot="navigation-menu-link"');
   expect(navigationMenuPositioner).toContain("<NavigationMenuPrimitive.Portal");
+  expect(navigationMenuPositioner).toContain("container={portalContainer}");
+  expect(navigationMenuPositioner).toContain("disabled={disablePortal}");
   expect(navigationMenuPositioner).toContain("<NavigationMenuPrimitive.Positioner");
   expect(navigationMenuPositioner).toContain("sideOffset = 8");
   expect(navigationMenuPositioner).toContain('size?: "sm" | "md";');
@@ -538,6 +565,12 @@ export async function assertReactStyledOverlayOutput(outputRoot: string): Promis
   expect(tooltipContent).toContain('"tabindex" | "tabIndex"');
   expect(tooltipContent).toContain("positionerClassName?: string;");
   expect(tooltipContent).toContain("positionerClassName,");
+  for (const portalOwner of [tooltipContent, hoverCardContent]) {
+    expect(portalOwner).toContain("portalContainer?: string;");
+    expect(portalOwner).toContain("disablePortal?: boolean;");
+    expect(portalOwner).toContain("container={portalContainer}");
+    expect(portalOwner).toContain("disabled={disablePortal}");
+  }
   expect(tooltipContent).toContain("<TooltipPrimitive.Popup");
   expect(tooltipContent).toContain('data-slot="tooltip-content"');
   expect(tooltipContent).toContain("className={tooltipPositioner({ class: positionerClassName })}");

@@ -3,8 +3,8 @@ export async function verifyAstroSheetPortalCases({ page }) {
     const sheetContent = document.querySelector(
       "#runtime-sheet-dropdown-sheet [data-slot='sheet-content']",
     );
-    const floatingRoot = sheetContent?.querySelector(":scope > [data-floating-root]");
     const content = document.querySelector("#runtime-sheet-dropdown-content");
+    const floatingRoot = content?.closest("[data-floating-root]");
     const sheetTrigger = document.querySelector("#runtime-sheet-dropdown-sheet-trigger");
     const root = document.querySelector("#runtime-sheet-dropdown");
     const trigger = document.querySelector("#runtime-sheet-dropdown-trigger");
@@ -34,13 +34,13 @@ export async function verifyAstroSheetPortalCases({ page }) {
         floatingRoot instanceof HTMLElement && content instanceof HTMLElement
           ? floatingRoot.contains(content)
           : null,
-      nearestFloatingRootSlot:
+      floatingRootKind: floatingRoot?.getAttribute("data-sw-floating-root"),
+      topLayerHostOpen:
+        floatingRoot?.parentElement?.matches("[data-sw-dialog-top-layer-host]:popover-open") ??
+        null,
+      portalTagName:
         content instanceof HTMLElement
-          ? content.closest("[data-floating-root]")?.getAttribute("data-slot")
-          : null,
-      portalPromoted:
-        content instanceof HTMLElement
-          ? content.closest("[data-sw-floating-portal]")?.matches(":popover-open")
+          ? content.closest("[data-slot='dropdown-portal']")?.tagName
           : null,
       position: content instanceof HTMLElement ? getComputedStyle(content).position : null,
       role: content?.getAttribute("role"),
@@ -67,8 +67,9 @@ export async function verifyAstroSheetPortalCases({ page }) {
     sheetDropdownState.sheetTriggerDataSlot !== "button" ||
     sheetDropdownState.sheetTriggerHasAttribute !== true ||
     sheetDropdownState.floatingRootContainsContent !== true ||
-    sheetDropdownState.nearestFloatingRootSlot !== "floating-root" ||
-    sheetDropdownState.portalPromoted !== true ||
+    sheetDropdownState.floatingRootKind !== "dialog" ||
+    sheetDropdownState.topLayerHostOpen !== true ||
+    sheetDropdownState.portalTagName !== "DIV" ||
     sheetDropdownState.rootContains !== false ||
     sheetDropdownState.position !== "fixed" ||
     sheetDropdownState.styleLeft === "" ||
@@ -81,7 +82,7 @@ export async function verifyAstroSheetPortalCases({ page }) {
     sheetDropdownState.contentDataSlot !== "dropdown-content"
   ) {
     throw new Error(
-      `Expected Astro Dropdown inside Sheet to portal into the sheet floating root, got ${JSON.stringify(
+      `Expected Astro Dropdown inside Sheet to portal through the Dialog-owned top-layer host, got ${JSON.stringify(
         sheetDropdownState,
       )}.`,
     );
@@ -95,9 +96,9 @@ export async function verifyAstroSheetPortalCases({ page }) {
     const sheetContent = document.querySelector(
       "#runtime-sheet-dropdown-sheet [data-slot='sheet-content']",
     );
-    const floatingRoot = sheetContent?.querySelector(":scope > [data-floating-root]");
     const menuContent = document.querySelector("#runtime-sheet-dropdown-content");
     const submenuContent = document.querySelector("#runtime-sheet-dropdown-sub-content");
+    const floatingRoot = submenuContent?.closest("[data-floating-root]");
     const trigger = document.querySelector("#runtime-sheet-dropdown-sub-trigger");
 
     return {
@@ -109,13 +110,13 @@ export async function verifyAstroSheetPortalCases({ page }) {
       submenuState: submenuContent?.getAttribute("data-state"),
       activeElementId:
         document.activeElement instanceof HTMLElement ? document.activeElement.id : null,
-      nearestFloatingRootSlot:
+      floatingRootKind: floatingRoot?.getAttribute("data-sw-floating-root"),
+      topLayerHostOpen:
+        floatingRoot?.parentElement?.matches("[data-sw-dialog-top-layer-host]:popover-open") ??
+        null,
+      portalTagName:
         submenuContent instanceof HTMLElement
-          ? submenuContent.closest("[data-floating-root]")?.getAttribute("data-slot")
-          : null,
-      portalPromoted:
-        submenuContent instanceof HTMLElement
-          ? submenuContent.closest("[data-sw-floating-portal]")?.matches(":popover-open")
+          ? submenuContent.closest("[data-slot='dropdown-sub-portal']")?.tagName
           : null,
       triggerExpanded: trigger?.getAttribute("aria-expanded"),
       usesSheetFloatingRoot:
@@ -129,15 +130,16 @@ export async function verifyAstroSheetPortalCases({ page }) {
     sheetDropdownSubmenuState.menuHidden !== false ||
     sheetDropdownSubmenuState.submenuHidden !== false ||
     sheetDropdownSubmenuState.submenuState !== "open" ||
-    sheetDropdownSubmenuState.nearestFloatingRootSlot !== "floating-root" ||
-    sheetDropdownSubmenuState.portalPromoted !== true ||
+    sheetDropdownSubmenuState.floatingRootKind !== "dialog" ||
+    sheetDropdownSubmenuState.topLayerHostOpen !== true ||
+    sheetDropdownSubmenuState.portalTagName !== "DIV" ||
     sheetDropdownSubmenuState.submenuPosition !== "fixed" ||
     sheetDropdownSubmenuState.activeElementId !== "runtime-sheet-dropdown-email" ||
     sheetDropdownSubmenuState.triggerExpanded !== "true" ||
     sheetDropdownSubmenuState.usesSheetFloatingRoot !== true
   ) {
     throw new Error(
-      `Expected Astro Dropdown submenu inside Sheet to stay in the sheet floating root, got ${JSON.stringify(
+      `Expected Astro Dropdown submenu inside Sheet to stay in the Dialog-owned top-layer host, got ${JSON.stringify(
         sheetDropdownSubmenuState,
       )}.`,
     );
@@ -172,8 +174,8 @@ export async function verifyAstroSheetPortalCases({ page }) {
     const sheetContent = document.querySelector(
       "#runtime-sheet-popover [data-slot='sheet-content']",
     );
-    const floatingRoot = sheetContent?.querySelector(":scope > [data-floating-root]");
     const content = document.querySelector("#runtime-sheet-popover-details-content");
+    const floatingRoot = content?.closest("[data-floating-root]");
     const sheetTrigger = document.querySelector("#runtime-sheet-popover-trigger");
     const root = document.querySelector("#runtime-sheet-popover-details");
     const trigger = document.querySelector("#runtime-sheet-popover-details-trigger");
@@ -198,13 +200,13 @@ export async function verifyAstroSheetPortalCases({ page }) {
           : null,
       labelledBy: content?.getAttribute("aria-labelledby"),
       describedBy: content?.getAttribute("aria-describedby"),
-      nearestFloatingRootSlot:
+      floatingRootKind: floatingRoot?.getAttribute("data-sw-floating-root"),
+      topLayerHostOpen:
+        floatingRoot?.parentElement?.matches("[data-sw-dialog-top-layer-host]:popover-open") ??
+        null,
+      portalTagName:
         content instanceof HTMLElement
-          ? content.closest("[data-floating-root]")?.getAttribute("data-slot")
-          : null,
-      portalPromoted:
-        content instanceof HTMLElement
-          ? content.closest("[data-sw-floating-portal]")?.matches(":popover-open")
+          ? content.closest("[data-slot='popover-portal']")?.tagName
           : null,
       position: content instanceof HTMLElement ? getComputedStyle(content).position : null,
       role: content?.getAttribute("role"),
@@ -233,8 +235,9 @@ export async function verifyAstroSheetPortalCases({ page }) {
     sheetPopoverState.sheetTriggerDataSlot !== "button" ||
     sheetPopoverState.sheetTriggerHasAttribute !== true ||
     sheetPopoverState.floatingRootContainsContent !== true ||
-    sheetPopoverState.nearestFloatingRootSlot !== "floating-root" ||
-    sheetPopoverState.portalPromoted !== true ||
+    sheetPopoverState.floatingRootKind !== "dialog" ||
+    sheetPopoverState.topLayerHostOpen !== true ||
+    sheetPopoverState.portalTagName !== "DIV" ||
     sheetPopoverState.rootContains !== false ||
     sheetPopoverState.position !== "fixed" ||
     sheetPopoverState.styleLeft === "" ||
@@ -247,7 +250,7 @@ export async function verifyAstroSheetPortalCases({ page }) {
     sheetPopoverState.contentDataSlot !== "popover-content"
   ) {
     throw new Error(
-      `Expected Astro Popover inside Sheet to portal into the sheet floating root, got ${JSON.stringify(
+      `Expected Astro Popover inside Sheet to portal through the Dialog-owned top-layer host, got ${JSON.stringify(
         sheetPopoverState,
       )}.`,
     );
@@ -260,9 +263,9 @@ export async function verifyAstroSheetPortalCases({ page }) {
     const sheetContent = document.querySelector(
       "#runtime-sheet-popover [data-slot='sheet-content']",
     );
-    const floatingRoot = sheetContent?.querySelector(":scope > [data-floating-root]");
     const parentContent = document.querySelector("#runtime-sheet-popover-details-content");
     const nestedContent = document.querySelector("#runtime-sheet-popover-nested-content");
+    const floatingRoot = nestedContent?.closest("[data-floating-root]");
     const trigger = document.querySelector("#runtime-sheet-popover-nested-trigger");
 
     return {
@@ -280,15 +283,14 @@ export async function verifyAstroSheetPortalCases({ page }) {
       nestedSide: nestedContent?.getAttribute("data-side"),
       nestedState: nestedContent?.getAttribute("data-state"),
       role: nestedContent?.getAttribute("role"),
-      nearestFloatingRootSlot:
-        nestedContent instanceof HTMLElement
-          ? nestedContent.closest("[data-floating-root]")?.getAttribute("data-slot")
-          : null,
-      portalsPromoted:
+      floatingRootKind: floatingRoot?.getAttribute("data-sw-floating-root"),
+      topLayerHostOpen:
+        floatingRoot?.parentElement?.matches("[data-sw-dialog-top-layer-host]:popover-open") ??
+        null,
+      portalsUsePublicWrappers:
         parentContent instanceof HTMLElement && nestedContent instanceof HTMLElement
           ? [parentContent, nestedContent].every(
-              (item) =>
-                item.closest("[data-sw-floating-portal]")?.matches(":popover-open") === true,
+              (item) => item.closest("[data-slot='popover-portal']")?.tagName === "DIV",
             )
           : null,
       parentHidden: parentContent instanceof HTMLElement ? parentContent.hidden : null,
@@ -312,15 +314,16 @@ export async function verifyAstroSheetPortalCases({ page }) {
     !sheetNestedPopoverState.labelledBy ||
     !sheetNestedPopoverState.describedBy ||
     !["left", "right"].includes(sheetNestedPopoverState.nestedSide ?? "") ||
-    sheetNestedPopoverState.nearestFloatingRootSlot !== "floating-root" ||
-    sheetNestedPopoverState.portalsPromoted !== true ||
+    sheetNestedPopoverState.floatingRootKind !== "dialog" ||
+    sheetNestedPopoverState.topLayerHostOpen !== true ||
+    sheetNestedPopoverState.portalsUsePublicWrappers !== true ||
     sheetNestedPopoverState.nestedRootContains !== false ||
     sheetNestedPopoverState.nestedPosition !== "fixed" ||
     sheetNestedPopoverState.triggerExpanded !== "true" ||
     sheetNestedPopoverState.usesSheetFloatingRoot !== true
   ) {
     throw new Error(
-      `Expected nested Astro Popover inside Sheet to stay in the sheet floating root, got ${JSON.stringify(
+      `Expected nested Astro Popover inside Sheet to stay in the Dialog-owned top-layer host, got ${JSON.stringify(
         sheetNestedPopoverState,
       )}.`,
     );

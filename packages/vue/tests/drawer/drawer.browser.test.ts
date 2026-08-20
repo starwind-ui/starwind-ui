@@ -68,6 +68,7 @@ describe("Vue Drawer browser contract", () => {
       expect(backdrop.hidden).toBe(false);
       host.querySelector<HTMLButtonElement>("[data-sw-drawer-close]")!.click();
       await nextTick();
+      await waitForDialogClosed(popup);
       expect(popup.open).toBe(false);
       expect(popup.hidden).toBe(true);
     },
@@ -85,6 +86,7 @@ describe("Vue Drawer browser contract", () => {
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
     document.body.querySelector<HTMLElement>("[data-sw-drawer-backdrop]")!.click();
     await nextTick();
+    await waitForDialogClosed(modalPopup);
     expect(modalPopup.open).toBe(false);
     expect(document.activeElement).toBe(outside);
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
@@ -109,7 +111,10 @@ describe("Vue Drawer browser contract", () => {
     app.mount(host);
     cleanups.push(() => app.unmount());
     await nextTick();
-    expect(target.querySelector("[data-sw-drawer-portal]")).not.toBeNull();
+    const remotePortal = target.querySelector<HTMLElement>("[data-sw-drawer-portal]")!;
+    expect(remotePortal.dataset.placement).toBe("ready");
+    expect(remotePortal.hasAttribute("data-floating-root")).toBe(true);
+    expect(remotePortal.contains(remotePortal.querySelector("[data-sw-drawer-popup]"))).toBe(true);
     show.value = false;
     await nextTick();
     expect(target.querySelector("[data-sw-drawer-portal]")).toBeNull();
@@ -118,7 +123,10 @@ describe("Vue Drawer browser contract", () => {
     expect(target.querySelector("[data-sw-drawer-portal]")).not.toBeNull();
 
     const inlineHost = mount(tree({}, { disabled: true }));
-    expect(inlineHost.querySelector("[data-sw-drawer-portal]")).not.toBeNull();
+    await nextTick();
+    expect(
+      inlineHost.querySelector<HTMLElement>("[data-sw-drawer-portal]")!.dataset.placement,
+    ).toBe("ready");
   });
 
   it("isolates multiple owners and closes only the nested topmost Drawer", async () => {
@@ -173,7 +181,9 @@ describe("Vue Drawer browser contract", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
     await nextTick();
     expect(document.body.querySelector<HTMLDialogElement>("#parent-popup")!.open).toBe(true);
-    expect(document.body.querySelector<HTMLDialogElement>("#child-popup")!.open).toBe(false);
+    const childPopup = document.body.querySelector<HTMLDialogElement>("#child-popup")!;
+    await waitForDialogClosed(childPopup);
+    expect(childPopup.open).toBe(false);
   });
 
   it("recreates changed options while open and cleans locks without proposals", async () => {
@@ -193,6 +203,7 @@ describe("Vue Drawer browser contract", () => {
     await nextTick();
     proposals.length = 0;
     state.modal = false;
+    await nextTick();
     await nextTick();
     await nextTick();
     expect(document.body.querySelector<HTMLDialogElement>("dialog")!.open).toBe(true);
@@ -251,4 +262,13 @@ function mount(vnode: ReturnType<typeof h>): HTMLElement {
   app.mount(host);
   cleanups.push(() => app.unmount());
   return host;
+}
+
+async function waitForDialogClosed(dialog: HTMLDialogElement): Promise<void> {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    if (!dialog.open) return;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+
+  throw new Error("Drawer did not reach its closed native state.");
 }

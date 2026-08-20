@@ -94,6 +94,11 @@ describe("generated Vue Avatar Primitive", () => {
     expect(first.index).toContain(
       'export { default as AvatarFallback } from "./AvatarFallback.vue";',
     );
+    expect(first.index).toContain(`const Avatar = {
+  Root: AvatarRoot,
+  Image: AvatarImage,
+  Fallback: AvatarFallback,
+};`);
   });
 
   async function generateAvatar(): Promise<{

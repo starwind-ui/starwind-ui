@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ContextMenuPrimitive from "@starwind-ui/vue/context-menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { contextMenuLabel } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,13 +18,12 @@ const { class: className, inset = false } = defineProps<ContextMenuLabelDeclared
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ContextMenuPrimitive.ContextMenuLabel
     :class="contextMenuLabel({ inset, class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="context-menu-label"
   >
     <slot />

@@ -11,6 +11,8 @@ type Props = HTMLAttributes<"div"> &
     sideOffset?: number;
     avoidCollisions?: boolean;
     collisionStrategy?: "initial-placement" | "best-fit";
+    portalContainer?: string;
+    disablePortal?: boolean;
   };
 
 const {
@@ -21,11 +23,17 @@ const {
   avoidCollisions = true,
   collisionStrategy = "initial-placement",
   exitMotion = "popover",
+  portalContainer,
+  disablePortal = false,
   ...rest
 } = Astro.props;
 ---
 
-<PopoverPrimitive.Portal data-slot="popover-portal">
+<PopoverPrimitive.Portal
+  container={portalContainer}
+  disabled={disablePortal}
+  data-slot="popover-portal"
+>
   <PopoverPrimitive.Popup
     class={popoverContent({ exitMotion, class: className })}
     side={side}

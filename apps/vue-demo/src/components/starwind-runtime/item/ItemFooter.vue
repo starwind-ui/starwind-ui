@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { itemFooter } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,7 +15,6 @@ const { class: className } = defineProps<ItemFooterDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 </script>
@@ -24,7 +23,7 @@ defineExpose({ element });
   <div
     ref="element"
     :class="itemFooter({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="item-footer"
   >
     <slot />

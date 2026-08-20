@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as PopoverPrimitive from "@starwind-ui/vue/popover";
 import type { ClassValue } from "tailwind-variants";
-import { type ButtonHTMLAttributes, computed, useAttrs } from "vue";
+import { type ButtonHTMLAttributes, computed } from "vue";
 import { popoverTrigger } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,7 +18,6 @@ const { asChild = false, class: className } = defineProps<PopoverTriggerDeclared
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const triggerBaseClassName = computed(() => popoverTrigger({ class: className }));
 const triggerClassName = computed(() => (asChild ? className : triggerBaseClassName.value));
 </script>
@@ -27,7 +26,7 @@ const triggerClassName = computed(() => (asChild ? className : triggerBaseClassN
   <PopoverPrimitive.PopoverTrigger
     :class="triggerClassName"
     :as-child="asChild"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="popover-trigger"
   >
     <slot />

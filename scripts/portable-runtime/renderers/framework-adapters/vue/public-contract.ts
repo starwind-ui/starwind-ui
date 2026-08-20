@@ -11,6 +11,53 @@ export type VueDetailedEventProjection = Readonly<{
   runtimeHandler: string;
 }>;
 
+export type VueAttributeSetupReason =
+  | "as-child"
+  | "dynamic-composition"
+  | "event-work"
+  | "hidden-read"
+  | "projection-helper"
+  | "protected-merge"
+  | "setup-consumer"
+  | "style-read";
+
+export type VueAttributeAccessProjection =
+  | Readonly<{
+      kind: "template-only";
+      setupBinding: null;
+      templateBinding: "$attrs";
+      vueImport: null;
+    }>
+  | Readonly<{
+      kind: "setup";
+      reasons: readonly VueAttributeSetupReason[];
+      setupBinding: "const attrs = useAttrs();";
+      templateBinding: "attrs";
+      vueImport: "useAttrs";
+    }>;
+
+/** Selects Vue's template context only when no setup path consumes fallthrough attributes. */
+export function projectVueAttributeAccess(
+  setupReasons: readonly VueAttributeSetupReason[],
+): VueAttributeAccessProjection {
+  if (setupReasons.length === 0) {
+    return {
+      kind: "template-only",
+      setupBinding: null,
+      templateBinding: "$attrs",
+      vueImport: null,
+    };
+  }
+
+  return {
+    kind: "setup",
+    reasons: [...new Set(setupReasons)],
+    setupBinding: "const attrs = useAttrs();",
+    templateBinding: "attrs",
+    vueImport: "useAttrs",
+  };
+}
+
 function capitalize(value: string): string {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }

@@ -44,7 +44,12 @@ export function renderVueComponent(
   }
 
   validateRootBindings(projection);
-  const template = renderNodes(projection.render, 1, projection.imports.primitiveAliases);
+  const template = renderNodes(
+    projection.render,
+    1,
+    projection.imports.primitiveAliases,
+    projection.attributeAccess?.templateBinding ?? "attrs",
+  );
   const imports = renderVueImports(projection.imports);
   const props = renderProps(projection.props);
   const exposedRefs = projection.exposedRefs.map(renderExposedRef);
@@ -472,7 +477,7 @@ function renderSetup(projection: VueStyledComponentProjection): string {
   return [
     propsDeclaration,
     slots,
-    ...(usesAttrs ? ["const attrs = useAttrs();"] : []),
+    ...(projection.attributeAccess?.setupBinding ? [projection.attributeAccess.setupBinding] : []),
     ...(filtersComponentAttrs
       ? [
           `function omitForwardedAttrs(
@@ -498,14 +503,16 @@ function renderNodes(
   nodes: readonly StyledOutputRenderNode[],
   level: number,
   primitiveAliases: Record<string, string>,
+  attrsBinding = "attrs",
 ): string {
-  return nodes.map((node) => renderNode(node, level, primitiveAliases)).join("\n");
+  return nodes.map((node) => renderNode(node, level, primitiveAliases, attrsBinding)).join("\n");
 }
 
 function renderNode(
   node: StyledOutputRenderNode,
   level: number,
   primitiveAliases: Record<string, string>,
+  attrsBinding: string,
 ): string {
   const pad = "  ".repeat(level);
   switch (node.type) {
@@ -516,6 +523,7 @@ function renderNode(
         node.children,
         level,
         primitiveAliases,
+        attrsBinding,
       );
     case "primitive":
       return renderTag(
@@ -524,6 +532,7 @@ function renderNode(
         node.children,
         level,
         primitiveAliases,
+        attrsBinding,
       );
     case "element":
       return node.tagBinding
@@ -539,23 +548,26 @@ function renderNode(
             node.children,
             level,
             primitiveAliases,
+            attrsBinding,
           )
-        : renderTag(node.tag, node.attrs, node.children, level, primitiveAliases);
+        : renderTag(node.tag, node.attrs, node.children, level, primitiveAliases, attrsBinding);
     case "fragment":
-      return renderNodes(node.children, level, primitiveAliases);
+      return renderNodes(node.children, level, primitiveAliases, attrsBinding);
     case "icon":
-      return renderIcon(node, level);
+      return renderIcon(node, level, attrsBinding);
     case "condition":
       return `${pad}<template v-if="${escapeVueAttribute(node.condition)}">\n${renderNodes(
         node.then,
         level + 1,
         primitiveAliases,
+        attrsBinding,
       )}\n${pad}</template>${
         node.else.length
           ? `\n${pad}<template v-else>\n${renderNodes(
               node.else,
               level + 1,
               primitiveAliases,
+              attrsBinding,
             )}\n${pad}</template>`
           : ""
       }`;
@@ -574,11 +586,12 @@ function renderNode(
               : child,
           )
         : node.children;
-      const key = keyAttribute ? ` ${renderAttribute(keyAttribute)}` : "";
+      const key = keyAttribute ? ` ${renderAttribute(keyAttribute, attrsBinding)}` : "";
       return `${pad}<template v-for="${binding} in ${node.each}"${key}>\n${renderNodes(
         children,
         level + 1,
         primitiveAliases,
+        attrsBinding,
       )}\n${pad}</template>`;
     }
     case "slot": {
@@ -588,6 +601,7 @@ function renderNode(
         node.fallback,
         level + 1,
         primitiveAliases,
+        attrsBinding,
       )}\n${pad}</slot>`;
     }
     case "text":
@@ -606,24 +620,27 @@ function renderTag(
   children: readonly StyledOutputRenderNode[],
   level: number,
   primitiveAliases: Record<string, string>,
+  attrsBinding: string,
 ): string {
   const pad = "  ".repeat(level);
-  const renderedAttrs = attrs.filter(isForVue).map(renderAttribute);
+  const renderedAttrs = attrs
+    .filter(isForVue)
+    .map((attribute) => renderAttribute(attribute, attrsBinding));
   const open = renderedAttrs.length
     ? `${pad}<${tag}\n${renderedAttrs.map((attr) => `${pad}  ${attr}`).join("\n")}\n${pad}>`
     : `${pad}<${tag}>`;
   if (!children.length) return `${open.slice(0, -1)} />`;
-  return `${open}\n${renderNodes(children, level + 1, primitiveAliases)}\n${pad}</${tag}>`;
+  return `${open}\n${renderNodes(children, level + 1, primitiveAliases, attrsBinding)}\n${pad}</${tag}>`;
 }
 
-function renderAttribute(attribute: StyledOutputAttribute): string {
+function renderAttribute(attribute: StyledOutputAttribute, attrsBinding = "attrs"): string {
   if (attribute.name === "spread") {
     if (!attribute.value) {
       throw new Error("Vue Styled spread attributes require a value expression.");
     }
     const expression =
       attribute.value.type === "variable" && attribute.value.name === "rest"
-        ? "attrs"
+        ? attrsBinding
         : renderVueExpression(attribute.value);
     return `v-bind="${escapeVueAttribute(expression)}"`;
   }
@@ -642,7 +659,11 @@ function renderValue(value: StyledOutputValueExpression): string {
   return renderVueExpression(value);
 }
 
-export function renderIcon(icon: StyledOutputIconNode, level: number): string {
+export function renderIcon(
+  icon: StyledOutputIconNode,
+  level: number,
+  attrsBinding = "attrs",
+): string {
   if (!icon.asset) {
     throw new TypeError(`Vue Styled icon ${icon.importName} requires a projected SVG asset.`);
   }
@@ -651,7 +672,7 @@ export function renderIcon(icon: StyledOutputIconNode, level: number): string {
   const renderedAttrs = icon.attrs
     .filter((attribute) => !asset.omittedAttributes?.includes(attribute.name))
     .filter(isForVue)
-    .map(renderAttribute);
+    .map((attribute) => renderAttribute(attribute, attrsBinding));
   return `${pad}<svg\n${[...asset.attributes.map(renderSvgAttribute), ...renderedAttrs]
     .map((attr) => `${pad}  ${attr}`)
     .join("\n")}\n${pad}>\n${asset.children

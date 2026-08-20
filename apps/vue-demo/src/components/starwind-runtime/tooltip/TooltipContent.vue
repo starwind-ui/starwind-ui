@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as TooltipPrimitive from "@starwind-ui/vue/tooltip";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { tooltipCaret, tooltipContent, tooltipPositioner } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -11,6 +11,8 @@ export type TooltipContentProps = Omit<
   | "align"
   | "avoidCollisions"
   | "class"
+  | "disablePortal"
+  | "portalContainer"
   | "positionerClass"
   | "side"
   | "sideOffset"
@@ -22,6 +24,8 @@ export type TooltipContentProps = Omit<
   sideOffset?: number;
   avoidCollisions?: boolean;
   positionerClass?: string;
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 };
 type TooltipContentDeclaredProps = {
@@ -30,6 +34,8 @@ type TooltipContentDeclaredProps = {
   sideOffset?: number;
   avoidCollisions?: boolean;
   positionerClass?: string;
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 } & /* @vue-ignore */ TooltipContentProps;
 const {
@@ -39,16 +45,21 @@ const {
   align = "center",
   sideOffset = 8,
   avoidCollisions = true,
+  portalContainer,
+  disablePortal = false,
 } = defineProps<TooltipContentDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
   icon?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <TooltipPrimitive.TooltipPortal data-slot="tooltip-portal">
+  <TooltipPrimitive.TooltipPortal
+    :container="portalContainer"
+    :disabled="disablePortal"
+    data-slot="tooltip-portal"
+  >
     <TooltipPrimitive.TooltipPositioner
       :side="side"
       :align="align"
@@ -63,7 +74,7 @@ const attrs = useAttrs();
         :align="align"
         :side-offset="sideOffset"
         :avoid-collisions="avoidCollisions"
-        v-bind="attrs"
+        v-bind="$attrs"
         data-slot="tooltip-content"
       >
         <slot> My tooltip! </slot>

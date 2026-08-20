@@ -342,10 +342,16 @@ describe("release package tooling", () => {
     expect(root.scripts?.["publish:release:dry-run"]).not.toContain("release:prepare");
     expect(root.scripts?.["publish:release:dry-run"]).not.toContain("release:gate");
     expect(root.scripts?.["runtime:size:check"]).toBe(
-      "pnpm runtime:build && pnpm react:build && node scripts/portable-runtime/measure-package-sizes.mjs --check",
+      "pnpm runtime:build && pnpm react:build && pnpm vue:build && node scripts/portable-runtime/measure-package-sizes.mjs --check --private-vue",
     );
     expect(root.scripts?.["runtime:size:check:prepared"]).toBe(
       "node scripts/portable-runtime/measure-package-sizes.mjs --check",
+    );
+    expect(root.scripts?.["runtime:size:check:prepared:private"]).toBe(
+      "node scripts/portable-runtime/measure-package-sizes.mjs --check --private-vue",
+    );
+    expect(root.scripts?.["runtime:size:baseline:vue"]).toBe(
+      "node scripts/portable-runtime/measure-package-sizes.mjs --baseline-vue",
     );
     expect(root.scripts?.["release:candidate:acceptance"]).toBe(
       "node scripts/release-candidate-acceptance.mjs",

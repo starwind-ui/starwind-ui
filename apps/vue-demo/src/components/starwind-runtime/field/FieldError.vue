@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as FieldPrimitive from "@starwind-ui/vue/field";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { fieldError } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -44,7 +44,6 @@ const { match, messageSource, class: className } = defineProps<FieldErrorDeclare
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDivElement | null } & ComponentPublicInstance) | null =
   null;
@@ -74,7 +73,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :class="fieldError({ class: className })"
     :match="match"
     :message-source="messageSource"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="field-error"
   >
     <slot />

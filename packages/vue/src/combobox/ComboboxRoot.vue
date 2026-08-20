@@ -5,12 +5,12 @@ import { type ComputedRef, type InjectionKey, inject, type Ref } from "vue";
 
 export type ComboboxContextValue = Readonly<{
   disabled: ComputedRef<boolean>;
+  element: Readonly<Ref<HTMLElement | null>>;
   inputValue: ComputedRef<string>;
   mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   readOnly: ComputedRef<boolean>;
   registerPortal(owner: symbol, element: HTMLElement | null): void;
-  refreshPortalTarget(owner: symbol): void;
   required: ComputedRef<boolean>;
   value: ComputedRef<string | null>;
 }>;
@@ -115,10 +115,10 @@ let portalReference: HTMLElement | null = null;
 let resetForm: HTMLFormElement | null = null;
 let resetTimer: number | undefined;
 let lifecycleGeneration = 0;
-let portalRefreshGeneration = 0;
 
 provide(ComboboxContext, {
   disabled,
+  element: rootRef,
   inputValue: renderedInputValue,
   mounted,
   open: renderedOpen,
@@ -130,27 +130,7 @@ provide(ComboboxContext, {
     } else if (portalOwner === owner) {
       portalOwner = undefined;
       portalReference = null;
-      portalRefreshGeneration += 1;
     }
-  },
-  refreshPortalTarget(owner) {
-    const generation = ++portalRefreshGeneration;
-    void nextTick().then(() => {
-      if (
-        !mounted.value ||
-        generation !== portalRefreshGeneration ||
-        portalOwner !== owner ||
-        !instance
-      )
-        return;
-      const open = instance.getOpen();
-      if (open) {
-        instance.setOpen(false, { emit: false });
-        instance.setOpen(true, { emit: false });
-      } else {
-        instance.updatePosition();
-      }
-    });
   },
   required,
   value: renderedValue,
@@ -350,7 +330,6 @@ watch(
 );
 onBeforeUnmount(() => {
   lifecycleGeneration += 1;
-  portalRefreshGeneration += 1;
   mounted.value = false;
   destroyOwnedInstance();
 });

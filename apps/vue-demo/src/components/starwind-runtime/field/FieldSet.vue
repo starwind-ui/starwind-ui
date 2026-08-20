@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as FieldsetPrimitive from "@starwind-ui/vue/fieldset";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { fieldSet } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -19,7 +19,6 @@ const { disabled = false, class: className } = defineProps<FieldSetDeclaredProps
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLFieldSetElement | null>(null);
 let pendingPrimitiveRef:
   | ({ element?: HTMLFieldSetElement | null } & ComponentPublicInstance)
@@ -51,7 +50,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :ref="setElement"
     :class="fieldSet({ class: className })"
     :disabled="disabled"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="field-set"
   >
     <slot />

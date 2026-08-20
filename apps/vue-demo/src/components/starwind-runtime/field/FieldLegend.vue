@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as FieldsetPrimitive from "@starwind-ui/vue/fieldset";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { fieldLegend } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,7 +18,6 @@ const { variant, class: className } = defineProps<FieldLegendDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDivElement | null } & ComponentPublicInstance) | null =
   null;
@@ -46,7 +45,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
   <FieldsetPrimitive.FieldsetLegend
     :ref="setElement"
     :class="fieldLegend({ variant, class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="field-legend"
   >
     <slot />

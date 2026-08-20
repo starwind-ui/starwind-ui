@@ -72,15 +72,15 @@ import {
   printAstroAnchoredMenuOverlayIndex,
 } from "./anchored-menu-overlay.js";
 import {
+  type AstroColorPickerComponentProjection,
+  type AstroColorPickerIndexProjection,
+  printAstroColorPickerComponent,
+  printAstroColorPickerIndex,
+} from "./color-picker.js";
+import {
   printAstroCompositeMenuOverlayComponent,
   printAstroCompositeMenuOverlayIndex,
 } from "./composite-menu-overlay.js";
-import {
-  printAstroColorPickerComponent,
-  printAstroColorPickerIndex,
-  type AstroColorPickerComponentProjection,
-  type AstroColorPickerIndexProjection,
-} from "./color-picker.js";
 import {
   printAstroEditableCollectionOverlayComponent,
   printAstroEditableCollectionOverlayIndex,
@@ -106,15 +106,16 @@ import {
   printAstroOptionCollectionOverlayComponent,
   printAstroOptionCollectionOverlayIndex,
 } from "./option-collection-overlay.js";
+import { printAstroRuntimePortal } from "./portal.js";
 import { printAstroRangeStatusComponent, printAstroRangeStatusIndex } from "./range-status.js";
-import {
-  printAstroSharedViewportNavigationComponent,
-  printAstroSharedViewportNavigationIndex,
-} from "./shared-viewport-navigation.js";
 import {
   printAstroScopedRuntimeSetupScript,
   printAstroSimpleSlottedRestPropsComponent,
 } from "./shared-fragments.js";
+import {
+  printAstroSharedViewportNavigationComponent,
+  printAstroSharedViewportNavigationIndex,
+} from "./shared-viewport-navigation.js";
 
 export const astroFrameworkAdapter = defineFrameworkAdapter({
   target: "astro",
@@ -922,7 +923,7 @@ function printAstroNativeOverlayComponent(family: AdapterNativeOverlayComponentP
   }
   if (family.part === "close") return printAstroNativeOverlayClose(facts);
   if (family.part === "portal" && facts.parts.portal) {
-    return printAstroNativeOverlaySimplePart(facts.parts.portal, facts.attrs.portal);
+    return printAstroRuntimePortal(facts.parts.portal, facts.attrs.portal as string);
   }
   if (family.part === "viewport" && facts.parts.viewport) {
     return printAstroNativeOverlaySimplePart(facts.parts.viewport, facts.attrs.viewport);
@@ -1021,7 +1022,7 @@ function printAstroPresenceFloatingOverlayComponent(
   if (family.part === "backdrop") return printAstroPresenceFloatingOverlayBackdrop(facts);
   if (family.part === "close") return printAstroPresenceFloatingOverlayClose(facts);
   if (family.part === "portal") {
-    return printAstroPresenceFloatingOverlaySimplePart(facts.parts.portal, facts.attrs.portal);
+    return printAstroRuntimePortal(facts.parts.portal, facts.attrs.portal);
   }
   if (family.part === "arrow") {
     return printAstroPresenceFloatingOverlaySimplePart(facts.parts.arrow, facts.attrs.arrow);
@@ -1131,7 +1132,7 @@ function printAstroTimedFloatingOverlayComponent(
   if (family.part === "positioner") return printAstroTimedFloatingOverlayPositioner(facts);
   if (family.part === "popup") return printAstroTimedFloatingOverlayPopup(facts);
   if (family.part === "portal") {
-    return printAstroTimedFloatingOverlaySimplePart(facts.parts.portal, facts.attrs.portal);
+    return printAstroRuntimePortal(facts.parts.portal, facts.attrs.portal);
   }
   if (family.part === "arrow") return printAstroTimedFloatingOverlayArrow(facts);
   if (family.part === "backdrop") return printAstroTimedFloatingOverlayBackdrop(facts);

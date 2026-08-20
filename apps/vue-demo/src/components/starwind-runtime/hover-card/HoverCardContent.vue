@@ -1,20 +1,29 @@
 <script setup lang="ts">
 import * as PreviewCardPrimitive from "@starwind-ui/vue/preview-card";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { hoverCardContent, hoverCardPositioner } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
 export type HoverCardContentProps = Omit<
   HTMLAttributes,
-  "align" | "avoidCollisions" | "class" | "positionerClass" | "side" | "sideOffset"
+  | "align"
+  | "avoidCollisions"
+  | "class"
+  | "disablePortal"
+  | "portalContainer"
+  | "positionerClass"
+  | "side"
+  | "sideOffset"
 > & {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
   positionerClass?: string;
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 };
 type HoverCardContentDeclaredProps = {
@@ -23,6 +32,8 @@ type HoverCardContentDeclaredProps = {
   sideOffset?: number;
   avoidCollisions?: boolean;
   positionerClass?: string;
+  portalContainer?: string;
+  disablePortal?: boolean;
   class?: ClassValue;
 } & /* @vue-ignore */ HoverCardContentProps;
 const {
@@ -32,15 +43,20 @@ const {
   align = "center",
   sideOffset = 4,
   avoidCollisions = true,
+  portalContainer,
+  disablePortal = false,
 } = defineProps<HoverCardContentDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <PreviewCardPrimitive.PreviewCardPortal data-slot="hover-card-portal">
+  <PreviewCardPrimitive.PreviewCardPortal
+    :container="portalContainer"
+    :disabled="disablePortal"
+    data-slot="hover-card-portal"
+  >
     <PreviewCardPrimitive.PreviewCardPositioner
       :side="side"
       :align="align"
@@ -55,7 +71,7 @@ const attrs = useAttrs();
         :align="align"
         :side-offset="sideOffset"
         :avoid-collisions="avoidCollisions"
-        v-bind="attrs"
+        v-bind="$attrs"
         data-slot="hover-card-content"
       >
         <slot />

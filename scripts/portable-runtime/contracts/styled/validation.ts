@@ -95,6 +95,8 @@ function validateContract(
     }
   }
 
+  validatePrimitiveFacadeExports(contract, componentExports, issues);
+
   if (
     contract.defaultExportMode === "component" &&
     Object.keys(contract.defaultExport).length !== 1
@@ -215,6 +217,90 @@ function validateContract(
   for (const component of contract.components) {
     validateComponent(contract, component, contractsByComponent, variants, issues);
   }
+}
+
+function validatePrimitiveFacadeExports(
+  contract: StyledAdapterContract,
+  componentExports: ReadonlySet<string>,
+  issues: StyledAdapterContractIssue[],
+): void {
+  const facade = contract.primitiveFacadeExports;
+  if (!facade) return;
+
+  if (!facade.component.trim()) {
+    issues.push(
+      issue(
+        contract,
+        "primitiveFacadeExports.component",
+        "Primitive facade component id must be non-empty.",
+      ),
+    );
+  } else if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(facade.component)) {
+    issues.push(
+      issue(
+        contract,
+        "primitiveFacadeExports.component",
+        `Primitive facade component id "${facade.component}" must use kebab-case.`,
+      ),
+    );
+  }
+
+  const indexBindings = new Set([
+    ...componentExports,
+    ...(contract.frameworks?.includes("vue") || contract.frameworks === undefined
+      ? [...componentExports].map((exportName) => `${exportName}Props`)
+      : []),
+    ...Object.keys(contract.constants ?? {}),
+    ...Object.keys(contract.variants ?? {}),
+    ...Object.keys(contract.variantAliases ?? {}),
+    ...(contract.variantCollectionName ? [contract.variantCollectionName] : []),
+    ...contract.publicExports,
+    ...Object.values(contract.defaultExport),
+  ]);
+
+  validatePrimitiveFacadeExportNamespace(contract, "types", facade.types, indexBindings, issues);
+  validatePrimitiveFacadeExportNamespace(contract, "values", facade.values, indexBindings, issues);
+}
+
+function validatePrimitiveFacadeExportNamespace(
+  contract: StyledAdapterContract,
+  namespace: "types" | "values",
+  names: readonly string[],
+  indexBindings: ReadonlySet<string>,
+  issues: StyledAdapterContractIssue[],
+): void {
+  const kind = namespace === "types" ? "type" : "value";
+  const seen = new Set<string>();
+
+  names.forEach((name, index) => {
+    const path = `primitiveFacadeExports.${namespace}.${index}`;
+    if (!name.trim()) {
+      issues.push(issue(contract, path, `Primitive facade ${kind} export name must be non-empty.`));
+      return;
+    }
+    if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name)) {
+      issues.push(
+        issue(
+          contract,
+          path,
+          `Primitive facade ${kind} export "${name}" must be a TypeScript identifier.`,
+        ),
+      );
+    }
+    if (seen.has(name)) {
+      issues.push(issue(contract, path, `Duplicate Primitive facade ${kind} export "${name}".`));
+    }
+    seen.add(name);
+    if (indexBindings.has(name)) {
+      issues.push(
+        issue(
+          contract,
+          path,
+          `Primitive facade ${kind} export "${name}" collides with an index binding.`,
+        ),
+      );
+    }
+  });
 }
 
 function validateAnnotations(

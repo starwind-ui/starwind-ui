@@ -1,3 +1,4 @@
+import { createCancelableDetails } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
   ensureId,
@@ -7,7 +8,6 @@ import {
   setBooleanAttribute,
   uniqueElements,
 } from "../../internal/dom";
-import { createCancelableDetails } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
 import {
   createFloatingPositioner,
@@ -22,6 +22,7 @@ import {
   type FloatingDisclosurePositionOptions,
 } from "../../internal/floating-disclosure";
 import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { showElement } from "../../internal/presence";
 
 export type TooltipOpenChangeReason =
@@ -133,6 +134,20 @@ const INTERACTIVE_TOOLTIP_DESCENDANT_SELECTOR = [
 
 const instances = new WeakMap<HTMLElement, TooltipController>();
 
+export function refreshTooltipPortalSurface(root: HTMLElement): void {
+  const controller = instances.get(root);
+  if (!controller) return;
+  const nextElements = getTooltipElements(controller.root);
+  if (nextElements.popup === controller["elements"].popup) return;
+
+  controller["portalSurfaceAbortController"]?.abort();
+  controller["portalSurfaceAbortController"] = new AbortController();
+  Object.assign(controller["elements"], nextElements);
+  controller["setupAccessibility"]();
+  controller["bindPortalEvents"]();
+  controller["lifecycle"].refreshSurface(controller["elements"].popup);
+}
+
 export function createTooltip(root: HTMLElement, options: TooltipOptions = {}): TooltipInstance {
   assertHTMLElement(root, "createTooltip root");
 
@@ -165,6 +180,7 @@ class TooltipController implements TooltipInstance {
   private focusOrigin: FocusOrigin = null;
   private openState: boolean;
   private openTimer: number | null = null;
+  private portalSurfaceAbortController: AbortController | null = null;
 
   constructor(root: HTMLElement, options: TooltipOptions) {
     this.root = root;
@@ -289,6 +305,7 @@ class TooltipController implements TooltipInstance {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.portalSurfaceAbortController?.abort();
     this.clearCloseTimer();
     this.clearOpenTimer();
     this.lifecycle.destroy();
@@ -394,6 +411,12 @@ class TooltipController implements TooltipInstance {
         { signal },
       );
     });
+
+    this.bindPortalEvents();
+  }
+
+  private bindPortalEvents(): void {
+    const signal = this.portalSurfaceAbortController?.signal ?? this.abortController.signal;
 
     if (this.contentHoverable) {
       this.getTooltipContentHoverElements().forEach((element) => {
@@ -578,7 +601,7 @@ class TooltipController implements TooltipInstance {
   }
 
   private getPortalElement(): HTMLElement {
-    return this.elements.positioner ?? this.elements.popup;
+    return this.elements.portal ?? this.elements.positioner ?? this.elements.popup;
   }
 
   private getFloatingReference(): HTMLElement | null {
@@ -739,10 +762,9 @@ function queryOwnElement(root: HTMLElement, selector: string): HTMLElement | nul
 }
 
 function queryOwnElements(root: HTMLElement, selector: string): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((element) => {
-    const owner = element.closest<HTMLElement>(`[${TOOLTIP_ROOT_ATTRIBUTE}]`);
-    return owner === root;
-  });
+  return queryRuntimePartElements(root, selector).filter((element) =>
+    isRuntimePartOwned(root, element, `[${TOOLTIP_ROOT_ATTRIBUTE}]`),
+  );
 }
 
 function getTriggerTarget(trigger: HTMLElement): HTMLElement {

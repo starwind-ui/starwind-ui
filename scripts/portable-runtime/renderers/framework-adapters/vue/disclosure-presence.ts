@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
 import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
 
@@ -224,7 +228,7 @@ function printPanel(
 ): string {
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -233,7 +237,6 @@ const props = withDefaults(
   { ${facts.props.hiddenUntilFound.name}: false },
 );
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 
 defineExpose({ element });
@@ -242,7 +245,7 @@ defineExpose({ element });
 <template>
   <div
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.panel}
     data-sw-part="${facts.parts.panel.name}"
     :${facts.attrs.panelHiddenUntilFound}="props.${facts.props.hiddenUntilFound.name} ? '' : undefined"

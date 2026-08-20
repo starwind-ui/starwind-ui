@@ -9,6 +9,10 @@ This release path covers the public package set:
 
 ## Versioning And Channels
 
+Follow `docs/release/versioning.md` when classifying package and component changes. Component
+versions remain independent from the `starwind` package version. An agent needs express user
+consent in the current task before it can create or modify a `starwind` major Changeset.
+
 Use numbered SemVer prereleases and publish them with the matching npm dist-tag. Changesets
 prerelease state is the source for the active channel: `beta`, `rc`, or another prerelease tag.
 Stable package versions publish with `latest` only after prerelease state has been fully consumed.

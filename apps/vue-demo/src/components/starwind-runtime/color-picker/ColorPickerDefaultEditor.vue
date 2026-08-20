@@ -17,6 +17,8 @@ import {
 export type ColorPickerDefaultEditorProps = {
   size?: "sm" | "md" | "lg";
   showEyeDropper?: boolean;
+  portalContainer?: string;
+  disablePortal?: boolean;
   formatControl?: "select" | "native" | "none";
   formats?: readonly import("@starwind-ui/runtime/color-picker").ColorPickerFormat[];
   swatches?: readonly (
@@ -31,6 +33,8 @@ export type ColorPickerDefaultEditorProps = {
 type ColorPickerDefaultEditorDeclaredProps = {
   size?: "sm" | "md" | "lg";
   showEyeDropper?: boolean;
+  portalContainer?: string;
+  disablePortal?: boolean;
   formatControl?: "select" | "native" | "none";
   formats?: readonly import("@starwind-ui/runtime/color-picker").ColorPickerFormat[];
   swatches?: readonly (
@@ -45,6 +49,8 @@ type ColorPickerDefaultEditorDeclaredProps = {
 const {
   size = "md",
   showEyeDropper = true,
+  portalContainer,
+  disablePortal = false,
   formatControl = "select",
   formats = ["hex", "rgb", "hsl", "hsb"],
   swatches = [],
@@ -101,6 +107,8 @@ const hasSwatchesAttribute = computed(() =>
       :format-content-size="size"
       :format-control="formatControl"
       :formats="formats"
+      :portal-container="portalContainer"
+      :disable-portal="disablePortal"
       class="min-w-0 flex-1"
     />
   </div>

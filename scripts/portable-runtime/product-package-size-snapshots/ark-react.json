@@ -1,0 +1,439 @@
+{
+  "schema": "starwind.product-package-size-comparator",
+  "schemaVersion": 2,
+  "capturedAt": "2026-08-18T14:49:25.086Z",
+  "catalog": {
+    "brotliBytes": 225898,
+    "gzipBytes": 286967,
+    "minifiedBytes": 1049486
+  },
+  "comparatorId": "ark-react",
+  "components": {
+    "accordion": {
+      "brotliBytes": 10452,
+      "gzipBytes": 11571,
+      "minifiedBytes": 32813
+    },
+    "alert-dialog": {
+      "brotliBytes": 17849,
+      "gzipBytes": 19788,
+      "minifiedBytes": 59736
+    },
+    "avatar": {
+      "brotliBytes": 6232,
+      "gzipBytes": 6868,
+      "minifiedBytes": 17892
+    },
+    "carousel": {
+      "brotliBytes": 13153,
+      "gzipBytes": 14549,
+      "minifiedBytes": 42631
+    },
+    "checkbox": {
+      "brotliBytes": 9581,
+      "gzipBytes": 10636,
+      "minifiedBytes": 29111
+    },
+    "checkbox-group": {
+      "brotliBytes": 9581,
+      "gzipBytes": 10636,
+      "minifiedBytes": 29111
+    },
+    "collapsible": {
+      "brotliBytes": 8252,
+      "gzipBytes": 9117,
+      "minifiedBytes": 24564
+    },
+    "combobox": {
+      "brotliBytes": 30411,
+      "gzipBytes": 34126,
+      "minifiedBytes": 106218
+    },
+    "context-menu": {
+      "brotliBytes": 29645,
+      "gzipBytes": 33129,
+      "minifiedBytes": 101116
+    },
+    "dialog": {
+      "brotliBytes": 17849,
+      "gzipBytes": 19788,
+      "minifiedBytes": 59736
+    },
+    "drawer": {
+      "brotliBytes": 26557,
+      "gzipBytes": 29935,
+      "minifiedBytes": 94085
+    },
+    "dropzone": {
+      "brotliBytes": 12303,
+      "gzipBytes": 13779,
+      "minifiedBytes": 38059
+    },
+    "field": {
+      "brotliBytes": 3841,
+      "gzipBytes": 4289,
+      "minifiedBytes": 11238
+    },
+    "input-otp": {
+      "brotliBytes": 9631,
+      "gzipBytes": 10648,
+      "minifiedBytes": 29644
+    },
+    "menu": {
+      "brotliBytes": 29645,
+      "gzipBytes": 33129,
+      "minifiedBytes": 101116
+    },
+    "navigation-menu": {
+      "brotliBytes": 16530,
+      "gzipBytes": 18389,
+      "minifiedBytes": 54840
+    },
+    "popover": {
+      "brotliBytes": 27146,
+      "gzipBytes": 30428,
+      "minifiedBytes": 89088
+    },
+    "preview-card": {
+      "brotliBytes": 21088,
+      "gzipBytes": 23475,
+      "minifiedBytes": 66223
+    },
+    "progress": {
+      "brotliBytes": 7223,
+      "gzipBytes": 7942,
+      "minifiedBytes": 21527
+    },
+    "radio": {
+      "brotliBytes": 9812,
+      "gzipBytes": 10877,
+      "minifiedBytes": 30596
+    },
+    "radio-group": {
+      "brotliBytes": 9812,
+      "gzipBytes": 10877,
+      "minifiedBytes": 30596
+    },
+    "scroll-area": {
+      "brotliBytes": 10931,
+      "gzipBytes": 12138,
+      "minifiedBytes": 34445
+    },
+    "select": {
+      "brotliBytes": 29850,
+      "gzipBytes": 33427,
+      "minifiedBytes": 102841
+    },
+    "slider": {
+      "brotliBytes": 13123,
+      "gzipBytes": 14555,
+      "minifiedBytes": 41820
+    },
+    "switch": {
+      "brotliBytes": 8932,
+      "gzipBytes": 9923,
+      "minifiedBytes": 26716
+    },
+    "tabs": {
+      "brotliBytes": 11301,
+      "gzipBytes": 12534,
+      "minifiedBytes": 34920
+    },
+    "toast": {
+      "brotliBytes": 12567,
+      "gzipBytes": 13917,
+      "minifiedBytes": 39625
+    },
+    "toggle": {
+      "brotliBytes": 5344,
+      "gzipBytes": 5872,
+      "minifiedBytes": 14728
+    },
+    "toggle-group": {
+      "brotliBytes": 7841,
+      "gzipBytes": 8662,
+      "minifiedBytes": 22916
+    },
+    "tooltip": {
+      "brotliBytes": 19820,
+      "gzipBytes": 21957,
+      "minifiedBytes": 62363
+    }
+  },
+  "environment": {
+    "esbuild": "0.27.7",
+    "node": "24.19.0"
+  },
+  "fixtureRevision": 2,
+  "measurementEntries": {
+    "catalog": [
+      {
+        "exports": ["*"],
+        "specifier": "@ark-ui/react"
+      }
+    ],
+    "components": {
+      "accordion": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/accordion"
+        }
+      ],
+      "alert-dialog": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/dialog"
+        }
+      ],
+      "avatar": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/avatar"
+        }
+      ],
+      "carousel": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/carousel"
+        }
+      ],
+      "checkbox": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/checkbox"
+        }
+      ],
+      "checkbox-group": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/checkbox"
+        }
+      ],
+      "collapsible": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/collapsible"
+        }
+      ],
+      "combobox": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/combobox"
+        }
+      ],
+      "context-menu": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/menu"
+        }
+      ],
+      "dialog": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/dialog"
+        }
+      ],
+      "drawer": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/drawer"
+        }
+      ],
+      "dropzone": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/file-upload"
+        }
+      ],
+      "field": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/field"
+        }
+      ],
+      "input-otp": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/pin-input"
+        }
+      ],
+      "menu": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/menu"
+        }
+      ],
+      "navigation-menu": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/navigation-menu"
+        }
+      ],
+      "popover": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/popover"
+        }
+      ],
+      "preview-card": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/hover-card"
+        }
+      ],
+      "progress": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/progress"
+        }
+      ],
+      "radio": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/radio-group"
+        }
+      ],
+      "radio-group": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/radio-group"
+        }
+      ],
+      "scroll-area": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/scroll-area"
+        }
+      ],
+      "select": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/select"
+        }
+      ],
+      "slider": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/slider"
+        }
+      ],
+      "switch": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/switch"
+        }
+      ],
+      "tabs": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/tabs"
+        }
+      ],
+      "toast": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/toast"
+        }
+      ],
+      "toggle": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/toggle"
+        }
+      ],
+      "toggle-group": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/toggle-group"
+        }
+      ],
+      "tooltip": [
+        {
+          "exports": ["*"],
+          "specifier": "@ark-ui/react/tooltip"
+        }
+      ]
+    },
+    "overlaps": {
+      "react-exact-three-way": [
+        "accordion",
+        "alert-dialog",
+        "avatar",
+        "checkbox",
+        "checkbox-group",
+        "collapsible",
+        "combobox",
+        "context-menu",
+        "dialog",
+        "drawer",
+        "field",
+        "input-otp",
+        "menu",
+        "navigation-menu",
+        "popover",
+        "preview-card",
+        "progress",
+        "radio",
+        "radio-group",
+        "scroll-area",
+        "select",
+        "slider",
+        "switch",
+        "tabs",
+        "toast",
+        "toggle",
+        "toggle-group",
+        "tooltip"
+      ],
+      "react-ark-react-overlap": [
+        "accordion",
+        "alert-dialog",
+        "avatar",
+        "carousel",
+        "checkbox",
+        "checkbox-group",
+        "collapsible",
+        "combobox",
+        "context-menu",
+        "dialog",
+        "drawer",
+        "dropzone",
+        "field",
+        "input-otp",
+        "menu",
+        "navigation-menu",
+        "popover",
+        "preview-card",
+        "progress",
+        "radio",
+        "radio-group",
+        "scroll-area",
+        "select",
+        "slider",
+        "switch",
+        "tabs",
+        "toast",
+        "toggle",
+        "toggle-group",
+        "tooltip"
+      ]
+    }
+  },
+  "overlaps": {
+    "react-exact-three-way": {
+      "brotliBytes": 100341,
+      "gzipBytes": 127717,
+      "minifiedBytes": 451962
+    },
+    "react-ark-react-overlap": {
+      "brotliBytes": 111279,
+      "gzipBytes": 141302,
+      "minifiedBytes": 498401
+    }
+  },
+  "package": {
+    "integrity": "sha512-uWKzQUDgKIxQUdf56OCO50c5T+6AGoXPrVJ/TldmU2pxxeutaCERIFmm3LM7mrFPNM9DJm4VQHCKKWajGTWjjg==",
+    "name": "@ark-ui/react",
+    "version": "5.38.2"
+  }
+}

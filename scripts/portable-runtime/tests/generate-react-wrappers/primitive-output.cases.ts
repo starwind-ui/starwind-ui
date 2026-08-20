@@ -820,6 +820,10 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
     expect(popoverRoot).toMatch(
       /}, \[\s*closeOnEscape,\s*closeOnOutsideInteract,\s*modal,\s*openOnHover,?\s*\]\);/,
     );
+    expect(popoverRoot).toContain(
+      "useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime)",
+    );
+    expect(popoverRoot).toContain("refreshPopoverPortalSurface(root)");
     expect(popoverTrigger).toContain("asChild?: boolean;");
     expect(popoverTrigger).toContain("getAsChildElement(children)");
     expect(popoverTrigger).toContain("React.cloneElement");
@@ -1735,8 +1739,10 @@ export function defineReactPrimitiveOutputTests(getTempRoot: GetTempRoot): void 
       "}, [autoComplete, disabled, filterMode, form, highlightItemOnHover, locale, readOnly]);",
     );
     expect(comboboxRoot).toMatch(
-      /}, \[\s*children,\s*autoComplete,\s*disabled,\s*filterMode,\s*form,\s*highlightItemOnHover,\s*locale,\s*modal,\s*name,\s*readOnly,\s*required,\s*setUncontrolledInputValue,\s*setUncontrolledOpen,\s*setUncontrolledValue,\s*\]\);/,
+      /}, \[\s*children,\s*autoComplete,\s*disabled,\s*filterMode,\s*form,\s*highlightItemOnHover,\s*locale,\s*modal,\s*name,\s*readOnly,\s*required,\s*setUncontrolledInputValue,\s*setUncontrolledOpen,\s*setUncontrolledValue,\s*portalRuntimeActivation,\s*\]\);/,
     );
+    expect(comboboxRoot).toContain("pendingProgrammaticValueRef.current = {");
+    expect(comboboxRoot).toContain("refreshComboboxPortalSurface(root)");
     expect(comboboxRoot).toContain("}, [ensureInstance, open, uncontrolledOpen]);");
     expect(comboboxRoot).toContain(
       "instance.setInputValue(inputValue, { emit: false, filter: false })",

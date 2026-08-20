@@ -4,6 +4,7 @@ const NON_SHIPPING_COMMENT =
   "Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.";
 
 export type VueIndexPrintOptions = {
+  namespaceMembers?: readonly { key: string; name: string }[];
   partExportOrder?: "model" | "export-name";
   partExportSpacing?: "compact" | "separated";
 };
@@ -25,6 +26,7 @@ export function printVueIndexFile(
   const namespaceMembers = getNamespaceMembers(
     file,
     valueMembers.map((member) => member.name),
+    options.namespaceMembers,
   )
     .map((member) => `  ${member.key}: ${member.name},`)
     .join("\n");
@@ -81,11 +83,12 @@ function getNamespaceKey(namespace: string, member: string): string {
 function getNamespaceMembers(
   file: AdapterIndexFile,
   valueExportNames: string[],
+  overrideMembers?: readonly { key: string; name: string }[],
 ): Array<{ key: string; name: string }> {
   const projection = file.family as
     | { facts?: { index?: { namespaceMembers?: Array<{ key: string; name: string }> } } }
     | undefined;
-  const projectedMembers = projection?.facts?.index?.namespaceMembers;
+  const projectedMembers = overrideMembers ?? projection?.facts?.index?.namespaceMembers;
   if (!projectedMembers) {
     return valueExportNames.map((name) => ({
       key: getNamespaceKey(file.exports.namespace, name),
@@ -103,7 +106,7 @@ function getNamespaceMembers(
     );
   }
 
-  return projectedMembers;
+  return [...projectedMembers];
 }
 
 function printVueIndexPrelude(file: AdapterIndexFile): string {

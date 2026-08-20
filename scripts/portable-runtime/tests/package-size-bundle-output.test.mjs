@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { constants } from "node:zlib";
 
 import { summarizeInitialBundleOutput } from "../package-size-bundle-output.mjs";
 
@@ -88,6 +89,22 @@ describe("package size bundle output", () => {
     });
 
     expect(gzipCalls).toEqual([{ level: 9 }]);
+  });
+
+  it("uses Brotli quality 11 for the same initial output graph", () => {
+    const brotliCalls = [];
+
+    const summary = summarizeInitialBundleOutput({
+      brotli: (contents, options) => {
+        brotliCalls.push(options);
+        return Buffer.from(contents);
+      },
+      entryFilePath: "/tmp/out/entry.js",
+      outputFiles: [outputFile("/tmp/out/entry.js", "export const value=1;")],
+    });
+
+    expect(summary.brotliBytes).toBe(summary.minifiedBytes);
+    expect(brotliCalls).toEqual([{ params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }]);
   });
 });
 

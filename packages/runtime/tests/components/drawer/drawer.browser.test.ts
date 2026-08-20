@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { initStarwind } from "../../../src/init-starwind";
 import { createDialog } from "../../../src/components/dialog";
 import { createDrawer } from "../../../src/components/drawer/drawer";
+import { initStarwind } from "../../../src/init-starwind";
 import { createFloatingPortalSession } from "../../../src/internal/floating-portal";
 
 describe("createDrawer", () => {
@@ -11,7 +10,7 @@ describe("createDrawer", () => {
     document.body.style.overflow = "";
   });
 
-  it("opens through a trigger and closes on outside interaction by default", () => {
+  it("opens through a trigger and closes on outside interaction by default", async () => {
     const root = renderDrawer();
     const listener = vi.fn();
     root.addEventListener("starwind:open-change", listener);
@@ -33,6 +32,7 @@ describe("createDrawer", () => {
     expect(getBackdrop().getAttribute("data-state")).toBe("open");
 
     getBackdrop().click();
+    await waitForPresenceFrame();
 
     expect(drawer.getOpen()).toBe(false);
     expect(getPopup().open).toBe(false);
@@ -49,6 +49,62 @@ describe("createDrawer", () => {
     );
 
     drawer.destroy();
+  });
+
+  it("locks document scroll before native presentation", () => {
+    const root = renderDrawer();
+    const popup = getPopup();
+    const presentationState = vi.fn(() => {
+      popup.setAttribute("open", "");
+      return {
+        locked: document.body.hasAttribute("data-sw-scroll-locked"),
+        overflow: document.body.style.overflow,
+        state: popup.getAttribute("data-state"),
+      };
+    });
+    vi.spyOn(popup, "showModal").mockImplementation(() => {
+      presentationState();
+    });
+    const drawer = createDrawer(root);
+
+    getTrigger().click();
+
+    expect(presentationState).toHaveReturnedWith({
+      locked: true,
+      overflow: "hidden",
+      state: "open",
+    });
+    drawer.destroy();
+  });
+
+  it("moves and restores the public portal wrapper around the native overlay", async () => {
+    const root = renderDrawer();
+    const target = document.createElement("section");
+    const portal = document.createElement("div");
+    target.id = "drawer-portal-target";
+    portal.dataset.swDrawerPortal = "";
+    portal.dataset.container = "#drawer-portal-target";
+    portal.dataset.swPortalPlacement = "runtime";
+    root.insertBefore(portal, getBackdrop());
+    portal.append(getBackdrop(), getPopup());
+    document.body.append(target);
+    const drawer = createDrawer(root);
+
+    getTrigger().click();
+
+    expect(portal.parentElement).toBe(target);
+    expect(portal.getAttribute("data-placement")).toBe("ready");
+    expect(portal.contains(getBackdrop())).toBe(true);
+    expect(portal.contains(getPopup())).toBe(true);
+    expect(getPopup().open).toBe(true);
+
+    getCloseButton().click();
+    await waitForPresenceFrame();
+
+    expect(portal.parentElement).toBe(root);
+    expect(portal.getAttribute("data-placement")).toBe("pending");
+    drawer.destroy();
+    target.remove();
   });
 
   it("inherits deterministic destroy focus restoration from Dialog normalization", () => {
@@ -75,7 +131,7 @@ describe("createDrawer", () => {
     expect(document.body.style.overflow).toBe("");
   });
 
-  it("reports close button, escape, and programmatic open-change reasons", () => {
+  it("reports close button, escape, and programmatic open-change reasons", async () => {
     const root = renderDrawer();
     const drawer = createDrawer(root);
     const listener = vi.fn();
@@ -93,6 +149,7 @@ describe("createDrawer", () => {
 
     getTrigger().click();
     getCloseButton().click();
+    await waitForPresenceFrame();
     expect(listener).toHaveBeenLastCalledWith(
       expect.objectContaining({ open: false, reason: "close-press" }),
     );
@@ -177,6 +234,7 @@ describe("createDrawer", () => {
     expect(closeCompleteListener).not.toHaveBeenCalled();
     expect(getPopup().open).toBe(true);
 
+    await nextAnimationFrame();
     closeAnimation.resolve();
     await closeAnimation.promise;
     await waitForMicrotasks();
@@ -194,7 +252,7 @@ describe("createDrawer", () => {
     expect(closeCompleteSubscriber).toHaveBeenCalledWith(expectedDetails);
   });
 
-  it("inherits dialog-owned floating layer closure and native cleanup", () => {
+  it("inherits dialog-owned floating layer closure and native cleanup", async () => {
     const root = renderDrawer();
     const drawer = createDrawer(root);
     drawer.open();
@@ -218,14 +276,17 @@ describe("createDrawer", () => {
     });
     session.mount();
 
-    expect(document.querySelector("[data-sw-floating-portal]:popover-open")).not.toBeNull();
+    const topLayerHost = popup.querySelector<HTMLElement>("[data-sw-dialog-top-layer-host]")!;
+    expect(topLayerHost.matches(":popover-open")).toBe(true);
+    expect(topLayerHost.querySelector("[data-floating-root]")?.contains(layer)).toBe(true);
 
     drawer.close();
+    await waitForPresenceFrame();
 
     expect(closeEvents).toEqual(["requested"]);
     expect(layer.getAttribute("data-state")).toBe("closed");
     expect(popup.open).toBe(false);
-    expect(document.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(topLayerHost.matches(":popover-open")).toBe(false);
 
     session.destroy();
     drawer.destroy();
@@ -245,13 +306,14 @@ describe("createDrawer", () => {
     drawer.destroy();
   });
 
-  it("handles native cancel events and respects closeOnEscape", () => {
+  it("handles native cancel events and respects closeOnEscape", async () => {
     const root = renderDrawer();
     const drawer = createDrawer(root);
     getTrigger().click();
 
     const cancelEvent = new Event("cancel", { cancelable: true });
     getPopup().dispatchEvent(cancelEvent);
+    await waitForPresenceFrame();
 
     expect(cancelEvent.defaultPrevented).toBe(true);
     expect(drawer.getOpen()).toBe(false);
@@ -304,7 +366,7 @@ describe("createDrawer", () => {
     drawer.destroy();
   });
 
-  it("inherits topmost nested behavior when opened inside a dialog", () => {
+  it("inherits topmost nested behavior when opened inside a dialog", async () => {
     const wrapper = document.createElement("div");
     wrapper.innerHTML = `
       <div data-sw-dialog>
@@ -344,6 +406,7 @@ describe("createDrawer", () => {
     expect(nestedBackdrop.hidden).toBe(true);
 
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+    await waitForPresenceFrame();
 
     expect(nestedPopup.open).toBe(false);
     expect(parentContent.open).toBe(true);
@@ -352,7 +415,7 @@ describe("createDrawer", () => {
     parentDialog.destroy();
   });
 
-  it("keeps body scroll locked while a sibling dialog remains open", () => {
+  it("keeps body scroll locked while a sibling dialog remains open", async () => {
     const dialogRoot = renderBaseDialog();
     const drawerRoot = renderDrawer();
     const dialog = createDialog(dialogRoot);
@@ -364,11 +427,13 @@ describe("createDrawer", () => {
     expect(document.body.style.overflow).toBe("hidden");
 
     drawer.setOpen(false);
+    await waitForPresenceFrame();
 
     expect(dialog.getOpen()).toBe(true);
     expect(document.body.style.overflow).toBe("hidden");
 
     dialog.setOpen(false);
+    await waitForPresenceFrame();
 
     expect(document.body.style.overflow).toBe("");
   });
@@ -582,4 +647,13 @@ function createDeferred(): { promise: Promise<void>; resolve: () => void } {
 async function waitForMicrotasks(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+async function waitForPresenceFrame(): Promise<void> {
+  await nextAnimationFrame();
+  await waitForMicrotasks();
 }

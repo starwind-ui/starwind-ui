@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as NavigationMenuPrimitive from "@starwind-ui/vue/navigation-menu";
 import type { ClassValue } from "tailwind-variants";
-import { type AnchorHTMLAttributes, useAttrs } from "vue";
+import { type AnchorHTMLAttributes } from "vue";
 import { navigationMenuLink } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -27,7 +27,6 @@ const {
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -35,7 +34,7 @@ const attrs = useAttrs();
     :class="navigationMenuLink({ class: className })"
     :active="active"
     :close-on-click="closeOnClick"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="navigation-menu-link"
   >
     <slot />

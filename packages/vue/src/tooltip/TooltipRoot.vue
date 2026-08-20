@@ -4,6 +4,7 @@
 import type { InjectionKey, Ref } from "vue";
 
 export type TooltipContextValue = {
+  element: Readonly<Ref<HTMLElement | null>>;
   mounted: Readonly<Ref<boolean>>;
   registerPortal: (owner: symbol, element: HTMLElement | null) => void;
 };
@@ -57,6 +58,7 @@ let runtimeGeneration = 0;
 let disposed = false;
 
 provide(TooltipContext, {
+  element: rootRef,
   mounted,
   registerPortal(owner, element) {
     if (element) portalOwner = owner;

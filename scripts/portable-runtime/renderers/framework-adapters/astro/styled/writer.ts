@@ -81,7 +81,11 @@ async function generateStyledOutputComponentGroup(
         ),
       ),
     ),
-    writeGeneratedFile(dir, "index.ts", renderIndex(group, tsHeader)),
+    writeGeneratedFile(
+      dir,
+      "index.ts",
+      renderIndex(group, tsHeader, { directory: dir, primitiveImportBase, primitiveOutputRoot }),
+    ),
   ];
 
   if (group.variants.length > 0 || (group.variantAliases ?? []).length > 0) {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as AlertDialogPrimitive from "@starwind-ui/vue/alert-dialog";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { alertDialogBackdrop, alertDialogContent } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -17,7 +17,6 @@ defineSlots<{
   default?: () => unknown;
   backdrop?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDialogElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDialogElement | null } & ComponentPublicInstance) | null =
   null;
@@ -57,7 +56,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :class="alertDialogContent({ class: className })"
     role="alertdialog"
     data-state="closed"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="alert-dialog-content"
   >
     <slot />

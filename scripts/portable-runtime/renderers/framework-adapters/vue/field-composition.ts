@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterFormControlCompositionComponentProjection,
   AdapterFormControlCompositionFacts,
@@ -76,7 +80,7 @@ function printRoot(facts: AdapterFormControlCompositionFacts): string {
 <script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
 import type { ${facts.formTiming.typeImport.name} } from "${facts.formTiming.typeImport.importSource}";
-import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(
@@ -101,7 +105,6 @@ const props = withDefaults(
   },
 );
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLDivElement | null>(null);
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
 defineExpose({ element: rootRef });
@@ -156,7 +159,7 @@ onBeforeUnmount(destroyOwnedInstance);
 <template>
   <${root.defaultElement}
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.root}
     data-sw-part="${root.name}"
     :${dirty.attribute}="props.${dirty.prop.name} ? '' : undefined"
@@ -229,7 +232,7 @@ function printError(facts: AdapterFormControlCompositionFacts): string {
   const part = facts.parts.error;
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 export type ${facts.message.matchType} = ${printMatchType(facts)};
@@ -246,7 +249,6 @@ const props = withDefaults(
   },
 );
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 
@@ -258,7 +260,7 @@ function serializeMatch(value: ${facts.message.matchType}): string {
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.error}
     data-sw-part="${part.name}"
     :${facts.message.error.matchAttribute}="serializeMatch(props.${facts.message.error.matchProp.name})"
@@ -275,7 +277,7 @@ function printValidity(facts: AdapterFormControlCompositionFacts): string {
   const part = facts.parts.validity;
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 export type ${facts.message.matchType} = ${printMatchType(facts)};
@@ -290,7 +292,6 @@ const props = withDefaults(
   },
 );
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 
@@ -302,7 +303,7 @@ function serializeMatch(value: ${facts.message.matchType}): string {
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.validity}
     data-sw-part="${part.name}"
     :${facts.message.validity.matchAttribute}="serializeMatch(props.${facts.message.validity.matchProp.name})"
@@ -327,11 +328,10 @@ function printSimplePart(
         : "HTMLDivElement";
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<${elementType} | null>(null);
 defineExpose({ element });
 </script>
@@ -339,7 +339,7 @@ defineExpose({ element });
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs[partName]}
     data-sw-part="${part.name}"
   >

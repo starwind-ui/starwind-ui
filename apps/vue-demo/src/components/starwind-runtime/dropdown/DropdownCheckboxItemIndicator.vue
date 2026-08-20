@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as MenuPrimitive from "@starwind-ui/vue/menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { dropdownCheckboxItemIndicator } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,13 +16,12 @@ const { class: className } = defineProps<DropdownCheckboxItemIndicatorDeclaredPr
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <MenuPrimitive.MenuCheckboxItemIndicator
     :class="dropdownCheckboxItemIndicator({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="dropdown-checkbox-item-indicator"
   >
     <slot />

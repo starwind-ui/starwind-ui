@@ -1,4 +1,6 @@
-export async function verifyHoverCardCases({ page, ids, label }) {
+import { assertPublicPortalTopology } from "./public-portal-topology.mjs";
+
+export async function verifyHoverCardCases({ page, ids, label, positionerParentTagName = "DIV" }) {
   await page.locator(`#${ids.demo}`).scrollIntoViewIfNeeded();
 
   const initialState = await page.evaluate(readHoverCardState, {
@@ -44,6 +46,9 @@ export async function verifyHoverCardCases({ page, ids, label }) {
 
   await page.locator(`#${ids.nativeTrigger}`).hover();
   await page.locator(`#${ids.nativeContent}`).waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator(`#${ids.nativeContent}`), {
+    portalSlot: "hover-card-portal",
+  });
   const nativeState = await page.evaluate(readOpenContentState, {
     contentId: ids.nativeContent,
     triggerId: ids.nativeTrigger,
@@ -88,7 +93,7 @@ export async function verifyHoverCardCases({ page, ids, label }) {
       sideState.align !== "center" ||
       sideState.role !== "tooltip" ||
       sideState.positionerSlot !== "hover-card-positioner" ||
-      sideState.positionerParentTag !== "BODY" ||
+      sideState.positionerParentTag !== positionerParentTagName ||
       sideState.positionerPosition !== "fixed" ||
       sideState.positionerStyleLeft === "" ||
       sideState.positionerStyleTop === "" ||

@@ -14,6 +14,8 @@ export type TooltipContentProps = Omit<
   sideOffset?: number;
   avoidCollisions?: boolean;
   positionerClassName?: string;
+  portalContainer?: string;
+  disablePortal?: boolean;
   icon?: React.ReactNode;
 };
 
@@ -25,13 +27,19 @@ function TooltipContent(props: TooltipContentProps) {
     align = "center",
     sideOffset = 8,
     avoidCollisions = true,
+    portalContainer,
+    disablePortal = false,
     children,
     icon,
     ...rest
   } = props;
 
   return (
-    <TooltipPrimitive.Portal data-slot="tooltip-portal">
+    <TooltipPrimitive.Portal
+      container={portalContainer}
+      disabled={disablePortal}
+      data-slot="tooltip-portal"
+    >
       <TooltipPrimitive.Positioner
         side={side}
         align={align}

@@ -12,6 +12,8 @@ export type PopoverContentProps = React.ComponentPropsWithoutRef<"div"> &
     sideOffset?: number;
     avoidCollisions?: boolean;
     collisionStrategy?: "initial-placement" | "best-fit";
+    portalContainer?: string;
+    disablePortal?: boolean;
   };
 
 function PopoverContent(props: PopoverContentProps) {
@@ -23,12 +25,18 @@ function PopoverContent(props: PopoverContentProps) {
     avoidCollisions = true,
     collisionStrategy = "initial-placement",
     exitMotion = "popover",
+    portalContainer,
+    disablePortal = false,
     children,
     ...rest
   } = props;
 
   return (
-    <PopoverPrimitive.Portal data-slot="popover-portal">
+    <PopoverPrimitive.Portal
+      container={portalContainer}
+      disabled={disablePortal}
+      data-slot="popover-portal"
+    >
       <PopoverPrimitive.Popup
         className={popoverContent({ exitMotion, class: className })}
         side={side}

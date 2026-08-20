@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterComponentFile,
   AdapterIndexFile,
@@ -15,9 +19,7 @@ export function printVueNativeDisabledIndex(file: AdapterIndexFile): AdapterPrin
   return printVueFamilyIndex(file, "native-disabled");
 }
 
-export function printVueNativeDisabledComponent(
-  file: AdapterComponentFile,
-): AdapterPrintedFile {
+export function printVueNativeDisabledComponent(file: AdapterComponentFile): AdapterPrintedFile {
   const family = file.component.family;
   if (family?.kind !== "native-disabled") {
     throw new TypeError(
@@ -25,9 +27,7 @@ export function printVueNativeDisabledComponent(
     );
   }
 
-  const part = family.facts.parts.all.find(
-    (candidate) => candidate.name === family.part,
-  );
+  const part = family.facts.parts.all.find((candidate) => candidate.name === family.part);
   if (!part) {
     throw new TypeError(
       `${family.facts.displayName} native-disabled facts are missing ${family.part} part.`,
@@ -50,7 +50,7 @@ function printRoot(
     contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
-import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -65,7 +65,6 @@ const props = withDefaults(
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const rootRef = ref<${getElementType(part)} | null>(null);
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
 
@@ -97,7 +96,7 @@ onBeforeUnmount(destroyOwnedInstance);
 <template>
   <${part.defaultElement}
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${part.discoveryAttribute}
     :${facts.attrs.stateDisabled}="props.${disabled} ? '' : undefined"
     :${facts.attrs.disabled}="props.${disabled}"
@@ -117,14 +116,13 @@ function printSlotPart(
   return {
     contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const rootRef = ref<${getElementType(part)} | null>(null);
 
 defineExpose({
@@ -135,7 +133,7 @@ defineExpose({
 <template>
   <${part.defaultElement}
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${part.discoveryAttribute}${part.role ? `\n    role="${part.role}"` : ""}
   >
     <slot />

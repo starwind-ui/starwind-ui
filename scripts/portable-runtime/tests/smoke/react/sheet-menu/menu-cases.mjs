@@ -1,4 +1,5 @@
 import { expectText } from "../../shared/text.mjs";
+import { assertPublicPortalTopology } from "../../shared/public-portal-topology.mjs";
 
 export async function verifyReactMenuCases({ page }) {
   await page.locator("#react-runtime-dropdown-trigger").focus();
@@ -38,6 +39,9 @@ export async function verifyReactMenuCases({ page }) {
 
   await page.getByRole("button", { name: "Open React menu" }).click();
   await page.locator("#react-runtime-dropdown-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#react-runtime-dropdown-content"), {
+    portalSlot: "dropdown-portal",
+  });
   const openDropdownState = await page
     .locator("#react-runtime-dropdown-content")
     .evaluate((content) => ({
@@ -61,7 +65,7 @@ export async function verifyReactMenuCases({ page }) {
     openDropdownState.state !== "open" ||
     !["bottom", "top"].includes(openDropdownState.dataSide ?? "") ||
     openDropdownState.dataAlign !== "start" ||
-    openDropdownState.parentTagName !== "BODY" ||
+    openDropdownState.parentTagName !== "DIV" ||
     openDropdownState.rootContains !== false ||
     openDropdownState.position !== "fixed" ||
     openDropdownState.styleLeft === "" ||
@@ -209,6 +213,9 @@ export async function verifyReactMenuCases({ page }) {
     trigger.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
   });
   await page.locator("#react-runtime-dropdown-sub-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#react-runtime-dropdown-sub-content"), {
+    portalSlot: "dropdown-sub-portal",
+  });
   const openDropdownSubmenuState = await page
     .locator("#react-runtime-dropdown-sub-content")
     .evaluate((content) => ({
@@ -222,7 +229,7 @@ export async function verifyReactMenuCases({ page }) {
     }));
   if (
     openDropdownSubmenuState.hidden !== false ||
-    openDropdownSubmenuState.parentTagName !== "BODY" ||
+    openDropdownSubmenuState.parentTagName !== "DIV" ||
     openDropdownSubmenuState.position !== "fixed" ||
     openDropdownSubmenuState.state !== "open" ||
     openDropdownSubmenuState.triggerExpanded !== "true"
@@ -238,17 +245,18 @@ export async function verifyReactMenuCases({ page }) {
   await page.waitForFunction(() => {
     const content = document.querySelector("#react-runtime-dropdown-content");
     const submenu = document.querySelector("#react-runtime-dropdown-sub-content");
-    const root = document.querySelector("#react-runtime-dropdown-default");
-
     return (
       content instanceof HTMLElement &&
       submenu instanceof HTMLElement &&
-      root instanceof HTMLElement &&
       content.hidden &&
-      submenu.hidden &&
-      root.contains(content) &&
-      root.contains(submenu)
+      submenu.hidden
     );
+  });
+  await assertPublicPortalTopology(page.locator("#react-runtime-dropdown-content"), {
+    portalSlot: "dropdown-portal",
+  });
+  await assertPublicPortalTopology(page.locator("#react-runtime-dropdown-sub-content"), {
+    portalSlot: "dropdown-sub-portal",
   });
 
   await expectText(page.locator("#react-dropdown-count"), "0");
@@ -272,14 +280,10 @@ export async function verifyReactMenuCases({ page }) {
   await expectText(page.locator("#react-dropdown-count"), "2");
   await page.waitForFunction(() => {
     const content = document.querySelector("#react-runtime-dropdown-controlled-content");
-    const root = document.querySelector("#react-runtime-dropdown-controlled");
-
-    return (
-      content instanceof HTMLElement &&
-      root instanceof HTMLElement &&
-      content.hidden &&
-      root.contains(content)
-    );
+    return content instanceof HTMLElement && content.hidden;
+  });
+  await assertPublicPortalTopology(page.locator("#react-runtime-dropdown-controlled-content"), {
+    portalSlot: "dropdown-portal",
   });
 
   const dropdownAsChildInitial = await page
@@ -294,6 +298,9 @@ export async function verifyReactMenuCases({ page }) {
     }));
   await page.getByRole("button", { name: "As child menu" }).click();
   await page.locator("#react-runtime-dropdown-as-child-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#react-runtime-dropdown-as-child-content"), {
+    portalSlot: "dropdown-portal",
+  });
   const dropdownAsChildOpen = await page.evaluate(() => {
     const trigger = document.querySelector("#react-runtime-dropdown-as-child-trigger");
     const content = document.querySelector("#react-runtime-dropdown-as-child-content");
@@ -316,7 +323,7 @@ export async function verifyReactMenuCases({ page }) {
     dropdownAsChildOpen.contentHidden !== false ||
     dropdownAsChildOpen.contentRole !== "menu" ||
     dropdownAsChildOpen.contentState !== "open" ||
-    dropdownAsChildOpen.parentTagName !== "BODY"
+    dropdownAsChildOpen.parentTagName !== "DIV"
   ) {
     throw new Error(
       `Expected React Dropdown asChild trigger to clone attributes and open, got ${JSON.stringify({
@@ -344,6 +351,9 @@ export async function verifyReactMenuCases({ page }) {
   await page.locator("#react-runtime-context-menu-trigger").focus();
   await page.keyboard.press("Shift+F10");
   await page.locator("#react-runtime-context-menu-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#react-runtime-context-menu-content"), {
+    portalSlot: "context-menu-portal",
+  });
   const keyboardContextMenuFocusState = await page.evaluate(() => ({
     activeId: document.activeElement?.id,
     activeTabIndex: document.activeElement?.getAttribute("tabindex"),
@@ -397,7 +407,7 @@ export async function verifyReactMenuCases({ page }) {
     openContextMenuState.state !== "open" ||
     !["bottom", "top"].includes(openContextMenuState.dataSide ?? "") ||
     openContextMenuState.dataAlign !== "start" ||
-    openContextMenuState.parentTagName !== "BODY" ||
+    openContextMenuState.parentTagName !== "DIV" ||
     openContextMenuState.rootContains !== false ||
     openContextMenuState.position !== "fixed" ||
     openContextMenuState.styleLeft === "" ||
@@ -514,6 +524,9 @@ export async function verifyReactMenuCases({ page }) {
     trigger.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
   });
   await page.locator("#react-runtime-context-menu-sub-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#react-runtime-context-menu-sub-content"), {
+    portalSlot: "context-menu-sub-portal",
+  });
   const openContextSubmenuState = await page
     .locator("#react-runtime-context-menu-sub-content")
     .evaluate((content) => ({
@@ -527,7 +540,7 @@ export async function verifyReactMenuCases({ page }) {
     }));
   if (
     openContextSubmenuState.hidden !== false ||
-    openContextSubmenuState.parentTagName !== "BODY" ||
+    openContextSubmenuState.parentTagName !== "DIV" ||
     openContextSubmenuState.position !== "fixed" ||
     openContextSubmenuState.state !== "open" ||
     openContextSubmenuState.triggerExpanded !== "true"
@@ -543,17 +556,18 @@ export async function verifyReactMenuCases({ page }) {
   await page.waitForFunction(() => {
     const content = document.querySelector("#react-runtime-context-menu-content");
     const submenu = document.querySelector("#react-runtime-context-menu-sub-content");
-    const root = document.querySelector("#react-runtime-context-menu-default");
-
     return (
       content instanceof HTMLElement &&
       submenu instanceof HTMLElement &&
-      root instanceof HTMLElement &&
       content.hidden &&
-      submenu.hidden &&
-      root.contains(content) &&
-      root.contains(submenu)
+      submenu.hidden
     );
+  });
+  await assertPublicPortalTopology(page.locator("#react-runtime-context-menu-content"), {
+    portalSlot: "context-menu-portal",
+  });
+  await assertPublicPortalTopology(page.locator("#react-runtime-context-menu-sub-content"), {
+    portalSlot: "context-menu-sub-portal",
   });
 
   await expectText(page.locator("#react-context-menu-count"), "0");
@@ -582,13 +596,9 @@ export async function verifyReactMenuCases({ page }) {
   await expectText(page.locator("#react-context-menu-count"), "2");
   await page.waitForFunction(() => {
     const content = document.querySelector("#react-runtime-context-menu-controlled-content");
-    const root = document.querySelector("#react-runtime-context-menu-controlled");
-
-    return (
-      content instanceof HTMLElement &&
-      root instanceof HTMLElement &&
-      content.hidden &&
-      root.contains(content)
-    );
+    return content instanceof HTMLElement && content.hidden;
+  });
+  await assertPublicPortalTopology(page.locator("#react-runtime-context-menu-controlled-content"), {
+    portalSlot: "context-menu-portal",
   });
 }

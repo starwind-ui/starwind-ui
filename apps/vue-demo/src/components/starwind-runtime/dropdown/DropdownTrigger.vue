@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as MenuPrimitive from "@starwind-ui/vue/menu";
 import type { ClassValue } from "tailwind-variants";
-import { type ButtonHTMLAttributes, computed, useAttrs } from "vue";
+import { type ButtonHTMLAttributes, computed } from "vue";
 import { dropdownTrigger } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,7 +18,6 @@ const { asChild = false, class: className } = defineProps<DropdownTriggerDeclare
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const triggerBaseClassName = computed(() => dropdownTrigger({ class: className }));
 const triggerClassName = computed(() => (asChild ? className : triggerBaseClassName.value));
 </script>
@@ -27,7 +26,7 @@ const triggerClassName = computed(() => (asChild ? className : triggerBaseClassN
   <MenuPrimitive.MenuTrigger
     :class="triggerClassName"
     :as-child="asChild"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="dropdown-trigger"
   >
     <slot />

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { itemDescription } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,7 +15,6 @@ const { class: className } = defineProps<ItemDescriptionDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLParagraphElement | null>(null);
 defineExpose({ element });
 </script>
@@ -24,7 +23,7 @@ defineExpose({ element });
   <p
     ref="element"
     :class="itemDescription({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="item-description"
   >
     <slot />

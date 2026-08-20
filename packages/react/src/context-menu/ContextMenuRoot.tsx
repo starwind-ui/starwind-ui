@@ -10,8 +10,14 @@ import {
   type ContextMenuOpenChangeDetails,
   createContextMenu,
 } from "@starwind-ui/runtime/context-menu";
+import { createPortalBinding, refreshMenuPortalSurface } from "@starwind-ui/runtime/menu";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import {
+  ReactPortalScopeProvider,
+  useReactPortalRuntimeLifecycle,
+  useReactPortalScope,
+} from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 export type ContextMenuRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
@@ -39,6 +45,8 @@ const ContextMenuRoot = React.forwardRef<HTMLDivElement, ContextMenuRootProps>(
     forwardedRef,
   ) {
     const rootRef = React.useRef<HTMLDivElement>(null);
+    const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+    const portalRuntimeActivation = portalScope.activation;
     const instanceRef = React.useRef<ReturnType<typeof createContextMenu> | undefined>(undefined);
     const onCloseCompleteRef = React.useRef(onCloseComplete);
     const onOpenChangeRef = React.useRef(onOpenChange);
@@ -72,7 +80,7 @@ const ContextMenuRoot = React.forwardRef<HTMLDivElement, ContextMenuRootProps>(
       [forwardedRef],
     );
 
-    useIsomorphicLayoutEffect(() => {
+    const initializePortalRuntime = React.useCallback(() => {
       const root = rootRef.current;
       if (!root) return;
 
@@ -105,6 +113,15 @@ const ContextMenuRoot = React.forwardRef<HTMLDivElement, ContextMenuRootProps>(
       };
     }, [disabled, modal, closeDelay]);
 
+    useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
+
+    useIsomorphicLayoutEffect(() => {
+      if (!portalScope.isReady()) return;
+      const root = rootRef.current;
+      if (!root) return;
+      refreshMenuPortalSurface(root);
+    }, [portalRuntimeActivation]);
+
     useIsomorphicLayoutEffect(() => {
       if (open === undefined) return;
       const instance = instanceRef.current;
@@ -117,17 +134,19 @@ const ContextMenuRoot = React.forwardRef<HTMLDivElement, ContextMenuRootProps>(
     const renderedOpen = open ?? uncontrolledOpen;
 
     return (
-      <div
-        data-sw-context-menu
-        data-sw-menu
-        data-default-open={defaultOpenRef.current ? "true" : undefined}
-        data-disabled={disabled ? "" : undefined}
-        data-modal={modal ? "true" : "false"}
-        data-close-delay={closeDelay}
-        data-state={renderedOpen ? "open" : "closed"}
-        ref={composedRef}
-        {...props}
-      />
+      <ReactPortalScopeProvider scope={portalScope}>
+        <div
+          data-sw-context-menu
+          data-sw-menu
+          data-default-open={defaultOpenRef.current ? "true" : undefined}
+          data-disabled={disabled ? "" : undefined}
+          data-modal={modal ? "true" : "false"}
+          data-close-delay={closeDelay}
+          data-state={renderedOpen ? "open" : "closed"}
+          ref={composedRef}
+          {...props}
+        />
+      </ReactPortalScopeProvider>
     );
   },
 );

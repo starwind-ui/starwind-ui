@@ -38,6 +38,7 @@ import {
 } from "../renderers/framework-adapters/index.js";
 import {
   applyReactEffectTiming,
+  applyReactPortalImportCanonicalization,
   applyReactRefCleanup,
   writeReactAdapterOutput,
 } from "../renderers/framework-adapters/react/primitive-output-writer.js";
@@ -1151,9 +1152,13 @@ describe("SpecializedAdapterSpec", () => {
     expect(astroIndex).toContain("SelectOpenChangeDetails");
     expect(astroIndex).toContain("SelectValueChangeDetails");
 
-    expect(reactRoot).toContain(
-      "createSelect,\n  type SelectOpenChangeDetails,\n  type SelectValueChangeDetails,",
-    );
+    expect(reactRoot).toContain(`import {
+  createPortalBinding,
+  createSelect,
+  refreshSelectPortalSurface,
+  type SelectOpenChangeDetails,
+  type SelectValueChangeDetails,
+} from "@starwind-ui/runtime/select";`);
     expect(reactRoot).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
     expect(reactRoot).toContain("const onValueChangeRef = React.useRef(onValueChange);");
     expect(reactRoot).toContain("createSelect(root, {");
@@ -1562,7 +1567,12 @@ describe("SpecializedAdapterSpec", () => {
       },
       portal: {
         discoveryAttribute: "data-sw-combobox-portal",
-        initialAttributes: [],
+        initialAttributes: [
+          "data-container",
+          "data-disabled",
+          "data-sw-portal-placement",
+          "data-placement",
+        ],
         publicRef: false,
       },
       positioner: {
@@ -2123,7 +2133,12 @@ describe("SpecializedAdapterSpec", () => {
       },
       portal: {
         discoveryAttribute: "data-sw-tooltip-portal",
-        initialAttributes: [],
+        initialAttributes: [
+          "data-container",
+          "data-disabled",
+          "data-sw-portal-placement",
+          "data-placement",
+        ],
         publicRef: true,
         role: undefined,
       },
@@ -2478,7 +2493,12 @@ describe("SpecializedAdapterSpec", () => {
       },
       portal: {
         discoveryAttribute: "data-sw-preview-card-portal",
-        initialAttributes: [],
+        initialAttributes: [
+          "data-container",
+          "data-disabled",
+          "data-sw-portal-placement",
+          "data-placement",
+        ],
         publicRef: true,
         role: undefined,
       },
@@ -8423,14 +8443,19 @@ describe("SpecializedAdapterSpec", () => {
       outputModel.files.map((file) => (file.kind === "component" ? `${file.path}.tsx` : file.path)),
     );
 
-    const root = getPrintedFile(printedFiles, "tooltip/TooltipRoot.tsx");
+    const root = applyReactPortalImportCanonicalization(
+      getPrintedFile(printedFiles, "tooltip/TooltipRoot.tsx"),
+    );
     const trigger = getPrintedFile(printedFiles, "tooltip/TooltipTrigger.tsx");
     const popup = getPrintedFile(printedFiles, "tooltip/TooltipPopup.tsx");
     const index = getPrintedFile(printedFiles, "tooltip/index.ts");
 
-    expect(root).toContain(
-      'import { createTooltip, type TooltipOpenChangeDetails } from "@starwind-ui/runtime/tooltip";',
-    );
+    expect(root).toContain(`import {
+  createPortalBinding,
+  createTooltip,
+  refreshTooltipPortalSurface,
+  type TooltipOpenChangeDetails,
+} from "@starwind-ui/runtime/tooltip";`);
     expect(root).toContain("const onOpenChangeRef = React.useRef(onOpenChange);");
     expect(root).toContain("onOpenChangeRef.current?.(nextOpen, details);");
     expect(root).toContain("instance.setDisabled(disabled);");
@@ -9255,7 +9280,9 @@ describe("SpecializedAdapterSpec", () => {
       "navigation-menu/NavigationMenuPositioner.astro",
     );
     const astroIndex = getPrintedFile(astroFiles, "navigation-menu/index.ts");
-    const reactRoot = getPrintedFile(reactFiles, "navigation-menu/NavigationMenuRoot.tsx");
+    const reactRoot = applyReactPortalImportCanonicalization(
+      getPrintedFile(reactFiles, "navigation-menu/NavigationMenuRoot.tsx"),
+    );
     const reactTrigger = getPrintedFile(reactFiles, "navigation-menu/NavigationMenuTrigger.tsx");
     const reactLink = getPrintedFile(reactFiles, "navigation-menu/NavigationMenuLink.tsx");
     const reactPositioner = getPrintedFile(
@@ -9317,9 +9344,12 @@ describe("SpecializedAdapterSpec", () => {
     expect(astroIndex).toContain("NavigationMenuValue");
     expect(astroIndex).toContain("NavigationMenuValueChangeDetails");
 
-    expect(reactRoot).toContain(
-      'import { createNavigationMenu, type NavigationMenuValueChangeDetails } from "@starwind-ui/runtime/navigation-menu";',
-    );
+    expect(reactRoot).toContain(`import {
+  createNavigationMenu,
+  createPortalBinding,
+  type NavigationMenuValueChangeDetails,
+  refreshNavigationMenuPortalSurface,
+} from "@starwind-ui/runtime/navigation-menu";`);
     expect(reactRoot).toContain("const onValueChangeRef = React.useRef(onValueChange);");
     expect(reactRoot).toContain(
       "const pendingValueChangeDetailsRef = React.useRef<NavigationMenuValueChangeDetails | null>(",
@@ -9328,10 +9358,11 @@ describe("SpecializedAdapterSpec", () => {
     expect(reactRoot).toContain("reason: pendingDetails.reason,");
     expect(reactRoot).toContain("trigger: pendingDetails.trigger,");
     expect(reactRoot).toContain("createNavigationMenu(root, {");
-    expect(reactRoot).toContain("defaultValue: defaultValueRef.current,");
+    expect(reactRoot).toContain("defaultValue: uncontrolledValueRef.current,");
     expect(reactRoot).toContain("onValueChangeRef.current?.(nextValue, details);");
     expect(reactRoot).toContain('instance.subscribe("valueChange"');
-    expect(reactRoot).toContain("setUncontrolledValue(instance.getValue());");
+    expect(reactRoot).toContain("const nextValue = instance.getValue();");
+    expect(reactRoot).toContain("setUncontrolledValue(nextValue);");
     expect(reactRoot).toContain('data-sw-nav-menu=""');
     expect(reactRoot).toContain('data-state={initialValue !== null ? "open" : "closed"}');
     expect(reactRoot).toContain("instance.destroy();");
@@ -10356,7 +10387,12 @@ export default Menu;
       },
       portal: {
         discoveryAttribute: "data-sw-nav-menu-portal",
-        initialAttributes: [],
+        initialAttributes: [
+          "data-container",
+          "data-disabled",
+          "data-sw-portal-placement",
+          "data-placement",
+        ],
         publicRef: true,
       },
       positioner: {
@@ -13095,7 +13131,7 @@ function expectPrintedBodiesToMatchGeneratedPackageBodies(
   for (const file of files) {
     const contents = packageSourceDirectory.includes("/astro/")
       ? normalizeAstroPrimitiveOutput(file.path.split("/").at(-1)!, file.contents)
-      : applyReactRefCleanup(file.contents);
+      : applyReactPortalImportCanonicalization(applyReactRefCleanup(file.contents));
     expect(normalizePrintedComparison(contents)).toBe(
       normalizePrintedComparison(readGeneratedPackageBody(packageSourceDirectory, file.path)),
     );
@@ -13220,7 +13256,9 @@ async function formatGeneratedOutput(contents: string, filepath: string): Promis
   if (filepath.endsWith(".astro")) {
     contents = normalizeAstroPrimitiveOutput(basename(filepath), contents);
   } else if (filepath.endsWith(".tsx")) {
-    contents = applyReactRefCleanup(applyReactEffectTiming(contents));
+    contents = applyReactPortalImportCanonicalization(
+      applyReactRefCleanup(applyReactEffectTiming(contents)),
+    );
   }
   const cacheKey = filepath.endsWith(".astro")
     ? "astro"

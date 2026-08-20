@@ -19,10 +19,12 @@ export type NavigationMenuProps = Omit<
   | "collisionPadding"
   | "contentSize"
   | "defaultValue"
+  | "disablePortal"
   | "modelValue"
   | "onChange"
   | "openDelay"
   | "orientation"
+  | "portalContainer"
   | "side"
   | "sideOffset"
   | "size"
@@ -41,6 +43,8 @@ export type NavigationMenuProps = Omit<
   avoidCollisions?: boolean;
   collisionPadding?: number;
   size?: "sm" | "md";
+  portalContainer?: string;
+  disablePortal?: boolean;
   contentSize?: "sm" | "md";
   class?: ClassValue;
   modelValue?: import("@starwind-ui/vue/navigation-menu").NavigationMenuValue;
@@ -59,6 +63,8 @@ type NavigationMenuDeclaredProps = {
   avoidCollisions?: boolean;
   collisionPadding?: number;
   size?: "sm" | "md";
+  portalContainer?: string;
+  disablePortal?: boolean;
   contentSize?: "sm" | "md";
   class?: ClassValue;
   modelValue?: import("@starwind-ui/vue/navigation-menu").NavigationMenuValue;
@@ -79,6 +85,8 @@ const {
   size = "md",
   contentSize: __vueDependentProp13,
   class: className,
+  portalContainer,
+  disablePortal = false,
   modelValue,
 } = defineProps<NavigationMenuDeclaredProps>();
 defineSlots<{
@@ -128,6 +136,8 @@ function handleValueChange(
       :avoid-collisions="avoidCollisions"
       :collision-padding="collisionPadding"
       :size="contentSize"
+      :portal-container="portalContainer"
+      :disable-portal="disablePortal"
     />
   </NavigationMenuPrimitive.NavigationMenuRoot>
 </template>

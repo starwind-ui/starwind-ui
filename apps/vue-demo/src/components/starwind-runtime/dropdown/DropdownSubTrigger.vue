@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as MenuPrimitive from "@starwind-ui/vue/menu";
 import type { ClassValue } from "tailwind-variants";
-import { computed, type HTMLAttributes, useAttrs } from "vue";
+import { computed, type HTMLAttributes } from "vue";
 import { dropdownItem } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -24,7 +24,6 @@ const {
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const subTriggerClassName = computed(() => className);
 </script>
 
@@ -32,7 +31,7 @@ const subTriggerClassName = computed(() => className);
   <MenuPrimitive.MenuSubmenuTrigger
     :class="dropdownItem({ inset, disabled, class: subTriggerClassName })"
     :disabled="disabled"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="dropdown-sub-trigger"
   >
     <slot />

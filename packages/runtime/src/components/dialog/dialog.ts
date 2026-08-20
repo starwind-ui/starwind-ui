@@ -1,22 +1,30 @@
+import { createCancelableDetails } from "../../internal/cancelable-details";
 import {
   ensureId,
   readBooleanAttribute,
   resolveAsChildControl,
   uniqueElements,
 } from "../../internal/dom";
-import { createCancelableDetails } from "../../internal/cancelable-details";
 import {
   dispatchCustomEvent,
   type ScheduledStarwindInit,
   scheduleStarwindInit,
 } from "../../internal/events";
-import { focusFirstElement, trapTabKey } from "../../internal/focus";
-import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
 import {
+  createFloatingPortalSession,
   demoteDialogOwnedFloatingPortals,
+  type FloatingPortalSession,
   promoteDialogOwnedFloatingPortals,
   requestDialogOwnedFloatingPortalClose,
+  resolvePortalPlacement,
 } from "../../internal/floating-portal";
+import {
+  createDialogTopLayerHost,
+  type DialogTopLayerHost,
+} from "../../internal/dialog-top-layer-host";
+import { focusFirstElement, trapTabKey } from "../../internal/focus";
+import { runOverlayOpenChangeShell } from "../../internal/overlay-open-change";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
 import { type DocumentScrollLock, lockDocumentScroll } from "../../internal/scroll-lock";
 
@@ -83,6 +91,7 @@ export type DialogInstance = {
 type DialogElements = {
   content: HTMLDialogElement;
   overlay: HTMLElement | null;
+  portal: HTMLElement | null;
   triggers: HTMLElement[];
   closeButtons: HTMLElement[];
   title: HTMLElement | null;
@@ -119,6 +128,32 @@ type DialogRollbackFocusPlan = {
 
 export function createDialog(root: HTMLElement, options: DialogOptions = {}): DialogInstance {
   return createDialogInternal(root, options, null);
+}
+
+export function refreshDialogPortalSurface(root: HTMLElement): void {
+  const controller = instances.get(root);
+  if (!controller) return;
+  const nextElements = getDialogElements(controller.root);
+  if (nextElements.content === controller["elements"].content) return;
+
+  const previousContent = controller["elements"].content;
+  requestDialogOwnedFloatingPortalClose(previousContent);
+  demoteDialogOwnedFloatingPortals(previousContent);
+  if (previousContent.open) previousContent.close();
+  controller["topLayerHost"].destroy();
+  controller["portalSurfaceAbortController"]?.abort();
+  controller["portalSurfaceAbortController"] = new AbortController();
+  Object.assign(controller["elements"], nextElements);
+  controller["topLayerHost"] = createDialogTopLayerHost(controller["elements"].content);
+  controller["setupAccessibility"]();
+  controller["bindPortalSurfaceEvents"]();
+  controller["portalSession"]?.mount();
+  controller["stateApplied"] = false;
+  if (controller["openState"]) {
+    controller["runOpenTransaction"]({ reason: "imperative-action" }, false);
+  } else {
+    controller["applyOpenState"](false, { reason: "imperative-action" });
+  }
 }
 
 function createDialogInternal(
@@ -159,6 +194,9 @@ class DialogController implements DialogInstance {
   private readonly onOpenChange?: (open: boolean, details: DialogOpenChangeDetails) => void;
   private readonly onCloseComplete?: (details: DialogCloseCompleteDetails) => void;
   private readonly role: DialogRole;
+  private readonly portalSession: FloatingPortalSession | null;
+  private topLayerHost: DialogTopLayerHost;
+  private portalSurfaceAbortController: AbortController | null = null;
   private openState: boolean;
   private previousActiveElement: HTMLElement | null = null;
   private closeAbortController: AbortController | null = null;
@@ -170,6 +208,7 @@ class DialogController implements DialogInstance {
   private nestedOpenCount = 0;
   private nestedParentNotified = false;
   private scheduledInit: ScheduledStarwindInit | null = null;
+  private placementReadyCleanup: (() => void) | null = null;
 
   constructor(root: HTMLElement, options: DialogOptions) {
     this.root = root;
@@ -184,8 +223,23 @@ class DialogController implements DialogInstance {
     this.onOpenChange = options.onOpenChange;
     this.onCloseComplete = options.onCloseComplete;
     this.role = options.role ?? readDialogRole(this.elements.content.getAttribute("role"));
+    this.topLayerHost = createDialogTopLayerHost(this.elements.content);
     this.openState =
       options.open ?? options.defaultOpen ?? readBooleanAttribute(root, "data-default-open");
+    this.portalSession = this.elements.portal
+      ? createFloatingPortalSession({
+          canPromote: () => this.openState,
+          getPortalElement: () => this.elements.portal as HTMLElement,
+          getPortalTarget: () =>
+            resolvePortalPlacement(this.elements.portal as HTMLElement, {
+              reference: this.root,
+            }).target,
+          onOwnerCloseRequest: () => {
+            this.requestOpen(false, { reason: "imperative-action" });
+          },
+          root,
+        })
+      : null;
   }
 
   initialize(initializationTransaction: DialogInitializationTransaction | null): void {
@@ -278,8 +332,12 @@ class DialogController implements DialogInstance {
     requestDialogOwnedFloatingPortalClose(this.elements.content);
     demoteDialogOwnedFloatingPortals(this.elements.content);
     this.abortController.abort();
+    this.portalSurfaceAbortController?.abort();
     this.closeAbortController?.abort();
     this.cancelScheduledInit();
+    this.cancelPlacementReady();
+    this.portalSession?.destroy();
+    this.topLayerHost.destroy();
     this.openChangeSubscribers.clear();
     this.closeCompleteSubscribers.clear();
     if (this.openState || this.elements.content.open) {
@@ -318,7 +376,7 @@ class DialogController implements DialogInstance {
 
   private bindEvents(): void {
     const { signal } = this.abortController;
-    const { content, closeButtons, overlay, triggers } = this.elements;
+    const { triggers } = this.elements;
 
     triggers.forEach((trigger) => {
       trigger.addEventListener(
@@ -330,26 +388,7 @@ class DialogController implements DialogInstance {
       );
     });
 
-    closeButtons.forEach((button) => {
-      button.addEventListener(
-        "click",
-        (event) => {
-          if (!this.isTopmostOpenLayer()) return;
-          this.requestOpen(false, { reason: "close-press", event, trigger: button });
-        },
-        { signal },
-      );
-    });
-
-    overlay?.addEventListener(
-      "click",
-      (event) => {
-        if (!this.closeOnOutsideInteract) return;
-        if (!this.isTopmostOpenLayer()) return;
-        this.requestOpen(false, { reason: "outside-press", event });
-      },
-      { signal },
-    );
+    this.bindPortalSurfaceEvents();
 
     this.root.addEventListener(
       "dialog:open",
@@ -387,55 +426,6 @@ class DialogController implements DialogInstance {
       { signal },
     );
 
-    content.addEventListener(
-      "click",
-      (event) => {
-        if (!this.closeOnOutsideInteract) return;
-        if (!isMouseEventForDocument(event, this.root.ownerDocument)) return;
-        if (
-          isNodeForDocument(event.target, this.root.ownerDocument) &&
-          event.target !== content &&
-          content.contains(event.target)
-        ) {
-          return;
-        }
-        if (isPointInsideElement(content, event.clientX, event.clientY)) return;
-        if (!this.isTopmostOpenLayer()) return;
-
-        this.requestOpen(false, { reason: "outside-press", event });
-      },
-      { signal },
-    );
-
-    content.addEventListener(
-      "cancel",
-      (event) => {
-        event.preventDefault();
-        if (!this.closeOnEscape) return;
-        if (!this.isTopmostOpenLayer()) return;
-        this.requestOpen(false, { reason: "escape-key", event });
-      },
-      { signal },
-    );
-
-    content.addEventListener(
-      "submit",
-      (event) => {
-        if (!isFormElementForDocument(event.target, this.root.ownerDocument)) return;
-        if (event.target.closest("dialog") !== content) return;
-        if (event.target.method !== "dialog") return;
-
-        event.preventDefault();
-        if (!this.isTopmostOpenLayer()) return;
-        this.requestOpen(false, {
-          reason: "close-press",
-          event,
-          trigger: getSubmitter(event, this.root.ownerDocument) ?? event.target,
-        });
-      },
-      { signal },
-    );
-
     this.root.ownerDocument.addEventListener(
       "keydown",
       (event) => {
@@ -454,8 +444,78 @@ class DialogController implements DialogInstance {
         }
 
         if (this.modal) {
-          trapTabKey(content, event);
+          trapTabKey(this.elements.content, event);
         }
+      },
+      { signal },
+    );
+  }
+
+  private bindPortalSurfaceEvents(): void {
+    const { content, closeButtons, overlay } = this.elements;
+    const signal = this.portalSurfaceAbortController?.signal ?? this.abortController.signal;
+
+    closeButtons.forEach((button) => {
+      button.addEventListener(
+        "click",
+        (event) => {
+          if (!this.isTopmostOpenLayer()) return;
+          this.requestOpen(false, { reason: "close-press", event, trigger: button });
+        },
+        { signal },
+      );
+    });
+
+    overlay?.addEventListener(
+      "click",
+      (event) => {
+        if (!this.closeOnOutsideInteract || !this.isTopmostOpenLayer()) return;
+        this.requestOpen(false, { reason: "outside-press", event });
+      },
+      { signal },
+    );
+
+    content.addEventListener(
+      "click",
+      (event) => {
+        if (!this.closeOnOutsideInteract) return;
+        if (!isMouseEventForDocument(event, this.root.ownerDocument)) return;
+        if (
+          isNodeForDocument(event.target, this.root.ownerDocument) &&
+          event.target !== content &&
+          content.contains(event.target)
+        ) {
+          return;
+        }
+        if (isPointInsideElement(content, event.clientX, event.clientY)) return;
+        if (!this.isTopmostOpenLayer()) return;
+        this.requestOpen(false, { reason: "outside-press", event });
+      },
+      { signal },
+    );
+
+    content.addEventListener(
+      "cancel",
+      (event) => {
+        event.preventDefault();
+        if (!this.closeOnEscape || !this.isTopmostOpenLayer()) return;
+        this.requestOpen(false, { reason: "escape-key", event });
+      },
+      { signal },
+    );
+
+    content.addEventListener(
+      "submit",
+      (event) => {
+        if (!isFormElementForDocument(event.target, this.root.ownerDocument)) return;
+        if (event.target.closest("dialog") !== content || event.target.method !== "dialog") return;
+        event.preventDefault();
+        if (!this.isTopmostOpenLayer()) return;
+        this.requestOpen(false, {
+          reason: "close-press",
+          event,
+          trigger: getSubmitter(event, this.root.ownerDocument) ?? event.target,
+        });
       },
       { signal },
     );
@@ -567,12 +627,14 @@ class DialogController implements DialogInstance {
   ): void {
     this.closeAbortController?.abort();
     this.closeAbortController = null;
+    this.cancelPlacementReady();
     if (open) {
       this.pendingControlledCloseRequest = null;
     }
 
     if (!open && !this.stateApplied) {
       this.cancelScheduledInit();
+      this.portalSession?.restore();
       this.renderState(false);
       this.elements.content.hidden = true;
       if (this.elements.overlay) this.elements.overlay.hidden = true;
@@ -581,6 +643,14 @@ class DialogController implements DialogInstance {
     }
 
     if (open) {
+      if (this.portalSession) {
+        const placementReady = this.portalSession.mount();
+        this.placementReadyCleanup = this.portalSession.onReadyChange((ready) => {
+          this.handlePortalPlacementReadyChange(ready, request);
+        });
+        if (!placementReady) return;
+      }
+
       if (rescanOnly) {
         if (!initializationTransaction) {
           throw new Error("Dialog open initialization requires a transaction.");
@@ -593,13 +663,13 @@ class DialogController implements DialogInstance {
 
       this.registerOpenLayer();
       this.notifyParentNestedOpen();
+      this.lockBodyScroll();
       this.renderState(true);
       this.openNativeDialog();
       if (!initializationTransaction) {
         throw new Error("Dialog open initialization requires a transaction.");
       }
       this.initializeNestedDialogs(initializationTransaction);
-      this.lockBodyScroll();
       if (this.isTopmostOpenLayer()) {
         focusFirstElement(this.elements.content);
       }
@@ -648,6 +718,7 @@ class DialogController implements DialogInstance {
     this.unregisterOpenLayer();
     demoteDialogOwnedFloatingPortals(this.elements.content);
     this.closeNativeDialog();
+    this.portalSession?.restore();
     this.unlockBodyScroll();
     this.renderState(false);
     this.elements.content.hidden = true;
@@ -670,6 +741,7 @@ class DialogController implements DialogInstance {
         content.setAttribute("open", "");
       }
     }
+    this.topLayerHost.show();
     promoteDialogOwnedFloatingPortals(content);
   }
 
@@ -688,6 +760,31 @@ class DialogController implements DialogInstance {
     this.scheduledInit = null;
   }
 
+  private cancelPlacementReady(): void {
+    this.placementReadyCleanup?.();
+    this.placementReadyCleanup = null;
+  }
+
+  private handlePortalPlacementReadyChange(ready: boolean, request?: OpenRequest): void {
+    if (this.destroyed || !this.openState) return;
+
+    if (!ready) {
+      if (!this.elements.content.open) return;
+
+      this.cancelScheduledInit();
+      demoteDialogOwnedFloatingPortals(this.elements.content);
+      this.unregisterOpenLayer();
+      this.closeNativeDialog();
+      this.unlockBodyScroll();
+      if (this.elements.overlay) this.elements.overlay.hidden = true;
+      return;
+    }
+
+    if (!this.elements.content.open) {
+      this.runOpenTransaction(request, false);
+    }
+  }
+
   scheduleInitializationAfterCommit(): void {
     this.cancelScheduledInit();
     this.scheduledInit = scheduleStarwindInit(this.elements.content);
@@ -695,6 +792,7 @@ class DialogController implements DialogInstance {
 
   private closeNativeDialog(): void {
     const { content } = this.elements;
+    this.topLayerHost.hide();
     if (!content.open) return;
 
     if (typeof content.close === "function") {
@@ -718,7 +816,10 @@ class DialogController implements DialogInstance {
         showElement(overlay, { startingStyleRelease: "after-paint" });
       }
     } else if (overlay) {
-      hideElementAfterAnimations(overlay, { signal: closeSignal });
+      hideElementAfterAnimations(overlay, {
+        animationDiscovery: "next-frame",
+        signal: closeSignal,
+      });
     }
 
     triggers.forEach((trigger) => {
@@ -732,12 +833,14 @@ class DialogController implements DialogInstance {
     request: OpenRequest | undefined,
   ): void {
     hideElementAfterAnimations(this.elements.content, {
+      animationDiscovery: "next-frame",
       signal: closeAbortController.signal,
       onHidden: () => {
         if (closeAbortController.signal.aborted) return;
 
         demoteDialogOwnedFloatingPortals(this.elements.content);
         this.closeNativeDialog();
+        this.portalSession?.restore();
         this.unregisterOpenLayer();
         this.notifyParentNestedClose();
         this.unlockBodyScroll();
@@ -952,19 +1055,29 @@ function removeOpenLayer(controller: DialogController): void {
 }
 
 function getDialogElements(root: HTMLElement): DialogElements {
-  const content = root.querySelector<HTMLDialogElement>("[data-sw-dialog-content]");
+  const content = queryDialogElement<HTMLDialogElement>(root, "[data-sw-dialog-content]");
   if (!content) {
     throw new Error("Dialog requires a [data-sw-dialog-content] element.");
   }
 
   return {
     content,
-    overlay: root.querySelector<HTMLElement>("[data-sw-dialog-overlay]"),
+    overlay: queryDialogElement(root, "[data-sw-dialog-overlay]"),
+    portal: getOwnedNativeOverlayPortal(root),
     triggers: getDialogTriggers(root),
     closeButtons: getResolvedDialogControls(root, DIALOG_CLOSE_ATTRIBUTE),
-    title: root.querySelector<HTMLElement>("[data-sw-dialog-title]"),
-    description: root.querySelector<HTMLElement>("[data-sw-dialog-description]"),
+    title: queryDialogElement(root, "[data-sw-dialog-title]"),
+    description: queryDialogElement(root, "[data-sw-dialog-description]"),
   };
+}
+
+function getOwnedNativeOverlayPortal(root: HTMLElement): HTMLElement | null {
+  const selector = "[data-sw-alert-dialog-portal], [data-sw-drawer-portal]";
+  return (
+    queryRuntimePartElements(root, selector).find((portal) =>
+      isRuntimePartOwned(root, portal, DIALOG_ROOT_SELECTOR),
+    ) ?? null
+  );
 }
 
 function getDialogTriggers(root: HTMLElement): HTMLElement[] {
@@ -989,7 +1102,20 @@ function getDialogTriggers(root: HTMLElement): HTMLElement[] {
 
 function getResolvedDialogControls(root: HTMLElement, attribute: string): HTMLElement[] {
   return uniqueElements(
-    Array.from(root.querySelectorAll<HTMLElement>(`[${attribute}]`)).map(resolveAsChildControl),
+    queryRuntimePartElements(root, `[${attribute}]`)
+      .filter((element) => isRuntimePartOwned(root, element, DIALOG_ROOT_SELECTOR))
+      .map(resolveAsChildControl),
+  );
+}
+
+function queryDialogElement<T extends HTMLElement = HTMLElement>(
+  root: HTMLElement,
+  selector: string,
+): T | null {
+  return (
+    queryRuntimePartElements<T>(root, selector).find((element) =>
+      isRuntimePartOwned(root, element, DIALOG_ROOT_SELECTOR),
+    ) ?? null
   );
 }
 

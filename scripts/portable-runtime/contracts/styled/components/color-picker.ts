@@ -173,6 +173,8 @@ function defaultAnatomyNodes(inline: boolean): RenderNode[] {
       { name: "formats", value: variable("normalizedFormats") },
       { name: "showEyeDropper", value: variable("showEyeDropper") },
       { name: "swatches", value: variable("swatches") },
+      { name: "portalContainer", value: variable("portalContainer") },
+      { name: "disablePortal", value: variable("disablePortal") },
     ],
   };
 
@@ -228,6 +230,8 @@ function defaultAnatomyNodes(inline: boolean): RenderNode[] {
             { name: "align", value: variable("align") },
             { name: "sideOffset", value: variable("sideOffset") },
             { name: "avoidCollisions", value: variable("avoidCollisions") },
+            { name: "portalContainer", value: variable("portalContainer") },
+            { name: "disablePortal", value: variable("disablePortal") },
             {
               name: "aria-label",
               value: {
@@ -400,6 +404,8 @@ function defaultEditorNodes(): RenderNode[] {
             { name: "formatContentSize", value: variable("size") },
             { name: "formatControl", value: variable("formatControl") },
             { name: "formats", value: variable("formats") },
+            { name: "portalContainer", value: variable("portalContainer") },
+            { name: "disablePortal", value: variable("disablePortal") },
             { name: "class", value: literal("min-w-0 flex-1") },
           ],
         },
@@ -618,6 +624,8 @@ function colorPickerInputNodes(): RenderNode[] {
                       exportName: "SelectContent",
                       attrs: [
                         { name: "size", value: variable("formatContentSize") },
+                        { name: "portalContainer", value: variable("portalContainer") },
+                        { name: "disablePortal", value: variable("disablePortal") },
                         { name: "data-sw-color-picker-format-options", value: literal("") },
                       ],
                       children: formatOptionNodes("select"),
@@ -742,7 +750,8 @@ export const colorPickerStyledContract: StyledAdapterContract = {
       '[data-slot="color-picker-value-swatch"] { background-color: #fff; background-image: linear-gradient(var(--sw-color-picker-swatch-color, transparent), var(--sw-color-picker-swatch-color, transparent)), linear-gradient(45deg, #d4d4d8 25%, transparent 25%), linear-gradient(-45deg, #d4d4d8 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d4d4d8 75%), linear-gradient(-45deg, transparent 75%, #d4d4d8 75%); background-position: 0 0, 0 0, 0 4px, 4px -4px, -4px 0; background-size: 100% 100%, 8px 8px, 8px 8px, 8px 8px, 8px 8px; }',
       '[data-slot="color-picker-value-swatch"] > [data-slot="color-picker-transparency-grid"], [data-slot="color-picker-value-swatch"] > [data-slot="color-picker-value-swatch-color"] { display: none; }',
       '[data-slot="color-picker-footer"][data-has-swatches="false"]:not(:has([data-slot="color-picker-clear"]:not([hidden]))) > [data-slot="color-picker-separator"] { display: none; }',
-      '[data-sw-color-picker][data-floating-root] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }',
+      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] { display: contents; }',
+      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options]) { position: fixed; z-index: 60; }',
     ],
   },
   variants: {
@@ -878,6 +887,8 @@ export const colorPickerStyledContract: StyledAdapterContract = {
           { name: "align", optional: true, type: '"start" | "center" | "end"' },
           { name: "sideOffset", optional: true, type: "number" },
           { name: "avoidCollisions", optional: true, type: "boolean" },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
           {
             name: "onValueChange",
             optional: true,
@@ -948,6 +959,8 @@ export const colorPickerStyledContract: StyledAdapterContract = {
           { name: "align", defaultValue: '"start"' },
           { name: "sideOffset", defaultValue: "4" },
           { name: "avoidCollisions", defaultValue: "true" },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
           { name: "onValueChange", frameworks: ["react", "vue"] },
           { name: "onValueCommitted", frameworks: ["react", "vue"] },
           { name: "onFormatChange", frameworks: ["react", "vue"] },
@@ -1063,6 +1076,8 @@ export const colorPickerStyledContract: StyledAdapterContract = {
         fields: [
           { name: "size", optional: true, type: '"sm" | "md" | "lg"' },
           { name: "showEyeDropper", optional: true, type: "boolean" },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
           ...formatFields,
           swatchesField,
         ],
@@ -1071,6 +1086,8 @@ export const colorPickerStyledContract: StyledAdapterContract = {
         props: [
           { name: "size", defaultValue: '"md"' },
           { name: "showEyeDropper", defaultValue: "true" },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
           { name: "formatControl", defaultValue: '"select"' },
           { name: "formats", defaultValue: JSON.stringify(formatOptions) },
           { name: "swatches", defaultValue: "[]" },
@@ -1113,6 +1130,8 @@ export const colorPickerStyledContract: StyledAdapterContract = {
         fields: [
           ...formatFields,
           { name: "formatContentSize", optional: true, type: '"sm" | "md" | "lg"' },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
         ],
       },
       destructure: {
@@ -1120,6 +1139,8 @@ export const colorPickerStyledContract: StyledAdapterContract = {
           { name: "formatControl", defaultValue: '"select"' },
           { name: "formats", defaultValue: JSON.stringify(formatOptions) },
           { name: "formatContentSize", defaultValue: '"md"' },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
           { name: "class", alias: "className" },
         ],
         rest: "rest",
@@ -1228,6 +1249,8 @@ export const colorPickerStyledContract: StyledAdapterContract = {
           { name: "side", defaultValue: '"bottom"' },
           { name: "align", defaultValue: '"start"' },
           { name: "exitMotion", defaultValue: '"fade"' },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
         ],
         rest: "rest",
       },
@@ -1249,6 +1272,8 @@ export const colorPickerStyledContract: StyledAdapterContract = {
             { name: "align", value: variable("align") },
             { name: "collisionStrategy", value: literal("best-fit") },
             { name: "exitMotion", value: variable("exitMotion") },
+            { name: "portalContainer", value: variable("portalContainer") },
+            { name: "disablePortal", value: variable("disablePortal") },
             { name: "spread", value: variable("rest") },
             { name: "data-sw-color-picker-content", value: literal("") },
             { name: "data-size", value: variable("size") },
@@ -1263,6 +1288,8 @@ export const colorPickerStyledContract: StyledAdapterContract = {
                 attrs: [
                   { name: "size", value: variable("size") },
                   { name: "showEyeDropper", value: variable("showEyeDropper") },
+                  { name: "portalContainer", value: variable("portalContainer") },
+                  { name: "disablePortal", value: variable("disablePortal") },
                   { name: "formatControl", value: variable("formatControl") },
                   { name: "formats", value: variable("formats") },
                   { name: "swatches", value: variable("swatches") },

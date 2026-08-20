@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as AccordionPrimitive from "@starwind-ui/vue/accordion";
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import { accordionItem } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -20,7 +20,6 @@ const { value, disabled = false, class: className } = defineProps<AccordionItemD
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLElement | null } & ComponentPublicInstance) | null = null;
 defineExpose({ element });
@@ -49,7 +48,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :class="accordionItem({ class: className })"
     :value="value"
     :disabled="disabled"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="accordion-item"
   >
     <slot />

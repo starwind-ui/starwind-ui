@@ -8,6 +8,8 @@ type Props = HTMLAttributes<"div"> & {
   align?: "start" | "center" | "end";
   sideOffset?: number;
   avoidCollisions?: boolean;
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 const {
@@ -16,13 +18,19 @@ const {
   align = "start",
   sideOffset = 0,
   avoidCollisions = true,
+  portalContainer,
+  disablePortal = false,
   ...rest
 } = Astro.props;
 
 const subContentClassName = className;
 ---
 
-<ContextMenuPrimitive.Portal data-slot="context-menu-sub-portal">
+<ContextMenuPrimitive.Portal
+  container={portalContainer}
+  disabled={disablePortal}
+  data-slot="context-menu-sub-portal"
+>
   <ContextMenuPrimitive.Popup
     class={contextMenuContent({ class: subContentClassName })}
     side={side}

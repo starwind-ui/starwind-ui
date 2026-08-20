@@ -23,37 +23,42 @@ async function runDialogFloatingOverlays({ ids, label, page }) {
   const assertPromoted = async (contentId, expectedRole) => {
     await page.locator(`#${contentId}`).waitFor({ state: "visible" });
     const state = await page.locator(`#${contentId}`).evaluate((content) => {
-      const dialog = content.closest("dialog[open]");
-      const floatingRoot = dialog?.querySelector(":scope > [data-floating-root]");
-      const portal = content.closest("[data-sw-floating-portal]");
+      const floatingRoot = content.closest("[data-floating-root]");
+      const portal = content.closest('[data-slot$="-portal"]');
       const rect = content.getBoundingClientRect();
       const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
       return {
-        dialogOwnsPortal:
+        floatingRootContainsPortal:
           floatingRoot instanceof HTMLElement && portal instanceof HTMLElement
             ? floatingRoot.contains(portal)
             : null,
+        floatingRootKind: floatingRoot?.getAttribute("data-sw-floating-root"),
+        topLayerHostOpen:
+          floatingRoot?.parentElement?.matches("[data-sw-dialog-top-layer-host]:popover-open") ??
+          null,
         expanded: document
           .querySelector(`[aria-controls='${content.id}']`)
           ?.getAttribute("aria-expanded"),
         hitInsideContent: hit instanceof Node ? content.contains(hit) : false,
-        portalPromoted: portal?.matches(":popover-open") ?? false,
+        portalTagName: portal?.tagName,
         role: content.getAttribute("role"),
         state: content.getAttribute("data-state"),
       };
     });
 
     if (
-      state.dialogOwnsPortal !== true ||
+      state.floatingRootContainsPortal !== true ||
+      state.floatingRootKind !== "dialog" ||
+      state.topLayerHostOpen !== true ||
       state.expanded !== "true" ||
       state.hitInsideContent !== true ||
-      state.portalPromoted !== true ||
+      state.portalTagName !== "DIV" ||
       state.role !== expectedRole ||
       state.state !== "open"
     ) {
       throw new Error(
-        `Expected ${label} ${contentId} to be promoted and interactive inside its dialog, got ${JSON.stringify(state)}.`,
+        `Expected ${label} ${contentId} to use its public portal wrapper inside the Dialog-owned top-layer host, got ${JSON.stringify(state)}.`,
       );
     }
   };
@@ -106,11 +111,10 @@ async function runDialogFloatingOverlays({ ids, label, page }) {
     .evaluate((content, config) => {
       const dialog = content.closest("dialog[open]");
       const parentContent = document.querySelector(`#${config.popoverContent}`);
-      const parentDialog = document.querySelector(`#${config.labContent}`);
-      const parentFloatingRoot = parentDialog?.querySelector(":scope > [data-floating-root]");
-      const parentPortal = parentContent?.closest("[data-sw-floating-portal]");
-      const childFloatingRoot = dialog?.querySelector(":scope > [data-floating-root]");
-      const childPortal = content.closest("[data-sw-floating-portal]");
+      const parentFloatingRoot = parentContent?.closest("[data-floating-root]");
+      const parentPortal = parentContent?.closest('[data-slot$="-portal"]');
+      const childFloatingRoot = content.closest("[data-floating-root]");
+      const childPortal = content.closest('[data-slot$="-portal"]');
       const clip = dialog?.querySelector("[data-runtime-dialog-overlay-clip]");
       const contentRect = content.getBoundingClientRect();
       const clipRect = clip?.getBoundingClientRect();
@@ -151,7 +155,8 @@ async function runDialogFloatingOverlays({ ids, label, page }) {
           dialog instanceof HTMLDialogElement && topHit instanceof Node
             ? dialog.contains(topHit)
             : null,
-        childPromoted: childPortal?.matches(":popover-open") ?? false,
+        childFloatingRootKind: childFloatingRoot?.getAttribute("data-sw-floating-root"),
+        childPortalTagName: childPortal?.tagName,
         childState: content.getAttribute("data-state"),
         escapesClip,
         hitOutsideClip,
@@ -159,7 +164,8 @@ async function runDialogFloatingOverlays({ ids, label, page }) {
           parentFloatingRoot instanceof HTMLElement && parentPortal instanceof HTMLElement
             ? parentFloatingRoot.contains(parentPortal)
             : null,
-        parentPromoted: parentPortal?.matches(":popover-open") ?? false,
+        parentFloatingRootKind: parentFloatingRoot?.getAttribute("data-sw-floating-root"),
+        parentPortalTagName: parentPortal?.tagName,
         parentState: parentContent?.getAttribute("data-state"),
         portalsDistinct: parentPortal !== childPortal,
       };
@@ -167,17 +173,19 @@ async function runDialogFloatingOverlays({ ids, label, page }) {
   if (
     nestedState?.childOwnsPortal !== true ||
     nestedState.childOwnsTopHit !== true ||
-    nestedState.childPromoted !== true ||
+    nestedState.childFloatingRootKind !== "dialog" ||
+    nestedState.childPortalTagName !== "DIV" ||
     nestedState.childState !== "open" ||
     nestedState.escapesClip !== true ||
     nestedState.hitOutsideClip !== true ||
     nestedState.parentOwnsPortal !== true ||
-    nestedState.parentPromoted !== true ||
+    nestedState.parentFloatingRootKind !== "dialog" ||
+    nestedState.parentPortalTagName !== "DIV" ||
     nestedState.parentState !== "open" ||
     nestedState.portalsDistinct !== true
   ) {
     throw new Error(
-      `Expected ${label} parent and nested layers to stay promoted in owner order while the nested Popover escapes clipping, got ${JSON.stringify(nestedState)}.`,
+      `Expected ${label} parent and nested layers to use distinct public portal wrappers while the nested Popover escapes clipping, got ${JSON.stringify(nestedState)}.`,
     );
   }
   await page.locator(`#${ids.nestedPopoverAction}`).click();
@@ -221,8 +229,24 @@ async function runDialogFloatingOverlays({ ids, label, page }) {
     return dialog instanceof HTMLDialogElement && !dialog.open;
   }, ids.labContent);
   await page.waitForFunction(
-    () => !document.querySelector("[data-sw-floating-portal]:popover-open"),
+    (config) =>
+      [
+        config.popoverContent,
+        config.selectContent,
+        config.comboboxContent,
+        config.dropdownContent,
+        config.nestedPopoverContent,
+      ].every((id) => document.querySelector(`#${id}`)?.getAttribute("data-state") !== "open"),
+    ids,
   );
+  const dialogHostOpen = await page
+    .locator(`#${ids.labContent} > [data-sw-dialog-top-layer-host]`)
+    .evaluate((host) => host.matches(":popover-open"));
+  if (dialogHostOpen) {
+    throw new Error(
+      `Expected ${label} Dialog host to leave :popover-open after its child floating state closed.`,
+    );
+  }
 
   await page.locator(`#${ids.labTrigger}`).click();
   await page.getByRole("dialog", { name: "Overlays inside a dialog" }).waitFor();
@@ -234,25 +258,10 @@ async function runDialogFloatingOverlays({ ids, label, page }) {
         config.comboboxInput,
         config.dropdownTrigger,
       ].map((id) => document.querySelector(`#${id}`)?.getAttribute("aria-expanded")),
-      promotedFixtureLayers: [
-        config.popoverContent,
-        config.selectContent,
-        config.comboboxContent,
-        config.dropdownContent,
-        config.nestedPopoverContent,
-      ].filter((id) =>
-        document
-          .querySelector(`#${id}`)
-          ?.closest("[data-sw-floating-portal]")
-          ?.matches(":popover-open"),
-      ),
     }),
     ids,
   );
-  if (
-    reopenedState.promotedFixtureLayers.length > 0 ||
-    reopenedState.expanded.some((value) => value !== "false")
-  ) {
+  if (reopenedState.expanded.some((value) => value !== "false")) {
     throw new Error(
       `Expected ${label} dialog reopen to reset floating layers, got ${JSON.stringify(reopenedState)}.`,
     );
@@ -287,12 +296,6 @@ async function cleanupDialogFloatingOverlays({ ids, page }) {
         config.dropdownContent,
         config.nestedPopoverContent,
       ];
-      const hasPromotedFixturePortal = floatingContentIds.some((id) =>
-        document
-          .querySelector(`#${id}`)
-          ?.closest("[data-sw-floating-portal]")
-          ?.matches(":popover-open"),
-      );
       const hasOpenFloatingState = floatingContentIds.some(
         (id) => document.querySelector(`#${id}`)?.getAttribute("data-state") === "open",
       );
@@ -307,7 +310,6 @@ async function cleanupDialogFloatingOverlays({ ids, page }) {
       return (
         !(lab instanceof HTMLDialogElement && lab.open) &&
         !(nested instanceof HTMLDialogElement && nested.open) &&
-        !hasPromotedFixturePortal &&
         !hasOpenFloatingState &&
         !hasExpandedControl
       );

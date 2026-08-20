@@ -43,7 +43,7 @@ export const svelteFrameworkAdapterReadiness = defineFrameworkAdapterReadiness({
   fileExtension: ".svelte",
   lifecycleStrategy: "svelte-attachment-cleanup",
   normalizeAttributeName: normalizeHtmlAttributeName,
-  portalStrategy: "runtime-owned",
+  portalStrategy: "svelte-attachment",
   propStrategy: "svelte-props",
   publicSupport: svelteAdapterPublicContract.publicSupport,
   refStrategy: "svelte-attachment-ref",

@@ -1,0 +1,517 @@
+{
+  "schema": "starwind.product-package-size-comparator",
+  "schemaVersion": 2,
+  "capturedAt": "2026-08-18T14:49:56.133Z",
+  "catalog": {
+    "brotliBytes": 159919,
+    "gzipBytes": 210385,
+    "minifiedBytes": 789944
+  },
+  "comparatorId": "reka-vue",
+  "components": {
+    "accordion": {
+      "brotliBytes": 7592,
+      "gzipBytes": 8467,
+      "minifiedBytes": 23418
+    },
+    "alert-dialog": {
+      "brotliBytes": 11045,
+      "gzipBytes": 12447,
+      "minifiedBytes": 39506
+    },
+    "avatar": {
+      "brotliBytes": 2458,
+      "gzipBytes": 2759,
+      "minifiedBytes": 6742
+    },
+    "checkbox": {
+      "brotliBytes": 8509,
+      "gzipBytes": 9486,
+      "minifiedBytes": 26406
+    },
+    "collapsible": {
+      "brotliBytes": 4515,
+      "gzipBytes": 5019,
+      "minifiedBytes": 12699
+    },
+    "combobox": {
+      "brotliBytes": 36494,
+      "gzipBytes": 41521,
+      "minifiedBytes": 127424
+    },
+    "context-menu": {
+      "brotliBytes": 26898,
+      "gzipBytes": 30556,
+      "minifiedBytes": 100270
+    },
+    "dialog": {
+      "brotliBytes": 10315,
+      "gzipBytes": 11542,
+      "minifiedBytes": 34957
+    },
+    "input-otp": {
+      "brotliBytes": 5347,
+      "gzipBytes": 5942,
+      "minifiedBytes": 15666
+    },
+    "menu": {
+      "brotliBytes": 27399,
+      "gzipBytes": 31246,
+      "minifiedBytes": 103198
+    },
+    "navigation-menu": {
+      "brotliBytes": 11740,
+      "gzipBytes": 13146,
+      "minifiedBytes": 39130
+    },
+    "popover": {
+      "brotliBytes": 20262,
+      "gzipBytes": 22777,
+      "minifiedBytes": 68831
+    },
+    "preview-card": {
+      "brotliBytes": 18147,
+      "gzipBytes": 20341,
+      "minifiedBytes": 58728
+    },
+    "progress": {
+      "brotliBytes": 2793,
+      "gzipBytes": 3105,
+      "minifiedBytes": 7259
+    },
+    "radio": {
+      "brotliBytes": 8956,
+      "gzipBytes": 9977,
+      "minifiedBytes": 28161
+    },
+    "radio-group": {
+      "brotliBytes": 8956,
+      "gzipBytes": 9977,
+      "minifiedBytes": 28161
+    },
+    "scroll-area": {
+      "brotliBytes": 7774,
+      "gzipBytes": 8888,
+      "minifiedBytes": 27793
+    },
+    "select": {
+      "brotliBytes": 27754,
+      "gzipBytes": 31316,
+      "minifiedBytes": 93762
+    },
+    "slider": {
+      "brotliBytes": 7061,
+      "gzipBytes": 8011,
+      "minifiedBytes": 23111
+    },
+    "switch": {
+      "brotliBytes": 3680,
+      "gzipBytes": 4101,
+      "minifiedBytes": 10893
+    },
+    "tabs": {
+      "brotliBytes": 6904,
+      "gzipBytes": 7690,
+      "minifiedBytes": 21248
+    },
+    "toast": {
+      "brotliBytes": 9483,
+      "gzipBytes": 10674,
+      "minifiedBytes": 30352
+    },
+    "toggle": {
+      "brotliBytes": 3423,
+      "gzipBytes": 3839,
+      "minifiedBytes": 9957
+    },
+    "toggle-group": {
+      "brotliBytes": 7360,
+      "gzipBytes": 8188,
+      "minifiedBytes": 22873
+    },
+    "tooltip": {
+      "brotliBytes": 18835,
+      "gzipBytes": 21088,
+      "minifiedBytes": 61276
+    }
+  },
+  "environment": {
+    "esbuild": "0.27.7",
+    "node": "24.19.0"
+  },
+  "fixtureRevision": 2,
+  "measurementEntries": {
+    "catalog": [
+      {
+        "exports": ["*"],
+        "specifier": "reka-ui"
+      }
+    ],
+    "components": {
+      "accordion": [
+        {
+          "exports": [
+            "AccordionContent",
+            "AccordionHeader",
+            "AccordionItem",
+            "AccordionRoot",
+            "AccordionTrigger"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "alert-dialog": [
+        {
+          "exports": [
+            "AlertDialogAction",
+            "AlertDialogCancel",
+            "AlertDialogContent",
+            "AlertDialogDescription",
+            "AlertDialogOverlay",
+            "AlertDialogPortal",
+            "AlertDialogRoot",
+            "AlertDialogTitle",
+            "AlertDialogTrigger"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "avatar": [
+        {
+          "exports": ["AvatarFallback", "AvatarImage", "AvatarRoot"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "checkbox": [
+        {
+          "exports": ["CheckboxGroupRoot", "CheckboxIndicator", "CheckboxRoot"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "collapsible": [
+        {
+          "exports": ["CollapsibleContent", "CollapsibleRoot", "CollapsibleTrigger"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "combobox": [
+        {
+          "exports": [
+            "ComboboxAnchor",
+            "ComboboxArrow",
+            "ComboboxCancel",
+            "ComboboxContent",
+            "ComboboxEmpty",
+            "ComboboxGroup",
+            "ComboboxInput",
+            "ComboboxItem",
+            "ComboboxItemIndicator",
+            "ComboboxLabel",
+            "ComboboxPortal",
+            "ComboboxRoot",
+            "ComboboxSeparator",
+            "ComboboxTrigger",
+            "ComboboxViewport",
+            "ComboboxVirtualizer"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "context-menu": [
+        {
+          "exports": [
+            "ContextMenuArrow",
+            "ContextMenuCheckboxItem",
+            "ContextMenuContent",
+            "ContextMenuGroup",
+            "ContextMenuItem",
+            "ContextMenuItemIndicator",
+            "ContextMenuLabel",
+            "ContextMenuPortal",
+            "ContextMenuRadioGroup",
+            "ContextMenuRadioItem",
+            "ContextMenuRoot",
+            "ContextMenuSeparator",
+            "ContextMenuSub",
+            "ContextMenuSubContent",
+            "ContextMenuSubTrigger",
+            "ContextMenuTrigger"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "dialog": [
+        {
+          "exports": [
+            "DialogClose",
+            "DialogContent",
+            "DialogDescription",
+            "DialogOverlay",
+            "DialogPortal",
+            "DialogRoot",
+            "DialogTitle",
+            "DialogTrigger"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "input-otp": [
+        {
+          "exports": ["PinInputInput", "PinInputRoot"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "menu": [
+        {
+          "exports": [
+            "DropdownMenuArrow",
+            "DropdownMenuCheckboxItem",
+            "DropdownMenuContent",
+            "DropdownMenuFilter",
+            "DropdownMenuGroup",
+            "DropdownMenuItem",
+            "DropdownMenuItemIndicator",
+            "DropdownMenuLabel",
+            "DropdownMenuPortal",
+            "DropdownMenuRadioGroup",
+            "DropdownMenuRadioItem",
+            "DropdownMenuRoot",
+            "DropdownMenuSeparator",
+            "DropdownMenuSub",
+            "DropdownMenuSubContent",
+            "DropdownMenuSubTrigger",
+            "DropdownMenuTrigger"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "navigation-menu": [
+        {
+          "exports": [
+            "NavigationMenuContent",
+            "NavigationMenuIndicator",
+            "NavigationMenuItem",
+            "NavigationMenuLink",
+            "NavigationMenuList",
+            "NavigationMenuRoot",
+            "NavigationMenuSub",
+            "NavigationMenuTrigger",
+            "NavigationMenuViewport"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "popover": [
+        {
+          "exports": [
+            "PopoverAnchor",
+            "PopoverArrow",
+            "PopoverClose",
+            "PopoverContent",
+            "PopoverPortal",
+            "PopoverRoot",
+            "PopoverTrigger"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "preview-card": [
+        {
+          "exports": [
+            "HoverCardArrow",
+            "HoverCardContent",
+            "HoverCardPortal",
+            "HoverCardRoot",
+            "HoverCardTrigger"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "progress": [
+        {
+          "exports": ["ProgressIndicator", "ProgressRoot"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "radio": [
+        {
+          "exports": ["RadioGroupIndicator", "RadioGroupItem", "RadioGroupRoot"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "radio-group": [
+        {
+          "exports": ["RadioGroupIndicator", "RadioGroupItem", "RadioGroupRoot"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "scroll-area": [
+        {
+          "exports": [
+            "ScrollAreaCorner",
+            "ScrollAreaRoot",
+            "ScrollAreaScrollbar",
+            "ScrollAreaScrollbarGlimpse",
+            "ScrollAreaThumb",
+            "ScrollAreaViewport"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "select": [
+        {
+          "exports": [
+            "SelectArrow",
+            "SelectContent",
+            "SelectGroup",
+            "SelectIcon",
+            "SelectItem",
+            "SelectItemIndicator",
+            "SelectItemText",
+            "SelectLabel",
+            "SelectPortal",
+            "SelectRoot",
+            "SelectScrollDownButton",
+            "SelectScrollUpButton",
+            "SelectSeparator",
+            "SelectTrigger",
+            "SelectValue",
+            "SelectViewport"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "slider": [
+        {
+          "exports": ["SliderRange", "SliderRoot", "SliderThumb", "SliderTrack"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "switch": [
+        {
+          "exports": ["SwitchRoot", "SwitchThumb"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "tabs": [
+        {
+          "exports": ["TabsContent", "TabsIndicator", "TabsList", "TabsRoot", "TabsTrigger"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "toast": [
+        {
+          "exports": [
+            "ToastAction",
+            "ToastClose",
+            "ToastDescription",
+            "ToastPortal",
+            "ToastProvider",
+            "ToastRoot",
+            "ToastTitle",
+            "ToastViewport"
+          ],
+          "specifier": "reka-ui"
+        }
+      ],
+      "toggle": [
+        {
+          "exports": ["Toggle"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "toggle-group": [
+        {
+          "exports": ["ToggleGroupItem", "ToggleGroupRoot"],
+          "specifier": "reka-ui"
+        }
+      ],
+      "tooltip": [
+        {
+          "exports": [
+            "TooltipArrow",
+            "TooltipContent",
+            "TooltipPortal",
+            "TooltipProvider",
+            "TooltipRoot",
+            "TooltipTrigger"
+          ],
+          "specifier": "reka-ui"
+        }
+      ]
+    },
+    "overlaps": {
+      "vue-exact-three-way": [
+        "accordion",
+        "alert-dialog",
+        "avatar",
+        "checkbox",
+        "collapsible",
+        "combobox",
+        "context-menu",
+        "dialog",
+        "input-otp",
+        "menu",
+        "navigation-menu",
+        "popover",
+        "preview-card",
+        "progress",
+        "radio",
+        "radio-group",
+        "scroll-area",
+        "select",
+        "slider",
+        "switch",
+        "tabs",
+        "toast",
+        "toggle",
+        "toggle-group",
+        "tooltip"
+      ],
+      "vue-reka-vue-overlap": [
+        "accordion",
+        "alert-dialog",
+        "avatar",
+        "checkbox",
+        "collapsible",
+        "combobox",
+        "context-menu",
+        "dialog",
+        "input-otp",
+        "menu",
+        "navigation-menu",
+        "popover",
+        "preview-card",
+        "progress",
+        "radio",
+        "radio-group",
+        "scroll-area",
+        "select",
+        "slider",
+        "switch",
+        "tabs",
+        "toast",
+        "toggle",
+        "toggle-group",
+        "tooltip"
+      ]
+    }
+  },
+  "overlaps": {
+    "vue-exact-three-way": {
+      "brotliBytes": 82679,
+      "gzipBytes": 102940,
+      "minifiedBytes": 376981
+    },
+    "vue-reka-vue-overlap": {
+      "brotliBytes": 82679,
+      "gzipBytes": 102940,
+      "minifiedBytes": 376981
+    }
+  },
+  "package": {
+    "integrity": "sha512-nJGZbwcha8AcP2wbnjodfzsciTKBqp1mIzepC9Pi2xDI/YK3++ej3vpJOSPyxqrkq1Oorj4K+BdJkbVCV6x6ag==",
+    "name": "reka-ui",
+    "version": "2.10.3"
+  }
+}

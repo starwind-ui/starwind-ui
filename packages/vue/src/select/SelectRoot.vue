@@ -5,6 +5,7 @@ import { type ComputedRef, type InjectionKey, inject, type Ref } from "vue";
 
 export type SelectContextValue = Readonly<{
   disabled: ComputedRef<boolean>;
+  element: Readonly<Ref<HTMLElement | null>>;
   mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   readOnly: ComputedRef<boolean>;
@@ -113,6 +114,7 @@ let lifecycleGeneration = 0;
 
 provide(SelectContext, {
   disabled,
+  element: rootRef,
   mounted,
   open: renderedOpen,
   readOnly,

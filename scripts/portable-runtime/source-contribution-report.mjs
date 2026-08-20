@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-const categoryOrder = ["Runtime", "React adapter", "Third-party", "Other"];
-const starwindCategories = new Set(["Runtime", "React adapter"]);
+const categoryOrder = ["Runtime", "React adapter", "Vue adapter", "Third-party", "Other"];
+const starwindCategories = new Set(["Runtime", "React adapter", "Vue adapter"]);
 
 export function buildSourceContributionAnalyses({
   readFile = readFileSync,
@@ -196,6 +196,7 @@ function categorizeInput(input, { repoRoot, tmpRoot }) {
   const absoluteInput = resolvePortablePath(tmpRoot, input);
   const runtimeSegment = "/packages/runtime/";
   const reactSegment = "/packages/react/";
+  const vueSegment = "/packages/vue/";
 
   if (absoluteInput.includes(runtimeSegment) || normalizedInput.includes(runtimeSegment)) {
     return "Runtime";
@@ -203,6 +204,10 @@ function categorizeInput(input, { repoRoot, tmpRoot }) {
 
   if (absoluteInput.includes(reactSegment) || normalizedInput.includes(reactSegment)) {
     return "React adapter";
+  }
+
+  if (absoluteInput.includes(vueSegment) || normalizedInput.includes(vueSegment)) {
+    return "Vue adapter";
   }
 
   if (absoluteInput.includes("/node_modules/") || normalizedInput.includes("/node_modules/")) {
@@ -218,7 +223,8 @@ function resolveSourceOwner(input, { readFile, repoRoot, tmpRoot }) {
 
   if (
     !relativeToRepo.startsWith("packages/runtime/") &&
-    !relativeToRepo.startsWith("packages/react/")
+    !relativeToRepo.startsWith("packages/react/") &&
+    !relativeToRepo.startsWith("packages/vue/")
   ) {
     return null;
   }

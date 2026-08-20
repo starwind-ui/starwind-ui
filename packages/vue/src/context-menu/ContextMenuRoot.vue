@@ -42,6 +42,7 @@ let instance: ReturnType<typeof createContextMenu> | undefined;
 let generation = 0;
 
 provide(MenuRootContext, {
+  element: rootRef,
   mounted,
   open: renderedOpen,
   registerPortal() {},

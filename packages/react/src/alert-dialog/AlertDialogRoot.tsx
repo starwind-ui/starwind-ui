@@ -9,9 +9,16 @@ import {
   type AlertDialogCloseCompleteDetails,
   type AlertDialogOpenChangeDetails,
   createAlertDialog,
+  createPortalBinding,
+  refreshAlertDialogPortalSurface,
 } from "@starwind-ui/runtime/alert-dialog";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import {
+  ReactPortalScopeProvider,
+  useReactPortalRuntimeLifecycle,
+  useReactPortalScope,
+} from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 export type AlertDialogRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
@@ -39,6 +46,8 @@ const AlertDialogRoot = React.forwardRef<HTMLDivElement, AlertDialogRootProps>(
     forwardedRef,
   ) {
     const rootRef = React.useRef<HTMLDivElement>(null);
+    const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+    const portalRuntimeActivation = portalScope.activation;
     const instanceRef = React.useRef<ReturnType<typeof createAlertDialog> | undefined>(undefined);
     const onCloseCompleteRef = React.useRef(onCloseComplete);
     const onOpenChangeRef = React.useRef(onOpenChange);
@@ -72,7 +81,7 @@ const AlertDialogRoot = React.forwardRef<HTMLDivElement, AlertDialogRootProps>(
       [forwardedRef],
     );
 
-    useIsomorphicLayoutEffect(() => {
+    const initializePortalRuntime = React.useCallback(() => {
       const root = rootRef.current;
       if (!root) return;
 
@@ -105,6 +114,15 @@ const AlertDialogRoot = React.forwardRef<HTMLDivElement, AlertDialogRootProps>(
       };
     }, [closeOnEscape, closeOnOutsideInteract, modal]);
 
+    useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
+
+    useIsomorphicLayoutEffect(() => {
+      if (!portalScope.isReady()) return;
+      const root = rootRef.current;
+      if (!root) return;
+      refreshAlertDialogPortalSurface(root);
+    }, [portalRuntimeActivation]);
+
     useIsomorphicLayoutEffect(() => {
       if (open === undefined) return;
       const instance = instanceRef.current;
@@ -117,16 +135,18 @@ const AlertDialogRoot = React.forwardRef<HTMLDivElement, AlertDialogRootProps>(
     const renderedOpen = open ?? uncontrolledOpen;
 
     return (
-      <div
-        data-sw-alert-dialog
-        data-default-open={defaultOpenRef.current ? "true" : undefined}
-        data-close-on-escape={closeOnEscape ? "true" : "false"}
-        data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
-        data-modal={modal ? "true" : "false"}
-        data-state={renderedOpen ? "open" : "closed"}
-        ref={composedRef}
-        {...props}
-      />
+      <ReactPortalScopeProvider scope={portalScope}>
+        <div
+          data-sw-alert-dialog
+          data-default-open={defaultOpenRef.current ? "true" : undefined}
+          data-close-on-escape={closeOnEscape ? "true" : "false"}
+          data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
+          data-modal={modal ? "true" : "false"}
+          data-state={renderedOpen ? "open" : "closed"}
+          ref={composedRef}
+          {...props}
+        />
+      </ReactPortalScopeProvider>
     );
   },
 );

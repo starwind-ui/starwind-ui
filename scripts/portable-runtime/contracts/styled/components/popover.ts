@@ -201,6 +201,8 @@ export const popoverStyledContract: StyledAdapterContract = {
             optional: true,
             type: '"initial-placement" | "best-fit"',
           },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
         ],
       },
       destructure: {
@@ -212,6 +214,8 @@ export const popoverStyledContract: StyledAdapterContract = {
           { name: "avoidCollisions", defaultValue: "true" },
           { name: "collisionStrategy", defaultValue: '"initial-placement"' },
           { name: "exitMotion", defaultValue: '"popover"' },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
         ],
         rest: "rest",
       },
@@ -220,7 +224,11 @@ export const popoverStyledContract: StyledAdapterContract = {
           type: "primitive",
           component: "popover",
           part: "Portal",
-          attrs: [{ name: "data-slot", value: { type: "literal", value: "popover-portal" } }],
+          attrs: [
+            { name: "container", value: { type: "variable", name: "portalContainer" } },
+            { name: "disabled", value: { type: "variable", name: "disablePortal" } },
+            { name: "data-slot", value: { type: "literal", value: "popover-portal" } },
+          ],
           children: [
             {
               type: "primitive",

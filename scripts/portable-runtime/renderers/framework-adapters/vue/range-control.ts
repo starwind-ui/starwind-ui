@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterRangeControlComponentProjection,
   AdapterRangeControlFacts,
@@ -278,18 +282,16 @@ function printSimplePart(
 
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
-
-const attrs = useAttrs();
 const element = ref<${elementType} | null>(null);
 
 defineExpose({ element });
 </script>
 
 <template>
-  <${part.defaultElement} ref="element" ${facts.attrs[partName]} v-bind="attrs"><slot /></${part.defaultElement}>
+  <${part.defaultElement} ref="element" ${facts.attrs[partName]} v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"><slot /></${part.defaultElement}>
 </template>
 `;
 }
@@ -300,14 +302,13 @@ function printThumb(facts: AdapterRangeControlFacts): string {
 
   return `<!-- ${NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
 defineProps<{
   ${props.index.name}?: ${props.index.type};
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 
 defineExpose({ element });
@@ -318,7 +319,7 @@ defineExpose({ element });
     ref="element"
     ${facts.attrs.thumb}
     :${facts.attrs.index}="${props.index.name}"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
   >
     <slot />
     <input

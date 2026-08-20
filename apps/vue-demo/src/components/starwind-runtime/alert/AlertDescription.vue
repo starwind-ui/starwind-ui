@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { alertDescription } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,7 +15,6 @@ const { class: className } = defineProps<AlertDescriptionDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLParagraphElement | null>(null);
 defineExpose({ element });
 </script>
@@ -25,7 +24,7 @@ defineExpose({ element });
     ref="element"
     data-sw-alert-description
     :class="alertDescription({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="alert-description"
   >
     <slot />

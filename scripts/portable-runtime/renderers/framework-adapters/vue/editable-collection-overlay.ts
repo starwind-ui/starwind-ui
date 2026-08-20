@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterEditableCollectionOverlayComponentProjection,
   AdapterEditableCollectionOverlayFacts,
@@ -114,12 +118,12 @@ import { type ComputedRef, type InjectionKey, inject, type Ref } from "vue";
 
 export type ${f.context.rootContextValueType} = Readonly<{
   disabled: ComputedRef<boolean>;
+  element: Readonly<Ref<HTMLElement | null>>;
   inputValue: ComputedRef<string>;
   mounted: Readonly<Ref<boolean>>;
   open: ComputedRef<boolean>;
   readOnly: ComputedRef<boolean>;
   registerPortal(owner: symbol, element: HTMLElement | null): void;
-  refreshPortalTarget(owner: symbol): void;
   required: ComputedRef<boolean>;
   value: ComputedRef<string | null>;
 }>;
@@ -179,9 +183,8 @@ let portalReference: HTMLElement | null = null;
 let resetForm: HTMLFormElement | null = null;
 let resetTimer: number | undefined;
 let lifecycleGeneration = 0;
-let portalRefreshGeneration = 0;
 
-provide(${f.context.rootContext}, { disabled, inputValue: renderedInputValue, mounted, open: renderedOpen, readOnly, registerPortal(owner, element) { if (element) { portalOwner = owner; portalReference = element; } else if (portalOwner === owner) { portalOwner = undefined; portalReference = null; portalRefreshGeneration += 1; } }, refreshPortalTarget(owner) { const generation = ++portalRefreshGeneration; void nextTick().then(() => { if (!mounted.value || generation !== portalRefreshGeneration || portalOwner !== owner || !instance) return; const open = instance.${f.states.open.getter}(); if (open) { instance.${f.setters.open.method}(false, { emit: false }); instance.${f.setters.open.method}(true, { emit: false }); } else { instance.updatePosition(); } }); }, required, value: renderedValue });
+provide(${f.context.rootContext}, { disabled, element: rootRef, inputValue: renderedInputValue, mounted, open: renderedOpen, readOnly, registerPortal(owner, element) { if (element) { portalOwner = owner; portalReference = element; } else if (portalOwner === owner) { portalOwner = undefined; portalReference = null; } }, required, value: renderedValue });
 defineExpose({ element: rootRef, close: () => instance?.close(), open: () => { if (!props.disabled) instance?.open(); }, updatePosition: () => instance?.updatePosition() });
 
 function handleInputValueChange(inputValue: string, detail: ${f.events.inputValueChange.detailsType}): void { emit("${f.events.inputValueChange.name}", inputValue, detail); if (detail.isCanceled) return; }
@@ -214,7 +217,7 @@ watch(() => props.modelValue, (value, previous) => { if ((value === undefined) !
 watch(() => props.disabled, (value) => { if (!instance) return; instance.${f.setters.disabled.method}(value); if (value) { if (props.open === undefined) uncontrolledOpen.value = false; return; } const nextOpen = props.open ?? uncontrolledOpen.value; if (!Object.is(instance.${f.states.open.getter}(), nextOpen)) instance.${f.setters.open.method}(nextOpen, { emit: false }); });
 watch(() => [props.readOnly, props.filterMode, props.locale, props.modal, props.highlightItemOnHover] as const, () => { void recreate(); }, { flush: "post" });
 watch(() => [props.autoComplete, props.form, props.name, props.required] as const, ([autoComplete, form, name, required]) => { instance?.${f.formSetter.method}({ autoComplete, form, name, required }); bindReset(); }, { flush: "post" });
-onBeforeUnmount(() => { lifecycleGeneration += 1; portalRefreshGeneration += 1; mounted.value = false; destroyOwnedInstance(); });
+onBeforeUnmount(() => { lifecycleGeneration += 1; mounted.value = false; destroyOwnedInstance(); });
 </script>
 <template>
   <${f.parts.root.defaultElement} ref="rootRef" v-bind="attrs" ${f.attrs.root} data-sw-part="root" :${f.attrs.autoComplete}="props.autoComplete" :${f.attrs.defaultInputValue}="initialDefaultInputValue" :${f.attrs.defaultOpen}="initialDefaultOpen ? 'true' : undefined" :${f.attrs.defaultValue}="initialDefaultValue ?? undefined" :${f.attrs.disabled}="props.disabled ? '' : undefined" :${f.attrs.filterMode}="props.filterMode" :${f.attrs.form}="props.form" :${f.attrs.highlightItemOnHover}="props.highlightItemOnHover ? 'true' : 'false'" :${f.attrs.inputValue}="renderedInputValue" :${f.attrs.locale}="props.locale" :${f.attrs.modal}="props.modal ? 'true' : 'false'" :${f.attrs.name}="props.name" :${f.attrs.readOnly}="props.readOnly ? '' : undefined" :${f.attrs.required}="props.required ? '' : undefined" :data-state="renderedOpen ? 'open' : 'closed'" :data-value="renderedValue ?? undefined">
@@ -285,18 +288,21 @@ const AsChild = defineComponent({ inheritAttrs: false, setup() { return () => as
 function printPortal(f: AdapterEditableCollectionOverlayFacts): string {
   return `<!-- ${COMMENT} -->
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, Teleport, watch } from "vue";
+import { reportPortalPlacement, resolvePortalPlacement } from "${f.runtime.importSource}";
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { useVuePortalPlacement } from "../_internal/portal";
 import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";
 
-const props = withDefaults(defineProps<{ container?: string | HTMLElement; disabled?: boolean }>(), { container: "body", disabled: false });
+defineOptions({ inheritAttrs: false });
+
+const props = withDefaults(defineProps<{ container?: string | HTMLElement; disabled?: boolean }>(), { disabled: false });
 defineSlots<{ default?: () => unknown }>();
-const combobox = ${f.context.useRootContext}("Portal"); const portalRef = ref<HTMLDivElement | null>(null); const owner = Symbol("${f.displayName}Portal"); let disposed = false; let refreshGeneration = 0;
-async function refreshTarget(): Promise<void> { const generation = ++refreshGeneration; await nextTick(); if (disposed || generation !== refreshGeneration) return; combobox.refreshPortalTarget(owner); }
-onMounted(() => { combobox.registerPortal(owner, portalRef.value); void refreshTarget(); });
-watch(() => [combobox.mounted.value, props.container, props.disabled] as const, () => { void refreshTarget(); }, { flush: "post" });
-onBeforeUnmount(() => { disposed = true; refreshGeneration += 1; combobox.registerPortal(owner, null); });
+const combobox = ${f.context.useRootContext}("Portal"); const portalRef = ref<HTMLDivElement | null>(null); const owner = Symbol("${f.displayName}Portal");
+const placement = useVuePortalPlacement({ active: () => combobox.mounted.value, container: () => props.container, disabled: () => props.disabled, element: portalRef, reference: () => combobox.element.value, runtime: { reportPortalPlacement, resolvePortalPlacement } });
+onMounted(() => { combobox.registerPortal(owner, portalRef.value); });
+onBeforeUnmount(() => { combobox.registerPortal(owner, null); });
 </script>
-<template><Teleport :to="props.container" :disabled="props.disabled || !combobox.mounted.value"><div ref="portalRef" ${f.attrs.portal} data-sw-part="${f.parts.portal.name}" data-floating-root><slot /></div></Teleport></template>
+<template><Teleport :to="placement.target.value" :disabled="placement.disabled.value"><div ref="portalRef" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.portal} :data-container="typeof props.container === 'string' ? props.container : undefined" :data-disabled="props.disabled ? '' : undefined" :data-placement="placement.ready.value ? 'ready' : 'pending'" data-sw-portal-placement="framework" data-sw-part="${f.parts.portal.name}" data-floating-root><slot /></div></Teleport></template>
 `;
 }
 
@@ -309,11 +315,12 @@ function printFloatingPart(
     name === "popup" ? ` role="${f.popupRole}" tabindex="-1" :hidden="!combobox.open.value"` : "";
   return `<!-- ${COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue"; import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";
+import { ref } from "vue"; import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";
 
-defineOptions({ inheritAttrs: false }); const props=withDefaults(defineProps<{ align?: "start"|"center"|"end"; alignOffset?: number; avoidCollisions?: boolean; side?: "top"|"right"|"bottom"|"left"; sideOffset?: number }>(), { align: ${f.floating.alignDefault}, alignOffset: ${f.floating.alignOffsetDefault}, avoidCollisions: ${f.floating.avoidCollisionsDefault}, side: ${f.floating.sideDefault}, sideOffset: ${f.floating.sideOffsetDefault} }); defineSlots<{ default?: () => unknown }>(); const attrs=useAttrs(); const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRootContext}("${p.namespaceKey}"); defineExpose({ element });
+defineOptions({ inheritAttrs: false }); const props=withDefaults(defineProps<{ align?: "start"|"center"|"end"; alignOffset?: number; avoidCollisions?: boolean; side?: "top"|"right"|"bottom"|"left"; sideOffset?: number }>(), { align: ${f.floating.alignDefault}, alignOffset: ${f.floating.alignOffsetDefault}, avoidCollisions: ${f.floating.avoidCollisionsDefault}, side: ${f.floating.sideDefault}, sideOffset: ${f.floating.sideOffsetDefault} }); defineSlots<{ default?: () => unknown }>();
+const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRootContext}("${p.namespaceKey}"); defineExpose({ element });
 </script>
-<template><${p.defaultElement} ref="element" v-bind="attrs" ${f.attrs[name]} data-sw-part="${p.name}"${popup} :data-state="combobox.open.value ? 'open' : 'closed'" :${f.attrs.side}="props.side" :${f.attrs.align}="props.align" :${f.attrs.sideOffset}="props.sideOffset" :${f.attrs.alignOffset}="props.alignOffset" :${f.attrs.avoidCollisions}="props.avoidCollisions ? 'true' : 'false'"><slot /></${p.defaultElement}></template>
+<template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs[name]} data-sw-part="${p.name}"${popup} :data-state="combobox.open.value ? 'open' : 'closed'" :${f.attrs.side}="props.side" :${f.attrs.align}="props.align" :${f.attrs.sideOffset}="props.sideOffset" :${f.attrs.alignOffset}="props.alignOffset" :${f.attrs.avoidCollisions}="props.avoidCollisions ? 'true' : 'false'"><slot /></${p.defaultElement}></template>
 `;
 }
 
@@ -321,11 +328,12 @@ function printItem(f: AdapterEditableCollectionOverlayFacts): string {
   const p = f.parts.item;
   return `<!-- ${COMMENT} -->
 <script setup lang="ts">
-import { computed, provide, ref, useAttrs } from "vue"; import { ${f.context.itemContext}, ${f.context.useRootContext} } from "./${f.exports.root}.vue";
+import { computed, provide, ref } from "vue"; import { ${f.context.itemContext}, ${f.context.useRootContext} } from "./${f.exports.root}.vue";
 
-defineOptions({ inheritAttrs:false }); const props=withDefaults(defineProps<{ disabled?: boolean; value: string }>(), { disabled:false }); defineSlots<{default?:()=>unknown}>(); const attrs=useAttrs(); const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRootContext}("Item"); const value=computed(()=>props.value); const disabled=computed(()=>props.disabled); const selected=computed(()=>combobox.value.value===value.value); provide(${f.context.itemContext},{disabled,value}); defineExpose({element});
+defineOptions({ inheritAttrs:false }); const props=withDefaults(defineProps<{ disabled?: boolean; value: string }>(), { disabled:false }); defineSlots<{default?:()=>unknown}>();
+const element=ref<HTMLDivElement|null>(null); const combobox=${f.context.useRootContext}("Item"); const value=computed(()=>props.value); const disabled=computed(()=>props.disabled); const selected=computed(()=>combobox.value.value===value.value); provide(${f.context.itemContext},{disabled,value}); defineExpose({element});
 </script>
-<template><${p.defaultElement} ref="element" v-bind="attrs" ${f.attrs.item} data-sw-part="${p.name}" :${f.attrs.valueData}="props.value" role="${f.collection.item.role}" :aria-selected="selected" :aria-disabled="props.disabled ? 'true' : undefined" :${f.attrs.disabled}="props.disabled ? '' : undefined" :data-selected="selected ? '' : undefined" tabindex="${f.collection.item.initialProjection.tabIndex}"><slot /></${p.defaultElement}></template>
+<template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.item} data-sw-part="${p.name}" :${f.attrs.valueData}="props.value" role="${f.collection.item.role}" :aria-selected="selected" :aria-disabled="props.disabled ? 'true' : undefined" :${f.attrs.disabled}="props.disabled ? '' : undefined" :data-selected="selected ? '' : undefined" tabindex="${f.collection.item.initialProjection.tabIndex}"><slot /></${p.defaultElement}></template>
 `;
 }
 
@@ -333,11 +341,12 @@ function printItemIndicator(f: AdapterEditableCollectionOverlayFacts): string {
   const p = f.parts.itemIndicator;
   return `<!-- ${COMMENT} -->
 <script setup lang="ts">
-import { computed, ref, useAttrs } from "vue"; import { ${f.context.useRootContext}, ${f.context.useItemContext} } from "./${f.exports.root}.vue";
+import { computed, ref } from "vue"; import { ${f.context.useRootContext}, ${f.context.useItemContext} } from "./${f.exports.root}.vue";
 
-defineOptions({inheritAttrs:false}); defineSlots<{default?:()=>unknown}>(); const attrs=useAttrs(); const element=ref<HTMLSpanElement|null>(null); const combobox=${f.context.useRootContext}("ItemIndicator"); const item=${f.context.useItemContext}("ItemIndicator"); const selected=computed(()=>combobox.value.value===item.value.value); defineExpose({element});
+defineOptions({inheritAttrs:false}); defineSlots<{default?:()=>unknown}>();
+const element=ref<HTMLSpanElement|null>(null); const combobox=${f.context.useRootContext}("ItemIndicator"); const item=${f.context.useItemContext}("ItemIndicator"); const selected=computed(()=>combobox.value.value===item.value.value); defineExpose({element});
 </script>
-<template><${p.defaultElement} ref="element" v-bind="attrs" ${f.attrs.itemIndicator} data-sw-part="${p.name}" aria-hidden="true" :${f.collection.itemIndicator.selectedStateAttribute}="selected ? 'checked' : 'unchecked'" :${f.collection.itemIndicator.dataHiddenAttribute}="selected ? undefined : ''" :hidden="!selected"><slot /></${p.defaultElement}></template>
+<template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${f.attrs.itemIndicator} data-sw-part="${p.name}" aria-hidden="true" :${f.collection.itemIndicator.selectedStateAttribute}="selected ? 'checked' : 'unchecked'" :${f.collection.itemIndicator.dataHiddenAttribute}="selected ? undefined : ''" :hidden="!selected"><slot /></${p.defaultElement}></template>
 `;
 }
 
@@ -360,8 +369,9 @@ function printSeparator(f: AdapterEditableCollectionOverlayFacts): string {
 function printValue(f: AdapterEditableCollectionOverlayFacts): string {
   const p = f.parts.value;
   return `<!-- ${COMMENT} -->
-<script setup lang="ts">import { ref, useAttrs } from "vue"; import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";\n\ndefineOptions({inheritAttrs:false}); const props=defineProps<{placeholder?:string}>(); const slots=defineSlots<{default?:()=>unknown}>(); const attrs=useAttrs(); const element=ref<HTMLSpanElement|null>(null); const initialPlaceholder=props.placeholder; ${f.context.useRootContext}("Value"); defineExpose({element});</script>
-<template><${p.defaultElement} ref="element" v-bind="attrs" :${f.attrs.value}="slots.default ? undefined : ''" data-sw-part="${p.name}" :data-placeholder="props.placeholder"><slot>{{ initialPlaceholder }}</slot></${p.defaultElement}></template>
+<script setup lang="ts">import { ref } from "vue"; import { ${f.context.useRootContext} } from "./${f.exports.root}.vue";\n\ndefineOptions({inheritAttrs:false}); const props=defineProps<{placeholder?:string}>(); const slots=defineSlots<{default?:()=>unknown}>();
+const element=ref<HTMLSpanElement|null>(null); const initialPlaceholder=props.placeholder; ${f.context.useRootContext}("Value"); defineExpose({element});</script>
+<template><${p.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" :${f.attrs.value}="slots.default ? undefined : ''" data-sw-part="${p.name}" :data-placeholder="props.placeholder"><slot>{{ initialPlaceholder }}</slot></${p.defaultElement}></template>
 `;
 }
 function printSimplePart(
@@ -404,11 +414,12 @@ function simpleSfc(
 ): string {
   return `<!-- ${COMMENT} -->
 <script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 ${setup}
-defineOptions({ inheritAttrs: false }); ${props} defineSlots<{ default?: () => unknown }>(); const attrs=useAttrs(); const element=ref<${type}|null>(null); defineExpose({element});
+defineOptions({ inheritAttrs: false }); ${props} defineSlots<{ default?: () => unknown }>();
+const element=ref<${type}|null>(null); defineExpose({element});
 </script>
-<template>${templatePrefix}<${tag} ref="element" v-bind="attrs" ${attributes}${voidElement ? " />" : `><slot /></${tag}>`}</template>
+<template>${templatePrefix}<${tag} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${attributes}${voidElement ? " />" : `><slot /></${tag}>`}</template>
 `;
 }
 function elementType(tag: string): string {

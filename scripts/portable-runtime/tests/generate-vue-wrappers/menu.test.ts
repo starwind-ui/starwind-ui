@@ -59,7 +59,9 @@ describe("generated Vue Menu Primitive", () => {
     expect(root).toContain("createMenu(element");
     expect(root).toMatch(/emit\("openChange"[\s\S]*detail\.isCanceled[\s\S]*emit\("update:open"/);
     expect(root).toContain("portalReference: portalReference ?? undefined");
-    expect(portal).toContain("ownerContext.kind === 'submenu'");
+    expect(portal).toContain('ownerContext.kind === "root"');
+    expect(portal).toContain(':disabled="placement.disabled.value"');
+    expect(portal).toContain("useVuePortalPlacement");
     expect(portal).toContain("menu.registerPortal(owner, null)");
     expect(checkbox).toMatch(
       /emit\("checkedChange"[\s\S]*detail\.isCanceled[\s\S]*emit\("update:checked"/,
@@ -73,7 +75,9 @@ describe("generated Vue Menu Primitive", () => {
     );
     expect(submenuRoot).toContain('provide(MenuOwnerContext, { kind: "submenu" })');
     expect(index).toContain("const Menu = {");
-    expect(index).toContain("useMenuRootContext");
+    expect(index).toContain("MenuOpenChangeDetails");
+    expect(index).not.toMatch(/MenuContext|ContextValue|useMenu/);
+    expect(root).toContain('from "./MenuContext"');
     expect([...output.values()].join("\n")).not.toContain("specialized-future-framework-tracer");
   });
 

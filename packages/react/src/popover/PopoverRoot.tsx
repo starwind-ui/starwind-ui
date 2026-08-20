@@ -7,11 +7,18 @@
 
 import {
   createPopover,
+  createPortalBinding,
   type PopoverCloseCompleteDetails,
   type PopoverOpenChangeDetails,
+  refreshPopoverPortalSurface,
 } from "@starwind-ui/runtime/popover";
 import * as React from "react";
 import { setRef } from "../internal/compose-refs";
+import {
+  ReactPortalScopeProvider,
+  useReactPortalRuntimeLifecycle,
+  useReactPortalScope,
+} from "../internal/portal";
 import { useIsomorphicLayoutEffect } from "../internal/use-isomorphic-layout-effect";
 
 export type PopoverRootProps = Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
@@ -42,6 +49,8 @@ const PopoverRoot = React.forwardRef<HTMLDivElement, PopoverRootProps>(function 
   forwardedRef,
 ) {
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const portalScope = useReactPortalScope(rootRef, createPortalBinding);
+  const portalRuntimeActivation = portalScope.activation;
   const instanceRef = React.useRef<ReturnType<typeof createPopover> | undefined>(undefined);
   const onCloseCompleteRef = React.useRef(onCloseComplete);
   const onOpenChangeRef = React.useRef(onOpenChange);
@@ -75,7 +84,7 @@ const PopoverRoot = React.forwardRef<HTMLDivElement, PopoverRootProps>(function 
     [forwardedRef],
   );
 
-  useIsomorphicLayoutEffect(() => {
+  const initializePortalRuntime = React.useCallback(() => {
     const root = rootRef.current;
     if (!root) return;
 
@@ -109,6 +118,15 @@ const PopoverRoot = React.forwardRef<HTMLDivElement, PopoverRootProps>(function 
     };
   }, [closeOnEscape, closeOnOutsideInteract, modal, openOnHover]);
 
+  useReactPortalRuntimeLifecycle(portalScope, initializePortalRuntime);
+
+  useIsomorphicLayoutEffect(() => {
+    if (!portalScope.isReady()) return;
+    const root = rootRef.current;
+    if (!root) return;
+    refreshPopoverPortalSurface(root);
+  }, [portalRuntimeActivation]);
+
   useIsomorphicLayoutEffect(() => {
     if (open === undefined) return;
     const instance = instanceRef.current;
@@ -121,18 +139,20 @@ const PopoverRoot = React.forwardRef<HTMLDivElement, PopoverRootProps>(function 
   const renderedOpen = open ?? uncontrolledOpen;
 
   return (
-    <div
-      data-sw-popover
-      data-default-open={defaultOpenRef.current ? "true" : undefined}
-      data-close-on-escape={closeOnEscape ? "true" : "false"}
-      data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
-      data-modal={modal ? "true" : "false"}
-      data-open-on-hover={openOnHover ? "true" : undefined}
-      data-close-delay={closeDelay}
-      data-state={renderedOpen ? "open" : "closed"}
-      ref={composedRef}
-      {...props}
-    />
+    <ReactPortalScopeProvider scope={portalScope}>
+      <div
+        data-sw-popover
+        data-default-open={defaultOpenRef.current ? "true" : undefined}
+        data-close-on-escape={closeOnEscape ? "true" : "false"}
+        data-close-on-outside-interact={closeOnOutsideInteract ? "true" : "false"}
+        data-modal={modal ? "true" : "false"}
+        data-open-on-hover={openOnHover ? "true" : undefined}
+        data-close-delay={closeDelay}
+        data-state={renderedOpen ? "open" : "closed"}
+        ref={composedRef}
+        {...props}
+      />
+    </ReactPortalScopeProvider>
   );
 });
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 import { cardTitle } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,7 +15,6 @@ const { class: className } = defineProps<CardTitleDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 </script>
@@ -25,7 +24,7 @@ defineExpose({ element });
     ref="element"
     data-sw-card-title
     :class="cardTitle({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="card-title"
   >
     <slot />

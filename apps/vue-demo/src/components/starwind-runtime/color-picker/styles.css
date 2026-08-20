@@ -204,7 +204,12 @@
   > [data-slot="color-picker-separator"] {
   display: none;
 }
+[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] {
+  display: contents;
+}
 [data-sw-color-picker][data-floating-root]
+  > [data-slot="select-portal"]
   > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options]) {
+  position: fixed;
   z-index: 60;
 }

@@ -2,7 +2,9 @@ import * as React from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
+import { userEvent } from "vitest/browser";
 
+import { DrawerPopup, DrawerRoot } from "../src/drawer/index";
 import {
   PopoverPopup,
   PopoverPortal,
@@ -23,6 +25,38 @@ afterEach(async () => {
 });
 
 describe("React Popover", () => {
+  it("activates on first placement when nested in an open Sheet-equivalent Drawer", async () => {
+    await mount(
+      <DrawerRoot defaultOpen>
+        <DrawerPopup>
+          <div data-floating-root />
+          <PopoverRoot>
+            <PopoverTrigger id="sheet-popover-trigger">Open details</PopoverTrigger>
+            <PopoverPortal>
+              <PopoverPopup id="sheet-popover-popup">Details</PopoverPopup>
+            </PopoverPortal>
+          </PopoverRoot>
+        </DrawerPopup>
+      </DrawerRoot>,
+    );
+
+    const trigger = query<HTMLButtonElement>("#sheet-popover-trigger");
+    const popup = query<HTMLElement>("#sheet-popover-popup");
+    const portal = query<HTMLElement>("[data-sw-popover-portal]");
+    expect(portal).toHaveAttribute("data-placement", "ready");
+    expect(trigger).toHaveAttribute("aria-controls", popup.id);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(popup.hidden).toBe(true);
+
+    await act(async () => {
+      trigger.focus();
+      await userEvent.keyboard("{Enter}");
+    });
+
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(popup.hidden).toBe(false);
+  });
+
   it("coordinates a pre-rendered nested tree through normal effect ordering", async () => {
     await mount(
       <PopoverRoot openOnHover closeDelay={20}>

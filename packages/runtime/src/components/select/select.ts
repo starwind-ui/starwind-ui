@@ -1,5 +1,8 @@
 import { autoUpdate } from "@floating-ui/dom";
-
+import {
+  createCancelableDetails,
+  runCancelableDetailsTransaction,
+} from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
   ensureId,
@@ -9,17 +12,7 @@ import {
   setBooleanAttribute,
   uniqueElements,
 } from "../../internal/dom";
-import {
-  createCancelableDetails,
-  runCancelableDetailsTransaction,
-} from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
-import { attachFormValueRevision } from "../../internal/form-value-revision";
-import {
-  createFocusBoundary,
-  type FocusBoundaryHandle,
-  getNextDocumentTabStop,
-} from "../../internal/focus-boundary";
 import {
   createFloatingPositioner,
   type FloatingPositioner,
@@ -33,11 +26,23 @@ import {
   type FloatingListLifecycle,
 } from "../../internal/floating-list-lifecycle";
 import {
+  createFocusBoundary,
+  type FocusBoundaryHandle,
+  getNextDocumentTabStop,
+} from "../../internal/focus-boundary";
+import { attachFormValueRevision } from "../../internal/form-value-revision";
+import {
   type OverlayOpenChangeShellResult,
   runOverlayOpenChangeShell,
 } from "../../internal/overlay-open-change";
 import { showElement } from "../../internal/presence";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 import { lockDocumentScroll } from "../../internal/scroll-lock";
+import {
+  createOwnedListNavigation,
+  createRovingFocusNavigationAdapter,
+  type OwnedListNavigation,
+} from "../../internal/owned-list-navigation";
 import { registerFieldControlBridge } from "../field/field-control-bridge";
 
 export type SelectOpenChangeReason =
@@ -214,6 +219,41 @@ const SELECT_SCROLL_ARROW_INTERVAL = 32;
 
 const instances = new WeakMap<HTMLElement, SelectController>();
 
+export function refreshSelectPortalSurface(root: HTMLElement): void {
+  const controller = instances.get(root);
+  if (!controller) return;
+  if (!queryRootElement(root, `[${SELECT_POPUP_ATTRIBUTE}]`)) {
+    controller["stopItemObserver"]();
+    controller["lifecycle"].suspendSurface();
+    return;
+  }
+  const nextElements = getSelectElements(root);
+  if (nextElements.popup === controller["elements"].popup) return;
+
+  controller["stopItemObserver"]();
+  controller["stopScrollArrow"]();
+  controller["clearAlignedPositionRetry"]();
+  controller["stopAlignedAutoUpdate"]();
+  controller["floatingPositioner"]?.destroy();
+  controller["floatingPositioner"] = null;
+  controller["portalSurfaceAbortController"]?.abort();
+  controller["portalSurfaceAbortController"] = new AbortController();
+  Object.assign(controller["elements"], nextElements);
+  controller["ownedList"].setRoot(nextElements.popup);
+  controller["authoredPlacementAttributes"] = readPlacementAttributes(
+    controller["elements"].positioner ?? controller["elements"].popup,
+  );
+  controller["ownedList"].clear();
+  controller["invalidateItems"]();
+  controller["focusBoundary"].setSurfaces(controller["getFocusBoundarySurfaces"]());
+  controller["setupAccessibility"]();
+  controller["bindPortalEvents"]();
+  controller["applyValueState"](controller["valueState"]);
+  controller["lifecycle"].refreshSurface(controller["elements"].popup, {
+    reason: "imperative-action",
+  });
+}
+
 registerFieldControlBridge({
   kind: "select",
   connect(control, { disabled, name, shouldSyncName }) {
@@ -250,16 +290,15 @@ class SelectController implements SelectInstance {
     details: SelectValueChangeDetails,
   ) => void;
   private readonly openSubscribers = new Set<(details: SelectOpenChangeDetails) => void>();
+  private readonly ownedList: OwnedListNavigation;
   private readonly portalReference: Element | null;
   private readOnly: boolean;
   private readonly reference: Element | null;
   private readonly initialValue: string | null;
-  private readonly authoredPlacementAttributes: SelectPlacementAttributes;
-  private readonly lifecycle: FloatingListLifecycle<OpenRequest>;
+  private authoredPlacementAttributes: SelectPlacementAttributes;
+  private lifecycle: FloatingListLifecycle<OpenRequest>;
   private modal: boolean;
   private readonly valueSubscribers = new Set<(details: SelectValueChangeDetails) => void>();
-  private activeIndex = -1;
-  private activeItem: HTMLElement | null = null;
   private alignedAutoUpdateCleanup: (() => void) | null = null;
   private alignItemWithTriggerActive = false;
   private autoComplete?: string;
@@ -268,9 +307,6 @@ class SelectController implements SelectInstance {
   private floatingPositioner: FloatingPositioner | null = null;
   private form?: string;
   private highlightItemOnHover: boolean;
-  private itemCache: HTMLElement[] | null = null;
-  private itemIndexCache: Map<HTMLElement, number> | null = null;
-  private itemObserver: MutationObserver | null = null;
   private lastEligibleFocusOwner: HTMLElement | null = null;
   private alignedPositionRetryFrame: number | null = null;
   private readonly boundScrollArrows = new WeakSet<HTMLElement>();
@@ -279,15 +315,15 @@ class SelectController implements SelectInstance {
   private openState: boolean;
   private pendingRestoreFocus = false;
   private pendingFocus: SelectFocusTarget | null = null;
+  private placementRevision = 0;
   private pointerTypeForOpen: string | null = null;
+  private portalSurfaceAbortController: AbortController | null = null;
   private required: boolean;
   private resetForm: HTMLFormElement | null = null;
   private resetTimer: number | undefined;
   private scrollArrowDirection: 1 | -1 | null = null;
   private scrollArrowTimer: number | undefined;
   private formInputDefaultInitialized = false;
-  private typeaheadBuffer = "";
-  private typeaheadTimer: number | null = null;
   private valueState: string | null;
 
   constructor(root: HTMLElement, options: SelectOptions) {
@@ -320,6 +356,27 @@ class SelectController implements SelectInstance {
     this.initialValue = readInitialResetValue(options, root, this.elements.input);
     this.valueState = readInitialValue(options, root);
     this.lifecycle = this.createLifecycle();
+    this.ownedList = createOwnedListNavigation({
+      adapter: createRovingFocusNavigationAdapter({ renderHighlight: renderItemHighlight }),
+      attributeFilter: [SELECT_DISABLED_ATTRIBUTE, SELECT_ITEM_ATTRIBUTE],
+      getText: getItemText,
+      indexMode: "all",
+      isHighlighted: (item) => item.hasAttribute(SELECT_HIGHLIGHTED_ATTRIBUTE),
+      isNavigable: (item) => !isDisabledElement(item),
+      itemSelector: `[${SELECT_ITEM_ATTRIBUTE}]`,
+      mutationMode: "refresh",
+      onRefresh: (items) => {
+        this.updateItems(items);
+      },
+      onMutation: (items) => {
+        if (!this.openState || this.destroyed) return;
+        this.updateItems(items);
+        this.applyItemSelectionState(items);
+        this.updateScrollArrows();
+      },
+      ownerSelector: `[${SELECT_POPUP_ATTRIBUTE}]`,
+      root: this.elements.popup,
+    });
     this.focusBoundary = createFocusBoundary({
       containsTarget: (target) => this.containsTarget(target),
       onFocusDeparture: ({ lastFocusOwner }) => {
@@ -333,6 +390,15 @@ class SelectController implements SelectInstance {
     this.bindEvents();
     this.applyValueState(this.valueState);
     this.applyOpenState(this.openState, { reason: "imperative-action" });
+  }
+
+  private get activeIndex(): number {
+    if (this.ownedList.activeItem) this.ownedList.reconcile();
+    return this.ownedList.activeIndex;
+  }
+
+  private get activeItem(): HTMLElement | null {
+    return this.ownedList.activeItem;
   }
 
   open(options: SelectOpenOptions = {}): void {
@@ -478,6 +544,7 @@ class SelectController implements SelectInstance {
     if (this.destroyed) return;
 
     this.abortController.abort();
+    this.portalSurfaceAbortController?.abort();
     this.focusBoundary.destroy();
     this.detachFormResetListener();
     this.clearResetTimer();
@@ -492,7 +559,7 @@ class SelectController implements SelectInstance {
     this.openState = false;
     this.stopItemObserver();
     this.renderOpenState(false);
-    this.activeItem = null;
+    this.ownedList.destroy();
     this.lastEligibleFocusOwner = null;
     this.lifecycle.destroy();
     this.elements.popup.hidden = true;
@@ -539,7 +606,7 @@ class SelectController implements SelectInstance {
 
   private bindEvents(): void {
     const { signal } = this.abortController;
-    const { popup, trigger } = this.elements;
+    const { trigger } = this.elements;
 
     this.root.ownerDocument.addEventListener(
       "focusin",
@@ -589,6 +656,9 @@ class SelectController implements SelectInstance {
       "pointerdown",
       (event) => {
         this.pointerTypeForOpen = event.pointerType;
+        if (this.openState && event.pointerType === "touch") {
+          this.focusBoundary.suppressNextDeparture();
+        }
       },
       { signal },
     );
@@ -634,6 +704,27 @@ class SelectController implements SelectInstance {
             reason: "trigger-press",
             trigger,
           });
+        }
+      },
+      { signal },
+    );
+
+    this.bindPortalEvents();
+
+    this.bindScrollContainer(this.getScrollContainer());
+    this.bindScrollArrow(this.elements.scrollUpArrow, -1);
+    this.bindScrollArrow(this.elements.scrollDownArrow, 1);
+  }
+
+  private bindPortalEvents(): void {
+    const popup = this.elements.popup;
+    const signal = this.portalSurfaceAbortController?.signal ?? this.abortController.signal;
+
+    popup.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (this.openState && event.pointerType === "touch") {
+          event.preventDefault();
         }
       },
       { signal },
@@ -1092,6 +1183,7 @@ class SelectController implements SelectInstance {
       },
       hooks: {
         onAfterOpen: () => {
+          this.placementRevision += 1;
           this.positionPopup();
           if (this.alignItemWithTriggerActive) {
             this.startAlignedAutoUpdate();
@@ -1114,6 +1206,11 @@ class SelectController implements SelectInstance {
           this.prepareOpenItems();
           this.positionPopup();
           this.queueAlignedPositionRetry();
+        },
+        onPlacementPending: () => {
+          this.placementRevision += 1;
+          this.clearAlignedPositionRetry();
+          this.stopAlignedAutoUpdate();
         },
       },
       popup: this.elements.popup,
@@ -1153,7 +1250,7 @@ class SelectController implements SelectInstance {
   }
 
   private getPortalElement(): HTMLElement {
-    return this.elements.positioner ?? this.elements.popup;
+    return this.elements.portal ?? this.elements.positioner ?? this.elements.popup;
   }
 
   private getFocusBoundarySurfaces(): HTMLElement[] {
@@ -1213,7 +1310,9 @@ class SelectController implements SelectInstance {
   }
 
   private positionPopup(): void {
-    if (!this.openState) return;
+    if (!this.openState || !this.lifecycle.isPlacementReady()) return;
+
+    const placementRevision = this.placementRevision;
 
     this.clearAvailableSpaceStyles();
     const triggerWidth = `${Math.round(this.elements.trigger.getBoundingClientRect().width)}px`;
@@ -1230,19 +1329,32 @@ class SelectController implements SelectInstance {
       this.getFloatingPositioner()?.startAutoUpdate();
     }
     this.applyAvailableSpaceSize();
-    void this.getFloatingPositioner()
-      ?.update()
+    const positioner = this.getFloatingPositioner();
+    if (!positioner) return;
+
+    void positioner
+      .update()
       .then((state) => {
-        if (!this.openState || this.destroyed || this.alignItemWithTriggerActive) return;
+        if (!this.isPlacementUpdateCurrent(placementRevision)) return;
 
         this.applyAvailableSpaceSize(state.side);
-        return this.getFloatingPositioner()?.update();
+        return positioner.update();
       })
       .then(() => {
-        if (!this.openState || this.destroyed || this.alignItemWithTriggerActive) return;
+        if (!this.isPlacementUpdateCurrent(placementRevision)) return;
 
         this.updateScrollArrows();
       });
+  }
+
+  private isPlacementUpdateCurrent(revision: number): boolean {
+    return (
+      this.openState &&
+      !this.destroyed &&
+      !this.alignItemWithTriggerActive &&
+      this.lifecycle.isPlacementReady() &&
+      this.placementRevision === revision
+    );
   }
 
   private getFloatingPositioner(): FloatingPositioner | null {
@@ -1254,6 +1366,7 @@ class SelectController implements SelectInstance {
 
     this.floatingPositioner = createFloatingPositioner({
       floating,
+      getApplyRevision: () => this.placementRevision,
       getOptions: () => ({
         align: readFloatingAlignAttribute(placementElement.getAttribute(SELECT_ALIGN_ATTRIBUTE)),
         alignOffset: readNumberAttribute(placementElement, SELECT_ALIGN_OFFSET_ATTRIBUTE, 0),
@@ -1283,7 +1396,9 @@ class SelectController implements SelectInstance {
   }
 
   private startAlignedAutoUpdate(): void {
-    if (this.alignedAutoUpdateCleanup || this.destroyed) return;
+    if (this.alignedAutoUpdateCleanup || this.destroyed || !this.lifecycle.isPlacementReady()) {
+      return;
+    }
 
     this.alignedAutoUpdateCleanup = autoUpdate(
       this.reference ?? this.elements.trigger,
@@ -1305,6 +1420,7 @@ class SelectController implements SelectInstance {
     if (
       this.alignedPositionRetryFrame !== null ||
       !this.openState ||
+      !this.lifecycle.isPlacementReady() ||
       this.alignItemWithTriggerActive ||
       !this.shouldAlignItemWithTrigger() ||
       this.pointerTypeForOpen === "touch"
@@ -1314,7 +1430,7 @@ class SelectController implements SelectInstance {
 
     this.alignedPositionRetryFrame = window.requestAnimationFrame(() => {
       this.alignedPositionRetryFrame = null;
-      if (!this.openState || this.destroyed) return;
+      if (!this.openState || this.destroyed || !this.lifecycle.isPlacementReady()) return;
 
       this.prepareOpenItems();
       this.positionPopup();
@@ -1519,41 +1635,21 @@ class SelectController implements SelectInstance {
   }
 
   private getItems(): HTMLElement[] {
-    if (!this.openState) {
-      return queryPopupElements(this.elements.popup, `[${SELECT_ITEM_ATTRIBUTE}]`);
-    }
-
-    if (this.itemCache === null) {
-      this.itemCache = queryPopupElements(this.elements.popup, `[${SELECT_ITEM_ATTRIBUTE}]`);
-      this.itemIndexCache = new Map(this.itemCache.map((item, index) => [item, index] as const));
-    }
-
-    return this.itemCache;
+    return this.ownedList.getItems({ force: !this.openState });
   }
 
   private invalidateItems(): void {
-    this.itemCache = null;
-    this.itemIndexCache = null;
+    this.ownedList.invalidate();
   }
 
   private startItemObserver(): void {
-    if (this.itemObserver) return;
-
-    this.itemObserver = new MutationObserver(() => {
-      this.refreshItemsAfterMutation();
-    });
-    this.itemObserver.observe(this.elements.popup, {
-      attributeFilter: [SELECT_ITEM_ATTRIBUTE],
-      attributes: true,
-      childList: true,
-      subtree: true,
-    });
+    this.ownedList.start();
   }
 
   private refreshItemsAfterMutation(): void {
     this.invalidateItems();
     const items = this.getItems();
-    this.reconcileActiveItem(items);
+    this.ownedList.reconcile();
     if (!this.openState || this.destroyed) return;
     this.updateItems(items);
     this.applyItemSelectionState(items);
@@ -1561,24 +1657,12 @@ class SelectController implements SelectInstance {
   }
 
   private reconcileActiveItem(items: HTMLElement[]): void {
-    const activeItem =
-      this.activeItem ??
-      items.find((item) => item.hasAttribute(SELECT_HIGHLIGHTED_ATTRIBUTE)) ??
-      null;
-    const nextActiveIndex = activeItem ? items.indexOf(activeItem) : -1;
-
-    if (activeItem && nextActiveIndex < 0) {
-      renderItemHighlight(activeItem, false);
-    }
-
-    this.activeIndex = nextActiveIndex;
-    this.activeItem = nextActiveIndex >= 0 ? activeItem : null;
+    void items;
+    this.ownedList.reconcile();
   }
 
   private stopItemObserver(): void {
-    this.itemObserver?.disconnect();
-    this.itemObserver = null;
-    this.invalidateItems();
+    this.ownedList.stop();
   }
 
   private selectItem(item: HTMLElement, event?: Event): void {
@@ -1604,66 +1688,20 @@ class SelectController implements SelectInstance {
   }
 
   private focusItem(index: number, direction: 1 | -1 = 1): void {
-    this.highlightItem(index, { direction, focus: true });
+    this.ownedList.highlightIndex(index, { direction, focus: true });
   }
 
   private highlightItemByElement(item: HTMLElement, options: { focus: boolean }): void {
-    const index = this.getCachedItemIndex(item);
-    if (index < 0 || isDisabledElement(item)) return;
-
-    this.highlightItemElement(item, index, options);
+    if (this.ownedList.highlightItem(item, options)) return;
+    this.refreshItemsAfterMutation();
+    this.ownedList.highlightItem(item, options);
   }
 
   private highlightItem(index: number, options: { direction?: 1 | -1; focus: boolean }): void {
-    const result = this.getSelectableItemFromIndex(index, options.direction ?? 1);
-    if (!result) return;
-
-    this.highlightItemElement(result.item, result.index, options);
-  }
-
-  private highlightItemElement(
-    item: HTMLElement,
-    index: number,
-    options: { focus: boolean },
-  ): void {
-    if (item === this.activeItem) {
-      if (options.focus && document.activeElement !== item) item.focus();
-      return;
-    }
-
-    if (this.activeItem) renderItemHighlight(this.activeItem, false);
-    renderItemHighlight(item, true);
-
-    this.activeIndex = index;
-    this.activeItem = item;
-    if (options.focus) item.focus();
-  }
-
-  private getCachedItemIndex(item: HTMLElement): number {
-    this.getItems();
-
-    const cachedIndex = this.itemIndexCache?.get(item);
-    if (cachedIndex !== undefined) return cachedIndex;
-
-    this.refreshItemsAfterMutation();
-    return this.itemIndexCache?.get(item) ?? -1;
-  }
-
-  private getSelectableItemFromIndex(
-    index: number,
-    direction: 1 | -1,
-  ): { index: number; item: HTMLElement } | null {
-    const items = this.getItems();
-    if (items.length === 0 || items.every((item) => isDisabledElement(item))) return null;
-
-    let nextIndex = normalizeIndex(index, items.length);
-    for (let offset = 0; offset < items.length; offset += 1) {
-      const item = items[nextIndex]!;
-      if (!isDisabledElement(item)) return { index: nextIndex, item };
-      nextIndex = normalizeIndex(nextIndex + direction, items.length);
-    }
-
-    return null;
+    this.ownedList.highlightIndex(index, {
+      direction: options.direction,
+      focus: options.focus,
+    });
   }
 
   private queuePendingFocus(): void {
@@ -1693,40 +1731,11 @@ class SelectController implements SelectInstance {
   }
 
   private clearHighlightedItems(): void {
-    const activeItem = this.activeItem;
-    const items = this.itemCache ?? (this.openState ? this.getItems() : []);
-
-    this.activeIndex = -1;
-    this.activeItem = null;
-    items.forEach((item) => renderItemHighlight(item, false));
-    if (activeItem && !items.includes(activeItem)) {
-      renderItemHighlight(activeItem, false);
-    }
+    this.ownedList.clear();
   }
 
   private focusTypeaheadMatch(key: string): void {
-    const allItems = this.getItems();
-    const items = allItems.filter((item) => !isDisabledElement(item));
-    if (items.length === 0) return;
-
-    this.typeaheadBuffer += key.toLocaleLowerCase();
-    this.clearTypeaheadTimer();
-    this.typeaheadTimer = window.setTimeout(() => {
-      this.typeaheadTimer = null;
-      this.typeaheadBuffer = "";
-    }, 500);
-
-    const search = getTypeaheadSearch(this.typeaheadBuffer);
-    const activeItem = this.activeIndex >= 0 ? allItems[this.activeIndex] : null;
-    const currentIndex = activeItem ? items.indexOf(activeItem) : -1;
-    const startIndex = Math.max(0, currentIndex + 1);
-    const orderedItems = [...items.slice(startIndex), ...items.slice(0, startIndex)];
-    const match = orderedItems.find((item) =>
-      getItemText(item).toLocaleLowerCase().startsWith(search),
-    );
-    if (!match) return;
-
-    this.highlightItemByElement(match, { focus: true });
+    this.ownedList.typeahead(key, { focus: true });
   }
 
   private findSelectedItem(value: string | null, items?: HTMLElement[]): HTMLElement | null {
@@ -1761,11 +1770,7 @@ class SelectController implements SelectInstance {
   }
 
   private clearTypeaheadTimer(): void {
-    if (this.typeaheadTimer === null) return;
-
-    window.clearTimeout(this.typeaheadTimer);
-    this.typeaheadTimer = null;
-    this.typeaheadBuffer = "";
+    this.ownedList.resetTypeahead();
   }
 
   private clearResetTimer(): void {
@@ -1901,10 +1906,9 @@ function queryRootElement(root: HTMLElement, selector: string): HTMLElement | nu
 }
 
 function queryRootElements(root: HTMLElement, selector: string): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((element) => {
-    const owner = element.closest<HTMLElement>(`[${SELECT_ROOT_ATTRIBUTE}]`);
-    return owner === root;
-  });
+  return queryRuntimePartElements(root, selector).filter((element) =>
+    isRuntimePartOwned(root, element, `[${SELECT_ROOT_ATTRIBUTE}]`),
+  );
 }
 
 function queryPopupElements(popup: HTMLElement, selector: string): HTMLElement[] {

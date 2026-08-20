@@ -54,8 +54,8 @@ describe("generated Vue Fieldset Primitive", () => {
     expect(() => assertVueSfcCompiles(first.legend, "FieldsetLegend.vue")).not.toThrow();
     expect(first.root).toContain("instance = createFieldset(element, {");
     expect(first.root).toContain("instance?.setDisabled(nextDisabled);");
-    expect(first.root).toContain('v-bind="attrs"');
-    expect(first.root).toContain(":disabled=\"props.disabled\"");
+    expect(first.root).toContain('v-bind="$attrs"');
+    expect(first.root).toContain(':disabled="props.disabled"');
     expect(first.root).toContain("onBeforeUnmount(destroyOwnedInstance);");
     expect(first.legend).toContain("data-sw-fieldset-legend");
     await expect(first.root).toBe(

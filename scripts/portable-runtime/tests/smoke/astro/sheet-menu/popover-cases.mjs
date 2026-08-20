@@ -1,4 +1,5 @@
 import { dispatchOutsidePointerDown } from "../../shared/pointer.mjs";
+import { assertPublicPortalTopology } from "../../shared/public-portal-topology.mjs";
 
 export async function verifyAstroPopoverCases({ page }) {
   const nativeRecipeClasses = [
@@ -41,6 +42,9 @@ export async function verifyAstroPopoverCases({ page }) {
 
   await page.getByRole("button", { name: "Open popover" }).click();
   await page.getByRole("heading", { name: "Runtime popover" }).waitFor();
+  await assertPublicPortalTopology(page.locator("#runtime-popover-content"), {
+    portalSlot: "popover-portal",
+  });
 
   const openPopoverState = await page.locator("#runtime-popover-content").evaluate((content) => ({
     className: content.getAttribute("class"),
@@ -70,7 +74,7 @@ export async function verifyAstroPopoverCases({ page }) {
     openPopoverState.state !== "open" ||
     !["bottom", "top"].includes(openPopoverState.dataSide ?? "") ||
     openPopoverState.dataAlign !== "start" ||
-    openPopoverState.parentTagName !== "BODY" ||
+    openPopoverState.parentTagName !== "DIV" ||
     openPopoverState.rootContains !== false ||
     openPopoverState.position !== "fixed" ||
     openPopoverState.styleLeft === "" ||
@@ -94,17 +98,20 @@ export async function verifyAstroPopoverCases({ page }) {
     .locator("#runtime-popover-content")
     .evaluate((content) => ({
       hidden: content instanceof HTMLElement ? content.hidden : null,
-      parentTagName: content.parentElement?.tagName,
+      contentInsidePortal:
+        content.closest('[data-slot="popover-portal"]')?.contains(content) ?? false,
+      portalParentTagName: content.closest('[data-slot="popover-portal"]')?.parentElement?.tagName,
       state: content.getAttribute("data-state"),
     }));
   const isClosingInPortal =
     closingPopoverState.state === "closed" &&
     closingPopoverState.hidden === false &&
-    closingPopoverState.parentTagName === "BODY";
+    closingPopoverState.contentInsidePortal === true &&
+    closingPopoverState.portalParentTagName === "BODY";
   const isClosedInRoot =
     closingPopoverState.state === "closed" &&
     closingPopoverState.hidden === true &&
-    closingPopoverState.parentTagName !== "BODY";
+    closingPopoverState.portalParentTagName !== "BODY";
   if (!isClosingInPortal && !isClosedInRoot) {
     throw new Error(
       `Expected outside click to close Astro Popover with either exit-animation presence or final hidden state, got ${JSON.stringify(
@@ -145,6 +152,9 @@ export async function verifyAstroPopoverCases({ page }) {
     }));
   await page.locator("#runtime-popover-as-child-trigger").click();
   await page.locator("#runtime-popover-as-child-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#runtime-popover-as-child-content"), {
+    portalSlot: "popover-portal",
+  });
   const popoverAsChildOpen = await page.evaluate(() => {
     const trigger = document.querySelector("#runtime-popover-as-child-trigger");
     const content = document.querySelector("#runtime-popover-as-child-content");
@@ -178,7 +188,7 @@ export async function verifyAstroPopoverCases({ page }) {
     popoverAsChildOpen.contentHidden !== false ||
     popoverAsChildOpen.contentRole !== "dialog" ||
     popoverAsChildOpen.contentState !== "open" ||
-    popoverAsChildOpen.parentTagName !== "BODY" ||
+    popoverAsChildOpen.parentTagName !== "DIV" ||
     popoverAsChildOpen.listenerCount !== "1" ||
     popoverAsChildOpen.listenerText !== "1" ||
     popoverAsChildOpen.text?.includes("As child popover") !== true
@@ -213,6 +223,9 @@ export async function verifyAstroPopoverCases({ page }) {
     }));
   await page.locator("#runtime-popover-styled-child-trigger").click();
   await page.locator("#runtime-popover-styled-child-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#runtime-popover-styled-child-content"), {
+    portalSlot: "popover-portal",
+  });
   const styledContentOpen = await page
     .locator("#runtime-popover-styled-child-content")
     .evaluate((content) => ({
@@ -233,7 +246,7 @@ export async function verifyAstroPopoverCases({ page }) {
     styledTriggerInitial.letterSpacing !== "0.234px" ||
     styledTriggerInitial.textTransform !== "uppercase" ||
     styledContentOpen.hidden !== false ||
-    styledContentOpen.parentTagName !== "BODY" ||
+    styledContentOpen.parentTagName !== "DIV" ||
     styledContentOpen.role !== "dialog" ||
     styledContentOpen.state !== "open" ||
     styledContentOpen.text !== "Styled child content"

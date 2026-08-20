@@ -358,6 +358,8 @@ export const selectStyledContract: StyledAdapterContract = {
           { name: "side", optional: true, type: '"top" | "right" | "bottom" | "left"' },
           { name: "sideOffset", optional: true, type: "number" },
           { name: "size", optional: true, type: '"sm" | "md" | "lg"' },
+          { name: "portalContainer", optional: true, type: "string" },
+          { name: "disablePortal", optional: true, type: "boolean" },
         ],
       },
       destructure: {
@@ -371,6 +373,8 @@ export const selectStyledContract: StyledAdapterContract = {
           { name: "side", defaultValue: '"bottom"' },
           { name: "sideOffset", defaultValue: "4" },
           { name: "size", defaultValue: '"md"' },
+          { name: "portalContainer" },
+          { name: "disablePortal", defaultValue: "false" },
         ],
         rest: "rest",
       },
@@ -379,7 +383,11 @@ export const selectStyledContract: StyledAdapterContract = {
           type: "primitive",
           component: "select",
           part: "Portal",
-          attrs: [{ name: "data-slot", value: { type: "literal", value: "select-portal" } }],
+          attrs: [
+            { name: "container", value: { type: "variable", name: "portalContainer" } },
+            { name: "disabled", value: { type: "variable", name: "disablePortal" } },
+            { name: "data-slot", value: { type: "literal", value: "select-portal" } },
+          ],
           children: [
             {
               type: "primitive",

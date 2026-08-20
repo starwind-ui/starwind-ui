@@ -559,7 +559,7 @@ describe("createPopover", () => {
     );
   });
 
-  it("suppresses a controlled Dialog-owned Popover and restores it with the owner", () => {
+  it("suppresses a controlled Dialog-owned Popover and restores it with the owner", async () => {
     const dialogRoot = renderDialogOwner();
     const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
     const popoverRoot = renderPopover();
@@ -572,22 +572,25 @@ describe("createPopover", () => {
       open: true,
     });
 
-    expect(getPopup().closest("[data-sw-floating-portal]:popover-open")).not.toBeNull();
+    expect(getPopup().closest("[data-sw-dialog-top-layer-host]:popover-open")).not.toBeNull();
 
     dialog.close();
+    await waitForAnimationFrame();
 
     expect(openIntents).toEqual([false]);
     expect(popover.getOpen()).toBe(true);
     expect(dialogContent.open).toBe(false);
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(dialogContent.querySelector("[data-sw-dialog-top-layer-host]:popover-open")).toBeNull();
 
     dialog.open();
 
-    expect(getPopup().closest("[data-sw-floating-portal]:popover-open")).not.toBeNull();
+    expect(getPopup().closest("[data-sw-dialog-top-layer-host]:popover-open")).not.toBeNull();
 
     popover.setOpen(false, { emit: false });
     expect(getPopup().getAttribute("data-state")).toBe("closed");
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(
+      dialogContent.querySelector("[data-sw-dialog-top-layer-host]:popover-open"),
+    ).not.toBeNull();
 
     popover.destroy();
     dialog.destroy();
@@ -612,25 +615,28 @@ describe("createPopover", () => {
 
     popover.setOpen(false, { emit: false });
     expect(getPopup().getAttribute("data-state")).toBe("closed");
-    expect(dialogContent.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(1);
+    expect(
+      dialogContent.querySelectorAll("[data-sw-dialog-top-layer-host]:popover-open"),
+    ).toHaveLength(1);
 
     dialog.close();
+    await waitForAnimationFrame();
 
     expect(openIntents).toEqual([]);
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(dialogContent.querySelector("[data-sw-dialog-top-layer-host]:popover-open")).toBeNull();
 
     closeAnimation.resolve();
     await closeAnimation.promise;
     await Promise.resolve();
 
     expect(getPopup().parentElement).toBe(popoverRoot);
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(dialogContent.querySelector("[data-sw-dialog-top-layer-host]:popover-open")).toBeNull();
 
     popover.destroy();
     dialog.destroy();
   });
 
-  it("force-resets an uncontrolled Popover when its Dialog owner close intent is canceled", () => {
+  it("force-resets an uncontrolled Popover when its Dialog owner close intent is canceled", async () => {
     const dialogRoot = renderDialogOwner();
     const dialogContent = dialogRoot.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
     const popoverRoot = renderPopover();
@@ -645,13 +651,16 @@ describe("createPopover", () => {
     popover.open();
 
     dialog.close();
+    await waitForAnimationFrame();
 
     expect(popover.getOpen()).toBe(false);
     expect(getPopup().getAttribute("data-state")).toBe("closed");
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(dialogContent.querySelector("[data-sw-dialog-top-layer-host]:popover-open")).toBeNull();
 
     dialog.open();
-    expect(dialogContent.querySelector("[data-sw-floating-portal]")).toBeNull();
+    expect(
+      dialogContent.querySelector("[data-sw-dialog-top-layer-host]:popover-open"),
+    ).not.toBeNull();
 
     popover.destroy();
     dialog.destroy();

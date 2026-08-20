@@ -13,12 +13,12 @@ import ScrollAreaThumb from "./ScrollAreaThumb.vue";
 import ScrollAreaViewport from "./ScrollAreaViewport.vue";
 
 const ScrollArea = {
-  Content: ScrollAreaContent,
-  Corner: ScrollAreaCorner,
   Root: ScrollAreaRoot,
+  Viewport: ScrollAreaViewport,
+  Content: ScrollAreaContent,
   Scrollbar: ScrollAreaScrollbar,
   Thumb: ScrollAreaThumb,
-  Viewport: ScrollAreaViewport,
+  Corner: ScrollAreaCorner,
 };
 
 export { default as ScrollAreaContent } from "./ScrollAreaContent.vue";

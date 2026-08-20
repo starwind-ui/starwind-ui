@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterEngineViewportComponentProjection,
   AdapterEngineViewportFacts,
@@ -49,7 +53,7 @@ import {
   type ${facts.runtime.instanceType},
   type ${facts.runtime.optionsType},
 } from "${facts.runtime.importSource}";
-import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, useAttrs, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
 import type { ${root}Props } from "./${facts.displayName}Types.js";
 
 defineOptions({ inheritAttrs: false });
@@ -67,7 +71,6 @@ const rawProps = withDefaults(
   },
 );
 const props = rawProps as ${root}Props;
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 let instance: ${facts.runtime.instanceType} | undefined;
 let refreshRevision = 0;
@@ -129,7 +132,7 @@ onBeforeUnmount(() => {
 <template>
   <${facts.parts.root.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.attrs.root}
     ${facts.attrs.role}="${facts.semantics.rootRole}"
     ${facts.attrs.roledescription}="${facts.semantics.rootRoledescription}"
@@ -173,16 +176,15 @@ function printSimplePart(
 
 function printElement(tag: string, protectedAttributes: string): string {
   return `<script setup lang="ts">
-import { ref, useAttrs } from "vue";
+import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
-const attrs = useAttrs();
 const element = ref<HTMLElement | null>(null);
 defineExpose({ element });
 </script>
 
 <template>
-  <${tag} ref="element" v-bind="attrs"${protectedAttributes}><slot /></${tag}>
+  <${tag} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"${protectedAttributes}><slot /></${tag}>
 </template>
 `;
 }

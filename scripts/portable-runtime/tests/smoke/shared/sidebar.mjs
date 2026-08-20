@@ -3,6 +3,7 @@ export async function verifySidebarCases({ page, ids, label, expectations = {} }
     badgeText: "12",
     containerPosition: "absolute",
     firstMenuLinkHref: "#",
+    footerContentParentTagName: "BODY",
     minMenuActionCount: 1,
     minMenuButtonCount: 7,
     minSkeletonCount: 1,
@@ -183,7 +184,7 @@ export async function verifySidebarCases({ page, ids, label, expectations = {} }
     footerDropdownState.triggerState !== "open" ||
     footerDropdownState.contentHidden !== false ||
     footerDropdownState.contentState !== "open" ||
-    footerDropdownState.contentParentTagName !== "BODY" ||
+    footerDropdownState.contentParentTagName !== expected.footerContentParentTagName ||
     footerDropdownState.contentPosition !== "fixed" ||
     collapsedByTrigger.providerState !== "collapsed" ||
     collapsedByTrigger.sidebarState !== "collapsed" ||

@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type FloatingPositioner } from "../../src/internal/floating";
 import { createFloatingDisclosureLifecycle } from "../../src/internal/floating-disclosure";
-import { requestDialogOwnedFloatingPortalClose } from "../../src/internal/floating-portal";
+import {
+  reportPortalPlacement,
+  requestDialogOwnedFloatingPortalClose,
+} from "../../src/internal/floating-portal";
 
 type TestRequest = {
   event?: Event;
@@ -71,6 +74,75 @@ describe("floating disclosure lifecycle", () => {
     expect(popup.parentElement).toBe(originalParent);
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
     expect(positioner.stopAutoUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("pauses positioning and dismissal while framework placement is pending", () => {
+    const root = document.createElement("div");
+    const trigger = document.createElement("button");
+    const portal = document.createElement("div");
+    const popup = document.createElement("div");
+    const target = document.createElement("section");
+    const secondTarget = document.createElement("section");
+    const positioner = createPositioner();
+    const closeRequests: TestRequest[] = [];
+    let open = true;
+    portal.setAttribute("data-sw-portal-placement", "framework");
+    portal.append(popup);
+    root.append(trigger, portal);
+    document.body.append(root, target, secondTarget);
+
+    const lifecycle = createFloatingDisclosureLifecycle<TestRequest>({
+      closeOnOutsideInteract: () => true,
+      containsTarget: (candidate) => root.contains(candidate) || popup.contains(candidate),
+      createFloatingPositioner: () => positioner,
+      getFloatingReference: () => trigger,
+      getOpen: () => open,
+      getPortalElement: () => portal,
+      getPortalTarget: () => target,
+      isDestroyed: () => false,
+      onOutsidePointerDown: (event) => {
+        closeRequests.push({ event, reason: "outside-press" });
+      },
+      popup,
+      renderState: (nextOpen) => {
+        popup.hidden = !nextOpen;
+      },
+      root,
+    });
+
+    lifecycle.applyOpenState(true, { reason: "trigger-press", trigger });
+    document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(positioner.update).not.toHaveBeenCalled();
+    expect(positioner.startAutoUpdate).not.toHaveBeenCalled();
+    expect(closeRequests).toHaveLength(0);
+
+    target.append(portal);
+    reportPortalPlacement(portal, { ready: true, target });
+
+    expect(positioner.update).toHaveBeenCalledTimes(1);
+    expect(positioner.startAutoUpdate).toHaveBeenCalledTimes(1);
+
+    reportPortalPlacement(portal, { ready: false, target: secondTarget });
+    document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(positioner.stopAutoUpdate).toHaveBeenCalledTimes(1);
+    expect(closeRequests).toHaveLength(0);
+
+    secondTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+    document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(positioner.update).toHaveBeenCalledTimes(2);
+    expect(positioner.startAutoUpdate).toHaveBeenCalledTimes(2);
+    expect(closeRequests).toHaveLength(1);
+
+    open = false;
+    lifecycle.applyOpenState(false, closeRequests[0]);
+    lifecycle.destroy();
+    reportPortalPlacement(portal, null);
+    target.remove();
+    secondTarget.remove();
   });
 
   it("aborts pending close completion when reopened before animations finish", () => {
@@ -250,16 +322,14 @@ describe("floating disclosure lifecycle", () => {
 
     open = true;
     lifecycle.applyOpenState(true, { reason: "trigger-press", trigger });
-    expect(popup.closest<HTMLElement>("[data-sw-floating-portal]")?.matches(":popover-open")).toBe(
-      true,
-    );
+    expect(popup.parentElement).toBe(portalTarget);
+    expect(popup.getAttribute("data-placement")).toBe("ready");
 
     requestDialogOwnedFloatingPortalClose(dialog);
 
     expect(closeIntents).toEqual([{ reason: "imperative-action" }]);
     expect(popup.getAttribute("data-state")).toBe("closed");
     expect(popup.parentElement).toBe(originalParent);
-    expect(dialog.querySelector("[data-sw-floating-portal]")).toBeNull();
 
     lifecycle.destroy();
     dialog.close();

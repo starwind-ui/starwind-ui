@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as MenuPrimitive from "@starwind-ui/vue/menu";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { dropdownRadioItemIndicator } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,13 +16,12 @@ const { class: className } = defineProps<DropdownRadioItemIndicatorDeclaredProps
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <MenuPrimitive.MenuRadioItemIndicator
     :class="dropdownRadioItemIndicator({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="dropdown-radio-item-indicator"
   >
     <slot />

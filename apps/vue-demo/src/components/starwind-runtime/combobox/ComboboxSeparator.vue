@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ComboboxPrimitive from "@starwind-ui/vue/combobox";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { comboboxSeparator } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -14,13 +14,12 @@ type ComboboxSeparatorDeclaredProps = {
 } & /* @vue-ignore */ ComboboxSeparatorProps;
 const { class: className } = defineProps<ComboboxSeparatorDeclaredProps>();
 defineSlots<{}>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ComboboxPrimitive.ComboboxSeparator
     :class="comboboxSeparator({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="combobox-separator"
   />
 </template>

@@ -1,3 +1,12 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+const VUE_AVATAR_NAMESPACE_MEMBERS = [
+  { key: "Root", name: "AvatarRoot" },
+  { key: "Image", name: "AvatarImage" },
+  { key: "Fallback", name: "AvatarFallback" },
+] as const;
+
 import type {
   AdapterComponentFile,
   AdapterIndexFile,
@@ -11,7 +20,9 @@ import {
 } from "./primitive/shared-fragments.js";
 
 export function printVueMediaStatusIndex(file: AdapterIndexFile): AdapterPrintedFile {
-  return printVueFamilyIndex(file, "media-status");
+  return printVueFamilyIndex(file, "media-status", {
+    namespaceMembers: VUE_AVATAR_NAMESPACE_MEMBERS,
+  });
 }
 
 export function printVueMediaStatusComponent(file: AdapterComponentFile): AdapterPrintedFile {
@@ -34,11 +45,10 @@ function printRoot(facts: AdapterMediaStatusFacts): string {
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
-import { onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLSpanElement | null>(null);
 let instance: ReturnType<typeof ${facts.runtime.factory}> | undefined;
 
@@ -61,7 +71,7 @@ onBeforeUnmount(destroyOwnedInstance);
 <template>
   <${facts.parts.root.defaultElement}
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${facts.parts.root.discoveryAttribute}
     ${facts.attrs.rootStatus}="idle"
   >

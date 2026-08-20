@@ -1,3 +1,7 @@
+import { projectVueAttributeAccess } from "./public-contract.js";
+
+const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
+
 import type {
   AdapterComponentFile,
   AdapterIndexFile,
@@ -53,6 +57,7 @@ function printRoot(facts: AdapterNativeOverlayFacts): string {
 import type { InjectionKey, Ref } from "vue";
 
 export type ${facts.displayName}ContextValue = {
+  element: Readonly<Ref<HTMLElement | null>>;
   mounted: Readonly<Ref<boolean>>;
   registerPortal: (owner: symbol, element: HTMLElement | null) => void;
 };
@@ -71,6 +76,7 @@ let portalOwner: symbol | undefined;
 let runtimeGeneration = 0;
 
 provide(${contextName}, {
+  element: rootRef,
   mounted,
   registerPortal(owner, element) {
     if (element) {
@@ -274,7 +280,9 @@ function printPortal(facts: AdapterNativeOverlayFacts): string {
 
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { inject, onBeforeUnmount, onMounted, ref, useAttrs } from "vue";
+import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
+import { inject, onBeforeUnmount, onMounted, ref } from "vue";
+import { useVuePortalPlacement } from "../_internal/portal";
 import { ${facts.displayName}Context } from "./${facts.exports.root}.vue";
 
 defineOptions({ inheritAttrs: false });
@@ -285,16 +293,22 @@ const props = withDefaults(
     disabled?: boolean;
   }>(),
   {
-    container: "body",
     disabled: false,
   },
 );
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const root = inject(${facts.displayName}Context);
 if (!root) throw new TypeError("${exportName} must be nested inside ${facts.exports.root}.");
 const owner = Symbol("${exportName}");
 const element = ref<HTMLDivElement | null>(null);
+const placement = useVuePortalPlacement({
+  active: () => root.mounted.value,
+  container: () => props.container,
+  disabled: () => props.disabled,
+  element,
+  reference: () => root.element.value,
+  runtime: { reportPortalPlacement, resolvePortalPlacement },
+});
 
 onMounted(() => root.registerPortal(owner, element.value));
 onBeforeUnmount(() => root.registerPortal(owner, null));
@@ -303,11 +317,16 @@ defineExpose({ element });
 </script>
 
 <template>
-  <Teleport :to="props.container" :disabled="props.disabled || !root.mounted.value">
+  <Teleport :to="placement.target.value" :disabled="placement.disabled.value">
     <${part.defaultElement}
       ref="element"
-      v-bind="attrs"
+      v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
       ${discoveryAttribute}
+      :data-container="typeof props.container === 'string' ? props.container : undefined"
+      :data-disabled="props.disabled ? '' : undefined"
+      :data-placement="placement.ready.value ? 'ready' : 'pending'"
+      data-sw-portal-placement="framework"
+      data-floating-root
       data-sw-part="${part.name}"
     >
       <slot />
@@ -436,14 +455,13 @@ function printPart({
 }): string {
   return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
 <script setup lang="ts">
-import { type HTMLAttributes, ref, useAttrs } from "vue";
+import { type HTMLAttributes, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
 type NativeElementProps = /* @vue-ignore */ HTMLAttributes;
 ${props ? `const props = defineProps<{ ${props} } & NativeElementProps>();` : "defineProps<NativeElementProps>();"}
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const element = ref<${elementType} | null>(null);
 
 defineExpose({ element });
@@ -452,7 +470,7 @@ defineExpose({ element });
 <template>
   <${part.defaultElement}
     ref="element"
-    v-bind="attrs"
+    v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}"
     ${attrs.filter(Boolean).join("\n    ")}
   >
     <slot />

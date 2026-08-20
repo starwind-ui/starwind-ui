@@ -5,13 +5,23 @@
 
 "use client";
 
+import { reportPortalPlacement, resolvePortalPlacement } from "@starwind-ui/runtime/drawer";
 import * as React from "react";
+import { ReactPortal, type ReactPortalProps } from "../internal/portal";
 
-export type DrawerPortalProps = React.HTMLAttributes<HTMLDivElement>;
+export type DrawerPortalProps = ReactPortalProps;
 
 const DrawerPortal = React.forwardRef<HTMLDivElement, DrawerPortalProps>(
   function DrawerPortal(props, forwardedRef) {
-    return <div data-sw-drawer-portal ref={forwardedRef} {...props} />;
+    return (
+      <ReactPortal
+        discoveryAttribute="data-sw-drawer-portal"
+        reportPlacement={reportPortalPlacement}
+        resolvePlacement={resolvePortalPlacement}
+        ref={forwardedRef}
+        {...props}
+      />
+    );
   },
 );
 

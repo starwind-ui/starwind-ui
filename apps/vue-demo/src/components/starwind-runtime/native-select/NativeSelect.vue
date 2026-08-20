@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { ref, type SelectHTMLAttributes, useAttrs } from "vue";
+import { ref, type SelectHTMLAttributes } from "vue";
 import { nativeSelect, nativeSelectIcon, nativeSelectWrapper } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,7 +18,6 @@ defineSlots<{
   default?: () => unknown;
   icon?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLSelectElement | null>(null);
 defineExpose({ element });
 </script>
@@ -28,7 +27,7 @@ defineExpose({ element });
     <select
       ref="element"
       :class="nativeSelect({ size, class: className })"
-      v-bind="attrs"
+      v-bind="$attrs"
       data-slot="native-select"
     >
       <slot />

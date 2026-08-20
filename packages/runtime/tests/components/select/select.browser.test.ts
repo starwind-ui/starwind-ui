@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createPopover } from "../../../src/components/popover/popover";
 import { createSelect } from "../../../src/components/select/select";
+import { reportPortalPlacement } from "../../../src/internal/floating-portal";
 
 describe("createSelect", () => {
   beforeEach(() => {
@@ -1383,6 +1384,132 @@ describe("createSelect", () => {
     expect(document.querySelectorAll("[data-sw-floating-portal]")).toHaveLength(0);
   });
 
+  it("pauses aligned positioning and auto-update during a framework target change", async () => {
+    const firstTarget = document.createElement("section");
+    const secondTarget = document.createElement("section");
+    const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark", modal: false });
+    const positioner = getPositioner();
+    const portal = document.createElement("div");
+    portal.setAttribute("data-sw-select-portal", "");
+    portal.setAttribute("data-sw-portal-placement", "framework");
+    positioner.replaceWith(portal);
+    portal.append(positioner);
+    document.body.append(firstTarget, secondTarget);
+    const select = createSelect(root);
+    firstTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: firstTarget });
+    const addEventListener = vi.spyOn(window, "addEventListener");
+    const removeEventListener = vi.spyOn(window, "removeEventListener");
+    const { valueRect } = mockAlignmentRects();
+
+    openWithMouse();
+    await waitForFloatingPosition();
+
+    const initialResizeAdds = addEventListener.mock.calls.filter(
+      ([type]) => type === "resize",
+    ).length;
+    expect(initialResizeAdds).toBeGreaterThan(0);
+    addEventListener.mockClear();
+    removeEventListener.mockClear();
+    const triggerRect = vi.mocked(getTrigger().getBoundingClientRect);
+    triggerRect.mockClear();
+    valueRect.mockReturnValue(DOMRect.fromRect({ height: 20, width: 80, x: 132, y: 172 }));
+    const placedTop = positioner.style.top;
+
+    reportPortalPlacement(portal, { ready: false, target: secondTarget });
+    select.updatePosition();
+    window.dispatchEvent(new Event("resize"));
+    await waitForFloatingPosition();
+
+    expect(positioner.style.top).toBe(placedTop);
+    expect(triggerRect).not.toHaveBeenCalled();
+    expect(
+      removeEventListener.mock.calls.filter(([type]) => type === "resize").length,
+    ).toBeGreaterThan(0);
+
+    getTrigger().focus();
+    addEventListener.mockClear();
+    secondTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+    await waitForFloatingPosition();
+
+    expect(select.getOpen()).toBe(true);
+    expect(positioner.style.top).toBe("116px");
+    expect(addEventListener.mock.calls.filter(([type]) => type === "resize")).toHaveLength(
+      initialResizeAdds,
+    );
+
+    select.destroy();
+    reportPortalPlacement(portal, null);
+    firstTarget.remove();
+    secondTarget.remove();
+  });
+
+  it("blocks fallback updates and stale async coordinates while framework placement is pending", async () => {
+    const firstTarget = document.createElement("section");
+    const secondTarget = document.createElement("section");
+    const root = renderSelect({ alignItemWithTrigger: false, defaultValue: "dark", modal: false });
+    const positioner = getPositioner();
+    const portal = document.createElement("div");
+    portal.setAttribute("data-sw-select-portal", "");
+    portal.setAttribute("data-sw-portal-placement", "framework");
+    positioner.replaceWith(portal);
+    portal.append(positioner);
+    document.body.append(firstTarget, secondTarget);
+    const select = createSelect(root);
+    firstTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: firstTarget });
+    mockRect(getTrigger(), { height: 32, width: 240, x: 100, y: 100 });
+    mockRect(getPositioner(), { height: 160, width: 240, x: 40, y: 200 });
+    mockRect(getPopup(), { height: 160, width: 240, x: 40, y: 200 });
+    openWithMouse();
+    await waitForFloatingPosition();
+    const triggerRect = vi.mocked(getTrigger().getBoundingClientRect);
+    triggerRect.mockClear();
+
+    getPopup().style.left = "777px";
+    select.updatePosition();
+    reportPortalPlacement(portal, { ready: false, target: secondTarget });
+    triggerRect.mockClear();
+    select.updatePosition();
+
+    expect(triggerRect).not.toHaveBeenCalled();
+
+    await waitForFloatingPosition();
+
+    expect(getPopup().style.left).toBe("777px");
+
+    secondTarget.append(portal);
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+    reportPortalPlacement(portal, { ready: true, target: secondTarget });
+    await waitForFloatingPosition();
+
+    expect(getPopup().style.left).not.toBe("777px");
+
+    select.destroy();
+    reportPortalPlacement(portal, null);
+    firstTarget.remove();
+    secondTarget.remove();
+  });
+
+  it("keeps cleared styles after destroy invalidates a deferred fallback update", async () => {
+    const root = renderSelect({ alignItemWithTrigger: false, defaultValue: "dark", modal: false });
+    const select = createSelect(root);
+    mockRect(getTrigger(), { height: 32, width: 240, x: 100, y: 100 });
+    mockRect(getPositioner(), { height: 160, width: 240, x: 40, y: 200 });
+    mockRect(getPopup(), { height: 160, width: 240, x: 40, y: 200 });
+    openWithMouse();
+    await waitForFloatingPosition();
+
+    select.updatePosition();
+    select.destroy();
+    await waitForFloatingPosition();
+
+    expect(getPopup().style.left).toBe("");
+    expect(getPopup().style.top).toBe("");
+  });
+
   it("lets the topmost select own Escape focus restoration", () => {
     const firstRoot = renderSelect({ defaultValue: "system" });
     const secondRoot = renderSelect({ defaultValue: "light" });
@@ -2252,6 +2379,35 @@ describe("createSelect", () => {
     expect(getPopup().getAttribute("data-side")).not.toBe("none");
   });
 
+  it("closes when an open touch Select trigger is tapped again", async () => {
+    const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark" });
+    const select = createSelect(root);
+
+    mockAlignmentRects();
+    await tapWithTouchFocusLoss(getTrigger());
+
+    expect(select.getOpen()).toBe(true);
+    expect(getPositioner().getAttribute("data-side")).not.toBe("none");
+
+    await tapWithTouchFocusLoss(getTrigger());
+
+    expect(select.getOpen()).toBe(false);
+    expect(getTrigger().getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("selects an item from a touch-opened Select", async () => {
+    const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark" });
+    const select = createSelect(root);
+
+    mockAlignmentRects();
+    await tapWithTouchFocusLoss(getTrigger());
+    await tapWithTouchFocusLoss(getItem("light"));
+
+    expect(select.getValue()).toBe("light");
+    expect(getValue().textContent).toBe("Light");
+    expect(select.getOpen()).toBe(false);
+  });
+
   it("restores authored placement when a touch open follows an aligned open", async () => {
     const root = renderSelect({ alignItemWithTrigger: true, defaultValue: "dark" });
     createSelect(root);
@@ -2818,6 +2974,31 @@ function openWithMouse(): void {
     }),
   );
   getTrigger().click();
+}
+
+async function tapWithTouchFocusLoss(target: HTMLElement): Promise<void> {
+  const shouldRunFocusDefault = target.dispatchEvent(
+    new PointerEvent("pointerdown", {
+      bubbles: true,
+      cancelable: true,
+      pointerType: "touch",
+    }),
+  );
+
+  if (shouldRunFocusDefault && document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+  await waitForMicrotasks();
+
+  target.dispatchEvent(
+    new PointerEvent("pointerup", {
+      bubbles: true,
+      cancelable: true,
+      pointerType: "touch",
+    }),
+  );
+  target.click();
+  await waitForFloatingPosition();
 }
 
 function createDeferred<T>() {

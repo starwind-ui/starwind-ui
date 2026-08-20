@@ -126,19 +126,35 @@ try {
 
   // Composite format selection synchronizes without dismissing the parent Popover.
   const compositeFormat = popup.getByRole("combobox", { name: "Color format" });
+  const closedSelectGeometry = await readColorPickerGeometry(page.locator("#popup-picker"));
   await compositeFormat.click();
   const compositePositioner = page.locator(
-    '#popup-picker > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
+    '#popup-picker > [data-slot="select-portal"] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
   );
   assert.equal(await compositePositioner.count(), 1, "format Select popup marker must be stable");
+  assert.equal(
+    await compositePositioner.evaluate((positioner) => getComputedStyle(positioner).position),
+    "fixed",
+    "format Select positioner must remain fixed",
+  );
   assert.equal(
     await compositePositioner.evaluate((positioner) => getComputedStyle(positioner).zIndex),
     "60",
     "format Select positioner must layer above its parent Popover",
   );
+  assertColorPickerGeometryStable(
+    closedSelectGeometry,
+    await readColorPickerGeometry(page.locator("#popup-picker")),
+    "while the Astro format Select is open",
+  );
   await page.getByRole("listbox").getByRole("option", { name: "RGB" }).click();
   assert.equal(await page.locator("#popup-picker").getAttribute("data-format"), "rgb");
   assert.equal(await popup.isVisible(), true, "nested Select must keep the Color Picker open");
+  assertColorPickerGeometryStable(
+    closedSelectGeometry,
+    await readColorPickerGeometry(page.locator("#popup-picker")),
+    "after the Astro format Select closes",
+  );
   await compositeFormat.click();
   await page.getByRole("listbox").getByRole("option", { name: "HEX" }).click();
   assert.equal(await page.locator("#popup-picker").getAttribute("data-format"), "hex");
@@ -751,6 +767,24 @@ async function assertConstrainedColorPickerPlacement({ page, popup, trigger }) {
       else element.setAttribute("style", style);
     }, originalStyle);
     await page.setViewportSize({ width: 1280, height: 1000 });
+  }
+}
+
+async function readColorPickerGeometry(root) {
+  const fixture = root.locator("xpath=..");
+  const [rootBox, fixtureBox] = await Promise.all([root.boundingBox(), fixture.boundingBox()]);
+  assert.ok(rootBox && fixtureBox, "Color Picker geometry must be measurable");
+  return { fixture: fixtureBox, root: rootBox };
+}
+
+function assertColorPickerGeometryStable(expected, actual, phase) {
+  for (const target of ["root", "fixture"]) {
+    for (const dimension of ["x", "y", "width", "height"]) {
+      assert.ok(
+        Math.abs(expected[target][dimension] - actual[target][dimension]) <= 1,
+        `${target} ${dimension} must stay within 1 CSS pixel ${phase}: expected ${expected[target][dimension]}, received ${actual[target][dimension]}`,
+      );
+    }
   }
 }
 

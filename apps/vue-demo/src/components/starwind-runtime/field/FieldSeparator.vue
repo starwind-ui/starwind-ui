@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, ref, useAttrs, useSlots } from "vue";
+import { type HTMLAttributes, ref, useSlots } from "vue";
 import { Separator } from "../separator";
 import { fieldSeparator, fieldSeparatorContent } from "./variants";
 
@@ -16,7 +16,6 @@ const { class: className } = defineProps<FieldSeparatorDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 defineExpose({ element });
 
@@ -27,7 +26,7 @@ const hasContent = Boolean(useSlots().default);
   <div
     ref="element"
     :class="fieldSeparator({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="field-separator"
   >
     <Separator class="absolute inset-0 top-1/2" />

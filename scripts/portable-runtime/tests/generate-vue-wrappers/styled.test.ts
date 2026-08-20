@@ -693,6 +693,57 @@ try {
 }
 `;
 
+const COMBOBOX_PORTAL_HYDRATION_PROOF_SOURCE = String.raw`
+import { createSSRApp, defineComponent, h, nextTick } from "vue";
+import {
+  ComboboxInput,
+  ComboboxPopup,
+  ComboboxPortal,
+  ComboboxRoot,
+} from "@starwind-ui/vue/combobox";
+
+const Fixture = defineComponent({
+  render: () =>
+    h(
+      ComboboxRoot,
+      { defaultOpen: true },
+      {
+        default: () => [
+          h(ComboboxInput),
+          h(
+            ComboboxPortal,
+            { container: "#combobox-overlays", "data-slot": "combobox-portal" },
+            { default: () => h(ComboboxPopup, null, { default: () => "Hydrated content" }) },
+          ),
+        ],
+      },
+    ),
+});
+
+try {
+  const warnings = [];
+  const app = createSSRApp(Fixture);
+  app.config.warnHandler = (message) => warnings.push(message);
+  app.mount("#app");
+  await nextTick();
+
+  const portal = document.querySelector("[data-sw-combobox-portal]");
+  if (!(portal instanceof HTMLDivElement)) {
+    throw new Error("Generated Combobox Portal did not hydrate a div.");
+  }
+  document.documentElement.dataset.starwindComboboxPortalHydrationResult = JSON.stringify({
+    dataSlot: portal.getAttribute("data-slot"),
+    parentId: portal.parentElement?.id ?? null,
+    warnings,
+  });
+  app.unmount();
+} catch (error) {
+  document.documentElement.dataset.starwindComboboxPortalHydrationResult = JSON.stringify({
+    error: error instanceof Error ? error.stack ?? error.message : String(error),
+  });
+}
+`;
+
 const PROGRESS_HYDRATION_PROOF_SOURCE = String.raw`
 import { createSSRApp, defineComponent, h, nextTick, ref } from "vue";
 import { Progress } from "./styled/progress/index.ts";
@@ -1272,10 +1323,25 @@ describe("generated Vue Styled wrappers", () => {
     expect(firstTree["hover-card/HoverCardContent.vue"]).not.toContain("isolate");
     expect(firstTree["hover-card/variants.ts"]).toContain("export const hoverCardPositioner");
     expect(firstTree["dropdown/DropdownContent.vue"]).toContain('data-slot="dropdown-content"');
+    for (const relativePath of [
+      "combobox/ComboboxContent.vue",
+      "context-menu/ContextMenuContent.vue",
+      "context-menu/ContextMenuSubContent.vue",
+      "dropdown/DropdownContent.vue",
+      "dropdown/DropdownSubContent.vue",
+      "hover-card/HoverCardContent.vue",
+      "navigation-menu/NavigationMenuPositioner.vue",
+      "popover/PopoverContent.vue",
+      "select/SelectContent.vue",
+      "tooltip/TooltipContent.vue",
+    ]) {
+      expect(firstTree[relativePath], relativePath).toContain('"portalContainer"?: string;');
+      expect(firstTree[relativePath], relativePath).toContain('"disablePortal"?: boolean;');
+      expect(firstTree[relativePath], relativePath).toContain(':container="portalContainer"');
+      expect(firstTree[relativePath], relativePath).toContain(':disabled="disablePortal"');
+    }
     expect(firstTree["combobox/ComboboxContent.vue"]).toContain('data-slot="combobox-content"');
-    expect(firstTree["combobox/ComboboxContent.vue"]).not.toContain(
-      '<ComboboxPrimitive.ComboboxPortal data-slot="combobox-portal">',
-    );
+    expect(firstTree["combobox/ComboboxContent.vue"]).toContain('data-slot="combobox-portal"');
     expect(firstTree["combobox/variants.ts"]).toContain("fade-out zoom-out-95");
     expect(firstTree["combobox/variants.ts"]).not.toContain("slide-out-to-");
     expect(firstTree["combobox/ComboboxClear.vue"]).toContain(
@@ -1309,7 +1375,7 @@ describe("generated Vue Styled wrappers", () => {
       /v-bind="attrs as Omit<InstanceType<typeof InputGroup>\['\$props'\], 'class' \| 'style'>"[\s\S]*data-slot="combobox-input-group"/,
     );
     expect(firstTree["input-group/InputGroup.vue"]).toMatch(
-      /data-slot="input-group"[\s\S]*v-bind="attrs"/,
+      /data-slot="input-group"[\s\S]*v-bind="\$attrs"/,
     );
     expect(firstTree["input-group/InputGroupButton.vue"]).toContain(
       `v-bind="attrs as Omit<InstanceType<typeof Button>['$props'], 'class' | 'style'>"`,
@@ -1338,6 +1404,15 @@ describe("generated Vue Styled wrappers", () => {
       '"update:modelValue": [value: import("@starwind-ui/vue/color-picker").ColorPickerValue]',
     );
     expect(firstTree["color-picker/ColorPicker.vue"]).toContain('"update:open": [value: boolean]');
+    for (const relativePath of [
+      "color-picker/ColorPicker.vue",
+      "color-picker/ColorPickerContent.vue",
+      "color-picker/ColorPickerDefaultEditor.vue",
+      "color-picker/ColorPickerInput.vue",
+    ]) {
+      expect(firstTree[relativePath], relativePath).toContain("portalContainer");
+      expect(firstTree[relativePath], relativePath).toContain("disablePortal");
+    }
     expect(firstTree["color-picker/ColorPicker.vue"]).toContain("handleValueCommitted");
     expect(firstTree["color-picker/ColorPicker.vue"]).toContain("handleCloseComplete");
     expect(firstTree["color-picker/ColorPicker.vue"]).toContain("defineExpose({ element });");
@@ -1347,6 +1422,13 @@ describe("generated Vue Styled wrappers", () => {
       'import { Popover } from "../popover"',
     );
     expect(firstTree["color-picker/styles.css"]).toContain("--sw-color-picker-area-background");
+    expect(firstTree["color-picker/styles.css"]).toContain(
+      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] { display: contents; }',
+    );
+    expect(firstTree["color-picker/styles.css"]).toContain(
+      '[data-sw-color-picker][data-floating-root] > [data-slot="select-portal"] > [data-slot="select-positioner"]:has(> [data-sw-color-picker-format-options])',
+    );
+    expect(firstTree["color-picker/styles.css"]).toContain("{ position: fixed; z-index: 60; }");
     expect(firstTree["toast/Toaster.vue"]).toContain(
       'import * as ToastPrimitive from "@starwind-ui/vue/toast"',
     );
@@ -1408,7 +1490,7 @@ describe("generated Vue Styled wrappers", () => {
     expect(themeToggle).toContain('ref="element"');
     expect(themeToggle).toContain("defineExpose({ element });");
     expect(themeToggle).toContain('type="button"');
-    expect(themeToggle).toMatch(/v-bind="attrs"\n\s+type="button"/);
+    expect(themeToggle).toMatch(/v-bind="\$attrs"\n\s+type="button"/);
     expect(themeToggle).toContain("data-sw-theme-toggle");
     expect(themeToggle).toContain(`:data-slot="dataSlot || 'theme-toggle'"`);
     expect(themeToggle).toContain('<slot name="light-icon">');
@@ -1858,6 +1940,104 @@ describe("generated Vue Styled wrappers", () => {
         refsCleared: true,
         refsSame: true,
         wrapperClicks: 2,
+        warnings: [],
+      });
+    } finally {
+      await browser.close();
+    }
+  });
+
+  it("hydrates the generated Combobox Portal slot on its teleported public div without warnings", async () => {
+    const root = await createProductionContextOutputRoot();
+    const primitiveOutputRoot = path.resolve(process.cwd(), "packages/vue/src");
+    const ssrServer = await createVueSsrLoader();
+    servers.push(ssrServer);
+    const ComboboxRoot = await loadGeneratedComponent(
+      ssrServer,
+      primitiveOutputRoot,
+      "combobox/ComboboxRoot.vue",
+    );
+    const ComboboxPortal = await loadGeneratedComponent(
+      ssrServer,
+      primitiveOutputRoot,
+      "combobox/ComboboxPortal.vue",
+    );
+    const ComboboxInput = await loadGeneratedComponent(
+      ssrServer,
+      primitiveOutputRoot,
+      "combobox/ComboboxInput.vue",
+    );
+    const ComboboxPopup = await loadGeneratedComponent(
+      ssrServer,
+      primitiveOutputRoot,
+      "combobox/ComboboxPopup.vue",
+    );
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(
+            ComboboxRoot,
+            { defaultOpen: true },
+            {
+              default: () => [
+                h(ComboboxInput),
+                h(
+                  ComboboxPortal,
+                  { container: "#combobox-overlays", "data-slot": "combobox-portal" },
+                  {
+                    default: () => h(ComboboxPopup, null, { default: () => "Hydrated content" }),
+                  },
+                ),
+              ],
+            },
+          ),
+      }),
+    );
+    await writeFile(
+      path.join(root, "index.html"),
+      `<!doctype html><html><body><div id="app">${html}</div><div id="combobox-overlays"></div><script type="module" src="/combobox-portal-hydration.js"></script></body></html>`,
+      "utf8",
+    );
+    await writeFile(
+      path.join(root, "combobox-portal-hydration.js"),
+      COMBOBOX_PORTAL_HYDRATION_PROOF_SOURCE,
+      "utf8",
+    );
+
+    const server = await createVueBrowserServer(root);
+    servers.push(server);
+    await server.listen();
+    const url = server.resolvedUrls?.local[0];
+    if (!url) throw new Error("Vue Combobox Portal hydration server did not expose a local URL.");
+    const workspaceRequire = createRequire(
+      path.join(process.cwd(), "apps/react-demo/package.json"),
+    );
+    const playwright: unknown = workspaceRequire("playwright");
+    if (!isPlaywrightModule(playwright)) {
+      throw new TypeError("The workspace Playwright module does not expose Chromium.");
+    }
+
+    const browser = await playwright.chromium.launch({ headless: true });
+    try {
+      const page = await browser.newPage();
+      const browserErrors: string[] = [];
+      page.on("pageerror", (error) => browserErrors.push(describeUnknownError(error)));
+      page.on("console", (message) => {
+        if (message.type() === "error") browserErrors.push(`console.error: ${message.text()}`);
+      });
+      await page.goto(url);
+      await page.waitForFunction(
+        () => document.documentElement.dataset.starwindComboboxPortalHydrationResult !== undefined,
+        undefined,
+        { timeout: 15_000 },
+      );
+      if (browserErrors.length) throw new Error(browserErrors.join("\n"));
+      const result = await page.evaluate(() =>
+        JSON.parse(document.documentElement.dataset.starwindComboboxPortalHydrationResult ?? "{}"),
+      );
+      expect(result).toEqual({
+        dataSlot: "combobox-portal",
+        parentId: "combobox-overlays",
         warnings: [],
       });
     } finally {

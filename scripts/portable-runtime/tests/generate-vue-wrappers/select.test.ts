@@ -111,7 +111,8 @@ describe("generated Vue Select Primitive", () => {
     expect(root).not.toContain("asChild");
 
     expect(portal).toContain("container?: string | HTMLElement");
-    expect(portal).toContain(':disabled="props.disabled || !select.mounted.value"');
+    expect(portal).toContain(':disabled="placement.disabled.value"');
+    expect(portal).toContain("useVuePortalPlacement");
     expect(portal).toContain("select.registerPortal(owner, portalRef.value)");
     expect(portal).toContain("select.registerPortal(owner, null)");
     expect(trigger).not.toContain("asChild");

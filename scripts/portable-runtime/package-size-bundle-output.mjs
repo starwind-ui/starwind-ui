@@ -1,7 +1,8 @@
 import path from "node:path";
-import { gzipSync } from "node:zlib";
+import { brotliCompressSync, constants, gzipSync } from "node:zlib";
 
 export function summarizeInitialBundleOutput({
+  brotli = brotliCompressSync,
   entryFilePath,
   gzip = gzipSync,
   metafile,
@@ -14,9 +15,13 @@ export function summarizeInitialBundleOutput({
     0,
   );
   const gzipBytes = gzip(combineOutputContents(initialOutputFiles), { level: 9 }).byteLength;
+  const brotliBytes = brotli(combineOutputContents(initialOutputFiles), {
+    params: { [constants.BROTLI_PARAM_QUALITY]: 11 },
+  }).byteLength;
   const initialOutputPaths = initialOutputFiles.map((outputFile) => outputFile.path);
 
   return {
+    brotliBytes,
     gzipBytes,
     initialOutputPaths,
     metafile: metafile ? filterMetafileToOutputs(metafile, initialOutputPaths) : undefined,

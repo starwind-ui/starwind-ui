@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as ToastPrimitive from "@starwind-ui/vue/toast";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import {
   toastAction,
   toastClose,
@@ -22,11 +22,10 @@ const { variant = "default" } = defineProps<ToastTemplateDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <ToastPrimitive.ToastTemplate :variant="variant" v-bind="attrs">
+  <ToastPrimitive.ToastTemplate :variant="variant" v-bind="$attrs">
     <slot>
       <ToastPrimitive.ToastRoot
         :class="toastItem({ variant: variant === 'loading' ? 'default' : variant })"

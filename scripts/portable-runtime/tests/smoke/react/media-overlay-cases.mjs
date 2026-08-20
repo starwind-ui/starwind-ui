@@ -7,6 +7,7 @@ import {
 import { verifyHoverCardCases } from "../shared/hover-card.mjs";
 import { verifyVideoCases } from "../shared/video.mjs";
 import { verifyDialogEntryAnimationGestures } from "../shared/dialog-entry-animation.mjs";
+import { assertPublicPortalTopology } from "../shared/public-portal-topology.mjs";
 
 export async function verifyReactMediaOverlayCases({ page, messages }) {
   await verifyVideoCases({
@@ -296,6 +297,9 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
 
   await page.getByRole("button", { name: "Shortcut help" }).hover();
   await page.locator("#react-runtime-tooltip-content").waitFor({ state: "visible" });
+  await assertPublicPortalTopology(page.locator("#react-runtime-tooltip-content"), {
+    portalSlot: "tooltip-portal",
+  });
   const openTooltipState = await page
     .locator("#react-runtime-tooltip-content")
     .evaluate((content) => {
@@ -355,7 +359,7 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
     openTooltipState.dataAlign !== "center" ||
     openTooltipState.parentDataSlot !== "tooltip-positioner" ||
     openTooltipState.parentTagName !== "DIV" ||
-    openTooltipState.positionerParentTagName !== "BODY" ||
+    openTooltipState.positionerParentTagName !== "DIV" ||
     openTooltipState.rootContains !== false ||
     openTooltipState.position !== "fixed" ||
     openTooltipState.popupPosition === "fixed" ||
@@ -375,17 +379,14 @@ export async function verifyReactMediaOverlayCases({ page, messages }) {
   await page.mouse.move(20, 20);
   await page.waitForFunction(() => {
     const content = document.querySelector("#react-runtime-tooltip-content");
-    const root = document.querySelector("#react-runtime-tooltip-default");
-
-    return (
-      content instanceof HTMLElement &&
-      root instanceof HTMLElement &&
-      content.hidden &&
-      root.contains(content)
-    );
+    return content instanceof HTMLElement && content.hidden;
+  });
+  await assertPublicPortalTopology(page.locator("#react-runtime-tooltip-content"), {
+    portalSlot: "tooltip-portal",
   });
 
   await verifyTooltipCompositionCases(page, "react-runtime", {
+    positionerParentTagName: "DIV",
     react: true,
     styledSlot: "breadcrumb-link",
   });

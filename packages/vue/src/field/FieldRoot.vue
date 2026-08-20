@@ -3,7 +3,7 @@
 <script setup lang="ts">
 import { createField } from "@starwind-ui/runtime/field";
 import type { FormValidationTiming } from "@starwind-ui/runtime/form";
-import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(
@@ -28,7 +28,6 @@ const props = withDefaults(
   },
 );
 defineSlots<{ default?: () => unknown }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLDivElement | null>(null);
 let instance: ReturnType<typeof createField> | undefined;
 defineExpose({ element: rootRef });
@@ -83,7 +82,7 @@ onBeforeUnmount(destroyOwnedInstance);
 <template>
   <div
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-sw-field
     data-sw-part="root"
     :data-dirty="props.dirty ? '' : undefined"

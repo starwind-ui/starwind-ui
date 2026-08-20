@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ToastPrimitive from "@starwind-ui/vue/toast";
 import type { ClassValue, VariantProps } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { toastClose, toastContent, toastItem } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -18,14 +18,13 @@ const { class: className, variant = "default" } = defineProps<ToastItemDeclaredP
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ToastPrimitive.ToastRoot
     :class="toastItem({ variant, class: className })"
     :variant="variant"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="toast"
   >
     <ToastPrimitive.ToastContent :class="toastContent()" data-slot="toast-content">

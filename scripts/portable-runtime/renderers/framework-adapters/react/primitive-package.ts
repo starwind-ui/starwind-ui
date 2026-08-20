@@ -3,6 +3,7 @@ import { rm } from "node:fs/promises";
 import { appendRuntimeTypeFacades, renderPrimitiveIndex } from "../../primitive-index.js";
 import { createTsHeader, writeGeneratedFile } from "../../shared.js";
 import type { FrameworkAdapterTargetPrimitivePackageGenerator } from "../types.js";
+import { renderReactPortalHelperFile } from "./portal.js";
 import {
   renderComposeRefsFile,
   renderUseClosePresenceFile,
@@ -34,6 +35,11 @@ export const generateReactPrimitivePackage: FrameworkAdapterTargetPrimitivePacka
         `${outputRoot}/internal`,
         "use-close-presence.ts",
         renderUseClosePresenceFile(moduleHeader),
+      ),
+      writeGeneratedFile(
+        `${outputRoot}/internal`,
+        "portal.tsx",
+        renderReactPortalHelperFile(moduleHeader),
       ),
       writeGeneratedFile(outputRoot, "index.ts", renderPrimitiveIndex(moduleHeader)),
     ]);

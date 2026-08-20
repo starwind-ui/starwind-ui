@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref, useAttrs } from "vue";
+import { type ComponentPublicInstance, type HTMLAttributes, nextTick, ref } from "vue";
 import "./styles.css";
 import * as ScrollAreaPrimitive from "@starwind-ui/vue/scroll-area";
 import {
@@ -36,7 +36,6 @@ defineSlots<{
   default?: () => unknown;
   scrollbar?: () => unknown;
 }>();
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 let pendingPrimitiveRef: ({ element?: HTMLDivElement | null } & ComponentPublicInstance) | null =
   null;
@@ -65,7 +64,7 @@ function setElement(value: Element | ComponentPublicInstance | null): void {
     :ref="setElement"
     :class="scrollArea({ class: className })"
     :overflow-edge-threshold="overflowEdgeThreshold"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="scroll-area"
   >
     <ScrollAreaPrimitive.ScrollAreaViewport

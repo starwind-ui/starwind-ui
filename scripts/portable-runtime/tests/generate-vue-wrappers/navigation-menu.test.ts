@@ -53,6 +53,7 @@ describe("generated Vue Navigation Menu Primitive", () => {
     const trigger = output.get("NavigationMenuTrigger.vue")!;
     const portal = output.get("NavigationMenuPortal.vue")!;
     const viewport = output.get("NavigationMenuViewport.vue")!;
+    const index = output.get("index.ts")!;
     const all = [...output.values()].join("\n");
 
     expect(root).toContain("createNavigationMenu");
@@ -60,11 +61,7 @@ describe("generated Vue Navigation Menu Primitive", () => {
     expect(root).toContain('emit("update:modelValue", detail.value)');
     expect(root).toContain('instance.subscribe("valueChange"');
     expect(root).toContain("onUpdated(syncUncontrolledFromRuntime)");
-    expect(root).toContain("refreshPortalTarget: () => Promise<void>");
-    expect(root).toContain(
-      "const replayValue = props.modelValue !== undefined ? props.modelValue : owned.getValue()",
-    );
-    expect(root).toContain("owned.setValue(replayValue, { emit: false })");
+    expect(root).not.toContain("refreshPortalTarget");
     expect(root).toContain("owned?.destroy()");
     expect(root).toContain("provide(NavigationMenuRootContext");
     expect(root).toContain("NavigationMenuViewportContext");
@@ -72,10 +69,13 @@ describe("generated Vue Navigation Menu Primitive", () => {
     expect(trigger).toContain("useNavigationMenuItemContext");
     expect(portal).toContain("<Teleport");
     expect(portal).toContain("data-floating-root");
-    expect(portal).toContain("void root.refreshPortalTarget()");
+    expect(portal).toContain("useVuePortalPlacement");
+    expect(portal).toContain(':disabled="placement.disabled.value"');
     expect(list).toContain("useNavigationMenuRootContext");
     expect(list).toContain(':data-orientation="root.orientation.value"');
     expect(viewport).toContain("provide(NavigationMenuViewportContext");
+    expect(index).toContain("NavigationMenuValueChangeDetails");
+    expect(index).not.toMatch(/Context|useNavigationMenu/);
     expect(all).not.toMatch(
       /ResizeObserver|getBoundingClientRect|offsetWidth|offsetHeight|specialized-future-framework-tracer/,
     );

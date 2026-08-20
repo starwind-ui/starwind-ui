@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { sheetHeader } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -15,11 +15,10 @@ const { class: className } = defineProps<SheetHeaderDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
-  <div :class="sheetHeader({ class: className })" v-bind="attrs" data-slot="sheet-header">
+  <div :class="sheetHeader({ class: className })" v-bind="$attrs" data-slot="sheet-header">
     <slot />
   </div>
 </template>

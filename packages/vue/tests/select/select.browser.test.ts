@@ -614,6 +614,10 @@ function expectOwnedPortal(
   location: "local" | "remote",
 ): void {
   expect(document.querySelectorAll("[data-sw-select-portal]")).toHaveLength(1);
+  const portal = document.querySelector<HTMLElement>("[data-sw-select-portal]")!;
+  expect(portal.dataset.placement).toBe("ready");
+  expect(portal.hasAttribute("data-floating-root")).toBe(true);
+  expect(portal.contains(document.querySelector("[data-sw-select-positioner]"))).toBe(true);
   expect(host.querySelectorAll("[data-sw-select-portal]")).toHaveLength(
     location === "local" ? 1 : 0,
   );

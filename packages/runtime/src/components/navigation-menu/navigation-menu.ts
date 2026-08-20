@@ -1,3 +1,4 @@
+import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import {
   assertHTMLElement,
   ensureId,
@@ -6,7 +7,6 @@ import {
   resolveAsChildControl,
   setBooleanAttribute,
 } from "../../internal/dom";
-import { runCancelableDetailsTransaction } from "../../internal/cancelable-details";
 import { dispatchCustomEvent } from "../../internal/events";
 import {
   createFloatingPositioner,
@@ -26,6 +26,7 @@ import {
   registerOverlayDismissal,
 } from "../../internal/overlay-dismissal";
 import { hideElementAfterAnimations, showElement } from "../../internal/presence";
+import { isRuntimePartOwned, queryRuntimePartElements } from "../../internal/portal-binding";
 
 export type NavigationMenuValue = string | null;
 
@@ -161,6 +162,27 @@ const BASE_UI_POSITIONER_WIDTH_PROPERTY = "--positioner-width";
 const BASE_UI_POSITIONER_HEIGHT_PROPERTY = "--positioner-height";
 const BASE_UI_TRANSFORM_ORIGIN_PROPERTY = "--transform-origin";
 const instances = new WeakMap<HTMLElement, NavigationMenuInstance>();
+
+export function refreshNavigationMenuPortalSurface(root: HTMLElement): void {
+  const instance = instances.get(root);
+  if (!(instance instanceof NavigationMenuController)) return;
+  const nextElements = getNavigationMenuElements(root);
+  if (nextElements.popup === instance["elements"].popup) return;
+
+  instance["placementRevision"] += 1;
+  instance["cancelPlacementReady"]();
+  instance["unregisterDismissal"]();
+  instance["floatingPositioner"]?.destroy();
+  instance["floatingPositioner"] = null;
+  instance["floatingReference"] = null;
+  instance["portalSurfaceAbortController"]?.abort();
+  instance["portalSurfaceAbortController"] = new AbortController();
+  Object.assign(instance["elements"], nextElements);
+  instance["setupAccessibility"]();
+  instance["bindPortalSurfaceEvents"]();
+  instance["portalSession"].mount();
+  instance["applyValueState"](instance["valueState"]);
+}
 const unsupportedNestedRoots = new WeakSet<HTMLElement>();
 
 export function createNavigationMenu(
@@ -237,7 +259,11 @@ class NavigationMenuController implements NavigationMenuInstance {
   private instantElements: HTMLElement[] = [];
   private openTimer: number | null = null;
   private pendingKeyboardOpenFocus: PendingKeyboardOpenFocus | null = null;
+  private pendingKeyboardOpenFocusAwaitingPlacement = false;
   private pendingKeyboardOpenFocusTimer: number | null = null;
+  private placementRevision = 0;
+  private placementReadyCleanup: (() => void) | null = null;
+  private portalSurfaceAbortController: AbortController | null = null;
   private readonly portalSession: FloatingPortalSession;
   private rendered = false;
   private restoreFocusTrigger: HTMLElement | null = null;
@@ -255,7 +281,7 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.portalSession = createFloatingPortalSession({
       canPromote: () => this.valueState !== null,
       root,
-      getPortalElement: () => this.getPortalElement(),
+      getPortalElement: () => this.getPortalWrapper(),
       getPortalTarget: () => this.getPortalTarget(),
       onOwnerCloseRequest: () => {
         const request: ValueRequest = {
@@ -309,7 +335,9 @@ class NavigationMenuController implements NavigationMenuInstance {
   destroy(): void {
     if (this.destroyed) return;
 
+    this.placementRevision += 1;
     this.abortController.abort();
+    this.portalSurfaceAbortController?.abort();
     this.collectionObserver?.disconnect();
     this.collectionObserver = null;
     this.collectionRefreshQueued = false;
@@ -318,6 +346,7 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.clearCloseTimer();
     this.clearOpenTimer();
     this.clearPendingKeyboardOpenFocus();
+    this.cancelPlacementReady();
     this.clearBoundaryTransformFrame();
     this.clearInstantFrame();
     this.clearSurfaceSizeFrame();
@@ -468,6 +497,55 @@ class NavigationMenuController implements NavigationMenuInstance {
             return;
           }
 
+          this.closeAfterDelay(event);
+        },
+        { signal },
+      );
+    });
+  }
+
+  private bindPortalSurfaceEvents(): void {
+    const signal = this.portalSurfaceAbortController?.signal ?? this.abortController.signal;
+    this.elements.popup.addEventListener(
+      "keydown",
+      (event) => {
+        if (this.handlePopupTabKeyDown(event) || this.handlePopupFocusKeyDown(event)) return;
+        if (!this.closeOnEscape || event.key !== "Escape" || this.valueState === null) return;
+        event.preventDefault();
+        this.requestValue(null, {
+          event,
+          reason: "escape-key",
+          trigger: this.activeTrigger ?? undefined,
+        });
+      },
+      { signal },
+    );
+
+    getUniqueElements(
+      [
+        this.elements.portal,
+        this.elements.positioner,
+        this.elements.popup,
+        this.elements.viewport,
+        this.elements.arrow,
+      ].filter(isHTMLElement),
+    ).forEach((element) => {
+      element.addEventListener(
+        "pointerenter",
+        (event) => {
+          if (!isMousePointer(event)) return;
+          this.clearCloseTimer();
+        },
+        { signal },
+      );
+      element.addEventListener(
+        "pointerleave",
+        (event) => {
+          if (!isMousePointer(event)) return;
+          if (this.isPointerMovingWithinMenu(event)) {
+            this.clearCloseTimer();
+            return;
+          }
           this.closeAfterDelay(event);
         },
         { signal },
@@ -938,36 +1016,69 @@ class NavigationMenuController implements NavigationMenuInstance {
         this.activeTrigger ??
         this.restoreFocusTrigger;
       this.renderState(value);
-      let positionUpdateDeferred = false;
       if (activeItem) {
         const activationDirection = this.updateActivationState(activeIndex);
         instantSize = activationDirection === "initial";
         if (!instantSize) {
           this.clearInstantFrame();
         }
-        positionUpdateDeferred = this.updateViewportSize(activeItem, {
-          animateFromPrevious: !instantSize,
-          instant: instantSize,
-        });
       }
-      this.portalPopup();
-      this.registerDismissal();
-      if (positionUpdateDeferred) {
+      const activatePlacedOpen = () => {
+        if (this.destroyed || this.valueState === null) return;
+
+        const positionUpdateDeferred = activeItem
+          ? this.updateViewportSize(activeItem, {
+              animateFromPrevious: !instantSize,
+              instant: instantSize,
+            })
+          : false;
+        this.registerDismissal();
+        if (positionUpdateDeferred) {
+          this.floatingPositioner?.stopAutoUpdate();
+        } else {
+          void this.positionPopup();
+          this.setupAutoUpdate();
+        }
+        if (activeItem && !positionUpdateDeferred) {
+          this.scheduleViewportSizeRefresh(activeItem, { instant: instantSize });
+        }
+        if (this.pendingKeyboardOpenFocusAwaitingPlacement && this.pendingKeyboardOpenFocus) {
+          this.focusPendingKeyboardOpenControl({
+            event: this.pendingKeyboardOpenFocus.event,
+          });
+        }
+      };
+      const deactivatePlacedOpen = () => {
+        this.clearBoundaryTransformFrame();
+        this.clearInstantFrame();
+        this.clearSurfaceSizeFrame();
+        this.clearViewportRefreshFrame();
+        this.unregisterDismissal();
         this.floatingPositioner?.stopAutoUpdate();
-      } else {
-        this.positionPopup();
-        this.setupAutoUpdate();
-      }
-      if (activeItem && !positionUpdateDeferred) {
-        this.scheduleViewportSizeRefresh(activeItem, { instant: instantSize });
+      };
+      this.cancelPlacementReady();
+      this.placementRevision += 1;
+      const placementReady = this.portalPopup();
+      this.placementReadyCleanup = this.portalSession.onReadyChange((ready) => {
+        if (ready) {
+          activatePlacedOpen();
+        } else {
+          this.placementRevision += 1;
+          deactivatePlacedOpen();
+        }
+      });
+      if (placementReady) {
+        activatePlacedOpen();
       }
     } else if (!this.rendered) {
+      this.cancelPlacementReady();
       this.unregisterDismissal();
       this.renderState(null);
       this.elements.popup.hidden = true;
       this.elements.viewport.hidden = true;
       this.activeIndex = null;
     } else {
+      this.cancelPlacementReady();
       this.unregisterDismissal();
       this.renderState(null);
       this.activeIndex = null;
@@ -1035,7 +1146,7 @@ class NavigationMenuController implements NavigationMenuInstance {
     item: NavigationMenuItem,
     options: { animateFromPrevious?: boolean; instant?: boolean } = {},
   ): boolean {
-    if (!item.content) return false;
+    if (!item.content || !this.portalSession.isReady()) return false;
 
     const { height, width } = measureNavigationMenuContent(item.content);
     if (width <= 0 || height <= 0) return false;
@@ -1193,13 +1304,21 @@ class NavigationMenuController implements NavigationMenuInstance {
     widthValue: string,
     heightValue: string,
   ): Promise<void> {
+    if (!this.portalSession.isReady()) return;
+
+    const placementRevision = this.placementRevision;
     const previousBoundary = this.getRenderedPopupBoundary();
     const restorePositionerTransition = this.disablePositionerTransition();
 
     this.applyPositionerSize(widthValue, heightValue);
     this.applySurfaceSize(widthValue, heightValue);
     await this.positionPopup();
-    if (this.destroyed || this.valueState !== value) {
+    if (
+      this.destroyed ||
+      this.valueState !== value ||
+      !this.portalSession.isReady() ||
+      this.placementRevision !== placementRevision
+    ) {
       restorePositionerTransition?.();
       return;
     }
@@ -1298,6 +1417,10 @@ class NavigationMenuController implements NavigationMenuInstance {
       this.clearPendingKeyboardOpenFocus(pending.value);
       return;
     }
+    if (!this.portalSession.isReady()) {
+      this.pendingKeyboardOpenFocusAwaitingPlacement = true;
+      return;
+    }
 
     this.clearPendingKeyboardOpenFocus(pending.value);
     const item = this.getItemByValue(pending.value);
@@ -1309,6 +1432,7 @@ class NavigationMenuController implements NavigationMenuInstance {
   private clearPendingKeyboardOpenFocus(value?: string): void {
     if (value === undefined || this.pendingKeyboardOpenFocus?.value === value) {
       this.pendingKeyboardOpenFocus = null;
+      this.pendingKeyboardOpenFocusAwaitingPlacement = false;
       if (this.pendingKeyboardOpenFocusTimer !== null) {
         window.clearTimeout(this.pendingKeyboardOpenFocusTimer);
         this.pendingKeyboardOpenFocusTimer = null;
@@ -1319,8 +1443,10 @@ class NavigationMenuController implements NavigationMenuInstance {
   private setPendingKeyboardOpenFocus(value: string, event: Event): void {
     this.clearPendingKeyboardOpenFocus();
     this.pendingKeyboardOpenFocus = { event, value };
+    this.pendingKeyboardOpenFocusAwaitingPlacement = false;
     this.pendingKeyboardOpenFocusTimer = window.setTimeout(() => {
       this.pendingKeyboardOpenFocusTimer = null;
+      if (this.pendingKeyboardOpenFocusAwaitingPlacement && this.valueState === value) return;
       this.clearPendingKeyboardOpenFocus(value);
     }, 0);
   }
@@ -1410,8 +1536,13 @@ class NavigationMenuController implements NavigationMenuInstance {
     this.dismissalHandle = null;
   }
 
-  private portalPopup(): void {
-    this.portalSession.mount();
+  private portalPopup(): boolean {
+    return this.portalSession.mount();
+  }
+
+  private cancelPlacementReady(): void {
+    this.placementReadyCleanup?.();
+    this.placementReadyCleanup = null;
   }
 
   private unportalPopup(): void {
@@ -1424,30 +1555,51 @@ class NavigationMenuController implements NavigationMenuInstance {
     return this.elements.positioner ?? this.elements.popup;
   }
 
+  private getPortalWrapper(): HTMLElement {
+    return this.elements.portal ?? this.getPortalElement();
+  }
+
   private getPortalTarget(): HTMLElement {
-    const portalElement = this.getPortalElement();
+    const portalElement = this.getPortalWrapper();
+    const authoredTarget =
+      this.elements.portal?.matches("[data-floating-root]") ||
+      this.elements.portal?.parentElement?.matches("[data-floating-root]")
+        ? this.elements.portal.parentElement
+        : null;
     return resolveFloatingPortalTarget(this.activeTrigger, {
-      explicitReferences: [this.elements.portal, portalElement],
+      explicitReferences: this.elements.portal ? [] : [portalElement],
+      explicitTargets: [authoredTarget],
     });
   }
 
   private async positionPopup(): Promise<unknown> {
-    if (this.valueState === null) return undefined;
+    if (this.valueState === null || !this.portalSession.isReady()) return undefined;
 
+    const placementRevision = this.placementRevision;
     const state = await this.getFloatingPositioner()?.update();
+    if (
+      this.destroyed ||
+      this.valueState === null ||
+      !this.portalSession.isReady() ||
+      this.placementRevision !== placementRevision
+    ) {
+      return state;
+    }
     this.updatePopupPlacementAnchor();
     return state;
   }
 
   private setupAutoUpdate(): void {
+    if (!this.portalSession.isReady()) return;
+
     this.getFloatingPositioner()?.startAutoUpdate({
       onUpdated: () => {
-        if (this.valueState !== null) {
+        if (this.valueState !== null && this.portalSession.isReady()) {
           this.updatePopupPlacementAnchor();
         }
       },
       onUpdate: () => {
-        if (this.valueState !== null) {
+        if (this.valueState !== null && this.portalSession.isReady()) {
           this.setInstantPositionState();
         }
       },
@@ -1625,7 +1777,14 @@ class NavigationMenuController implements NavigationMenuInstance {
   ): void {
     this.viewportRefreshFrame = requestAnimationFrame(() => {
       this.viewportRefreshFrame = null;
-      if (this.destroyed || this.valueState !== item.value || !item.content?.isConnected) return;
+      if (
+        this.destroyed ||
+        this.valueState !== item.value ||
+        !item.content?.isConnected ||
+        !this.portalSession.isReady()
+      ) {
+        return;
+      }
 
       const positionUpdateDeferred = this.updateViewportSize(item, options);
       if (!positionUpdateDeferred) {
@@ -1798,10 +1957,9 @@ function isUnsupportedNestedNavigationMenuRoot(root: HTMLElement): boolean {
 }
 
 function queryOwnElements(root: HTMLElement, selector: string): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((element) => {
-    const owner = element.closest<HTMLElement>(`[${NAV_MENU_ROOT_ATTRIBUTE}]`);
-    return owner === root;
-  });
+  return queryRuntimePartElements(root, selector).filter((element) =>
+    isRuntimePartOwned(root, element, `[${NAV_MENU_ROOT_ATTRIBUTE}]`),
+  );
 }
 
 function queryItemElement(

@@ -1,0 +1,439 @@
+{
+  "schema": "starwind.product-package-size-comparator",
+  "schemaVersion": 2,
+  "capturedAt": "2026-08-18T14:49:55.028Z",
+  "catalog": {
+    "brotliBytes": 131144,
+    "gzipBytes": 159885,
+    "minifiedBytes": 479338
+  },
+  "comparatorId": "base-react",
+  "components": {
+    "accordion": {
+      "brotliBytes": 8386,
+      "gzipBytes": 9308,
+      "minifiedBytes": 24533
+    },
+    "alert-dialog": {
+      "brotliBytes": 20779,
+      "gzipBytes": 23058,
+      "minifiedBytes": 67822
+    },
+    "avatar": {
+      "brotliBytes": 3627,
+      "gzipBytes": 4011,
+      "minifiedBytes": 10222
+    },
+    "button": {
+      "brotliBytes": 2942,
+      "gzipBytes": 3217,
+      "minifiedBytes": 7775
+    },
+    "checkbox": {
+      "brotliBytes": 7124,
+      "gzipBytes": 7902,
+      "minifiedBytes": 19464
+    },
+    "checkbox-group": {
+      "brotliBytes": 3688,
+      "gzipBytes": 4040,
+      "minifiedBytes": 9577
+    },
+    "collapsible": {
+      "brotliBytes": 6713,
+      "gzipBytes": 7419,
+      "minifiedBytes": 19288
+    },
+    "combobox": {
+      "brotliBytes": 44199,
+      "gzipBytes": 50117,
+      "minifiedBytes": 141220
+    },
+    "context-menu": {
+      "brotliBytes": 45474,
+      "gzipBytes": 52424,
+      "minifiedBytes": 152545
+    },
+    "dialog": {
+      "brotliBytes": 20798,
+      "gzipBytes": 23137,
+      "minifiedBytes": 67775
+    },
+    "drawer": {
+      "brotliBytes": 33541,
+      "gzipBytes": 37797,
+      "minifiedBytes": 110355
+    },
+    "field": {
+      "brotliBytes": 8372,
+      "gzipBytes": 9196,
+      "minifiedBytes": 24221
+    },
+    "input": {
+      "brotliBytes": 8395,
+      "gzipBytes": 9231,
+      "minifiedBytes": 24359
+    },
+    "input-otp": {
+      "brotliBytes": 7908,
+      "gzipBytes": 8767,
+      "minifiedBytes": 21884
+    },
+    "menu": {
+      "brotliBytes": 44743,
+      "gzipBytes": 51657,
+      "minifiedBytes": 149757
+    },
+    "navigation-menu": {
+      "brotliBytes": 33588,
+      "gzipBytes": 38003,
+      "minifiedBytes": 108240
+    },
+    "popover": {
+      "brotliBytes": 35927,
+      "gzipBytes": 40740,
+      "minifiedBytes": 117521
+    },
+    "preview-card": {
+      "brotliBytes": 29328,
+      "gzipBytes": 32945,
+      "minifiedBytes": 94163
+    },
+    "progress": {
+      "brotliBytes": 2962,
+      "gzipBytes": 3302,
+      "minifiedBytes": 7864
+    },
+    "radio": {
+      "brotliBytes": 6930,
+      "gzipBytes": 7663,
+      "minifiedBytes": 19116
+    },
+    "radio-group": {
+      "brotliBytes": 6606,
+      "gzipBytes": 7354,
+      "minifiedBytes": 18863
+    },
+    "scroll-area": {
+      "brotliBytes": 7015,
+      "gzipBytes": 7830,
+      "minifiedBytes": 20138
+    },
+    "select": {
+      "brotliBytes": 39353,
+      "gzipBytes": 44388,
+      "minifiedBytes": 123648
+    },
+    "slider": {
+      "brotliBytes": 12847,
+      "gzipBytes": 14266,
+      "minifiedBytes": 35809
+    },
+    "switch": {
+      "brotliBytes": 5534,
+      "gzipBytes": 6125,
+      "minifiedBytes": 14857
+    },
+    "tabs": {
+      "brotliBytes": 11354,
+      "gzipBytes": 12550,
+      "minifiedBytes": 33611
+    },
+    "toast": {
+      "brotliBytes": 23559,
+      "gzipBytes": 26228,
+      "minifiedBytes": 72252
+    },
+    "toggle": {
+      "brotliBytes": 4427,
+      "gzipBytes": 4866,
+      "minifiedBytes": 11767
+    },
+    "toggle-group": {
+      "brotliBytes": 5328,
+      "gzipBytes": 5935,
+      "minifiedBytes": 15315
+    },
+    "tooltip": {
+      "brotliBytes": 30121,
+      "gzipBytes": 34023,
+      "minifiedBytes": 97557
+    }
+  },
+  "environment": {
+    "esbuild": "0.27.7",
+    "node": "24.19.0"
+  },
+  "fixtureRevision": 2,
+  "measurementEntries": {
+    "catalog": [
+      {
+        "exports": ["*"],
+        "specifier": "@base-ui/react"
+      }
+    ],
+    "components": {
+      "accordion": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/accordion"
+        }
+      ],
+      "alert-dialog": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/alert-dialog"
+        }
+      ],
+      "avatar": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/avatar"
+        }
+      ],
+      "button": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/button"
+        }
+      ],
+      "checkbox": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/checkbox"
+        }
+      ],
+      "checkbox-group": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/checkbox-group"
+        }
+      ],
+      "collapsible": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/collapsible"
+        }
+      ],
+      "combobox": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/combobox"
+        }
+      ],
+      "context-menu": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/context-menu"
+        }
+      ],
+      "dialog": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/dialog"
+        }
+      ],
+      "drawer": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/drawer"
+        }
+      ],
+      "field": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/field"
+        }
+      ],
+      "input": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/input"
+        }
+      ],
+      "input-otp": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/otp-field"
+        }
+      ],
+      "menu": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/menu"
+        }
+      ],
+      "navigation-menu": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/navigation-menu"
+        }
+      ],
+      "popover": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/popover"
+        }
+      ],
+      "preview-card": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/preview-card"
+        }
+      ],
+      "progress": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/progress"
+        }
+      ],
+      "radio": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/radio"
+        }
+      ],
+      "radio-group": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/radio-group"
+        }
+      ],
+      "scroll-area": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/scroll-area"
+        }
+      ],
+      "select": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/select"
+        }
+      ],
+      "slider": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/slider"
+        }
+      ],
+      "switch": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/switch"
+        }
+      ],
+      "tabs": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/tabs"
+        }
+      ],
+      "toast": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/toast"
+        }
+      ],
+      "toggle": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/toggle"
+        }
+      ],
+      "toggle-group": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/toggle-group"
+        }
+      ],
+      "tooltip": [
+        {
+          "exports": ["*"],
+          "specifier": "@base-ui/react/tooltip"
+        }
+      ]
+    },
+    "overlaps": {
+      "react-exact-three-way": [
+        "accordion",
+        "alert-dialog",
+        "avatar",
+        "checkbox",
+        "checkbox-group",
+        "collapsible",
+        "combobox",
+        "context-menu",
+        "dialog",
+        "drawer",
+        "field",
+        "input-otp",
+        "menu",
+        "navigation-menu",
+        "popover",
+        "preview-card",
+        "progress",
+        "radio",
+        "radio-group",
+        "scroll-area",
+        "select",
+        "slider",
+        "switch",
+        "tabs",
+        "toast",
+        "toggle",
+        "toggle-group",
+        "tooltip"
+      ],
+      "react-base-react-overlap": [
+        "accordion",
+        "alert-dialog",
+        "avatar",
+        "button",
+        "checkbox",
+        "checkbox-group",
+        "collapsible",
+        "combobox",
+        "context-menu",
+        "dialog",
+        "drawer",
+        "field",
+        "input",
+        "input-otp",
+        "menu",
+        "navigation-menu",
+        "popover",
+        "preview-card",
+        "progress",
+        "radio",
+        "radio-group",
+        "scroll-area",
+        "select",
+        "slider",
+        "switch",
+        "tabs",
+        "toast",
+        "toggle",
+        "toggle-group",
+        "tooltip"
+      ]
+    }
+  },
+  "overlaps": {
+    "react-exact-three-way": {
+      "brotliBytes": 123214,
+      "gzipBytes": 149198,
+      "minifiedBytes": 450167
+    },
+    "react-base-react-overlap": {
+      "brotliBytes": 123136,
+      "gzipBytes": 149365,
+      "minifiedBytes": 450683
+    }
+  },
+  "package": {
+    "integrity": "sha512-j+8QjX44C32jrXD/qyEAGpFr70FRpGL2CY61mQd9nBPWN737CK0xxD1ceJ055rW4RtdvFDT1e7otzdlfxvsYug==",
+    "name": "@base-ui/react",
+    "version": "1.7.0"
+  }
+}

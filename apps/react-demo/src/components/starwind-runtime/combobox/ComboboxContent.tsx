@@ -12,6 +12,8 @@ export type ComboboxContentProps = React.ComponentPropsWithoutRef<"div"> & {
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
   size?: "sm" | "md" | "lg";
+  portalContainer?: string;
+  disablePortal?: boolean;
 };
 
 function ComboboxContent(props: ComboboxContentProps) {
@@ -24,12 +26,18 @@ function ComboboxContent(props: ComboboxContentProps) {
     side = "bottom",
     sideOffset = 4,
     size = "md",
+    portalContainer,
+    disablePortal = false,
     children,
     ...rest
   } = props;
 
   return (
-    <ComboboxPrimitive.Portal data-slot="combobox-portal">
+    <ComboboxPrimitive.Portal
+      container={portalContainer}
+      disabled={disablePortal}
+      data-slot="combobox-portal"
+    >
       <ComboboxPrimitive.Positioner
         align={align}
         alignOffset={alignOffset}

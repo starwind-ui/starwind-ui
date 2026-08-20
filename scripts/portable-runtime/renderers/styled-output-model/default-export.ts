@@ -116,6 +116,8 @@ function collectIndexBindings(
     ...group.variants.map((variant) => variant.name),
     ...(group.variantAliases ?? []).map((alias) => alias.name),
     ...(group.variantCollectionName ? [group.variantCollectionName] : []),
+    ...(group.primitiveFacadeExports?.types ?? []),
+    ...(group.primitiveFacadeExports?.values ?? []),
     ...group.publicExports,
     ...group.defaultExport.members.map((member) => member.localName),
   ]);

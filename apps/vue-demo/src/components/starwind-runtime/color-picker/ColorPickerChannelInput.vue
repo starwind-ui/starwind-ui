@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ColorPickerPrimitive from "@starwind-ui/vue/color-picker";
 import type { ClassValue } from "tailwind-variants";
-import { type InputHTMLAttributes, useAttrs } from "vue";
+import { type InputHTMLAttributes } from "vue";
 import { colorPickerChannelInput, colorPickerChannelInputLayout } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,7 +16,6 @@ type ColorPickerChannelInputDeclaredProps = {
 };
 const { channel, class: className } = defineProps<ColorPickerChannelInputDeclaredProps>();
 defineSlots<{}>();
-const attrs = useAttrs();
 </script>
 
 <template>
@@ -27,7 +26,7 @@ const attrs = useAttrs();
         .join(' ')
     "
     :channel="channel"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="color-picker-channel-input"
   />
 </template>

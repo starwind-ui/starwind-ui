@@ -5,7 +5,7 @@ import {
   type CarouselOptions,
   createCarousel,
 } from "@starwind-ui/runtime/carousel";
-import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, useAttrs, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
 import type { CarouselRootProps } from "./CarouselTypes.js";
 
 defineOptions({ inheritAttrs: false });
@@ -23,7 +23,6 @@ const rawProps = withDefaults(
   },
 );
 const props = rawProps as CarouselRootProps;
-const attrs = useAttrs();
 const element = ref<HTMLDivElement | null>(null);
 let instance: CarouselInstance | undefined;
 let refreshRevision = 0;
@@ -82,7 +81,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     ref="element"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-sw-carousel
     role="region"
     aria-roledescription="carousel"

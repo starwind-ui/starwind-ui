@@ -2,7 +2,7 @@
 <!-- Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies. -->
 <script setup lang="ts">
 import { createFieldset } from "@starwind-ui/runtime/fieldset";
-import { onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 defineOptions({ inheritAttrs: false });
 
@@ -17,7 +17,6 @@ const props = withDefaults(
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 const rootRef = ref<HTMLFieldSetElement | null>(null);
 let instance: ReturnType<typeof createFieldset> | undefined;
 
@@ -55,7 +54,7 @@ onBeforeUnmount(destroyOwnedInstance);
 <template>
   <fieldset
     ref="rootRef"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-sw-fieldset
     :data-disabled="props.disabled ? '' : undefined"
     :disabled="props.disabled"

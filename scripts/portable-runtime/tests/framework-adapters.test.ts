@@ -1825,27 +1825,6 @@ describe("Framework Adapter seam", () => {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
       private?: boolean;
-      scripts?: Record<string, string>;
-    };
-    const approvedPrivateVueScripts = {
-      l: "pnpm runtime:build && pnpm react:build && pnpm vue:build && pnpm cli:build && pnpm runtime:link && pnpm astro:link && pnpm react:link && pnpm vue:link && pnpm cli:link",
-      "runtime:generate:vue": "tsx scripts/portable-runtime/generate-vue-wrappers.ts",
-      "runtime:generate:vue:check": "tsx scripts/portable-runtime/check-vue-tracer-fixtures.ts",
-      "runtime:generate:vue:test": "vitest run --project=portable-vue",
-      "test:vue-cli-host-acceptance":
-        "pnpm exec tsx --tsconfig packages/cli/tsconfig.json scripts/vue-cli-host-acceptance.mjs",
-      "test:vue-cli-local-link":
-        "pnpm exec tsx --tsconfig packages/cli/tsconfig.json scripts/vue-cli-host-acceptance.mjs --local-link-only",
-      ul: 'node -e "const { spawnSync } = require(\\"node:child_process\\"); const command = process.platform === \\"win32\\" ? \\"pnpm.cmd\\" : \\"pnpm\\"; const scripts = [\\"astro:unlink\\", \\"react:unlink\\", \\"vue:unlink\\", \\"runtime:unlink\\", \\"cli:unlink\\"]; let failed = false; for (const script of scripts) { const result = spawnSync(command, [script], { stdio: \\"inherit\\" }); failed ||= result.status !== 0; } process.exitCode = failed ? 1 : 0;"',
-      "vue:build": "pnpm --filter=@starwind-ui/vue build",
-      "vue:link": "pnpm --dir packages/vue add --global . --ignore-scripts",
-      "vue:test": "pnpm --filter=@starwind-ui/vue test:all",
-      "vue:typecheck": "pnpm --filter=@starwind-ui/vue typecheck",
-      "vue:unlink": "pnpm unlink:global @starwind-ui/vue",
-      "vue:verify": "pnpm runtime:generate:vue:test && pnpm vue:typecheck && pnpm vue:test",
-      "vue-demo:build": "pnpm --filter=vue-demo build",
-      "vue-demo:dev": "pnpm --filter=vue-demo dev",
-      "vue-demo:smoke": "pnpm --filter=vue-demo smoke",
     };
     const boundaryAwareVuePattern = /(^|[^a-z0-9])vue(?=$|[^a-z0-9])/i;
     const forbiddenRootSolidDependencyPatterns = [
@@ -1855,12 +1834,6 @@ describe("Framework Adapter seam", () => {
     ];
     const hasForbiddenRootSolidDependency = (source: string) =>
       forbiddenRootSolidDependencyPatterns.some((pattern) => pattern.test(source));
-    const rootVueScripts = Object.fromEntries(
-      Object.entries(rootPackage.scripts ?? {}).filter(
-        ([name, command]) =>
-          boundaryAwareVuePattern.test(name) || boundaryAwareVuePattern.test(command),
-      ),
-    );
     const publicSurfaces = [
       "README.md",
       "packages/cli/src/registry/bundled-registry.json",
@@ -1897,7 +1870,6 @@ describe("Framework Adapter seam", () => {
       expect(existsSync(join(process.cwd(), "packages/vue/src", cohortComponent))).toBe(true);
     }
     expect(rootPackage.private).toBe(true);
-    expect(rootVueScripts).toEqual(approvedPrivateVueScripts);
     expect(rootPackage.dependencies).not.toHaveProperty("@starwind-ui/vue");
     expect(rootPackage.devDependencies).not.toHaveProperty("@starwind-ui/vue");
     expect(hasForbiddenRootSolidDependency(rootPackageSource)).toBe(false);

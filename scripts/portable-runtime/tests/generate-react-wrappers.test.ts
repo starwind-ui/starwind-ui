@@ -3,14 +3,14 @@ import os from "node:os";
 import path from "node:path";
 
 import { afterEach, beforeEach, describe } from "vitest";
-
-import { defineReactCarouselOutputTests } from "./generate-react-wrappers/carousel-output.cases.js";
 import { defineReactCancelableCallbackOutputTests } from "./generate-react-wrappers/cancelable-callback-output.cases.js";
-import { defineReactCompositionOutputTests } from "./generate-react-wrappers/composition-output.cases.js";
+import { defineReactCarouselOutputTests } from "./generate-react-wrappers/carousel-output.cases.js";
 import { defineReactColorPickerOutputTests } from "./generate-react-wrappers/color-picker-output.cases.js";
+import { defineReactCompositionOutputTests } from "./generate-react-wrappers/composition-output.cases.js";
 import { defineReactDropzoneOutputTests } from "./generate-react-wrappers/dropzone-output.cases.js";
 import { defineReactFamilyOutputTests } from "./generate-react-wrappers/family-output.cases.js";
 import { defineReactLayoutEffectOutputTests } from "./generate-react-wrappers/layout-effect-output.cases.js";
+import { defineReactPortalOutputTests } from "./generate-react-wrappers/portal-output.cases.js";
 import { defineReactPreviewCardOutputTests } from "./generate-react-wrappers/preview-card-output.cases.js";
 import { defineReactPrimitiveOutputTests } from "./generate-react-wrappers/primitive-output.cases.js";
 import { defineReactRuntimeSubpathOutputTests } from "./generate-react-wrappers/runtime-subpath-output.cases.js";
@@ -31,6 +31,7 @@ describe("generateReactWrappers", () => {
   });
 
   defineReactPrimitiveOutputTests(getTempRoot);
+  defineReactPortalOutputTests(getTempRoot);
   defineReactCancelableCallbackOutputTests(getTempRoot);
   defineReactColorPickerOutputTests(getTempRoot);
   defineReactCarouselOutputTests(getTempRoot);

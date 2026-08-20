@@ -445,6 +445,10 @@ function getContextMenuAnchoredMenuOverlayFacts(
       importSource: spec.root.runtimeImportSource,
       initEvents: [...spec.contextMenu.lifecycle.initEvents],
       instancesName: "contextMenuInstances",
+      portalOwner: {
+        factory: spec.sourceMenuSpec.root.runtimeFactory,
+        importSource: spec.sourceMenuSpec.root.runtimeImportSource,
+      },
       setupFunction: "setupContextMenus",
       typeImportSource: "@starwind-ui/runtime",
     },

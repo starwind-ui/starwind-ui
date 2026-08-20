@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as ComboboxPrimitive from "@starwind-ui/vue/combobox";
 import type { ClassValue } from "tailwind-variants";
-import { type HTMLAttributes, useAttrs } from "vue";
+import { type HTMLAttributes } from "vue";
 import { comboboxGroup } from "./variants";
 
 defineOptions({ inheritAttrs: false });
@@ -16,13 +16,12 @@ const { class: className } = defineProps<ComboboxGroupDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
-const attrs = useAttrs();
 </script>
 
 <template>
   <ComboboxPrimitive.ComboboxGroup
     :class="comboboxGroup({ class: className })"
-    v-bind="attrs"
+    v-bind="$attrs"
     data-slot="combobox-group"
   >
     <slot />

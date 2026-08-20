@@ -46,6 +46,9 @@ const ToastParts = {
   Close: ToastClose,
 };
 
+export type { ToastApi, ToastOptions, ToastPromiseOptions } from "@starwind-ui/vue/toast";
+export { toast } from "@starwind-ui/vue/toast";
+
 export {
   ToastAction,
   ToastClose,

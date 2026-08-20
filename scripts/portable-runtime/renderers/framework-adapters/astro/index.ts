@@ -1,7 +1,9 @@
 import { projectStyledOutputModel } from "../../styled-output-model/index.js";
 import { defineFrameworkAdapterTarget } from "../target-definition.js";
+import { frameworkAdapterTargetRenderedPortal } from "../types.js";
 import { astroFrameworkAdapter } from "./adapter.js";
 import { astroManualPrimitiveGenerators } from "./manual-primitives.js";
+import { astroRenderedPortalCapability } from "./portal.js";
 import { writeAstroAdapterOutput } from "./primitive-output-writer.js";
 import { generateAstroPrimitivePackage } from "./primitive-package.js";
 import { projectSpecializedAdapterOutputModel } from "./specialized-adapter-spec.js";
@@ -53,6 +55,7 @@ export const astroFrameworkAdapterTarget = defineFrameworkAdapterTarget({
   home: "scripts/portable-runtime/renderers/framework-adapters/astro",
   packageName: "@starwind-ui/astro",
   primitive: {
+    [frameworkAdapterTargetRenderedPortal]: astroRenderedPortalCapability,
     generatePackage: generateAstroPrimitivePackage,
     manualPrimitives: astroManualPrimitiveGenerators,
     outputModel: {
