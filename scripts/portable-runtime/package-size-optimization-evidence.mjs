@@ -422,6 +422,13 @@ function assertMatchingToolProvenance(before, after) {
 
 function normalizeMeasurementCommand(command) {
   const measurementScript = path.normalize(command.arguments[0]);
+  const portableMeasurementScript = path.normalize(MEASUREMENT_SCRIPT);
+  if (measurementScript === portableMeasurementScript) {
+    return {
+      executable: command.executable,
+      arguments: [`<worktree>/${MEASUREMENT_SCRIPT}`, ...command.arguments.slice(1)],
+    };
+  }
   const expectedSuffix = `${path.sep}${MEASUREMENT_SCRIPT.split("/").join(path.sep)}`;
   if (!path.isAbsolute(measurementScript) || !measurementScript.endsWith(expectedSuffix)) {
     throw new Error(

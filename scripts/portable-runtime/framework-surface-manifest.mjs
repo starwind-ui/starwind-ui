@@ -771,7 +771,7 @@ async function runCli() {
   const repoRoot = process.cwd();
   const manifestPath = path.join(
     repoRoot,
-    ".scratch/vue-adapter-optimization-and-portal-parity/framework-surface-manifest.json",
+    "scripts/portable-runtime/framework-surface-manifest.json",
   );
   const generated = await buildFrameworkSurfaceManifest({ repoRoot });
   const serialized = serializeFrameworkSurfaceManifest(generated);

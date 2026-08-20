@@ -378,6 +378,14 @@ const partInventory = () => Array.from(document.querySelectorAll("[data-sw-part]
   .sort()
   .join("|");
 const tick = async () => { flushSync(); await new Promise((resolve) => setTimeout(resolve, 0)); flushSync(); };
+const waitFor = async (predicate, label) => {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    flushSync();
+    if (predicate()) return;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+  throw new Error("Timed out waiting for " + label + ".");
+};
 
 void (async () => {
 try {
@@ -513,8 +521,15 @@ try {
   instance.ownershipControlOpen(false);
   await tick();
   const afterOpenRemoval = { open: ownershipRoot()?.getAttribute("data-state") === "open", value: ownershipRoot()?.getAttribute("data-value") };
+  await waitFor(
+    () => query('[data-case="ownership"] [data-sw-select-popup]')?.hidden === true,
+    "the ownership Select close lifecycle",
+  );
   ownershipTrigger()?.click();
-  await tick();
+  await waitFor(
+    () => ownershipRoot()?.getAttribute("data-state") === "open",
+    "the ownership Select open state",
+  );
   instance.ownershipControlValue(false);
   await tick();
   const afterValueRemoval = { open: ownershipRoot()?.getAttribute("data-state") === "open", value: ownershipRoot()?.getAttribute("data-value") };

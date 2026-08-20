@@ -18,10 +18,7 @@ import {
 const repoRoot = process.cwd();
 const acceptedEvidence = JSON.parse(
   await readFile(
-    path.join(
-      repoRoot,
-      ".scratch/vue-package-size-comparison/evidence/vue-package-size-baseline.json",
-    ),
+    path.join(repoRoot, "scripts/portable-runtime/evidence/vue-package-size-baseline.json"),
     "utf8",
   ),
 );
@@ -423,7 +420,7 @@ describe("package size optimization evidence", () => {
         await fileExists(
           path.join(
             temporaryRepo,
-            ".scratch/vue-package-size-comparison/evidence/vue-package-size-baseline.json",
+            "scripts/portable-runtime/evidence/vue-package-size-baseline.json",
           ),
         ),
       ).toBe(false);
@@ -453,10 +450,7 @@ describe("package size optimization evidence", () => {
 
   it("rejects a symlinked feature destination before staging", async () => {
     const temporaryRepo = await mkdtemp(path.join(os.tmpdir(), "starwind-candidate-symlink-"));
-    const acceptedDirectory = path.join(
-      temporaryRepo,
-      ".scratch/vue-package-size-comparison/evidence",
-    );
+    const acceptedDirectory = path.join(temporaryRepo, "scripts/portable-runtime/evidence");
     const featureParent = path.join(
       temporaryRepo,
       ".scratch/vue-adapter-optimization-and-portal-parity",
@@ -500,8 +494,8 @@ describe("package size optimization evidence", () => {
   it("publishes only inside the feature evidence directory", async () => {
     const temporaryRepo = await mkdtemp(path.join(os.tmpdir(), "starwind-candidate-scope-"));
     const protectedFiles = [
-      ".scratch/vue-package-size-comparison/evidence/vue-package-size-baseline.json",
-      ".scratch/vue-package-size-comparison/evidence/vue-package-size-baseline.md",
+      "scripts/portable-runtime/evidence/vue-package-size-baseline.json",
+      "scripts/portable-runtime/evidence/vue-package-size-baseline.md",
       "docs/portable-runtime/diagnostics/package-size-diagnostics.md",
       "docs/portable-runtime/package-size-comparison.md",
       "scripts/portable-runtime/vue-package-size-baseline.mjs",

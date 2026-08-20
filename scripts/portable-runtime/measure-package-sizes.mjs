@@ -61,10 +61,7 @@ const DIAGNOSTIC_REPORT_PATH = path.join(
   REPO_ROOT,
   "docs/portable-runtime/diagnostics/package-size-diagnostics.md",
 );
-const VUE_BASELINE_EVIDENCE_DIRECTORY = path.join(
-  REPO_ROOT,
-  ".scratch/vue-package-size-comparison/evidence",
-);
+const VUE_BASELINE_EVIDENCE_DIRECTORY = path.join(REPO_ROOT, "scripts/portable-runtime/evidence");
 const CHECK_ONLY = process.argv.includes("--check");
 const INCLUDE_PRIVATE_VUE = process.argv.includes("--private-vue") || !CHECK_ONLY;
 const BASELINE_VUE = process.argv.includes("--baseline-vue");

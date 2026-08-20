@@ -1,0 +1,1556 @@
+{
+  "candidates": [
+    {
+      "ceilingBytes": 54398,
+      "headroomBytes": 2591,
+      "id": "vue.adapter-only",
+      "maximumBytes": 51807,
+      "values": [
+        51807,
+        51807,
+        51807
+      ]
+    },
+    {
+      "ceilingBytes": 30721,
+      "headroomBytes": 1463,
+      "id": "vue.cold.combobox",
+      "maximumBytes": 29258,
+      "values": [
+        29258,
+        29258,
+        29258
+      ]
+    },
+    {
+      "ceilingBytes": 28564,
+      "headroomBytes": 1361,
+      "id": "vue.cold.context-menu",
+      "maximumBytes": 27203,
+      "values": [
+        27203,
+        27203,
+        27203
+      ]
+    },
+    {
+      "ceilingBytes": 28544,
+      "headroomBytes": 1360,
+      "id": "vue.cold.menu",
+      "maximumBytes": 27184,
+      "values": [
+        27184,
+        27184,
+        27184
+      ]
+    },
+    {
+      "ceilingBytes": 26122,
+      "headroomBytes": 1244,
+      "id": "vue.cold.navigation-menu",
+      "maximumBytes": 24878,
+      "values": [
+        24878,
+        24878,
+        24878
+      ]
+    },
+    {
+      "ceilingBytes": 31613,
+      "headroomBytes": 1506,
+      "id": "vue.cold.select",
+      "maximumBytes": 30107,
+      "values": [
+        30107,
+        30107,
+        30107
+      ]
+    },
+    {
+      "ceilingBytes": 211271,
+      "headroomBytes": 10061,
+      "id": "vue.combined",
+      "maximumBytes": 201210,
+      "values": [
+        201210,
+        201210,
+        201210
+      ]
+    },
+    {
+      "ceilingBytes": 142288,
+      "headroomBytes": 6776,
+      "id": "vue.packed-tarball",
+      "maximumBytes": 135512,
+      "values": [
+        135512,
+        135512,
+        135512
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "command": {
+        "arguments": [
+          "scripts/portable-runtime/measure-package-sizes.mjs",
+          "--baseline-vue"
+        ],
+        "executable": "node"
+      },
+      "commit": "ef58435373775514c1237ce94bfc3e7628c1ebe4",
+      "comparator": {
+        "name": "zag-vue",
+        "packages": {
+          "@zag-js/accordion": "1.42.0",
+          "@zag-js/avatar": "1.42.0",
+          "@zag-js/carousel": "1.42.0",
+          "@zag-js/checkbox": "1.42.0",
+          "@zag-js/collapsible": "1.42.0",
+          "@zag-js/color-picker": "1.42.0",
+          "@zag-js/combobox": "1.42.0",
+          "@zag-js/core": "1.42.0",
+          "@zag-js/dialog": "1.42.0",
+          "@zag-js/drawer": "1.42.0",
+          "@zag-js/file-upload": "1.42.0",
+          "@zag-js/hover-card": "1.42.0",
+          "@zag-js/menu": "1.42.0",
+          "@zag-js/navigation-menu": "1.42.0",
+          "@zag-js/pin-input": "1.42.0",
+          "@zag-js/popover": "1.42.0",
+          "@zag-js/progress": "1.42.0",
+          "@zag-js/radio-group": "1.42.0",
+          "@zag-js/scroll-area": "1.42.0",
+          "@zag-js/select": "1.42.0",
+          "@zag-js/slider": "1.42.0",
+          "@zag-js/switch": "1.42.0",
+          "@zag-js/tabs": "1.42.0",
+          "@zag-js/toast": "1.42.0",
+          "@zag-js/toggle": "1.42.0",
+          "@zag-js/toggle-group": "1.42.0",
+          "@zag-js/tooltip": "1.42.0",
+          "@zag-js/vue": "1.42.0"
+        },
+        "version": "1.42.0"
+      },
+      "complete": true,
+      "diagnosticPath": "/tmp/starwind-package-size-comparison/vue-baseline-xlU6jd",
+      "environment": {
+        "architecture": "x64",
+        "esbuildVersion": "0.28.1",
+        "kernelRelease": "7.0.0-28-generic",
+        "nodeVersion": "24.19.0",
+        "npmVersion": "11.17.0",
+        "osName": "Linux",
+        "osRelease": "#28~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Jul  1 15:50:57 UTC 2",
+        "platform": "linux",
+        "pnpmVersion": "11.8.0",
+        "zlibVersion": "1.3.2.1-motley-3246f1b"
+      },
+      "flags": {
+        "baselineVue": true,
+        "checkOnly": false,
+        "gzipLevel": 9,
+        "includePrivateVue": true,
+        "minify": true,
+        "platform": "browser",
+        "staticGraphHeadlines": true,
+        "target": "es2020"
+      },
+      "packageVersions": {
+        "@starwind-ui/runtime": "1.1.0",
+        "@starwind-ui/vue": "0.0.0",
+        "@zag-js/accordion": "1.42.0",
+        "@zag-js/avatar": "1.42.0",
+        "@zag-js/carousel": "1.42.0",
+        "@zag-js/checkbox": "1.42.0",
+        "@zag-js/collapsible": "1.42.0",
+        "@zag-js/color-picker": "1.42.0",
+        "@zag-js/combobox": "1.42.0",
+        "@zag-js/core": "1.42.0",
+        "@zag-js/dialog": "1.42.0",
+        "@zag-js/drawer": "1.42.0",
+        "@zag-js/file-upload": "1.42.0",
+        "@zag-js/hover-card": "1.42.0",
+        "@zag-js/menu": "1.42.0",
+        "@zag-js/navigation-menu": "1.42.0",
+        "@zag-js/pin-input": "1.42.0",
+        "@zag-js/popover": "1.42.0",
+        "@zag-js/progress": "1.42.0",
+        "@zag-js/radio-group": "1.42.0",
+        "@zag-js/scroll-area": "1.42.0",
+        "@zag-js/select": "1.42.0",
+        "@zag-js/slider": "1.42.0",
+        "@zag-js/switch": "1.42.0",
+        "@zag-js/tabs": "1.42.0",
+        "@zag-js/toast": "1.42.0",
+        "@zag-js/toggle": "1.42.0",
+        "@zag-js/toggle-group": "1.42.0",
+        "@zag-js/tooltip": "1.42.0",
+        "@zag-js/vue": "1.42.0"
+      },
+      "rows": [
+        {
+          "gzipBytes": 51807,
+          "id": "vue.adapter-only"
+        },
+        {
+          "gzipBytes": 4669,
+          "id": "vue.cold.accordion"
+        },
+        {
+          "gzipBytes": 12461,
+          "id": "vue.cold.alert-dialog"
+        },
+        {
+          "gzipBytes": 2447,
+          "id": "vue.cold.avatar"
+        },
+        {
+          "gzipBytes": 1336,
+          "id": "vue.cold.button"
+        },
+        {
+          "gzipBytes": 9802,
+          "id": "vue.cold.carousel"
+        },
+        {
+          "gzipBytes": 7881,
+          "id": "vue.cold.checkbox"
+        },
+        {
+          "gzipBytes": 8923,
+          "id": "vue.cold.checkbox-group"
+        },
+        {
+          "gzipBytes": 5285,
+          "id": "vue.cold.collapsible"
+        },
+        {
+          "gzipBytes": 18228,
+          "id": "vue.cold.color-picker"
+        },
+        {
+          "gzipBytes": 29258,
+          "id": "vue.cold.combobox"
+        },
+        {
+          "gzipBytes": 27203,
+          "id": "vue.cold.context-menu"
+        },
+        {
+          "gzipBytes": 10633,
+          "id": "vue.cold.dialog"
+        },
+        {
+          "gzipBytes": 12477,
+          "id": "vue.cold.drawer"
+        },
+        {
+          "gzipBytes": 6064,
+          "id": "vue.cold.dropzone"
+        },
+        {
+          "gzipBytes": 10480,
+          "id": "vue.cold.field"
+        },
+        {
+          "gzipBytes": 2548,
+          "id": "vue.cold.fieldset"
+        },
+        {
+          "gzipBytes": 17632,
+          "id": "vue.cold.form"
+        },
+        {
+          "gzipBytes": 2291,
+          "id": "vue.cold.input"
+        },
+        {
+          "gzipBytes": 7927,
+          "id": "vue.cold.input-otp"
+        },
+        {
+          "gzipBytes": 27184,
+          "id": "vue.cold.menu"
+        },
+        {
+          "gzipBytes": 24878,
+          "id": "vue.cold.navigation-menu"
+        },
+        {
+          "gzipBytes": 21165,
+          "id": "vue.cold.popover"
+        },
+        {
+          "gzipBytes": 19345,
+          "id": "vue.cold.preview-card"
+        },
+        {
+          "gzipBytes": 3112,
+          "id": "vue.cold.progress"
+        },
+        {
+          "gzipBytes": 7789,
+          "id": "vue.cold.radio"
+        },
+        {
+          "gzipBytes": 10897,
+          "id": "vue.cold.radio-group"
+        },
+        {
+          "gzipBytes": 5161,
+          "id": "vue.cold.scroll-area"
+        },
+        {
+          "gzipBytes": 30107,
+          "id": "vue.cold.select"
+        },
+        {
+          "gzipBytes": 6586,
+          "id": "vue.cold.sidebar"
+        },
+        {
+          "gzipBytes": 10008,
+          "id": "vue.cold.slider"
+        },
+        {
+          "gzipBytes": 6885,
+          "id": "vue.cold.switch"
+        },
+        {
+          "gzipBytes": 5569,
+          "id": "vue.cold.tabs"
+        },
+        {
+          "gzipBytes": 6382,
+          "id": "vue.cold.toast"
+        },
+        {
+          "gzipBytes": 3497,
+          "id": "vue.cold.toggle"
+        },
+        {
+          "gzipBytes": 5463,
+          "id": "vue.cold.toggle-group"
+        },
+        {
+          "gzipBytes": 19739,
+          "id": "vue.cold.tooltip"
+        },
+        {
+          "gzipBytes": 201210,
+          "id": "vue.combined"
+        },
+        {
+          "gzipBytes": 176194,
+          "id": "vue.matched.starwind"
+        },
+        {
+          "gzipBytes": 128292,
+          "id": "vue.matched.zag"
+        },
+        {
+          "gzipBytes": 135512,
+          "id": "vue.packed-tarball"
+        },
+        {
+          "gzipBytes": 3649,
+          "id": "vue.theme"
+        }
+      ],
+      "schema": "starwind.package-size.run-evidence",
+      "schemaVersion": 1
+    },
+    {
+      "command": {
+        "arguments": [
+          "scripts/portable-runtime/measure-package-sizes.mjs",
+          "--baseline-vue"
+        ],
+        "executable": "node"
+      },
+      "commit": "ef58435373775514c1237ce94bfc3e7628c1ebe4",
+      "comparator": {
+        "name": "zag-vue",
+        "packages": {
+          "@zag-js/accordion": "1.42.0",
+          "@zag-js/avatar": "1.42.0",
+          "@zag-js/carousel": "1.42.0",
+          "@zag-js/checkbox": "1.42.0",
+          "@zag-js/collapsible": "1.42.0",
+          "@zag-js/color-picker": "1.42.0",
+          "@zag-js/combobox": "1.42.0",
+          "@zag-js/core": "1.42.0",
+          "@zag-js/dialog": "1.42.0",
+          "@zag-js/drawer": "1.42.0",
+          "@zag-js/file-upload": "1.42.0",
+          "@zag-js/hover-card": "1.42.0",
+          "@zag-js/menu": "1.42.0",
+          "@zag-js/navigation-menu": "1.42.0",
+          "@zag-js/pin-input": "1.42.0",
+          "@zag-js/popover": "1.42.0",
+          "@zag-js/progress": "1.42.0",
+          "@zag-js/radio-group": "1.42.0",
+          "@zag-js/scroll-area": "1.42.0",
+          "@zag-js/select": "1.42.0",
+          "@zag-js/slider": "1.42.0",
+          "@zag-js/switch": "1.42.0",
+          "@zag-js/tabs": "1.42.0",
+          "@zag-js/toast": "1.42.0",
+          "@zag-js/toggle": "1.42.0",
+          "@zag-js/toggle-group": "1.42.0",
+          "@zag-js/tooltip": "1.42.0",
+          "@zag-js/vue": "1.42.0"
+        },
+        "version": "1.42.0"
+      },
+      "complete": true,
+      "diagnosticPath": "/tmp/starwind-package-size-comparison/vue-baseline-PBRDfW",
+      "environment": {
+        "architecture": "x64",
+        "esbuildVersion": "0.28.1",
+        "kernelRelease": "7.0.0-28-generic",
+        "nodeVersion": "24.19.0",
+        "npmVersion": "11.17.0",
+        "osName": "Linux",
+        "osRelease": "#28~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Jul  1 15:50:57 UTC 2",
+        "platform": "linux",
+        "pnpmVersion": "11.8.0",
+        "zlibVersion": "1.3.2.1-motley-3246f1b"
+      },
+      "flags": {
+        "baselineVue": true,
+        "checkOnly": false,
+        "gzipLevel": 9,
+        "includePrivateVue": true,
+        "minify": true,
+        "platform": "browser",
+        "staticGraphHeadlines": true,
+        "target": "es2020"
+      },
+      "packageVersions": {
+        "@starwind-ui/runtime": "1.1.0",
+        "@starwind-ui/vue": "0.0.0",
+        "@zag-js/accordion": "1.42.0",
+        "@zag-js/avatar": "1.42.0",
+        "@zag-js/carousel": "1.42.0",
+        "@zag-js/checkbox": "1.42.0",
+        "@zag-js/collapsible": "1.42.0",
+        "@zag-js/color-picker": "1.42.0",
+        "@zag-js/combobox": "1.42.0",
+        "@zag-js/core": "1.42.0",
+        "@zag-js/dialog": "1.42.0",
+        "@zag-js/drawer": "1.42.0",
+        "@zag-js/file-upload": "1.42.0",
+        "@zag-js/hover-card": "1.42.0",
+        "@zag-js/menu": "1.42.0",
+        "@zag-js/navigation-menu": "1.42.0",
+        "@zag-js/pin-input": "1.42.0",
+        "@zag-js/popover": "1.42.0",
+        "@zag-js/progress": "1.42.0",
+        "@zag-js/radio-group": "1.42.0",
+        "@zag-js/scroll-area": "1.42.0",
+        "@zag-js/select": "1.42.0",
+        "@zag-js/slider": "1.42.0",
+        "@zag-js/switch": "1.42.0",
+        "@zag-js/tabs": "1.42.0",
+        "@zag-js/toast": "1.42.0",
+        "@zag-js/toggle": "1.42.0",
+        "@zag-js/toggle-group": "1.42.0",
+        "@zag-js/tooltip": "1.42.0",
+        "@zag-js/vue": "1.42.0"
+      },
+      "rows": [
+        {
+          "gzipBytes": 51807,
+          "id": "vue.adapter-only"
+        },
+        {
+          "gzipBytes": 4669,
+          "id": "vue.cold.accordion"
+        },
+        {
+          "gzipBytes": 12461,
+          "id": "vue.cold.alert-dialog"
+        },
+        {
+          "gzipBytes": 2447,
+          "id": "vue.cold.avatar"
+        },
+        {
+          "gzipBytes": 1336,
+          "id": "vue.cold.button"
+        },
+        {
+          "gzipBytes": 9802,
+          "id": "vue.cold.carousel"
+        },
+        {
+          "gzipBytes": 7881,
+          "id": "vue.cold.checkbox"
+        },
+        {
+          "gzipBytes": 8923,
+          "id": "vue.cold.checkbox-group"
+        },
+        {
+          "gzipBytes": 5285,
+          "id": "vue.cold.collapsible"
+        },
+        {
+          "gzipBytes": 18228,
+          "id": "vue.cold.color-picker"
+        },
+        {
+          "gzipBytes": 29258,
+          "id": "vue.cold.combobox"
+        },
+        {
+          "gzipBytes": 27203,
+          "id": "vue.cold.context-menu"
+        },
+        {
+          "gzipBytes": 10633,
+          "id": "vue.cold.dialog"
+        },
+        {
+          "gzipBytes": 12477,
+          "id": "vue.cold.drawer"
+        },
+        {
+          "gzipBytes": 6064,
+          "id": "vue.cold.dropzone"
+        },
+        {
+          "gzipBytes": 10480,
+          "id": "vue.cold.field"
+        },
+        {
+          "gzipBytes": 2548,
+          "id": "vue.cold.fieldset"
+        },
+        {
+          "gzipBytes": 17632,
+          "id": "vue.cold.form"
+        },
+        {
+          "gzipBytes": 2291,
+          "id": "vue.cold.input"
+        },
+        {
+          "gzipBytes": 7927,
+          "id": "vue.cold.input-otp"
+        },
+        {
+          "gzipBytes": 27184,
+          "id": "vue.cold.menu"
+        },
+        {
+          "gzipBytes": 24878,
+          "id": "vue.cold.navigation-menu"
+        },
+        {
+          "gzipBytes": 21165,
+          "id": "vue.cold.popover"
+        },
+        {
+          "gzipBytes": 19345,
+          "id": "vue.cold.preview-card"
+        },
+        {
+          "gzipBytes": 3112,
+          "id": "vue.cold.progress"
+        },
+        {
+          "gzipBytes": 7789,
+          "id": "vue.cold.radio"
+        },
+        {
+          "gzipBytes": 10897,
+          "id": "vue.cold.radio-group"
+        },
+        {
+          "gzipBytes": 5161,
+          "id": "vue.cold.scroll-area"
+        },
+        {
+          "gzipBytes": 30107,
+          "id": "vue.cold.select"
+        },
+        {
+          "gzipBytes": 6586,
+          "id": "vue.cold.sidebar"
+        },
+        {
+          "gzipBytes": 10008,
+          "id": "vue.cold.slider"
+        },
+        {
+          "gzipBytes": 6885,
+          "id": "vue.cold.switch"
+        },
+        {
+          "gzipBytes": 5569,
+          "id": "vue.cold.tabs"
+        },
+        {
+          "gzipBytes": 6382,
+          "id": "vue.cold.toast"
+        },
+        {
+          "gzipBytes": 3497,
+          "id": "vue.cold.toggle"
+        },
+        {
+          "gzipBytes": 5463,
+          "id": "vue.cold.toggle-group"
+        },
+        {
+          "gzipBytes": 19739,
+          "id": "vue.cold.tooltip"
+        },
+        {
+          "gzipBytes": 201210,
+          "id": "vue.combined"
+        },
+        {
+          "gzipBytes": 176194,
+          "id": "vue.matched.starwind"
+        },
+        {
+          "gzipBytes": 128292,
+          "id": "vue.matched.zag"
+        },
+        {
+          "gzipBytes": 135512,
+          "id": "vue.packed-tarball"
+        },
+        {
+          "gzipBytes": 3649,
+          "id": "vue.theme"
+        }
+      ],
+      "schema": "starwind.package-size.run-evidence",
+      "schemaVersion": 1
+    },
+    {
+      "command": {
+        "arguments": [
+          "scripts/portable-runtime/measure-package-sizes.mjs",
+          "--baseline-vue"
+        ],
+        "executable": "node"
+      },
+      "commit": "ef58435373775514c1237ce94bfc3e7628c1ebe4",
+      "comparator": {
+        "name": "zag-vue",
+        "packages": {
+          "@zag-js/accordion": "1.42.0",
+          "@zag-js/avatar": "1.42.0",
+          "@zag-js/carousel": "1.42.0",
+          "@zag-js/checkbox": "1.42.0",
+          "@zag-js/collapsible": "1.42.0",
+          "@zag-js/color-picker": "1.42.0",
+          "@zag-js/combobox": "1.42.0",
+          "@zag-js/core": "1.42.0",
+          "@zag-js/dialog": "1.42.0",
+          "@zag-js/drawer": "1.42.0",
+          "@zag-js/file-upload": "1.42.0",
+          "@zag-js/hover-card": "1.42.0",
+          "@zag-js/menu": "1.42.0",
+          "@zag-js/navigation-menu": "1.42.0",
+          "@zag-js/pin-input": "1.42.0",
+          "@zag-js/popover": "1.42.0",
+          "@zag-js/progress": "1.42.0",
+          "@zag-js/radio-group": "1.42.0",
+          "@zag-js/scroll-area": "1.42.0",
+          "@zag-js/select": "1.42.0",
+          "@zag-js/slider": "1.42.0",
+          "@zag-js/switch": "1.42.0",
+          "@zag-js/tabs": "1.42.0",
+          "@zag-js/toast": "1.42.0",
+          "@zag-js/toggle": "1.42.0",
+          "@zag-js/toggle-group": "1.42.0",
+          "@zag-js/tooltip": "1.42.0",
+          "@zag-js/vue": "1.42.0"
+        },
+        "version": "1.42.0"
+      },
+      "complete": true,
+      "diagnosticPath": "/tmp/starwind-package-size-comparison/vue-baseline-F62Pp8",
+      "environment": {
+        "architecture": "x64",
+        "esbuildVersion": "0.28.1",
+        "kernelRelease": "7.0.0-28-generic",
+        "nodeVersion": "24.19.0",
+        "npmVersion": "11.17.0",
+        "osName": "Linux",
+        "osRelease": "#28~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Jul  1 15:50:57 UTC 2",
+        "platform": "linux",
+        "pnpmVersion": "11.8.0",
+        "zlibVersion": "1.3.2.1-motley-3246f1b"
+      },
+      "flags": {
+        "baselineVue": true,
+        "checkOnly": false,
+        "gzipLevel": 9,
+        "includePrivateVue": true,
+        "minify": true,
+        "platform": "browser",
+        "staticGraphHeadlines": true,
+        "target": "es2020"
+      },
+      "packageVersions": {
+        "@starwind-ui/runtime": "1.1.0",
+        "@starwind-ui/vue": "0.0.0",
+        "@zag-js/accordion": "1.42.0",
+        "@zag-js/avatar": "1.42.0",
+        "@zag-js/carousel": "1.42.0",
+        "@zag-js/checkbox": "1.42.0",
+        "@zag-js/collapsible": "1.42.0",
+        "@zag-js/color-picker": "1.42.0",
+        "@zag-js/combobox": "1.42.0",
+        "@zag-js/core": "1.42.0",
+        "@zag-js/dialog": "1.42.0",
+        "@zag-js/drawer": "1.42.0",
+        "@zag-js/file-upload": "1.42.0",
+        "@zag-js/hover-card": "1.42.0",
+        "@zag-js/menu": "1.42.0",
+        "@zag-js/navigation-menu": "1.42.0",
+        "@zag-js/pin-input": "1.42.0",
+        "@zag-js/popover": "1.42.0",
+        "@zag-js/progress": "1.42.0",
+        "@zag-js/radio-group": "1.42.0",
+        "@zag-js/scroll-area": "1.42.0",
+        "@zag-js/select": "1.42.0",
+        "@zag-js/slider": "1.42.0",
+        "@zag-js/switch": "1.42.0",
+        "@zag-js/tabs": "1.42.0",
+        "@zag-js/toast": "1.42.0",
+        "@zag-js/toggle": "1.42.0",
+        "@zag-js/toggle-group": "1.42.0",
+        "@zag-js/tooltip": "1.42.0",
+        "@zag-js/vue": "1.42.0"
+      },
+      "rows": [
+        {
+          "gzipBytes": 51807,
+          "id": "vue.adapter-only"
+        },
+        {
+          "gzipBytes": 4669,
+          "id": "vue.cold.accordion"
+        },
+        {
+          "gzipBytes": 12461,
+          "id": "vue.cold.alert-dialog"
+        },
+        {
+          "gzipBytes": 2447,
+          "id": "vue.cold.avatar"
+        },
+        {
+          "gzipBytes": 1336,
+          "id": "vue.cold.button"
+        },
+        {
+          "gzipBytes": 9802,
+          "id": "vue.cold.carousel"
+        },
+        {
+          "gzipBytes": 7881,
+          "id": "vue.cold.checkbox"
+        },
+        {
+          "gzipBytes": 8923,
+          "id": "vue.cold.checkbox-group"
+        },
+        {
+          "gzipBytes": 5285,
+          "id": "vue.cold.collapsible"
+        },
+        {
+          "gzipBytes": 18228,
+          "id": "vue.cold.color-picker"
+        },
+        {
+          "gzipBytes": 29258,
+          "id": "vue.cold.combobox"
+        },
+        {
+          "gzipBytes": 27203,
+          "id": "vue.cold.context-menu"
+        },
+        {
+          "gzipBytes": 10633,
+          "id": "vue.cold.dialog"
+        },
+        {
+          "gzipBytes": 12477,
+          "id": "vue.cold.drawer"
+        },
+        {
+          "gzipBytes": 6064,
+          "id": "vue.cold.dropzone"
+        },
+        {
+          "gzipBytes": 10480,
+          "id": "vue.cold.field"
+        },
+        {
+          "gzipBytes": 2548,
+          "id": "vue.cold.fieldset"
+        },
+        {
+          "gzipBytes": 17632,
+          "id": "vue.cold.form"
+        },
+        {
+          "gzipBytes": 2291,
+          "id": "vue.cold.input"
+        },
+        {
+          "gzipBytes": 7927,
+          "id": "vue.cold.input-otp"
+        },
+        {
+          "gzipBytes": 27184,
+          "id": "vue.cold.menu"
+        },
+        {
+          "gzipBytes": 24878,
+          "id": "vue.cold.navigation-menu"
+        },
+        {
+          "gzipBytes": 21165,
+          "id": "vue.cold.popover"
+        },
+        {
+          "gzipBytes": 19345,
+          "id": "vue.cold.preview-card"
+        },
+        {
+          "gzipBytes": 3112,
+          "id": "vue.cold.progress"
+        },
+        {
+          "gzipBytes": 7789,
+          "id": "vue.cold.radio"
+        },
+        {
+          "gzipBytes": 10897,
+          "id": "vue.cold.radio-group"
+        },
+        {
+          "gzipBytes": 5161,
+          "id": "vue.cold.scroll-area"
+        },
+        {
+          "gzipBytes": 30107,
+          "id": "vue.cold.select"
+        },
+        {
+          "gzipBytes": 6586,
+          "id": "vue.cold.sidebar"
+        },
+        {
+          "gzipBytes": 10008,
+          "id": "vue.cold.slider"
+        },
+        {
+          "gzipBytes": 6885,
+          "id": "vue.cold.switch"
+        },
+        {
+          "gzipBytes": 5569,
+          "id": "vue.cold.tabs"
+        },
+        {
+          "gzipBytes": 6382,
+          "id": "vue.cold.toast"
+        },
+        {
+          "gzipBytes": 3497,
+          "id": "vue.cold.toggle"
+        },
+        {
+          "gzipBytes": 5463,
+          "id": "vue.cold.toggle-group"
+        },
+        {
+          "gzipBytes": 19739,
+          "id": "vue.cold.tooltip"
+        },
+        {
+          "gzipBytes": 201210,
+          "id": "vue.combined"
+        },
+        {
+          "gzipBytes": 176194,
+          "id": "vue.matched.starwind"
+        },
+        {
+          "gzipBytes": 128292,
+          "id": "vue.matched.zag"
+        },
+        {
+          "gzipBytes": 135512,
+          "id": "vue.packed-tarball"
+        },
+        {
+          "gzipBytes": 3649,
+          "id": "vue.theme"
+        }
+      ],
+      "schema": "starwind.package-size.run-evidence",
+      "schemaVersion": 1
+    }
+  ],
+  "schema": "starwind.package-size.vue-baseline",
+  "schemaVersion": 1,
+  "sentinels": [
+    {
+      "component": "select",
+      "id": "vue.cold.select",
+      "maximumBytes": 30107,
+      "rank": 1
+    },
+    {
+      "component": "combobox",
+      "id": "vue.cold.combobox",
+      "maximumBytes": 29258,
+      "rank": 2
+    },
+    {
+      "component": "context-menu",
+      "id": "vue.cold.context-menu",
+      "maximumBytes": 27203,
+      "rank": 3
+    },
+    {
+      "component": "menu",
+      "id": "vue.cold.menu",
+      "maximumBytes": 27184,
+      "rank": 4
+    },
+    {
+      "component": "navigation-menu",
+      "id": "vue.cold.navigation-menu",
+      "maximumBytes": 24878,
+      "rank": 5
+    }
+  ],
+  "stability": {
+    "commit": "ef58435373775514c1237ce94bfc3e7628c1ebe4",
+    "environment": {
+      "architecture": "x64",
+      "esbuildVersion": "0.28.1",
+      "kernelRelease": "7.0.0-28-generic",
+      "nodeVersion": "24.19.0",
+      "npmVersion": "11.17.0",
+      "osName": "Linux",
+      "osRelease": "#28~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Jul  1 15:50:57 UTC 2",
+      "platform": "linux",
+      "pnpmVersion": "11.8.0",
+      "zlibVersion": "1.3.2.1-motley-3246f1b"
+    },
+    "requiredRowIds": [
+      "vue.adapter-only",
+      "vue.cold.accordion",
+      "vue.cold.alert-dialog",
+      "vue.cold.avatar",
+      "vue.cold.button",
+      "vue.cold.carousel",
+      "vue.cold.checkbox",
+      "vue.cold.checkbox-group",
+      "vue.cold.collapsible",
+      "vue.cold.color-picker",
+      "vue.cold.combobox",
+      "vue.cold.context-menu",
+      "vue.cold.dialog",
+      "vue.cold.drawer",
+      "vue.cold.dropzone",
+      "vue.cold.field",
+      "vue.cold.fieldset",
+      "vue.cold.form",
+      "vue.cold.input",
+      "vue.cold.input-otp",
+      "vue.cold.menu",
+      "vue.cold.navigation-menu",
+      "vue.cold.popover",
+      "vue.cold.preview-card",
+      "vue.cold.progress",
+      "vue.cold.radio",
+      "vue.cold.radio-group",
+      "vue.cold.scroll-area",
+      "vue.cold.select",
+      "vue.cold.sidebar",
+      "vue.cold.slider",
+      "vue.cold.switch",
+      "vue.cold.tabs",
+      "vue.cold.toast",
+      "vue.cold.toggle",
+      "vue.cold.toggle-group",
+      "vue.cold.tooltip",
+      "vue.combined",
+      "vue.matched.starwind",
+      "vue.matched.zag",
+      "vue.packed-tarball",
+      "vue.theme"
+    ],
+    "rows": [
+      {
+        "id": "vue.adapter-only",
+        "maximumBytes": 51807,
+        "minimumBytes": 51807,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          51807,
+          51807,
+          51807
+        ]
+      },
+      {
+        "id": "vue.cold.accordion",
+        "maximumBytes": 4669,
+        "minimumBytes": 4669,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          4669,
+          4669,
+          4669
+        ]
+      },
+      {
+        "id": "vue.cold.alert-dialog",
+        "maximumBytes": 12461,
+        "minimumBytes": 12461,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          12461,
+          12461,
+          12461
+        ]
+      },
+      {
+        "id": "vue.cold.avatar",
+        "maximumBytes": 2447,
+        "minimumBytes": 2447,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          2447,
+          2447,
+          2447
+        ]
+      },
+      {
+        "id": "vue.cold.button",
+        "maximumBytes": 1336,
+        "minimumBytes": 1336,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          1336,
+          1336,
+          1336
+        ]
+      },
+      {
+        "id": "vue.cold.carousel",
+        "maximumBytes": 9802,
+        "minimumBytes": 9802,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          9802,
+          9802,
+          9802
+        ]
+      },
+      {
+        "id": "vue.cold.checkbox",
+        "maximumBytes": 7881,
+        "minimumBytes": 7881,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          7881,
+          7881,
+          7881
+        ]
+      },
+      {
+        "id": "vue.cold.checkbox-group",
+        "maximumBytes": 8923,
+        "minimumBytes": 8923,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          8923,
+          8923,
+          8923
+        ]
+      },
+      {
+        "id": "vue.cold.collapsible",
+        "maximumBytes": 5285,
+        "minimumBytes": 5285,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          5285,
+          5285,
+          5285
+        ]
+      },
+      {
+        "id": "vue.cold.color-picker",
+        "maximumBytes": 18228,
+        "minimumBytes": 18228,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          18228,
+          18228,
+          18228
+        ]
+      },
+      {
+        "id": "vue.cold.combobox",
+        "maximumBytes": 29258,
+        "minimumBytes": 29258,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          29258,
+          29258,
+          29258
+        ]
+      },
+      {
+        "id": "vue.cold.context-menu",
+        "maximumBytes": 27203,
+        "minimumBytes": 27203,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          27203,
+          27203,
+          27203
+        ]
+      },
+      {
+        "id": "vue.cold.dialog",
+        "maximumBytes": 10633,
+        "minimumBytes": 10633,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          10633,
+          10633,
+          10633
+        ]
+      },
+      {
+        "id": "vue.cold.drawer",
+        "maximumBytes": 12477,
+        "minimumBytes": 12477,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          12477,
+          12477,
+          12477
+        ]
+      },
+      {
+        "id": "vue.cold.dropzone",
+        "maximumBytes": 6064,
+        "minimumBytes": 6064,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          6064,
+          6064,
+          6064
+        ]
+      },
+      {
+        "id": "vue.cold.field",
+        "maximumBytes": 10480,
+        "minimumBytes": 10480,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          10480,
+          10480,
+          10480
+        ]
+      },
+      {
+        "id": "vue.cold.fieldset",
+        "maximumBytes": 2548,
+        "minimumBytes": 2548,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          2548,
+          2548,
+          2548
+        ]
+      },
+      {
+        "id": "vue.cold.form",
+        "maximumBytes": 17632,
+        "minimumBytes": 17632,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          17632,
+          17632,
+          17632
+        ]
+      },
+      {
+        "id": "vue.cold.input",
+        "maximumBytes": 2291,
+        "minimumBytes": 2291,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          2291,
+          2291,
+          2291
+        ]
+      },
+      {
+        "id": "vue.cold.input-otp",
+        "maximumBytes": 7927,
+        "minimumBytes": 7927,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          7927,
+          7927,
+          7927
+        ]
+      },
+      {
+        "id": "vue.cold.menu",
+        "maximumBytes": 27184,
+        "minimumBytes": 27184,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          27184,
+          27184,
+          27184
+        ]
+      },
+      {
+        "id": "vue.cold.navigation-menu",
+        "maximumBytes": 24878,
+        "minimumBytes": 24878,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          24878,
+          24878,
+          24878
+        ]
+      },
+      {
+        "id": "vue.cold.popover",
+        "maximumBytes": 21165,
+        "minimumBytes": 21165,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          21165,
+          21165,
+          21165
+        ]
+      },
+      {
+        "id": "vue.cold.preview-card",
+        "maximumBytes": 19345,
+        "minimumBytes": 19345,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          19345,
+          19345,
+          19345
+        ]
+      },
+      {
+        "id": "vue.cold.progress",
+        "maximumBytes": 3112,
+        "minimumBytes": 3112,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          3112,
+          3112,
+          3112
+        ]
+      },
+      {
+        "id": "vue.cold.radio",
+        "maximumBytes": 7789,
+        "minimumBytes": 7789,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          7789,
+          7789,
+          7789
+        ]
+      },
+      {
+        "id": "vue.cold.radio-group",
+        "maximumBytes": 10897,
+        "minimumBytes": 10897,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          10897,
+          10897,
+          10897
+        ]
+      },
+      {
+        "id": "vue.cold.scroll-area",
+        "maximumBytes": 5161,
+        "minimumBytes": 5161,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          5161,
+          5161,
+          5161
+        ]
+      },
+      {
+        "id": "vue.cold.select",
+        "maximumBytes": 30107,
+        "minimumBytes": 30107,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          30107,
+          30107,
+          30107
+        ]
+      },
+      {
+        "id": "vue.cold.sidebar",
+        "maximumBytes": 6586,
+        "minimumBytes": 6586,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          6586,
+          6586,
+          6586
+        ]
+      },
+      {
+        "id": "vue.cold.slider",
+        "maximumBytes": 10008,
+        "minimumBytes": 10008,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          10008,
+          10008,
+          10008
+        ]
+      },
+      {
+        "id": "vue.cold.switch",
+        "maximumBytes": 6885,
+        "minimumBytes": 6885,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          6885,
+          6885,
+          6885
+        ]
+      },
+      {
+        "id": "vue.cold.tabs",
+        "maximumBytes": 5569,
+        "minimumBytes": 5569,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          5569,
+          5569,
+          5569
+        ]
+      },
+      {
+        "id": "vue.cold.toast",
+        "maximumBytes": 6382,
+        "minimumBytes": 6382,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          6382,
+          6382,
+          6382
+        ]
+      },
+      {
+        "id": "vue.cold.toggle",
+        "maximumBytes": 3497,
+        "minimumBytes": 3497,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          3497,
+          3497,
+          3497
+        ]
+      },
+      {
+        "id": "vue.cold.toggle-group",
+        "maximumBytes": 5463,
+        "minimumBytes": 5463,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          5463,
+          5463,
+          5463
+        ]
+      },
+      {
+        "id": "vue.cold.tooltip",
+        "maximumBytes": 19739,
+        "minimumBytes": 19739,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          19739,
+          19739,
+          19739
+        ]
+      },
+      {
+        "id": "vue.combined",
+        "maximumBytes": 201210,
+        "minimumBytes": 201210,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 2012,
+        "values": [
+          201210,
+          201210,
+          201210
+        ]
+      },
+      {
+        "id": "vue.matched.starwind",
+        "maximumBytes": 176194,
+        "minimumBytes": 176194,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1761,
+        "values": [
+          176194,
+          176194,
+          176194
+        ]
+      },
+      {
+        "id": "vue.matched.zag",
+        "maximumBytes": 128292,
+        "minimumBytes": 128292,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1282,
+        "values": [
+          128292,
+          128292,
+          128292
+        ]
+      },
+      {
+        "id": "vue.packed-tarball",
+        "maximumBytes": 135512,
+        "minimumBytes": 135512,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1355,
+        "values": [
+          135512,
+          135512,
+          135512
+        ]
+      },
+      {
+        "id": "vue.theme",
+        "maximumBytes": 3649,
+        "minimumBytes": 3649,
+        "rangeBytes": 0,
+        "stable": true,
+        "toleranceBytes": 1024,
+        "values": [
+          3649,
+          3649,
+          3649
+        ]
+      }
+    ],
+    "runCount": 3,
+    "schema": "starwind.package-size.run-evidence",
+    "schemaVersion": 1,
+    "stable": true,
+    "unstableRows": []
+  }
+}

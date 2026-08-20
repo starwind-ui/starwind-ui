@@ -474,8 +474,7 @@ export async function runHydrationChecks() {
     assert(dialogPopup.open, "Dialog did not open after hydration");
     assert(dialog.getAttribute("data-state") === "open", "Dialog model did not update");
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
-    await frame();
-    assert(!dialogPopup.open, "Dialog did not close after hydration");
+    await waitFor(() => !dialogPopup.open, "Dialog did not close after hydration");
 
     const alertDialogTrigger = host.querySelector("#hydrated-alert-dialog-trigger");
     const alertDialogPopup = overlays.querySelector("#hydrated-alert-dialog-popup");
@@ -485,8 +484,7 @@ export async function runHydrationChecks() {
     overlays.querySelector("[data-sw-alert-dialog-backdrop]").click();
     assert(alertDialogPopup.open, "Alert Dialog dismissed from outside interaction");
     overlays.querySelector("[data-sw-alert-dialog-close]").click();
-    await frame();
-    assert(!alertDialogPopup.open, "Alert Dialog did not close after hydration");
+    await waitFor(() => !alertDialogPopup.open, "Alert Dialog did not close after hydration");
 
     const drawerTrigger = host.querySelector("#hydrated-drawer-trigger");
     const drawerPopup = overlays.querySelector("#hydrated-drawer-popup");
@@ -497,8 +495,7 @@ export async function runHydrationChecks() {
     await nextTick();
     assert(drawerPopup.open, "Drawer did not open after hydration");
     drawerPopup.querySelector("[data-sw-drawer-close]").click();
-    await nextTick();
-    assert(!drawerPopup.open, "Drawer did not close after hydration");
+    await waitFor(() => !drawerPopup.open, "Drawer did not close after hydration");
 
     const popoverTrigger = host.querySelector("#hydrated-popover-trigger");
     const popoverPopup = overlays.querySelector("#hydrated-popover-popup");

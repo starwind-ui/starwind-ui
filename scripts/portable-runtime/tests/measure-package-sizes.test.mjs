@@ -462,7 +462,7 @@ describe("package-size public and diagnostic reports", () => {
     expect(reports.publicReport).not.toContain("Private Vue");
     expect(reports.publicReport).not.toContain("vue.adapter-only");
     expect(reports.diagnosticReport).toContain(
-      ".scratch/vue-package-size-comparison/evidence/vue-package-size-baseline.json",
+      "scripts/portable-runtime/evidence/vue-package-size-baseline.json",
     );
     expect(reports.diagnosticReport).toContain(
       "| `vue.adapter-only` | 51,807 B | 51,807 B | 51,807 B | 51,807 B | 2,591 B | 54,398 B | Pass |",

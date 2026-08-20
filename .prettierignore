@@ -39,6 +39,7 @@ ai-context
 # local projects
 .local
 scripts/portable-runtime/docs/layered-docs/generated/**
+scripts/portable-runtime/evidence/**
 
 # turbo files
 **/.turbo

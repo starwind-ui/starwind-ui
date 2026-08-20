@@ -102,6 +102,7 @@ describe("Vue Alert Dialog public behavior", () => {
     expect(popup.open).toBe(true);
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
     await nextTick();
+    await waitForDialogClosed(popup);
     expect(popup.open).toBe(false);
     expect(popup.getAttribute("data-state")).toBe("closed");
     expect(popup.hidden).toBe(true);
@@ -136,6 +137,7 @@ describe("Vue Alert Dialog public behavior", () => {
     expect(popup.open).toBe(true);
     portal.querySelector<HTMLButtonElement>("[data-sw-alert-dialog-close]")!.click();
     await nextTick();
+    await waitForDialogClosed(popup);
     expect(popup.open).toBe(false);
     expect(document.activeElement).toBe(outside);
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
@@ -268,10 +270,12 @@ describe("Vue Alert Dialog public behavior", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
     await nextTick();
     expect(parent.open).toBe(true);
+    await waitForDialogClosed(child);
     expect(child.open).toBe(false);
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
     await nextTick();
+    await waitForDialogClosed(parent);
     expect(parent.open).toBe(false);
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
   });
@@ -459,7 +463,7 @@ describe("Vue Alert Dialog public behavior", () => {
     cancel.click();
     await nextTick();
     expect(calls).toEqual(["trigger-child", "trigger-adapter", "cancel-child", "cancel-adapter"]);
-    expect(host.querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
+    await waitForDialogClosed(host.querySelector<HTMLDialogElement>("dialog")!);
     trigger.click();
     await nextTick();
     action.click();
@@ -474,7 +478,7 @@ describe("Vue Alert Dialog public behavior", () => {
       "action-child",
       "action-adapter",
     ]);
-    expect(host.querySelector<HTMLDialogElement>("dialog")!.open).toBe(false);
+    await waitForDialogClosed(host.querySelector<HTMLDialogElement>("dialog")!);
     const triggerExposed = triggerRef.value!;
     const cancelExposed = cancelRef.value!;
     const actionExposed = actionRef.value!;
@@ -537,6 +541,15 @@ async function waitForPortalReady(portal: HTMLElement): Promise<void> {
     });
     observer.observe(portal, { attributeFilter: ["data-placement"], attributes: true });
   });
+}
+
+async function waitForDialogClosed(dialog: HTMLDialogElement): Promise<void> {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    if (!dialog.open) return;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+
+  throw new Error("Alert Dialog did not reach its closed native state.");
 }
 
 function tree(

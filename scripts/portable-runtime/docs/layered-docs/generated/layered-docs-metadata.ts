@@ -9109,7 +9109,12 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-floating-root",
-            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] { display: contents; }",
+            source: "local-style",
+          },
+          {
+            attribute: "data-floating-root",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { position: fixed; z-index: 60; }",
             source: "local-style",
           },
           {
@@ -9415,18 +9420,29 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             attribute: "data-slot",
             value: "select-portal",
-            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] { display: contents; }",
+            source: "local-style",
+          },
+          {
+            attribute: "data-slot",
+            value: "select-portal",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { position: fixed; z-index: 60; }",
             source: "local-style",
           },
           {
             attribute: "data-slot",
             value: "select-positioner",
-            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { position: fixed; z-index: 60; }",
             source: "local-style",
           },
           {
             attribute: "data-sw-color-picker",
-            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] { display: contents; }",
+            source: "local-style",
+          },
+          {
+            attribute: "data-sw-color-picker",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { position: fixed; z-index: 60; }",
             source: "local-style",
           },
           {
@@ -9446,7 +9462,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           },
           {
             attribute: "data-sw-color-picker-format-options",
-            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { z-index: 60; }",
+            selector: "[data-sw-color-picker][data-floating-root] > [data-slot=\"select-portal\"] > [data-slot=\"select-positioner\"]:has(> [data-sw-color-picker-format-options]) { position: fixed; z-index: 60; }",
             source: "local-style",
           },
         ],

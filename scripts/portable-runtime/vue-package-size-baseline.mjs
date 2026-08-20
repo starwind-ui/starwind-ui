@@ -34,7 +34,7 @@ export const vuePackageSizeBaseline = deepFreeze({
     zagMatchedGzipBytes: 128_292,
     zagVersion: ZAG_VUE_COMPARATOR_VERSION,
   },
-  evidenceSource: ".scratch/vue-package-size-comparison/evidence/vue-package-size-baseline.json",
+  evidenceSource: "scripts/portable-runtime/evidence/vue-package-size-baseline.json",
   provenance: {
     command: {
       arguments: ["scripts/portable-runtime/measure-package-sizes.mjs", "--baseline-vue"],

@@ -70,6 +70,7 @@ describe("Vue Dialog public behavior", () => {
 
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
     await nextTick();
+    await waitForDialogClosed(popup(host));
     expect(popup(host).open).toBe(false);
     expect(document.activeElement).toBe(outside);
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
@@ -130,6 +131,7 @@ describe("Vue Dialog public behavior", () => {
     expect(popup(host).open).toBe(true);
     close(host).click();
     await nextTick();
+    await waitForDialogClosed(popup(host));
     expect(popup(host).open).toBe(false);
   });
 
@@ -165,7 +167,9 @@ describe("Vue Dialog public behavior", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
     await nextTick();
     expect(parent.querySelector<HTMLDialogElement>(":scope > dialog")!.open).toBe(true);
-    expect(child.querySelector<HTMLDialogElement>(":scope > dialog")!.open).toBe(false);
+    const childPopup = child.querySelector<HTMLDialogElement>(":scope > dialog")!;
+    await waitForDialogClosed(childPopup);
+    expect(childPopup.open).toBe(false);
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
 
     show.value = false;
@@ -241,6 +245,7 @@ describe("Vue Dialog public behavior", () => {
       document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
       await nextTick();
       expect(proposals).toEqual([false]);
+      await waitForDialogClosed(popup(host));
       expect(popup(host).open).toBe(false);
       expect(completions).toEqual(["complete"]);
 
@@ -362,7 +367,9 @@ describe("Vue Dialog public behavior", () => {
     closeElement.click();
     await nextTick();
     expect(calls).toEqual(["trigger-child", "trigger-consumer", "close-child", "close-consumer"]);
-    expect(host.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!.open).toBe(false);
+    const composedPopup = host.querySelector<HTMLDialogElement>("[data-sw-dialog-content]")!;
+    await waitForDialogClosed(composedPopup);
+    expect(composedPopup.open).toBe(false);
 
     showParts.value = false;
     await nextTick();
@@ -460,4 +467,13 @@ function backdrop(host: Element): HTMLElement {
 
 function close(host: Element): HTMLButtonElement {
   return host.querySelector<HTMLButtonElement>("[data-sw-dialog-close]")!;
+}
+
+async function waitForDialogClosed(dialog: HTMLDialogElement): Promise<void> {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    if (!dialog.open) return;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+
+  throw new Error("Dialog did not reach its closed native state.");
 }

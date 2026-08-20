@@ -8,10 +8,7 @@ import {
 } from "../vue-package-size-baseline.mjs";
 import { buildVueBaselineEvidence } from "../package-size-vue-baseline-runner.mjs";
 
-const evidencePath = new URL(
-  "../../../.scratch/vue-package-size-comparison/evidence/vue-package-size-baseline.json",
-  import.meta.url,
-);
+const evidencePath = new URL("../evidence/vue-package-size-baseline.json", import.meta.url);
 
 describe("adopted Vue package-size baseline", () => {
   it("matches every adopted value and sentinel from the committed evidence", () => {
@@ -19,8 +16,7 @@ describe("adopted Vue package-size baseline", () => {
 
     expect(validateVuePackageSizeBaselineEvidence(evidence)).toBe(true);
     expect(vuePackageSizeBaseline).toMatchObject({
-      evidenceSource:
-        ".scratch/vue-package-size-comparison/evidence/vue-package-size-baseline.json",
+      evidenceSource: "scripts/portable-runtime/evidence/vue-package-size-baseline.json",
       provenance: {
         command: {
           arguments: ["scripts/portable-runtime/measure-package-sizes.mjs", "--baseline-vue"],

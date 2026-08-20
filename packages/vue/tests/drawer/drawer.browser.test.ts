@@ -68,6 +68,7 @@ describe("Vue Drawer browser contract", () => {
       expect(backdrop.hidden).toBe(false);
       host.querySelector<HTMLButtonElement>("[data-sw-drawer-close]")!.click();
       await nextTick();
+      await waitForDialogClosed(popup);
       expect(popup.open).toBe(false);
       expect(popup.hidden).toBe(true);
     },
@@ -85,6 +86,7 @@ describe("Vue Drawer browser contract", () => {
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(true);
     document.body.querySelector<HTMLElement>("[data-sw-drawer-backdrop]")!.click();
     await nextTick();
+    await waitForDialogClosed(modalPopup);
     expect(modalPopup.open).toBe(false);
     expect(document.activeElement).toBe(outside);
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
@@ -179,7 +181,9 @@ describe("Vue Drawer browser contract", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
     await nextTick();
     expect(document.body.querySelector<HTMLDialogElement>("#parent-popup")!.open).toBe(true);
-    expect(document.body.querySelector<HTMLDialogElement>("#child-popup")!.open).toBe(false);
+    const childPopup = document.body.querySelector<HTMLDialogElement>("#child-popup")!;
+    await waitForDialogClosed(childPopup);
+    expect(childPopup.open).toBe(false);
   });
 
   it("recreates changed options while open and cleans locks without proposals", async () => {
@@ -258,4 +262,13 @@ function mount(vnode: ReturnType<typeof h>): HTMLElement {
   app.mount(host);
   cleanups.push(() => app.unmount());
   return host;
+}
+
+async function waitForDialogClosed(dialog: HTMLDialogElement): Promise<void> {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    if (!dialog.open) return;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+
+  throw new Error("Drawer did not reach its closed native state.");
 }

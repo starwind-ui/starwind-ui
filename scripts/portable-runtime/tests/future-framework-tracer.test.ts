@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -135,7 +135,7 @@ describe("private Solid portal placement tracer", () => {
       "README.md",
       "docs/product/positioning.md",
       ...readTextFiles("docs/portable-runtime"),
-    ];
+    ].filter(existsSync);
     const forbiddenReferences = [
       "@starwind-ui/solid",
       "@starwind-ui/svelte",
@@ -223,8 +223,9 @@ function readTextFiles(root: string): string[] {
 
   return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
     const entryPath = path.join(root, entry.name);
+    if (entry.name === "node_modules") return [];
     if (entry.isDirectory()) return readTextFiles(entryPath);
-    if (!statSync(entryPath).isFile() || /\.(?:gif|jpe?g|png|webp|woff2?)$/i.test(entry.name)) {
+    if (!entry.isFile() || /\.(?:gif|jpe?g|png|webp|woff2?)$/i.test(entry.name)) {
       return [];
     }
     return [entryPath];
