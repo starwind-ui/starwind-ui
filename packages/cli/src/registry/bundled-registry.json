@@ -1774,7 +1774,7 @@
             },
             {
               "path": "src/components/starwind/pagination/PaginationEllipsis.astro",
-              "content": "---\nimport Dots from \"@tabler/icons/outline/dots.svg\";\nimport type { HTMLAttributes } from \"astro/types\";\nimport type { VariantProps } from \"tailwind-variants\";\n\nimport { paginationEllipsis } from \"./variants\";\n\ntype Props = HTMLAttributes<\"span\"> & VariantProps<typeof paginationEllipsis>;\n\nconst { size, class: className, ...rest } = Astro.props;\n---\n\n<span\n  aria-hidden\n  class={paginationEllipsis({ size, class: className })}\n  {...rest}\n  data-slot=\"pagination-ellipsis\"\n>\n  <slot name=\"icon\">\n    <Dots class=\"size-4\" />\n  </slot>\n\n  <slot>\n    <span class=\"sr-only\">More pages</span>\n  </slot>\n</span>\n"
+              "content": "---\nimport Dots from \"@tabler/icons/outline/dots.svg\";\nimport type { HTMLAttributes } from \"astro/types\";\nimport type { VariantProps } from \"tailwind-variants\";\n\nimport { paginationEllipsis } from \"./variants\";\n\ntype Props = HTMLAttributes<\"span\"> & VariantProps<typeof paginationEllipsis>;\n\nconst { size, class: className, ...rest } = Astro.props;\n---\n\n<span\n  aria-hidden\n  class={paginationEllipsis({ size, class: className })}\n  {...rest}\n  data-slot=\"pagination-ellipsis\"\n>\n  <slot name=\"icon\">\n    <Dots />\n  </slot>\n\n  <slot>\n    <span class=\"sr-only\">More pages</span>\n  </slot>\n</span>\n"
             },
             {
               "path": "src/components/starwind/pagination/PaginationItem.astro",
@@ -1798,7 +1798,7 @@
             },
             {
               "path": "src/components/starwind/pagination/variants.ts",
-              "content": "import { tv } from \"tailwind-variants\";\n\nexport const pagination = tv({\n  base: \"mx-auto flex w-full justify-center\",\n});\n\nexport const paginationContent = tv({\n  base: \"flex flex-row items-center gap-1\",\n});\n\nexport const paginationEllipsis = tv({\n  base: \"flex items-center justify-center\",\n  variants: {\n    size: {\n      \"icon-sm\": \"size-9\",\n      icon: \"size-11\",\n      \"icon-lg\": \"size-12\",\n    },\n  },\n  defaultVariants: {\n    size: \"icon\",\n  },\n});\n"
+              "content": "import { tv } from \"tailwind-variants\";\n\nexport const pagination = tv({\n  base: \"mx-auto flex w-full justify-center\",\n});\n\nexport const paginationContent = tv({\n  base: \"flex flex-row items-center gap-1\",\n});\n\nexport const paginationEllipsis = tv({\n  base: \"flex items-center justify-center\",\n  variants: {\n    size: {\n      \"icon-sm\": \"size-9 [&_svg:not([class*='size-'])]:size-3.5\",\n      icon: \"size-11 [&_svg:not([class*='size-'])]:size-4.5\",\n      \"icon-lg\": \"size-12 [&_svg:not([class*='size-'])]:size-5\",\n    },\n  },\n  defaultVariants: {\n    size: \"icon\",\n  },\n});\n"
             }
           ],
           "componentDependencies": ["button"],
@@ -1821,7 +1821,7 @@
             },
             {
               "path": "src/components/starwind/pagination/PaginationEllipsis.tsx",
-              "content": "import { IconDots as Dots } from \"@tabler/icons-react\";\nimport type * as React from \"react\";\nimport type { VariantProps } from \"tailwind-variants\";\nimport { paginationEllipsis } from \"./variants\";\n\nexport type PaginationEllipsisProps = React.ComponentPropsWithoutRef<\"span\"> &\n  VariantProps<typeof paginationEllipsis> & {\n    ref?: React.Ref<HTMLSpanElement>;\n    icon?: React.ReactNode;\n  };\n\nfunction PaginationEllipsis(props: PaginationEllipsisProps) {\n  const { size, ref, className, children, icon, ...rest } = props;\n\n  return (\n    <span\n      aria-hidden\n      className={paginationEllipsis({ size, class: className })}\n      {...rest}\n      ref={ref}\n      data-slot=\"pagination-ellipsis\"\n    >\n      {icon ?? (\n        <Dots\n          className=\"size-4\"\n        />\n      )}\n\n      {children ?? <span className=\"sr-only\">More pages</span>}\n    </span>\n  );\n}\n\nexport default PaginationEllipsis;\n"
+              "content": "import { IconDots as Dots } from \"@tabler/icons-react\";\nimport type * as React from \"react\";\nimport type { VariantProps } from \"tailwind-variants\";\nimport { paginationEllipsis } from \"./variants\";\n\nexport type PaginationEllipsisProps = React.ComponentPropsWithoutRef<\"span\"> &\n  VariantProps<typeof paginationEllipsis> & {\n    ref?: React.Ref<HTMLSpanElement>;\n    icon?: React.ReactNode;\n  };\n\nfunction PaginationEllipsis(props: PaginationEllipsisProps) {\n  const { size, ref, className, children, icon, ...rest } = props;\n\n  return (\n    <span\n      aria-hidden\n      className={paginationEllipsis({ size, class: className })}\n      {...rest}\n      ref={ref}\n      data-slot=\"pagination-ellipsis\"\n    >\n      {icon ?? <Dots />}\n\n      {children ?? <span className=\"sr-only\">More pages</span>}\n    </span>\n  );\n}\n\nexport default PaginationEllipsis;\n"
             },
             {
               "path": "src/components/starwind/pagination/PaginationItem.tsx",
@@ -1845,7 +1845,7 @@
             },
             {
               "path": "src/components/starwind/pagination/variants.ts",
-              "content": "import { tv } from \"tailwind-variants\";\n\nexport const pagination = tv({\n  base: \"mx-auto flex w-full justify-center\",\n});\n\nexport const paginationContent = tv({\n  base: \"flex flex-row items-center gap-1\",\n});\n\nexport const paginationEllipsis = tv({\n  base: \"flex items-center justify-center\",\n  variants: {\n    size: {\n      \"icon-sm\": \"size-9\",\n      icon: \"size-11\",\n      \"icon-lg\": \"size-12\",\n    },\n  },\n  defaultVariants: {\n    size: \"icon\",\n  },\n});\n"
+              "content": "import { tv } from \"tailwind-variants\";\n\nexport const pagination = tv({\n  base: \"mx-auto flex w-full justify-center\",\n});\n\nexport const paginationContent = tv({\n  base: \"flex flex-row items-center gap-1\",\n});\n\nexport const paginationEllipsis = tv({\n  base: \"flex items-center justify-center\",\n  variants: {\n    size: {\n      \"icon-sm\": \"size-9 [&_svg:not([class*='size-'])]:size-3.5\",\n      icon: \"size-11 [&_svg:not([class*='size-'])]:size-4.5\",\n      \"icon-lg\": \"size-12 [&_svg:not([class*='size-'])]:size-5\",\n    },\n  },\n  defaultVariants: {\n    size: \"icon\",\n  },\n});\n"
             }
           ],
           "componentDependencies": ["button"],

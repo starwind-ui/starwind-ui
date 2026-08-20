@@ -357,6 +357,11 @@ describe("generateLayeredDocsMetadata", () => {
       ).toMatchObject({ classification: "variant", defaultValue: '"icon"' });
       expect(
         pagination
+          ?.find((entry) => entry.exportName === "PaginationEllipsis")
+          ?.props.find((prop) => prop.name === "size"),
+      ).toMatchObject({ classification: "variant", defaultValue: '"icon"' });
+      expect(
+        pagination
           ?.find((entry) => entry.exportName === "PaginationPrevious")
           ?.props.find((prop) => prop.name === "size"),
       ).toMatchObject({ classification: "variant", defaultValue: '"md"' });

@@ -20,7 +20,7 @@ function PaginationEllipsis(props: PaginationEllipsisProps) {
       ref={ref}
       data-slot="pagination-ellipsis"
     >
-      {icon ?? <Dots className="size-4" />}
+      {icon ?? <Dots />}
 
       {children ?? <span className="sr-only">More pages</span>}
     </span>

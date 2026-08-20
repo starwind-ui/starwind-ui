@@ -224,6 +224,7 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(paginationEllipsis).toContain("paginationEllipsis({ size, class: className })");
     expect(paginationEllipsis).toContain("aria-hidden");
     expect(paginationEllipsis).toContain("<Dots");
+    expect(paginationEllipsis).not.toContain('<Dots className="size-4"');
     expect(paginationEllipsis).toContain('<span className="sr-only">More pages</span>');
     expect(paginationIndex).toContain("Previous: PaginationPrevious");
     expect(paginationIndex).toContain("Next: PaginationNext");
@@ -231,7 +232,13 @@ export function defineReactFamilyOutputTests(getTempRoot: GetTempRoot): void {
     expect(paginationVariants).toContain("flex flex-row items-center gap-1");
     expect(paginationVariants).not.toContain("export const paginationLink");
     expect(paginationVariants).not.toContain("group-data-[size=");
-    expect(paginationVariants).toContain('"icon-lg": "size-12"');
+    expect(paginationVariants).toContain(
+      `"icon-sm": "size-9 [&_svg:not([class*='size-'])]:size-3.5"`,
+    );
+    expect(paginationVariants).toContain(`icon: "size-11 [&_svg:not([class*='size-'])]:size-4.5"`);
+    expect(paginationVariants).toContain(
+      `"icon-lg": "size-12 [&_svg:not([class*='size-'])]:size-5"`,
+    );
   });
 
   it("generates Table styled React wrappers", async () => {
