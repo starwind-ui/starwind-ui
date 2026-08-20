@@ -5,22 +5,12 @@ import PaginationItem from "./PaginationItem";
 import PaginationLink from "./PaginationLink";
 import PaginationNext from "./PaginationNext";
 import PaginationPrevious from "./PaginationPrevious";
-import {
-  pagination,
-  paginationContent,
-  paginationEllipsis,
-  paginationLink,
-  paginationNext,
-  paginationPrevious,
-} from "./variants";
+import { pagination, paginationContent, paginationEllipsis } from "./variants";
 
 const PaginationVariants = {
   pagination,
   paginationContent,
   paginationEllipsis,
-  paginationLink,
-  paginationNext,
-  paginationPrevious,
 };
 
 const PaginationParts = {

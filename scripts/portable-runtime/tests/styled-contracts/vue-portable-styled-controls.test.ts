@@ -159,14 +159,7 @@ const CONTROL_CONTRACT_ORACLE = {
       PaginationNext: ["default", "icon"],
       PaginationPrevious: ["default", "icon"],
     },
-    variants: [
-      "pagination",
-      "paginationContent",
-      "paginationEllipsis",
-      "paginationLink",
-      "paginationNext",
-      "paginationPrevious",
-    ],
+    variants: ["pagination", "paginationContent", "paginationEllipsis"],
   },
   textarea: {
     components: ["Textarea"],

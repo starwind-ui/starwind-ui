@@ -238,6 +238,33 @@ describe("createFocusBoundary", () => {
     boundary.destroy();
   });
 
+  it("uses an owned focusout destination while activeElement is between targets", async () => {
+    const surface = document.createElement("div");
+    const current = button("current");
+    const destination = button("destination");
+    surface.append(current, destination);
+    document.body.append(surface);
+    const onFocusDeparture = vi.fn();
+    const boundary = createFocusBoundary({
+      containsTarget: (target) => surface.contains(target),
+      onFocusDeparture,
+      ownerDocument: document,
+      surfaces: [surface],
+    });
+
+    current.dispatchEvent(
+      new FocusEvent("focusout", {
+        bubbles: true,
+        relatedTarget: destination,
+      }),
+    );
+    await settleFocus();
+
+    expect(document.activeElement).toBe(document.body);
+    expect(onFocusDeparture).not.toHaveBeenCalled();
+    boundary.destroy();
+  });
+
   it("coalesces duplicate focusout observations into one settled departure", async () => {
     const outer = document.createElement("div");
     const inner = document.createElement("div");

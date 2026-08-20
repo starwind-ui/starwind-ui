@@ -5,22 +5,12 @@ import PaginationItem from "./PaginationItem.astro";
 import PaginationLink from "./PaginationLink.astro";
 import PaginationNext from "./PaginationNext.astro";
 import PaginationPrevious from "./PaginationPrevious.astro";
-import {
-  pagination,
-  paginationContent,
-  paginationEllipsis,
-  paginationLink,
-  paginationNext,
-  paginationPrevious,
-} from "./variants";
+import { pagination, paginationContent, paginationEllipsis } from "./variants";
 
 const PaginationVariants = {
   pagination,
   paginationContent,
   paginationEllipsis,
-  paginationLink,
-  paginationNext,
-  paginationPrevious,
 };
 
 const PaginationParts = {

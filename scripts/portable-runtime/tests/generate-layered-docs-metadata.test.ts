@@ -347,6 +347,25 @@ describe("generateLayeredDocsMetadata", () => {
       "tone",
       "variant",
     ]);
+    for (const framework of ["astro", "react"] as const) {
+      const pagination = byId.get("pagination")?.styledApi[framework].exports;
+
+      expect(
+        pagination
+          ?.find((entry) => entry.exportName === "PaginationLink")
+          ?.props.find((prop) => prop.name === "size"),
+      ).toMatchObject({ classification: "variant", defaultValue: '"icon"' });
+      expect(
+        pagination
+          ?.find((entry) => entry.exportName === "PaginationPrevious")
+          ?.props.find((prop) => prop.name === "size"),
+      ).toMatchObject({ classification: "variant", defaultValue: '"md"' });
+      expect(
+        pagination
+          ?.find((entry) => entry.exportName === "PaginationNext")
+          ?.props.find((prop) => prop.name === "size"),
+      ).toMatchObject({ classification: "variant", defaultValue: '"md"' });
+    }
     expect(byId.get("image")?.styledApi.astro.exports[0]?.inheritance).toContainEqual(
       expect.objectContaining({
         kind: "raw",

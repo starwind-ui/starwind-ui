@@ -1,6 +1,5 @@
 import type * as React from "react";
 import { Button } from "../button";
-import { paginationLink } from "./variants";
 
 export type PaginationLinkProps = Omit<
   React.ComponentProps<typeof Button>,
@@ -13,6 +12,7 @@ export type PaginationLinkProps = Omit<
 function PaginationLink(props: PaginationLinkProps) {
   const {
     isActive,
+    size = "icon",
     "data-slot": dataSlot = "pagination-link",
     ref,
     className,
@@ -24,8 +24,8 @@ function PaginationLink(props: PaginationLinkProps) {
     <Button
       aria-current={isActive ? "page" : undefined}
       variant={isActive ? "outline" : "ghost"}
-      size="md"
-      className={paginationLink({ class: className })}
+      size={size}
+      className={className}
       {...rest}
       as="a"
       ref={ref}

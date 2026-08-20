@@ -436,6 +436,17 @@ export const styledDocsAnnotations: Record<string, StyledDocsAnnotation> = {
     groupId: "navigation",
     docsPage: componentPage("pagination"),
     foundation: { type: "styled-only" },
+    styledApi: {
+      PaginationLink: {
+        props: { size: { include: true } },
+      },
+      PaginationPrevious: {
+        props: { size: { include: true } },
+      },
+      PaginationNext: {
+        props: { size: { include: true } },
+      },
+    },
   },
   popover: {
     groupId: "overlay-disclosure",
