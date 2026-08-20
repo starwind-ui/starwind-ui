@@ -14,6 +14,7 @@ import {
   validateStyledVersionPullRequest,
   versionStyledComponents,
   type StyledReleaseSnapshot,
+  type StyledVersionIntent,
 } from "../styled-component-release.js";
 
 const temporaryRoots: string[] = [];
@@ -32,6 +33,7 @@ function registryComponent(
   return {
     name,
     version,
+    sourceVersion: version,
     type: "component",
     dependencies: [],
     targets: {
@@ -57,11 +59,12 @@ function registryComponent(
 
 function snapshot(
   options: {
-    fragments?: Record<string, { components: Record<string, "major" | "minor" | "patch"> }>;
+    fragments?: StyledReleaseSnapshot["fragments"];
     manifest?: Record<string, string>;
     registryVersion?: string;
     registry?: RuntimeRegistry["components"];
-    starwindChangesets?: string[];
+    packageReleases?: StyledReleaseSnapshot["packageReleases"];
+    sourceVersions?: Record<string, string>;
   } = {},
 ): StyledReleaseSnapshot {
   const manifest = options.manifest ?? { accordion: "2.0.1", progress: "2.0.0" };
@@ -72,6 +75,7 @@ function snapshot(
       registryVersion,
       defaultComponentVersion: "1.0.0",
       components: manifest,
+      sourceVersions: options.sourceVersions ?? manifest,
     },
     registry: {
       $schema: "https://starwind.dev/registry-schema.v2.json",
@@ -81,19 +85,31 @@ function snapshot(
         options.registry ??
         Object.entries(manifest).map(([name, version]) => registryComponent(name, version)),
     },
-    starwindChangesets: options.starwindChangesets ?? [],
+    packageReleases: options.packageReleases ?? {},
   };
 }
 
 describe("styled component release intents", () => {
   it("parses a strict non-empty component bump map", () => {
+    const legacyIntent = {
+      components: { accordion: "patch" },
+    } satisfies StyledVersionIntent;
+    expect(legacyIntent).toEqual({ components: { accordion: "patch" } });
+
     expect(
       parseStyledVersionIntent(
         { components: { accordion: "patch", card: "minor" } },
         "example.json",
         new Set(["accordion", "card"]),
       ),
-    ).toEqual({ components: { accordion: "patch", card: "minor" } });
+    ).toEqual({ components: { accordion: "patch", card: "minor" }, impact: "source" });
+    expect(
+      parseStyledVersionIntent(
+        { impact: "behavior", components: { accordion: "patch" } },
+        "behavior.json",
+        new Set(["accordion"]),
+      ),
+    ).toEqual({ components: { accordion: "patch" }, impact: "behavior" });
 
     expect(() => parseStyledVersionIntent({ components: {} }, "empty.json", new Set())).toThrow(
       /at least one component/,
@@ -111,7 +127,7 @@ describe("styled component release intents", () => {
         "unknown.json",
         new Set(["accordion"]),
       ),
-    ).toThrow(/only a components object/);
+    ).toThrow(/only components and optional impact/);
     expect(() =>
       parseStyledVersionIntent(
         { components: { missing: "patch" } },
@@ -122,6 +138,13 @@ describe("styled component release intents", () => {
     expect(() =>
       applyStyledVersionIntents({ accordion: "beta-two" }, { accordion: "patch" }),
     ).toThrow(/invalid semver/i);
+    expect(() =>
+      parseStyledVersionIntent(
+        { impact: "files", components: { accordion: "patch" } },
+        "invalid-impact.json",
+        new Set(["accordion"]),
+      ),
+    ).toThrow(/impact must be source or behavior/i);
   });
 
   it("collapses repeated intents to one highest-severity bump", () => {
@@ -132,10 +155,22 @@ describe("styled component release intents", () => {
       "accordion.json": { components: { accordion: "major" } },
     });
 
-    expect(aggregated).toEqual({ accordion: "major", progress: "minor" });
+    expect(aggregated).toEqual({
+      accordion: { bump: "major", impact: "source" },
+      progress: { bump: "minor", impact: "source" },
+    });
     expect(
       applyStyledVersionIntents({ accordion: "2.0.1", progress: "2.0.0" }, aggregated),
     ).toEqual({ accordion: "3.0.0", progress: "2.1.0" });
+  });
+
+  it("lets source impact win independently from the highest bump", () => {
+    expect(
+      aggregateStyledVersionIntents({
+        "behavior.json": { impact: "behavior", components: { accordion: "major" } },
+        "source.json": { impact: "source", components: { accordion: "patch" } },
+      }),
+    ).toEqual({ accordion: { bump: "major", impact: "source" } });
   });
 
   it("rejects unsafe fragment filenames before changing the manifest", async () => {
@@ -159,6 +194,7 @@ describe("styled component release intents", () => {
     const before = registryComponent("accordion", "2.0.1");
     const releaseOnly = structuredClone(before);
     releaseOnly.version = "2.0.2";
+    releaseOnly.sourceVersion = "2.0.2";
     releaseOnly.targets!.astro!.packageRequirements[0].range = "^0.1.0-beta.3";
     expect(createStyledRegistryFingerprint(before)).toBe(
       createStyledRegistryFingerprint(releaseOnly),
@@ -170,6 +206,65 @@ describe("styled component release intents", () => {
     );
   });
 
+  it("accepts behavior intent only with Runtime backing and complete package release facts", () => {
+    const base = snapshot();
+    const packageReleases = {
+      "runtime-behavior.md": {
+        starwind: "patch" as const,
+        "@starwind-ui/runtime": "patch" as const,
+        "@starwind-ui/astro": "patch" as const,
+        "@starwind-ui/react": "patch" as const,
+      },
+    };
+    const head = snapshot({
+      fragments: {
+        "accordion-behavior.json": {
+          impact: "behavior",
+          components: { accordion: "patch" },
+        },
+      },
+      packageReleases,
+    });
+    expect(validateStyledVersionPullRequest({ base, head })).toMatchObject({ mode: "intent" });
+    expect(() =>
+      validateStyledVersionPullRequest({
+        base,
+        head: { ...head, packageReleases: { "runtime-behavior.md": { starwind: "patch" } } },
+      }),
+    ).toThrow(/requires new release intent.*runtime/i);
+    expect(() =>
+      validateStyledVersionPullRequest({
+        base,
+        head: {
+          ...head,
+          packageReleases: {
+            "runtime-behavior.md": {
+              starwind: "patch",
+              "@starwind-ui/runtime": "minor",
+              "@starwind-ui/astro": "patch",
+              "@starwind-ui/react": "patch",
+            },
+          },
+        },
+      }),
+    ).toThrow(/matching fixed-group release bumps/i);
+
+    const external = registryComponent("accordion", "2.0.1");
+    for (const target of Object.values(external.targets ?? {})) {
+      target.packageRequirements = [{ name: "external-package", range: "^1.0.0" }];
+    }
+    expect(() =>
+      validateStyledVersionPullRequest({
+        base: snapshot({ registry: [external, registryComponent("progress", "2.0.0")] }),
+        head: snapshot({
+          fragments: head.fragments,
+          packageReleases,
+          registry: [external, registryComponent("progress", "2.0.0")],
+        }),
+      }),
+    ).toThrow(/Runtime-backed component/i);
+  });
+
   it("requires intent and a starwind changeset for normal feature PR source changes", () => {
     const base = snapshot();
     const head = snapshot({
@@ -178,7 +273,7 @@ describe("styled component release intents", () => {
         registryComponent("accordion", "2.0.1", "changed accordion"),
         registryComponent("progress", "2.0.0"),
       ],
-      starwindChangesets: ["accordion-fix.md"],
+      packageReleases: { "accordion-fix.md": { starwind: "patch" } },
     });
 
     expect(validateStyledVersionPullRequest({ base, head })).toMatchObject({
@@ -194,7 +289,7 @@ describe("styled component release intents", () => {
     expect(() =>
       validateStyledVersionPullRequest({
         base,
-        head: { ...head, starwindChangesets: [] },
+        head: { ...head, packageReleases: {} },
       }),
     ).toThrow(/starwind package changeset/i);
     expect(() =>
@@ -202,7 +297,7 @@ describe("styled component release intents", () => {
         base,
         head: snapshot({
           fragments: { "progress-fix.json": { components: { progress: "patch" } } },
-          starwindChangesets: ["progress-fix.md"],
+          packageReleases: { "progress-fix.md": { starwind: "patch" } },
         }),
       }),
     ).toThrow(/no installable source change.*progress/i);
@@ -242,7 +337,7 @@ describe("styled component release intents", () => {
             registryComponent("accordion", "2.0.1", "changed accordion"),
             registryComponent("progress", "2.0.0", "changed progress"),
           ],
-          starwindChangesets: ["generated-change.md"],
+          packageReleases: { "generated-change.md": { starwind: "patch" } },
         }),
       }),
     ).toThrow(/missing styled version intent.*progress/i);
@@ -253,7 +348,7 @@ describe("styled component release intents", () => {
     const head = snapshot({
       manifest: { accordion: "2.0.1", progress: "2.0.0", "new-component": "0.1.0" },
       registry: [...base.registry.components, registryComponent("new-component", "0.1.0")],
-      starwindChangesets: ["new-component.md"],
+      packageReleases: { "new-component.md": { starwind: "minor" } },
     });
 
     expect(validateStyledVersionPullRequest({ base, head })).toMatchObject({
@@ -276,7 +371,7 @@ describe("styled component release intents", () => {
         registryComponent("color-picker", "1.2.0", "changed color picker"),
         registryComponent("progress", "2.0.0"),
       ],
-      starwindChangesets: ["color-picker-area.md"],
+      packageReleases: { "color-picker-area.md": { starwind: "patch" } },
     });
 
     expect(validateStyledVersionPullRequest({ base, head: migrated })).toMatchObject({
@@ -295,7 +390,7 @@ describe("styled component release intents", () => {
             registryComponent("color-picker", "1.2.0"),
             registryComponent("progress", "2.0.0"),
           ],
-          starwindChangesets: migrated.starwindChangesets,
+          packageReleases: migrated.packageReleases,
         }),
       }),
     ).toThrow(/requires an installable source change/i);
@@ -311,7 +406,7 @@ describe("styled component release intents", () => {
             registryComponent("color-picker", "0.0.9", "changed color picker"),
             registryComponent("progress", "2.0.0"),
           ],
-          starwindChangesets: migrated.starwindChangesets,
+          packageReleases: migrated.packageReleases,
         }),
       }),
     ).toThrow(/must advance/i);
@@ -415,6 +510,7 @@ describe("styled component release intents", () => {
     });
     expect(JSON.parse(await readFile(manifestPath, "utf8"))).toMatchObject({
       components: { accordion: "2.0.1", progress: "2.0.1" },
+      sourceVersions: { accordion: "2.0.1", progress: "2.0.1" },
     });
     await expect(
       readFile(path.join(root, ".styled-component-intents/progress-a.json"), "utf8"),
@@ -422,6 +518,25 @@ describe("styled component release intents", () => {
       code: "ENOENT",
     });
     expect(await versionStyledComponents({ repoRoot: root })).toMatchObject({ versions: {} });
+  });
+
+  it("preserves sourceVersion when materializing behavior impact", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "styled-component-behavior-"));
+    temporaryRoots.push(root);
+    const fragmentRoot = path.join(root, ".changeset/styled-components");
+    const manifestPath = path.join(root, "packages/cli/registry/styled-component-versions.json");
+    await mkdir(fragmentRoot, { recursive: true });
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    await writeFile(manifestPath, `${JSON.stringify(snapshot().manifest, null, 2)}\n`);
+    await writeFile(
+      path.join(fragmentRoot, "accordion.json"),
+      `${JSON.stringify({ impact: "behavior", components: { accordion: "patch" } }, null, 2)}\n`,
+    );
+    await versionStyledComponents({ repoRoot: root });
+    expect(JSON.parse(await readFile(manifestPath, "utf8"))).toMatchObject({
+      components: { accordion: "2.0.2" },
+      sourceVersions: { accordion: "2.0.1" },
+    });
   });
 
   it("materializes component versions into generated Astro and React registry artifacts", async () => {

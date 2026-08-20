@@ -82,6 +82,7 @@ const defaultRegistryFixture = {
     {
       name: "button",
       version: "2.1.0",
+      sourceVersion: "2.1.0",
       dependencies: [],
       type: "component" as const,
       targets: {
@@ -110,6 +111,7 @@ const defaultRegistryFixture = {
     {
       name: "card",
       version: "2.1.0",
+      sourceVersion: "2.1.0",
       dependencies: [],
       type: "component" as const,
       targets: {
@@ -148,6 +150,7 @@ const customRegistryFixture = {
     {
       name: "button",
       version: "3.0.0",
+      sourceVersion: "3.0.0",
       dependencies: [],
       type: "component" as const,
       targets: {
@@ -166,6 +169,7 @@ const customRegistryFixture = {
     {
       name: "custom-card",
       version: "3.0.0",
+      sourceVersion: "3.0.0",
       dependencies: [],
       type: "component" as const,
       targets: {

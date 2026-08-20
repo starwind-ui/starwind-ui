@@ -1,4 +1,5 @@
 import { highlighter } from "./highlighter.js";
+import type { RuntimeUpdateDelivery } from "./runtime-component.js";
 
 export type UpdatePreviewFile = {
   changed: boolean;
@@ -25,7 +26,12 @@ export type UpdatePreviewPlan = {
   packagesToInstall: readonly string[];
   skipped: readonly UpdatePreviewStatus[];
   updates: readonly {
+    component: {
+      name: string;
+    };
+    delivery: RuntimeUpdateDelivery;
     files: readonly UpdatePreviewFile[];
+    framework?: string;
   }[];
 };
 
@@ -67,6 +73,17 @@ export function getPreviewMode(options?: UpdatePreviewOptions): UpdatePreviewMod
 
 export function formatUpdatePreview(plan: UpdatePreviewPlan, mode: UpdatePreviewMode): string {
   const lines = [highlighter.underline("Update Preview")];
+
+  lines.push("");
+  lines.push("Update delivery:");
+  lines.push(
+    ...formatList(
+      plan.updates.map((item) => {
+        const framework = item.framework ? ` [${item.framework}]` : "";
+        return `${item.component.name}${framework}: ${item.delivery}`;
+      }),
+    ),
+  );
 
   lines.push("");
   lines.push("Package requirements:");

@@ -65,6 +65,16 @@ npx starwind@latest remove button
 
 Use `--dry-run`, `--diff`, and `--view` to inspect updates before changing files.
 
+An update can have source delivery or behavior delivery. Source delivery writes the latest canonical
+component files. Behavior delivery installs required packages and records the latest component
+version without writing component files, so local component changes remain in place. The CLI stores
+only the delivered `version` in `starwind.config.json`; it does not need a `sourceVersion` field.
+
+Old or third-party registry entries that omit `sourceVersion` use their `version` as the source
+version. They retain the established source-update behavior. A behavior update that needs packages
+completes after package installation. If required package installation is declined, the CLI keeps the
+recorded component version unchanged.
+
 ### Find components and documentation
 
 ```bash

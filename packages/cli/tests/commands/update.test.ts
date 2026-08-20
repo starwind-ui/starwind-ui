@@ -114,6 +114,7 @@ describe("update command", () => {
             type: "component",
           },
           componentIndex: 0,
+          delivery: "source",
           files: [
             {
               path: "src/components/starwind/button/index.tsx",
@@ -159,6 +160,7 @@ describe("update command", () => {
     mockUpdateRuntimeComponents.mockResolvedValue({
       updated: [
         {
+          delivery: "source",
           name: "button",
           status: "updated",
           oldVersion: "1.0.0",
@@ -184,6 +186,82 @@ describe("update command", () => {
         skipPrompts: true,
       }),
     );
+  });
+
+  it("classifies source and behavior deliveries in a mixed update summary", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        components: [
+          { name: "button", version: "1.0.0", framework: "react" },
+          { name: "card", version: "1.0.0", framework: "react" },
+        ],
+      }),
+    });
+    mockUpdateRuntimeComponents.mockResolvedValue({
+      updated: [
+        {
+          delivery: "source",
+          name: "button",
+          status: "updated",
+          oldVersion: "1.0.0",
+          newVersion: "2.0.0",
+        },
+        {
+          delivery: "behavior",
+          name: "card",
+          status: "updated",
+          oldVersion: "1.0.0",
+          newVersion: "2.0.0",
+        },
+      ],
+      skipped: [],
+      failed: [],
+    });
+
+    await update(["button", "card"], { yes: true });
+
+    const summary = mockLog.success.mock.calls[0]![0] as string;
+    expect(summary).toContain("button (1.0.0 → 2.0.0) [source]");
+    expect(summary).toContain("card (1.0.0 → 2.0.0) [behavior]");
+  });
+
+  it("classifies declined behavior delivery while leaving ordinary skips unlabeled", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        components: [
+          { name: "button", version: "1.0.0", framework: "react" },
+          { name: "card", version: "1.0.0", framework: "react" },
+        ],
+      }),
+    });
+    mockUpdateRuntimeComponents.mockResolvedValue({
+      updated: [],
+      skipped: [
+        {
+          delivery: "behavior",
+          name: "button",
+          status: "skipped",
+          oldVersion: "1.0.0",
+          newVersion: "2.0.0",
+        },
+        {
+          name: "card",
+          status: "skipped",
+          oldVersion: "1.0.0",
+          newVersion: "1.0.0",
+        },
+      ],
+      failed: [],
+    });
+
+    await update(["button", "card"], { yes: true });
+
+    const summary = mockLog.info.mock.calls[0]![0] as string;
+    expect(summary).toContain("button (1.0.0) [behavior]");
+    expect(summary).toContain("card (1.0.0)");
+    expect(summary).not.toContain("card (1.0.0) [");
   });
 
   it("recommends migrate for legacy configs instead of mixing Runtime updates", async () => {
@@ -234,6 +312,133 @@ describe("update command", () => {
     expect(output).toContain("src/components/starwind/button/index.tsx");
   });
 
+  it("reports behavior delivery with package effects and no file blocks in every preview mode", async () => {
+    mockPlanRuntimeComponentUpdates.mockResolvedValue({
+      failed: [],
+      packageRequirements: [{ name: "@starwind-ui/react", range: "^2.0.0" }],
+      packagesToInstall: ["@starwind-ui/react@^2.0.0"],
+      skipped: [],
+      updates: [
+        {
+          component: {
+            name: "button",
+            version: "2.0.0",
+            dependencies: [],
+            type: "component",
+          },
+          componentIndex: 0,
+          delivery: "behavior",
+          files: [],
+          framework: "react",
+          newVersion: "2.0.0",
+          oldVersion: "1.0.0",
+          packageRequirements: [{ name: "@starwind-ui/react", range: "^2.0.0" }],
+          packagesToInstall: ["@starwind-ui/react@^2.0.0"],
+          registryReference: { componentRegistry: "default" },
+          target: {
+            files: [],
+            componentDependencies: [],
+            packageRequirements: [{ name: "@starwind-ui/react", range: "^2.0.0" }],
+          },
+        },
+      ],
+    });
+
+    await update(["button"], { dryRun: true });
+
+    const output = getConsoleOutput(consoleLogSpy);
+    expect(output).toContain("Update delivery:");
+    expect(output).toContain("button [react]: behavior");
+    expect(output).toContain("@starwind-ui/react@^2.0.0");
+    expect(output).toContain("File changes:\n  - none");
+
+    consoleLogSpy.mockClear();
+    await update(["button"], { diff: true });
+    const diffOutput = getConsoleOutput(consoleLogSpy);
+    expect(diffOutput).toContain("button [react]: behavior");
+    expect(diffOutput).toContain("File changes:\n  - none");
+    expect(diffOutput).not.toContain("diff --");
+
+    consoleLogSpy.mockClear();
+    await update(["button"], { view: true });
+    const viewOutput = getConsoleOutput(consoleLogSpy);
+    expect(viewOutput).toContain("button [react]: behavior");
+    expect(viewOutput).toContain("File changes:\n  - none");
+    expect(viewOutput).not.toContain("### ");
+  });
+
+  it("reports each delivery mode in a mixed update preview", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        components: [
+          { name: "button", version: "1.0.0", framework: "react" },
+          { name: "card", version: "1.0.0", framework: "react" },
+        ],
+      }),
+    });
+    mockPlanRuntimeComponentUpdates.mockResolvedValueOnce({
+      failed: [],
+      packageRequirements: [],
+      packagesToInstall: [],
+      skipped: [],
+      updates: [
+        {
+          component: {
+            name: "button",
+            version: "2.0.0",
+            dependencies: [],
+            type: "component",
+          },
+          componentIndex: 0,
+          delivery: "source",
+          files: [
+            {
+              path: "src/components/starwind/button/index.tsx",
+              destination: "C:/project/src/components/starwind/button/index.tsx",
+              currentContent: "old button\n",
+              content: "new button\n",
+              exists: true,
+              changed: true,
+            },
+          ],
+          framework: "react",
+          newVersion: "2.0.0",
+          oldVersion: "1.0.0",
+          packageRequirements: [],
+          packagesToInstall: [],
+          registryReference: { componentRegistry: "default" },
+          target: { files: [], componentDependencies: [], packageRequirements: [] },
+        },
+        {
+          component: {
+            name: "card",
+            version: "2.0.0",
+            dependencies: [],
+            type: "component",
+          },
+          componentIndex: 1,
+          delivery: "behavior",
+          files: [],
+          framework: "react",
+          newVersion: "2.0.0",
+          oldVersion: "1.0.0",
+          packageRequirements: [],
+          packagesToInstall: [],
+          registryReference: { componentRegistry: "default" },
+          target: { files: [], componentDependencies: [], packageRequirements: [] },
+        },
+      ],
+    });
+
+    await update(["button", "card"], { dryRun: true });
+
+    const output = getConsoleOutput(consoleLogSpy);
+    expect(output).toContain("button [react]: source");
+    expect(output).toContain("card [react]: behavior");
+    expect(output).toContain("src/components/starwind/button/index.tsx");
+  });
+
   it("updates all installed components without passing a registry override by default", async () => {
     mockGetConfigState.mockResolvedValue({
       status: "current",
@@ -257,6 +462,7 @@ describe("update command", () => {
     mockUpdateRuntimeComponents.mockResolvedValue({
       updated: [
         {
+          delivery: "source",
           name: "button",
           status: "updated",
           oldVersion: "1.0.0",
@@ -309,6 +515,7 @@ describe("update command", () => {
     mockUpdateRuntimeComponents.mockResolvedValue({
       updated: [
         {
+          delivery: "source",
           name: "button",
           status: "updated",
           oldVersion: "1.0.0",
@@ -355,6 +562,7 @@ describe("update command", () => {
     mockUpdateRuntimeComponents.mockResolvedValue({
       updated: [
         {
+          delivery: "source",
           name: "button",
           framework: "react",
           status: "updated",
@@ -456,6 +664,7 @@ describe("update command", () => {
     mockUpdateRuntimeComponents.mockResolvedValue({
       updated: [
         {
+          delivery: "source",
           name: "button",
           framework: "astro",
           status: "updated",
@@ -463,6 +672,7 @@ describe("update command", () => {
           newVersion: "2.0.0",
         },
         {
+          delivery: "source",
           name: "button",
           framework: "react",
           status: "updated",
@@ -489,6 +699,7 @@ describe("update command", () => {
     mockUpdateRuntimeComponents.mockResolvedValue({
       updated: [
         {
+          delivery: "source",
           name: "button",
           framework: "react",
           status: "updated",
@@ -517,8 +728,20 @@ describe("update command", () => {
     });
     mockUpdateRuntimeComponents.mockResolvedValue({
       updated: [
-        { name: "zebra", status: "updated", oldVersion: "1.0.0", newVersion: "2.0.0" },
-        { name: "Alpha", status: "updated", oldVersion: "1.0.0", newVersion: "2.0.0" },
+        {
+          delivery: "source",
+          name: "zebra",
+          status: "updated",
+          oldVersion: "1.0.0",
+          newVersion: "2.0.0",
+        },
+        {
+          delivery: "source",
+          name: "Alpha",
+          status: "updated",
+          oldVersion: "1.0.0",
+          newVersion: "2.0.0",
+        },
       ],
       skipped: [],
       failed: [],
@@ -638,6 +861,7 @@ describe("update command", () => {
             type: "component" as const,
           },
           componentIndex: 0,
+          delivery: "source" as const,
           files: [
             {
               path: "src/components/starwind/button/index.tsx",
@@ -720,6 +944,7 @@ describe("update command", () => {
     mockUpdateRuntimeComponents.mockResolvedValue({
       updated: [
         {
+          delivery: "source",
           name: "button",
           status: "updated",
           oldVersion: "1.0.0",

@@ -109,7 +109,15 @@ describe("primitives command", () => {
       failed: [],
     });
     mockUpdatePrimitiveComponents.mockResolvedValue({
-      updated: [{ name: "button", status: "updated", oldVersion: "0.1.0", newVersion: "0.2.0" }],
+      updated: [
+        {
+          delivery: "source",
+          name: "button",
+          status: "updated",
+          oldVersion: "0.1.0",
+          newVersion: "0.2.0",
+        },
+      ],
       skipped: [],
       failed: [],
     });
@@ -127,6 +135,7 @@ describe("primitives command", () => {
             type: "component",
           },
           componentIndex: 0,
+          delivery: "source",
           files: [
             {
               path: "src/components/starwind-primitives/button/ButtonRoot.astro",
@@ -532,6 +541,45 @@ describe("primitives command", () => {
     );
   });
 
+  it("classifies mixed Primitive deliveries and uses generic success copy", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        primitives: [
+          { name: "button", version: "0.1.0", framework: "astro", source: "bundled" },
+          { name: "card", version: "0.1.0", framework: "astro", source: "bundled" },
+        ],
+      }),
+    });
+    mockUpdatePrimitiveComponents.mockResolvedValue({
+      updated: [
+        {
+          delivery: "source",
+          name: "button",
+          status: "updated",
+          oldVersion: "0.1.0",
+          newVersion: "0.2.0",
+        },
+        {
+          delivery: "behavior",
+          name: "card",
+          status: "updated",
+          oldVersion: "0.1.0",
+          newVersion: "0.2.0",
+        },
+      ],
+      skipped: [],
+      failed: [],
+    });
+
+    await primitivesUpdate(["button", "card"], { yes: true });
+
+    const summary = mockLog.success.mock.calls[0]![0] as string;
+    expect(summary).toContain("button (0.1.0 -> 0.2.0) [source]");
+    expect(summary).toContain("card (0.1.0 -> 0.2.0) [behavior]");
+    expect(mockOutro).toHaveBeenCalledWith("Primitives updated successfully");
+  });
+
   it("sorts shuffled primitive update summaries without changing updater order", async () => {
     mockGetConfigState.mockResolvedValue({
       status: "current",
@@ -544,8 +592,20 @@ describe("primitives command", () => {
     });
     mockUpdatePrimitiveComponents.mockResolvedValue({
       updated: [
-        { name: "zebra", status: "updated", oldVersion: "0.1.0", newVersion: "0.2.0" },
-        { name: "Alpha", status: "updated", oldVersion: "0.1.0", newVersion: "0.2.0" },
+        {
+          delivery: "source",
+          name: "zebra",
+          status: "updated",
+          oldVersion: "0.1.0",
+          newVersion: "0.2.0",
+        },
+        {
+          delivery: "source",
+          name: "Alpha",
+          status: "updated",
+          oldVersion: "0.1.0",
+          newVersion: "0.2.0",
+        },
       ],
       skipped: [],
       failed: [],
@@ -709,6 +769,7 @@ describe("primitives command", () => {
     mockUpdatePrimitiveComponents.mockResolvedValue({
       updated: [
         {
+          delivery: "source",
           name: "button",
           status: "updated",
           oldVersion: "0.1.0",
@@ -744,25 +805,47 @@ describe("primitives command", () => {
     expect(mockExit).toHaveBeenCalledWith(1);
   });
 
-  it("reports already-current primitive updates as skipped", async () => {
+  it("classifies declined Primitive delivery while leaving ordinary skips unlabeled", async () => {
     mockGetConfigState.mockResolvedValue({
       status: "current",
       config: runtimeConfig({
-        primitives: [{ name: "button", version: "0.1.0", framework: "astro", source: "bundled" }],
+        primitives: [
+          { name: "button", version: "0.1.0", framework: "astro", source: "bundled" },
+          { name: "card", version: "0.1.0", framework: "astro", source: "bundled" },
+        ],
       }),
     });
     mockUpdatePrimitiveComponents.mockResolvedValue({
       updated: [],
-      skipped: [{ name: "button", status: "skipped", oldVersion: "0.1.0", newVersion: "0.1.0" }],
+      skipped: [
+        {
+          delivery: "behavior",
+          name: "button",
+          status: "skipped",
+          oldVersion: "0.1.0",
+          newVersion: "0.2.0",
+        },
+        {
+          name: "card",
+          status: "skipped",
+          oldVersion: "0.1.0",
+          newVersion: "0.1.0",
+        },
+      ],
       failed: [],
     });
 
-    await primitivesUpdate(["button"], { yes: true });
+    await primitivesUpdate(["button", "card"], { yes: true });
 
     expect(mockLog.info).toHaveBeenCalledWith(
       expect.stringContaining("Primitives already up to date or skipped:"),
     );
-    expect(mockLog.info).toHaveBeenCalledWith(expect.stringContaining("button (0.1.0 -> 0.1.0)"));
+    const summary = mockLog.info.mock.calls.find(([message]) =>
+      String(message).includes("Primitives already up to date or skipped:"),
+    )?.[0] as string;
+    expect(summary).toContain("button (0.1.0 -> 0.2.0) [behavior]");
+    expect(summary).toContain("card (0.1.0 -> 0.1.0)");
+    expect(summary).not.toContain("card (0.1.0 -> 0.1.0) [");
   });
 
   it("passes --yes through so package update prompts are skipped by the primitive updater", async () => {
@@ -919,6 +1002,64 @@ describe("primitives command", () => {
     expect(output).toContain("@starwind-ui/runtime@^1.0.0");
     expect(output).toContain("File changes:");
     expect(output).toContain("src/components/starwind-primitives/button/ButtonRoot.astro");
+  });
+
+  it("reports Primitive behavior delivery without file blocks in every preview mode", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        primitives: [{ name: "button", version: "0.1.0", framework: "astro", source: "bundled" }],
+      }),
+    });
+    mockPlanPrimitiveComponentUpdates.mockResolvedValue({
+      failed: [],
+      packageRequirements: [{ name: "@starwind-ui/runtime", range: "^2.0.0" }],
+      packagesToInstall: ["@starwind-ui/runtime@^2.0.0"],
+      skipped: [],
+      updates: [
+        {
+          component: {
+            name: "button",
+            version: "0.2.0",
+            dependencies: [],
+            type: "component",
+          },
+          componentIndex: 0,
+          delivery: "behavior",
+          files: [],
+          framework: "astro",
+          newVersion: "0.2.0",
+          oldVersion: "0.1.0",
+          packageRequirements: [{ name: "@starwind-ui/runtime", range: "^2.0.0" }],
+          packagesToInstall: ["@starwind-ui/runtime@^2.0.0"],
+          target: {
+            files: [],
+            componentDependencies: [],
+            packageRequirements: [{ name: "@starwind-ui/runtime", range: "^2.0.0" }],
+          },
+        },
+      ],
+    });
+
+    await primitivesUpdate(["button"], { dryRun: true });
+    const output = getConsoleOutput(consoleLogSpy);
+    expect(output).toContain("button [astro]: behavior");
+    expect(output).toContain("@starwind-ui/runtime@^2.0.0");
+    expect(output).toContain("File changes:\n  - none");
+
+    consoleLogSpy.mockClear();
+    await primitivesUpdate(["button"], { diff: true });
+    const diffOutput = getConsoleOutput(consoleLogSpy);
+    expect(diffOutput).toContain("button [astro]: behavior");
+    expect(diffOutput).toContain("File changes:\n  - none");
+    expect(diffOutput).not.toContain("diff --");
+
+    consoleLogSpy.mockClear();
+    await primitivesUpdate(["button"], { view: true });
+    const viewOutput = getConsoleOutput(consoleLogSpy);
+    expect(viewOutput).toContain("button [astro]: behavior");
+    expect(viewOutput).toContain("File changes:\n  - none");
+    expect(viewOutput).not.toContain("### ");
   });
 
   it("does not bootstrap missing config while previewing primitive updates", async () => {

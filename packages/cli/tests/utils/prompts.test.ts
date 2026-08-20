@@ -18,8 +18,20 @@ describe("prompts", () => {
   describe("selectComponents", () => {
     it("returns selected components from the default Runtime registry", async () => {
       const mockComponents = [
-        { name: "button", version: "2.1.0", dependencies: [], type: "component" as const },
-        { name: "input", version: "1.0.0", dependencies: [], type: "component" as const },
+        {
+          name: "button",
+          version: "2.1.0",
+          sourceVersion: "2.1.0",
+          dependencies: [],
+          type: "component" as const,
+        },
+        {
+          name: "input",
+          version: "1.0.0",
+          sourceVersion: "1.0.0",
+          dependencies: [],
+          type: "component" as const,
+        },
       ];
 
       mockGetAllComponents.mockResolvedValue(mockComponents);
@@ -76,7 +88,13 @@ describe("prompts", () => {
 
     it("returns an empty array if user cancels", async () => {
       mockGetAllComponents.mockResolvedValue([
-        { name: "button", version: "2.1.0", dependencies: [], type: "component" as const },
+        {
+          name: "button",
+          version: "2.1.0",
+          sourceVersion: "2.1.0",
+          dependencies: [],
+          type: "component" as const,
+        },
       ]);
       mockMultiselect.mockResolvedValue(Symbol("cancel"));
 

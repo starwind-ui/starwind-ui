@@ -29,6 +29,7 @@ import {
 } from "./project-path.js";
 import type { Component, RegistryPackageRequirement, RegistryTarget } from "./registry.js";
 import type {
+  RuntimeUpdateDelivery,
   RuntimeUpdatePlan,
   RuntimeUpdatePlanFile,
   RuntimeUpdatePlanItem,
@@ -59,6 +60,7 @@ export type PrimitiveVendoringArtifact<TFramework extends CliFrameworkTarget = S
     files: PrimitiveVendoringFile[];
     framework: TFramework;
     packageRequirements: RegistryPackageRequirement[];
+    sourceVersion?: string;
     version: string;
   };
 
@@ -88,6 +90,7 @@ export type PrimitiveInstallSummary = {
 };
 
 type PrimitiveUpdateStatus = {
+  delivery?: RuntimeUpdateDelivery;
   error?: string;
   name: string;
   newVersion?: string;
@@ -95,10 +98,15 @@ type PrimitiveUpdateStatus = {
   status: "updated" | "skipped" | "failed";
 };
 
+export type PrimitiveUpdatedStatus = Omit<PrimitiveUpdateStatus, "delivery" | "status"> & {
+  delivery: RuntimeUpdateDelivery;
+  status: "updated";
+};
+
 export type PrimitiveUpdateSummary = {
   failed: PrimitiveUpdateStatus[];
   skipped: PrimitiveUpdateStatus[];
-  updated: PrimitiveUpdateStatus[];
+  updated: PrimitiveUpdatedStatus[];
 };
 
 export type PrimitiveUpdatePlan<TFramework extends CliFrameworkTarget = StarwindFramework> = Omit<
@@ -377,32 +385,25 @@ export async function planPrimitiveComponentUpdates<TFramework extends CliFramew
     }
 
     try {
-      const preparedFiles = await resolvePreparedPrimitiveFiles(
-        preparePrimitiveFiles(
-          options.config,
-          artifact.files,
-          framework,
-          options.primitiveDir,
-          targetPolicy,
-        ),
-      );
-      const files = await Promise.all(
-        preparedFiles.map(async (file): Promise<RuntimeUpdatePlanFile> => {
-          const exists = await fs.pathExists(file.destination);
-          const currentContent = exists ? await fs.readFile(file.destination, "utf-8") : "";
-
-          return {
-            ...file,
-            currentContent,
-            exists,
-            changed: currentContent !== file.content,
-          };
-        }),
-      );
+      const sourceVersion = artifact.sourceVersion ?? artifact.version;
+      const delivery: RuntimeUpdateDelivery = semver.lt(currentPrimitive.version, sourceVersion)
+        ? "source"
+        : "behavior";
+      const files =
+        delivery === "source"
+          ? await resolvePrimitiveUpdateFiles(
+              options.config,
+              artifact.files,
+              framework,
+              options.primitiveDir,
+              targetPolicy,
+            )
+          : [];
 
       plan.updates.push({
         component: toRegistryComponent(artifact),
         componentIndex: currentPrimitiveIndex,
+        delivery,
         files,
         framework,
         newVersion: artifact.version,
@@ -477,6 +478,7 @@ export async function updatePrimitiveComponents<TFramework extends CliFrameworkT
   for (const item of plan.updates) {
     if (skipPackageDependentUpdates && item.packagesToInstall.length > 0) {
       summary.skipped.push({
+        delivery: item.delivery,
         name: item.component.name,
         status: "skipped",
         oldVersion: item.oldVersion,
@@ -485,7 +487,9 @@ export async function updatePrimitiveComponents<TFramework extends CliFrameworkT
       continue;
     }
 
-    await writePreparedPrimitiveFiles(item.files);
+    if (item.delivery === "source") {
+      await writePreparedPrimitiveFiles(item.files);
+    }
 
     const currentIndex = updatedPrimitives.findIndex(
       (primitive) =>
@@ -509,6 +513,7 @@ export async function updatePrimitiveComponents<TFramework extends CliFrameworkT
     }
 
     summary.updated.push({
+      delivery: item.delivery,
       name: item.component.name,
       status: "updated",
       oldVersion: item.oldVersion,
@@ -703,6 +708,32 @@ async function resolvePreparedPrimitiveFiles(
   );
 }
 
+async function resolvePrimitiveUpdateFiles<TFramework extends CliFrameworkTarget>(
+  config: StarwindConfigFor<TFramework>,
+  files: PrimitiveVendoringFile[],
+  framework: TFramework,
+  primitiveDir: string | undefined,
+  targetPolicy: FrameworkTargetPolicy<TFramework>,
+): Promise<RuntimeUpdatePlanFile[]> {
+  const preparedFiles = await resolvePreparedPrimitiveFiles(
+    preparePrimitiveFiles(config, files, framework, primitiveDir, targetPolicy),
+  );
+
+  return Promise.all(
+    preparedFiles.map(async (file): Promise<RuntimeUpdatePlanFile> => {
+      const exists = await fs.pathExists(file.destination);
+      const currentContent = exists ? await fs.readFile(file.destination, "utf-8") : "";
+
+      return {
+        ...file,
+        currentContent,
+        exists,
+        changed: currentContent !== file.content,
+      };
+    }),
+  );
+}
+
 async function finalizePrimitiveUpdatePackagePlan<TFramework extends CliFrameworkTarget>(
   plan: PrimitiveUpdatePlan<TFramework>,
 ): Promise<void> {
@@ -755,6 +786,7 @@ function toRegistryComponent(artifact: PrimitiveVendoringArtifact<CliFrameworkTa
   return {
     name: artifact.component,
     version: artifact.version,
+    sourceVersion: artifact.sourceVersion ?? artifact.version,
     dependencies: [],
     type: "component",
   };
@@ -895,7 +927,7 @@ function normalizePrimitiveArtifactIntegrityDocument<TFramework extends CliFrame
 ) {
   return {
     ...artifactSet,
-    primitives: artifactSet.primitives.map((artifact) => ({
+    primitives: artifactSet.primitives.map(({ sourceVersion: _sourceVersion, ...artifact }) => ({
       ...artifact,
       packageRequirements: normalizeIntegrityPackageRequirements(artifact.packageRequirements),
       version: "<release-managed>",

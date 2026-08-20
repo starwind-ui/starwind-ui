@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import * as clackPrompts from "@clack/prompts";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import {
   buildRuntimeRegistry,
@@ -21,7 +21,7 @@ import {
   PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
 } from "../../src/utils/framework-target-policy.js";
 import * as packageManager from "../../src/utils/package-manager.js";
-import type { StarwindRegistry, StarwindRegistryFor } from "../../src/utils/registry.js";
+import type { NormalizedStarwindRegistry, StarwindRegistryFor } from "../../src/utils/registry.js";
 import * as registry from "../../src/utils/registry.js";
 import {
   installRuntimeComponents,
@@ -77,13 +77,14 @@ const runtimeConfig: StarwindConfig = {
   components: [],
 };
 
-const registryFixture: StarwindRegistry = {
+const registryFixture: NormalizedStarwindRegistry = {
   $schema: "https://starwind.dev/registry-schema.v2.json",
   version: "0.1.0",
   components: [
     {
       name: "button",
       version: "2.0.0",
+      sourceVersion: "2.0.0",
       type: "component",
       dependencies: [],
       targets: {
@@ -135,6 +136,7 @@ function createRegistryComponent(name: string, componentDependencies: string[] =
   return {
     name,
     version: "1.0.0",
+    sourceVersion: "1.0.0",
     type: "component" as const,
     dependencies: [],
     targets: {
@@ -273,6 +275,7 @@ describe.sequential("runtime component installs", () => {
         {
           name: "dialog",
           version: "2.0.0",
+          sourceVersion: "2.0.0",
           type: "component",
           dependencies: [],
           targets: {
@@ -622,6 +625,7 @@ describe.sequential("runtime component installs", () => {
         {
           name: "card",
           version: "3.0.0",
+          sourceVersion: "3.0.0",
           type: "component",
           dependencies: [],
           targets: {
@@ -896,6 +900,7 @@ describe.sequential("runtime component installs", () => {
         {
           name: "separator",
           version: "1.0.0",
+          sourceVersion: "1.0.0",
           type: "component",
           dependencies: [],
           targets: {
@@ -1032,6 +1037,7 @@ describe.sequential("runtime component installs", () => {
         {
           name: "separator",
           version: "1.0.0",
+          sourceVersion: "1.0.0",
           type: "component",
           dependencies: [],
           targets: {
@@ -1108,6 +1114,7 @@ describe.sequential("runtime component installs", () => {
         {
           name: "separator",
           version: "1.0.0",
+          sourceVersion: "1.0.0",
           type: "component",
           dependencies: [],
           targets: {
@@ -1342,6 +1349,7 @@ describe.sequential("runtime component installs", () => {
         {
           name: "separator",
           version: "1.0.0",
+          sourceVersion: "1.0.0",
           type: "component",
           dependencies: [],
           targets: {
@@ -1422,6 +1430,7 @@ describe.sequential("runtime component installs", () => {
 
     expect(result.updated).toEqual([
       {
+        delivery: "source",
         name: "button",
         status: "updated",
         oldVersion: "1.0.0",
@@ -1450,6 +1459,123 @@ describe.sequential("runtime component installs", () => {
       },
       { appendComponents: false },
     );
+  });
+
+  it("delivers a styled behavior update without reading or rewriting customized files", async () => {
+    await writeFile(
+      "package.json",
+      JSON.stringify({ dependencies: { next: "^16.3.0", react: "^19.2.0" } }),
+      "utf-8",
+    );
+    await mkdir("pages", { recursive: true });
+    await mkdir("styles", { recursive: true });
+    await writeFile(
+      "pages/_app.tsx",
+      'import "@/styles/globals.css";\nexport default function App() { return null; }\n',
+      "utf-8",
+    );
+    await writeFile("styles/globals.css", '@import "./starwind.css";\n', "utf-8");
+    const starwindCss = '@import "tailwindcss";\n';
+    await writeFile("styles/starwind.css", starwindCss, "utf-8");
+    mockLoadRegistry.mockResolvedValue({
+      ...registryFixture,
+      components: [
+        {
+          ...registryFixture.components[0],
+          version: "2.0.0",
+          sourceVersion: "1.0.0",
+        },
+      ],
+    });
+    const currentConfig: StarwindConfig = {
+      ...runtimeConfig,
+      tailwind: { ...runtimeConfig.tailwind, css: "styles/starwind.css" },
+      components: [{ name: "button", version: "1.0.0", framework: "react" }],
+    };
+    const targetPath = join(tempDir, "src", "components", "starwind", "button", "index.tsx");
+    await mkdir(dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, "export function Button() { return 'custom'; }\n", "utf-8");
+    await writeFile(join(dirname(targetPath), "styles.css"), ".custom {}\n", "utf-8");
+    mockFilterUninstalledDependencies.mockResolvedValue([]);
+
+    const plan = await planRuntimeComponentUpdates(["button"], {
+      config: currentConfig,
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+    expect(plan.updates).toEqual([expect.objectContaining({ delivery: "behavior", files: [] })]);
+    expectTypeOf(plan.updates[0]!.delivery).toEqualTypeOf<"source" | "behavior">();
+
+    const result = await updateRuntimeComponents(["button"], {
+      config: currentConfig,
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+
+    expect(result.updated).toEqual([
+      {
+        delivery: "behavior",
+        name: "button",
+        status: "updated",
+        oldVersion: "1.0.0",
+        newVersion: "2.0.0",
+      },
+    ]);
+    expectTypeOf(result.updated[0]!.delivery).toEqualTypeOf<"source" | "behavior">();
+    await expect(readFile(targetPath, "utf-8")).resolves.toContain("return 'custom'");
+    await expect(readFile("styles/starwind.css", "utf-8")).resolves.toBe(starwindCss);
+    expect(mockInstallDependencies).not.toHaveBeenCalled();
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      {
+        components: [
+          {
+            name: "button",
+            version: "2.0.0",
+            framework: "react",
+            registry: "default",
+          },
+        ],
+      },
+      { appendComponents: false },
+    );
+  });
+
+  it("delivers styled source files when the installed version predates a later source release", async () => {
+    mockLoadRegistry.mockResolvedValue({
+      ...registryFixture,
+      components: [
+        {
+          ...registryFixture.components[0],
+          version: "3.0.0",
+          sourceVersion: "2.0.0",
+        },
+      ],
+    });
+    const currentConfig: StarwindConfig = {
+      ...runtimeConfig,
+      components: [{ name: "button", version: "1.0.0", framework: "react" }],
+    };
+    const targetPath = join(tempDir, "src", "components", "starwind", "button", "index.tsx");
+    await mkdir(dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, "export function Button() { return 'old'; }\n", "utf-8");
+    mockFilterUninstalledDependencies.mockResolvedValue([]);
+
+    const result = await updateRuntimeComponents(["button"], {
+      config: currentConfig,
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+
+    expect(result.updated).toEqual([
+      {
+        delivery: "source",
+        name: "button",
+        status: "updated",
+        oldVersion: "1.0.0",
+        newVersion: "3.0.0",
+      },
+    ]);
+    await expect(readFile(targetPath, "utf-8")).resolves.toContain("return null");
   });
 
   it("updates an explicit alternative-framework styled entry without replacing the primary-framework entry", async () => {
@@ -1512,6 +1638,7 @@ describe.sequential("runtime component installs", () => {
 
     expect(result.updated).toEqual([
       {
+        delivery: "source",
         name: "button",
         framework: "react",
         status: "updated",
@@ -1602,6 +1729,7 @@ describe.sequential("runtime component installs", () => {
 
     expect(result.updated).toEqual([
       {
+        delivery: "source",
         name: "button",
         framework: "astro",
         status: "updated",
@@ -1609,6 +1737,7 @@ describe.sequential("runtime component installs", () => {
         newVersion: "2.0.0",
       },
       {
+        delivery: "source",
         name: "button",
         framework: "react",
         status: "updated",
@@ -1644,6 +1773,7 @@ describe.sequential("runtime component installs", () => {
 
     expect(result.updated).toEqual([
       {
+        delivery: "source",
         name: "button",
         status: "updated",
         oldVersion: "1.0.0",
@@ -1691,6 +1821,7 @@ describe.sequential("runtime component installs", () => {
     ]);
     expect(result.updated).toEqual([
       {
+        delivery: "source",
         name: "button",
         status: "updated",
         oldVersion: "1.0.0",
@@ -1726,6 +1857,7 @@ describe.sequential("runtime component installs", () => {
         {
           name: "card",
           version: "2.0.0",
+          sourceVersion: "2.0.0",
           type: "component",
           dependencies: [],
           targets: {
@@ -1781,13 +1913,14 @@ describe.sequential("runtime component installs", () => {
   });
 
   it("updates styled components from their recorded registries", async () => {
-    const customRegistry: StarwindRegistry = {
+    const customRegistry: NormalizedStarwindRegistry = {
       ...registryFixture,
       version: "0.2.0",
       components: [
         {
           name: "card",
           version: "3.0.0",
+          sourceVersion: "3.0.0",
           type: "component",
           dependencies: [],
           targets: {
@@ -1933,7 +2066,7 @@ describe.sequential("runtime component installs", () => {
   });
 
   it("updates with an explicit registry override and records the override source", async () => {
-    const overrideRegistry: StarwindRegistry = {
+    const overrideRegistry: NormalizedStarwindRegistry = {
       ...registryFixture,
       version: "0.2.0",
       components: [
@@ -2014,6 +2147,7 @@ describe.sequential("runtime component installs", () => {
         {
           name: "card",
           version: "2.0.0",
+          sourceVersion: "2.0.0",
           type: "component",
           dependencies: [],
           targets: {
@@ -2125,6 +2259,7 @@ describe.sequential("runtime component installs", () => {
         {
           ...createRegistryComponent("accordion"),
           version: "2.0.2",
+          sourceVersion: "2.0.0",
         },
       ],
     });
@@ -2152,6 +2287,8 @@ describe.sequential("runtime component installs", () => {
     expect(plan.failed).toEqual([]);
     expect(plan.updates).toEqual([
       expect.objectContaining({
+        delivery: "behavior",
+        files: [],
         oldVersion: "2.0.1",
         newVersion: "2.0.2",
         component: expect.objectContaining({ name: "accordion" }),
@@ -2173,6 +2310,15 @@ describe.sequential("runtime component installs", () => {
     const targetPath = join(tempDir, "src", "components", "starwind", "button", "index.tsx");
     await mkdir(dirname(targetPath), { recursive: true });
     await writeFile(targetPath, "export function Button() { return 'old'; }\n", "utf-8");
+    mockLoadRegistry.mockResolvedValue({
+      ...registryFixture,
+      components: [
+        {
+          ...registryFixture.components[0],
+          sourceVersion: "1.0.0",
+        },
+      ],
+    });
     mockFilterUninstalledDependencies.mockResolvedValue(["@starwind-ui/react@^1.0.0"]);
     mockConfirm.mockResolvedValue(false);
 
@@ -2193,6 +2339,7 @@ describe.sequential("runtime component installs", () => {
     expect(result.updated).toEqual([]);
     expect(result.skipped).toEqual([
       {
+        delivery: "behavior",
         name: "button",
         status: "skipped",
         oldVersion: "1.0.0",
@@ -2423,6 +2570,7 @@ describe.sequential("runtime component installs", () => {
 
     expect(result.updated).toEqual([
       {
+        delivery: "source",
         name: "button",
         framework: "vue",
         status: "updated",

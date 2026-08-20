@@ -62,6 +62,7 @@ export interface RegistrySetupTarget {
 export interface ComponentFor<TFramework extends CliFrameworkTarget> {
   name: string;
   version: string;
+  sourceVersion?: string;
   dependencies: string[];
   artifact?: RegistryArtifactReference;
   fileDependencies?: string[];
@@ -72,6 +73,15 @@ export interface ComponentFor<TFramework extends CliFrameworkTarget> {
 
 export type Component = ComponentFor<PublicCliFrameworkTarget>;
 
+export type NormalizedComponentFor<TFramework extends CliFrameworkTarget> = Omit<
+  ComponentFor<TFramework>,
+  "sourceVersion"
+> & {
+  sourceVersion: string;
+};
+
+export type NormalizedComponent = NormalizedComponentFor<PublicCliFrameworkTarget>;
+
 export interface RegistryComponentArtifactFor<TFramework extends CliFrameworkTarget> {
   $schema?: string;
   registryVersion: string;
@@ -79,6 +89,12 @@ export interface RegistryComponentArtifactFor<TFramework extends CliFrameworkTar
 }
 
 export type RegistryComponentArtifact = RegistryComponentArtifactFor<PublicCliFrameworkTarget>;
+
+export interface NormalizedRegistryComponentArtifactFor<TFramework extends CliFrameworkTarget> {
+  $schema?: string;
+  registryVersion: string;
+  component: Omit<NormalizedComponentFor<TFramework>, "artifact">;
+}
 
 export interface StarwindRegistryFor<TFramework extends CliFrameworkTarget> {
   $schema?: string;
@@ -88,6 +104,15 @@ export interface StarwindRegistryFor<TFramework extends CliFrameworkTarget> {
 }
 
 export type StarwindRegistry = StarwindRegistryFor<PublicCliFrameworkTarget>;
+
+export interface NormalizedStarwindRegistryFor<TFramework extends CliFrameworkTarget> {
+  $schema?: string;
+  version: string;
+  setup?: Partial<Record<TFramework, RegistrySetupTarget>>;
+  components: NormalizedComponentFor<TFramework>[];
+}
+
+export type NormalizedStarwindRegistry = NormalizedStarwindRegistryFor<PublicCliFrameworkTarget>;
 
 export type RegistrySource =
   | { type: "bundled" }
@@ -318,11 +343,34 @@ const safeComponentNameSchema = z
 const componentBaseFields = {
   name: safeComponentNameSchema,
   version: semverVersionSchema,
+  sourceVersion: semverVersionSchema.optional(),
   dependencies: z.array(z.string()).default([]),
   fileDependencies: z.array(z.string()).optional(),
   publicRenames: componentPublicRenamesSchema.optional(),
   type: z.literal("component"),
 };
+
+function normalizeComponentSourceVersion<
+  TComponent extends { version: string; sourceVersion?: string },
+>(component: TComponent): TComponent & { sourceVersion: string } {
+  return {
+    ...component,
+    sourceVersion: component.sourceVersion ?? component.version,
+  };
+}
+
+function validateComponentSourceVersion(
+  component: { version: string; sourceVersion: string },
+  ctx: z.RefinementCtx,
+): void {
+  if (semver.gt(component.sourceVersion, component.version)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["sourceVersion"],
+      message: `Source version ${component.sourceVersion} must not be newer than component version ${component.version}`,
+    });
+  }
+}
 
 function createComponentSchema<TFramework extends CliFrameworkTarget>(
   targetPolicy: FrameworkTargetPolicy<TFramework>,
@@ -348,7 +396,9 @@ function createComponentSchema<TFramework extends CliFrameworkTarget>(
           message: "Expected either inline targets or artifact, not both",
         });
       }
-    });
+    })
+    .transform(normalizeComponentSourceVersion)
+    .superRefine(validateComponentSourceVersion);
 }
 
 function createRegistryComponentArtifactSchema<TFramework extends CliFrameworkTarget>(
@@ -359,7 +409,9 @@ function createRegistryComponentArtifactSchema<TFramework extends CliFrameworkTa
       ...componentBaseFields,
       targets: createRegistryTargetsSchema(targetPolicy),
     })
-    .strict();
+    .strict()
+    .transform(normalizeComponentSourceVersion)
+    .superRefine(validateComponentSourceVersion);
 
   return z
     .object({
@@ -385,8 +437,11 @@ function createRegistryRootSchema<TFramework extends CliFrameworkTarget>(
 
 let defaultRegistrySource: RegistrySource = { type: "bundled" };
 
-type RegistryCache = Map<string, Promise<StarwindRegistryFor<CliFrameworkTarget>>>;
-type RegistryArtifactCache = Map<string, Promise<RegistryComponentArtifactFor<CliFrameworkTarget>>>;
+type RegistryCache = Map<string, Promise<NormalizedStarwindRegistryFor<CliFrameworkTarget>>>;
+type RegistryArtifactCache = Map<
+  string,
+  Promise<NormalizedRegistryComponentArtifactFor<CliFrameworkTarget>>
+>;
 
 let registryCachesByPolicy = new WeakMap<object, RegistryCache>();
 let registryArtifactCachesByPolicy = new WeakMap<object, RegistryArtifactCache>();
@@ -424,11 +479,11 @@ function formatRegistryError(error: z.ZodError): Error {
 function parseRegistry<TFramework extends CliFrameworkTarget>(
   rawRegistry: unknown,
   targetPolicy: FrameworkTargetPolicy<TFramework>,
-): StarwindRegistryFor<TFramework> {
+): NormalizedStarwindRegistryFor<TFramework> {
   try {
     return createRegistryRootSchema(targetPolicy).parse(
       rawRegistry,
-    ) as StarwindRegistryFor<TFramework>;
+    ) as NormalizedStarwindRegistryFor<TFramework>;
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw formatRegistryError(error);
@@ -442,11 +497,11 @@ function parseRegistryArtifact<TFramework extends CliFrameworkTarget>(
   rawArtifact: unknown,
   artifactPath: string,
   targetPolicy: FrameworkTargetPolicy<TFramework>,
-): RegistryComponentArtifactFor<TFramework> {
+): NormalizedRegistryComponentArtifactFor<TFramework> {
   try {
     return createRegistryComponentArtifactSchema(targetPolicy).parse(
       rawArtifact,
-    ) as RegistryComponentArtifactFor<TFramework>;
+    ) as NormalizedRegistryComponentArtifactFor<TFramework>;
   } catch (error) {
     if (error instanceof z.ZodError) {
       const firstIssue = error.issues[0];
@@ -485,10 +540,10 @@ interface RegistryPolicyOptions<TFramework extends CliFrameworkTarget> {
 }
 
 async function hydrateRegistry<TFramework extends CliFrameworkTarget>(
-  registry: StarwindRegistryFor<TFramework>,
+  registry: NormalizedStarwindRegistryFor<TFramework>,
   source: RegistrySource,
   options: RegistryPolicyOptions<TFramework>,
-): Promise<StarwindRegistryFor<TFramework>> {
+): Promise<NormalizedStarwindRegistryFor<TFramework>> {
   const hasArtifacts = registry.components.some((component) => component.artifact);
 
   if (!hasArtifacts) {
@@ -508,11 +563,11 @@ async function hydrateRegistry<TFramework extends CliFrameworkTarget>(
 }
 
 async function hydrateComponentArtifact<TFramework extends CliFrameworkTarget>(
-  indexComponent: ComponentFor<TFramework>,
-  registry: StarwindRegistryFor<TFramework>,
+  indexComponent: NormalizedComponentFor<TFramework>,
+  registry: NormalizedStarwindRegistryFor<TFramework>,
   source: RegistrySource,
   options: RegistryPolicyOptions<TFramework>,
-): Promise<ComponentFor<TFramework>> {
+): Promise<NormalizedComponentFor<TFramework>> {
   if (!indexComponent.artifact) return indexComponent;
 
   const artifact = await loadRegistryArtifact(indexComponent, source, options);
@@ -535,6 +590,12 @@ async function hydrateComponentArtifact<TFramework extends CliFrameworkTarget>(
     );
   }
 
+  if (artifact.component.sourceVersion !== indexComponent.sourceVersion) {
+    throw new Error(
+      `Registry artifact for ${indexComponent.name} at ${indexComponent.artifact.path} declares source version ${artifact.component.sourceVersion}; expected ${indexComponent.sourceVersion}.`,
+    );
+  }
+
   return {
     ...artifact.component,
     artifact: indexComponent.artifact,
@@ -545,10 +606,10 @@ async function hydrateComponentArtifact<TFramework extends CliFrameworkTarget>(
 }
 
 async function loadRegistryArtifact<TFramework extends CliFrameworkTarget>(
-  component: ComponentFor<TFramework>,
+  component: NormalizedComponentFor<TFramework>,
   source: RegistrySource,
   options: RegistryPolicyOptions<TFramework>,
-): Promise<RegistryComponentArtifactFor<TFramework>> {
+): Promise<NormalizedRegistryComponentArtifactFor<TFramework>> {
   const artifactSource = resolveRegistryArtifactSource(component, source);
   const registryArtifactCache = getPolicyCache(
     registryArtifactCachesByPolicy,
@@ -558,7 +619,7 @@ async function loadRegistryArtifact<TFramework extends CliFrameworkTarget>(
 
   if (!options.forceRefresh && registryArtifactCache.has(cacheKey)) {
     return registryArtifactCache.get(cacheKey)! as Promise<
-      RegistryComponentArtifactFor<TFramework>
+      NormalizedRegistryComponentArtifactFor<TFramework>
     >;
   }
 
@@ -567,7 +628,7 @@ async function loadRegistryArtifact<TFramework extends CliFrameworkTarget>(
   );
   registryArtifactCache.set(
     cacheKey,
-    artifactPromise as Promise<RegistryComponentArtifactFor<CliFrameworkTarget>>,
+    artifactPromise as Promise<NormalizedRegistryComponentArtifactFor<CliFrameworkTarget>>,
   );
 
   return artifactPromise;
@@ -578,7 +639,7 @@ type ResolvedRegistryArtifactSource =
   | { type: "remote"; url: string; cacheKey: string };
 
 function resolveRegistryArtifactSource<TFramework extends CliFrameworkTarget>(
-  component: ComponentFor<TFramework>,
+  component: NormalizedComponentFor<TFramework>,
   source: RegistrySource,
 ): ResolvedRegistryArtifactSource {
   const artifactPath = component.artifact?.path;
@@ -665,7 +726,7 @@ function isUrlInside(rootUrl: URL, childUrl: URL): boolean {
 }
 
 async function readRegistryArtifact<TFramework extends CliFrameworkTarget>(
-  component: ComponentFor<TFramework>,
+  component: NormalizedComponentFor<TFramework>,
   source: ResolvedRegistryArtifactSource,
 ): Promise<unknown> {
   try {
@@ -694,18 +755,21 @@ async function readRegistryArtifact<TFramework extends CliFrameworkTarget>(
 async function loadRegistryFromSource<TFramework extends CliFrameworkTarget>(
   source: RegistrySource,
   options: RegistryPolicyOptions<TFramework>,
-): Promise<StarwindRegistryFor<TFramework>> {
+): Promise<NormalizedStarwindRegistryFor<TFramework>> {
   const registryCache = getPolicyCache(registryCachesByPolicy, options.targetPolicy);
   const cacheKey = registrySourceKey(source);
 
   if (!options.forceRefresh && registryCache.has(cacheKey)) {
-    return registryCache.get(cacheKey)! as Promise<StarwindRegistryFor<TFramework>>;
+    return registryCache.get(cacheKey)! as Promise<NormalizedStarwindRegistryFor<TFramework>>;
   }
 
   const registryPromise = readRegistrySource(source)
     .then((rawRegistry) => parseRegistry(rawRegistry, options.targetPolicy))
     .then((registry) => hydrateRegistry(registry, source, options));
-  registryCache.set(cacheKey, registryPromise as Promise<StarwindRegistryFor<CliFrameworkTarget>>);
+  registryCache.set(
+    cacheKey,
+    registryPromise as Promise<NormalizedStarwindRegistryFor<CliFrameworkTarget>>,
+  );
 
   return registryPromise;
 }
@@ -720,19 +784,19 @@ export interface LoadRegistryOptions<
 export function loadRegistry(
   source?: RegistrySource,
   options?: LoadRegistryOptions,
-): Promise<StarwindRegistry>;
+): Promise<NormalizedStarwindRegistry>;
 export function loadRegistry<TFramework extends CliFrameworkTarget>(
   source: RegistrySource | undefined,
   options: LoadRegistryOptions<TFramework> & {
     targetPolicy: FrameworkTargetPolicy<TFramework>;
   },
-): Promise<StarwindRegistryFor<TFramework>>;
+): Promise<NormalizedStarwindRegistryFor<TFramework>>;
 export async function loadRegistry<
   TFramework extends CliFrameworkTarget = PublicCliFrameworkTarget,
 >(
   source?: RegistrySource,
   options: LoadRegistryOptions<TFramework> = {},
-): Promise<StarwindRegistryFor<TFramework>> {
+): Promise<NormalizedStarwindRegistryFor<TFramework>> {
   const targetPolicy =
     options.targetPolicy ??
     (PUBLIC_FRAMEWORK_TARGET_POLICY as unknown as FrameworkTargetPolicy<TFramework>);
@@ -748,7 +812,7 @@ export async function loadRegistry<
  * @param forceRefresh Whether to force a refresh of the cache
  * @returns A promise that resolves to an array of Components
  */
-export async function getRegistry(forceRefresh = false): Promise<Component[]> {
+export async function getRegistry(forceRefresh = false): Promise<NormalizedComponent[]> {
   const registry = await loadRegistryFromSource(defaultRegistrySource, {
     forceRefresh,
     targetPolicy: PUBLIC_FRAMEWORK_TARGET_POLICY,
@@ -773,7 +837,7 @@ export function clearRegistryCache(): void {
 export async function getComponent(
   name: string,
   forceRefresh = false,
-): Promise<Component | undefined> {
+): Promise<NormalizedComponent | undefined> {
   const registry = await getRegistry(forceRefresh);
   return registry.find((component) => component.name === name);
 }
@@ -783,6 +847,7 @@ export async function getComponent(
  * @param forceRefresh Whether to force a refresh of the registry cache
  * @returns All components in the registry
  */
-export async function getAllComponents(forceRefresh = false): Promise<Component[]> {
+export function getAllComponents(forceRefresh?: boolean): Promise<NormalizedComponent[]>;
+export async function getAllComponents(forceRefresh = false): Promise<NormalizedComponent[]> {
   return getRegistry(forceRefresh);
 }

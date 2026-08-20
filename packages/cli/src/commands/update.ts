@@ -18,6 +18,7 @@ import {
 } from "@/utils/registry.js";
 import {
   planRuntimeComponentUpdates,
+  type RuntimeUpdateDelivery,
   updateRuntimeComponents,
   type UpdateRuntimeComponentsOptions,
 } from "@/utils/runtime-component.js";
@@ -45,12 +46,18 @@ export type PrivateVueUpdateDependencies = {
 };
 
 type UpdateResult = {
+  delivery?: RuntimeUpdateDelivery;
   error?: string;
   framework?: PrivateVueCliFrameworkTarget;
   name: string;
   newVersion?: string;
   oldVersion?: string;
   status: "updated" | "skipped" | "failed";
+};
+
+type UpdatedUpdateResult = Omit<UpdateResult, "delivery" | "status"> & {
+  delivery: RuntimeUpdateDelivery;
+  status: "updated";
 };
 
 export function update(components?: string[], options?: UpdateOptions): Promise<void>;
@@ -182,7 +189,7 @@ export async function update(
     }
 
     const results = {
-      updated: [] as UpdateResult[],
+      updated: [] as UpdatedUpdateResult[],
       skipped: [] as UpdateResult[],
       failed: [] as UpdateResult[],
     };
@@ -258,7 +265,10 @@ export async function update(
         `${highlighter.info("Components already up to date or skipped:")}\n${sortComponentPresentation(
           results.skipped,
         )
-          .map((r) => `  ${formatUpdateResultName(r)} (${r.oldVersion})`)
+          .map(
+            (r) =>
+              `  ${formatUpdateResultName(r)} (${r.oldVersion})${r.delivery ? ` [${r.delivery}]` : ""}`,
+          )
           .join("\n")}`,
       );
     }
@@ -268,7 +278,10 @@ export async function update(
         `${highlighter.success("Successfully updated components:")}\n${sortComponentPresentation(
           results.updated,
         )
-          .map((r) => `  ${formatUpdateResultName(r)} (${r.oldVersion} → ${r.newVersion})`)
+          .map(
+            (r) =>
+              `  ${formatUpdateResultName(r)} (${r.oldVersion} → ${r.newVersion}) [${r.delivery}]`,
+          )
           .join("\n")}`,
       );
     }

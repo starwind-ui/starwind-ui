@@ -60,8 +60,20 @@ describe("docs command", () => {
       $schema: "https://starwind.dev/registry-schema.v2.json",
       version: "0.1.0",
       components: [
-        { name: "card", version: "1.0.0", dependencies: [], type: "component" },
-        { name: "button", version: "1.0.0", dependencies: [], type: "component" },
+        {
+          name: "card",
+          version: "1.0.0",
+          sourceVersion: "1.0.0",
+          dependencies: [],
+          type: "component",
+        },
+        {
+          name: "button",
+          version: "1.0.0",
+          sourceVersion: "1.0.0",
+          dependencies: [],
+          type: "component",
+        },
       ],
     });
   });

@@ -4,6 +4,13 @@ import path from "node:path";
 import semver from "semver";
 
 export type ReleaseVersionBump = "major" | "minor" | "patch";
+export type ReleaseImpact = "source" | "behavior";
+export type ReleaseDecision<T extends ReleaseVersionBump = ReleaseVersionBump> = {
+  bump: T;
+  impact: ReleaseImpact;
+};
+export type PackageReleaseFacts = Record<string, ReleaseVersionBump>;
+export type ChangesetReleaseFacts = Record<string, PackageReleaseFacts>;
 
 const BUMP_PRIORITY: Record<ReleaseVersionBump, number> = { patch: 0, minor: 1, major: 2 };
 const FRAGMENT_FILE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*\.json$/;
@@ -21,14 +28,33 @@ export function aggregateVersionIntents<T extends ReleaseVersionBump>(
   return sortRecord(aggregated);
 }
 
+export function aggregateReleaseDecisions<T extends ReleaseVersionBump>(
+  fragments: Record<string, { impact: ReleaseImpact; releases: Record<string, T> }>,
+): Record<string, ReleaseDecision<T>> {
+  const bumps = aggregateVersionIntents(
+    Object.fromEntries(Object.entries(fragments).map(([file, value]) => [file, value.releases])),
+  );
+  const decisions: Record<string, ReleaseDecision<T>> = {};
+  for (const [name, bump] of Object.entries(bumps)) {
+    const impact = Object.keys(fragments)
+      .sort()
+      .some((file) => fragments[file].impact === "source" && name in fragments[file].releases)
+      ? "source"
+      : "behavior";
+    decisions[name] = { bump, impact };
+  }
+  return sortRecord(decisions);
+}
+
 export function applyVersionIntents<T extends ReleaseVersionBump>(options: {
   currentVersions: Record<string, string>;
-  intents: Record<string, T>;
+  intents: Record<string, T | ReleaseDecision<T>>;
   label: string;
   validateNext?: (name: string, current: string, next: string, bump: T) => void;
 }): Record<string, string> {
   const nextVersions = { ...options.currentVersions };
-  for (const [name, bump] of Object.entries(options.intents)) {
+  for (const [name, intent] of Object.entries(options.intents)) {
+    const bump = typeof intent === "string" ? intent : intent.bump;
     const current = options.currentVersions[name];
     if (!current || !semver.valid(current)) {
       throw new Error(`${options.label} "${name}" has invalid semver version "${current}".`);
@@ -39,6 +65,54 @@ export function applyVersionIntents<T extends ReleaseVersionBump>(options: {
     nextVersions[name] = next;
   }
   return nextVersions;
+}
+
+export function materializeSourceVersions<T extends ReleaseVersionBump>(options: {
+  currentSourceVersions: Record<string, string>;
+  decisions: Record<string, ReleaseDecision<T>>;
+  nextVersions: Record<string, string>;
+}): Record<string, string> {
+  const next = { ...options.currentSourceVersions };
+  for (const [name, decision] of Object.entries(options.decisions)) {
+    if (decision.impact === "source") next[name] = options.nextVersions[name];
+  }
+  return sortRecord(next);
+}
+
+export function parseChangesetReleaseFacts(content: string): PackageReleaseFacts {
+  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(content);
+  if (!match) return {};
+  const releases: PackageReleaseFacts = {};
+  for (const line of match[1].split(/\r?\n/)) {
+    const release = /^(?:"([^"]+)"|'([^']+)'|([^:'"\s][^:]*)):\s*(patch|minor|major)\s*$/.exec(
+      line.trim(),
+    );
+    if (release)
+      releases[(release[1] ?? release[2] ?? release[3]).trim()] = release[4] as ReleaseVersionBump;
+  }
+  return sortRecord(releases);
+}
+
+export function hasNewPackageRelease(
+  base: ChangesetReleaseFacts,
+  head: ChangesetReleaseFacts,
+  packageName: string,
+): boolean {
+  return Object.keys(head).some((file) => !(file in base) && packageName in head[file]);
+}
+
+export function getNewPackageReleaseBump(
+  base: ChangesetReleaseFacts,
+  head: ChangesetReleaseFacts,
+  packageName: string,
+): ReleaseVersionBump | undefined {
+  let result: ReleaseVersionBump | undefined;
+  for (const file of Object.keys(head).sort()) {
+    if (file in base) continue;
+    const bump = head[file][packageName];
+    if (bump && (!result || BUMP_PRIORITY[bump] > BUMP_PRIORITY[result])) result = bump;
+  }
+  return result;
 }
 
 export function assertSafeIntentFile(file: string, label: string): void {
