@@ -489,6 +489,40 @@ describe("release package tooling", () => {
     expect(waits).toEqual([5_000, 5_000]);
   });
 
+  it("preserves non-retryable version lookup errors", async () => {
+    const expected = deriveReleaseIdentity(manifests({ cli: "3.0.0", runtime: "1.0.0" }), "latest");
+    const waits: number[] = [];
+    let attempts = 0;
+
+    const error = await verifyPublishedPackages(
+      expected,
+      {
+        capture: async () => {
+          attempts += 1;
+          return { code: 1, stderr: "npm error E401", stdout: "" };
+        },
+        run: async () => undefined,
+      },
+      {
+        attempts: 3,
+        onRetry: () => undefined,
+        retryDelayMs: 5_000,
+        wait: async (delayMs: number) => {
+          waits.push(delayMs);
+        },
+      },
+    ).then(
+      () => undefined,
+      (failure: unknown) => failure,
+    );
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain("version could not be verified: npm error E401");
+    expect((error as Error).message).not.toContain("pnpm release:finalize");
+    expect(attempts).toBe(1);
+    expect(waits).toEqual([]);
+  });
+
   it("stops before Git changes when any package version is missing", async () => {
     const expected = deriveReleaseIdentity(
       manifests({ cli: "3.0.0-beta.8", runtime: "0.1.0-beta.8" }),

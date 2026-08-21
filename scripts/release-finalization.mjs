@@ -142,12 +142,14 @@ export async function verifyPublishedPackages(release, system, options = {}) {
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
       const versionResult = await system.capture("npm", ["view", spec, "version", "--json"]);
       if (versionResult.code !== 0) {
-        if (attempt < attempts && isRetryableRegistryFailure(versionResult)) {
+        const retryable = isRetryableRegistryFailure(versionResult);
+        if (attempt < attempts && retryable) {
           onRetry(spec, attempt);
           await waitForRetry(retryDelayMs);
           continue;
         }
-        throw createRegistryPropagationError(spec, attempt);
+        if (retryable) throw createRegistryPropagationError(spec, attempt);
+        parseJsonOutput(versionResult, `${spec} version`);
       }
       const publishedVersion = parseJsonOutput(versionResult, `${spec} version`);
       if (publishedVersion !== entry.version) {
