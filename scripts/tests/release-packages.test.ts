@@ -417,6 +417,45 @@ describe("release package tooling", () => {
     expect(calls).toHaveLength(8);
   });
 
+  it("retries a package version while npm publication propagates", async () => {
+    const expected = deriveReleaseIdentity(manifests({ cli: "3.0.0", runtime: "1.0.0" }), "latest");
+    const calls: string[] = [];
+    const waits: number[] = [];
+    let runtimeVersionAttempts = 0;
+
+    await verifyPublishedPackages(
+      expected,
+      {
+        capture: async (command: string, args: string[]) => {
+          calls.push([command, ...args].join(" "));
+          const packageName = args[1].slice(0, args[1].lastIndexOf("@"));
+          const item = expected.packages.find((entry) => entry.name === packageName)!;
+          if (packageName === "@starwind-ui/runtime" && args[2] === "version") {
+            runtimeVersionAttempts += 1;
+            if (runtimeVersionAttempts === 1) {
+              return { code: 1, stderr: "npm error E404", stdout: "" };
+            }
+          }
+          return args[2] === "version"
+            ? { code: 0, stderr: "", stdout: JSON.stringify(item.version) }
+            : { code: 0, stderr: "", stdout: JSON.stringify({ latest: item.version }) };
+        },
+        run: async () => undefined,
+      },
+      {
+        attempts: 3,
+        retryDelayMs: 5_000,
+        wait: async (delayMs: number) => {
+          waits.push(delayMs);
+        },
+      },
+    );
+
+    expect(runtimeVersionAttempts).toBe(2);
+    expect(waits).toEqual([5_000]);
+    expect(calls).toHaveLength(9);
+  });
+
   it("stops before Git changes when any package version is missing", async () => {
     const expected = deriveReleaseIdentity(
       manifests({ cli: "3.0.0-beta.8", runtime: "0.1.0-beta.8" }),
@@ -432,7 +471,9 @@ describe("release package tooling", () => {
         commands.push([command, ...args].join(" "));
       },
     };
-    await expect(verifyPublishedPackages(expected, system)).rejects.toThrow(/not published/);
+    await expect(verifyPublishedPackages(expected, system, { attempts: 1 })).rejects.toThrow(
+      /did not become visible/,
+    );
     expect(commands.every((command) => command.startsWith("npm view"))).toBe(true);
   });
 
@@ -445,6 +486,7 @@ describe("release package tooling", () => {
           packageManifests: manifests({ cli: "3.0.0-beta.8", runtime: "0.1.0-beta.8" }),
           tag: "beta",
         }),
+        registryVerificationOptions: { attempts: 1 },
         system: {
           capture: async (command: string, args: string[]) => {
             commands.push([command, ...args].join(" "));
@@ -455,7 +497,7 @@ describe("release package tooling", () => {
           },
         },
       }),
-    ).rejects.toThrow(/not published/);
+    ).rejects.toThrow(/did not become visible/);
     expect(commands).toEqual(["npm view @starwind-ui/runtime@0.1.0-beta.8 version --json"]);
   });
 

@@ -9,6 +9,8 @@ import { assertPublicMainForPublish, assertReleaseMetadata } from "./release-pac
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(SCRIPT_DIR, "..");
 const PUBLIC_REPOSITORY = "starwind-ui/starwind-ui";
+const DEFAULT_REGISTRY_VERIFICATION_ATTEMPTS = 12;
+const DEFAULT_REGISTRY_RETRY_DELAY_MS = 5_000;
 
 export function createCommandSystem({ cwd = ROOT_DIR, spawnProcess = spawn } = {}) {
   async function capture(command, args) {
@@ -99,26 +101,78 @@ function parseJsonOutput(result, description) {
   }
 }
 
-export async function verifyPublishedPackages(release, system) {
+function wait(delayMs) {
+  return new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+function isRetryableRegistryFailure(result) {
+  const detail = `${result.stderr}\n${result.stdout}`;
+  return /(?:E404|404 Not Found|EAI_AGAIN|ECONNRESET|ETIMEDOUT|ENETUNREACH|EHOSTUNREACH|HTTP 5\d\d)/i.test(
+    detail,
+  );
+}
+
+export async function verifyPublishedPackages(release, system, options = {}) {
+  const attempts = options.attempts ?? DEFAULT_REGISTRY_VERIFICATION_ATTEMPTS;
+  const retryDelayMs = options.retryDelayMs ?? DEFAULT_REGISTRY_RETRY_DELAY_MS;
+  const waitForRetry = options.wait ?? wait;
+  const onRetry =
+    options.onRetry ??
+    ((spec, attempt) => {
+      console.log(
+        `[finalize] Waiting for ${spec} to become visible on npm (${attempt}/${attempts})...`,
+      );
+    });
+  if (!Number.isInteger(attempts) || attempts < 1) {
+    throw new Error("Registry verification attempts must be a positive integer.");
+  }
+  if (!Number.isFinite(retryDelayMs) || retryDelayMs < 0) {
+    throw new Error("Registry retry delay must be a non-negative number.");
+  }
+
   for (const entry of release.packages) {
     const spec = `${entry.name}@${entry.version}`;
-    const versionResult = await system.capture("npm", ["view", spec, "version", "--json"]);
-    if (versionResult.code !== 0) {
-      throw new Error(`${spec} is not published and release finalization cannot continue.`);
-    }
-    const publishedVersion = parseJsonOutput(versionResult, `${spec} version`);
-    if (publishedVersion !== entry.version) {
-      throw new Error(
-        `${spec} resolved to unexpected version ${JSON.stringify(publishedVersion)}.`,
-      );
-    }
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const versionResult = await system.capture("npm", ["view", spec, "version", "--json"]);
+      if (versionResult.code !== 0) {
+        if (attempt < attempts && isRetryableRegistryFailure(versionResult)) {
+          onRetry(spec, attempt);
+          await waitForRetry(retryDelayMs);
+          continue;
+        }
+        throw new Error(
+          `${spec} did not become visible on npm after ${attempt} registry ${attempt === 1 ? "check" : "checks"}. ` +
+            "The package publication may have succeeded. Wait for npm propagation, then run pnpm release:finalize.",
+        );
+      }
+      const publishedVersion = parseJsonOutput(versionResult, `${spec} version`);
+      if (publishedVersion !== entry.version) {
+        throw new Error(
+          `${spec} resolved to unexpected version ${JSON.stringify(publishedVersion)}.`,
+        );
+      }
 
-    const tagsResult = await system.capture("npm", ["view", spec, "dist-tags", "--json"]);
-    const tags = parseJsonOutput(tagsResult, `${spec} dist-tags`);
-    if (tags?.[release.npmTag] !== entry.version) {
-      throw new Error(
-        `${entry.name} dist-tag ${release.npmTag} must point to ${entry.version}, found ${tags?.[release.npmTag] ?? "nothing"}.`,
-      );
+      const tagsResult = await system.capture("npm", ["view", spec, "dist-tags", "--json"]);
+      if (tagsResult.code !== 0) {
+        if (attempt < attempts && isRetryableRegistryFailure(tagsResult)) {
+          onRetry(spec, attempt);
+          await waitForRetry(retryDelayMs);
+          continue;
+        }
+        parseJsonOutput(tagsResult, `${spec} dist-tags`);
+      }
+      const tags = parseJsonOutput(tagsResult, `${spec} dist-tags`);
+      if (tags?.[release.npmTag] !== entry.version) {
+        if (attempt < attempts) {
+          onRetry(spec, attempt);
+          await waitForRetry(retryDelayMs);
+          continue;
+        }
+        throw new Error(
+          `${entry.name} dist-tag ${release.npmTag} must point to ${entry.version}, found ${tags?.[release.npmTag] ?? "nothing"}.`,
+        );
+      }
+      break;
     }
   }
 }
@@ -247,12 +301,13 @@ export async function finalizeVerifiedRelease(release, system) {
 export async function runReleaseFinalization({
   gitStateLoader = assertPublicMainForPublish,
   metadataLoader = assertReleaseMetadata,
+  registryVerificationOptions,
   system = createCommandSystem(),
 } = {}) {
   const { packageManifests, tag } = await metadataLoader();
   const { head } = await gitStateLoader();
   const release = deriveReleaseIdentity(packageManifests, tag, head);
-  await verifyPublishedPackages(release, system);
+  await verifyPublishedPackages(release, system, registryVerificationOptions);
   await finalizeVerifiedRelease(release, system);
   return release;
 }
