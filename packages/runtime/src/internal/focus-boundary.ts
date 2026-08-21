@@ -72,8 +72,16 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
   let suppressionPending = false;
   let suppressionTimer: ReturnType<typeof globalThis.setTimeout> | null = null;
 
+  const cancelPendingCheck = (): void => {
+    if (!pendingCheck) return;
+
+    pendingCheck = false;
+    pendingCheckVersion += 1;
+  };
+
   const handleFocusIn = (event: FocusEvent): void => {
     if (!isDocumentNode(event.target, ownerDocument) || !containsTarget(event.target)) return;
+    cancelPendingCheck();
     if (!(event.target instanceof (ownerDocument.defaultView?.HTMLElement ?? HTMLElement))) return;
 
     const focusOwner = event.target as HTMLElement;
@@ -111,7 +119,12 @@ export function createFocusBoundary(options: FocusBoundaryOptions): FocusBoundar
     queueMicrotask(() => runPendingCheck(version));
   };
 
-  const handleFocusOut = (): void => {
+  const handleFocusOut = (event: FocusEvent): void => {
+    if (isDocumentNode(event.relatedTarget, ownerDocument) && containsTarget(event.relatedTarget)) {
+      cancelPendingCheck();
+      return;
+    }
+
     scheduleDepartureCheck();
   };
 

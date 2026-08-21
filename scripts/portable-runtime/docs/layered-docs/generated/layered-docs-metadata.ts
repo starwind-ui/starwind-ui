@@ -12379,7 +12379,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           {
             name: "pagination",
             exportName: "PaginationVariants",
-            baseClassCount: 5,
+            baseClassCount: 4,
             options: [],
             compoundVariantCount: 0,
           },
@@ -12391,31 +12391,20 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             compoundVariantCount: 0,
           },
           {
-            name: "paginationLink",
-            exportName: "PaginationVariants",
-            baseClassCount: 9,
-            options: [],
-            compoundVariantCount: 0,
-          },
-          {
             name: "paginationEllipsis",
             exportName: "PaginationVariants",
-            baseClassCount: 6,
-            options: [],
-            compoundVariantCount: 0,
-          },
-          {
-            name: "paginationNext",
-            exportName: "PaginationVariants",
-            baseClassCount: 12,
-            options: [],
-            compoundVariantCount: 0,
-          },
-          {
-            name: "paginationPrevious",
-            exportName: "PaginationVariants",
-            baseClassCount: 12,
-            options: [],
+            baseClassCount: 3,
+            options: [
+              {
+                name: "size",
+                values: [
+                  "icon-sm",
+                  "icon",
+                  "icon-lg",
+                ],
+                defaultValue: "icon",
+              },
+            ],
             compoundVariantCount: 0,
           },
         ],
@@ -12428,103 +12417,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           "pagination-next",
           "pagination-previous",
         ],
-        stateSelectors: [
-          {
-            attribute: "data-size",
-            selector: "data-size",
-            source: "render-attribute",
-          },
-          {
-            attribute: "data-size",
-            value: "lg",
-            selector: "group-data-[size=lg]/pagination:h-12",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "lg",
-            selector: "group-data-[size=lg]/pagination:p-0",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "lg",
-            selector: "group-data-[size=lg]/pagination:px-8",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "lg",
-            selector: "group-data-[size=lg]/pagination:size-12",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "lg",
-            selector: "group-data-[size=lg]/pagination:text-lg",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "md",
-            selector: "group-data-[size=md]/pagination:h-11",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "md",
-            selector: "group-data-[size=md]/pagination:p-0",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "md",
-            selector: "group-data-[size=md]/pagination:px-5",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "md",
-            selector: "group-data-[size=md]/pagination:size-11",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "md",
-            selector: "group-data-[size=md]/pagination:text-base",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "sm",
-            selector: "group-data-[size=sm]/pagination:h-9",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "sm",
-            selector: "group-data-[size=sm]/pagination:p-0",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "sm",
-            selector: "group-data-[size=sm]/pagination:px-4",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "sm",
-            selector: "group-data-[size=sm]/pagination:size-9",
-            source: "variant-class",
-          },
-          {
-            attribute: "data-size",
-            value: "sm",
-            selector: "group-data-[size=sm]/pagination:text-sm",
-            source: "variant-class",
-          },
-        ],
+        stateSelectors: [],
       },
       {
         id: "popover",
@@ -29408,9 +29301,6 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
         "pagination",
         "paginationContent",
         "paginationEllipsis",
-        "paginationLink",
-        "paginationNext",
-        "paginationPrevious",
       ],
       slots: [
         "pagination",
@@ -29451,17 +29341,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           exports: [
             {
               exportName: "Pagination",
-              props: [
-                {
-                  name: "size",
-                  type: "\"sm\" | \"md\" | \"lg\"",
-                  required: false,
-                  classification: "wrapper",
-                  defaultValue: "\"md\"",
-                  description: "Selects the component's visual size.",
-                  descriptionSource: "catalog",
-                },
-              ],
+              props: [],
               inheritance: [
                 {
                   key: "html:nav",
@@ -29509,6 +29389,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Applies the active visual state.",
                   descriptionSource: "catalog",
                 },
+                {
+                  name: "size",
+                  type: "\"sm\" | \"md\" | \"lg\" | \"icon-sm\" | \"icon\" | \"icon-lg\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"icon\"",
+                  values: [
+                    "sm",
+                    "md",
+                    "lg",
+                    "icon-sm",
+                    "icon",
+                    "icon-lg",
+                  ],
+                  description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
               ],
               inheritance: [
                 {
@@ -29527,7 +29424,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "PaginationPrevious",
-              props: [],
+              props: [
+                {
+                  name: "size",
+                  type: "\"sm\" | \"md\" | \"lg\" | \"icon-sm\" | \"icon\" | \"icon-lg\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"md\"",
+                  values: [
+                    "sm",
+                    "md",
+                    "lg",
+                    "icon-sm",
+                    "icon",
+                    "icon-lg",
+                  ],
+                  description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "component:pagination.PaginationLink",
@@ -29541,7 +29456,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "PaginationNext",
-              props: [],
+              props: [
+                {
+                  name: "size",
+                  type: "\"sm\" | \"md\" | \"lg\" | \"icon-sm\" | \"icon\" | \"icon-lg\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"md\"",
+                  values: [
+                    "sm",
+                    "md",
+                    "lg",
+                    "icon-sm",
+                    "icon",
+                    "icon-lg",
+                  ],
+                  description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "component:pagination.PaginationLink",
@@ -29555,7 +29488,22 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "PaginationEllipsis",
-              props: [],
+              props: [
+                {
+                  name: "size",
+                  type: "\"icon-sm\" | \"icon\" | \"icon-lg\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"icon\"",
+                  values: [
+                    "icon-sm",
+                    "icon",
+                    "icon-lg",
+                  ],
+                  description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:span",
@@ -29573,17 +29521,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
           exports: [
             {
               exportName: "Pagination",
-              props: [
-                {
-                  name: "size",
-                  type: "\"sm\" | \"md\" | \"lg\"",
-                  required: false,
-                  classification: "wrapper",
-                  defaultValue: "\"md\"",
-                  description: "Selects the component's visual size.",
-                  descriptionSource: "catalog",
-                },
-              ],
+              props: [],
               inheritance: [
                 {
                   key: "html:nav",
@@ -29631,6 +29569,23 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
                   description: "Applies the active visual state.",
                   descriptionSource: "catalog",
                 },
+                {
+                  name: "size",
+                  type: "\"sm\" | \"md\" | \"lg\" | \"icon-sm\" | \"icon\" | \"icon-lg\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"icon\"",
+                  values: [
+                    "sm",
+                    "md",
+                    "lg",
+                    "icon-sm",
+                    "icon",
+                    "icon-lg",
+                  ],
+                  description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
               ],
               inheritance: [
                 {
@@ -29649,7 +29604,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "PaginationPrevious",
-              props: [],
+              props: [
+                {
+                  name: "size",
+                  type: "\"sm\" | \"md\" | \"lg\" | \"icon-sm\" | \"icon\" | \"icon-lg\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"md\"",
+                  values: [
+                    "sm",
+                    "md",
+                    "lg",
+                    "icon-sm",
+                    "icon",
+                    "icon-lg",
+                  ],
+                  description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "component:pagination.PaginationLink",
@@ -29663,7 +29636,25 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "PaginationNext",
-              props: [],
+              props: [
+                {
+                  name: "size",
+                  type: "\"sm\" | \"md\" | \"lg\" | \"icon-sm\" | \"icon\" | \"icon-lg\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"md\"",
+                  values: [
+                    "sm",
+                    "md",
+                    "lg",
+                    "icon-sm",
+                    "icon",
+                    "icon-lg",
+                  ],
+                  description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "component:pagination.PaginationLink",
@@ -29677,7 +29668,22 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
             },
             {
               exportName: "PaginationEllipsis",
-              props: [],
+              props: [
+                {
+                  name: "size",
+                  type: "\"icon-sm\" | \"icon\" | \"icon-lg\"",
+                  required: false,
+                  classification: "variant",
+                  defaultValue: "\"icon\"",
+                  values: [
+                    "icon-sm",
+                    "icon",
+                    "icon-lg",
+                  ],
+                  description: "Selects the component's visual size.",
+                  descriptionSource: "catalog",
+                },
+              ],
               inheritance: [
                 {
                   key: "html:span",

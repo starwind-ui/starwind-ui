@@ -8,21 +8,31 @@ import semver from "semver";
 
 import type { RegistryVersionManifest, RuntimeRegistry } from "./generate-cli-registry.js";
 import {
-  aggregateVersionIntents,
+  aggregateReleaseDecisions,
   applyVersionIntents,
   assertSafeIntentFile,
+  getNewPackageReleaseBump,
+  hasNewPackageRelease,
   isNodeError,
   isPlainObject,
+  materializeSourceVersions,
+  parseChangesetReleaseFacts,
   resolveVersionIntentDirectory,
   sortRecord,
   stageVersionIntents,
+  type ChangesetReleaseFacts,
+  type ReleaseDecision,
+  type ReleaseImpact,
 } from "./release-intent-utils.js";
 
 export type StyledVersionBump = "major" | "minor" | "patch";
 
 export type StyledVersionIntent = {
   components: Record<string, StyledVersionBump>;
+  impact?: ReleaseImpact;
 };
+
+export type ParsedStyledVersionIntent = StyledVersionIntent & { impact: ReleaseImpact };
 
 type StyledRegistryComponent = RuntimeRegistry["components"][number];
 
@@ -30,7 +40,7 @@ export type StyledReleaseSnapshot = {
   fragments: Record<string, StyledVersionIntent>;
   manifest: RegistryVersionManifest;
   registry: RuntimeRegistry;
-  starwindChangesets: string[];
+  packageReleases: ChangesetReleaseFacts;
 };
 
 export type StyledVersionPlan = {
@@ -60,6 +70,11 @@ const RELEASE_MANAGED_PACKAGES = new Set([
   "@starwind-ui/astro",
   "@starwind-ui/react",
 ]);
+const FIXED_GROUP_PACKAGES = [
+  "@starwind-ui/runtime",
+  "@starwind-ui/astro",
+  "@starwind-ui/react",
+] as const;
 
 export const STYLED_VERSION_FRAGMENT_DIR = ".changeset/styled-components";
 export const STAGED_STYLED_VERSION_FRAGMENT_DIR = ".styled-component-intents";
@@ -73,9 +88,18 @@ export function parseStyledVersionIntent(
   value: unknown,
   source: string,
   knownComponents: ReadonlySet<string>,
-): StyledVersionIntent {
-  if (!isPlainObject(value) || Object.keys(value).length !== 1 || !("components" in value)) {
-    throw new Error(`${source} must contain only a components object.`);
+): ParsedStyledVersionIntent {
+  const keys = isPlainObject(value) ? Object.keys(value) : [];
+  if (
+    !isPlainObject(value) ||
+    !keys.includes("components") ||
+    keys.some((key) => key !== "components" && key !== "impact")
+  ) {
+    throw new Error(`${source} must contain only components and optional impact fields.`);
+  }
+  const impact = value.impact ?? "source";
+  if (impact !== "source" && impact !== "behavior") {
+    throw new Error(`${source} impact must be source or behavior.`);
   }
   if (!isPlainObject(value.components)) {
     throw new Error(`${source} components must be an object.`);
@@ -96,22 +120,25 @@ export function parseStyledVersionIntent(
     }
     components[component] = bump;
   }
-  return { components };
+  return { components, impact };
 }
 
 export function aggregateStyledVersionIntents(
   fragments: Record<string, StyledVersionIntent>,
-): Record<string, StyledVersionBump> {
-  return aggregateVersionIntents(
+): Record<string, ReleaseDecision<StyledVersionBump>> {
+  return aggregateReleaseDecisions(
     Object.fromEntries(
-      Object.entries(fragments).map(([file, intent]) => [file, intent.components]),
+      Object.entries(fragments).map(([file, intent]) => [
+        file,
+        { impact: intent.impact ?? "source", releases: intent.components },
+      ]),
     ),
   );
 }
 
 export function applyStyledVersionIntents(
   currentVersions: Record<string, string>,
-  intents: Record<string, StyledVersionBump>,
+  intents: Record<string, StyledVersionBump | ReleaseDecision<StyledVersionBump>>,
 ): Record<string, string> {
   return applyVersionIntents({
     currentVersions,
@@ -123,6 +150,7 @@ export function applyStyledVersionIntents(
 export function createStyledRegistryFingerprint(component: StyledRegistryComponent): string {
   const normalized = structuredClone(component) as StyledRegistryComponent;
   delete (normalized as Partial<StyledRegistryComponent>).version;
+  delete (normalized as Partial<StyledRegistryComponent>).sourceVersion;
   for (const target of Object.values(normalized.targets ?? {})) {
     for (const requirement of target.packageRequirements ?? []) {
       if (RELEASE_MANAGED_PACKAGES.has(requirement.name)) {
@@ -173,6 +201,11 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
 
     const aggregated = aggregateStyledVersionIntents(options.base.fragments);
     const expected = applyStyledVersionIntents(options.base.manifest.components, aggregated);
+    const expectedSources = materializeSourceVersions({
+      currentSourceVersions: sourceVersions(options.base.manifest),
+      decisions: aggregated,
+      nextVersions: expected,
+    });
     assertManifestMetadataEqual(options.base.manifest, options.head.manifest);
     for (const [component, expectedVersion] of Object.entries(expected)) {
       const actualVersion = options.head.manifest.components[component];
@@ -183,6 +216,11 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
       }
     }
     assertSameKeys(expected, options.head.manifest.components, "styled version manifest");
+    assertVersionMap(
+      expectedSources,
+      sourceVersions(options.head.manifest),
+      "styled source version manifest",
+    );
     return { mode: "version", versionedComponents: Object.keys(aggregated).sort() };
   }
 
@@ -217,12 +255,11 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
     }
   }
 
-  const addedIntentComponents = new Set<string>();
-  for (const file of addedFragments) {
-    for (const component of Object.keys(options.head.fragments[file].components)) {
-      addedIntentComponents.add(component);
-    }
-  }
+  const addedIntents = Object.fromEntries(
+    addedFragments.map((file) => [file, options.head.fragments[file]]),
+  );
+  const addedDecisions = aggregateStyledVersionIntents(addedIntents);
+  const addedIntentComponents = new Set(Object.keys(addedDecisions));
   const changedSet = new Set(changedComponents);
   assertFeatureManifestMigration({
     base: options.base.manifest,
@@ -230,23 +267,41 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
     existingVersionChanges,
     head: options.head.manifest,
   });
+  assertFeatureSourceVersions(options.base.manifest, options.head.manifest, existingVersionChanges);
   const missingIntents = changedComponents.filter(
-    (component) => !addedIntentComponents.has(component),
+    (component) => addedDecisions[component]?.impact !== "source",
   );
-  const extraIntents = [...addedIntentComponents].filter((component) => !changedSet.has(component));
+  const behaviorComponents = [...addedIntentComponents].filter(
+    (component) => addedDecisions[component].impact === "behavior",
+  );
+  const extraSourceIntents = [...addedIntentComponents].filter(
+    (component) => addedDecisions[component].impact === "source" && !changedSet.has(component),
+  );
   if (missingIntents.length > 0) {
     throw new Error(
       `Missing styled version intent for changed component(s): ${missingIntents.join(", ")}.`,
     );
   }
-  if (extraIntents.length > 0) {
+  if (extraSourceIntents.length > 0) {
     throw new Error(
-      `Styled version intent has no installable source change: ${extraIntents.join(", ")}.`,
+      `Styled source version intent has no installable source change: ${extraSourceIntents.join(", ")}.`,
     );
   }
+  for (const component of behaviorComponents) {
+    const entry = headComponents.get(component);
+    if (!entry || !isRuntimeBackedStyledComponent(entry)) {
+      throw new Error(`Styled behavior intent requires a Runtime-backed component: ${component}.`);
+    }
+  }
+  if (behaviorComponents.length > 0)
+    assertBehaviorPackageReleases(
+      options.base.packageReleases,
+      options.head.packageReleases,
+      "Styled",
+    );
   if (
     (changedComponents.length > 0 || addedComponents.length > 0) &&
-    !options.head.starwindChangesets.some((file) => !options.base.starwindChangesets.includes(file))
+    !hasNewPackageRelease(options.base.packageReleases, options.head.packageReleases, "starwind")
   ) {
     throw new Error("Styled source changes require a new starwind package Changeset.");
   }
@@ -271,9 +326,14 @@ export async function versionStyledComponents(
   const nextVersions = sortRecord(applyStyledVersionIntents(manifest.components, aggregated));
   const versions: StyledVersionPlan["versions"] = {};
 
-  for (const [component, bump] of Object.entries(aggregated)) {
+  const nextSourceVersions = materializeSourceVersions({
+    currentSourceVersions: sourceVersions(manifest),
+    decisions: aggregated,
+    nextVersions,
+  });
+  for (const [component, decision] of Object.entries(aggregated)) {
     versions[component] = {
-      bump,
+      bump: decision.bump,
       from: manifest.components[component],
       to: nextVersions[component],
     };
@@ -282,7 +342,7 @@ export async function versionStyledComponents(
 
   await writeFile(
     manifestPath,
-    `${JSON.stringify({ ...manifest, components: nextVersions }, null, 2)}\n`,
+    `${JSON.stringify({ ...manifest, components: nextVersions, sourceVersions: nextSourceVersions }, null, 2)}\n`,
   );
   // Changesets treats every direct child of `.changeset` as one of its own
   // files, so the consumed intent directory must disappear before
@@ -327,7 +387,7 @@ async function readWorkingSnapshot(repoRoot: string): Promise<StyledReleaseSnaps
     fragments: await readFragments(repoRoot, new Set(Object.keys(manifest.components))),
     manifest,
     registry: await readJson<RuntimeRegistry>(path.join(repoRoot, STYLED_REGISTRY_ARTIFACT)),
-    starwindChangesets: await readWorkingStarwindChangesets(repoRoot),
+    packageReleases: await readWorkingPackageReleases(repoRoot),
   };
 }
 
@@ -337,7 +397,7 @@ async function readGitSnapshot(repoRoot: string, ref: string): Promise<StyledRel
   ) as RegistryVersionManifest;
   const knownComponents = new Set(Object.keys(manifest.components));
   const fragmentPaths = await listGitFiles(repoRoot, ref, STYLED_VERSION_FRAGMENT_DIR);
-  const fragments: Record<string, StyledVersionIntent> = {};
+  const fragments: Record<string, ParsedStyledVersionIntent> = {};
   for (const fragmentPath of fragmentPaths) {
     if (path.posix.dirname(fragmentPath) !== STYLED_VERSION_FRAGMENT_DIR) {
       throw new Error(`Unsafe styled version intent path "${fragmentPath}".`);
@@ -356,11 +416,11 @@ async function readGitSnapshot(repoRoot: string, ref: string): Promise<StyledRel
       path.posix.dirname(file) === ".changeset" &&
       !file.endsWith("/README.md"),
   );
-  const starwindChangesets: string[] = [];
+  const packageReleases: ChangesetReleaseFacts = {};
   for (const changesetPath of changesetPaths) {
-    if (changesetReleasesStarwind(await readGitFile(repoRoot, ref, changesetPath))) {
-      starwindChangesets.push(path.posix.basename(changesetPath));
-    }
+    packageReleases[path.posix.basename(changesetPath)] = parseChangesetReleaseFacts(
+      await readGitFile(repoRoot, ref, changesetPath),
+    );
   }
   return {
     fragments,
@@ -368,7 +428,7 @@ async function readGitSnapshot(repoRoot: string, ref: string): Promise<StyledRel
     registry: JSON.parse(
       await readGitFile(repoRoot, ref, STYLED_REGISTRY_ARTIFACT),
     ) as RuntimeRegistry,
-    starwindChangesets: starwindChangesets.sort(),
+    packageReleases: sortRecord(packageReleases),
   };
 }
 
@@ -376,7 +436,7 @@ async function readFragments(
   repoRoot: string,
   knownComponents: ReadonlySet<string>,
   directory = STYLED_VERSION_FRAGMENT_DIR,
-): Promise<Record<string, StyledVersionIntent>> {
+): Promise<Record<string, ParsedStyledVersionIntent>> {
   const root = path.join(repoRoot, directory);
   let entries;
   try {
@@ -386,7 +446,7 @@ async function readFragments(
     throw error;
   }
 
-  const fragments: Record<string, StyledVersionIntent> = {};
+  const fragments: Record<string, ParsedStyledVersionIntent> = {};
   for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
     if (!entry.isFile())
       throw new Error(`Styled version intent directory contains non-file entry: ${entry.name}.`);
@@ -410,28 +470,17 @@ async function resolveVersionFragmentDirectory(repoRoot: string): Promise<string
   });
 }
 
-async function readWorkingStarwindChangesets(repoRoot: string): Promise<string[]> {
+async function readWorkingPackageReleases(repoRoot: string): Promise<ChangesetReleaseFacts> {
   const root = path.join(repoRoot, ".changeset");
   const entries = await readdir(root, { withFileTypes: true });
-  const files: string[] = [];
+  const files: ChangesetReleaseFacts = {};
   for (const entry of entries) {
     if (!entry.isFile() || !entry.name.endsWith(".md") || entry.name === "README.md") continue;
-    if (changesetReleasesStarwind(await readFile(path.join(root, entry.name), "utf8"))) {
-      files.push(entry.name);
-    }
+    files[entry.name] = parseChangesetReleaseFacts(
+      await readFile(path.join(root, entry.name), "utf8"),
+    );
   }
-  return files.sort();
-}
-
-function changesetReleasesStarwind(content: string): boolean {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(content);
-  return Boolean(
-    match?.[1]
-      .split(/\r?\n/)
-      .some((line) =>
-        /^(?:"starwind"|'starwind'|starwind):\s*(?:patch|minor|major)\s*$/.test(line.trim()),
-      ),
-  );
+  return sortRecord(files);
 }
 
 function validateSnapshot(snapshot: StyledReleaseSnapshot, label: string): void {
@@ -456,6 +505,13 @@ function validateSnapshot(snapshot: StyledReleaseSnapshot, label: string): void 
         `${label} registry has ${component}@${registryVersion ?? "missing"}; expected ${version}.`,
       );
     }
+    if (
+      Object.hasOwn(snapshot.manifest, "sourceVersions") &&
+      registryComponents.get(component)?.sourceVersion !==
+        sourceVersions(snapshot.manifest)[component]
+    ) {
+      throw new Error(`${label} registry has an invalid sourceVersion for ${component}.`);
+    }
   }
 }
 
@@ -472,6 +528,59 @@ function validateManifest(manifest: RegistryVersionManifest, label: string): voi
     if (!component || typeof version !== "string" || !semver.valid(version)) {
       throw new Error(`${label} has invalid version for styled component "${component}".`);
     }
+  }
+  const sources = sourceVersions(manifest);
+  assertSameKeys(manifest.components, sources, `${label} source versions`);
+  for (const [component, sourceVersion] of Object.entries(sources)) {
+    if (!semver.valid(sourceVersion) || semver.gt(sourceVersion, manifest.components[component])) {
+      throw new Error(`${label} has invalid source version for styled component "${component}".`);
+    }
+  }
+}
+
+function sourceVersions(manifest: RegistryVersionManifest): Record<string, string> {
+  return manifest.sourceVersions ?? manifest.components;
+}
+
+function assertVersionMap(
+  expected: Record<string, string>,
+  actual: Record<string, string>,
+  label: string,
+): void {
+  assertSameKeys(expected, actual, label);
+  for (const [name, version] of Object.entries(expected)) {
+    if (actual[name] !== version)
+      throw new Error(
+        `${label} expected ${name}@${version}, received ${actual[name] ?? "missing"}.`,
+      );
+  }
+}
+
+function isRuntimeBackedStyledComponent(component: StyledRegistryComponent): boolean {
+  return Object.values(component.targets ?? {}).some((target) =>
+    target.packageRequirements.some((requirement) =>
+      RELEASE_MANAGED_PACKAGES.has(requirement.name),
+    ),
+  );
+}
+
+function assertBehaviorPackageReleases(
+  base: ChangesetReleaseFacts,
+  head: ChangesetReleaseFacts,
+  label: string,
+): void {
+  const required = ["starwind", ...FIXED_GROUP_PACKAGES];
+  const missing = required.filter((name) => !hasNewPackageRelease(base, head, name));
+  if (missing.length > 0) {
+    throw new Error(
+      `${label} behavior intent requires new release intent for: ${missing.join(", ")}.`,
+    );
+  }
+  const fixedGroupBumps = new Set(
+    FIXED_GROUP_PACKAGES.map((name) => getNewPackageReleaseBump(base, head, name)),
+  );
+  if (fixedGroupBumps.size !== 1) {
+    throw new Error(`${label} behavior intent requires matching fixed-group release bumps.`);
   }
 }
 
@@ -570,6 +679,33 @@ function assertFeatureManifestMigration(options: {
     if (!before || !after || !semver.gt(after, before)) {
       throw new Error(
         `Styled baseline migration for ${component} must advance from ${before ?? "missing"} to a later version.`,
+      );
+    }
+  }
+}
+
+function assertFeatureSourceVersions(
+  base: RegistryVersionManifest,
+  head: RegistryVersionManifest,
+  baselineComponents: readonly string[],
+): void {
+  const baselineSet = new Set(baselineComponents);
+  const before = sourceVersions(base);
+  const after = sourceVersions(head);
+  for (const component of Object.keys(base.components)) {
+    const expected = baselineSet.has(component) ? head.components[component] : before[component];
+    if (after[component] !== expected) {
+      throw new Error(
+        `Feature PR must defer ${component} sourceVersion changes to the Version Packages PR.`,
+      );
+    }
+  }
+  for (const component of Object.keys(head.components).filter(
+    (name) => !(name in base.components),
+  )) {
+    if (after[component] !== head.components[component]) {
+      throw new Error(
+        `New styled component "${component}" must start with sourceVersion equal to version.`,
       );
     }
   }

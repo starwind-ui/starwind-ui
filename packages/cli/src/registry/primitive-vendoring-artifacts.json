@@ -4,6 +4,7 @@
     {
       "component": "button",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -39,6 +40,7 @@
     {
       "component": "carousel",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -104,6 +106,7 @@
     {
       "component": "toggle",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -139,6 +142,7 @@
     {
       "component": "field",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -210,6 +214,7 @@
     {
       "component": "fieldset",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -251,6 +256,7 @@
     {
       "component": "form",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -292,6 +298,7 @@
     {
       "component": "input",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -327,6 +334,7 @@
     {
       "component": "switch",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -368,6 +376,7 @@
     {
       "component": "checkbox",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -409,6 +418,7 @@
     {
       "component": "radio",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -450,6 +460,7 @@
     {
       "component": "slider",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -515,6 +526,7 @@
     {
       "component": "collapsible",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -562,6 +574,7 @@
     {
       "component": "toggle-group",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -597,6 +610,7 @@
     {
       "component": "radio-group",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -632,6 +646,7 @@
     {
       "component": "checkbox-group",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -667,6 +682,7 @@
     {
       "component": "tabs",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -726,6 +742,7 @@
     {
       "component": "accordion",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -785,6 +802,7 @@
     {
       "component": "avatar",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -832,6 +850,7 @@
     {
       "component": "progress",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -891,6 +910,7 @@
     {
       "component": "scroll-area",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -956,6 +976,7 @@
     {
       "component": "input-otp",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1009,6 +1030,7 @@
     {
       "component": "tooltip",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1074,6 +1096,7 @@
     {
       "component": "popover",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1169,6 +1192,7 @@
     {
       "component": "preview-card",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1246,6 +1270,7 @@
     {
       "component": "dialog",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1317,6 +1342,7 @@
     {
       "component": "alert-dialog",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1400,6 +1426,7 @@
     {
       "component": "drawer",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1483,6 +1510,7 @@
     {
       "component": "dropzone",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1542,6 +1570,7 @@
     {
       "component": "menu",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1679,6 +1708,7 @@
     {
       "component": "navigation-menu",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1780,6 +1810,7 @@
     {
       "component": "context-menu",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -1935,6 +1966,7 @@
     {
       "component": "select",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2066,6 +2098,7 @@
     {
       "component": "sidebar",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2125,6 +2158,7 @@
     {
       "component": "combobox",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2268,6 +2302,7 @@
     {
       "component": "color-picker",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2441,6 +2476,7 @@
     {
       "component": "toast",
       "framework": "astro",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2524,6 +2560,7 @@
     {
       "component": "button",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2569,6 +2606,7 @@
     {
       "component": "carousel",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2644,6 +2682,7 @@
     {
       "component": "toggle",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2689,6 +2728,7 @@
     {
       "component": "field",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2776,6 +2816,7 @@
     {
       "component": "fieldset",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2827,6 +2868,7 @@
     {
       "component": "form",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2878,6 +2920,7 @@
     {
       "component": "input",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2923,6 +2966,7 @@
     {
       "component": "switch",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -2974,6 +3018,7 @@
     {
       "component": "checkbox",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3031,6 +3076,7 @@
     {
       "component": "radio",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3088,6 +3134,7 @@
     {
       "component": "slider",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3163,6 +3210,7 @@
     {
       "component": "collapsible",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3220,6 +3268,7 @@
     {
       "component": "toggle-group",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3271,6 +3320,7 @@
     {
       "component": "radio-group",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3322,6 +3372,7 @@
     {
       "component": "checkbox-group",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3373,6 +3424,7 @@
     {
       "component": "tabs",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3448,6 +3500,7 @@
     {
       "component": "accordion",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3517,6 +3570,7 @@
     {
       "component": "avatar",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3574,6 +3628,7 @@
     {
       "component": "progress",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3643,6 +3698,7 @@
     {
       "component": "scroll-area",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3718,6 +3774,7 @@
     {
       "component": "input-otp",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3781,6 +3838,7 @@
     {
       "component": "tooltip",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3862,6 +3920,7 @@
     {
       "component": "popover",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -3973,6 +4032,7 @@
     {
       "component": "preview-card",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -4066,6 +4126,7 @@
     {
       "component": "dialog",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -4147,6 +4208,7 @@
     {
       "component": "alert-dialog",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -4246,6 +4308,7 @@
     {
       "component": "drawer",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -4345,6 +4408,7 @@
     {
       "component": "dropzone",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -4414,6 +4478,7 @@
     {
       "component": "menu",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -4573,6 +4638,7 @@
     {
       "component": "navigation-menu",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -4690,6 +4756,7 @@
     {
       "component": "context-menu",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -4849,6 +4916,7 @@
     {
       "component": "select",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -5008,6 +5076,7 @@
     {
       "component": "sidebar",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -5083,6 +5152,7 @@
     {
       "component": "combobox",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -5254,6 +5324,7 @@
     {
       "component": "color-picker",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {
@@ -5431,6 +5502,7 @@
     {
       "component": "toast",
       "framework": "react",
+      "sourceVersion": "1.0.0",
       "version": "1.0.0",
       "files": [
         {

@@ -4,8 +4,7 @@ Version each public surface from the contract that changed. Starwind has three r
 
 - The `starwind` package versions CLI commands, options, configuration, and the bundled registry
   payload that makes component releases available.
-- Styled component versions describe generated component source copied into user projects.
-- Primitive versions describe vendorable Astro and React Primitive source.
+- Styled and Primitive component versions describe delivered public behavior.
 
 Runtime, Astro, and React form a separate fixed package group. ADR 0007 owns their lockstep release
 policy.
@@ -46,8 +45,22 @@ Changeset, Version Packages PR, dry run, and publication handoff.
 
 ## Component Intent
 
-For an existing Styled component whose installable source changes, add a deferred intent under
-`.changeset/styled-components/`. For an existing vendorable Primitive change, add an intent under
+Each existing Styled or vendorable Primitive has two values. `version` is the SemVer of delivered
+public behavior. `sourceVersion` is the component version from the most recent release that changed
+canonical installable files. A source version is valid SemVer and must not exceed its version. A new
+component starts with equal values.
+
+A release intent declares one impact for every entry in its file:
+
+- `source impact` changes canonical installable files.
+- `behavior impact` changes delivered Runtime-backed behavior while canonical installable files stay
+  unchanged.
+
+The optional intent field is `impact: "source" | "behavior"`. Omitted impact means source impact
+for existing intent-file compatibility. Separate files hold mixed impacts.
+
+For an existing Styled component, add the deferred intent under
+`.changeset/styled-components/`. For an existing vendorable Primitive, add it under
 `.changeset/primitive-components/`. Use component SemVer:
 
 - `patch` for a compatible correction.
@@ -56,6 +69,19 @@ For an existing Styled component whose installable source changes, add a deferre
 
 Keep the released manifest value unchanged in the implementation change. `pnpm release:version`
 aggregates pending intents and applies the highest component bump once in the Version Packages PR.
+Source impact wins when aggregation combines both impacts for the same component. The Version
+Packages PR always advances `version`. It sets `sourceVersion` to the new version for source impact
+and preserves `sourceVersion` for behavior impact.
+
+Source impact requires a matching canonical source fingerprint change. Behavior impact is valid only
+for a Runtime-backed first-party component or Primitive. It requires a `starwind` release intent and
+the complete Runtime, Astro, and React fixed package group from ADR 0007. Existing component
+releases still require a `starwind` Changeset.
+
+The pending Context Menu source changes and mobile Runtime correction ship in one combined batch.
+Keep only the existing source-impact intents because source impact wins aggregation and advances
+`version` and `sourceVersion` together. A later behavior-only release can preserve that source
+baseline while it advances `version`.
 
 Give each new stable component an explicit initial version in its manifest. Existing legacy
 components continue their published history. New stable components normally start at `1.0.0`.

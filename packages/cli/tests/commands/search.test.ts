@@ -136,11 +136,18 @@ describe("search command", () => {
         {
           name: "card",
           version: "1.0.0",
+          sourceVersion: "1.0.0",
           dependencies: [],
           type: "component",
           targets: { react: { files: [], componentDependencies: [], packageRequirements: [] } },
         },
-        { name: "button", version: "1.0.0", dependencies: [], type: "component" },
+        {
+          name: "button",
+          version: "1.0.0",
+          sourceVersion: "1.0.0",
+          dependencies: [],
+          type: "component",
+        },
       ],
     });
   });
@@ -192,8 +199,20 @@ describe("search command", () => {
       $schema: "https://starwind.dev/registry-schema.v2.json",
       version: "0.1.0",
       components: [
-        { name: "zebra", version: "1.0.0", dependencies: [], type: "component" },
-        { name: "Alpha", version: "1.0.0", dependencies: [], type: "component" },
+        {
+          name: "zebra",
+          version: "1.0.0",
+          sourceVersion: "1.0.0",
+          dependencies: [],
+          type: "component",
+        },
+        {
+          name: "Alpha",
+          version: "1.0.0",
+          sourceVersion: "1.0.0",
+          dependencies: [],
+          type: "component",
+        },
       ],
     });
     mockSearchProBlocks.mockResolvedValue([

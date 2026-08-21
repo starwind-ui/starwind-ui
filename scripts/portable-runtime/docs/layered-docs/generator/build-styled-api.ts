@@ -152,6 +152,14 @@ const buildExportMetadata = (
     framework,
     validationIssues,
   );
+  addAnnotatedInheritedCandidates(
+    contract,
+    component,
+    allStyledContracts,
+    exportAnnotation,
+    framework,
+    candidates,
+  );
   const inheritance = collectInheritance(component, framework);
 
   validateExportAnnotations(
@@ -392,6 +400,122 @@ const collectPropCandidates = (
   }
 
   return candidates;
+};
+
+const addAnnotatedInheritedCandidates = (
+  contract: StyledAdapterContract,
+  component: StyledComponentContract,
+  allStyledContracts: readonly StyledAdapterContract[],
+  annotation: StyledApiExportAnnotation | undefined,
+  framework: StyledFrameworkTarget,
+  candidates: Map<string, PropCandidate>,
+) => {
+  for (const [name, propAnnotation] of Object.entries(annotation?.props ?? {})) {
+    if (
+      propAnnotation.include !== true ||
+      candidates.has(name) ||
+      FRAMEWORK_PLUMBING_PROPS.has(name)
+    ) {
+      continue;
+    }
+
+    const destructuredDefault = component.destructure?.props.find(
+      (prop) => prop.name === name && isInFramework(prop.frameworks, framework),
+    )?.defaultValue;
+    const inheritedCandidate = resolveInheritedComponentProp(
+      contract,
+      component,
+      allStyledContracts,
+      name,
+      framework,
+    );
+    if (!inheritedCandidate) continue;
+
+    addCandidate(candidates, {
+      ...inheritedCandidate,
+      ...(destructuredDefault !== undefined ? { defaultValue: destructuredDefault } : {}),
+      exactPrimitivePassthrough: false,
+    });
+  }
+};
+
+const resolveInheritedComponentProp = (
+  contract: StyledAdapterContract,
+  component: StyledComponentContract,
+  allStyledContracts: readonly StyledAdapterContract[],
+  propName: string,
+  framework: StyledFrameworkTarget,
+  visited = new Set<string>(),
+): PropCandidate | undefined => {
+  const visitKey = `${contract.component}.${component.exportName}.${propName}`;
+  if (visited.has(visitKey)) return undefined;
+  visited.add(visitKey);
+
+  for (const extend of component.props?.extends ?? []) {
+    if (!isInFramework(extend.frameworks, framework)) continue;
+
+    if (extend.type === "variantProps") {
+      if (extend.omit?.includes(propName)) continue;
+
+      const definition = resolveVariantDefinition(contract, allStyledContracts, extend.variant);
+      const choices = definition?.variants?.[propName];
+      if (!choices) continue;
+
+      const values = Object.keys(choices);
+      return {
+        name: propName,
+        type: isBooleanVariant(values)
+          ? "boolean"
+          : values.map((value) => JSON.stringify(value)).join(" | "),
+        required: false,
+        classification: "variant",
+        ...(definition?.defaultVariants?.[propName] !== undefined
+          ? { defaultValue: formatDefaultValue(definition.defaultVariants[propName]) }
+          : {}),
+        values,
+        exactPrimitivePassthrough: false,
+      };
+    }
+
+    if (extend.type !== "componentProps" || extend.keys?.includes(propName)) continue;
+
+    const inheritedContract = allStyledContracts.find(
+      (candidate) => candidate.component === extend.component,
+    );
+    const inheritedComponent = inheritedContract?.components.find(
+      (candidate) => candidate.exportName === extend.exportName,
+    );
+    if (!inheritedContract || !inheritedComponent) continue;
+
+    const inheritedField = inheritedComponent.props?.fields?.find(
+      (field) => field.name === propName && isInFramework(field.frameworks, framework),
+    );
+    if (inheritedField) {
+      const inheritedDefault = inheritedComponent.destructure?.props.find(
+        (prop) => prop.name === propName && isInFramework(prop.frameworks, framework),
+      )?.defaultValue;
+      return {
+        name: propName,
+        type: inheritedField.type,
+        required: !inheritedField.optional,
+        classification: "wrapper",
+        ...(inheritedDefault !== undefined ? { defaultValue: inheritedDefault } : {}),
+        exactPrimitivePassthrough: false,
+      };
+    }
+
+    const inheritedCandidate = resolveInheritedComponentProp(
+      inheritedContract,
+      inheritedComponent,
+      allStyledContracts,
+      propName,
+      framework,
+      visited,
+    );
+    if (inheritedCandidate) return inheritedCandidate;
+  }
+
+  return undefined;
 };
 
 const addCandidate = (candidates: Map<string, PropCandidate>, candidate: PropCandidate) => {

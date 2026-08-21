@@ -169,6 +169,7 @@ export async function primitivesAdd(
 }
 
 type PrimitiveUpdateResult = {
+  delivery?: PrimitiveUpdateSummary["updated"][number]["delivery"];
   error?: string;
   name: string;
   newVersion?: string;
@@ -268,7 +269,7 @@ export async function primitivesUpdate(
       p.cancel("Some primitives failed to update");
       process.exit(1);
     } else if (results.updated.length > 0) {
-      p.outro("Primitive source updated successfully");
+      p.outro("Primitives updated successfully");
     } else if (results.skipped.length > 0 && results.failed.length === 0) {
       p.outro("Primitives already up to date or skipped");
     } else {
@@ -744,7 +745,7 @@ function formatPrimitiveUpdateResults(results: PrimitiveUpdateResult[]): string 
 
       return `  ${result.name} (${result.oldVersion ?? "unknown"} -> ${
         result.newVersion ?? "unknown"
-      })`;
+      })${result.delivery ? ` [${result.delivery}]` : ""}`;
     })
     .join("\n");
 }

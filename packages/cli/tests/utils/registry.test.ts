@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import {
   type FrameworkTargetPolicy,
@@ -12,6 +12,7 @@ import {
 } from "../../src/utils/framework-target-policy.js";
 import {
   clearRegistryCache,
+  getAllComponents,
   getComponent,
   getRegistry,
   loadRegistry,
@@ -86,6 +87,28 @@ describe.sequential("runtime registry loading", () => {
     expect(button?.targets?.react?.files.length).toBeGreaterThan(0);
   });
 
+  it("exposes normalized source versions from registry reader APIs", async () => {
+    const loadedRegistry = await loadRegistry({ type: "bundled" });
+    const explicitlyTypedRegistry = await loadRegistry<"astro" | "react" | "vue">(
+      { type: "bundled" },
+      { targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
+    );
+    const registryComponents = await getRegistry();
+    const component = await getComponent("button");
+    const allComponents = await getAllComponents();
+
+    expectTypeOf(loadedRegistry.components[0]!.sourceVersion).toEqualTypeOf<string>();
+    expectTypeOf(explicitlyTypedRegistry.components[0]!.sourceVersion).toEqualTypeOf<string>();
+    expectTypeOf(registryComponents[0]!.sourceVersion).toEqualTypeOf<string>();
+    if (component) {
+      expectTypeOf(component.sourceVersion).toEqualTypeOf<string>();
+    }
+    expectTypeOf(allComponents[0]!.sourceVersion).toEqualTypeOf<string>();
+    expectTypeOf<
+      Awaited<ReturnType<typeof getAllComponents>>[number]["sourceVersion"]
+    >().toEqualTypeOf<string>();
+  });
+
   it("loads a local v2 registry source", async () => {
     const registryPath = join(tempDir, "registry.json");
     await writeFile(registryPath, JSON.stringify(validRegistry, null, 2), "utf-8");
@@ -96,6 +119,7 @@ describe.sequential("runtime registry loading", () => {
         {
           name: "button",
           version: "2.4.0",
+          sourceVersion: "2.4.0",
           targets: {
             astro: {
               packageRequirements: [{ name: "@starwind-ui/astro", range: "^0.1.0" }],
@@ -103,6 +127,32 @@ describe.sequential("runtime registry loading", () => {
           },
         },
       ],
+    });
+  });
+
+  it("loads a component source version from an inline registry", async () => {
+    const registryPath = join(tempDir, "registry-with-source-version.json");
+    await writeFile(
+      registryPath,
+      JSON.stringify(
+        {
+          ...validRegistry,
+          components: [
+            {
+              ...validRegistry.components[0],
+              version: "2.5.0",
+              sourceVersion: "2.4.0",
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+
+    await expect(loadRegistry({ type: "local", path: registryPath })).resolves.toMatchObject({
+      components: [{ name: "button", version: "2.5.0", sourceVersion: "2.4.0" }],
     });
   });
 
@@ -288,10 +338,13 @@ describe.sequential("runtime registry loading", () => {
       "utf-8",
     );
 
-    await expect(loadRegistry({ type: "local", path: registryPath })).resolves.toMatchObject({
+    const hydratedRegistry = await loadRegistry({ type: "local", path: registryPath });
+    expectTypeOf(hydratedRegistry.components[0]!.sourceVersion).toEqualTypeOf<string>();
+    expect(hydratedRegistry).toMatchObject({
       components: [
         {
           name: "button",
+          sourceVersion: "2.4.0",
           artifact: { path: "artifacts/button.json" },
           targets: {
             react: {
@@ -306,6 +359,86 @@ describe.sequential("runtime registry loading", () => {
         },
       ],
     });
+  });
+
+  it("rejects a split artifact with a different normalized source version", async () => {
+    const registryPath = join(tempDir, "registry.json");
+    const artifactPath = join(tempDir, "artifacts", "button.json");
+    await mkdir(join(tempDir, "artifacts"), { recursive: true });
+    await writeFile(
+      registryPath,
+      JSON.stringify(
+        {
+          version: "2.0.0",
+          components: [
+            {
+              name: "button",
+              version: "2.4.0",
+              sourceVersion: "2.3.0",
+              type: "component",
+              dependencies: [],
+              artifact: { path: "artifacts/button.json" },
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+    await writeFile(
+      artifactPath,
+      JSON.stringify(
+        {
+          registryVersion: "2.0.0",
+          component: validRegistry.components[0],
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+
+    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(
+      /declares source version 2\.4\.0; expected 2\.3\.0/,
+    );
+  });
+
+  it("rejects a forward-ordered split artifact source version at its field path", async () => {
+    const registryPath = join(tempDir, "registry.json");
+    const artifactPath = join(tempDir, "artifacts", "button.json");
+    await mkdir(join(tempDir, "artifacts"), { recursive: true });
+    await writeFile(
+      registryPath,
+      JSON.stringify({
+        version: "2.0.0",
+        components: [
+          {
+            name: "button",
+            version: "2.4.0",
+            type: "component",
+            dependencies: [],
+            artifact: { path: "artifacts/button.json" },
+          },
+        ],
+      }),
+      "utf-8",
+    );
+    await writeFile(
+      artifactPath,
+      JSON.stringify({
+        registryVersion: "2.0.0",
+        component: {
+          ...validRegistry.components[0],
+          sourceVersion: "2.5.0",
+        },
+      }),
+      "utf-8",
+    );
+
+    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(
+      /artifacts\/button\.json\.component\.sourceVersion/,
+    );
   });
 
   it("hydrates and caches remote split registry component artifacts", async () => {
@@ -678,6 +811,57 @@ describe.sequential("runtime registry loading", () => {
 
     await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(
       /components\.0\.version/,
+    );
+  });
+
+  it("rejects non-semver source versions with a field-specific error", async () => {
+    const registryPath = join(tempDir, "invalid-source-version-registry.json");
+    await writeFile(
+      registryPath,
+      JSON.stringify(
+        {
+          ...validRegistry,
+          components: [
+            {
+              ...validRegistry.components[0],
+              sourceVersion: "2026-08-20",
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+
+    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(
+      /components\.0\.sourceVersion/,
+    );
+  });
+
+  it("rejects source versions newer than the component version", async () => {
+    const registryPath = join(tempDir, "forward-source-version-registry.json");
+    await writeFile(
+      registryPath,
+      JSON.stringify(
+        {
+          ...validRegistry,
+          components: [
+            {
+              ...validRegistry.components[0],
+              version: "2.4.0",
+              sourceVersion: "2.5.0",
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+
+    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(
+      /components\.0\.sourceVersion/,
     );
   });
 

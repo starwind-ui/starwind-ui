@@ -348,17 +348,23 @@ export async function verifyReactFoundationCases({ page }) {
       nextClass: next?.getAttribute("class") ?? null,
       nextHref: next?.getAttribute("href"),
       nextIconCount: next?.querySelectorAll("svg").length ?? 0,
+      nextHeight: next?.getBoundingClientRect().height ?? null,
       nextSlot: next?.getAttribute("data-slot"),
+      nextWidth: next?.getBoundingClientRect().width ?? null,
       previousAriaLabel: previous?.getAttribute("aria-label"),
       previousClass: previous?.getAttribute("class") ?? null,
       previousHref: previous?.getAttribute("href"),
       previousIconCount: previous?.querySelectorAll("svg").length ?? 0,
+      previousHeight: previous?.getBoundingClientRect().height ?? null,
       previousSlot: previous?.getAttribute("data-slot"),
+      previousWidth: previous?.getBoundingClientRect().width ?? null,
       rootAriaLabel: defaultRoot?.getAttribute("aria-label"),
       rootRole: defaultRoot?.getAttribute("role"),
       rootSlot: defaultRoot?.getAttribute("data-slot"),
       smallEllipsisClass: smallEllipsis?.getAttribute("class") ?? null,
       smallNextClass: smallNext?.getAttribute("class") ?? null,
+      smallNextHeight: smallNext?.getBoundingClientRect().height ?? null,
+      smallNextWidth: smallNext?.getBoundingClientRect().width ?? null,
       smallPageClass: smallPage?.getAttribute("class") ?? null,
     };
   });
@@ -375,16 +381,20 @@ export async function verifyReactFoundationCases({ page }) {
     paginationState.previousSlot !== "pagination-previous" ||
     paginationState.previousAriaLabel !== "Go to previous page" ||
     paginationState.previousHref !== "#runtime-pagination-demo" ||
-    paginationState.previousClass?.includes("group") !== true ||
     paginationState.previousClass?.includes("h-11") !== true ||
+    paginationState.previousClass?.includes("text-base") !== true ||
+    paginationState.previousClass?.includes("size-4.5") !== true ||
     paginationState.previousIconCount !== 1 ||
+    paginationState.previousWidth <= paginationState.previousHeight ||
     paginationState.nextSlot !== "pagination-next" ||
     paginationState.nextAriaLabel !== "Go to next page" ||
     paginationState.nextHref !== "#runtime-pagination-demo" ||
-    paginationState.nextClass?.includes("group") !== true ||
+    paginationState.nextClass?.includes("h-11") !== true ||
     paginationState.nextIconCount !== 1 ||
+    paginationState.nextWidth <= paginationState.nextHeight ||
     paginationState.inactiveSlot !== "pagination-link" ||
     paginationState.inactiveClass?.includes("hover:bg-muted") !== true ||
+    paginationState.inactiveClass?.includes("size-11") !== true ||
     paginationState.activeSlot !== "pagination-link" ||
     paginationState.activeAriaCurrent !== "page" ||
     paginationState.activeClass?.includes("border") !== true ||
@@ -396,9 +406,12 @@ export async function verifyReactFoundationCases({ page }) {
     paginationState.ellipsisSrOnlyText !== "More pages" ||
     paginationState.smallPageClass?.includes("size-9") !== true ||
     paginationState.smallNextClass?.includes("h-9") !== true ||
+    paginationState.smallNextClass?.includes("size-3.5") !== true ||
+    paginationState.smallNextWidth <= paginationState.smallNextHeight ||
     paginationState.smallEllipsisClass?.includes("size-9") !== true ||
     paginationState.largePageClass?.includes("size-12") !== true ||
     paginationState.largeNextClass?.includes("h-12") !== true ||
+    paginationState.largeNextClass?.includes("size-5") !== true ||
     paginationState.largeEllipsisClass?.includes("size-12") !== true
   ) {
     throw new Error(

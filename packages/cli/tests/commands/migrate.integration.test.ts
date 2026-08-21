@@ -67,13 +67,14 @@ const mockTasks = vi.mocked(clackPrompts.tasks);
 const mockInstallDependencies = vi.mocked(packageManager.installDependenciesWithProgress);
 const mockLoadRegistry = vi.mocked(registry.loadRegistry);
 
-const registryFixture: registry.StarwindRegistry = {
+const registryFixture: registry.NormalizedStarwindRegistry = {
   $schema: "https://starwind.dev/registry-schema.v2.json",
   version: "0.1.0",
   components: [
     {
       name: "button",
       version: "2.0.0",
+      sourceVersion: "2.0.0",
       type: "component",
       dependencies: [],
       targets: {
@@ -92,6 +93,7 @@ const registryFixture: registry.StarwindRegistry = {
     {
       name: "dropdown",
       version: "2.0.0",
+      sourceVersion: "2.0.0",
       type: "component",
       dependencies: [],
       targets: {
@@ -110,6 +112,7 @@ const registryFixture: registry.StarwindRegistry = {
     {
       name: "menu",
       version: "2.0.0",
+      sourceVersion: "2.0.0",
       type: "component",
       dependencies: [],
       publicRenames: {
@@ -132,6 +135,7 @@ const registryFixture: registry.StarwindRegistry = {
     {
       name: "combobox",
       version: "2.0.0",
+      sourceVersion: "2.0.0",
       type: "component",
       dependencies: [],
       targets: {
@@ -150,6 +154,7 @@ const registryFixture: registry.StarwindRegistry = {
     {
       name: "input-group",
       version: "2.0.0",
+      sourceVersion: "2.0.0",
       type: "component",
       dependencies: [],
       targets: {
@@ -168,6 +173,7 @@ const registryFixture: registry.StarwindRegistry = {
     {
       name: "color-picker",
       version: "1.2.0",
+      sourceVersion: "1.2.0",
       type: "component",
       dependencies: [],
       targets: {
@@ -187,6 +193,7 @@ const registryFixture: registry.StarwindRegistry = {
     {
       name: "select",
       version: "2.0.0",
+      sourceVersion: "2.0.0",
       type: "component",
       dependencies: [],
       targets: {

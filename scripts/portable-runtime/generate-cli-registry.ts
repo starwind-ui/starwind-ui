@@ -57,6 +57,7 @@ type RegistrySetupTarget = {
 type RegistryComponent = {
   dependencies: string[];
   name: string;
+  sourceVersion: string;
   targets: Partial<Record<RegistryImplementationTarget, RegistryTarget>>;
   type: "component";
   version: string;
@@ -80,11 +81,21 @@ export type RegistryVersionManifest = {
   components: Record<string, string>;
   defaultComponentVersion: string;
   registryVersion: string;
+  sourceVersions: Record<string, string>;
 };
 
 export type PrimitiveVersionManifest = {
   defaultPrimitiveVersion: string;
   primitives: Record<string, string>;
+  sourceVersions: Record<string, string>;
+};
+
+type RegistryVersionManifestSource = Omit<RegistryVersionManifest, "sourceVersions"> & {
+  sourceVersions?: Record<string, string>;
+};
+
+type PrimitiveVersionManifestSource = Omit<PrimitiveVersionManifest, "sourceVersions"> & {
+  sourceVersions?: Record<string, string>;
 };
 
 export type RuntimeRegistryArtifactDocument = {
@@ -113,6 +124,7 @@ export type PrimitiveVendoringArtifact = {
   files: PrimitiveVendoringFile[];
   framework: PrimitiveVendoringFramework;
   packageRequirements: RegistryPackageRequirement[];
+  sourceVersion: string;
   version: string;
 };
 
@@ -420,6 +432,10 @@ export async function buildRuntimeRegistry(
       components: await Promise.all(
         contracts.map(async (contract) => ({
           name: contract.component,
+          sourceVersion:
+            options.componentVersion ??
+            versionManifest.sourceVersions[contract.component] ??
+            versionManifest.defaultComponentVersion,
           version:
             options.componentVersion ??
             versionManifest.components[contract.component] ??
@@ -609,6 +625,7 @@ export async function buildPrimitiveVendoringArtifacts(
           return {
             component: contract.component,
             framework: target.framework,
+            sourceVersion: primitiveVersionManifest.sourceVersions[contract.component],
             version: primitiveVersionManifest.primitives[contract.component],
             files,
             packageRequirements: collectPrimitivePackageRequirements({
@@ -801,7 +818,10 @@ export async function loadRegistryVersionManifest(
     );
   }
 
-  return rawManifest;
+  return {
+    ...rawManifest,
+    sourceVersions: rawManifest.sourceVersions ?? rawManifest.components,
+  };
 }
 
 export async function loadPrimitiveVersionManifest(
@@ -831,7 +851,10 @@ export async function loadPrimitiveVersionManifest(
     );
   }
 
-  return rawManifest;
+  return {
+    ...rawManifest,
+    sourceVersions: rawManifest.sourceVersions ?? rawManifest.primitives,
+  };
 }
 
 function validateRegistryVersionManifest(
@@ -848,6 +871,22 @@ function validateRegistryVersionManifest(
   for (const [componentName, version] of Object.entries(manifest.components)) {
     assertSemver(version, `${options.manifestPath} component "${componentName}"`);
   }
+
+  assertMatchingVersionMapKeys({
+    manifestPath: options.manifestPath,
+    sourceVersions: manifest.sourceVersions,
+    versions: manifest.components,
+  });
+
+  for (const [componentName, sourceVersion] of Object.entries(manifest.sourceVersions)) {
+    assertSemver(sourceVersion, `${options.manifestPath} sourceVersion "${componentName}"`);
+  }
+
+  assertSourceVersionsDoNotExceedVersions({
+    manifestPath: options.manifestPath,
+    sourceVersions: manifest.sourceVersions,
+    versions: manifest.components,
+  });
 
   if (!options.requireComponentVersions) return;
 
@@ -875,6 +914,22 @@ function validatePrimitiveVersionManifest(
     assertSemver(version, `${options.manifestPath} primitive "${componentName}"`);
   }
 
+  assertMatchingVersionMapKeys({
+    manifestPath: options.manifestPath,
+    sourceVersions: manifest.sourceVersions,
+    versions: manifest.primitives,
+  });
+
+  for (const [componentName, sourceVersion] of Object.entries(manifest.sourceVersions)) {
+    assertSemver(sourceVersion, `${options.manifestPath} sourceVersion "${componentName}"`);
+  }
+
+  assertSourceVersionsDoNotExceedVersions({
+    manifestPath: options.manifestPath,
+    sourceVersions: manifest.sourceVersions,
+    versions: manifest.primitives,
+  });
+
   const missingComponents = options.contracts
     .map((contract) => contract.component)
     .filter((componentName) => manifest.primitives[componentName] === undefined);
@@ -886,34 +941,83 @@ function validatePrimitiveVersionManifest(
   }
 }
 
-function isRegistryVersionManifest(value: unknown): value is RegistryVersionManifest {
+function isRegistryVersionManifest(value: unknown): value is RegistryVersionManifestSource {
   if (!value || typeof value !== "object") return false;
 
-  const manifest = value as Partial<RegistryVersionManifest>;
+  const manifest = value as Partial<RegistryVersionManifestSource>;
   return (
     typeof manifest.registryVersion === "string" &&
     typeof manifest.defaultComponentVersion === "string" &&
     Boolean(manifest.components) &&
     typeof manifest.components === "object" &&
-    Object.values(manifest.components).every((version) => typeof version === "string")
+    Object.values(manifest.components).every((version) => typeof version === "string") &&
+    (manifest.sourceVersions === undefined ||
+      (Boolean(manifest.sourceVersions) &&
+        typeof manifest.sourceVersions === "object" &&
+        Object.values(manifest.sourceVersions).every((version) => typeof version === "string")))
   );
 }
 
-function isPrimitiveVersionManifest(value: unknown): value is PrimitiveVersionManifest {
+function isPrimitiveVersionManifest(value: unknown): value is PrimitiveVersionManifestSource {
   if (!value || typeof value !== "object") return false;
 
-  const manifest = value as Partial<PrimitiveVersionManifest>;
+  const manifest = value as Partial<PrimitiveVersionManifestSource>;
   return (
     typeof manifest.defaultPrimitiveVersion === "string" &&
     Boolean(manifest.primitives) &&
     typeof manifest.primitives === "object" &&
-    Object.values(manifest.primitives).every((version) => typeof version === "string")
+    Object.values(manifest.primitives).every((version) => typeof version === "string") &&
+    (manifest.sourceVersions === undefined ||
+      (Boolean(manifest.sourceVersions) &&
+        typeof manifest.sourceVersions === "object" &&
+        Object.values(manifest.sourceVersions).every((version) => typeof version === "string")))
   );
 }
 
 function assertSemver(version: string, label: string): void {
   if (!isSemverVersion(version)) {
     throw new Error(`${label} must be a semver version. Received "${version}".`);
+  }
+}
+
+function assertMatchingVersionMapKeys(options: {
+  manifestPath: string;
+  sourceVersions: Record<string, string>;
+  versions: Record<string, string>;
+}): void {
+  const missingKeys = Object.keys(options.versions).filter(
+    (componentName) => !Object.hasOwn(options.sourceVersions, componentName),
+  );
+
+  if (missingKeys.length > 0) {
+    throw new Error(
+      `${options.manifestPath} sourceVersions is missing entries for: ${missingKeys.join(", ")}`,
+    );
+  }
+
+  const extraKeys = Object.keys(options.sourceVersions).filter(
+    (componentName) => !Object.hasOwn(options.versions, componentName),
+  );
+
+  if (extraKeys.length > 0) {
+    throw new Error(
+      `${options.manifestPath} sourceVersions has extra entries for: ${extraKeys.join(", ")}`,
+    );
+  }
+}
+
+function assertSourceVersionsDoNotExceedVersions(options: {
+  manifestPath: string;
+  sourceVersions: Record<string, string>;
+  versions: Record<string, string>;
+}): void {
+  for (const [componentName, sourceVersion] of Object.entries(options.sourceVersions)) {
+    const version = options.versions[componentName]!;
+    if (semver.gt(sourceVersion, version)) {
+      throw new Error(
+        `${options.manifestPath} sourceVersion "${componentName}" ${sourceVersion} must not exceed version ${version}.`,
+      );
+    }
   }
 }
 
@@ -1342,7 +1446,7 @@ function createPrimitiveArtifactIntegrityFingerprint(
 ): string {
   const document = {
     ...artifactSet,
-    primitives: artifactSet.primitives.map((artifact) => ({
+    primitives: artifactSet.primitives.map(({ sourceVersion: _sourceVersion, ...artifact }) => ({
       ...artifact,
       packageRequirements: normalizeIntegrityPackageRequirements(artifact.packageRequirements),
       version: "<release-managed>",

@@ -56,6 +56,7 @@ export type RuntimeInstallSummary = {
 };
 
 type RuntimeUpdateStatus<TFramework extends CliFrameworkTarget = StarwindFramework> = {
+  delivery?: RuntimeUpdateDelivery;
   error?: string;
   framework?: TFramework;
   name: string;
@@ -64,10 +65,20 @@ type RuntimeUpdateStatus<TFramework extends CliFrameworkTarget = StarwindFramewo
   status: "updated" | "skipped" | "failed";
 };
 
+export type RuntimeUpdatedStatus<TFramework extends CliFrameworkTarget = StarwindFramework> = Omit<
+  RuntimeUpdateStatus<TFramework>,
+  "delivery" | "status"
+> & {
+  delivery: RuntimeUpdateDelivery;
+  status: "updated";
+};
+
+export type RuntimeUpdateDelivery = "source" | "behavior";
+
 export type RuntimeUpdateSummary<TFramework extends CliFrameworkTarget = StarwindFramework> = {
   failed: RuntimeUpdateStatus<TFramework>[];
   skipped: RuntimeUpdateStatus<TFramework>[];
-  updated: RuntimeUpdateStatus<TFramework>[];
+  updated: RuntimeUpdatedStatus<TFramework>[];
 };
 
 export type RuntimeUpdatePlanFile = {
@@ -82,6 +93,7 @@ export type RuntimeUpdatePlanFile = {
 export type RuntimeUpdatePlanItem<TFramework extends CliFrameworkTarget = CliFrameworkTarget> = {
   component: ComponentFor<TFramework>;
   componentIndex: number;
+  delivery: RuntimeUpdateDelivery;
   files: RuntimeUpdatePlanFile[];
   framework: TFramework;
   newVersion: string;
@@ -638,6 +650,7 @@ export async function updateRuntimeComponents<TFramework extends CliFrameworkTar
 
   const updatedComponents = [...options.config.components];
   let skipPackageDependentUpdates = false;
+  let hasSourceDelivery = false;
 
   if (plan.packagesToInstall.length > 0) {
     if (!options.skipPrompts) {
@@ -667,6 +680,7 @@ export async function updateRuntimeComponents<TFramework extends CliFrameworkTar
   for (const item of plan.updates) {
     if (skipPackageDependentUpdates && item.packagesToInstall.length > 0) {
       summary.skipped.push({
+        delivery: item.delivery,
         name: item.component.name,
         ...getFrameworkStatusMetadata(
           options.config,
@@ -681,7 +695,10 @@ export async function updateRuntimeComponents<TFramework extends CliFrameworkTar
       continue;
     }
 
-    await writePreparedRegistryFiles(item.files, true);
+    if (item.delivery === "source") {
+      await writePreparedRegistryFiles(item.files, true);
+      hasSourceDelivery = true;
+    }
 
     const currentIndex = item.componentIndex;
     const currentComponent = updatedComponents[currentIndex]!;
@@ -696,6 +713,7 @@ export async function updateRuntimeComponents<TFramework extends CliFrameworkTar
       version: item.newVersion,
     };
     summary.updated.push({
+      delivery: item.delivery,
       name: item.component.name,
       ...getFrameworkStatusMetadata(
         options.config,
@@ -710,7 +728,9 @@ export async function updateRuntimeComponents<TFramework extends CliFrameworkTar
   }
 
   if (summary.updated.length > 0) {
-    await syncReactProjectComponentStyles(options.config, reactHostKind);
+    if (hasSourceDelivery) {
+      await syncReactProjectComponentStyles(options.config, reactHostKind);
+    }
     const registries = mergeRegistryReferences(plan.updates);
     await updateConfig(
       {
@@ -858,32 +878,25 @@ export async function planRuntimeComponentUpdates<TFramework extends CliFramewor
       }
 
       try {
-        const preparedFiles = await resolvePreparedRegistryFiles(
-          prepareRegistryFiles({
-            componentDir: getStyledComponentDir(options.config, framework),
-            componentName,
-            files: registryTarget.files,
-            reactHostKind: framework === "react" ? reactHostKind : undefined,
-          }),
-        );
+        const sourceVersion = registryComponent.sourceVersion ?? registryComponent.version;
+        const delivery: RuntimeUpdateDelivery = semver.lt(currentVersion, sourceVersion)
+          ? "source"
+          : "behavior";
         const packageRequirements = dedupePackageRequirements(registryTarget.packageRequirements);
-        const files = await Promise.all(
-          preparedFiles.map(async (file): Promise<RuntimeUpdatePlanFile> => {
-            const exists = await fs.pathExists(file.destination);
-            const currentContent = exists ? await fs.readFile(file.destination, "utf-8") : "";
-
-            return {
-              ...file,
-              currentContent,
-              exists,
-              changed: currentContent !== file.content,
-            };
-          }),
-        );
+        const files =
+          delivery === "source"
+            ? await resolveRuntimeUpdateFiles({
+                componentDir: getStyledComponentDir(options.config, framework),
+                componentName,
+                files: registryTarget.files,
+                reactHostKind: framework === "react" ? reactHostKind : undefined,
+              })
+            : [];
 
         plan.updates.push({
           component: registryComponent,
           componentIndex,
+          delivery,
           files,
           framework,
           newVersion: registryComponent.version,
@@ -938,6 +951,29 @@ async function loadComponentUpdateRegistry<TFramework extends CliFrameworkTarget
       }`,
     );
   }
+}
+
+async function resolveRuntimeUpdateFiles(options: {
+  componentDir: string;
+  componentName: string;
+  files: RegistryTarget["files"];
+  reactHostKind?: ReactHostKind;
+}): Promise<RuntimeUpdatePlanFile[]> {
+  const preparedFiles = await resolvePreparedRegistryFiles(prepareRegistryFiles(options));
+
+  return Promise.all(
+    preparedFiles.map(async (file): Promise<RuntimeUpdatePlanFile> => {
+      const exists = await fs.pathExists(file.destination);
+      const currentContent = exists ? await fs.readFile(file.destination, "utf-8") : "";
+
+      return {
+        ...file,
+        currentContent,
+        exists,
+        changed: currentContent !== file.content,
+      };
+    }),
+  );
 }
 
 async function finalizeRuntimeUpdatePackagePlan<TFramework extends CliFrameworkTarget>(

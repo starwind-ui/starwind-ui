@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import * as clackPrompts from "@clack/prompts";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import type { StarwindConfig, StarwindConfigFor } from "../../src/utils/config.js";
 import * as config from "../../src/utils/config.js";
@@ -15,10 +16,16 @@ import * as packageManager from "../../src/utils/package-manager.js";
 import {
   getPrimitiveComponents,
   installPrimitiveComponents,
+  planPrimitiveComponentUpdates,
   type PrimitiveVendoringArtifact,
   type PrimitiveVendoringArtifactSet,
   updatePrimitiveComponents,
 } from "../../src/utils/primitive-component.js";
+import {
+  buildPrimitiveVendoringArtifacts,
+  createCliRegistryBuildPolicy,
+} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
+import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
 
 vi.mock("@clack/prompts", () => ({
   confirm: vi.fn(),
@@ -577,6 +584,7 @@ describe.sequential("primitive component vendoring", () => {
 
     expect(updateResult.updated).toEqual([
       {
+        delivery: "source",
         name: "button",
         status: "updated",
         oldVersion: "0.1.0",
@@ -636,7 +644,9 @@ describe.sequential("primitive component vendoring", () => {
     mockConfirm.mockResolvedValue(false);
 
     const result = await updatePrimitiveComponents(["button"], {
-      artifacts: { primitives: [primitiveArtifact("0.2.0")] },
+      artifacts: {
+        primitives: [{ ...primitiveArtifact("0.2.0"), sourceVersion: "0.1.0" }],
+      },
       config: currentConfig,
       packageManager: "pnpm",
       skipPrompts: false,
@@ -653,6 +663,7 @@ describe.sequential("primitive component vendoring", () => {
     expect(result.updated).toEqual([]);
     expect(result.skipped).toEqual([
       {
+        delivery: "behavior",
         name: "button",
         status: "skipped",
         oldVersion: "0.1.0",
@@ -662,6 +673,150 @@ describe.sequential("primitive component vendoring", () => {
     await expect(readFile(targetPath, "utf-8")).resolves.toBe("old primitive\n");
     expect(mockInstallDependencies).not.toHaveBeenCalled();
     expect(mockUpdateConfig).not.toHaveBeenCalled();
+  });
+
+  it("delivers a primitive behavior update without creating or rewriting source files", async () => {
+    const currentConfig: StarwindConfig = {
+      ...primitiveConfig,
+      primitives: [{ name: "button", version: "0.1.0", framework: "astro", source: "bundled" }],
+    };
+    const artifact = {
+      ...primitiveArtifact("0.2.0"),
+      sourceVersion: "0.1.0",
+    };
+    const targetPath = join(
+      tempDir,
+      "src",
+      "components",
+      "starwind-primitives",
+      "button",
+      "ButtonRoot.astro",
+    );
+    const absentIndexPath = join(dirname(targetPath), "index.ts");
+    await mkdir(dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, "custom primitive\n", "utf-8");
+    mockFilterUninstalledDependencies.mockResolvedValue([]);
+
+    const plan = await planPrimitiveComponentUpdates(["button"], {
+      artifacts: { primitives: [artifact] },
+      config: currentConfig,
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+    expect(plan.updates).toEqual([expect.objectContaining({ delivery: "behavior", files: [] })]);
+    expectTypeOf(plan.updates[0]!.delivery).toEqualTypeOf<"source" | "behavior">();
+
+    const result = await updatePrimitiveComponents(["button"], {
+      artifacts: { primitives: [artifact] },
+      config: currentConfig,
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+
+    expect(result.updated).toEqual([
+      {
+        delivery: "behavior",
+        name: "button",
+        status: "updated",
+        oldVersion: "0.1.0",
+        newVersion: "0.2.0",
+      },
+    ]);
+    expectTypeOf(result.updated[0]!.delivery).toEqualTypeOf<"source" | "behavior">();
+    await expect(readFile(targetPath, "utf-8")).resolves.toBe("custom primitive\n");
+    await expect(readFile(absentIndexPath, "utf-8")).rejects.toThrow();
+    expect(mockInstallDependencies).not.toHaveBeenCalled();
+    expect(mockUpdateConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        primitives: [{ name: "button", version: "0.2.0", framework: "astro", source: "bundled" }],
+      }),
+      { appendComponents: false },
+    );
+  });
+
+  it("does not create a Primitive destination directory for behavior delivery", async () => {
+    const currentConfig: StarwindConfig = {
+      ...primitiveConfig,
+      primitives: [{ name: "button", version: "0.1.0", framework: "astro", source: "bundled" }],
+    };
+    const destinationDir = join(tempDir, "src", "components", "starwind-primitives", "button");
+    mockFilterUninstalledDependencies.mockResolvedValue([]);
+
+    await expect(stat(destinationDir)).rejects.toThrow();
+
+    const result = await updatePrimitiveComponents(["button"], {
+      artifacts: {
+        primitives: [{ ...primitiveArtifact("0.2.0"), sourceVersion: "0.1.0" }],
+      },
+      config: currentConfig,
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+
+    expect(result.updated).toEqual([
+      {
+        delivery: "behavior",
+        name: "button",
+        status: "updated",
+        oldVersion: "0.1.0",
+        newVersion: "0.2.0",
+      },
+    ]);
+    await expect(stat(destinationDir)).rejects.toThrow();
+  });
+
+  it("delivers primitive source files when the installed version predates a later source release", async () => {
+    const currentConfig: StarwindConfig = {
+      ...primitiveConfig,
+      primitives: [{ name: "button", version: "0.1.0", framework: "astro", source: "bundled" }],
+    };
+    const targetPath = join(
+      tempDir,
+      "src",
+      "components",
+      "starwind-primitives",
+      "button",
+      "ButtonRoot.astro",
+    );
+    await mkdir(dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, "old primitive\n", "utf-8");
+    mockFilterUninstalledDependencies.mockResolvedValue([]);
+
+    const result = await updatePrimitiveComponents(["button"], {
+      artifacts: {
+        primitives: [{ ...primitiveArtifact("0.3.0"), sourceVersion: "0.2.0" }],
+      },
+      config: currentConfig,
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+
+    expect(result.updated).toEqual([
+      {
+        delivery: "source",
+        name: "button",
+        status: "updated",
+        oldVersion: "0.1.0",
+        newVersion: "0.3.0",
+      },
+    ]);
+    await expect(readFile(targetPath, "utf-8")).resolves.toContain("data-sw-button");
+  });
+
+  it("plans primitive behavior delivery after a skipped source release", async () => {
+    const plan = await planPrimitiveComponentUpdates(["button"], {
+      artifacts: {
+        primitives: [{ ...primitiveArtifact("0.4.0"), sourceVersion: "0.2.0" }],
+      },
+      config: {
+        ...primitiveConfig,
+        primitives: [{ name: "button", version: "0.3.0", framework: "astro", source: "bundled" }],
+      },
+      packageManager: "pnpm",
+      skipPrompts: true,
+    });
+
+    expect(plan.updates).toEqual([expect.objectContaining({ delivery: "behavior", files: [] })]);
   });
 
   it("updates an explicit framework primitive without replacing the same primitive for another framework", async () => {
@@ -697,6 +852,7 @@ describe.sequential("primitive component vendoring", () => {
 
     expect(result.updated).toEqual([
       {
+        delivery: "source",
         name: "button",
         status: "updated",
         oldVersion: "0.1.0",
@@ -766,4 +922,44 @@ describe.sequential("primitive component vendoring", () => {
       }),
     ).toThrow(/trusted integrity fingerprint/);
   });
+
+  it("rejects source-version drift after private artifact integrity validation", async () => {
+    const repositoryRoot = fileURLToPath(new URL("../../../..", import.meta.url));
+    const generatedArtifactRoot = await mkdtemp(
+      join(tmpdir(), "starwind-vue-primitive-integrity-test-"),
+    );
+    const projectRoot = process.cwd();
+
+    try {
+      process.chdir(repositoryRoot);
+      const generated = (await buildPrimitiveVendoringArtifacts({
+        repoRoot: repositoryRoot,
+        targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
+        tempRoot: generatedArtifactRoot,
+      })) as PrimitiveVendoringArtifactSet<"astro" | "react" | "vue">;
+      process.chdir(projectRoot);
+      const changedSourceVersions = structuredClone(generated);
+      for (const artifact of changedSourceVersions.primitives) {
+        artifact.sourceVersion = "0.0.0";
+      }
+
+      expect(
+        getPrimitiveComponents({
+          artifacts: generated,
+          framework: "vue",
+          targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+        }),
+      ).not.toHaveLength(0);
+      expect(() =>
+        getPrimitiveComponents({
+          artifacts: changedSourceVersions,
+          framework: "vue",
+          targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+        }),
+      ).toThrow(/must use manifest source version/);
+    } finally {
+      process.chdir(projectRoot);
+      await rm(generatedArtifactRoot, { force: true, recursive: true });
+    }
+  }, 30_000);
 });

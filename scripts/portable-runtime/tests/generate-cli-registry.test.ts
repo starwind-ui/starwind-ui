@@ -175,6 +175,9 @@ describe("generateCliRegistry", () => {
       expect(component.version, componentName).toBe(
         styledVersionManifest.components[componentName],
       );
+      expect(component.sourceVersion, componentName).toBe(
+        styledVersionManifest.sourceVersions[componentName],
+      );
       expect(target.files.length, componentName).toBeGreaterThan(0);
       expect(packageNames, componentName).toContain("@starwind-ui/vue");
       expect(packageNames, componentName).toContain("vue");
@@ -277,6 +280,9 @@ describe("generateCliRegistry", () => {
       const packageNames = primitive.packageRequirements.map(({ name }) => name);
       expect(primitive.version, primitive.component).toBe(
         primitiveVersionManifest.primitives[primitive.component],
+      );
+      expect(primitive.sourceVersion, primitive.component).toBe(
+        primitiveVersionManifest.sourceVersions[primitive.component],
       );
       expect(primitive.files.length, primitive.component).toBeGreaterThan(0);
       expect(packageNames, primitive.component).toContain("@starwind-ui/runtime");
@@ -857,6 +863,48 @@ describe("generateCliRegistry", () => {
     );
   });
 
+  it("emits styled source versions in full and split registry documents", async () => {
+    const manifestPath = path.join(tempRoot, "registry-versions.json");
+    await writeRegistryVersionManifest(manifestPath, {
+      registryVersion: "3.0.0",
+      components: {
+        button: "2.1.1",
+      },
+      sourceVersions: {
+        button: "2.1.0",
+      },
+    });
+
+    const options = {
+      contracts: starwindStyledContracts.filter((contract) => contract.component === "button"),
+      versionManifestPath: manifestPath,
+    };
+    const registry = await buildRuntimeRegistry({
+      ...options,
+      tempRoot: path.join(tempRoot, "full"),
+    });
+    const splitRegistry = await buildSplitRuntimeRegistry({
+      ...options,
+      tempRoot: path.join(tempRoot, "split"),
+    });
+
+    expect(registry.components[0]).toMatchObject({
+      name: "button",
+      sourceVersion: "2.1.0",
+      version: "2.1.1",
+    });
+    expect(splitRegistry.registry.components[0]).toMatchObject({
+      name: "button",
+      sourceVersion: "2.1.0",
+      version: "2.1.1",
+    });
+    expect(splitRegistry.artifacts[0]?.artifact.component).toMatchObject({
+      name: "button",
+      sourceVersion: "2.1.0",
+      version: "2.1.1",
+    });
+  });
+
   it("changes only the bumped component version when the manifest version changes", async () => {
     const firstManifestPath = path.join(tempRoot, "registry-versions.first.json");
     const secondManifestPath = path.join(tempRoot, "registry-versions.second.json");
@@ -866,11 +914,19 @@ describe("generateCliRegistry", () => {
         button: "2.1.0",
         dropdown: "2.2.0",
       },
+      sourceVersions: {
+        button: "2.1.0",
+        dropdown: "2.2.0",
+      },
     });
     await writeRegistryVersionManifest(secondManifestPath, {
       registryVersion: "3.0.0",
       components: {
         button: "2.1.1",
+        dropdown: "2.2.0",
+      },
+      sourceVersions: {
+        button: "2.1.0",
         dropdown: "2.2.0",
       },
     });
@@ -924,6 +980,48 @@ describe("generateCliRegistry", () => {
         versionManifestPath: manifestPath,
       }),
     ).rejects.toThrow(/registry-versions\.json.*dropdown/);
+  });
+
+  it("rejects styled source-version maps with missing keys", async () => {
+    const manifestPath = path.join(tempRoot, "registry-versions.json");
+    await writeRegistryVersionManifest(manifestPath, {
+      registryVersion: "3.0.0",
+      components: {
+        button: "2.1.0",
+        dropdown: "2.2.0",
+      },
+      sourceVersions: {
+        button: "2.1.0",
+      },
+    });
+
+    await expect(
+      buildRuntimeRegistry({
+        contracts: starwindStyledContracts.filter((contract) => contract.component === "button"),
+        tempRoot: path.join(tempRoot, "generated"),
+        versionManifestPath: manifestPath,
+      }),
+    ).rejects.toThrow(/sourceVersions.*missing.*dropdown/);
+  });
+
+  it("rejects source-version maps that inherit a missing component key", async () => {
+    const manifestPath = path.join(tempRoot, "registry-versions.json");
+    await writeRegistryVersionManifest(manifestPath, {
+      registryVersion: "3.0.0",
+      components: {
+        constructor: "2.1.0",
+      },
+      sourceVersions: {},
+    });
+
+    await expect(
+      buildRuntimeRegistry({
+        componentVersion: "2.0.0",
+        contracts: starwindStyledContracts.filter((contract) => contract.component === "button"),
+        tempRoot: path.join(tempRoot, "generated"),
+        versionManifestPath: manifestPath,
+      }),
+    ).rejects.toThrow(/sourceVersions.*missing.*constructor/);
   });
 
   it("validates manifest registry and component versions as semver", async () => {
@@ -981,6 +1079,48 @@ describe("generateCliRegistry", () => {
         versionManifestPath: manifestPath,
       }),
     ).rejects.toThrow(/defaultComponentVersion.*semver/);
+  });
+
+  it("rejects invalid styled source versions", async () => {
+    const manifestPath = path.join(tempRoot, "registry-versions.json");
+    await writeRegistryVersionManifest(manifestPath, {
+      registryVersion: "3.0.0",
+      components: {
+        button: "2.1.0",
+      },
+      sourceVersions: {
+        button: "latest",
+      },
+    });
+
+    await expect(
+      buildRuntimeRegistry({
+        contracts: starwindStyledContracts.filter((contract) => contract.component === "button"),
+        tempRoot: path.join(tempRoot, "generated"),
+        versionManifestPath: manifestPath,
+      }),
+    ).rejects.toThrow(/sourceVersion.*button.*semver/);
+  });
+
+  it("rejects styled source versions newer than delivered versions", async () => {
+    const manifestPath = path.join(tempRoot, "registry-versions.json");
+    await writeRegistryVersionManifest(manifestPath, {
+      registryVersion: "3.0.0",
+      components: {
+        button: "2.1.0",
+      },
+      sourceVersions: {
+        button: "2.1.1",
+      },
+    });
+
+    await expect(
+      buildRuntimeRegistry({
+        contracts: starwindStyledContracts.filter((contract) => contract.component === "button"),
+        tempRoot: path.join(tempRoot, "generated"),
+        versionManifestPath: manifestPath,
+      }),
+    ).rejects.toThrow(/sourceVersion.*button.*2\.1\.1.*version.*2\.1\.0/);
   });
 
   it("can build a split registry index with per-component artifact documents", async () => {
@@ -1298,12 +1438,16 @@ describe("generateCliRegistry", () => {
       "packages/cli/registry/styled-component-versions.json",
     );
     expect(Object.keys(versionManifest.components).sort()).toEqual(contractNames);
+    expect(versionManifest.sourceVersions).toEqual(versionManifest.components);
   });
 
   it("generates Astro primitive vendoring artifacts from source with Runtime package requirements", async () => {
     const manifestPath = path.join(tempRoot, "primitive-versions.json");
     await writePrimitiveVersionManifest(manifestPath, {
       primitives: {
+        button: "0.3.1",
+      },
+      sourceVersions: {
         button: "0.3.0",
       },
     });
@@ -1319,7 +1463,8 @@ describe("generateCliRegistry", () => {
     expect(button).toMatchObject({
       component: "button",
       framework: "astro",
-      version: "0.3.0",
+      sourceVersion: "0.3.0",
+      version: "0.3.1",
       packageRequirements: expect.arrayContaining([
         expect.objectContaining({
           name: "@starwind-ui/runtime",
@@ -1518,6 +1663,7 @@ describe("generateCliRegistry", () => {
     for (const artifact of artifactSet.primitives) {
       const registration = getPrimitiveFrameworkAdapterTarget(artifact.framework);
 
+      expect(artifact.sourceVersion, artifact.component).toBe(artifact.version);
       assertSafeInstallPaths(artifact.files, DEFAULT_PRIMITIVE_INSTALL_ROOT);
       assertInstallGraphSourceClosure({
         files: artifact.files,
@@ -1613,6 +1759,67 @@ describe("generateCliRegistry", () => {
     ).rejects.toThrow(/button.*semver/);
   });
 
+  it("rejects primitive source-version maps with extra keys", async () => {
+    const manifestPath = path.join(tempRoot, "primitive-versions.json");
+    await writePrimitiveVersionManifest(manifestPath, {
+      primitives: {
+        button: "0.3.0",
+      },
+      sourceVersions: {
+        button: "0.3.0",
+        removed: "0.1.0",
+      },
+    });
+
+    await expect(
+      buildPrimitiveVendoringArtifacts({
+        contracts: [buttonRuntimeAdapterContract],
+        primitiveVersionManifestPath: manifestPath,
+        tempRoot: path.join(tempRoot, "extra-source-version"),
+      }),
+    ).rejects.toThrow(/sourceVersions.*extra.*removed/);
+  });
+
+  it("rejects invalid primitive source versions", async () => {
+    const manifestPath = path.join(tempRoot, "primitive-versions.json");
+    await writePrimitiveVersionManifest(manifestPath, {
+      primitives: {
+        button: "0.3.0",
+      },
+      sourceVersions: {
+        button: "latest",
+      },
+    });
+
+    await expect(
+      buildPrimitiveVendoringArtifacts({
+        contracts: [buttonRuntimeAdapterContract],
+        primitiveVersionManifestPath: manifestPath,
+        tempRoot: path.join(tempRoot, "invalid-source-version"),
+      }),
+    ).rejects.toThrow(/sourceVersion.*button.*semver/);
+  });
+
+  it("rejects primitive source versions newer than delivered versions", async () => {
+    const manifestPath = path.join(tempRoot, "primitive-versions.json");
+    await writePrimitiveVersionManifest(manifestPath, {
+      primitives: {
+        button: "0.3.0",
+      },
+      sourceVersions: {
+        button: "0.3.1",
+      },
+    });
+
+    await expect(
+      buildPrimitiveVendoringArtifacts({
+        contracts: [buttonRuntimeAdapterContract],
+        primitiveVersionManifestPath: manifestPath,
+        tempRoot: path.join(tempRoot, "forward-source-version"),
+      }),
+    ).rejects.toThrow(/sourceVersion.*button.*0\.3\.1.*version.*0\.3\.0/);
+  });
+
   it("rejects primitive vendoring paths that escape the destination root", async () => {
     const manifestPath = path.join(tempRoot, "primitive-versions.json");
     await writePrimitiveVersionManifest(manifestPath, {
@@ -1661,6 +1868,7 @@ describe("generateCliRegistry", () => {
       "packages/cli/registry/primitive-versions.json",
     );
     expect(Object.keys(versionManifest.primitives).sort()).toEqual(contractNames);
+    expect(versionManifest.sourceVersions).toEqual(versionManifest.primitives);
   });
 
   it("publishes deterministic, source-closed Color Picker candidates for Astro and React", async () => {
@@ -1884,7 +2092,15 @@ describe("generateCliRegistry", () => {
         primitive.component === "button" && primitive.framework === "react",
     );
 
-    expect(committedArtifacts).toEqual(generatedArtifacts);
+    expect({
+      ...committedArtifacts,
+      primitives: committedArtifacts.primitives.map(
+        (primitive: { sourceVersion?: string; version: string }) => ({
+          ...primitive,
+          sourceVersion: primitive.sourceVersion ?? primitive.version,
+        }),
+      ),
+    }).toEqual(generatedArtifacts);
     expect(navigationMenu).toBeDefined();
     expect(JSON.stringify(navigationMenu)).toContain("data-sw-nav-menu");
     expect(JSON.stringify(navigationMenu)).toContain("@starwind-ui/runtime/navigation-menu");
@@ -2154,6 +2370,7 @@ async function writeRegistryVersionManifest(
   manifest: {
     components: Record<string, string>;
     registryVersion: string;
+    sourceVersions?: Record<string, string>;
   },
 ) {
   await writeFile(
@@ -2174,6 +2391,7 @@ async function writePrimitiveVersionManifest(
   manifestPath: string,
   manifest: {
     primitives: Record<string, string>;
+    sourceVersions?: Record<string, string>;
   },
 ) {
   await writeFile(

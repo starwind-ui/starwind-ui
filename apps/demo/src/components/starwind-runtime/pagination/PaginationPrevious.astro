@@ -3,21 +3,21 @@ import ChevronLeft from "@tabler/icons/outline/chevron-left.svg";
 import type { ComponentProps } from "astro/types";
 
 import PaginationLink from "./PaginationLink.astro";
-import { paginationPrevious } from "./variants";
 
 type Props = ComponentProps<typeof PaginationLink>;
 
-const { class: className, ...rest } = Astro.props;
+const { size = "md", class: className, ...rest } = Astro.props;
 ---
 
 <PaginationLink
   aria-label="Go to previous page"
-  class={paginationPrevious({ class: className })}
+  size={size}
+  class={className}
   {...rest}
   data-slot="pagination-previous"
 >
   <slot name="icon">
-    <ChevronLeft class="size-4 transition-transform group-hover:-translate-x-1" />
+    <ChevronLeft />
   </slot>
 
   <slot />

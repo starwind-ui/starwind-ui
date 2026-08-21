@@ -116,12 +116,24 @@ function legacyConfig(overrides: Partial<config.StarwindConfig> = {}): config.St
 
 let vueRegistryFixture: registry.StarwindRegistryFor<"astro" | "react" | "vue">;
 
-const registryFixture: registry.StarwindRegistry = {
+const registryFixture: registry.NormalizedStarwindRegistry = {
   $schema: "https://starwind.dev/registry-schema.v2.json",
   version: "0.1.0",
   components: [
-    { name: "button", version: "2.0.0", dependencies: [], type: "component" },
-    { name: "card", version: "2.0.0", dependencies: [], type: "component" },
+    {
+      name: "button",
+      version: "2.0.0",
+      sourceVersion: "2.0.0",
+      dependencies: [],
+      type: "component",
+    },
+    {
+      name: "card",
+      version: "2.0.0",
+      sourceVersion: "2.0.0",
+      dependencies: [],
+      type: "component",
+    },
   ],
 };
 

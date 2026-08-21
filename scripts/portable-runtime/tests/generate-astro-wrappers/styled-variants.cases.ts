@@ -153,17 +153,20 @@ export function defineAstroStyledVariantTests(getTempRoot: GetTempRoot): void {
     expect(nativeSelectVariants).toContain('md: "right-3 size-4"');
   });
 
-  it("keeps Pagination sizing owned by its styled root contract", () => {
+  it("keeps Pagination sizing owned by its links", () => {
     const paginationContract = starwindStyledContracts.find(
       (contract) => contract.component === "pagination",
     )!;
 
     expect(toArray(paginationContract.variants!.pagination.base)).toContain(
-      "group/pagination mx-auto flex w-full justify-center",
+      "mx-auto flex w-full justify-center",
     );
-    expect(toArray(paginationContract.variants!.paginationLink.base)).toContain(
-      "group-data-[size=sm]/pagination:size-9 group-data-[size=sm]/pagination:p-0 group-data-[size=sm]/pagination:text-sm",
-    );
+    expect(paginationContract.variants!.paginationLink).toBeUndefined();
+    expect(paginationContract.variants!.paginationPrevious).toBeUndefined();
+    expect(paginationContract.variants!.paginationNext).toBeUndefined();
+    expect(paginationContract.variants!.paginationEllipsis.defaultVariants).toEqual({
+      size: "icon",
+    });
 
     expect(paginationContract.defaultExport).toEqual({
       Root: "Pagination",
@@ -207,8 +210,8 @@ export function defineAstroStyledVariantTests(getTempRoot: GetTempRoot): void {
     expect(pagination).toContain('role="navigation"');
     expect(pagination).toContain('aria-label="pagination"');
     expect(pagination).toContain("pagination({ class: className })");
-    expect(pagination).toContain('size = "md"');
-    expect(pagination).toMatch(/\{\.\.\.rest\}[\s\S]*data-size=\{size\}/);
+    expect(pagination).not.toContain("size =");
+    expect(pagination).not.toContain("data-size=");
     expect(pagination).toContain('data-slot="pagination"');
     expect(paginationContent).toContain("paginationContent({ class: className })");
     expect(paginationContent).toContain('data-slot="pagination-content"');
@@ -225,31 +228,49 @@ export function defineAstroStyledVariantTests(getTempRoot: GetTempRoot): void {
     expect(paginationLink).toContain('as="a"');
     expect(paginationLink).toContain('{...rest}\n  as="a"');
     expect(paginationLink).toContain('variant={isActive ? "outline" : "ghost"}');
-    expect(paginationLink).toContain('size="md"');
-    expect(paginationLink).toContain("paginationLink({ class: className })");
+    expect(paginationLink).toContain('size = "icon"');
+    expect(paginationLink).toContain("size={size}");
+    expect(paginationLink).toContain("class={className}");
+    expect(paginationLink).not.toContain("paginationLink(");
     expect(paginationLink).toContain("data-slot={dataSlot}");
     expect(paginationPrevious).toContain('import PaginationLink from "./PaginationLink.astro";');
     expect(paginationPrevious).toContain("type Props = ComponentProps<typeof PaginationLink>");
     expect(paginationPrevious).toContain('aria-label="Go to previous page"');
-    expect(paginationPrevious).not.toContain("size =");
+    expect(paginationPrevious).toContain('size = "md"');
+    expect(paginationPrevious).toContain("size={size}");
     expect(paginationPrevious).toContain('data-slot="pagination-previous"');
-    expect(paginationPrevious).toContain("<ChevronLeft");
-    expect(paginationPrevious).toContain("paginationPrevious({ class: className })");
+    expect(paginationPrevious).toContain("<ChevronLeft />");
+    expect(paginationPrevious).not.toContain("group-hover:");
+    expect(paginationPrevious).not.toContain("transition-transform");
+    expect(paginationPrevious).toContain("class={className}");
+    expect(paginationPrevious).not.toContain("paginationPrevious(");
     expect(paginationNext).toContain('aria-label="Go to next page"');
+    expect(paginationNext).toContain('size = "md"');
+    expect(paginationNext).toContain("size={size}");
     expect(paginationNext).toContain('data-slot="pagination-next"');
-    expect(paginationNext).toContain("<ChevronRight");
+    expect(paginationNext).toContain("<ChevronRight />");
+    expect(paginationNext).not.toContain("group-hover:");
+    expect(paginationNext).not.toContain("transition-transform");
     expect(paginationEllipsis).toContain("import Dots");
-    expect(paginationEllipsis).toContain("paginationEllipsis({ class: className })");
-    expect(paginationEllipsis).not.toContain("size?:");
+    expect(paginationEllipsis).toContain("VariantProps<typeof paginationEllipsis>");
+    expect(paginationEllipsis).toContain("paginationEllipsis({ size, class: className })");
     expect(paginationEllipsis).toContain("aria-hidden");
     expect(paginationEllipsis).toContain("<Dots");
+    expect(paginationEllipsis).not.toContain('<Dots class="size-4"');
     expect(paginationEllipsis).toContain('<span class="sr-only">More pages</span>');
     expect(paginationIndex).toContain("Previous: PaginationPrevious");
     expect(paginationIndex).toContain("Next: PaginationNext");
     expect(paginationVariants).toContain("mx-auto flex w-full justify-center");
     expect(paginationVariants).toContain("flex flex-row items-center gap-1");
-    expect(paginationVariants).toContain("export const paginationLink");
-    expect(paginationVariants).toContain("group-data-[size=lg]/pagination:size-12");
+    expect(paginationVariants).not.toContain("export const paginationLink");
+    expect(paginationVariants).not.toContain("group-data-[size=");
+    expect(paginationVariants).toContain(
+      `"icon-sm": "size-9 [&_svg:not([class*='size-'])]:size-3.5"`,
+    );
+    expect(paginationVariants).toContain(`icon: "size-11 [&_svg:not([class*='size-'])]:size-4.5"`);
+    expect(paginationVariants).toContain(
+      `"icon-lg": "size-12 [&_svg:not([class*='size-'])]:size-5"`,
+    );
   });
 
   it("generates Table styled Astro wrappers", async () => {
