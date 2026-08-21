@@ -1,5 +1,19 @@
 # starwind
 
+## 3.2.0
+
+### Minor Changes
+
+- Track canonical source versions separately from delivered component versions, and preserve
+  customized files during behavior-only Styled and Primitive updates.
+
+### Patch Changes
+
+- Move Pagination sizing from the root to each link. Page links now default to the Starwind icon button size, previous and next controls default to the normal medium button size, and every control accepts direct Button size overrides. Keep the direction chevrons static on hover.
+- Add portable portal container and inline-mode controls to generated floating Styled components.
+- Keep touch Select triggers and popup items inside the active focus boundary so trigger taps close an open popup and item taps commit their values on mobile browsers.
+- Expose the Toast imperative API from generated local Toast component barrels.
+
 ## 3.1.0
 
 ### Minor Changes

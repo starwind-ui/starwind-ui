@@ -1,5 +1,19 @@
 # @starwind-ui/astro
 
+## 1.2.0
+
+### Minor Changes
+
+- Use deterministic Portal bindings across framework adapters. Keep React wrappers under
+  framework-owned placement, retain Runtime movement for Astro, and use one Dialog-owned top-layer
+  host for nested floating content.
+- Add optional portable portal container, disabled, and placement props to Astro overlay adapters. Add the shared Runtime placement handshake so framework adapters can report when their public portal wrapper reaches its resolved target.
+
+### Patch Changes
+
+- Updated dependencies
+  - @starwind-ui/runtime@1.2.0
+
 ## 1.1.0
 
 ### Patch Changes

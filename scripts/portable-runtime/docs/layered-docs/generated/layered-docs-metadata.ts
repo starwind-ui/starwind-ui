@@ -38238,7 +38238,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "alert-dialog",
       displayName: "Alert Dialog",
       category: "dialog-native-overlay",
-      registryVersion: "1.0.0",
+      registryVersion: "1.1.0",
       runtime: {
         primitiveId: "alert-dialog",
         factory: "createAlertDialog",
@@ -48534,7 +48534,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "combobox",
       displayName: "Combobox",
       category: "floating-value-control",
-      registryVersion: "1.0.0",
+      registryVersion: "1.1.0",
       runtime: {
         primitiveId: "combobox",
         factory: "createCombobox",
@@ -51952,7 +51952,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "context-menu",
       displayName: "Context Menu",
       category: "composite-menu-overlay",
-      registryVersion: "1.0.0",
+      registryVersion: "1.1.0",
       runtime: {
         primitiveId: "context-menu",
         factory: "createContextMenu",
@@ -57454,7 +57454,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "drawer",
       displayName: "Drawer",
       category: "dialog-native-overlay",
-      registryVersion: "1.0.0",
+      registryVersion: "1.1.0",
       runtime: {
         primitiveId: "drawer",
         factory: "createDrawer",
@@ -64543,7 +64543,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "menu",
       displayName: "Menu",
       category: "composite-menu-overlay",
-      registryVersion: "1.0.0",
+      registryVersion: "1.1.0",
       runtime: {
         primitiveId: "menu",
         factory: "createMenu",
@@ -68849,7 +68849,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "navigation-menu",
       displayName: "Navigation Menu",
       category: "floating-value-control",
-      registryVersion: "1.0.0",
+      registryVersion: "1.1.0",
       runtime: {
         primitiveId: "navigation-menu",
         factory: "createNavigationMenu",
@@ -71168,7 +71168,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "popover",
       displayName: "Popover",
       category: "presence-floating-overlay",
-      registryVersion: "1.0.0",
+      registryVersion: "1.1.0",
       runtime: {
         primitiveId: "popover",
         factory: "createPopover",
@@ -73171,7 +73171,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "preview-card",
       displayName: "Preview Card",
       category: "presence-floating-overlay",
-      registryVersion: "1.0.0",
+      registryVersion: "1.1.0",
       runtime: {
         primitiveId: "preview-card",
         factory: "createPreviewCard",
@@ -78829,7 +78829,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "select",
       displayName: "Select",
       category: "floating-value-control",
-      registryVersion: "1.0.0",
+      registryVersion: "1.1.0",
       runtime: {
         primitiveId: "select",
         factory: "createSelect",
@@ -90319,7 +90319,7 @@ export const layeredDocsMetadata: LayeredDocsMetadata = {
       id: "tooltip",
       displayName: "Tooltip",
       category: "presence-floating-overlay",
-      registryVersion: "1.0.0",
+      registryVersion: "1.1.0",
       runtime: {
         primitiveId: "tooltip",
         factory: "createTooltip",

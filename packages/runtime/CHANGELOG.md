@@ -1,5 +1,20 @@
 # @starwind-ui/runtime
 
+## 1.2.0
+
+### Minor Changes
+
+- Use deterministic Portal bindings across framework adapters. Keep React wrappers under
+  framework-owned placement, retain Runtime movement for Astro, and use one Dialog-owned top-layer
+  host for nested floating content.
+- Add optional portable portal container, disabled, and placement props to Astro overlay adapters. Add the shared Runtime placement handshake so framework adapters can report when their public portal wrapper reaches its resolved target.
+
+### Patch Changes
+
+- Centralize internal owned-list discovery, mutation reconciliation, navigation, highlight, and typeahead behavior for Select, Combobox, and Menu maintenance. Public Runtime interfaces and component behavior stay unchanged.
+- Keep touch-opened Context Menu parents active while focus moves to a submenu trigger, so portaled submenus remain positioned against their trigger on mobile browsers.
+- Keep touch Select triggers and popup items inside the active focus boundary so trigger taps close an open popup and item taps commit their values on mobile browsers.
+
 ## 1.1.0
 
 ### Minor Changes
