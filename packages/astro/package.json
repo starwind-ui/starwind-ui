@@ -1,6 +1,6 @@
 {
   "name": "@starwind-ui/astro",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Accessible Astro primitives for Starwind UI, powered by the shared framework-neutral Runtime.",
   "license": "MIT",
   "homepage": "https://starwind.dev/",

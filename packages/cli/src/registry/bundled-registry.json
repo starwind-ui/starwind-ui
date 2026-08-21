@@ -3,7 +3,7 @@
   "version": "2.2.0",
   "setup": {
     "astro": {
-      "adapterPackage": { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+      "adapterPackage": { "name": "@starwind-ui/astro", "range": "^1.2.0" },
       "packageRequirements": [
         { "name": "@tabler/icons", "range": "^3" },
         { "name": "@tailwindcss/forms", "range": "^0.5" },
@@ -15,7 +15,7 @@
       ]
     },
     "react": {
-      "adapterPackage": { "name": "@starwind-ui/react", "range": "^1.1.0" },
+      "adapterPackage": { "name": "@starwind-ui/react", "range": "^1.2.0" },
       "packageRequirements": [
         { "name": "@tabler/icons-react", "range": "^3" },
         { "name": "@tailwindcss/forms", "range": "^0.5" },
@@ -52,7 +52,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -74,7 +74,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -105,7 +105,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -127,7 +127,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -162,7 +162,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -188,7 +188,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -219,7 +219,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -241,7 +241,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -272,7 +272,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -294,7 +294,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -325,7 +325,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -347,7 +347,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -378,7 +378,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -401,7 +401,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -457,7 +457,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -503,7 +503,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -558,7 +558,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -605,7 +605,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -645,7 +645,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -675,7 +675,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -706,7 +706,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -728,7 +728,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -767,7 +767,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -797,7 +797,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -832,7 +832,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -859,7 +859,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -891,7 +891,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -913,7 +913,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -922,8 +922,8 @@
     },
     {
       "name": "combobox",
-      "sourceVersion": "1.1.0",
-      "version": "1.1.0",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -1000,7 +1000,7 @@
           ],
           "componentDependencies": ["input-group"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1079,7 +1079,7 @@
           ],
           "componentDependencies": ["input-group"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1089,8 +1089,8 @@
     },
     {
       "name": "color-picker",
-      "sourceVersion": "2.0.2",
-      "version": "2.0.2",
+      "sourceVersion": "2.1.0",
+      "version": "2.1.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -1163,7 +1163,7 @@
           ],
           "componentDependencies": ["input", "native-select", "popover", "select"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1238,7 +1238,7 @@
           ],
           "componentDependencies": ["input", "native-select", "popover", "select"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1270,7 +1270,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1292,7 +1292,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1343,7 +1343,7 @@
           ],
           "componentDependencies": ["button", "input", "textarea"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1385,7 +1385,7 @@
           ],
           "componentDependencies": ["button", "input", "textarea"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1428,7 +1428,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1463,7 +1463,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1531,7 +1531,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1589,7 +1589,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1628,7 +1628,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1659,7 +1659,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1669,8 +1669,8 @@
     },
     {
       "name": "navigation-menu",
-      "sourceVersion": "1.1.1",
-      "version": "1.1.1",
+      "sourceVersion": "1.2.0",
+      "version": "1.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -1719,7 +1719,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1770,7 +1770,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1780,8 +1780,8 @@
     },
     {
       "name": "pagination",
-      "sourceVersion": "4.0.1",
-      "version": "4.0.1",
+      "sourceVersion": "5.0.0",
+      "version": "5.0.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -1826,7 +1826,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1873,7 +1873,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -1905,7 +1905,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1927,7 +1927,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1962,7 +1962,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -1988,7 +1988,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2023,7 +2023,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2050,7 +2050,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2106,7 +2106,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2152,7 +2152,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2161,8 +2161,8 @@
     },
     {
       "name": "select",
-      "sourceVersion": "2.0.2",
-      "version": "2.0.2",
+      "sourceVersion": "2.1.0",
+      "version": "2.1.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -2227,7 +2227,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2294,7 +2294,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2326,7 +2326,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2348,7 +2348,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2379,7 +2379,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2401,7 +2401,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2444,7 +2444,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2478,7 +2478,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2537,7 +2537,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2587,7 +2587,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2596,8 +2596,8 @@
     },
     {
       "name": "toast",
-      "sourceVersion": "2.0.1",
-      "version": "2.0.1",
+      "sourceVersion": "2.1.0",
+      "version": "2.1.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -2650,7 +2650,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2705,7 +2705,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2715,8 +2715,8 @@
     },
     {
       "name": "hover-card",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.2.0",
+      "version": "2.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -2745,7 +2745,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2775,7 +2775,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2784,8 +2784,8 @@
     },
     {
       "name": "tooltip",
-      "sourceVersion": "2.1.0",
-      "version": "2.1.0",
+      "sourceVersion": "2.2.0",
+      "version": "2.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -2814,7 +2814,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2845,7 +2845,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2877,7 +2877,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2900,7 +2900,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -2932,7 +2932,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2954,7 +2954,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -2989,7 +2989,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3015,7 +3015,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3046,7 +3046,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3068,7 +3068,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3107,7 +3107,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3137,7 +3137,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3184,7 +3184,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3223,7 +3223,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3255,7 +3255,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3277,7 +3277,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3316,7 +3316,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3346,7 +3346,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -3389,7 +3389,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3424,7 +3424,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3488,7 +3488,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3543,7 +3543,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3553,8 +3553,8 @@
     },
     {
       "name": "dropdown",
-      "sourceVersion": "3.1.1",
-      "version": "3.1.1",
+      "sourceVersion": "3.2.0",
+      "version": "3.2.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -3639,7 +3639,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3726,7 +3726,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3770,7 +3770,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3805,7 +3805,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3815,8 +3815,8 @@
     },
     {
       "name": "context-menu",
-      "sourceVersion": "2.0.1",
-      "version": "2.0.1",
+      "sourceVersion": "2.1.0",
+      "version": "2.1.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -3897,7 +3897,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -3980,7 +3980,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4040,7 +4040,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4091,7 +4091,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4215,7 +4215,7 @@
           ],
           "componentDependencies": ["button", "input", "separator", "sheet", "skeleton", "tooltip"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "@tabler/icons", "range": "^3.37.1" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4330,7 +4330,7 @@
           ],
           "componentDependencies": ["button", "input", "separator", "sheet", "skeleton", "tooltip"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "@tabler/icons-react", "range": "^3.37.1" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
@@ -4362,7 +4362,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4397,7 +4397,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4423,7 +4423,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4502,7 +4502,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4572,7 +4572,7 @@
           ],
           "componentDependencies": ["separator"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4581,8 +4581,8 @@
     },
     {
       "name": "popover",
-      "sourceVersion": "2.0.3",
-      "version": "2.0.3",
+      "sourceVersion": "2.1.0",
+      "version": "2.1.0",
       "type": "component",
       "dependencies": [],
       "targets": {
@@ -4623,7 +4623,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4665,7 +4665,7 @@
           ],
           "componentDependencies": [],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4728,7 +4728,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/astro", "range": "^1.1.0" },
+            { "name": "@starwind-ui/astro", "range": "^1.2.0" },
             { "name": "astro", "range": ">=5" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
@@ -4782,7 +4782,7 @@
           ],
           "componentDependencies": ["button"],
           "packageRequirements": [
-            { "name": "@starwind-ui/react", "range": "^1.1.0" },
+            { "name": "@starwind-ui/react", "range": "^1.2.0" },
             { "name": "react", "range": ">=18" },
             { "name": "tailwind-variants", "range": "^3.2.2" }
           ]
