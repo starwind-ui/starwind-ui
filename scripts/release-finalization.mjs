@@ -112,6 +112,13 @@ function isRetryableRegistryFailure(result) {
   );
 }
 
+function createRegistryPropagationError(subject, attempt) {
+  return new Error(
+    `${subject} did not become visible on npm after ${attempt} registry ${attempt === 1 ? "check" : "checks"}. ` +
+      "The package publication may have succeeded. Wait for npm propagation, then run pnpm release:finalize.",
+  );
+}
+
 export async function verifyPublishedPackages(release, system, options = {}) {
   const attempts = options.attempts ?? DEFAULT_REGISTRY_VERIFICATION_ATTEMPTS;
   const retryDelayMs = options.retryDelayMs ?? DEFAULT_REGISTRY_RETRY_DELAY_MS;
@@ -140,10 +147,7 @@ export async function verifyPublishedPackages(release, system, options = {}) {
           await waitForRetry(retryDelayMs);
           continue;
         }
-        throw new Error(
-          `${spec} did not become visible on npm after ${attempt} registry ${attempt === 1 ? "check" : "checks"}. ` +
-            "The package publication may have succeeded. Wait for npm propagation, then run pnpm release:finalize.",
-        );
+        throw createRegistryPropagationError(spec, attempt);
       }
       const publishedVersion = parseJsonOutput(versionResult, `${spec} version`);
       if (publishedVersion !== entry.version) {
@@ -158,6 +162,9 @@ export async function verifyPublishedPackages(release, system, options = {}) {
           onRetry(spec, attempt);
           await waitForRetry(retryDelayMs);
           continue;
+        }
+        if (isRetryableRegistryFailure(tagsResult)) {
+          throw createRegistryPropagationError(`${spec} dist-tag ${release.npmTag}`, attempt);
         }
         parseJsonOutput(tagsResult, `${spec} dist-tags`);
       }

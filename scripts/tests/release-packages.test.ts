@@ -456,6 +456,39 @@ describe("release package tooling", () => {
     expect(calls).toHaveLength(9);
   });
 
+  it("reports safe recovery after dist-tag propagation retries are exhausted", async () => {
+    const expected = deriveReleaseIdentity(manifests({ cli: "3.0.0", runtime: "1.0.0" }), "latest");
+    const waits: number[] = [];
+    let runtimeTagAttempts = 0;
+
+    await expect(
+      verifyPublishedPackages(
+        expected,
+        {
+          capture: async (_command: string, args: string[]) => {
+            if (args[2] === "version") {
+              return { code: 0, stderr: "", stdout: JSON.stringify("1.0.0") };
+            }
+            runtimeTagAttempts += 1;
+            return { code: 1, stderr: "npm error E404", stdout: "" };
+          },
+          run: async () => undefined,
+        },
+        {
+          attempts: 3,
+          onRetry: () => undefined,
+          retryDelayMs: 5_000,
+          wait: async (delayMs: number) => {
+            waits.push(delayMs);
+          },
+        },
+      ),
+    ).rejects.toThrow(/dist-tag latest.*pnpm release:finalize/);
+
+    expect(runtimeTagAttempts).toBe(3);
+    expect(waits).toEqual([5_000, 5_000]);
+  });
+
   it("stops before Git changes when any package version is missing", async () => {
     const expected = deriveReleaseIdentity(
       manifests({ cli: "3.0.0-beta.8", runtime: "0.1.0-beta.8" }),
