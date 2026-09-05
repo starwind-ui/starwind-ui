@@ -1,5 +1,12 @@
 # starwind
 
+## 3.3.1
+
+### Patch Changes
+
+- Stop adding the deprecated baseUrl option when setting up Vue TypeScript aliases. New Vue projects
+  can build with TypeScript 6 while existing user configuration is preserved.
+
 ## 3.3.0
 
 ### Minor Changes
