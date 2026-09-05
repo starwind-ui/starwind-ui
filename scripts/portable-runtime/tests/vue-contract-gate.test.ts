@@ -14,6 +14,7 @@ import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { PUBLIC_FRAMEWORK_TARGET_POLICY } from "../../../packages/cli/src/utils/framework-target-policy.js";
+import { CHANGESET_IGNORED_PACKAGES } from "../../runtime-release-policy.mjs";
 
 import {
   createVueContractFixtureFiles,
@@ -172,7 +173,7 @@ const forbiddenPublicVueScriptCommandPatterns = [
   /(?:pack-public-release-artifacts|published-release-acceptance|release-candidate-acceptance|release-packages)\.mjs\b/i,
   /(?:runtime:registry(?::|\b)|generate-cli-registry|packages\/cli\/(?:registry|src\/registry))/i,
 ] as const;
-const approvedChangesetIgnore = ["demo", "react-demo", "vue-demo", "@starwind-ui/svelte"];
+const approvedChangesetIgnore = [...CHANGESET_IGNORED_PACKAGES];
 const approvedProductPositioningVueClaim =
   /Current first-party Primitive adapter packages are Astro, React, and the Vue 3\.5 public beta\.\s+Runtime adapter contract types also allow future targets such as Svelte and Solid\. Claim support\s+only after generated package output, demos, host checks, and release metadata exist\./;
 const approvedVueArchitectureDoc = "docs/adr/0011-use-idiomatic-vue-adapter-semantics.md";

@@ -2,12 +2,22 @@
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
   "changelog": "./changelog.mjs",
   "commit": true,
-  "fixed": [["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"]],
+  "fixed": [
+    [
+      "@starwind-ui/runtime",
+      "@starwind-ui/astro",
+      "@starwind-ui/react"
+    ]
+  ],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["demo", "react-demo", "vue-demo", "@starwind-ui/svelte"],
+  "ignore": [
+    "demo",
+    "react-demo",
+    "vue-demo"
+  ],
   "privatePackages": {
     "version": false,
     "tag": false

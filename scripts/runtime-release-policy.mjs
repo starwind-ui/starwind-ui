@@ -2,7 +2,6 @@ export const CHANGESET_IGNORED_PACKAGES = Object.freeze([
   "demo",
   "react-demo",
   "vue-demo",
-  "@starwind-ui/svelte",
 ]);
 
 export const CHANGESET_PRIVATE_PACKAGE_POLICY = Object.freeze({
