@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -12,12 +12,12 @@ import {
   aggregatePrimitiveVersionIntents,
   applyPrimitiveVersionIntents,
   createPrimitiveArtifactFingerprint,
+  type PrimitiveReleaseSnapshot,
+  type PrimitiveVersionIntent,
   parsePrimitiveVersionIntent,
   stagePrimitiveVersionIntents,
   validatePrimitiveVersionPullRequest,
   versionPrimitiveComponents,
-  type PrimitiveReleaseSnapshot,
-  type PrimitiveVersionIntent,
 } from "../primitive-component-release.js";
 
 const temporaryRoots: string[] = [];
@@ -88,6 +88,27 @@ function snapshot(
 }
 
 describe("primitive component release intents", () => {
+  it("adds Vue without bumping primitives, but guards later Vue source edits", () => {
+    const base = snapshot();
+    const head = structuredClone(base);
+    head.artifacts.primitives.push({
+      ...structuredClone(head.artifacts.primitives[0]),
+      framework: "vue",
+    });
+    expect(() => validatePrimitiveVersionPullRequest({ base, head })).toThrow(/starwind minor/);
+    base.cliVersion = "3.2.0";
+    head.cliVersion = "3.3.0";
+    expect(validatePrimitiveVersionPullRequest({ base, head }).changedPrimitives).toEqual([]);
+    const released = structuredClone(head);
+    head.artifacts.primitives.at(-1)!.files[0].content += "changed";
+    expect(() => validatePrimitiveVersionPullRequest({ base: released, head })).toThrow(
+      /Missing primitive version intent/,
+    );
+    head.artifacts.primitives.pop();
+    expect(() => validatePrimitiveVersionPullRequest({ base: released, head })).toThrow(
+      /Missing primitive version intent/,
+    );
+  });
   it("parses strict SemVer intents and rejects invalid input", () => {
     const legacyIntent = {
       primitives: { avatar: "patch" },

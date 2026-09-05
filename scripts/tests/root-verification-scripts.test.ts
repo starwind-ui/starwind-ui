@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
-
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
+import { hasPrivateSvelte } from "../portable-runtime/tests/workspace-support.js";
 
 type PackageJson = {
   scripts?: Record<string, string>;
@@ -63,7 +63,9 @@ describe("root verification scripts", () => {
     expect(pkg.scripts?.["test:repo"]).toContain("--project=repo-scripts");
     expect(pkg.scripts?.["test:cli"]).toContain("--project=cli");
     expect(pkg.scripts?.["runtime:generate:test"]).toContain("--project=portable-runtime");
-    expect(pkg.scripts?.["runtime:generate:svelte:test"]).toContain("--project=portable-svelte");
+    if (hasPrivateSvelte)
+      expect(pkg.scripts?.["runtime:generate:svelte:test"]).toContain("--project=portable-svelte");
+    else expect(pkg.scripts?.["runtime:generate:svelte:test"]).toBeUndefined();
     expect(pkg.scripts?.["runtime:generate:vue:test"]).toContain("--project=portable-vue");
     expect(commandPhases(pkg.scripts?.["test:all"])).toEqual([
       "pnpm test:run",
@@ -158,7 +160,7 @@ describe("root verification scripts", () => {
       "pnpm react-demo:smoke",
       "pnpm vue-demo:smoke",
       "pnpm runtime:size:check:prepared",
-      "pnpm runtime:perf:vue:check",
+      ...(hasPrivateSvelte ? ["pnpm runtime:perf:vue:check"] : []),
       "pnpm release:candidate:acceptance",
     ]);
     expect(pkg.scripts?.["runtime:size:check:prepared"]).toContain("--private-vue");

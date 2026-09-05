@@ -2,11 +2,10 @@ import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { compileScript, compileTemplate, parse } from "@vue/compiler-sfc";
+import { format as formatWithPrettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PUBLIC_FRAMEWORK_TARGET_POLICY } from "../../../packages/cli/src/utils/framework-target-policy.js";
-import { format as formatWithPrettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import {
   buttonRuntimeAdapterContract,
   checkboxRuntimeAdapterContract,
@@ -38,13 +37,13 @@ import {
   astroFrameworkAdapterTarget,
   getPrimitiveFrameworkAdapterTarget,
   reactFrameworkAdapterTarget,
-  svelteFrameworkAdapterTarget,
 } from "../renderers/framework-adapters/index.js";
 import { vueFrameworkAdapterTarget } from "../renderers/framework-adapters/vue/index.js";
 import {
   vueRuntimePrimitiveComponents,
   vueStyledComponents,
 } from "../renderers/framework-adapters/vue/inventory.js";
+import { hasPrivateSvelte } from "./workspace-support.js";
 
 const runtimePackage = JSON.parse(
   await readFile(new URL("../../../packages/runtime/package.json", import.meta.url), "utf8"),
@@ -90,9 +89,10 @@ describe("generateCliRegistry", () => {
     expect(() =>
       createCliRegistryBuildPolicy([vueFrameworkAdapterTarget, vueFrameworkAdapterTarget]),
     ).toThrow(/Duplicate CLI registry target "vue"/);
-    expect(() => createCliRegistryBuildPolicy([svelteFrameworkAdapterTarget])).toThrow(
-      /svelte.*missing Styled adapter capability/,
-    );
+    if (hasPrivateSvelte)
+      expect(() =>
+        createCliRegistryBuildPolicy([getPrimitiveFrameworkAdapterTarget("svelte")]),
+      ).toThrow(/svelte.*missing Styled adapter capability/);
   });
 
   it("keeps generated artifacts stable across release-only version changes", async () => {

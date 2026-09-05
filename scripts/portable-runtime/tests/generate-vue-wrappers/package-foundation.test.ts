@@ -1,16 +1,15 @@
 import { readdir, readFile } from "node:fs/promises";
-
 import { describe, expect, it } from "vitest";
+import {
+  formatVueInventoryDiagnostics,
+  validateVueInventorySnapshot,
+} from "../../../../packages/vue/scripts/validate-inventory.mjs";
 
 import {
   compileVueSfc,
   createVueEntryPoints,
   vueEntryPoints,
 } from "../../../../packages/vue/tsup.config.js";
-import {
-  formatVueInventoryDiagnostics,
-  validateVueInventorySnapshot,
-} from "../../../../packages/vue/scripts/validate-inventory.mjs";
 import { vueFrameworkAdapterTarget } from "../../renderers/framework-adapters/vue/index.js";
 import {
   assertVueInventorySnapshot,
@@ -22,6 +21,7 @@ import {
   vuePrimitiveComponents,
   vueStyledComponents,
 } from "../../renderers/framework-adapters/vue/inventory.js";
+import { hasPrivateSvelte } from "../workspace-support.js";
 
 describe("Vue package foundation", () => {
   it("derives every executable Vue projection from one typed inventory", async () => {
@@ -401,8 +401,10 @@ describe("Vue package foundation", () => {
 
     const vueDemoPackage = JSON.parse(await readFile("apps/vue-demo/package.json", "utf8"));
     expect(vueDemoPackage.private).toBe(true);
-    const sveltePackage = JSON.parse(await readFile("packages/svelte/package.json", "utf8"));
-    expect(sveltePackage.private).toBe(true);
+    if (hasPrivateSvelte) {
+      const sveltePackage = JSON.parse(await readFile("packages/svelte/package.json", "utf8"));
+      expect(sveltePackage.private).toBe(true);
+    }
     expect(rootPackage.scripts["runtime:generate:all"]).not.toContain("svelte");
     expect(rootPackage.scripts["build:public"]).not.toContain("svelte");
     expect(rootPackage.scripts["typecheck:public"]).not.toContain("svelte");

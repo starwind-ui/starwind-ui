@@ -3,7 +3,6 @@ import { tmpdir } from "node:os";
 import { basename, join as joinPath } from "node:path";
 import { format, resolveConfig } from "prettier";
 import { afterAll, describe, expect, it } from "vitest";
-
 import {
   accordionRuntimeAdapterContract,
   carouselRuntimeAdapterContract,
@@ -125,6 +124,7 @@ import {
   validateToastSpecializedAdapterSpec,
   validateTooltipSpecializedAdapterSpec,
 } from "../renderers/specialized-adapter-spec/index.js";
+import { expectedPrimitiveTargets } from "./workspace-support.js";
 
 const temporaryOutputRoot = mkdtempSync(joinPath(tmpdir(), "starwind-specialized-adapter-spec-"));
 
@@ -583,7 +583,7 @@ function expectSpecializedPrimitiveRegistrySource({
   buildOutputModel: string;
   buildSpec: string;
   component: string;
-  targets?: Array<"astro" | "react" | "svelte" | "vue">;
+  targets?: readonly string[];
 }): void {
   const entry = getPrimitiveGeneratorEntry(component);
   const registrySource = readFileSync(
@@ -3273,7 +3273,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildAccordionAdapterOutputModel",
       buildSpec: "buildAccordionSpecializedAdapterSpec",
       component: "accordion",
-      targets: ["astro", "react", "vue", "svelte"],
+      targets: expectedPrimitiveTargets,
     });
     const spec = buildAccordionSpecializedAdapterSpec(accordionRuntimeAdapterContract);
     const outputRoot = join(
@@ -3318,7 +3318,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildAccordionAdapterOutputModel",
       buildSpec: "buildAccordionSpecializedAdapterSpec",
       component: "accordion",
-      targets: ["astro", "react", "vue", "svelte"],
+      targets: expectedPrimitiveTargets,
     });
     const spec = buildAccordionSpecializedAdapterSpec(accordionRuntimeAdapterContract);
     const outputRoot = join(
@@ -5098,7 +5098,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildSliderAdapterOutputModel",
       buildSpec: "buildSliderSpecializedAdapterSpec",
       component: "slider",
-      targets: ["astro", "react", "vue", "svelte"],
+      targets: expectedPrimitiveTargets,
     });
     const spec = buildSliderSpecializedAdapterSpec(sliderRuntimeAdapterContract);
     const outputRoot = join(
@@ -5143,7 +5143,7 @@ describe("SpecializedAdapterSpec", () => {
       buildOutputModel: "buildSliderAdapterOutputModel",
       buildSpec: "buildSliderSpecializedAdapterSpec",
       component: "slider",
-      targets: ["astro", "react", "vue", "svelte"],
+      targets: expectedPrimitiveTargets,
     });
     const spec = buildSliderSpecializedAdapterSpec(sliderRuntimeAdapterContract);
     const outputRoot = join(

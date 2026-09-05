@@ -45,6 +45,26 @@ Changeset, Version Packages PR, dry run, and publication handoff.
 
 ## Component Intent
 
+### Shared framework versions
+
+Each Styled component and vendorable Primitive has one version history shared across its framework
+implementations. Different components keep their own histories. A new framework implementation
+starts at that component's current `version` and `sourceVersion`; it does not restart at `0.x`.
+Adding a framework requires a CLI minor release. When existing implementations and shared metadata
+stay unchanged, the addition requires no component bump. Release guards compare existing targets
+separately from additions, and still reject unversioned changes or removals of existing targets.
+
+After its first delivery, a Vue-only component source change advances the shared component version
+using the usual patch/minor/major intent and schedules CLI delivery. Other frameworks may see that
+shared version advance even when their files stay unchanged. Their adapter npm packages need no
+release solely because Vue changed. Changes to shared Runtime behavior still follow the fixed-group
+rules below.
+
+Vue's npm package has a separate beta version history, starting at `0.1.0` on the `beta` tag while
+preserving `latest`. Component versions do not determine package beta status. Stable graduation and
+package alignment require a separate approved decision. The initial Vue release keeps all existing
+component versions and publishes CLI `3.3.0` with Vue `0.1.0`.
+
 Each existing Styled or vendorable Primitive has two values. `version` is the SemVer of delivered
 public behavior. `sourceVersion` is the component version from the most recent release that changed
 canonical installable files. A source version is valid SemVer and must not exceed its version. A new

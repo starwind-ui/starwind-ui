@@ -1,22 +1,21 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
-
 import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
 import { solidFrameworkAdapterReadiness } from "../../renderers/framework-adapters/solid/adapter.js";
-import { vueFrameworkAdapterTarget } from "../../renderers/framework-adapters/vue/index.js";
-import { vuePrimitiveComponents } from "../../renderers/framework-adapters/vue/inventory.js";
 import { defineFrameworkAdapterTarget } from "../../renderers/framework-adapters/target-definition.js";
-import type { FrameworkAdapterTargetRegistration } from "../../renderers/framework-adapters/types.js";
 import {
   getPrimitiveFrameworkAdapterTarget,
   getPrimitiveFrameworkAdapterTargetNames,
   getPrimitiveFrameworkAdapterTargetsForComponent,
   resolvePrimitiveFrameworkAdapterTargetComponents,
 } from "../../renderers/framework-adapters/target-registry.js";
+import type { FrameworkAdapterTargetRegistration } from "../../renderers/framework-adapters/types.js";
+import { vueFrameworkAdapterTarget } from "../../renderers/framework-adapters/vue/index.js";
+import { vuePrimitiveComponents } from "../../renderers/framework-adapters/vue/inventory.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
+import { expectedPrimitiveTargets, hasPrivateSvelte } from "../workspace-support.js";
 
 describe("registered Vue Framework Adapter target", () => {
   const temporaryRoots: string[] = [];
@@ -28,7 +27,7 @@ describe("registered Vue Framework Adapter target", () => {
   });
 
   it("registers exactly the approved public-beta Primitive subset", () => {
-    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(["astro", "react", "vue", "svelte"]);
+    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(expectedPrimitiveTargets);
     expect(resolvePrimitiveFrameworkAdapterTargetComponents("vue")).toEqual(vuePrimitiveComponents);
     expect(vueFrameworkAdapterTarget.primitive.support).toEqual({
       components: vuePrimitiveComponents,
@@ -92,7 +91,8 @@ describe("registered Vue Framework Adapter target", () => {
 
     expect(getPrimitiveFrameworkAdapterTarget("astro").publicSupport).toEqual(shipping);
     expect(getPrimitiveFrameworkAdapterTarget("react").publicSupport).toEqual(shipping);
-    expect(getPrimitiveFrameworkAdapterTarget("svelte").publicSupport).toEqual(quarantined);
+    if (hasPrivateSvelte)
+      expect(getPrimitiveFrameworkAdapterTarget("svelte").publicSupport).toEqual(quarantined);
     expect(solidFrameworkAdapterReadiness.publicSupport).toEqual(quarantined);
   });
 
@@ -162,7 +162,7 @@ describe("registered Vue Framework Adapter target", () => {
       "astro",
       "react",
       "vue",
-      "svelte",
+      ...(hasPrivateSvelte ? ["svelte"] : []),
     ]);
 
     const dialog = primitiveGeneratorRegistry.find((entry) => entry.component === "dialog");

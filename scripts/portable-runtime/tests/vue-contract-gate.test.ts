@@ -249,6 +249,7 @@ function isApprovedVueDocumentation({ path, source }: TextSurface): boolean {
   if (!containsBoundaryAwareVue(source)) return true;
   if (path.startsWith("docs/portable-runtime/")) return true;
   if (path === "docs/agents/test-health.md") return true;
+  if (path === "docs/release/versioning.md") return true;
   if (path === approvedVueArchitectureDoc) return true;
   if (path !== "docs/product/positioning.md") return false;
 
@@ -634,7 +635,7 @@ describe("Vue public-beta contract gate", () => {
       "astro",
       "react",
       "vue",
-      "svelte",
+      ...(existsSync("packages/svelte/package.json") ? ["svelte"] : []),
     ]);
     expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
     expect(
@@ -756,6 +757,7 @@ describe("Vue public-beta contract gate", () => {
 
     const publicCliSurfaces = readTextSurfaces(publicCliTextSurfacePaths);
     expect(findBoundaryAwareVueSurfaces(publicCliSurfaces)).toEqual([
+      "packages/cli/registry/README.md",
       "packages/cli/src/program.ts",
       "packages/cli/src/registry/bundled-registry.json",
       "packages/cli/src/registry/primitive-vendoring-artifacts.json",
@@ -827,6 +829,7 @@ describe("Vue public-beta contract gate", () => {
           ({ path }) =>
             path.startsWith("docs/portable-runtime/") ||
             path === "docs/agents/test-health.md" ||
+            path === "docs/release/versioning.md" ||
             path === approvedVueArchitectureDoc ||
             path === "docs/product/positioning.md",
         ),

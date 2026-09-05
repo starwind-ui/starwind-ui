@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import {
   mkdir,
   mkdtemp,
@@ -11,24 +12,15 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeAll, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-
-import {
-  buildRuntimeRegistry,
-  createCliRegistryBuildPolicy,
-} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
-import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
-
+import * as astroReactIntegration from "../../src/utils/astro-react-integration.js";
 import type { StarwindConfig, StarwindConfigFor } from "../../src/utils/config.js";
 import * as config from "../../src/utils/config.js";
-import * as astroReactIntegration from "../../src/utils/astro-react-integration.js";
 import * as dependencyResolver from "../../src/utils/dependency-resolver.js";
 import {
-  type PrivateVueCliFrameworkTarget,
   PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+  type PrivateVueCliFrameworkTarget,
 } from "../../src/utils/framework-target-policy.js";
 import * as packageManager from "../../src/utils/package-manager.js";
 import type { NormalizedStarwindRegistry, StarwindRegistryFor } from "../../src/utils/registry.js";
@@ -139,7 +131,6 @@ const vueClosureNames = [
   "combobox",
 ] as const;
 
-const repoRoot = fileURLToPath(new URL("../../../..", import.meta.url));
 let vueRegistryFixture: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
 
 function createRegistryComponent(name: string, componentDependencies: string[] = []) {
@@ -185,11 +176,10 @@ describe.sequential("runtime component installs", () => {
   let tempDir = "";
   let previousCwd = "";
 
-  beforeAll(async () => {
-    vueRegistryFixture = await buildRuntimeRegistry({
-      repoRoot,
-      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
-    });
+  beforeAll(() => {
+    vueRegistryFixture = JSON.parse(
+      readFileSync(new URL("../../src/registry/bundled-registry.json", import.meta.url), "utf8"),
+    );
   });
 
   beforeEach(async () => {

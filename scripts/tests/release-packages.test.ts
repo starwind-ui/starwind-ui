@@ -1,44 +1,43 @@
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { EventEmitter } from "node:events";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { EventEmitter } from "node:events";
 import { PassThrough } from "node:stream";
-
 import { describe, expect, it } from "vitest";
 import { parse as parseYaml } from "yaml";
-
+import { createSpawnCommand, getPackageManagerCommand } from "../command-process.mjs";
+import { hasPrivateSvelte } from "../portable-runtime/tests/workspace-support.js";
 import {
-  RELEASE_PACKAGE_SET,
-  VUE_BETA_RELEASE_PLAN,
-  captureVueBetaRegistryBaseline,
-  createPublishCommands,
-  createVueBetaPublishCommands,
-  createUserPublishHandoff,
-  executeReleasePublication,
-  formatPublishPlan,
-  formatCommandFailure,
-  isDirtyGitStatusOutput,
-  loadVueBetaRegistryBaseline,
-  parseArgs,
-  parsePublishOutput,
-  readGitOutput,
-  redactCommandArgs,
-  validatePublishGitState,
-  validatePublishedPrefix,
-  validateReleaseChangesetConfig,
-  validateReleasePackageManifests,
-  validateVueBetaReleaseMetadata,
-} from "../release-packages.mjs";
-import {
-  createGitHubReleaseArgs,
   createCommandSystem,
+  createGitHubReleaseArgs,
   deriveReleaseIdentity,
   finalizeVerifiedRelease,
   runReleaseFinalization,
   verifyPublishedPackages,
 } from "../release-finalization.mjs";
-import { createSpawnCommand, getPackageManagerCommand } from "../command-process.mjs";
+import {
+  captureVueBetaRegistryBaseline,
+  createPublishCommands,
+  createUserPublishHandoff,
+  createVueBetaPublishCommands,
+  executeReleasePublication,
+  formatCommandFailure,
+  formatPublishPlan,
+  isDirtyGitStatusOutput,
+  loadVueBetaRegistryBaseline,
+  parseArgs,
+  parsePublishOutput,
+  RELEASE_PACKAGE_SET,
+  readGitOutput,
+  redactCommandArgs,
+  VUE_BETA_RELEASE_PLAN,
+  validatePublishedPrefix,
+  validatePublishGitState,
+  validateReleaseChangesetConfig,
+  validateReleasePackageManifests,
+  validateVueBetaReleaseMetadata,
+} from "../release-packages.mjs";
 import {
   CHANGESET_IGNORED_PACKAGES,
   CHANGESET_PRIVATE_PACKAGE_POLICY,
@@ -148,35 +147,36 @@ describe("release package tooling", () => {
 
     const [vuePackage, sveltePackage] = await Promise.all([
       readJson<PackageJson>("packages/vue/package.json"),
-      readJson<PackageJson>("packages/svelte/package.json"),
+      hasPrivateSvelte ? readJson<PackageJson>("packages/svelte/package.json") : undefined,
     ]);
     expect(vuePackage).toMatchObject({
       name: "@starwind-ui/vue",
       version: "0.1.0",
     });
-    expect(sveltePackage).toMatchObject({
-      dependencies: { "@starwind-ui/runtime": "workspace:*" },
-      name: "@starwind-ui/svelte",
-      peerDependencies: { svelte: ">=5.29.0" },
-      private: true,
-      sideEffects: false,
-      version: "0.0.0",
-    });
-    expect(Object.keys(sveltePackage.exports ?? {})).toEqual([
-      ".",
-      "./button",
-      "./carousel",
-      "./checkbox",
-      "./select",
-      "./accordion",
-      "./dialog",
-      "./slider",
-      "./toast",
-    ]);
-    expect(
-      Object.keys(sveltePackage.scripts ?? {}).filter((script) => script.startsWith("publish")),
-    ).toEqual([]);
-
+    if (sveltePackage) {
+      expect(sveltePackage).toMatchObject({
+        dependencies: { "@starwind-ui/runtime": "workspace:*" },
+        name: "@starwind-ui/svelte",
+        peerDependencies: { svelte: ">=5.29.0" },
+        private: true,
+        sideEffects: false,
+        version: "0.0.0",
+      });
+      expect(Object.keys(sveltePackage.exports ?? {})).toEqual([
+        ".",
+        "./button",
+        "./carousel",
+        "./checkbox",
+        "./select",
+        "./accordion",
+        "./dialog",
+        "./slider",
+        "./toast",
+      ]);
+      expect(
+        Object.keys(sveltePackage.scripts ?? {}).filter((script) => script.startsWith("publish")),
+      ).toEqual([]);
+    }
     const changesetFiles = (await readdir(".changeset", { withFileTypes: true }))
       .filter((entry) => entry.isFile() && entry.name.endsWith(".md") && entry.name !== "README.md")
       .map((entry) => entry.name);

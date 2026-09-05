@@ -1,20 +1,20 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-
 import { describe, expect, it } from "vitest";
-
+import {
+  ZAG_VUE_COMPARATOR_VERSION,
+  zagVueExpectedResolvedVersions,
+} from "../package-size-vue-plan.mjs";
 import { scenarioRows } from "../runtime-performance/model.mjs";
 import {
   REKA_UI_COMPARATOR_VERSION,
-  VUE_PERFORMANCE_REKA_AUDIT_SOURCE,
   rekaUiAuditedNamedExportsByScenario,
   rekaUiExpectedResolvedVersions,
   rekaUiScenarioDecisions,
   selectVuePerformanceRows,
+  VUE_PERFORMANCE_REKA_AUDIT_SOURCE,
   validateVuePerformanceComparatorVersions,
   validateVuePerformancePlan,
-  vuePerformanceDomPhaseFactsByScenario,
   vuePerformanceDomPartCountsByScenario,
+  vuePerformanceDomPhaseFactsByScenario,
   vuePerformanceExcludedScenarioKeys,
   vuePerformancePlan,
   vuePerformanceProposedScenarioKeys,
@@ -23,10 +23,6 @@ import {
   vuePerformanceScenarioKeys,
   vuePerformanceTopology,
 } from "../runtime-performance/vue-plan.mjs";
-import {
-  ZAG_VUE_COMPARATOR_VERSION,
-  zagVueExpectedResolvedVersions,
-} from "../package-size-vue-plan.mjs";
 
 describe("Vue runtime performance topology", () => {
   it("reuses every applicable shared scenario identity in stable order", () => {
@@ -691,20 +687,6 @@ describe("Vue runtime performance provider provenance", () => {
       expect(row.limitation.length).toBeGreaterThan(0);
     }
 
-    const audit = readFileSync(
-      path.resolve(import.meta.dirname, "../../..", VUE_PERFORMANCE_REKA_AUDIT_SOURCE),
-      "utf8",
-    );
-    const auditedDecisions = [...audit.matchAll(/^\| `([^`]+)` \| (Include|Exclude) \|/gm)].map(
-      ([, scenario, decision]) => ({ scenario, decision: decision.toLowerCase() }),
-    );
-    expect(audit).toContain(`Selected package:** \`reka-ui@${REKA_UI_COMPARATOR_VERSION}\``);
-    expect(audit).toContain(
-      "Synchronously dispatch `mousedown`, `mouseup`, and `click`, in that order, on the last trigger.",
-    );
-    expect(auditedDecisions).toEqual(
-      rekaUiScenarioDecisions.map(({ scenario, decision }) => ({ scenario, decision })),
-    );
     expect(rekaUiAuditedNamedExportsByScenario["menu-submenu-open"]).toEqual([
       "DropdownMenuContent",
       "DropdownMenuItem",

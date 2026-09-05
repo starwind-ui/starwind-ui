@@ -90,6 +90,48 @@ function snapshot(
 }
 
 describe("styled component release intents", () => {
+  it("adds a framework at current component versions with CLI minor delivery", () => {
+    const base = snapshot();
+    const head = structuredClone(base);
+    for (const component of head.registry.components)
+      component.targets!.vue = structuredClone(component.targets!.react!);
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(/starwind minor/);
+    head.packageReleases = { "vue.md": { starwind: "minor" } };
+    expect(validateStyledVersionPullRequest({ base, head }).changedComponents).toEqual([]);
+    head.registry.components[0].targets!.astro!.files[0].content += "changed";
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(
+      /Missing styled version intent/,
+    );
+  });
+
+  it("requires a component intent for subsequent Vue edits and target removals", () => {
+    const base = snapshot();
+    base.registry.components[0].targets!.vue = structuredClone(
+      base.registry.components[0].targets!.react!,
+    );
+    const head = structuredClone(base);
+    head.registry.components[0].targets!.vue!.files[0].content += "changed";
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(
+      /Missing styled version intent/,
+    );
+    delete head.registry.components[0].targets!.vue;
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(
+      /Missing styled version intent/,
+    );
+  });
+
+  it("accepts an already materialized CLI minor for framework addition, but not a patch", () => {
+    const base = snapshot();
+    base.cliVersion = "3.2.0";
+    const head = structuredClone(base);
+    head.registry.components[0].targets!.vue = structuredClone(
+      head.registry.components[0].targets!.react!,
+    );
+    head.cliVersion = "3.2.1";
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(/starwind minor/);
+    head.cliVersion = "3.3.0";
+    expect(validateStyledVersionPullRequest({ base, head }).changedComponents).toEqual([]);
+  });
   it("parses a strict non-empty component bump map", () => {
     const legacyIntent = {
       components: { accordion: "patch" },

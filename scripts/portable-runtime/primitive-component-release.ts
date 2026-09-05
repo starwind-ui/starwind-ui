@@ -1,8 +1,8 @@
 import { execFile } from "node:child_process";
-import { readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 import semver from "semver";
 
@@ -15,18 +15,19 @@ import {
   aggregateReleaseDecisions,
   applyVersionIntents,
   assertSafeIntentFile,
+  type ChangesetReleaseFacts,
   getNewPackageReleaseBump,
+  hasFrameworkAdditionRelease,
   hasNewPackageRelease,
   isNodeError,
   isPlainObject,
   materializeSourceVersions,
   parseChangesetReleaseFacts,
+  type ReleaseDecision,
+  type ReleaseImpact,
   resolveVersionIntentDirectory,
   sortRecord,
   stageVersionIntents,
-  type ChangesetReleaseFacts,
-  type ReleaseDecision,
-  type ReleaseImpact,
 } from "./release-intent-utils.js";
 
 export type PrimitiveVersionBump = "major" | "minor" | "patch";
@@ -39,6 +40,7 @@ export type PrimitiveVersionIntent = {
 export type ParsedPrimitiveVersionIntent = PrimitiveVersionIntent & { impact: ReleaseImpact };
 
 export type PrimitiveReleaseSnapshot = {
+  cliVersion?: string;
   artifacts: PrimitiveVendoringArtifacts;
   fragments: Record<string, PrimitiveVersionIntent>;
   manifest: PrimitiveVersionManifest;
@@ -261,9 +263,26 @@ export function validatePrimitiveVersionPullRequest(options: {
       (name) =>
         headArtifacts.has(name) &&
         createPrimitiveArtifactFingerprint(baseArtifacts.get(name)!) !==
-          createPrimitiveArtifactFingerprint(headArtifacts.get(name)!),
+          createPrimitiveArtifactFingerprint(
+            headArtifacts
+              .get(name)!
+              .filter((artifact) =>
+                baseArtifacts
+                  .get(name)!
+                  .some((previous) => previous.framework === artifact.framework),
+              ),
+          ),
     )
     .sort();
+
+  const hasAddedTarget = [...baseArtifacts].some(([name, artifacts]) =>
+    (headArtifacts.get(name) ?? []).some(
+      (artifact) => !artifacts.some((previous) => previous.framework === artifact.framework),
+    ),
+  );
+  if (hasAddedTarget && !hasFrameworkAdditionRelease(options.base, options.head)) {
+    throw new Error("Adding a Primitive framework target requires a starwind minor release.");
+  }
 
   for (const primitive of baseArtifacts.keys()) {
     if (
@@ -419,6 +438,14 @@ async function readWorkingSnapshot(repoRoot: string): Promise<PrimitiveReleaseSn
     fragments: await readFragments(repoRoot, new Set(Object.keys(manifest.primitives))),
     manifest,
     packageReleases: await readWorkingPackageReleases(repoRoot),
+    cliVersion: await readJson<{ version?: string }>(
+      path.join(repoRoot, "packages/cli/package.json"),
+    )
+      .then((pkg) => pkg.version)
+      .catch((error) => {
+        if (isNodeError(error) && error.code === "ENOENT") return undefined;
+        throw error;
+      }),
   };
 }
 
@@ -457,6 +484,7 @@ async function readGitSnapshot(repoRoot: string, ref: string): Promise<Primitive
     fragments,
     manifest,
     packageReleases: sortRecord(packageReleases),
+    cliVersion: JSON.parse(await readGitFile(repoRoot, ref, "packages/cli/package.json")).version,
   };
 }
 

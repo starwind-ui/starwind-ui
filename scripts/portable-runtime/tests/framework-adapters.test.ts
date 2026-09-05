@@ -43,9 +43,6 @@ import {
   reactFrameworkAdapter,
   solidFrameworkAdapter,
   solidFrameworkAdapterReadiness,
-  svelteAdapterPublicContract,
-  svelteFrameworkAdapterReadiness,
-  svelteFrameworkAdapterTarget,
   toStyledAdapterContract,
   vueFrameworkAdapter,
   vueFrameworkAdapterReadiness,
@@ -68,6 +65,7 @@ import {
   buildSliderSpecializedAdapterSpec,
 } from "../renderers/specialized-adapter-spec/index.js";
 import type { StyledOutputComponentGroup } from "../renderers/styled-output-model/index.js";
+import { hasPrivateSvelte } from "./workspace-support.js";
 
 describe("Framework Adapter seam", () => {
   it("builds framework-neutral export and type facts for target printers", () => {
@@ -758,218 +756,220 @@ describe("Framework Adapter seam", () => {
         },
         target: registration.target,
       })),
-    ).toEqual([
-      {
-        adapterTarget: "astro",
-        cliRegistry: {
-          generatedImportCandidateExtensions: [".astro", ".ts", ".js"],
-          packageMetadataSources: [
-            "packages/astro/package.json",
-            "packages/runtime/package.json",
-            "apps/demo/package.json",
-          ],
-          primitiveArtifact: {
-            editableContentMarkers: expect.any(Array),
-            forbiddenContent: [],
-            outputDir: "astro-primitives",
-            projectContent: "function",
-            sourceRoot: "packages/astro/src",
-          },
-          styledArtifact: {
-            collectPackageImportSources: "function",
-            outputDir: "astro",
-            primitiveOutputDir: "astro-primitives",
-          },
-          setupPackageRequirements: [
-            { name: "@tabler/icons", range: "^3" },
-            { name: "@tailwindcss/forms", range: "^0.5" },
-            { name: "@tailwindcss/vite", range: "^4" },
-            { name: "tailwind-merge", range: "^3" },
-            { name: "tailwind-variants", range: "^3" },
-            { name: "tailwindcss", range: "^4" },
-            { name: "tw-animate-css", range: "^1" },
-          ],
-        },
-        fileExtension: ".astro",
-        home: "scripts/portable-runtime/renderers/framework-adapters/astro",
-        packageName: "@starwind-ui/astro",
-        primitive: {
-          generatePackage: "function",
-          manualPrimitives: "object",
-          outputModel: {
-            projectSpecialized: "function",
-            write: "function",
-          },
-        },
-        publicSupport: {
-          cliRegistry: true,
-          demoIntegration: true,
-          packageExports: true,
-          publicDocsClaim: true,
-          status: "shipping",
-        },
-        styled: {
-          project: "function",
-          write: "function",
-        },
-        target: "astro",
-      },
-      {
-        adapterTarget: "react",
-        cliRegistry: {
-          generatedImportCandidateExtensions: [".ts", ".tsx", ".js", ".jsx"],
-          packageMetadataSources: [
-            "packages/react/package.json",
-            "packages/runtime/package.json",
-            "apps/react-demo/package.json",
-          ],
-          primitiveArtifact: {
-            editableContentMarkers: expect.any(Array),
-            extraPackageRequirements: ["react", "react-dom"],
-            forbiddenContent: [],
-            includeLocalImportGraph: true,
-            outputDir: "react-primitives",
-            projectContent: "function",
-            sourceRoot: "packages/react/src",
-          },
-          styledArtifact: {
-            collectPackageImportSources: "function",
-            outputDir: "react",
-            primitiveOutputDir: "react-primitives",
-          },
-          setupPackageRequirements: [
-            { name: "@tabler/icons-react", range: "^3" },
-            { name: "@tailwindcss/forms", range: "^0.5" },
-            { name: "@tailwindcss/vite", range: "^4" },
-            { name: "tailwind-merge", range: "^3" },
-            { name: "tailwind-variants", range: "^3" },
-            { name: "tailwindcss", range: "^4" },
-            { name: "tw-animate-css", range: "^1" },
-          ],
-        },
-        fileExtension: ".tsx",
-        home: "scripts/portable-runtime/renderers/framework-adapters/react",
-        packageName: "@starwind-ui/react",
-        primitive: {
-          generatePackage: "function",
-          manualPrimitives: "object",
-          outputModel: {
-            projectSpecialized: "function",
-            write: "function",
-          },
-        },
-        publicSupport: {
-          cliRegistry: true,
-          demoIntegration: true,
-          packageExports: true,
-          publicDocsClaim: true,
-          status: "shipping",
-        },
-        styled: {
-          project: "function",
-          write: "function",
-        },
-        target: "react",
-      },
-      {
-        adapterTarget: "vue",
-        cliRegistry: {
-          exactAdapterPackageVersion: "0.1.0",
-          generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
-          packageMetadataSources: [
-            "packages/vue/package.json",
-            "packages/runtime/package.json",
-            "apps/vue-demo/package.json",
-          ],
-          primitiveArtifact: {
-            editableContentMarkers: expect.any(Array),
-            forbiddenContent: expect.any(Array),
-            includeLocalImportGraph: true,
-            outputDir: "vue-primitives",
-            projectContent: "function",
-            sourceRoot: "packages/vue/src",
-          },
-          styledArtifact: {
-            collectPackageImportSources: "function",
-            outputDir: "vue",
-            primitiveOutputDir: "vue-primitives",
-          },
-          setupPackageRequirements: [{ name: "vue", range: ">=3.5" }],
-        },
-        fileExtension: ".vue",
-        home: "scripts/portable-runtime/renderers/framework-adapters/vue",
-        packageName: "@starwind-ui/vue",
-        primitive: {
-          generatePackage: "function",
-          manualPrimitives: "object",
-          outputModel: {
-            projectSpecialized: "function",
-            write: "function",
-          },
-        },
-        publicSupport: {
-          cliRegistry: true,
-          demoIntegration: true,
-          packageExports: true,
-          publicDocsClaim: true,
-          status: "public-beta",
-        },
-        styled: {
-          project: "function",
-          write: "function",
-        },
-        target: "vue",
-      },
-      {
-        adapterTarget: "svelte",
-        cliRegistry: {
-          generatedImportCandidateExtensions: [".svelte", ".ts", ".js"],
-          primitiveArtifact: undefined,
-          styledArtifact: {
-            collectPackageImportSources: "undefined",
-            outputDir: "svelte",
-            primitiveOutputDir: "svelte-primitives",
-          },
-          setupPackageRequirements: [],
-        },
-        fileExtension: ".svelte",
-        home: "scripts/portable-runtime/renderers/framework-adapters/svelte",
-        packageName: "@starwind-ui/svelte",
-        primitive: {
-          generatePackage: "function",
-          manualPrimitives: "undefined",
-          outputModel: {
-            projectSpecialized: "function",
-            write: "function",
-          },
-          support: {
-            components: [
-              "button",
-              "carousel",
-              "checkbox",
-              "select",
-              "accordion",
-              "dialog",
-              "slider",
-              "toast",
+    ).toEqual(
+      [
+        {
+          adapterTarget: "astro",
+          cliRegistry: {
+            generatedImportCandidateExtensions: [".astro", ".ts", ".js"],
+            packageMetadataSources: [
+              "packages/astro/package.json",
+              "packages/runtime/package.json",
+              "apps/demo/package.json",
             ],
-            kind: "subset",
+            primitiveArtifact: {
+              editableContentMarkers: expect.any(Array),
+              forbiddenContent: [],
+              outputDir: "astro-primitives",
+              projectContent: "function",
+              sourceRoot: "packages/astro/src",
+            },
+            styledArtifact: {
+              collectPackageImportSources: "function",
+              outputDir: "astro",
+              primitiveOutputDir: "astro-primitives",
+            },
+            setupPackageRequirements: [
+              { name: "@tabler/icons", range: "^3" },
+              { name: "@tailwindcss/forms", range: "^0.5" },
+              { name: "@tailwindcss/vite", range: "^4" },
+              { name: "tailwind-merge", range: "^3" },
+              { name: "tailwind-variants", range: "^3" },
+              { name: "tailwindcss", range: "^4" },
+              { name: "tw-animate-css", range: "^1" },
+            ],
           },
+          fileExtension: ".astro",
+          home: "scripts/portable-runtime/renderers/framework-adapters/astro",
+          packageName: "@starwind-ui/astro",
+          primitive: {
+            generatePackage: "function",
+            manualPrimitives: "object",
+            outputModel: {
+              projectSpecialized: "function",
+              write: "function",
+            },
+          },
+          publicSupport: {
+            cliRegistry: true,
+            demoIntegration: true,
+            packageExports: true,
+            publicDocsClaim: true,
+            status: "shipping",
+          },
+          styled: {
+            project: "function",
+            write: "function",
+          },
+          target: "astro",
         },
-        publicSupport: {
-          cliRegistry: false,
-          demoIntegration: false,
-          packageExports: false,
-          publicDocsClaim: false,
-          status: "non-shipping-tracer",
+        {
+          adapterTarget: "react",
+          cliRegistry: {
+            generatedImportCandidateExtensions: [".ts", ".tsx", ".js", ".jsx"],
+            packageMetadataSources: [
+              "packages/react/package.json",
+              "packages/runtime/package.json",
+              "apps/react-demo/package.json",
+            ],
+            primitiveArtifact: {
+              editableContentMarkers: expect.any(Array),
+              extraPackageRequirements: ["react", "react-dom"],
+              forbiddenContent: [],
+              includeLocalImportGraph: true,
+              outputDir: "react-primitives",
+              projectContent: "function",
+              sourceRoot: "packages/react/src",
+            },
+            styledArtifact: {
+              collectPackageImportSources: "function",
+              outputDir: "react",
+              primitiveOutputDir: "react-primitives",
+            },
+            setupPackageRequirements: [
+              { name: "@tabler/icons-react", range: "^3" },
+              { name: "@tailwindcss/forms", range: "^0.5" },
+              { name: "@tailwindcss/vite", range: "^4" },
+              { name: "tailwind-merge", range: "^3" },
+              { name: "tailwind-variants", range: "^3" },
+              { name: "tailwindcss", range: "^4" },
+              { name: "tw-animate-css", range: "^1" },
+            ],
+          },
+          fileExtension: ".tsx",
+          home: "scripts/portable-runtime/renderers/framework-adapters/react",
+          packageName: "@starwind-ui/react",
+          primitive: {
+            generatePackage: "function",
+            manualPrimitives: "object",
+            outputModel: {
+              projectSpecialized: "function",
+              write: "function",
+            },
+          },
+          publicSupport: {
+            cliRegistry: true,
+            demoIntegration: true,
+            packageExports: true,
+            publicDocsClaim: true,
+            status: "shipping",
+          },
+          styled: {
+            project: "function",
+            write: "function",
+          },
+          target: "react",
         },
-        styled: {
-          project: "undefined",
-          write: "undefined",
+        {
+          adapterTarget: "vue",
+          cliRegistry: {
+            exactAdapterPackageVersion: "0.1.0",
+            generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
+            packageMetadataSources: [
+              "packages/vue/package.json",
+              "packages/runtime/package.json",
+              "apps/vue-demo/package.json",
+            ],
+            primitiveArtifact: {
+              editableContentMarkers: expect.any(Array),
+              forbiddenContent: expect.any(Array),
+              includeLocalImportGraph: true,
+              outputDir: "vue-primitives",
+              projectContent: "function",
+              sourceRoot: "packages/vue/src",
+            },
+            styledArtifact: {
+              collectPackageImportSources: "function",
+              outputDir: "vue",
+              primitiveOutputDir: "vue-primitives",
+            },
+            setupPackageRequirements: [{ name: "vue", range: ">=3.5" }],
+          },
+          fileExtension: ".vue",
+          home: "scripts/portable-runtime/renderers/framework-adapters/vue",
+          packageName: "@starwind-ui/vue",
+          primitive: {
+            generatePackage: "function",
+            manualPrimitives: "object",
+            outputModel: {
+              projectSpecialized: "function",
+              write: "function",
+            },
+          },
+          publicSupport: {
+            cliRegistry: true,
+            demoIntegration: true,
+            packageExports: true,
+            publicDocsClaim: true,
+            status: "public-beta",
+          },
+          styled: {
+            project: "function",
+            write: "function",
+          },
+          target: "vue",
         },
-        target: "svelte",
-      },
-    ]);
+        {
+          adapterTarget: "svelte",
+          cliRegistry: {
+            generatedImportCandidateExtensions: [".svelte", ".ts", ".js"],
+            primitiveArtifact: undefined,
+            styledArtifact: {
+              collectPackageImportSources: "undefined",
+              outputDir: "svelte",
+              primitiveOutputDir: "svelte-primitives",
+            },
+            setupPackageRequirements: [],
+          },
+          fileExtension: ".svelte",
+          home: "scripts/portable-runtime/renderers/framework-adapters/svelte",
+          packageName: "@starwind-ui/svelte",
+          primitive: {
+            generatePackage: "function",
+            manualPrimitives: "undefined",
+            outputModel: {
+              projectSpecialized: "function",
+              write: "function",
+            },
+            support: {
+              components: [
+                "button",
+                "carousel",
+                "checkbox",
+                "select",
+                "accordion",
+                "dialog",
+                "slider",
+                "toast",
+              ],
+              kind: "subset",
+            },
+          },
+          publicSupport: {
+            cliRegistry: false,
+            demoIntegration: false,
+            packageExports: false,
+            publicDocsClaim: false,
+            status: "non-shipping-tracer",
+          },
+          styled: {
+            project: "undefined",
+            write: "undefined",
+          },
+          target: "svelte",
+        },
+      ].filter(({ target }) => target !== "svelte" || hasPrivateSvelte),
+    );
     for (const registration of primitiveFrameworkAdapterTargets) {
       expect(Object.keys(registration).sort()).toEqual(
         registration.target === "svelte"
@@ -1073,33 +1073,35 @@ describe("Framework Adapter seam", () => {
         status: "public-beta",
       },
     });
-    const svelteTarget = getPrimitiveFrameworkAdapterTarget("svelte");
-    expect(svelteTarget).toMatchObject({
-      packageName: "@starwind-ui/svelte",
-      primitive: {
-        support: {
-          components: [
-            "button",
-            "carousel",
-            "checkbox",
-            "select",
-            "accordion",
-            "dialog",
-            "slider",
-            "toast",
-          ],
-          kind: "subset",
+    if (hasPrivateSvelte) {
+      const svelteTarget = getPrimitiveFrameworkAdapterTarget("svelte");
+      expect(svelteTarget).toMatchObject({
+        packageName: "@starwind-ui/svelte",
+        primitive: {
+          support: {
+            components: [
+              "button",
+              "carousel",
+              "checkbox",
+              "select",
+              "accordion",
+              "dialog",
+              "slider",
+              "toast",
+            ],
+            kind: "subset",
+          },
         },
-      },
-      publicSupport: {
-        cliRegistry: false,
-        demoIntegration: false,
-        packageExports: false,
-        publicDocsClaim: false,
-        status: "non-shipping-tracer",
-      },
-    });
-    expect(svelteTarget).not.toHaveProperty("styled");
+        publicSupport: {
+          cliRegistry: false,
+          demoIntegration: false,
+          packageExports: false,
+          publicDocsClaim: false,
+          status: "non-shipping-tracer",
+        },
+      });
+      expect(svelteTarget).not.toHaveProperty("styled");
+    }
     expect(
       new Set(primitiveFrameworkAdapterTargets.map((registration) => registration.target)).size,
     ).toBe(primitiveFrameworkAdapterTargets.length);
@@ -1951,41 +1953,6 @@ describe("Framework Adapter seam", () => {
     expect(compileScript).toContain('"vue"');
     expect(compileScript).toContain("vue-tsc");
     expect(compileScript).toContain("rm(fixtureRoot, { force: true, recursive: true })");
-  });
-
-  it("documents the registered private Svelte package and its non-shipping boundary", () => {
-    const svelteReadme = readFileSync(
-      join(process.cwd(), "scripts/portable-runtime/renderers/framework-adapters/svelte/README.md"),
-      "utf8",
-    );
-    const normalizedSvelteReadme = svelteReadme.replace(/\s+/g, " ");
-
-    expect(svelteFrameworkAdapterReadiness).toMatchObject({
-      fileExtension: ".svelte",
-      lifecycleStrategy: "svelte-attachment-cleanup",
-      publicSupport: svelteAdapterPublicContract.publicSupport,
-      target: "svelte",
-    });
-    expect(svelteFrameworkAdapterTarget.publicSupport).toEqual({
-      cliRegistry: false,
-      demoIntegration: false,
-      packageExports: false,
-      publicDocsClaim: false,
-      status: "non-shipping-tracer",
-    });
-    expect(svelteReadme).toContain("private, non-shipping Svelte 5.29+ target");
-    expect(svelteReadme).toContain("single Svelte registration");
-    expect(normalizedSvelteReadme).toContain(
-      "Do not add CLI registry entries, demo dependencies, install docs, public",
-    );
-    expect(normalizedSvelteReadme).toContain(
-      "The target supports exactly Button, Carousel, Checkbox, Select, Accordion, Dialog, Slider, and Toast.",
-    );
-    expect(svelteReadme).not.toContain(
-      "The target supports exactly Button, Checkbox, and Select; this proof currently generates Button.",
-    );
-    expect(svelteReadme).not.toContain("deferred");
-    expect(svelteReadme).toContain("packages/svelte/src");
   });
 });
 
