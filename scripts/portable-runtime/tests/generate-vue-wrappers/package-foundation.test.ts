@@ -396,9 +396,8 @@ describe("Vue package foundation", () => {
     expect(changesetConfig.fixed).toEqual([
       ["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"],
     ]);
-    expect(changesetConfig.ignore).toEqual(
-      expect.arrayContaining(["vue-demo", "@starwind-ui/svelte"]),
-    );
+    expect(changesetConfig.ignore).toContain("vue-demo");
+    expect(changesetConfig.ignore.includes("@starwind-ui/svelte")).toBe(hasPrivateSvelte);
     expect(changesetConfig.ignore).not.toContain("@starwind-ui/vue");
 
     const vueDemoPackage = JSON.parse(await readFile("apps/vue-demo/package.json", "utf8"));
