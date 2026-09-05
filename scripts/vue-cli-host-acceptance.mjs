@@ -34,7 +34,6 @@ const NUXT_3_VERSION = "3.21.0";
 const NUXT_4_VERSION = "4.2.0";
 const QUASAR_APP_VERSION = "3.0.0";
 const VUE_BETA_REGISTRY_VERSION = "0.1.0";
-const VUE_BETA_CLI_VERSION = "3.3.0";
 const HOST = "127.0.0.1";
 const PRIVATE_PACKAGES = [
   {
@@ -676,6 +675,10 @@ export async function runVueLocalLinkAcceptance({ root, runCommand = runLoggedCo
   console.log("[vue-cli-host] isolated Runtime, Vue, and CLI local-link acceptance passed");
 }
 
+export function getVueBetaPackVersion(key, version) {
+  return key === "vue" ? VUE_BETA_REGISTRY_VERSION : version;
+}
+
 async function packVueBetaPackages(outputDirectory, logsDirectory) {
   const plan = createVueBetaPackPlan({ outputDirectory });
   await mkdir(outputDirectory, { recursive: true });
@@ -686,12 +689,7 @@ async function packVueBetaPackages(outputDirectory, logsDirectory) {
     const manifest = JSON.parse(
       await readFile(path.join(packageDirectory, "package.json"), "utf8"),
     );
-    const plannedVersion =
-      entry.key === "vue"
-        ? VUE_BETA_REGISTRY_VERSION
-        : entry.key === "cli"
-          ? VUE_BETA_CLI_VERSION
-          : manifest.version;
+    const plannedVersion = getVueBetaPackVersion(entry.key, manifest.version);
     if (plannedVersion !== manifest.version) {
       packageDirectory = path.join(outputDirectory, "staged", entry.key);
       await cp(entry.directory, packageDirectory, {
