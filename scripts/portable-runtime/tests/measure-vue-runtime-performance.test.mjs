@@ -4,10 +4,9 @@ import os from "node:os";
 import path from "node:path";
 
 import { describe, expect, it, vi } from "vitest";
-
 import {
-  assertVuePerformanceBrowserResult,
   assertVuePerformanceBaselineWorktree,
+  assertVuePerformanceBrowserResult,
   buildComparatorBrowserEntry,
   buildVueComparatorInstallCommands,
   buildVuePerformanceRunConfig,
@@ -30,7 +29,6 @@ import {
   vueComparatorInstallSpecifiers,
 } from "../runtime-performance/vue-comparator-fixtures.mjs";
 import { vuePerformanceProviderRows } from "../runtime-performance/vue-plan.mjs";
-import { buildStarwindVueFixture } from "../runtime-performance/vue-starwind-fixture.mjs";
 import {
   buildVuePerformanceRowRecord,
   createVuePerformanceAudit,
@@ -38,6 +36,8 @@ import {
   createVuePerformanceRun,
   VUE_PERFORMANCE_BASELINE_FLAGS,
 } from "../runtime-performance/vue-run-evidence.mjs";
+import { buildStarwindVueFixture } from "../runtime-performance/vue-starwind-fixture.mjs";
+import { hasPrivateSvelte } from "./workspace-support.js";
 
 const repoRoot = path.resolve(import.meta.dirname, "../../..");
 
@@ -836,7 +836,9 @@ describe("Vue runtime performance runner", () => {
       "measure-runtime-performance.mjs --snapshot",
     );
     expect(packageJson.scripts["runtime:perf:vue:check"]).toBe(
-      "node scripts/portable-runtime/measure-vue-runtime-performance.mjs --check",
+      hasPrivateSvelte
+        ? "node scripts/portable-runtime/measure-vue-runtime-performance.mjs --check"
+        : undefined,
     );
   });
 });

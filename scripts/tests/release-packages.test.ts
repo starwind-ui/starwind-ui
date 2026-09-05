@@ -364,7 +364,7 @@ describe("release package tooling", () => {
       "pnpm react-demo:smoke",
       "pnpm vue-demo:smoke",
       "pnpm runtime:size:check:prepared",
-      "pnpm runtime:perf:vue:check",
+      ...(hasPrivateSvelte ? ["pnpm runtime:perf:vue:check"] : []),
       "pnpm release:candidate:acceptance",
     ]);
     expect(root.scripts?.["publish:release:dry-run"]).not.toContain("release:prepare");
