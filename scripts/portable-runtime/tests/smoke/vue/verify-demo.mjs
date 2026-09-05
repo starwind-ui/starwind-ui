@@ -3162,6 +3162,10 @@ async function verifyStyledMenusFloating(page) {
   await navigationTrigger.click();
   const navigationContent = page.getByTestId("styled-navigation-content-guides");
   await navigationContent.waitFor({ state: "visible" });
+  await page.waitForFunction(() => {
+    const content = document.querySelector('[data-testid="styled-navigation-content-guides"]');
+    return content && Number.parseFloat(getComputedStyle(content).opacity) > 0;
+  });
   await assertTextIncludes(
     page.getByTestId("styled-navigation-state"),
     "guides",
