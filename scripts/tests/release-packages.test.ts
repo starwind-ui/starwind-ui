@@ -131,7 +131,7 @@ describe("release package tooling", () => {
       "demo",
       "react-demo",
       "vue-demo",
-      "@starwind-ui/svelte",
+      ...(hasPrivateSvelte ? ["@starwind-ui/svelte"] : []),
     ]);
     expect(RUNTIME_FIXED_GROUP).toEqual([
       "@starwind-ui/runtime",

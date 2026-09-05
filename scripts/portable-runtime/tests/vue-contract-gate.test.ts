@@ -172,7 +172,14 @@ const forbiddenPublicVueScriptCommandPatterns = [
   /(?:pack-public-release-artifacts|published-release-acceptance|release-candidate-acceptance|release-packages)\.mjs\b/i,
   /(?:runtime:registry(?::|\b)|generate-cli-registry|packages\/cli\/(?:registry|src\/registry))/i,
 ] as const;
-const approvedChangesetIgnore = ["demo", "react-demo", "vue-demo", "@starwind-ui/svelte"];
+const approvedChangesetIgnore = [
+  "demo",
+  "react-demo",
+  "vue-demo",
+  ...(existsSync(join(process.cwd(), "packages/svelte/package.json"))
+    ? ["@starwind-ui/svelte"]
+    : []),
+];
 const approvedProductPositioningVueClaim =
   /Current first-party Primitive adapter packages are Astro, React, and the Vue 3\.5 public beta\.\s+Runtime adapter contract types also allow future targets such as Svelte and Solid\. Claim support\s+only after generated package output, demos, host checks, and release metadata exist\./;
 const approvedVueArchitectureDoc = "docs/adr/0011-use-idiomatic-vue-adapter-semantics.md";
