@@ -202,13 +202,13 @@ describe("Vue adapter public contract", () => {
     });
   });
 
-  it("keeps every public-support flag false and agrees with readiness metadata", () => {
+  it("keeps every public-beta support flag enabled and agrees with readiness metadata", () => {
     expect(vueAdapterPublicContract.publicSupport).toEqual({
-      cliRegistry: false,
-      demoIntegration: false,
-      packageExports: false,
-      publicDocsClaim: false,
-      status: "non-shipping-tracer",
+      cliRegistry: true,
+      demoIntegration: true,
+      packageExports: true,
+      publicDocsClaim: true,
+      status: "public-beta",
     });
     expect(vueAdapterPublicContract.publicSupport).toEqual(
       vueFrameworkAdapterReadiness.publicSupport,

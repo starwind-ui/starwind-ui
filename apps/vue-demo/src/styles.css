@@ -49,15 +49,31 @@ a {
   display: flex;
   width: min(100% - 2rem, 76rem);
   min-height: 4rem;
+  flex-wrap: wrap;
   align-items: center;
   gap: 1rem;
   margin-inline: auto;
+  padding-block: 0.5rem;
 }
 
 .demo-header__brand {
   color: var(--foreground);
   font-weight: 800;
   text-decoration: none;
+}
+
+.beta-label {
+  display: inline-flex;
+  min-height: 1.5rem;
+  align-items: center;
+  padding-inline: 0.55rem;
+  border: 1px solid color-mix(in oklch, var(--primary) 45%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--primary) 12%, var(--background));
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 750;
+  line-height: 1;
 }
 
 .demo-header nav {

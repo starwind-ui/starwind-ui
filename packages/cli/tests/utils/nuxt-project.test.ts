@@ -78,8 +78,61 @@ describe("Nuxt project setup", () => {
     expect(updated!.match(/from "@tailwindcss\/vite"/g)).toHaveLength(1);
     expect(updated!.match(/tailwindcss\(\)/g)).toHaveLength(1);
     expect(updated!.match(/~\/assets\/css\/starwind\.css/g)).toHaveLength(1);
+    expect(updated).toContain(
+      'components: [{ path: "~/components", ignore: ["starwind/**/*.ts", "starwind-primitives/**/*.ts"] }]',
+    );
     expect(updated).toContain('compatibilityDate: "2025-07-15"');
     expect(updateNuxtConfigContent(updated!)).toBe(updated);
+  });
+
+  it.each(["Nuxt 3", "Nuxt 4"])(
+    "preserves the normal %s component scan while excluding only Starwind TypeScript files",
+    () => {
+      const source = `export default defineNuxtConfig({
+  components: [
+    { path: "~/features", prefix: "Feature" },
+    { path: "~/components", pathPrefix: true, ignore: ["generated/**"] },
+  ],
+});
+`;
+      const updated = updateNuxtConfigContent(source);
+
+      expect(updated).not.toBeNull();
+      expect(updated).toContain('{ path: "~/features", prefix: "Feature" }');
+      expect(updated).toContain("pathPrefix: true");
+      expect(updated).toContain('"generated/**"');
+      expect(updated).toContain('"starwind/**/*.ts"');
+      expect(updated).toContain('"starwind-primitives/**/*.ts"');
+      expect(updateNuxtConfigContent(updated!)).toBe(updated);
+    },
+  );
+
+  it("upgrades the documented boolean and string normal component scan forms", () => {
+    const boolean = updateNuxtConfigContent(
+      "export default defineNuxtConfig({ components: true });\n",
+    );
+    const string = updateNuxtConfigContent(
+      'export default defineNuxtConfig({ components: ["~/components", "~/widgets"] });\n',
+    );
+
+    for (const updated of [boolean, string]) {
+      expect(updated).not.toBeNull();
+      expect(updated).toContain('path: "~/components"');
+      expect(updated).toContain('"starwind/**/*.ts"');
+      expect(updated).toContain('"starwind-primitives/**/*.ts"');
+      expect(updateNuxtConfigContent(updated!)).toBe(updated);
+    }
+    expect(string).toContain('"~/widgets"');
+  });
+
+  it.each([
+    "export default defineNuxtConfig({ components: false });",
+    'export default defineNuxtConfig({ components: ["~/widgets"] });',
+    "const components = []; export default defineNuxtConfig({ components });",
+    "export default defineNuxtConfig({ components: [{ path: getComponents() }] });",
+    'export default defineNuxtConfig({ components: [{ path: "~/components", ignore: getIgnore() }] });',
+  ])("keeps an incompatible component discovery shape behind manual action", (source) => {
+    expect(updateNuxtConfigContent(source)).toBeNull();
   });
 
   it("preserves safe literal CSS and Vite plugin configuration", () => {
@@ -104,7 +157,9 @@ describe("Nuxt project setup", () => {
       "import tailwindcss from '@tailwindcss/vite';\nexport default defineNuxtConfig({ css: ['\\u{7e}/assets/css/starwind.css'], vite: { plugins: [tailwindcss()] } });\n",
     ],
   ])("preserves an escaped canonical CSS entry in %s", (_case, source) => {
-    expect(updateNuxtConfigContent(source)).toBe(source);
+    const updated = updateNuxtConfigContent(source);
+    expect(updated).toContain('components: [{ path: "~/components"');
+    expect(updated).toContain(source.match(/css: \[[^\]]+\]/)![0]);
   });
 
   it.each([
@@ -130,7 +185,9 @@ describe("Nuxt project setup", () => {
       "import tailwindcss from '@tailwindcss\\x2fvite';\nexport default defineNuxtConfig({ css: ['~/assets/css/starwind.css'], vite: { plugins: [tailwindcss()] } });\n",
     ],
   ])("preserves an escaped Tailwind module specifier in %s", (_case, source) => {
-    expect(updateNuxtConfigContent(source)).toBe(source);
+    const updated = updateNuxtConfigContent(source);
+    expect(updated).toContain(source.split("\n")[0]);
+    expect(updated).toContain('components: [{ path: "~/components"');
   });
 
   it.each([
@@ -147,7 +204,9 @@ describe("Nuxt project setup", () => {
       '// import fake from "@tailwindcss/vite";\n/* "@tailwindcss/vite" */\nimport tailwindcss from "@tailwindcss/vite";\nexport default defineNuxtConfig({ css: ["~/assets/css/starwind.css"], vite: { plugins: [tailwindcss()] } });\n',
     ],
   ])("detects an existing Tailwind import after %s", (_case, source) => {
-    expect(updateNuxtConfigContent(source)).toBe(source);
+    const updated = updateNuxtConfigContent(source);
+    expect(updated!.split("\n").filter((line) => line.startsWith("import "))).toHaveLength(1);
+    expect(updated).toContain('components: [{ path: "~/components"');
   });
 
   it("ignores import-shaped template text and inserts a real collision-safe import", () => {

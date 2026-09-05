@@ -4,7 +4,6 @@ import ColorPickerChannelInput from "./ColorPickerChannelInput.vue";
 import ColorPickerChannelSlider from "./ColorPickerChannelSlider.vue";
 import ColorPickerClear from "./ColorPickerClear.vue";
 import ColorPickerContent from "./ColorPickerContent.vue";
-import ColorPickerDefaultEditor from "./ColorPickerDefaultEditor.vue";
 import ColorPickerEyeDropper from "./ColorPickerEyeDropper.vue";
 import ColorPickerInput from "./ColorPickerInput.vue";
 import ColorPickerSwatch from "./ColorPickerSwatch.vue";

@@ -28,7 +28,6 @@ const {
   defaultValue,
   orientation = "horizontal",
   syncKey,
-  value,
   class: className,
   modelValue,
 } = defineProps<TabsDeclaredProps>();

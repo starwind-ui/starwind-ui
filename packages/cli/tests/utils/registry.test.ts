@@ -182,8 +182,8 @@ describe.sequential("runtime registry loading", () => {
     {
       name: "unsupported targets",
       setup: {
-        vue: {
-          adapterPackage: { name: "@starwind-ui/vue", range: "^0.1.0" },
+        svelte: {
+          adapterPackage: { name: "@starwind-ui/svelte", range: "^0.1.0" },
           packageRequirements: [],
         },
       },
@@ -967,14 +967,14 @@ describe.sequential("runtime registry loading", () => {
     );
   });
 
-  it("accepts Vue registry setup and prepared targets only through the private policy", async () => {
+  it("accepts Vue registry setup and prepared targets through the production policy", async () => {
     const registryPath = join(tempDir, "vue-registry.json");
     const vueRegistry = {
       $schema: "https://starwind.dev/registry-schema.v2.json",
       version: "2.0.0",
       setup: {
         vue: {
-          adapterPackage: { name: "@starwind-ui/vue", range: "*" },
+          adapterPackage: { name: "@starwind-ui/vue", range: "0.1.0" },
           packageRequirements: [{ name: "vue", range: ">=3.5" }],
         },
       },
@@ -988,7 +988,7 @@ describe.sequential("runtime registry loading", () => {
             vue: {
               files: [{ path: "button/Button.vue", content: "<template><button /></template>\n" }],
               componentDependencies: [],
-              packageRequirements: [{ name: "@starwind-ui/vue", range: "*" }],
+              packageRequirements: [{ name: "@starwind-ui/vue", range: "0.1.0" }],
             },
           },
         },
@@ -996,32 +996,21 @@ describe.sequential("runtime registry loading", () => {
     };
     await writeFile(registryPath, JSON.stringify(vueRegistry, null, 2), "utf-8");
 
-    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(/setup\.vue/);
-    await expect(
-      loadRegistry(
-        { type: "local", path: registryPath },
-        { targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
-      ),
-    ).resolves.toMatchObject({
+    await expect(loadRegistry({ type: "local", path: registryPath })).resolves.toMatchObject({
       setup: { vue: { adapterPackage: { name: "@starwind-ui/vue" } } },
       components: [
         {
           name: "button",
           targets: {
-            vue: { packageRequirements: [{ name: "@starwind-ui/vue", range: "*" }] },
+            vue: { packageRequirements: [{ name: "@starwind-ui/vue", range: "0.1.0" }] },
           },
         },
       ],
     });
-    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(/setup\.vue/);
   });
 
-  it("applies the private policy to linked Vue component artifacts", async () => {
+  it("applies the production policy to linked Vue component artifacts", async () => {
     const registryPath = join(tempDir, "vue-split-registry.json");
-    const collidingPublicPolicy: FrameworkTargetPolicy<"astro" | "react"> = Object.freeze({
-      ...PUBLIC_FRAMEWORK_TARGET_POLICY,
-      cacheKey: "private-vue",
-    });
     const artifactPath = join(tempDir, "artifacts", "vue-button.json");
     await mkdir(join(tempDir, "artifacts"), { recursive: true });
     await writeFile(
@@ -1055,7 +1044,7 @@ describe.sequential("runtime registry loading", () => {
             vue: {
               files: [{ path: "button/Button.vue", content: "<template><button /></template>\n" }],
               componentDependencies: [],
-              packageRequirements: [{ name: "@starwind-ui/vue", range: "*" }],
+              packageRequirements: [{ name: "@starwind-ui/vue", range: "0.1.0" }],
             },
           },
         },
@@ -1063,22 +1052,11 @@ describe.sequential("runtime registry loading", () => {
       "utf-8",
     );
 
-    await expect(loadRegistry({ type: "local", path: registryPath })).rejects.toThrow(
-      /targets\.vue/,
-    );
-    await expect(
-      loadRegistry(
-        { type: "local", path: registryPath },
-        { targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY },
-      ),
-    ).resolves.toMatchObject({
+    await expect(loadRegistry({ type: "local", path: registryPath })).resolves.toMatchObject({
       components: [
         { name: "button", targets: { vue: { files: [{ path: "button/Button.vue" }] } } },
       ],
     });
-    await expect(
-      loadRegistry({ type: "local", path: registryPath }, { targetPolicy: collidingPublicPolicy }),
-    ).rejects.toThrow(/targets\.vue/);
   });
 
   it("requires the Vue adapter for private prepared registry files", async () => {

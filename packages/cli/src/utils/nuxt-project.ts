@@ -5,6 +5,7 @@ import { resolveProjectMutationPath } from "./project-path.js";
 import {
   asAstArrayExpression,
   asAstObjectExpression,
+  getAstBooleanValue,
   getAstDefaultExportCallObject,
   getAstDefaultImportBinding,
   getAstNodeRange,
@@ -52,6 +53,8 @@ export const NUXT_PROJECT_CANDIDATE_PATHS = [
 ] as const;
 
 const STARWIND_CSS_ENTRY = "~/assets/css/starwind.css";
+const NUXT_COMPONENTS_DIRECTORY = "~/components";
+const STARWIND_COMPONENT_IGNORES = ["starwind/**/*.ts", "starwind-primitives/**/*.ts"] as const;
 const MANUAL_ACTION =
   "This Nuxt project needs manual action. Starwind supports only the official Nuxt 4 app/app.vue layout or the bounded Nuxt 3 root app.vue layout with a static root nuxt.config.ts.";
 
@@ -140,6 +143,7 @@ export function updateNuxtConfigContent(source: string): string | null {
       text: `import ${tailwindName} from "@tailwindcss/vite";\n`,
     });
   }
+  addNuxtComponentsEdits(edits, shape);
   if (!shape.css) {
     addObjectPropertyEdit(edits, shape.config, `css: [${JSON.stringify(STARWIND_CSS_ENTRY)}]`, 2);
   } else if (!hasStringEntry(shape.css, STARWIND_CSS_ENTRY)) {
@@ -156,11 +160,18 @@ export function updateNuxtConfigContent(source: string): string | null {
 }
 
 type NuxtConfigShape = {
+  components: NuxtComponentsShape;
   config: AstObjectExpression;
   css?: AstArrayExpression;
   plugins?: AstArrayExpression;
   vite?: AstObjectExpression;
 };
+
+type NuxtComponentsShape =
+  | { kind: "missing" }
+  | { kind: "replace-array"; range: SourceRange }
+  | { kind: "replace-entry"; range: SourceRange }
+  | { ignore?: AstArrayExpression; kind: "object"; object: AstObjectExpression };
 
 type TextEdit = SourceRange & { text: string };
 
@@ -176,6 +187,9 @@ function getNuxtConfigShape(module: ParsedSourceModule): NuxtConfigShape | undef
     return undefined;
   }
 
+  const components = getNuxtComponentsShape(module, config);
+  if (!components) return undefined;
+
   const cssProperty = getAstObjectProperty(config, "css");
   if (cssProperty.status === "unsafe") return undefined;
   let css: AstArrayExpression | undefined;
@@ -188,15 +202,100 @@ function getNuxtConfigShape(module: ParsedSourceModule): NuxtConfigShape | undef
 
   const viteProperty = getAstObjectProperty(config, "vite");
   if (viteProperty.status === "unsafe") return undefined;
-  if (viteProperty.status === "missing") return { config, css };
+  if (viteProperty.status === "missing") return { components, config, css };
   const vite = asAstObjectExpression(viteProperty.value);
   if (!vite || hasAstEscapedObjectKey(module, vite)) return undefined;
   const pluginsProperty = getAstObjectProperty(vite, "plugins");
   if (pluginsProperty.status === "unsafe") return undefined;
-  if (pluginsProperty.status === "missing") return { config, css, vite };
+  if (pluginsProperty.status === "missing") return { components, config, css, vite };
   const plugins = asAstArrayExpression(pluginsProperty.value);
   if (!plugins || !hasOnlyAstDirectCalls(plugins)) return undefined;
-  return { config, css, plugins, vite };
+  return { components, config, css, plugins, vite };
+}
+
+function getNuxtComponentsShape(
+  module: ParsedSourceModule,
+  config: AstObjectExpression,
+): NuxtComponentsShape | undefined {
+  const property = getAstObjectProperty(config, "components");
+  if (property.status === "unsafe") return undefined;
+  if (property.status === "missing") return { kind: "missing" };
+
+  if (getAstBooleanValue(property.value) === true) {
+    const range = getAstNodeRange(property.value);
+    return range ? { kind: "replace-array", range } : undefined;
+  }
+
+  const array = asAstArrayExpression(property.value);
+  if (!array) return undefined;
+  let normalDirectory:
+    | { kind: "replace-entry"; range: SourceRange }
+    | { ignore?: AstArrayExpression; kind: "object"; object: AstObjectExpression }
+    | undefined;
+
+  for (const element of array.elements) {
+    if (!element) return undefined;
+    const stringPath = getAstStringValue(element);
+    if (stringPath !== undefined) {
+      if (stringPath !== NUXT_COMPONENTS_DIRECTORY) continue;
+      if (normalDirectory) return undefined;
+      const range = getAstNodeRange(element);
+      if (!range) return undefined;
+      normalDirectory = { kind: "replace-entry", range };
+      continue;
+    }
+
+    const object = asAstObjectExpression(element);
+    if (!object || hasAstEscapedObjectKey(module, object)) return undefined;
+    const pathProperty = getAstObjectProperty(object, "path");
+    if (pathProperty.status !== "found") return undefined;
+    const path = getAstStringValue(pathProperty.value);
+    if (path === undefined) return undefined;
+    if (path !== NUXT_COMPONENTS_DIRECTORY) continue;
+    if (normalDirectory) return undefined;
+
+    const ignoreProperty = getAstObjectProperty(object, "ignore");
+    if (ignoreProperty.status === "unsafe") return undefined;
+    let ignore: AstArrayExpression | undefined;
+    if (ignoreProperty.status === "found") {
+      ignore = asAstArrayExpression(ignoreProperty.value);
+      if (!ignore || !hasOnlyStaticStrings(ignore)) return undefined;
+    }
+    normalDirectory = { ignore, kind: "object", object };
+  }
+
+  if (!normalDirectory) return undefined;
+  return normalDirectory;
+}
+
+function addNuxtComponentsEdits(edits: TextEdit[], shape: NuxtConfigShape): void {
+  const entry = `{ path: ${JSON.stringify(NUXT_COMPONENTS_DIRECTORY)}, ignore: [${STARWIND_COMPONENT_IGNORES.map((glob) => JSON.stringify(glob)).join(", ")}] }`;
+  if (shape.components.kind === "missing") {
+    addObjectPropertyEdit(edits, shape.config, `components: [${entry}]`, 2);
+    return;
+  }
+  if (shape.components.kind === "replace-array") {
+    edits.push({ ...shape.components.range, text: `[${entry}]` });
+    return;
+  }
+  if (shape.components.kind === "replace-entry") {
+    edits.push({ ...shape.components.range, text: entry });
+    return;
+  }
+  if (!shape.components.ignore) {
+    addObjectPropertyEdit(
+      edits,
+      shape.components.object,
+      `ignore: [${STARWIND_COMPONENT_IGNORES.map((glob) => JSON.stringify(glob)).join(", ")}]`,
+      4,
+    );
+    return;
+  }
+  for (const glob of STARWIND_COMPONENT_IGNORES) {
+    if (!hasStringEntry(shape.components.ignore, glob)) {
+      addArrayEntryEdit(edits, shape.components.ignore, JSON.stringify(glob));
+    }
+  }
 }
 
 function hasOnlyStaticStrings(array: AstArrayExpression): boolean {

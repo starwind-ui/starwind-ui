@@ -12,6 +12,7 @@ import {
 } from "vue";
 import { renderToString } from "vue/server-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 
 import type { CollapsibleOpenChangeDetails } from "@starwind-ui/runtime/collapsible";
 import {
@@ -257,6 +258,51 @@ describe("Vue Collapsible public behavior", () => {
     expect(childRef.value).toBeNull();
     expect(wrapperRef.value).toBeNull();
     expect(exposed?.element).toBeNull();
+  });
+
+  it("keeps one native multi-child button as the pointer and keyboard control", async () => {
+    const host = appendHost();
+    const app = createApp({
+      render: () =>
+        h(CollapsibleRoot, null, {
+          default: () => [
+            h(
+              CollapsibleTrigger,
+              { asChild: true, class: "composed-trigger" },
+              {
+                default: () =>
+                  h("button", { "data-testid": "multi-child-trigger" }, [
+                    h("span", null, "Models"),
+                    h("svg", { "aria-hidden": "true", viewBox: "0 0 16 16" }, [
+                      h("path", { d: "M2 8h12" }),
+                    ]),
+                  ]),
+              },
+            ),
+            h(CollapsiblePanel, null, { default: () => "Genesis" }),
+          ],
+        }),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await settleModel();
+
+    const trigger = host.querySelector<HTMLButtonElement>("[data-testid=multi-child-trigger]")!;
+    const panel = host.querySelector<HTMLElement>("[data-sw-collapsible-panel]")!;
+    expect(trigger.hasAttribute("data-sw-collapsible-trigger")).toBe(true);
+    expect(trigger.hasAttribute("data-as-child")).toBe(false);
+    expect(trigger.style.display).not.toBe("contents");
+    expect(trigger.querySelector("[data-sw-collapsible-trigger]")).toBeNull();
+
+    trigger.click();
+    await settleModel();
+    expect(panel.hidden).toBe(false);
+
+    trigger.focus();
+    await userEvent.keyboard("{Enter}");
+    await settleModel();
+    expect(panel.hidden).toBe(true);
+    expect(document.activeElement).toBe(trigger);
   });
 
   it.each([

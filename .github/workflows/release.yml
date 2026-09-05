@@ -21,17 +21,11 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Detect merged Version Packages candidate
+      - name: Detect public package version changes
         id: changes
         shell: bash
         run: |
-          git diff --name-status "${GITHUB_SHA}^" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
-          if grep -Eq '^D[[:space:]]+\.changeset/[^/]+\.md$' "$RUNNER_TEMP/changed-files.txt" &&
-             grep -Eq '^M[[:space:]]+packages/(astro|cli|react|runtime)/package\.json$' "$RUNNER_TEMP/changed-files.txt"; then
-            echo "versioned=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "versioned=false" >> "$GITHUB_OUTPUT"
-          fi
+          node scripts/detect-release-version-changes.mjs "${GITHUB_SHA}^" "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
 
   verify:
     name: Verify

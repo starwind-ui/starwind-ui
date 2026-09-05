@@ -282,7 +282,6 @@ const AsChildTrigger = defineComponent({
         "${facts.attrs.triggerAriaHaspopup}": "dialog",
         "${facts.attrs.triggerAriaExpanded}": "false",
         "${facts.attrs.triggerState}": "closed",
-        "data-as-child": "",
         "data-sw-part": "${part.name}",
       };
       return asChild.render({

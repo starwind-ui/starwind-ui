@@ -269,7 +269,7 @@ const element = ref<HTMLElement | null>(null);
 const asChild = createVueAsChild("${facts.exports.trigger}", element);
 const { setElement } = asChild;
 defineExpose({ element });
-function protectedProps() { return { "${attrs.trigger}": "", "data-as-child": "", "data-sw-part": "${facts.parts.trigger.name}", "aria-haspopup": "menu", "aria-expanded": menu.open.value, "data-state": menu.open.value ? "open" : "closed", "aria-disabled": props.${props.disabled.name} ? "true" : undefined, "data-disabled": props.${props.disabled.name} ? "" : undefined }; }
+function protectedProps() { return { "${attrs.trigger}": "", "data-sw-part": "${facts.parts.trigger.name}", "aria-haspopup": "menu", "aria-expanded": menu.open.value, "data-state": menu.open.value ? "open" : "closed", "aria-disabled": props.${props.disabled.name} ? "true" : undefined, "data-disabled": props.${props.disabled.name} ? "" : undefined }; }
 const AsChildTrigger = defineComponent({ inheritAttrs: false, setup() { return () => asChild.render({ children: slots.default?.() ?? [], consumerProps: attrs, protectedProps: protectedProps() }); } });
 </script>
 <template>
@@ -294,7 +294,7 @@ const ownerContext = use${facts.displayName}OwnerContext("Portal");
 const portalRef = ref<HTMLDivElement | null>(null);
 const owner = Symbol("${facts.displayName}PortalOwner");
 const placement = useVuePortalPlacement({
-  active: () => menu.mounted.value && ownerContext.kind === "root",
+  active: () => menu.mounted.value,
   container: () => props.container,
   disabled: () => props.disabled,
   element: portalRef,

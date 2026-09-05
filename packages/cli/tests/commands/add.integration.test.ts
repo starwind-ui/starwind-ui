@@ -1,15 +1,8 @@
+import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-
-import {
-  buildRuntimeRegistry,
-  createCliRegistryBuildPolicy,
-} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
-import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
 
 import { add } from "../../src/commands/add.js";
 import { ensureAstroReactIntegration } from "../../src/utils/astro-react-integration.js";
@@ -62,10 +55,10 @@ vi.mock("../../src/utils/package-manager.js", () => ({
   installDependenciesWithProgress: vi.fn(),
 }));
 
+import * as clackPrompts from "@clack/prompts";
 import { installDependenciesWithProgress } from "../../src/utils/package-manager.js";
 import { loadRegistry, parseRegistrySource } from "../../src/utils/registry.js";
 import { isValidComponent } from "../../src/utils/validate.js";
-import * as clackPrompts from "@clack/prompts";
 
 const mockInstallDependencies = vi.mocked(installDependenciesWithProgress);
 const mockEnsureAstroReactIntegration = vi.mocked(ensureAstroReactIntegration);
@@ -140,7 +133,6 @@ const defaultRegistryFixture = {
   ],
 };
 
-const repoRoot = fileURLToPath(new URL("../../../..", import.meta.url));
 let vueRegistryFixture: StarwindRegistryFor<"astro" | "react" | "vue">;
 
 const customRegistryFixture = {
@@ -194,11 +186,10 @@ describe.sequential("add command integration", () => {
   let previousFetch: typeof globalThis.fetch;
   let mockExit: ReturnType<typeof vi.spyOn>;
 
-  beforeAll(async () => {
-    vueRegistryFixture = await buildRuntimeRegistry({
-      repoRoot,
-      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
-    });
+  beforeAll(() => {
+    vueRegistryFixture = JSON.parse(
+      readFileSync(new URL("../../src/registry/bundled-registry.json", import.meta.url), "utf8"),
+    );
   });
 
   beforeEach(async () => {
@@ -398,7 +389,7 @@ describe.sequential("add command integration", () => {
       'from "@starwind-ui/vue/button"',
     );
     expect(mockInstallDependencies).toHaveBeenCalledWith(
-      ["@starwind-ui/vue", "tailwind-variants@^3.2.2", "vue@>=3.5"],
+      ["@starwind-ui/vue@0.1.0", "tailwind-variants@^3.2.2", "vue@>=3.5"],
       "pnpm",
     );
     expect(mockLoadRegistry).not.toHaveBeenCalled();

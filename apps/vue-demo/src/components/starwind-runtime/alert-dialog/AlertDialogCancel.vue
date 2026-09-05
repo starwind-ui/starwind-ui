@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { ClassValue } from "tailwind-variants";
 import {
-  type ButtonHTMLAttributes,
   type ComponentPublicInstance,
   cloneVNode,
   computed,

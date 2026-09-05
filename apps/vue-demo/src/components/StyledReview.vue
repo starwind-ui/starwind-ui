@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import NestedDropdownReview from "./NestedDropdownReview.vue";
 
 import { Button } from "./starwind-runtime/button";
 import {
@@ -79,7 +80,9 @@ const styledChecked = ref(true);
 const styledCollapsibleOpen = ref(false);
 const styledCollapsibleChanges = ref(0);
 const styledDialogOpen = ref(false);
+const styledDialogPopoverOpen = ref(false);
 const styledSheetOpen = ref(false);
+const styledSheetPopoverOpen = ref(false);
 const styledCustomSheetOpen = ref(false);
 const styledSheetSide = ref<"top" | "right" | "bottom" | "left">("right");
 const styledSheetSides = ["top", "right", "bottom", "left"] as const;
@@ -93,6 +96,7 @@ const styledInputOtp = ref("12");
 const styledDropzoneFiles = ref<string[]>([]);
 const styledFieldValue = ref("");
 const styledPopoverOpen = ref(false);
+const styledNestedPopoverOpen = ref(false);
 const styledRadioValue = ref("styled-alpha");
 const styledSwitch = ref(false);
 const styledSwitchChanges = ref(0);
@@ -183,11 +187,27 @@ const styledToggleGroupSpacing = ref(1);
           </template>
           <DialogTitle>Styled Vue Dialog</DialogTitle>
           <DialogDescription>
-            Generated backdrop, motion, close affordance, and nested-dialog styling.
+            Generated backdrop, motion, close affordance, and a nested floating element.
           </DialogDescription>
+          <NestedDropdownReview context="Dialog" id="dialog-dropdown" />
+          <Popover v-model:open="styledDialogPopoverOpen">
+            <PopoverTrigger class="review-action mt-4" data-testid="styled-dialog-popover-trigger">
+              Open Popover inside Dialog
+            </PopoverTrigger>
+            <PopoverContent side="bottom" align="start" data-testid="styled-dialog-popover-content">
+              <PopoverHeader>
+                <PopoverTitle>Dialog child Popover</PopoverTitle>
+                <PopoverDescription>
+                  This floating panel must appear above the Dialog without clipping.
+                </PopoverDescription>
+              </PopoverHeader>
+            </PopoverContent>
+          </Popover>
         </DialogContent>
       </Dialog>
-      <output data-testid="styled-dialog-state">open: {{ styledDialogOpen }}</output>
+      <output data-testid="styled-dialog-state">
+        open: {{ styledDialogOpen }}, child: {{ styledDialogPopoverOpen }}
+      </output>
     </div>
 
     <div class="scenario" data-testid="styled-popover-scenario">
@@ -205,12 +225,28 @@ const styledToggleGroupSpacing = ref(1);
           <PopoverHeader>
             <PopoverTitle>Styled Vue Popover</PopoverTitle>
             <PopoverDescription>
-              Generated Styled composition on the Vue Primitive adapter.
+              This parent contains a second floating Popover.
             </PopoverDescription>
           </PopoverHeader>
+          <NestedDropdownReview context="Popover" id="popover-dropdown" />
+          <Popover v-model:open="styledNestedPopoverOpen">
+            <PopoverTrigger class="review-action mt-4" data-testid="styled-nested-popover-trigger">
+              Open nested Popover
+            </PopoverTrigger>
+            <PopoverContent side="bottom" align="start" data-testid="styled-nested-popover-content">
+              <PopoverHeader>
+                <PopoverTitle>Nested Popover</PopoverTitle>
+                <PopoverDescription>
+                  This panel must escape the parent panel and remain fully visible.
+                </PopoverDescription>
+              </PopoverHeader>
+            </PopoverContent>
+          </Popover>
         </PopoverContent>
       </Popover>
-      <output data-testid="styled-popover-state">open: {{ styledPopoverOpen }}</output>
+      <output data-testid="styled-popover-state">
+        open: {{ styledPopoverOpen }}, child: {{ styledNestedPopoverOpen }}
+      </output>
     </div>
 
     <div class="scenario" data-testid="styled-alert-dialog-scenario">
@@ -269,13 +305,28 @@ const styledToggleGroupSpacing = ref(1);
           </template>
           <SheetTitle>Styled Vue Sheet</SheetTitle>
           <SheetDescription>
-            Generated side motion, custom backdrop and default generated close icon on Drawer
+            Generated side motion, custom backdrop, close icon, and a nested Popover on Drawer
             Runtime.
           </SheetDescription>
+          <NestedDropdownReview context="Sheet" id="sheet-dropdown" />
+          <Popover v-model:open="styledSheetPopoverOpen">
+            <PopoverTrigger class="review-action mt-4" data-testid="styled-sheet-popover-trigger">
+              Open Popover inside Sheet
+            </PopoverTrigger>
+            <PopoverContent side="bottom" align="end" data-testid="styled-sheet-popover-content">
+              <PopoverHeader>
+                <PopoverTitle>Sheet child Popover</PopoverTitle>
+                <PopoverDescription>
+                  This floating panel must appear above the Sheet without clipping.
+                </PopoverDescription>
+              </PopoverHeader>
+            </PopoverContent>
+          </Popover>
         </SheetContent>
       </Sheet>
       <output data-testid="styled-sheet-state">
-        open: {{ styledSheetOpen }}, side: {{ styledSheetSide }}
+        open: {{ styledSheetOpen }}, side: {{ styledSheetSide }}, child:
+        {{ styledSheetPopoverOpen }}
       </output>
       <Sheet v-model:open="styledCustomSheetOpen">
         <SheetTrigger class="review-action" data-testid="styled-custom-sheet-trigger">

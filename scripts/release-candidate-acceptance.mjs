@@ -2,7 +2,7 @@
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import os from "node:os";
@@ -22,6 +22,7 @@ const NEXT_SCAFFOLD_VERSION = "16.3.0";
 const REACT_ROUTER_SCAFFOLD_VERSION = "8.3.0";
 const TANSTACK_CLI_VERSION = "0.70.1";
 const VITE_SCAFFOLD_VERSION = "9.1.1";
+const VUE_BETA_VERSION = "0.1.0";
 
 function fileSpecifier(file) {
   return `file:${file.replaceAll("\\", "/")}`;
@@ -125,6 +126,10 @@ export async function startCandidateRegistry(packageEntries) {
   };
 }
 
+export function getCandidateRegistryVersion(packageName, manifestVersion) {
+  return packageName === "@starwind-ui/vue" ? VUE_BETA_VERSION : manifestVersion;
+}
+
 export function getCandidateMatrix() {
   return [
     {
@@ -153,6 +158,14 @@ export function getCandidateMatrix() {
       frameworkVersion: "19.2.0",
       host: "vite",
       id: "react-19",
+      packageManager: "pnpm",
+    },
+    {
+      adapterVersion: VUE_BETA_VERSION,
+      framework: "vue",
+      frameworkVersion: "3.5.39",
+      host: "vite",
+      id: "vue-35",
       packageManager: "pnpm",
     },
     {
@@ -225,6 +238,17 @@ function getScaffoldArgs(entry) {
       "--no-install",
       "--no-git",
       "--yes",
+    ];
+  }
+
+  if (entry.framework === "vue") {
+    return [
+      "create",
+      `vite@${VITE_SCAFFOLD_VERSION}`,
+      entry.id,
+      "--template",
+      "vue-ts",
+      "--no-interactive",
     ];
   }
 
@@ -323,13 +347,15 @@ export function createCandidatePlan({ packages, projectIds, root }) {
         check: packageCommand(
           entry.framework === "astro"
             ? ["exec", "astro", "check"]
-            : entry.host === "react-router"
-              ? ["typecheck"]
-              : isJavaScript
-                ? ["exec", "tsc", "--noEmit", "--project", "tsconfig.json"]
-                : entry.packageManager === "npm"
-                  ? ["exec", "tsc", "--", "--noEmit"]
-                  : ["exec", "tsc", "--noEmit"],
+            : entry.framework === "vue"
+              ? ["exec", "vue-tsc", "--noEmit"]
+              : entry.host === "react-router"
+                ? ["typecheck"]
+                : isJavaScript
+                  ? ["exec", "tsc", "--noEmit", "--project", "tsconfig.json"]
+                  : entry.packageManager === "npm"
+                    ? ["exec", "tsc", "--", "--noEmit"]
+                    : ["exec", "tsc", "--noEmit"],
         ),
         directory,
         init: cli(["init", "--defaults"]),
@@ -344,7 +370,7 @@ export function createCandidatePlan({ packages, projectIds, root }) {
         scaffold: { args: getScaffoldArgs(entry), cwd: root },
         ssrMarker: entry.host && entry.host !== "vite" ? "data-sw-color-picker" : undefined,
         ssr:
-          entry.host === "vite"
+          entry.host === "vite" && entry.framework === "react"
             ? packageCommand(
                 entry.packageManager === "npm"
                   ? [
@@ -397,7 +423,7 @@ function getCandidatePreview(entry) {
 }
 
 export function getCandidateWorkspacePolicy(_projects, packages) {
-  return `packages: []\nminimumReleaseAge: 0\nminimumReleaseAgeStrict: false\nallowBuilds:\n  esbuild: true\n  sharp: true\n  unrs-resolver: true\noverrides:\n  "@starwind-ui/astro": "${fileSpecifier(packages.astro)}"\n  "@starwind-ui/react": "${fileSpecifier(packages.react)}"\n  "@starwind-ui/runtime": "${fileSpecifier(packages.runtime)}"\n  starwind: "${fileSpecifier(packages.cli)}"\n`;
+  return `packages: []\nminimumReleaseAge: 0\nminimumReleaseAgeStrict: false\nallowBuilds:\n  esbuild: true\n  sharp: true\n  unrs-resolver: true\noverrides:\n  "@starwind-ui/astro": "${fileSpecifier(packages.astro)}"\n  "@starwind-ui/react": "${fileSpecifier(packages.react)}"\n  "@starwind-ui/runtime": "${fileSpecifier(packages.runtime)}"\n  "@starwind-ui/vue": "${fileSpecifier(packages.vue)}"\n  starwind: "${fileSpecifier(packages.cli)}"\n`;
 }
 
 async function prepareProjectManifest(project) {
@@ -410,6 +436,13 @@ async function prepareProjectManifest(project) {
       ...manifest.devDependencies,
       "@astrojs/check": "^0.9.8",
       typescript: "^5.9.3",
+    };
+  } else if (project.framework === "vue") {
+    manifest.dependencies = { ...manifest.dependencies, vue: project.frameworkVersion };
+    manifest.devDependencies = {
+      ...manifest.devDependencies,
+      typescript: "5.9.3",
+      "vue-tsc": "3.3.6",
     };
   } else {
     manifest.dependencies = {
@@ -572,15 +605,38 @@ async function packWorkspacePackages(packDirectory) {
     cli: path.join(packDirectory, "starwind-cli.tgz"),
     react: path.join(packDirectory, "starwind-react.tgz"),
     runtime: path.join(packDirectory, "starwind-runtime.tgz"),
+    vue: path.join(packDirectory, "starwind-vue.tgz"),
   };
   const packageDirectories = {
     astro: "packages/astro",
     cli: "packages/cli",
     react: "packages/react",
     runtime: "packages/runtime",
+    vue: "packages/vue",
   };
 
-  for (const name of ["runtime", "astro", "react", "cli"]) {
+  for (const name of ["runtime", "astro", "react", "vue", "cli"]) {
+    if (name === "vue") {
+      const sourceDirectory = path.join(REPO_ROOT, packageDirectories.vue);
+      const stageDirectory = path.join(packDirectory, "vue-package");
+      const manifest = JSON.parse(await readFile(path.join(sourceDirectory, "package.json")));
+      manifest.version = VUE_BETA_VERSION;
+      await mkdir(stageDirectory, { recursive: true });
+      await cp(path.join(sourceDirectory, "dist"), path.join(stageDirectory, "dist"), {
+        recursive: true,
+      });
+      await copyFile(path.join(REPO_ROOT, "LICENSE"), path.join(stageDirectory, "LICENSE"));
+      await copyFile(
+        path.join(sourceDirectory, "README.md"),
+        path.join(stageDirectory, "README.md"),
+      );
+      await writeFile(
+        path.join(stageDirectory, "package.json"),
+        `${JSON.stringify(manifest, null, 2)}\n`,
+      );
+      await runCommand({ args: ["pack", "--out", packages.vue], cwd: stageDirectory });
+      continue;
+    }
     await runCommand({
       args: ["pack", "--out", packages[name]],
       cwd: path.join(REPO_ROOT, packageDirectories[name]),
@@ -594,6 +650,7 @@ async function getCandidateRegistryPackages(packages) {
     astro: "packages/astro",
     react: "packages/react",
     runtime: "packages/runtime",
+    vue: "packages/vue",
   };
   const entries = {};
 
@@ -605,7 +662,7 @@ async function getCandidateRegistryPackages(packages) {
       file: packages[name],
       manifest,
       name: manifest.name,
-      version: manifest.version,
+      version: getCandidateRegistryVersion(manifest.name, manifest.version),
     };
   }
   return entries;
@@ -637,6 +694,9 @@ async function validateCandidateAdapter(project) {
     ),
   );
   assert.equal(manifest.name, packageName);
+  if (project.adapterVersion) {
+    assert.equal(manifest.version, project.adapterVersion, `${packageName} candidate version`);
+  }
 
   if (project.packageManager === "npm") {
     const lock = await readFile(path.join(project.directory, "package-lock.json"), "utf8");

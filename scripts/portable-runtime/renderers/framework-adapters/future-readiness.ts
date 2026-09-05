@@ -1,3 +1,5 @@
+import type { FrameworkAdapterTargetPublicSupport } from "./types.js";
+
 export type FrameworkAdapterReadinessTarget = "astro" | "react" | "solid" | "svelte" | "vue";
 
 export type FrameworkAdapterReadiness = {
@@ -38,13 +40,7 @@ export type FrameworkAdapterReadiness = {
     | "solid-jsx-props"
     | "svelte-props"
     | "vue-bindings";
-  publicSupport: {
-    cliRegistry: boolean;
-    demoIntegration: boolean;
-    packageExports: boolean;
-    publicDocsClaim: boolean;
-    status: "non-shipping-tracer" | "shipping";
-  };
+  publicSupport: FrameworkAdapterTargetPublicSupport;
   refStrategy:
     | "astro-dom-query"
     | "react-forward-ref"

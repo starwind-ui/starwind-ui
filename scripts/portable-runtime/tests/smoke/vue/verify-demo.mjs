@@ -34,6 +34,14 @@ const visualEvidence = {
     os.tmpdir(),
     "starwind-vue-styled-menus-floating-open-light.png",
   ),
+  styledCatalogDesktopDark: path.join(os.tmpdir(), "starwind-vue-styled-catalog-desktop-dark.png"),
+  styledCatalogDesktopLight: path.join(
+    os.tmpdir(),
+    "starwind-vue-styled-catalog-desktop-light.png",
+  ),
+  styledCatalogNarrowDark: path.join(os.tmpdir(), "starwind-vue-styled-catalog-narrow-dark.png"),
+  styledCatalogNarrowLight: path.join(os.tmpdir(), "starwind-vue-styled-catalog-narrow-light.png"),
+  styledSidebarNarrow: path.join(os.tmpdir(), "starwind-vue-styled-sidebar-narrow.png"),
   portableClosureDesktopDark: path.join(
     os.tmpdir(),
     "starwind-vue-portable-closure-desktop-dark.png",
@@ -87,8 +95,11 @@ try {
     sessionStorage.setItem("starwind-vue-smoke-theme-seeded", "true");
   });
 
-  await page.goto(new URL("/review", baseUrl).toString(), { waitUntil: "networkidle" });
-  await page.getByRole("heading", { name: "Starwind Vue adapter review" }).waitFor();
+  await page.goto(new URL("/internal/adapter-review", baseUrl).toString(), {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("heading", { name: "Starwind Vue internal adapter verification" }).waitFor();
+  await verifyVueBetaLabel(page, "review light");
   await assertNoErrors(messages);
 
   await verifyAccordion(page);
@@ -147,14 +158,21 @@ try {
   await captureReviewEvidence(page, visualEvidence.dark);
   await assertNoErrors(messages);
 
+  await verifyStyledHumanReview(page, baseUrl, visualEvidence, messages);
+  await verifyStyledSidebarReview(page, baseUrl, visualEvidence.styledSidebarNarrow, messages);
+
   await page.goto(new URL("/", baseUrl).toString(), { waitUntil: "networkidle" });
   await page.getByTestId("vue-review-index").waitFor();
   await verifyPersistentHeader(page, "index");
   await verifyIndexDarkTheme(page, themeProof);
+  await verifyVueBetaLabel(page, "index dark");
+  await page.getByTestId("header-theme-toggle").click();
+  await page.waitForFunction(() => !document.documentElement.classList.contains("dark"));
+  await verifyVueBetaLabel(page, "index light");
   await assertNoErrors(messages);
 
   console.log(
-    `Vue production demo smoke passed at ${new URL("/review", baseUrl)}. Visual evidence: ${visualEvidence.light}, ${visualEvidence.dark}. Portable closure evidence: ${visualEvidence.portableClosureDesktopLight}, ${visualEvidence.portableClosureDesktopDark}, ${visualEvidence.portableClosureNarrowLight}, ${visualEvidence.portableClosureNarrowDark}. Styled menus and floating evidence: ${visualEvidence.styledMenusFloatingLight}, ${visualEvidence.styledMenusFloatingDark}. Styled Popover evidence: ${visualEvidence.styledPopoverLight}, ${visualEvidence.styledPopoverDark}. Styled Alert Dialog evidence: ${visualEvidence.styledAlertDialogLight} (${formatDimensions(visualEvidenceDimensions.styledAlertDialogLight)}), ${visualEvidence.styledAlertDialogDark} (${formatDimensions(visualEvidenceDimensions.styledAlertDialogDark)}). Styled Sheet geometries: ${JSON.stringify(styledSheetGeometries)}. Styled Sheet side evidence: ${["light", "dark"].flatMap((theme) => ["top", "right", "bottom", "left"].map((side) => visualEvidence[`styledSheet${capitalize(side)}${capitalize(theme)}`])).join(", ")}`,
+    `Vue production demo smoke passed at ${new URL("/internal/adapter-review", baseUrl)}. Styled human review evidence: ${visualEvidence.styledCatalogDesktopLight}, ${visualEvidence.styledCatalogDesktopDark}, ${visualEvidence.styledCatalogNarrowLight}, ${visualEvidence.styledCatalogNarrowDark}. Styled Sidebar narrow evidence: ${visualEvidence.styledSidebarNarrow}. Internal adapter evidence: ${visualEvidence.light}, ${visualEvidence.dark}. Portable closure evidence: ${visualEvidence.portableClosureDesktopLight}, ${visualEvidence.portableClosureDesktopDark}, ${visualEvidence.portableClosureNarrowLight}, ${visualEvidence.portableClosureNarrowDark}. Styled menus and floating evidence: ${visualEvidence.styledMenusFloatingLight}, ${visualEvidence.styledMenusFloatingDark}. Styled Popover evidence: ${visualEvidence.styledPopoverLight}, ${visualEvidence.styledPopoverDark}. Styled Alert Dialog evidence: ${visualEvidence.styledAlertDialogLight} (${formatDimensions(visualEvidenceDimensions.styledAlertDialogLight)}), ${visualEvidence.styledAlertDialogDark} (${formatDimensions(visualEvidenceDimensions.styledAlertDialogDark)}). Styled Sheet geometries: ${JSON.stringify(styledSheetGeometries)}. Styled Sheet side evidence: ${["light", "dark"].flatMap((theme) => ["top", "right", "bottom", "left"].map((side) => visualEvidence[`styledSheet${capitalize(side)}${capitalize(theme)}`])).join(", ")}`,
   );
 } catch (error) {
   throw new Error(
@@ -166,6 +184,258 @@ try {
 } finally {
   await browser?.close();
   await server.close();
+}
+
+async function verifyStyledHumanReview(page, baseUrl, evidence, messages) {
+  const expectedComponents = [
+    "accordion",
+    "alert",
+    "alert-dialog",
+    "aspect-ratio",
+    "avatar",
+    "badge",
+    "breadcrumb",
+    "button",
+    "button-group",
+    "card",
+    "carousel",
+    "checkbox",
+    "checkbox-group",
+    "collapsible",
+    "color-picker",
+    "combobox",
+    "context-menu",
+    "dialog",
+    "dropdown",
+    "dropzone",
+    "field",
+    "form",
+    "hover-card",
+    "input",
+    "input-group",
+    "input-otp",
+    "item",
+    "kbd",
+    "label",
+    "native-select",
+    "navigation-menu",
+    "pagination",
+    "popover",
+    "progress",
+    "prose",
+    "radio-group",
+    "scroll-area",
+    "select",
+    "separator",
+    "sheet",
+    "sidebar",
+    "skeleton",
+    "slider",
+    "spinner",
+    "switch",
+    "table",
+    "tabs",
+    "textarea",
+    "theme-toggle",
+    "toast",
+    "toggle",
+    "toggle-group",
+    "tooltip",
+    "video",
+  ];
+  await page.goto(new URL("/review", baseUrl).toString(), { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Starwind Vue Styled review" }).waitFor();
+  const actualComponents = await page
+    .getByTestId("styled-catalog-entry")
+    .evaluateAll((entries) => entries.map((entry) => entry.getAttribute("data-styled-component")));
+  await assertEqual(
+    JSON.stringify(actualComponents),
+    JSON.stringify(expectedComponents),
+    "Styled human catalog inventory",
+  );
+  await assertEqual(
+    await page.locator('[data-testid*="primitive"]').count(),
+    0,
+    "Styled human route raw Primitive panels",
+  );
+  for (const heading of [
+    "Default multiple value and dynamic items",
+    "Controlled, cancelable, form-adjacent value",
+  ]) {
+    await assertEqual(
+      await page.getByRole("heading", { exact: true, name: heading }).count(),
+      0,
+      `Styled human route Accordion Primitive heading: ${heading}`,
+    );
+  }
+  for (const testId of [
+    "styled-review",
+    "styled-menus-floating-review",
+    "styled-complex-services-review",
+    "portable-styled-closure-review",
+    "accordion-review",
+    "avatar-review",
+    "progress-review",
+    "scroll-area-review",
+  ]) {
+    await assertEqual(await page.getByTestId(testId).count(), 1, `${testId} human inventory`);
+  }
+  await assertEqual(
+    await page
+      .getByTestId("styled-sidebar-review-link")
+      .locator('a[href="/review/sidebar"]')
+      .count(),
+    1,
+    "Styled human Sidebar review link",
+  );
+  await assertNoErrors(messages);
+
+  await verifyDocumentationNavigationWidths(page);
+  await captureReviewEvidence(page, evidence.styledCatalogDesktopDark);
+  await page.setViewportSize({ height: 844, width: 390 });
+  await captureReviewEvidence(page, evidence.styledCatalogNarrowDark);
+  await page.setViewportSize({ height: 1000, width: 1440 });
+  await page.getByTestId("styled-review-theme-toggle").click();
+  await page.waitForFunction(() => !document.documentElement.classList.contains("dark"));
+  await verifyDocumentationNavigationWidths(page);
+  await captureReviewEvidence(page, evidence.styledCatalogDesktopLight);
+  await page.setViewportSize({ height: 844, width: 390 });
+  await captureReviewEvidence(page, evidence.styledCatalogNarrowLight);
+  await page.setViewportSize({ height: 1000, width: 1440 });
+  await page.getByTestId("styled-review-theme-toggle").click();
+  await page.waitForFunction(() => document.documentElement.classList.contains("dark"));
+}
+
+async function verifyDocumentationNavigationWidths(page) {
+  for (const [name, id, width] of [
+    ["Getting started", "getting-started", 432],
+    ["Components", "components", 700],
+    ["With icon", "status", 240],
+  ]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    const content = page.getByTestId(`docs-navigation-${id}`);
+    await content.waitFor({ state: "visible" });
+    await page.waitForFunction(
+      ({ id, width }) => {
+        const content = document.querySelector(`[data-testid="docs-navigation-${id}"]`);
+        const popup = content?.closest('[data-slot="navigation-menu-popup"]');
+        return popup && Math.abs(popup.getBoundingClientRect().width - (width + 8)) < 1;
+      },
+      { id, width },
+    );
+    await assertEqual(
+      await content.locator("ul").evaluate((element) => element.offsetWidth),
+      width,
+      `Documentation Navigation Menu ${name} authored width`,
+    );
+    await page.keyboard.press("Escape");
+    await content.waitFor({ state: "hidden" });
+  }
+}
+
+async function verifyStyledSidebarReview(page, baseUrl, evidencePath, messages) {
+  await page.goto(new URL("/review/sidebar", baseUrl).toString(), { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Workspace overview" }).waitFor();
+  await assertEqual(
+    await page.getByTestId("styled-sidebar-page").count(),
+    1,
+    "Sidebar review root",
+  );
+  await assertEqual(
+    await page.getByTestId("styled-sidebar-page-sidebar").count(),
+    1,
+    "Sidebar review component",
+  );
+
+  const trigger = page.getByTestId("styled-sidebar-page-trigger");
+  await assertEqual(
+    await trigger.getAttribute("aria-expanded"),
+    "true",
+    "Sidebar review desktop open",
+  );
+  await trigger.click();
+  await assertTextIncludes(
+    page.getByTestId("styled-sidebar-page-state"),
+    "desktop: false",
+    "Sidebar review desktop collapse",
+  );
+  await trigger.click();
+
+  await page.setViewportSize({ height: 844, width: 390 });
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="styled-sidebar-page-trigger"]')
+        ?.getAttribute("aria-expanded") === "false",
+  );
+  await assertEqual(
+    await trigger.getAttribute("aria-expanded"),
+    "false",
+    "Sidebar review mobile closed",
+  );
+  const uncoveredHeader = await page
+    .getByTestId("styled-sidebar-page-inset")
+    .locator("header")
+    .evaluate((header) => {
+      const headerBounds = header.getBoundingClientRect();
+      const trigger = header.querySelector('[data-testid="styled-sidebar-page-trigger"]');
+      if (!(trigger instanceof HTMLElement)) return false;
+      const triggerBounds = trigger.getBoundingClientRect();
+      const topmost = document.elementFromPoint(
+        triggerBounds.left + triggerBounds.width / 2,
+        triggerBounds.top + triggerBounds.height / 2,
+      );
+      return (
+        headerBounds.top >= 0 &&
+        headerBounds.bottom <= window.innerHeight &&
+        triggerBounds.top >= headerBounds.top &&
+        triggerBounds.bottom <= headerBounds.bottom &&
+        (topmost === trigger || trigger.contains(topmost))
+      );
+    });
+  await assertEqual(uncoveredHeader, true, "Sidebar review narrow header is uncovered");
+  await trigger.click();
+  await assertTextIncludes(
+    page.getByTestId("styled-sidebar-page-state"),
+    "mobile: true",
+    "Sidebar review mobile open",
+  );
+  const mobileSheet = page.locator('[data-sidebar="mobile"] dialog[open]');
+  await mobileSheet.waitFor({ state: "visible" });
+  await mobileSheet.evaluate(async (dialog) => {
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const animations = dialog.getAnimations({ subtree: true });
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+  });
+  const uncoveredSheet = await mobileSheet.evaluate((dialog) => {
+    const bounds = dialog.getBoundingClientRect();
+    const style = getComputedStyle(dialog);
+    const topmost = document.elementFromPoint(
+      bounds.left + bounds.width / 2,
+      bounds.top + Math.min(bounds.height / 2, 40),
+    );
+    return (
+      bounds.top >= 0 &&
+      bounds.bottom <= window.innerHeight &&
+      bounds.left >= 0 &&
+      bounds.right <= window.innerWidth &&
+      bounds.width > 0 &&
+      bounds.height > 0 &&
+      Number.parseFloat(style.opacity) > 0 &&
+      style.visibility === "visible" &&
+      (topmost === dialog || dialog.contains(topmost))
+    );
+  });
+  await assertEqual(uncoveredSheet, true, "Sidebar review mobile sheet is uncovered");
+  await page.screenshot({ path: evidencePath });
+  await page.keyboard.press("Escape");
+  await assertTextIncludes(
+    page.getByTestId("styled-sidebar-page-state"),
+    "mobile: false",
+    "Sidebar review mobile close",
+  );
+  await page.setViewportSize({ height: 1000, width: 1440 });
+  await assertNoErrors(messages);
 }
 
 async function verifyPortableStyledClosure(page, evidence) {
@@ -1714,6 +1984,7 @@ async function verifyTheme(page) {
   if (darkHeaderBackground === initialHeaderBackground) {
     throw new Error(`Theme visual token did not change: ${darkHeaderBackground}`);
   }
+  await verifyVueBetaLabel(page, "review dark");
   await assertThemeIcons(headerToggle, false, true, "header dark icons");
   await assertThemeIcons(reviewToggle, false, true, "review custom dark icons");
 
@@ -1818,6 +2089,13 @@ async function verifyPersistentHeader(page, route) {
     1,
     `${route} header toggle`,
   );
+}
+
+async function verifyVueBetaLabel(page, state) {
+  const label = page.getByTestId("vue-beta-label");
+  await assertEqual(await label.count(), 1, `${state} Vue beta label count`);
+  await assertEqual(await label.isVisible(), true, `${state} Vue beta label visibility`);
+  await assertText(label, "Vue 3.5 beta", `${state} Vue beta label text`);
 }
 
 async function verifyButton(page) {
@@ -2000,14 +2278,26 @@ async function verifyDialog(page) {
     "",
     "Dialog modal scroll lock",
   );
-  await page.getByTestId("nested-dialog-trigger").click();
+  const nestedTrigger = page.getByTestId("nested-dialog-trigger");
+  const nestedPopup = nestedTrigger
+    .locator("xpath=ancestor::*[@data-sw-dialog][1]")
+    .locator("[data-sw-dialog-content]");
+  await nestedTrigger.click();
+  await assertEqual(await nestedPopup.count(), 1, "Dialog nested popup ownership");
+  await assertEqual(await nestedPopup.getAttribute("open"), "", "Dialog nested accepted open");
+  const nestedPopupHandle = await nestedPopup.elementHandle();
   await page.keyboard.press("Escape");
+  await page.waitForFunction((element) => !element.hasAttribute("open"), nestedPopupHandle);
   await assertEqual(await popup.isVisible(), true, "Dialog nested Escape ownership");
+  await assertEqual(await popup.getAttribute("open"), "", "Dialog parent remains native-open");
+  await assertEqual(await popup.getAttribute("data-state"), "open", "Dialog parent remains open");
   await page.keyboard.press("Escape");
-  await assertEqual(await popup.isVisible(), false, "Dialog Escape dismissal");
-  await page.waitForFunction(
-    () => !document.querySelector('[data-testid="dialog-popup"]')?.hasAttribute("open"),
+  await page.waitForFunction(() =>
+    document
+      .querySelector('[data-testid="dialog-popup"][data-sw-dialog-content]')
+      ?.hasAttribute("hidden"),
   );
+  await assertEqual(await popup.isVisible(), false, "Dialog Escape dismissal");
   await page.getByTestId("dialog-remount").click();
   await assertEqual(await page.getByTestId("primitive-dialog").count(), 0, "Dialog unmount");
   await page.getByTestId("dialog-remount").click();
@@ -2284,6 +2574,28 @@ async function verifyStyledSheetEvidence(page, theme, evidence) {
       true,
       `Styled Sheet ${side} ${theme} custom backdrop`,
     );
+    if (side === "right") {
+      await page.getByTestId("styled-sheet-popover-trigger").click();
+      const sheetPopover = page.getByTestId("styled-sheet-popover-content");
+      await sheetPopover.waitFor({ state: "visible" });
+      await assertResolvedGeometry(sheetPopover, `Styled Sheet child Popover ${theme}`);
+      await assertFullyVisibleOutsideClippingAncestors(
+        sheetPopover,
+        `Styled Sheet child Popover ${theme}`,
+      );
+      await assertTopmostAtCenter(sheetPopover, `Styled Sheet child Popover ${theme}`);
+      await page.keyboard.press("Escape");
+      await page.waitForFunction(() =>
+        document
+          .querySelector('[data-testid="styled-sheet-popover-content"]')
+          ?.hasAttribute("hidden"),
+      );
+      await assertEqual(
+        await content.getAttribute("open"),
+        "",
+        `Styled Sheet ${theme} remains open after child Escape`,
+      );
+    }
     await assertEqual(
       await content.locator('path[d="M18 6l-12 12"]').count(),
       1,
@@ -2816,6 +3128,10 @@ async function verifyStyledMenusFloating(page) {
   const dropdownSubContent = page.getByTestId("styled-dropdown-sub-content");
   await dropdownSubContent.waitFor({ state: "visible" });
   await assertResolvedGeometry(dropdownSubContent, "Styled Dropdown nested content");
+  await assertFullyVisibleOutsideClippingAncestors(
+    dropdownSubContent,
+    "Styled Dropdown nested content",
+  );
   await page.getByTestId("styled-dropdown-archive").click();
   await dropdownContent.waitFor({ state: "hidden" });
 
@@ -2833,6 +3149,10 @@ async function verifyStyledMenusFloating(page) {
   const contextSubContent = page.getByTestId("styled-context-menu-sub-content");
   await contextSubContent.waitFor({ state: "visible" });
   await assertResolvedGeometry(contextSubContent, "Styled Context Menu nested content");
+  await assertFullyVisibleOutsideClippingAncestors(
+    contextSubContent,
+    "Styled Context Menu nested content",
+  );
   await page.getByTestId("styled-context-menu-frame").click();
   await contextContent.waitFor({ state: "hidden" });
 
@@ -3024,6 +3344,28 @@ async function verifyStyledComplexServices(page) {
     "reviewColor",
     "Styled Color Picker form value",
   );
+  const colorPickerWidthBefore = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  for (let index = 0; index < 12; index += 1) {
+    await page
+      .locator(`[id="${controlledColorPopupId}"]`)
+      .locator("[data-sw-color-picker-format-select]")
+      .selectOption(index % 2 === 0 ? "hsl" : "rgb");
+  }
+  const colorPickerWidthAfter = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  if (
+    colorPickerWidthAfter.scrollWidth > colorPickerWidthAfter.clientWidth + 1 ||
+    colorPickerWidthAfter.scrollWidth > colorPickerWidthBefore.scrollWidth + 1
+  ) {
+    throw new Error(
+      `Styled Color Picker repeated events widened the page: ${JSON.stringify({ after: colorPickerWidthAfter, before: colorPickerWidthBefore })}`,
+    );
+  }
   await page.getByTestId("styled-color-picker-cleanup-toggle").click();
   await assertEqual(
     await page.getByTestId("styled-color-picker-controlled").count(),
@@ -3044,7 +3386,36 @@ async function verifyStyledComplexServices(page) {
     "Styled Toast multiple instances",
   );
   await page.getByTestId("styled-toast-success").click();
-  await page.getByTestId("styled-toaster-secondary").locator('[data-slot="toast"]').waitFor();
+  const activeToast = page.getByTestId("styled-toaster-secondary").locator('[data-slot="toast"]');
+  await activeToast.waitFor();
+  await activeToast.evaluate(async (element) => {
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const animations = element.getAnimations({ subtree: true });
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+  });
+  const activeToastGeometry = await activeToast.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      bottomGap: window.innerHeight - bounds.bottom,
+      centerX: bounds.left + bounds.width / 2,
+      centerY: bounds.top + bounds.height / 2,
+      rightGap: window.innerWidth - bounds.right,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
+    };
+  });
+  if (
+    activeToastGeometry.centerX <= activeToastGeometry.viewportWidth / 2 ||
+    activeToastGeometry.centerY <= activeToastGeometry.viewportHeight / 2 ||
+    activeToastGeometry.bottomGap < 0 ||
+    activeToastGeometry.bottomGap > 48 ||
+    activeToastGeometry.rightGap < 0 ||
+    activeToastGeometry.rightGap > 48
+  ) {
+    throw new Error(
+      `Styled active Toast was not bottom-right: ${JSON.stringify(activeToastGeometry)}`,
+    );
+  }
   await assertEqual(
     await page.getByTestId("styled-toaster").locator('[data-slot="toast"]').count(),
     0,
@@ -3117,8 +3488,85 @@ async function assertResolvedGeometry(locator, label) {
   }
 }
 
+async function assertFullyVisibleOutsideClippingAncestors(locator, label) {
+  const visibility = await locator.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const visible = {
+      bottom: Math.min(bounds.bottom, window.innerHeight),
+      left: Math.max(bounds.left, 0),
+      right: Math.min(bounds.right, window.innerWidth),
+      top: Math.max(bounds.top, 0),
+    };
+    const clippingAncestors = [];
+
+    for (let ancestor = element.parentElement; ancestor; ancestor = ancestor.parentElement) {
+      const style = getComputedStyle(ancestor);
+      const clipsX = /^(auto|clip|hidden|scroll)$/.test(style.overflowX);
+      const clipsY = /^(auto|clip|hidden|scroll)$/.test(style.overflowY);
+      if (clipsX || clipsY) {
+        const ancestorBounds = ancestor.getBoundingClientRect();
+        if (clipsX) {
+          visible.left = Math.max(visible.left, ancestorBounds.left);
+          visible.right = Math.min(visible.right, ancestorBounds.right);
+        }
+        if (clipsY) {
+          visible.top = Math.max(visible.top, ancestorBounds.top);
+          visible.bottom = Math.min(visible.bottom, ancestorBounds.bottom);
+        }
+        clippingAncestors.push({
+          bounds: {
+            bottom: ancestorBounds.bottom,
+            left: ancestorBounds.left,
+            right: ancestorBounds.right,
+            top: ancestorBounds.top,
+          },
+          dataSlot: ancestor.getAttribute("data-slot"),
+          overflowX: style.overflowX,
+          overflowY: style.overflowY,
+          tagName: ancestor.tagName,
+        });
+      }
+
+      if (ancestor.matches(":popover-open, dialog:modal")) break;
+    }
+
+    const width = Math.max(0, visible.right - visible.left);
+    const height = Math.max(0, visible.bottom - visible.top);
+    const area = bounds.width * bounds.height;
+    return {
+      bounds: {
+        bottom: bounds.bottom,
+        height: bounds.height,
+        left: bounds.left,
+        right: bounds.right,
+        top: bounds.top,
+        width: bounds.width,
+      },
+      clippingAncestors,
+      visibleAreaRatio: area > 0 ? (width * height) / area : 0,
+    };
+  });
+
+  if (visibility.visibleAreaRatio < 0.99) {
+    throw new Error(`${label} was clipped: ${JSON.stringify(visibility)}`);
+  }
+}
+
+async function assertTopmostAtCenter(locator, label) {
+  const topmost = await locator.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(
+      bounds.left + bounds.width / 2,
+      bounds.top + bounds.height / 2,
+    );
+    return hit === element || (hit instanceof Node && element.contains(hit));
+  });
+  await assertEqual(topmost, true, `${label} stacking`);
+}
+
 async function verifyPopover(page) {
   const trigger = page.getByTestId("popover-trigger");
+  const root = trigger.locator("xpath=ancestor::*[@data-sw-popover]");
   const popup = page.getByTestId("popover-popup");
 
   await page.getByTestId("popover-side").selectOption("right");
@@ -3167,7 +3615,7 @@ async function verifyPopover(page) {
   await page.getByTestId("popover-portal-mode").selectOption("inline");
   await trigger.click();
   await assertEqual(
-    await page.getByTestId("popover-review").locator("[data-sw-popover-portal]").count(),
+    await root.locator(":scope > [data-sw-popover-portal]").count(),
     1,
     "Popover inline portal ownership",
   );
@@ -3252,11 +3700,35 @@ async function verifyStyled(page) {
 
   const styledDialogTrigger = page.getByTestId("styled-dialog-trigger");
   await styledDialogTrigger.click();
-  await assertText(page.getByTestId("styled-dialog-state"), "open: true", "Styled Dialog model");
+  await assertTextIncludes(
+    page.getByTestId("styled-dialog-state"),
+    "open: true",
+    "Styled Dialog model",
+  );
   await assertEqual(
     await page.getByTestId("styled-dialog-custom-backdrop").isVisible(),
     true,
     "Styled Dialog custom backdrop",
+  );
+  await page.getByTestId("styled-dialog-popover-trigger").click();
+  const dialogPopover = page.getByTestId("styled-dialog-popover-content");
+  await dialogPopover.waitFor({ state: "visible" });
+  await assertResolvedGeometry(dialogPopover, "Styled Dialog child Popover");
+  await assertFullyVisibleOutsideClippingAncestors(dialogPopover, "Styled Dialog child Popover");
+  await assertTopmostAtCenter(dialogPopover, "Styled Dialog child Popover");
+  await assertTextIncludes(
+    page.getByTestId("styled-dialog-state"),
+    "child: true",
+    "Styled Dialog child model",
+  );
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() =>
+    document.querySelector('[data-testid="styled-dialog-popover-content"]')?.hasAttribute("hidden"),
+  );
+  await assertEqual(
+    await page.getByTestId("styled-dialog-content").getAttribute("open"),
+    "",
+    "Styled Dialog remains open after child Escape",
   );
   await page.keyboard.press("Escape");
   await page.waitForFunction(
@@ -3488,7 +3960,7 @@ async function verifyStyledPopover(page, evidencePath, theme) {
   });
   await assertText(
     page.getByTestId("styled-popover-state"),
-    "open: true",
+    "open: true, child: false",
     `Styled Popover model in ${theme} mode`,
   );
   await assertEqual(await content.getAttribute("data-side"), "right", "Styled Popover side");
@@ -3539,7 +4011,27 @@ async function verifyStyledPopover(page, evidencePath, theme) {
   ) {
     throw new Error(`Styled Popover visual failed in ${theme} mode: ${JSON.stringify(visual)}`);
   }
+  await page.getByTestId("styled-nested-popover-trigger").click();
+  const nestedContent = page.getByTestId("styled-nested-popover-content");
+  await nestedContent.waitFor({ state: "visible" });
+  await assertResolvedGeometry(nestedContent, `Nested Styled Popover ${theme}`);
+  await assertFullyVisibleOutsideClippingAncestors(nestedContent, `Nested Styled Popover ${theme}`);
+  await assertTopmostAtCenter(nestedContent, `Nested Styled Popover ${theme}`);
+  await assertText(
+    page.getByTestId("styled-popover-state"),
+    "open: true, child: true",
+    `Nested Styled Popover model in ${theme} mode`,
+  );
   await page.screenshot({ path: evidencePath });
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() =>
+    document.querySelector('[data-testid="styled-nested-popover-content"]')?.hasAttribute("hidden"),
+  );
+  await assertEqual(
+    await content.getAttribute("data-state"),
+    "open",
+    `Styled Popover ${theme} remains open after child Escape`,
+  );
   await page.keyboard.press("Escape");
   await page.waitForFunction(() =>
     document.querySelector('[data-testid="styled-popover-content"]')?.hasAttribute("hidden"),

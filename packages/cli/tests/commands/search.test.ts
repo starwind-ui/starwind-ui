@@ -126,6 +126,9 @@ describe("search command", () => {
       if (options.framework === "react") {
         return [primitiveArtifact("button", "react"), primitiveArtifact("toast", "react")];
       }
+      if (options.framework === "vue") {
+        return [primitiveArtifact("button", "vue"), primitiveArtifact("toast", "vue")];
+      }
 
       return [primitiveArtifact("button", "astro"), primitiveArtifact("checkbox", "astro")];
     });
@@ -483,11 +486,12 @@ describe("search command", () => {
     expect(mockGetConfigState).not.toHaveBeenCalled();
     expect(mockGetPrimitiveComponents).toHaveBeenCalledWith({ framework: "astro" });
     expect(mockGetPrimitiveComponents).toHaveBeenCalledWith({ framework: "react" });
+    expect(mockGetPrimitiveComponents).toHaveBeenCalledWith({ framework: "vue" });
 
     const output = JSON.parse(consoleLogSpy.mock.calls[0][0] as string);
     expect(output.query).toBe("button");
     expect(output.filters.framework).toBe("all");
-    expect(output.primitives.total).toBe(2);
+    expect(output.primitives.total).toBe(3);
     expect(output.primitives.results).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -499,6 +503,11 @@ describe("search command", () => {
           name: "button",
           framework: "react",
           installCommand: "starwind primitives add button --framework react",
+        }),
+        expect.objectContaining({
+          name: "button",
+          framework: "vue",
+          installCommand: "starwind primitives add button --framework vue",
         }),
       ]),
     );

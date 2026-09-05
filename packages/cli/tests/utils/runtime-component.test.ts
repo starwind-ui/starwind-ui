@@ -1,24 +1,26 @@
-import { mkdir, mkdtemp, readFile, rm, stat, symlink, utimes, writeFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  stat,
+  symlink,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeAll, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-
-import {
-  buildRuntimeRegistry,
-  createCliRegistryBuildPolicy,
-} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
-import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
-
+import * as astroReactIntegration from "../../src/utils/astro-react-integration.js";
 import type { StarwindConfig, StarwindConfigFor } from "../../src/utils/config.js";
 import * as config from "../../src/utils/config.js";
-import * as astroReactIntegration from "../../src/utils/astro-react-integration.js";
 import * as dependencyResolver from "../../src/utils/dependency-resolver.js";
 import {
-  type PrivateVueCliFrameworkTarget,
   PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+  type PrivateVueCliFrameworkTarget,
 } from "../../src/utils/framework-target-policy.js";
 import * as packageManager from "../../src/utils/package-manager.js";
 import type { NormalizedStarwindRegistry, StarwindRegistryFor } from "../../src/utils/registry.js";
@@ -129,7 +131,6 @@ const vueClosureNames = [
   "combobox",
 ] as const;
 
-const repoRoot = fileURLToPath(new URL("../../../..", import.meta.url));
 let vueRegistryFixture: StarwindRegistryFor<PrivateVueCliFrameworkTarget>;
 
 function createRegistryComponent(name: string, componentDependencies: string[] = []) {
@@ -175,11 +176,10 @@ describe.sequential("runtime component installs", () => {
   let tempDir = "";
   let previousCwd = "";
 
-  beforeAll(async () => {
-    vueRegistryFixture = await buildRuntimeRegistry({
-      repoRoot,
-      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
-    });
+  beforeAll(() => {
+    vueRegistryFixture = JSON.parse(
+      readFileSync(new URL("../../src/registry/bundled-registry.json", import.meta.url), "utf8"),
+    );
   });
 
   beforeEach(async () => {
@@ -2396,7 +2396,7 @@ describe.sequential("runtime component installs", () => {
     expect(plan.updates[0]!.files[0]).toEqual(
       expect.objectContaining({
         path: "src/components/starwind-react/button/index.tsx",
-        destination: targetPath,
+        destination: await realpath(targetPath),
       }),
     );
   });
@@ -2445,7 +2445,7 @@ describe.sequential("runtime component installs", () => {
       file.path.endsWith("/ThemeToggle.vue"),
     )!.content!;
     expect(themeToggle.targets!.vue!.packageRequirements).toEqual([
-      { name: "@starwind-ui/vue", range: "*" },
+      { name: "@starwind-ui/vue", range: "0.1.0" },
       { name: "tailwind-variants", range: "^3.2.2" },
       { name: "vue", range: ">=3.5" },
     ]);
@@ -2466,7 +2466,7 @@ describe.sequential("runtime component installs", () => {
     ).toContain('from "@starwind-ui/vue/combobox"');
 
     expect(mockInstallDependencies).toHaveBeenCalledWith(
-      ["@starwind-ui/vue", "tailwind-variants@^3.2.2", "vue@>=3.5"],
+      ["@starwind-ui/vue@0.1.0", "tailwind-variants@^3.2.2", "vue@>=3.5"],
       "pnpm",
     );
     expect(mockUpdateConfig).toHaveBeenCalledWith(
@@ -2598,14 +2598,13 @@ describe.sequential("runtime component installs", () => {
     );
   });
 
-  it("keeps Vue unavailable when Runtime helpers use the public default policy", async () => {
+  it("installs Vue when Runtime helpers use the public default policy", async () => {
     const vueConfig: StarwindConfigFor<PrivateVueCliFrameworkTarget> = {
       ...runtimeConfig,
       framework: "vue",
       components: [],
     };
 
-    // @ts-expect-error A Vue lifecycle call requires an explicit private target policy.
     const result = await installRuntimeComponents(["button"], {
       config: vueConfig,
       framework: "vue",
@@ -2613,10 +2612,8 @@ describe.sequential("runtime component installs", () => {
       skipPrompts: true,
     });
 
-    expect(result.failed).toEqual([
-      expect.objectContaining({ name: "button", error: expect.stringContaining("not supported") }),
-    ]);
-    expect(mockInstallDependencies).not.toHaveBeenCalled();
-    expect(mockUpdateConfig).not.toHaveBeenCalled();
+    expect(result.failed).toEqual([]);
+    expect(mockInstallDependencies).toHaveBeenCalled();
+    expect(mockUpdateConfig).toHaveBeenCalled();
   });
 });

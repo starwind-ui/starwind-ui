@@ -70,6 +70,10 @@ async function assertCanonicalDocsComposition(page) {
   await root.getByRole("button", { name: "Open brand color picker" }).click();
   const content = page.locator('[data-slot="popover-content"][aria-label="Brand color editor"]');
   await content.waitFor();
+  await content.evaluate(async (element) => {
+    const animations = element.getAnimations({ subtree: true });
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+  });
 
   const clear = content.locator('[data-slot="color-picker-clear"]');
   assert.equal(await clear.count(), 1);

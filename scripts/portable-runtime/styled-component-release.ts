@@ -1,8 +1,8 @@
 import { execFile } from "node:child_process";
-import { readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 import semver from "semver";
 
@@ -11,18 +11,19 @@ import {
   aggregateReleaseDecisions,
   applyVersionIntents,
   assertSafeIntentFile,
+  type ChangesetReleaseFacts,
   getNewPackageReleaseBump,
+  hasFrameworkAdditionRelease,
   hasNewPackageRelease,
   isNodeError,
   isPlainObject,
   materializeSourceVersions,
   parseChangesetReleaseFacts,
+  type ReleaseDecision,
+  type ReleaseImpact,
   resolveVersionIntentDirectory,
   sortRecord,
   stageVersionIntents,
-  type ChangesetReleaseFacts,
-  type ReleaseDecision,
-  type ReleaseImpact,
 } from "./release-intent-utils.js";
 
 export type StyledVersionBump = "major" | "minor" | "patch";
@@ -37,6 +38,7 @@ export type ParsedStyledVersionIntent = StyledVersionIntent & { impact: ReleaseI
 type StyledRegistryComponent = RuntimeRegistry["components"][number];
 
 export type StyledReleaseSnapshot = {
+  cliVersion?: string;
   fragments: Record<string, StyledVersionIntent>;
   manifest: RegistryVersionManifest;
   registry: RuntimeRegistry;
@@ -245,9 +247,25 @@ export function validateStyledVersionPullRequest(options: ValidatePullRequestOpt
       (name) =>
         headComponents.has(name) &&
         createStyledRegistryFingerprint(baseComponents.get(name)!) !==
-          createStyledRegistryFingerprint(headComponents.get(name)!),
+          createStyledRegistryFingerprint({
+            ...headComponents.get(name)!,
+            targets: Object.fromEntries(
+              Object.entries(headComponents.get(name)!.targets ?? {}).filter(
+                ([target]) => target in (baseComponents.get(name)!.targets ?? {}),
+              ),
+            ),
+          }),
     )
     .sort();
+
+  const hasAddedTarget = [...baseComponents].some(([name, component]) =>
+    Object.keys(headComponents.get(name)?.targets ?? {}).some(
+      (target) => !(target in (component.targets ?? {})),
+    ),
+  );
+  if (hasAddedTarget && !hasFrameworkAdditionRelease(options.base, options.head)) {
+    throw new Error("Adding a Styled framework target requires a starwind minor release.");
+  }
 
   for (const component of addedComponents) {
     if (!options.head.manifest.components[component]) {
@@ -388,6 +406,14 @@ async function readWorkingSnapshot(repoRoot: string): Promise<StyledReleaseSnaps
     manifest,
     registry: await readJson<RuntimeRegistry>(path.join(repoRoot, STYLED_REGISTRY_ARTIFACT)),
     packageReleases: await readWorkingPackageReleases(repoRoot),
+    cliVersion: await readJson<{ version?: string }>(
+      path.join(repoRoot, "packages/cli/package.json"),
+    )
+      .then((pkg) => pkg.version)
+      .catch((error) => {
+        if (isNodeError(error) && error.code === "ENOENT") return undefined;
+        throw error;
+      }),
   };
 }
 
@@ -429,6 +455,7 @@ async function readGitSnapshot(repoRoot: string, ref: string): Promise<StyledRel
       await readGitFile(repoRoot, ref, STYLED_REGISTRY_ARTIFACT),
     ) as RuntimeRegistry,
     packageReleases: sortRecord(packageReleases),
+    cliVersion: JSON.parse(await readGitFile(repoRoot, ref, "packages/cli/package.json")).version,
   };
 }
 

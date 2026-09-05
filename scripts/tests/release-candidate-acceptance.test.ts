@@ -8,6 +8,7 @@ import {
   createCandidatePlan,
   createCandidateVerificationPlan,
   getCandidateManifestScriptCommand,
+  getCandidateRegistryVersion,
   getCandidateFixtureFiles,
   getCandidateMatrix,
   startCandidateRegistry,
@@ -22,10 +23,11 @@ const packages = {
   cli: path.join(root, "packs", "starwind.tgz"),
   react: path.join(root, "packs", "react.tgz"),
   runtime: path.join(root, "packs", "runtime.tgz"),
+  vue: path.join(root, "packs", "vue.tgz"),
 };
 
 describe("release candidate acceptance", () => {
-  it("covers supported Astro and React majors plus each supported React host", () => {
+  it("covers supported Astro, React, and Vue versions plus each supported React host", () => {
     expect(getCandidateMatrix()).toEqual([
       expect.objectContaining({ framework: "astro", id: "astro-5", packageManager: "pnpm" }),
       expect.objectContaining({ framework: "astro", id: "astro-7", packageManager: "pnpm" }),
@@ -40,6 +42,14 @@ describe("release candidate acceptance", () => {
         host: "vite",
         id: "react-19",
         packageManager: "pnpm",
+      }),
+      expect.objectContaining({
+        framework: "vue",
+        frameworkVersion: "3.5.39",
+        host: "vite",
+        id: "vue-35",
+        packageManager: "pnpm",
+        adapterVersion: "0.1.0",
       }),
       expect.objectContaining({
         framework: "react",
@@ -86,6 +96,7 @@ describe("release candidate acceptance", () => {
     expect(workspace).toContain(
       `"@starwind-ui/runtime": "file:${packages.runtime.replaceAll("\\", "/")}"`,
     );
+    expect(workspace).toContain(`"@starwind-ui/vue": "file:${packages.vue.replaceAll("\\", "/")}"`);
     expect(workspace).toContain("unrs-resolver: true");
   });
 
@@ -130,6 +141,11 @@ describe("release candidate acceptance", () => {
     }
   });
 
+  it("advertises the approved beta version without materializing the packed Vue manifest", () => {
+    expect(getCandidateRegistryVersion("@starwind-ui/vue", "0.0.0")).toBe("0.1.0");
+    expect(getCandidateRegistryVersion("@starwind-ui/runtime", "1.2.0")).toBe("1.2.0");
+  });
+
   it("runs auto-detect, all-component install, lifecycle, checks, builds, SSR, and browser work", () => {
     const plan = createCandidatePlan({ packages, root });
 
@@ -152,7 +168,9 @@ describe("release candidate acceptance", () => {
       expect(project.check).toBeDefined();
       expect(project.build.args).toEqual(["build"]);
       expect(project.browser).toBe(true);
-      if (project.host === "vite") expect(project.ssr).toBeDefined();
+      if (project.host === "vite" && project.framework === "react") {
+        expect(project.ssr).toBeDefined();
+      }
     }
   });
 
@@ -232,6 +250,11 @@ describe("release candidate acceptance", () => {
       "tsconfig.json",
     ]);
     expect(getProject("react-19-js").ssr.args).toContain("src/acceptance-ssr.jsx");
+    expect(getProject("vue-35").scaffold.args).toEqual(
+      expect.arrayContaining(["create", "vite@9.1.1", "vue-35", "--template", "vue-ts"]),
+    );
+    expect(getProject("vue-35").check.args).toEqual(["exec", "vue-tsc", "--noEmit"]);
+    expect(getProject("vue-35").ssr).toBeUndefined();
   });
 
   it("writes framework-native fixtures that render the critical interactive cohort", () => {
@@ -248,6 +271,10 @@ describe("release candidate acceptance", () => {
     expect(fixturePaths["tanstack-start"]).toEqual(["src/routes/index.tsx"]);
     expect(fixturePaths["react-router"]).toEqual(["app/routes/home.tsx"]);
     expect(fixturePaths["react-19-js"]).toEqual(["src/App.jsx"]);
+    expect(fixturePaths["vue-35"]).toEqual(["src/App.vue"]);
+    expect(
+      getCandidateFixtureFiles(projects.find((project) => project.id === "vue-35")!)[0].content,
+    ).toContain("Published Vue Runtime panel");
 
     for (const id of ["next-app", "next-pages", "tanstack-start", "react-router"]) {
       const content = getCandidateFixtureFiles(projects.find((project) => project.id === id)!)[0]

@@ -8,6 +8,7 @@ import {
   formatDetectedHost,
   getHostPlan,
   getPrivateVueHostPlan,
+  type ProjectPackage,
   validateHostTarget,
 } from "../../src/utils/host-planner.js";
 
@@ -49,6 +50,27 @@ describe("host planning", () => {
       reactProject: { kind: "vite" },
       targets: [{ framework: "react", readiness: "ready" }],
     });
+  });
+
+  it("preserves a supported React host when Vue lacks host-specific evidence", async () => {
+    const paths = new Set(["vite.config.ts", "src/main.tsx"]);
+    const plan = await detectHostPlan(
+      {
+        dependencies: { react: "^19.2.0", vue: "^3.5.0" },
+        devDependencies: { "@vitejs/plugin-react": "latest", vite: "^8.2.0" },
+      },
+      {
+        pathExists: async (filePath) => paths.has(filePath),
+        readFile: async () => "",
+      },
+    );
+
+    expect(plan).toMatchObject({
+      host: { kind: "vite", label: "Vite" },
+      reactProject: { kind: "vite" },
+      targets: [{ framework: "react", readiness: "ready" }],
+    });
+    expect(plan.vueHostProject).toBeUndefined();
   });
 
   it("plans Astro as ready and React as configurable for a plain Astro host", () => {
@@ -311,6 +333,110 @@ export default defineConfig({
     });
   });
 
+  it.each([
+    {
+      expectedHost: { kind: "vite", label: "Vite" },
+      name: "Vite Vue",
+      paths: ["vite.config.ts", "src/main.ts", "src/App.vue"],
+      pkg: {
+        dependencies: { vue: "^3.5.13" },
+        devDependencies: { "@vitejs/plugin-vue": "^6.0.0", vite: "^8.2.0" },
+      },
+      projectFiles: {},
+    },
+    {
+      expectedHost: { kind: "astro", label: "Astro" },
+      name: "Astro with Vue",
+      paths: ["astro.config.ts"],
+      pkg: {
+        dependencies: { "@astrojs/vue": "^5.1.5", astro: "^7.0.0", vue: "^3.5.13" },
+      },
+      projectFiles: {
+        "astro.config.ts":
+          'import vue from "@astrojs/vue"; export default defineConfig({ integrations: [vue()] });',
+      },
+    },
+    {
+      expectedHost: { kind: "nuxt", label: "Nuxt 3" },
+      name: "Nuxt 3",
+      paths: ["nuxt.config.ts", "app.vue"],
+      pkg: { dependencies: { nuxt: "^3.21.0", vue: "^3.5.13" } },
+      projectFiles: {},
+    },
+    {
+      expectedHost: { kind: "nuxt", label: "Nuxt 4" },
+      name: "Nuxt 4",
+      paths: ["nuxt.config.ts", "app/app.vue"],
+      pkg: { dependencies: { nuxt: "^4.2.0", vue: "^3.5.13" } },
+      projectFiles: {},
+    },
+    {
+      expectedHost: { kind: "laravel", label: "Laravel with Inertia Vue" },
+      name: "Laravel Inertia Vue",
+      paths: [
+        "artisan",
+        "composer.json",
+        "vite.config.ts",
+        "resources/js/app.ts",
+        "resources/css/app.css",
+        "tsconfig.json",
+      ],
+      pkg: {
+        dependencies: {
+          "@inertiajs/vite": "^3.0.0",
+          "@inertiajs/vue3": "^3.0.0",
+          "@tailwindcss/vite": "^4.1.0",
+          "@vitejs/plugin-vue": "^6.0.0",
+          "laravel-vite-plugin": "^3.0.0",
+          tailwindcss: "^4.1.0",
+          vue: "^3.5.13",
+        },
+      },
+      projectFiles: {
+        "composer.json": JSON.stringify({ require: { "laravel/framework": "^13.0" } }),
+        "resources/css/app.css":
+          "@import 'tailwindcss';\n@import 'tw-animate-css';\n@custom-variant dark (&:is(.dark *));\n@theme inline { --color-background: var(--background); }\n",
+        "resources/js/app.ts":
+          "import { createInertiaApp } from '@inertiajs/vue3'; createInertiaApp({});",
+        "tsconfig.json": '{ "compilerOptions": { "paths": { "@/*": ["./resources/js/*"] } } }',
+        "vite.config.ts":
+          "import inertia from '@inertiajs/vite'; import tailwindcss from '@tailwindcss/vite'; import vue from '@vitejs/plugin-vue'; import laravel from 'laravel-vite-plugin'; import { defineConfig } from 'vite'; export default defineConfig({ plugins: [laravel({ input: ['resources/css/app.css', 'resources/js/app.ts'] }), inertia(), tailwindcss(), vue()] });",
+      },
+    },
+    ...(["SPA", "SSR"] as const).map((mode) => ({
+      expectedHost: { kind: "quasar", label: `Quasar ${mode}` },
+      name: `Quasar Vite ${mode}`,
+      paths: [
+        "quasar.config.ts",
+        "src/App.vue",
+        "src/router",
+        "src/layouts",
+        "src/pages",
+        "src/css",
+        ...(mode === "SSR" ? ["src-ssr"] : []),
+      ],
+      pkg: {
+        dependencies: { quasar: "^2.18.0", vue: "^3.5.13" },
+        devDependencies: { "@quasar/app-vite": "^3.0.0" },
+      },
+      projectFiles: {
+        "quasar.config.ts":
+          "import { defineConfig } from '#q-app'; export default defineConfig(() => ({ css: ['app.css'], build: { vitePlugins: [] } }));",
+      },
+    })),
+  ])("exposes $name through the production Vue policy", async (fixture) => {
+    const paths = new Set(fixture.paths);
+    const projectFiles = fixture.projectFiles as Record<string, string>;
+    const plan = await detectHostPlan(fixture.pkg as ProjectPackage, {
+      pathExists: async (filePath) => paths.has(filePath),
+      readFile: async (filePath) => projectFiles[filePath] ?? "",
+    });
+
+    expect(plan.host).toEqual(fixture.expectedHost);
+    expect(plan.targets).toContainEqual({ framework: "vue", readiness: "ready" });
+    expect(plan.vueHostProject).toMatchObject({ projectFramework: expect.any(String) });
+  });
+
   it.each(["^3.4.0", "^2.7.16"])(
     "requires explicit corrective setup for a Vite project declaring Vue %s",
     (range) => {
@@ -414,7 +540,7 @@ export default defineConfig({
     },
   );
 
-  it("gathers Nuxt evidence only for private planning", async () => {
+  it("gathers Nuxt evidence for production Vue planning", async () => {
     const paths = new Set(["nuxt.config.ts", "app/app.vue"]);
     const reader = {
       pathExists: async (filePath: string) => paths.has(filePath),
@@ -429,7 +555,15 @@ export default defineConfig({
 
     expect(privatePlan.host).toEqual({ kind: "nuxt", label: "Nuxt 4" });
     expect(privatePlan.vueHostProject?.vueUpgradeRequired).toBe(true);
-    expect(publicPlan.targets.map((target) => target.framework)).not.toContain("vue");
+    expect(publicPlan).toMatchObject({
+      host: privatePlan.host,
+      targets: privatePlan.targets,
+      vueHostProject: {
+        hostKind: privatePlan.vueHostProject?.hostKind,
+        projectFramework: "vue",
+        vueUpgradeRequired: true,
+      },
+    });
   });
 
   it.each([
@@ -487,7 +621,7 @@ export default defineConfig(() => ({ css: ['app.css'], build: { vitePlugins: [] 
     });
   });
 
-  it("gathers Quasar config and mode evidence only for private planning", async () => {
+  it("gathers Quasar config and mode evidence for production Vue planning", async () => {
     const source = `import { defineConfig } from '#q-app';
 export default defineConfig(() => ({ css: [], build: { vitePlugins: [] } }));
 `;
@@ -518,7 +652,15 @@ export default defineConfig(() => ({ css: [], build: { vitePlugins: [] } }));
 
     expect(privatePlan.host).toEqual({ kind: "quasar", label: "Quasar SSR" });
     expect(privatePlan.vueHostProject?.vueUpgradeRequired).toBe(true);
-    expect(publicPlan.targets.map((target) => target.framework)).not.toContain("vue");
+    expect(publicPlan).toMatchObject({
+      host: privatePlan.host,
+      targets: privatePlan.targets,
+      vueHostProject: {
+        hostKind: privatePlan.vueHostProject?.hostKind,
+        projectFramework: "vue",
+        vueUpgradeRequired: true,
+      },
+    });
   });
 
   it("returns a manual-action Quasar diagnostic for partial CLI evidence before generic Vite", () => {
@@ -562,7 +704,7 @@ export default defineConfig(() => ({ css: [], build: { vitePlugins: [] } }));
     expect(plan.targets).toContainEqual({ framework: "vue", readiness: "ready" });
   });
 
-  it("plans complete Laravel Inertia Vue evidence only through the private policy", async () => {
+  it("plans complete Laravel Inertia Vue evidence through production detection", async () => {
     const projectFiles: Record<string, string> = {
       "composer.json": JSON.stringify({ require: { "laravel/framework": "^13.0" } }),
       "resources/css/app.css":
@@ -608,7 +750,14 @@ export default defineConfig(() => ({ css: [], build: { vitePlugins: [] } }));
         utilsDir: "resources/js/lib/utils",
       },
     });
-    expect(publicPlan.targets.map((target) => target.framework)).not.toContain("vue");
+    expect(publicPlan).toMatchObject({
+      host: privatePlan.host,
+      targets: privatePlan.targets,
+      vueHostProject: {
+        hostKind: privatePlan.vueHostProject?.hostKind,
+        projectFramework: "vue",
+      },
+    });
   });
 
   it("keeps generic Vite Vue when common PHP and resources paths exist", () => {

@@ -17,7 +17,6 @@ defineExpose({ element });
 function protectedAttrs(): Record<string, unknown> {
   return {
     "data-sw-combobox-trigger": "",
-    "data-as-child": props.asChild ? "" : undefined,
     "data-sw-part": "trigger",
     "aria-disabled": combobox.disabled.value ? "true" : undefined,
     "aria-readonly": combobox.readOnly.value ? "true" : undefined,

@@ -73,13 +73,6 @@ export {
   SVELTE_FRAMEWORK_ADAPTER_PRIVATE_TARGET,
 } from "./future-readiness.js";
 export { reactFrameworkAdapter, reactFrameworkAdapterTarget } from "./react/index.js";
-export {
-  svelteAdapterPublicContract,
-  svelteFrameworkAdapter,
-  svelteFrameworkAdapterReadiness,
-  svelteFrameworkAdapterTarget,
-  SVELTE_PRIMITIVE_COMPONENTS,
-} from "./svelte/index.js";
 export type {
   AdapterColorPickerComponentProjection,
   AdapterColorPickerEvent,

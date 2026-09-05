@@ -4,6 +4,8 @@ import { ref } from "vue";
 
 import Progress from "./starwind-runtime/progress/Progress.vue";
 
+const props = defineProps<{ styledOnly?: boolean }>();
+
 const variants = [
   "default",
   "primary",
@@ -32,7 +34,7 @@ const styledProgress = ref<InstanceType<typeof Progress> | null>(null);
     </div>
 
     <div class="review-grid progress-review-grid">
-      <article class="scenario">
+      <article v-if="!props.styledOnly" class="scenario">
         <h3>Primitive semantics</h3>
         <ProgressPrimitive.ProgressRoot
           aria-labelledby="primitive-progress-label"

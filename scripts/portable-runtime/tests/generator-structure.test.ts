@@ -1,7 +1,6 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
 import { describe, expect, it } from "vitest";
 import {
   getPrimitiveFrameworkAdapterTargetNames,
@@ -14,6 +13,7 @@ import {
 } from "../renderers/primitive-generator-registry.js";
 import { PRIMITIVE_COMPONENTS, PRIMITIVE_HELPER_EXPORTS } from "../renderers/primitive-index.js";
 import { getPrimitiveInventoryEntry } from "../renderers/primitive-inventory.js";
+import { expectedPrimitiveTargets, hasPrivateSvelte } from "./workspace-support.js";
 
 const SCRIPT_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const RUNTIME_INTERNAL_CONTRACT_IMPORT = ["packages/runtime", "src/internal/contracts"].join("/");
@@ -193,8 +193,9 @@ const FUTURE_FRAMEWORK_TRACER_SHIPPING_SURFACE_PATTERNS = [
     pattern: /@starwind-ui\/(?:solid|svelte|vue)/g,
   },
 ] as const;
-const PRIVATE_VUE_PACKAGE_SURFACE_PATHS = new Set([
+const PUBLIC_VUE_PACKAGE_SURFACE_PATHS = new Set([
   "packages/cli/src/utils/framework-target-policy.ts",
+  "packages/cli/src/registry/bundled-registry.json",
 ]);
 
 type FrameworkSpecificContainmentException = {
@@ -404,71 +405,73 @@ describe("portable runtime generator structure", () => {
         support: "support" in entry.primitive ? entry.primitive.support : { kind: "all" },
         target: entry.target,
       })),
-    ).toEqual([
-      { support: { kind: "all" }, target: "astro" },
-      { support: { kind: "all" }, target: "react" },
-      {
-        support: {
-          components: [
-            "accordion",
-            "alert-dialog",
-            "avatar",
-            "button",
-            "carousel",
-            "checkbox",
-            "checkbox-group",
-            "collapsible",
-            "color-picker",
-            "combobox",
-            "context-menu",
-            "dialog",
-            "drawer",
-            "dropzone",
-            "field",
-            "fieldset",
-            "form",
-            "input",
-            "input-otp",
-            "menu",
-            "navigation-menu",
-            "popover",
-            "preview-card",
-            "progress",
-            "radio",
-            "radio-group",
-            "scroll-area",
-            "select",
-            "sidebar",
-            "slider",
-            "switch",
-            "tabs",
-            "toast",
-            "toggle",
-            "toggle-group",
-            "tooltip",
-            "theme",
-          ],
-          kind: "subset",
+    ).toEqual(
+      [
+        { support: { kind: "all" }, target: "astro" },
+        { support: { kind: "all" }, target: "react" },
+        {
+          support: {
+            components: [
+              "accordion",
+              "alert-dialog",
+              "avatar",
+              "button",
+              "carousel",
+              "checkbox",
+              "checkbox-group",
+              "collapsible",
+              "color-picker",
+              "combobox",
+              "context-menu",
+              "dialog",
+              "drawer",
+              "dropzone",
+              "field",
+              "fieldset",
+              "form",
+              "input",
+              "input-otp",
+              "menu",
+              "navigation-menu",
+              "popover",
+              "preview-card",
+              "progress",
+              "radio",
+              "radio-group",
+              "scroll-area",
+              "select",
+              "sidebar",
+              "slider",
+              "switch",
+              "tabs",
+              "toast",
+              "toggle",
+              "toggle-group",
+              "tooltip",
+              "theme",
+            ],
+            kind: "subset",
+          },
+          target: "vue",
         },
-        target: "vue",
-      },
-      {
-        support: {
-          components: [
-            "button",
-            "carousel",
-            "checkbox",
-            "select",
-            "accordion",
-            "dialog",
-            "slider",
-            "toast",
-          ],
-          kind: "subset",
+        {
+          support: {
+            components: [
+              "button",
+              "carousel",
+              "checkbox",
+              "select",
+              "accordion",
+              "dialog",
+              "slider",
+              "toast",
+            ],
+            kind: "subset",
+          },
+          target: "svelte",
         },
-        target: "svelte",
-      },
-    ]);
+      ].filter(({ target }) => target !== "svelte" || hasPrivateSvelte),
+    );
     expect(
       lineCount(await readPortableFile("renderers/framework-adapters/astro/primitive-package.ts")),
     ).toBeLessThanOrEqual(PRIMITIVE_AGGREGATOR_LINE_BUDGET);
@@ -591,24 +594,17 @@ describe("portable runtime generator structure", () => {
       "renderers/framework-adapters/target-registry.ts",
     );
 
-    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(["astro", "react", "vue", "svelte"]);
+    expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(expectedPrimitiveTargets);
     expect(frameworkAdapterRegistry).toContain("primitiveFrameworkAdapterTargets");
     expect(frameworkAdapterRegistry).toContain("astroFrameworkAdapterTarget");
     expect(frameworkAdapterRegistry).toContain("reactFrameworkAdapterTarget");
     expect(frameworkAdapterRegistry).toContain("vueFrameworkAdapterTarget");
-    expect(frameworkAdapterRegistry).toContain("svelteFrameworkAdapterTarget");
+    expect(frameworkAdapterRegistry.includes("svelteFrameworkAdapterTarget")).toBe(
+      hasPrivateSvelte,
+    );
     expect(frameworkAdapterRegistry).toContain(
       '(typeof primitiveFrameworkAdapterTargets)[number]["target"]',
     );
-    const svelteTarget = primitiveFrameworkAdapterTargets.find(({ target }) => target === "svelte");
-    expect(svelteTarget?.styled).toBeUndefined();
-    expect(svelteTarget?.publicSupport).toEqual({
-      cliRegistry: false,
-      demoIntegration: false,
-      packageExports: false,
-      publicDocsClaim: false,
-      status: "non-shipping-tracer",
-    });
     expect(routeFreeGenerator).not.toContain("const ROUTE_FREE_PRIMITIVE_TARGETS");
     expect(routeFreeGenerator).not.toContain("routeFreeFrameworkAdapters");
     expect(routeFreeGenerator).not.toContain("writeAstroAdapterOutput");
@@ -958,7 +954,7 @@ describe("portable runtime generator structure", () => {
       .map((file) => {
         const labels = getFutureFrameworkTracerShippingSurfaceLabels(file.source);
         return {
-          labels: PRIVATE_VUE_PACKAGE_SURFACE_PATHS.has(file.relativePath)
+          labels: PUBLIC_VUE_PACKAGE_SURFACE_PATHS.has(file.relativePath)
             ? labels.filter((label) => label !== "future package surface")
             : labels,
           path: file.relativePath,

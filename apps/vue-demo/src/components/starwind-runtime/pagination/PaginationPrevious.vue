@@ -2,7 +2,6 @@
 import type { ClassValue } from "tailwind-variants";
 import { useAttrs } from "vue";
 import PaginationLink from "./PaginationLink.vue";
-import { paginationPrevious } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
@@ -11,8 +10,9 @@ export type PaginationPreviousProps = InstanceType<typeof PaginationLink>["$prop
 };
 type PaginationPreviousDeclaredProps = {
   class?: ClassValue;
+  size?: unknown;
 } & /* @vue-ignore */ PaginationPreviousProps;
-const { class: className } = defineProps<PaginationPreviousDeclaredProps>();
+const { size = "md", class: className } = defineProps<PaginationPreviousDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
   icon?: () => unknown;
@@ -29,11 +29,12 @@ function omitForwardedAttrs(
 <template>
   <PaginationLink
     aria-label="Go to previous page"
-    :class="paginationPrevious({ class: className })"
+    :size="size"
+    :class="className"
     v-bind="
-      omitForwardedAttrs(attrs, ['aria-label', 'class', 'data-slot']) as Omit<
+      omitForwardedAttrs(attrs, ['aria-label', 'size', 'class', 'data-slot']) as Omit<
         InstanceType<typeof PaginationLink>['$props'],
-        'aria-label' | 'class' | 'data-slot'
+        'aria-label' | 'size' | 'class' | 'data-slot'
       >
     "
     data-slot="pagination-previous"
@@ -48,7 +49,6 @@ function omitForwardedAttrs(
         stroke-linecap="round"
         stroke-linejoin="round"
         aria-hidden="true"
-        class="size-4 transition-transform group-hover:-translate-x-1"
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M15 6l-6 6l6 6" />

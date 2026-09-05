@@ -1,21 +1,12 @@
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
-
+import { readFileSync } from "node:fs";
 import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-
-import {
-  buildRuntimeRegistry,
-  createCliRegistryBuildPolicy,
-} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
-import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
-
+import { update } from "../../src/commands/update.js";
 import * as config from "../../src/utils/config.js";
-import * as fs from "../../src/utils/fs.js";
 import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
+import * as fs from "../../src/utils/fs.js";
 import * as registry from "../../src/utils/registry.js";
 import * as runtimeComponent from "../../src/utils/runtime-component.js";
-import { update } from "../../src/commands/update.js";
 
 vi.mock("@clack/prompts");
 vi.mock("../../src/utils/config.js");
@@ -76,11 +67,10 @@ describe("update command", () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
   let mockExit: ReturnType<typeof vi.spyOn>;
 
-  beforeAll(async () => {
-    vueRegistryFixture = await buildRuntimeRegistry({
-      repoRoot: fileURLToPath(new URL("../../../..", import.meta.url)),
-      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
-    });
+  beforeAll(() => {
+    vueRegistryFixture = JSON.parse(
+      readFileSync(new URL("../../src/registry/bundled-registry.json", import.meta.url), "utf8"),
+    );
   });
 
   beforeEach(() => {
@@ -624,14 +614,33 @@ describe("update command", () => {
     },
   );
 
-  it("rejects Vue through the public update API default", async () => {
-    // @ts-expect-error Public update calls cannot select Vue without private dependencies.
-    await expect(update(["button"], { framework: "vue", yes: true })).rejects.toThrow(
-      "process.exit called",
-    );
+  it("routes Vue through the public update API default", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        framework: "vue",
+        components: [{ name: "button", version: "1.0.0", framework: "vue", registry: "default" }],
+      }),
+    });
+    mockUpdateRuntimeComponents.mockResolvedValue({
+      updated: [
+        {
+          delivery: "source",
+          name: "button",
+          newVersion: "2.0.0",
+          status: "updated",
+        },
+      ],
+      skipped: [],
+      failed: [],
+    });
 
-    expect(mockUpdateRuntimeComponents).not.toHaveBeenCalled();
-    expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("public target policy"));
+    await update(["button"], { framework: "vue", yes: true });
+
+    expect(mockUpdateRuntimeComponents).toHaveBeenCalledWith(
+      ["button"],
+      expect.objectContaining({ framework: "vue" }),
+    );
   });
 
   it("updates every installed framework target when --framework all is used", async () => {

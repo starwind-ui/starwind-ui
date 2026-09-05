@@ -212,7 +212,7 @@ describe("Vue Menu", () => {
     expect(radio.getAttribute("aria-checked")).toBe("true");
   });
 
-  it("keeps nested submenu ownership inside the root portal and cleans exact Runtime resources", async () => {
+  it("teleports nested submenu portals beside the root portal and cleans exact Runtime resources", async () => {
     const abort = vi.spyOn(AbortController.prototype, "abort");
     const overlays = document.createElement("div");
     overlays.id = "menu-overlays";
@@ -222,14 +222,17 @@ describe("Vue Menu", () => {
     app.mount(host);
     await frame();
 
-    expect(overlays.querySelectorAll(":scope > [data-sw-menu-portal]")).toHaveLength(1);
+    expect(overlays.querySelectorAll(":scope > [data-sw-menu-portal]")).toHaveLength(2);
     expect(overlays.querySelectorAll("[data-sw-menu-portal]")).toHaveLength(2);
-    const portals = overlays.querySelectorAll<HTMLElement>("[data-sw-menu-portal]");
-    const rootPortal = portals[0]!;
-    const submenuPortal = portals[1]!;
+    const submenuRoot = overlays.querySelector<HTMLElement>("[data-sw-menu-submenu-root]")!;
+    const rootPortal = submenuRoot.closest<HTMLElement>("[data-sw-menu-portal]")!;
+    const submenuPortal = [...overlays.querySelectorAll<HTMLElement>("[data-sw-menu-portal]")].find(
+      (portal) => portal !== rootPortal,
+    )!;
     expect(rootPortal.dataset.placement).toBe("ready");
     expect(submenuPortal.dataset.placement).toBe("ready");
-    expect(rootPortal.contains(submenuPortal)).toBe(true);
+    expect(rootPortal.contains(submenuPortal)).toBe(false);
+    expect(submenuPortal.parentElement).toBe(overlays);
     const trigger = host.querySelector<HTMLButtonElement>("[data-sw-menu-trigger]")!;
     trigger.click();
     await frame();
@@ -241,6 +244,16 @@ describe("Vue Menu", () => {
     await frame();
     expect(submenuTrigger.getAttribute("aria-expanded")).toBe("true");
     expect(overlays.querySelectorAll("[data-sw-menu-popup]:not([hidden])")).toHaveLength(2);
+    const submenuPopup = submenuPortal.querySelector<HTMLElement>("[data-sw-menu-popup]")!;
+    expect(document.activeElement?.textContent).toContain("Duplicate");
+    submenuPopup.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowLeft" }));
+    await frame();
+    expect(submenuTrigger.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(submenuTrigger);
+    submenuTrigger.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }),
+    );
+    await frame();
     const submenuPositioner = submenuPortal.querySelector<HTMLElement>(
       "[data-sw-menu-positioner]",
     )!;
@@ -266,6 +279,16 @@ describe("Vue Menu", () => {
     expect(document.body.hasAttribute("data-sw-scroll-locked")).toBe(false);
     expect(overlays.children).toHaveLength(0);
     expect(host.children).toHaveLength(0);
+
+    const remountedApp = createApp({
+      render: () => renderMenu({ container: overlays, modal: true }),
+    });
+    remountedApp.mount(host);
+    await frame();
+    expect(overlays.querySelectorAll(":scope > [data-sw-menu-portal]")).toHaveLength(2);
+    remountedApp.unmount();
+    expect(abort).toHaveBeenCalledTimes(4);
+    expect(overlays.children).toHaveLength(0);
   });
 
   it("restores controlled checkbox and radio item plus indicator state after accepted requests", async () => {

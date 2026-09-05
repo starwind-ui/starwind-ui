@@ -6,6 +6,7 @@ import {
   type FrameworkTargetPolicy,
   isConfigTarget,
   type PrivateVueCliFrameworkTarget,
+  PUBLIC_FRAMEWORK_TARGET_POLICY,
 } from "./framework-target-policy.js";
 import {
   detectReactProjectPaths,
@@ -75,25 +76,7 @@ export async function detectHostPlan(
   pkg: ProjectPackage,
   reader: HostEvidenceReader = defaultEvidenceReader,
 ): Promise<HostPlan<StarwindFramework>> {
-  const existingPaths = new Set(await detectReactProjectPaths(reader.pathExists));
-  const astroConfigPath = (
-    await Promise.all(
-      ASTRO_CONFIG_PATHS.map(async (configPath) =>
-        (await reader.pathExists(configPath)) ? configPath : undefined,
-      ),
-    )
-  ).find((configPath) => configPath !== undefined);
-
-  let astroConfig: HostEvidence["astroConfig"];
-  if (astroConfigPath) {
-    existingPaths.add(astroConfigPath);
-    astroConfig = {
-      content: await reader.readFile(astroConfigPath),
-      path: astroConfigPath,
-    };
-  }
-
-  return getHostPlan(pkg, { astroConfig, existingPaths });
+  return detectPrivateVueHostPlan(pkg, PUBLIC_FRAMEWORK_TARGET_POLICY, reader);
 }
 
 export async function detectPrivateVueHostPlan(
@@ -102,7 +85,7 @@ export async function detectPrivateVueHostPlan(
   reader: HostEvidenceReader = defaultEvidenceReader,
 ): Promise<HostPlan<PrivateVueCliFrameworkTarget>> {
   if (!isConfigTarget(targetPolicy, "vue")) {
-    throw new Error("Private Vue host planning requires a policy that admits Vue.");
+    throw new Error("Vue host planning requires a policy that admits Vue.");
   }
   const existingPaths = new Set(await detectReactProjectPaths(reader.pathExists));
   const projectFiles: Record<string, string> = {};
@@ -167,11 +150,19 @@ export function getPrivateVueHostPlan(
   targetPolicy: FrameworkTargetPolicy<PrivateVueCliFrameworkTarget>,
 ): HostPlan<PrivateVueCliFrameworkTarget> {
   if (!isConfigTarget(targetPolicy, "vue")) {
-    throw new Error("Private Vue host planning requires a policy that admits Vue.");
+    throw new Error("Vue host planning requires a policy that admits Vue.");
   }
   const publicPlan = getHostPlan(pkg, evidence);
   const vueDetection = detectVueHostProject(pkg, evidence, publicPlan.host.kind);
   if (vueDetection?.status === "failed") {
+    if (
+      vueDetection.host.kind === "vite" &&
+      publicPlan.targets.some(
+        (target) => target.framework === "react" && target.readiness === "ready",
+      )
+    ) {
+      return publicPlan;
+    }
     return {
       diagnostic: vueDetection.diagnostic,
       host: vueDetection.host,

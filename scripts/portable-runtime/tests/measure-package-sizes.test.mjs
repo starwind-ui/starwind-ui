@@ -9,10 +9,10 @@ import {
   buildContractGenerationProofMeasurementRows,
   committedComparatorBaselines,
   createMeasurementProvenance,
+  createStarwindVueAlias,
   evaluateColorPickerSizeComparison,
   formatColorPickerSizeComparisonMarkdown,
   formatPackageSizeReports,
-  createStarwindVueAlias,
   getPackageSizeCommandMode,
   getPackageSizeMeasurementPlan,
   measureBundle,
@@ -31,7 +31,7 @@ import {
 import { buildSourceContributionAnalyses } from "../source-contribution-report.mjs";
 
 describe("package-size command prerequisites", () => {
-  it("builds Vue for full local measurements and preserves the prepared public check", () => {
+  it("builds Vue and includes its evidence in the prepared public check", () => {
     const rootPackage = JSON.parse(
       readFileSync(new URL("../../../package.json", import.meta.url), "utf8"),
     );
@@ -43,7 +43,7 @@ describe("package-size command prerequisites", () => {
       "pnpm runtime:build && pnpm react:build && pnpm vue:build && node scripts/portable-runtime/measure-package-sizes.mjs --check --private-vue",
     );
     expect(rootPackage.scripts["runtime:size:check:prepared"]).toBe(
-      "node scripts/portable-runtime/measure-package-sizes.mjs --check",
+      "node scripts/portable-runtime/measure-package-sizes.mjs --check --private-vue",
     );
     expect(rootPackage.scripts["runtime:size:check:prepared:private"]).toBe(
       "node scripts/portable-runtime/measure-package-sizes.mjs --check --private-vue",
@@ -66,7 +66,7 @@ describe("package-size command prerequisites", () => {
   });
 });
 
-describe("private Vue browser measurement plan", () => {
+describe("Vue public-beta browser measurement plan", () => {
   it("uses built root and subpath aliases", () => {
     const root = "/repo";
     expect(resolveStarwindVueBuiltPath("@starwind-ui/vue", { repoRoot: root })).toBe(

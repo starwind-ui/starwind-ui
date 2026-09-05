@@ -27,7 +27,6 @@ import { ensureDirectory, fileExists, readJsonFile, writeCssFile } from "@/utils
 import { highlighter } from "@/utils/highlighter.js";
 import {
   detectHostPlan,
-  detectPrivateVueHostPlan,
   formatDetectedHost,
   formatPrivateDetectedHost,
   validateHostTarget,
@@ -289,16 +288,12 @@ export async function init(
       return;
     }
 
-    const hostPlan =
-      dependencies?.hostPlan ??
-      (dependencies
-        ? await detectPrivateVueHostPlan(pkg, dependencies.targetPolicy)
-        : await detectHostPlan(pkg));
+    const hostPlan = dependencies?.hostPlan ?? (await detectHostPlan(pkg));
     const defaultFramework = await selectHostTarget(
       hostPlan as HostPlan<PrivateVueCliFrameworkTarget>,
       selectedFramework,
       targetPolicy,
-      dependencies !== undefined,
+      isConfigTarget(targetPolicy, "vue"),
     );
     const isAstroReactTarget = hostPlan.host.kind === "astro" && defaultFramework === "react";
     const vueHostProject = defaultFramework === "vue" ? hostPlan.vueHostProject : undefined;

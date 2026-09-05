@@ -24,12 +24,20 @@ describe("Node 22 public consumer smoke", () => {
       expect.objectContaining({ key: "react", name: "@starwind-ui/react" }),
       expect.objectContaining({ key: "cli", name: "starwind" }),
     ]);
+    expect(createPackPlan({ outputDirectory }).packages.map(({ key }) => key)).not.toContain("vue");
+    expect(
+      createPackPlan({ outputDirectory, vueBeta: true }).packages.map(({ key }) => key),
+    ).toEqual(["runtime", "astro", "react", "vue", "cli"]);
   });
 
   it("packs to the shared release directory by default", () => {
     expect(parsePackArgs([])).toEqual({ outputDirectory: path.resolve(".release-packs") });
     expect(parsePackArgs(["--output", "custom-packs"])).toEqual({
       outputDirectory: path.resolve("custom-packs"),
+    });
+    expect(parsePackArgs(["--vue-beta", "--output", "custom-packs"])).toEqual({
+      outputDirectory: path.resolve("custom-packs"),
+      vueBeta: true,
     });
   });
 

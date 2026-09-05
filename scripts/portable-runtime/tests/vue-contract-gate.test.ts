@@ -102,6 +102,7 @@ const manifestDependencySections = [
 type PackageManifest = Partial<
   Record<(typeof manifestDependencySections)[number], Record<string, string>>
 > & {
+  description?: string;
   exports?: Record<string, unknown>;
   name?: string;
   private?: boolean;
@@ -114,19 +115,36 @@ type TextSurface = {
 };
 
 const boundaryAwareVuePattern = /(^|[^a-z0-9])vue(?=$|[^a-z0-9])/i;
-const boundaryAwareVueGlobalPattern = /(^|[^a-z0-9])vue(?=$|[^a-z0-9])/gi;
-const approvedPrivateVueScriptNames = [
+const approvedVueCliManifestPath = "packages/cli/package.json";
+const approvedVueCliDescription =
+  "Install and manage Starwind UI components in Astro, React, and Vue (beta) applications";
+const approvedVueScriptNames = [
+  "build:public",
   "l",
+  "publish:vue-beta",
+  "publish:vue-beta:dry-run",
+  "release:gate",
+  "release:pack:vue-beta-artifacts",
+  "release:vue-beta:artifacts",
+  "release:vue-beta:artifacts:record",
+  "release:vue-beta:finalize",
+  "runtime:generate:all",
   "runtime:generate:vue",
   "runtime:generate:vue:check",
   "runtime:generate:vue:test",
+  "runtime:perf:vue",
+  "runtime:perf:vue:baseline",
+  ...(existsSync("packages/svelte/package.json") ? ["runtime:perf:vue:check"] : []),
   "runtime:size",
   "runtime:size:baseline:vue",
   "runtime:size:check",
+  "runtime:size:check:prepared",
   "runtime:size:check:prepared:private",
   "runtime:size:starwind",
   "test:vue-cli-host-acceptance",
   "test:vue-cli-local-link",
+  "test:all",
+  "typecheck:public",
   "ul",
   "vue:build",
   "vue:link",
@@ -138,22 +156,25 @@ const approvedPrivateVueScriptNames = [
   "vue-demo:dev",
   "vue-demo:smoke",
 ] as const;
-const approvedPrivateVueScriptNameSet = new Set<string>(approvedPrivateVueScriptNames);
+const approvedVueScriptNameSet = new Set<string>(approvedVueScriptNames);
+const approvedVueReleaseScriptNames = new Set([
+  "publish:vue-beta",
+  "publish:vue-beta:dry-run",
+  "release:gate",
+  "release:pack:vue-beta-artifacts",
+  "release:vue-beta:artifacts",
+  "release:vue-beta:artifacts:record",
+  "release:vue-beta:finalize",
+]);
 const forbiddenPublicVueScriptCommandPatterns = [
   /\b(?:npm|pnpm|yarn)\b[^\n;&|]*\b(?:pack|publish)\b/i,
   /\bchangeset\b[^\n;&|]*\bpublish\b/i,
   /(?:pack-public-release-artifacts|published-release-acceptance|release-candidate-acceptance|release-packages)\.mjs\b/i,
   /(?:runtime:registry(?::|\b)|generate-cli-registry|packages\/cli\/(?:registry|src\/registry))/i,
 ] as const;
-const approvedChangesetIgnore = [
-  "demo",
-  "react-demo",
-  "vue-demo",
-  "@starwind-ui/vue",
-  "@starwind-ui/svelte",
-];
+const approvedChangesetIgnore = ["demo", "react-demo", "vue-demo", "@starwind-ui/svelte"];
 const approvedProductPositioningVueClaim =
-  /Current first-party Primitive adapter packages are Astro and React\. Runtime adapter contract types\s+already allow future targets such as Vue, Svelte, and Solid, but do not claim those adapters are\s+shipped until generated package output and demos exist\./;
+  /Current first-party Primitive adapter packages are Astro, React, and the Vue 3\.5 public beta\.\s+Runtime adapter contract types also allow future targets such as Svelte and Solid\. Claim support\s+only after generated package output, demos, host checks, and release metadata exist\./;
 const approvedVueArchitectureDoc = "docs/adr/0011-use-idiomatic-vue-adapter-semantics.md";
 
 const publicCliTextSurfacePaths = [
@@ -191,15 +212,18 @@ function findVueScriptPolicyViolations(scripts: Record<string, string>): string[
   const actualVueScripts = getBoundaryAwareVueScripts(scripts);
   const violations: string[] = [];
 
-  for (const name of approvedPrivateVueScriptNames) {
+  for (const name of approvedVueScriptNames) {
     if (!(name in actualVueScripts)) violations.push(`missing:${name}`);
   }
   for (const [name, command] of Object.entries(actualVueScripts)) {
-    if (!approvedPrivateVueScriptNameSet.has(name)) {
+    if (!approvedVueScriptNameSet.has(name)) {
       violations.push(`unexpected:${name}`);
       continue;
     }
-    if (forbiddenPublicVueScriptCommandPatterns.some((pattern) => pattern.test(command))) {
+    if (
+      !approvedVueReleaseScriptNames.has(name) &&
+      forbiddenPublicVueScriptCommandPatterns.some((pattern) => pattern.test(command))
+    ) {
       violations.push(`forbidden:${name}`);
     }
   }
@@ -225,13 +249,11 @@ function isApprovedVueDocumentation({ path, source }: TextSurface): boolean {
   if (!containsBoundaryAwareVue(source)) return true;
   if (path.startsWith("docs/portable-runtime/")) return true;
   if (path === "docs/agents/test-health.md") return true;
+  if (path === "docs/release/versioning.md") return true;
   if (path === approvedVueArchitectureDoc) return true;
   if (path !== "docs/product/positioning.md") return false;
 
-  return (
-    (source.match(boundaryAwareVueGlobalPattern) ?? []).length === 1 &&
-    approvedProductPositioningVueClaim.test(source)
-  );
+  return approvedProductPositioningVueClaim.test(source);
 }
 
 function findUnexpectedVueDocumentation(surfaces: TextSurface[]): string[] {
@@ -273,7 +295,48 @@ function findForbiddenVueDependencies(manifest: PackageManifest): string[] {
     .sort();
 }
 
-describe("Vue non-shipping public-contract gate", () => {
+function isApprovedVueAwarePackageManifest(path: string, manifest: PackageManifest): boolean {
+  if (!containsBoundaryAwareVue(JSON.stringify(manifest))) return true;
+  if (path !== approvedVueCliManifestPath || manifest.description !== approvedVueCliDescription) {
+    return false;
+  }
+
+  const { description: _approvedDescription, ...manifestWithoutDescription } = manifest;
+  return !containsBoundaryAwareVue(JSON.stringify(manifestWithoutDescription));
+}
+
+describe("Vue public-beta contract gate", () => {
+  it("keeps the human review Styled-only and the full adapter review internal", () => {
+    const demoRoot = join(process.cwd(), "apps/vue-demo/src");
+    const app = readFileSync(join(demoRoot, "App.vue"), "utf8");
+    const styledReview = readFileSync(
+      join(demoRoot, "components/StyledCatalogReviewPage.vue"),
+      "utf8",
+    );
+    const catalogSource = styledReview.match(
+      /const styledComponents = \[([\s\S]*?)\] as const;/,
+    )?.[1];
+    const catalog = [...(catalogSource?.matchAll(/"([^"]+)"/g) ?? [])]
+      .map((match) => match[1]!)
+      .sort();
+    const generated = readdirSync(join(demoRoot, "components/starwind-runtime"), {
+      withFileTypes: true,
+    })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+
+    expect(app).toContain("route === '/review'");
+    expect(app).toContain("route === '/internal/adapter-review'");
+    expect(catalog).toEqual(generated);
+    expect(catalog).toHaveLength(54);
+    expect(styledReview).toContain("<AccordionReview styled-only />");
+    expect(styledReview).toContain("<AvatarReview styled-only />");
+    expect(styledReview).toContain("<ProgressReview styled-only />");
+    expect(styledReview).toContain("<ScrollAreaReview styled-only />");
+    expect(styledReview).not.toContain("@starwind-ui/vue/");
+  });
+
   it("excludes generator test homes and tolerates only disappearing paths", () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), "starwind-vue-surface-scan-"));
     const stableRoot = join(fixtureRoot, "stable");
@@ -560,19 +623,19 @@ describe("Vue non-shipping public-contract gate", () => {
     }
   });
 
-  it("keeps every Vue support flag false and every public shipping surface absent", () => {
+  it("keeps Vue public-beta support enabled across public surfaces", () => {
     expect(vueFrameworkAdapterReadiness.publicSupport).toBe(vueAdapterPublicContract.publicSupport);
-    expect(vueAdapterPublicContract.publicSupport.status).toBe("non-shipping-tracer");
+    expect(vueAdapterPublicContract.publicSupport.status).toBe("public-beta");
     expect(
       Object.entries(vueAdapterPublicContract.publicSupport)
         .filter(([key]) => key !== "status")
         .map(([, value]) => value),
-    ).toEqual([false, false, false, false]);
+    ).toEqual([true, true, true, true]);
     expect(primitiveFrameworkAdapterTargets.map(({ target }) => target)).toEqual([
       "astro",
       "react",
       "vue",
-      "svelte",
+      ...(existsSync("packages/svelte/package.json") ? ["svelte"] : []),
     ]);
     expect(existsSync(join(process.cwd(), "packages/vue"))).toBe(true);
     expect(
@@ -611,8 +674,9 @@ describe("Vue non-shipping public-contract gate", () => {
         }
         const manifestSource = readFileSync(join(process.cwd(), root, file), "utf8");
         const manifest = JSON.parse(manifestSource) as PackageManifest;
-        expect(findForbiddenVueDependencies(manifest), `${root}/${file}`).toEqual([]);
-        expect(containsBoundaryAwareVue(manifestSource), `${root}/${file}`).toBe(false);
+        const manifestPath = `${root}/${normalizedFile}`;
+        expect(findForbiddenVueDependencies(manifest), manifestPath).toEqual([]);
+        expect(isApprovedVueAwarePackageManifest(manifestPath, manifest), manifestPath).toBe(true);
       }
     }
 
@@ -620,12 +684,12 @@ describe("Vue non-shipping public-contract gate", () => {
       readFileSync(join(process.cwd(), "packages/vue/package.json"), "utf8"),
     ) as PackageManifest;
     expect(vueManifest).toMatchObject({
-      dependencies: { "@starwind-ui/runtime": "workspace:*" },
+      dependencies: { "@starwind-ui/runtime": "1.2.0" },
       name: "@starwind-ui/vue",
       peerDependencies: { vue: ">=3.5" },
-      private: true,
-      version: "0.0.0",
+      version: "0.1.0",
     });
+    expect(vueManifest.private).not.toBe(true);
     expect(Object.keys(vueManifest.exports ?? {}).sort()).toEqual(
       Object.keys(vuePackageExports).sort(),
     );
@@ -692,23 +756,35 @@ describe("Vue non-shipping public-contract gate", () => {
     }
 
     const publicCliSurfaces = readTextSurfaces(publicCliTextSurfacePaths);
-    expect(findBoundaryAwareVueSurfaces(publicCliSurfaces)).toEqual([]);
+    expect(findBoundaryAwareVueSurfaces(publicCliSurfaces)).toEqual([
+      "packages/cli/registry/README.md",
+      "packages/cli/src/program.ts",
+      "packages/cli/src/registry/bundled-registry.json",
+      "packages/cli/src/registry/primitive-vendoring-artifacts.json",
+    ]);
     expect(PUBLIC_FRAMEWORK_TARGET_POLICY).toEqual({
       cacheKey: "public",
-      configTargets: ["astro", "react"],
-      labels: { astro: "Astro", react: "React" },
+      configTargets: ["astro", "react", "vue"],
+      labels: { astro: "Astro", react: "React", vue: "Vue (beta)" },
       primitiveArtifactIntegrity: undefined,
-      registryTargets: ["legacy-astro", "astro", "react"],
+      registryTargets: ["legacy-astro", "astro", "react", "vue"],
       requiredAdapterPackages: {
         "legacy-astro": [],
         astro: ["@starwind-ui/astro"],
         react: ["@starwind-ui/react"],
+        vue: ["@starwind-ui/vue"],
       },
-      setupTargets: ["astro", "react"],
+      setupTargets: ["astro", "react", "vue"],
     });
 
     const publicReleaseSurfaces = readTextSurfaces(publicReleaseSurfacePaths);
-    expect(findBoundaryAwareVueSurfaces(publicReleaseSurfaces)).toEqual([]);
+    expect(findBoundaryAwareVueSurfaces(publicReleaseSurfaces)).toEqual([
+      "scripts/check-release-artifacts.mjs",
+      "scripts/pack-public-release-artifacts.mjs",
+      "scripts/published-release-acceptance.mjs",
+      "scripts/release-candidate-acceptance.mjs",
+      "scripts/release-packages.mjs",
+    ]);
 
     const publicReadmeSurfaces: TextSurface[] = [
       {
@@ -730,7 +806,10 @@ describe("Vue non-shipping public-contract gate", () => {
         source: readFileSync(readmePath, "utf8"),
       });
     }
-    expect(findBoundaryAwareVueSurfaces(publicReadmeSurfaces)).toEqual([]);
+    expect(findBoundaryAwareVueSurfaces(publicReadmeSurfaces)).toEqual([
+      "README.md",
+      "packages/vue/README.md",
+    ]);
 
     const documentationSurfaces = listFiles(join(process.cwd(), "docs")).map((file) => ({
       path: `docs/${file}`,
@@ -750,6 +829,7 @@ describe("Vue non-shipping public-contract gate", () => {
           ({ path }) =>
             path.startsWith("docs/portable-runtime/") ||
             path === "docs/agents/test-health.md" ||
+            path === "docs/release/versioning.md" ||
             path === approvedVueArchitectureDoc ||
             path === "docs/product/positioning.md",
         ),
@@ -786,11 +866,28 @@ describe("Vue non-shipping public-contract gate", () => {
     );
   });
 
-  it("rejects synthetic Vue leaks across private-script, registry, docs, and manifests", () => {
+  it("rejects unregistered Vue scripts and invalid private-package policy", () => {
     const rootManifest = JSON.parse(
       readFileSync(join(process.cwd(), "package.json"), "utf8"),
     ) as PackageManifest;
     const rootScripts = rootManifest.scripts ?? {};
+    expect(
+      Object.fromEntries(
+        ["runtime:perf:vue", "runtime:perf:vue:baseline", "runtime:perf:vue:check"].map((name) => [
+          name,
+          rootScripts[name],
+        ]),
+      ),
+    ).toEqual({
+      "runtime:perf:vue":
+        "pnpm runtime:build && pnpm vue:build && node scripts/portable-runtime/measure-vue-runtime-performance.mjs",
+      "runtime:perf:vue:baseline":
+        "pnpm runtime:build && pnpm vue:build && node scripts/portable-runtime/measure-vue-runtime-performance.mjs --baseline",
+      "runtime:perf:vue:check": existsSync("packages/svelte/package.json")
+        ? "node scripts/portable-runtime/measure-vue-runtime-performance.mjs --check"
+        : undefined,
+    });
+    expect(findVueScriptPolicyViolations(rootScripts)).toEqual([]);
     expect(
       findVueScriptPolicyViolations({
         ...rootScripts,
@@ -878,5 +975,21 @@ describe("Vue non-shipping public-contract gate", () => {
       "optionalDependencies:@vue/server-renderer",
       "peerDependencies:@vue/runtime-dom",
     ]);
+    expect(
+      isApprovedVueAwarePackageManifest(approvedVueCliManifestPath, {
+        description: approvedVueCliDescription,
+      }),
+    ).toBe(true);
+    expect(
+      isApprovedVueAwarePackageManifest(approvedVueCliManifestPath, {
+        description: approvedVueCliDescription,
+        scripts: { prepare: "vue-tsc" },
+      }),
+    ).toBe(false);
+    expect(
+      isApprovedVueAwarePackageManifest("packages/runtime/package.json", {
+        description: approvedVueCliDescription,
+      }),
+    ).toBe(false);
   });
 });

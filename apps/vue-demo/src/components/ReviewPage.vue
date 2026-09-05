@@ -36,13 +36,12 @@ const themeClickCount = ref(0);
 </script>
 
 <template>
-  <main class="review-shell" data-testid="vue-review-route">
+  <main class="review-shell" data-testid="vue-adapter-review-route">
     <header class="review-hero">
-      <p class="eyebrow">Internal, non-shipping checkpoint</p>
-      <h1>Starwind Vue adapter review</h1>
+      <p class="eyebrow">Vue 3.5 public beta</p>
+      <h1>Starwind Vue internal adapter verification</h1>
       <p>
-        Primitive and generated Styled output for the verified Vue 3.5 vertical slice plus Theme,
-        Avatar, Progress, and Scroll Area cohort.
+        Internal Primitive adapter and generated Styled checks used by the automated release gate.
       </p>
       <nav aria-label="Review sections">
         <a href="#button-review">Button</a>

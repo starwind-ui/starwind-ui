@@ -61,6 +61,8 @@ describe("generated Vue Tabs", () => {
     const content = await readFile(path.join(repoRoot, "styled/tabs/TabsContent.vue"), "utf8");
 
     expect(root).toContain(':model-value="modelValue"');
+    expect(root).toContain('"value"?: unknown;');
+    expect(root).not.toMatch(/const \{[\s\S]*\n\s+value,[\s\S]*\} = defineProps/);
     expect(root).toContain('@update:model-value="emit(&quot;update:modelValue&quot;, $event)"');
     expect(root).toContain('@value-change="handleValueChange"');
     expect(root).toContain('data-slot="tabs"');

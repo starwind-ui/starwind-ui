@@ -1,16 +1,15 @@
 import { readdir, readFile } from "node:fs/promises";
-
 import { describe, expect, it } from "vitest";
+import {
+  formatVueInventoryDiagnostics,
+  validateVueInventorySnapshot,
+} from "../../../../packages/vue/scripts/validate-inventory.mjs";
 
 import {
   compileVueSfc,
   createVueEntryPoints,
   vueEntryPoints,
 } from "../../../../packages/vue/tsup.config.js";
-import {
-  formatVueInventoryDiagnostics,
-  validateVueInventorySnapshot,
-} from "../../../../packages/vue/scripts/validate-inventory.mjs";
 import { vueFrameworkAdapterTarget } from "../../renderers/framework-adapters/vue/index.js";
 import {
   assertVueInventorySnapshot,
@@ -22,8 +21,9 @@ import {
   vuePrimitiveComponents,
   vueStyledComponents,
 } from "../../renderers/framework-adapters/vue/inventory.js";
+import { hasPrivateSvelte } from "../workspace-support.js";
 
-describe("internal Vue package foundation", () => {
+describe("Vue package foundation", () => {
   it("derives every executable Vue projection from one typed inventory", async () => {
     expect(vueAdapterInventory.runtimePrimitives.map(({ component }) => component)).toEqual([
       "accordion",
@@ -293,7 +293,7 @@ describe("internal Vue package foundation", () => {
     );
   });
 
-  it("pins the exact generated source file inventory for the private cohort", async () => {
+  it("pins the exact generated source file inventory for the public-beta cohort", async () => {
     expect(
       (await readdir("packages/vue/src", { recursive: true, withFileTypes: true }))
         .filter((entry) => entry.isFile())
@@ -303,7 +303,7 @@ describe("internal Vue package foundation", () => {
     ).toEqual(vueGeneratedSourceFiles);
   });
 
-  it("pins an internal package with exact ESM and declaration exports", async () => {
+  it("pins a public-beta package with exact ESM and declaration exports", async () => {
     const packageJson = JSON.parse(await readFile("packages/vue/package.json", "utf8"));
     const packageMetadataSources =
       vueFrameworkAdapterTarget.cliRegistry.packageMetadataSources ?? [];
@@ -319,7 +319,8 @@ describe("internal Vue package foundation", () => {
     ).resolves.toHaveLength(3);
 
     expect(packageJson.name).toBe("@starwind-ui/vue");
-    expect(packageJson.private).toBe(true);
+    expect(packageJson.private).toBeUndefined();
+    expect(packageJson.description).toContain("Public-beta Vue 3.5");
     expect(packageJson.type).toBe("module");
     expect(packageJson.exports).toEqual(vuePackageExports);
     for (const contract of Object.values(packageJson.exports) as Array<{
@@ -329,8 +330,14 @@ describe("internal Vue package foundation", () => {
       expect(contract.import).toMatch(/^\.\/dist\/.+\.js$/);
       expect(contract.types).toMatch(/^\.\/dist\/.+\.d\.ts$/);
     }
-    expect(packageJson.dependencies).toEqual({ "@starwind-ui/runtime": "workspace:*" });
+    expect(packageJson.dependencies).toEqual({ "@starwind-ui/runtime": "1.2.0" });
     expect(packageJson.peerDependencies).toEqual({ vue: ">=3.5" });
+
+    const readme = await readFile("packages/vue/README.md", "utf8");
+    expect(readme).toContain("public beta");
+    expect(readme).toContain("Vue 3.5 or newer");
+    expect(readme).toContain("@starwind-ui/vue@beta");
+    expect(readme).not.toMatch(/\bstable support\b/i);
   });
 
   it("uses exact multi-entry precompiled output with Vue and Runtime externalized", async () => {
@@ -362,38 +369,82 @@ describe("internal Vue package foundation", () => {
     expect(output).not.toMatch(/vue\/compiler-sfc|vue\.esm-bundler|\bcompile\s*\(/);
   });
 
-  it("does not expose Vue through current public support or release generation", async () => {
+  it("exposes Vue as public beta through public generation and release verification", async () => {
     expect(vueFrameworkAdapterTarget.publicSupport).toEqual({
-      cliRegistry: false,
-      demoIntegration: false,
-      packageExports: false,
-      publicDocsClaim: false,
-      status: "non-shipping-tracer",
+      cliRegistry: true,
+      demoIntegration: true,
+      packageExports: true,
+      publicDocsClaim: true,
+      status: "public-beta",
     });
 
     const rootPackage = JSON.parse(await readFile("package.json", "utf8"));
-    expect(rootPackage.scripts["runtime:generate:all"]).not.toContain("vue");
-    expect(rootPackage.scripts["release:prepare"]).not.toContain("vue");
-    expect(rootPackage.scripts["release:artifacts"]).not.toContain("vue");
+    expect(rootPackage.scripts["runtime:generate:all"]).toContain("pnpm runtime:generate:vue");
+    expect(rootPackage.scripts["build:public"]).toContain("--filter=@starwind-ui/vue");
+    expect(rootPackage.scripts["typecheck:public"]).toContain("--filter=@starwind-ui/vue");
+    expect(rootPackage.scripts["test:all"]).toContain("pnpm vue:test");
+    expect(rootPackage.scripts["release:prepare"]).toContain("pnpm runtime:generate:all");
+    expect(rootPackage.scripts["release:prepare"]).toContain("pnpm runtime:registry:generate");
+    expect(rootPackage.scripts["release:gate"]).toContain("pnpm vue-demo:smoke");
+    expect(rootPackage.scripts["release:gate"]).toContain("pnpm runtime:size:check:prepared");
+    expect(rootPackage.scripts["release:gate"].includes("pnpm runtime:perf:vue:check")).toBe(
+      hasPrivateSvelte,
+    );
+    expect(rootPackage.scripts["release:gate"]).toContain("pnpm release:candidate:acceptance");
 
     const changesetConfig = JSON.parse(await readFile(".changeset/config.json", "utf8"));
+    expect(changesetConfig.fixed).toEqual([
+      ["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"],
+    ]);
     expect(changesetConfig.ignore).toEqual(
-      expect.arrayContaining(["vue-demo", "@starwind-ui/vue"]),
+      expect.arrayContaining(["vue-demo", "@starwind-ui/svelte"]),
     );
+    expect(changesetConfig.ignore).not.toContain("@starwind-ui/vue");
 
     const vueDemoPackage = JSON.parse(await readFile("apps/vue-demo/package.json", "utf8"));
     expect(vueDemoPackage.private).toBe(true);
-    const cliPackage = JSON.parse(await readFile("packages/cli/package.json", "utf8"));
-    expect(JSON.stringify(cliPackage)).not.toContain("@starwind-ui/vue");
-
-    const publicRegistryFiles = (
-      await readdir("packages/cli/src/registry", { recursive: true, withFileTypes: true })
-    ).filter((entry) => entry.isFile());
-    for (const entry of publicRegistryFiles) {
-      const registryFile = `${entry.parentPath.replaceAll("\\", "/")}/${entry.name}`;
-      expect(registryFile).not.toMatch(/(?:^|\/)vue(?:\/|$)/);
-      expect(await readFile(registryFile, "utf8")).not.toContain("@starwind-ui/vue");
+    if (hasPrivateSvelte) {
+      const sveltePackage = JSON.parse(await readFile("packages/svelte/package.json", "utf8"));
+      expect(sveltePackage.private).toBe(true);
     }
+    expect(rootPackage.scripts["runtime:generate:all"]).not.toContain("svelte");
+    expect(rootPackage.scripts["build:public"]).not.toContain("svelte");
+    expect(rootPackage.scripts["typecheck:public"]).not.toContain("svelte");
+
+    const bundledRegistry = JSON.parse(
+      await readFile("packages/cli/src/registry/bundled-registry.json", "utf8"),
+    );
+    expect(bundledRegistry.setup.vue).toEqual({
+      adapterPackage: { name: "@starwind-ui/vue", range: "0.1.0" },
+      packageRequirements: [{ name: "vue", range: ">=3.5" }],
+    });
+    const vueRegistryComponents = bundledRegistry.components.filter(
+      (component: { targets: Record<string, unknown> }) => component.targets.vue,
+    );
+    expect(vueRegistryComponents.map(({ name }: { name: string }) => name).sort()).toEqual(
+      [...vueStyledComponents].sort(),
+    );
+    for (const component of vueRegistryComponents) {
+      expect(component.targets.vue.packageRequirements).toEqual(
+        expect.arrayContaining([{ name: "@starwind-ui/vue", range: "0.1.0" }]),
+      );
+      expect(component.targets.svelte).toBeUndefined();
+    }
+
+    const primitiveRegistry = JSON.parse(
+      await readFile("packages/cli/src/registry/primitive-vendoring-artifacts.json", "utf8"),
+    );
+    const vueRegistryPrimitives = primitiveRegistry.primitives.filter(
+      (primitive: { framework: string }) => primitive.framework === "vue",
+    );
+    expect(
+      vueRegistryPrimitives.map(({ component }: { component: string }) => component).sort(),
+    ).toEqual(vueAdapterInventory.runtimePrimitives.map(({ component }) => component).sort());
+    expect(
+      primitiveRegistry.primitives.some(
+        (primitive: { framework: string }) => primitive.framework === "svelte",
+      ),
+    ).toBe(false);
   });
 });
 

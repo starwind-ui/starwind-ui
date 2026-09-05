@@ -39,7 +39,6 @@ function protectedProps() {
     href: props.disabled ? undefined : attrs.href,
     tabindex: props.disabled ? -1 : attrs.tabindex,
     onClick: handleClick,
-    "data-as-child": "",
     "data-sw-part": "trigger",
   };
 }

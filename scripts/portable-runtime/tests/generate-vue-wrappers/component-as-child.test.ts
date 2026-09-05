@@ -58,6 +58,7 @@ describe("generated Vue component-rooted asChild support", () => {
       expect(source, relativePath).not.toMatch(/\b(?:cloneVNode|isVNode|mergeProps)\b/);
       expect(source, relativePath).not.toContain("typeof child.type");
       expect(source, relativePath).not.toContain("isNativeElementVNode");
+      expect(source, relativePath).not.toContain('"data-as-child"');
     }
 
     const owningRoots = [

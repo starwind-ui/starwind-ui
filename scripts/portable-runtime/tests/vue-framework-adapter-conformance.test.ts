@@ -115,14 +115,14 @@ describe("Vue Framework Adapter conformance projection", () => {
     expect(template.errors).toEqual([]);
   });
 
-  it("keeps Vue Tier 0 with every public-support flag unchanged", () => {
+  it("keeps Vue public-beta support aligned with the public contract", () => {
     expect(vueFrameworkAdapterReadiness.publicSupport).toBe(vueAdapterPublicContract.publicSupport);
     expect(vueFrameworkAdapterReadiness.publicSupport).toEqual({
-      cliRegistry: false,
-      demoIntegration: false,
-      packageExports: false,
-      publicDocsClaim: false,
-      status: "non-shipping-tracer",
+      cliRegistry: true,
+      demoIntegration: true,
+      packageExports: true,
+      publicDocsClaim: true,
+      status: "public-beta",
     });
   });
 });

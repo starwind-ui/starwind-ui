@@ -211,30 +211,7 @@ function createValidVueArtifact(): PrimitiveVendoringArtifact<"astro" | "react" 
 function createValidVueArtifactSet(
   artifact: PrimitiveVendoringArtifact<"astro" | "react" | "vue">,
 ): PrimitiveVendoringArtifactSet<"astro" | "react" | "vue"> {
-  const generatedRequirements = createValidVueArtifact().packageRequirements;
-  return {
-    primitives: [artifact],
-    validation: {
-      vue: {
-        editableContentMarkers: [
-          {
-            extensions: [".vue"],
-            markers: [vendoredVueHeader],
-            position: "prefix",
-          },
-          {
-            extensions: [".ts", ".js"],
-            markers: ["// Vendored by the Starwind CLI.\n// You own this file in your project."],
-            position: "prefix",
-          },
-        ],
-        forbiddenContent: ["Internal non-shipping Vue adapter output"],
-        generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
-        packageRequirements: generatedRequirements,
-        sourceRoot: "packages/vue/src",
-      },
-    },
-  };
+  return { primitives: [artifact] };
 }
 
 function withVueFileContent(
@@ -873,7 +850,7 @@ describe.sequential("primitive component vendoring", () => {
       { appendComponents: false },
     );
   });
-  it("vendors and updates a valid Vue artifact only through the private policy", async () => {
+  it("vendors a valid Vue artifact through the production policy", async () => {
     const vueConfig: StarwindConfigFor<"astro" | "react" | "vue"> = {
       ...primitiveConfig,
       framework: "vue",
@@ -887,43 +864,28 @@ describe.sequential("primitive component vendoring", () => {
       packageManager: "pnpm",
       skipPrompts: true,
     });
-    expect(publicResult.failed[0]?.error).toContain("Astro and React");
-
-    await expect(
-      installPrimitiveComponents(["button"], {
-        artifacts: createValidVueArtifactSet(vueArtifact),
-        config: vueConfig,
-        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
-      }),
-    ).rejects.toThrow(/trusted integrity fingerprint/);
-    expect(mockInstallDependencies).not.toHaveBeenCalled();
+    expect(publicResult.failed).toEqual([]);
+    expect(publicResult.installed).toEqual([
+      { name: "button", status: "installed", version: vueArtifact.version },
+    ]);
+    expect(mockInstallDependencies).toHaveBeenCalledWith(
+      [`@starwind-ui/runtime@^${runtimePackage.version}`, "vue@>=3.5"],
+      "pnpm",
+    );
   });
 
-  it("rejects a handcrafted private document before descriptor validation", () => {
+  it("reads public Vue artifacts without private integrity metadata", () => {
     const artifactSet = createValidVueArtifactSet(createValidVueArtifact());
 
-    expect(() =>
+    expect(
       getPrimitiveComponents({
         artifacts: artifactSet,
         framework: "vue",
-        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
       }),
-    ).toThrow(/trusted integrity fingerprint/);
-
-    artifactSet.integrity = {
-      algorithm: "sha256",
-      fingerprint: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY.primitiveArtifactIntegrity!.vue!,
-    };
-    expect(() =>
-      getPrimitiveComponents({
-        artifacts: artifactSet,
-        framework: "vue",
-        targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
-      }),
-    ).toThrow(/trusted integrity fingerprint/);
+    ).toHaveLength(1);
   });
 
-  it("rejects source-version drift after private artifact integrity validation", async () => {
+  it("reads generated public Vue artifacts without private integrity validation", async () => {
     const repositoryRoot = fileURLToPath(new URL("../../../..", import.meta.url));
     const generatedArtifactRoot = await mkdtemp(
       join(tmpdir(), "starwind-vue-primitive-integrity-test-"),
@@ -938,25 +900,12 @@ describe.sequential("primitive component vendoring", () => {
         tempRoot: generatedArtifactRoot,
       })) as PrimitiveVendoringArtifactSet<"astro" | "react" | "vue">;
       process.chdir(projectRoot);
-      const changedSourceVersions = structuredClone(generated);
-      for (const artifact of changedSourceVersions.primitives) {
-        artifact.sourceVersion = "0.0.0";
-      }
-
       expect(
         getPrimitiveComponents({
           artifacts: generated,
           framework: "vue",
-          targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
         }),
       ).not.toHaveLength(0);
-      expect(() =>
-        getPrimitiveComponents({
-          artifacts: changedSourceVersions,
-          framework: "vue",
-          targetPolicy: PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
-        }),
-      ).toThrow(/must use manifest source version/);
     } finally {
       process.chdir(projectRoot);
       await rm(generatedArtifactRoot, { force: true, recursive: true });

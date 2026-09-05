@@ -1,12 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
 import {
   createReadStream,
   existsSync,
   mkdirSync,
   readdirSync,
   readFileSync,
-  renameSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -16,6 +14,8 @@ import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+
+import { scenarioRows, writeStagedReports } from "./runtime-performance/model.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -49,227 +49,6 @@ const externalPackages = [
   "@zag-js/tooltip",
   "react",
   "react-dom",
-];
-
-const scenarioRows = [
-  {
-    key: "dialog-open",
-    category: "baseline-open",
-    label: "Dialog open",
-    cpuThrottle: 20,
-    sampleCount: 5,
-    type: "open",
-    details: "10k outside nodes, Enter-to-visible",
-  },
-  {
-    key: "select-open",
-    category: "baseline-open",
-    label: "Select open",
-    cpuThrottle: 6,
-    sampleCount: 5,
-    type: "open",
-    details: "1000 items, Enter-to-visible",
-  },
-  {
-    key: "select-item-highlight",
-    category: "baseline-hover",
-    label: "Select item highlight",
-    cpuThrottle: 1,
-    sampleCount: 5,
-    type: "hover",
-    details: "Open select, scripted pointermove sweep across 1000 items",
-  },
-  {
-    key: "menu-open",
-    category: "baseline-open",
-    label: "Menu open",
-    cpuThrottle: 6,
-    sampleCount: 5,
-    type: "open",
-    details: "1000 items, Enter-to-visible",
-  },
-  {
-    key: "tooltip-trigger-mount",
-    category: "baseline-mount",
-    label: "Tooltip trigger mount",
-    cpuThrottle: 1,
-    groupCount: 5,
-    iterationsPerGroup: 20,
-    type: "mount",
-    details: "1000 tooltip triggers, render + layout",
-  },
-  {
-    key: "dialog-trigger-mount",
-    category: "closed-overlay-candidate",
-    label: "Dialog trigger mount",
-    cpuThrottle: 1,
-    groupCount: 5,
-    iterationsPerGroup: 20,
-    type: "mount",
-    details: "1000 closed dialog triggers with content, render + layout",
-  },
-  {
-    key: "popover-trigger-mount",
-    category: "closed-overlay-candidate",
-    label: "Popover trigger mount",
-    cpuThrottle: 1,
-    groupCount: 5,
-    iterationsPerGroup: 20,
-    type: "mount",
-    details: "1000 closed popover triggers with content, render + layout",
-  },
-  {
-    key: "preview-card-trigger-mount",
-    category: "closed-overlay-candidate",
-    label: "Preview card trigger mount",
-    cpuThrottle: 1,
-    groupCount: 5,
-    iterationsPerGroup: 20,
-    type: "mount",
-    details: "1000 closed preview card triggers with content, render + layout",
-  },
-  {
-    key: "select-trigger-mount",
-    category: "baseline-mount",
-    label: "Select trigger mount",
-    cpuThrottle: 1,
-    groupCount: 5,
-    iterationsPerGroup: 20,
-    type: "mount",
-    details: "1000 select triggers, 10 items each, render + layout",
-  },
-  {
-    key: "menu-item-highlight",
-    category: "baseline-hover",
-    label: "Menu item highlight",
-    cpuThrottle: 1,
-    sampleCount: 5,
-    type: "hover",
-    details: "Open menu, scripted pointermove sweep across 1000 items",
-  },
-  {
-    key: "combobox-open",
-    category: "combobox-candidate",
-    label: "Combobox open",
-    cpuThrottle: 6,
-    sampleCount: 5,
-    type: "open",
-    openTarget: "[data-benchmark-input]",
-    openKey: "ArrowDown",
-    details: "1000 items, ArrowDown-to-visible",
-  },
-  {
-    key: "combobox-trigger-mount",
-    category: "combobox-candidate",
-    label: "Combobox trigger mount",
-    cpuThrottle: 1,
-    groupCount: 5,
-    iterationsPerGroup: 20,
-    type: "mount",
-    details: "1000 combobox triggers, 10 items each, render + layout",
-  },
-  {
-    key: "combobox-item-highlight",
-    category: "combobox-candidate",
-    label: "Combobox item highlight",
-    cpuThrottle: 1,
-    sampleCount: 5,
-    type: "hover",
-    details: "Open combobox, scripted pointermove sweep across 1000 items",
-  },
-  {
-    key: "combobox-filter-input",
-    category: "combobox-candidate",
-    label: "Combobox filter input",
-    cpuThrottle: 1,
-    sampleCount: 5,
-    type: "filter",
-    details: "Open combobox, type filter query, input-to-layout",
-  },
-  {
-    key: "menu-submenu-open",
-    category: "nested-menu-candidate",
-    label: "Menu submenu open",
-    cpuThrottle: 6,
-    sampleCount: 5,
-    type: "submenu-open",
-    details: "Parent menu plus 1000-item submenu, activation-to-visible",
-  },
-  {
-    key: "menu-submenu-item-highlight",
-    category: "nested-menu-candidate",
-    label: "Menu submenu item highlight",
-    cpuThrottle: 1,
-    sampleCount: 5,
-    type: "submenu-hover",
-    details: "Open submenu, scripted pointermove sweep across 1000 submenu items",
-  },
-  {
-    key: "navigation-menu-content-switch",
-    category: "navigation-menu-candidate",
-    label: "Navigation menu content switch",
-    cpuThrottle: 1,
-    sampleCount: 5,
-    type: "navigation-switch",
-    details: "Large navigation content switch, click-to-visible",
-  },
-  {
-    key: "tabs-high-count-mount",
-    category: "non-floating-collection-candidate",
-    label: "Tabs high-count mount",
-    cpuThrottle: 1,
-    groupCount: 5,
-    iterationsPerGroup: 20,
-    type: "mount",
-    details: "1000 tabs and 1000 keep-mounted panels, render + layout",
-  },
-  {
-    key: "tabs-activation-click",
-    category: "non-floating-collection-candidate",
-    label: "Tabs activation click",
-    cpuThrottle: 1,
-    sampleCount: 5,
-    type: "tabs-activation",
-    details: "1000 tabs and panels, last tab click-to-panel",
-  },
-  {
-    key: "accordion-high-count-mount",
-    category: "non-floating-collection-candidate",
-    label: "Accordion high-count mount",
-    cpuThrottle: 1,
-    groupCount: 5,
-    iterationsPerGroup: 20,
-    type: "mount",
-    details: "1000 closed accordion items with mounted panels, render + layout",
-  },
-  {
-    key: "accordion-toggle-click",
-    category: "non-floating-collection-candidate",
-    label: "Accordion toggle click",
-    cpuThrottle: 1,
-    sampleCount: 5,
-    type: "accordion-toggle",
-    details: "1000 closed accordion items, last trigger click-to-panel",
-  },
-  {
-    key: "radio-group-high-count-mount",
-    category: "non-floating-collection-candidate",
-    label: "Radio Group high-count mount",
-    cpuThrottle: 1,
-    groupCount: 5,
-    iterationsPerGroup: 20,
-    type: "mount",
-    details: "1000 radio items in one group, render + layout",
-  },
-  {
-    key: "radio-group-change-sweep",
-    category: "non-floating-collection-candidate",
-    label: "Radio Group change sweep",
-    cpuThrottle: 1,
-    sampleCount: 5,
-    type: "radio-sweep",
-    details: "Scripted click sweep across 1000 radio items",
-  },
 ];
 
 const libraryRows = [
@@ -1207,61 +986,6 @@ function buildRuntimePerformanceReportPaths({
     path.join(docsDir, `runtime-performance-comparison-${utcDate}.md`),
     path.join(diagnosticsDir, `runtime-performance-diagnostics-${utcDate}.md`),
   ];
-}
-
-function writeStagedReports(outputs, fileSystem = {}) {
-  const operations = {
-    exists: existsSync,
-    mkdir: (directory) => mkdirSync(directory, { recursive: true }),
-    remove: (target) => rmSync(target, { force: true }),
-    rename: renameSync,
-    writeFile: writeFileSync,
-    ...fileSystem,
-  };
-  const transactionId = `${process.pid}-${randomUUID()}`;
-  const staged = outputs.map((output, index) => ({
-    ...output,
-    backupPath: `${output.path}.backup-${transactionId}-${index}`,
-    stagedPath: `${output.path}.staged-${transactionId}-${index}`,
-  }));
-
-  try {
-    for (const item of staged) {
-      operations.mkdir(path.dirname(item.path));
-      operations.writeFile(item.stagedPath, item.content);
-    }
-  } catch (error) {
-    for (const item of staged) operations.remove(item.stagedPath);
-    throw error;
-  }
-
-  const replaced = [];
-  try {
-    for (const item of staged) {
-      const hadOriginal = operations.exists(item.path);
-      if (hadOriginal) operations.rename(item.path, item.backupPath);
-      try {
-        operations.rename(item.stagedPath, item.path);
-      } catch (error) {
-        if (hadOriginal && operations.exists(item.backupPath)) {
-          operations.rename(item.backupPath, item.path);
-        }
-        throw error;
-      }
-      replaced.push({ ...item, hadOriginal });
-    }
-  } catch (error) {
-    for (const item of replaced.reverse()) {
-      operations.remove(item.path);
-      if (item.hadOriginal && operations.exists(item.backupPath)) {
-        operations.rename(item.backupPath, item.path);
-      }
-    }
-    for (const item of staged) operations.remove(item.stagedPath);
-    throw error;
-  }
-
-  for (const item of replaced) operations.remove(item.backupPath);
 }
 
 function migrateExistingRuntimePerformanceReports({ repoRoot = REPO_ROOT } = {}) {

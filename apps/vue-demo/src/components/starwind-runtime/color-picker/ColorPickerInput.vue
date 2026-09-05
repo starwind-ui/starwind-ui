@@ -68,7 +68,7 @@ const normalizedFormats = computed(() => Array.from(new Set(formats)));
           v-bind="{ 'aria-label': 'Color format' } as Record<string, unknown>"
           data-slot="color-picker-native-format-select"
         >
-          <template v-for="(formatOption, formatIndex) in normalizedFormats">
+          <template v-for="formatOption in normalizedFormats">
             <NativeSelectOption :value="formatOption">
               {{ formatOption.toUpperCase() }}
             </NativeSelectOption>
@@ -104,7 +104,7 @@ const normalizedFormats = computed(() => Array.from(new Set(formats)));
             :disable-portal="disablePortal"
             data-sw-color-picker-format-options=""
           >
-            <template v-for="(formatOption, formatIndex) in normalizedFormats">
+            <template v-for="formatOption in normalizedFormats">
               <SelectItem :value="formatOption">
                 {{ formatOption.toUpperCase() }}
               </SelectItem>

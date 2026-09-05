@@ -12,6 +12,22 @@ export type ReleaseDecision<T extends ReleaseVersionBump = ReleaseVersionBump> =
 export type PackageReleaseFacts = Record<string, ReleaseVersionBump>;
 export type ChangesetReleaseFacts = Record<string, PackageReleaseFacts>;
 
+export function hasFrameworkAdditionRelease(
+  base: { packageReleases: ChangesetReleaseFacts; cliVersion?: string },
+  head: { packageReleases: ChangesetReleaseFacts; cliVersion?: string },
+): boolean {
+  const bump = getNewPackageReleaseBump(base.packageReleases, head.packageReleases, "starwind");
+  if (bump === "minor" || bump === "major") return true;
+  // A release may already have been materialized before the public sync.
+  return Boolean(
+    base.cliVersion &&
+    head.cliVersion &&
+    semver.valid(base.cliVersion) &&
+    semver.valid(head.cliVersion) &&
+    semver.gte(head.cliVersion, semver.inc(base.cliVersion, "minor")!),
+  );
+}
+
 const BUMP_PRIORITY: Record<ReleaseVersionBump, number> = { patch: 0, minor: 1, major: 2 };
 const FRAGMENT_FILE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*\.json$/;
 

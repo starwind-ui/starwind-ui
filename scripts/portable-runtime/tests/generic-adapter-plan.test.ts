@@ -27,14 +27,15 @@ import {
 import type { RuntimeAdapterContract } from "../contracts/primitive/types.js";
 import { normalizeAstroPrimitiveOutput } from "../renderers/framework-adapters/astro/primitive-output-writer.js";
 import {
+  astroFrameworkAdapter,
+  reactFrameworkAdapter,
+} from "../renderers/framework-adapters/index.js";
+import {
   applyReactEffectTiming,
   applyReactPortalImportCanonicalization,
   applyReactRefCleanup,
 } from "../renderers/framework-adapters/react/primitive-output-writer.js";
-import {
-  astroFrameworkAdapter,
-  reactFrameworkAdapter,
-} from "../renderers/framework-adapters/index.js";
+import { getBooleanFormControlFacts } from "../renderers/generic-adapter-plan/families/boolean-form-control.js";
 import {
   buildGenericAdapterOutputModel,
   buildGenericAdapterPlan,
@@ -48,7 +49,6 @@ import {
   validateGenericAdapterPlan,
   validateGenericAdapterPlanCoverageManifest,
 } from "../renderers/generic-adapter-plan/index.js";
-import { getBooleanFormControlFacts } from "../renderers/generic-adapter-plan/families/boolean-form-control.js";
 import { timedFloatingOverlayContractSummary } from "../renderers/generic-adapter-plan/timed-floating-overlay-contract-summary.js";
 
 function printAstroGenericAdapterOutputModel(plan: GenericAdapterPlan) {
@@ -1247,7 +1247,7 @@ describe("GenericAdapterPlan", () => {
     expect(readinessFutureTracerList).not.toContain("- `sidebar/vue`");
     expect(readinessFutureTracerList).not.toContain("- `sidebar/solid`");
     expect(gate).toContain(
-      "Vue has private, non-shipping generated output for its registered Primitive surface",
+      "Vue is a registered Vue 3.5 public-beta target across its complete Primitive and portable Styled",
     );
     expect(gate).toMatch(/Existing Solid\s+tracers are frozen comparison artifacts/);
   });

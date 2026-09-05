@@ -3,16 +3,15 @@ import type {
   StyledOutputPropExtend,
   StyledOutputRenderNode,
 } from "../../../styled-output-model/index.js";
-
+import { projectVueModel } from "../public-contract.js";
+import { renderVueExpression } from "./expressions.js";
+import { renderVuePropKey } from "./props.js";
+import { supportsVueScope } from "./scope.js";
 import {
   getVueNativeElementSemantics,
   type VueEmitProjection,
   type VueModelProjection,
 } from "./types.js";
-import { projectVueModel } from "../public-contract.js";
-import { renderVueExpression } from "./expressions.js";
-import { renderVuePropKey } from "./props.js";
-import { supportsVueScope } from "./scope.js";
 
 type VueStyledPublicContract = {
   additionalBindings?: ReadonlyArray<{
@@ -31,6 +30,8 @@ type VueStyledPublicContract = {
   fields?: ReadonlyArray<{ name: string; optional: boolean; type: string }>;
   models?: ReadonlyArray<VueModelProjection>;
   omittedPropFields?: readonly string[];
+  omittedRepeatIndexes?: readonly string[];
+  omittedSetupBindings?: readonly string[];
   omittedTargetAttributes?: readonly string[];
   objectBoundTargetAttributes?: ReadonlyArray<{
     names: readonly string[];
@@ -241,7 +242,11 @@ const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
       },
     ],
   },
+  "color-picker:ColorPickerDefaultEditor": {
+    omittedRepeatIndexes: ["swatchIndex"],
+  },
   "color-picker:ColorPickerInput": {
+    omittedRepeatIndexes: ["formatIndex"],
     primitiveSpreadExpressions: [
       {
         code: "({ 'aria-label': 'Color format' } as Record<string, unknown>)",
@@ -441,6 +446,7 @@ const PUBLIC_CONTRACTS: Readonly<Record<string, VueStyledPublicContract>> = {
         updateEvent: tabsValueModel.updateEvent,
       },
     ],
+    omittedSetupBindings: ["value"],
     target: { component: "tabs", part: "Root" },
   },
   "avatar:AvatarImage": {

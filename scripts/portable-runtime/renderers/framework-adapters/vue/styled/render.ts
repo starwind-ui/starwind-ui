@@ -10,8 +10,8 @@ import type {
 import { renderVueComputedExpression, renderVueExpression } from "./expressions.js";
 import { renderVueImports } from "./imports.js";
 import { projectVueStyledComponent } from "./projection.js";
-import { getVueNativeAttributesType } from "./public-contracts.js";
 import { renderVuePropKey } from "./props.js";
+import { getVueNativeAttributesType } from "./public-contracts.js";
 import { renderExposedRef } from "./ref-bridges.js";
 import { escapeVueAttribute, toVueAttributeName } from "./render-tree.js";
 import { supportsVueScope } from "./scope.js";
@@ -95,8 +95,7 @@ function projectAlertDialogAsChildSfc(projection: VueStyledComponentProjection):
   class: className,
 } = defineProps<${projection.props.declared.name}>();`;
   const imports = `import {
-  type ButtonHTMLAttributes,
-  type ComponentPublicInstance,
+${isTrigger ? "  type ButtonHTMLAttributes,\n" : ""}  type ComponentPublicInstance,
   cloneVNode,
   computed,
   defineComponent,

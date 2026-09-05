@@ -242,11 +242,11 @@ export const vueAdapterPublicContract = {
   lifecycle: lifecyclePolicy,
   models: modelPolicy,
   publicSupport: {
-    cliRegistry: false,
-    demoIntegration: false,
-    packageExports: false,
-    publicDocsClaim: false,
-    status: "non-shipping-tracer",
+    cliRegistry: true,
+    demoIntegration: true,
+    packageExports: true,
+    publicDocsClaim: true,
+    status: "public-beta",
   },
   refs: {
     element: "semantic-dom-element",

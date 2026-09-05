@@ -20,7 +20,6 @@ defineExpose({ element });
 function protectedProps() {
   return {
     "data-sw-menu-trigger": "",
-    "data-as-child": "",
     "data-sw-part": "trigger",
     "aria-haspopup": "menu",
     "aria-expanded": menu.open.value,

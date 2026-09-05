@@ -1,27 +1,18 @@
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
-
+import { readFileSync } from "node:fs";
 import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-
-import {
-  buildRuntimeRegistry,
-  createCliRegistryBuildPolicy,
-} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
-import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
-
+import { add } from "../../src/commands/add.js";
+import * as initModule from "../../src/commands/init.js";
+import * as migrateModule from "../../src/commands/migrate.js";
 import * as config from "../../src/utils/config.js";
-import * as fs from "../../src/utils/fs.js";
 import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
+import * as fs from "../../src/utils/fs.js";
 import * as packageManager from "../../src/utils/package-manager.js";
 import * as proRegistry from "../../src/utils/pro-registry.js";
 import * as registry from "../../src/utils/registry.js";
 import * as runtimeComponent from "../../src/utils/runtime-component.js";
 import * as shadcnConfig from "../../src/utils/shadcn-config.js";
 import * as validate from "../../src/utils/validate.js";
-import { add } from "../../src/commands/add.js";
-import * as initModule from "../../src/commands/init.js";
-import * as migrateModule from "../../src/commands/migrate.js";
 
 vi.mock("@clack/prompts");
 vi.mock("../../src/utils/config.js");
@@ -140,11 +131,10 @@ const registryFixture: registry.NormalizedStarwindRegistry = {
 describe("add command", () => {
   let mockExit: ReturnType<typeof vi.spyOn>;
 
-  beforeAll(async () => {
-    vueRegistryFixture = await buildRuntimeRegistry({
-      repoRoot: fileURLToPath(new URL("../../../..", import.meta.url)),
-      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
-    });
+  beforeAll(() => {
+    vueRegistryFixture = JSON.parse(
+      readFileSync(new URL("../../src/registry/bundled-registry.json", import.meta.url), "utf8"),
+    );
   });
 
   beforeEach(() => {
@@ -393,14 +383,13 @@ describe("add command", () => {
     );
   });
 
-  it("rejects Vue through the public add API default", async () => {
-    // @ts-expect-error Public add calls cannot select Vue without private dependencies.
-    await expect(add(["button"], { framework: "vue", yes: true })).rejects.toThrow(
-      "process.exit called",
-    );
+  it("routes Vue through the public add API default", async () => {
+    await add(["button"], { framework: "vue", yes: true });
 
-    expect(mockInstallRuntimeComponents).not.toHaveBeenCalled();
-    expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("public target policy"));
+    expect(mockInstallRuntimeComponents).toHaveBeenCalledWith(
+      ["button"],
+      expect.objectContaining({ framework: "vue" }),
+    );
   });
 
   it("treats private-beta componentLayer as inert for styled component adds", async () => {

@@ -1,20 +1,20 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
-
+import { accordionStyledContract } from "../contracts/styled/components/accordion.js";
 import { buildRuntimeRegistry, type RuntimeRegistry } from "../generate-cli-registry.js";
 import {
   aggregateStyledVersionIntents,
   applyStyledVersionIntents,
   createStyledRegistryFingerprint,
   parseStyledVersionIntent,
+  type StyledReleaseSnapshot,
+  type StyledVersionIntent,
   stageStyledVersionIntents,
   validateStyledVersionPullRequest,
   versionStyledComponents,
-  type StyledReleaseSnapshot,
-  type StyledVersionIntent,
 } from "../styled-component-release.js";
 
 const temporaryRoots: string[] = [];
@@ -90,6 +90,48 @@ function snapshot(
 }
 
 describe("styled component release intents", () => {
+  it("adds a framework at current component versions with CLI minor delivery", () => {
+    const base = snapshot();
+    const head = structuredClone(base);
+    for (const component of head.registry.components)
+      component.targets!.vue = structuredClone(component.targets!.react!);
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(/starwind minor/);
+    head.packageReleases = { "vue.md": { starwind: "minor" } };
+    expect(validateStyledVersionPullRequest({ base, head }).changedComponents).toEqual([]);
+    head.registry.components[0].targets!.astro!.files[0].content += "changed";
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(
+      /Missing styled version intent/,
+    );
+  });
+
+  it("requires a component intent for subsequent Vue edits and target removals", () => {
+    const base = snapshot();
+    base.registry.components[0].targets!.vue = structuredClone(
+      base.registry.components[0].targets!.react!,
+    );
+    const head = structuredClone(base);
+    head.registry.components[0].targets!.vue!.files[0].content += "changed";
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(
+      /Missing styled version intent/,
+    );
+    delete head.registry.components[0].targets!.vue;
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(
+      /Missing styled version intent/,
+    );
+  });
+
+  it("accepts an already materialized CLI minor for framework addition, but not a patch", () => {
+    const base = snapshot();
+    base.cliVersion = "3.2.0";
+    const head = structuredClone(base);
+    head.registry.components[0].targets!.vue = structuredClone(
+      head.registry.components[0].targets!.react!,
+    );
+    head.cliVersion = "3.2.1";
+    expect(() => validateStyledVersionPullRequest({ base, head })).toThrow(/starwind minor/);
+    head.cliVersion = "3.3.0";
+    expect(validateStyledVersionPullRequest({ base, head }).changedComponents).toEqual([]);
+  });
   it("parses a strict non-empty component bump map", () => {
     const legacyIntent = {
       components: { accordion: "patch" },
@@ -539,7 +581,7 @@ describe("styled component release intents", () => {
     });
   });
 
-  it("materializes component versions into generated Astro and React registry artifacts", async () => {
+  it("materializes component versions into generated public registry artifacts", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "styled-component-registry-"));
     temporaryRoots.push(root);
     const fragmentRoot = path.join(root, ".changeset/styled-components");
@@ -560,6 +602,7 @@ describe("styled component release intents", () => {
 
     await versionStyledComponents({ repoRoot: root });
     const registry = await buildRuntimeRegistry({
+      contracts: [accordionStyledContract],
       repoRoot: process.cwd(),
       tempRoot: path.join(root, "generated"),
       versionManifestPath: manifestPath,
@@ -569,7 +612,7 @@ describe("styled component release intents", () => {
     expect(accordion.version).toBe(
       applyStyledVersionIntents(currentManifest.components, { accordion: "patch" }).accordion,
     );
-    expect(Object.keys(accordion.targets ?? {}).sort()).toEqual(["astro", "react"]);
+    expect(Object.keys(accordion.targets ?? {}).sort()).toEqual(["astro", "react", "vue"]);
     expect(
       Object.values(accordion.targets ?? {}).flatMap((target) =>
         target.files.map((file) => file.content),

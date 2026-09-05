@@ -37,12 +37,12 @@ describe("Runtime setup plan", () => {
     );
   });
 
-  it("returns Vue setup only through the private policy", () => {
+  it("returns exact Vue beta setup through the production policy", () => {
     const vueRegistry: StarwindRegistryFor<"astro" | "react" | "vue"> = {
       version: "2.1.0",
       setup: {
         vue: {
-          adapterPackage: { name: "@starwind-ui/vue", range: "*" },
+          adapterPackage: { name: "@starwind-ui/vue", range: "0.1.0" },
           packageRequirements: [
             { name: "vue", range: ">=3.5" },
             { name: "@tabler/icons-vue", range: "^3" },
@@ -52,12 +52,9 @@ describe("Runtime setup plan", () => {
       components: [],
     };
 
-    expect(getRuntimeSetupPlan("vue", vueRegistry, PRIVATE_VUE_FRAMEWORK_TARGET_POLICY)).toEqual({
-      adapterPackage: "@starwind-ui/vue@0.0.0",
+    expect(getRuntimeSetupPlan("vue", vueRegistry)).toEqual({
+      adapterPackage: "@starwind-ui/vue@0.1.0",
       packageRequirements: ["vue@>=3.5", "@tabler/icons-vue@^3"],
     });
-    expect(() => getRuntimeSetupPlan("vue" as never, vueRegistry as never)).toThrow(
-      /not available under the public target policy/,
-    );
   });
 });

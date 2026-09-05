@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import NavigationMenuStyledExample from "./NavigationMenuStyledExample.vue";
+
+defineProps<{ docsNavigation?: boolean }>();
 
 import {
   Combobox,
@@ -213,36 +216,42 @@ function submitComboboxForm(event: Event): void {
       <article
         id="styled-navigation-menu-review"
         class="scenario"
+        :class="{ 'col-span-full': docsNavigation }"
         data-testid="styled-navigation-menu-review"
       >
-        <h3>Navigation Menu controlled and dynamic</h3>
-        <NavigationMenu v-model="navigationValue">
-          <NavigationMenuList>
-            <NavigationMenuItem
-              v-for="item in navigationItems"
-              :key="item.value"
-              :value="item.value"
-            >
-              <NavigationMenuTrigger :data-testid="`styled-navigation-trigger-${item.value}`">
-                {{ item.label }}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent :data-testid="`styled-navigation-content-${item.value}`">
-                <NavigationMenuLink :href="`#${item.value}`">
-                  Read {{ item.label.toLowerCase() }}
-                </NavigationMenuLink>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
-        <button
-          type="button"
-          class="review-action"
-          data-testid="styled-navigation-add-item"
-          @click="addNavigationItem"
-        >
-          Add Patterns
-        </button>
-        <output data-testid="styled-navigation-state">value: {{ navigationValue }}</output>
+        <h3>
+          Navigation Menu {{ docsNavigation ? "documentation example" : "controlled and dynamic" }}
+        </h3>
+        <NavigationMenuStyledExample v-if="docsNavigation" />
+        <template v-else>
+          <NavigationMenu v-model="navigationValue">
+            <NavigationMenuList>
+              <NavigationMenuItem
+                v-for="item in navigationItems"
+                :key="item.value"
+                :value="item.value"
+              >
+                <NavigationMenuTrigger :data-testid="`styled-navigation-trigger-${item.value}`">
+                  {{ item.label }}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent :data-testid="`styled-navigation-content-${item.value}`">
+                  <NavigationMenuLink :href="`#${item.value}`">
+                    Read {{ item.label.toLowerCase() }}
+                  </NavigationMenuLink>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+          <button
+            type="button"
+            class="review-action"
+            data-testid="styled-navigation-add-item"
+            @click="addNavigationItem"
+          >
+            Add Patterns
+          </button>
+          <output data-testid="styled-navigation-state">value: {{ navigationValue }}</output>
+        </template>
       </article>
 
       <article id="styled-combobox-review" class="scenario" data-testid="styled-combobox-review">
