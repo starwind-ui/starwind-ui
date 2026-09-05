@@ -198,7 +198,15 @@ export async function verifyPublishedPackages(release, system, options = {}) {
         release.preservedDistTags?.[entry.name] ?? {},
       )) {
         const actualVersion = tags?.[preservedTag] ?? null;
-        if (actualVersion !== preservedVersion) {
+        // The release owner approved latest on the first Vue beta only.
+        const approvedInitialVueLatest =
+          entry.name === "@starwind-ui/vue" &&
+          entry.version === "0.1.0" &&
+          expectedTag === "beta" &&
+          preservedTag === "latest" &&
+          preservedVersion === null &&
+          actualVersion === "0.1.0";
+        if (actualVersion !== preservedVersion && !approvedInitialVueLatest) {
           throw new Error(
             `${entry.name} dist-tag ${preservedTag} changed during publication: expected ${preservedVersion ?? "nothing"}, found ${actualVersion ?? "nothing"}.`,
           );
