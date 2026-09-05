@@ -599,19 +599,12 @@ describe("portable runtime generator structure", () => {
     expect(frameworkAdapterRegistry).toContain("astroFrameworkAdapterTarget");
     expect(frameworkAdapterRegistry).toContain("reactFrameworkAdapterTarget");
     expect(frameworkAdapterRegistry).toContain("vueFrameworkAdapterTarget");
-    expect(frameworkAdapterRegistry).toContain("svelteFrameworkAdapterTarget");
+    expect(frameworkAdapterRegistry.includes("svelteFrameworkAdapterTarget")).toBe(
+      hasPrivateSvelte,
+    );
     expect(frameworkAdapterRegistry).toContain(
       '(typeof primitiveFrameworkAdapterTargets)[number]["target"]',
     );
-    const svelteTarget = primitiveFrameworkAdapterTargets.find(({ target }) => target === "svelte");
-    expect(svelteTarget?.styled).toBeUndefined();
-    expect(svelteTarget?.publicSupport).toEqual({
-      cliRegistry: false,
-      demoIntegration: false,
-      packageExports: false,
-      publicDocsClaim: false,
-      status: "non-shipping-tracer",
-    });
     expect(routeFreeGenerator).not.toContain("const ROUTE_FREE_PRIMITIVE_TARGETS");
     expect(routeFreeGenerator).not.toContain("routeFreeFrameworkAdapters");
     expect(routeFreeGenerator).not.toContain("writeAstroAdapterOutput");

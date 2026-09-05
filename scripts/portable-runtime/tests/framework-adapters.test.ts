@@ -36,7 +36,6 @@ import {
   type FrameworkAdapter,
   getFrameworkAdapterTargetsWithStyledCapability,
   getPrimitiveFrameworkAdapterTarget,
-  primitiveFrameworkAdapterTargets,
   printAdapterOutput,
   printFrameworkAdapterConformanceFixture,
   projectStyledOutputModel,
@@ -65,7 +64,11 @@ import {
   buildSliderSpecializedAdapterSpec,
 } from "../renderers/specialized-adapter-spec/index.js";
 import type { StyledOutputComponentGroup } from "../renderers/styled-output-model/index.js";
-import { hasPrivateSvelte } from "./workspace-support.js";
+import {
+  getWorkspacePrimitiveTarget,
+  hasPrivateSvelte,
+  workspacePrimitiveTargets as primitiveFrameworkAdapterTargets,
+} from "./workspace-support.js";
 
 describe("Framework Adapter seam", () => {
   it("builds framework-neutral export and type facts for target printers", () => {
@@ -1074,7 +1077,7 @@ describe("Framework Adapter seam", () => {
       },
     });
     if (hasPrivateSvelte) {
-      const svelteTarget = getPrimitiveFrameworkAdapterTarget("svelte");
+      const svelteTarget = getWorkspacePrimitiveTarget("svelte");
       expect(svelteTarget).toMatchObject({
         packageName: "@starwind-ui/svelte",
         primitive: {

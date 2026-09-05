@@ -15,7 +15,11 @@ import type { FrameworkAdapterTargetRegistration } from "../../renderers/framewo
 import { vueFrameworkAdapterTarget } from "../../renderers/framework-adapters/vue/index.js";
 import { vuePrimitiveComponents } from "../../renderers/framework-adapters/vue/inventory.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
-import { expectedPrimitiveTargets, hasPrivateSvelte } from "../workspace-support.js";
+import {
+  expectedPrimitiveTargets,
+  getWorkspacePrimitiveTarget,
+  hasPrivateSvelte,
+} from "../workspace-support.js";
 
 describe("registered Vue Framework Adapter target", () => {
   const temporaryRoots: string[] = [];
@@ -92,7 +96,7 @@ describe("registered Vue Framework Adapter target", () => {
     expect(getPrimitiveFrameworkAdapterTarget("astro").publicSupport).toEqual(shipping);
     expect(getPrimitiveFrameworkAdapterTarget("react").publicSupport).toEqual(shipping);
     if (hasPrivateSvelte)
-      expect(getPrimitiveFrameworkAdapterTarget("svelte").publicSupport).toEqual(quarantined);
+      expect(getWorkspacePrimitiveTarget("svelte").publicSupport).toEqual(quarantined);
     expect(solidFrameworkAdapterReadiness.publicSupport).toEqual(quarantined);
   });
 

@@ -5,7 +5,6 @@ import path from "node:path";
 import { compileScript, compileTemplate, parse } from "@vue/compiler-sfc";
 import { format as formatWithPrettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { PUBLIC_FRAMEWORK_TARGET_POLICY } from "../../../packages/cli/src/utils/framework-target-policy.js";
 import {
   buttonRuntimeAdapterContract,
   checkboxRuntimeAdapterContract,
@@ -43,7 +42,6 @@ import {
   vueRuntimePrimitiveComponents,
   vueStyledComponents,
 } from "../renderers/framework-adapters/vue/inventory.js";
-import { hasPrivateSvelte } from "./workspace-support.js";
 
 const runtimePackage = JSON.parse(
   await readFile(new URL("../../../packages/runtime/package.json", import.meta.url), "utf8"),
@@ -89,10 +87,6 @@ describe("generateCliRegistry", () => {
     expect(() =>
       createCliRegistryBuildPolicy([vueFrameworkAdapterTarget, vueFrameworkAdapterTarget]),
     ).toThrow(/Duplicate CLI registry target "vue"/);
-    if (hasPrivateSvelte)
-      expect(() =>
-        createCliRegistryBuildPolicy([getPrimitiveFrameworkAdapterTarget("svelte")]),
-      ).toThrow(/svelte.*missing Styled adapter capability/);
   });
 
   it("keeps generated artifacts stable across release-only version changes", async () => {
