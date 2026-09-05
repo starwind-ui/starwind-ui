@@ -1322,7 +1322,9 @@ async function verifyProgress(page) {
       `Progress determinate transition: expected a non-zero duration, received ${controlledTransitionDuration}`,
     );
   }
-  await page.waitForTimeout(200);
+  await controlledIndicator.evaluate(async (element) => {
+    await Promise.all(element.getAnimations().map((animation) => animation.finished));
+  });
   await assertProgressVisiblePercent(controlled, 50, "Progress settled determinate update");
 
   const indeterminate = page.getByTestId("progress-indeterminate");
@@ -3160,6 +3162,10 @@ async function verifyStyledMenusFloating(page) {
   await navigationTrigger.click();
   const navigationContent = page.getByTestId("styled-navigation-content-guides");
   await navigationContent.waitFor({ state: "visible" });
+  await page.waitForFunction(() => {
+    const content = document.querySelector('[data-testid="styled-navigation-content-guides"]');
+    return content && Number.parseFloat(getComputedStyle(content).opacity) > 0;
+  });
   await assertTextIncludes(
     page.getByTestId("styled-navigation-state"),
     "guides",
@@ -3250,6 +3256,12 @@ async function verifyStyledComplexServices(page) {
   );
   const desktopViewport = page.viewportSize();
   await page.setViewportSize({ height: desktopViewport?.height ?? 900, width: 600 });
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="styled-sidebar-trigger"]')
+        ?.getAttribute("aria-expanded") === "false",
+  );
   await assertEqual(
     await page.getByTestId("styled-sidebar-trigger").getAttribute("aria-expanded"),
     "false",
@@ -3348,6 +3360,11 @@ async function verifyStyledComplexServices(page) {
     clientWidth: document.documentElement.clientWidth,
     scrollWidth: document.documentElement.scrollWidth,
   }));
+  // The preceding form and inline-control interactions can dismiss the popup.
+  if ((await controlledColorTrigger.getAttribute("aria-expanded")) !== "true") {
+    await controlledColorTrigger.click();
+  }
+  await page.locator(`[id="${controlledColorPopupId}"]`).waitFor({ state: "visible" });
   for (let index = 0; index < 12; index += 1) {
     await page
       .locator(`[id="${controlledColorPopupId}"]`)
