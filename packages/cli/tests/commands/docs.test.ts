@@ -1,18 +1,10 @@
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 
 import * as clackPrompts from "@clack/prompts";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-
-import {
-  buildRuntimeRegistry,
-  createCliRegistryBuildPolicy,
-} from "../../../../scripts/portable-runtime/generate-cli-registry.js";
-import { vueFrameworkAdapterTarget } from "../../../../scripts/portable-runtime/renderers/framework-adapters/vue/index.js";
-
-import * as registry from "../../src/utils/registry.js";
 import { docs } from "../../src/commands/docs.js";
 import { PRIVATE_VUE_FRAMEWORK_TARGET_POLICY } from "../../src/utils/framework-target-policy.js";
+import * as registry from "../../src/utils/registry.js";
 
 vi.mock("@clack/prompts");
 vi.mock("../../src/utils/registry.js");
@@ -37,13 +29,12 @@ const mockParseRegistrySource = vi.mocked(registry.parseRegistrySource);
 describe("docs command", () => {
   let mockExit: ReturnType<typeof vi.spyOn>;
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-  let vueRegistry: Awaited<ReturnType<typeof buildRuntimeRegistry>>;
+  let vueRegistry: Awaited<ReturnType<typeof registry.loadRegistry>>;
 
-  beforeAll(async () => {
-    vueRegistry = await buildRuntimeRegistry({
-      repoRoot: fileURLToPath(new URL("../../../..", import.meta.url)),
-      targetPolicy: createCliRegistryBuildPolicy([vueFrameworkAdapterTarget]),
-    });
+  beforeAll(() => {
+    vueRegistry = JSON.parse(
+      readFileSync(new URL("../../src/registry/bundled-registry.json", import.meta.url), "utf8"),
+    );
   });
 
   beforeEach(() => {
