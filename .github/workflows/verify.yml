@@ -209,7 +209,7 @@ jobs:
   svelte-tests:
     name: Svelte verification
     needs: scope
-    if: (github.event_name == 'pull_request' || inputs.private_adapters) && github.head_ref != 'changeset-release/main' && needs.scope.outputs.svelte == 'true'
+    if: github.event.repository.private && (github.event_name == 'pull_request' || inputs.private_adapters) && github.head_ref != 'changeset-release/main' && needs.scope.outputs.svelte == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo

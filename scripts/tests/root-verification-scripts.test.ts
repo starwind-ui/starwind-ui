@@ -255,6 +255,25 @@ describe("root verification scripts", () => {
     expect(verifyWorkflow.jobs["svelte-tests"].if).toContain(
       "needs.scope.outputs.svelte == 'true'",
     );
+    const shouldRunSvelte = new Function(
+      "github",
+      "inputs",
+      "needs",
+      `return (${verifyWorkflow.jobs["svelte-tests"].if});`,
+    );
+    for (const isPrivate of [false, true]) {
+      expect(
+        shouldRunSvelte(
+          {
+            event: { repository: { private: isPrivate } },
+            event_name: "pull_request",
+            head_ref: "runtime",
+          },
+          { private_adapters: false },
+          { scope: { outputs: { svelte: "true" } } },
+        ),
+      ).toBe(isPrivate);
+    }
     expect(verifyWorkflowSource).not.toMatch(/packages\/\(runtime\|svelte\)/u);
     expect(verifyWorkflowSource).toContain("packages/svelte/");
     expect(verifyWorkflow.jobs["windows-packed-cli"]).toMatchObject({
