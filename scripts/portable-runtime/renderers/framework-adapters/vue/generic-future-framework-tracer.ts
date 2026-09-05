@@ -259,7 +259,6 @@ const AsChildTrigger = defineComponent({
         child.type === "button" && !childHasType && !attrsHaveType ? { type: "button" } : {};
       const protectedProps = {
         "${part.discoveryAttribute}": "",
-        "data-as-child": "",
         ref: setElement,
       };
       return cloneVNode(child, mergeProps(defaultedProps, attrs, protectedProps), true);

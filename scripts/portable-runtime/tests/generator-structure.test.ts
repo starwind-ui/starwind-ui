@@ -193,8 +193,9 @@ const FUTURE_FRAMEWORK_TRACER_SHIPPING_SURFACE_PATTERNS = [
     pattern: /@starwind-ui\/(?:solid|svelte|vue)/g,
   },
 ] as const;
-const PRIVATE_VUE_PACKAGE_SURFACE_PATHS = new Set([
+const PUBLIC_VUE_PACKAGE_SURFACE_PATHS = new Set([
   "packages/cli/src/utils/framework-target-policy.ts",
+  "packages/cli/src/registry/bundled-registry.json",
 ]);
 
 type FrameworkSpecificContainmentException = {
@@ -958,7 +959,7 @@ describe("portable runtime generator structure", () => {
       .map((file) => {
         const labels = getFutureFrameworkTracerShippingSurfaceLabels(file.source);
         return {
-          labels: PRIVATE_VUE_PACKAGE_SURFACE_PATHS.has(file.relativePath)
+          labels: PUBLIC_VUE_PACKAGE_SURFACE_PATHS.has(file.relativePath)
             ? labels.filter((label) => label !== "future package surface")
             : labels,
           path: file.relativePath,

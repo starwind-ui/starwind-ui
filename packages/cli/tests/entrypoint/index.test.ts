@@ -139,28 +139,18 @@ describe("starwind CLI parser", () => {
   });
 
   it.each([
-    ["init", ["init", "--framework", "vue"]],
-    ["component add", ["add", "button", "--framework", "vue"]],
-    ["primitive add", ["primitives", "add", "button", "--framework", "vue"]],
-  ] as const)("rejects Vue from public %s", async (_command, args) => {
+    ["init", ["init", "--framework", "vue"], mockInit],
+    ["component add", ["add", "button", "--framework", "vue"], mockAdd],
+    ["primitive add", ["primitives", "add", "button", "--framework", "vue"], mockPrimitivesAdd],
+  ] as const)("passes the Vue beta target through public %s", async (_command, args, action) => {
     const program = createTestProgram();
-    let stderr = "";
 
-    configureCommandTree(program, {
-      writeErr: (message: string) => {
-        stderr += message;
-      },
-    });
+    await program.parseAsync([...args], { from: "user" });
 
-    await expect(program.parseAsync([...args], { from: "user" })).rejects.toMatchObject({
-      code: "commander.invalidArgument",
-    });
-
-    expect(stderr).toContain("argument 'vue' is invalid");
-    expect(stderr).toContain("Allowed choices are astro, react");
-    expect(mockInit).not.toHaveBeenCalled();
-    expect(mockAdd).not.toHaveBeenCalled();
-    expect(mockPrimitivesAdd).not.toHaveBeenCalled();
+    expect(action).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ framework: "vue" }),
+    );
   });
   it("passes only public add arguments and keeps Commander context out of dependencies", async () => {
     const program = createTestProgram();
@@ -476,24 +466,26 @@ describe("starwind CLI parser", () => {
     );
   });
 
-  it("keeps Vue out of every public framework option", () => {
+  it("labels Vue as beta and exposes it in every public framework option", () => {
     const program = createProgram();
+    expect(program.description()).toContain("Vue (beta)");
     const primitivesCommand = getCommand(program, "primitives");
     const frameworkOptions: Array<[Command, string[]]> = [
-      [getCommand(program, "init"), ["astro", "react"]],
-      [getCommand(program, "add"), ["astro", "react"]],
-      [getCommand(program, "search"), ["astro", "react", "all"]],
-      [getCommand(program, "update"), ["astro", "react", "all"]],
-      [getCommand(program, "remove"), ["astro", "react", "all"]],
-      [getCommand(primitivesCommand, "add"), ["astro", "react"]],
-      [getCommand(primitivesCommand, "update"), ["astro", "react"]],
-      [getCommand(primitivesCommand, "list"), ["astro", "react", "all"]],
+      [getCommand(program, "init"), ["astro", "react", "vue"]],
+      [getCommand(program, "add"), ["astro", "react", "vue"]],
+      [getCommand(program, "search"), ["astro", "react", "vue", "all"]],
+      [getCommand(program, "update"), ["astro", "react", "vue", "all"]],
+      [getCommand(program, "remove"), ["astro", "react", "vue", "all"]],
+      [getCommand(primitivesCommand, "add"), ["astro", "react", "vue"]],
+      [getCommand(primitivesCommand, "update"), ["astro", "react", "vue"]],
+      [getCommand(primitivesCommand, "list"), ["astro", "react", "vue", "all"]],
     ];
 
     for (const [command, expectedChoices] of frameworkOptions) {
       const option = command.options.find((entry) => entry.long === "--framework");
       expect(option?.argChoices).toEqual(expectedChoices);
-      expect(option?.argChoices).not.toContain("vue");
+      expect(option?.argChoices).toContain("vue");
+      expect(command.helpInformation()).toContain("Vue is beta");
     }
   });
 

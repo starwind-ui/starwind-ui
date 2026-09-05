@@ -115,9 +115,12 @@ describe("generated Vue Alert Dialog", () => {
       expect(() => assertVueSfcCompiles(source, `AlertDialog${part}.vue`)).not.toThrow();
     }
     expect(action).toContain("alertDialogActionAsChild");
+    expect(action).not.toContain("ButtonHTMLAttributes");
     expect(action).toContain("<Button");
     expect(action).toContain('data-slot="alert-dialog-action"');
     expect(cancel).toContain("alertDialogCancelAsChild");
+    expect(cancel).not.toContain("ButtonHTMLAttributes");
     expect(cancel).toContain('data-slot="alert-dialog-cancel"');
+    expect(trigger).toContain("ButtonHTMLAttributes");
   });
 });

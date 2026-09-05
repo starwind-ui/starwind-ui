@@ -6,6 +6,8 @@ import Avatar from "./starwind-runtime/avatar/Avatar.vue";
 import AvatarFallback from "./starwind-runtime/avatar/AvatarFallback.vue";
 import AvatarImage from "./starwind-runtime/avatar/AvatarImage.vue";
 
+const props = defineProps<{ styledOnly?: boolean }>();
+
 const loadedSource =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='%236366f1'/%3E%3Ccircle cx='40' cy='31' r='15' fill='white'/%3E%3Cpath d='M14 78c3-20 14-30 26-30s23 10 26 30' fill='white'/%3E%3C/svg%3E";
 const brokenSource = "data:image/png;base64,AAAA";
@@ -37,7 +39,7 @@ const styledFallback = ref<InstanceType<typeof AvatarFallback> | null>(null);
     </div>
 
     <div class="review-grid avatar-review-grid">
-      <article class="scenario">
+      <article v-if="!props.styledOnly" class="scenario">
         <h3>Primitive loaded image</h3>
         <AvatarPrimitive.AvatarRoot data-testid="avatar-primitive-root">
           <AvatarPrimitive.AvatarImage

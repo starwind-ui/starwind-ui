@@ -121,7 +121,7 @@ const hasSwatchesAttribute = computed(() =>
     />
     <template v-if="normalizedSwatches.length > 0">
       <ColorPickerSwatchGroup aria-label="Suggested colors">
-        <template v-for="(swatch, swatchIndex) in normalizedSwatches">
+        <template v-for="swatch in normalizedSwatches">
           <ColorPickerSwatch
             :value="swatch.value"
             :disabled="swatch.disabled"

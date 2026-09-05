@@ -946,6 +946,17 @@ describe("primitives command", () => {
           },
         ];
       }
+      if (options.framework === "vue") {
+        return [
+          {
+            component: "button",
+            framework: "vue",
+            version: "0.1.0",
+            files: [],
+            packageRequirements: [],
+          },
+        ];
+      }
 
       return [
         {
@@ -962,7 +973,7 @@ describe("primitives command", () => {
 
     const output = JSON.parse(consoleLogSpy.mock.calls[0][0] as string);
     expect(output.filters.framework).toBe("all");
-    expect(output.primitives.total).toBe(2);
+    expect(output.primitives.total).toBe(3);
     expect(output.primitives.results).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -972,6 +983,10 @@ describe("primitives command", () => {
         expect.objectContaining({
           framework: "react",
           installCommand: "starwind primitives add button --framework react",
+        }),
+        expect.objectContaining({
+          framework: "vue",
+          installCommand: "starwind primitives add button --framework vue",
         }),
       ]),
     );

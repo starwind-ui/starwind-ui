@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,6 +8,7 @@ import { createSpawnCommand } from "./command-process.mjs";
 import {
   CHANGESET_IGNORED_PACKAGES,
   CHANGESET_PRIVATE_PACKAGE_POLICY,
+  RUNTIME_FIXED_GROUP,
   RUNTIME_RELEASE_PACKAGE_SET,
 } from "./runtime-release-policy.mjs";
 
@@ -21,12 +22,117 @@ export const RELEASE_PACKAGE_SET = RUNTIME_RELEASE_PACKAGE_SET;
 
 export const BETA_PACKAGE_SET = RELEASE_PACKAGE_SET;
 
+export const VUE_BETA_RELEASE_PLAN = Object.freeze([
+  Object.freeze({
+    directory: "packages/vue",
+    name: "@starwind-ui/vue",
+    tag: "beta",
+    version: "0.1.0",
+  }),
+  Object.freeze({ directory: "packages/cli", name: "starwind", tag: "latest", version: "3.3.0" }),
+]);
+
+const VUE_BETA_RUNTIME_VERSION = "1.2.0";
+const VUE_BETA_REGISTRY_BASELINE_FILE =
+  "node_modules/.cache/starwind-release/vue-beta-registry-baseline.json";
+
 function getPnpmCommand() {
   return process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 }
 
 function getPackageDir(entry) {
   return path.join(ROOT_DIR, entry.directory);
+}
+
+function getVueBetaRegistryBaselineFile(repoRoot) {
+  return path.join(repoRoot, VUE_BETA_REGISTRY_BASELINE_FILE);
+}
+
+function getVueBetaPlanIdentity() {
+  return VUE_BETA_RELEASE_PLAN.map(({ name, tag, version }) => ({ name, tag, version }));
+}
+
+export async function loadVueBetaRegistryBaseline({ head, repoRoot = ROOT_DIR }) {
+  const file = getVueBetaRegistryBaselineFile(repoRoot);
+  let baseline;
+  try {
+    baseline = JSON.parse(await readFile(file, "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      throw new Error("The Vue beta registry baseline is missing.");
+    }
+    throw new Error("The Vue beta registry baseline is invalid.");
+  }
+  if (
+    baseline?.head !== head ||
+    JSON.stringify(baseline?.plan) !== JSON.stringify(getVueBetaPlanIdentity()) ||
+    (baseline?.vueLatest !== null && typeof baseline?.vueLatest !== "string")
+  ) {
+    throw new Error("The Vue beta registry baseline does not match this release commit and plan.");
+  }
+  return baseline;
+}
+
+async function captureNpmOutput(args, spawnProcess = spawn) {
+  const command = process.platform === "win32" ? "npm.cmd" : "npm";
+  const spawned = createSpawnCommand(command, args);
+  return await new Promise((resolve, reject) => {
+    let stderr = "";
+    let stdout = "";
+    const child = spawnProcess(spawned.command, spawned.args, {
+      cwd: ROOT_DIR,
+      env: process.env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    child.stdout.on("data", (chunk) => (stdout += chunk));
+    child.stderr.on("data", (chunk) => (stderr += chunk));
+    child.on("error", reject);
+    child.on("close", (code) =>
+      resolve({ code: code ?? 1, stderr: stderr.trim(), stdout: stdout.trim() }),
+    );
+  });
+}
+
+export async function captureVueBetaRegistryBaseline({
+  head,
+  registry = { capture: (_command, args) => captureNpmOutput(args) },
+  repoRoot = ROOT_DIR,
+  resumeFrom,
+}) {
+  try {
+    return await loadVueBetaRegistryBaseline({ head, repoRoot });
+  } catch (error) {
+    if (resumeFrom) {
+      throw new Error(
+        `Cannot resume the Vue beta publication without its original registry baseline: ${error.message}`,
+      );
+    }
+  }
+
+  const result = await registry.capture("npm", ["view", "@starwind-ui/vue", "dist-tags", "--json"]);
+  let vueLatest = null;
+  if (result.code === 0) {
+    let tags;
+    try {
+      tags = JSON.parse(result.stdout);
+    } catch {
+      throw new Error("@starwind-ui/vue dist-tags returned invalid JSON.");
+    }
+    if (tags?.latest !== undefined && typeof tags.latest !== "string") {
+      throw new Error("@starwind-ui/vue latest returned an invalid value.");
+    }
+    vueLatest = tags?.latest ?? null;
+  } else if (!/(?:E404|404 Not Found)/i.test(`${result.stderr}\n${result.stdout}`)) {
+    throw new Error(
+      `Could not capture @starwind-ui/vue latest before publication: ${result.stderr || result.stdout}`,
+    );
+  }
+
+  const baseline = { head, plan: getVueBetaPlanIdentity(), vueLatest };
+  const file = getVueBetaRegistryBaselineFile(repoRoot);
+  await mkdir(path.dirname(file), { recursive: true });
+  await writeFile(file, `${JSON.stringify(baseline, null, 2)}\n`, "utf8");
+  return baseline;
 }
 
 export function redactCommandArgs(args) {
@@ -58,19 +164,24 @@ export function formatCommandFailure(command, args, exitCode, options = {}) {
   return `${formattedCommand}${formattedContext} failed with exit code ${exitCode}.`;
 }
 
-function getResumeIndex(resumeFrom) {
+function getResumeIndex(resumeFrom, releasePlan = RELEASE_PACKAGE_SET) {
   if (!resumeFrom) return 0;
-  const index = RELEASE_PACKAGE_SET.findIndex((entry) => entry.name === resumeFrom);
+  const index = releasePlan.findIndex((entry) => entry.name === resumeFrom);
   if (index === -1) {
     throw new Error(
-      `Unknown --resume-from package: ${resumeFrom}. Expected one of: ${RELEASE_PACKAGE_SET.map((entry) => entry.name).join(", ")}.`,
+      `Unknown --resume-from package: ${resumeFrom}. Expected one of: ${releasePlan.map((entry) => entry.name).join(", ")}.`,
     );
   }
   return index;
 }
 
-export function createPublishCommands({ dryRun = false, otp, resumeFrom, tag = "beta" } = {}) {
-  if (!SAFE_DIST_TAG_PATTERN.test(tag)) throw new Error(`Invalid npm dist-tag: ${tag}.`);
+export function createPublishCommands({
+  dryRun = false,
+  otp,
+  releasePlan = RELEASE_PACKAGE_SET,
+  resumeFrom,
+  tag = "beta",
+} = {}) {
   if (otp && !/^\d{6,8}$/.test(otp)) {
     throw new Error("Expected --otp to be a numeric one-time password.");
   }
@@ -78,8 +189,12 @@ export function createPublishCommands({ dryRun = false, otp, resumeFrom, tag = "
     throw new Error("--resume-from is available only for a real publish.");
   }
 
-  return RELEASE_PACKAGE_SET.slice(getResumeIndex(resumeFrom)).map((entry) => {
-    const args = ["publish", "--tag", tag, "--access", "public", "--no-git-checks"];
+  return releasePlan.slice(getResumeIndex(resumeFrom, releasePlan)).map((entry) => {
+    const packageTag = entry.tag ?? tag;
+    if (!SAFE_DIST_TAG_PATTERN.test(packageTag)) {
+      throw new Error(`Invalid npm dist-tag: ${packageTag}.`);
+    }
+    const args = ["publish", "--tag", packageTag, "--access", "public", "--no-git-checks"];
     if (dryRun) args.push("--dry-run");
     if (otp) args.push("--otp", otp);
     return {
@@ -89,6 +204,16 @@ export function createPublishCommands({ dryRun = false, otp, resumeFrom, tag = "
       packageName: entry.name,
     };
   });
+}
+
+export function createVueBetaPublishCommands(options = {}) {
+  return createPublishCommands({ ...options, releasePlan: VUE_BETA_RELEASE_PLAN });
+}
+
+export function formatPublishPlan(packageManifests) {
+  return packageManifests.map(
+    ({ entry, manifest }) => `${entry.name}@${manifest.version} -> npm tag ${entry.tag}`,
+  );
 }
 
 function parseVersion(version) {
@@ -171,16 +296,68 @@ export function validateReleaseChangesetConfig(config) {
   return { errors, ok: errors.length === 0 };
 }
 
-export function createUserPublishHandoff({ resumeFrom, tag }) {
-  const resumeIndex = getResumeIndex(resumeFrom);
+export function validateVueBetaReleaseMetadata({ config, fixedGroupManifests, packageManifests }) {
+  const errors = [];
+  const expectedPlan = VUE_BETA_RELEASE_PLAN.map(({ name, tag, version }) => ({
+    name,
+    tag,
+    version,
+  }));
+  const actualPlan = packageManifests.map(({ entry, manifest }) => ({
+    name: manifest.name,
+    tag: entry.tag,
+    version: manifest.version,
+  }));
+  if (JSON.stringify(actualPlan) !== JSON.stringify(expectedPlan)) {
+    errors.push(
+      `Vue beta release plan must be exactly ${expectedPlan.map(({ name, tag, version }) => `${name}@${version} on ${tag}`).join(", ")} in that order.`,
+    );
+  }
+
+  const vue = packageManifests.find(({ entry }) => entry.name === "@starwind-ui/vue")?.manifest;
+  if (vue?.private === true)
+    errors.push("@starwind-ui/vue must be public before beta publication.");
+  if (vue?.dependencies?.["@starwind-ui/runtime"] !== VUE_BETA_RUNTIME_VERSION) {
+    errors.push(
+      `@starwind-ui/vue must depend on exact @starwind-ui/runtime ${VUE_BETA_RUNTIME_VERSION}.`,
+    );
+  }
+
+  const expectedFixedNames = RUNTIME_RELEASE_PACKAGE_SET.slice(0, 3).map(({ name }) => name);
+  const fixedNames = fixedGroupManifests.map(({ manifest }) => manifest.name);
+  const fixedVersions = new Set(fixedGroupManifests.map(({ manifest }) => manifest.version));
+  if (
+    JSON.stringify(fixedNames) !== JSON.stringify(expectedFixedNames) ||
+    fixedVersions.size !== 1 ||
+    fixedVersions.values().next().value !== VUE_BETA_RUNTIME_VERSION
+  ) {
+    errors.push(
+      `Runtime, Astro, and React must remain unchanged at ${VUE_BETA_RUNTIME_VERSION} for the initial Vue beta.`,
+    );
+  }
+
+  const configResult = validateReleaseChangesetConfig(config);
+  errors.push(...configResult.errors);
+  if (JSON.stringify(config?.fixed) !== JSON.stringify([RUNTIME_FIXED_GROUP])) {
+    errors.push(
+      `Changesets fixed groups must contain only Runtime, Astro, and React in their existing group.`,
+    );
+  }
+  return { errors, ok: errors.length === 0, plan: expectedPlan };
+}
+
+export function createUserPublishHandoff({ releasePlan = RELEASE_PACKAGE_SET, resumeFrom, tag }) {
+  const resumeIndex = getResumeIndex(resumeFrom, releasePlan);
   const command = resumeFrom
-    ? `node scripts/release-packages.mjs --publish --resume-from ${resumeFrom}`
-    : tag === "beta"
-      ? "pnpm publish:beta"
-      : "pnpm publish:release";
+    ? `node scripts/release-packages.mjs${releasePlan === VUE_BETA_RELEASE_PLAN ? " --vue-beta" : ""} --publish --resume-from ${resumeFrom}`
+    : releasePlan === VUE_BETA_RELEASE_PLAN
+      ? "pnpm publish:vue-beta"
+      : tag === "beta"
+        ? "pnpm publish:beta"
+        : "pnpm publish:release";
   return {
     command,
-    packages: RELEASE_PACKAGE_SET.slice(resumeIndex).map((entry) => entry.name),
+    packages: releasePlan.slice(resumeIndex).map((entry) => entry.name),
   };
 }
 
@@ -193,8 +370,8 @@ export function parsePublishOutput(output) {
   return published;
 }
 
-export function validatePublishedPrefix(publishedNames) {
-  const expected = RELEASE_PACKAGE_SET.map((entry) => entry.name);
+export function validatePublishedPrefix(publishedNames, releasePlan = RELEASE_PACKAGE_SET) {
+  const expected = releasePlan.map((entry) => entry.name);
   const valid = publishedNames.every((name, index) => name === expected[index]);
   return {
     complete: valid && publishedNames.length === expected.length,
@@ -207,6 +384,19 @@ async function readPackageManifest(entry) {
   const manifestPath = path.join(getPackageDir(entry), "package.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   return { entry, manifest };
+}
+
+export async function assertVueBetaReleaseMetadata() {
+  const fixedGroupEntries = RUNTIME_RELEASE_PACKAGE_SET.slice(0, 3);
+  const [packageManifests, fixedGroupManifests, config] = await Promise.all([
+    Promise.all(VUE_BETA_RELEASE_PLAN.map((entry) => readPackageManifest(entry))),
+    Promise.all(fixedGroupEntries.map((entry) => readPackageManifest(entry))),
+    readFile(path.join(ROOT_DIR, ".changeset", "config.json"), "utf8").then(JSON.parse),
+  ]);
+  const result = validateVueBetaReleaseMetadata({ config, fixedGroupManifests, packageManifests });
+  if (!result.ok)
+    throw new Error(`Vue beta release metadata is not ready:\n${result.errors.join("\n")}`);
+  return { packageManifests, plan: result.plan };
 }
 
 async function readPrereleaseState() {
@@ -238,11 +428,13 @@ export function parseArgs(argv) {
   let publish = false;
   let otp;
   let resumeFrom;
+  let vueBeta = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--dry-run") dryRun = true;
     else if (arg === "--publish") publish = true;
+    else if (arg === "--vue-beta") vueBeta = true;
     else if (arg === "--otp") {
       const otpValue = argv[index + 1];
       if (!otpValue || otpValue.startsWith("--")) throw new Error("Expected a value after --otp.");
@@ -263,8 +455,8 @@ export function parseArgs(argv) {
 
   if (dryRun === publish) throw new Error("Pass exactly one mode: --dry-run or --publish.");
   if (dryRun && resumeFrom) throw new Error("--resume-from is available only with --publish.");
-  getResumeIndex(resumeFrom);
-  return { dryRun, otp, resumeFrom };
+  getResumeIndex(resumeFrom, vueBeta ? VUE_BETA_RELEASE_PLAN : RELEASE_PACKAGE_SET);
+  return { dryRun, otp, resumeFrom, vueBeta };
 }
 
 function runCommand(command, args, options = {}) {
@@ -363,17 +555,30 @@ export async function executeReleasePublication({
 }
 
 async function main() {
-  const { dryRun, otp, resumeFrom } = parseArgs(process.argv.slice(2));
-  const { tag } = await assertReleaseMetadata();
-  if (!dryRun) await assertPublicMainForPublish();
+  const { dryRun, otp, resumeFrom, vueBeta } = parseArgs(process.argv.slice(2));
+  const metadata = vueBeta ? await assertVueBetaReleaseMetadata() : await assertReleaseMetadata();
+  const gitState = !dryRun ? await assertPublicMainForPublish() : undefined;
+  if (vueBeta && gitState) {
+    await captureVueBetaRegistryBaseline({ head: gitState.head, resumeFrom });
+  }
+  if (vueBeta) {
+    console.log("[publish-plan] Approved Vue beta release order:");
+    for (const target of formatPublishPlan(metadata.packageManifests)) console.log(`- ${target}`);
+  }
   const finalize = async () => {
     const { runReleaseFinalization } = await import("./release-finalization.mjs");
-    await runReleaseFinalization();
+    await runReleaseFinalization({ vueBeta });
   };
   await executeReleasePublication({
     dryRun,
     finalize,
-    publishCommands: createPublishCommands({ dryRun, otp, resumeFrom, tag }),
+    publishCommands: createPublishCommands({
+      dryRun,
+      otp,
+      releasePlan: vueBeta ? VUE_BETA_RELEASE_PLAN : RELEASE_PACKAGE_SET,
+      resumeFrom,
+      tag: metadata.tag,
+    }),
   });
 }
 

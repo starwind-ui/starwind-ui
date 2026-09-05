@@ -9,38 +9,21 @@ import {
 import type { RegistryImplementationTarget } from "../../src/utils/registry.js";
 
 describe("CLI framework target policy", () => {
-  it("keeps public framework types narrow", () => {
-    expectTypeOf<StarwindFramework>().toEqualTypeOf<"astro" | "react">();
+  it("includes the public Vue beta in framework types", () => {
+    expectTypeOf<StarwindFramework>().toEqualTypeOf<"astro" | "react" | "vue">();
     expectTypeOf<RegistryImplementationTarget>().toEqualTypeOf<
-      "legacy-astro" | "astro" | "react"
+      "legacy-astro" | "astro" | "react" | "vue"
     >();
   });
 
-  it("keeps the public policy limited to Astro and React", () => {
-    expect(PUBLIC_FRAMEWORK_TARGET_POLICY).toMatchObject({
+  it("publishes Vue through the production policy with a beta label", () => {
+    expect(PUBLIC_FRAMEWORK_TARGET_POLICY).toEqual({
       cacheKey: "public",
-      configTargets: ["astro", "react"],
-      registryTargets: ["legacy-astro", "astro", "react"],
-      setupTargets: ["astro", "react"],
-      labels: { astro: "Astro", react: "React" },
-      requiredAdapterPackages: {
-        "legacy-astro": [],
-        astro: ["@starwind-ui/astro"],
-        react: ["@starwind-ui/react"],
-      },
-    });
-  });
-
-  it("adds target-level Vue facts to the private policy", () => {
-    expect(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY).toEqual({
-      cacheKey: "private-vue",
       configTargets: ["astro", "react", "vue"],
       registryTargets: ["legacy-astro", "astro", "react", "vue"],
       setupTargets: ["astro", "react", "vue"],
-      labels: { astro: "Astro", react: "React", vue: "Vue" },
-      primitiveArtifactIntegrity: {
-        vue: "sha256:0e86c8b6e9368e633ae1778e3d734878d354863963aae1b226d3f3457add6fc9",
-      },
+      labels: { astro: "Astro", react: "React", vue: "Vue (beta)" },
+      primitiveArtifactIntegrity: undefined,
       requiredAdapterPackages: {
         "legacy-astro": [],
         astro: ["@starwind-ui/astro"],
@@ -48,36 +31,32 @@ describe("CLI framework target policy", () => {
         vue: ["@starwind-ui/vue"],
       },
     });
+  });
+
+  it("uses the production policy for existing Vue acceptance seams", () => {
+    expect(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY).toBe(PUBLIC_FRAMEWORK_TARGET_POLICY);
     expect(JSON.stringify(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY)).not.toMatch(
       /components|inventory|behavior/i,
     );
   });
 
-  it("binds private Primitive artifacts to the exact immutable capability policy", () => {
+  it("uses generated public Primitive artifacts without a private fingerprint", () => {
     expect(
-      getPrimitiveArtifactIntegrityFingerprint(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY, "vue"),
-    ).toBe("sha256:0e86c8b6e9368e633ae1778e3d734878d354863963aae1b226d3f3457add6fc9");
+      getPrimitiveArtifactIntegrityFingerprint(PUBLIC_FRAMEWORK_TARGET_POLICY, "vue"),
+    ).toBeUndefined();
     expect(
       getPrimitiveArtifactIntegrityFingerprint(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY, "astro"),
     ).toBeUndefined();
-    expect(() =>
-      getPrimitiveArtifactIntegrityFingerprint({ ...PRIVATE_VUE_FRAMEWORK_TARGET_POLICY }, "vue"),
-    ).toThrow(/exact registered private framework target policy/);
     expect(
       getPrimitiveArtifactIntegrityFingerprint(PUBLIC_FRAMEWORK_TARGET_POLICY, "astro"),
     ).toBeUndefined();
   });
 
   it("freezes policy records and nested adapter package lists", () => {
-    expect(Object.isFrozen(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY)).toBe(true);
-    expect(Object.isFrozen(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY.configTargets)).toBe(true);
-    expect(Object.isFrozen(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY.labels)).toBe(true);
-    expect(Object.isFrozen(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY.primitiveArtifactIntegrity)).toBe(
-      true,
-    );
-    expect(Object.isFrozen(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY.requiredAdapterPackages)).toBe(true);
-    expect(Object.isFrozen(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY.requiredAdapterPackages.vue)).toBe(
-      true,
-    );
+    expect(Object.isFrozen(PUBLIC_FRAMEWORK_TARGET_POLICY)).toBe(true);
+    expect(Object.isFrozen(PUBLIC_FRAMEWORK_TARGET_POLICY.configTargets)).toBe(true);
+    expect(Object.isFrozen(PUBLIC_FRAMEWORK_TARGET_POLICY.labels)).toBe(true);
+    expect(Object.isFrozen(PUBLIC_FRAMEWORK_TARGET_POLICY.requiredAdapterPackages)).toBe(true);
+    expect(Object.isFrozen(PUBLIC_FRAMEWORK_TARGET_POLICY.requiredAdapterPackages.vue)).toBe(true);
   });
 });

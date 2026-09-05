@@ -3,20 +3,20 @@
 Status: current
 Date: 2026-08-02
 
-This guide is for future Primitive Framework Adapter targets such as Vue, Solid, Svelte, or another
-framework. It records the authoring pattern proven by the React and Astro renderer refactors:
+This guide is for Primitive Framework Adapter targets such as the current Vue beta and future Solid,
+Svelte, or other frameworks. It records the authoring pattern proven by the React and Astro renderer refactors:
 target adapters should print from Runtime Adapter Contracts, Generic Adapter Plans, Adapter Family
 Plans, Specialized Adapter Specs, and Adapter Output Models without copying large unstructured
 string templates.
 
-Astro and React are shipping targets. Vue and Svelte have private, non-shipping workspace packages;
-Solid remains a tracer-only target. A private package proves realistic generation, build, types,
-SSR/hydration, and consumer resolution, but does not imply CLI support, public documentation, or
-publication.
+Astro and React are stable shipping targets. Vue is a Vue 3.5 public-beta target. Svelte has a
+private, non-shipping workspace package, and Solid remains a tracer-only target. A private package
+proves realistic generation, build, types, SSR/hydration, and consumer resolution, but does not
+imply CLI support, public documentation, or publication.
 
 Vue target work follows the repository's accepted idiomatic Vue adapter semantics. The typed Vue
 public contract lives in the Vue target home and owns model/event naming, composition, lifecycle,
-SSR/hydration, and delayed Teleport projection while Vue remains non-shipping.
+SSR/hydration, and delayed Teleport projection for the public beta.
 
 Svelte target work follows the accepted Svelte 5.29+ component-and-attachment model. Typed
 `$props`, snippets, context, attachments, reactive Runtime setters, and teardown remain owned by the
@@ -161,9 +161,11 @@ unchanged after formatting unless the issue explicitly accepts a formatting-only
 
 Future-framework tracer output is not public support.
 
-- Vue and Svelte may keep private packages only while they remain `private: true`, version `0.0.0`,
-  ignored by Changesets, absent from the release package set, absent from public CLI registry
-  artifacts, and described as non-shipping.
+- Svelte may keep a private package only while it remains `private: true`, version `0.0.0`, ignored
+  by Changesets, absent from the release package set, absent from public CLI registry artifacts,
+  and described as non-shipping.
+- Vue public-beta capability flags must move together. The target stays outside the stable Runtime,
+  Astro, and React fixed package group until a separate stable-support decision.
 - Solid tracer output must not add a package, CLI registry artifacts, demo dependencies, install
   instructions, or public docs claims.
 - Any public API difference from Astro or React must be documented as framework semantics, not a

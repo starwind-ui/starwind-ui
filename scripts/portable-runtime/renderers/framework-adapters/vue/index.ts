@@ -52,6 +52,7 @@ async function readGeneratedFiles(directory: string, root: string = directory): 
 const vueFrameworkAdapterTargetDefinition = {
   adapter: vueFrameworkAdapter,
   cliRegistry: {
+    exactAdapterPackageVersion: "0.1.0",
     generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
     packageMetadataSources: [
       "packages/vue/package.json",

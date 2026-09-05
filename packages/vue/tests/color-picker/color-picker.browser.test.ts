@@ -2,8 +2,19 @@ import { createApp, createSSRApp, h, nextTick, ref } from "vue";
 import { renderToString } from "vue/server-renderer";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { ColorPickerRoot, parseColor } from "@starwind-ui/vue/color-picker";
-import { PopoverPopup, PopoverRoot, PopoverTrigger } from "@starwind-ui/vue/popover";
+import {
+  ColorPickerFormatControl,
+  ColorPickerFormatSelect,
+  ColorPickerRoot,
+  parseColor,
+} from "@starwind-ui/vue/color-picker";
+import {
+  PopoverPopup,
+  PopoverPortal,
+  PopoverPositioner,
+  PopoverRoot,
+  PopoverTrigger,
+} from "@starwind-ui/vue/popover";
 import {
   SelectItem,
   SelectItemText,
@@ -72,6 +83,62 @@ describe("Vue Color Picker public behavior", () => {
     hue.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "ArrowRight" }));
     await settle();
     expect(value.value?.hsb.hue).toBe(1);
+  });
+
+  it("keeps portaled format controls inside their authored floating owner", async () => {
+    const format = ref<"hex" | "rgb">("hex");
+    const events: string[] = [];
+    const host = document.createElement("div");
+    document.body.append(host);
+    const app = createApp({
+      render: () =>
+        h(PopoverRoot, { defaultOpen: true }, () =>
+          h(
+            ColorPickerRoot,
+            {
+              "data-floating-root": "",
+              defaultValue: "#ff0000",
+              format: format.value,
+              onFormatChange: (next: "hex" | "rgb", detail: { format: "hex" | "rgb" }) =>
+                events.push(`formatChange:${next}:${detail.format}`),
+              "onUpdate:format": (next: "hex" | "rgb") => {
+                events.push(`update:format:${next}`);
+                format.value = next;
+              },
+            },
+            () => [
+              h(PopoverTrigger, null, () => "Open color picker"),
+              h(PopoverPortal, null, () =>
+                h(PopoverPositioner, null, () =>
+                  h(PopoverPopup, null, () =>
+                    h(ColorPickerFormatControl, null, () =>
+                      h(ColorPickerFormatSelect, null, () => [
+                        h("option", { value: "hex" }, "Hex"),
+                        h("option", { value: "rgb" }, "RGB"),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await settle();
+
+    const root = host.querySelector<HTMLElement>("[data-sw-color-picker]")!;
+    const portal = document.querySelector<HTMLElement>("[data-sw-popover-portal]")!;
+    const select = portal.querySelector<HTMLSelectElement>("[data-sw-color-picker-format-select]")!;
+    expect(portal.parentElement).toBe(root);
+
+    select.value = "rgb";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    await settle();
+
+    expect(format.value).toBe("rgb");
+    expect(events).toEqual(["formatChange:rgb:rgb", "update:format:rgb"]);
   });
 
   it("acquires and releases value control without losing the accepted value", async () => {

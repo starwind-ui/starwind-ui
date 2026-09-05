@@ -69,6 +69,7 @@ describe("root verification scripts", () => {
       "pnpm test:run",
       "pnpm runtime:test",
       "pnpm react:test",
+      "pnpm vue:test",
     ]);
   });
 
@@ -121,8 +122,17 @@ describe("root verification scripts", () => {
       "pnpm runtime:docs:metadata:check",
       "pnpm build:public",
     ]);
-    expect(pkg.scripts?.["build:public"]).not.toMatch(/vue|svelte/);
-    expect(pkg.scripts?.["typecheck:public"]).not.toMatch(/vue|svelte/);
+    expect(pkg.scripts?.["build:public"]).toContain("--filter=@starwind-ui/vue");
+    expect(pkg.scripts?.["build:public"]).toContain("--filter=vue-demo");
+    expect(pkg.scripts?.["build:public"]).not.toMatch(/svelte/);
+    expect(pkg.scripts?.["typecheck:public"]).toContain("--filter=@starwind-ui/vue");
+    expect(pkg.scripts?.["typecheck:public"]).toContain("--filter=vue-demo");
+    expect(pkg.scripts?.["typecheck:public"]).not.toMatch(/svelte/);
+    expect(commandPhases(pkg.scripts?.["runtime:generate:all"])).toEqual([
+      "pnpm runtime:generate:astro",
+      "pnpm runtime:generate:react",
+      "pnpm runtime:generate:vue",
+    ]);
     expect(phases.some((phase) => /audit/i.test(phase))).toBe(false);
     expect(phases).not.toContain("pnpm runtime:generate:test");
     expect(new Set(phases).size).toBe(phases.length);
@@ -146,9 +156,12 @@ describe("root verification scripts", () => {
       "pnpm audit:prod",
       "pnpm demo:smoke",
       "pnpm react-demo:smoke",
+      "pnpm vue-demo:smoke",
       "pnpm runtime:size:check:prepared",
+      "pnpm runtime:perf:vue:check",
       "pnpm release:candidate:acceptance",
     ]);
+    expect(pkg.scripts?.["runtime:size:check:prepared"]).toContain("--private-vue");
     expect(commandPhases(pkg.scripts?.["publish:release:dry-run"])).toEqual([
       "pnpm release:artifacts",
       "node scripts/release-packages.mjs --dry-run",
@@ -156,7 +169,7 @@ describe("root verification scripts", () => {
     expect(pkg.scripts?.["publish:release"]).toBe("node scripts/release-packages.mjs --publish");
   });
 
-  it("runs private adapters only for relevant development PRs", async () => {
+  it("runs public Vue and private Svelte checks in their intended scopes", async () => {
     const [verifyWorkflowSource, releaseWorkflowSource] = await Promise.all([
       readFile(".github/workflows/verify.yml", "utf8"),
       readFile(".github/workflows/release.yml", "utf8"),
@@ -192,10 +205,49 @@ describe("root verification scripts", () => {
       ]),
     );
     expect(verifyWorkflow.jobs["vue-tests"]).toMatchObject({
-      if: expect.stringContaining("inputs.private_adapters"),
+      if: expect.not.stringContaining("inputs.private_adapters"),
       needs: "scope",
     });
     expect(verifyWorkflow.jobs["vue-tests"].if).toContain("needs.scope.outputs.vue == 'true'");
+    expect(verifyWorkflow.jobs["vue-tests"].steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ run: "pnpm vue:verify" }),
+        expect.objectContaining({ run: "pnpm test:vue-cli-host-acceptance" }),
+      ]),
+    );
+    const scopeStep = verifyWorkflow.jobs.scope.steps?.find((step) => step.id === "changes");
+    const vueScopePattern = scopeStep?.env?.VUE_SCOPE_PATTERN;
+    expect(vueScopePattern).toBeDefined();
+    const matchesVueScope = (file: string): boolean => new RegExp(vueScopePattern!).test(file);
+    for (const file of [
+      "apps/vue-demo/src/App.vue",
+      "packages/vue/src/index.ts",
+      "packages/runtime/src/index.ts",
+      "packages/cli/registry/styled-components.json",
+      "packages/cli/src/registry/bundled-registry.json",
+      "packages/cli/src/commands/init.ts",
+      "packages/cli/tests/commands/init.test.ts",
+      "packages/cli/package.json",
+      "packages/cli/tsup.config.ts",
+      "scripts/portable-runtime/contracts/primitive/components/dialog.ts",
+      "scripts/portable-runtime/contracts/styled/components/dialog.ts",
+      "scripts/portable-runtime/renderers/shared.ts",
+      "scripts/portable-runtime/renderers/generic-adapter-plan/index.ts",
+      "scripts/portable-runtime/renderers/framework-adapters/vue/renderer.ts",
+      "scripts/portable-runtime/renderers/framework-adapters/target-definition.ts",
+      "scripts/portable-runtime/generate-cli-registry.ts",
+      "scripts/release-candidate-acceptance.mjs",
+      "scripts/tests/root-verification-scripts.test.ts",
+      ".github/workflows/verify.yml",
+      "package.json",
+      "turbo.json",
+    ]) {
+      expect(matchesVueScope(file), file).toBe(true);
+    }
+    expect(matchesVueScope("docs/product/positioning.md")).toBe(false);
+    expect(
+      matchesVueScope("scripts/portable-runtime/renderers/framework-adapters/svelte/renderer.ts"),
+    ).toBe(false);
     expect(verifyWorkflow.jobs["svelte-tests"]).toMatchObject({
       if: expect.stringContaining("inputs.private_adapters"),
       needs: "scope",
@@ -203,9 +255,7 @@ describe("root verification scripts", () => {
     expect(verifyWorkflow.jobs["svelte-tests"].if).toContain(
       "needs.scope.outputs.svelte == 'true'",
     );
-    expect(verifyWorkflowSource).not.toMatch(/packages\/\(cli\|runtime\|vue\)/u);
     expect(verifyWorkflowSource).not.toMatch(/packages\/\(runtime\|svelte\)/u);
-    expect(verifyWorkflowSource).toContain("packages/vue/");
     expect(verifyWorkflowSource).toContain("packages/svelte/");
     expect(verifyWorkflow.jobs["windows-packed-cli"]).toMatchObject({
       if: "needs.scope.outputs.windows == 'true'",

@@ -82,7 +82,7 @@ const registryVersionManifest = JSON.parse(
 ) as { registryVersion: string };
 const CURRENT_ASTRO_SPEC = `@starwind-ui/astro@${runtimePackage.version}`;
 const CURRENT_REACT_SPEC = `@starwind-ui/react@${runtimePackage.version}`;
-const CURRENT_VUE_SPEC = "@starwind-ui/vue@0.0.0";
+const CURRENT_VUE_SPEC = "@starwind-ui/vue@0.1.0";
 const ASTRO_SETUP_REQUIREMENTS = [
   "@tabler/icons@^3",
   "@tailwindcss/forms@^0.5",
@@ -286,7 +286,7 @@ describe("init command", () => {
     version: "2.0.0",
     setup: {
       vue: {
-        adapterPackage: { name: "@starwind-ui/vue", range: "*" },
+        adapterPackage: { name: "@starwind-ui/vue", range: "0.1.0" },
         packageRequirements: [{ name: "vue", range: ">=3.5" }],
       },
     },
@@ -585,7 +585,7 @@ describe("init command", () => {
     const projectPackage = {
       dependencies: {
         "@starwind-ui/runtime": "^0.1.0",
-        "@starwind-ui/vue": "0.0.0",
+        "@starwind-ui/vue": "0.1.0",
         "@tailwindcss/forms": "^0.5.1",
         tailwindcss: "^4.1",
         "tw-animate-css": "^1.2.0",
@@ -828,27 +828,23 @@ describe("init command", () => {
     }
   });
 
-  it("rejects Vue through the public init call before host detection or mutation", async () => {
-    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("process.exit called");
+  it("initializes Vue through the public host path", async () => {
+    mockDetectHostPlan.mockResolvedValue(vuePlan);
+
+    await init(true, {
+      defaults: true,
+      framework: "vue",
+      packageManager: "pnpm",
     });
-    try {
-      await expect(
-        init(true, {
-          defaults: true,
-          framework: "vue",
-          packageManager: "pnpm",
-        } as never),
-      ).rejects.toThrow("process.exit called");
-      expect(clackPrompts.log.error).toHaveBeenCalledWith(
-        expect.stringContaining("public target policy"),
-      );
-      expect(mockDetectHostPlan).not.toHaveBeenCalled();
-      expect(mockInstallDependencies).not.toHaveBeenCalled();
-      expect(mockUpdateConfig).not.toHaveBeenCalled();
-    } finally {
-      exitSpy.mockRestore();
-    }
+
+    expect(mockDetectHostPlan).toHaveBeenCalled();
+    expect(mockInstallDependencies).toHaveBeenCalledWith(
+      expect.arrayContaining(["@starwind-ui/vue@0.1.0"]),
+      "pnpm",
+    );
+    expect(mockUpdateConfig).toHaveBeenCalledWith(expect.objectContaining({ framework: "vue" }), {
+      appendComponents: false,
+    });
   });
 
   it("preserves a Vite Vue project when preflight fails", async () => {

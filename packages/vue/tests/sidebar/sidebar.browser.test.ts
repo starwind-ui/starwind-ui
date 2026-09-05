@@ -1,5 +1,12 @@
 import { createApp, h, nextTick, ref } from "vue";
 import { afterEach, describe, expect, it } from "vitest";
+import { userEvent } from "vitest/browser";
+
+import {
+  CollapsiblePanel,
+  CollapsibleRoot,
+  CollapsibleTrigger,
+} from "@starwind-ui/vue/collapsible";
 
 import {
   SidebarComponent,
@@ -8,6 +15,21 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@starwind-ui/vue/sidebar";
+import {
+  Collapsible as StyledCollapsible,
+  CollapsibleContent as StyledCollapsibleContent,
+  CollapsibleTrigger as StyledCollapsibleTrigger,
+} from "../../../../apps/vue-demo/src/components/starwind-runtime/collapsible";
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownTrigger,
+} from "../../../../apps/vue-demo/src/components/starwind-runtime/dropdown";
+import {
+  SidebarMenuButton as StyledSidebarMenuButton,
+  SidebarMenuItem as StyledSidebarMenuItem,
+} from "../../../../apps/vue-demo/src/components/starwind-runtime/sidebar";
 
 const cleanups: Array<() => void> = [];
 
@@ -65,6 +87,103 @@ describe("Vue Sidebar public behavior", () => {
     remounted.querySelector<HTMLButtonElement>("[data-sw-sidebar-rail]")!.click();
     await settle();
     expect(provider(remounted).dataset.state).toBe("expanded");
+  });
+
+  it("keeps direct native and Styled Sidebar compositions on one interactive control", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const iconAndLabel = (label: string) => [
+      h("svg", { "aria-hidden": "true", viewBox: "0 0 16 16" }, [h("path", { d: "M2 8h12" })]),
+      h("span", null, label),
+    ];
+    const styledDisclosure = (name: string, tooltip?: string) =>
+      h(StyledSidebarMenuItem, null, () =>
+        h(StyledCollapsible, null, () => [
+          h(StyledCollapsibleTrigger, { asChild: true }, () =>
+            h(StyledSidebarMenuButton, { "data-testid": `${name}-trigger`, tooltip }, () =>
+              iconAndLabel(name),
+            ),
+          ),
+          h(
+            StyledCollapsibleContent,
+            { "data-testid": `${name}-content` },
+            () => `${name} content`,
+          ),
+        ]),
+      );
+    const app = createApp({
+      render: () =>
+        h(
+          SidebarProvider,
+          { defaultOpen: true, mobileQuery: "(max-width: 0px)", persistOpen: false },
+          () => [
+            h(SidebarComponent, { collapsible: "icon" }, () => "Sidebar"),
+            h(CollapsibleRoot, null, () => [
+              h(CollapsibleTrigger, { asChild: true }, () =>
+                h("button", { "data-testid": "native-models-trigger" }, iconAndLabel("Models")),
+              ),
+              h(CollapsiblePanel, { "data-testid": "native-models-content" }, () => "Genesis"),
+            ]),
+            styledDisclosure("without-tooltip"),
+            styledDisclosure("with-tooltip", "Models tooltip"),
+            h(Dropdown, null, () => [
+              h(DropdownTrigger, { asChild: true }, () =>
+                h(StyledSidebarMenuButton, { "data-testid": "account-trigger", size: "lg" }, () =>
+                  iconAndLabel("Branden account"),
+                ),
+              ),
+              h(DropdownContent, { "data-testid": "account-content", disablePortal: true }, () =>
+                h(DropdownItem, null, () => "Account"),
+              ),
+            ]),
+          ],
+        ),
+    });
+    app.mount(host);
+    cleanups.push(() => app.unmount());
+    await settle();
+
+    const nativeTrigger = host.querySelector<HTMLButtonElement>(
+      "[data-testid=native-models-trigger]",
+    )!;
+    expect(nativeTrigger.hasAttribute("data-sw-collapsible-trigger")).toBe(true);
+    expect(nativeTrigger.hasAttribute("data-as-child")).toBe(false);
+    expect(nativeTrigger.style.display).not.toBe("contents");
+    expect(nativeTrigger.querySelector("[data-sw-collapsible-trigger]")).toBeNull();
+    nativeTrigger.focus();
+    await userEvent.keyboard("{Enter}");
+    await settle();
+    expect(host.querySelector<HTMLElement>("[data-testid=native-models-content]")!.hidden).toBe(
+      false,
+    );
+    nativeTrigger.click();
+    await settle();
+    expect(host.querySelector<HTMLElement>("[data-testid=native-models-content]")!.hidden).toBe(
+      true,
+    );
+
+    for (const name of ["without-tooltip", "with-tooltip"]) {
+      const trigger = host.querySelector<HTMLButtonElement>(`[data-testid=${name}-trigger]`)!;
+      expect(trigger.tagName).toBe("BUTTON");
+      expect(trigger.hasAttribute("data-sw-collapsible-trigger")).toBe(true);
+      expect(trigger.hasAttribute("data-sw-sidebar-menu-button")).toBe(true);
+      expect(trigger.parentElement?.closest("button")).toBeNull();
+      expect(trigger.querySelector("button")).toBeNull();
+      expect(trigger.querySelector("[data-sw-collapsible-trigger]")).toBeNull();
+      if (name === "with-tooltip") {
+        expect(trigger.hasAttribute("data-sw-tooltip-trigger")).toBe(true);
+      }
+      trigger.click();
+      await settle();
+      expect(host.querySelector<HTMLElement>(`[data-testid=${name}-content]`)!.hidden).toBe(false);
+    }
+
+    const accountTrigger = host.querySelector<HTMLButtonElement>("[data-testid=account-trigger]")!;
+    expect(accountTrigger.hasAttribute("data-sw-menu-trigger")).toBe(true);
+    expect(accountTrigger.hasAttribute("data-sw-sidebar-menu-button")).toBe(true);
+    accountTrigger.click();
+    await settle();
+    expect(host.querySelector<HTMLElement>("[data-testid=account-content]")!.hidden).toBe(false);
   });
 
   it("tracks responsive transitions and Runtime request operations", async () => {

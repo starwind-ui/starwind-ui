@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   access,
+  cp,
   mkdir,
   mkdtemp,
   readdir,
@@ -32,6 +33,8 @@ const VUE_VERSION = "3.5.39";
 const NUXT_3_VERSION = "3.21.0";
 const NUXT_4_VERSION = "4.2.0";
 const QUASAR_APP_VERSION = "3.0.0";
+const VUE_BETA_REGISTRY_VERSION = "0.1.0";
+const VUE_BETA_CLI_VERSION = "3.3.0";
 const HOST = "127.0.0.1";
 const PRIVATE_PACKAGES = [
   {
@@ -62,7 +65,7 @@ function fileSpecifier(file) {
   return `file:${file.replaceAll("\\", "/")}`;
 }
 
-export function createPrivateVuePackPlan({ outputDirectory }) {
+export function createVueBetaPackPlan({ outputDirectory }) {
   return {
     outputDirectory,
     packages: PRIVATE_PACKAGES.map((entry) => ({
@@ -72,6 +75,9 @@ export function createPrivateVuePackPlan({ outputDirectory }) {
     })),
   };
 }
+
+/** @deprecated Use createVueBetaPackPlan. */
+export const createPrivateVuePackPlan = createVueBetaPackPlan;
 
 export function createVueLocalLinkAcceptancePlan({ root }) {
   const pnpmHome = path.join(root, "pnpm-global");
@@ -121,6 +127,8 @@ function createBaselineVueCliHostAcceptancePlan({ packages, root }) {
         ],
         lifecycle: [
           "init",
+          "repeat-init",
+          "search",
           "styled-add",
           "styled-update",
           "styled-remove",
@@ -172,6 +180,8 @@ function createBaselineVueCliHostAcceptancePlan({ packages, root }) {
         ],
         lifecycle: [
           "init",
+          "repeat-init",
+          "search",
           "styled-add",
           "styled-update",
           "styled-remove",
@@ -268,12 +278,30 @@ export function shouldPreserveVueHostRoot({ failed, keepTemp }) {
 export function parseArgs(argv) {
   let keepTemp = false;
   let localLinkOnly = false;
-  for (const argument of argv) {
+  const projectIds = [];
+  let rootDirectory;
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
     if (argument === "--keep-temp") keepTemp = true;
     else if (argument === "--local-link-only") localLinkOnly = true;
-    else throw new Error(`Unknown argument: ${argument}`);
+    else if (argument === "--project") {
+      const projectId = argv[index + 1];
+      if (!projectId) throw new Error("Expected an id after --project.");
+      projectIds.push(projectId);
+      index += 1;
+    } else if (argument.startsWith("--project=")) projectIds.push(argument.slice(10));
+    else if (argument === "--root") {
+      rootDirectory = argv[index + 1];
+      if (!rootDirectory) throw new Error("Expected a path after --root.");
+      index += 1;
+    } else throw new Error(`Unknown argument: ${argument}`);
   }
-  return { keepTemp, localLinkOnly };
+  return {
+    keepTemp,
+    localLinkOnly,
+    projectIds: projectIds.length > 0 ? projectIds : undefined,
+    rootDirectory,
+  };
 }
 
 export function assertPackedVueHostProvenance({
@@ -410,8 +438,14 @@ function samePath(left, right) {
   return normalize(left) === normalize(right);
 }
 
-export async function runWithTemporaryVueHostRoot({ keepTemp = false } = {}, operation) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-cli-host-acceptance-"));
+export async function runWithTemporaryVueHostRoot(
+  { keepTemp = false, rootDirectory } = {},
+  operation,
+) {
+  const root = rootDirectory
+    ? path.resolve(rootDirectory)
+    : await mkdtemp(path.join(os.tmpdir(), "starwind-vue-cli-host-acceptance-"));
+  if (rootDirectory) await mkdir(root, { recursive: true });
   let failed = false;
   console.log(`[vue-cli-host] project root: ${root}`);
   try {
@@ -642,18 +676,40 @@ export async function runVueLocalLinkAcceptance({ root, runCommand = runLoggedCo
   console.log("[vue-cli-host] isolated Runtime, Vue, and CLI local-link acceptance passed");
 }
 
-async function packPrivatePackages(outputDirectory, logsDirectory) {
-  const plan = createPrivateVuePackPlan({ outputDirectory });
+async function packVueBetaPackages(outputDirectory, logsDirectory) {
+  const plan = createVueBetaPackPlan({ outputDirectory });
   await mkdir(outputDirectory, { recursive: true });
   const packages = {};
   const manifests = {};
   for (const entry of plan.packages) {
-    const manifest = JSON.parse(await readFile(path.join(entry.directory, "package.json"), "utf8"));
+    let packageDirectory = entry.directory;
+    const manifest = JSON.parse(
+      await readFile(path.join(packageDirectory, "package.json"), "utf8"),
+    );
+    const plannedVersion =
+      entry.key === "vue"
+        ? VUE_BETA_REGISTRY_VERSION
+        : entry.key === "cli"
+          ? VUE_BETA_CLI_VERSION
+          : manifest.version;
+    if (plannedVersion !== manifest.version) {
+      packageDirectory = path.join(outputDirectory, "staged", entry.key);
+      await cp(entry.directory, packageDirectory, {
+        filter: (source) => path.basename(source) !== "node_modules",
+        recursive: true,
+      });
+      manifest.version = plannedVersion;
+      await writeFile(
+        path.join(packageDirectory, "package.json"),
+        `${JSON.stringify(manifest, null, 2)}\n`,
+        "utf8",
+      );
+    }
     assert.equal(manifest.name, entry.name);
     assert.equal(typeof manifest.version, "string");
     await runLoggedCommand(
       `pack-${entry.key}`,
-      { args: ["pack", "--out", entry.file], cwd: entry.directory },
+      { args: ["pack", "--out", entry.file], cwd: packageDirectory },
       logsDirectory,
     );
     packages[entry.key] = entry.file;
@@ -706,7 +762,7 @@ async function prepareManifest(project, packages, registryUrl) {
   );
 }
 
-async function loadPrivateCapability(root) {
+async function loadProductionCapability() {
   const [
     initModule,
     addModule,
@@ -714,8 +770,7 @@ async function loadPrivateCapability(root) {
     removeModule,
     primitivesModule,
     policyModule,
-    registryModule,
-    vueTargetModule,
+    searchModule,
   ] = await Promise.all([
     import("../packages/cli/src/commands/init.ts"),
     import("../packages/cli/src/commands/add.ts"),
@@ -723,22 +778,18 @@ async function loadPrivateCapability(root) {
     import("../packages/cli/src/commands/remove.ts"),
     import("../packages/cli/src/commands/primitives.ts"),
     import("../packages/cli/src/utils/framework-target-policy.ts"),
-    import("./portable-runtime/generate-cli-registry.ts"),
-    import("./portable-runtime/renderers/framework-adapters/vue/index.ts"),
+    import("../packages/cli/src/commands/search.ts"),
   ]);
-  const generatorPolicy = registryModule.createCliRegistryBuildPolicy([
-    vueTargetModule.vueFrameworkAdapterTarget,
+  const [registry, artifacts] = await Promise.all([
+    readFile(path.join(REPO_ROOT, "packages/cli/src/registry/bundled-registry.json"), "utf8").then(
+      JSON.parse,
+    ),
+    readFile(
+      path.join(REPO_ROOT, "packages/cli/src/registry/primitive-vendoring-artifacts.json"),
+      "utf8",
+    ).then(JSON.parse),
   ]);
-  const registry = await registryModule.buildRuntimeRegistry({
-    repoRoot: REPO_ROOT,
-    targetPolicy: generatorPolicy,
-    tempRoot: path.join(root, "generated-styled"),
-  });
-  const artifacts = await registryModule.buildPrimitiveVendoringArtifacts({
-    repoRoot: REPO_ROOT,
-    targetPolicy: generatorPolicy,
-    tempRoot: path.join(root, "generated-primitives"),
-  });
+  assert.equal(registry.setup.vue.adapterPackage.range, "0.1.0");
   return {
     add: addModule.add,
     artifacts,
@@ -746,18 +797,19 @@ async function loadPrivateCapability(root) {
     primitivesAdd: primitivesModule.primitivesAdd,
     registry,
     remove: removeModule.remove,
-    targetPolicy: policyModule.PRIVATE_VUE_FRAMEWORK_TARGET_POLICY,
+    search: searchModule.search,
+    targetPolicy: policyModule.PUBLIC_FRAMEWORK_TARGET_POLICY,
     update: updateModule.update,
   };
 }
 
-async function runPrivatePhase(project, logsDirectory, phase, operation) {
+async function runProductionPhase(project, logsDirectory, phase, operation) {
   const originalDirectory = process.cwd();
   const originalExit = process.exit;
   const logFile = path.join(logsDirectory, `${phase}.log`);
   await mkdir(logsDirectory, { recursive: true });
   process.exit = (code) => {
-    throw new Error(`Private CLI phase ${phase} requested process exit ${code ?? 0}.`);
+    throw new Error(`Production CLI phase ${phase} requested process exit ${code ?? 0}.`);
   };
   process.chdir(project.directory);
   try {
@@ -843,10 +895,10 @@ export async function assertPreservedVueHostPackageRanges(project, expected) {
   }
 }
 
-async function runPrivateLifecycle(project, capability, logsDirectory) {
+async function runProductionLifecycle(project, capability, logsDirectory) {
   const preservedPackageRanges = await captureVueHostPackageRanges(project);
   const dependencies = { registry: capability.registry, targetPolicy: capability.targetPolicy };
-  await runPrivatePhase(project, logsDirectory, "03-init", () =>
+  await runProductionPhase(project, logsDirectory, "03-init", () =>
     capability.init(
       true,
       { defaults: true, framework: "vue", packageManager: "pnpm" },
@@ -855,7 +907,7 @@ async function runPrivateLifecycle(project, capability, logsDirectory) {
   );
   await assertPreservedVueHostPackageRanges(project, preservedPackageRanges);
   const stableFiles = await captureProjectBytes(project);
-  await runPrivatePhase(project, logsDirectory, "03-repeat-init", () =>
+  await runProductionPhase(project, logsDirectory, "03-repeat-init", () =>
     capability.init(
       true,
       { defaults: true, framework: "vue", packageManager: "pnpm" },
@@ -868,7 +920,14 @@ async function runPrivateLifecycle(project, capability, logsDirectory) {
     `${project.id} repeat init changed host or Starwind bytes.`,
   );
   await assertPreservedVueHostPackageRanges(project, preservedPackageRanges);
-  await runPrivatePhase(project, logsDirectory, "04-styled-add", () =>
+  await runProductionPhase(project, logsDirectory, "04-search", () =>
+    capability.search(
+      "button",
+      { framework: "vue", json: true, primitives: true },
+      { artifacts: capability.artifacts, targetPolicy: capability.targetPolicy },
+    ),
+  );
+  await runProductionPhase(project, logsDirectory, "05-styled-add", () =>
     capability.add(
       ["collapsible"],
       { framework: "vue", packageManager: "pnpm", yes: true },
@@ -891,7 +950,7 @@ async function runPrivateLifecycle(project, capability, logsDirectory) {
     "stale source\n",
     "utf8",
   );
-  await runPrivatePhase(project, logsDirectory, "05-styled-update", () =>
+  await runProductionPhase(project, logsDirectory, "06-styled-update", () =>
     capability.update(
       ["collapsible"],
       { framework: "vue", packageManager: "pnpm", yes: true },
@@ -899,7 +958,7 @@ async function runPrivateLifecycle(project, capability, logsDirectory) {
     ),
   );
   await assertStyledPayload(project, capability.registry);
-  await runPrivatePhase(project, logsDirectory, "06-styled-remove", () =>
+  await runProductionPhase(project, logsDirectory, "07-styled-remove", () =>
     capability.remove(
       ["collapsible"],
       { framework: "vue", yes: true },
@@ -909,7 +968,7 @@ async function runPrivateLifecycle(project, capability, logsDirectory) {
   for (const file of styledArtifact.files) {
     await assertMissing(resolveStyledFile(project, file.path));
   }
-  await runPrivatePhase(project, logsDirectory, "07-styled-re-add", () =>
+  await runProductionPhase(project, logsDirectory, "08-styled-re-add", () =>
     capability.add(
       ["collapsible"],
       { framework: "vue", packageManager: "pnpm", yes: true },
@@ -917,7 +976,7 @@ async function runPrivateLifecycle(project, capability, logsDirectory) {
     ),
   );
   await assertStyledPayload(project, capability.registry);
-  await runPrivatePhase(project, logsDirectory, "08-primitive-add", () =>
+  await runProductionPhase(project, logsDirectory, "09-primitive-add", () =>
     capability.primitivesAdd(
       ["button"],
       {
@@ -1074,6 +1133,143 @@ async function verifyPackedProvenance(project, packages, manifests) {
   });
 }
 
+export function createPackedVueExportProbe(manifest) {
+  const specifiers = Object.keys(manifest.exports)
+    .filter((subpath) => subpath !== "./package.json")
+    .map((subpath) =>
+      subpath === "." ? "@starwind-ui/vue" : `@starwind-ui/vue/${subpath.slice(2)}`,
+    );
+  return {
+    runtimeSource: `${specifiers.map((specifier) => `await import(${JSON.stringify(specifier)});`).join("\n")}\n`,
+    typeSource: `${specifiers
+      .map(
+        (specifier, index) => `import type * as Export${index} from ${JSON.stringify(specifier)};`,
+      )
+      .join("\n")}\n`,
+  };
+}
+
+export async function verifyPackedVueExports(
+  project,
+  logsDirectory,
+  { runCommand = runLoggedCommand } = {},
+) {
+  const packageRoot = path.join(project.directory, "node_modules", "@starwind-ui", "vue");
+  const manifest = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
+  const { runtimeSource, typeSource } = createPackedVueExportProbe(manifest);
+  const probeDirectory = path.join(project.directory, ".starwind-vue-export-probe");
+  await mkdir(probeDirectory, { recursive: true });
+  await writeFile(path.join(probeDirectory, "index.ts"), typeSource, "utf8");
+  await writeFile(
+    path.join(probeDirectory, "tsconfig.json"),
+    `${JSON.stringify(
+      {
+        compilerOptions: {
+          lib: ["ES2022", "DOM", "DOM.Iterable"],
+          module: "ESNext",
+          moduleResolution: "Bundler",
+          noEmit: true,
+          skipLibCheck: true,
+          strict: true,
+          target: "ES2022",
+        },
+        files: ["index.ts"],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  await runCommand(
+    "09-packed-declarations",
+    {
+      args: [
+        path.join(project.directory, "node_modules", "typescript", "bin", "tsc"),
+        "--project",
+        path.join(probeDirectory, "tsconfig.json"),
+      ],
+      command: process.execPath,
+      cwd: project.directory,
+    },
+    logsDirectory,
+  );
+  const source = `
+import { access, readFile } from "node:fs/promises";
+import path from "node:path";
+const packageRoot = ${JSON.stringify(packageRoot)};
+const manifest = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
+for (const [subpath, target] of Object.entries(manifest.exports)) {
+  if (subpath === "./package.json") continue;
+  const conditions = typeof target === "string" ? { import: target } : target;
+  if (!conditions.types) throw new Error(subpath + " has no declaration export");
+  await access(path.join(packageRoot, conditions.types));
+}
+${runtimeSource}
+`;
+  await runCommand(
+    "09-packed-exports",
+    {
+      args: ["--input-type=module", "--eval", source],
+      command: process.execPath,
+      cwd: project.directory,
+    },
+    logsDirectory,
+  );
+}
+
+export function isVueHydrationMismatchWarning(text) {
+  return /(?:hydration[^\n]*(?:mismatch|mismatches|failed)|(?:mismatch|mismatches)[^\n]*hydration)/i.test(
+    text,
+  );
+}
+
+export function shouldCaptureVueHydrationWarnings(project) {
+  return project.host === "nuxt" || project.id === "astro-vue" || project.fixture?.mode === "ssr";
+}
+
+export function isNuxtComponentCollisionWarning(text) {
+  return /(?:Two component files resolving to the same name|duplicated imports[^\n]*component)/i.test(
+    text,
+  );
+}
+
+export async function assertNuxtComponentDiscovery(project, logsDirectory) {
+  if (project.host !== "nuxt") return;
+  const commandOutput = await Promise.all(
+    ["09-typecheck.log", "10-build.log"].map((file) =>
+      readFile(path.join(logsDirectory, file), "utf8"),
+    ),
+  );
+  assert.equal(
+    commandOutput.some(isNuxtComponentCollisionWarning),
+    false,
+    `${project.id} reported a duplicate Nuxt component registration.`,
+  );
+
+  const declarations = await readFile(
+    path.join(project.directory, ".nuxt", "components.d.ts"),
+    "utf8",
+  );
+  for (const name of [
+    "StarwindCollapsible",
+    "StarwindPrimitivesButtonRoot",
+    "UserTypeScript",
+    "UserVue",
+  ]) {
+    assert.match(declarations, new RegExp(`\\b${name}\\b`), `${project.id} missing ${name}.`);
+  }
+  assert.doesNotMatch(
+    declarations,
+    /components[\\/]starwind[\\/][^'"\n]*\.ts\b/i,
+    `${project.id} registered a Styled TypeScript file as a component.`,
+  );
+  assert.doesNotMatch(
+    declarations,
+    /components[\\/]starwind-primitives[\\/][^'"\n]*\.ts\b/i,
+    `${project.id} registered a Primitive TypeScript file as a component.`,
+  );
+}
+
 export async function assertRegistryVueHostProvenance(project) {
   const manifest = JSON.parse(await readFile(path.join(project.directory, "package.json"), "utf8"));
   const lockfile = parseYaml(
@@ -1096,13 +1292,11 @@ export async function assertRegistryVueHostProvenance(project) {
         !specifier.replaceAll("\\", "/").includes(REPO_ROOT.replaceAll("\\", "/")),
       `${project.id} ${packageName} bypasses registry provenance.`,
     );
-    const installedFile = await realpath(
-      path.join(project.directory, "node_modules", ...packageName.split("/"), "package.json"),
-    );
-    const relative = path.relative(project.directory, installedFile);
-    assert.ok(
-      relative !== "" && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative),
-      `${project.id} ${packageName} resolves outside its isolated project.`,
+    const installedFile = path.join(
+      project.directory,
+      "node_modules",
+      ...packageName.split("/"),
+      "package.json",
     );
     const installed = JSON.parse(await readFile(installedFile, "utf8"));
     assert.equal(installed.name, packageName);
@@ -1297,6 +1491,13 @@ async function verifyBrowser(project, logsDirectory, browser) {
     const errors = [];
     page.on("console", (message) => {
       if (message.type() === "error") errors.push(`console: ${message.text()}`);
+      else if (
+        message.type() === "warning" &&
+        shouldCaptureVueHydrationWarnings(project) &&
+        isVueHydrationMismatchWarning(message.text())
+      ) {
+        errors.push(`console warning: ${message.text()}`);
+      }
     });
     page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
     try {
@@ -1350,9 +1551,15 @@ function formatError(error) {
   return error instanceof Error ? (error.stack ?? error.message) : String(error);
 }
 
-export async function runVueCliHostAcceptance({ keepTemp = false, localLinkOnly = false } = {}) {
-  return runWithTemporaryVueHostRoot({ keepTemp }, async (root) => {
-    await runVueLocalLinkAcceptance({ root });
+export async function runVueCliHostAcceptance({
+  keepTemp = false,
+  localLinkOnly = false,
+  projectIds,
+  rootDirectory,
+  skipLocalLink = true,
+} = {}) {
+  return runWithTemporaryVueHostRoot({ keepTemp, rootDirectory }, async (root) => {
+    if (localLinkOnly || !skipLocalLink) await runVueLocalLinkAcceptance({ root });
     if (localLinkOnly) return { root };
 
     const rootLogs = path.join(root, "logs");
@@ -1360,8 +1567,17 @@ export async function runVueCliHostAcceptance({ keepTemp = false, localLinkOnly 
     let browser;
     let registry;
     await runWithCleanup(async () => {
-      const { manifests, packages } = await packPrivatePackages(packsDirectory, rootLogs);
+      const { manifests, packages } = await packVueBetaPackages(packsDirectory, rootLogs);
       const plan = createVueCliHostAcceptancePlan({ packages, root });
+      if (projectIds) {
+        const requested = new Set(projectIds);
+        plan.projects = plan.projects.filter(({ id }) => requested.has(id));
+        assert.equal(
+          plan.projects.length,
+          requested.size,
+          "Unknown Vue host acceptance project id.",
+        );
+      }
       registry = await startCandidateRegistry(
         Object.fromEntries(
           ["runtime", "vue"].map((key) => [
@@ -1375,7 +1591,7 @@ export async function runVueCliHostAcceptance({ keepTemp = false, localLinkOnly 
           ]),
         ),
       );
-      const capability = await loadPrivateCapability(root);
+      const capability = await loadProductionCapability();
       const require = createRequire(path.join(REPO_ROOT, "package.json"));
       const { chromium } = require("playwright");
       browser = await chromium.launch();
@@ -1388,14 +1604,28 @@ export async function runVueCliHostAcceptance({ keepTemp = false, localLinkOnly 
         await runLoggedCommand("02-install", packageCommand(project.directory, ["install"]), logs);
         if (project.ssrInstall) await runLoggedCommand("02-ssr-install", project.ssrInstall, logs);
         if (project.prepare) await runLoggedCommand("02-prepare", project.prepare, logs);
-        await runPrivateLifecycle(project, capability, logs);
+        try {
+          await runProductionLifecycle(project, capability, logs);
+        } catch (error) {
+          throw new Error(
+            `${project.id} production CLI lifecycle failed. Expected setup, repeat setup, search, add, update, remove, and Primitive checks to pass. Evidence: ${logs}.\n${formatError(error)}`,
+            { cause: error },
+          );
+        }
+        await runLoggedCommand(
+          "09-sync-lockfile",
+          packageCommand(project.directory, ["install", "--no-frozen-lockfile"]),
+          logs,
+        );
         await assertPreservedVueHostBytes(project, preservedBytes);
         await writeFixture(project);
         await verifyPackedProvenance(project, packages, manifests);
+        await verifyPackedVueExports(project, logs);
         await assertRegistryVueHostProvenance(project);
         await assertNoWorkspaceSourceAliases(project);
         await runLoggedCommand("09-typecheck", project.check, logs);
         await runLoggedCommand("10-build", project.build, logs);
+        await assertNuxtComponentDiscovery(project, logs);
         if (project.postBuild) await runLoggedCommand("11-output-install", project.postBuild, logs);
         await assertPreservedVueHostBytes(project, preservedBytes);
         if (project.preview) await verifyBrowser(project, logs, browser);
@@ -1452,7 +1682,27 @@ export async function createOfficialVueHostFixture(project) {
         ? '{"files":[],"references":[{"path":"./.nuxt/tsconfig.app.json"},{"path":"./.nuxt/tsconfig.server.json"},{"path":"./.nuxt/tsconfig.shared.json"},{"path":"./.nuxt/tsconfig.node.json"}]}\n'
         : '{"extends":"./.nuxt/tsconfig.json"}\n',
     );
-    await write(`${source}app.vue`, "<template><Acceptance /></template>\n");
+    await write(
+      `${source}app.vue`,
+      `<template>
+  <Acceptance />
+  <StarwindCollapsible data-testid="auto-styled">
+    <StarwindCollapsibleTrigger>Auto toggle</StarwindCollapsibleTrigger>
+    <StarwindCollapsibleContent>Auto content</StarwindCollapsibleContent>
+  </StarwindCollapsible>
+  <StarwindPrimitivesButtonRoot data-testid="auto-primitive">Auto primitive</StarwindPrimitivesButtonRoot>
+  <UserTypeScript />
+  <UserVue />
+</template>
+`,
+    );
+    await write(
+      `${source}components/UserTypeScript.ts`,
+      `import { defineComponent, h } from "vue";
+export default defineComponent({ name: "UserTypeScript", render: () => h("p", "User TypeScript") });
+`,
+    );
+    await write(`${source}components/UserVue.vue`, "<template><p>User Vue</p></template>\n");
     return;
   }
 
@@ -1542,6 +1792,7 @@ export default defineConfig({ plugins: [
           "@types/node": "^24.0.0",
           "sass-embedded": "^1.93.0",
           typescript: "^5.9.3",
+          vite: "^8.0.0",
           "vue-tsc": "^3.1.8",
         },
       },
@@ -1646,6 +1897,7 @@ export function createVueCliHostAcceptancePlan({ packages, root }) {
   const lifecycle = [
     "init",
     "repeat-init",
+    "search",
     "styled-add",
     "styled-update",
     "styled-remove",
@@ -1765,8 +2017,7 @@ export function createVueCliHostAcceptancePlan({ packages, root }) {
             ? { args: ["dist/ssr/index.js"], command: process.execPath }
             : {
                 args: [
-                  "exec",
-                  "vite",
+                  "node_modules/vite/bin/vite.js",
                   "preview",
                   "--host",
                   "{host}",
@@ -1776,7 +2027,7 @@ export function createVueCliHostAcceptancePlan({ packages, root }) {
                   "--outDir",
                   "dist/spa",
                 ],
-                command: getPnpmCommand(),
+                command: process.execPath,
               },
         primitiveDir: "src/components/starwind-primitives",
         registryDependencies: [
@@ -1787,6 +2038,7 @@ export function createVueCliHostAcceptancePlan({ packages, root }) {
           "quasar",
           "tailwindcss",
           "tw-animate-css",
+          "vite",
           "vue",
           "vue-router",
         ],

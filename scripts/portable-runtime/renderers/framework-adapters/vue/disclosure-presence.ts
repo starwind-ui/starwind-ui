@@ -188,7 +188,6 @@ const AsChildTrigger = defineComponent({
         "${facts.attrs.trigger}": "",
         "${facts.attrs.triggerExpanded}": "false",
         "${facts.attrs.triggerState}": "closed",
-        "data-as-child": "",
         "data-sw-part": "${facts.parts.trigger.name}",
       };
       return asChild.render({

@@ -183,7 +183,7 @@ describe.sequential("config utilsDir handling", () => {
         {
           $schema: CONFIG_SCHEMA_V2_URL,
           version: 2,
-          framework: "vue",
+          framework: "svelte",
           registry: {
             source: "bundled",
             version: "2.0.0",
@@ -1521,7 +1521,7 @@ describe.sequential("config utilsDir handling", () => {
           },
           componentDir: "src/components/starwind",
           componentDirs: {
-            vue: "src/components/starwind-vue",
+            svelte: "src/components/starwind-svelte",
           },
           components: [],
         },
@@ -1531,7 +1531,7 @@ describe.sequential("config utilsDir handling", () => {
       "utf-8",
     );
 
-    await expect(getConfigState()).rejects.toThrow(/componentDirs\.vue/);
+    await expect(getConfigState()).rejects.toThrow(/componentDirs\.svelte/);
 
     await writeFile(
       "starwind.config.json",
@@ -1693,7 +1693,7 @@ describe.sequential("config utilsDir handling", () => {
     await expect(getConfigState()).rejects.toThrow(/component "button" version/);
   });
 
-  it("accepts complete Vue config data only through the private policy", () => {
+  it("accepts complete Vue config data through the production policy", () => {
     const vueConfig = {
       $schema: CONFIG_SCHEMA_V2_URL,
       version: 2,
@@ -1719,8 +1719,7 @@ describe.sequential("config utilsDir handling", () => {
       primitives: [{ name: "accordion", version: "1.0.0", framework: "vue" }],
     };
 
-    expect(() => parseCurrentConfig(vueConfig)).toThrow(/componentDirs\.vue|framework "vue"/);
-    expect(parseCurrentConfig(vueConfig, PRIVATE_VUE_FRAMEWORK_TARGET_POLICY)).toMatchObject({
+    expect(parseCurrentConfig(vueConfig)).toMatchObject({
       framework: "vue",
       componentDirs: { vue: "src/components/starwind-vue" },
       primitiveDirs: { vue: "src/components/starwind-vue-primitives" },
@@ -1729,7 +1728,7 @@ describe.sequential("config utilsDir handling", () => {
     });
   });
 
-  it("uses the private policy for Vue config reads and writes", async () => {
+  it("uses the production policy for Vue config reads and writes", async () => {
     await writeFile(
       "starwind.config.json",
       JSON.stringify({
@@ -1756,8 +1755,7 @@ describe.sequential("config utilsDir handling", () => {
       "utf-8",
     );
 
-    await expect(getConfig()).rejects.toThrow(/starwind\.config\.json/);
-    await expect(getConfig(PRIVATE_VUE_FRAMEWORK_TARGET_POLICY)).resolves.toMatchObject({
+    await expect(getConfig()).resolves.toMatchObject({
       framework: "vue",
     });
 
@@ -1787,7 +1785,7 @@ describe.sequential("config utilsDir handling", () => {
     });
   });
 
-  it("rejects nested Vue records under the public policy", () => {
+  it("accepts nested Vue records under the public policy", () => {
     const baseConfig = {
       $schema: CONFIG_SCHEMA_V2_URL,
       version: 2,
@@ -1802,23 +1800,22 @@ describe.sequential("config utilsDir handling", () => {
       components: [],
     };
 
-    expect(() =>
+    expect(
       parseCurrentConfig({
         ...baseConfig,
         components: [{ name: "button", version: "2.4.0", framework: "vue", registry: "default" }],
-      }),
-    ).toThrow(/framework "vue"/);
-    expect(() =>
-      parseCurrentConfig({
-        ...baseConfig,
         primitives: [{ name: "accordion", version: "1.0.0", framework: "vue" }],
       }),
-    ).toThrow(/framework "vue"/);
+    ).toMatchObject({
+      components: [{ framework: "vue" }],
+      primitives: [{ framework: "vue" }],
+    });
   });
 
-  it("rejects Vue config writes under the public policy", async () => {
-    await expect(
-      updateConfig({ componentDirs: { vue: "src/components/starwind-vue" } } as never),
-    ).rejects.toThrow(/componentDirs\.vue/);
+  it("writes Vue config directories under the public policy", async () => {
+    await updateConfig({ componentDirs: { vue: "src/components/starwind-vue" } });
+    await expect(getConfig()).resolves.toMatchObject({
+      componentDirs: { vue: "src/components/starwind-vue" },
+    });
   });
 });

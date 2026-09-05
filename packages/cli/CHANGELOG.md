@@ -1,5 +1,11 @@
 # starwind
 
+## 3.3.0
+
+### Minor Changes
+
+- Add the public Vue 3.5 beta workflow to the CLI.
+
 ## 3.2.0
 
 ### Minor Changes

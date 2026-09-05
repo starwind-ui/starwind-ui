@@ -275,8 +275,7 @@ function protectedProps() {
     "${facts.attrs.triggerDisabled}": props.${facts.props.disabled.name} ? "" : undefined,
     "${facts.attrs.triggerAriaDisabled}": props.${facts.props.disabled.name} ? "true" : undefined,
     "${facts.attrs.triggerState}": "closed",
-${anchor ? `    "${closeDelay}": props.${facts.props.closeDelay.name},\n    "${openDelay}": props.${facts.props.openDelay.name},\n    href: props.${facts.props.disabled.name} ? undefined : attrs.href,\n    tabindex: props.${facts.props.disabled.name} ? -1 : attrs.tabindex,\n    onClick: handleClick,\n` : nativeDisabled ? `    "${nativeDisabled}": props.${facts.props.disabled.name},\n` : ""}    "data-as-child": "",
-    "data-sw-part": "${facts.parts.trigger.name}",
+${anchor ? `    "${closeDelay}": props.${facts.props.closeDelay.name},\n    "${openDelay}": props.${facts.props.openDelay.name},\n    href: props.${facts.props.disabled.name} ? undefined : attrs.href,\n    tabindex: props.${facts.props.disabled.name} ? -1 : attrs.tabindex,\n    onClick: handleClick,\n` : nativeDisabled ? `    "${nativeDisabled}": props.${facts.props.disabled.name},\n` : ""}    "data-sw-part": "${facts.parts.trigger.name}",
   };
 }
 const AsChildTrigger = defineComponent({

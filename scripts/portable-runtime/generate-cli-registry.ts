@@ -8,6 +8,7 @@ import semver from "semver";
 import type { RuntimeAdapterContract } from "./contracts/primitive/types.js";
 import { starwindStyledContracts } from "./contracts/styled/starwind.js";
 import type { FrameworkTarget, StyledAdapterContract } from "./contracts/styled/types.js";
+import { formatGeneratedOutput } from "./format-generated-output.js";
 import {
   type FrameworkAdapterRegisteredTarget,
   getFrameworkAdapterTargetsWithStyledCapability,
@@ -185,6 +186,7 @@ type WriteRuntimeRegistryOptions = BuildRuntimeRegistryOptions & {
 
 type TargetDefinition = {
   adapterPackage: string;
+  adapterPackageRange?: string;
   collectPackageImportSources?: (args: {
     group: StyledOutputComponentGroup;
     primitiveImportBase: string;
@@ -244,6 +246,7 @@ function createTargetDefinitions(
 
     return {
       adapterPackage,
+      adapterPackageRange: getExactAdapterPackageRange(registration),
       collectPackageImportSources:
         registration.cliRegistry.styledArtifact.collectPackageImportSources,
       generatedImportCandidateExtensions:
@@ -414,15 +417,17 @@ export async function buildRuntimeRegistry(
       );
       if (targetContracts.length === 0) continue;
 
+      const outputRoot = path.join(tempRoot, target.outputDir);
       await generateFrameworkStyledWrappers(target.target, {
         contracts: targetContracts,
         generatedBy: "scripts/portable-runtime/generate-cli-registry.ts",
-        outputRoot: path.join(tempRoot, target.outputDir),
+        outputRoot,
         primitiveImportBase: target.primitiveImportBase,
         primitiveOutputRoot: path.join(tempRoot, target.primitiveOutputDir),
       });
+      if (target.target === "vue") await formatGeneratedOutput([outputRoot], repoRoot);
 
-      targetOutputs.set(target.target, path.join(tempRoot, target.outputDir));
+      targetOutputs.set(target.target, outputRoot);
     }
 
     return {
@@ -503,7 +508,7 @@ function buildRegistrySetup(
     setup[target.target] = {
       adapterPackage: {
         name: target.adapterPackage,
-        range: getPackageRange(target.adapterPackage, packageRanges),
+        range: target.adapterPackageRange ?? getPackageRange(target.adapterPackage, packageRanges),
       },
       packageRequirements,
     };
@@ -1092,9 +1097,13 @@ function collectPackageRequirements(options: {
     }
   }
 
-  return [...packageNames]
-    .sort()
-    .map((name) => ({ name, range: getPackageRange(name, options.packageRanges) }));
+  return [...packageNames].sort().map((name) => ({
+    name,
+    range:
+      name === options.target.adapterPackage && options.target.adapterPackageRange
+        ? options.target.adapterPackageRange
+        : getPackageRange(name, options.packageRanges),
+  }));
 }
 
 function collectStyledPackageRequirementSources(
@@ -1197,6 +1206,19 @@ function getCliRegistryAdapterPackage(target: FrameworkAdapterRegisteredTarget):
   }
 
   return packageName;
+}
+
+function getExactAdapterPackageRange(
+  registration: CliRegistryTargetRegistration,
+): string | undefined {
+  const version = registration.cliRegistry.exactAdapterPackageVersion;
+  if (version === undefined) return undefined;
+  if (semver.valid(version) !== version) {
+    throw new Error(
+      `CLI registry target "${registration.target}" requires an exact adapter package version; received "${version}".`,
+    );
+  }
+  return version;
 }
 
 function normalizeArtifactDir(artifactDir: string): string {

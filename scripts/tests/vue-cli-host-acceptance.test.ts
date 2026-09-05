@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -8,13 +8,14 @@ import { createPackPlan } from "../pack-public-release-artifacts.mjs";
 import { getCandidateMatrix } from "../release-candidate-acceptance.mjs";
 import {
   assertNoWorkspaceSourceAliases,
+  assertNuxtComponentDiscovery,
+  assertPackedVueHostProvenance,
   assertPreservedVueHostBytes,
   assertPreservedVueHostPackageRanges,
-  assertPackedVueHostProvenance,
   capturePreservedVueHostBytes,
   captureVueHostPackageRanges,
   createOfficialVueHostFixture,
-  createPrivateVuePackPlan,
+  createVueBetaPackPlan,
   createVueCliHostAcceptancePlan,
   createVueLocalLinkAcceptancePlan,
   getAstroPageFixture,
@@ -22,11 +23,15 @@ import {
   getViteVueFixture,
   getVueFixture,
   isPreviewTreeAlive,
+  isNuxtComponentCollisionWarning,
+  isVueHydrationMismatchWarning,
   parseArgs,
   runCleanupOperations,
   runWithCleanup,
+  shouldCaptureVueHydrationWarnings,
   shouldPreserveVueHostRoot,
   stopPreviewTree,
+  verifyPackedVueExports,
 } from "../vue-cli-host-acceptance.mjs";
 
 const root = path.resolve("vue-cli-host-root");
@@ -36,20 +41,26 @@ const packages = {
   vue: path.join(root, "packs", "starwind-vue.tgz"),
 };
 
-describe("private Vue CLI host acceptance", () => {
-  it("plans exact private packages without changing the public pack plan", () => {
-    const privatePlan = createPrivateVuePackPlan({ outputDirectory: path.join(root, "packs") });
+describe("production Vue CLI host acceptance", () => {
+  it("plans exact beta packages and includes Vue in public candidate acceptance", () => {
+    const betaPlan = createVueBetaPackPlan({ outputDirectory: path.join(root, "packs") });
     const publicPlan = createPackPlan({ outputDirectory: path.join(root, "public-packs") });
 
-    expect(privatePlan.packages.map(({ key }) => key)).toEqual(["runtime", "vue", "cli"]);
-    expect(privatePlan.packages.map(({ name }) => name)).toEqual([
+    expect(betaPlan.packages.map(({ key }) => key)).toEqual(["runtime", "vue", "cli"]);
+    expect(betaPlan.packages.map(({ name }) => name)).toEqual([
       "@starwind-ui/runtime",
       "@starwind-ui/vue",
       "starwind",
     ]);
     expect(publicPlan.packages.map(({ key }) => key)).toEqual(["runtime", "astro", "react", "cli"]);
     expect(publicPlan.packages.map(({ key }) => key)).not.toContain("vue");
-    expect(getCandidateMatrix().map(({ framework }) => framework)).not.toContain("vue");
+    expect(
+      createPackPlan({
+        outputDirectory: path.join(root, "public-beta-packs"),
+        vueBeta: true,
+      }).packages.map(({ key }) => key),
+    ).toEqual(["runtime", "astro", "react", "vue", "cli"]);
+    expect(getCandidateMatrix().map(({ framework }) => framework)).toContain("vue");
   });
 
   it("plans isolated build-before-link execution and aggregate plus leaf cleanup", () => {
@@ -100,6 +111,7 @@ describe("private Vue CLI host acceptance", () => {
       expect(project.lifecycle).toEqual([
         "init",
         "repeat-init",
+        "search",
         "styled-add",
         "styled-update",
         "styled-remove",
@@ -166,8 +178,7 @@ describe("private Vue CLI host acceptance", () => {
       { directory: "src-ssr", packages: ["@hono/node-server", "hono"] },
     ]);
     expect(byId["quasar-spa"].preview.args).toEqual([
-      "exec",
-      "vite",
+      "node_modules/vite/bin/vite.js",
       "preview",
       "--host",
       "{host}",
@@ -177,6 +188,8 @@ describe("private Vue CLI host acceptance", () => {
       "--outDir",
       "dist/spa",
     ]);
+    expect(byId["nuxt-4"].registryDependencies).not.toContain("vite");
+    expect(byId["quasar-spa"].registryDependencies).toContain("vite");
     for (const project of projects) {
       expect(project.registryDependencies).toEqual(
         expect.arrayContaining([
@@ -199,6 +212,113 @@ describe("private Vue CLI host acceptance", () => {
         .join(" ");
       expect(commands).not.toMatch(/\b(?:composer|php)\b/i);
     }
+  });
+
+  it("captures Vue hydration mismatch warnings only for SSR and island hosts", () => {
+    expect(isVueHydrationMismatchWarning("[Vue warn]: Hydration text content mismatch")).toBe(true);
+    expect(isVueHydrationMismatchWarning("Hydration completed but contains mismatches.")).toBe(
+      true,
+    );
+    expect(isVueHydrationMismatchWarning("Third-party package is deprecated")).toBe(false);
+    expect(shouldCaptureVueHydrationWarnings({ host: "nuxt" })).toBe(true);
+    expect(shouldCaptureVueHydrationWarnings({ fixture: { mode: "ssr" } })).toBe(true);
+    expect(shouldCaptureVueHydrationWarnings({ id: "astro-vue" })).toBe(true);
+    expect(shouldCaptureVueHydrationWarnings({ id: "vite-vue" })).toBe(false);
+  });
+
+  it("detects Nuxt component collisions and accepts only SFC plus unrelated user declarations", async () => {
+    expect(
+      isNuxtComponentCollisionWarning(
+        "Two component files resolving to the same name StarwindCollapsible",
+      ),
+    ).toBe(true);
+    expect(isNuxtComponentCollisionWarning("Nuxt build completed")).toBe(false);
+
+    const fixtureRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-nuxt-components-"));
+    const project = {
+      directory: path.join(fixtureRoot, "nuxt-4"),
+      host: "nuxt",
+      id: "nuxt-4",
+    };
+    const logs = path.join(fixtureRoot, "logs");
+    try {
+      await mkdir(path.join(project.directory, ".nuxt"), { recursive: true });
+      await mkdir(logs, { recursive: true });
+      await writeFile(path.join(logs, "09-typecheck.log"), "typecheck passed\n");
+      await writeFile(path.join(logs, "10-build.log"), "build passed\n");
+      await writeFile(
+        path.join(project.directory, ".nuxt", "components.d.ts"),
+        `declare module 'vue' {
+  export interface GlobalComponents {
+    StarwindCollapsible: typeof import('../app/components/starwind/collapsible/Collapsible.vue')['default']
+    StarwindPrimitivesButtonRoot: typeof import('../app/components/starwind-primitives/button/ButtonRoot.vue')['default']
+    UserTypeScript: typeof import('../app/components/UserTypeScript.ts')['default']
+    UserVue: typeof import('../app/components/UserVue.vue')['default']
+  }
+}
+`,
+      );
+
+      await expect(assertNuxtComponentDiscovery(project, logs)).resolves.toBeUndefined();
+      await writeFile(
+        path.join(logs, "10-build.log"),
+        "Two component files resolving to the same name StarwindCollapsible\n",
+      );
+      await expect(assertNuxtComponentDiscovery(project, logs)).rejects.toThrow(
+        /duplicate Nuxt component/i,
+      );
+      await writeFile(path.join(logs, "10-build.log"), "build passed\n");
+      await writeFile(
+        path.join(project.directory, ".nuxt", "components.d.ts"),
+        `export const StarwindCollapsible: unknown;
+export const StarwindPrimitivesButtonRoot: unknown;
+export const UserTypeScript: unknown;
+export const UserVue: unknown;
+export const StarwindCollapsibleHelper: typeof import('../app/components/starwind/collapsible/internal-helper.ts')['default'];
+`,
+      );
+      await expect(assertNuxtComponentDiscovery(project, logs)).rejects.toThrow(
+        /Styled TypeScript file/i,
+      );
+    } finally {
+      await rm(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  it("rejects malformed packed Vue declarations through the consumer compiler", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-declaration-test-"));
+    const packageDirectory = path.join(directory, "node_modules/@starwind-ui/vue");
+    const logsDirectory = path.join(directory, "logs");
+    await mkdir(path.join(packageDirectory, "dist/button"), { recursive: true });
+    await writeFile(
+      path.join(packageDirectory, "package.json"),
+      `${JSON.stringify({
+        exports: {
+          ".": { import: "./dist/index.js", types: "./dist/index.d.ts" },
+          "./button": { import: "./dist/button/index.js", types: "./dist/button/index.d.ts" },
+        },
+        name: "@starwind-ui/vue",
+        type: "module",
+        version: "0.1.0",
+      })}\n`,
+    );
+    await Promise.all([
+      writeFile(path.join(packageDirectory, "dist/index.d.ts"), "export type Broken = ;\n"),
+      writeFile(path.join(packageDirectory, "dist/index.js"), "export {};\n"),
+      writeFile(
+        path.join(packageDirectory, "dist/button/index.d.ts"),
+        "export type Button = {};\n",
+      ),
+      writeFile(path.join(packageDirectory, "dist/button/index.js"), "export {};\n"),
+    ]);
+    await symlink(
+      await realpath("node_modules/typescript"),
+      path.join(directory, "node_modules/typescript"),
+    );
+    await expect(verifyPackedVueExports({ directory }, logsDirectory)).rejects.toThrow(
+      /09-packed-declarations/,
+    );
+    await rm(directory, { force: true, recursive: true });
   });
 
   it("rejects workspace and source fallbacks from every host-owned isolation config", async () => {
@@ -324,13 +444,13 @@ describe("private Vue CLI host acceptance", () => {
         file: packages.runtime,
         version: "0.1.0-beta.8",
       },
-      "@starwind-ui/vue": { file: packages.vue, version: "0.0.0" },
-      starwind: { file: packages.cli, version: "3.0.0-beta.8" },
+      "@starwind-ui/vue": { file: packages.vue, version: "0.1.0" },
+      starwind: { file: packages.cli, version: "3.3.0" },
     };
     const installed = {
       "@starwind-ui/runtime": { name: "@starwind-ui/runtime", version: "0.1.0-beta.8" },
-      "@starwind-ui/vue": { name: "@starwind-ui/vue", version: "0.0.0" },
-      starwind: { name: "starwind", version: "3.0.0-beta.8" },
+      "@starwind-ui/vue": { name: "@starwind-ui/vue", version: "0.1.0" },
+      starwind: { name: "starwind", version: "3.3.0" },
     };
     const assertLockfile = (lockfile: string, installedPackages = installed) =>
       assertPackedVueHostProvenance({
@@ -383,8 +503,24 @@ describe("private Vue CLI host acceptance", () => {
     expect(shouldPreserveVueHostRoot({ failed: true, keepTemp: false })).toBe(true);
     expect(shouldPreserveVueHostRoot({ failed: false, keepTemp: true })).toBe(true);
     expect(shouldPreserveVueHostRoot({ failed: false, keepTemp: false })).toBe(false);
-    expect(parseArgs(["--keep-temp"])).toEqual({ keepTemp: true, localLinkOnly: false });
-    expect(parseArgs(["--local-link-only"])).toEqual({ keepTemp: false, localLinkOnly: true });
+    expect(parseArgs(["--keep-temp"])).toEqual({
+      keepTemp: true,
+      localLinkOnly: false,
+      projectIds: undefined,
+      rootDirectory: undefined,
+    });
+    expect(parseArgs(["--local-link-only"])).toEqual({
+      keepTemp: false,
+      localLinkOnly: true,
+      projectIds: undefined,
+      rootDirectory: undefined,
+    });
+    expect(parseArgs(["--project", "nuxt-4", "--root", "/tmp/vue-host"])).toEqual({
+      keepTemp: false,
+      localLinkOnly: false,
+      projectIds: ["nuxt-4"],
+      rootDirectory: "/tmp/vue-host",
+    });
     expect(() => parseArgs(["--private-vue"])).toThrow(/Unknown argument/);
   });
 
@@ -430,21 +566,24 @@ describe("private Vue CLI host acceptance", () => {
     expect(isPreviewTreeAlive({ child })).toBe(false);
   });
 
-  it("keeps public Commander choices and checked-in registry artifacts Vue-free", async () => {
+  it("uses public Commander choices and checked-in Vue beta registry artifacts", async () => {
     const [program, registry, primitives] = await Promise.all([
       readFile("packages/cli/src/program.ts", "utf8"),
       readFile("packages/cli/src/registry/bundled-registry.json", "utf8"),
       readFile("packages/cli/src/registry/primitive-vendoring-artifacts.json", "utf8"),
     ]);
 
-    expect(program).toContain('choices(["astro", "react"])');
+    expect(program).toContain('"vue",');
     expect(program).not.toContain("PRIVATE_VUE_FRAMEWORK_TARGET_POLICY");
-    expect(JSON.parse(registry).setup).not.toHaveProperty("vue");
+    expect(JSON.parse(registry).setup.vue.adapterPackage).toEqual({
+      name: "@starwind-ui/vue",
+      range: "0.1.0",
+    });
     expect(
       JSON.parse(primitives).primitives.some(
         (artifact: { framework: string }) => artifact.framework === "vue",
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 

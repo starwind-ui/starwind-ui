@@ -27,6 +27,24 @@ describe("primitive discovery", () => {
           },
         ];
       }
+      if (framework === "vue") {
+        return [
+          {
+            component: "button",
+            framework: "vue",
+            version: "1.0.0",
+            files: [],
+            packageRequirements: [],
+          },
+          {
+            component: "zebra",
+            framework: "vue",
+            version: "1.0.0",
+            files: [],
+            packageRequirements: [],
+          },
+        ];
+      }
 
       return [
         {
@@ -55,7 +73,9 @@ describe("primitive discovery", () => {
       ["Alpha", "react"],
       ["button", "astro"],
       ["button", "react"],
+      ["button", "vue"],
       ["zebra", "astro"],
+      ["zebra", "vue"],
     ]);
   });
 

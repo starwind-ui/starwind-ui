@@ -59,7 +59,10 @@ describe("generated Vue Menu Primitive", () => {
     expect(root).toContain("createMenu(element");
     expect(root).toMatch(/emit\("openChange"[\s\S]*detail\.isCanceled[\s\S]*emit\("update:open"/);
     expect(root).toContain("portalReference: portalReference ?? undefined");
-    expect(portal).toContain('ownerContext.kind === "root"');
+    expect(portal).toContain("active: () => menu.mounted.value");
+    expect(portal).not.toContain(
+      'active: () => menu.mounted.value && ownerContext.kind === "root"',
+    );
     expect(portal).toContain(':disabled="placement.disabled.value"');
     expect(portal).toContain("useVuePortalPlacement");
     expect(portal).toContain("menu.registerPortal(owner, null)");

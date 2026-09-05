@@ -16,6 +16,8 @@ import {
   AccordionTrigger as StyledAccordionTrigger,
 } from "./starwind-runtime/accordion";
 
+const props = defineProps<{ styledOnly?: boolean }>();
+
 const controlledValue = ref<AccordionValue>("alpha");
 const cancelNext = ref(true);
 const items = ref(["alpha", "beta"]);
@@ -37,7 +39,7 @@ function handleValueChange(value: AccordionValue, detail: AccordionValueChangeDe
       </div>
     </div>
 
-    <div class="scenario">
+    <div v-if="!props.styledOnly" class="scenario">
       <h3>Default multiple value and dynamic items</h3>
       <AccordionRoot type="multiple" :default-value="['alpha']">
         <AccordionItem v-for="item in items" :key="item" :value="item">
@@ -61,7 +63,7 @@ function handleValueChange(value: AccordionValue, detail: AccordionValueChangeDe
       </button>
     </div>
 
-    <div class="scenario">
+    <div v-if="!props.styledOnly" class="scenario">
       <h3>Controlled, cancelable, form-adjacent value</h3>
       <input name="accordion-review-value" type="hidden" :value="String(controlledValue)" />
       <AccordionRoot

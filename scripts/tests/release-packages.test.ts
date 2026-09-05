@@ -10,11 +10,16 @@ import { parse as parseYaml } from "yaml";
 
 import {
   RELEASE_PACKAGE_SET,
+  VUE_BETA_RELEASE_PLAN,
+  captureVueBetaRegistryBaseline,
   createPublishCommands,
+  createVueBetaPublishCommands,
   createUserPublishHandoff,
   executeReleasePublication,
+  formatPublishPlan,
   formatCommandFailure,
   isDirtyGitStatusOutput,
+  loadVueBetaRegistryBaseline,
   parseArgs,
   parsePublishOutput,
   readGitOutput,
@@ -23,6 +28,7 @@ import {
   validatePublishedPrefix,
   validateReleaseChangesetConfig,
   validateReleasePackageManifests,
+  validateVueBetaReleaseMetadata,
 } from "../release-packages.mjs";
 import {
   createGitHubReleaseArgs,
@@ -80,7 +86,7 @@ function manifests(versions: { cli: string; runtime: string }) {
 }
 
 const CHANGESET_BUMPS = new Set<unknown>(["major", "minor", "patch"]);
-const PRIVATE_ADAPTER_PACKAGE_NAMES = new Set(["@starwind-ui/vue", "@starwind-ui/svelte"]);
+const PRIVATE_ADAPTER_PACKAGE_NAMES = new Set(["@starwind-ui/svelte"]);
 
 function parseChangesetReleasePackageNames(file: string, source: string): string[] {
   const frontmatter = source.match(/^---[ \t]*\r?\n([\s\S]*?)^---[ \t]*$/m);
@@ -121,12 +127,11 @@ describe("release package tooling", () => {
     expect(RELEASE_PACKAGE_SET.map((entry) => entry.name)).not.toContain("@starwind-ui/svelte");
   });
 
-  it("keeps Vue and Svelte quarantined outside Changesets and publication", async () => {
+  it("keeps Vue out of the fixed-group release and keeps Svelte quarantined", async () => {
     expect(CHANGESET_IGNORED_PACKAGES).toEqual([
       "demo",
       "react-demo",
       "vue-demo",
-      "@starwind-ui/vue",
       "@starwind-ui/svelte",
     ]);
     expect(RUNTIME_FIXED_GROUP).toEqual([
@@ -147,8 +152,7 @@ describe("release package tooling", () => {
     ]);
     expect(vuePackage).toMatchObject({
       name: "@starwind-ui/vue",
-      private: true,
-      version: "0.0.0",
+      version: "0.1.0",
     });
     expect(sveltePackage).toMatchObject({
       dependencies: { "@starwind-ui/runtime": "workspace:*" },
@@ -261,7 +265,7 @@ describe("release package tooling", () => {
         changelog: false,
         commit: false,
         fixed: [["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"]],
-        ignore: ["@starwind-ui/vue", "@starwind-ui/svelte"],
+        ignore: ["@starwind-ui/svelte"],
         linked: [],
         prettier: true,
         privatePackages: CHANGESET_PRIVATE_PACKAGE_POLICY,
@@ -297,10 +301,10 @@ describe("release package tooling", () => {
   it("rejects single-quoted private package releases in Changeset frontmatter", () => {
     expect(() =>
       assertNoPrivateAdapterChangesetReleases(
-        "private-vue.md",
-        "---\n'@starwind-ui/vue': patch\n---\n\nPrivate Vue release.\n",
+        "private-svelte.md",
+        "---\n'@starwind-ui/svelte': patch\n---\n\nPrivate Svelte release.\n",
       ),
-    ).toThrow(/@starwind-ui\/vue/);
+    ).toThrow(/@starwind-ui\/svelte/);
   });
 
   it("exposes generic release commands and beta compatibility aliases", async () => {
@@ -321,12 +325,34 @@ describe("release package tooling", () => {
       "node scripts/release-packages.mjs --dry-run",
     ]);
     expect(root.scripts?.["publish:release"]).toBe("node scripts/release-packages.mjs --publish");
+    expect(commandPhases(root.scripts?.["publish:vue-beta:dry-run"])).toEqual([
+      "pnpm release:vue-beta:artifacts",
+      "node scripts/release-packages.mjs --vue-beta --dry-run",
+    ]);
+    expect(root.scripts?.["release:vue-beta:artifacts"]).toBe(
+      "node scripts/check-release-artifacts.mjs --vue-beta",
+    );
+    expect(commandPhases(root.scripts?.["release:vue-beta:artifacts:record"])).toEqual([
+      "pnpm vue:build",
+      "pnpm cli:build",
+      "node scripts/check-release-artifacts.mjs --vue-beta --record",
+    ]);
+    expect(commandPhases(root.scripts?.["publish:vue-beta"])).toEqual([
+      "pnpm release:vue-beta:artifacts",
+      "node scripts/release-packages.mjs --vue-beta --publish",
+    ]);
     expect(root.scripts?.["release:finalize"]).toBe("node scripts/release-finalization.mjs");
+    expect(root.scripts?.["release:vue-beta:finalize"]).toBe(
+      "node scripts/release-finalization.mjs --vue-beta",
+    );
     expect(root.scripts?.["release:consumer:node22"]).toBe(
       "node scripts/node22-public-consumer-smoke.mjs",
     );
     expect(root.scripts?.["release:pack:public-artifacts"]).toBe(
       "node scripts/pack-public-release-artifacts.mjs --output .release-packs",
+    );
+    expect(root.scripts?.["release:pack:vue-beta-artifacts"]).toBe(
+      "node scripts/pack-public-release-artifacts.mjs --vue-beta --output .release-packs",
     );
     expect(root.scripts?.["publish:beta:dry-run"]).toBe("pnpm publish:release:dry-run");
     expect(root.scripts?.["publish:beta"]).toBe("pnpm publish:release");
@@ -336,7 +362,9 @@ describe("release package tooling", () => {
       "pnpm audit:prod",
       "pnpm demo:smoke",
       "pnpm react-demo:smoke",
+      "pnpm vue-demo:smoke",
       "pnpm runtime:size:check:prepared",
+      "pnpm runtime:perf:vue:check",
       "pnpm release:candidate:acceptance",
     ]);
     expect(root.scripts?.["publish:release:dry-run"]).not.toContain("release:prepare");
@@ -345,7 +373,7 @@ describe("release package tooling", () => {
       "pnpm runtime:build && pnpm react:build && pnpm vue:build && node scripts/portable-runtime/measure-package-sizes.mjs --check --private-vue",
     );
     expect(root.scripts?.["runtime:size:check:prepared"]).toBe(
-      "node scripts/portable-runtime/measure-package-sizes.mjs --check",
+      "node scripts/portable-runtime/measure-package-sizes.mjs --check --private-vue",
     );
     expect(root.scripts?.["runtime:size:check:prepared:private"]).toBe(
       "node scripts/portable-runtime/measure-package-sizes.mjs --check --private-vue",
@@ -417,6 +445,118 @@ describe("release package tooling", () => {
     expect(calls).toHaveLength(8);
   });
 
+  it.each(["E404", "E429", "E503"])(
+    "retries npm %s while package publication propagates",
+    async (errorCode) => {
+      const expected = deriveReleaseIdentity(
+        manifests({ cli: "3.0.0", runtime: "1.0.0" }),
+        "latest",
+      );
+      const calls: string[] = [];
+      const waits: number[] = [];
+      let runtimeVersionAttempts = 0;
+
+      await verifyPublishedPackages(
+        expected,
+        {
+          capture: async (command: string, args: string[]) => {
+            calls.push([command, ...args].join(" "));
+            const packageName = args[1].slice(0, args[1].lastIndexOf("@"));
+            const item = expected.packages.find((entry) => entry.name === packageName)!;
+            if (packageName === "@starwind-ui/runtime" && args[2] === "version") {
+              runtimeVersionAttempts += 1;
+              if (runtimeVersionAttempts === 1) {
+                return { code: 1, stderr: `npm error ${errorCode}`, stdout: "" };
+              }
+            }
+            return args[2] === "version"
+              ? { code: 0, stderr: "", stdout: JSON.stringify(item.version) }
+              : { code: 0, stderr: "", stdout: JSON.stringify({ latest: item.version }) };
+          },
+          run: async () => undefined,
+        },
+        {
+          attempts: 3,
+          retryDelayMs: 5_000,
+          wait: async (delayMs: number) => {
+            waits.push(delayMs);
+          },
+        },
+      );
+
+      expect(runtimeVersionAttempts).toBe(2);
+      expect(waits).toEqual([5_000]);
+      expect(calls).toHaveLength(9);
+    },
+  );
+
+  it("reports safe recovery after dist-tag propagation retries are exhausted", async () => {
+    const expected = deriveReleaseIdentity(manifests({ cli: "3.0.0", runtime: "1.0.0" }), "latest");
+    const waits: number[] = [];
+    let runtimeTagAttempts = 0;
+
+    await expect(
+      verifyPublishedPackages(
+        expected,
+        {
+          capture: async (_command: string, args: string[]) => {
+            if (args[2] === "version") {
+              return { code: 0, stderr: "", stdout: JSON.stringify("1.0.0") };
+            }
+            runtimeTagAttempts += 1;
+            return { code: 1, stderr: "npm error E404", stdout: "" };
+          },
+          run: async () => undefined,
+        },
+        {
+          attempts: 3,
+          onRetry: () => undefined,
+          retryDelayMs: 5_000,
+          wait: async (delayMs: number) => {
+            waits.push(delayMs);
+          },
+        },
+      ),
+    ).rejects.toThrow(/dist-tag latest.*pnpm release:finalize/);
+
+    expect(runtimeTagAttempts).toBe(3);
+    expect(waits).toEqual([5_000, 5_000]);
+  });
+
+  it("preserves non-retryable version lookup errors", async () => {
+    const expected = deriveReleaseIdentity(manifests({ cli: "3.0.0", runtime: "1.0.0" }), "latest");
+    const waits: number[] = [];
+    let attempts = 0;
+
+    const error = await verifyPublishedPackages(
+      expected,
+      {
+        capture: async () => {
+          attempts += 1;
+          return { code: 1, stderr: "npm error E401", stdout: "" };
+        },
+        run: async () => undefined,
+      },
+      {
+        attempts: 3,
+        onRetry: () => undefined,
+        retryDelayMs: 5_000,
+        wait: async (delayMs: number) => {
+          waits.push(delayMs);
+        },
+      },
+    ).then(
+      () => undefined,
+      (failure: unknown) => failure,
+    );
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain("version could not be verified: npm error E401");
+    expect((error as Error).message).not.toContain("pnpm release:finalize");
+    expect(attempts).toBe(1);
+    expect(waits).toEqual([]);
+  });
+
   it("stops before Git changes when any package version is missing", async () => {
     const expected = deriveReleaseIdentity(
       manifests({ cli: "3.0.0-beta.8", runtime: "0.1.0-beta.8" }),
@@ -432,7 +572,9 @@ describe("release package tooling", () => {
         commands.push([command, ...args].join(" "));
       },
     };
-    await expect(verifyPublishedPackages(expected, system)).rejects.toThrow(/not published/);
+    await expect(verifyPublishedPackages(expected, system, { attempts: 1 })).rejects.toThrow(
+      /did not become visible/,
+    );
     expect(commands.every((command) => command.startsWith("npm view"))).toBe(true);
   });
 
@@ -445,6 +587,7 @@ describe("release package tooling", () => {
           packageManifests: manifests({ cli: "3.0.0-beta.8", runtime: "0.1.0-beta.8" }),
           tag: "beta",
         }),
+        registryVerificationOptions: { attempts: 1 },
         system: {
           capture: async (command: string, args: string[]) => {
             commands.push([command, ...args].join(" "));
@@ -455,7 +598,7 @@ describe("release package tooling", () => {
           },
         },
       }),
-    ).rejects.toThrow(/not published/);
+    ).rejects.toThrow(/did not become visible/);
     expect(commands).toEqual(["npm view @starwind-ui/runtime@0.1.0-beta.8 version --json"]);
   });
 
@@ -809,6 +952,172 @@ describe("release package tooling", () => {
     ).toEqual(["@starwind-ui/astro", "@starwind-ui/react", "starwind"]);
   });
 
+  it("builds the ordered mixed-tag Vue beta publication plan", () => {
+    expect(VUE_BETA_RELEASE_PLAN.map(({ name, tag, version }) => ({ name, tag, version }))).toEqual(
+      [
+        { name: "@starwind-ui/vue", tag: "beta", version: "0.1.0" },
+        { name: "starwind", tag: "latest", version: "3.3.0" },
+      ],
+    );
+    expect(
+      createVueBetaPublishCommands({ dryRun: true }).map(({ args, packageName }) => ({
+        args,
+        packageName,
+      })),
+    ).toEqual([
+      {
+        args: ["publish", "--tag", "beta", "--access", "public", "--no-git-checks", "--dry-run"],
+        packageName: "@starwind-ui/vue",
+      },
+      {
+        args: ["publish", "--tag", "latest", "--access", "public", "--no-git-checks", "--dry-run"],
+        packageName: "starwind",
+      },
+    ]);
+    expect(
+      formatPublishPlan(
+        VUE_BETA_RELEASE_PLAN.map((entry) => ({
+          entry,
+          manifest: { name: entry.name, version: entry.version },
+        })),
+      ),
+    ).toEqual(["@starwind-ui/vue@0.1.0 -> npm tag beta", "starwind@3.3.0 -> npm tag latest"]);
+  });
+
+  it("publishes CLI metadata that names the Vue beta", async () => {
+    const cliPackage = await readJson<PackageJson>("packages/cli/package.json");
+
+    expect(cliPackage.description).toBe(
+      "Install and manage Starwind UI components in Astro, React, and Vue (beta) applications",
+    );
+  });
+
+  it("accepts only the materialized initial Vue beta metadata", () => {
+    const config = {
+      fixed: [["@starwind-ui/runtime", "@starwind-ui/astro", "@starwind-ui/react"]],
+      ignore: [...CHANGESET_IGNORED_PACKAGES],
+      privatePackages: CHANGESET_PRIVATE_PACKAGE_POLICY,
+    };
+    const fixedGroupManifests = ["runtime", "astro", "react"].map((name) => ({
+      manifest: { name: `@starwind-ui/${name}`, version: "1.2.0" },
+    }));
+    const packageManifests = VUE_BETA_RELEASE_PLAN.map((entry) => ({
+      entry,
+      manifest: {
+        dependencies:
+          entry.name === "@starwind-ui/vue" ? { "@starwind-ui/runtime": "1.2.0" } : undefined,
+        name: entry.name,
+        version: entry.version,
+      },
+    }));
+    expect(
+      validateVueBetaReleaseMetadata({ config, fixedGroupManifests, packageManifests }),
+    ).toMatchObject({ ok: true });
+
+    for (const mutate of [
+      (fixture: typeof packageManifests) => fixture.reverse(),
+      (fixture: typeof packageManifests) => {
+        fixture[0].entry = { ...fixture[0].entry, tag: "latest" };
+      },
+      (fixture: typeof packageManifests) => {
+        fixture[1].entry = { ...fixture[1].entry, tag: "beta" };
+      },
+      (fixture: typeof packageManifests) => {
+        fixture[0].manifest.version = "0.1.1";
+      },
+      (fixture: typeof packageManifests) => {
+        fixture[0].manifest.dependencies = { "@starwind-ui/runtime": "workspace:*" };
+      },
+    ]) {
+      const fixture = structuredClone(packageManifests);
+      mutate(fixture);
+      expect(
+        validateVueBetaReleaseMetadata({ config, fixedGroupManifests, packageManifests: fixture })
+          .ok,
+      ).toBe(false);
+    }
+    expect(
+      validateVueBetaReleaseMetadata({
+        config: { ...config, fixed: [[...config.fixed[0], "@starwind-ui/vue"]] },
+        fixedGroupManifests,
+        packageManifests,
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateVueBetaReleaseMetadata({
+        config,
+        fixedGroupManifests: fixedGroupManifests.map((entry, index) =>
+          index === 2 ? { manifest: { ...entry.manifest, version: "1.2.1" } } : entry,
+        ),
+        packageManifests,
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("captures one Vue latest baseline and preserves it for prefix recovery", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "starwind-vue-beta-baseline-"));
+    try {
+      let registryReads = 0;
+      const registryCalls: string[] = [];
+      const baseline = await captureVueBetaRegistryBaseline({
+        head: "abc123",
+        registry: {
+          capture: async (command: string, args: string[]) => {
+            registryReads += 1;
+            registryCalls.push([command, ...args].join(" "));
+            return {
+              code: 0,
+              stderr: "",
+              stdout: JSON.stringify({ beta: "0.0.9", latest: "0.0.8" }),
+            };
+          },
+        },
+        repoRoot: root,
+      });
+      expect(baseline.vueLatest).toBe("0.0.8");
+      expect(registryReads).toBe(1);
+      expect(registryCalls).toEqual(["npm view @starwind-ui/vue dist-tags --json"]);
+
+      await expect(
+        captureVueBetaRegistryBaseline({
+          head: "abc123",
+          registry: {
+            capture: async () => {
+              registryReads += 1;
+              return { code: 0, stderr: "", stdout: JSON.stringify({ latest: "0.1.0" }) };
+            },
+          },
+          repoRoot: root,
+          resumeFrom: "starwind",
+        }),
+      ).resolves.toMatchObject({ vueLatest: "0.0.8" });
+      expect(registryReads).toBe(1);
+      await expect(
+        loadVueBetaRegistryBaseline({ head: "abc123", repoRoot: root }),
+      ).resolves.toEqual(baseline);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("refuses Vue beta prefix recovery when its original latest baseline is unavailable", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "starwind-vue-beta-missing-baseline-"));
+    try {
+      await expect(
+        captureVueBetaRegistryBaseline({
+          head: "abc123",
+          registry: {
+            capture: async () => ({ code: 0, stderr: "", stdout: "{}" }),
+          },
+          repoRoot: root,
+          resumeFrom: "starwind",
+        }),
+      ).rejects.toThrow(/without its original registry baseline/);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("never finalizes after a publish failure at any package prefix", async () => {
     const publishCommands = createPublishCommands({ tag: "beta" });
     for (let failureIndex = 0; failureIndex < publishCommands.length; failureIndex += 1) {
@@ -859,6 +1168,10 @@ describe("release package tooling", () => {
       packages: RELEASE_PACKAGE_SET.map((entry) => entry.name),
     });
     expect(createUserPublishHandoff({ tag: "latest" }).command).toBe("pnpm publish:release");
+    expect(createUserPublishHandoff({ releasePlan: VUE_BETA_RELEASE_PLAN })).toEqual({
+      command: "pnpm publish:vue-beta",
+      packages: ["@starwind-ui/vue", "starwind"],
+    });
     expect(createUserPublishHandoff({ resumeFrom: "@starwind-ui/react", tag: "beta" })).toEqual({
       command: "node scripts/release-packages.mjs --publish --resume-from @starwind-ui/react",
       packages: ["@starwind-ui/react", "starwind"],
@@ -933,6 +1246,12 @@ describe("release package tooling", () => {
         originUrl: "git@github.com:starwind-ui/starwind-ui.git",
       }).ok,
     ).toBe(true);
+    expect(validatePublishedPrefix(["@starwind-ui/vue"], VUE_BETA_RELEASE_PLAN)).toEqual({
+      complete: false,
+      firstMissing: "starwind",
+      valid: true,
+    });
+    expect(validatePublishedPrefix(["starwind"], VUE_BETA_RELEASE_PLAN).valid).toBe(false);
   });
 
   it("waits for Git stdout to close before validating publish state", async () => {

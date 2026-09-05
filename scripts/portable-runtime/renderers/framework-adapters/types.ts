@@ -10,13 +10,21 @@ import type {
 
 export type FrameworkAdapterTarget = "astro" | "react" | "solid" | "svelte" | "vue" | (string & {});
 
-export type FrameworkAdapterTargetPublicSupport = {
-  cliRegistry: boolean;
-  demoIntegration: boolean;
-  packageExports: boolean;
-  publicDocsClaim: boolean;
-  status: "deferred" | "non-shipping-tracer" | "shipping";
-};
+export type FrameworkAdapterTargetPublicSupport =
+  | {
+      cliRegistry: true;
+      demoIntegration: true;
+      packageExports: true;
+      publicDocsClaim: true;
+      status: "public-beta" | "shipping";
+    }
+  | {
+      cliRegistry: false;
+      demoIntegration: false;
+      packageExports: false;
+      publicDocsClaim: false;
+      status: "deferred" | "non-shipping-tracer";
+    };
 
 export type FrameworkAdapterTargetPrimitiveOutputArgs = {
   componentHeader?: string;
@@ -133,6 +141,7 @@ export type FrameworkAdapterTargetPrimitiveEditableContentMarker = {
 };
 
 export type FrameworkAdapterTargetCliRegistryMetadata = {
+  exactAdapterPackageVersion?: string;
   generatedImportCandidateExtensions: readonly string[];
   packageMetadataSources?: readonly string[];
   primitiveArtifact?: {

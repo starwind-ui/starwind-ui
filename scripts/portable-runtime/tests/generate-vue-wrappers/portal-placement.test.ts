@@ -61,6 +61,13 @@ describe("generated Vue framework-owned Portal placement", () => {
     expect(source).toContain("options.runtime.resolvePortalPlacement");
     expect(source).toContain("options.runtime.reportPortalPlacement");
     expect(source).toContain("options.reference?.()");
+    expect(source).toContain("if (inlineReference?.isConnected) return inlineReference");
+    expect(source).toContain(
+      "if (authoredRoot instanceof HTMLElement && authoredRoot.isConnected) return authoredRoot",
+    );
+    expect(source.indexOf("inlineReference?.isConnected")).toBeLessThan(
+      source.indexOf("options.reference?.()"),
+    );
     expect(source).toContain("new MutationObserver");
     expect(source).toContain("wrapper.parentElement");
     expect(source).toContain("function acceptsTeleportTarget(");

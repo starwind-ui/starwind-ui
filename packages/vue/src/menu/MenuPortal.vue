@@ -17,7 +17,7 @@ const ownerContext = useMenuOwnerContext("Portal");
 const portalRef = ref<HTMLDivElement | null>(null);
 const owner = Symbol("MenuPortalOwner");
 const placement = useVuePortalPlacement({
-  active: () => menu.mounted.value && ownerContext.kind === "root",
+  active: () => menu.mounted.value,
   container: () => props.container,
   disabled: () => props.disabled,
   element: portalRef,

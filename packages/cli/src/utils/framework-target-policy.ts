@@ -1,5 +1,5 @@
 export type CliFrameworkTarget = "astro" | "react" | "vue";
-export type PublicCliFrameworkTarget = Exclude<CliFrameworkTarget, "vue">;
+export type PublicCliFrameworkTarget = CliFrameworkTarget;
 export type RegistryTargetFor<TFramework extends CliFrameworkTarget> = "legacy-astro" | TFramework;
 
 export interface FrameworkTargetPolicy<TFramework extends CliFrameworkTarget> {
@@ -40,36 +40,13 @@ function defineFrameworkTargetPolicy<TFramework extends CliFrameworkTarget>(
 export const PUBLIC_FRAMEWORK_TARGET_POLICY = defineFrameworkTargetPolicy<PublicCliFrameworkTarget>(
   {
     cacheKey: "public",
-    configTargets: ["astro", "react"],
-    registryTargets: ["legacy-astro", "astro", "react"],
-    setupTargets: ["astro", "react"],
-    labels: {
-      astro: "Astro",
-      react: "React",
-    },
-    requiredAdapterPackages: {
-      "legacy-astro": [],
-      astro: ["@starwind-ui/astro"],
-      react: ["@starwind-ui/react"],
-    },
-  },
-);
-
-export type PrivateVueCliFrameworkTarget = CliFrameworkTarget;
-
-export const PRIVATE_VUE_FRAMEWORK_TARGET_POLICY =
-  defineFrameworkTargetPolicy<PrivateVueCliFrameworkTarget>({
-    cacheKey: "private-vue",
     configTargets: ["astro", "react", "vue"],
     registryTargets: ["legacy-astro", "astro", "react", "vue"],
     setupTargets: ["astro", "react", "vue"],
     labels: {
       astro: "Astro",
       react: "React",
-      vue: "Vue",
-    },
-    primitiveArtifactIntegrity: {
-      vue: "sha256:0e86c8b6e9368e633ae1778e3d734878d354863963aae1b226d3f3457add6fc9",
+      vue: "Vue (beta)",
     },
     requiredAdapterPackages: {
       "legacy-astro": [],
@@ -77,7 +54,13 @@ export const PRIVATE_VUE_FRAMEWORK_TARGET_POLICY =
       react: ["@starwind-ui/react"],
       vue: ["@starwind-ui/vue"],
     },
-  });
+  },
+);
+
+export type PrivateVueCliFrameworkTarget = CliFrameworkTarget;
+
+/** @deprecated Vue now uses the production framework target policy. */
+export const PRIVATE_VUE_FRAMEWORK_TARGET_POLICY = PUBLIC_FRAMEWORK_TARGET_POLICY;
 
 export function getPrimitiveArtifactIntegrityFingerprint<TFramework extends CliFrameworkTarget>(
   policy: FrameworkTargetPolicy<TFramework>,
@@ -87,11 +70,11 @@ export function getPrimitiveArtifactIntegrityFingerprint<TFramework extends CliF
   if (!fingerprint) return undefined;
 
   if (
-    (policy as unknown as typeof PRIVATE_VUE_FRAMEWORK_TARGET_POLICY) !==
-    PRIVATE_VUE_FRAMEWORK_TARGET_POLICY
+    (policy as unknown as FrameworkTargetPolicy<CliFrameworkTarget>) !==
+    PUBLIC_FRAMEWORK_TARGET_POLICY
   ) {
     throw new Error(
-      "Private Primitive artifacts require the exact registered private framework target policy.",
+      "Primitive artifact fingerprints require the exact registered public framework target policy.",
     );
   }
   if (!/^sha256:[a-f0-9]{64}$/.test(fingerprint)) {

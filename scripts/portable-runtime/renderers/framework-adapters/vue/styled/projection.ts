@@ -1,22 +1,21 @@
 import {
   collectStyledOutputNamedSlots,
-  usesStyledOutputDefaultSlot,
   type StyledOutputComponent,
   type StyledOutputComponentGroup,
   type StyledOutputRenderNode,
+  usesStyledOutputDefaultSlot,
 } from "../../../styled-output-model/index.js";
-
-import { computedExpressionUsesReference, projectVueComputedExpression } from "./expressions.js";
 import { projectVueAttributeAccess, type VueAttributeSetupReason } from "../public-contract.js";
+import { computedExpressionUsesReference, projectVueComputedExpression } from "./expressions.js";
 import { projectVueImports } from "./imports.js";
+import { hasVueDependentPropDefault } from "./props.js";
 import {
   applyVueStyledPublicContractBindings,
+  collectVueNativeAttributesTypes,
   collectVueStyledPublicEmits,
   collectVueStyledPublicModels,
-  collectVueNativeAttributesTypes,
   getVueStyledPublicContract,
 } from "./public-contracts.js";
-import { hasVueDependentPropDefault } from "./props.js";
 import { applyGenericNativeElementRef } from "./ref-bridges.js";
 import { supportsVueScope } from "./scope.js";
 import { specializeVueStyledComponent } from "./specializations.js";
@@ -37,6 +36,7 @@ export function projectVueStyledComponent(
   applyGenericNativeElementRef(component, specialization);
   const publicContract = getVueStyledPublicContract(group.component, component.exportName);
   applyVueStyledPublicContractBindings(component.render, publicContract);
+  omitVueRepeatIndexes(component.render, publicContract.omittedRepeatIndexes ?? []);
   applyGenericNativeClassBindings(component);
   const manuallyForwardsAttrs = component.render.some((node) =>
     renderNodeUsesVueAttrs(node, component.destructure?.rest),
@@ -202,6 +202,25 @@ function applyGenericNativeClassBindings(component: StyledOutputComponent): void
       code: `${classBinding} as import('vue').ClassValue`,
     };
   });
+}
+
+function omitVueRepeatIndexes(
+  nodes: StyledOutputRenderNode[],
+  omittedIndexes: readonly string[],
+): void {
+  const expected = new Set(omittedIndexes);
+  const found = new Set<string>();
+  visitRenderNodes(nodes, (node) => {
+    if (node.type !== "repeat" || !node.index || !expected.has(node.index)) return;
+    found.add(node.index);
+    delete node.index;
+  });
+  const pending = [...expected].filter((name) => !found.has(name));
+  if (pending.length > 0) {
+    throw new TypeError(
+      `Vue Styled repeat indexes are missing from the projected render tree: ${pending.join(", ")}.`,
+    );
+  }
 }
 
 function visitRenderNodes(
@@ -416,9 +435,11 @@ function projectProps(
     (field) => isForVue(field) && !omittedPropFields.has(field.name),
   );
   const targetFields = publicContract.fields ?? [];
-  const destructure = (component.destructure?.props ?? []).filter(
+  const sourceDestructure = (component.destructure?.props ?? []).filter(
     (prop) => isForVue(prop) && !omittedPropFields.has(prop.name),
   );
+  const omittedSetupBindings = new Set(publicContract.omittedSetupBindings ?? []);
+  const destructure = sourceDestructure.filter((prop) => !omittedSetupBindings.has(prop.name));
   const declaredPropNames: Record<string, string> = {
     ...publicContract.declaredPropNames,
   };
@@ -440,7 +461,7 @@ function projectProps(
     return name === prop.name ? prop : { ...prop, name };
   });
   const models = collectVueStyledPublicModels(publicContract);
-  const inheritedPublicFields = destructure.flatMap((prop) => {
+  const inheritedPublicFields = sourceDestructure.flatMap((prop) => {
     if (publicFields.some((field) => field.name === prop.name)) return [];
     const type = getInheritedPropType(component, prop.name);
     return type === "unknown" || type.includes(`${component.exportName}Props[`)
@@ -457,7 +478,7 @@ function projectProps(
   ]);
   const declaredSourceNames = new Set([
     ...knownFields.keys(),
-    ...destructure.map((prop) => prop.name).filter((name) => !omittedPropFields.has(name)),
+    ...sourceDestructure.map((prop) => prop.name).filter((name) => !omittedPropFields.has(name)),
   ]);
   const declaredFields = new Map(
     [...declaredSourceNames].map((sourceName) => {

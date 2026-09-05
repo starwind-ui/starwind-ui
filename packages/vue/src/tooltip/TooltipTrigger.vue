@@ -33,7 +33,6 @@ function protectedProps() {
     "aria-disabled": props.disabled ? "true" : undefined,
     "data-state": "closed",
     disabled: props.disabled,
-    "data-as-child": "",
     "data-sw-part": "trigger",
   };
 }

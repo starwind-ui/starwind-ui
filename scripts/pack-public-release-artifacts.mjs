@@ -32,6 +32,17 @@ const PUBLIC_PACKAGES = [
   { directory: "packages/cli", fileName: "starwind-cli.tgz", key: "cli", name: "starwind" },
 ];
 
+const VUE_BETA_PACKAGES = [
+  ...PUBLIC_PACKAGES.slice(0, -1),
+  {
+    directory: "packages/vue",
+    fileName: "starwind-vue.tgz",
+    key: "vue",
+    name: "@starwind-ui/vue",
+  },
+  PUBLIC_PACKAGES.at(-1),
+];
+
 function getPnpmCommand() {
   return process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 }
@@ -67,10 +78,10 @@ async function runCommand({ args, command = getPnpmCommand(), cwd }) {
   });
 }
 
-export function createPackPlan({ outputDirectory }) {
+export function createPackPlan({ outputDirectory, vueBeta = false }) {
   return {
     outputDirectory,
-    packages: PUBLIC_PACKAGES.map((entry) => ({
+    packages: (vueBeta ? VUE_BETA_PACKAGES : PUBLIC_PACKAGES).map((entry) => ({
       ...entry,
       directory: path.join(REPO_ROOT, entry.directory),
       file: path.join(outputDirectory, entry.fileName),
@@ -80,9 +91,11 @@ export function createPackPlan({ outputDirectory }) {
 
 export function parseArgs(argv) {
   let outputDirectory = DEFAULT_OUTPUT_DIRECTORY;
+  let vueBeta = false;
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
-    if (argument === "--output") {
+    if (argument === "--vue-beta") vueBeta = true;
+    else if (argument === "--output") {
       outputDirectory = argv[index + 1];
       if (!outputDirectory) throw new Error("Expected a path after --output.");
       index += 1;
@@ -92,11 +105,13 @@ export function parseArgs(argv) {
       throw new Error(`Unknown argument: ${argument}`);
     }
   }
-  return { outputDirectory: path.resolve(outputDirectory) };
+  return vueBeta
+    ? { outputDirectory: path.resolve(outputDirectory), vueBeta }
+    : { outputDirectory: path.resolve(outputDirectory) };
 }
 
-export async function packPublicReleaseArtifacts({ outputDirectory }) {
-  const plan = createPackPlan({ outputDirectory });
+export async function packPublicReleaseArtifacts({ outputDirectory, vueBeta = false }) {
+  const plan = createPackPlan({ outputDirectory, vueBeta });
   await mkdir(outputDirectory, { recursive: true });
   const artifactPackages = {};
 

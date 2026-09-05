@@ -81,13 +81,15 @@ export function useVuePortalPlacement(
   }
 
   function getInlineReference(wrapper: HTMLElement): HTMLElement {
-    const authoredRoot = options.reference?.();
-    if (authoredRoot instanceof HTMLElement) return authoredRoot;
     if (trackedWrapper !== wrapper) {
       trackedWrapper = wrapper;
       inlineReference = wrapper.parentElement;
     }
-    return inlineReference ?? wrapper.parentElement ?? wrapper.ownerDocument.body;
+    if (inlineReference?.isConnected) return inlineReference;
+    const authoredRoot = options.reference?.();
+    if (authoredRoot instanceof HTMLElement && authoredRoot.isConnected) return authoredRoot;
+    const currentParent = wrapper.parentElement;
+    return currentParent?.isConnected ? currentParent : wrapper.ownerDocument.body;
   }
 
   function observeOwnerDocument(wrapper: HTMLElement): void {

@@ -4,9 +4,12 @@
 
 ## Current public support
 
-The stable release supports Astro and React. Use `starwind@latest` in installation commands.
+The stable release supports Astro and React. Use `starwind@latest` in CLI commands. Vue 3.5 is a
+public beta, and its adapter uses the `beta` npm channel.
 
-Vue and Svelte packages in the source repository are private adapter verification surfaces. They are not published packages or public CLI targets. Do not generate instructions that use `--framework vue` or `--framework svelte`.
+The Vue beta supports Vite Vue, Astro Vue, Nuxt 3/4, Laravel with Inertia Vue, and Quasar Vite
+SPA/SSR hosts. Svelte remains a private adapter verification surface. Do not generate instructions
+that use `--framework svelte`.
 
 Astro remains the product center. React uses the same Runtime behavior foundation. The styled Image component is Astro-only because it wraps `astro:assets`.
 
@@ -36,7 +39,15 @@ npx starwind@latest init --framework react
 npx starwind@latest add button dialog form
 ```
 
-Omit `--framework` to choose Astro or React interactively.
+Vue 3.5 beta:
+
+```bash
+npm install @starwind-ui/vue@beta vue@^3.5
+npx starwind@latest init --framework vue
+npx starwind@latest add button dialog form
+```
+
+Omit `--framework` to choose an available framework interactively.
 
 The main commands are:
 
@@ -64,6 +75,7 @@ Applications normally install an adapter, which brings the compatible Runtime ve
 ```bash
 npm install @starwind-ui/astro@latest
 npm install @starwind-ui/react@latest
+npm install @starwind-ui/vue@beta vue@^3.5
 ```
 
 Framework authors and raw HTML integrations can install Runtime directly:
@@ -110,13 +122,35 @@ export function SaveButton() {
 }
 ```
 
+Vue Primitive adapters use the same family subpaths and idiomatic models and events:
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+import Collapsible from "@starwind-ui/vue/collapsible";
+
+const open = ref(false);
+</script>
+
+<template>
+  <Collapsible.Root v-model:open="open">
+    <Collapsible.Trigger>Details</Collapsible.Trigger>
+    <Collapsible.Panel>Portable Runtime content</Collapsible.Panel>
+  </Collapsible.Root>
+</template>
+```
+
+Named models emit matching `update:*` events. Detailed changes use normal Vue event listeners.
+
 ## Behavior guidance
 
 Keep native HTML form participation. Runtime-backed controls use normal `FormData` and share accessible label, description, error, validity, and disabled-state behavior.
 
 Preserve Runtime-managed focus, keyboard, dismissal, portal, and cleanup behavior when you customize copied styled components. Keep `data-sw-*` discovery hooks and public `data-slot` identities.
 
-Dynamic collections support items added, removed, disabled, or reordered after initialization. Overlay components share consistent focus, dismissal, nesting, and lifecycle behavior across Astro and React.
+Dynamic collections support items added, removed, disabled, or reordered after initialization.
+Overlay components share consistent focus, dismissal, nesting, and lifecycle behavior across Astro,
+React, and the Vue beta.
 
 ## Ownership and customization
 
@@ -130,7 +164,12 @@ Primitive packages are appropriate when a project needs unstyled parts. Vendored
 - Tailwind CSS: version 4 for current styled components.
 - Astro adapters: Astro 5 or newer.
 - React adapters: React and React DOM 18 or newer.
-- Public framework choices: Astro and React.
+- Vue adapters: Vue 3.5 or newer, in public beta.
+- Public framework choices: stable Astro and React, plus the Vue 3.5 beta.
+
+The Styled Image component remains Astro-only because it wraps `astro:assets`. Report Vue beta
+feedback through the
+[Starwind UI issue tracker](https://github.com/starwind-ui/starwind-ui/issues).
 
 ## Documentation and AI surfaces
 

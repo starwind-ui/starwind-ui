@@ -11,6 +11,8 @@ import {
   ScrollBar,
 } from "./starwind-runtime/scroll-area";
 
+const props = defineProps<{ styledOnly?: boolean }>();
+
 const verticalItems = Array.from({ length: 12 }, (_, index) => `Vertical item ${index + 1}`);
 const horizontalItems = Array.from({ length: 10 }, (_, index) => `Column ${index + 1}`);
 const dynamicItems = ref(2);
@@ -31,7 +33,7 @@ const styledRoot = ref<InstanceType<typeof ScrollArea> | null>(null);
     </div>
 
     <div class="review-grid scroll-area-review-grid">
-      <article class="scenario">
+      <article v-if="!props.styledOnly" class="scenario">
         <h3>Primitive anatomy</h3>
         <ScrollAreaPrimitive.ScrollAreaRoot
           class="review-scroll-area"
@@ -94,7 +96,7 @@ const styledRoot = ref<InstanceType<typeof ScrollArea> | null>(null);
         </ScrollArea>
       </article>
 
-      <article class="scenario">
+      <article v-if="!props.styledOnly" class="scenario">
         <h3>Custom six-part composition</h3>
         <ScrollAreaPrimitive.ScrollAreaRoot
           class="review-scroll-area relative overflow-hidden"

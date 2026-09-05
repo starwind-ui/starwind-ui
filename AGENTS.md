@@ -2,18 +2,18 @@
 
 ## Project Shape
 
-Starwind UI is a pnpm/Turbo monorepo for Astro and React components, framework-neutral Runtime
-controllers, generated Primitive adapters, and the `starwind` CLI.
+Starwind UI is a pnpm/Turbo monorepo for Astro, React, and Vue 3.5 beta components,
+framework-neutral Runtime controllers, generated Primitive adapters, and the `starwind` CLI.
 
 - `packages/runtime`: behavior-only DOM controllers and component subpath exports.
 - `packages/astro` and `packages/react`: generated first-party Primitive adapters.
-- `packages/vue`: private, non-shipping Vue adapter verification output; it is not an npm or CLI
-  support surface until a dedicated release transition removes the quarantine.
-- `packages/svelte`: private, non-shipping Svelte adapter verification output for Button,
-  Checkbox, and Select; it is not an npm or CLI support surface.
+- `packages/vue`: generated Vue 3.5 public-beta Primitive adapters. The beta remains outside the
+  stable Runtime, Astro, and React fixed package group.
+- Svelte adapter verification stays in the private development repository. It is not an npm, CLI,
+  demo, or public workspace surface.
 - `packages/cli`: CLI commands, registries, migrations, and project integration.
 - `apps/demo` and `apps/react-demo`: complete Astro and React integration demos.
-- `apps/vue-demo`: private Vue integration verification for the quarantined adapter.
+- `apps/vue-demo`: public Vue beta integration and review demo.
 - `scripts/portable-runtime`: adapter contracts, generators, smoke tests, and measurement tooling.
 
 Use pnpm for package work. Package metadata requires Node `>=22.12.0`; CI uses Node 24.
@@ -31,6 +31,7 @@ pnpm lint:check
 pnpm format:check
 pnpm demo:smoke
 pnpm react-demo:smoke
+pnpm vue-demo:smoke
 pnpm runtime:generate:all
 pnpm runtime:registry:generate
 pnpm runtime:size:check
@@ -51,8 +52,9 @@ pnpm runtime:size:check
 - Add deferred primitive version intent under `.changeset/primitive-components/` for changed
   existing vendored primitives. Use normal SemVer: `patch` for compatible fixes, `minor` for
   backward-compatible capabilities, and `major` for breaking changes.
-- Add a Changeset for package-facing changes. Never add Changesets for `@starwind-ui/vue`,
-  `@starwind-ui/svelte`, and `vue-demo` while they remain quarantined.
+- Add a Changeset for package-facing changes. Follow the Vue beta release policy for
+  `@starwind-ui/vue`. Never add Changesets for `@starwind-ui/svelte` or `vue-demo` while they remain
+  quarantined or private.
 - Follow `docs/release/versioning.md`. Existing component changes schedule a `starwind` patch
   independently from their component bump. A brand-new stable component schedules a `starwind`
   minor.

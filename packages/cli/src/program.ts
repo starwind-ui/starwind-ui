@@ -14,7 +14,7 @@ import { update } from "./commands/update.js";
 export function createProgram(): Command {
   const program = new Command()
     .name("starwind")
-    .description("Add beautifully designed components to Astro and React applications")
+    .description("Add beautifully designed components to Astro, React, and Vue (beta) applications")
     .version(pkg.version);
 
   program
@@ -23,7 +23,11 @@ export function createProgram(): Command {
     .option("-d, --defaults", "Use default values for all prompts")
     .option("-p, --pro", "Initialize with Starwind Pro setup")
     .addOption(
-      new Option("--framework <framework>", "Framework target").choices(["astro", "react"]),
+      new Option("--framework <framework>", "Framework target; Vue is beta").choices([
+        "astro",
+        "react",
+        "vue",
+      ]),
     )
     .option("--astro", "Initialize for Astro")
     .option("--react", "Initialize for React")
@@ -55,7 +59,11 @@ export function createProgram(): Command {
         .default("3"),
     )
     .addOption(
-      new Option("--framework <framework>", "Framework target").choices(["astro", "react"]),
+      new Option("--framework <framework>", "Framework target; Vue is beta").choices([
+        "astro",
+        "react",
+        "vue",
+      ]),
     )
     .addOption(
       new Option("-m, --package-manager <pm>", "Package manager to use").choices([
@@ -90,9 +98,10 @@ export function createProgram(): Command {
     .option("--registry <registry>", "Remote registry URL or local registry file")
     .option("--primitives", "Search Starwind primitive source")
     .addOption(
-      new Option("--framework <framework>", "Primitive framework target").choices([
+      new Option("--framework <framework>", "Primitive framework target; Vue is beta").choices([
         "astro",
         "react",
+        "vue",
         "all",
       ]),
     )
@@ -107,7 +116,7 @@ export function createProgram(): Command {
           json?: boolean;
           registry?: string;
           primitives?: boolean;
-          framework?: "astro" | "react" | "all";
+          framework?: "astro" | "react" | "vue" | "all";
         },
       ) => {
         const parsedLimit = Math.min(Math.max(parseInt(opts.limit, 10) || 20, 1), 50);
@@ -138,7 +147,12 @@ export function createProgram(): Command {
     .option("--view [path]", "Show new file contents for all files or one planned file")
     .option("--registry <registry>", "Remote registry URL or local registry file")
     .addOption(
-      new Option("--framework <framework>", "Framework target").choices(["astro", "react", "all"]),
+      new Option("--framework <framework>", "Framework target; Vue is beta").choices([
+        "astro",
+        "react",
+        "vue",
+        "all",
+      ]),
     )
     .addOption(
       new Option("-m, --package-manager <pm>", "Package manager to use").choices([
@@ -175,9 +189,10 @@ export function createProgram(): Command {
     .option("-y, --yes", "Skip confirmation prompts")
     .option("-o, --overwrite", "Overwrite existing files")
     .addOption(
-      new Option("--framework <framework>", "Primitive framework target").choices([
+      new Option("--framework <framework>", "Primitive framework target; Vue is beta").choices([
         "astro",
         "react",
+        "vue",
       ]),
     )
     .option("--to <dir>", "Primitive source destination directory")
@@ -202,9 +217,10 @@ export function createProgram(): Command {
     .option("--diff [path]", "Show update diff for all files or one planned file")
     .option("--view [path]", "Show new file contents for all files or one planned file")
     .addOption(
-      new Option("--framework <framework>", "Primitive framework target").choices([
+      new Option("--framework <framework>", "Primitive framework target; Vue is beta").choices([
         "astro",
         "react",
+        "vue",
       ]),
     )
     .addOption(
@@ -221,9 +237,10 @@ export function createProgram(): Command {
     .description("List Starwind primitive source")
     .option("--json", "Output as JSON")
     .addOption(
-      new Option("--framework <framework>", "Primitive framework target").choices([
+      new Option("--framework <framework>", "Primitive framework target; Vue is beta").choices([
         "astro",
         "react",
+        "vue",
         "all",
       ]),
     )
@@ -237,7 +254,12 @@ export function createProgram(): Command {
     .option("-a, --all", "Remove all installed components")
     .option("-y, --yes", "Skip confirmation prompts")
     .addOption(
-      new Option("--framework <framework>", "Framework target").choices(["astro", "react", "all"]),
+      new Option("--framework <framework>", "Framework target; Vue is beta").choices([
+        "astro",
+        "react",
+        "vue",
+        "all",
+      ]),
     )
     .action((components, options) => remove(components, options));
 

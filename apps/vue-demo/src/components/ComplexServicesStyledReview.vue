@@ -11,6 +11,7 @@ import {
   CarouselPrevious,
   type CarouselProps,
 } from "./starwind-runtime/carousel";
+import { Card, CardContent } from "./starwind-runtime/card";
 import { ColorPicker } from "./starwind-runtime/color-picker";
 import {
   Sidebar,
@@ -49,6 +50,9 @@ const toasterMounted = ref(true);
 const toaster = ref<InstanceType<typeof Toaster> | null>(null);
 const secondaryToasterMounted = ref(true);
 const toastCount = ref(0);
+const props = withDefaults(defineProps<{ separateSidebarReview?: boolean }>(), {
+  separateSidebarReview: false,
+});
 
 const carouselApiState = computed(() => (carouselApi.value ? "ready" : "pending"));
 
@@ -62,7 +66,11 @@ function addCarouselItem(): void {
 
 function updateColor(value: ColorPickerValue): void {
   if (value) colorValue.value = value;
-  colorEvents.value.push(`value:${value?.toString() ?? "empty"}`);
+  recordColorEvent(`value:${value?.toString() ?? "empty"}`);
+}
+
+function recordColorEvent(event: string): void {
+  colorEvents.value = [...colorEvents.value.slice(-7), event];
 }
 
 function submitColorForm(event: Event): void {
@@ -102,24 +110,47 @@ function showPromiseToast(): void {
         <Carousel
           v-if="carouselMounted"
           ref="carousel"
-          class="max-w-md"
+          class="mx-auto w-full max-w-xs"
           :opts="{ loop: true }"
           :set-api="captureCarouselApi"
           data-testid="styled-carousel-controlled"
         >
           <CarouselContent>
             <CarouselItem v-for="item in carouselItems" :key="item">
-              <div class="scenario" :data-carousel-item="item">{{ item }}</div>
+              <div class="p-1" :data-carousel-item="item">
+                <Card>
+                  <CardContent class="flex aspect-square items-center justify-center p-6">
+                    <span class="text-4xl font-semibold">{{ item }}</span>
+                  </CardContent>
+                </Card>
+              </div>
             </CarouselItem>
           </CarouselContent>
           <CarouselPrevious data-testid="styled-carousel-previous" />
           <CarouselNext data-testid="styled-carousel-next" />
         </Carousel>
-        <Carousel orientation="vertical" class="max-w-xs" data-testid="styled-carousel-second">
-          <CarouselContent>
-            <CarouselItem><div class="scenario">Vertical one</div></CarouselItem>
-            <CarouselItem><div class="scenario">Vertical two</div></CarouselItem>
+        <Carousel
+          orientation="vertical"
+          class="mx-auto my-10 w-full max-w-xs"
+          data-testid="styled-carousel-second"
+        >
+          <CarouselContent class="h-[200px] min-w-[140px]">
+            <CarouselItem
+              v-for="(item, index) in ['Vertical one', 'Vertical two', 'Vertical three']"
+              :key="item"
+              class="aspect-square pt-1 md:basis-3/4"
+            >
+              <div class="h-full p-1">
+                <Card class="h-full">
+                  <CardContent class="flex h-full items-center justify-center p-6">
+                    <span class="text-3xl font-semibold">{{ index + 1 }}</span>
+                  </CardContent>
+                </Card>
+              </div>
+            </CarouselItem>
           </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
         </Carousel>
         <div class="demo-row">
           <button
@@ -144,7 +175,23 @@ function showPromiseToast(): void {
         </output>
       </article>
 
-      <article id="styled-sidebar-review" class="scenario" data-testid="styled-sidebar-review">
+      <article
+        v-if="props.separateSidebarReview"
+        id="styled-sidebar-review"
+        class="scenario"
+        data-testid="styled-sidebar-review-link"
+      >
+        <h3>Sidebar full-page review</h3>
+        <p>Open the dedicated layout to review the desktop, collapsed, and mobile presentations.</p>
+        <a class="review-link" href="/review/sidebar">Open the Sidebar review</a>
+      </article>
+
+      <article
+        v-else
+        id="styled-sidebar-review"
+        class="scenario"
+        data-testid="styled-sidebar-review"
+      >
         <h3>Sidebar controlled, default, responsive, refs, and remount</h3>
         <SidebarProvider
           v-if="sidebarMounted"
@@ -228,10 +275,10 @@ function showPromiseToast(): void {
             data-testid="styled-color-picker-controlled"
             @update:model-value="updateColor"
             @value-change="
-              (_, detail) => colorEvents.push(`detail:${detail.value?.toString() ?? 'empty'}`)
+              (_, detail) => recordColorEvent(`detail:${detail.value?.toString() ?? 'empty'}`)
             "
             @format-change="
-              (format, detail) => colorEvents.push(`format:${format}:${detail.format}`)
+              (format, detail) => recordColorEvent(`format:${format}:${detail.format}`)
             "
           />
           <button class="review-action" type="submit" data-testid="styled-color-picker-submit">
@@ -271,7 +318,7 @@ function showPromiseToast(): void {
             {{ colorMounted ? "Unmount Color Picker" : "Remount Color Picker" }}
           </button>
         </div>
-        <output data-testid="styled-color-picker-state">
+        <output class="block max-w-full min-w-0 break-all" data-testid="styled-color-picker-state">
           value: {{ colorValue }}, format: {{ colorFormat }}, open: {{ colorOpen }}, ref:
           {{ colorPicker?.element?.tagName ?? "none" }}, form: {{ colorFormResult }}, events:
           {{ colorEvents.join("|") }}
@@ -283,13 +330,13 @@ function showPromiseToast(): void {
         <Toaster
           v-if="toasterMounted"
           ref="toaster"
-          position="bottom-right"
+          position="bottom-left"
           :limit="4"
           data-testid="styled-toaster"
         />
         <Toaster
           v-if="secondaryToasterMounted"
-          position="top-right"
+          position="bottom-right"
           :limit="4"
           data-testid="styled-toaster-secondary"
         />

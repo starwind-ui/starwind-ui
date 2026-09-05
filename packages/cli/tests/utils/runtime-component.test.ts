@@ -1,4 +1,14 @@
-import { mkdir, mkdtemp, readFile, rm, stat, symlink, utimes, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  stat,
+  symlink,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -2396,7 +2406,7 @@ describe.sequential("runtime component installs", () => {
     expect(plan.updates[0]!.files[0]).toEqual(
       expect.objectContaining({
         path: "src/components/starwind-react/button/index.tsx",
-        destination: targetPath,
+        destination: await realpath(targetPath),
       }),
     );
   });
@@ -2445,7 +2455,7 @@ describe.sequential("runtime component installs", () => {
       file.path.endsWith("/ThemeToggle.vue"),
     )!.content!;
     expect(themeToggle.targets!.vue!.packageRequirements).toEqual([
-      { name: "@starwind-ui/vue", range: "*" },
+      { name: "@starwind-ui/vue", range: "0.1.0" },
       { name: "tailwind-variants", range: "^3.2.2" },
       { name: "vue", range: ">=3.5" },
     ]);
@@ -2466,7 +2476,7 @@ describe.sequential("runtime component installs", () => {
     ).toContain('from "@starwind-ui/vue/combobox"');
 
     expect(mockInstallDependencies).toHaveBeenCalledWith(
-      ["@starwind-ui/vue", "tailwind-variants@^3.2.2", "vue@>=3.5"],
+      ["@starwind-ui/vue@0.1.0", "tailwind-variants@^3.2.2", "vue@>=3.5"],
       "pnpm",
     );
     expect(mockUpdateConfig).toHaveBeenCalledWith(
@@ -2598,14 +2608,13 @@ describe.sequential("runtime component installs", () => {
     );
   });
 
-  it("keeps Vue unavailable when Runtime helpers use the public default policy", async () => {
+  it("installs Vue when Runtime helpers use the public default policy", async () => {
     const vueConfig: StarwindConfigFor<PrivateVueCliFrameworkTarget> = {
       ...runtimeConfig,
       framework: "vue",
       components: [],
     };
 
-    // @ts-expect-error A Vue lifecycle call requires an explicit private target policy.
     const result = await installRuntimeComponents(["button"], {
       config: vueConfig,
       framework: "vue",
@@ -2613,10 +2622,8 @@ describe.sequential("runtime component installs", () => {
       skipPrompts: true,
     });
 
-    expect(result.failed).toEqual([
-      expect.objectContaining({ name: "button", error: expect.stringContaining("not supported") }),
-    ]);
-    expect(mockInstallDependencies).not.toHaveBeenCalled();
-    expect(mockUpdateConfig).not.toHaveBeenCalled();
+    expect(result.failed).toEqual([]);
+    expect(mockInstallDependencies).toHaveBeenCalled();
+    expect(mockUpdateConfig).toHaveBeenCalled();
   });
 });

@@ -2,7 +2,6 @@
 import type { ClassValue } from "tailwind-variants";
 import { useAttrs } from "vue";
 import { Button } from "../button";
-import { paginationLink } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
@@ -16,10 +15,12 @@ export type PaginationLinkProps = Omit<
 type PaginationLinkDeclaredProps = {
   isActive?: boolean;
   class?: ClassValue;
+  size?: unknown;
   dataSlot?: unknown;
 } & /* @vue-ignore */ Omit<PaginationLinkProps, "data-slot">;
 const {
   isActive,
+  size = "icon",
   dataSlot = "pagination-link",
   class: className,
 } = defineProps<PaginationLinkDeclaredProps>();
@@ -39,8 +40,8 @@ function omitForwardedAttrs(
   <Button
     :aria-current="isActive ? 'page' : undefined"
     :variant="isActive ? 'outline' : 'ghost'"
-    size="md"
-    :class="paginationLink({ class: className })"
+    :size="size"
+    :class="className"
     v-bind="
       omitForwardedAttrs(attrs, [
         'aria-current',

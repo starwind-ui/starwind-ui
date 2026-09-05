@@ -398,7 +398,7 @@ describe.sequential("add command integration", () => {
       'from "@starwind-ui/vue/button"',
     );
     expect(mockInstallDependencies).toHaveBeenCalledWith(
-      ["@starwind-ui/vue", "tailwind-variants@^3.2.2", "vue@>=3.5"],
+      ["@starwind-ui/vue@0.1.0", "tailwind-variants@^3.2.2", "vue@>=3.5"],
       "pnpm",
     );
     expect(mockLoadRegistry).not.toHaveBeenCalled();

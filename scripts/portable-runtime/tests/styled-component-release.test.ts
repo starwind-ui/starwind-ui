@@ -1,20 +1,20 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
-
+import { accordionStyledContract } from "../contracts/styled/components/accordion.js";
 import { buildRuntimeRegistry, type RuntimeRegistry } from "../generate-cli-registry.js";
 import {
   aggregateStyledVersionIntents,
   applyStyledVersionIntents,
   createStyledRegistryFingerprint,
   parseStyledVersionIntent,
+  type StyledReleaseSnapshot,
+  type StyledVersionIntent,
   stageStyledVersionIntents,
   validateStyledVersionPullRequest,
   versionStyledComponents,
-  type StyledReleaseSnapshot,
-  type StyledVersionIntent,
 } from "../styled-component-release.js";
 
 const temporaryRoots: string[] = [];
@@ -539,7 +539,7 @@ describe("styled component release intents", () => {
     });
   });
 
-  it("materializes component versions into generated Astro and React registry artifacts", async () => {
+  it("materializes component versions into generated public registry artifacts", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "styled-component-registry-"));
     temporaryRoots.push(root);
     const fragmentRoot = path.join(root, ".changeset/styled-components");
@@ -560,6 +560,7 @@ describe("styled component release intents", () => {
 
     await versionStyledComponents({ repoRoot: root });
     const registry = await buildRuntimeRegistry({
+      contracts: [accordionStyledContract],
       repoRoot: process.cwd(),
       tempRoot: path.join(root, "generated"),
       versionManifestPath: manifestPath,
@@ -569,7 +570,7 @@ describe("styled component release intents", () => {
     expect(accordion.version).toBe(
       applyStyledVersionIntents(currentManifest.components, { accordion: "patch" }).accordion,
     );
-    expect(Object.keys(accordion.targets ?? {}).sort()).toEqual(["astro", "react"]);
+    expect(Object.keys(accordion.targets ?? {}).sort()).toEqual(["astro", "react", "vue"]);
     expect(
       Object.values(accordion.targets ?? {}).flatMap((target) =>
         target.files.map((file) => file.content),

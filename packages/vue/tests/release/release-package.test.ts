@@ -1316,7 +1316,7 @@ describe("release-like @starwind-ui/vue package", () => {
     const packageJson = JSON.parse(
       await readFile(path.join(repoRoot, "packages/vue/package.json"), "utf8"),
     );
-    expect(packageJson.dependencies).toEqual({ "@starwind-ui/runtime": "workspace:*" });
+    expect(packageJson.dependencies).toEqual({ "@starwind-ui/runtime": "1.2.0" });
     expect(packageJson.peerDependencies).toEqual({ vue: ">=3.5" });
 
     const javaScript = await readJavaScriptTree(path.join(repoRoot, "packages/vue/dist"));

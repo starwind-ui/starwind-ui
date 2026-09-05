@@ -393,14 +393,13 @@ describe("add command", () => {
     );
   });
 
-  it("rejects Vue through the public add API default", async () => {
-    // @ts-expect-error Public add calls cannot select Vue without private dependencies.
-    await expect(add(["button"], { framework: "vue", yes: true })).rejects.toThrow(
-      "process.exit called",
-    );
+  it("routes Vue through the public add API default", async () => {
+    await add(["button"], { framework: "vue", yes: true });
 
-    expect(mockInstallRuntimeComponents).not.toHaveBeenCalled();
-    expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("public target policy"));
+    expect(mockInstallRuntimeComponents).toHaveBeenCalledWith(
+      ["button"],
+      expect.objectContaining({ framework: "vue" }),
+    );
   });
 
   it("treats private-beta componentLayer as inert for styled component adds", async () => {

@@ -25,6 +25,7 @@ export function getAcceptanceWorkspacePolicy() {
   return `packages:
   - astro
   - react
+  - vue
 minimumReleaseAge: 0
 minimumReleaseAgeStrict: false
 allowBuilds:
@@ -45,6 +46,12 @@ export function getPreviewEnvironment(environment = process.env) {
     ASTRO_PREVIEW_BACKGROUND: "0",
     ASTRO_TELEMETRY_DISABLED: "1",
   };
+}
+
+export function isVueHydrationMismatchWarning(text) {
+  return /(?:hydration (?:children|class|node|style|text) mismatch|hydration completed but contains mismatches)/i.test(
+    text,
+  );
 }
 
 export function getAcceptanceCleanupOptions() {
@@ -181,10 +188,34 @@ function App() {
 export default App;
 `;
 
+const VUE_FIXTURE = `<script setup lang="ts">
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "./components/starwind/dialog";
+</script>
+
+<template>
+  <main class="mx-auto flex min-h-screen max-w-xl flex-col gap-10 p-10">
+    <h1 class="text-2xl font-semibold">Starwind Vue published release acceptance</h1>
+    <Dialog>
+      <DialogTrigger>Open Vue dialog</DialogTrigger>
+      <DialogContent>
+        <DialogTitle>Published Vue package dialog</DialogTitle>
+        <p>Published Vue Runtime panel</p>
+      </DialogContent>
+    </Dialog>
+  </main>
+</template>
+`;
+
 export function parseArgs(argv) {
   let artifacts;
   let keepTemp = false;
   let version;
+  let vueVersion;
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -198,6 +229,15 @@ export function parseArgs(argv) {
       index += 1;
     } else if (argument.startsWith("--version=")) {
       version = argument.slice("--version=".length);
+    } else if (argument === "--vue-version") {
+      const value = argv[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error("Expected a value after --vue-version.");
+      }
+      vueVersion = value;
+      index += 1;
+    } else if (argument.startsWith("--vue-version=")) {
+      vueVersion = argument.slice("--vue-version=".length);
     } else if (argument === "--artifacts") {
       const value = argv[index + 1];
       if (!value || value.startsWith("--")) throw new Error("Expected a path after --artifacts.");
@@ -216,10 +256,14 @@ export function parseArgs(argv) {
   if (!EXACT_VERSION_PATTERN.test(version)) {
     throw new Error(`Expected an exact SemVer version, received: ${version}`);
   }
-  return { artifacts, keepTemp, version };
+  if (!vueVersion) throw new Error("Pass --vue-version <version>.");
+  if (!EXACT_VERSION_PATTERN.test(vueVersion)) {
+    throw new Error(`Expected an exact Vue SemVer version, received: ${vueVersion}`);
+  }
+  return { artifacts, keepTemp, version, vueVersion };
 }
 
-export function createAcceptancePlan({ root, version }) {
+export function createAcceptancePlan({ root, version, vueVersion }) {
   const cliSpecifier = `starwind@${version}`;
   const cliEntrypoint = path.join(root, "node_modules", "starwind", "dist", "index.js");
   const components = ["button", "dialog", "context-menu", "color-picker"];
@@ -271,6 +315,17 @@ export function createAcceptancePlan({ root, version }) {
         "react-ts",
         "--no-interactive",
       ]),
+      {
+        ...createProject("vue", [
+          "create",
+          `vite@${VITE_SCAFFOLD_VERSION}`,
+          "vue",
+          "--template",
+          "vue-ts",
+          "--no-interactive",
+        ]),
+        expectedAdapterVersion: vueVersion,
+      },
     ],
     root,
     version,
@@ -283,6 +338,9 @@ export function getFixtureFiles(framework) {
   }
   if (framework === "react") {
     return [{ content: REACT_FIXTURE, path: "src/App.tsx" }];
+  }
+  if (framework === "vue") {
+    return [{ content: VUE_FIXTURE, path: "src/App.vue" }];
   }
 
   throw new Error(`Unsupported acceptance framework: ${framework}`);
@@ -401,6 +459,13 @@ async function validateInstalledAdapter(project) {
     EXACT_VERSION_PATTERN,
     `${packageName} must depend on an exact Runtime version`,
   );
+  if (project.expectedAdapterVersion) {
+    assert.equal(
+      adapterManifest.version,
+      project.expectedAdapterVersion,
+      `${packageName} must equal the requested published beta version`,
+    );
+  }
 
   return {
     adapter: `${packageName}@${adapterManifest.version}`,
@@ -559,7 +624,15 @@ export async function verifyBrowserProject({ artifacts, browser, project }) {
   const browserErrors = [];
 
   page.on("console", (message) => {
-    if (message.type() === "error") browserErrors.push(`console error: ${message.text()}`);
+    const text = message.text();
+    if (
+      message.type() === "error" ||
+      (project.framework === "vue" &&
+        message.type() === "warning" &&
+        isVueHydrationMismatchWarning(text))
+    ) {
+      browserErrors.push(`console ${message.type()}: ${text}`);
+    }
   });
   page.on("pageerror", (error) => browserErrors.push(`page error: ${error.message}`));
   page.on("requestfailed", (request) => {
@@ -590,6 +663,17 @@ export async function verifyBrowserProject({ artifacts, browser, project }) {
         project.themeInitScriptCount,
         `${project.id ?? project.framework} theme initialization script count`,
       );
+    }
+
+    if (project.framework === "vue") {
+      const trigger = page.getByRole("button", { name: "Open Vue dialog" });
+      await trigger.click();
+      await page
+        .getByRole("dialog", { name: "Published Vue package dialog" })
+        .waitFor({ state: "visible" });
+      assert.deepEqual(browserErrors, [], `${project.framework} browser errors`);
+      console.log(`[acceptance] ${project.framework} browser behavior passed at ${url}`);
+      return;
     }
 
     const dialogTrigger = page.getByRole("button", { name: "Open dialog" });
@@ -645,7 +729,11 @@ export async function runPublishedReleaseAcceptance(options) {
   const artifacts = options.artifacts
     ? path.resolve(options.artifacts)
     : await mkdtemp(path.join(os.tmpdir(), "starwind-published-release-artifacts-"));
-  const plan = createAcceptancePlan({ root, version: options.version });
+  const plan = createAcceptancePlan({
+    root,
+    version: options.version,
+    vueVersion: options.vueVersion,
+  });
   const packageVersions = [];
   const acceptancePnpmEnvironment = getAcceptancePnpmEnvironment();
   const previousPnpmEnvironment = Object.fromEntries(
@@ -705,7 +793,9 @@ export async function runPublishedReleaseAcceptance(options) {
       `${JSON.stringify({ cli: `starwind@${options.version}`, packages: packageVersions }, null, 2)}\n`,
       "utf8",
     );
-    console.log(`[acceptance] published release ${options.version} passed in Astro and React`);
+    console.log(
+      `[acceptance] published release ${options.version} passed in Astro, React, and Vue`,
+    );
   } catch (error) {
     acceptanceError = error;
     throw error;

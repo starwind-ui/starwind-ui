@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import type { ClassValue } from "tailwind-variants";
+import type { ClassValue, VariantProps } from "tailwind-variants";
 import { type HTMLAttributes, ref } from "vue";
 import { paginationEllipsis } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
-export type PaginationEllipsisProps = Omit<HTMLAttributes, "class"> & {
-  class?: ClassValue;
-};
+export type PaginationEllipsisProps = Omit<HTMLAttributes, "class"> &
+  VariantProps<typeof paginationEllipsis> & {
+    class?: ClassValue;
+  };
 type PaginationEllipsisDeclaredProps = {
   class?: ClassValue;
+  size?: PaginationEllipsisProps["size"];
 } & /* @vue-ignore */ PaginationEllipsisProps;
-const { class: className } = defineProps<PaginationEllipsisDeclaredProps>();
+const { size, class: className } = defineProps<PaginationEllipsisDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
   icon?: () => unknown;
@@ -24,7 +26,7 @@ defineExpose({ element });
   <span
     ref="element"
     aria-hidden
-    :class="paginationEllipsis({ class: className })"
+    :class="paginationEllipsis({ size, class: className })"
     v-bind="$attrs"
     data-slot="pagination-ellipsis"
   >
@@ -38,7 +40,6 @@ defineExpose({ element });
         stroke-linecap="round"
         stroke-linejoin="round"
         aria-hidden="true"
-        class="size-4"
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />

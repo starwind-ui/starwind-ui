@@ -5,15 +5,13 @@ import { pagination } from "./variants";
 
 defineOptions({ inheritAttrs: false });
 
-export type PaginationProps = Omit<HTMLAttributes, "class" | "size"> & {
-  size?: "sm" | "md" | "lg";
+export type PaginationProps = Omit<HTMLAttributes, "class"> & {
   class?: ClassValue;
 };
 type PaginationDeclaredProps = {
-  size?: "sm" | "md" | "lg";
   class?: ClassValue;
 } & /* @vue-ignore */ PaginationProps;
-const { size = "md", class: className } = defineProps<PaginationDeclaredProps>();
+const { class: className } = defineProps<PaginationDeclaredProps>();
 defineSlots<{
   default?: () => unknown;
 }>();
@@ -28,7 +26,6 @@ defineExpose({ element });
     aria-label="pagination"
     :class="pagination({ class: className })"
     v-bind="$attrs"
-    :data-size="size"
     data-slot="pagination"
   >
     <slot />

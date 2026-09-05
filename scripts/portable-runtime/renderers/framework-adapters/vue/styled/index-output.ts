@@ -1,11 +1,10 @@
 import path from "node:path";
-
+import { getRelativeImportPath } from "../../../shared.js";
 import {
   assertStyledPartsIdentifier,
   getStyledPartsIdentifier,
   type StyledOutputComponentGroup,
 } from "../../../styled-output-model/index.js";
-import { getRelativeImportPath } from "../../../shared.js";
 
 export type RenderVueStyledIndexOptions = {
   directory: string;
@@ -18,7 +17,12 @@ export function renderIndex(
   options?: RenderVueStyledIndexOptions,
 ): string {
   assertStyledPartsIdentifier(group);
+  const importedComponentNames = new Set([
+    ...group.publicExports,
+    ...group.defaultExport.members.map((member) => member.localName),
+  ]);
   const imports = [...group.components]
+    .filter((component) => importedComponentNames.has(component.exportName))
     .sort((left, right) => left.exportName.localeCompare(right.exportName))
     .map((component) => `import ${component.exportName} from "./${component.exportName}.vue";`)
     .join("\n");

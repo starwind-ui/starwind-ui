@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -9,6 +9,7 @@ import { createVueComponentHeader } from "../../renderers/framework-adapters/vue
 import { assertVueSfcCompiles } from "../../renderers/framework-adapters/vue/sfc-compiler.js";
 import { primitiveGeneratorRegistry } from "../../renderers/primitive-generator-registry.js";
 import { createTsHeader } from "../../renderers/shared.js";
+import { generateSelectedVueStyledGroups } from "./selected-styled-groups.js";
 
 const GENERATED_BY = "scripts/portable-runtime/generate-vue-wrappers.ts";
 const PARTS = [
@@ -87,6 +88,32 @@ describe("generated Vue Color Picker Primitive", () => {
       "utf8",
     );
     expect(adapter).not.toMatch(/componentName[^\n]*color-picker|color-picker[^\n]*componentName/i);
+  });
+
+  it("omits Vue-only unused loop aliases and private index imports", async () => {
+    const repoRoot = await mkdtemp(path.join(os.tmpdir(), "starwind-vue-styled-color-picker-"));
+    temporaryRoots.push(repoRoot);
+    await generateSelectedVueStyledGroups({
+      groups: ["color-picker"],
+      outputDir: "styled",
+      repoRoot,
+    });
+
+    const directory = path.join(repoRoot, "styled/color-picker");
+    const input = await readFile(path.join(directory, "ColorPickerInput.vue"), "utf8");
+    const editor = await readFile(path.join(directory, "ColorPickerDefaultEditor.vue"), "utf8");
+    const index = await readFile(path.join(directory, "index.ts"), "utf8");
+
+    expect(input).toContain('v-for="formatOption in normalizedFormats"');
+    expect(input).not.toContain("formatIndex");
+    expect(editor).toContain('v-for="swatch in normalizedSwatches"');
+    expect(editor).not.toContain("swatchIndex");
+    expect(index).not.toContain(
+      'import ColorPickerDefaultEditor from "./ColorPickerDefaultEditor.vue"',
+    );
+    expect(index).toContain(
+      'export type { ColorPickerDefaultEditorProps } from "./ColorPickerDefaultEditor.vue"',
+    );
   });
 
   async function generateColorPicker(): Promise<Map<string, string>> {

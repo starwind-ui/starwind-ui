@@ -624,14 +624,33 @@ describe("update command", () => {
     },
   );
 
-  it("rejects Vue through the public update API default", async () => {
-    // @ts-expect-error Public update calls cannot select Vue without private dependencies.
-    await expect(update(["button"], { framework: "vue", yes: true })).rejects.toThrow(
-      "process.exit called",
-    );
+  it("routes Vue through the public update API default", async () => {
+    mockGetConfigState.mockResolvedValue({
+      status: "current",
+      config: runtimeConfig({
+        framework: "vue",
+        components: [{ name: "button", version: "1.0.0", framework: "vue", registry: "default" }],
+      }),
+    });
+    mockUpdateRuntimeComponents.mockResolvedValue({
+      updated: [
+        {
+          delivery: "source",
+          name: "button",
+          newVersion: "2.0.0",
+          status: "updated",
+        },
+      ],
+      skipped: [],
+      failed: [],
+    });
 
-    expect(mockUpdateRuntimeComponents).not.toHaveBeenCalled();
-    expect(mockLog.error).toHaveBeenCalledWith(expect.stringContaining("public target policy"));
+    await update(["button"], { framework: "vue", yes: true });
+
+    expect(mockUpdateRuntimeComponents).toHaveBeenCalledWith(
+      ["button"],
+      expect.objectContaining({ framework: "vue" }),
+    );
   });
 
   it("updates every installed framework target when --framework all is used", async () => {

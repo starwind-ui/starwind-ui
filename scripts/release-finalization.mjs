@@ -4,11 +4,18 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { createSpawnCommand } from "./command-process.mjs";
-import { assertPublicMainForPublish, assertReleaseMetadata } from "./release-packages.mjs";
+import {
+  assertPublicMainForPublish,
+  assertReleaseMetadata,
+  assertVueBetaReleaseMetadata,
+  loadVueBetaRegistryBaseline,
+} from "./release-packages.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(SCRIPT_DIR, "..");
 const PUBLIC_REPOSITORY = "starwind-ui/starwind-ui";
+const DEFAULT_REGISTRY_VERIFICATION_ATTEMPTS = 12;
+const DEFAULT_REGISTRY_RETRY_DELAY_MS = 5_000;
 
 export function createCommandSystem({ cwd = ROOT_DIR, spawnProcess = spawn } = {}) {
   async function capture(command, args) {
@@ -58,6 +65,7 @@ export function createCommandSystem({ cwd = ROOT_DIR, spawnProcess = spawn } = {
 export function deriveReleaseIdentity(packageManifests, npmTag, head) {
   const packages = packageManifests.map(({ entry, manifest }) => ({
     name: entry.name,
+    tag: entry.tag ?? npmTag,
     version: manifest.version,
   }));
   const cli = packages.find((entry) => entry.name === "starwind");
@@ -99,26 +107,104 @@ function parseJsonOutput(result, description) {
   }
 }
 
-export async function verifyPublishedPackages(release, system) {
+function wait(delayMs) {
+  return new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+function isRetryableRegistryFailure(result) {
+  const detail = `${result.stderr}\n${result.stdout}`;
+  return /(?:E404|E429|E5\d\d|404 Not Found|EAI_AGAIN|ECONNRESET|ETIMEDOUT|ENETUNREACH|EHOSTUNREACH|HTTP (?:429|5\d\d))/i.test(
+    detail,
+  );
+}
+
+function createRegistryPropagationError(subject, attempt, finalizeCommand) {
+  return new Error(
+    `${subject} did not become visible on npm after ${attempt} registry ${attempt === 1 ? "check" : "checks"}. ` +
+      `The package publication may have succeeded. Wait for npm propagation, then run ${finalizeCommand}.`,
+  );
+}
+
+export async function verifyPublishedPackages(release, system, options = {}) {
+  const attempts = options.attempts ?? DEFAULT_REGISTRY_VERIFICATION_ATTEMPTS;
+  const retryDelayMs = options.retryDelayMs ?? DEFAULT_REGISTRY_RETRY_DELAY_MS;
+  const waitForRetry = options.wait ?? wait;
+  const finalizeCommand = release.finalizeCommand ?? "pnpm release:finalize";
+  const onRetry =
+    options.onRetry ??
+    ((spec, attempt) => {
+      console.log(
+        `[finalize] Waiting for ${spec} to become visible on npm (${attempt}/${attempts})...`,
+      );
+    });
+  if (!Number.isInteger(attempts) || attempts < 1) {
+    throw new Error("Registry verification attempts must be a positive integer.");
+  }
+  if (!Number.isFinite(retryDelayMs) || retryDelayMs < 0) {
+    throw new Error("Registry retry delay must be a non-negative number.");
+  }
+
   for (const entry of release.packages) {
     const spec = `${entry.name}@${entry.version}`;
-    const versionResult = await system.capture("npm", ["view", spec, "version", "--json"]);
-    if (versionResult.code !== 0) {
-      throw new Error(`${spec} is not published and release finalization cannot continue.`);
-    }
-    const publishedVersion = parseJsonOutput(versionResult, `${spec} version`);
-    if (publishedVersion !== entry.version) {
-      throw new Error(
-        `${spec} resolved to unexpected version ${JSON.stringify(publishedVersion)}.`,
-      );
-    }
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const versionResult = await system.capture("npm", ["view", spec, "version", "--json"]);
+      if (versionResult.code !== 0) {
+        const retryable = isRetryableRegistryFailure(versionResult);
+        if (attempt < attempts && retryable) {
+          onRetry(spec, attempt);
+          await waitForRetry(retryDelayMs);
+          continue;
+        }
+        if (retryable) throw createRegistryPropagationError(spec, attempt, finalizeCommand);
+        parseJsonOutput(versionResult, `${spec} version`);
+      }
+      const publishedVersion = parseJsonOutput(versionResult, `${spec} version`);
+      if (publishedVersion !== entry.version) {
+        throw new Error(
+          `${spec} resolved to unexpected version ${JSON.stringify(publishedVersion)}.`,
+        );
+      }
 
-    const tagsResult = await system.capture("npm", ["view", spec, "dist-tags", "--json"]);
-    const tags = parseJsonOutput(tagsResult, `${spec} dist-tags`);
-    if (tags?.[release.npmTag] !== entry.version) {
-      throw new Error(
-        `${entry.name} dist-tag ${release.npmTag} must point to ${entry.version}, found ${tags?.[release.npmTag] ?? "nothing"}.`,
-      );
+      const expectedTag = entry.tag ?? release.npmTag;
+      if (!expectedTag) throw new Error(`${spec} is missing its expected npm dist-tag.`);
+      const tagsResult = await system.capture("npm", ["view", spec, "dist-tags", "--json"]);
+      if (tagsResult.code !== 0) {
+        if (attempt < attempts && isRetryableRegistryFailure(tagsResult)) {
+          onRetry(spec, attempt);
+          await waitForRetry(retryDelayMs);
+          continue;
+        }
+        if (isRetryableRegistryFailure(tagsResult)) {
+          throw createRegistryPropagationError(
+            `${spec} dist-tag ${expectedTag}`,
+            attempt,
+            finalizeCommand,
+          );
+        }
+        parseJsonOutput(tagsResult, `${spec} dist-tags`);
+      }
+      const tags = parseJsonOutput(tagsResult, `${spec} dist-tags`);
+      if (tags?.[expectedTag] !== entry.version) {
+        if (attempt < attempts) {
+          onRetry(spec, attempt);
+          await waitForRetry(retryDelayMs);
+          continue;
+        }
+        throw new Error(
+          `${entry.name} dist-tag ${expectedTag} must point to ${entry.version}, found ${tags?.[expectedTag] ?? "nothing"}.`,
+        );
+      }
+      for (const [preservedTag, preservedVersion] of Object.entries(
+        release.preservedDistTags?.[entry.name] ?? {},
+      )) {
+        const actualVersion = tags?.[preservedTag] ?? null;
+        if (actualVersion !== preservedVersion) {
+          throw new Error(
+            `${entry.name} dist-tag ${preservedTag} changed during publication: expected ${preservedVersion ?? "nothing"}, found ${actualVersion ?? "nothing"}.`,
+          );
+        }
+      }
+      break;
     }
   }
 }
@@ -247,19 +333,34 @@ export async function finalizeVerifiedRelease(release, system) {
 export async function runReleaseFinalization({
   gitStateLoader = assertPublicMainForPublish,
   metadataLoader = assertReleaseMetadata,
+  registryVerificationOptions,
   system = createCommandSystem(),
+  vueBeta = false,
+  vueBetaMetadataLoader = assertVueBetaReleaseMetadata,
+  vueLatestBaselineLoader = loadVueBetaRegistryBaseline,
 } = {}) {
-  const { packageManifests, tag } = await metadataLoader();
+  const loadedMetadata = vueBeta ? await vueBetaMetadataLoader() : await metadataLoader();
+  const { packageManifests, tag } = loadedMetadata;
   const { head } = await gitStateLoader();
   const release = deriveReleaseIdentity(packageManifests, tag, head);
-  await verifyPublishedPackages(release, system);
+  if (vueBeta) {
+    const baseline = await vueLatestBaselineLoader({ head });
+    release.finalizeCommand = "pnpm release:vue-beta:finalize";
+    release.preservedDistTags = {
+      "@starwind-ui/vue": { latest: baseline.vueLatest },
+    };
+  }
+  await verifyPublishedPackages(release, system, registryVerificationOptions);
   await finalizeVerifiedRelease(release, system);
   return release;
 }
 
 async function main() {
-  if (process.argv.length > 2) throw new Error("release:finalize does not accept arguments.");
-  const release = await runReleaseFinalization();
+  const args = process.argv.slice(2);
+  if (args.some((arg) => arg !== "--vue-beta") || args.length > 1) {
+    throw new Error("release:finalize accepts only the optional --vue-beta plan selector.");
+  }
+  const release = await runReleaseFinalization({ vueBeta: args[0] === "--vue-beta" });
   console.log(`Release ${release.tagName} is finalized.`);
 }
 

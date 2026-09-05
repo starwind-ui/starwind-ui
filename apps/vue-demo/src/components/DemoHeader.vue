@@ -6,9 +6,10 @@ import ThemeToggle from "./starwind-runtime/theme-toggle/ThemeToggle.vue";
   <header class="demo-header" data-testid="vue-demo-header">
     <div class="demo-header__inner">
       <a class="demo-header__brand" href="/">Starwind Vue</a>
+      <span class="beta-label" data-testid="vue-beta-label">Vue 3.5 beta</span>
       <nav aria-label="Demo pages">
         <a href="/">Overview</a>
-        <a href="/review">Review</a>
+        <a href="/review">Styled review</a>
       </nav>
       <ThemeToggle id="header-theme-toggle" data-testid="header-theme-toggle" />
     </div>

@@ -4,8 +4,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-export const MAX_TARBALL_BYTES = 460_800;
-export const MAX_UNPACKED_BYTES = 3_145_728;
+export const MAX_TARBALL_BYTES = 512_000;
+export const MAX_UNPACKED_BYTES = 3_932_160;
 export const INSTALLED_CLI_COMMAND = Object.freeze(["exec", "starwind", "--help"]);
 
 const PACKAGE_DIRECTORY = fileURLToPath(new URL("..", import.meta.url));

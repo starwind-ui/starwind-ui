@@ -84,6 +84,9 @@ export async function verifyDialogEntryAnimationGestures({
           };
         };
         const sample = (now) => {
+          // The rAF timestamp marks the frame start and can predate synchronous input work in the
+          // same frame. Use the capture time when ordering samples against event timestamps.
+          const sampledAt = performance.now();
           const animations = [
             ...element.getAnimations(),
             ...(backdrop instanceof HTMLElement ? backdrop.getAnimations() : []),
@@ -105,6 +108,7 @@ export async function verifyDialogEntryAnimationGestures({
             contentOpen: element instanceof HTMLDialogElement ? element.open : null,
             contentState: element.getAttribute("data-state"),
             now,
+            sampledAt,
           });
 
           if (finishedFrames >= 2 || now - record.startedAt > 4000) {
@@ -142,10 +146,10 @@ export async function verifyDialogEntryAnimationGestures({
   }
 }
 
-function assertEntryProgress({ expectedDuration, gesture, label, result }) {
-  const afterRelease = result.samples.filter((sample) => sample.now >= result.releaseTime);
+export function assertEntryProgress({ expectedDuration, gesture, label, result }) {
+  const afterRelease = result.samples.filter((sample) => sample.sampledAt >= result.releaseTime);
   const afterPresentation = afterRelease.filter(
-    (sample) => sample.now >= result.showModalReturnedAt,
+    (sample) => sample.sampledAt >= result.showModalReturnedAt,
   );
   const running = afterRelease.filter((sample) =>
     sample.animations.some((animation) => animation.playState === "running"),

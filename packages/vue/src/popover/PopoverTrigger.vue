@@ -27,7 +27,6 @@ const AsChildTrigger = defineComponent({
         "aria-haspopup": "dialog",
         "aria-expanded": "false",
         "data-state": "closed",
-        "data-as-child": "",
         "data-sw-part": "trigger",
       };
       return asChild.render({

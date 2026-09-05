@@ -5,9 +5,13 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { starwindStyledContracts } from "../../contracts/styled/starwind.js";
+import { solidFrameworkAdapterReadiness } from "../../renderers/framework-adapters/solid/adapter.js";
 import { vueFrameworkAdapterTarget } from "../../renderers/framework-adapters/vue/index.js";
 import { vuePrimitiveComponents } from "../../renderers/framework-adapters/vue/inventory.js";
+import { defineFrameworkAdapterTarget } from "../../renderers/framework-adapters/target-definition.js";
+import type { FrameworkAdapterTargetRegistration } from "../../renderers/framework-adapters/types.js";
 import {
+  getPrimitiveFrameworkAdapterTarget,
   getPrimitiveFrameworkAdapterTargetNames,
   getPrimitiveFrameworkAdapterTargetsForComponent,
   resolvePrimitiveFrameworkAdapterTargetComponents,
@@ -23,7 +27,7 @@ describe("registered Vue Framework Adapter target", () => {
     );
   });
 
-  it("registers exactly the approved non-shipping Primitive subset", () => {
+  it("registers exactly the approved public-beta Primitive subset", () => {
     expect(getPrimitiveFrameworkAdapterTargetNames()).toEqual(["astro", "react", "vue", "svelte"]);
     expect(resolvePrimitiveFrameworkAdapterTargetComponents("vue")).toEqual(vuePrimitiveComponents);
     expect(vueFrameworkAdapterTarget.primitive.support).toEqual({
@@ -31,11 +35,11 @@ describe("registered Vue Framework Adapter target", () => {
       kind: "subset",
     });
     expect(vueFrameworkAdapterTarget.publicSupport).toEqual({
-      cliRegistry: false,
-      demoIntegration: false,
-      packageExports: false,
-      publicDocsClaim: false,
-      status: "non-shipping-tracer",
+      cliRegistry: true,
+      demoIntegration: true,
+      packageExports: true,
+      publicDocsClaim: true,
+      status: "public-beta",
     });
     expect(vueFrameworkAdapterTarget.cliRegistry).toMatchObject({
       generatedImportCandidateExtensions: [".vue", ".ts", ".js"],
@@ -56,6 +60,40 @@ describe("registered Vue Framework Adapter target", () => {
       },
       setupPackageRequirements: [{ name: "vue", range: ">=3.5" }],
     });
+  });
+
+  it("rejects a partial public-beta capability promotion", () => {
+    expect(() =>
+      defineFrameworkAdapterTarget({
+        ...vueFrameworkAdapterTarget,
+        publicSupport: {
+          ...vueFrameworkAdapterTarget.publicSupport,
+          publicDocsClaim: false,
+        },
+      } as unknown as FrameworkAdapterTargetRegistration<"vue">),
+    ).toThrow(/status "public-beta" requires .* to be true together.*publicDocsClaim/);
+  });
+
+  it("keeps stable and quarantined target support classifications unchanged", () => {
+    const shipping = {
+      cliRegistry: true,
+      demoIntegration: true,
+      packageExports: true,
+      publicDocsClaim: true,
+      status: "shipping",
+    };
+    const quarantined = {
+      cliRegistry: false,
+      demoIntegration: false,
+      packageExports: false,
+      publicDocsClaim: false,
+      status: "non-shipping-tracer",
+    };
+
+    expect(getPrimitiveFrameworkAdapterTarget("astro").publicSupport).toEqual(shipping);
+    expect(getPrimitiveFrameworkAdapterTarget("react").publicSupport).toEqual(shipping);
+    expect(getPrimitiveFrameworkAdapterTarget("svelte").publicSupport).toEqual(quarantined);
+    expect(solidFrameworkAdapterReadiness.publicSupport).toEqual(quarantined);
   });
 
   it("collects Styled package imports from Vue projection and output-model facts", () => {

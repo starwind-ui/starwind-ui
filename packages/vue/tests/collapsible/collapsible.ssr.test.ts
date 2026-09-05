@@ -82,7 +82,7 @@ describe("Vue Collapsible SSR", () => {
     expect(html.match(/<button/g)).toHaveLength(1);
     expect(html).toContain('data-testid="child"');
     expect(html).toContain("data-sw-collapsible-trigger");
-    expect(html).toContain("data-as-child");
+    expect(html).not.toContain("data-as-child");
     expect(html).toContain('class="child outer"');
     expect(html).toContain('type="button"');
   });
