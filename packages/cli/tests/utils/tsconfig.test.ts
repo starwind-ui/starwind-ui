@@ -181,11 +181,18 @@ describe("tsconfig", () => {
       ...existing,
       compilerOptions: {
         ...existing.compilerOptions,
-        baseUrl: ".",
         paths: { "~/*": ["./src/*"], "@/*": ["./src/*"] },
       },
     });
     expect(mergeVueTsConfig(merged)).toEqual(merged);
+    expect(merged.compilerOptions).not.toHaveProperty("baseUrl");
+  });
+
+  it("preserves an authored Vue baseUrl without adding one to new configs", () => {
+    expect(mergeVueTsConfig({}).compilerOptions).not.toHaveProperty("baseUrl");
+    const existing = { compilerOptions: { baseUrl: ".", strict: true } };
+    expect(mergeVueTsConfig(existing).compilerOptions?.baseUrl).toBe(".");
+    expect(existing).toEqual({ compilerOptions: { baseUrl: ".", strict: true } });
   });
 
   it("updates the official split Vue app config", async () => {
@@ -200,7 +207,6 @@ describe("tsconfig", () => {
       "tsconfig.app.json",
       expect.objectContaining({
         compilerOptions: expect.objectContaining({
-          baseUrl: ".",
           paths: { "@/*": ["./src/*"] },
         }),
       }),

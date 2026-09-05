@@ -61,7 +61,9 @@ release solely because Vue changed. Changes to shared Runtime behavior still fol
 rules below.
 
 Vue's npm package has a separate beta version history, starting at `0.1.0` on the `beta` tag while
-preserving `latest`. Component versions do not determine package beta status. Stable graduation and
+preserving `latest` after the initial release. The release owner approved `latest=0.1.0` when the
+first publication had no previous `latest`; the initial release may have both tags. This exception
+does not permit later beta releases to move an existing `latest`. Component versions do not determine package beta status. Stable graduation and
 package alignment require a separate approved decision. The initial Vue release keeps all existing
 component versions and publishes CLI `3.3.0` with Vue `0.1.0`.
 

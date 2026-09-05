@@ -259,7 +259,6 @@ export async function setupTsConfig(
 export function mergeVueTsConfig(existingConfig: TsConfig, includeJavaScript = false): TsConfig {
   const compilerOptions = {
     ...(existingConfig.compilerOptions ?? {}),
-    baseUrl: existingConfig.compilerOptions?.baseUrl ?? ".",
     ...(includeJavaScript
       ? {
           allowJs: true,

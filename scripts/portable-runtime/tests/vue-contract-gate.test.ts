@@ -746,14 +746,8 @@ describe("Vue public-beta contract gate", () => {
       expect(prereleaseState.initialVersions["@starwind-ui/vue"]).toBe("0.0.0");
       expect(prereleaseState.changesets.filter(containsBoundaryAwareVue)).toEqual([]);
     }
-    for (const file of listFiles(join(process.cwd(), ".changeset")).filter(
-      (candidate) => candidate !== "config.json" && candidate !== "pre.json",
-    )) {
-      expect(
-        containsBoundaryAwareVue(readFileSync(join(process.cwd(), ".changeset", file), "utf8")),
-        `.changeset/${file}`,
-      ).toBe(false);
-    }
+    // Public beta fixes may describe Vue in Changesets. Package eligibility and fixed-group
+    // membership are enforced by the configuration checks above, not by release-note wording.
 
     const publicCliSurfaces = readTextSurfaces(publicCliTextSurfacePaths);
     expect(findBoundaryAwareVueSurfaces(publicCliSurfaces)).toEqual([
