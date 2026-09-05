@@ -22,6 +22,7 @@ import {
   getAstroVueFixture,
   getViteVueFixture,
   getVueFixture,
+  getVueBetaPackVersion,
   isPreviewTreeAlive,
   isNuxtComponentCollisionWarning,
   isVueHydrationMismatchWarning,
@@ -42,6 +43,12 @@ const packages = {
 };
 
 describe("production Vue CLI host acceptance", () => {
+  it("keeps the candidate CLI version when packing Vue beta hosts", () => {
+    expect(getVueBetaPackVersion("cli", "3.3.1")).toBe("3.3.1");
+    expect(getVueBetaPackVersion("runtime", "1.2.0")).toBe("1.2.0");
+    expect(getVueBetaPackVersion("vue", "0.1.0")).toBe("0.1.0");
+  });
+
   it("plans exact beta packages and includes Vue in public candidate acceptance", () => {
     const betaPlan = createVueBetaPackPlan({ outputDirectory: path.join(root, "packs") });
     const publicPlan = createPackPlan({ outputDirectory: path.join(root, "public-packs") });
