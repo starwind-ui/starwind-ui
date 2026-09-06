@@ -7,12 +7,51 @@ import {
   collectDynamicJsImports,
   collectHtmlJsAssets,
   collectStaticJsImports,
+  evaluateRouteReport,
   findAttributedStaticChunk,
   inspectPortalBundleBoundaries,
   writeMarkdownReport,
 } from "../assert-astro-demo-bundles.mjs";
 
 describe("assert-astro-demo-bundles helpers", () => {
+  it("warns on chunk layout changes while enforcing transfer and forbidden-import limits", () => {
+    const report = {
+      route: "fixture/index.html",
+      budget: {
+        maxStaticChunkCount: 1,
+        maxInitialExternalRawBytes: 10,
+        maxInitialExternalGzipBytes: 50,
+        maxInitialJsGzipBytes: 100,
+      },
+      initialExternal: { count: 2, rawBytes: 11, gzipBytes: 50 },
+      initialJsGzipBytes: 100,
+      initialAssets: [],
+      attributedStaticChunks: [
+        { assetPattern: /^shared\./, importerPattern: /^entry\./, note: "shared chunk" },
+      ],
+      staticImportEdges: [],
+      forbiddenMatches: [],
+    };
+    const reshaped = evaluateRouteReport(report);
+    expect(reshaped.failures).toEqual([]);
+    expect(reshaped.advisories).toHaveLength(3);
+    const overReview = evaluateRouteReport({ ...report, initialJsGzipBytes: 101 });
+    expect(overReview.failures).toEqual([]);
+    expect(overReview.advisories).toHaveLength(4);
+    expect(evaluateRouteReport({ ...report, initialJsGzipBytes: 2_148 }).failures).toEqual([]);
+    const oversized = evaluateRouteReport({ ...report, initialJsGzipBytes: 2_149 });
+    expect(oversized.failures).toHaveLength(1);
+    expect(oversized.failures[0]).toContain("initial JS gzip bytes exceeded hard limit");
+    const forbidden = evaluateRouteReport({
+      ...report,
+      forbiddenMatches: [{ asset: "color-picker.js", label: "unexpected Runtime" }],
+    });
+    expect(forbidden.failures[0]).toContain("loaded forbidden runtime assets");
+    expect(
+      evaluateRouteReport({ ...report, initialJsGzipBytes: Number.NaN }).failures[0],
+    ).toContain("invalid initial JS gzip bytes measurement");
+  });
+
   it("collects only initial-loading route HTML JavaScript assets", () => {
     const html = `
       <script type="module" src="/_astro/entry.js"></script>

@@ -24,7 +24,7 @@ describe("Astro smoke dev-server readiness", () => {
     expect(page.goto).toHaveBeenCalledTimes(1);
     expect(page.goto).toHaveBeenCalledWith("http://127.0.0.1:4325/", {
       timeout: 30000,
-      waitUntil: "domcontentloaded",
+      waitUntil: "networkidle",
     });
   });
 

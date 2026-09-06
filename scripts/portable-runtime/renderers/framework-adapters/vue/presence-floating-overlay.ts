@@ -8,7 +8,7 @@ import type {
   AdapterPresenceFloatingOverlayFacts,
   AdapterPrintedFile,
 } from "../types.js";
-import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVuePresenceFloatingOverlayIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "presence-floating-overlay");
@@ -57,8 +57,7 @@ function printRoot(facts: AdapterPresenceFloatingOverlayFacts): string {
   const setterOptions = printOptions(facts.setter.options);
   const contextName = `${facts.displayName}Context`;
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
 import type { InjectionKey, Ref } from "vue";
 
 export type ${facts.displayName}ContextValue = {
@@ -254,8 +253,7 @@ onBeforeUnmount(() => {
 
 function printTrigger(facts: AdapterPresenceFloatingOverlayFacts): string {
   const part = facts.parts.trigger;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { defineComponent, ref, useAttrs, type VNode } from "vue";
 import { createVueAsChild } from "../_internal/as-child";
 
@@ -316,8 +314,7 @@ const AsChildTrigger = defineComponent({
 
 function printPortal(facts: AdapterPresenceFloatingOverlayFacts): string {
   const part = facts.parts.portal;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
 import { inject, onBeforeUnmount, onMounted, ref } from "vue";
 import { useVuePortalPlacement } from "../_internal/portal";
@@ -379,8 +376,7 @@ function printFloatingPart(
     partName === "popup"
       ? `\n    ${facts.attrs.popupRole}="${facts.parts.popup.role}"\n    :${facts.attrs.popupTabIndex.toLowerCase()}="-1"`
       : "";
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { type HTMLAttributes, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -451,8 +447,7 @@ function printPart(
   extraAttrs: string[],
 ): string {
   const part = facts.parts[partName];
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { type HTMLAttributes, ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

@@ -9,7 +9,7 @@ import type {
   AdapterTimedFloatingOverlayFacts,
   AdapterTimedFloatingOverlayPartName,
 } from "../types.js";
-import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueTimedFloatingOverlayIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "timed-floating-overlay");
@@ -71,8 +71,7 @@ watch(
   const setterOptions = printOptions(facts.setters.open.options);
   const contextName = `${facts.displayName}Context`;
 
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script lang="ts">
+  return `<script lang="ts">
 import type { InjectionKey, Ref } from "vue";
 
 export type ${contextName}Value = {
@@ -245,8 +244,7 @@ function printTrigger(facts: AdapterTimedFloatingOverlayFacts): string {
     : "";
   const openDelay = anchor ? requireFact(facts.attrs.triggerOpenDelay, "trigger open delay") : "";
   const nativeDisabled = facts.attrs.triggerNativeDisabled;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { defineComponent, ref, useAttrs, type VNode } from "vue";
 import { createVueAsChild } from "../_internal/as-child";
 
@@ -312,8 +310,7 @@ ${anchor ? `    :${closeDelay}="props.${facts.props.closeDelay.name}"\n    :${op
 }
 
 function printPortal(facts: AdapterTimedFloatingOverlayFacts): string {
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}";
 import { inject, onBeforeUnmount, onMounted, ref } from "vue";
 import { useVuePortalPlacement } from "../_internal/portal";
@@ -352,8 +349,7 @@ function printFloatingPart(
   const part = facts.parts[partName];
   const role = partName === "popup" ? `\n    role="${facts.popupRole}"` : "";
   const hidden = partName === "popup" ? `\n    ${facts.attrs.popupHidden}` : "";
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { type HTMLAttributes, ref } from "vue";
 defineOptions({ inheritAttrs: false });
 type NativeElementProps = /* @vue-ignore */ HTMLAttributes;
@@ -403,8 +399,7 @@ function printSimplePart(
       : partName === "backdrop"
         ? `${requireFact(facts.attrs.backdropState, "backdrop state")}="closed" ${requireFact(facts.attrs.backdropHidden, "backdrop hidden")}`
         : `${requireFact(facts.attrs.viewportState, "viewport state")}="closed"`;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { type HTMLAttributes, ref } from "vue";
 defineOptions({ inheritAttrs: false });
 type NativeElementProps = /* @vue-ignore */ HTMLAttributes;

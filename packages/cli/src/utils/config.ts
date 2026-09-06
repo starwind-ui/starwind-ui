@@ -164,14 +164,6 @@ export const DEFAULT_STARWIND_PRO_REGISTRY_CONFIG: ResolvedStarwindProRegistryCo
   params: {},
 };
 
-export function getDefaultStarwindProAuthConfig(): StarwindProConfig {
-  return {
-    registry: {
-      headers: { ...DEFAULT_STARWIND_PRO_REGISTRY_CONFIG.headers },
-    },
-  };
-}
-
 function getAuthorizationHeader(headers: Record<string, string> | undefined): string | undefined {
   if (!headers) return undefined;
 

@@ -10,7 +10,6 @@ import type {
   AdapterSharedViewportNavigationFacts,
   AdapterSharedViewportNavigationPartName,
 } from "../types.js";
-import { VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
 
 export function isVueSharedViewportNavigationOutput(model: AdapterOutputModel): boolean {
   return model.files.some(
@@ -103,8 +102,7 @@ export function use${facts.displayName}ViewportContext(consumer: string) { retur
 function printRoot(facts: AdapterSharedViewportNavigationFacts): string {
   const p = facts.props;
   const event = facts.valueControl.event;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-${printContext(facts)}
+  return `${printContext(facts)}
 <script setup lang="ts">
 import { ${facts.runtime.factory}, type ${event.detailsType} } from "${facts.runtime.importSource}";
 import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, provide, ref, useAttrs, watch } from "vue";
@@ -135,8 +133,7 @@ onBeforeUnmount(() => { generation += 1; mounted.value = false; destroyOwnedInst
 }
 
 function printItem(facts: AdapterSharedViewportNavigationFacts): string {
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { computed, provide, ref } from "vue"; import { ${facts.displayName}ItemContext, use${facts.displayName}RootContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); const props = defineProps<{ ${facts.item.valueProp.name}?: ${facts.item.valueProp.type} }>(); defineSlots<{ default?: () => unknown }>();
+  return `<script setup lang="ts">import { computed, provide, ref } from "vue"; import { ${facts.displayName}ItemContext, use${facts.displayName}RootContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); const props = defineProps<{ ${facts.item.valueProp.name}?: ${facts.item.valueProp.type} }>(); defineSlots<{ default?: () => unknown }>();
 const root = use${facts.displayName}RootContext("${facts.exports.item}"); const element = ref<HTMLLIElement | null>(null); const itemValue = computed(() => props.${facts.item.valueProp.name}); const open = computed(() => itemValue.value !== undefined && root.value.value === itemValue.value); provide(${facts.displayName}ItemContext, { open, value: itemValue }); defineExpose({ element });</script>
 <template><${facts.parts.item.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.item} data-sw-part="${facts.parts.item.name}" :${facts.attrs.itemValue}="props.${facts.item.valueProp.name}" :${facts.item.stateAttribute}="open ? 'open' : '${facts.item.stateValue}'"><slot /></${facts.parts.item.defaultElement}></template>
 `;
@@ -144,8 +141,7 @@ const root = use${facts.displayName}RootContext("${facts.exports.item}"); const 
 
 function printList(facts: AdapterSharedViewportNavigationFacts): string {
   const part = facts.parts.list;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { ref } from "vue"; import { use${facts.displayName}RootContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); defineSlots<{ default?: () => unknown }>();
+  return `<script setup lang="ts">import { ref } from "vue"; import { use${facts.displayName}RootContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); defineSlots<{ default?: () => unknown }>();
 const root = use${facts.displayName}RootContext("${facts.exports.list}"); const element = ref<HTMLElement | null>(null); defineExpose({ element });</script>
 <template><${part.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${part.discoveryAttribute} data-sw-part="${part.name}" :${facts.attrs.orientation}="root.orientation.value"><slot /></${part.defaultElement}></template>
 `;
@@ -153,15 +149,13 @@ const root = use${facts.displayName}RootContext("${facts.exports.list}"); const 
 
 function printTrigger(facts: AdapterSharedViewportNavigationFacts): string {
   const t = facts.trigger;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { defineComponent, ref, useAttrs, type VNode } from "vue"; import { createVueAsChild } from "../_internal/as-child"; import { use${facts.displayName}ItemContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${t.asChild.name}?: ${t.asChild.type}; ${t.disabled.prop.name}?: ${t.disabled.prop.type}; ${t.openDelay.name}?: ${t.openDelay.type}; ${t.closeDelay.name}?: ${t.closeDelay.type} }>(), { ${t.asChild.name}: ${valueDefault(t.asChild, "false")}, ${t.disabled.prop.name}: ${valueDefault(t.disabled.prop, "false")} }); const slots = defineSlots<{ default?: () => VNode[] }>(); const attrs = useAttrs(); const item = use${facts.displayName}ItemContext("${facts.exports.trigger}"); const element = ref<HTMLElement | null>(null); const asChild = createVueAsChild("${facts.exports.trigger}", element); const { setElement } = asChild; const AsChild = defineComponent({ setup() { return () => asChild.render({ children: slots.default?.() ?? [], consumerProps: attrs, protectedProps: protectedAttrs() }); } }); function protectedAttrs() { return { "${facts.attrs.trigger}": "", "${facts.attrs.triggerOpenDelay}": props.${t.openDelay.name} == null ? undefined : String(props.${t.openDelay.name}), "${facts.attrs.triggerCloseDelay}": props.${t.closeDelay.name} == null ? undefined : String(props.${t.closeDelay.name}), "${t.disabled.dataAttribute}": props.${t.disabled.prop.name} ? "" : undefined, "${t.disabled.ariaAttribute}": props.${t.disabled.prop.name} ? true : undefined, "${t.disclosure.ariaExpanded}": item.open.value, "${t.disclosure.ariaHaspopup.attribute}": "${t.disclosure.ariaHaspopup.value}" as const, "${t.disclosure.stateAttribute}": item.open.value ? "open" : "${t.disclosure.closedStateValue}" }; } defineExpose({ element });</script>
+  return `<script setup lang="ts">import { defineComponent, ref, useAttrs, type VNode } from "vue"; import { createVueAsChild } from "../_internal/as-child"; import { use${facts.displayName}ItemContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${t.asChild.name}?: ${t.asChild.type}; ${t.disabled.prop.name}?: ${t.disabled.prop.type}; ${t.openDelay.name}?: ${t.openDelay.type}; ${t.closeDelay.name}?: ${t.closeDelay.type} }>(), { ${t.asChild.name}: ${valueDefault(t.asChild, "false")}, ${t.disabled.prop.name}: ${valueDefault(t.disabled.prop, "false")} }); const slots = defineSlots<{ default?: () => VNode[] }>(); const attrs = useAttrs(); const item = use${facts.displayName}ItemContext("${facts.exports.trigger}"); const element = ref<HTMLElement | null>(null); const asChild = createVueAsChild("${facts.exports.trigger}", element); const { setElement } = asChild; const AsChild = defineComponent({ setup() { return () => asChild.render({ children: slots.default?.() ?? [], consumerProps: attrs, protectedProps: protectedAttrs() }); } }); function protectedAttrs() { return { "${facts.attrs.trigger}": "", "${facts.attrs.triggerOpenDelay}": props.${t.openDelay.name} == null ? undefined : String(props.${t.openDelay.name}), "${facts.attrs.triggerCloseDelay}": props.${t.closeDelay.name} == null ? undefined : String(props.${t.closeDelay.name}), "${t.disabled.dataAttribute}": props.${t.disabled.prop.name} ? "" : undefined, "${t.disabled.ariaAttribute}": props.${t.disabled.prop.name} ? true : undefined, "${t.disclosure.ariaExpanded}": item.open.value, "${t.disclosure.ariaHaspopup.attribute}": "${t.disclosure.ariaHaspopup.value}" as const, "${t.disclosure.stateAttribute}": item.open.value ? "open" : "${t.disclosure.closedStateValue}" }; } defineExpose({ element });</script>
 <template><AsChild v-if="props.${t.asChild.name}" /><${facts.parts.trigger.defaultElement} v-else :ref="setElement" v-bind="{ ...attrs, ...protectedAttrs() }" ${t.typeAttribute.attribute}="${t.typeAttribute.value}" :${t.disabled.nativeAttribute}="props.${t.disabled.prop.name}"><slot /></${facts.parts.trigger.defaultElement}></template>
 `;
 }
 
 function printContent(facts: AdapterSharedViewportNavigationFacts): string {
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { ref } from "vue"; import { use${facts.displayName}ItemContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); defineSlots<{ default?: () => unknown }>();
+  return `<script setup lang="ts">import { ref } from "vue"; import { use${facts.displayName}ItemContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); defineSlots<{ default?: () => unknown }>();
 const item = use${facts.displayName}ItemContext("${facts.exports.content}"); const element = ref<HTMLDivElement | null>(null); defineExpose({ element });</script>
 <template><${facts.parts.content.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.content} data-sw-part="${facts.parts.content.name}" :${facts.content.stateAttribute}="item.open.value ? 'open' : '${facts.content.stateValue}'" ${facts.content.hiddenAttribute}><slot /></${facts.parts.content.defaultElement}></template>
 `;
@@ -170,16 +164,14 @@ const item = use${facts.displayName}ItemContext("${facts.exports.content}"); con
 function printLink(facts: AdapterSharedViewportNavigationFacts): string {
   const active = facts.link.active;
   const close = facts.link.closeOnClick;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { ref } from "vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ href?: string; ${active.prop.name}?: ${active.prop.type}; ${close.prop.name}?: ${close.prop.type} }>(), { ${active.prop.name}: ${valueDefault(active.prop, "false")}, ${close.prop.name}: ${valueDefault(close.prop, "true")} }); defineSlots<{ default?: () => unknown }>();
+  return `<script setup lang="ts">import { ref } from "vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ href?: string; ${active.prop.name}?: ${active.prop.type}; ${close.prop.name}?: ${close.prop.type} }>(), { ${active.prop.name}: ${valueDefault(active.prop, "false")}, ${close.prop.name}: ${valueDefault(close.prop, "true")} }); defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLAnchorElement | null>(null); defineExpose({ element });</script>
 <template><${facts.parts.link.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.link} data-sw-part="${facts.parts.link.name}" :href="props.href" :${facts.attrs.active}="props.${active.prop.name} ? '' : undefined" :${active.ariaCurrentAttribute}="props.${active.prop.name} ? '${active.ariaCurrentValue}' : undefined" :${facts.attrs.linkCloseOnClick}="props.${close.prop.name} ? undefined : '${close.falseValue}'"><slot /></${facts.parts.link.defaultElement}></template>
 `;
 }
 
 function printPortal(facts: AdapterSharedViewportNavigationFacts): string {
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}"; import { ref } from "vue"; import { useVuePortalPlacement } from "../_internal/portal"; import { use${facts.displayName}RootContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ container?: string | HTMLElement; disabled?: boolean }>(), { disabled: false }); defineSlots<{ default?: () => unknown }>();
+  return `<script setup lang="ts">import { reportPortalPlacement, resolvePortalPlacement } from "${facts.runtime.importSource}"; import { ref } from "vue"; import { useVuePortalPlacement } from "../_internal/portal"; import { use${facts.displayName}RootContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ container?: string | HTMLElement; disabled?: boolean }>(), { disabled: false }); defineSlots<{ default?: () => unknown }>();
 const root = use${facts.displayName}RootContext("${facts.exports.portal}"); const element = ref<HTMLDivElement | null>(null); const placement = useVuePortalPlacement({ active: () => root.mounted.value, container: () => props.container, disabled: () => props.disabled, element, reference: () => root.element.value, runtime: { reportPortalPlacement, resolvePortalPlacement } }); defineExpose({ element });</script>
 <template><Teleport :to="placement.target.value" :disabled="placement.disabled.value"><${facts.parts.portal.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.portal} :data-container="typeof props.container === 'string' ? props.container : undefined" :data-disabled="props.disabled ? '' : undefined" :data-placement="placement.ready.value ? 'ready' : 'pending'" data-sw-portal-placement="framework" data-floating-root data-sw-part="${facts.parts.portal.name}"><slot /></${facts.parts.portal.defaultElement}></Teleport></template>
 `;
@@ -187,8 +179,7 @@ const root = use${facts.displayName}RootContext("${facts.exports.portal}"); cons
 
 function printPositioner(facts: AdapterSharedViewportNavigationFacts): string {
   const f = facts.floating;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { ref } from "vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${f.side.name}?: ${f.side.type}; ${f.align.name}?: ${f.align.type}; ${f.sideOffset.name}?: ${f.sideOffset.type}; ${f.alignOffset.name}?: ${f.alignOffset.type}; ${f.avoidCollisions.name}?: ${f.avoidCollisions.type}; ${f.collisionPadding.name}?: ${f.collisionPadding.type} }>(), { ${f.side.name}: ${valueDefault(f.side, '"bottom"')}, ${f.align.name}: ${valueDefault(f.align, '"start"')}, ${f.sideOffset.name}: ${valueDefault(f.sideOffset, "4")}, ${f.alignOffset.name}: ${valueDefault(f.alignOffset, "0")}, ${f.avoidCollisions.name}: ${valueDefault(f.avoidCollisions, "true")}, ${f.collisionPadding.name}: ${valueDefault(f.collisionPadding, "8")} }); defineSlots<{ default?: () => unknown }>();
+  return `<script setup lang="ts">import { ref } from "vue"; defineOptions({ inheritAttrs: false }); const props = withDefaults(defineProps<{ ${f.side.name}?: ${f.side.type}; ${f.align.name}?: ${f.align.type}; ${f.sideOffset.name}?: ${f.sideOffset.type}; ${f.alignOffset.name}?: ${f.alignOffset.type}; ${f.avoidCollisions.name}?: ${f.avoidCollisions.type}; ${f.collisionPadding.name}?: ${f.collisionPadding.type} }>(), { ${f.side.name}: ${valueDefault(f.side, '"bottom"')}, ${f.align.name}: ${valueDefault(f.align, '"start"')}, ${f.sideOffset.name}: ${valueDefault(f.sideOffset, "4")}, ${f.alignOffset.name}: ${valueDefault(f.alignOffset, "0")}, ${f.avoidCollisions.name}: ${valueDefault(f.avoidCollisions, "true")}, ${f.collisionPadding.name}: ${valueDefault(f.collisionPadding, "8")} }); defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLDivElement | null>(null); defineExpose({ element });</script>
 <template><${facts.parts.positioner.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${facts.attrs.positioner} data-sw-part="${facts.parts.positioner.name}" ${facts.positioner.stateAttribute}="${facts.positioner.stateValue}" :${facts.attrs.side}="props.${f.side.name}" :${facts.attrs.align}="props.${f.align.name}" :${facts.attrs.sideOffset}="props.${f.sideOffset.name}" :${facts.attrs.alignOffset}="props.${f.alignOffset.name}" :${facts.attrs.avoidCollisions}="props.${f.avoidCollisions.name} ? 'true' : 'false'" :${facts.attrs.collisionPadding}="props.${f.collisionPadding.name}"><slot /></${facts.parts.positioner.defaultElement}></template>
 `;
@@ -196,8 +187,7 @@ const element = ref<HTMLDivElement | null>(null); defineExpose({ element });</sc
 
 function printViewport(facts: AdapterSharedViewportNavigationFacts): string {
   const part = facts.parts.viewport;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { provide, ref } from "vue"; import { ${facts.displayName}ViewportContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); defineSlots<{ default?: () => unknown }>();
+  return `<script setup lang="ts">import { provide, ref } from "vue"; import { ${facts.displayName}ViewportContext } from "./${facts.exports.root}.vue"; defineOptions({ inheritAttrs: false }); defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLDivElement | null>(null); provide(${facts.displayName}ViewportContext, { element }); defineExpose({ element });</script>
 <template><${part.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${part.discoveryAttribute} data-sw-part="${part.name}" ${part.stateAttribute}="${part.stateValue}" ${part.hiddenAttribute}><slot /></${part.defaultElement}></template>
 `;
@@ -208,8 +198,7 @@ function printSimple(
   partName: "arrow" | "icon" | "popup",
 ): string {
   const part = facts.parts[partName];
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">import { ref } from "vue"; defineOptions({ inheritAttrs: false }); defineSlots<{ default?: () => unknown }>();
+  return `<script setup lang="ts">import { ref } from "vue"; defineOptions({ inheritAttrs: false }); defineSlots<{ default?: () => unknown }>();
 const element = ref<HTMLElement | null>(null); defineExpose({ element });</script>
 <template><${part.defaultElement} ref="element" v-bind="${VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS.templateBinding}" ${part.discoveryAttribute} data-sw-part="${part.name}"${part.ariaHidden ? ' aria-hidden="true"' : ""}${part.stateAttribute ? ` ${part.stateAttribute}="${part.stateValue}"` : ""}${part.hidden ? ` ${part.hiddenAttribute}` : ""}><slot /></${part.defaultElement}></template>
 `;

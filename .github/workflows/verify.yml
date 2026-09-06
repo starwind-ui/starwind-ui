@@ -253,6 +253,27 @@ jobs:
         run: pnpm build
       - name: Reject Generated Drift
         run: git diff --exit-code
+      - name: Check CLI package size
+        run: pnpm --filter=starwind package:check
+      - name: Check prepared Astro demo bundles
+        run: node scripts/portable-runtime/assert-astro-demo-bundles.mjs
+      - name: Validate saved Vue performance evidence
+        if: github.event.repository.private
+        run: pnpm runtime:perf:vue:evidence:check
+      - name: Check prepared package sizes
+        env:
+          STARWIND_MEASUREMENT_TMP_ROOT: ${{ runner.temp }}/starwind-measurements
+        run: pnpm runtime:size:check:prepared
+      - name: Upload package-size failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: package-size-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/starwind-measurements/starwind-package-size-comparison/run-*/raw-evidence
+            docs/portable-runtime/diagnostics/astro-demo-bundle-report.md
+          if-no-files-found: ignore
+          retention-days: 7
 
   node22-public-consumer:
     name: Node 22.12 public consumer

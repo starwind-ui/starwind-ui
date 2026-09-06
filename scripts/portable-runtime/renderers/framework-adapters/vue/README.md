@@ -1,7 +1,8 @@
 # Vue Framework Adapter
 
-This is the internally registered, non-shipping Vue Framework Adapter home. It generates the
-private `@starwind-ui/vue` package at version `0.0.0`. Every public-support flag remains disabled.
+This Framework Adapter home generates the Vue 3.5 public beta. The `@starwind-ui/vue` package
+uses the `beta` npm channel and stays outside the stable Runtime, Astro, and React fixed package
+group. Its current package version is `0.1.0`. All four public-support flags are enabled.
 
 `inventory.ts` is the authoritative inventory. The current Primitive surface contains Accordion,
 Alert Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Color Picker,
@@ -9,7 +10,7 @@ Combobox, Context Menu, Dialog, Drawer, Dropzone, Field, Fieldset, Form, Input, 
 Navigation Menu, Popover, Preview Card, Progress, Radio, Radio Group, Scroll Area, Select, Sidebar,
 Slider, Switch, Tabs, Toast, Toggle, Toggle Group, Tooltip, and the manual Theme facade.
 
-The complete private Styled surface contains 54 portable roots exactly once: Accordion, Alert
+The complete Styled surface contains 54 portable roots exactly once: Accordion, Alert
 Dialog, Avatar, Button, Carousel, Checkbox, Checkbox Group, Collapsible, Combobox, Color Picker,
 Context Menu, Dialog, Dropzone, Dropdown, Field, Sheet, Form, Hover Card, Input, Input OTP,
 Navigation Menu, Popover, Progress, Radio Group, Scroll Area, Select, Separator, Sidebar, Slider,
@@ -28,25 +29,29 @@ Navigation Menu, Combobox, and Toggle tracer artifacts remain historical, non-no
 fixtures. They do not define target support or package output. The legacy Collapsible printer
 fixture remains isolated printer-unit evidence.
 
-The target may create deterministic private package, Vue demo, and authenticated private CLI
-registry fixture output. It must not create public, production, or checked-in CLI registry entries,
-public demo dependencies, install docs, release configuration, or public Vue support claims. The
-target remains private and non-shipping.
+The registered target generates the public Primitive package, Vue demo, and CLI registry output.
+The beta supports Vite with Vue, Astro with Vue, Nuxt 3 and 4, Laravel with Inertia Vue, and Quasar
+CLI with Vite in SPA or SSR mode.
 
 `public-contract.ts` is the typed, target-local source of truth for Vue 3.5 public naming,
 composition, lifecycle, SSR, hydration, and Teleport projection. It records how framework-neutral
 Runtime Adapter Contract and output-model facts become Vue semantics without adding those semantics
-to shared contracts. The repository's accepted Vue adapter decision keeps that policy durable while
-this target remains quarantined.
+to shared contracts. The repository's accepted Vue adapter decision keeps that policy durable.
 
-The lists above are exact private subsets. Run `pnpm runtime:generate:vue:test` for isolated
+The lists above describe the supported inventory. Run `pnpm runtime:generate:vue:test` for isolated
 path-and-byte generation, compiler coverage, and exact inventory checks. Run `pnpm vue:verify` for
 package typechecking, source and browser tests, built hydration, every-export SSR, and release-like
 distribution checks. Run `pnpm vue-demo:smoke` for production behavior, remount and cleanup
 accounting, plus light and dark visual review. Existing Solid tracers are frozen comparisons rather
 than an active target.
 
-## Portable Styled Closure Verdict
+## Historical Pre-Beta Evidence
+
+The Orders 11–14 records below describe the private verification phase. Package versions, support
+flags, and roadmap actions in these records apply to that phase. The current public beta status
+is defined above and in `public-contract.ts`.
+
+### Portable Styled Closure Verdict
 
 Order 11 closed with a PROCEED depth verdict on 2026-08-06. The Styled Output Model and registered
 target `styled` capability form the small interface. Contracts own component composition and shared
@@ -58,7 +63,7 @@ Astro and React output, bundle guard, and current size guard pass. No closure co
 Vue-local behavior, lifecycle, a component printer, or handwritten SFC input. Vue remains private
 and non-shipping while order 12 owns CLI and registry work.
 
-## Private CLI and Registry Closure
+### Private CLI and Registry Closure
 
 Order 12 completed its expanded implementation and correction gates on 2026-08-10. Internal callers
 can generate an authenticated Vue registry fixture and initialize Vite Vue, Astro Vue, Nuxt 3/4,
@@ -81,7 +86,7 @@ consumers, Vue package and demo checks, and public demo builds. Independent Stan
 reviews approved the expanded closure. Order 13 Package Size Comparison is the current internal
 roadmap action.
 
-## Private Package Size Comparison
+### Private Package Size Comparison
 
 Order 13 measures fresh built `packages/vue/dist` output through the shared esbuild browser ESM,
 minification, static-import graph, and Node zlib level-9 gzip method. Vue stays external for browser
@@ -107,7 +112,7 @@ Order 14 later closed through the private Runtime performance evidence below. Or
 Readiness and Release is the next internal roadmap action. It keeps Vue outside the fixed package
 group at `0.1.0` under the npm `beta` tag. A later feedback-gated decision owns GA alignment.
 
-## Private Runtime Performance Comparison
+### Private Runtime Performance Comparison
 
 Order 14 measures production-built `packages/vue/dist` and `packages/runtime/dist` in Playwright
 Chromium. The frozen plan has 22 scenarios and 63 provider rows: 22 Starwind Vue, 22 exact Zag Vue
@@ -134,8 +139,9 @@ and inputs. Comparator-relative results remain advisory and do not form a releas
 public performance claim.
 
 Accepted row JSON, the collection manifest, the private Markdown report, smoke eligibility, the Reka
-audit, and rejected diagnostics remain in the private evidence store. Run `pnpm runtime:perf:vue:check` for strict
-read-only validation. The check requires all 63 canonical rows and validates membership, exact
+audit, and rejected diagnostics remain in the private evidence store. The private evidence check
+performs strict read-only validation of saved evidence. Current timing requires a new controlled
+capture. The check requires all 63 canonical rows and validates membership, exact
 versions, environment identity, statistics, candidate disposition, audit linkage, and report bytes
 without a package install, network request, browser launch, or evidence write.
 
@@ -144,7 +150,7 @@ React performance commands and artifacts unchanged. The Vue package remains priv
 `cliRegistry`, `demoIntegration`, `packageExports`, and `publicDocsClaim` remain false. Order 15 owns
 the atomic move from private verification to public beta.
 
-Before expanding this tracer, read `docs/portable-runtime/framework-renderer-authoring.md` for the
+Before changing this target, read `docs/portable-runtime/framework-renderer-authoring.md` for the
 target-local renderer fragment/helper pattern and public-support guardrails.
 
 ## Author Checklist

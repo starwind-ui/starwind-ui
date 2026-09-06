@@ -1039,11 +1039,11 @@ async function verifyAstroImageCases({ page, serverMode }) {
     }),
   );
   const importedImageState = imageStates.find((image) => image.alt === "Runtime image fixture");
-  const remoteImageState = imageStates.find(
-    (image) => image.alt === "Workspace with desks and large windows",
+  const sizedImageState = imageStates.find(
+    (image) => image.alt === "Pricing table with Starter, Professional, and Enterprise plans",
   );
   const hasExpectedImportedSource = hasOptimizedImageSource(importedImageState?.src, serverMode);
-  const hasExpectedRemoteSource = hasOptimizedImageSource(remoteImageState?.src, serverMode);
+  const hasExpectedSizedSource = hasOptimizedImageSource(sizedImageState?.src, serverMode);
 
   if (
     imageStates.length !== 2 ||
@@ -1058,17 +1058,18 @@ async function verifyAstroImageCases({ page, serverMode }) {
     importedImageState.renderedWidth <= 0 ||
     importedImageState.renderedHeight <= 0 ||
     hasExpectedImportedSource !== true ||
-    remoteImageState?.slot !== "image" ||
-    remoteImageState.hasWidthAttribute !== true ||
-    remoteImageState.complete !== true ||
-    Number(remoteImageState.naturalWidth) <= 0 ||
-    Number(remoteImageState.naturalHeight) <= 0 ||
-    remoteImageState.renderedWidth <= 0 ||
-    remoteImageState.renderedHeight <= 0 ||
-    hasExpectedRemoteSource !== true
+    sizedImageState?.slot !== "image" ||
+    Number(sizedImageState.widthAttribute) !== 960 ||
+    Number(sizedImageState.heightAttribute) !== 720 ||
+    sizedImageState.complete !== true ||
+    Number(sizedImageState.naturalWidth) <= 0 ||
+    Number(sizedImageState.naturalHeight) <= 0 ||
+    sizedImageState.renderedWidth <= 0 ||
+    sizedImageState.renderedHeight <= 0 ||
+    hasExpectedSizedSource !== true
   ) {
     throw new Error(
-      `Expected Astro Image demo to render optimized imported and remote Astro image output with dimensions and Starwind styling, got ${JSON.stringify(
+      `Expected Astro Image demo to render optimized images with inferred and explicit dimensions and Starwind styling, got ${JSON.stringify(
         imageStates,
       )}.`,
     );

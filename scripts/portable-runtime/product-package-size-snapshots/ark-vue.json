@@ -1,148 +1,148 @@
 {
   "schema": "starwind.product-package-size-comparator",
   "schemaVersion": 2,
-  "capturedAt": "2026-08-18T14:49:59.325Z",
+  "capturedAt": "2026-09-06T13:37:51.222Z",
   "catalog": {
-    "brotliBytes": 242842,
-    "gzipBytes": 314045,
-    "minifiedBytes": 1185805
+    "brotliBytes": 251906,
+    "gzipBytes": 325299,
+    "minifiedBytes": 1222485
   },
   "comparatorId": "ark-vue",
   "components": {
     "accordion": {
-      "brotliBytes": 11413,
-      "gzipBytes": 12720,
-      "minifiedBytes": 37384
+      "brotliBytes": 11438,
+      "gzipBytes": 12742,
+      "minifiedBytes": 37408
     },
     "alert-dialog": {
-      "brotliBytes": 18544,
-      "gzipBytes": 20626,
-      "minifiedBytes": 63058
+      "brotliBytes": 18728,
+      "gzipBytes": 20773,
+      "minifiedBytes": 63671
     },
     "avatar": {
-      "brotliBytes": 6708,
-      "gzipBytes": 7399,
+      "brotliBytes": 6711,
+      "gzipBytes": 7401,
       "minifiedBytes": 19445
     },
     "carousel": {
-      "brotliBytes": 13927,
-      "gzipBytes": 15516,
-      "minifiedBytes": 46244
+      "brotliBytes": 14043,
+      "gzipBytes": 15618,
+      "minifiedBytes": 46535
     },
     "checkbox": {
-      "brotliBytes": 10394,
-      "gzipBytes": 11533,
-      "minifiedBytes": 32170
+      "brotliBytes": 10424,
+      "gzipBytes": 11537,
+      "minifiedBytes": 32190
     },
     "checkbox-group": {
-      "brotliBytes": 10394,
-      "gzipBytes": 11533,
-      "minifiedBytes": 32170
+      "brotliBytes": 10424,
+      "gzipBytes": 11537,
+      "minifiedBytes": 32190
     },
     "collapsible": {
-      "brotliBytes": 8710,
+      "brotliBytes": 8711,
       "gzipBytes": 9622,
       "minifiedBytes": 26308
     },
     "combobox": {
-      "brotliBytes": 31236,
-      "gzipBytes": 35209,
-      "minifiedBytes": 110885
+      "brotliBytes": 31390,
+      "gzipBytes": 35415,
+      "minifiedBytes": 111607
     },
     "context-menu": {
-      "brotliBytes": 30352,
-      "gzipBytes": 34148,
-      "minifiedBytes": 105512
+      "brotliBytes": 30477,
+      "gzipBytes": 34319,
+      "minifiedBytes": 106133
     },
     "dialog": {
-      "brotliBytes": 18544,
-      "gzipBytes": 20626,
-      "minifiedBytes": 63058
+      "brotliBytes": 18728,
+      "gzipBytes": 20773,
+      "minifiedBytes": 63671
     },
     "drawer": {
-      "brotliBytes": 27291,
-      "gzipBytes": 30800,
-      "minifiedBytes": 97732
+      "brotliBytes": 27425,
+      "gzipBytes": 30948,
+      "minifiedBytes": 98344
     },
     "dropzone": {
-      "brotliBytes": 13303,
-      "gzipBytes": 14936,
-      "minifiedBytes": 42176
+      "brotliBytes": 13326,
+      "gzipBytes": 14969,
+      "minifiedBytes": 42292
     },
     "field": {
-      "brotliBytes": 4350,
-      "gzipBytes": 4902,
+      "brotliBytes": 4352,
+      "gzipBytes": 4901,
       "minifiedBytes": 14079
     },
     "input-otp": {
-      "brotliBytes": 10106,
-      "gzipBytes": 11186,
-      "minifiedBytes": 31478
+      "brotliBytes": 10123,
+      "gzipBytes": 11208,
+      "minifiedBytes": 31567
     },
     "menu": {
-      "brotliBytes": 30352,
-      "gzipBytes": 34148,
-      "minifiedBytes": 105512
+      "brotliBytes": 30477,
+      "gzipBytes": 34319,
+      "minifiedBytes": 106133
     },
     "navigation-menu": {
-      "brotliBytes": 17148,
-      "gzipBytes": 19087,
-      "minifiedBytes": 57735
+      "brotliBytes": 17277,
+      "gzipBytes": 19239,
+      "minifiedBytes": 58352
     },
     "popover": {
-      "brotliBytes": 27948,
-      "gzipBytes": 31413,
-      "minifiedBytes": 93098
+      "brotliBytes": 28111,
+      "gzipBytes": 31611,
+      "minifiedBytes": 93806
     },
     "preview-card": {
-      "brotliBytes": 21762,
-      "gzipBytes": 24155,
-      "minifiedBytes": 68960
+      "brotliBytes": 21839,
+      "gzipBytes": 24304,
+      "minifiedBytes": 69561
     },
     "progress": {
-      "brotliBytes": 7698,
-      "gzipBytes": 8519,
-      "minifiedBytes": 23694
+      "brotliBytes": 7742,
+      "gzipBytes": 8545,
+      "minifiedBytes": 23778
     },
     "radio": {
-      "brotliBytes": 10503,
-      "gzipBytes": 11710,
-      "minifiedBytes": 33217
+      "brotliBytes": 10528,
+      "gzipBytes": 11735,
+      "minifiedBytes": 33251
     },
     "radio-group": {
-      "brotliBytes": 10503,
-      "gzipBytes": 11710,
-      "minifiedBytes": 33217
+      "brotliBytes": 10528,
+      "gzipBytes": 11735,
+      "minifiedBytes": 33251
     },
     "scroll-area": {
-      "brotliBytes": 11241,
-      "gzipBytes": 12540,
-      "minifiedBytes": 35805
+      "brotliBytes": 11277,
+      "gzipBytes": 12560,
+      "minifiedBytes": 35827
     },
     "select": {
-      "brotliBytes": 30781,
-      "gzipBytes": 34606,
-      "minifiedBytes": 107512
+      "brotliBytes": 30930,
+      "gzipBytes": 34791,
+      "minifiedBytes": 108212
     },
     "slider": {
-      "brotliBytes": 13805,
-      "gzipBytes": 15377,
-      "minifiedBytes": 44683
+      "brotliBytes": 13824,
+      "gzipBytes": 15391,
+      "minifiedBytes": 44705
     },
     "switch": {
-      "brotliBytes": 9538,
-      "gzipBytes": 10594,
-      "minifiedBytes": 28952
+      "brotliBytes": 9581,
+      "gzipBytes": 10621,
+      "minifiedBytes": 28986
     },
     "tabs": {
-      "brotliBytes": 11619,
-      "gzipBytes": 12907,
-      "minifiedBytes": 36179
+      "brotliBytes": 11775,
+      "gzipBytes": 13072,
+      "minifiedBytes": 36784
     },
     "toast": {
-      "brotliBytes": 13271,
-      "gzipBytes": 14691,
-      "minifiedBytes": 42013
+      "brotliBytes": 13276,
+      "gzipBytes": 14721,
+      "minifiedBytes": 42102
     },
     "toggle": {
       "brotliBytes": 5826,
@@ -150,206 +150,268 @@
       "minifiedBytes": 16294
     },
     "toggle-group": {
-      "brotliBytes": 8164,
-      "gzipBytes": 9028,
-      "minifiedBytes": 23918
+      "brotliBytes": 8175,
+      "gzipBytes": 9051,
+      "minifiedBytes": 23942
     },
     "tooltip": {
-      "brotliBytes": 20521,
-      "gzipBytes": 22701,
-      "minifiedBytes": 65085
+      "brotliBytes": 20629,
+      "gzipBytes": 22866,
+      "minifiedBytes": 65698
     }
   },
   "environment": {
     "esbuild": "0.27.7",
-    "node": "24.19.0"
+    "node": "24.20.0"
   },
   "fixtureRevision": 2,
   "measurementEntries": {
     "catalog": [
       {
-        "exports": ["*"],
+        "exports": [
+          "*"
+        ],
         "specifier": "@ark-ui/vue"
       }
     ],
     "components": {
       "accordion": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/accordion"
         }
       ],
       "alert-dialog": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/dialog"
         }
       ],
       "avatar": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/avatar"
         }
       ],
       "carousel": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/carousel"
         }
       ],
       "checkbox": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/checkbox"
         }
       ],
       "checkbox-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/checkbox"
         }
       ],
       "collapsible": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/collapsible"
         }
       ],
       "combobox": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/combobox"
         }
       ],
       "context-menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/menu"
         }
       ],
       "dialog": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/dialog"
         }
       ],
       "drawer": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/drawer"
         }
       ],
       "dropzone": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/file-upload"
         }
       ],
       "field": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/field"
         }
       ],
       "input-otp": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/pin-input"
         }
       ],
       "menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/menu"
         }
       ],
       "navigation-menu": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/navigation-menu"
         }
       ],
       "popover": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/popover"
         }
       ],
       "preview-card": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/hover-card"
         }
       ],
       "progress": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/progress"
         }
       ],
       "radio": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/radio-group"
         }
       ],
       "radio-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/radio-group"
         }
       ],
       "scroll-area": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/scroll-area"
         }
       ],
       "select": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/select"
         }
       ],
       "slider": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/slider"
         }
       ],
       "switch": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/switch"
         }
       ],
       "tabs": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/tabs"
         }
       ],
       "toast": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/toast"
         }
       ],
       "toggle": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/toggle"
         }
       ],
       "toggle-group": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/toggle-group"
         }
       ],
       "tooltip": [
         {
-          "exports": ["*"],
+          "exports": [
+            "*"
+          ],
           "specifier": "@ark-ui/vue/tooltip"
         }
       ]
@@ -418,19 +480,19 @@
   },
   "overlaps": {
     "vue-exact-three-way": {
-      "brotliBytes": 96967,
-      "gzipBytes": 126997,
-      "minifiedBytes": 459924
+      "brotliBytes": 97227,
+      "gzipBytes": 127216,
+      "minifiedBytes": 460686
     },
     "vue-ark-vue-overlap": {
-      "brotliBytes": 120577,
-      "gzipBytes": 157806,
-      "minifiedBytes": 568603
+      "brotliBytes": 120808,
+      "gzipBytes": 158132,
+      "minifiedBytes": 569584
     }
   },
   "package": {
-    "integrity": "sha512-ujs0YNuopXUlJB+0nOmrIWLXKydlEi6ufqCLDot/IFjxdN5dfGvyKWavzDxygzn1HfS/Ebnw5ug1BnGwL5wWdw==",
+    "integrity": "sha512-WQan9gtoU0EX9Amn05UQ8HRjcU2YKHZo6o6Kv4X6foPy6TGEjnRfvLvneyb+Ooz25r58h1KsGbvE2cVZjUgkGw==",
     "name": "@ark-ui/vue",
-    "version": "5.38.2"
+    "version": "5.39.1"
   }
 }

@@ -1,5 +1,5 @@
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
-import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueSingleBooleanControlIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "single-boolean-control");
@@ -31,8 +31,7 @@ export function printVueSingleBooleanControlComponent(
   }
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { ${facts.runtime.factory}, type ${detailType} } from "${facts.runtime.importSource}";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
 

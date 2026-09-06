@@ -40,8 +40,6 @@ function getFixture(path: (typeof VUE_CONTRACT_FIXTURE_PATHS)[number]): string {
   return fixture.contents;
 }
 
-type ReadDirectoryEntries = (directory: string) => Dirent[];
-
 // primitive-docs-examples.test.ts creates and removes these repo-local homes while the
 // portable Runtime suite is running. They are test fixtures, never public app surfaces.
 const ephemeralGeneratorTestHomePrefixes = [".tmp-starwind-react-doc-examples-"] as const;
@@ -134,7 +132,9 @@ const approvedVueScriptNames = [
   "runtime:generate:vue:test",
   "runtime:perf:vue",
   "runtime:perf:vue:baseline",
-  ...(existsSync("packages/svelte/package.json") ? ["runtime:perf:vue:check"] : []),
+  ...(existsSync("packages/svelte/package.json")
+    ? ["runtime:perf:vue:evidence:check", "runtime:perf:vue:check"]
+    : []),
   "runtime:size",
   "runtime:size:baseline:vue",
   "runtime:size:check",
@@ -874,18 +874,23 @@ describe("Vue public-beta contract gate", () => {
     const rootScripts = rootManifest.scripts ?? {};
     expect(
       Object.fromEntries(
-        ["runtime:perf:vue", "runtime:perf:vue:baseline", "runtime:perf:vue:check"].map((name) => [
-          name,
-          rootScripts[name],
-        ]),
+        [
+          "runtime:perf:vue",
+          "runtime:perf:vue:baseline",
+          "runtime:perf:vue:evidence:check",
+          "runtime:perf:vue:check",
+        ].map((name) => [name, rootScripts[name]]),
       ),
     ).toEqual({
       "runtime:perf:vue":
         "pnpm runtime:build && pnpm vue:build && node scripts/portable-runtime/measure-vue-runtime-performance.mjs",
       "runtime:perf:vue:baseline":
         "pnpm runtime:build && pnpm vue:build && node scripts/portable-runtime/measure-vue-runtime-performance.mjs --baseline",
-      "runtime:perf:vue:check": existsSync("packages/svelte/package.json")
+      "runtime:perf:vue:evidence:check": existsSync("packages/svelte/package.json")
         ? "node scripts/portable-runtime/measure-vue-runtime-performance.mjs --check"
+        : undefined,
+      "runtime:perf:vue:check": existsSync("packages/svelte/package.json")
+        ? "pnpm runtime:perf:vue:evidence:check"
         : undefined,
     });
     expect(findVueScriptPolicyViolations(rootScripts)).toEqual([]);

@@ -75,9 +75,6 @@ export function createVueBetaPackPlan({ outputDirectory }) {
   };
 }
 
-/** @deprecated Use createVueBetaPackPlan. */
-export const createPrivateVuePackPlan = createVueBetaPackPlan;
-
 export function createVueLocalLinkAcceptancePlan({ root }) {
   const pnpmHome = path.join(root, "pnpm-global");
   return {

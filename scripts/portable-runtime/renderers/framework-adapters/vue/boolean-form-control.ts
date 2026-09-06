@@ -3,7 +3,7 @@ import { projectVueAttributeAccess } from "./public-contract.js";
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
 
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
-import { printVueFamilyIndex, VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex } from "./primitive/shared-fragments.js";
 
 export function printVueBooleanFormControlIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "boolean-form-control", {
@@ -79,8 +79,7 @@ function printVueRadioRoot(
   }
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { ${facts.runtime.factory}, type ${detailType} } from "${facts.runtime.importSource}";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
 
@@ -378,8 +377,7 @@ const effectiveDisabled = computed(() => props.${disabled} || ${group.variableNa
 const effectiveDisabled = computed(() => props.${disabled});`;
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { type ${detailType}, ${facts.runtime.factory} } from "${facts.runtime.importSource}";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
 ${groupImport}
@@ -677,8 +675,7 @@ function printVueCheckboxIndicator(
   }
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -749,8 +746,7 @@ function printVueExternalBooleanRoot(
   }
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { ${facts.runtime.factory}, type ${detailType} } from "${facts.runtime.importSource}";
 import { computed, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
 
@@ -997,8 +993,7 @@ function printVueBooleanStateIndicator(
   }
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

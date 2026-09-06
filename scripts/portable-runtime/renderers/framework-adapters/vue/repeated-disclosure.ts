@@ -9,9 +9,6 @@ import type {
 } from "../types.js";
 import { projectVueDetailedEvent, projectVueModel } from "./public-contract.js";
 
-const NON_SHIPPING_COMMENT =
-  "Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.";
-
 export function printVueRepeatedDisclosureComponent(
   family: AdapterRepeatedDisclosureComponentProjection,
 ): string {
@@ -42,8 +39,7 @@ export function printVueRepeatedDisclosureIndex(family: AdapterRepeatedDisclosur
     .join("\n");
   const exports = facts.index.importMembers.map(({ name }) => name).join(",\n  ");
   return {
-    contents: `// ${NON_SHIPPING_COMMENT}
-
+    contents: `
 ${imports}
 
 const ${facts.exports.namespace} = {
@@ -90,8 +86,7 @@ function printRoot(facts: AdapterRepeatedDisclosureFacts): string {
   const model = projectVueModel(facts.state.name);
   const event = projectVueDetailedEvent(facts.events.valueChange.callbackProp);
   const part = facts.parts.root;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import {
   type ${facts.state.type},
   type ${facts.events.valueChange.detailsType},
@@ -206,8 +201,7 @@ const defaultValueAttribute = Array.isArray(initialDefaultValue)
 function printItem(facts: AdapterRepeatedDisclosureFacts): string {
   const part = facts.parts.item;
   const context = getContextNames(facts);
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { provide, ref } from "vue";
 import { ${context.key}, type ${context.type} } from "./${context.file}";
 
@@ -244,8 +238,7 @@ defineExpose({ element });
 
 function printHeader(facts: AdapterRepeatedDisclosureFacts): string {
   const part = facts.parts.header;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 defineOptions({ inheritAttrs: false });
 defineSlots<{ default?: () => unknown }>();
@@ -264,8 +257,7 @@ defineExpose({ element });
 function printTrigger(facts: AdapterRepeatedDisclosureFacts): string {
   const part = facts.parts.trigger;
   const context = getContextNames(facts);
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 import { ${context.hook} } from "./${context.file}";
 defineOptions({ inheritAttrs: false });
@@ -294,8 +286,7 @@ defineExpose({ element });
 function printPanel(facts: AdapterRepeatedDisclosureFacts): string {
   const part = facts.parts.panel;
   const context = getContextNames(facts);
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 import { ${context.hook} } from "./${context.file}";
 defineOptions({ inheritAttrs: false });

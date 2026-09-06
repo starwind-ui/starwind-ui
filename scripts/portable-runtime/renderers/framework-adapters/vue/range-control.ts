@@ -8,9 +8,6 @@ import type {
   AdapterRangeControlIndexProjection,
 } from "../types.js";
 
-const NON_SHIPPING_COMMENT =
-  "Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.";
-
 export function printVueRangeControlComponent(
   family: AdapterRangeControlComponentProjection,
 ): string {
@@ -48,8 +45,7 @@ function printRoot(facts: AdapterRangeControlFacts): string {
     );
   }
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import {
   ${facts.runtime.factory},
   type ${props.orientation.type},
@@ -280,8 +276,7 @@ function printSimplePart(
   const exportName = facts.exports[partName];
   const elementType = part.defaultElement === "span" ? "HTMLSpanElement" : "HTMLDivElement";
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -300,8 +295,7 @@ function printThumb(facts: AdapterRangeControlFacts): string {
   const props = facts.props;
   const part = facts.parts.thumb;
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

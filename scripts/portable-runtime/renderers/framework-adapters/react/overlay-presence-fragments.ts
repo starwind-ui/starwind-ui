@@ -96,17 +96,6 @@ export function printReactPresenceFloatingOverlayPopup(
   });
 }
 
-export function printReactTimedFloatingOverlaySimplePart(
-  facts: AdapterTimedFloatingOverlayFacts,
-  part: AdapterTimedFloatingOverlayFacts["parts"]["portal"],
-  exportName: string,
-  discoveryAttribute: string,
-): string {
-  const elementType = getReactElementTypeForPart(part.defaultElement);
-
-  return `import * as React from "react";\n\nexport type ${exportName}Props = React.HTMLAttributes<${elementType}>;\n\nconst ${exportName} = React.forwardRef<${elementType}, ${exportName}Props>(\n  function ${exportName}(props, forwardedRef) {\n    return <${part.defaultElement} ${discoveryAttribute} ref={forwardedRef} {...props} />;\n  },\n);\n\n${exportName}.displayName = "${facts.displayName}.${part.namespaceKey}";\n\nexport default ${exportName};\n`;
-}
-
 export function printReactTimedFloatingOverlayPositioner(
   facts: AdapterTimedFloatingOverlayFacts,
 ): string {
@@ -262,21 +251,4 @@ function renderReactFloatingPlacementAttributes(
 
 function renderReactJsxReturn(jsx: string): string {
   return `return ${jsx};`;
-}
-
-function getReactElementTypeForPart(tagName: string): string {
-  const elementTypes: Record<string, string> = {
-    button: "HTMLButtonElement",
-    dialog: "HTMLDialogElement",
-    div: "HTMLDivElement",
-    h2: "HTMLHeadingElement",
-    h3: "HTMLHeadingElement",
-    img: "HTMLImageElement",
-    input: "HTMLInputElement",
-    label: "HTMLLabelElement",
-    p: "HTMLParagraphElement",
-    span: "HTMLSpanElement",
-  };
-
-  return elementTypes[tagName] ?? "HTMLElement";
 }

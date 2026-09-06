@@ -443,10 +443,10 @@ export function renderVueBetaReadinessAudit(audit = assertVueBetaReadinessCovera
     "",
     "- `pnpm runtime:generate:vue:test`",
     "- `pnpm runtime:size:check:prepared:private`",
-    "- `pnpm runtime:perf:vue:check`",
+    "- `pnpm runtime:perf:vue:evidence:check`",
     "- `pnpm vue:verify` (orchestrator checkpoint)",
     "",
-    "The audit calls the existing read-only validators for committed Vue package-size baseline evidence and accepted Runtime performance evidence. Invalid offline evidence blocks structural coverage. The absolute size measurement remains a live command. Comparator-relative timing remains advisory.",
+    "The audit calls the existing read-only validators for committed Vue package-size baseline evidence and saved accepted Runtime performance evidence. Current timing requires a new controlled capture. Invalid offline evidence blocks structural coverage. The absolute size measurement remains a live command. Comparator-relative timing remains advisory.",
     "",
   );
   return lines.join("\n");

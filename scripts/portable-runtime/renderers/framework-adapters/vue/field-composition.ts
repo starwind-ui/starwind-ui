@@ -9,9 +9,6 @@ import type {
   AdapterFormControlCompositionPartName,
 } from "../types.js";
 
-const NON_SHIPPING_COMMENT =
-  "Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.";
-
 export function printVueFieldCompositionComponent(
   family: AdapterFormControlCompositionComponentProjection,
 ): string {
@@ -44,8 +41,7 @@ export function printVueFieldCompositionIndex(
   const exports = facts.index.importMembers.map(({ name }) => name).join(",\n  ");
 
   return {
-    contents: `// ${NON_SHIPPING_COMMENT}
-
+    contents: `
 ${imports}
 
 const ${facts.exports.namespace} = {
@@ -76,8 +72,7 @@ function printRoot(facts: AdapterFormControlCompositionFacts): string {
   const revalidationTiming = facts.formTiming.revalidationTiming;
   const validationTiming = facts.formTiming.validationTiming;
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
 import type { ${facts.formTiming.typeImport.name} } from "${facts.formTiming.typeImport.importSource}";
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -178,8 +173,7 @@ onBeforeUnmount(destroyOwnedInstance);
 }
 
 function printControl(facts: AdapterFormControlCompositionFacts): string {
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import type { InputValue, InputValueChangeDetails } from "@starwind-ui/runtime/input";
 import { computed, ref, useAttrs } from "vue";
 import InputRoot from "../input/InputRoot.vue";
@@ -230,8 +224,7 @@ function handleModelValueUpdate(value: InputValue | undefined): void {
 
 function printError(facts: AdapterFormControlCompositionFacts): string {
   const part = facts.parts.error;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -275,8 +268,7 @@ function serializeMatch(value: ${facts.message.matchType}): string {
 
 function printValidity(facts: AdapterFormControlCompositionFacts): string {
   const part = facts.parts.validity;
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -326,8 +318,7 @@ function printSimplePart(
       : partName === "description"
         ? "HTMLParagraphElement"
         : "HTMLDivElement";
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

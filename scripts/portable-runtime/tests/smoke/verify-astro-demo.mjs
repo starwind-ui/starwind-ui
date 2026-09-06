@@ -12,6 +12,7 @@ import { verifyAstroFoundationCases } from "./astro/foundation-cases.mjs";
 import { verifyAstroMediaOverlayCases } from "./astro/media-overlay-cases.mjs";
 import { verifyAstroSheetMenuCases } from "./astro/sheet-menu-cases.mjs";
 import { waitForAstroSmokePage } from "./astro-smoke-readiness.mjs";
+import { startAstroSmokeDevServer } from "./astro-smoke-dev-server.mjs";
 import { verifyNavigationMenuSizingCases } from "./shared/navigation-menu-sizing.mjs";
 import { verifyNestedSidebarPageCases, verifySidebarCases } from "./shared/sidebar.mjs";
 
@@ -25,7 +26,7 @@ const COMPONENT_DEMO_PATH = "/";
 const CAROUSEL_CLIENT_ROUTER_START_PATH = "/smoke/carousel-client-router-start/";
 const SERVER_MODE = process.env.STARWIND_ASTRO_SMOKE_SERVER_MODE ?? "preview";
 const SERVER_COMMAND = SERVER_MODE === "dev" ? "dev" : "preview";
-const SHOULD_SPAWN_SERVER = SERVER_MODE !== "external";
+const SHOULD_SPAWN_SERVER = SERVER_MODE !== "external" && SERVER_MODE !== "dev";
 
 const demoRequire = createRequire(path.join(DEMO_ROOT, "package.json"));
 const reactDemoRequire = createRequire(path.join(REACT_DEMO_ROOT, "package.json"));
@@ -48,6 +49,7 @@ const preview = SHOULD_SPAWN_SERVER
     )
   : null;
 
+let devServer;
 let browser;
 let page;
 const messages = [];
@@ -61,6 +63,14 @@ preview?.stderr?.on("data", (chunk) => {
 });
 
 try {
+  if (SERVER_MODE === "dev") {
+    devServer = await startAstroSmokeDevServer({
+      root: DEMO_ROOT,
+      host: HOST,
+      port: PORT,
+      astroPackagePath,
+    });
+  }
   const baseUrl = `http://${HOST}:${PORT}`;
   const url = `${baseUrl}${COMPONENT_DEMO_PATH}`;
   const carouselClientRouterStartUrl = `${baseUrl}${CAROUSEL_CLIENT_ROUTER_START_PATH}`;
@@ -200,8 +210,12 @@ try {
 
 ${await describeFailure(page, messages, previewOutput)}`);
 } finally {
-  await browser?.close();
-  preview?.kill();
+  try {
+    await browser?.close();
+  } finally {
+    await devServer?.stop();
+    preview?.kill();
+  }
 }
 
 async function describeFailure(page, messages, previewOutput) {

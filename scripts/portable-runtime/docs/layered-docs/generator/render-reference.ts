@@ -1,19 +1,18 @@
-import {
-  type PrimitiveDocsAuthoredExampleFrameworkMetadata,
-  type PrimitiveDocsAuthoredExampleMetadata,
-  type PrimitiveDocsFrameworkTarget,
-  type PrimitiveDocsMetadata,
-  type PrimitiveFrameworkBehaviorMetadata,
-  type PrimitivePartApiReferenceMetadata,
-  type PrimitiveSetterMetadata,
-  type PrimitiveStateModelMetadata,
+import type {
+  PrimitiveDocsAuthoredExampleFrameworkMetadata,
+  PrimitiveDocsAuthoredExampleMetadata,
+  PrimitiveDocsFrameworkTarget,
+  PrimitiveDocsMetadata,
+  PrimitiveFrameworkBehaviorMetadata,
+  PrimitivePartApiReferenceMetadata,
+  PrimitiveStateModelMetadata,
 } from "../types.js";
 import {
   GENERATED_MDX_COMMENT,
   PRIMITIVE_ANATOMY_FRAMEWORK_ORDER,
   PRIMITIVE_DOCS_FRAMEWORK_TARGETS,
 } from "./constants.js";
-import { formatNaturalList, toDisplayTitle } from "./shared.js";
+import { toDisplayTitle } from "./shared.js";
 
 export const renderPrimitiveIndexPage = () => `---
 title: Runtime Primitives
@@ -180,17 +179,13 @@ const renderPrimitiveAuthoredSections = (primitive: PrimitiveDocsMetadata) =>
           joinMarkdownSections([
             `## ${section.title}`,
             "",
-            renderPrimitiveAuthoredSectionContent(primitive, section.content, "mdx"),
+            renderPrimitiveAuthoredSectionContent(primitive, section.content),
           ]),
         )
         .join("\n\n")
     : undefined;
 
-const renderPrimitiveAuthoredSectionContent = (
-  primitive: PrimitiveDocsMetadata,
-  content: string,
-  format: "mdx" | "markdown",
-) =>
+const renderPrimitiveAuthoredSectionContent = (primitive: PrimitiveDocsMetadata, content: string) =>
   content.replace(/^\s*::example\{id="([A-Za-z0-9-]+)"\}\s*$/gm, (_, exampleId: string) => {
     const example = primitive.docsReference.authoredExamples.find(
       (candidate) => candidate.id === exampleId,
@@ -200,9 +195,7 @@ const renderPrimitiveAuthoredSectionContent = (
       return `Missing authored example ${exampleId}.`;
     }
 
-    return format === "mdx"
-      ? renderPrimitiveAuthoredExampleMdx(example)
-      : renderPrimitiveAuthoredExampleMarkdown(example);
+    return renderPrimitiveAuthoredExampleMdx(example);
   });
 
 const renderPrimitiveAuthoredExampleMdx = (example: PrimitiveDocsAuthoredExampleMetadata) => {
@@ -247,26 +240,6 @@ const renderPrimitiveAuthoredExampleTabContent = (
     "</DocsTabsContent>",
   ]);
 
-const renderPrimitiveAuthoredExampleMarkdown = (example: PrimitiveDocsAuthoredExampleMetadata) => {
-  const frameworks = getPrimitiveAuthoredExampleFrameworksInDisplayOrder(example.frameworks);
-
-  return joinMarkdownSections([
-    `### ${example.title}`,
-    "",
-    example.summary,
-    "",
-    frameworks
-      .map((framework) =>
-        joinMarkdownSections([
-          `#### ${getPrimitiveDocsFrameworkLabel(framework.framework)}`,
-          "",
-          renderCodeFence(framework.code, framework.language),
-        ]),
-      )
-      .join("\n\n"),
-  ]);
-};
-
 const renderPrimitiveAuthoredExampleCodeBlock = (
   framework: PrimitiveDocsAuthoredExampleFrameworkMetadata,
 ) =>
@@ -285,256 +258,6 @@ const renderPrimitivePartApiReference = (
     "",
     `<PrimitivePartReference docId="primitives/${primitive.id}" part="${part.part}" />`,
   ]);
-
-const _renderPrimitivePartApiReferenceMarkdown = (
-  primitive: PrimitiveDocsMetadata,
-  part: PrimitivePartApiReferenceMetadata,
-) =>
-  joinMarkdownSections([
-    `### ${toDisplayTitle(part.part)}`,
-    "",
-    part.description,
-    "",
-    renderMarkdownTable(
-      ["Fact", "Value"],
-      [
-        ["Default element", `\`${part.defaultElement}\``],
-        ["Discovery hook", `\`${part.discoveryAttribute}\``],
-        ["Role", part.role ? `\`${part.role}\`` : ""],
-      ],
-    ),
-    "",
-    renderPrimitivePartPropsReference(part),
-    "",
-    renderPrimitivePartDataAttributesReference(part),
-    "",
-    renderPrimitivePartStateReference(part),
-    "",
-    renderPrimitivePartEventsReference(part),
-    "",
-    renderPrimitivePartSettersReference(part),
-    "",
-    renderPrimitivePartRefsReference(part),
-    "",
-    renderPrimitivePartContextReference(part),
-    "",
-    renderPrimitivePartAsChildReference(part),
-    "",
-    renderPrimitivePartInitialMarkupReference(part),
-    "",
-    renderPrimitivePartFormReference(part),
-    "",
-    renderPrimitivePartPresenceReference(part),
-  ]);
-
-const renderPrimitivePartPropsReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.props.length > 0
-    ? joinMarkdownSections([
-        "#### Props",
-        "",
-        renderMarkdownTable(
-          ["Prop", "Type", "Default", "Kind", "Description", "Framework Behavior"],
-          part.props.map((prop) => [
-            prop.name,
-            `\`${prop.displayType ?? prop.type}\``,
-            prop.defaultValue ?? "",
-            prop.kind,
-            prop.description ?? "",
-            formatPrimitiveFrameworkBehavior(prop.frameworkBehavior),
-          ]),
-        ),
-      ])
-    : undefined;
-
-const renderPrimitivePartDataAttributesReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.dataAttributes.length > 0
-    ? joinMarkdownSections([
-        "#### Data Attributes",
-        "",
-        renderMarkdownTable(
-          ["Attribute", "Source", "Value", "Description"],
-          part.dataAttributes.map((attribute) => [
-            `\`${attribute.name}\``,
-            attribute.source,
-            attribute.value ? `\`${attribute.value}\`` : "",
-            attribute.description ?? "",
-          ]),
-        ),
-      ])
-    : undefined;
-
-const renderPrimitivePartStateReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.stateModels.length > 0
-    ? joinMarkdownSections([
-        "#### State",
-        "",
-        renderMarkdownTable(
-          [
-            "State",
-            "Value Type",
-            "Controlled Prop",
-            "Default Prop",
-            "Initial Attribute",
-            "Runtime Getter",
-            "Runtime Setter",
-            "Description",
-            "State Control Support",
-          ],
-          part.stateModels.map((state) => [
-            state.name,
-            `\`${state.valueType}\``,
-            state.controlledProp ?? "",
-            state.defaultProp ?? "",
-            state.initialAttribute ? `\`${state.initialAttribute}\`` : "",
-            state.runtimeGetter ? `\`${state.runtimeGetter}\`` : "",
-            state.runtimeSetter ? `\`${state.runtimeSetter}\`` : "",
-            state.description ?? "",
-            formatPrimitiveFrameworkBehavior(state.frameworkBehavior),
-          ]),
-        ),
-      ])
-    : undefined;
-
-const renderPrimitivePartEventsReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.events.length > 0
-    ? joinMarkdownSections([
-        "#### Events",
-        "",
-        renderMarkdownTable(
-          [
-            "Event",
-            "Callback",
-            "DOM Event",
-            "Value",
-            "Details",
-            "Timing",
-            "Cancelable",
-            "Description",
-            "Cancellation Sequence",
-          ],
-          part.events.map((event) => [
-            event.name,
-            event.callbackProp,
-            event.domEvent ?? "",
-            formatPrimitiveEventValue(event),
-            event.detailsType ?? "",
-            event.callbackTiming ?? "",
-            formatOptionalBoolean(event.cancelable),
-            event.description ?? "",
-            formatPrimitiveEventCancellationSequence(event.cancellationSequence),
-          ]),
-        ),
-      ])
-    : undefined;
-
-const renderPrimitivePartSettersReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.setters.length > 0
-    ? joinMarkdownSections([
-        "#### Runtime Setters",
-        "",
-        renderMarkdownTable(
-          ["Method", "Target", "Options", "Suppresses Emit", "Description"],
-          part.setters.map((setter) => [
-            `\`${setter.method}\``,
-            formatPrimitiveSetterTarget(setter),
-            formatPrimitiveSetterOptions(setter),
-            setter.suppressesEmit ? "Yes" : "No",
-            setter.description ?? "",
-          ]),
-        ),
-      ])
-    : undefined;
-
-const renderPrimitivePartRefsReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.refs.length > 0
-    ? joinMarkdownSections([
-        "#### Refs",
-        "",
-        renderMarkdownTable(
-          ["Part", "Public"],
-          part.refs.map((ref) => [ref.part, formatBoolean(ref.public)]),
-        ),
-      ])
-    : undefined;
-
-const renderPrimitivePartContextReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.context.length > 0
-    ? joinMarkdownSections([
-        "#### Context",
-        "",
-        renderMarkdownTable(
-          ["Name", "Direction", "Values"],
-          part.context.map((context) => [
-            context.name,
-            context.direction,
-            formatMarkdownList(context.values),
-          ]),
-        ),
-      ])
-    : undefined;
-
-const renderPrimitivePartAsChildReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.asChild.length > 0
-    ? joinMarkdownSections([
-        "#### asChild",
-        "",
-        renderMarkdownTable(
-          ["Part", "Merged Props"],
-          part.asChild.map((asChild) => [asChild.part, formatMarkdownList(asChild.merges)]),
-        ),
-      ])
-    : undefined;
-
-const renderPrimitivePartInitialMarkupReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.initialMarkup.length > 0
-    ? joinMarkdownSections([
-        "#### Initial Markup",
-        "",
-        renderMarkdownTable(
-          ["Attributes", "Reason"],
-          part.initialMarkup.map((initialMarkup) => [
-            formatMarkdownList(initialMarkup.attributes.map((attribute) => `\`${attribute}\``)),
-            initialMarkup.reason,
-          ]),
-        ),
-      ])
-    : undefined;
-
-const renderPrimitivePartFormReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.form
-    ? joinMarkdownSections([
-        "#### Form",
-        "",
-        renderMarkdownTable(
-          ["Fact", "Value"],
-          [
-            ["Form props", formatMarkdownList(part.form.props)],
-            [
-              "Hidden input",
-              part.form.hiddenInput
-                ? `${part.form.hiddenInput.part} (${part.form.hiddenInput.type})`
-                : "",
-            ],
-          ],
-        ),
-      ])
-    : undefined;
-
-const renderPrimitivePartPresenceReference = (part: PrimitivePartApiReferenceMetadata) =>
-  part.presence
-    ? joinMarkdownSections([
-        "#### Presence",
-        "",
-        renderMarkdownTable(
-          ["Fact", "Value"],
-          [
-            ["Initial hidden", formatBoolean(part.presence.initialHidden)],
-            ["Unmount policy", part.presence.unmountPolicy],
-            ["Keep mounted prop", part.presence.keepMountedProp ?? ""],
-          ],
-        ),
-      ])
-    : undefined;
 
 const renderPrimitiveRuntimeApiReference = (primitive: PrimitiveDocsMetadata) =>
   joinMarkdownSections([
@@ -605,37 +328,6 @@ const renderPrimitiveRelatedStyledComponentsReference = (primitive: PrimitiveDoc
         "## Related Styled Components",
         "",
         `<PrimitiveRelatedStyledComponents docId="primitives/${primitive.id}" />`,
-      ])
-    : undefined;
-
-const _renderPrimitiveExportGroupsReference = (primitive: PrimitiveDocsMetadata) =>
-  primitive.docsReference.apiReference.exportGroups.length > 0
-    ? joinMarkdownSections([
-        "## Exports",
-        "",
-        renderMarkdownTable(
-          ["Group", "Import", "Exports"],
-          primitive.docsReference.apiReference.exportGroups.map((group) => [
-            group.label,
-            `\`${group.importSource}\``,
-            formatMarkdownList(group.exports.map((name) => `\`${name}\``)),
-          ]),
-        ),
-      ])
-    : undefined;
-
-const _renderPrimitiveCanonicalNamesReference = (primitive: PrimitiveDocsMetadata) =>
-  primitive.docsReference.apiReference.canonicalNames.length > 0
-    ? joinMarkdownSections([
-        "## Canonical Names",
-        "",
-        renderMarkdownTable(
-          ["Kind", "Name"],
-          primitive.docsReference.apiReference.canonicalNames.map((name) => [
-            name.kind,
-            `\`${name.name}\``,
-          ]),
-        ),
       ])
     : undefined;
 
@@ -775,41 +467,6 @@ const escapeMarkdownTableCell = (value: string) =>
 const formatMarkdownList = (values: readonly string[] | undefined) =>
   values && values.length > 0 ? values.join(", ") : "";
 
-const _formatOptionLifecycles = (
-  lifecycles: PrimitiveDocsMetadata["runtime"]["optionPropLifecycles"],
-) =>
-  lifecycles
-    ? Object.entries(lifecycles)
-        .map(([prop, lifecycle]) => `${prop}: ${lifecycle}`)
-        .join(", ")
-    : "";
-
-const formatPrimitiveSetterTarget = (setter: PrimitiveSetterMetadata) => {
-  if ("stateModel" in setter) return `state: ${setter.stateModel}`;
-  if ("prop" in setter) return `prop: ${setter.prop}`;
-  if ("props" in setter) return `props: ${setter.props.join(", ")}`;
-  return "";
-};
-
-const formatPrimitiveSetterOptions = (setter: PrimitiveSetterMetadata) =>
-  setter.options
-    ? Object.entries(setter.options)
-        .map(([name, value]) => `${name}: ${String(value)}`)
-        .join(", ")
-    : "";
-
-const formatPrimitiveEventValue = (
-  event: Pick<PrimitivePartApiReferenceMetadata["events"][number], "valueProperty" | "valueType">,
-) => {
-  if (!event.valueProperty && !event.valueType) {
-    return "";
-  }
-
-  return [event.valueProperty ?? "value", event.valueType ? `\`${event.valueType}\`` : undefined]
-    .filter((part): part is string => part !== undefined)
-    .join(": ");
-};
-
 const formatPrimitiveFrameworkBehavior = (
   entries: readonly PrimitiveFrameworkBehaviorMetadata[] | undefined,
 ) => entries?.map((entry) => `**${entry.label}:** ${entry.summary}`).join("<br>") ?? "";
@@ -818,13 +475,6 @@ export const formatPrimitiveStateControlSupport = (
   _part: PrimitivePartApiReferenceMetadata,
   state: PrimitiveStateModelMetadata,
 ) => formatPrimitiveFrameworkBehavior(state.frameworkBehavior);
-
-const formatPrimitiveEventCancellationSequence = (
-  sequence: PrimitivePartApiReferenceMetadata["events"][number]["cancellationSequence"],
-) => sequence?.map((step) => `${step.step}. ${step.action}`).join("<br>") ?? "";
-
-const formatOptionalBoolean = (value: boolean | undefined) =>
-  value === undefined ? "" : formatBoolean(value);
 
 const formatBoolean = (value: boolean | undefined) => (value ? "Yes" : "No");
 

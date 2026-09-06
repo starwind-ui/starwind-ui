@@ -3,11 +3,7 @@ import { projectVueAttributeAccess } from "./public-contract.js";
 const VUE_TEMPLATE_ONLY_ATTRIBUTE_ACCESS = projectVueAttributeAccess([]);
 
 import type { AdapterComponentFile, AdapterIndexFile, AdapterPrintedFile } from "../types.js";
-import {
-  printVueFamilyIndex,
-  printVueOwnedInstanceDestroy,
-  VUE_NON_SHIPPING_COMMENT,
-} from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex, printVueOwnedInstanceDestroy } from "./primitive/shared-fragments.js";
 
 export function printVueActionSurfaceIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "action-surface");
@@ -29,8 +25,7 @@ export function printVueActionSurfaceComponent(file: AdapterComponentFile): Adap
   const rootElementType = getVueElementType(rootElement);
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 

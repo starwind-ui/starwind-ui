@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   aggregateBaselineProvenance,
   evaluatePackageSizeBudgets,
+  evaluateVueSizeBudget,
 } from "../package-size-budget-checks.mjs";
 import { vuePackageSizeBaseline } from "../vue-package-size-baseline.mjs";
 
@@ -307,7 +308,7 @@ describe("package size budget checks", () => {
     );
   });
 
-  it("passes every adopted Vue absolute budget at equality and fails one byte above", () => {
+  it("passes every frozen Vue warning limit at equality and warns one byte above", () => {
     const atCeiling = evaluatePackageSizeBudgets({
       bundleResults: passingBundleResults(),
       includePrivateVue: true,
@@ -323,9 +324,129 @@ describe("package size budget checks", () => {
 
     expect(atCeiling.vueAbsoluteChecks).toHaveLength(8);
     expect(atCeiling.vueAbsoluteChecks.every(({ status }) => status === "Pass")).toBe(true);
-    expect(oneByteAbove.vueAbsoluteChecks.every(({ status }) => status === "Fail")).toBe(true);
+    expect(oneByteAbove.vueAbsoluteChecks.every(({ status }) => status === "Warn")).toBe(true);
+    expect(oneByteAbove.failures).toEqual([]);
     for (const id of Object.keys(vuePackageSizeBaseline.budgets)) {
-      expect(oneByteAbove.failures.join("\n")).toContain(`${id} budget exceeded`);
+      expect(oneByteAbove.advisories.join("\n")).toContain(`${id} review warning`);
+    }
+  });
+
+  it.each(Object.entries(vuePackageSizeBaseline.budgets))(
+    "allows hard-limit equality for %s and fails one byte above",
+    (id, budget) => {
+      const maxGzipBytes =
+        budget.maximumBytes + Math.max(Math.ceil(budget.maximumBytes / 10), 2048);
+      const atLimit = evaluateVueSizeBudget({ id, ...budget, measuredBytes: maxGzipBytes });
+      const above = evaluateVueSizeBudget({ id, ...budget, measuredBytes: maxGzipBytes + 1 });
+      expect(atLimit).toMatchObject({
+        baselineGzipBytes: budget.maximumBytes,
+        warningGzipBytes: budget.ceilingBytes,
+        maxGzipBytes,
+        failure: null,
+        status: "Warn",
+      });
+      expect(above.status).toBe("Fail");
+      expect(above.advisory).toBeNull();
+      expect(above.failure).toContain("hard limit");
+      expect(above.failure).toContain("growth from baseline");
+      expect(above.growthBytes).toBe(maxGzipBytes + 1 - budget.maximumBytes);
+      expect(above.growthPercent).toBeCloseTo((above.growthBytes / budget.maximumBytes) * 100);
+    },
+  );
+
+  it.each([
+    [10_000, 11_024, 12_048],
+    [20_480, 21_504, 22_528],
+    [30_000, 31_500, 33_000],
+  ])("applies both growth bands to a %s byte baseline", (maximumBytes, ceilingBytes, hardLimit) => {
+    const evaluate = (measuredBytes) =>
+      evaluateVueSizeBudget({
+        id: "vue.synthetic",
+        maximumBytes,
+        ceilingBytes,
+        headroomBytes: ceilingBytes - maximumBytes,
+        measuredBytes,
+      });
+    expect(evaluate(ceilingBytes - 1).status).toBe("Pass");
+    expect(evaluate(ceilingBytes).status).toBe("Pass");
+    expect(evaluate(ceilingBytes + 1).status).toBe("Warn");
+    expect(evaluate(hardLimit - 1).status).toBe("Warn");
+    expect(evaluate(hardLimit)).toMatchObject({
+      status: "Warn",
+      maxGzipBytes: hardLimit,
+      failure: null,
+    });
+    expect(evaluate(hardLimit + 1).status).toBe("Fail");
+  });
+
+  it.each([undefined, null, NaN, Infinity, -Infinity, -1, 1.5, "123", {}, true])(
+    "fails an invalid required Vue measurement: %s",
+    (measuredBytes) => {
+      const input = privateVueBudgetResults({ measurement: () => measuredBytes });
+      const result = evaluatePackageSizeBudgets({
+        bundleResults: passingBundleResults(),
+        supportResults: passingSupportResults(),
+        includePrivateVue: true,
+        ...input,
+      });
+      expect(result.failures).toHaveLength(8);
+      expect(result.vueAbsoluteChecks.every((check) => check.status === "Fail")).toBe(true);
+      for (const check of result.vueAbsoluteChecks) {
+        expect(check.advisory).toBeNull();
+        expect(check.growthBytes).toBeNull();
+        expect(check.growthPercent).toBeNull();
+      }
+    },
+  );
+
+  it("reports the four current Vue growth warnings without failing the gate", () => {
+    const currentBytes = {
+      "vue.adapter-only": 51_790,
+      "vue.combined": 202_960,
+      "vue.packed-tarball": 136_552,
+      "vue.cold.combobox": 30_985,
+      "vue.cold.context-menu": 28_704,
+      "vue.cold.menu": 28_661,
+      "vue.cold.navigation-menu": 24_913,
+      "vue.cold.select": 31_783,
+    };
+    const result = evaluatePackageSizeBudgets({
+      bundleResults: passingBundleResults(),
+      supportResults: passingSupportResults(),
+      includePrivateVue: true,
+      ...privateVueBudgetResults({ measurement: (id) => currentBytes[id] }),
+    });
+    expect(result.failures).toEqual([]);
+    expect(
+      result.vueAbsoluteChecks.filter(({ status }) => status === "Warn").map(({ id }) => id),
+    ).toEqual(["vue.cold.combobox", "vue.cold.context-menu", "vue.cold.menu", "vue.cold.select"]);
+    for (const check of result.vueAbsoluteChecks) {
+      expect(check.failure).toBeNull();
+      if (check.status === "Warn") {
+        expect(result.advisories).toContain(check.advisory);
+        expect(check.advisory).toContain("growth from baseline");
+        expect(check.advisory).toContain("hard limit");
+      }
+    }
+  });
+
+  it("adds all eight hard-limit violations to failures", () => {
+    const result = evaluatePackageSizeBudgets({
+      bundleResults: passingBundleResults(),
+      supportResults: passingSupportResults(),
+      includePrivateVue: true,
+      ...privateVueBudgetResults({
+        measurement: (id) => {
+          const baseline = vuePackageSizeBaseline.budgets[id].maximumBytes;
+          return baseline + Math.max(Math.ceil(baseline / 10), 2048) + 1;
+        },
+      }),
+    });
+    expect(result.failures).toHaveLength(8);
+    for (const check of result.vueAbsoluteChecks) {
+      expect(check.status).toBe("Fail");
+      expect(result.failures).toContain(check.failure);
+      expect(check.advisory).toBeNull();
     }
   });
 
@@ -372,8 +493,8 @@ describe("package size budget checks", () => {
   });
 });
 
-function privateVueBudgetResults({ offset = 0 } = {}) {
-  const ceiling = (id) => vuePackageSizeBaseline.budgets[id].ceilingBytes + offset;
+function privateVueBudgetResults({ offset = 0, measurement } = {}) {
+  const ceiling = measurement ?? ((id) => vuePackageSizeBaseline.budgets[id].ceilingBytes + offset);
   return {
     vueBundleResults: [
       { gzipBytes: ceiling("vue.adapter-only"), label: "@starwind-ui/vue (adapter only)" },

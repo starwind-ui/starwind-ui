@@ -42,13 +42,11 @@ export {
 };
 
 export type FloatingPortalSession = {
-  demote(): void;
   destroy(): void;
   isReady(): boolean;
   mount(): boolean;
   onReady(callback: () => void): () => void;
   onReadyChange(callback: (ready: boolean) => void): () => void;
-  promote(): void;
   restore(): void;
 };
 
@@ -143,7 +141,6 @@ export function createFloatingPortalSession(
   };
 
   const session: FloatingPortalSession = {
-    demote: () => undefined,
     destroy,
     isReady: () => placementReady,
     mount,
@@ -156,7 +153,6 @@ export function createFloatingPortalSession(
       readinessChangeCallbacks.add(callback);
       return () => readinessChangeCallbacks.delete(callback);
     },
-    promote: () => undefined,
     restore,
   };
 

@@ -8,9 +8,6 @@ import type {
   AdapterHiddenInputVisualSlotIndexProjection,
 } from "../types.js";
 
-const NON_SHIPPING_COMMENT =
-  "Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.";
-
 export function printVueHiddenInputVisualSlotComponent(
   family: AdapterHiddenInputVisualSlotComponentProjection,
 ): string {
@@ -48,8 +45,7 @@ function printRoot(facts: AdapterHiddenInputVisualSlotFacts): string {
     );
   }
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import {
   ${facts.runtime.factory},
   type ${event.detailsType},
@@ -305,8 +301,7 @@ function printSimplePart(
       ? ` ${facts.attrs.separatorAriaHidden}="${facts.visualSlots.separator.ariaHiddenValue}" role="${facts.visualSlots.separator.role}"`
       : "";
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
@@ -325,8 +320,7 @@ function printSlot(facts: AdapterHiddenInputVisualSlotFacts): string {
   const props = facts.props;
   const part = facts.parts.slot;
 
-  return `<!-- ${NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

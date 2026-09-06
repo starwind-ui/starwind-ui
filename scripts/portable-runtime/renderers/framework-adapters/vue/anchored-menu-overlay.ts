@@ -5,7 +5,6 @@ import type {
   AdapterOutputModel,
   AdapterPrintedFile,
 } from "../types.js";
-import { VUE_NON_SHIPPING_COMMENT } from "./primitive/shared-fragments.js";
 
 export function isVueAnchoredMenuOverlayOutput(model: AdapterOutputModel): boolean {
   return model.files.some(
@@ -53,8 +52,7 @@ function printComponent(
 
 function printRoot(facts: AdapterAnchoredMenuOverlayFacts): string {
   const { attrs, events, props, runtime, state } = facts;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { type ${events.closeComplete.detailsType}, type ${events.openChange.detailsType}, ${runtime.factory} } from "${runtime.importSource}";
 import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, useAttrs, watch } from "vue";
 import { MenuOwnerContext, MenuRootContext } from "../menu/MenuContext";
@@ -170,8 +168,7 @@ onBeforeUnmount(() => { generation += 1; mounted.value = false; destroyOwnedInst
 
 function printTrigger(facts: AdapterAnchoredMenuOverlayFacts): string {
   const { attrs, props, trigger } = facts;
-  return `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+  return `<script setup lang="ts">
 import { ref, useAttrs } from "vue";
 import { useMenuRootContext } from "../menu/MenuContext";
 defineOptions({ inheritAttrs: false });

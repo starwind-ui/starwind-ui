@@ -150,7 +150,7 @@ describe("product package-size report", () => {
     ).toEqual({ minifiedBytes: 500, gzipBytes: 200, brotliBytes: 150 });
   });
 
-  it("renders individual, overlap, and built-site tables with a plain-language guide", () => {
+  it("renders individual, overlap, and built-site tables", () => {
     const report = formatProductSizeReport({
       generatedAt: "2026-08-18T00:00:00.000Z",
       react: comparisonFixture("react"),
@@ -171,7 +171,18 @@ describe("product package-size report", () => {
     expect(report).toContain("## React overlap bundles");
     expect(report).toContain("## Vue individual components");
     expect(report).toContain("## Astro versus React site delivery");
-    expect(report).toContain("The empty route is the backpack");
+    expect(report).toContain(
+      "| Component | starwind-react 1.0.0 | ark-react 1.0.0 | base-react 1.0.0 |",
+    );
+    expect(report).toContain(
+      "| Overlap | Components | starwind-vue 1.0.0 | ark-vue 1.0.0 | reka-vue 1.0.0 |",
+    );
+    expect(report).toContain(
+      "| Scenario | Starwind target | Total initial gzip / Brotli | Component-added JS gzip / Brotli |",
+    );
+    expect(report).not.toContain("## ELI5 guide");
+    expect(report.toLowerCase()).not.toContain("backpack");
+    expect(report.toLowerCase()).not.toContain("toolbox");
     expect(report.toLowerCase()).toContain("component-added js");
     expect(report).toContain("Brotli");
     expect(report).not.toContain("Lazy JS");
@@ -190,6 +201,71 @@ describe("product package-size report", () => {
     expect(report).toContain("## Vue exact-overlap attribution");
     expect(report).toContain("Runtime");
     expect(report).toContain("Minified bytes in output");
+  });
+
+  it("counts strict pairwise wins and includes losses and ties in per-component medians", () => {
+    const react = comparisonFixture("react");
+    react.components = {
+      accordion: {
+        "starwind-react": size(100, 100, 100),
+        "ark-react": size(200, 200, 200),
+        "base-react": size(100, 100, 100),
+      },
+      dialog: {
+        "starwind-react": size(200, 200, 200),
+        "ark-react": size(100, 100, 100),
+        "base-react": size(100, 100, 100),
+      },
+      tabs: {
+        "starwind-react": size(50, 50, 50),
+        "ark-react": size(200, 200, 200),
+        "base-react": size(100, 100, 100),
+      },
+      carousel: {
+        "starwind-react": size(80, 80, 80),
+        "ark-react": size(100, 100, 100),
+      },
+      input: { "starwind-react": size(10, 10, 10) },
+    };
+    const report = formatProductSizeReport({
+      generatedAt: "2026-09-06T00:00:00.000Z",
+      react,
+      vue: comparisonFixture("vue"),
+      site: {},
+    });
+
+    expect(report).toContain("| Starwind UI React vs Ark UI React | **3 of 4** | **35.0%** |");
+    expect(report).toContain("| Starwind UI React vs Base UI React | **1 of 3** | **0.0%** |");
+    expect(report).toContain("| Starwind UI Vue vs Ark UI Vue | **0 of 1** | **0.0%** |");
+    expect(report).toContain("The median includes every shared measured category");
+    expect(report).toContain("The smaller count excludes ties");
+  });
+
+  it("leads with a supported majority claim and keeps combined results beside their tables", () => {
+    const react = comparisonFixture("react");
+    const vue = comparisonFixture("vue");
+    react.components.select["starwind-react"] = size(4, 4, 4);
+    vue.components.select["starwind-vue"] = size(4, 4, 4);
+    const input = { generatedAt: "2026-09-06T00:00:00.000Z", react, vue, site: {} };
+    const report = formatProductSizeReport(input);
+    const claim = "Starwind UI has the smallest imports in the majority of comparisons.";
+    const summary = report.slice(0, report.indexOf("## React individual components"));
+
+    expect(summary).toContain(claim);
+    expect(summary).toContain("| Comparison | Starwind smaller | Median reduction per component |");
+    expect(summary).not.toContain("combined bundle");
+    expect(report.indexOf("In the 1-component combined bundle")).toBeGreaterThan(
+      report.indexOf("## React overlap bundles"),
+    );
+    expect(report).not.toContain("three-way category-match individual rows");
+
+    vue.components.select["starwind-vue"] = size(8, 8, 8);
+    expect(formatProductSizeReport(input)).not.toContain(claim);
+
+    vue.components = {};
+    const unavailable = formatProductSizeReport(input);
+    expect(unavailable).not.toContain(claim);
+    expect(unavailable).toContain("| Starwind UI Vue vs Ark UI Vue | N/A | N/A |");
   });
 });
 

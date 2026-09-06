@@ -9,11 +9,7 @@ import type {
   AdapterNativeDisabledPart,
   AdapterPrintedFile,
 } from "../types.js";
-import {
-  printVueFamilyIndex,
-  printVueOwnedInstanceDestroy,
-  VUE_NON_SHIPPING_COMMENT,
-} from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex, printVueOwnedInstanceDestroy } from "./primitive/shared-fragments.js";
 
 export function printVueNativeDisabledIndex(file: AdapterIndexFile): AdapterPrintedFile {
   return printVueFamilyIndex(file, "native-disabled");
@@ -47,8 +43,7 @@ function printRoot(
   const part = facts.parts.root;
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { ${facts.runtime.factory} } from "${facts.runtime.importSource}";
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 
@@ -114,8 +109,7 @@ function printSlotPart(
   part: AdapterNativeDisabledPart,
 ): AdapterPrintedFile {
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });

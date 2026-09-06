@@ -3,7 +3,6 @@
  * Do not edit by hand; update the contract/template instead.
  */
 
-// Internal non-shipping Vue adapter output. Do not publish, expose through the CLI registry, claim in public docs, or copy into public demo dependencies.
 import type { CheckboxGroupValue } from "@starwind-ui/runtime/checkbox-group";
 import { type InjectionKey, inject, type Ref } from "vue";
 

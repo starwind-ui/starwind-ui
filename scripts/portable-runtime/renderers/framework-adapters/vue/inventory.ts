@@ -593,12 +593,6 @@ export const vueGeneratedSourceFiles = [
   ...vueAdapterInventory.manualFacades.flatMap(({ sourceFiles }) => sourceFiles),
 ].sort();
 
-const vueStyledComponentSet: ReadonlySet<string> = new Set(vueStyledComponents);
-
-export function isVueInventoryStyledComponent(component: string): boolean {
-  return vueStyledComponentSet.has(component);
-}
-
 export function validateVueInventorySnapshot({
   packageExports,
   sourceFiles,

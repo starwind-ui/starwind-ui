@@ -24,7 +24,6 @@ import {
   executeReleasePublication,
   formatCommandFailure,
   formatPublishPlan,
-  isDirtyGitStatusOutput,
   loadVueBetaRegistryBaseline,
   parseArgs,
   parsePublishOutput,
@@ -364,7 +363,7 @@ describe("release package tooling", () => {
       "pnpm react-demo:smoke",
       "pnpm vue-demo:smoke",
       "pnpm runtime:size:check:prepared",
-      ...(hasPrivateSvelte ? ["pnpm runtime:perf:vue:check"] : []),
+      ...(hasPrivateSvelte ? ["pnpm runtime:perf:vue:evidence:check"] : []),
       "pnpm release:candidate:acceptance",
     ]);
     expect(root.scripts?.["publish:release:dry-run"]).not.toContain("release:prepare");

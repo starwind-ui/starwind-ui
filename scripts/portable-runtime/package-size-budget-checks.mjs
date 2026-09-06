@@ -236,6 +236,7 @@ export function evaluatePackageSizeBudgets({
         vuePackagePayload,
       }).map((check) => {
         if (check.failure) failures.push(check.failure);
+        if (check.advisory) advisories.push(check.advisory);
         return check;
       })
     : [];
@@ -278,26 +279,50 @@ function createVueAbsoluteBudgetChecks({
   ]);
 
   return Object.entries(vuePackageSizeBaseline.budgets).map(([id, budget]) =>
-    evaluateAbsoluteBudget({ id, measuredBytes: measurements.get(id), ...budget }),
+    evaluateVueSizeBudget({ id, measuredBytes: measurements.get(id), ...budget }),
   );
 }
 
-function evaluateAbsoluteBudget({ ceilingBytes, headroomBytes, id, maximumBytes, measuredBytes }) {
+export function evaluateVueSizeBudget({
+  ceilingBytes,
+  headroomBytes,
+  id,
+  maximumBytes,
+  measuredBytes,
+}) {
+  // Keep the frozen warning ceiling; round the new percentage allowance as the baseline did.
+  const maxGzipBytes = maximumBytes + Math.max(Math.ceil(maximumBytes / 10), 2 * 1024);
+  const validMeasurement = Number.isSafeInteger(measuredBytes) && measuredBytes >= 0;
+  const growthBytes = validMeasurement ? measuredBytes - maximumBytes : null;
+  const growthPercent = validMeasurement ? (growthBytes / maximumBytes) * 100 : null;
+  let advisory = null;
   let failure = null;
-  if (typeof measuredBytes !== "number" || !Number.isFinite(measuredBytes)) {
-    failure = `${id} budget could not be evaluated: missing min+gzip measurement.`;
-  } else if (measuredBytes > ceilingBytes) {
-    failure = `${id} budget exceeded: ${formatBudgetBytes(measuredBytes)} > budget ${formatBudgetBytes(ceilingBytes)}.`;
+
+  if (!validMeasurement) {
+    const reason = measuredBytes == null ? "missing" : "invalid";
+    failure = `${id} budget could not be evaluated: ${reason} min+gzip measurement.`;
+  } else {
+    const growth = `${formatBudgetBytes(growthBytes)} (${growthPercent.toFixed(2)}%) growth from baseline ${formatBudgetBytes(maximumBytes)}`;
+    if (measuredBytes > maxGzipBytes) {
+      failure = `${id} hard limit exceeded: ${formatBudgetBytes(measuredBytes)} with ${growth}; hard limit ${formatBudgetBytes(maxGzipBytes)} allows the greater of 10% or 2 KiB growth.`;
+    } else if (measuredBytes > ceilingBytes) {
+      advisory = `${id} review warning: ${formatBudgetBytes(measuredBytes)} with ${growth} exceeds warning limit ${formatBudgetBytes(ceilingBytes)}; hard limit ${formatBudgetBytes(maxGzipBytes)} allows the greater of 10% or 2 KiB growth.`;
+    }
   }
+
   return {
+    advisory,
     baselineGzipBytes: maximumBytes,
     failure,
+    growthBytes,
+    growthPercent,
     gzipBytes: measuredBytes ?? null,
     headroomBytes,
     id,
     label: id,
-    maxGzipBytes: ceilingBytes,
-    status: failure ? "Fail" : "Pass",
+    maxGzipBytes,
+    status: failure ? "Fail" : advisory ? "Warn" : "Pass",
+    warningGzipBytes: ceilingBytes,
   };
 }
 

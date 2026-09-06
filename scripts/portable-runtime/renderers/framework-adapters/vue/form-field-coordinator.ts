@@ -8,11 +8,7 @@ import type {
   AdapterIndexFile,
   AdapterPrintedFile,
 } from "../types.js";
-import {
-  printVueFamilyIndex,
-  printVueOwnedInstanceDestroy,
-  VUE_NON_SHIPPING_COMMENT,
-} from "./primitive/shared-fragments.js";
+import { printVueFamilyIndex, printVueOwnedInstanceDestroy } from "./primitive/shared-fragments.js";
 
 export function printVueFormFieldCoordinatorIndex(file: AdapterIndexFile): AdapterPrintedFile {
   const family = file.family;
@@ -63,8 +59,7 @@ function printRoot(
   const validationTiming = facts.props.validationTiming.name;
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { ${facts.runtime.factory}, type ${facts.runtime.validationTimingType} } from "${facts.runtime.importSource}";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 
@@ -129,8 +124,7 @@ function printErrorSummary(
   const part = facts.parts.errorSummary;
 
   return {
-    contents: `<!-- ${VUE_NON_SHIPPING_COMMENT} -->
-<script setup lang="ts">
+    contents: `<script setup lang="ts">
 import { ref } from "vue";
 
 defineOptions({ inheritAttrs: false });
