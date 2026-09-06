@@ -1,0 +1,175 @@
+---
+import { Tabs } from "@starwind-ui/astro/tabs";
+import Select from "@/components/starwind-runtime/select";
+import Combobox from "@/components/starwind-runtime/combobox";
+import Dropdown from "@/components/starwind-runtime/dropdown";
+import Layout from "@/layouts/Layout.astro";
+
+const layouts = [
+  { label: "Normal", transform: "none" },
+  { label: "Scaled", transform: "translate(8px, 4px) scale(0.85, 1.1)" },
+  { label: "Rotated", transform: "rotate(5deg)" },
+];
+const orientations = ["horizontal", "vertical"] as const;
+---
+
+<Layout
+  title="Group labels and Tabs review"
+  description="Manual review of group announcements and Tabs alignment"
+>
+  <main class="mx-auto max-w-5xl space-y-10 px-6 py-12">
+    <header class="space-y-3">
+      <h1 class="text-3xl font-semibold">Group labels and Tabs review</h1>
+      <p class="text-muted-foreground">
+        Use your screen reader to browse each group. Select each tab and check the outline around
+        its button.
+      </p>
+    </header>
+    <section class="space-y-5" aria-labelledby="group-review">
+      <h2 id="group-review" class="text-xl font-semibold">Grouped choices</h2>
+      <div class="grid gap-6 sm:grid-cols-2">
+        <div class="space-y-2">
+          <h3 id="select-review" class="font-medium">Select a destination</h3>
+          <Select.Root id="review-select">
+            <Select.Trigger
+              aria-labelledby="select-review"
+              class="w-full"
+              placeholder="Choose a city"
+            />
+            <Select.Content>
+              <Select.Group>
+                <Select.Label>Europe</Select.Label>
+                <Select.Item value="paris">Paris</Select.Item>
+                <Select.Item value="lisbon">Lisbon</Select.Item>
+              </Select.Group>
+              <Select.Group>
+                <Select.Label>Asia</Select.Label>
+                <Select.Item value="kyoto">Kyoto</Select.Item>
+                <Select.Item value="seoul">Seoul</Select.Item>
+              </Select.Group>
+            </Select.Content>
+          </Select.Root>
+        </div>
+        <Combobox.Root id="review-combobox">
+          <Combobox.Label>Find a fruit</Combobox.Label>
+          <Combobox.Input id="review-fruit-input" placeholder="Search fruit" />
+          <Combobox.Content>
+            <Combobox.Group>
+              <Combobox.GroupLabel>Citrus</Combobox.GroupLabel>
+              <Combobox.Item value="orange">Orange</Combobox.Item>
+              <Combobox.Item value="lemon">Lemon</Combobox.Item>
+            </Combobox.Group>
+            <Combobox.Group>
+              <Combobox.GroupLabel>Berries</Combobox.GroupLabel>
+              <Combobox.Item value="blueberry">Blueberry</Combobox.Item>
+              <Combobox.Item value="raspberry">Raspberry</Combobox.Item>
+            </Combobox.Group>
+          </Combobox.Content>
+        </Combobox.Root>
+      </div>
+      <Dropdown.Root id="review-menu">
+        <Dropdown.Trigger>Document actions</Dropdown.Trigger>
+        <Dropdown.Content>
+          <Dropdown.Group>
+            <Dropdown.Label>Edit document</Dropdown.Label>
+            <Dropdown.Item>Rename</Dropdown.Item>
+            <Dropdown.Item>Duplicate</Dropdown.Item>
+          </Dropdown.Group>
+          <Dropdown.Separator />
+          <Dropdown.Group aria-label="Sharing options">
+            <Dropdown.Label>Share document</Dropdown.Label>
+            <Dropdown.Item>Copy link</Dropdown.Item>
+            <Dropdown.Item>Invite a colleague</Dropdown.Item>
+          </Dropdown.Group>
+        </Dropdown.Content>
+      </Dropdown.Root>
+      <p class="text-muted-foreground text-sm">
+        The menu's second group has the authored name “Sharing options”. Its visible heading remains
+        available to the screen reader.
+      </p>
+    </section>
+    <section class="space-y-6" aria-labelledby="tabs-review">
+      <h2 id="tabs-review" class="text-xl font-semibold">Tabs alignment</h2>
+      <p class="text-muted-foreground">
+        Use arrow keys to move focus, then Enter to select. The blue outline should follow the
+        selected button in every example.
+      </p>
+      <div class="grid gap-8 md:grid-cols-2">
+        {
+          layouts.flatMap((layout) =>
+            orientations.map((orientation) => (
+              <article class="min-w-0 space-y-5 rounded-lg border p-5 pb-8">
+                <h3 class="font-medium">
+                  {layout.label} · {orientation}
+                </h3>
+                <div style={`transform:${layout.transform}; transform-origin:top left;`}>
+                  <Tabs.Root defaultValue="overview" orientation={orientation}>
+                    <Tabs.List
+                      aria-label={`${layout.label} ${orientation} project tabs`}
+                      class={`review-tab-list ${orientation}`}
+                    >
+                      <Tabs.Tab value="overview" class="review-tab">
+                        Overview
+                      </Tabs.Tab>
+                      <Tabs.Tab value="activity" class="review-tab">
+                        Activity
+                      </Tabs.Tab>
+                      <Tabs.Indicator class="review-indicator" />
+                    </Tabs.List>
+                    <Tabs.Panel value="overview" class="mt-4 text-sm">
+                      Project overview
+                    </Tabs.Panel>
+                    <Tabs.Panel value="activity" class="mt-4 text-sm">
+                      Recent activity
+                    </Tabs.Panel>
+                  </Tabs.Root>
+                </div>
+              </article>
+            )),
+          )
+        }
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<style is:global>
+  .review-tab-list {
+    position: relative;
+    display: flex;
+    width: fit-content;
+    gap: 7.375px;
+    padding: 5.25px;
+    border: 2px solid var(--color-border);
+    border-radius: 0.5rem;
+    background: var(--color-muted);
+  }
+  .review-tab-list.vertical {
+    flex-direction: column;
+  }
+  .review-tab {
+    box-sizing: border-box;
+    width: 105.375px;
+    height: 38.625px;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+  }
+  .review-tab[data-state="active"] {
+    background: var(--color-background);
+  }
+  .review-tab:focus-visible {
+    outline: 2px dashed currentColor;
+    outline-offset: -5px;
+  }
+  .review-indicator {
+    position: absolute;
+    pointer-events: none;
+    left: var(--active-tab-left);
+    top: var(--active-tab-top);
+    width: var(--active-tab-width);
+    height: var(--active-tab-height);
+    border: 2px solid #2563eb;
+    border-radius: 0.375rem;
+  }
+</style>

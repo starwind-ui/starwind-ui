@@ -40,7 +40,7 @@ export function renderProps(
       .filter((field) => isForFramework(field, REACT_FRAMEWORK))
       .map(
         (field) =>
-          `  ${formatObjectKey(field.name)}${field.optional ? "?" : ""}: ${rewriteRuntimeTypeImports(
+          `  ${formatObjectKey(field.name)}${field.optional ? "?" : ""}: ${rewriteRuntimeTypeImportReferences(
             field.type,
             runtimeImportContext,
           )};`,
@@ -95,13 +95,6 @@ export function getRuntimeImportRewriteContext(
         ? `${primitiveImportBase}/${primitiveComponents[0]}`
         : primitiveImportBase,
   };
-}
-
-function rewriteRuntimeTypeImports(
-  type: string,
-  runtimeImportContext: RuntimeImportRewriteContext,
-) {
-  return rewriteRuntimeTypeImportReferences(type, runtimeImportContext);
 }
 
 function renderWrappedExtends(extendsParts: string[]): string {

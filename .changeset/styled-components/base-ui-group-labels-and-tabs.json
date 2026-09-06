@@ -1,0 +1,10 @@
+{
+  "components": {
+    "combobox": "patch",
+    "context-menu": "patch",
+    "dropdown": "patch",
+    "select": "patch",
+    "tabs": "patch"
+  },
+  "impact": "behavior"
+}

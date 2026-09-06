@@ -726,6 +726,35 @@ describe("createContextMenu", () => {
   });
 });
 
+describe("context menu group labels", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    document.body.removeAttribute("style");
+    window.scrollTo(0, 0);
+    vi.useRealTimers();
+  });
+
+  it("uses the shared menu group naming behavior", () => {
+    const root = renderContextMenu();
+    const popup = getPopup();
+    const group = document.createElement("div");
+    group.setAttribute("data-sw-menu-group", "");
+    group.setAttribute("role", "group");
+    const heading = document.createElement("div");
+    heading.setAttribute("data-sw-menu-label", "");
+    heading.textContent = "Page actions";
+    group.append(heading, getItem());
+    popup.prepend(group);
+    const contextMenu = createContextMenu(root);
+
+    openFromPointer();
+
+    expect(group).toHaveAccessibleName("Page actions");
+    expect(heading).toHaveAttribute("aria-hidden", "true");
+    contextMenu.destroy();
+  });
+});
+
 function renderContextMenu(
   options: { disabled?: boolean; modal?: boolean; withPositioner?: boolean } = {},
 ): HTMLElement {

@@ -12,7 +12,6 @@ import * as proRegistry from "../../src/utils/pro-registry.js";
 import * as registry from "../../src/utils/registry.js";
 import * as runtimeComponent from "../../src/utils/runtime-component.js";
 import * as shadcnConfig from "../../src/utils/shadcn-config.js";
-import * as validate from "../../src/utils/validate.js";
 
 vi.mock("@clack/prompts");
 vi.mock("../../src/utils/config.js");
@@ -27,7 +26,6 @@ vi.mock("../../src/utils/registry.js");
 vi.mock("../../src/utils/pro-registry.js");
 vi.mock("../../src/utils/runtime-component.js");
 vi.mock("../../src/utils/shadcn-config.js");
-vi.mock("../../src/utils/validate.js");
 vi.mock("../../src/utils/sleep.js", () => ({
   sleep: vi.fn().mockResolvedValue(undefined),
 }));
@@ -69,7 +67,6 @@ const mockReadStarwindProRegistryFromComponentsJson = vi.mocked(
 const mockResolveStarwindProRegistryImport = vi.mocked(
   shadcnConfig.resolveStarwindProRegistryImport,
 );
-const mockIsValidComponent = vi.mocked(validate.isValidComponent);
 const mockInit = vi.mocked(initModule.init);
 const mockMigrate = vi.mocked(migrateModule.migrate);
 
@@ -180,7 +177,6 @@ describe("add command", () => {
     mockParseRegistrySource.mockImplementation((value) =>
       value ? { type: "remote", url: value } : undefined,
     );
-    mockIsValidComponent.mockResolvedValue(true);
     mockMigrate.mockResolvedValue(undefined);
   });
 
@@ -189,6 +185,13 @@ describe("add command", () => {
   });
 
   it("sorts installation summaries without changing the installer request order", async () => {
+    mockLoadRegistry.mockResolvedValue({
+      ...registryFixture,
+      components: ["zebra", "Alpha"].map((name) => ({
+        ...registryFixture.components[0]!,
+        name,
+      })),
+    });
     mockInstallRuntimeComponents.mockResolvedValue({
       installed: [
         { name: "zebra", status: "installed", version: "2.0.0" },
@@ -208,6 +211,16 @@ describe("add command", () => {
       String(message).includes("Successfully installed components:"),
     )?.[0] as string;
     expect(summary.indexOf("Alpha")).toBeLessThan(summary.indexOf("zebra"));
+  });
+
+  it("warns about unknown names and installs known components in request order", async () => {
+    await add(["card", "missing-component", "button"], { yes: true });
+
+    expect(mockInstallRuntimeComponents).toHaveBeenCalledWith(
+      ["card", "button"],
+      expect.any(Object),
+    );
+    expect(mockLog.warn).toHaveBeenCalledWith(expect.stringContaining("missing-component"));
   });
 
   it("exits when config is missing and user declines init", async () => {

@@ -611,7 +611,6 @@ describe("portable runtime generator structure", () => {
     expect(routeFreeGenerator).not.toContain("writeReactAdapterOutput");
     expect(routeFreeGenerator).not.toContain('target === "astro"');
     expect(routeFreeGenerator).toContain("createSpecializedAdapterSpecPrimitiveGeneratorEntry");
-    expect(routeFreeGenerator).toContain("getRouteFreePrimitiveTargets");
     expect(routeFreeGenerator).not.toMatch(/\.\/primitives\/[^/]+\/(?:astro|react)\.js/);
     for (const component of PRIMITIVE_COMPONENTS) {
       expect(routeFreeGenerator).not.toContain(`"${component}"`);

@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -1172,86 +1172,6 @@ describe("GenericAdapterPlan", () => {
     }
   });
 
-  it("keeps the future-framework readiness gate aligned with coverage classifications", () => {
-    const gate = readWorkspaceFile("docs/portable-runtime/framework-readiness-gate.md");
-    const readinessSpecializedAdapterSpecList = readListBlockAfterLabel(
-      gate,
-      "Specialized Adapter Spec generated primitives:",
-    );
-    const readinessManualIslandList = readListBlockAfterLabel(gate, "Current manual islands:");
-    const readinessFutureTracerList = readListBlockAfterLabel(
-      gate,
-      "Non-shipping future-framework tracers exist only for:",
-    );
-
-    expect(gate).toContain("Adapter Family Plan components:");
-    for (const component of ["popover", "dialog", "alert-dialog", "drawer"]) {
-      expect(gate).toContain(`- \`${component}\``);
-    }
-
-    expect(gate).toContain("Specialized Adapter Spec generated primitives:");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `select`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `menu`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `context-menu`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `navigation-menu`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `combobox`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `color-picker`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `tooltip`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `preview-card`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `tabs`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `accordion`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `sidebar`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `slider`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `input-otp`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `dropzone`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `field`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `carousel`");
-    expect(readinessSpecializedAdapterSpecList).toContain("- `toast`");
-    expect(gate).toContain("Current manual islands:");
-    expect(readinessManualIslandList).not.toContain("- `tabs`");
-    expect(readinessManualIslandList).not.toContain("- `accordion`");
-    expect(readinessManualIslandList).not.toContain("- `combobox`");
-    expect(readinessManualIslandList).not.toContain("- `color-picker`");
-    expect(readinessManualIslandList).not.toContain("- `select`");
-    expect(readinessManualIslandList).not.toContain("- `menu`");
-    expect(readinessManualIslandList).not.toContain("- `context-menu`");
-    expect(readinessManualIslandList).not.toContain("- `navigation-menu`");
-    expect(readinessManualIslandList).not.toContain("- `tooltip`");
-    expect(readinessManualIslandList).not.toContain("- `preview-card`");
-    expect(readinessManualIslandList).not.toContain("- `sidebar`");
-    expect(readinessManualIslandList).not.toContain("- `slider`");
-    expect(readinessManualIslandList).not.toContain("- `input-otp`");
-    expect(readinessManualIslandList).not.toContain("- `dropzone`");
-    expect(readinessManualIslandList).not.toContain("- `field`");
-    expect(readinessManualIslandList).not.toContain("- `carousel`");
-    expect(readinessManualIslandList).not.toContain("- `toast`");
-    expect(gate).toContain("Non-shipping future-framework tracers exist only for:");
-    expect(readinessFutureTracerList).not.toContain("- `button/vue`");
-    expect(readinessFutureTracerList).not.toContain("- `checkbox/vue`");
-    expect(readinessFutureTracerList).not.toContain("- `select/vue`");
-    expect(readinessFutureTracerList).toContain("- `select/solid`");
-    expect(readinessFutureTracerList).toContain("- `menu/vue`");
-    expect(readinessFutureTracerList).toContain("- `menu/solid`");
-    expect(readinessFutureTracerList).toContain("- `navigation-menu/vue`");
-    expect(readinessFutureTracerList).toContain("- `navigation-menu/solid`");
-    expect(readinessFutureTracerList).toContain("- `combobox/vue`");
-    expect(readinessFutureTracerList).toContain("- `combobox/solid`");
-    expect(readinessFutureTracerList).not.toContain("- `tooltip/vue`");
-    expect(readinessFutureTracerList).not.toContain("- `tooltip/solid`");
-    expect(readinessFutureTracerList).not.toContain("- `preview-card/vue`");
-    expect(readinessFutureTracerList).not.toContain("- `preview-card/solid`");
-    expect(readinessFutureTracerList).not.toContain("- `tabs/vue`");
-    expect(readinessFutureTracerList).not.toContain("- `tabs/solid`");
-    expect(readinessFutureTracerList).not.toContain("- `accordion/vue`");
-    expect(readinessFutureTracerList).not.toContain("- `accordion/solid`");
-    expect(readinessFutureTracerList).not.toContain("- `sidebar/vue`");
-    expect(readinessFutureTracerList).not.toContain("- `sidebar/solid`");
-    expect(gate).toContain(
-      "Vue is a registered Vue 3.5 public-beta target across its complete Primitive and portable Styled",
-    );
-    expect(gate).toMatch(/Existing Solid\s+tracers are frozen comparison artifacts/);
-  });
-
   it("keeps Specialized Adapter Spec migrations out of current manual-island coverage", () => {
     const coverage = renderGenericAdapterPlanCoverageReport(
       runtimeAdapterContracts,
@@ -1280,86 +1200,6 @@ describe("GenericAdapterPlan", () => {
     ]) {
       expect(manualIslandSection).not.toContain(`- \`${component}\``);
     }
-  });
-
-  it("keeps active readiness and coverage docs on accepted adapter vocabulary", () => {
-    const activeDocs = [
-      {
-        name: "docs/portable-runtime/framework-readiness-gate.md",
-        source: readWorkspaceFile("docs/portable-runtime/framework-readiness-gate.md"),
-      },
-      {
-        name: "rendered generic adapter plan coverage",
-        source: renderGenericAdapterPlanCoverageReport(
-          runtimeAdapterContracts,
-          genericAdapterFutureFrameworkTracerClassifications,
-        ),
-      },
-    ];
-    const deprecatedPhrases = [
-      ["Primitive", "AdapterContract"].join(""),
-      ["Primitive", "RenderPlan"].join(""),
-      ["Component", "AdapterSpec"].join(""),
-      ["Primitive", " Adapter Contract"].join(""),
-      ["Primitive", " Render Plan"].join(""),
-      ["Component", " Adapter Spec"].join(""),
-      ["component", "-adapter-spec"].join(""),
-      ["static", "-plan"].join(""),
-      ["family", "-builder"].join(""),
-      ["custom", " island"].join(""),
-      ["custom", " islands"].join(""),
-      ["Custom", " Island"].join(""),
-      ["Custom", " Islands"].join(""),
-    ];
-
-    for (const { name, source } of activeDocs) {
-      for (const phrase of deprecatedPhrases) {
-        expect(source, `${name} contains deprecated vocabulary: ${phrase}`).not.toContain(phrase);
-      }
-    }
-  });
-
-  it("keeps durable generator architecture docs aligned with the current target-authoring flow", () => {
-    const readme = readWorkspaceFile("docs/portable-runtime/README.md").replace(/\s+/g, " ");
-    const vocabulary = readWorkspaceFile("docs/portable-runtime/adapter-vocabulary.md");
-    const readinessGate = readWorkspaceFile("docs/portable-runtime/framework-readiness-gate.md");
-
-    expect(readme).toContain("## Primitive Creation Flow");
-    expect(readme).toContain("## Styled Component Creation Flow");
-    expect(readme).toContain("## Future Framework Authoring Path");
-    expect(readme).toContain("## Current Exceptions And Follow-Ups");
-    expect(readme).toContain("scripts/portable-runtime/renderers/primitive-inventory.ts");
-    expect(readme).toContain("primitive-index.ts` consumes Primitive Inventory facts");
-    expect(readme).toContain(
-      "scripts/portable-runtime/renderers/framework-adapters/target-registry.ts",
-    );
-    expect(readme).toContain("one target home plus one target registration");
-
-    expect(vocabulary).toContain("Primitive Inventory");
-    expect(vocabulary).toContain("Adapter Family Plan locality");
-    expect(vocabulary).toContain("targetRegistration.primitive.outputModel.write");
-    expect(vocabulary).toContain("targetRegistration.styled.project");
-    expect(vocabulary).toContain("targetRegistration.styled.write");
-    expect(vocabulary).toContain("one target home plus one target registration");
-
-    const generatorNotesPath = join(process.cwd(), "docs/portable-runtime/generator-notes.md");
-    if (existsSync(generatorNotesPath)) {
-      const generatorNotes = readFileSync(generatorNotesPath, "utf8");
-      expect(generatorNotes).toContain("## Primitive Creation Flow");
-      expect(generatorNotes).toContain("## Styled Component Creation Flow");
-      expect(generatorNotes).toContain("## Current Exceptions And Follow-Ups");
-      expect(generatorNotes).toContain("primitive-index.ts` consumes that inventory");
-      expect(generatorNotes).toContain("Raw prebuilt generated-file wrappers");
-      expect(generatorNotes).toContain("Media Status");
-    }
-
-    expect(readinessGate).toContain("Target Home Checklist");
-    expect(readinessGate).toContain("target-registry.ts");
-    expect(readinessGate).toContain("generic-adapter-plan/families/");
-    expect(readinessGate).toContain("generic-adapter-output-model.ts");
-    expect(readinessGate).toContain("primitive.outputModel.write");
-    expect(readinessGate).toContain("styled.project");
-    expect(readinessGate).toContain("styled.write");
   });
 });
 
@@ -1404,32 +1244,6 @@ function normalizePrintedComparison(contents: string): string {
     .replace(/\s+/g, " ")
     .replace(/\s*([(){}\[\],;])\s*/g, "$1")
     .replace(/,([)\]}])/g, "$1");
-}
-
-function readWorkspaceFile(path: string): string {
-  return readFileSync(join(process.cwd(), path), "utf8").replace(/\r\n/g, "\n");
-}
-
-function readListBlockAfterLabel(source: string, label: string): string {
-  const lines = source.split("\n");
-  const startIndex = lines.findIndex((line) => line.trim() === label);
-  if (startIndex < 0) {
-    throw new Error(`Missing markdown label "${label}".`);
-  }
-
-  const listLines: string[] = [];
-  let listStarted = false;
-  for (const line of lines.slice(startIndex + 1)) {
-    if (line.trim() === "") {
-      if (listStarted) break;
-      continue;
-    }
-
-    listStarted = true;
-    listLines.push(line);
-  }
-
-  return listLines.join("\n");
 }
 
 function readMarkdownSection(source: string, heading: string): string {

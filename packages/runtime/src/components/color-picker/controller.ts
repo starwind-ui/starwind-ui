@@ -1781,12 +1781,6 @@ function readChannel(element: Element): Channel {
     ? (value as Channel)
     : "hue";
 }
-function channelValue(color: ColorPickerColor, channel: Channel) {
-  if (channel === "alpha") return color.alpha * 100;
-  if (channel in color.hsb) return color.hsb[channel as keyof typeof color.hsb];
-  if (channel in color.hsl) return color.hsl[channel as keyof typeof color.hsl];
-  return color.rgb[channel as keyof typeof color.rgb];
-}
 function updateChannel(color: ColorPickerColor, channel: Channel, value: number): ColorPickerColor {
   if (channel === "alpha") return color.withChannels("hsb", { alpha: value / 100 });
   if (channel === "red" || channel === "green" || channel === "blue")

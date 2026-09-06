@@ -72,8 +72,4 @@ export function createDialogTopLayerHost(owner: HTMLDialogElement): DialogTopLay
   hosts.set(owner, result);
   return result;
 }
-
-export function getDialogTopLayerFloatingRoot(owner: HTMLDialogElement): HTMLElement | null {
-  return hosts.get(owner)?.floatingRoot ?? null;
-}
 import { registerDialogTopLayerFloatingRoot } from "./portal-target-policy";

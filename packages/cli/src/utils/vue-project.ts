@@ -1,7 +1,6 @@
 import fs from "fs-extra";
 import semver from "semver";
 
-import { fileExists } from "./fs.js";
 import { resolveProjectMutationPath } from "./project-path.js";
 import { starwindStylesheetPackageRequirements } from "@/templates/starwind.css.js";
 import { addVueCssImport, updateVueViteConfigContent } from "./vite-config.js";
@@ -83,18 +82,6 @@ export function meetsVueVersionFloor(range: string): boolean {
   } catch {
     return false;
   }
-}
-
-export async function detectVueProjectPaths(
-  pathExists: (filePath: string) => Promise<boolean> = fileExists,
-): Promise<ReadonlySet<string>> {
-  const existingPaths = new Set<string>();
-  await Promise.all(
-    VUE_PROJECT_CANDIDATE_PATHS.map(async (candidate) => {
-      if (await pathExists(candidate)) existingPaths.add(candidate);
-    }),
-  );
-  return existingPaths;
 }
 
 export async function validateVueProjectSetup(plan: VueProjectPlan): Promise<void> {

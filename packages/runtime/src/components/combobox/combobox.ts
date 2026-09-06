@@ -204,6 +204,8 @@ const COMBOBOX_POSITIONER_ATTRIBUTE = "data-sw-combobox-positioner";
 const COMBOBOX_POPUP_ATTRIBUTE = "data-sw-combobox-popup";
 const COMBOBOX_LIST_ATTRIBUTE = "data-sw-combobox-list";
 const COMBOBOX_EMPTY_ATTRIBUTE = "data-sw-combobox-empty";
+const COMBOBOX_GROUP_ATTRIBUTE = "data-sw-combobox-group";
+const COMBOBOX_GROUP_LABEL_ATTRIBUTE = "data-sw-combobox-group-label";
 const COMBOBOX_ITEM_ATTRIBUTE = "data-sw-combobox-item";
 const COMBOBOX_ITEM_TEXT_ATTRIBUTE = "data-sw-combobox-item-text";
 const COMBOBOX_ITEM_INDICATOR_ATTRIBUTE = "data-sw-combobox-item-indicator";
@@ -388,6 +390,11 @@ class ComboboxController implements ComboboxInstance {
         renderHighlight: renderItemHighlight,
       }),
       attributeFilter: [COMBOBOX_DISABLED_ATTRIBUTE, COMBOBOX_ITEM_ATTRIBUTE],
+      groupLabels: {
+        groupSelector: `[${COMBOBOX_GROUP_ATTRIBUTE}]`,
+        headingSelector: `[${COMBOBOX_GROUP_LABEL_ATTRIBUTE}]`,
+        ownerSelector: `[${COMBOBOX_POPUP_ATTRIBUTE}]`,
+      },
       indexMode: "navigable",
       isHighlighted: (item) => item.hasAttribute(COMBOBOX_HIGHLIGHTED_ATTRIBUTE),
       isNavigable: (item) => this.isOwnedItem(item) && !item.hidden && !isDisabledElement(item),

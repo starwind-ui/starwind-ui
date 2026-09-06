@@ -2108,6 +2108,28 @@ describe("createCombobox", () => {
   });
 });
 
+describe("combobox group labels", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    document.body.removeAttribute("style");
+    vi.useRealTimers();
+  });
+
+  it("updates the group name when its heading text changes", async () => {
+    const root = renderCombobox({ defaultOpen: true });
+    const combobox = createCombobox(root);
+    const group = document.querySelector<HTMLElement>("[data-sw-combobox-group]")!;
+    const heading = group.querySelector<HTMLElement>("[data-sw-combobox-group-label]")!;
+
+    expect(group).toHaveAccessibleName("Common");
+    heading.textContent = "Suggested";
+    await waitForMicrotasks();
+    expect(group).toHaveAccessibleName("Suggested");
+    expect(heading).toHaveAttribute("aria-hidden", "true");
+    combobox.destroy();
+  });
+});
+
 function renderCombobox({
   autoComplete,
   defaultInputValue,

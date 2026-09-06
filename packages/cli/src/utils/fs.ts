@@ -12,15 +12,6 @@ export async function ensureDirectory(dir: string) {
 }
 
 /**
- * Copies a file from source to destination
- * @param src - Source file path
- * @param dest - Destination file path
- */
-export async function copyFile(src: string, dest: string) {
-  await fs.copy(src, dest);
-}
-
-/**
  * Reads and parses a JSON file
  * @param filePath - Path to the JSON file
  * @returns Parsed JSON content

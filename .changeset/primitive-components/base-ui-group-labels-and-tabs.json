@@ -1,0 +1,10 @@
+{
+  "impact": "behavior",
+  "primitives": {
+    "combobox": "patch",
+    "context-menu": "patch",
+    "menu": "patch",
+    "select": "patch",
+    "tabs": "patch"
+  }
+}

@@ -182,6 +182,8 @@ const SELECT_POSITIONER_ATTRIBUTE = "data-sw-select-positioner";
 const SELECT_POPUP_ATTRIBUTE = "data-sw-select-popup";
 const SELECT_LIST_ATTRIBUTE = "data-sw-select-list";
 const SELECT_LABEL_ATTRIBUTE = "data-sw-select-label";
+const SELECT_GROUP_ATTRIBUTE = "data-sw-select-group";
+const SELECT_GROUP_LABEL_ATTRIBUTE = "data-sw-select-group-label";
 const SELECT_ITEM_ATTRIBUTE = "data-sw-select-item";
 const SELECT_ITEM_TEXT_ATTRIBUTE = "data-sw-select-item-text";
 const SELECT_ITEM_INDICATOR_ATTRIBUTE = "data-sw-select-item-indicator";
@@ -360,6 +362,11 @@ class SelectController implements SelectInstance {
       adapter: createRovingFocusNavigationAdapter({ renderHighlight: renderItemHighlight }),
       attributeFilter: [SELECT_DISABLED_ATTRIBUTE, SELECT_ITEM_ATTRIBUTE],
       getText: getItemText,
+      groupLabels: {
+        groupSelector: `[${SELECT_GROUP_ATTRIBUTE}]`,
+        headingSelector: `[${SELECT_GROUP_LABEL_ATTRIBUTE}]`,
+        ownerSelector: `[${SELECT_POPUP_ATTRIBUTE}]`,
+      },
       indexMode: "all",
       isHighlighted: (item) => item.hasAttribute(SELECT_HIGHLIGHTED_ATTRIBUTE),
       isNavigable: (item) => !isDisabledElement(item),
@@ -2062,10 +2069,6 @@ function normalizeValue(value: string | null | undefined): string | null | undef
   return value;
 }
 
-function normalizeIndex(index: number, length: number): number {
-  return ((index % length) + length) % length;
-}
-
 function clamp(value: number, min: number, max: number): number {
   if (max < min) return min;
   return Math.min(Math.max(value, min), max);
@@ -2144,11 +2147,6 @@ function readElementHeight(element: HTMLElement): number {
 
 function isTypeaheadKey(event: KeyboardEvent): boolean {
   return event.key.length === 1 && !event.altKey && !event.ctrlKey && !event.metaKey;
-}
-
-function getTypeaheadSearch(buffer: string): string {
-  const characters = [...buffer];
-  return characters.every((character) => character === characters[0]) ? characters[0] : buffer;
 }
 
 function escapeCssString(value: string): string {

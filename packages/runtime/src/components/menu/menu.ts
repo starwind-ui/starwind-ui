@@ -163,6 +163,8 @@ const MENU_TRIGGER_ATTRIBUTE = "data-sw-menu-trigger";
 const MENU_PORTAL_ATTRIBUTE = "data-sw-menu-portal";
 const MENU_POSITIONER_ATTRIBUTE = "data-sw-menu-positioner";
 const MENU_POPUP_ATTRIBUTE = "data-sw-menu-popup";
+const MENU_GROUP_ATTRIBUTE = "data-sw-menu-group";
+const MENU_LABEL_ATTRIBUTE = "data-sw-menu-label";
 const MENU_ITEM_ATTRIBUTE = "data-sw-menu-item";
 const MENU_LINK_ITEM_ATTRIBUTE = "data-sw-menu-link-item";
 const MENU_CHECKBOX_ITEM_ATTRIBUTE = "data-sw-menu-checkbox-item";
@@ -1664,6 +1666,11 @@ function createMenuOwnedListNavigation(popup: HTMLElement): OwnedListNavigation 
     attributeFilter: MENU_ITEM_COLLECTION_ATTRIBUTES,
     beforeDiscover: updateRadioGroups,
     getText: getItemText,
+    groupLabels: {
+      groupSelector: `[${MENU_GROUP_ATTRIBUTE}]`,
+      headingSelector: `[${MENU_LABEL_ATTRIBUTE}]`,
+      ownerSelector: `[${MENU_POPUP_ATTRIBUTE}]`,
+    },
     indexMode: "all",
     isHighlighted: (item) => item.hasAttribute(MENU_HIGHLIGHTED_ATTRIBUTE),
     itemSelector: MENU_ITEM_SELECTOR,
@@ -1879,11 +1886,6 @@ function readNumberAttribute(element: HTMLElement, name: string, fallback: numbe
 
 function isTypeaheadKey(event: KeyboardEvent): boolean {
   return event.key.length === 1 && !event.altKey && !event.ctrlKey && !event.metaKey;
-}
-
-function getTypeaheadSearch(buffer: string): string {
-  const characters = [...buffer];
-  return characters.every((character) => character === characters[0]) ? characters[0] : buffer;
 }
 
 function getItemText(item: HTMLElement): string {

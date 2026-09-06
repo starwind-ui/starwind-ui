@@ -75,29 +75,6 @@ const PACKAGE_MANAGER_COMMANDS: Record<PackageManager, Omit<PackageManagerInfo, 
 };
 
 /**
- * Prompts the user to select their preferred package manager
- * @returns The selected package manager, defaults to npm if cancelled
- */
-export async function requestPackageManager(): Promise<PackageManager> {
-  const pm = await p.select({
-    message: "Select your preferred package manager",
-    options: [
-      { value: "pnpm", label: "pnpm", hint: "Default" },
-      { value: "npm", label: "npm" },
-      { value: "yarn", label: "yarn" },
-      { value: "bun", label: "bun" },
-    ],
-  });
-
-  if (p.isCancel(pm)) {
-    p.log.warn("No package manager selected, defaulting to npm");
-    return "npm";
-  }
-
-  return pm as PackageManager;
-}
-
-/**
  * Detects the currently running package manager from user agent
  * @returns The detected package manager, or null if not detected
  */
@@ -180,33 +157,6 @@ export function detectPackageManager(options: PackageManagerOptions = {}): Packa
  */
 export async function getDefaultPackageManager(): Promise<PackageManager> {
   return detectPackageManager().name;
-}
-
-/**
- * Gets the command for the given package manager and action
- *
- * @param action - The action to perform ('install', 'add', 'remove', or 'run')
- * @param options - Package manager detection options
- * @returns The command string for the specified action
- */
-export function getPackageManagerCommand(
-  action: "install" | "add" | "remove" | "run",
-  options: PackageManagerOptions = {},
-): string {
-  const pmInfo = detectPackageManager(options);
-
-  switch (action) {
-    case "install":
-      return pmInfo.installCmd;
-    case "add":
-      return pmInfo.addCmd;
-    case "remove":
-      return pmInfo.removeCmd;
-    case "run":
-      return pmInfo.runCmd;
-    default:
-      throw new Error(`Unknown action: ${action}`);
-  }
 }
 
 /**
