@@ -47,7 +47,11 @@ import {
 const runtimePackage = JSON.parse(
   await readFile(new URL("../../../packages/runtime/package.json", import.meta.url), "utf8"),
 ) as { version: string };
+const vuePackage = JSON.parse(
+  await readFile(new URL("../../../packages/vue/package.json", import.meta.url), "utf8"),
+) as { version: string };
 const CURRENT_BETA_PACKAGE_RANGE = `^${runtimePackage.version}`;
+const CURRENT_VUE_PACKAGE_VERSION = vuePackage.version;
 const STABLE_TARGET_POLICY = createCliRegistryBuildPolicy([
   astroFrameworkAdapterTarget,
   reactFrameworkAdapterTarget,
@@ -172,7 +176,7 @@ describe("generateCliRegistry", () => {
     );
     expect(firstRegistry.setup).toEqual({
       vue: {
-        adapterPackage: { name: "@starwind-ui/vue", range: "0.1.0" },
+        adapterPackage: { name: "@starwind-ui/vue", range: CURRENT_VUE_PACKAGE_VERSION },
         packageRequirements: [{ name: "vue", range: ">=3.5" }],
       },
     });
@@ -206,7 +210,7 @@ describe("generateCliRegistry", () => {
       expect(
         target.packageRequirements.find(({ name }) => name === "@starwind-ui/vue")?.range,
         componentName,
-      ).toBe("0.1.0");
+      ).toBe(CURRENT_VUE_PACKAGE_VERSION);
       expect(packageNames, componentName).toContain("vue");
       expect(packageNames, componentName).not.toEqual(
         expect.arrayContaining([
@@ -431,7 +435,7 @@ describe("generateCliRegistry", () => {
         ],
       },
       vue: {
-        adapterPackage: { name: "@starwind-ui/vue", range: "0.1.0" },
+        adapterPackage: { name: "@starwind-ui/vue", range: CURRENT_VUE_PACKAGE_VERSION },
         packageRequirements: [{ name: "vue", range: ">=3.5" }],
       },
     });
@@ -1488,7 +1492,7 @@ describe("generateCliRegistry", () => {
       "packages/cli/registry/styled-component-versions.json",
     );
     expect(Object.keys(versionManifest.components).sort()).toEqual(contractNames);
-    expect(versionManifest.sourceVersions).toEqual(versionManifest.components);
+    expect(Object.keys(versionManifest.sourceVersions).sort()).toEqual(contractNames);
   });
 
   it("generates Astro primitive vendoring artifacts from source with Runtime package requirements", async () => {
@@ -1690,9 +1694,10 @@ describe("generateCliRegistry", () => {
   });
 
   it("generates default primitive artifacts for every current primitive contract", async () => {
-    const artifactSet = await buildPrimitiveVendoringArtifacts({
-      tempRoot,
-    });
+    const [artifactSet, versionManifest] = await Promise.all([
+      buildPrimitiveVendoringArtifacts({ tempRoot }),
+      loadPrimitiveVersionManifest(),
+    ]);
     const artifactComponents = artifactSet.primitives.map((primitive) => primitive.component);
     const artifactsByComponent = new Map(
       artifactSet.primitives.map((primitive) => [
@@ -1713,7 +1718,12 @@ describe("generateCliRegistry", () => {
     for (const artifact of artifactSet.primitives) {
       const registration = getPrimitiveFrameworkAdapterTarget(artifact.framework);
 
-      expect(artifact.sourceVersion, artifact.component).toBe(artifact.version);
+      expect(artifact.version, artifact.component).toBe(
+        versionManifest.primitives[artifact.component],
+      );
+      expect(artifact.sourceVersion, artifact.component).toBe(
+        versionManifest.sourceVersions[artifact.component],
+      );
       assertSafeInstallPaths(artifact.files, DEFAULT_PRIMITIVE_INSTALL_ROOT);
       assertInstallGraphSourceClosure({
         files: artifact.files,
@@ -1918,7 +1928,7 @@ describe("generateCliRegistry", () => {
       "packages/cli/registry/primitive-versions.json",
     );
     expect(Object.keys(versionManifest.primitives).sort()).toEqual(contractNames);
-    expect(versionManifest.sourceVersions).toEqual(versionManifest.primitives);
+    expect(Object.keys(versionManifest.sourceVersions).sort()).toEqual(contractNames);
   });
 
   it("publishes deterministic, source-closed Color Picker candidates for Astro and React", async () => {
