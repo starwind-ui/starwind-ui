@@ -5,7 +5,6 @@ import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   access,
-  cp,
   mkdir,
   mkdtemp,
   readdir,
@@ -33,7 +32,6 @@ const VUE_VERSION = "3.5.39";
 const NUXT_3_VERSION = "3.21.0";
 const NUXT_4_VERSION = "4.2.0";
 const QUASAR_APP_VERSION = "3.0.0";
-const VUE_BETA_REGISTRY_VERSION = "0.1.0";
 const HOST = "127.0.0.1";
 const PRIVATE_PACKAGES = [
   {
@@ -672,39 +670,18 @@ export async function runVueLocalLinkAcceptance({ root, runCommand = runLoggedCo
   console.log("[vue-cli-host] isolated Runtime, Vue, and CLI local-link acceptance passed");
 }
 
-export function getVueBetaPackVersion(key, version) {
-  return key === "vue" ? VUE_BETA_REGISTRY_VERSION : version;
-}
-
 async function packVueBetaPackages(outputDirectory, logsDirectory) {
   const plan = createVueBetaPackPlan({ outputDirectory });
   await mkdir(outputDirectory, { recursive: true });
   const packages = {};
   const manifests = {};
   for (const entry of plan.packages) {
-    let packageDirectory = entry.directory;
-    const manifest = JSON.parse(
-      await readFile(path.join(packageDirectory, "package.json"), "utf8"),
-    );
-    const plannedVersion = getVueBetaPackVersion(entry.key, manifest.version);
-    if (plannedVersion !== manifest.version) {
-      packageDirectory = path.join(outputDirectory, "staged", entry.key);
-      await cp(entry.directory, packageDirectory, {
-        filter: (source) => path.basename(source) !== "node_modules",
-        recursive: true,
-      });
-      manifest.version = plannedVersion;
-      await writeFile(
-        path.join(packageDirectory, "package.json"),
-        `${JSON.stringify(manifest, null, 2)}\n`,
-        "utf8",
-      );
-    }
+    const manifest = JSON.parse(await readFile(path.join(entry.directory, "package.json"), "utf8"));
     assert.equal(manifest.name, entry.name);
     assert.equal(typeof manifest.version, "string");
     await runLoggedCommand(
       `pack-${entry.key}`,
-      { args: ["pack", "--out", entry.file], cwd: packageDirectory },
+      { args: ["pack", "--out", entry.file], cwd: entry.directory },
       logsDirectory,
     );
     packages[entry.key] = entry.file;
@@ -757,7 +734,7 @@ async function prepareManifest(project, packages, registryUrl) {
   );
 }
 
-async function loadProductionCapability() {
+async function loadProductionCapability(vueAdapterVersion) {
   const [
     initModule,
     addModule,
@@ -784,7 +761,7 @@ async function loadProductionCapability() {
       "utf8",
     ).then(JSON.parse),
   ]);
-  assert.equal(registry.setup.vue.adapterPackage.range, "0.1.0");
+  assert.equal(registry.setup.vue.adapterPackage.range, vueAdapterVersion);
   return {
     add: addModule.add,
     artifacts,
@@ -1586,7 +1563,7 @@ export async function runVueCliHostAcceptance({
           ]),
         ),
       );
-      const capability = await loadProductionCapability();
+      const capability = await loadProductionCapability(manifests.vue.version);
       const require = createRequire(path.join(REPO_ROOT, "package.json"));
       const { chromium } = require("playwright");
       browser = await chromium.launch();

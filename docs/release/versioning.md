@@ -60,12 +60,34 @@ shared version advance even when their files stay unchanged. Their adapter npm p
 release solely because Vue changed. Changes to shared Runtime behavior still follow the fixed-group
 rules below.
 
-Vue's npm package has a separate beta version history, starting at `0.1.0` on the `beta` tag while
-preserving `latest` after the initial release. The release owner approved `latest=0.1.0` when the
-first publication had no previous `latest`; the initial release may have both tags. This exception
-does not permit later beta releases to move an existing `latest`. Component versions do not determine package beta status. Stable graduation and
-package alignment require a separate approved decision. The initial Vue release keeps all existing
-component versions and publishes CLI `3.3.0` with Vue `0.1.0`.
+Vue's npm package has a separate beta version history outside the Runtime, Astro, and React fixed
+group. A normal `pnpm publish:release:dry-run` previews a manifest-derived selection for Runtime,
+Astro, React, Vue, and CLI. A user-run `pnpm publish:release` saves that selection as an immutable
+plan before its first npm publication. A new selection omits an exact version that already exists on
+npm. Recovery reads the original saved plan and resumes only its remaining suffix.
+
+Vue entries in a normal plan always publish on `beta`, even when the Vue version has no SemVer
+prerelease suffix. Vue `latest` stays at its captured baseline until an approved promotion changes
+it. Component versions do not set the Vue package channel. Stable graduation and fixed-group
+membership require a separate approved decision. The legacy `--vue-beta` mode exists only to
+recover the frozen first `0.1.0` release; it is not an ordinary Vue release path.
+
+The first Vue publication is historical: it published Vue `0.1.0` on `beta` and set `latest` to
+`0.1.0` because no prior `latest` existed. It also published CLI `3.3.0`. Later beta publications
+must preserve the existing `latest` value.
+
+## Publication plans and GitHub releases
+
+The saved plan records package order, exact versions, tags, and the Vue `latest` baseline before the
+first npm publication. It is stored under
+`node_modules/.cache/starwind-release/publication-plans/<head>.json`. A plan can contain any changed
+subset of Runtime, Astro, React, Vue, and CLI. Svelte is private and never appears in the plan.
+
+Finalization creates one GitHub release from the same plan. A plan with a CLI package uses
+`v<cli-version>`. A plan with Runtime and no CLI uses `runtime-v<runtime-version>`. A Vue-only plan uses
+`vue-v<vue-version>`, marks the GitHub release as a prerelease, and sets `latest` to `false`.
+The publisher finalizes automatically after all plan entries publish. Use standalone
+`pnpm release:finalize` only when npm publication completed but finalization failed.
 
 Each existing Styled or vendorable Primitive has two values. `version` is the SemVer of delivered
 public behavior. `sourceVersion` is the component version from the most recent release that changed

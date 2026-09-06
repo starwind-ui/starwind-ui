@@ -21,3 +21,16 @@ export const RUNTIME_RELEASE_PACKAGE_SET = Object.freeze([
   Object.freeze({ directory: "packages/react", name: "@starwind-ui/react" }),
   Object.freeze({ directory: "packages/cli", name: "starwind" }),
 ]);
+
+// Graduation requires an explicit policy change, independent of the package's SemVer.
+export const VUE_RELEASE_POLICY = Object.freeze({
+  directory: "packages/vue",
+  name: "@starwind-ui/vue",
+  tag: "beta",
+});
+
+export const ROUTINE_RELEASE_PACKAGE_SET = Object.freeze([
+  ...RUNTIME_RELEASE_PACKAGE_SET.slice(0, 3),
+  VUE_RELEASE_POLICY,
+  RUNTIME_RELEASE_PACKAGE_SET[3],
+]);

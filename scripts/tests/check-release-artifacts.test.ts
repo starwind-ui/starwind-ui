@@ -23,7 +23,7 @@ describe("release artifact check", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "starwind-release-artifacts-"));
     tempRoots.push(root);
 
-    for (const packageName of ["runtime", "react", "cli"]) {
+    for (const packageName of ["runtime", "react", "vue", "cli"]) {
       const packageRoot = path.join(root, "packages", packageName);
       await mkdir(packageRoot, { recursive: true });
       await writeFile(
@@ -41,6 +41,8 @@ describe("release artifact check", () => {
       "packages/cli/dist/index.js",
       "packages/react/dist/index.d.ts",
       "packages/react/dist/index.js",
+      "packages/vue/dist/index.d.ts",
+      "packages/vue/dist/index.js",
     ]);
   });
 

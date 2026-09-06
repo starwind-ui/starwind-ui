@@ -1,10 +1,11 @@
-# Runtime Prerelease Guide
+# Runtime Release Guide
 
-This release path covers the public package set:
+This release path plans the public package manifests:
 
 - `@starwind-ui/runtime`
 - `@starwind-ui/astro`
 - `@starwind-ui/react`
+- `@starwind-ui/vue`
 - `starwind`
 
 ## Versioning And Channels
@@ -17,7 +18,9 @@ Use numbered SemVer prereleases and publish them with the matching npm dist-tag.
 prerelease state is the source for the active channel: `beta`, `rc`, or another prerelease tag.
 Stable package versions publish with `latest` only after prerelease state has been fully consumed.
 
-Runtime, Astro, and React are versioned in lockstep. Release the CLI alongside them so generated
+Runtime, Astro, and React are versioned in lockstep. Vue has its own beta channel and always
+publishes on `beta`, including versions without a SemVer prerelease suffix. The saved plan preserves
+Vue `latest` until an approved promotion changes it. Release the CLI alongside Runtime changes so generated
 styled components and vendored Primitive sources request compatible package versions. Use
 `pnpm release:version` to consolidate deferred styled component intent, regenerate registry
 artifacts, and advance package versions; do not hand-edit prerelease versions. Before a release,
@@ -43,8 +46,10 @@ Release metadata validation rejects a stable Runtime adapter version below `1.0.
 ## Prepare, Gate, And Dry Run
 
 Start from a clean checkout of public `main`, fetch `origin/main`, and confirm that local `HEAD`
-matches the fetched branch. Record the four intended package versions, verify that each version is
-unused on npm, and inspect the existing dist-tags before publication.
+matches the fetched branch. Preview the manifest-derived selection, verify the intended versions
+against npm, and inspect existing dist-tags before publication. The normal dry-run omits exact
+versions already published. The user-run publication saves an immutable plan for prefix recovery and
+finalization before its first npm publication.
 
 Prepare the package set:
 
@@ -58,8 +63,8 @@ Run the complete release gate once against those prepared files:
 pnpm release:gate
 ```
 
-This command runs repository verification, the production dependency audit, both demo smoke tests,
-the prepared package-size check, and the ten-project candidate matrix. If the prepared files change,
+This command runs repository verification, the production dependency audit, demo smoke tests, the
+prepared package-size check, and the candidate matrix. If the prepared files change,
 prepare them again and restart the gate.
 
 After the gate passes, run the package dry-run:
@@ -68,9 +73,9 @@ After the gate passes, run the package dry-run:
 pnpm publish:release:dry-run
 ```
 
-The dry-run validates the release artifacts and runs the publisher in dry-run mode. It does not
-prepare the packages or repeat the release gate. Inspect the packed file lists, package metadata,
-dependency ranges, derived channel, and release summary before continuing.
+The dry-run validates release artifacts and runs the publisher in dry-run mode. It does not prepare
+packages or repeat the release gate. Inspect the packed file lists, package metadata, dependency
+ranges, package tags, and Vue `latest` baseline before continuing.
 
 ## Release Gate And Publication
 
@@ -122,17 +127,19 @@ run:
 pnpm publish:release
 ```
 
-The publisher derives the npm tag from Changesets state and uses `latest` only for stable versions.
-It publishes with public access in dependency order: Runtime, Astro, React, then the `starwind` CLI.
-A real publish refuses to run unless the checkout belongs to `starwind-ui/starwind-ui`, the working
-tree is clean, the current branch is `main`, and `HEAD` exactly matches the locally fetched
-`origin/main`.
+The publisher derives the normal plan from final manifests. It includes changed Runtime, Astro,
+React, Vue, and CLI packages, then omits exact versions already on npm. Before its first npm
+publication, the user-run command saves this immutable plan under
+`node_modules/.cache/starwind-release/publication-plans/<head>.json`. Vue uses `beta` and preserves
+its saved `latest` baseline. Other tags derive from the release state. A real publish refuses to run unless the checkout belongs to
+`starwind-ui/starwind-ui`, the working tree is clean, the current branch is `main`, and `HEAD`
+exactly matches the locally fetched `origin/main`.
 
-After all four exact versions and their npm dist-tags are visible, the publisher finalizes the
-release. It creates and pushes one annotated product tag from the CLI version, such as
-`v3.0.0-beta.8`. It pushes only that explicit tag ref. It then creates a GitHub Release with
-generated notes. Any SemVer prerelease becomes a GitHub prerelease and does not become the latest
-release. A stable version becomes the latest GitHub release.
+After all planned exact versions and their npm dist-tags are visible, the publisher automatically
+finalizes from the saved plan. It creates and pushes one annotated product tag, then creates a
+GitHub Release with generated notes. A plan with CLI uses `v<cli-version>`. A plan with Runtime and no CLI uses
+`runtime-v<runtime-version>`. A Vue-only plan uses `vue-v<vue-version>`, creates a GitHub
+prerelease, and sets `latest=false`. A SemVer prerelease also creates a GitHub prerelease.
 
 Finalization checks local and remote tag targets plus existing GitHub Release metadata before it
 writes anything. A retry succeeds when the tag target and release classification already match.
@@ -141,10 +148,10 @@ differs.
 
 ## Published Acceptance
 
-After publishing, query npm for all four exact versions and verify:
+After publishing, query npm for every exact version in the saved plan and verify:
 
-- the expected dist-tag points to the intended versions
-- `latest` was unchanged for a prerelease
+- the expected dist-tag points to each intended version
+- Vue `latest` matches its captured baseline
 - repository metadata and packed file lists are correct
 - Astro and React declare the intended Runtime version
 - the CLI declares compatible adapter and Runtime requirements
@@ -170,9 +177,9 @@ builds, and browser behavior checks all pass.
 
 ## Partial Publish Recovery
 
-If publishing fails, stop and query all four exact versions on npm. Continue only when the packages
-already present form a valid prefix of the intended publish order. Re-run the prepare and release
-gates, then resume from the first missing package:
+If publishing fails, stop and query every saved plan entry on npm. Continue only when packages
+already present form a valid prefix of the immutable plan. Re-run the prepare and release gates,
+then resume from the first missing package:
 
 ```bash
 node scripts/release-packages.mjs --publish --resume-from <first-missing-package>
@@ -182,13 +189,16 @@ Do not republish an existing version, unpublish a package, increment versions, o
 during recovery. If registry state is not a valid prefix, investigate and reconcile the registry
 state before making further changes.
 
-The publisher creates no tag after a partial package publish. When all four versions are present
-but tag or GitHub Release creation failed, use the idempotent recovery command:
+The legacy `--vue-beta` option is only for recovery of the frozen first `0.1.0` Vue publication. It
+does not apply to ordinary Vue beta releases or ordinary plan resume.
+
+When all planned versions are present but tag or GitHub Release creation failed, use the idempotent
+recovery command:
 
 ```bash
 pnpm release:finalize
 ```
 
-This command revalidates public `main`, all four exact npm versions, the derived dist-tag, local and
-remote tag targets, and GitHub Release metadata. It completes the missing finalization steps without
+This command revalidates public `main`, every planned exact npm version, the planned tags, local and
+remote tag targets, and GitHub Release metadata. It completes missing finalization without
 publishing an npm package again. Never force or move a release tag during recovery.

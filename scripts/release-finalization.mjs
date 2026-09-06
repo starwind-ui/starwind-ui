@@ -6,10 +6,11 @@ import { fileURLToPath } from "node:url";
 import { createSpawnCommand } from "./command-process.mjs";
 import {
   assertPublicMainForPublish,
-  assertReleaseMetadata,
+  assertRoutineReleaseMetadata,
   assertVueBetaReleaseMetadata,
   loadVueBetaRegistryBaseline,
 } from "./release-packages.mjs";
+import { loadPublicationPlan } from "./release-publication-plan.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(SCRIPT_DIR, "..");
@@ -68,14 +69,18 @@ export function deriveReleaseIdentity(packageManifests, npmTag, head) {
     tag: entry.tag ?? npmTag,
     version: manifest.version,
   }));
-  const cli = packages.find((entry) => entry.name === "starwind");
-  if (!cli?.version) throw new Error("The starwind package must have an exact version.");
+  const anchor =
+    packages.find((entry) => entry.name === "starwind") ??
+    packages.find((entry) => entry.name === "@starwind-ui/runtime") ??
+    packages[0];
+  if (!anchor?.version) throw new Error("Release finalization requires a versioned package.");
+  const prefix = anchor.name === "starwind" ? "" : `${anchor.name.replace("@starwind-ui/", "")}-`;
   return {
     head,
     npmTag,
     packages,
-    prerelease: cli.version.includes("-"),
-    tagName: `v${cli.version}`,
+    prerelease: anchor.tag !== "latest" || anchor.version.includes("-"),
+    tagName: `${prefix}v${anchor.version}`,
   };
 }
 
@@ -237,7 +242,7 @@ function isMissingRelease(result) {
   return result.code === 1 && /(?:not found|release not found|HTTP 404)/i.test(result.stderr);
 }
 
-export async function finalizeVerifiedRelease(release, system) {
+export async function assertReleaseIdentityAvailable(release, system) {
   if (!release.head) throw new Error("Release finalization requires the validated release commit.");
   const tagRef = `refs/tags/${release.tagName}`;
   const peeledTagRef = `${tagRef}^{}`;
@@ -311,6 +316,15 @@ export async function finalizeVerifiedRelease(release, system) {
     }
   }
 
+  return { githubRelease, localSha, remoteSha, repairLatest };
+}
+
+export async function finalizeVerifiedRelease(release, system) {
+  const { githubRelease, localSha, remoteSha, repairLatest } = await assertReleaseIdentityAvailable(
+    release,
+    system,
+  );
+  const tagRef = `refs/tags/${release.tagName}`;
   if (!localSha) {
     await system.run("git", [
       "tag",
@@ -340,7 +354,8 @@ export async function finalizeVerifiedRelease(release, system) {
 
 export async function runReleaseFinalization({
   gitStateLoader = assertPublicMainForPublish,
-  metadataLoader = assertReleaseMetadata,
+  metadataLoader = assertRoutineReleaseMetadata,
+  publicationPlanLoader = loadPublicationPlan,
   registryVerificationOptions,
   system = createCommandSystem(),
   vueBeta = false,
@@ -350,10 +365,23 @@ export async function runReleaseFinalization({
   const loadedMetadata = vueBeta ? await vueBetaMetadataLoader() : await metadataLoader();
   const { packageManifests, tag } = loadedMetadata;
   const { head } = await gitStateLoader();
-  const release = deriveReleaseIdentity(packageManifests, tag, head);
+  let selectedManifests = packageManifests;
+  let baseline;
   if (vueBeta) {
-    const baseline = await vueLatestBaselineLoader({ head });
+    baseline = await vueLatestBaselineLoader({ head });
+  } else {
+    baseline = await publicationPlanLoader({ head, packageManifests, tag });
+    selectedManifests = baseline.packages.map((selected) => {
+      const item = packageManifests.find(({ entry }) => entry.name === selected.name);
+      return { ...item, entry: { ...item.entry, tag: selected.tag } };
+    });
+    if (selectedManifests.length === 0) return undefined;
+  }
+  const release = deriveReleaseIdentity(selectedManifests, tag, head);
+  if (vueBeta) {
     release.finalizeCommand = "pnpm release:vue-beta:finalize";
+  }
+  if (release.packages.some((entry) => entry.name === "@starwind-ui/vue" && entry.tag === "beta")) {
     release.preservedDistTags = {
       "@starwind-ui/vue": { latest: baseline.vueLatest },
     };
@@ -369,7 +397,9 @@ async function main() {
     throw new Error("release:finalize accepts only the optional --vue-beta plan selector.");
   }
   const release = await runReleaseFinalization({ vueBeta: args[0] === "--vue-beta" });
-  console.log(`Release ${release.tagName} is finalized.`);
+  console.log(
+    release ? `Release ${release.tagName} is finalized.` : "No packages need finalization.",
+  );
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

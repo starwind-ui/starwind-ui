@@ -7,14 +7,13 @@ import { describe, expect, it } from "vitest";
 import {
   createCandidatePlan,
   createCandidateVerificationPlan,
-  getCandidateManifestScriptCommand,
-  getCandidateRegistryVersion,
   getCandidateFixtureFiles,
+  getCandidateManifestScriptCommand,
   getCandidateMatrix,
-  startCandidateRegistry,
   getCandidateWorkspacePackage,
   getCandidateWorkspacePolicy,
   parseArgs,
+  startCandidateRegistry,
 } from "../release-candidate-acceptance.mjs";
 
 const root = path.resolve("candidate-root");
@@ -25,6 +24,7 @@ const packages = {
   runtime: path.join(root, "packs", "runtime.tgz"),
   vue: path.join(root, "packs", "vue.tgz"),
 };
+const vueAdapterVersion = "0.2.0";
 
 describe("release candidate acceptance", () => {
   it("covers supported Astro, React, and Vue versions plus each supported React host", () => {
@@ -49,7 +49,6 @@ describe("release candidate acceptance", () => {
         host: "vite",
         id: "vue-35",
         packageManager: "pnpm",
-        adapterVersion: "0.1.0",
       }),
       expect.objectContaining({
         framework: "react",
@@ -84,7 +83,7 @@ describe("release candidate acceptance", () => {
 
     expect(manifest.devDependencies.starwind).toBe(`file:${packages.cli.replaceAll("\\", "/")}`);
     const workspace = getCandidateWorkspacePolicy(
-      createCandidatePlan({ packages, root }).projects,
+      createCandidatePlan({ packages, root, vueAdapterVersion }).projects,
       packages,
     );
     expect(workspace).toContain(
@@ -104,8 +103,10 @@ describe("release candidate acceptance", () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "starwind-candidate-registry-"));
     const tarball = path.join(directory, "runtime.tgz");
     const adapterTarball = path.join(directory, "astro.tgz");
+    const vueTarball = path.join(directory, "vue.tgz");
     await writeFile(tarball, "packed runtime");
     await writeFile(adapterTarball, "packed astro adapter");
+    await writeFile(vueTarball, "packed vue adapter");
     const registry = await startCandidateRegistry({
       astro: {
         file: adapterTarball,
@@ -117,6 +118,11 @@ describe("release candidate acceptance", () => {
         file: tarball,
         name: "@starwind-ui/runtime",
         version: "0.1.0-beta.7",
+      },
+      vue: {
+        file: vueTarball,
+        name: "@starwind-ui/vue",
+        version: "0.2.0",
       },
     });
 
@@ -135,19 +141,29 @@ describe("release candidate acceptance", () => {
 
       const tarballResponse = await fetch(metadata.versions["0.1.0-beta.7"].dist.tarball);
       expect(await tarballResponse.text()).toBe("packed runtime");
+
+      const vueMetadata = await (await fetch(`${registry.url}/@starwind-ui%2Fvue`)).json();
+      expect(vueMetadata["dist-tags"].beta).toBe("0.2.0");
+      expect(vueMetadata.versions["0.2.0"].version).toBe("0.2.0");
     } finally {
       await registry.close();
       await rm(directory, { force: true, recursive: true });
     }
   });
 
-  it("advertises the approved beta version without materializing the packed Vue manifest", () => {
-    expect(getCandidateRegistryVersion("@starwind-ui/vue", "0.0.0")).toBe("0.1.0");
-    expect(getCandidateRegistryVersion("@starwind-ui/runtime", "1.2.0")).toBe("1.2.0");
+  it("uses current manifest versions in candidate registry metadata and validation", () => {
+    expect(
+      createCandidatePlan({ packages, root, vueAdapterVersion }).projects.find(
+        ({ framework }) => framework === "vue",
+      ),
+    ).toMatchObject({ adapterVersion: vueAdapterVersion });
+    expect(() => createCandidatePlan({ packages, root })).toThrow(
+      "The Vue candidate adapter version is required.",
+    );
   });
 
   it("runs auto-detect, all-component install, lifecycle, checks, builds, SSR, and browser work", () => {
-    const plan = createCandidatePlan({ packages, root });
+    const plan = createCandidatePlan({ packages, root, vueAdapterVersion });
 
     for (const project of plan.projects.filter((project) => project.packageManager === "pnpm")) {
       expect(project.init.args).toEqual([plan.cliEntrypoint, "init", "--defaults"]);
@@ -175,7 +191,7 @@ describe("release candidate acceptance", () => {
   });
 
   it("uses each host's official noninteractive scaffold and production server", () => {
-    const projects = createCandidatePlan({ packages, root }).projects;
+    const projects = createCandidatePlan({ packages, root, vueAdapterVersion }).projects;
     const getProject = (id: string) => projects.find((project) => project.id === id)!;
 
     expect(getProject("next-app").scaffold.args).toEqual(
@@ -258,7 +274,7 @@ describe("release candidate acceptance", () => {
   });
 
   it("writes framework-native fixtures that render the critical interactive cohort", () => {
-    const projects = createCandidatePlan({ packages, root }).projects;
+    const projects = createCandidatePlan({ packages, root, vueAdapterVersion }).projects;
     const fixturePaths = Object.fromEntries(
       projects.map((project) => [
         project.id,
@@ -291,13 +307,16 @@ describe("release candidate acceptance", () => {
       "react-router",
     ]);
     expect(
-      createCandidatePlan({ packages, projectIds: ["next-pages"], root }).projects.map(
-        (project) => project.id,
-      ),
+      createCandidatePlan({
+        packages,
+        projectIds: ["next-pages"],
+        root,
+        vueAdapterVersion,
+      }).projects.map((project) => project.id),
     ).toEqual(["next-pages"]);
-    expect(() => createCandidatePlan({ packages, projectIds: ["missing"], root })).toThrow(
-      /Unknown candidate project: missing/,
-    );
+    expect(() =>
+      createCandidatePlan({ packages, projectIds: ["missing"], root, vueAdapterVersion }),
+    ).toThrow(/Unknown candidate project: missing/);
   });
 
   it("runs once in the release gate and stays out of the public sync and publish commands", async () => {

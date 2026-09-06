@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const RELEASE_PACKAGE_DIRS = ["packages/runtime", "packages/react", "packages/cli"];
+const RELEASE_PACKAGE_DIRS = ["packages/runtime", "packages/react", "packages/vue", "packages/cli"];
 const VUE_BETA_PACKAGE_DIRS = ["packages/vue", "packages/cli"];
 const VUE_BETA_INPUTS = [
   "tsconfig.json",
