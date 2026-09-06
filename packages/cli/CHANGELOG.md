@@ -1,5 +1,14 @@
 # starwind
 
+## 3.3.2
+
+### Patch Changes
+
+- Deliver Runtime-backed group naming and Tabs indicator geometry corrections through the first-party adapters and bundled registry. The Vue package remains on its beta release channel.
+- Remove obsolete private-release warnings from generated Vue adapters and normalize the resulting blank line in vendored Primitive indexes.
+- Remove unused internal portal methods and retired CLI helpers. Keep public behavior and component source unchanged.
+- Simplify component name validation during `add` while preserving request order and warnings for unknown names.
+
 ## 3.3.1
 
 ### Patch Changes

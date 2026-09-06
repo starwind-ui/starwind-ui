@@ -1,6 +1,6 @@
 {
   "name": "@starwind-ui/react",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Accessible React primitives for Starwind UI, powered by the shared framework-neutral Runtime.",
   "license": "MIT",
   "homepage": "https://starwind.dev/",
