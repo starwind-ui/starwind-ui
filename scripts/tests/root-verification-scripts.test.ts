@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
@@ -154,6 +155,8 @@ describe("root verification scripts", () => {
 
     expect(commandPhases(pkg.scripts?.["release:gate"])).toEqual([
       "pnpm verify:public",
+      "pnpm runtime:generate:vue:test",
+      "pnpm test:vue-cli-host-acceptance",
       "pnpm --filter=starwind package:check",
       "pnpm audit:prod",
       "pnpm demo:smoke",
@@ -171,20 +174,16 @@ describe("root verification scripts", () => {
     expect(pkg.scripts?.["publish:release"]).toBe("node scripts/release-packages.mjs --publish");
   });
 
-  it("runs public Vue and private Svelte checks in their intended scopes", async () => {
-    const [verifyWorkflowSource, releaseWorkflowSource] = await Promise.all([
-      readFile(".github/workflows/verify.yml", "utf8"),
-      readFile(".github/workflows/release.yml", "utf8"),
-    ]);
-    const verifyWorkflow = parse(verifyWorkflowSource) as Workflow;
-    const releaseWorkflow = parse(releaseWorkflowSource) as Workflow;
-    const verifyRuns = Object.values(verifyWorkflow.jobs).flatMap(
-      ({ steps = [] }) => steps.map(({ run }) => run).filter(Boolean) as string[],
-    );
+  it("keeps CI focused and checks every shipping adapter", async () => {
+    const source = await readFile(".github/workflows/verify.yml", "utf8");
+    const workflow = parse(source) as Workflow;
+    const pkg = await readRootPackage();
+    const jobs = Object.values(workflow.jobs);
+    const runs = jobs.flatMap(({ steps = [] }) => steps.flatMap(({ run }) => (run ? [run] : [])));
 
-    expect(verifyWorkflow.on).toMatchObject({
+    expect(workflow.on).toMatchObject({
       pull_request: null,
-      workflow_call: { inputs: { private_adapters: { default: false, type: "boolean" } } },
+      workflow_call: null,
       workflow_dispatch: {
         inputs: {
           base_sha: { required: true, type: "string" },
@@ -192,226 +191,102 @@ describe("root verification scripts", () => {
         },
       },
     });
-    expect(verifyWorkflow.permissions).toEqual({ contents: "read" });
-    expect(Object.keys(verifyWorkflow.jobs)).toEqual(
-      expect.arrayContaining([
-        "scope",
-        "static",
-        "node-tests",
-        "generator-tests",
-        "browser-adapter-tests",
-        "svelte-tests",
-        "vue-tests",
-        "build-drift",
-        "verify",
-      ]),
-    );
-    expect(verifyWorkflow.jobs["vue-tests"]).toMatchObject({
-      if: expect.not.stringContaining("inputs.private_adapters"),
-      needs: "scope",
-    });
-    expect(verifyWorkflow.jobs["vue-tests"].if).toContain("needs.scope.outputs.vue == 'true'");
-    expect(verifyWorkflow.jobs["vue-tests"].steps).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ run: "pnpm vue:verify" }),
-        expect.objectContaining({ run: "pnpm test:vue-cli-host-acceptance" }),
-      ]),
-    );
-    const scopeStep = verifyWorkflow.jobs.scope.steps?.find((step) => step.id === "changes");
-    const vueScopePattern = scopeStep?.env?.VUE_SCOPE_PATTERN;
-    expect(vueScopePattern).toBeDefined();
-    const matchesVueScope = (file: string): boolean => new RegExp(vueScopePattern!).test(file);
-    for (const file of [
-      "apps/vue-demo/src/App.vue",
-      "packages/vue/src/index.ts",
-      "packages/runtime/src/index.ts",
-      "packages/cli/registry/styled-components.json",
-      "packages/cli/src/registry/bundled-registry.json",
-      "packages/cli/src/commands/init.ts",
-      "packages/cli/tests/commands/init.test.ts",
-      "packages/cli/package.json",
-      "packages/cli/tsup.config.ts",
-      "scripts/portable-runtime/contracts/primitive/components/dialog.ts",
-      "scripts/portable-runtime/contracts/styled/components/dialog.ts",
-      "scripts/portable-runtime/renderers/shared.ts",
-      "scripts/portable-runtime/renderers/generic-adapter-plan/index.ts",
-      "scripts/portable-runtime/renderers/framework-adapters/vue/renderer.ts",
-      "scripts/portable-runtime/renderers/framework-adapters/target-definition.ts",
-      "scripts/portable-runtime/generate-cli-registry.ts",
-      "scripts/release-candidate-acceptance.mjs",
-      "scripts/tests/root-verification-scripts.test.ts",
-      ".github/workflows/verify.yml",
-      "package.json",
-      "turbo.json",
-    ]) {
-      expect(matchesVueScope(file), file).toBe(true);
-    }
-    expect(matchesVueScope("docs/product/positioning.md")).toBe(false);
-    expect(
-      matchesVueScope("scripts/portable-runtime/renderers/framework-adapters/svelte/renderer.ts"),
-    ).toBe(false);
-    expect(verifyWorkflow.jobs["svelte-tests"]).toMatchObject({
-      if: expect.stringContaining("inputs.private_adapters"),
-      needs: "scope",
-    });
-    expect(verifyWorkflow.jobs["svelte-tests"].if).toContain(
-      "needs.scope.outputs.svelte == 'true'",
-    );
-    const shouldRunSvelte = new Function(
-      "github",
-      "inputs",
-      "needs",
-      `return (${verifyWorkflow.jobs["svelte-tests"].if});`,
-    );
-    for (const isPrivate of [false, true]) {
-      expect(
-        shouldRunSvelte(
-          {
-            event: { repository: { private: isPrivate } },
-            event_name: "pull_request",
-            head_ref: "runtime",
-          },
-          { private_adapters: false },
-          { scope: { outputs: { svelte: "true" } } },
-        ),
-      ).toBe(isPrivate);
-    }
-    expect(verifyWorkflowSource).not.toMatch(/packages\/\(runtime\|svelte\)/u);
-    expect(verifyWorkflowSource).toContain("packages/svelte/");
-    expect(verifyWorkflow.jobs["windows-packed-cli"]).toMatchObject({
-      if: "needs.scope.outputs.windows == 'true'",
-      needs: "scope",
-    });
-    expect(verifyWorkflow.jobs["node22-public-consumer"]).toMatchObject({
-      if: "needs.scope.outputs.node22 == 'true'",
-      needs: "scope",
-    });
-    expect(verifyWorkflow.jobs["generator-tests"].steps).toEqual(
+    expect(workflow.permissions).toEqual({ contents: "read" });
+    expect(workflow.jobs.static.steps).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          name: "Install Playwright Chromium",
-          run: "pnpm exec playwright install --with-deps chromium",
+          if: "github.event_name == 'workflow_dispatch'",
+          env: { EXPECTED_HEAD_SHA: "${{ inputs.expected_head_sha }}" },
+          run: 'test "$GITHUB_SHA" = "$EXPECTED_HEAD_SHA"',
         }),
       ]),
     );
-    for (const job of Object.values(verifyWorkflow.jobs)) {
+    expect(runs).toEqual(
+      expect.arrayContaining([
+        "pnpm check && pnpm test:homes && pnpm runtime:generate:typecheck",
+        "pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr && pnpm --filter=@starwind-ui/vue test:run",
+        "pnpm runtime:generate:test:ci",
+        "pnpm runtime:test:browser && pnpm react:test:browser && pnpm vue:test:browser:ci",
+        "pnpm runtime:generate:all && pnpm runtime:registry:generate",
+        "pnpm exec turbo build --filter=@starwind-ui/runtime --filter=@starwind-ui/react --filter=@starwind-ui/vue --filter=starwind",
+        "git diff --exit-code",
+        "pnpm --filter=starwind package:check",
+        'pnpm styled:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',
+        'pnpm primitive:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',
+      ]),
+    );
+    expect(runs.join("\n")).not.toMatch(
+      /pnpm (?:vue:verify|vue:test(?:\s|$)|svelte:verify|build(?:\s|$)|runtime:size:|runtime:perf:|test:vue-cli-host-acceptance|test:windows-packed-cli|release:consumer:node22)/,
+    );
+    expect(pkg.scripts?.["runtime:generate:test:ci"]).toContain("generate-cli-registry.test.ts");
+    expect(pkg.scripts?.["runtime:generate:test:ci"]).toContain("runtime-adapter-contract.test.ts");
+    expect(pkg.scripts?.["runtime:generate:test"]).toBe("vitest run --project=portable-runtime");
+    for (const component of ["checkbox", "dialog", "select"]) {
+      expect(pkg.scripts?.["vue:test:browser:ci"]).toContain(
+        `packages/vue/tests/${component}/vitest.config.ts --project=browser`,
+      );
+    }
+    for (const job of jobs) {
       for (const value of Object.values(job.env ?? {})) {
         expect(value).not.toMatch(/\$\{\{[^}]*\brunner\./);
       }
     }
-    expect(verifyWorkflow.jobs["build-drift"]).toMatchObject({
-      steps: expect.arrayContaining([
-        expect.objectContaining({
-          name: "Check CLI package size",
-          run: "pnpm --filter=starwind package:check",
-        }),
-        expect.objectContaining({
-          name: "Check prepared Astro demo bundles",
-          run: "node scripts/portable-runtime/assert-astro-demo-bundles.mjs",
-        }),
-        expect.objectContaining({
-          if: "github.event.repository.private",
-          name: "Validate saved Vue performance evidence",
-          run: "pnpm runtime:perf:vue:evidence:check",
-        }),
-        expect.objectContaining({
-          name: "Check prepared package sizes",
-          env: {
-            STARWIND_MEASUREMENT_TMP_ROOT: "${{ runner.temp }}/starwind-measurements",
-          },
-          run: "pnpm runtime:size:check:prepared",
-        }),
-        expect.objectContaining({
-          if: "failure()",
-          name: "Upload package-size failure diagnostics",
-          uses: "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f",
-          with: expect.objectContaining({
-            "if-no-files-found": "ignore",
-            path: expect.stringContaining("starwind-package-size-comparison/run-*/raw-evidence"),
-          }),
-        }),
-      ]),
-    });
-    const browserInstallSteps = Object.values(verifyWorkflow.jobs).flatMap(({ steps = [] }) =>
-      steps.filter(({ name }) => name === "Install Playwright Chromium"),
-    );
-    expect(browserInstallSteps).toHaveLength(4);
-    for (const step of browserInstallSteps) {
-      expect(step.run).toBe("pnpm exec playwright install --with-deps chromium");
-    }
-    expect(verifyWorkflow.jobs.verify).toMatchObject({
-      name: "Verify",
-      needs: expect.arrayContaining([
-        "static",
-        "node-tests",
-        "generator-tests",
-        "browser-adapter-tests",
-        "svelte-tests",
-        "vue-tests",
-        "build-drift",
-      ]),
-    });
-    expect(verifyRuns).toEqual(
-      expect.arrayContaining([
-        "pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr",
-        "pnpm runtime:generate:test && pnpm runtime:generate:typecheck",
-        "pnpm runtime:test:browser && pnpm react:test:browser",
-        "pnpm svelte:verify",
-        "pnpm runtime:generate:all && pnpm runtime:registry:generate",
-        "git diff --exit-code",
-      ]),
-    );
-    expect(verifyRuns).toContain(
-      'pnpm styled:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',
-    );
-    expect(verifyRuns).toContain(
-      'pnpm primitive:versions:check --base "${{ inputs.base_sha || github.event.pull_request.base.sha }}"',
-    );
-    expect(
-      verifyRuns.filter((command) => command.includes("pnpm runtime:generate:test")),
-    ).toHaveLength(1);
-    expect(
-      verifyRuns.filter((command) => /(?:^|[\s;&])pnpm\s+audit(?::prod)?(?:\s|$)/u.test(command)),
-    ).toEqual([]);
-    expect(verifyWorkflowSource).toContain(`needs.windows-packed-cli.result }}" != "skipped"`);
-    expect(verifyWorkflowSource).toContain(`needs.node22-public-consumer.result }}" != "skipped"`);
-
-    expect(verifyWorkflow.concurrency).toMatchObject({
+    expect(workflow.concurrency).toMatchObject({
       "cancel-in-progress": "${{ github.event_name == 'pull_request' }}",
     });
-    expect(releaseWorkflow.concurrency).toMatchObject({ "cancel-in-progress": true });
-    expect(releaseWorkflow.jobs.verify).toMatchObject({
+  });
+
+  it("fails Verify when any required job fails, skips, or is cancelled", async () => {
+    const workflow = parse(await readFile(".github/workflows/verify.yml", "utf8")) as Workflow;
+    const gate = workflow.jobs.verify;
+    const requiredJobs = Object.keys(workflow.jobs).filter((name) => name !== "verify");
+    expect(gate.name).toBe("Verify");
+    expect(gate.if).toBe("always()");
+    expect(gate.needs).toEqual(requiredJobs);
+    const step = gate.steps?.find(({ name }) => name === "Require every verification gate");
+    expect(step?.env).toEqual({ CHECK_RESULTS: "${{ join(needs.*.result, ',') }}" });
+    const gateScript = step?.run?.match(/^node -e "(.*)"$/)?.[1];
+    expect(gateScript).toBeDefined();
+    const check = (results: string[]) =>
+      spawnSync(process.execPath, ["-e", gateScript!], {
+        env: { ...process.env, CHECK_RESULTS: results.join(",") },
+      }).status;
+    const success = requiredJobs.map(() => "success");
+    expect(check(success)).toBe(0);
+    for (let index = 0; index < requiredJobs.length; index += 1) {
+      for (const result of ["failure", "cancelled", "skipped"]) {
+        const results = [...success];
+        results[index] = result;
+        expect(check(results)).not.toBe(0);
+      }
+    }
+  });
+
+  it("preserves exact-head release verification and the publication boundary", async () => {
+    const source = await readFile(".github/workflows/release.yml", "utf8");
+    const workflow = parse(source) as Workflow;
+    expect(workflow.concurrency).toMatchObject({ "cancel-in-progress": true });
+    expect(workflow.jobs.verify).toMatchObject({
       if: "needs.scope.outputs.versioned == 'true'",
       needs: "scope",
       uses: "./.github/workflows/verify.yml",
-      with: { private_adapters: false },
     });
-    expect(releaseWorkflow.jobs.release).toMatchObject({
-      name: "Release",
-      needs: ["scope", "verify"],
-    });
-    expect(releaseWorkflow.jobs.release.steps).toEqual(
+    expect(workflow.jobs.release.needs).toEqual(["scope", "verify"]);
+    expect(workflow.jobs.release.steps).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           run: "pnpm styled:versions:stage && pnpm primitive:versions:stage",
         }),
-        expect.objectContaining({
-          id: "changesets",
-          name: "Create Release Pull Request",
-        }),
+        expect.objectContaining({ id: "changesets", name: "Create Release Pull Request" }),
         expect.objectContaining({
           if: "steps.changesets.outputs.pullRequestNumber != ''",
           name: "Verify Release Pull Request",
-          run: expect.stringContaining("gh workflow run verify.yml"),
+          run: expect.stringContaining('--field expected_head_sha="$HEAD_SHA"'),
         }),
       ]),
     );
-    expect(releaseWorkflowSource).toContain("commitMode: github-api");
-    expect(releaseWorkflow.jobs.release.permissions).toEqual({
-      actions: "write",
-      contents: "write",
-      "pull-requests": "write",
-    });
-    expect(releaseWorkflowSource).toContain("version: pnpm release:version");
+    expect(source).toContain("commitMode: github-api");
+    expect(source).toContain("version: pnpm release:version");
+    expect(source).not.toMatch(/pnpm (?:publish|release:gate)/);
   });
 });

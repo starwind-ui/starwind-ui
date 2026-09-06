@@ -1,11 +1,10 @@
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import {
-  assertPackedPackageProvenance,
   assertExactNodeVersion,
+  assertPackedPackageProvenance,
   createNodeFloorPlan,
   getJavaScriptTypecheckConfig,
   getPackedProjectDependencies,
@@ -177,18 +176,5 @@ describe("Node 22 public consumer smoke", () => {
       compilerOptions: { allowJs: true, checkJs: true, noEmit: true },
       include: expect.arrayContaining(["src/**/*.jsx", "src/**/*.tsx"]),
     });
-  });
-
-  it("runs as one focused exact-Node workflow without the full candidate matrix", async () => {
-    const workflow = await readFile(".github/workflows/verify.yml", "utf8");
-    const jobStart = workflow.indexOf("  node22-public-consumer:");
-    const nextJob = workflow.indexOf("\n  windows-packed-cli:", jobStart);
-    const job = workflow.slice(jobStart, nextJob);
-
-    expect(job).toContain("node-version: 22.12.0");
-    expect(job).toContain("pnpm release:pack:public-artifacts");
-    expect(job).toContain("npm run release:consumer:node22");
-    expect(job.slice(job.indexOf("Setup exact public Node floor"))).not.toContain("cache: pnpm");
-    expect(job).not.toContain("release:candidate:acceptance");
   });
 });

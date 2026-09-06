@@ -82,7 +82,7 @@
     "release:version": "tsx scripts/portable-runtime/styled-component-release.ts version && tsx scripts/portable-runtime/primitive-component-release.ts version && changeset version && pnpm runtime:registry:generate && pnpm runtime:docs:metadata",
     "local:release": "pnpm build && pnpm release:version && changeset publish",
     "release:prepare": "pnpm runtime:generate:all && pnpm runtime:registry:generate && pnpm runtime:docs:metadata",
-    "release:gate": "pnpm verify:public && pnpm --filter=starwind package:check && pnpm audit:prod && pnpm demo:smoke && pnpm react-demo:smoke && pnpm vue-demo:smoke && pnpm runtime:size:check:prepared && pnpm release:candidate:acceptance",
+    "release:gate": "pnpm verify:public && pnpm runtime:generate:vue:test && pnpm test:vue-cli-host-acceptance && pnpm --filter=starwind package:check && pnpm audit:prod && pnpm demo:smoke && pnpm react-demo:smoke && pnpm vue-demo:smoke && pnpm runtime:size:check:prepared && pnpm release:candidate:acceptance",
     "release:candidate:acceptance": "node scripts/release-candidate-acceptance.mjs",
     "release:artifacts": "node scripts/check-release-artifacts.mjs",
     "publish:release:dry-run": "pnpm release:artifacts && node scripts/release-packages.mjs --dry-run",
@@ -147,7 +147,9 @@
     "vue:link": "pnpm --dir packages/vue add --global . --ignore-scripts",
     "vue:unlink": "pnpm unlink:global @starwind-ui/vue",
     "unlink:global": "node -e \"const { spawnSync } = require(\\\"node:child_process\\\"); const command = process.platform === \\\"win32\\\" ? \\\"pnpm.cmd\\\" : \\\"pnpm\\\"; const name = process.argv[1]; const listed = spawnSync(command, [\\\"list\\\", \\\"--global\\\", \\\"--depth\\\", \\\"-1\\\", \\\"--json\\\"], { encoding: \\\"utf8\\\" }); if (listed.status !== 0) { process.stderr.write(listed.stderr); process.exitCode = listed.status ?? 1; } else { const dependencies = JSON.parse(listed.stdout)[0]?.dependencies ?? {}; if (dependencies[name]) { const removed = spawnSync(command, [\\\"rm\\\", \\\"--global\\\", name], { stdio: \\\"inherit\\\" }); process.exitCode = removed.status ?? 1; } }\"",
-    "test:vue-cli-local-link": "pnpm exec tsx --tsconfig packages/cli/tsconfig.json scripts/vue-cli-host-acceptance.mjs --local-link-only"
+    "test:vue-cli-local-link": "pnpm exec tsx --tsconfig packages/cli/tsconfig.json scripts/vue-cli-host-acceptance.mjs --local-link-only",
+    "runtime:generate:test:ci": "pnpm exec vitest run --project=portable-runtime scripts/portable-runtime/tests/runtime-adapter-contract.test.ts scripts/portable-runtime/tests/styled-adapter-contract.test.ts scripts/portable-runtime/tests/framework-surface-manifest.test.mjs scripts/portable-runtime/tests/primitive-generator-registry.test.ts scripts/portable-runtime/tests/generate-cli-registry.test.ts scripts/portable-runtime/tests/framework-adapters.test.ts",
+    "vue:test:browser:ci": "pnpm exec vitest run --config packages/vue/tests/checkbox/vitest.config.ts --project=browser && pnpm exec vitest run --config packages/vue/tests/dialog/vitest.config.ts --project=browser && pnpm exec vitest run --config packages/vue/tests/select/vitest.config.ts --project=browser"
   },
   "dependencies": {
     "turbo": "^2.5.4"

@@ -32,8 +32,6 @@ jobs:
     needs: scope
     if: needs.scope.outputs.versioned == 'true'
     uses: ./.github/workflows/verify.yml
-    with:
-      private_adapters: false
 
   release:
     name: Release

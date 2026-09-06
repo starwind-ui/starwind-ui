@@ -357,6 +357,8 @@ describe("release package tooling", () => {
     expect(root.scripts?.["publish:beta"]).toBe("pnpm publish:release");
     expect(commandPhases(root.scripts?.["release:gate"])).toEqual([
       "pnpm verify:public",
+      "pnpm runtime:generate:vue:test",
+      "pnpm test:vue-cli-host-acceptance",
       "pnpm --filter=starwind package:check",
       "pnpm audit:prod",
       "pnpm demo:smoke",

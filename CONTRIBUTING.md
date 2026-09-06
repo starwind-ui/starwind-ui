@@ -125,10 +125,36 @@ https://www.conventionalcommits.org/ or check out the
 
 3. Make and commit your changes following the
    [commit convention](https://github.com/starwind-ui/starwind-ui/blob/main/CONTRIBUTING.md#commit-convention).
-   Before opening a pull request, run `pnpm check`, `pnpm test:all`, and `pnpm build`. Run
-   `pnpm verify` for the complete local CI-equivalent gate.
+   Before opening a pull request, run the checks for the areas you changed. Use `pnpm verify`
+   for the full local test and build suite. PR CI targets about three minutes, excluding queue
+   time, with static checks, core tests, generated-file checks, and shipping package builds.
 
 4. Please note that you might have to run `git fetch origin main:master` (where
    origin will be your fork on GitHub).
 
 5. After making your changes, add a changeset by running `pnpm changeset`. This will open an interactive prompt where you can add a changeset.
+
+### Local verification
+
+CI runs Runtime and React browser tests, Vue source SSR, and Vue Checkbox, Dialog, and Select
+browser tests. Contract and registry tests cover adapter interfaces and installed source. CI also
+regenerates adapters and registries to detect stale files. Run the broader checks locally when the
+changed area needs them:
+
+| Changed area                                | Local command                                                        |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| Shared contracts, generators, or registry   | `pnpm runtime:generate:test`                                         |
+| Vue adapters or Vue generator               | `pnpm vue:verify`                                                    |
+| Vue CLI installation or project integration | `pnpm test:vue-cli-host-acceptance`                                  |
+| Astro or React CLI installation             | `pnpm test:cli-host-acceptance`                                      |
+| Demo interaction                            | `pnpm demo:smoke`, `pnpm react-demo:smoke`, or `pnpm vue-demo:smoke` |
+| Bundle size                                 | `pnpm runtime:bundle:test` and `pnpm runtime:size:check`             |
+| Windows CLI behavior                        | `pnpm test:windows-packed-cli` on Windows                            |
+
+For Node 22.12 consumer validation, build and pack the public packages with Node 24 using
+`pnpm runtime:build && pnpm react:build && pnpm cli:build && pnpm release:pack:public-artifacts`.
+Switch to Node 22.12.0, then run `npm run release:consumer:node22`.
+
+Before publication, run `pnpm release:gate` on the final versioned public commit. It includes the
+full test and build suite, Vue generator and host acceptance, demo smoke tests, size checks, and
+packed consumer acceptance. Publication remains a separate action.
