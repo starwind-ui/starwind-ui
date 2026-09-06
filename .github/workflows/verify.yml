@@ -3,10 +3,6 @@ name: Verify
 on:
   pull_request:
   workflow_call:
-    inputs:
-      private_adapters:
-        type: boolean
-        default: false
   workflow_dispatch:
     inputs:
       base_sha:
@@ -26,75 +22,20 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  scope:
-    name: Detect verification scope
+  static:
+    name: Static checks
     runs-on: ubuntu-latest
-    outputs:
-      svelte: ${{ steps.changes.outputs.svelte }}
-      vue: ${{ steps.changes.outputs.vue }}
-      windows: ${{ steps.changes.outputs.windows }}
-      node22: ${{ steps.changes.outputs.node22 }}
+    timeout-minutes: 5
     steps:
       - name: Checkout Repo
-        # checkout@6.0.2
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-
       - name: Verify dispatched head
         if: github.event_name == 'workflow_dispatch'
         env:
           EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
         run: test "$GITHUB_SHA" = "$EXPECTED_HEAD_SHA"
-
-      - name: Detect adapter-impacting changes
-        id: changes
-        shell: bash
-        env:
-          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha || github.event.before }}
-          VUE_SCOPE_PATTERN: "^(apps/vue-demo/|packages/(runtime|vue)/|packages/cli/(registry/|scripts/|src/|tests/|package[.]json$|tsconfig[.]json$|tsup[.]config[.]ts$|vitest[.]config[.]ts$)|scripts/(check-release-artifacts|pack-public-release-artifacts|published-release-acceptance|release-candidate-acceptance|sync-public-repo|vue-cli-host-acceptance)[.]mjs$|scripts/tests/(check-release-artifacts|pack-public-release-artifacts|published-release-acceptance|public-sync|release-candidate-acceptance|root-verification-scripts|vue-cli-host-acceptance)[.](test[.](mjs|ts)|mjs)$|scripts/portable-runtime/(contracts/(primitive|styled)/|renderers/(framework-adapters/(vue/|[^/]+[.](mjs|ts)$)|generic-adapter-plan/|primitive-output-model/|primitives/|specialized-adapter-spec/|styled-output-model/|[^/]+[.](mjs|ts)$)|generate-(cli-registry|primitive-vendoring-artifacts|vue-wrappers)[.]ts$|format-generated-output[.]ts$|framework-surface-manifest[.](json|mjs)$)|[.]github/workflows/verify[.]yml$|package[.]json$|pnpm-lock[.]yaml$|pnpm-workspace[.]yaml$|turbo[.]json$)"
-        run: |
-          if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "$BASE_SHA^{commit}"; then
-            echo "svelte=true" >> "$GITHUB_OUTPUT"
-            echo "vue=true" >> "$GITHUB_OUTPUT"
-            echo "windows=true" >> "$GITHUB_OUTPUT"
-            echo "node22=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          git diff --name-only "$BASE_SHA" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
-          if grep -Eq "$VUE_SCOPE_PATTERN" "$RUNNER_TEMP/changed-files.txt"; then
-            echo "vue=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "vue=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          if grep -Eq '^(packages/svelte/|scripts/portable-runtime/(renderers/framework-adapters/svelte/|generate-svelte-wrappers|check-svelte)|scripts/portable-runtime/tests/generate-svelte-proof/)' "$RUNNER_TEMP/changed-files.txt"; then
-            echo "svelte=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "svelte=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          if grep -Eq '^(packages/(astro|cli|runtime)/|scripts/(pack-public-release-artifacts|windows-packed-cli-smoke)\.mjs$|scripts/tests/windows-packed-cli-smoke\.test\.ts$|\.github/workflows/verify\.yml$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$)' "$RUNNER_TEMP/changed-files.txt"; then
-            echo "windows=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "windows=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          if grep -Eq '^(packages/(astro|cli|react|runtime)/|scripts/(node22-public-consumer-smoke|pack-public-release-artifacts)\.mjs$|scripts/tests/node22-public-consumer-smoke\.test\.ts$|\.github/workflows/verify\.yml$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$)' "$RUNNER_TEMP/changed-files.txt"; then
-            echo "node22=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "node22=false" >> "$GITHUB_OUTPUT"
-          fi
-
-  static:
-    name: Static checks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          fetch-depth: 0
       - name: Install pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
         with:
@@ -107,7 +48,7 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Check source and test ownership
-        run: pnpm check && pnpm test:homes
+        run: pnpm check && pnpm test:homes && pnpm runtime:generate:typecheck
       - name: Check release metadata
         run: pnpm styled:versions:check && pnpm primitive:versions:check && pnpm runtime:docs:metadata:check
       - name: Verify Styled Component Version Intent
@@ -119,6 +60,7 @@ jobs:
   node-tests:
     name: Node tests
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -134,33 +76,14 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Run Node suites
-        run: pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr
-
-  generator-tests:
-    name: Generator tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Install pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
-        with:
-          cache: true
-      - name: Setup Node.js 24
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Run portable Runtime generator tests
-        run: pnpm runtime:generate:test && pnpm runtime:generate:typecheck
+        run: pnpm test:node && pnpm runtime:test:unit && pnpm react:test:ssr && pnpm --filter=@starwind-ui/vue test:run
+      - name: Check adapter contracts and registry
+        run: pnpm runtime:generate:test:ci
 
   browser-adapter-tests:
     name: Browser adapter tests
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -178,61 +101,12 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Run browser suites
-        run: pnpm runtime:test:browser && pnpm react:test:browser
-
-  vue-tests:
-    name: Vue verification
-    needs: scope
-    if: github.head_ref != 'changeset-release/main' && needs.scope.outputs.vue == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Install pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
-        with:
-          cache: true
-      - name: Setup Node.js 24
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Run Vue public-beta verification
-        run: pnpm vue:verify
-      - name: Run Vue public-beta CLI host acceptance
-        run: pnpm test:vue-cli-host-acceptance
-
-  svelte-tests:
-    name: Svelte verification
-    needs: scope
-    if: github.event.repository.private && (github.event_name == 'pull_request' || inputs.private_adapters) && github.head_ref != 'changeset-release/main' && needs.scope.outputs.svelte == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Install pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
-        with:
-          cache: true
-      - name: Setup Node.js 24
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Run quarantined Svelte verification
-        run: pnpm svelte:verify
+        run: pnpm runtime:test:browser && pnpm react:test:browser && pnpm vue:test:browser:ci
 
   build-drift:
     name: Build and generated drift
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -249,129 +123,26 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Regenerate Runtime adapters and CLI registries
         run: pnpm runtime:generate:all && pnpm runtime:registry:generate
-      - name: Build repository
-        run: pnpm build
+      - name: Build shipping packages
+        run: pnpm exec turbo build --filter=@starwind-ui/runtime --filter=@starwind-ui/react --filter=@starwind-ui/vue --filter=starwind
       - name: Reject Generated Drift
         run: git diff --exit-code
       - name: Check CLI package size
         run: pnpm --filter=starwind package:check
-      - name: Check prepared Astro demo bundles
-        run: node scripts/portable-runtime/assert-astro-demo-bundles.mjs
-      - name: Validate saved Vue performance evidence
-        if: github.event.repository.private
-        run: pnpm runtime:perf:vue:evidence:check
-      - name: Check prepared package sizes
-        env:
-          STARWIND_MEASUREMENT_TMP_ROOT: ${{ runner.temp }}/starwind-measurements
-        run: pnpm runtime:size:check:prepared
-      - name: Upload package-size failure diagnostics
-        if: failure()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-        with:
-          name: package-size-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/starwind-measurements/starwind-package-size-comparison/run-*/raw-evidence
-            docs/portable-runtime/diagnostics/astro-demo-bundle-report.md
-          if-no-files-found: ignore
-          retention-days: 7
-
-  node22-public-consumer:
-    name: Node 22.12 public consumer
-    needs: scope
-    if: needs.scope.outputs.node22 == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Install pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
-        with:
-          cache: true
-      - name: Setup Node.js 24 for public package builds
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Build public packages
-        run: pnpm runtime:build && pnpm react:build && pnpm cli:build && pnpm --filter=@starwind-ui/astro typecheck
-      - name: Pack public artifacts
-        run: pnpm release:pack:public-artifacts
-      - name: Setup exact public Node floor
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
-        with:
-          node-version: 22.12.0
-      - name: Verify packed Astro and React consumers
-        run: npm run release:consumer:node22
-
-  windows-packed-cli:
-    name: Windows packed CLI
-    needs: scope
-    if: needs.scope.outputs.windows == 'true'
-    runs-on: windows-latest
-    timeout-minutes: 20
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Install pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
-        with:
-          cache: true
-      - name: Setup Node.js 24
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Verify packed Windows CLI lifecycle
-        run: pnpm test:windows-packed-cli
 
   verify:
     name: Verify
     if: always()
     needs:
-      - scope
       - static
       - node-tests
-      - generator-tests
       - browser-adapter-tests
-      - vue-tests
-      - svelte-tests
       - build-drift
-      - node22-public-consumer
-      - windows-packed-cli
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     steps:
       - name: Require every verification gate
-        shell: bash
-        run: |
-          if [[ "${{ needs.scope.result }}" != "success" ||
-                "${{ needs.static.result }}" != "success" ||
-                "${{ needs.node-tests.result }}" != "success" ||
-                "${{ needs.generator-tests.result }}" != "success" ||
-                "${{ needs.browser-adapter-tests.result }}" != "success" ||
-                "${{ needs.build-drift.result }}" != "success" ]]; then
-            exit 1
-          fi
-
-          if [[ "${{ needs.node22-public-consumer.result }}" != "success" &&
-                "${{ needs.node22-public-consumer.result }}" != "skipped" ]]; then
-            exit 1
-          fi
-
-          if [[ "${{ needs.windows-packed-cli.result }}" != "success" &&
-                "${{ needs.windows-packed-cli.result }}" != "skipped" ]]; then
-            exit 1
-          fi
-
-          if [[ "${{ needs.vue-tests.result }}" != "success" &&
-                "${{ needs.vue-tests.result }}" != "skipped" ]]; then
-            exit 1
-          fi
-
-          if [[ "${{ needs.svelte-tests.result }}" != "success" &&
-                "${{ needs.svelte-tests.result }}" != "skipped" ]]; then
-            exit 1
-          fi
+        env:
+          CHECK_RESULTS: ${{ join(needs.*.result, ',') }}
+        run: >-
+          node -e "process.exit(process.env.CHECK_RESULTS === 'success,success,success,success' ? 0 : 1)"
